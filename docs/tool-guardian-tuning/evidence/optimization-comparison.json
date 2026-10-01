@@ -1,0 +1,5677 @@
+{
+  "groups": {
+    "common": {
+      "comparisons": [
+        {
+          "after_first_ms": [
+            29.528042,
+            28.839667
+          ],
+          "after_mad_ms": [
+            0.381,
+            0.281
+          ],
+          "after_median_ms": [
+            28.933,
+            28.063
+          ],
+          "after_p95_ms": [
+            30.249,
+            28.708
+          ],
+          "before_first_ms": [
+            30.964333,
+            31.431041
+          ],
+          "before_mad_ms": [
+            0.241,
+            0.794
+          ],
+          "before_median_ms": [
+            30.668,
+            32.63
+          ],
+          "before_p95_ms": [
+            31.93,
+            33.816
+          ],
+          "case": "codex.guard.clean",
+          "input_bytes": 89,
+          "observed_noise_ms": 1.962,
+          "paired_median_delta_ms": [
+            1.735,
+            4.567
+          ],
+          "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.048,
+            30.712208
+          ],
+          "after_mad_ms": [
+            0.655,
+            0.161
+          ],
+          "after_median_ms": [
+            31.079,
+            30.77
+          ],
+          "after_p95_ms": [
+            39.463,
+            31.262
+          ],
+          "before_first_ms": [
+            31.839792,
+            33.269792
+          ],
+          "before_mad_ms": [
+            1.978,
+            0.393
+          ],
+          "before_median_ms": [
+            34.326,
+            32.527
+          ],
+          "before_p95_ms": [
+            41.926,
+            34.542
+          ],
+          "case": "codex.guard.danger.force_push_protected_branch",
+          "input_bytes": 108,
+          "observed_noise_ms": 1.978,
+          "paired_median_delta_ms": [
+            3.247,
+            1.757
+          ],
+          "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.041875,
+            33.263792
+          ],
+          "after_mad_ms": [
+            0.606,
+            0.725
+          ],
+          "after_median_ms": [
+            31.231,
+            30.451
+          ],
+          "after_p95_ms": [
+            32.817,
+            31.569
+          ],
+          "before_first_ms": [
+            33.870708,
+            39.642458
+          ],
+          "before_mad_ms": [
+            0.642,
+            0.464
+          ],
+          "before_median_ms": [
+            33.378,
+            32.597
+          ],
+          "before_p95_ms": [
+            42.765,
+            33.639
+          ],
+          "case": "codex.guard.danger.recursive_remove_root",
+          "input_bytes": 88,
+          "observed_noise_ms": 0.781,
+          "paired_median_delta_ms": [
+            2.147,
+            2.146
+          ],
+          "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            28.301875,
+            29.230125
+          ],
+          "after_mad_ms": [
+            0.364,
+            0.855
+          ],
+          "after_median_ms": [
+            28.762,
+            29.419
+          ],
+          "after_p95_ms": [
+            30.224,
+            30.547
+          ],
+          "before_first_ms": [
+            31.53225,
+            31.424083
+          ],
+          "before_mad_ms": [
+            0.252,
+            1.589
+          ],
+          "before_median_ms": [
+            32.693,
+            33.43
+          ],
+          "before_p95_ms": [
+            33.795,
+            37.404
+          ],
+          "case": "codex.guard.growth.git-128",
+          "input_bytes": 532,
+          "observed_noise_ms": 1.589,
+          "paired_median_delta_ms": [
+            3.931,
+            4.011
+          ],
+          "payload_sha256": "b8e50cfc6d3747eb99f3974cd6b896705e86ad5e4be01d0b7e635e33bd9da713",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            29.896083,
+            29.420958
+          ],
+          "after_mad_ms": [
+            0.173,
+            0.125
+          ],
+          "after_median_ms": [
+            30.766,
+            29.449
+          ],
+          "after_p95_ms": [
+            32.132,
+            29.764
+          ],
+          "before_first_ms": [
+            32.491125,
+            34.370833
+          ],
+          "before_mad_ms": [
+            0.227,
+            0.506
+          ],
+          "before_median_ms": [
+            32.18,
+            33.303
+          ],
+          "before_p95_ms": [
+            51.622,
+            35.168
+          ],
+          "case": "codex.guard.growth.git-250",
+          "input_bytes": 959,
+          "observed_noise_ms": 1.317,
+          "paired_median_delta_ms": [
+            1.414,
+            3.854
+          ],
+          "payload_sha256": "1ae70098e67c9dc69850f629afac4e6433d97d124c8dc84e74a9f45ee75c5d77",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.240875,
+            28.05425
+          ],
+          "after_mad_ms": [
+            0.202,
+            0.179
+          ],
+          "after_median_ms": [
+            29.815,
+            28.04
+          ],
+          "after_p95_ms": [
+            30.569,
+            29.161
+          ],
+          "before_first_ms": [
+            35.080084,
+            34.47875
+          ],
+          "before_mad_ms": [
+            0.538,
+            0.598
+          ],
+          "before_median_ms": [
+            32.986,
+            32.4
+          ],
+          "before_p95_ms": [
+            33.886,
+            33.208
+          ],
+          "case": "codex.guard.growth.git-64",
+          "input_bytes": 308,
+          "observed_noise_ms": 1.775,
+          "paired_median_delta_ms": [
+            3.171,
+            4.36
+          ],
+          "payload_sha256": "2e83709baceba0b5fb03a5a0b86c6e8fbc8566f20440f88430ae392d5469b6c9",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            29.765083,
+            28.317709
+          ],
+          "after_mad_ms": [
+            0.256,
+            0.279
+          ],
+          "after_median_ms": [
+            28.542,
+            28.484
+          ],
+          "after_p95_ms": [
+            29.597,
+            29.283
+          ],
+          "before_first_ms": [
+            32.277292,
+            33.251291
+          ],
+          "before_mad_ms": [
+            0.467,
+            0.325
+          ],
+          "before_median_ms": [
+            32.001,
+            31.806
+          ],
+          "before_p95_ms": [
+            34.317,
+            32.81
+          ],
+          "case": "codex.guard.growth.rm-128",
+          "input_bytes": 465,
+          "observed_noise_ms": 0.467,
+          "paired_median_delta_ms": [
+            3.459,
+            3.322
+          ],
+          "payload_sha256": "c720376a8f2f3bd8937c1582d3e5b8bc1602071668571c4a39e632dba897eba2",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            29.758083,
+            30.205167
+          ],
+          "after_mad_ms": [
+            0.599,
+            0.464
+          ],
+          "after_median_ms": [
+            29.297,
+            30.181
+          ],
+          "after_p95_ms": [
+            31.141,
+            30.75
+          ],
+          "before_first_ms": [
+            35.499667,
+            34.237334
+          ],
+          "before_mad_ms": [
+            0.462,
+            0.269
+          ],
+          "before_median_ms": [
+            31.954,
+            33.734
+          ],
+          "before_p95_ms": [
+            37.322,
+            34.304
+          ],
+          "case": "codex.guard.growth.rm-250",
+          "input_bytes": 831,
+          "observed_noise_ms": 1.78,
+          "paired_median_delta_ms": [
+            2.657,
+            3.553
+          ],
+          "payload_sha256": "5cea59f4f8a438b36462afdaee95e0b44a27738b88dc9af915783ed670c169d5",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            31.410375,
+            28.463166
+          ],
+          "after_mad_ms": [
+            0.396,
+            0.154
+          ],
+          "after_median_ms": [
+            29.917,
+            28.206
+          ],
+          "after_p95_ms": [
+            31.246,
+            28.567
+          ],
+          "before_first_ms": [
+            35.430916,
+            30.921625
+          ],
+          "before_mad_ms": [
+            0.752,
+            1.29
+          ],
+          "before_median_ms": [
+            34.162,
+            33.185
+          ],
+          "before_p95_ms": [
+            36.307,
+            40.064
+          ],
+          "case": "codex.guard.growth.rm-64",
+          "input_bytes": 273,
+          "observed_noise_ms": 1.711,
+          "paired_median_delta_ms": [
+            4.245,
+            4.979
+          ],
+          "payload_sha256": "a6b15794a9af8efff17a8939029a177f875f4f1a346f1881966adbc2a4ee48cd",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.41125,
+            29.510333
+          ],
+          "after_mad_ms": [
+            0.494,
+            0.267
+          ],
+          "after_median_ms": [
+            30.289,
+            28.34
+          ],
+          "after_p95_ms": [
+            31.615,
+            29.27
+          ],
+          "before_first_ms": [
+            31.688208,
+            31.2575
+          ],
+          "before_mad_ms": [
+            0.291,
+            0.859
+          ],
+          "before_median_ms": [
+            31.716,
+            32.757
+          ],
+          "before_p95_ms": [
+            32.736,
+            34.131
+          ],
+          "case": "codex.guard.patch.bytes-46899",
+          "input_bytes": 47109,
+          "observed_noise_ms": 1.949,
+          "paired_median_delta_ms": [
+            1.427,
+            4.417
+          ],
+          "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.689084,
+            28.182125
+          ],
+          "after_mad_ms": [
+            0.728,
+            0.665
+          ],
+          "after_median_ms": [
+            28.893,
+            28.925
+          ],
+          "after_p95_ms": [
+            29.646,
+            30.613
+          ],
+          "before_first_ms": [
+            30.939834,
+            37.7295
+          ],
+          "before_mad_ms": [
+            0.329,
+            0.608
+          ],
+          "before_median_ms": [
+            30.685,
+            32.941
+          ],
+          "before_p95_ms": [
+            40.004,
+            43.292
+          ],
+          "case": "codex.guard.patch.lines-330",
+          "input_bytes": 6363,
+          "observed_noise_ms": 2.256,
+          "paired_median_delta_ms": [
+            1.792,
+            4.016
+          ],
+          "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            27.543,
+            27.816125
+          ],
+          "after_mad_ms": [
+            0.167,
+            0.306
+          ],
+          "after_median_ms": [
+            27.684,
+            28.223
+          ],
+          "after_p95_ms": [
+            28.152,
+            28.847
+          ],
+          "before_first_ms": [
+            31.350125,
+            31.987042
+          ],
+          "before_mad_ms": [
+            0.423,
+            0.511
+          ],
+          "before_median_ms": [
+            30.863,
+            32.503
+          ],
+          "before_p95_ms": [
+            31.699,
+            33.672
+          ],
+          "case": "codex.guard.search.shell-literal",
+          "input_bytes": 121,
+          "observed_noise_ms": 1.64,
+          "paired_median_delta_ms": [
+            3.179,
+            4.28
+          ],
+          "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.789291,
+            31.0005
+          ],
+          "after_mad_ms": [
+            0.333,
+            0.681
+          ],
+          "after_median_ms": [
+            27.929,
+            29.528
+          ],
+          "after_p95_ms": [
+            29.464,
+            30.727
+          ],
+          "before_first_ms": [
+            31.141833,
+            32.758791
+          ],
+          "before_mad_ms": [
+            0.782,
+            0.533
+          ],
+          "before_median_ms": [
+            32.087,
+            33.492
+          ],
+          "before_p95_ms": [
+            34.654,
+            34.211
+          ],
+          "case": "codex.guard.survey.json-stdin",
+          "input_bytes": 221,
+          "observed_noise_ms": 1.599,
+          "paired_median_delta_ms": [
+            4.158,
+            3.964
+          ],
+          "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            29.126084,
+            30.887916
+          ],
+          "after_mad_ms": [
+            0.82,
+            0.448
+          ],
+          "after_median_ms": [
+            29.878,
+            29.82
+          ],
+          "after_p95_ms": [
+            32.672,
+            31.161
+          ],
+          "before_first_ms": [
+            31.86975,
+            34.579917
+          ],
+          "before_mad_ms": [
+            0.609,
+            0.874
+          ],
+          "before_median_ms": [
+            33.583,
+            33.949
+          ],
+          "before_p95_ms": [
+            35.147,
+            35.16
+          ],
+          "case": "codex.guard.survey.python-subprocess",
+          "input_bytes": 390,
+          "observed_noise_ms": 0.874,
+          "paired_median_delta_ms": [
+            3.705,
+            4.129
+          ],
+          "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            28.003042,
+            31.063459
+          ],
+          "after_mad_ms": [
+            0.141,
+            0.471
+          ],
+          "after_median_ms": [
+            27.604,
+            29.288
+          ],
+          "after_p95_ms": [
+            28.118,
+            30.197
+          ],
+          "before_first_ms": [
+            30.478083,
+            31.972542
+          ],
+          "before_mad_ms": [
+            0.65,
+            0.611
+          ],
+          "before_median_ms": [
+            31.834,
+            32.207
+          ],
+          "before_p95_ms": [
+            32.758,
+            33.344
+          ],
+          "case": "codex.guard.write.examples.md",
+          "input_bytes": 180,
+          "observed_noise_ms": 1.684,
+          "paired_median_delta_ms": [
+            4.23,
+            2.919
+          ],
+          "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            29.070917,
+            29.854542
+          ],
+          "after_mad_ms": [
+            0.731,
+            0.897
+          ],
+          "after_median_ms": [
+            29.681,
+            31.489
+          ],
+          "after_p95_ms": [
+            32.818,
+            42.29
+          ],
+          "before_first_ms": [
+            32.122792,
+            32.727375
+          ],
+          "before_mad_ms": [
+            0.327,
+            1.191
+          ],
+          "before_median_ms": [
+            32.183,
+            34.794
+          ],
+          "before_p95_ms": [
+            34.674,
+            36.985
+          ],
+          "case": "codex.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9032,
+          "observed_noise_ms": 2.611,
+          "paired_median_delta_ms": [
+            2.502,
+            3.305
+          ],
+          "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.856708,
+            29.947375
+          ],
+          "after_mad_ms": [
+            0.404,
+            0.445
+          ],
+          "after_median_ms": [
+            31.963,
+            31.251
+          ],
+          "after_p95_ms": [
+            32.82,
+            32.1
+          ],
+          "before_first_ms": [
+            31.78225,
+            36.69875
+          ],
+          "before_mad_ms": [
+            0.178,
+            0.616
+          ],
+          "before_median_ms": [
+            31.77,
+            34.684
+          ],
+          "before_p95_ms": [
+            31.99,
+            36.576
+          ],
+          "case": "codex.guard.writer.lines-120-segments-139",
+          "input_bytes": 2503,
+          "observed_noise_ms": 2.914,
+          "paired_median_delta_ms": [
+            -0.193,
+            3.433
+          ],
+          "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.523417,
+            33.720792
+          ],
+          "after_mad_ms": [
+            0.091,
+            0.594
+          ],
+          "after_median_ms": [
+            30.375,
+            30.986
+          ],
+          "after_p95_ms": [
+            30.604,
+            32.706
+          ],
+          "before_first_ms": [
+            34.815291,
+            36.070459
+          ],
+          "before_mad_ms": [
+            0.336,
+            0.268
+          ],
+          "before_median_ms": [
+            33.865,
+            33.142
+          ],
+          "before_p95_ms": [
+            34.919,
+            33.483
+          ],
+          "case": "copilot.guard.clean",
+          "input_bytes": 86,
+          "observed_noise_ms": 0.723,
+          "paired_median_delta_ms": [
+            3.49,
+            2.156
+          ],
+          "payload_sha256": "c846ac2d06ddcdc1af461533e1af263ad8c44879f634db699f50e73a75364ec6",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.957167,
+            33.78225
+          ],
+          "after_mad_ms": [
+            0.201,
+            0.478
+          ],
+          "after_median_ms": [
+            33.41,
+            32.248
+          ],
+          "after_p95_ms": [
+            34.049,
+            34.422
+          ],
+          "before_first_ms": [
+            35.572,
+            36.537709
+          ],
+          "before_mad_ms": [
+            0.64,
+            0.623
+          ],
+          "before_median_ms": [
+            34.486,
+            35.764
+          ],
+          "before_p95_ms": [
+            38.042,
+            36.405
+          ],
+          "case": "copilot.guard.danger.force_push_protected_branch",
+          "input_bytes": 105,
+          "observed_noise_ms": 1.278,
+          "paired_median_delta_ms": [
+            1.076,
+            3.516
+          ],
+          "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            36.131916,
+            36.852625
+          ],
+          "after_mad_ms": [
+            1.08,
+            0.534
+          ],
+          "after_median_ms": [
+            32.824,
+            33.5
+          ],
+          "after_p95_ms": [
+            44.157,
+            34.536
+          ],
+          "before_first_ms": [
+            37.828625,
+            36.847833
+          ],
+          "before_mad_ms": [
+            0.853,
+            0.565
+          ],
+          "before_median_ms": [
+            36.234,
+            34.567
+          ],
+          "before_p95_ms": [
+            37.881,
+            36.35
+          ],
+          "case": "copilot.guard.danger.recursive_remove_root",
+          "input_bytes": 85,
+          "observed_noise_ms": 1.667,
+          "paired_median_delta_ms": [
+            3.41,
+            1.067
+          ],
+          "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.027417,
+            32.870875
+          ],
+          "after_mad_ms": [
+            0.249,
+            0.476
+          ],
+          "after_median_ms": [
+            32.734,
+            33.166
+          ],
+          "after_p95_ms": [
+            33.526,
+            34.197
+          ],
+          "before_first_ms": [
+            36.02625,
+            35.158125
+          ],
+          "before_mad_ms": [
+            0.288,
+            0.826
+          ],
+          "before_median_ms": [
+            34.362,
+            35.417
+          ],
+          "before_p95_ms": [
+            36.376,
+            36.407
+          ],
+          "case": "copilot.guard.growth.git-128",
+          "input_bytes": 529,
+          "observed_noise_ms": 1.055,
+          "paired_median_delta_ms": [
+            1.628,
+            2.251
+          ],
+          "payload_sha256": "c2de5e2e3199e381dcb51ba16625810dabac0bed89c81160ff08dfc19d2bdbfd",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.074416,
+            32.180875
+          ],
+          "after_mad_ms": [
+            0.34,
+            0.682
+          ],
+          "after_median_ms": [
+            32.202,
+            32.864
+          ],
+          "after_p95_ms": [
+            33.51,
+            35.059
+          ],
+          "before_first_ms": [
+            44.112625,
+            36.599459
+          ],
+          "before_mad_ms": [
+            0.458,
+            0.382
+          ],
+          "before_median_ms": [
+            36.864,
+            35.317
+          ],
+          "before_p95_ms": [
+            38.542,
+            37.245
+          ],
+          "case": "copilot.guard.growth.git-250",
+          "input_bytes": 956,
+          "observed_noise_ms": 1.547,
+          "paired_median_delta_ms": [
+            4.662,
+            2.453
+          ],
+          "payload_sha256": "58bcec4466b8b2de084e166da4e08f966c957261fde51a3c9eb8c4b8a578ff9f",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.669583,
+            31.16375
+          ],
+          "after_mad_ms": [
+            0.153,
+            0.525
+          ],
+          "after_median_ms": [
+            30.694,
+            32.706
+          ],
+          "after_p95_ms": [
+            31.034,
+            33.417
+          ],
+          "before_first_ms": [
+            36.094875,
+            33.788709
+          ],
+          "before_mad_ms": [
+            0.396,
+            0.165
+          ],
+          "before_median_ms": [
+            35.469,
+            33.41
+          ],
+          "before_p95_ms": [
+            36.366,
+            34.046
+          ],
+          "case": "copilot.guard.growth.git-64",
+          "input_bytes": 305,
+          "observed_noise_ms": 2.059,
+          "paired_median_delta_ms": [
+            4.775,
+            0.704
+          ],
+          "payload_sha256": "111115aaaca757aab066fe3ff13cde167fe5a3902af4761e1b166eb3b2a934f7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.600666,
+            31.918917
+          ],
+          "after_mad_ms": [
+            0.175,
+            0.645
+          ],
+          "after_median_ms": [
+            30.827,
+            33.049
+          ],
+          "after_p95_ms": [
+            31.174,
+            34.347
+          ],
+          "before_first_ms": [
+            36.257542,
+            34.268625
+          ],
+          "before_mad_ms": [
+            0.844,
+            0.521
+          ],
+          "before_median_ms": [
+            34.369,
+            34.762
+          ],
+          "before_p95_ms": [
+            37.294,
+            35.777
+          ],
+          "case": "copilot.guard.growth.rm-128",
+          "input_bytes": 462,
+          "observed_noise_ms": 2.222,
+          "paired_median_delta_ms": [
+            3.542,
+            1.713
+          ],
+          "payload_sha256": "ec599dc70d9e180f9ed2f0625a585e6d47faf23cd209fbd7cbc87e1c39792d78",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.548208,
+            32.562625
+          ],
+          "after_mad_ms": [
+            0.722,
+            0.514
+          ],
+          "after_median_ms": [
+            32.051,
+            31.863
+          ],
+          "after_p95_ms": [
+            33.882,
+            37.026
+          ],
+          "before_first_ms": [
+            36.554708,
+            34.116666
+          ],
+          "before_mad_ms": [
+            0.61,
+            0.281
+          ],
+          "before_median_ms": [
+            35.631,
+            34.65
+          ],
+          "before_p95_ms": [
+            40.683,
+            34.985
+          ],
+          "case": "copilot.guard.growth.rm-250",
+          "input_bytes": 828,
+          "observed_noise_ms": 0.981,
+          "paired_median_delta_ms": [
+            3.58,
+            2.787
+          ],
+          "payload_sha256": "b7dc293a01e9c0b0d4838aab6ed1af8f23d8071a2bde09c202ea136696e51afb",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.707833,
+            33.616
+          ],
+          "after_mad_ms": [
+            0.116,
+            0.605
+          ],
+          "after_median_ms": [
+            30.61,
+            31.404
+          ],
+          "after_p95_ms": [
+            31.077,
+            33.808
+          ],
+          "before_first_ms": [
+            33.032458,
+            34.186875
+          ],
+          "before_mad_ms": [
+            0.137,
+            0.321
+          ],
+          "before_median_ms": [
+            32.911,
+            33.907
+          ],
+          "before_p95_ms": [
+            33.94,
+            42.362
+          ],
+          "case": "copilot.guard.growth.rm-64",
+          "input_bytes": 270,
+          "observed_noise_ms": 0.996,
+          "paired_median_delta_ms": [
+            2.301,
+            2.503
+          ],
+          "payload_sha256": "0c715150e6920d422331908793648fcd2ffe164db68752dd05aa927625956352",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            68.622667,
+            32.411166
+          ],
+          "after_mad_ms": [
+            2.364,
+            0.725
+          ],
+          "after_median_ms": [
+            34.469,
+            33.419
+          ],
+          "after_p95_ms": [
+            47.278,
+            34.525
+          ],
+          "before_first_ms": [
+            34.501292,
+            35.090625
+          ],
+          "before_mad_ms": [
+            0.23,
+            0.727
+          ],
+          "before_median_ms": [
+            34.986,
+            34.753
+          ],
+          "before_p95_ms": [
+            35.417,
+            36.215
+          ],
+          "case": "copilot.guard.patch.bytes-46899",
+          "input_bytes": 47130,
+          "observed_noise_ms": 2.364,
+          "paired_median_delta_ms": [
+            0.517,
+            1.334
+          ],
+          "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.334709,
+            33.973209
+          ],
+          "after_mad_ms": [
+            0.367,
+            0.485
+          ],
+          "after_median_ms": [
+            32.285,
+            32.494
+          ],
+          "after_p95_ms": [
+            32.855,
+            33.721
+          ],
+          "before_first_ms": [
+            37.278583,
+            33.816875
+          ],
+          "before_mad_ms": [
+            0.599,
+            0.291
+          ],
+          "before_median_ms": [
+            35.808,
+            34.778
+          ],
+          "before_p95_ms": [
+            36.546,
+            36.386
+          ],
+          "case": "copilot.guard.patch.lines-330",
+          "input_bytes": 6384,
+          "observed_noise_ms": 1.03,
+          "paired_median_delta_ms": [
+            3.523,
+            2.284
+          ],
+          "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.577125,
+            31.604167
+          ],
+          "after_mad_ms": [
+            0.271,
+            0.177
+          ],
+          "after_median_ms": [
+            30.573,
+            31.444
+          ],
+          "after_p95_ms": [
+            32.368,
+            32.021
+          ],
+          "before_first_ms": [
+            33.5715,
+            33.392333
+          ],
+          "before_mad_ms": [
+            0.345,
+            0.115
+          ],
+          "before_median_ms": [
+            34.372,
+            33.092
+          ],
+          "before_p95_ms": [
+            35.388,
+            33.367
+          ],
+          "case": "copilot.guard.search.shell-literal",
+          "input_bytes": 118,
+          "observed_noise_ms": 1.28,
+          "paired_median_delta_ms": [
+            3.799,
+            1.648
+          ],
+          "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            31.696792,
+            32.431375
+          ],
+          "after_mad_ms": [
+            0.434,
+            0.926
+          ],
+          "after_median_ms": [
+            31.79,
+            31.766
+          ],
+          "after_p95_ms": [
+            32.334,
+            33.335
+          ],
+          "before_first_ms": [
+            33.308375,
+            35.721416
+          ],
+          "before_mad_ms": [
+            0.353,
+            0.41
+          ],
+          "before_median_ms": [
+            33.955,
+            34.947
+          ],
+          "before_p95_ms": [
+            34.537,
+            36.095
+          ],
+          "case": "copilot.guard.survey.json-stdin",
+          "input_bytes": 218,
+          "observed_noise_ms": 0.992,
+          "paired_median_delta_ms": [
+            2.165,
+            3.181
+          ],
+          "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            31.879167,
+            34.107625
+          ],
+          "after_mad_ms": [
+            0.151,
+            1.04
+          ],
+          "after_median_ms": [
+            31.6,
+            32.627
+          ],
+          "after_p95_ms": [
+            32.529,
+            35.86
+          ],
+          "before_first_ms": [
+            35.161,
+            34.6405
+          ],
+          "before_mad_ms": [
+            0.816,
+            0.303
+          ],
+          "before_median_ms": [
+            35.574,
+            34.399
+          ],
+          "before_p95_ms": [
+            46.612,
+            36.085
+          ],
+          "case": "copilot.guard.survey.python-subprocess",
+          "input_bytes": 387,
+          "observed_noise_ms": 1.175,
+          "paired_median_delta_ms": [
+            3.974,
+            1.772
+          ],
+          "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.891959,
+            32.214208
+          ],
+          "after_mad_ms": [
+            0.632,
+            0.47
+          ],
+          "after_median_ms": [
+            31.044,
+            31.573
+          ],
+          "after_p95_ms": [
+            32.677,
+            32.115
+          ],
+          "before_first_ms": [
+            33.922208,
+            35.074375
+          ],
+          "before_mad_ms": [
+            0.35,
+            0.269
+          ],
+          "before_median_ms": [
+            33.821,
+            34.722
+          ],
+          "before_p95_ms": [
+            34.371,
+            35.102
+          ],
+          "case": "copilot.guard.write.examples.md",
+          "input_bytes": 135,
+          "observed_noise_ms": 0.901,
+          "paired_median_delta_ms": [
+            2.777,
+            3.149
+          ],
+          "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.3425,
+            33.792708
+          ],
+          "after_mad_ms": [
+            0.296,
+            1.489
+          ],
+          "after_median_ms": [
+            32.951,
+            33.638
+          ],
+          "after_p95_ms": [
+            33.494,
+            47.318
+          ],
+          "before_first_ms": [
+            35.420167,
+            34.860166
+          ],
+          "before_mad_ms": [
+            0.267,
+            0.382
+          ],
+          "before_median_ms": [
+            36.117,
+            35.273
+          ],
+          "before_p95_ms": [
+            36.624,
+            37.429
+          ],
+          "case": "copilot.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9029,
+          "observed_noise_ms": 1.489,
+          "paired_median_delta_ms": [
+            3.166,
+            1.635
+          ],
+          "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.001084,
+            36.42475
+          ],
+          "after_mad_ms": [
+            0.881,
+            0.469
+          ],
+          "after_median_ms": [
+            32.675,
+            34.051
+          ],
+          "after_p95_ms": [
+            33.836,
+            35.313
+          ],
+          "before_first_ms": [
+            35.883708,
+            35.019084
+          ],
+          "before_mad_ms": [
+            0.399,
+            0.189
+          ],
+          "before_median_ms": [
+            35.264,
+            34.561
+          ],
+          "before_p95_ms": [
+            36.496,
+            36.513
+          ],
+          "case": "copilot.guard.writer.lines-120-segments-139",
+          "input_bytes": 2500,
+          "observed_noise_ms": 1.376,
+          "paired_median_delta_ms": [
+            2.589,
+            0.51
+          ],
+          "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.664916,
+            35.2135
+          ],
+          "after_mad_ms": [
+            0.413,
+            0.932
+          ],
+          "after_median_ms": [
+            30.93,
+            31.837
+          ],
+          "after_p95_ms": [
+            32.892,
+            34.293
+          ],
+          "before_first_ms": [
+            33.2525,
+            33.626875
+          ],
+          "before_mad_ms": [
+            0.32,
+            0.292
+          ],
+          "before_median_ms": [
+            33.01,
+            33.898
+          ],
+          "before_p95_ms": [
+            34.429,
+            34.749
+          ],
+          "case": "gemini.guard.clean",
+          "input_bytes": 102,
+          "observed_noise_ms": 0.932,
+          "paired_median_delta_ms": [
+            2.08,
+            2.061
+          ],
+          "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.970209,
+            35.452333
+          ],
+          "after_mad_ms": [
+            0.128,
+            0.761
+          ],
+          "after_median_ms": [
+            31.835,
+            35.077
+          ],
+          "after_p95_ms": [
+            32.641,
+            35.978
+          ],
+          "before_first_ms": [
+            35.298542,
+            35.205584
+          ],
+          "before_mad_ms": [
+            0.27,
+            0.368
+          ],
+          "before_median_ms": [
+            34.462,
+            35.015
+          ],
+          "before_p95_ms": [
+            36.839,
+            36.842
+          ],
+          "case": "gemini.guard.danger.force_push_protected_branch",
+          "input_bytes": 121,
+          "observed_noise_ms": 3.242,
+          "paired_median_delta_ms": [
+            2.627,
+            -0.062
+          ],
+          "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.133417,
+            33.256416
+          ],
+          "after_mad_ms": [
+            0.369,
+            0.402
+          ],
+          "after_median_ms": [
+            33.743,
+            32.323
+          ],
+          "after_p95_ms": [
+            34.347,
+            33.544
+          ],
+          "before_first_ms": [
+            35.351792,
+            35.511041
+          ],
+          "before_mad_ms": [
+            0.645,
+            0.653
+          ],
+          "before_median_ms": [
+            35.128,
+            35.345
+          ],
+          "before_p95_ms": [
+            36.623,
+            36.782
+          ],
+          "case": "gemini.guard.danger.recursive_remove_root",
+          "input_bytes": 101,
+          "observed_noise_ms": 1.42,
+          "paired_median_delta_ms": [
+            1.385,
+            3.022
+          ],
+          "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.437958,
+            33.677709
+          ],
+          "after_mad_ms": [
+            0.462,
+            0.706
+          ],
+          "after_median_ms": [
+            32.07,
+            33.399
+          ],
+          "after_p95_ms": [
+            33.154,
+            35.821
+          ],
+          "before_first_ms": [
+            34.374042,
+            34.98075
+          ],
+          "before_mad_ms": [
+            0.577,
+            0.562
+          ],
+          "before_median_ms": [
+            34.33,
+            34.626
+          ],
+          "before_p95_ms": [
+            41.764,
+            46.112
+          ],
+          "case": "gemini.guard.growth.git-128",
+          "input_bytes": 545,
+          "observed_noise_ms": 1.329,
+          "paired_median_delta_ms": [
+            2.26,
+            1.227
+          ],
+          "payload_sha256": "423f1b1a27920d86c4ef2eb9a91afa203113568b37f68a9a4bf556d44c4b69ab",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.383833,
+            47.668042
+          ],
+          "after_mad_ms": [
+            0.134,
+            0.252
+          ],
+          "after_median_ms": [
+            32.324,
+            33.68
+          ],
+          "after_p95_ms": [
+            34.987,
+            34.72
+          ],
+          "before_first_ms": [
+            34.498167,
+            37.662833
+          ],
+          "before_mad_ms": [
+            0.572,
+            1.023
+          ],
+          "before_median_ms": [
+            35.399,
+            36.249
+          ],
+          "before_p95_ms": [
+            36.121,
+            38.275
+          ],
+          "case": "gemini.guard.growth.git-250",
+          "input_bytes": 972,
+          "observed_noise_ms": 1.356,
+          "paired_median_delta_ms": [
+            3.075,
+            2.569
+          ],
+          "payload_sha256": "fa4fd392a1fe56849bbca6781b2af3117cf10695a4f8d5e67f84046d2c29ac5f",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.911708,
+            32.558625
+          ],
+          "after_mad_ms": [
+            0.141,
+            0.354
+          ],
+          "after_median_ms": [
+            30.745,
+            33.002
+          ],
+          "after_p95_ms": [
+            31.127,
+            33.917
+          ],
+          "before_first_ms": [
+            33.484209,
+            34.484125
+          ],
+          "before_mad_ms": [
+            0.32,
+            0.289
+          ],
+          "before_median_ms": [
+            33.533,
+            34.478
+          ],
+          "before_p95_ms": [
+            37.718,
+            35.493
+          ],
+          "case": "gemini.guard.growth.git-64",
+          "input_bytes": 321,
+          "observed_noise_ms": 2.257,
+          "paired_median_delta_ms": [
+            2.788,
+            1.476
+          ],
+          "payload_sha256": "0b7cea6fc4c76ed343009c5506dd8ce9f560af6c6e721cb728ff50477192dba7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.135209,
+            33.266292
+          ],
+          "after_mad_ms": [
+            0.168,
+            0.36
+          ],
+          "after_median_ms": [
+            32.619,
+            32.901
+          ],
+          "after_p95_ms": [
+            32.863,
+            34.978
+          ],
+          "before_first_ms": [
+            37.893208,
+            34.853
+          ],
+          "before_mad_ms": [
+            0.494,
+            0.449
+          ],
+          "before_median_ms": [
+            34.732,
+            34.787
+          ],
+          "before_p95_ms": [
+            36.072,
+            35.979
+          ],
+          "case": "gemini.guard.growth.rm-128",
+          "input_bytes": 478,
+          "observed_noise_ms": 0.494,
+          "paired_median_delta_ms": [
+            2.113,
+            1.886
+          ],
+          "payload_sha256": "3cf2471b28385e56facbf09e6054f642fac51c54a0a2d7531e1ab3a2c915bf79",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            31.995834,
+            35.769125
+          ],
+          "after_mad_ms": [
+            0.525,
+            0.738
+          ],
+          "after_median_ms": [
+            32.061,
+            33.833
+          ],
+          "after_p95_ms": [
+            34.106,
+            37.576
+          ],
+          "before_first_ms": [
+            34.887625,
+            39.617584
+          ],
+          "before_mad_ms": [
+            0.949,
+            4.459
+          ],
+          "before_median_ms": [
+            35.69,
+            41.467
+          ],
+          "before_p95_ms": [
+            36.663,
+            54.63
+          ],
+          "case": "gemini.guard.growth.rm-250",
+          "input_bytes": 844,
+          "observed_noise_ms": 5.777,
+          "paired_median_delta_ms": [
+            3.629,
+            7.634
+          ],
+          "payload_sha256": "17e470208b9227a452e2c69eb664194b985d5e253a10c6c96ed8462d820bf2a7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.495375,
+            31.524375
+          ],
+          "after_mad_ms": [
+            0.407,
+            0.643
+          ],
+          "after_median_ms": [
+            31.173,
+            33.029
+          ],
+          "after_p95_ms": [
+            41.748,
+            34.003
+          ],
+          "before_first_ms": [
+            33.280334,
+            35.2955
+          ],
+          "before_mad_ms": [
+            0.885,
+            0.266
+          ],
+          "before_median_ms": [
+            34.233,
+            34.464
+          ],
+          "before_p95_ms": [
+            35.364,
+            35.846
+          ],
+          "case": "gemini.guard.growth.rm-64",
+          "input_bytes": 286,
+          "observed_noise_ms": 1.856,
+          "paired_median_delta_ms": [
+            3.06,
+            1.435
+          ],
+          "payload_sha256": "99d91f5b1d431841c748361ce018bab36049d382d59d505167f0da4d3ad8d2c0",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.221458,
+            34.372916
+          ],
+          "after_mad_ms": [
+            0.157,
+            0.809
+          ],
+          "after_median_ms": [
+            31.037,
+            33.991
+          ],
+          "after_p95_ms": [
+            31.367,
+            36.323
+          ],
+          "before_first_ms": [
+            35.875,
+            33.787708
+          ],
+          "before_mad_ms": [
+            0.886,
+            0.804
+          ],
+          "before_median_ms": [
+            34.195,
+            34.026
+          ],
+          "before_p95_ms": [
+            36.113,
+            35.849
+          ],
+          "case": "gemini.guard.patch.bytes-46899",
+          "input_bytes": 47140,
+          "observed_noise_ms": 2.954,
+          "paired_median_delta_ms": [
+            3.158,
+            0.035
+          ],
+          "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.755,
+            31.744
+          ],
+          "after_mad_ms": [
+            0.492,
+            0.646
+          ],
+          "after_median_ms": [
+            32.004,
+            32.553
+          ],
+          "after_p95_ms": [
+            32.804,
+            34.669
+          ],
+          "before_first_ms": [
+            35.358041,
+            35.608375
+          ],
+          "before_mad_ms": [
+            0.509,
+            0.449
+          ],
+          "before_median_ms": [
+            33.424,
+            34.84
+          ],
+          "before_p95_ms": [
+            35.391,
+            36.102
+          ],
+          "case": "gemini.guard.patch.lines-330",
+          "input_bytes": 6394,
+          "observed_noise_ms": 1.416,
+          "paired_median_delta_ms": [
+            1.42,
+            2.287
+          ],
+          "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.609375,
+            32.757625
+          ],
+          "after_mad_ms": [
+            0.631,
+            0.609
+          ],
+          "after_median_ms": [
+            31.358,
+            31.166
+          ],
+          "after_p95_ms": [
+            32.766,
+            34.504
+          ],
+          "before_first_ms": [
+            35.65375,
+            35.249708
+          ],
+          "before_mad_ms": [
+            0.604,
+            0.465
+          ],
+          "before_median_ms": [
+            34.866,
+            34.093
+          ],
+          "before_p95_ms": [
+            40.023,
+            36.324
+          ],
+          "case": "gemini.guard.search.shell-literal",
+          "input_bytes": 134,
+          "observed_noise_ms": 0.773,
+          "paired_median_delta_ms": [
+            3.508,
+            2.927
+          ],
+          "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.603958,
+            34.177625
+          ],
+          "after_mad_ms": [
+            0.574,
+            1.207
+          ],
+          "after_median_ms": [
+            32.268,
+            31.971
+          ],
+          "after_p95_ms": [
+            33.138,
+            34.017
+          ],
+          "before_first_ms": [
+            34.910917,
+            34.104459
+          ],
+          "before_mad_ms": [
+            1.415,
+            0.631
+          ],
+          "before_median_ms": [
+            34.444,
+            34.487
+          ],
+          "before_p95_ms": [
+            37.572,
+            36.451
+          ],
+          "case": "gemini.guard.survey.json-stdin",
+          "input_bytes": 234,
+          "observed_noise_ms": 1.415,
+          "paired_median_delta_ms": [
+            2.176,
+            2.516
+          ],
+          "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            34.275458,
+            32.884166
+          ],
+          "after_mad_ms": [
+            0.245,
+            0.919
+          ],
+          "after_median_ms": [
+            31.943,
+            33.777
+          ],
+          "after_p95_ms": [
+            34.145,
+            36.598
+          ],
+          "before_first_ms": [
+            39.49875,
+            36.814333
+          ],
+          "before_mad_ms": [
+            0.751,
+            0.624
+          ],
+          "before_median_ms": [
+            35.295,
+            34.769
+          ],
+          "before_p95_ms": [
+            36.947,
+            37.126
+          ],
+          "case": "gemini.guard.survey.python-subprocess",
+          "input_bytes": 403,
+          "observed_noise_ms": 1.834,
+          "paired_median_delta_ms": [
+            3.352,
+            0.992
+          ],
+          "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.377459,
+            32.950916
+          ],
+          "after_mad_ms": [
+            0.909,
+            1.281
+          ],
+          "after_median_ms": [
+            31.98,
+            32.306
+          ],
+          "after_p95_ms": [
+            33.367,
+            34.62
+          ],
+          "before_first_ms": [
+            35.188709,
+            34.77925
+          ],
+          "before_mad_ms": [
+            0.727,
+            0.43
+          ],
+          "before_median_ms": [
+            33.342,
+            34.069
+          ],
+          "before_p95_ms": [
+            35.281,
+            36.895
+          ],
+          "case": "gemini.guard.write.examples.md",
+          "input_bytes": 145,
+          "observed_noise_ms": 1.281,
+          "paired_median_delta_ms": [
+            1.362,
+            1.763
+          ],
+          "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.14775,
+            47.593167
+          ],
+          "after_mad_ms": [
+            0.426,
+            1.102
+          ],
+          "after_median_ms": [
+            34.055,
+            34.571
+          ],
+          "after_p95_ms": [
+            35.367,
+            36.002
+          ],
+          "before_first_ms": [
+            40.231459,
+            37.690792
+          ],
+          "before_mad_ms": [
+            0.938,
+            0.654
+          ],
+          "before_median_ms": [
+            35.561,
+            36.975
+          ],
+          "before_p95_ms": [
+            37.523,
+            38.339
+          ],
+          "case": "gemini.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9045,
+          "observed_noise_ms": 1.414,
+          "paired_median_delta_ms": [
+            1.506,
+            2.404
+          ],
+          "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.348333,
+            35.299166
+          ],
+          "after_mad_ms": [
+            0.286,
+            0.958
+          ],
+          "after_median_ms": [
+            33.759,
+            33.182
+          ],
+          "after_p95_ms": [
+            34.511,
+            38.148
+          ],
+          "before_first_ms": [
+            35.319417,
+            37.888916
+          ],
+          "before_mad_ms": [
+            0.891,
+            0.734
+          ],
+          "before_median_ms": [
+            36.269,
+            35.608
+          ],
+          "before_p95_ms": [
+            37.308,
+            37.683
+          ],
+          "case": "gemini.guard.writer.lines-120-segments-139",
+          "input_bytes": 2516,
+          "observed_noise_ms": 0.958,
+          "paired_median_delta_ms": [
+            2.51,
+            2.426
+          ],
+          "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4",
+          "verdict": "clear-benefit"
+        }
+      ],
+      "concurrency": [
+        {
+          "batch_ms": 95.067417,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 26.364,
+            "max_ms": 91.085,
+            "median_ms": 63.97,
+            "min_ms": 36.328,
+            "p95_ms": 91.085
+          },
+          "run": 1,
+          "samples_ms": [
+            38.357417,
+            89.581667,
+            91.085041,
+            36.32775
+          ],
+          "variant": "common-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 39.179833,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.398,
+            "max_ms": 37.747,
+            "median_ms": 37.071,
+            "min_ms": 36.049,
+            "p95_ms": 37.747
+          },
+          "run": 1,
+          "samples_ms": [
+            37.191291,
+            37.747292,
+            36.951417,
+            36.049292
+          ],
+          "variant": "common-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 87.730583,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 0.504,
+            "max_ms": 87.323,
+            "median_ms": 33.874,
+            "min_ms": 32.986,
+            "p95_ms": 87.323
+          },
+          "run": 1,
+          "samples_ms": [
+            87.322541,
+            33.993708,
+            32.986125,
+            33.754166
+          ],
+          "variant": "common-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 91.013792,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 0.335,
+            "max_ms": 90.491,
+            "median_ms": 34.739,
+            "min_ms": 34.365,
+            "p95_ms": 90.491
+          },
+          "run": 2,
+          "samples_ms": [
+            34.442666,
+            90.490666,
+            34.365167,
+            35.034541
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 47.676708,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.544,
+            "max_ms": 47.245,
+            "median_ms": 34.872,
+            "min_ms": 33.817,
+            "p95_ms": 47.245
+          },
+          "run": 2,
+          "samples_ms": [
+            47.245167,
+            34.906,
+            33.817125,
+            34.837584
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 88.139584,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 26.756,
+            "max_ms": 87.436,
+            "median_ms": 59.248,
+            "min_ms": 32.259,
+            "p95_ms": 87.436
+          },
+          "run": 2,
+          "samples_ms": [
+            32.725292,
+            32.259042,
+            85.770292,
+            87.435541
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 90.8585,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 27.584,
+            "max_ms": 90.308,
+            "median_ms": 62.261,
+            "min_ms": 34.089,
+            "p95_ms": 90.308
+          },
+          "run": 3,
+          "samples_ms": [
+            35.139833,
+            89.381583,
+            90.308042,
+            34.088625
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 48.354166,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.525,
+            "max_ms": 46.838,
+            "median_ms": 34.878,
+            "min_ms": 34.34,
+            "p95_ms": 46.838
+          },
+          "run": 3,
+          "samples_ms": [
+            35.390459,
+            46.83825,
+            34.340083,
+            34.3665
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 87.379542,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 0.579,
+            "max_ms": 86.901,
+            "median_ms": 32.29,
+            "min_ms": 31.651,
+            "p95_ms": 86.901
+          },
+          "run": 3,
+          "samples_ms": [
+            31.651375,
+            86.901209,
+            32.809958,
+            31.770083
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 92.634417,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 25.225,
+            "max_ms": 92.007,
+            "median_ms": 62.9,
+            "min_ms": 36.799,
+            "p95_ms": 92.007
+          },
+          "run": 4,
+          "samples_ms": [
+            38.55075,
+            36.798667,
+            92.007292,
+            87.249
+          ],
+          "variant": "common-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 50.334625,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 1.29,
+            "max_ms": 48.786,
+            "median_ms": 37.369,
+            "min_ms": 35.223,
+            "p95_ms": 48.786
+          },
+          "run": 4,
+          "samples_ms": [
+            37.803209,
+            48.786417,
+            36.935083,
+            35.222875
+          ],
+          "variant": "common-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 142.81475,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 27.61,
+            "max_ms": 142.25,
+            "median_ms": 63.562,
+            "min_ms": 35.906,
+            "p95_ms": 142.25
+          },
+          "run": 4,
+          "samples_ms": [
+            35.997375,
+            142.249667,
+            35.906458,
+            91.12675
+          ],
+          "variant": "common-before",
+          "workers": 4
+        }
+      ],
+      "verdict_counts": {
+        "clear-benefit": 31,
+        "clear-regression": 0,
+        "within-noise-or-inconclusive": 20
+      }
+    },
+    "git": {
+      "comparisons": [
+        {
+          "after_first_ms": [
+            30.97325,
+            30.012958
+          ],
+          "after_mad_ms": [
+            0.304,
+            0.363
+          ],
+          "after_median_ms": [
+            28.377,
+            28.266
+          ],
+          "after_p95_ms": [
+            28.788,
+            30.297
+          ],
+          "before_first_ms": [
+            28.285541,
+            29.18225
+          ],
+          "before_mad_ms": [
+            1.27,
+            0.978
+          ],
+          "before_median_ms": [
+            29.933,
+            29.86
+          ],
+          "before_p95_ms": [
+            31.969,
+            31.761
+          ],
+          "case": "codex.guard.growth.git-push-128",
+          "input_bytes": 656,
+          "observed_noise_ms": 1.27,
+          "paired_median_delta_ms": [
+            1.556,
+            1.594
+          ],
+          "payload_sha256": "bb535fdd75b47ea704850ac7fae4672775887dc5c024a39cc0d2146e161c3693",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            31.302292,
+            28.283875
+          ],
+          "after_mad_ms": [
+            1.005,
+            0.22
+          ],
+          "after_median_ms": [
+            29.212,
+            28.318
+          ],
+          "after_p95_ms": [
+            31.78,
+            30.042
+          ],
+          "before_first_ms": [
+            31.222958,
+            31.365292
+          ],
+          "before_mad_ms": [
+            0.718,
+            0.73
+          ],
+          "before_median_ms": [
+            32.737,
+            31.289
+          ],
+          "before_p95_ms": [
+            33.556,
+            40.718
+          ],
+          "case": "codex.guard.growth.git-push-250",
+          "input_bytes": 1205,
+          "observed_noise_ms": 1.448,
+          "paired_median_delta_ms": [
+            3.525,
+            2.971
+          ],
+          "payload_sha256": "6b2bc12522dc5036398d7a08afa47d8cb69da997382e39b6019dd48f707155ad",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            27.55375,
+            29.231333
+          ],
+          "after_mad_ms": [
+            0.517,
+            0.783
+          ],
+          "after_median_ms": [
+            27.656,
+            28.52
+          ],
+          "after_p95_ms": [
+            30.944,
+            32.518
+          ],
+          "before_first_ms": [
+            29.031,
+            27.935791
+          ],
+          "before_mad_ms": [
+            0.975,
+            0.912
+          ],
+          "before_median_ms": [
+            30.043,
+            29.508
+          ],
+          "before_p95_ms": [
+            31.907,
+            36.376
+          ],
+          "case": "codex.guard.growth.git-push-64",
+          "input_bytes": 368,
+          "observed_noise_ms": 0.975,
+          "paired_median_delta_ms": [
+            2.387,
+            0.988
+          ],
+          "payload_sha256": "0a946ad67af11a0c672640dc22ac1bc3122fb13893ca43b274c01f1813b7aea7",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            28.937833,
+            29.129166
+          ],
+          "after_mad_ms": [
+            0.587,
+            0.22
+          ],
+          "after_median_ms": [
+            31.617,
+            28.911
+          ],
+          "after_p95_ms": [
+            32.339,
+            29.579
+          ],
+          "before_first_ms": [
+            29.173041,
+            30.363375
+          ],
+          "before_mad_ms": [
+            1.156,
+            0.368
+          ],
+          "before_median_ms": [
+            30.204,
+            29.759
+          ],
+          "before_p95_ms": [
+            32.661,
+            30.604
+          ],
+          "case": "codex.guard.growth.git-push-danger-128",
+          "input_bytes": 662,
+          "observed_noise_ms": 2.706,
+          "paired_median_delta_ms": [
+            -1.413,
+            0.848
+          ],
+          "payload_sha256": "8264dfa6910f64a86a3e135302eb3fcad18172c368db9cf90de3984783822823",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.384375,
+            29.422875
+          ],
+          "after_mad_ms": [
+            0.794,
+            0.141
+          ],
+          "after_median_ms": [
+            30.124,
+            29.388
+          ],
+          "after_p95_ms": [
+            32.787,
+            30.54
+          ],
+          "before_first_ms": [
+            31.014291,
+            32.282958
+          ],
+          "before_mad_ms": [
+            0.374,
+            0.828
+          ],
+          "before_median_ms": [
+            30.686,
+            31.539
+          ],
+          "before_p95_ms": [
+            33.033,
+            32.707
+          ],
+          "case": "codex.guard.growth.git-push-danger-250",
+          "input_bytes": 1211,
+          "observed_noise_ms": 0.853,
+          "paired_median_delta_ms": [
+            0.562,
+            2.151
+          ],
+          "payload_sha256": "f8a7d98030f60128eb49abe6139f5fa8c1e0f5f620e226ae3e9a899999a67252",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            28.464917,
+            29.609875
+          ],
+          "after_mad_ms": [
+            0.797,
+            0.431
+          ],
+          "after_median_ms": [
+            30.433,
+            30.227
+          ],
+          "after_p95_ms": [
+            31.956,
+            31.295
+          ],
+          "before_first_ms": [
+            29.341125,
+            30.7665
+          ],
+          "before_mad_ms": [
+            0.239,
+            0.444
+          ],
+          "before_median_ms": [
+            28.622,
+            29.613
+          ],
+          "before_p95_ms": [
+            30.162,
+            31.421
+          ],
+          "case": "codex.guard.growth.git-push-danger-64",
+          "input_bytes": 374,
+          "observed_noise_ms": 0.991,
+          "paired_median_delta_ms": [
+            -1.811,
+            -0.614
+          ],
+          "payload_sha256": "bd1f7812d3f0b28e0f825369c8e5eabee40b6d6ee13c1158512058b9f869d962",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.474083,
+            31.356959
+          ],
+          "after_mad_ms": [
+            0.16,
+            0.331
+          ],
+          "after_median_ms": [
+            30.151,
+            30.693
+          ],
+          "after_p95_ms": [
+            30.42,
+            31.396
+          ],
+          "before_first_ms": [
+            31.690375,
+            31.049875
+          ],
+          "before_mad_ms": [
+            0.875,
+            0.144
+          ],
+          "before_median_ms": [
+            31.496,
+            31.056
+          ],
+          "before_p95_ms": [
+            33.012,
+            31.642
+          ],
+          "case": "copilot.guard.growth.git-push-128",
+          "input_bytes": 653,
+          "observed_noise_ms": 0.875,
+          "paired_median_delta_ms": [
+            1.345,
+            0.363
+          ],
+          "payload_sha256": "68c0c611a9e1646702ada546b3b2d8232d79cd98ea0946874df549d2673b910b",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.052083,
+            30.741458
+          ],
+          "after_mad_ms": [
+            0.157,
+            0.605
+          ],
+          "after_median_ms": [
+            30.628,
+            32.33
+          ],
+          "after_p95_ms": [
+            31.532,
+            32.985
+          ],
+          "before_first_ms": [
+            35.157292,
+            35.294708
+          ],
+          "before_mad_ms": [
+            0.404,
+            0.48
+          ],
+          "before_median_ms": [
+            33.305,
+            33.336
+          ],
+          "before_p95_ms": [
+            34.816,
+            34.945
+          ],
+          "case": "copilot.guard.growth.git-push-250",
+          "input_bytes": 1202,
+          "observed_noise_ms": 1.702,
+          "paired_median_delta_ms": [
+            2.677,
+            1.006
+          ],
+          "payload_sha256": "7f9c5144a1919221005a4a7761c0972e54539b6e352a43038540860cb3eaffbf",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.035917,
+            30.140875
+          ],
+          "after_mad_ms": [
+            0.899,
+            1.187
+          ],
+          "after_median_ms": [
+            32.264,
+            31.534
+          ],
+          "after_p95_ms": [
+            34.508,
+            40.02
+          ],
+          "before_first_ms": [
+            32.139541,
+            32.187
+          ],
+          "before_mad_ms": [
+            0.224,
+            2.599
+          ],
+          "before_median_ms": [
+            30.966,
+            40.046
+          ],
+          "before_p95_ms": [
+            33.848,
+            52.108
+          ],
+          "case": "copilot.guard.growth.git-push-64",
+          "input_bytes": 365,
+          "observed_noise_ms": 9.08,
+          "paired_median_delta_ms": [
+            -1.298,
+            8.512
+          ],
+          "payload_sha256": "8f7fdf4c0ba72a9dc6fe3e5bc4117c6e5082ea2c75cd677c82258a58f7153319",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.770667,
+            31.580625
+          ],
+          "after_mad_ms": [
+            1.725,
+            0.556
+          ],
+          "after_median_ms": [
+            33.556,
+            31.932
+          ],
+          "after_p95_ms": [
+            35.732,
+            37.066
+          ],
+          "before_first_ms": [
+            31.684625,
+            32.020042
+          ],
+          "before_mad_ms": [
+            0.848,
+            0.179
+          ],
+          "before_median_ms": [
+            32.584,
+            31.821
+          ],
+          "before_p95_ms": [
+            33.616,
+            32.299
+          ],
+          "case": "copilot.guard.growth.git-push-danger-128",
+          "input_bytes": 659,
+          "observed_noise_ms": 1.725,
+          "paired_median_delta_ms": [
+            -0.972,
+            -0.111
+          ],
+          "payload_sha256": "0f4e421bca5c151c9c63342f82b5bde05a960876ab790d77aabd92df98f71c95",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.252541,
+            32.189125
+          ],
+          "after_mad_ms": [
+            0.482,
+            0.566
+          ],
+          "after_median_ms": [
+            32.001,
+            32.836
+          ],
+          "after_p95_ms": [
+            34.174,
+            34.145
+          ],
+          "before_first_ms": [
+            33.722125,
+            34.70375
+          ],
+          "before_mad_ms": [
+            0.512,
+            0.732
+          ],
+          "before_median_ms": [
+            33.206,
+            33.494
+          ],
+          "before_p95_ms": [
+            36.398,
+            35.804
+          ],
+          "case": "copilot.guard.growth.git-push-danger-250",
+          "input_bytes": 1208,
+          "observed_noise_ms": 0.835,
+          "paired_median_delta_ms": [
+            1.205,
+            0.658
+          ],
+          "payload_sha256": "623b2e020410654a08b945f50e53dbec110b6937c199d8245e3364d110ff7bc4",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.175125,
+            30.981292
+          ],
+          "after_mad_ms": [
+            0.541,
+            1.072
+          ],
+          "after_median_ms": [
+            31.429,
+            33.248
+          ],
+          "after_p95_ms": [
+            34.835,
+            34.76
+          ],
+          "before_first_ms": [
+            32.553833,
+            33.853625
+          ],
+          "before_mad_ms": [
+            0.579,
+            0.192
+          ],
+          "before_median_ms": [
+            32.314,
+            31.543
+          ],
+          "before_p95_ms": [
+            35.05,
+            32.325
+          ],
+          "case": "copilot.guard.growth.git-push-danger-64",
+          "input_bytes": 371,
+          "observed_noise_ms": 1.819,
+          "paired_median_delta_ms": [
+            0.885,
+            -1.705
+          ],
+          "payload_sha256": "96fdc9f459cd07de6d83b40091b2e4aaccd0b807bbbec5f148f7674748590bb3",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.99175,
+            31.020458
+          ],
+          "after_mad_ms": [
+            0.158,
+            0.115
+          ],
+          "after_median_ms": [
+            30.352,
+            30.39
+          ],
+          "after_p95_ms": [
+            30.877,
+            32.047
+          ],
+          "before_first_ms": [
+            32.62725,
+            32.386667
+          ],
+          "before_mad_ms": [
+            0.515,
+            0.655
+          ],
+          "before_median_ms": [
+            32.17,
+            33.044
+          ],
+          "before_p95_ms": [
+            33.677,
+            37.913
+          ],
+          "case": "gemini.guard.growth.git-push-128",
+          "input_bytes": 669,
+          "observed_noise_ms": 0.874,
+          "paired_median_delta_ms": [
+            1.818,
+            2.654
+          ],
+          "payload_sha256": "050919bda0b93829d7128a321ae55ea0b7e5b46b56c2f2a287c808f197eb68d9",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            34.339334,
+            31.706625
+          ],
+          "after_mad_ms": [
+            0.39,
+            0.117
+          ],
+          "after_median_ms": [
+            31.017,
+            30.969
+          ],
+          "after_p95_ms": [
+            33.995,
+            31.783
+          ],
+          "before_first_ms": [
+            37.399708,
+            33.577208
+          ],
+          "before_mad_ms": [
+            0.816,
+            1.22
+          ],
+          "before_median_ms": [
+            33.52,
+            34.848
+          ],
+          "before_p95_ms": [
+            37.143,
+            36.321
+          ],
+          "case": "gemini.guard.growth.git-push-250",
+          "input_bytes": 1218,
+          "observed_noise_ms": 1.328,
+          "paired_median_delta_ms": [
+            2.503,
+            3.879
+          ],
+          "payload_sha256": "fbe2a8a31f7c9b647e94568e4c459ceb5dfa94ba0de711376422e7e761a3a21c",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.39875,
+            30.0645
+          ],
+          "after_mad_ms": [
+            0.217,
+            0.131
+          ],
+          "after_median_ms": [
+            30.03,
+            30.224
+          ],
+          "after_p95_ms": [
+            33.037,
+            30.658
+          ],
+          "before_first_ms": [
+            30.274542,
+            32.209375
+          ],
+          "before_mad_ms": [
+            0.416,
+            0.225
+          ],
+          "before_median_ms": [
+            30.579,
+            30.516
+          ],
+          "before_p95_ms": [
+            32.336,
+            33.435
+          ],
+          "case": "gemini.guard.growth.git-push-64",
+          "input_bytes": 381,
+          "observed_noise_ms": 0.416,
+          "paired_median_delta_ms": [
+            0.549,
+            0.292
+          ],
+          "payload_sha256": "40e17ca049188324ceabfc731e00009196bb88c121c0c476d6883dc7e0ae2b2e",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.100542,
+            33.011667
+          ],
+          "after_mad_ms": [
+            0.612,
+            0.38
+          ],
+          "after_median_ms": [
+            33.019,
+            31.823
+          ],
+          "after_p95_ms": [
+            35.618,
+            33.405
+          ],
+          "before_first_ms": [
+            32.761916,
+            32.066833
+          ],
+          "before_mad_ms": [
+            0.282,
+            0.913
+          ],
+          "before_median_ms": [
+            31.717,
+            32.826
+          ],
+          "before_p95_ms": [
+            33.828,
+            35.181
+          ],
+          "case": "gemini.guard.growth.git-push-danger-128",
+          "input_bytes": 675,
+          "observed_noise_ms": 1.196,
+          "paired_median_delta_ms": [
+            -1.302,
+            1.003
+          ],
+          "payload_sha256": "fbef11a15c9aa90cea4e4d6a62b1b0a2edf3791e5ab3008df1a61653e995a444",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.29125,
+            32.028958
+          ],
+          "after_mad_ms": [
+            1.466,
+            0.417
+          ],
+          "after_median_ms": [
+            33.537,
+            33.096
+          ],
+          "after_p95_ms": [
+            36.275,
+            34.91
+          ],
+          "before_first_ms": [
+            36.139083,
+            33.951708
+          ],
+          "before_mad_ms": [
+            1.764,
+            0.612
+          ],
+          "before_median_ms": [
+            35.609,
+            35.193
+          ],
+          "before_p95_ms": [
+            44.428,
+            35.938
+          ],
+          "case": "gemini.guard.growth.git-push-danger-250",
+          "input_bytes": 1224,
+          "observed_noise_ms": 1.764,
+          "paired_median_delta_ms": [
+            2.072,
+            2.097
+          ],
+          "payload_sha256": "38ca934fd42b9b0ec42a7dbdd665f48a20805d2c2989c782aec824302ec096ad",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.945,
+            31.77475
+          ],
+          "after_mad_ms": [
+            0.576,
+            0.167
+          ],
+          "after_median_ms": [
+            34.575,
+            31.276
+          ],
+          "after_p95_ms": [
+            35.518,
+            32.018
+          ],
+          "before_first_ms": [
+            31.370208,
+            32.047
+          ],
+          "before_mad_ms": [
+            0.43,
+            0.577
+          ],
+          "before_median_ms": [
+            31.772,
+            31.92
+          ],
+          "before_p95_ms": [
+            33.452,
+            34.134
+          ],
+          "case": "gemini.guard.growth.git-push-danger-64",
+          "input_bytes": 387,
+          "observed_noise_ms": 3.299,
+          "paired_median_delta_ms": [
+            -2.803,
+            0.644
+          ],
+          "payload_sha256": "e775cfa2039d99d2ceaafd9471dfcbc47b0cd831b6663fc55a5e71659d079737",
+          "verdict": "within-noise-or-inconclusive"
+        }
+      ],
+      "concurrency": [],
+      "verdict_counts": {
+        "clear-benefit": 6,
+        "clear-regression": 0,
+        "within-noise-or-inconclusive": 12
+      }
+    },
+    "suffix": {
+      "comparisons": [
+        {
+          "after_first_ms": [
+            30.19625,
+            30.880833
+          ],
+          "after_mad_ms": [
+            0.738,
+            0.619
+          ],
+          "after_median_ms": [
+            28.582,
+            29.257
+          ],
+          "after_p95_ms": [
+            30.008,
+            31.0
+          ],
+          "before_first_ms": [
+            29.623,
+            30.092917
+          ],
+          "before_mad_ms": [
+            0.201,
+            0.737
+          ],
+          "before_median_ms": [
+            29.015,
+            28.848
+          ],
+          "before_p95_ms": [
+            29.566,
+            30.144
+          ],
+          "case": "codex.guard.clean",
+          "input_bytes": 89,
+          "observed_noise_ms": 0.738,
+          "paired_median_delta_ms": [
+            0.433,
+            -0.409
+          ],
+          "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.316417,
+            31.165916
+          ],
+          "after_mad_ms": [
+            0.765,
+            0.42
+          ],
+          "after_median_ms": [
+            31.601,
+            31.262
+          ],
+          "after_p95_ms": [
+            33.701,
+            32.571
+          ],
+          "before_first_ms": [
+            30.669625,
+            29.140417
+          ],
+          "before_mad_ms": [
+            0.472,
+            0.832
+          ],
+          "before_median_ms": [
+            30.585,
+            30.825
+          ],
+          "before_p95_ms": [
+            31.217,
+            31.726
+          ],
+          "case": "codex.guard.danger.force_push_protected_branch",
+          "input_bytes": 108,
+          "observed_noise_ms": 0.832,
+          "paired_median_delta_ms": [
+            -1.016,
+            -0.437
+          ],
+          "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.767541,
+            33.0765
+          ],
+          "after_mad_ms": [
+            0.526,
+            0.565
+          ],
+          "after_median_ms": [
+            29.775,
+            30.742
+          ],
+          "after_p95_ms": [
+            31.425,
+            31.948
+          ],
+          "before_first_ms": [
+            32.761125,
+            34.325334
+          ],
+          "before_mad_ms": [
+            0.273,
+            0.41
+          ],
+          "before_median_ms": [
+            30.486,
+            29.842
+          ],
+          "before_p95_ms": [
+            31.098,
+            31.724
+          ],
+          "case": "codex.guard.danger.recursive_remove_root",
+          "input_bytes": 88,
+          "observed_noise_ms": 0.967,
+          "paired_median_delta_ms": [
+            0.711,
+            -0.9
+          ],
+          "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            28.433542,
+            29.26425
+          ],
+          "after_mad_ms": [
+            0.501,
+            0.779
+          ],
+          "after_median_ms": [
+            30.625,
+            29.606
+          ],
+          "after_p95_ms": [
+            33.073,
+            31.393
+          ],
+          "before_first_ms": [
+            40.891,
+            28.304917
+          ],
+          "before_mad_ms": [
+            0.522,
+            0.827
+          ],
+          "before_median_ms": [
+            29.889,
+            29.372
+          ],
+          "before_p95_ms": [
+            31.464,
+            30.518
+          ],
+          "case": "codex.guard.growth.git-128",
+          "input_bytes": 532,
+          "observed_noise_ms": 1.019,
+          "paired_median_delta_ms": [
+            -0.736,
+            -0.234
+          ],
+          "payload_sha256": "b8e50cfc6d3747eb99f3974cd6b896705e86ad5e4be01d0b7e635e33bd9da713",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.261375,
+            32.519917
+          ],
+          "after_mad_ms": [
+            0.479,
+            0.575
+          ],
+          "after_median_ms": [
+            30.855,
+            31.82
+          ],
+          "after_p95_ms": [
+            31.392,
+            36.933
+          ],
+          "before_first_ms": [
+            29.375125,
+            29.3775
+          ],
+          "before_mad_ms": [
+            0.44,
+            0.507
+          ],
+          "before_median_ms": [
+            31.021,
+            30.888
+          ],
+          "before_p95_ms": [
+            32.974,
+            31.515
+          ],
+          "case": "codex.guard.growth.git-250",
+          "input_bytes": 959,
+          "observed_noise_ms": 0.965,
+          "paired_median_delta_ms": [
+            0.166,
+            -0.932
+          ],
+          "payload_sha256": "1ae70098e67c9dc69850f629afac4e6433d97d124c8dc84e74a9f45ee75c5d77",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.290083,
+            31.417208
+          ],
+          "after_mad_ms": [
+            0.364,
+            0.4
+          ],
+          "after_median_ms": [
+            29.776,
+            30.55
+          ],
+          "after_p95_ms": [
+            30.34,
+            32.162
+          ],
+          "before_first_ms": [
+            31.060125,
+            29.719875
+          ],
+          "before_mad_ms": [
+            0.236,
+            0.805
+          ],
+          "before_median_ms": [
+            29.789,
+            29.39
+          ],
+          "before_p95_ms": [
+            30.303,
+            30.327
+          ],
+          "case": "codex.guard.growth.git-64",
+          "input_bytes": 308,
+          "observed_noise_ms": 0.805,
+          "paired_median_delta_ms": [
+            0.013,
+            -1.16
+          ],
+          "payload_sha256": "2e83709baceba0b5fb03a5a0b86c6e8fbc8566f20440f88430ae392d5469b6c9",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.328084,
+            30.023042
+          ],
+          "after_mad_ms": [
+            0.388,
+            0.798
+          ],
+          "after_median_ms": [
+            28.797,
+            29.784
+          ],
+          "after_p95_ms": [
+            30.424,
+            30.976
+          ],
+          "before_first_ms": [
+            33.035166,
+            32.424209
+          ],
+          "before_mad_ms": [
+            0.572,
+            0.472
+          ],
+          "before_median_ms": [
+            32.894,
+            31.146
+          ],
+          "before_p95_ms": [
+            35.394,
+            32.701
+          ],
+          "case": "codex.guard.growth.rm-128",
+          "input_bytes": 465,
+          "observed_noise_ms": 1.748,
+          "paired_median_delta_ms": [
+            4.097,
+            1.362
+          ],
+          "payload_sha256": "c720376a8f2f3bd8937c1582d3e5b8bc1602071668571c4a39e632dba897eba2",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.908875,
+            31.01225
+          ],
+          "after_mad_ms": [
+            0.737,
+            0.743
+          ],
+          "after_median_ms": [
+            30.38,
+            31.53
+          ],
+          "after_p95_ms": [
+            31.906,
+            33.21
+          ],
+          "before_first_ms": [
+            38.217375,
+            38.001166
+          ],
+          "before_mad_ms": [
+            1.129,
+            0.819
+          ],
+          "before_median_ms": [
+            39.451,
+            37.782
+          ],
+          "before_p95_ms": [
+            42.695,
+            39.71
+          ],
+          "case": "codex.guard.growth.rm-250",
+          "input_bytes": 831,
+          "observed_noise_ms": 1.669,
+          "paired_median_delta_ms": [
+            9.071,
+            6.252
+          ],
+          "payload_sha256": "5cea59f4f8a438b36462afdaee95e0b44a27738b88dc9af915783ed670c169d5",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            30.245542,
+            29.166292
+          ],
+          "after_mad_ms": [
+            0.844,
+            1.478
+          ],
+          "after_median_ms": [
+            29.289,
+            31.41
+          ],
+          "after_p95_ms": [
+            30.526,
+            36.136
+          ],
+          "before_first_ms": [
+            30.316583,
+            28.712
+          ],
+          "before_mad_ms": [
+            0.6,
+            0.785
+          ],
+          "before_median_ms": [
+            29.865,
+            30.064
+          ],
+          "before_p95_ms": [
+            31.639,
+            30.849
+          ],
+          "case": "codex.guard.growth.rm-64",
+          "input_bytes": 273,
+          "observed_noise_ms": 2.121,
+          "paired_median_delta_ms": [
+            0.576,
+            -1.346
+          ],
+          "payload_sha256": "a6b15794a9af8efff17a8939029a177f875f4f1a346f1881966adbc2a4ee48cd",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.802167,
+            28.541292
+          ],
+          "after_mad_ms": [
+            0.381,
+            0.565
+          ],
+          "after_median_ms": [
+            28.403,
+            29.604
+          ],
+          "after_p95_ms": [
+            30.097,
+            30.349
+          ],
+          "before_first_ms": [
+            29.516667,
+            29.484708
+          ],
+          "before_mad_ms": [
+            0.25,
+            0.789
+          ],
+          "before_median_ms": [
+            29.308,
+            28.876
+          ],
+          "before_p95_ms": [
+            29.766,
+            30.224
+          ],
+          "case": "codex.guard.patch.bytes-46899",
+          "input_bytes": 47109,
+          "observed_noise_ms": 1.201,
+          "paired_median_delta_ms": [
+            0.905,
+            -0.728
+          ],
+          "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.86425,
+            29.578584
+          ],
+          "after_mad_ms": [
+            0.588,
+            0.277
+          ],
+          "after_median_ms": [
+            29.178,
+            29.675
+          ],
+          "after_p95_ms": [
+            29.869,
+            30.561
+          ],
+          "before_first_ms": [
+            28.991875,
+            28.39675
+          ],
+          "before_mad_ms": [
+            0.223,
+            0.339
+          ],
+          "before_median_ms": [
+            29.108,
+            30.241
+          ],
+          "before_p95_ms": [
+            30.255,
+            31.828
+          ],
+          "case": "codex.guard.patch.lines-330",
+          "input_bytes": 6363,
+          "observed_noise_ms": 1.133,
+          "paired_median_delta_ms": [
+            -0.07,
+            0.566
+          ],
+          "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            28.538,
+            29.602458
+          ],
+          "after_mad_ms": [
+            0.454,
+            0.706
+          ],
+          "after_median_ms": [
+            28.163,
+            29.385
+          ],
+          "after_p95_ms": [
+            30.083,
+            30.479
+          ],
+          "before_first_ms": [
+            29.932833,
+            30.432334
+          ],
+          "before_mad_ms": [
+            0.229,
+            1.236
+          ],
+          "before_median_ms": [
+            29.71,
+            30.911
+          ],
+          "before_p95_ms": [
+            30.171,
+            33.254
+          ],
+          "case": "codex.guard.search.shell-literal",
+          "input_bytes": 121,
+          "observed_noise_ms": 1.236,
+          "paired_median_delta_ms": [
+            1.547,
+            1.526
+          ],
+          "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            27.992166,
+            30.489084
+          ],
+          "after_mad_ms": [
+            0.882,
+            0.413
+          ],
+          "after_median_ms": [
+            30.431,
+            29.973
+          ],
+          "after_p95_ms": [
+            38.563,
+            31.329
+          ],
+          "before_first_ms": [
+            29.183917,
+            28.310584
+          ],
+          "before_mad_ms": [
+            0.25,
+            0.995
+          ],
+          "before_median_ms": [
+            28.858,
+            28.942
+          ],
+          "before_p95_ms": [
+            29.308,
+            30.152
+          ],
+          "case": "codex.guard.survey.json-stdin",
+          "input_bytes": 221,
+          "observed_noise_ms": 0.995,
+          "paired_median_delta_ms": [
+            -1.573,
+            -1.031
+          ],
+          "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a",
+          "verdict": "clear-regression"
+        },
+        {
+          "after_first_ms": [
+            30.925333,
+            31.862959
+          ],
+          "after_mad_ms": [
+            0.425,
+            0.966
+          ],
+          "after_median_ms": [
+            31.295,
+            32.33
+          ],
+          "after_p95_ms": [
+            33.517,
+            33.767
+          ],
+          "before_first_ms": [
+            30.73725,
+            30.226583
+          ],
+          "before_mad_ms": [
+            0.213,
+            0.689
+          ],
+          "before_median_ms": [
+            30.404,
+            30.787
+          ],
+          "before_p95_ms": [
+            30.788,
+            32.93
+          ],
+          "case": "codex.guard.survey.python-subprocess",
+          "input_bytes": 390,
+          "observed_noise_ms": 1.035,
+          "paired_median_delta_ms": [
+            -0.891,
+            -1.543
+          ],
+          "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.263,
+            29.500416
+          ],
+          "after_mad_ms": [
+            0.517,
+            0.339
+          ],
+          "after_median_ms": [
+            29.711,
+            28.118
+          ],
+          "after_p95_ms": [
+            31.54,
+            29.793
+          ],
+          "before_first_ms": [
+            29.165417,
+            28.083834
+          ],
+          "before_mad_ms": [
+            0.356,
+            0.633
+          ],
+          "before_median_ms": [
+            28.796,
+            29.84
+          ],
+          "before_p95_ms": [
+            29.401,
+            31.165
+          ],
+          "case": "codex.guard.write.examples.md",
+          "input_bytes": 180,
+          "observed_noise_ms": 1.593,
+          "paired_median_delta_ms": [
+            -0.915,
+            1.722
+          ],
+          "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.592459,
+            30.12125
+          ],
+          "after_mad_ms": [
+            0.409,
+            0.714
+          ],
+          "after_median_ms": [
+            29.83,
+            31.515
+          ],
+          "after_p95_ms": [
+            31.722,
+            32.812
+          ],
+          "before_first_ms": [
+            30.481917,
+            32.319208
+          ],
+          "before_mad_ms": [
+            0.403,
+            0.386
+          ],
+          "before_median_ms": [
+            30.564,
+            31.634
+          ],
+          "before_p95_ms": [
+            31.949,
+            40.454
+          ],
+          "case": "codex.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9032,
+          "observed_noise_ms": 1.685,
+          "paired_median_delta_ms": [
+            0.734,
+            0.119
+          ],
+          "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            29.020625,
+            31.809333
+          ],
+          "after_mad_ms": [
+            0.793,
+            0.364
+          ],
+          "after_median_ms": [
+            29.901,
+            31.477
+          ],
+          "after_p95_ms": [
+            31.505,
+            32.142
+          ],
+          "before_first_ms": [
+            31.560667,
+            31.317667
+          ],
+          "before_mad_ms": [
+            0.421,
+            0.765
+          ],
+          "before_median_ms": [
+            30.29,
+            31.386
+          ],
+          "before_p95_ms": [
+            32.183,
+            32.434
+          ],
+          "case": "codex.guard.writer.lines-120-segments-139",
+          "input_bytes": 2503,
+          "observed_noise_ms": 1.576,
+          "paired_median_delta_ms": [
+            0.389,
+            -0.091
+          ],
+          "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.63125,
+            33.007083
+          ],
+          "after_mad_ms": [
+            0.722,
+            0.571
+          ],
+          "after_median_ms": [
+            32.638,
+            30.895
+          ],
+          "after_p95_ms": [
+            33.477,
+            32.661
+          ],
+          "before_first_ms": [
+            32.29925,
+            30.106583
+          ],
+          "before_mad_ms": [
+            0.346,
+            0.284
+          ],
+          "before_median_ms": [
+            32.355,
+            30.524
+          ],
+          "before_p95_ms": [
+            33.148,
+            31.452
+          ],
+          "case": "copilot.guard.clean",
+          "input_bytes": 86,
+          "observed_noise_ms": 1.831,
+          "paired_median_delta_ms": [
+            -0.283,
+            -0.371
+          ],
+          "payload_sha256": "c846ac2d06ddcdc1af461533e1af263ad8c44879f634db699f50e73a75364ec6",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            37.793333,
+            36.033083
+          ],
+          "after_mad_ms": [
+            0.578,
+            0.608
+          ],
+          "after_median_ms": [
+            33.928,
+            33.696
+          ],
+          "after_p95_ms": [
+            36.698,
+            34.956
+          ],
+          "before_first_ms": [
+            34.244125,
+            31.574292
+          ],
+          "before_mad_ms": [
+            0.76,
+            0.42
+          ],
+          "before_median_ms": [
+            33.575,
+            31.864
+          ],
+          "before_p95_ms": [
+            35.398,
+            34.143
+          ],
+          "case": "copilot.guard.danger.force_push_protected_branch",
+          "input_bytes": 105,
+          "observed_noise_ms": 1.711,
+          "paired_median_delta_ms": [
+            -0.353,
+            -1.832
+          ],
+          "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            36.402833,
+            36.962459
+          ],
+          "after_mad_ms": [
+            0.961,
+            0.407
+          ],
+          "after_median_ms": [
+            33.685,
+            32.322
+          ],
+          "after_p95_ms": [
+            38.616,
+            34.468
+          ],
+          "before_first_ms": [
+            39.751834,
+            36.1895
+          ],
+          "before_mad_ms": [
+            0.421,
+            0.261
+          ],
+          "before_median_ms": [
+            33.083,
+            32.038
+          ],
+          "before_p95_ms": [
+            35.697,
+            32.519
+          ],
+          "case": "copilot.guard.danger.recursive_remove_root",
+          "input_bytes": 85,
+          "observed_noise_ms": 1.363,
+          "paired_median_delta_ms": [
+            -0.602,
+            -0.284
+          ],
+          "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.951667,
+            31.686958
+          ],
+          "after_mad_ms": [
+            0.515,
+            0.474
+          ],
+          "after_median_ms": [
+            33.116,
+            33.556
+          ],
+          "after_p95_ms": [
+            35.396,
+            34.187
+          ],
+          "before_first_ms": [
+            32.11525,
+            32.021291
+          ],
+          "before_mad_ms": [
+            0.3,
+            0.145
+          ],
+          "before_median_ms": [
+            32.112,
+            30.952
+          ],
+          "before_p95_ms": [
+            33.085,
+            32.193
+          ],
+          "case": "copilot.guard.growth.git-128",
+          "input_bytes": 529,
+          "observed_noise_ms": 1.16,
+          "paired_median_delta_ms": [
+            -1.004,
+            -2.604
+          ],
+          "payload_sha256": "c2de5e2e3199e381dcb51ba16625810dabac0bed89c81160ff08dfc19d2bdbfd",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.474459,
+            33.855875
+          ],
+          "after_mad_ms": [
+            1.002,
+            0.841
+          ],
+          "after_median_ms": [
+            33.212,
+            34.039
+          ],
+          "after_p95_ms": [
+            35.78,
+            35.648
+          ],
+          "before_first_ms": [
+            33.535291,
+            34.563833
+          ],
+          "before_mad_ms": [
+            0.232,
+            0.615
+          ],
+          "before_median_ms": [
+            33.409,
+            32.925
+          ],
+          "before_p95_ms": [
+            34.1,
+            34.44
+          ],
+          "case": "copilot.guard.growth.git-250",
+          "input_bytes": 956,
+          "observed_noise_ms": 1.002,
+          "paired_median_delta_ms": [
+            0.197,
+            -1.114
+          ],
+          "payload_sha256": "58bcec4466b8b2de084e166da4e08f966c957261fde51a3c9eb8c4b8a578ff9f",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.992375,
+            33.70075
+          ],
+          "after_mad_ms": [
+            0.313,
+            0.803
+          ],
+          "after_median_ms": [
+            31.126,
+            32.543
+          ],
+          "after_p95_ms": [
+            33.828,
+            38.598
+          ],
+          "before_first_ms": [
+            32.969208,
+            30.600416
+          ],
+          "before_mad_ms": [
+            0.386,
+            0.609
+          ],
+          "before_median_ms": [
+            32.158,
+            31.056
+          ],
+          "before_p95_ms": [
+            32.732,
+            33.17
+          ],
+          "case": "copilot.guard.growth.git-64",
+          "input_bytes": 305,
+          "observed_noise_ms": 1.417,
+          "paired_median_delta_ms": [
+            1.032,
+            -1.487
+          ],
+          "payload_sha256": "111115aaaca757aab066fe3ff13cde167fe5a3902af4761e1b166eb3b2a934f7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.602833,
+            33.759375
+          ],
+          "after_mad_ms": [
+            1.018,
+            0.585
+          ],
+          "after_median_ms": [
+            32.466,
+            32.072
+          ],
+          "after_p95_ms": [
+            33.733,
+            40.139
+          ],
+          "before_first_ms": [
+            34.37475,
+            33.591417
+          ],
+          "before_mad_ms": [
+            0.267,
+            0.59
+          ],
+          "before_median_ms": [
+            34.553,
+            33.676
+          ],
+          "before_p95_ms": [
+            35.131,
+            35.686
+          ],
+          "case": "copilot.guard.growth.rm-128",
+          "input_bytes": 462,
+          "observed_noise_ms": 1.018,
+          "paired_median_delta_ms": [
+            2.087,
+            1.604
+          ],
+          "payload_sha256": "ec599dc70d9e180f9ed2f0625a585e6d47faf23cd209fbd7cbc87e1c39792d78",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.395917,
+            31.840833
+          ],
+          "after_mad_ms": [
+            0.509,
+            0.627
+          ],
+          "after_median_ms": [
+            33.454,
+            33.423
+          ],
+          "after_p95_ms": [
+            34.182,
+            34.675
+          ],
+          "before_first_ms": [
+            42.432875,
+            39.305375
+          ],
+          "before_mad_ms": [
+            0.49,
+            1.12
+          ],
+          "before_median_ms": [
+            40.806,
+            40.421
+          ],
+          "before_p95_ms": [
+            42.359,
+            43.71
+          ],
+          "case": "copilot.guard.growth.rm-250",
+          "input_bytes": 828,
+          "observed_noise_ms": 1.12,
+          "paired_median_delta_ms": [
+            7.352,
+            6.998
+          ],
+          "payload_sha256": "b7dc293a01e9c0b0d4838aab6ed1af8f23d8071a2bde09c202ea136696e51afb",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            35.25525,
+            33.162917
+          ],
+          "after_mad_ms": [
+            0.944,
+            0.704
+          ],
+          "after_median_ms": [
+            32.609,
+            32.41
+          ],
+          "after_p95_ms": [
+            34.472,
+            33.805
+          ],
+          "before_first_ms": [
+            33.47475,
+            30.865417
+          ],
+          "before_mad_ms": [
+            0.208,
+            0.311
+          ],
+          "before_median_ms": [
+            33.074,
+            31.159
+          ],
+          "before_p95_ms": [
+            33.817,
+            32.066
+          ],
+          "case": "copilot.guard.growth.rm-64",
+          "input_bytes": 270,
+          "observed_noise_ms": 1.915,
+          "paired_median_delta_ms": [
+            0.465,
+            -1.251
+          ],
+          "payload_sha256": "0c715150e6920d422331908793648fcd2ffe164db68752dd05aa927625956352",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.692542,
+            33.355208
+          ],
+          "after_mad_ms": [
+            0.38,
+            0.693
+          ],
+          "after_median_ms": [
+            31.198,
+            31.807
+          ],
+          "after_p95_ms": [
+            32.713,
+            33.387
+          ],
+          "before_first_ms": [
+            33.54325,
+            40.234042
+          ],
+          "before_mad_ms": [
+            0.371,
+            0.157
+          ],
+          "before_median_ms": [
+            31.239,
+            32.501
+          ],
+          "before_p95_ms": [
+            32.306,
+            32.828
+          ],
+          "case": "copilot.guard.patch.bytes-46899",
+          "input_bytes": 47130,
+          "observed_noise_ms": 1.262,
+          "paired_median_delta_ms": [
+            0.041,
+            0.694
+          ],
+          "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            30.652125,
+            32.487125
+          ],
+          "after_mad_ms": [
+            0.63,
+            0.796
+          ],
+          "after_median_ms": [
+            32.049,
+            31.938
+          ],
+          "after_p95_ms": [
+            34.151,
+            32.8
+          ],
+          "before_first_ms": [
+            35.098542,
+            32.543667
+          ],
+          "before_mad_ms": [
+            0.37,
+            0.141
+          ],
+          "before_median_ms": [
+            30.366,
+            31.835
+          ],
+          "before_p95_ms": [
+            31.313,
+            32.071
+          ],
+          "case": "copilot.guard.patch.lines-330",
+          "input_bytes": 6384,
+          "observed_noise_ms": 1.469,
+          "paired_median_delta_ms": [
+            -1.683,
+            -0.103
+          ],
+          "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.232667,
+            31.221375
+          ],
+          "after_mad_ms": [
+            0.793,
+            0.983
+          ],
+          "after_median_ms": [
+            32.322,
+            31.462
+          ],
+          "after_p95_ms": [
+            34.277,
+            33.004
+          ],
+          "before_first_ms": [
+            31.725667,
+            32.311417
+          ],
+          "before_mad_ms": [
+            1.01,
+            0.78
+          ],
+          "before_median_ms": [
+            32.66,
+            32.088
+          ],
+          "before_p95_ms": [
+            34.052,
+            37.846
+          ],
+          "case": "copilot.guard.search.shell-literal",
+          "input_bytes": 118,
+          "observed_noise_ms": 1.01,
+          "paired_median_delta_ms": [
+            0.338,
+            0.626
+          ],
+          "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.63275,
+            31.28075
+          ],
+          "after_mad_ms": [
+            0.754,
+            0.47
+          ],
+          "after_median_ms": [
+            31.25,
+            32.286
+          ],
+          "after_p95_ms": [
+            33.46,
+            32.895
+          ],
+          "before_first_ms": [
+            32.173208,
+            31.357417
+          ],
+          "before_mad_ms": [
+            0.324,
+            0.293
+          ],
+          "before_median_ms": [
+            31.739,
+            30.3
+          ],
+          "before_p95_ms": [
+            32.606,
+            31.39
+          ],
+          "case": "copilot.guard.survey.json-stdin",
+          "input_bytes": 218,
+          "observed_noise_ms": 1.439,
+          "paired_median_delta_ms": [
+            0.489,
+            -1.986
+          ],
+          "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.401875,
+            33.933042
+          ],
+          "after_mad_ms": [
+            0.993,
+            0.644
+          ],
+          "after_median_ms": [
+            32.92,
+            32.499
+          ],
+          "after_p95_ms": [
+            35.797,
+            34.262
+          ],
+          "before_first_ms": [
+            32.747417,
+            31.805459
+          ],
+          "before_mad_ms": [
+            0.376,
+            0.265
+          ],
+          "before_median_ms": [
+            33.127,
+            31.67
+          ],
+          "before_p95_ms": [
+            34.082,
+            32.472
+          ],
+          "case": "copilot.guard.survey.python-subprocess",
+          "input_bytes": 387,
+          "observed_noise_ms": 1.457,
+          "paired_median_delta_ms": [
+            0.207,
+            -0.829
+          ],
+          "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.959084,
+            32.063041
+          ],
+          "after_mad_ms": [
+            0.509,
+            0.831
+          ],
+          "after_median_ms": [
+            31.706,
+            31.561
+          ],
+          "after_p95_ms": [
+            34.64,
+            32.779
+          ],
+          "before_first_ms": [
+            30.412959,
+            32.505875
+          ],
+          "before_mad_ms": [
+            0.573,
+            0.42
+          ],
+          "before_median_ms": [
+            30.897,
+            32.275
+          ],
+          "before_p95_ms": [
+            32.521,
+            33.252
+          ],
+          "case": "copilot.guard.write.examples.md",
+          "input_bytes": 135,
+          "observed_noise_ms": 1.378,
+          "paired_median_delta_ms": [
+            -0.809,
+            0.714
+          ],
+          "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.678167,
+            32.451334
+          ],
+          "after_mad_ms": [
+            1.205,
+            1.318
+          ],
+          "after_median_ms": [
+            34.695,
+            34.005
+          ],
+          "after_p95_ms": [
+            48.13,
+            38.324
+          ],
+          "before_first_ms": [
+            34.063709,
+            34.942208
+          ],
+          "before_mad_ms": [
+            0.553,
+            0.631
+          ],
+          "before_median_ms": [
+            34.373,
+            34.003
+          ],
+          "before_p95_ms": [
+            35.551,
+            42.481
+          ],
+          "case": "copilot.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9029,
+          "observed_noise_ms": 1.318,
+          "paired_median_delta_ms": [
+            -0.322,
+            -0.002
+          ],
+          "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.876417,
+            32.151833
+          ],
+          "after_mad_ms": [
+            0.344,
+            0.975
+          ],
+          "after_median_ms": [
+            34.212,
+            32.879
+          ],
+          "after_p95_ms": [
+            35.036,
+            34.434
+          ],
+          "before_first_ms": [
+            34.675708,
+            32.407459
+          ],
+          "before_mad_ms": [
+            0.548,
+            0.328
+          ],
+          "before_median_ms": [
+            33.574,
+            31.879
+          ],
+          "before_p95_ms": [
+            35.825,
+            33.169
+          ],
+          "case": "copilot.guard.writer.lines-120-segments-139",
+          "input_bytes": 2500,
+          "observed_noise_ms": 1.695,
+          "paired_median_delta_ms": [
+            -0.638,
+            -1.0
+          ],
+          "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.025541,
+            32.861083
+          ],
+          "after_mad_ms": [
+            0.354,
+            0.763
+          ],
+          "after_median_ms": [
+            30.851,
+            32.413
+          ],
+          "after_p95_ms": [
+            33.099,
+            34.04
+          ],
+          "before_first_ms": [
+            32.11625,
+            31.868708
+          ],
+          "before_mad_ms": [
+            1.094,
+            0.202
+          ],
+          "before_median_ms": [
+            32.869,
+            30.303
+          ],
+          "before_p95_ms": [
+            34.374,
+            31.906
+          ],
+          "case": "gemini.guard.clean",
+          "input_bytes": 102,
+          "observed_noise_ms": 2.566,
+          "paired_median_delta_ms": [
+            2.018,
+            -2.11
+          ],
+          "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.682083,
+            34.267042
+          ],
+          "after_mad_ms": [
+            0.304,
+            0.666
+          ],
+          "after_median_ms": [
+            33.747,
+            33.969
+          ],
+          "after_p95_ms": [
+            34.592,
+            34.922
+          ],
+          "before_first_ms": [
+            33.253291,
+            31.46
+          ],
+          "before_mad_ms": [
+            0.372,
+            0.327
+          ],
+          "before_median_ms": [
+            33.535,
+            31.774
+          ],
+          "before_p95_ms": [
+            34.16,
+            32.854
+          ],
+          "case": "gemini.guard.danger.force_push_protected_branch",
+          "input_bytes": 121,
+          "observed_noise_ms": 1.761,
+          "paired_median_delta_ms": [
+            -0.212,
+            -2.195
+          ],
+          "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.959791,
+            33.458709
+          ],
+          "after_mad_ms": [
+            0.581,
+            0.319
+          ],
+          "after_median_ms": [
+            32.417,
+            34.079
+          ],
+          "after_p95_ms": [
+            34.525,
+            34.886
+          ],
+          "before_first_ms": [
+            36.452875,
+            32.470042
+          ],
+          "before_mad_ms": [
+            0.762,
+            0.296
+          ],
+          "before_median_ms": [
+            33.952,
+            31.716
+          ],
+          "before_p95_ms": [
+            36.169,
+            32.8
+          ],
+          "case": "gemini.guard.danger.recursive_remove_root",
+          "input_bytes": 101,
+          "observed_noise_ms": 2.236,
+          "paired_median_delta_ms": [
+            1.535,
+            -2.363
+          ],
+          "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.99275,
+            33.568625
+          ],
+          "after_mad_ms": [
+            0.289,
+            0.557
+          ],
+          "after_median_ms": [
+            33.312,
+            32.83
+          ],
+          "after_p95_ms": [
+            33.897,
+            33.85
+          ],
+          "before_first_ms": [
+            31.378375,
+            33.921458
+          ],
+          "before_mad_ms": [
+            0.249,
+            1.163
+          ],
+          "before_median_ms": [
+            32.336,
+            34.065
+          ],
+          "before_p95_ms": [
+            32.849,
+            35.852
+          ],
+          "case": "gemini.guard.growth.git-128",
+          "input_bytes": 545,
+          "observed_noise_ms": 1.729,
+          "paired_median_delta_ms": [
+            -0.976,
+            1.235
+          ],
+          "payload_sha256": "423f1b1a27920d86c4ef2eb9a91afa203113568b37f68a9a4bf556d44c4b69ab",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            33.081167,
+            32.471083
+          ],
+          "after_mad_ms": [
+            0.523,
+            0.926
+          ],
+          "after_median_ms": [
+            32.569,
+            33.377
+          ],
+          "after_p95_ms": [
+            34.807,
+            34.916
+          ],
+          "before_first_ms": [
+            34.491833,
+            34.570916
+          ],
+          "before_mad_ms": [
+            0.383,
+            0.419
+          ],
+          "before_median_ms": [
+            33.476,
+            32.415
+          ],
+          "before_p95_ms": [
+            34.547,
+            34.012
+          ],
+          "case": "gemini.guard.growth.git-250",
+          "input_bytes": 972,
+          "observed_noise_ms": 1.061,
+          "paired_median_delta_ms": [
+            0.907,
+            -0.962
+          ],
+          "payload_sha256": "fa4fd392a1fe56849bbca6781b2af3117cf10695a4f8d5e67f84046d2c29ac5f",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.230708,
+            33.145875
+          ],
+          "after_mad_ms": [
+            1.16,
+            0.424
+          ],
+          "after_median_ms": [
+            32.102,
+            31.285
+          ],
+          "after_p95_ms": [
+            33.395,
+            33.431
+          ],
+          "before_first_ms": [
+            33.021125,
+            33.134375
+          ],
+          "before_mad_ms": [
+            0.16,
+            0.691
+          ],
+          "before_median_ms": [
+            32.335,
+            32.776
+          ],
+          "before_p95_ms": [
+            32.648,
+            34.157
+          ],
+          "case": "gemini.guard.growth.git-64",
+          "input_bytes": 321,
+          "observed_noise_ms": 1.16,
+          "paired_median_delta_ms": [
+            0.233,
+            1.491
+          ],
+          "payload_sha256": "0b7cea6fc4c76ed343009c5506dd8ce9f560af6c6e721cb728ff50477192dba7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.453,
+            33.49925
+          ],
+          "after_mad_ms": [
+            1.019,
+            0.619
+          ],
+          "after_median_ms": [
+            32.494,
+            32.761
+          ],
+          "after_p95_ms": [
+            33.711,
+            33.742
+          ],
+          "before_first_ms": [
+            33.197417,
+            33.775458
+          ],
+          "before_mad_ms": [
+            0.221,
+            1.538
+          ],
+          "before_median_ms": [
+            34.476,
+            34.741
+          ],
+          "before_p95_ms": [
+            35.175,
+            47.226
+          ],
+          "case": "gemini.guard.growth.rm-128",
+          "input_bytes": 478,
+          "observed_noise_ms": 1.538,
+          "paired_median_delta_ms": [
+            1.982,
+            1.98
+          ],
+          "payload_sha256": "3cf2471b28385e56facbf09e6054f642fac51c54a0a2d7531e1ab3a2c915bf79",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            33.696959,
+            33.546125
+          ],
+          "after_mad_ms": [
+            0.707,
+            0.619
+          ],
+          "after_median_ms": [
+            33.099,
+            32.232
+          ],
+          "after_p95_ms": [
+            34.016,
+            34.135
+          ],
+          "before_first_ms": [
+            40.197208,
+            40.450792
+          ],
+          "before_mad_ms": [
+            0.832,
+            0.696
+          ],
+          "before_median_ms": [
+            41.694,
+            41.398
+          ],
+          "before_p95_ms": [
+            43.97,
+            42.415
+          ],
+          "case": "gemini.guard.growth.rm-250",
+          "input_bytes": 844,
+          "observed_noise_ms": 0.867,
+          "paired_median_delta_ms": [
+            8.595,
+            9.166
+          ],
+          "payload_sha256": "17e470208b9227a452e2c69eb664194b985d5e253a10c6c96ed8462d820bf2a7",
+          "verdict": "clear-benefit"
+        },
+        {
+          "after_first_ms": [
+            32.559166,
+            31.827291
+          ],
+          "after_mad_ms": [
+            0.714,
+            0.876
+          ],
+          "after_median_ms": [
+            31.385,
+            31.749
+          ],
+          "after_p95_ms": [
+            33.31,
+            33.545
+          ],
+          "before_first_ms": [
+            32.080084,
+            31.098875
+          ],
+          "before_mad_ms": [
+            0.252,
+            0.721
+          ],
+          "before_median_ms": [
+            33.112,
+            31.894
+          ],
+          "before_p95_ms": [
+            33.539,
+            36.499
+          ],
+          "case": "gemini.guard.growth.rm-64",
+          "input_bytes": 286,
+          "observed_noise_ms": 1.218,
+          "paired_median_delta_ms": [
+            1.727,
+            0.145
+          ],
+          "payload_sha256": "99d91f5b1d431841c748361ce018bab36049d382d59d505167f0da4d3ad8d2c0",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.256333,
+            32.047666
+          ],
+          "after_mad_ms": [
+            0.863,
+            1.947
+          ],
+          "after_median_ms": [
+            31.937,
+            33.51
+          ],
+          "after_p95_ms": [
+            33.476,
+            44.363
+          ],
+          "before_first_ms": [
+            33.309708,
+            33.710791
+          ],
+          "before_mad_ms": [
+            0.252,
+            0.389
+          ],
+          "before_median_ms": [
+            32.804,
+            31.291
+          ],
+          "before_p95_ms": [
+            33.712,
+            32.798
+          ],
+          "case": "gemini.guard.patch.bytes-46899",
+          "input_bytes": 47140,
+          "observed_noise_ms": 1.947,
+          "paired_median_delta_ms": [
+            0.867,
+            -2.219
+          ],
+          "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.185,
+            33.569791
+          ],
+          "after_mad_ms": [
+            0.257,
+            0.379
+          ],
+          "after_median_ms": [
+            32.907,
+            32.713
+          ],
+          "after_p95_ms": [
+            33.823,
+            34.073
+          ],
+          "before_first_ms": [
+            33.036834,
+            31.813084
+          ],
+          "before_mad_ms": [
+            0.435,
+            1.042
+          ],
+          "before_median_ms": [
+            32.195,
+            31.465
+          ],
+          "before_p95_ms": [
+            32.869,
+            33.852
+          ],
+          "case": "gemini.guard.patch.lines-330",
+          "input_bytes": 6394,
+          "observed_noise_ms": 1.042,
+          "paired_median_delta_ms": [
+            -0.712,
+            -1.248
+          ],
+          "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            31.346708,
+            30.995166
+          ],
+          "after_mad_ms": [
+            0.737,
+            0.993
+          ],
+          "after_median_ms": [
+            31.248,
+            31.862
+          ],
+          "after_p95_ms": [
+            32.997,
+            33.16
+          ],
+          "before_first_ms": [
+            33.77925,
+            30.971875
+          ],
+          "before_mad_ms": [
+            0.353,
+            0.446
+          ],
+          "before_median_ms": [
+            32.553,
+            30.934
+          ],
+          "before_p95_ms": [
+            33.991,
+            33.209
+          ],
+          "case": "gemini.guard.search.shell-literal",
+          "input_bytes": 134,
+          "observed_noise_ms": 1.619,
+          "paired_median_delta_ms": [
+            1.305,
+            -0.928
+          ],
+          "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            35.107709,
+            32.9035
+          ],
+          "after_mad_ms": [
+            0.361,
+            0.933
+          ],
+          "after_median_ms": [
+            32.657,
+            32.579
+          ],
+          "after_p95_ms": [
+            34.085,
+            34.266
+          ],
+          "before_first_ms": [
+            31.921166,
+            31.692292
+          ],
+          "before_mad_ms": [
+            0.347,
+            0.526
+          ],
+          "before_median_ms": [
+            32.148,
+            31.083
+          ],
+          "before_p95_ms": [
+            41.458,
+            32.623
+          ],
+          "case": "gemini.guard.survey.json-stdin",
+          "input_bytes": 234,
+          "observed_noise_ms": 1.065,
+          "paired_median_delta_ms": [
+            -0.509,
+            -1.496
+          ],
+          "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.635666,
+            33.842959
+          ],
+          "after_mad_ms": [
+            0.35,
+            0.601
+          ],
+          "after_median_ms": [
+            32.104,
+            34.92
+          ],
+          "after_p95_ms": [
+            34.26,
+            36.758
+          ],
+          "before_first_ms": [
+            36.868042,
+            32.4555
+          ],
+          "before_mad_ms": [
+            0.501,
+            0.14
+          ],
+          "before_median_ms": [
+            33.451,
+            31.393
+          ],
+          "before_p95_ms": [
+            34.532,
+            32.682
+          ],
+          "case": "gemini.guard.survey.python-subprocess",
+          "input_bytes": 403,
+          "observed_noise_ms": 2.816,
+          "paired_median_delta_ms": [
+            1.347,
+            -3.527
+          ],
+          "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            32.901292,
+            32.075458
+          ],
+          "after_mad_ms": [
+            0.573,
+            0.802
+          ],
+          "after_median_ms": [
+            32.761,
+            31.429
+          ],
+          "after_p95_ms": [
+            33.45,
+            32.899
+          ],
+          "before_first_ms": [
+            32.377333,
+            31.686708
+          ],
+          "before_mad_ms": [
+            0.864,
+            0.415
+          ],
+          "before_median_ms": [
+            33.037,
+            30.854
+          ],
+          "before_p95_ms": [
+            34.329,
+            34.331
+          ],
+          "case": "gemini.guard.write.examples.md",
+          "input_bytes": 145,
+          "observed_noise_ms": 2.183,
+          "paired_median_delta_ms": [
+            0.276,
+            -0.575
+          ],
+          "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.736583,
+            32.479417
+          ],
+          "after_mad_ms": [
+            0.718,
+            0.917
+          ],
+          "after_median_ms": [
+            35.084,
+            33.358
+          ],
+          "after_p95_ms": [
+            36.903,
+            34.893
+          ],
+          "before_first_ms": [
+            34.47775,
+            31.876416
+          ],
+          "before_mad_ms": [
+            0.378,
+            0.471
+          ],
+          "before_median_ms": [
+            34.222,
+            32.879
+          ],
+          "before_p95_ms": [
+            34.791,
+            35.343
+          ],
+          "case": "gemini.guard.writer.chars-8787-segments-183",
+          "input_bytes": 9045,
+          "observed_noise_ms": 1.726,
+          "paired_median_delta_ms": [
+            -0.862,
+            -0.479
+          ],
+          "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c",
+          "verdict": "within-noise-or-inconclusive"
+        },
+        {
+          "after_first_ms": [
+            34.715833,
+            32.399292
+          ],
+          "after_mad_ms": [
+            0.788,
+            0.495
+          ],
+          "after_median_ms": [
+            33.732,
+            34.337
+          ],
+          "after_p95_ms": [
+            35.948,
+            39.456
+          ],
+          "before_first_ms": [
+            33.506042,
+            32.312417
+          ],
+          "before_mad_ms": [
+            0.328,
+            0.449
+          ],
+          "before_median_ms": [
+            33.25,
+            31.927
+          ],
+          "before_p95_ms": [
+            34.078,
+            33.052
+          ],
+          "case": "gemini.guard.writer.lines-120-segments-139",
+          "input_bytes": 2516,
+          "observed_noise_ms": 1.323,
+          "paired_median_delta_ms": [
+            -0.482,
+            -2.41
+          ],
+          "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4",
+          "verdict": "within-noise-or-inconclusive"
+        }
+      ],
+      "concurrency": [
+        {
+          "batch_ms": 148.61525,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 28.56,
+            "max_ms": 145.74,
+            "median_ms": 62.65,
+            "min_ms": 33.677,
+            "p95_ms": 145.74
+          },
+          "run": 1,
+          "samples_ms": [
+            90.797125,
+            145.739917,
+            33.676625,
+            34.502625
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 45.495542,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.775,
+            "max_ms": 43.975,
+            "median_ms": 33.853,
+            "min_ms": 32.498,
+            "p95_ms": 43.975
+          },
+          "run": 1,
+          "samples_ms": [
+            34.046958,
+            43.975083,
+            33.6585,
+            32.497916
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 87.83125,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 25.583,
+            "max_ms": 87.167,
+            "median_ms": 57.691,
+            "min_ms": 31.628,
+            "p95_ms": 87.167
+          },
+          "run": 1,
+          "samples_ms": [
+            82.793,
+            32.588208,
+            87.167167,
+            31.627708
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 91.479917,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 26.117,
+            "max_ms": 91.046,
+            "median_ms": 61.149,
+            "min_ms": 34.263,
+            "p95_ms": 91.046
+          },
+          "run": 2,
+          "samples_ms": [
+            91.045917,
+            35.801,
+            86.496791,
+            34.262959
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 48.110417,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.909,
+            "max_ms": 47.697,
+            "median_ms": 35.181,
+            "min_ms": 33.689,
+            "p95_ms": 47.697
+          },
+          "run": 2,
+          "samples_ms": [
+            47.696791,
+            35.506333,
+            34.854709,
+            33.688834
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 33.837959,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 0.332,
+            "max_ms": 31.369,
+            "median_ms": 30.692,
+            "min_ms": 30.288,
+            "p95_ms": 31.369
+          },
+          "run": 2,
+          "samples_ms": [
+            31.36925,
+            30.952042,
+            30.287791,
+            30.432167
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 91.9355,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 26.198,
+            "max_ms": 91.416,
+            "median_ms": 62.344,
+            "min_ms": 35.992,
+            "p95_ms": 91.416
+          },
+          "run": 3,
+          "samples_ms": [
+            36.300041,
+            91.415792,
+            35.991917,
+            88.387208
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 45.43925,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.381,
+            "max_ms": 45.002,
+            "median_ms": 34.245,
+            "min_ms": 33.732,
+            "p95_ms": 45.002
+          },
+          "run": 3,
+          "samples_ms": [
+            45.0025,
+            34.493583,
+            33.996708,
+            33.732208
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 88.28875,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 0.761,
+            "max_ms": 87.766,
+            "median_ms": 33.406,
+            "min_ms": 32.404,
+            "p95_ms": 87.766
+          },
+          "run": 3,
+          "samples_ms": [
+            33.924833,
+            87.76625,
+            32.403791,
+            32.88775
+          ],
+          "variant": "final",
+          "workers": 4
+        },
+        {
+          "batch_ms": 89.380125,
+          "case": "copilot.guard.clean",
+          "individual": {
+            "mad_ms": 0.523,
+            "max_ms": 87.762,
+            "median_ms": 33.416,
+            "min_ms": 32.68,
+            "p95_ms": 87.762
+          },
+          "run": 4,
+          "samples_ms": [
+            33.106583,
+            32.679791,
+            33.725416,
+            87.762125
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 45.924875,
+          "case": "gemini.guard.clean",
+          "individual": {
+            "mad_ms": 0.223,
+            "max_ms": 45.554,
+            "median_ms": 32.361,
+            "min_ms": 32.084,
+            "p95_ms": 45.554
+          },
+          "run": 4,
+          "samples_ms": [
+            45.554417,
+            32.191792,
+            32.530542,
+            32.084375
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        },
+        {
+          "batch_ms": 87.377583,
+          "case": "codex.guard.clean",
+          "individual": {
+            "mad_ms": 0.377,
+            "max_ms": 85.895,
+            "median_ms": 31.315,
+            "min_ms": 30.841,
+            "p95_ms": 85.895
+          },
+          "run": 4,
+          "samples_ms": [
+            31.594041,
+            85.895333,
+            30.840583,
+            31.035625
+          ],
+          "variant": "suffix-before",
+          "workers": 4
+        }
+      ],
+      "verdict_counts": {
+        "clear-benefit": 6,
+        "clear-regression": 1,
+        "within-noise-or-inconclusive": 44
+      }
+    }
+  },
+  "method": "Before-minus-after deltas pair runs1/2 and4/3. Observed noise is the maximum per-run MAD or same-variant repeated-median span. Clear benefit/regression requires both median deltas to exceed that noise in the same direction. P95 and first observations remain separate."
+}

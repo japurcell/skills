@@ -1,0 +1,5355 @@
+{
+  "controls_per_provider": 18,
+  "failed": [
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "suffix-before"
+    }
+  ],
+  "fixture_count_per_provider": 47,
+  "passed": 576,
+  "results": [
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47130,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6384,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2632,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1648,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1788,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36108,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 140,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9029,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2500,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 218,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 387,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 201,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24082,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 105,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 90,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 92,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 120,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 144,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 114,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 270,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 305,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 462,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 529,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 828,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 956,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47140,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6394,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2642,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1658,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1798,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36118,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 150,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 241,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9045,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2516,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 234,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 403,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 211,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 155,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24098,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 106,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 112,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 110,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 136,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 139,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 160,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 169,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 115,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 137,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 130,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 148,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 286,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 321,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 478,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 545,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 844,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 972,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47109,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6363,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2611,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1830,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1833,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36153,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 185,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 199,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9032,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2503,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 221,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 390,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 247,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 190,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24085,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 98,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 97,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 147,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 156,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 124,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 117,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 183,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 273,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 308,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 465,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 532,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 831,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 959,
+      "matches": true,
+      "variant": "common-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47130,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6384,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2632,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1648,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1788,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36108,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 140,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9029,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2500,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 218,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 387,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 201,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24082,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 105,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 90,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 92,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 120,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 144,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 114,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 270,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 305,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 462,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 529,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 828,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 956,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47140,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6394,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2642,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1658,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1798,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36118,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 150,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 241,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9045,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2516,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 234,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 403,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 211,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 155,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24098,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 106,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 112,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 110,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 136,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 139,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 160,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 169,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 115,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 137,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 130,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 148,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 286,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 321,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 478,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 545,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 844,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 972,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47109,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6363,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2611,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1830,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1833,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36153,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 185,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 199,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9032,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2503,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 221,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 390,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 247,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 190,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24085,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 98,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 97,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 147,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 156,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 124,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 117,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 183,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 273,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 308,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 465,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 532,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 831,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 959,
+      "matches": true,
+      "variant": "final"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47130,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6384,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2632,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1648,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1788,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36108,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 140,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9029,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2500,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 218,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 387,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 201,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24082,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 85,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 86,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 105,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 90,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 92,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 120,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 84,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2530,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 144,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 153,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 135,
+      "matches": false,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 122,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 113,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "copilot.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 114,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 270,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 305,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 462,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 529,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 828,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "copilot.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 956,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47140,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6394,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2642,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1658,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1798,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36118,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 145,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 150,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 241,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9045,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2516,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 234,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 403,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 211,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 155,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24098,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 101,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 106,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 111,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 112,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 109,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 110,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 136,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 139,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 100,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2546,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 160,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 169,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 104,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 107,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 115,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 151,
+      "matches": false,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 134,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 138,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 137,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 129,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "gemini.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 130,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 148,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 286,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 321,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 478,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 545,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 844,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "gemini.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 972,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.bytes-46899",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 47109,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-330",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 6363,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2611,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.actual-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1830,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.escaped-newlines",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 1833,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.utf8-growth",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 36153,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.md",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 180,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.examples.test.py",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 185,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.edit.replacement",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 199,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 118,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.search.shell-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 9032,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.writer.lines-120-segments-139",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 2503,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.json-stdin",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 221,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.python-subprocess",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 390,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.survey.analysis-source",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 247,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.write.english-inflection",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 190,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.clean",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.large",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 24085,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_root",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_current",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 88,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_remove_parent",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 89,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_env_file",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.remove_git_metadata",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.force_push_protected_branch",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 108,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.hard_reset",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.forced_git_clean",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 93,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 95,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.drop_database",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 98,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.truncate_table",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 99,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.delete_without_where",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 96,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.recursive_world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 97,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.world_writable",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_bash",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 123,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.download_execute_sh",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 126,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.upload_local_data",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.privileged_command",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 87,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.publish_package",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-before",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.writer-after",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 2533,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.substitution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.interpreter-sink",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 147,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.unicode-normalization",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 156,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.extra-field",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 163,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.danger.malformed-schema",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-options-before-terminator",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-options-after-terminator",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 91,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.rm-option-looking-operand",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 94,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.rm-windows-home",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 102,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-options-with-values",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.git-quoted-option-value",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 138,
+      "matches": false,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.git-readonly-literal",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 121,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.windows-launcher-strict",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 125,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.quoted-substitution-data",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 124,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.unquoted-substitution-execution",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 116,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "deny",
+      "case": "codex.guard.control.force-refspec",
+      "exit_code": 0,
+      "expected": "deny",
+      "input_bytes": 117,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.control.role-native-content",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 183,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 273,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-64",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 308,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 465,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-128",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 532,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.rm-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 831,
+      "matches": true,
+      "variant": "suffix-before"
+    },
+    {
+      "actual": "allow",
+      "case": "codex.guard.growth.git-250",
+      "exit_code": 0,
+      "expected": "allow",
+      "input_bytes": 959,
+      "matches": true,
+      "variant": "suffix-before"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "changed_paths": {
+    "git-before": [
+      ".copilot/hooks/scripts/tool-guard.py",
+      ".gemini/hooks/scripts/tool-guard.py",
+      ".codex/hooks/tool-guard.py"
+    ]
+  },
+  "construction": "final rm suffix and cached quote-aware shell representation retained; only _match_git_push replaced from trusted9bcc6ff5 source",
+  "reference_revisions": {
+    "common-before": "5f1aa7e",
+    "suffix-before": "9bcc6ff5"
+  },
+  "sha256": {
+    "final": {
+      ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+      ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+      ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+      ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+      ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+      ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+      ".codex/hooks/tool-guard.py": "689b3ad10841028206daec63c8a4ac035b70f13b9e569c7843845212a09a3c05",
+      ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+      ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+      ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+      ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+      ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+      ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+      ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+      ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+      ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      ".copilot/hooks/scripts/tool-guard.py": "508b950ef3b999fdc0974ff61b372e60511865b7dcb2539d263b4b6f04152dd8",
+      ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+      ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+      ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+      ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+      ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+      ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+      ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+      ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+      ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+      ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+      ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+      ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+      ".gemini/hooks/scripts/tool-guard.py": "890913e0aaa1e10e548c3641722230a3e1a079ab0f88a63f8d7fae763a38acf3"
+    },
+    "git-before": {
+      ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+      ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+      ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+      ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+      ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+      ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+      ".codex/hooks/tool-guard.py": "667ca8bff0c48b0ea03ff99d050b8a5446587f653e378eeb3e3689d7eb39a338",
+      ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+      ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+      ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+      ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+      ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+      ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+      ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+      ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+      ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      ".copilot/hooks/scripts/tool-guard.py": "2c5fdb1796917c38dc699f85eb8fcff663447e9e17f4256ef2d590b05a6bd695",
+      ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+      ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+      ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+      ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+      ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+      ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+      ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+      ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+      ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+      ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+      ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+      ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+      ".gemini/hooks/scripts/tool-guard.py": "51e2e5afe90a88e68fd4e3bcec01be8f080c000147943c57961657de12010fb8"
+    }
+  },
+  "source_revision": "f47d51ddd6a9d05956f24f5f18ee59c4bbf3e60b",
+  "variants": {
+    "final": "/private/tmp/tool-guardian-ablation-final-m4/final",
+    "git-before": "/private/tmp/tool-guardian-ablation-final-m4/git-before"
+  }
+}

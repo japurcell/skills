@@ -1,0 +1,7 @@
+{
+  "syntax": "passed",
+  "help_exit": 0,
+  "stale_variant_exit": 1,
+  "stale_preflight_rejected": true,
+  "hook_subprocesses": 0
+}
