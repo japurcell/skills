@@ -45,6 +45,14 @@ python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspa
 
 - For large skill refactors, preserve any explicit exclusions or approval requirements already documented for that skill.
 
+## dotnet-upgrade
+
+- Read [`skills/dotnet-upgrade/SKILL.md`](../../skills/dotnet-upgrade/SKILL.md) only for explicit upgrade requests. Preserve both invocation controls; see [known issues](../memory/known-issues/skills.md) for enforcement limits.
+- Keep general procedure separate from dated route research and historical project decisions. Reconcile substantive reference changes with the bundled provenance ledger.
+- Invocation alone does not approve migration edits. Require approval of the concrete plan and refreshed necessary evidence; material scope or strategy changes require renewed approval.
+- Do not install the bundle, run account-wide installers, execute trial migrations or live evaluations, or change shared knowledge without separate authorization. Authoring scenarios are paper-review inputs, not evidence of runtime behavior.
+- Keep local and deployment readiness distinct. Follow the [document-only review guidance](../memory/testing/skills.md#dotnet-upgrade-document-review) without claiming cross-project execution.
+
 ## Subagent router maintenance
 
 - `skills/subagent-model-router/reference/model-catalog.md` owns tier membership and the task-default model table. Other routing references use named defaults instead of copying preferred model IDs.
