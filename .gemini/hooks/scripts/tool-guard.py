@@ -30,6 +30,7 @@ from helpers.common import emit_json, read_json_input  # noqa: E402
 
 TOOL_NAME_KEYS = ("tool_name", "toolName")
 TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
+TOOL_PROVIDER = "gemini"
 
 
 def emit_skip_allow_response() -> None:
@@ -57,6 +58,7 @@ import unicodedata
 
 
 MAX_SCAN_TEXT = 32768
+MAX_NATIVE_DATA_BYTES = 65536
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -596,17 +598,141 @@ def read_tool_input(payload: dict) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-def read_tool_scan_inputs(payload: dict) -> tuple[str, ...]:
+class NativeToolInput:
+    """Validated native arguments, with file operations separate from inert data."""
+    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = ()) -> None:
+        self.kind = kind
+        self.metadata = metadata
+        self.data = data
+        self.operations = operations
+
+
+def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
+    fields = {**required, **(optional or {})}
+    return required.keys() <= value.keys() <= fields.keys() and all(type(child) is fields[key] for key, child in value.items())
+
+
+def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
+    if not isinstance(value, dict):
+        return None
+    if TOOL_PROVIDER == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
+        return NativeToolInput("patch", (), (value["command"],))
+    if TOOL_PROVIDER == "gemini":
+        if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
+            return NativeToolInput("write", (value["file_path"],), (value["content"],))
+        if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
+            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]))
+        if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
+            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],))
+    if TOOL_PROVIDER == "copilot":
+        if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
+            return NativeToolInput("write", (value["path"],), (value["file_text"],))
+        if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
+            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]))
+        if tool_name in {"grep", "rg"}:
+            # Observed CLI arguments, not a guessed complete provider schema.
+            pattern_keys = value.keys() & {"pattern", "query"}
+            if len(pattern_keys) != 1 or (tool_name == "rg" and "query" in value):
+                return None
+            pattern_key = next(iter(pattern_keys))
+            fields = {"path": str, "paths": (str, list), "output_mode": str, "head_limit": int,
+                      "n": (bool, int), "C": int, "case_sensitive": bool} if tool_name == "grep" else {
+                          "paths": (str, list), "output_mode": str, "head_limit": int, "glob": str,
+                          "-n": bool, "-i": bool, "-A": int, "-C": int, "n": int}
+            if not value.keys() <= fields.keys() | {pattern_key} or type(value[pattern_key]) is not str:
+                return None
+            if "path" in value and "paths" in value:
+                return None
+            for key, child in value.items():
+                if key == pattern_key:
+                    continue
+                allowed_types = fields[key] if isinstance(fields[key], tuple) else (fields[key],)
+                if type(child) not in allowed_types or (type(child) is list and any(type(item) is not str for item in child)):
+                    return None
+            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)))
+    return None
+
+
+def _parse_native_patch(patch: str) -> NativeToolInput | None:
+    lines = patch.splitlines()
+    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
+        return None
+    operations: list[tuple[str, str]] = []
+    metadata: list[str] = []
+    kind = ""
+    body_seen = False
+    moved = False
+    for line in lines[1:-1]:
+        header = next((prefix for prefix in ("*** Add File: ", "*** Update File: ", "*** Delete File: ") if line.startswith(prefix)), None)
+        if header:
+            if kind in {"add", "update"} and not body_seen:
+                return None
+            path = line[len(header):]
+            if not path or "\x00" in path:
+                return None
+            kind = {"*** Add File: ": "add", "*** Update File: ": "update", "*** Delete File: ": "delete"}[header]
+            metadata.append(path)
+            if kind == "delete":
+                operations.append(("delete", path))
+            body_seen = moved = False
+        elif line.startswith("*** Move to: "):
+            if kind != "update" or body_seen or moved:
+                return None
+            destination = line[len("*** Move to: "):]
+            if not destination or "\x00" in destination:
+                return None
+            operations.append(("move", metadata[-1]))
+            metadata.append(destination)
+            moved = True
+        elif kind == "add" and line.startswith("+"):
+            body_seen = True
+        elif kind == "update" and (line.startswith((" ", "+", "-", "@@ ")) or line in {"@@", "*** End of File"}):
+            body_seen = True
+        else:
+            return None
+    if not kind or (kind in {"add", "update"} and not body_seen):
+        return None
+    return NativeToolInput("patch", tuple(metadata), (patch,), tuple(operations))
+
+
+def _native_operation_threats(native: NativeToolInput) -> list[dict[str, str]]:
+    threats: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for operation, path in native.operations:
+        # Move removes its source. Apply the existing environment/Git removal
+        # rules to that operation without treating a filename as shell code.
+        normalized = unicodedata.normalize("NFKC", path).casefold().replace("\\", "/")
+        for suffix, rule_id, cause in ((".env", "remove_env_file", "removal targets an environment file"),
+                                     (".git", "remove_git_metadata", "removal targets Git metadata")):
+            start = 0
+            protected = False
+            while (index := normalized.find(suffix, start)) != -1:
+                after = index + len(suffix)
+                if after == len(normalized) or not _is_word_char(normalized[after]):
+                    protected = True
+                    break
+                start = after
+            if protected and rule_id not in seen:
+                seen.add(rule_id)
+                threats.append({"category": "destructive_file_ops", "severity": "critical", "rule_id": rule_id,
+                                "cause": cause, "matched": f"patch {operation} {suffix}"})
+    return threats
+
+
+def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     value = _read_tool_input_value(payload)
     if isinstance(value, str):
         return (value,)
 
-    tool_name = read_tool_name(payload).casefold()
-    known_fields = KNOWN_TOOL_FIELDS.get(tool_name, frozenset())
+    tool_name = read_tool_name(payload)
+    native = _native_tool_shape(tool_name, value)
+    byte_limit = MAX_NATIVE_DATA_BYTES if native else MAX_SCAN_TEXT
+    known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
     stack: list[tuple[object, int, str]] = [(value, 0, "tool input")]
     strings: list[str] = []
     node_count = 0
     total_string_bytes = 0
+    keys: list[str] = []
     while stack:
         current, depth, field = stack.pop()
         node_count += 1
@@ -620,19 +746,33 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...]:
             total_string_bytes += current_bytes
             if len(strings) > MAX_STRUCTURED_STRINGS:
                 raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
-            if total_string_bytes > MAX_SCAN_TEXT:
-                source = field if current_bytes > MAX_SCAN_TEXT else "tool input"
-                raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes", source)
+            if total_string_bytes > byte_limit:
+                source = field if current_bytes > byte_limit else "tool input"
+                raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
         elif isinstance(current, dict):
+            keys.extend(current)
             stack.extend(
-                (child, depth + 1, f"{tool_name}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input")
+                (child, depth + 1, f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input")
                 for key, child in reversed(tuple(current.items()))
             )
         elif isinstance(current, (list, tuple)):
             stack.extend((child, depth + 1, "tool input") for child in reversed(current))
 
+    key_bytes = sum(len(key.encode("utf-8")) for key in keys)
+    if native:
+        aggregate_bytes = total_string_bytes + key_bytes
+        if aggregate_bytes > byte_limit:
+            raise ScanLimitExceeded("structured_bytes", byte_limit, aggregate_bytes, "bytes")
+        if native.kind == "patch":
+            native = _parse_native_patch(native.data[0])
+        if native is not None:
+            return native
+        if total_string_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
+    elif key_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
     serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-    return tuple(strings) + (serialized,)
+    return tuple(strings) + tuple(keys) + (serialized,)
 
 
 def sanitize_tool_name(value: str) -> str:
@@ -700,7 +840,9 @@ def build_threats(tool_text: str) -> list[dict[str, str]]:
     return threats
 
 
-def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[dict[str, str]]:
+def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToolInput) -> list[dict[str, str]]:
+    if isinstance(tool_inputs, NativeToolInput):
+        return _native_operation_threats(tool_inputs)
     threats: list[dict[str, str]] = []
     seen: set[str] = set()
     for tool_input in tool_inputs:
