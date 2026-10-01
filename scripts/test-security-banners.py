@@ -35,15 +35,19 @@ class SecurityBannerTests(unittest.TestCase):
                 or response.get('systemMessage') or '')
 
     def test_structured_byte_limit_explains_known_field_and_matches_log(self) -> None:
-        value = {'content': 'x' * 33000, 'file_path': '/tmp/demo.txt'}
         for provider in ('copilot', 'gemini', 'codex'):
             with self.subTest(provider=provider):
+                # Only Gemini recognizes this native write schema. Other providers
+                # retain strict inspection and its original byte bound.
+                limit = 65536 if provider == 'gemini' else 32768
+                measured = limit + 1
+                value = {'content': 'x' * measured, 'file_path': '/tmp/demo.txt'}
                 response, rows = self.invoke(provider, 'block', 'write_file', value)
                 reason = self.reason(response)
                 self.assertIn('structured_bytes', reason)
                 self.assertIn('write_file.content', reason)
-                self.assertIn('32768', reason)
-                self.assertIn('33000', reason)
+                self.assertIn(f'{limit} bytes', reason)
+                self.assertIn(f'{measured} bytes', reason)
                 self.assertNotIn('TOOL_GUARD_ALLOWLIST', reason)
                 self.assertEqual(rows[-1]['threats'][0]['rule_id'], 'structured_bytes')
                 self.assertIn(rows[-1]['threats'][0]['cause'], reason)

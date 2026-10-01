@@ -109,6 +109,8 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-security-banners.py")
         expected.add("scripts/test-tool-guard-false-positives.py")
         expected.add("scripts/test-tool-guard-native-data.py")
+        expected.add("scripts/test-tool-guard-shell-data.py")
+        expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
         listed = {
             part for command in commands for part in command if part.startswith("scripts/")
