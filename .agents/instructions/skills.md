@@ -51,7 +51,7 @@ python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspa
 - Keep general procedure separate from dated route research and historical project decisions. Reconcile substantive reference changes with the bundled provenance ledger.
 - Invocation alone does not approve migration edits. Require approval of the concrete plan and refreshed necessary evidence; material scope or strategy changes require renewed approval.
 - Do not install the bundle, run account-wide installers, execute trial migrations or live evaluations, or change shared knowledge without separate authorization. Authoring scenarios are paper-review inputs, not evidence of runtime behavior.
-- Keep local and deployment readiness distinct. Follow the [document-only review guidance](../memory/testing/skills.md#dotnet-upgrade-document-review) without claiming cross-project execution.
+- Keep local and deployment readiness distinct. Follow the [document-only review guidance](../memory/testing/skills.md#dotnet-upgrade-document-review) and use the bundled [document review](../../skills/dotnet-upgrade/references/document-review.md) as its acceptance record; it does not prove cross-project execution or client enforcement.
 
 ## Subagent router maintenance
 

@@ -5,7 +5,7 @@
   "ledger_state": "milestone-2-bundled-knowledge",
   "extraction_date": "2026-09-30",
   "destination_base": "skills/dotnet-upgrade/",
-  "coverage_statement": "All 45 immutable Git artifacts and the separately captured prompt were read before Milestone 2 extraction. All 184 stable findings retain their summaries, classifications, applicability and verification scope. Each destination and anchor resolves to bundled Milestone 2 knowledge, including historical detail formerly routed to Milestone 3 templates. The route retains 30 research documents with full version-specific category assessments. Document/data/whitespace review is not migration execution, vendor revalidation or client enforcement proof. Milestone 4 owns integrated acceptance and destination knowledge-base synchronization.",
+  "coverage_statement": "All 45 immutable Git artifacts and the separately captured prompt were read before Milestone 2 extraction. All 184 stable findings retain their summaries, classifications, applicability and verification scope. Each destination and anchor resolves to bundled knowledge. The route retains 30 research documents with full version-specific category assessments. Milestone 4 integrated document acceptance and destination knowledge-base reconciliation are recorded in references/document-review.md. Document review is not migration execution, vendor revalidation or client enforcement proof.",
   "reconciliation_date": "2026-10-01",
   "milestone_2_review_record": {
     "method": "Read immutable source artifacts, author standalone retained meaning, compare Git bytes and ledger metadata, review Markdown navigation and document scope. No application execution or live evaluation.",
@@ -20,7 +20,7 @@
       "unverified": 5
     },
     "scope": "37 owned reference files: 36 Markdown documents and this JSON ledger. No executable runner or credentials shipped.",
-    "deferred": "Milestone 4 integrated acceptance and destination .agents synchronization; client enforcement, runtime gates and live vendor refresh remain outside this document review."
+    "deferred": "At the Milestone 2 checkpoint, Milestone 4 integrated acceptance and destination .agents synchronization remained deferred; client enforcement, runtime gates and live vendor refresh remain outside this document review."
   },
   "milestone_2_acceptance": [
     "Documentation seam agreed by the request: missing bundled references/anchors before authoring, complete standalone knowledge afterward; no .NET or live evaluations.",

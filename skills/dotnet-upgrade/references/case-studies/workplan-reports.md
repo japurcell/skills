@@ -164,4 +164,4 @@ Checklists are [bundled in the playbook](../playbook.md#local-versus-deployment-
 
 ## Document extraction review
 
-October 1, 2026 acceptance is documentation only: source meaning, provenance, classification, anchors and standalone navigation. No .NET commands, historical runner, trial project, model, benchmark, packaging, installer or live deployment was executed. Milestone 4 owns integrated document acceptance and knowledge-base synchronization; this case is not its completion statement.
+The October 1, 2026 note records Milestone 2 source-extraction acceptance, not the final integrated review. Milestone 4 document acceptance and destination knowledge-base reconciliation are recorded in the [document review](../document-review.md). No .NET commands, historical runner, trial project, model, benchmark, packaging, installer, migration or live deployment was executed. This case study remains historical WorkPlanReports evidence and does not prove another project's migration or live client behavior.
