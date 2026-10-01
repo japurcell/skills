@@ -47,6 +47,10 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Decision Log
 
 
+- Decision: Extract unchanged provider-neutral policy into generated local helpers using ordinary Python imports, retaining provider-specific adapters in entrypoints.
+  Rationale: The main script recompiles its growing policy on every subprocess launch. Standard helper bytecode caching is simpler than self-managed caches and preserves complete inspection. The original shell worker owns the manifest, generator and disposable installer coverage. Fresh-install/no-bytecode timing remains explicit; the implementation is not accepted until full-hook gates pass.
+  Date/Author: 2026-10-01 23:41Z, implementation orchestrator.
+
 - Decision: Measure unchanged hooks from an immutable external baseline while native-classifier work proceeds in its isolated candidate worktree.
   Rationale: The copied baseline preserves unchanged runtime code independently of candidate edits. Milestone 2 integration followed the frozen incident corpus and first complete unchanged-runtime report; the second sequential baseline and milestone 1 commit then integrated without conflicts.
   Date/Author: 2026-10-01, implementation orchestrator.
