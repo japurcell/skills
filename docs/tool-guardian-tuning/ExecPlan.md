@@ -135,7 +135,7 @@ This milestone is complete when the observed shell writers, safe searches, and h
 
 ### Milestone 4: Validate resource limits, security, and runtime across providers
 
-Status: open
+Status: in progress (static boundary-test preparation; execution waits for the retained milestone 3 timing run)
 Acceptance: not met
 
 Separate bounds on accepted native data from bounds on executable inspection work. Keep finite limits for aggregate bytes, structure, normalized text, commands, tokens, and language-parser work. Native body line count must not consume an executable-command budget. Choose the smallest validated limits that admit every preserved incident fixture with documented headroom. Record actual selected constants, worst-case memory and runtime evidence, and the reason for each change in this plan. Do not globally multiply every bound or add an environment setting that disables inspection. Partial-input acceptance, skipped overflow, and timeout-based allow responses are unacceptable.
@@ -257,3 +257,5 @@ Revision note, 2026-10-01: Recorded the user-confirmed scope and security contra
 Revision note, 2026-10-01 22:21Z: Integrated the reviewed native classifier and immutable-baseline corpus, synchronized historical versus current operation handling, and recorded the active shell implementation frontier. Native byte limits remain provisional and candidate latency acceptance remains open.
 
 Revision note, 2026-10-01: Completed milestone 1 with sanitized provider-native fixture equivalents, immutable baseline fingerprints, exact baseline/candidate permission modes, public benchmark CLI coverage, two complete sequential baseline runs, per-case variation, and retained exploratory evidence. Updated the orchestrator-confirmed milestone 2 integration state and the milestone 4 truthful-limit test repair item. The plan is retained as explicitly requested.
+
+Revision note, 2026-10-01 22:43Z: Began independent static security review and milestone 4 boundary-test preparation while milestone 3 measures a frozen candidate snapshot. The initial native review reached its deadline without a verified artifact; it supplies no approval evidence. Candidate reports produced with different sample settings or source edits during measurement are exploratory only. No candidate latency gate has passed.
