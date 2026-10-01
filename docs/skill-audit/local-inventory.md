@@ -8,6 +8,14 @@ This read-only inventory was gathered on 2026-10-01 to scope the audit. It is a 
 
 There are 10 sibling benchmark workspaces under `skills/`: `architecture-design-contest`, `code-review`, `commit`, `create-skill`, `handoff`, `official-sources`, `okf-authoring`, `prd-to-tasks`, `self-improve`, and `techdebt`, each with the `-workspace` suffix. Recursive discovery finds 72 `SKILL.md` files under `skills/`; nested snapshots, generated outputs, and the two `create-skill` fixture skills must not inflate the 55 maintained entry points. See `.agents/memory/ARCHITECTURE.md:54` and `README.md:49` for source and installation boundaries.
 
+## Current audit scope
+
+The human narrowed this effort on 2026-10-01: exclude imported skills and review the remaining candidates. The [ownership decision](tickets/decide-skill-ownership-and-import-handling.md#resolution) supersedes the original all-skills scope. The current scripts map 23 published entry points to import sources; exclude those entry points using [the import evidence](import-ownership-evidence.md). This leaves 32 published candidates plus the five repository-local candidates, for 37 total.
+
+The published candidates are: adversarial-review, agents-md-improver, architecture-design-contest, code-modernization, code-review, code-simplify, commit, create-agentsmd, create-skill, delegate-to-subagents, dotnet, dotnet-ui-app, dotnet-upgrade, execplan-implement, explain-your-thinking, explore, fixing-accessibility, gh-cli, guidance-review, handoff, harness-analysis, improve-repo-harness, improve-skill, official-sources, prd, prd-ralph, prd-ralph-loop, self-improve, spec-to-tasks, subagent-model-router, techdebt, to-issues.
+
+Remove additional imported entry points when clear evidence establishes their origin. An absent importer mapping does not prove repository authorship, but unknown historical origin alone does not block reviewing a remaining candidate. Do not recover historical provenance or build a lasting ledger. Check shared resources only where they are dependencies of included skills; excluded bundles are not audit or improvement targets.
+
 ## Existing evaluation coverage
 
 Sixteen of the 55 primary skills contain `evals/evals.json`: `adversarial-review`, `architecture-design-contest`, `code-review`, `commit`, `create-skill`, `dotnet`, `dotnet-upgrade`, `explore`, `handoff`, `harness-analysis`, `improve-skill`, `official-sources`, `prd-ralph-loop`, `self-improve`, `spec-to-tasks`, and `techdebt`.
@@ -18,9 +26,9 @@ File presence does not prove evaluation quality, coverage, or pass state. Existi
 
 ## Import provenance and constraints
 
-`.addy-skills` names four Addy-derived skills: `addy-code-review-and-quality`, `addy-code-simplification`, `addy-performance-optimization`, and `addy-security-and-hardening`. `scripts/addy-install.sh` imports from a sibling `addy-agent-skills` checkout and prefixes names.
+`.addy-skills` records four unprefixed source names: `code-review-and-quality`, `code-simplification`, `performance-optimization`, and `security-and-hardening`. `scripts/addy-install.sh` imports from a sibling `addy-agent-skills` checkout and prefixes destination names with `addy-`. All four mapped destination entry points exist.
 
-`scripts/import-skill-repos.sh` names additional sources including `anthropics/claude-plugins-official`, `mattpocock/skills`, `JuliusBrussee/caveman`, `humanlayer/skills`, `addyosmani/web-quality-skills`, and the `anthropics/show-me` plugin. Check actual importer mappings before deciding whether a local edit survives refresh. The maintained `skill-creator` bundle itself has Claude-specific assumptions requiring compatibility assessment.
+`scripts/import-skill-repos.sh` names additional sources: `anthropics/claude-plugins-official`, `mattpocock/skills`, `JuliusBrussee/caveman`, `humanlayer/skills`, and `addyosmani/web-quality-skills`. The configured `show-me` source is `humanlayer/skills`, not `anthropics/show-me`. [Import and packaging evidence](import-ownership-evidence.md) records the exact mappings, destructive or overlay refresh behavior, and source-history limits. This evidence establishes exclusions rather than authorizing imported-skill improvements. The imported `skill-creator` bundle is excluded; included skills that depend on it receive only scoped dependency checks.
 
 ## Inventory delegation record
 

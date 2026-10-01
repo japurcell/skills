@@ -21,7 +21,7 @@ The human confirmed all five policies below in two rounds on 2026-10-01. They go
 
 ### Adoption rubric
 
-Review the complete [authoring checklist](../research/authoring-checklist/findings.md) for each maintained skill, using the [provider comparison](../research/provider-compatibility/findings.md) to qualify client-specific claims. Record each check's source, applicability conditions, and strength: repository requirement, required-client requirement, or advisory guidance. Cite the actual requirement rather than transferring a Claude constraint into another provider's contract.
+Review the complete [authoring checklist](../research/authoring-checklist/findings.md) for each in-scope maintained skill, using the [provider comparison](../research/provider-compatibility/findings.md) to qualify client-specific claims. Scope is governed by [Decide Skill Ownership and Import Handling](decide-skill-ownership-and-import-handling.md); the later exclusion of imported skills does not change this rubric. Record each check's source, applicability conditions, and strength: repository requirement, required-client requirement, or advisory guidance. Cite the actual requirement rather than transferring a Claude constraint into another provider's contract.
 
 Use four dispositions:
 

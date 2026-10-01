@@ -2,7 +2,7 @@
 
 ## Destination
 
-Complete an evidence-backed audit of maintained skills under `skills/` and `.agents/skills/`, then write a self-contained ExecPlan for accepted improvements. Final artifacts will be `docs/skill-audit/audit.md` and `docs/skill-audit/ExecPlan.md`.
+Complete an evidence-backed audit of non-imported maintained skills under `skills/` and `.agents/skills/`, then write a self-contained ExecPlan for accepted improvements. Final artifacts will be `docs/skill-audit/audit.md` and `docs/skill-audit/ExecPlan.md`.
 
 The current phase charts decisions and gathers source evidence with Wayfinder. Start at [Skill Authoring Audit](map.md). Its map, tickets, research, and handoff all live in this version-controlled directory, as explicitly requested by the user.
 
@@ -23,7 +23,9 @@ Highlighted practices from the idea are:
 
 ## Confirmed Effort Constraints
 
-The user selected static review of all maintained skills plus targeted safe OpenAI baselines, followed by an implementation ExecPlan. Planned authoring improvements preserve intended behavior and approval rules; behavior redesigns are presented separately.
+The user selected static review plus targeted safe OpenAI baselines, followed by an implementation ExecPlan. On 2026-10-01 the user narrowed this effort to exclude imported skills, superseding the original all-skills breadth. Current import mappings exclude 23 entry points from the 60-entry inventory, leaving 37 audit candidates across both roots. Imported-derivative maintenance and a lasting provenance ledger are outside this effort.
+
+Planned authoring improvements preserve intended behavior and approval rules; behavior redesigns are presented separately. The source idea above remains historical context; use the map and resolved tickets for current scope.
 
 The requested model set is 5.6, 6, and 6.1 Sol; 5.6 and 6 Luna; Astra; and Terra. The evidence ticket verifies exact IDs, effort values, and availability. The unavailable `domain-modeling` dependency is explicitly waived.
 

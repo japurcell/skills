@@ -11,7 +11,7 @@ description: Repo structure, install flows, and how top-level areas relate
 | --- | --- | --- |
 | `skills/` | Source of reusable task skills built around `SKILL.md` entry points. | Installed to `~/.agents/skills` by `scripts/install.sh` (PowerShell: `scripts/install.ps1`) |
 | `agents/` | Canonical Markdown source of custom agent definitions. | Copied to `~/.copilot/agents` and `~/.gemini/agents`; top-level files are converted to managed TOML in `~/.codex/agents` or `$CODEX_HOME/agents`. |
-| `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when that target exists |
+| `references/` | Optional shared reference material shipped with this repo. | Installed to `~/.agents/references` when the repository source exists; installers create the destination |
 | `.github/` | Repository-level Copilot config, including repo-local hooks. | Loaded directly from the workspace by Copilot |
 | `.copilot/` | Copilot-specific instructions and hooks. | Installed to `~/.copilot/` |
 | `.gemini/` | Gemini-specific instructions and hooks. | Installed to `~/.gemini/` |

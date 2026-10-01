@@ -40,7 +40,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
 | `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
-| [docs/skill-audit/map.md](../../docs/skill-audit/map.md) | active map | Decision map toward a completed authoring audit of both skill roots and an implementation ExecPlan. |
+| [docs/skill-audit/map.md](../../docs/skill-audit/map.md) | active map | Decision map toward an authoring audit of non-imported skills in both roots and an implementation ExecPlan. |
 | [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | active plan | Incident-based guardian false-positive repair across three providers, with security and no-added-latency acceptance gates. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |

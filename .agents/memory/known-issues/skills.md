@@ -7,6 +7,10 @@ description: Known issues, quirks, and workarounds for `skills`.
 
 Layer-specific quirks for skills. Cross-cutting issues live in `.agents/memory/KNOWN_ISSUES.md`.
 
+**Affected area:** Imported skill directories and shared references.
+**Description:** [Addy refresh](../../../scripts/addy-install.sh) deletes and recopies selected skill directories and its shared reference destination. The [multi-source copy helper](../../../scripts/copy-from-git.sh) overlays matching paths without destination cleanup, so local edits can be overwritten while stale files remain. `.addy-skills` records unprefixed source names, not upstream revisions or preserved local changes.
+**Workaround:** Do not assume refresh preserves local authoring changes or that its state file proves provenance. Inspect the relevant source and current changes before a human-run refresh; import orchestration remains human-only under [scripts instructions](../../instructions/scripts.md).
+
 **Affected area:** `skills/*/SKILL.md`
 **Description:** `python3 skills/skill-creator/scripts/quick_validate.py` rejects `disable-model-invocation` frontmatter even when a skill needs to keep it.
 **Workaround:** Preserve the key when a human has approved it; expect validation to fail until the validator supports it.

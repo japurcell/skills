@@ -11,7 +11,7 @@ What conditions make the audit complete and the implementation ExecPlan ready to
 
 Distinguish audit coverage and honest reporting from repaired skill behavior. Decide how blocker and major findings, unavailable model runs, unverified client behavior, approved exceptions, and separate behavior proposals affect each gate. Define when an unresolved item can be explicitly deferred, which implementation milestones must remain blocked by a human decision or missing evidence, and what the final audit and self-contained ExecPlan must contain.
 
-The destination remains a completed audit of every maintained skill plus an implementation plan. Resolving this ticket does not authorize implementation, installation, or publication. Use the evidence/model and batch/report decisions before selecting concrete acceptance requirements; do not invent universal model or provider claims.
+The destination remains a completed audit of every in-scope maintained skill plus an implementation plan. Imported skill bundles and their maintenance are excluded by the ownership decision. Resolving this ticket does not authorize implementation, installation, or publication. Use the evidence/model and batch/report decisions before selecting concrete acceptance requirements; do not invent universal model or provider claims.
 
 ---
 
