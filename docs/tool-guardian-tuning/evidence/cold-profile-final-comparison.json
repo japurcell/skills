@@ -5910,5 +5910,4128 @@
     "raw": "cold-profile-concurrency-repeat.json",
     "measured_launches": 1200,
     "acceptance": "PASS repeated individual and batch median/p95 improve for each provider in both pairs; original isolated noisy Gemini p95 retained"
-  }
+  },
+  "baseline_repeat_variation": {
+    "interpretation": "Two-run descriptive variation, not a confidence interval; no provider/case pooling",
+    "cases": [
+      {
+        "case": "copilot.guard.clean",
+        "baseline_medians_ms": [
+          26.297,
+          28.508
+        ],
+        "baseline_p95_ms": [
+          27.915,
+          30.657
+        ],
+        "within_run_mad_ms": [
+          0.216,
+          0.884
+        ],
+        "median_span_ms": 2.211,
+        "two_run_median_absolute_deviation_ms": 1.105
+      },
+      {
+        "case": "copilot.guard.finding",
+        "baseline_medians_ms": [
+          27.671,
+          32.005
+        ],
+        "baseline_p95_ms": [
+          27.965,
+          32.885
+        ],
+        "within_run_mad_ms": [
+          0.104,
+          0.689
+        ],
+        "median_span_ms": 4.334,
+        "two_run_median_absolute_deviation_ms": 2.167
+      },
+      {
+        "case": "copilot.guard.large",
+        "baseline_medians_ms": [
+          69.67,
+          74.906
+        ],
+        "baseline_p95_ms": [
+          72.019,
+          78.356
+        ],
+        "within_run_mad_ms": [
+          0.415,
+          0.853
+        ],
+        "median_span_ms": 5.236,
+        "two_run_median_absolute_deviation_ms": 2.618
+      },
+      {
+        "case": "copilot.guard.failure",
+        "baseline_medians_ms": [
+          24.853,
+          25.565
+        ],
+        "baseline_p95_ms": [
+          26.461,
+          26.086
+        ],
+        "within_run_mad_ms": [
+          0.119,
+          0.113
+        ],
+        "median_span_ms": 0.712,
+        "two_run_median_absolute_deviation_ms": 0.356
+      },
+      {
+        "case": "gemini.guard.clean",
+        "baseline_medians_ms": [
+          26.422,
+          27.287
+        ],
+        "baseline_p95_ms": [
+          26.727,
+          29.581
+        ],
+        "within_run_mad_ms": [
+          0.097,
+          0.294
+        ],
+        "median_span_ms": 0.865,
+        "two_run_median_absolute_deviation_ms": 0.432
+      },
+      {
+        "case": "gemini.guard.finding",
+        "baseline_medians_ms": [
+          27.84,
+          28.633
+        ],
+        "baseline_p95_ms": [
+          28.227,
+          28.867
+        ],
+        "within_run_mad_ms": [
+          0.113,
+          0.124
+        ],
+        "median_span_ms": 0.793,
+        "two_run_median_absolute_deviation_ms": 0.396
+      },
+      {
+        "case": "gemini.guard.large",
+        "baseline_medians_ms": [
+          117.042,
+          122.688
+        ],
+        "baseline_p95_ms": [
+          120.82,
+          133.692
+        ],
+        "within_run_mad_ms": [
+          3.503,
+          2.018
+        ],
+        "median_span_ms": 5.646,
+        "two_run_median_absolute_deviation_ms": 2.823
+      },
+      {
+        "case": "gemini.guard.failure",
+        "baseline_medians_ms": [
+          24.973,
+          27.085
+        ],
+        "baseline_p95_ms": [
+          26.485,
+          28.168
+        ],
+        "within_run_mad_ms": [
+          0.105,
+          0.422
+        ],
+        "median_span_ms": 2.112,
+        "two_run_median_absolute_deviation_ms": 1.056
+      },
+      {
+        "case": "codex.guard.clean",
+        "baseline_medians_ms": [
+          23.789,
+          26.067
+        ],
+        "baseline_p95_ms": [
+          24.1,
+          26.981
+        ],
+        "within_run_mad_ms": [
+          0.089,
+          0.744
+        ],
+        "median_span_ms": 2.278,
+        "two_run_median_absolute_deviation_ms": 1.139
+      },
+      {
+        "case": "codex.guard.finding",
+        "baseline_medians_ms": [
+          25.071,
+          26.385
+        ],
+        "baseline_p95_ms": [
+          25.302,
+          28.193
+        ],
+        "within_run_mad_ms": [
+          0.1,
+          0.345
+        ],
+        "median_span_ms": 1.314,
+        "two_run_median_absolute_deviation_ms": 0.657
+      },
+      {
+        "case": "codex.guard.large",
+        "baseline_medians_ms": [
+          109.872,
+          118.728
+        ],
+        "baseline_p95_ms": [
+          110.604,
+          122.094
+        ],
+        "within_run_mad_ms": [
+          0.269,
+          0.84
+        ],
+        "median_span_ms": 8.856,
+        "two_run_median_absolute_deviation_ms": 4.428
+      },
+      {
+        "case": "codex.guard.failure",
+        "baseline_medians_ms": [
+          22.723,
+          25.204
+        ],
+        "baseline_p95_ms": [
+          23.01,
+          28.084
+        ],
+        "within_run_mad_ms": [
+          0.149,
+          1.47
+        ],
+        "median_span_ms": 2.481,
+        "two_run_median_absolute_deviation_ms": 1.241
+      },
+      {
+        "case": "copilot.guard.patch.bytes-46899",
+        "baseline_medians_ms": [
+          26.663,
+          29.602
+        ],
+        "baseline_p95_ms": [
+          27.105,
+          32.365
+        ],
+        "within_run_mad_ms": [
+          0.091,
+          0.382
+        ],
+        "median_span_ms": 2.939,
+        "two_run_median_absolute_deviation_ms": 1.47
+      },
+      {
+        "case": "copilot.guard.patch.lines-330",
+        "baseline_medians_ms": [
+          26.285,
+          30.484
+        ],
+        "baseline_p95_ms": [
+          26.536,
+          38.87
+        ],
+        "within_run_mad_ms": [
+          0.112,
+          1.288
+        ],
+        "median_span_ms": 4.199,
+        "two_run_median_absolute_deviation_ms": 2.1
+      },
+      {
+        "case": "copilot.guard.patch.lines-124-segments-142",
+        "baseline_medians_ms": [
+          26.518,
+          29.189
+        ],
+        "baseline_p95_ms": [
+          27.45,
+          30.797
+        ],
+        "within_run_mad_ms": [
+          0.164,
+          0.606
+        ],
+        "median_span_ms": 2.671,
+        "two_run_median_absolute_deviation_ms": 1.335
+      },
+      {
+        "case": "copilot.guard.write.actual-newlines",
+        "baseline_medians_ms": [
+          27.39,
+          27.675
+        ],
+        "baseline_p95_ms": [
+          36.3,
+          29.079
+        ],
+        "within_run_mad_ms": [
+          0.981,
+          0.356
+        ],
+        "median_span_ms": 0.285,
+        "two_run_median_absolute_deviation_ms": 0.143
+      },
+      {
+        "case": "copilot.guard.write.escaped-newlines",
+        "baseline_medians_ms": [
+          26.465,
+          28.097
+        ],
+        "baseline_p95_ms": [
+          26.814,
+          29.604
+        ],
+        "within_run_mad_ms": [
+          0.108,
+          0.213
+        ],
+        "median_span_ms": 1.632,
+        "two_run_median_absolute_deviation_ms": 0.816
+      },
+      {
+        "case": "copilot.guard.write.utf8-growth",
+        "baseline_medians_ms": [
+          26.194,
+          29.136
+        ],
+        "baseline_p95_ms": [
+          26.744,
+          30.463
+        ],
+        "within_run_mad_ms": [
+          0.152,
+          0.7
+        ],
+        "median_span_ms": 2.942,
+        "two_run_median_absolute_deviation_ms": 1.471
+      },
+      {
+        "case": "copilot.guard.write.examples.md",
+        "baseline_medians_ms": [
+          27.901,
+          30.767
+        ],
+        "baseline_p95_ms": [
+          28.477,
+          31.912
+        ],
+        "within_run_mad_ms": [
+          0.107,
+          0.771
+        ],
+        "median_span_ms": 2.866,
+        "two_run_median_absolute_deviation_ms": 1.433
+      },
+      {
+        "case": "copilot.guard.write.examples.py",
+        "baseline_medians_ms": [
+          27.727,
+          28.939
+        ],
+        "baseline_p95_ms": [
+          28.008,
+          29.162
+        ],
+        "within_run_mad_ms": [
+          0.099,
+          0.095
+        ],
+        "median_span_ms": 1.212,
+        "two_run_median_absolute_deviation_ms": 0.606
+      },
+      {
+        "case": "copilot.guard.write.examples.test.py",
+        "baseline_medians_ms": [
+          27.678,
+          28.91
+        ],
+        "baseline_p95_ms": [
+          27.958,
+          29.229
+        ],
+        "within_run_mad_ms": [
+          0.103,
+          0.106
+        ],
+        "median_span_ms": 1.232,
+        "two_run_median_absolute_deviation_ms": 0.616
+      },
+      {
+        "case": "copilot.guard.edit.replacement",
+        "baseline_medians_ms": [
+          27.937,
+          28.878
+        ],
+        "baseline_p95_ms": [
+          28.174,
+          29.166
+        ],
+        "within_run_mad_ms": [
+          0.096,
+          0.095
+        ],
+        "median_span_ms": 0.941,
+        "two_run_median_absolute_deviation_ms": 0.47
+      },
+      {
+        "case": "copilot.guard.search.literal",
+        "baseline_medians_ms": [
+          27.789,
+          29.026
+        ],
+        "baseline_p95_ms": [
+          28.05,
+          30.578
+        ],
+        "within_run_mad_ms": [
+          0.123,
+          0.479
+        ],
+        "median_span_ms": 1.237,
+        "two_run_median_absolute_deviation_ms": 0.618
+      },
+      {
+        "case": "copilot.guard.search.shell-literal",
+        "baseline_medians_ms": [
+          26.39,
+          27.374
+        ],
+        "baseline_p95_ms": [
+          26.655,
+          29.123
+        ],
+        "within_run_mad_ms": [
+          0.138,
+          0.153
+        ],
+        "median_span_ms": 0.984,
+        "two_run_median_absolute_deviation_ms": 0.492
+      },
+      {
+        "case": "copilot.guard.writer.chars-8787-segments-183",
+        "baseline_medians_ms": [
+          26.251,
+          27.333
+        ],
+        "baseline_p95_ms": [
+          26.574,
+          27.52
+        ],
+        "within_run_mad_ms": [
+          0.081,
+          0.123
+        ],
+        "median_span_ms": 1.082,
+        "two_run_median_absolute_deviation_ms": 0.541
+      },
+      {
+        "case": "copilot.guard.writer.lines-120-segments-139",
+        "baseline_medians_ms": [
+          26.19,
+          27.176
+        ],
+        "baseline_p95_ms": [
+          26.478,
+          27.636
+        ],
+        "within_run_mad_ms": [
+          0.13,
+          0.094
+        ],
+        "median_span_ms": 0.986,
+        "two_run_median_absolute_deviation_ms": 0.493
+      },
+      {
+        "case": "copilot.guard.survey.json-stdin",
+        "baseline_medians_ms": [
+          27.939,
+          30.468
+        ],
+        "baseline_p95_ms": [
+          28.232,
+          31.813
+        ],
+        "within_run_mad_ms": [
+          0.067,
+          0.406
+        ],
+        "median_span_ms": 2.529,
+        "two_run_median_absolute_deviation_ms": 1.264
+      },
+      {
+        "case": "copilot.guard.survey.python-subprocess",
+        "baseline_medians_ms": [
+          28.691,
+          29.904
+        ],
+        "baseline_p95_ms": [
+          29.009,
+          31.603
+        ],
+        "within_run_mad_ms": [
+          0.16,
+          0.412
+        ],
+        "median_span_ms": 1.213,
+        "two_run_median_absolute_deviation_ms": 0.607
+      },
+      {
+        "case": "copilot.guard.survey.analysis-source",
+        "baseline_medians_ms": [
+          28.224,
+          30.296
+        ],
+        "baseline_p95_ms": [
+          28.493,
+          31.995
+        ],
+        "within_run_mad_ms": [
+          0.105,
+          0.992
+        ],
+        "median_span_ms": 2.072,
+        "two_run_median_absolute_deviation_ms": 1.036
+      },
+      {
+        "case": "copilot.guard.write.english-inflection",
+        "baseline_medians_ms": [
+          27.832,
+          28.583
+        ],
+        "baseline_p95_ms": [
+          27.965,
+          30.362
+        ],
+        "within_run_mad_ms": [
+          0.095,
+          0.216
+        ],
+        "median_span_ms": 0.751,
+        "two_run_median_absolute_deviation_ms": 0.375
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_root",
+        "baseline_medians_ms": [
+          27.553,
+          28.554
+        ],
+        "baseline_p95_ms": [
+          27.823,
+          30.327
+        ],
+        "within_run_mad_ms": [
+          0.07,
+          0.189
+        ],
+        "median_span_ms": 1.001,
+        "two_run_median_absolute_deviation_ms": 0.5
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_home",
+        "baseline_medians_ms": [
+          27.696,
+          28.58
+        ],
+        "baseline_p95_ms": [
+          27.87,
+          29.17
+        ],
+        "within_run_mad_ms": [
+          0.134,
+          0.153
+        ],
+        "median_span_ms": 0.884,
+        "two_run_median_absolute_deviation_ms": 0.442
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_current",
+        "baseline_medians_ms": [
+          27.744,
+          28.855
+        ],
+        "baseline_p95_ms": [
+          27.932,
+          34.095
+        ],
+        "within_run_mad_ms": [
+          0.091,
+          0.39
+        ],
+        "median_span_ms": 1.111,
+        "two_run_median_absolute_deviation_ms": 0.556
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_parent",
+        "baseline_medians_ms": [
+          27.659,
+          28.832
+        ],
+        "baseline_p95_ms": [
+          27.904,
+          32.861
+        ],
+        "within_run_mad_ms": [
+          0.124,
+          0.612
+        ],
+        "median_span_ms": 1.173,
+        "two_run_median_absolute_deviation_ms": 0.587
+      },
+      {
+        "case": "copilot.guard.danger.remove_env_file",
+        "baseline_medians_ms": [
+          27.513,
+          28.65
+        ],
+        "baseline_p95_ms": [
+          27.76,
+          32.704
+        ],
+        "within_run_mad_ms": [
+          0.139,
+          0.675
+        ],
+        "median_span_ms": 1.137,
+        "two_run_median_absolute_deviation_ms": 0.568
+      },
+      {
+        "case": "copilot.guard.danger.remove_git_metadata",
+        "baseline_medians_ms": [
+          27.723,
+          28.4
+        ],
+        "baseline_p95_ms": [
+          27.823,
+          28.796
+        ],
+        "within_run_mad_ms": [
+          0.056,
+          0.189
+        ],
+        "median_span_ms": 0.677,
+        "two_run_median_absolute_deviation_ms": 0.338
+      },
+      {
+        "case": "copilot.guard.danger.force_push_protected_branch",
+        "baseline_medians_ms": [
+          27.818,
+          28.809
+        ],
+        "baseline_p95_ms": [
+          28.087,
+          31.858
+        ],
+        "within_run_mad_ms": [
+          0.149,
+          0.339
+        ],
+        "median_span_ms": 0.991,
+        "two_run_median_absolute_deviation_ms": 0.495
+      },
+      {
+        "case": "copilot.guard.danger.hard_reset",
+        "baseline_medians_ms": [
+          27.665,
+          28.797
+        ],
+        "baseline_p95_ms": [
+          27.898,
+          29.601
+        ],
+        "within_run_mad_ms": [
+          0.092,
+          0.294
+        ],
+        "median_span_ms": 1.132,
+        "two_run_median_absolute_deviation_ms": 0.566
+      },
+      {
+        "case": "copilot.guard.danger.forced_git_clean",
+        "baseline_medians_ms": [
+          27.464,
+          28.277
+        ],
+        "baseline_p95_ms": [
+          28.39,
+          29.747
+        ],
+        "within_run_mad_ms": [
+          0.099,
+          0.119
+        ],
+        "median_span_ms": 0.813,
+        "two_run_median_absolute_deviation_ms": 0.407
+      },
+      {
+        "case": "copilot.guard.danger.drop_table",
+        "baseline_medians_ms": [
+          27.745,
+          28.577
+        ],
+        "baseline_p95_ms": [
+          27.943,
+          29.651
+        ],
+        "within_run_mad_ms": [
+          0.119,
+          0.174
+        ],
+        "median_span_ms": 0.832,
+        "two_run_median_absolute_deviation_ms": 0.416
+      },
+      {
+        "case": "copilot.guard.danger.drop_database",
+        "baseline_medians_ms": [
+          27.499,
+          28.403
+        ],
+        "baseline_p95_ms": [
+          27.76,
+          30.146
+        ],
+        "within_run_mad_ms": [
+          0.113,
+          0.135
+        ],
+        "median_span_ms": 0.904,
+        "two_run_median_absolute_deviation_ms": 0.452
+      },
+      {
+        "case": "copilot.guard.danger.truncate_table",
+        "baseline_medians_ms": [
+          27.523,
+          30.4
+        ],
+        "baseline_p95_ms": [
+          27.73,
+          33.823
+        ],
+        "within_run_mad_ms": [
+          0.08,
+          0.989
+        ],
+        "median_span_ms": 2.877,
+        "two_run_median_absolute_deviation_ms": 1.438
+      },
+      {
+        "case": "copilot.guard.danger.delete_without_where",
+        "baseline_medians_ms": [
+          27.535,
+          28.846
+        ],
+        "baseline_p95_ms": [
+          28.001,
+          30.517
+        ],
+        "within_run_mad_ms": [
+          0.073,
+          0.207
+        ],
+        "median_span_ms": 1.311,
+        "two_run_median_absolute_deviation_ms": 0.655
+      },
+      {
+        "case": "copilot.guard.danger.recursive_world_writable",
+        "baseline_medians_ms": [
+          27.581,
+          28.616
+        ],
+        "baseline_p95_ms": [
+          27.944,
+          34.12
+        ],
+        "within_run_mad_ms": [
+          0.077,
+          0.205
+        ],
+        "median_span_ms": 1.035,
+        "two_run_median_absolute_deviation_ms": 0.518
+      },
+      {
+        "case": "copilot.guard.danger.world_writable",
+        "baseline_medians_ms": [
+          27.739,
+          28.84
+        ],
+        "baseline_p95_ms": [
+          27.977,
+          31.33
+        ],
+        "within_run_mad_ms": [
+          0.082,
+          0.23
+        ],
+        "median_span_ms": 1.101,
+        "two_run_median_absolute_deviation_ms": 0.55
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_bash",
+        "baseline_medians_ms": [
+          27.383,
+          28.55
+        ],
+        "baseline_p95_ms": [
+          27.621,
+          29.77
+        ],
+        "within_run_mad_ms": [
+          0.109,
+          0.205
+        ],
+        "median_span_ms": 1.167,
+        "two_run_median_absolute_deviation_ms": 0.584
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_sh",
+        "baseline_medians_ms": [
+          27.155,
+          28.201
+        ],
+        "baseline_p95_ms": [
+          27.468,
+          28.49
+        ],
+        "within_run_mad_ms": [
+          0.078,
+          0.147
+        ],
+        "median_span_ms": 1.046,
+        "two_run_median_absolute_deviation_ms": 0.523
+      },
+      {
+        "case": "copilot.guard.danger.upload_local_data",
+        "baseline_medians_ms": [
+          27.74,
+          27.938
+        ],
+        "baseline_p95_ms": [
+          27.979,
+          28.281
+        ],
+        "within_run_mad_ms": [
+          0.088,
+          0.113
+        ],
+        "median_span_ms": 0.198,
+        "two_run_median_absolute_deviation_ms": 0.099
+      },
+      {
+        "case": "copilot.guard.danger.privileged_command",
+        "baseline_medians_ms": [
+          27.832,
+          28.256
+        ],
+        "baseline_p95_ms": [
+          28.099,
+          28.875
+        ],
+        "within_run_mad_ms": [
+          0.099,
+          0.091
+        ],
+        "median_span_ms": 0.424,
+        "two_run_median_absolute_deviation_ms": 0.212
+      },
+      {
+        "case": "copilot.guard.danger.publish_package",
+        "baseline_medians_ms": [
+          27.486,
+          28.226
+        ],
+        "baseline_p95_ms": [
+          27.685,
+          28.538
+        ],
+        "within_run_mad_ms": [
+          0.084,
+          0.083
+        ],
+        "median_span_ms": 0.74,
+        "two_run_median_absolute_deviation_ms": 0.37
+      },
+      {
+        "case": "copilot.guard.danger.writer-before",
+        "baseline_medians_ms": [
+          26.139,
+          26.96
+        ],
+        "baseline_p95_ms": [
+          26.397,
+          28.259
+        ],
+        "within_run_mad_ms": [
+          0.105,
+          0.214
+        ],
+        "median_span_ms": 0.821,
+        "two_run_median_absolute_deviation_ms": 0.411
+      },
+      {
+        "case": "copilot.guard.danger.writer-after",
+        "baseline_medians_ms": [
+          26.125,
+          26.957
+        ],
+        "baseline_p95_ms": [
+          26.272,
+          27.821
+        ],
+        "within_run_mad_ms": [
+          0.058,
+          0.254
+        ],
+        "median_span_ms": 0.832,
+        "two_run_median_absolute_deviation_ms": 0.416
+      },
+      {
+        "case": "copilot.guard.danger.substitution",
+        "baseline_medians_ms": [
+          26.254,
+          27.016
+        ],
+        "baseline_p95_ms": [
+          26.523,
+          27.344
+        ],
+        "within_run_mad_ms": [
+          0.114,
+          0.165
+        ],
+        "median_span_ms": 0.762,
+        "two_run_median_absolute_deviation_ms": 0.381
+      },
+      {
+        "case": "copilot.guard.danger.interpreter-sink",
+        "baseline_medians_ms": [
+          26.355,
+          27.127
+        ],
+        "baseline_p95_ms": [
+          26.79,
+          27.428
+        ],
+        "within_run_mad_ms": [
+          0.105,
+          0.131
+        ],
+        "median_span_ms": 0.772,
+        "two_run_median_absolute_deviation_ms": 0.386
+      },
+      {
+        "case": "copilot.guard.danger.unicode-normalization",
+        "baseline_medians_ms": [
+          27.671,
+          28.44
+        ],
+        "baseline_p95_ms": [
+          27.79,
+          28.707
+        ],
+        "within_run_mad_ms": [
+          0.084,
+          0.106
+        ],
+        "median_span_ms": 0.769,
+        "two_run_median_absolute_deviation_ms": 0.385
+      },
+      {
+        "case": "copilot.guard.danger.extra-field",
+        "baseline_medians_ms": [
+          27.807,
+          28.471
+        ],
+        "baseline_p95_ms": [
+          32.089,
+          28.845
+        ],
+        "within_run_mad_ms": [
+          0.152,
+          0.103
+        ],
+        "median_span_ms": 0.664,
+        "two_run_median_absolute_deviation_ms": 0.332
+      },
+      {
+        "case": "copilot.guard.danger.malformed-schema",
+        "baseline_medians_ms": [
+          27.575,
+          28.297
+        ],
+        "baseline_p95_ms": [
+          27.798,
+          28.932
+        ],
+        "within_run_mad_ms": [
+          0.154,
+          0.081
+        ],
+        "median_span_ms": 0.722,
+        "two_run_median_absolute_deviation_ms": 0.361
+      },
+      {
+        "case": "gemini.guard.patch.bytes-46899",
+        "baseline_medians_ms": [
+          26.699,
+          27.266
+        ],
+        "baseline_p95_ms": [
+          27.004,
+          27.515
+        ],
+        "within_run_mad_ms": [
+          0.096,
+          0.076
+        ],
+        "median_span_ms": 0.567,
+        "two_run_median_absolute_deviation_ms": 0.283
+      },
+      {
+        "case": "gemini.guard.patch.lines-330",
+        "baseline_medians_ms": [
+          26.388,
+          27.09
+        ],
+        "baseline_p95_ms": [
+          26.563,
+          27.578
+        ],
+        "within_run_mad_ms": [
+          0.114,
+          0.161
+        ],
+        "median_span_ms": 0.702,
+        "two_run_median_absolute_deviation_ms": 0.351
+      },
+      {
+        "case": "gemini.guard.patch.lines-124-segments-142",
+        "baseline_medians_ms": [
+          26.395,
+          27.069
+        ],
+        "baseline_p95_ms": [
+          26.887,
+          27.434
+        ],
+        "within_run_mad_ms": [
+          0.112,
+          0.089
+        ],
+        "median_span_ms": 0.674,
+        "two_run_median_absolute_deviation_ms": 0.337
+      },
+      {
+        "case": "gemini.guard.write.actual-newlines",
+        "baseline_medians_ms": [
+          26.528,
+          27.058
+        ],
+        "baseline_p95_ms": [
+          26.675,
+          34.717
+        ],
+        "within_run_mad_ms": [
+          0.096,
+          0.154
+        ],
+        "median_span_ms": 0.53,
+        "two_run_median_absolute_deviation_ms": 0.265
+      },
+      {
+        "case": "gemini.guard.write.escaped-newlines",
+        "baseline_medians_ms": [
+          26.588,
+          27.01
+        ],
+        "baseline_p95_ms": [
+          26.841,
+          27.263
+        ],
+        "within_run_mad_ms": [
+          0.11,
+          0.134
+        ],
+        "median_span_ms": 0.422,
+        "two_run_median_absolute_deviation_ms": 0.211
+      },
+      {
+        "case": "gemini.guard.write.utf8-growth",
+        "baseline_medians_ms": [
+          26.529,
+          27.004
+        ],
+        "baseline_p95_ms": [
+          27.199,
+          27.572
+        ],
+        "within_run_mad_ms": [
+          0.121,
+          0.112
+        ],
+        "median_span_ms": 0.475,
+        "two_run_median_absolute_deviation_ms": 0.238
+      },
+      {
+        "case": "gemini.guard.write.examples.md",
+        "baseline_medians_ms": [
+          27.836,
+          28.482
+        ],
+        "baseline_p95_ms": [
+          27.987,
+          28.64
+        ],
+        "within_run_mad_ms": [
+          0.1,
+          0.094
+        ],
+        "median_span_ms": 0.646,
+        "two_run_median_absolute_deviation_ms": 0.323
+      },
+      {
+        "case": "gemini.guard.write.examples.py",
+        "baseline_medians_ms": [
+          27.836,
+          28.508
+        ],
+        "baseline_p95_ms": [
+          27.933,
+          28.854
+        ],
+        "within_run_mad_ms": [
+          0.061,
+          0.116
+        ],
+        "median_span_ms": 0.672,
+        "two_run_median_absolute_deviation_ms": 0.336
+      },
+      {
+        "case": "gemini.guard.write.examples.test.py",
+        "baseline_medians_ms": [
+          27.839,
+          28.564
+        ],
+        "baseline_p95_ms": [
+          27.994,
+          28.954
+        ],
+        "within_run_mad_ms": [
+          0.105,
+          0.136
+        ],
+        "median_span_ms": 0.725,
+        "two_run_median_absolute_deviation_ms": 0.363
+      },
+      {
+        "case": "gemini.guard.edit.replacement",
+        "baseline_medians_ms": [
+          28.228,
+          28.94
+        ],
+        "baseline_p95_ms": [
+          28.792,
+          31.606
+        ],
+        "within_run_mad_ms": [
+          0.162,
+          0.267
+        ],
+        "median_span_ms": 0.712,
+        "two_run_median_absolute_deviation_ms": 0.356
+      },
+      {
+        "case": "gemini.guard.search.literal",
+        "baseline_medians_ms": [
+          27.74,
+          28.663
+        ],
+        "baseline_p95_ms": [
+          28.013,
+          37.273
+        ],
+        "within_run_mad_ms": [
+          0.097,
+          0.185
+        ],
+        "median_span_ms": 0.923,
+        "two_run_median_absolute_deviation_ms": 0.462
+      },
+      {
+        "case": "gemini.guard.search.shell-literal",
+        "baseline_medians_ms": [
+          26.358,
+          27.241
+        ],
+        "baseline_p95_ms": [
+          26.546,
+          27.79
+        ],
+        "within_run_mad_ms": [
+          0.12,
+          0.11
+        ],
+        "median_span_ms": 0.883,
+        "two_run_median_absolute_deviation_ms": 0.441
+      },
+      {
+        "case": "gemini.guard.writer.chars-8787-segments-183",
+        "baseline_medians_ms": [
+          26.392,
+          27.15
+        ],
+        "baseline_p95_ms": [
+          26.632,
+          27.485
+        ],
+        "within_run_mad_ms": [
+          0.089,
+          0.176
+        ],
+        "median_span_ms": 0.758,
+        "two_run_median_absolute_deviation_ms": 0.379
+      },
+      {
+        "case": "gemini.guard.writer.lines-120-segments-139",
+        "baseline_medians_ms": [
+          26.278,
+          26.883
+        ],
+        "baseline_p95_ms": [
+          26.67,
+          27.279
+        ],
+        "within_run_mad_ms": [
+          0.074,
+          0.11
+        ],
+        "median_span_ms": 0.605,
+        "two_run_median_absolute_deviation_ms": 0.303
+      },
+      {
+        "case": "gemini.guard.survey.json-stdin",
+        "baseline_medians_ms": [
+          28.05,
+          28.766
+        ],
+        "baseline_p95_ms": [
+          28.268,
+          29.234
+        ],
+        "within_run_mad_ms": [
+          0.072,
+          0.11
+        ],
+        "median_span_ms": 0.716,
+        "two_run_median_absolute_deviation_ms": 0.358
+      },
+      {
+        "case": "gemini.guard.survey.python-subprocess",
+        "baseline_medians_ms": [
+          28.644,
+          29.404
+        ],
+        "baseline_p95_ms": [
+          28.936,
+          30.124
+        ],
+        "within_run_mad_ms": [
+          0.143,
+          0.085
+        ],
+        "median_span_ms": 0.76,
+        "two_run_median_absolute_deviation_ms": 0.38
+      },
+      {
+        "case": "gemini.guard.survey.analysis-source",
+        "baseline_medians_ms": [
+          28.254,
+          28.982
+        ],
+        "baseline_p95_ms": [
+          28.429,
+          30.184
+        ],
+        "within_run_mad_ms": [
+          0.109,
+          0.17
+        ],
+        "median_span_ms": 0.728,
+        "two_run_median_absolute_deviation_ms": 0.364
+      },
+      {
+        "case": "gemini.guard.write.english-inflection",
+        "baseline_medians_ms": [
+          27.908,
+          29.526
+        ],
+        "baseline_p95_ms": [
+          28.068,
+          31.116
+        ],
+        "within_run_mad_ms": [
+          0.093,
+          0.326
+        ],
+        "median_span_ms": 1.618,
+        "two_run_median_absolute_deviation_ms": 0.809
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_root",
+        "baseline_medians_ms": [
+          27.755,
+          28.472
+        ],
+        "baseline_p95_ms": [
+          28.13,
+          28.679
+        ],
+        "within_run_mad_ms": [
+          0.081,
+          0.143
+        ],
+        "median_span_ms": 0.717,
+        "two_run_median_absolute_deviation_ms": 0.359
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_home",
+        "baseline_medians_ms": [
+          27.826,
+          28.364
+        ],
+        "baseline_p95_ms": [
+          28.409,
+          28.806
+        ],
+        "within_run_mad_ms": [
+          0.162,
+          0.122
+        ],
+        "median_span_ms": 0.538,
+        "two_run_median_absolute_deviation_ms": 0.269
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_current",
+        "baseline_medians_ms": [
+          27.766,
+          28.293
+        ],
+        "baseline_p95_ms": [
+          27.923,
+          29.164
+        ],
+        "within_run_mad_ms": [
+          0.099,
+          0.104
+        ],
+        "median_span_ms": 0.527,
+        "two_run_median_absolute_deviation_ms": 0.264
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_parent",
+        "baseline_medians_ms": [
+          27.794,
+          28.327
+        ],
+        "baseline_p95_ms": [
+          28.128,
+          28.459
+        ],
+        "within_run_mad_ms": [
+          0.059,
+          0.052
+        ],
+        "median_span_ms": 0.533,
+        "two_run_median_absolute_deviation_ms": 0.267
+      },
+      {
+        "case": "gemini.guard.danger.remove_env_file",
+        "baseline_medians_ms": [
+          27.761,
+          28.17
+        ],
+        "baseline_p95_ms": [
+          27.989,
+          28.461
+        ],
+        "within_run_mad_ms": [
+          0.088,
+          0.1
+        ],
+        "median_span_ms": 0.409,
+        "two_run_median_absolute_deviation_ms": 0.205
+      },
+      {
+        "case": "gemini.guard.danger.remove_git_metadata",
+        "baseline_medians_ms": [
+          27.718,
+          28.313
+        ],
+        "baseline_p95_ms": [
+          27.94,
+          28.496
+        ],
+        "within_run_mad_ms": [
+          0.09,
+          0.119
+        ],
+        "median_span_ms": 0.595,
+        "two_run_median_absolute_deviation_ms": 0.297
+      },
+      {
+        "case": "gemini.guard.danger.force_push_protected_branch",
+        "baseline_medians_ms": [
+          27.843,
+          28.373
+        ],
+        "baseline_p95_ms": [
+          28.101,
+          28.943
+        ],
+        "within_run_mad_ms": [
+          0.113,
+          0.147
+        ],
+        "median_span_ms": 0.53,
+        "two_run_median_absolute_deviation_ms": 0.265
+      },
+      {
+        "case": "gemini.guard.danger.hard_reset",
+        "baseline_medians_ms": [
+          28.064,
+          28.407
+        ],
+        "baseline_p95_ms": [
+          28.729,
+          29.374
+        ],
+        "within_run_mad_ms": [
+          0.231,
+          0.162
+        ],
+        "median_span_ms": 0.343,
+        "two_run_median_absolute_deviation_ms": 0.171
+      },
+      {
+        "case": "gemini.guard.danger.forced_git_clean",
+        "baseline_medians_ms": [
+          28.213,
+          28.413
+        ],
+        "baseline_p95_ms": [
+          28.488,
+          28.721
+        ],
+        "within_run_mad_ms": [
+          0.122,
+          0.088
+        ],
+        "median_span_ms": 0.2,
+        "two_run_median_absolute_deviation_ms": 0.1
+      },
+      {
+        "case": "gemini.guard.danger.drop_table",
+        "baseline_medians_ms": [
+          28.306,
+          28.546
+        ],
+        "baseline_p95_ms": [
+          28.538,
+          29.101
+        ],
+        "within_run_mad_ms": [
+          0.134,
+          0.097
+        ],
+        "median_span_ms": 0.24,
+        "two_run_median_absolute_deviation_ms": 0.12
+      },
+      {
+        "case": "gemini.guard.danger.drop_database",
+        "baseline_medians_ms": [
+          27.832,
+          28.323
+        ],
+        "baseline_p95_ms": [
+          31.289,
+          28.945
+        ],
+        "within_run_mad_ms": [
+          0.214,
+          0.131
+        ],
+        "median_span_ms": 0.491,
+        "two_run_median_absolute_deviation_ms": 0.245
+      },
+      {
+        "case": "gemini.guard.danger.truncate_table",
+        "baseline_medians_ms": [
+          27.769,
+          28.37
+        ],
+        "baseline_p95_ms": [
+          28.27,
+          28.704
+        ],
+        "within_run_mad_ms": [
+          0.137,
+          0.039
+        ],
+        "median_span_ms": 0.601,
+        "two_run_median_absolute_deviation_ms": 0.301
+      },
+      {
+        "case": "gemini.guard.danger.delete_without_where",
+        "baseline_medians_ms": [
+          27.737,
+          28.312
+        ],
+        "baseline_p95_ms": [
+          28.108,
+          28.546
+        ],
+        "within_run_mad_ms": [
+          0.11,
+          0.125
+        ],
+        "median_span_ms": 0.575,
+        "two_run_median_absolute_deviation_ms": 0.288
+      },
+      {
+        "case": "gemini.guard.danger.recursive_world_writable",
+        "baseline_medians_ms": [
+          27.661,
+          28.304
+        ],
+        "baseline_p95_ms": [
+          27.912,
+          28.451
+        ],
+        "within_run_mad_ms": [
+          0.051,
+          0.126
+        ],
+        "median_span_ms": 0.643,
+        "two_run_median_absolute_deviation_ms": 0.321
+      },
+      {
+        "case": "gemini.guard.danger.world_writable",
+        "baseline_medians_ms": [
+          27.583,
+          28.329
+        ],
+        "baseline_p95_ms": [
+          27.91,
+          28.556
+        ],
+        "within_run_mad_ms": [
+          0.107,
+          0.097
+        ],
+        "median_span_ms": 0.746,
+        "two_run_median_absolute_deviation_ms": 0.373
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_bash",
+        "baseline_medians_ms": [
+          27.349,
+          28.179
+        ],
+        "baseline_p95_ms": [
+          27.619,
+          28.579
+        ],
+        "within_run_mad_ms": [
+          0.104,
+          0.147
+        ],
+        "median_span_ms": 0.83,
+        "two_run_median_absolute_deviation_ms": 0.415
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_sh",
+        "baseline_medians_ms": [
+          27.391,
+          28.018
+        ],
+        "baseline_p95_ms": [
+          27.811,
+          28.473
+        ],
+        "within_run_mad_ms": [
+          0.131,
+          0.151
+        ],
+        "median_span_ms": 0.627,
+        "two_run_median_absolute_deviation_ms": 0.314
+      },
+      {
+        "case": "gemini.guard.danger.upload_local_data",
+        "baseline_medians_ms": [
+          27.445,
+          28.06
+        ],
+        "baseline_p95_ms": [
+          27.802,
+          28.359
+        ],
+        "within_run_mad_ms": [
+          0.107,
+          0.134
+        ],
+        "median_span_ms": 0.615,
+        "two_run_median_absolute_deviation_ms": 0.307
+      },
+      {
+        "case": "gemini.guard.danger.privileged_command",
+        "baseline_medians_ms": [
+          27.697,
+          28.428
+        ],
+        "baseline_p95_ms": [
+          27.853,
+          28.687
+        ],
+        "within_run_mad_ms": [
+          0.05,
+          0.084
+        ],
+        "median_span_ms": 0.731,
+        "two_run_median_absolute_deviation_ms": 0.366
+      },
+      {
+        "case": "gemini.guard.danger.publish_package",
+        "baseline_medians_ms": [
+          27.637,
+          28.296
+        ],
+        "baseline_p95_ms": [
+          28.185,
+          28.472
+        ],
+        "within_run_mad_ms": [
+          0.072,
+          0.111
+        ],
+        "median_span_ms": 0.659,
+        "two_run_median_absolute_deviation_ms": 0.329
+      },
+      {
+        "case": "gemini.guard.danger.writer-before",
+        "baseline_medians_ms": [
+          26.318,
+          26.837
+        ],
+        "baseline_p95_ms": [
+          26.894,
+          27.375
+        ],
+        "within_run_mad_ms": [
+          0.156,
+          0.087
+        ],
+        "median_span_ms": 0.519,
+        "two_run_median_absolute_deviation_ms": 0.259
+      },
+      {
+        "case": "gemini.guard.danger.writer-after",
+        "baseline_medians_ms": [
+          26.27,
+          26.689
+        ],
+        "baseline_p95_ms": [
+          26.668,
+          26.938
+        ],
+        "within_run_mad_ms": [
+          0.169,
+          0.088
+        ],
+        "median_span_ms": 0.419,
+        "two_run_median_absolute_deviation_ms": 0.21
+      },
+      {
+        "case": "gemini.guard.danger.substitution",
+        "baseline_medians_ms": [
+          26.608,
+          27.034
+        ],
+        "baseline_p95_ms": [
+          27.044,
+          27.514
+        ],
+        "within_run_mad_ms": [
+          0.176,
+          0.124
+        ],
+        "median_span_ms": 0.426,
+        "two_run_median_absolute_deviation_ms": 0.213
+      },
+      {
+        "case": "gemini.guard.danger.interpreter-sink",
+        "baseline_medians_ms": [
+          27.01,
+          27.101
+        ],
+        "baseline_p95_ms": [
+          27.332,
+          27.249
+        ],
+        "within_run_mad_ms": [
+          0.196,
+          0.078
+        ],
+        "median_span_ms": 0.091,
+        "two_run_median_absolute_deviation_ms": 0.045
+      },
+      {
+        "case": "gemini.guard.danger.unicode-normalization",
+        "baseline_medians_ms": [
+          28.305,
+          28.37
+        ],
+        "baseline_p95_ms": [
+          28.503,
+          28.773
+        ],
+        "within_run_mad_ms": [
+          0.124,
+          0.109
+        ],
+        "median_span_ms": 0.065,
+        "two_run_median_absolute_deviation_ms": 0.033
+      },
+      {
+        "case": "gemini.guard.danger.extra-field",
+        "baseline_medians_ms": [
+          28.407,
+          28.554
+        ],
+        "baseline_p95_ms": [
+          28.653,
+          28.85
+        ],
+        "within_run_mad_ms": [
+          0.116,
+          0.119
+        ],
+        "median_span_ms": 0.147,
+        "two_run_median_absolute_deviation_ms": 0.073
+      },
+      {
+        "case": "gemini.guard.danger.malformed-schema",
+        "baseline_medians_ms": [
+          28.233,
+          30.932
+        ],
+        "baseline_p95_ms": [
+          28.535,
+          39.708
+        ],
+        "within_run_mad_ms": [
+          0.117,
+          2.427
+        ],
+        "median_span_ms": 2.699,
+        "two_run_median_absolute_deviation_ms": 1.349
+      },
+      {
+        "case": "codex.guard.patch.bytes-46899",
+        "baseline_medians_ms": [
+          24.563,
+          24.302
+        ],
+        "baseline_p95_ms": [
+          26.903,
+          24.526
+        ],
+        "within_run_mad_ms": [
+          0.786,
+          0.095
+        ],
+        "median_span_ms": 0.261,
+        "two_run_median_absolute_deviation_ms": 0.13
+      },
+      {
+        "case": "codex.guard.patch.lines-330",
+        "baseline_medians_ms": [
+          25.222,
+          24.265
+        ],
+        "baseline_p95_ms": [
+          27.001,
+          24.465
+        ],
+        "within_run_mad_ms": [
+          0.386,
+          0.109
+        ],
+        "median_span_ms": 0.957,
+        "two_run_median_absolute_deviation_ms": 0.479
+      },
+      {
+        "case": "codex.guard.patch.lines-124-segments-142",
+        "baseline_medians_ms": [
+          23.913,
+          24.251
+        ],
+        "baseline_p95_ms": [
+          24.375,
+          24.481
+        ],
+        "within_run_mad_ms": [
+          0.119,
+          0.112
+        ],
+        "median_span_ms": 0.338,
+        "two_run_median_absolute_deviation_ms": 0.169
+      },
+      {
+        "case": "codex.guard.write.actual-newlines",
+        "baseline_medians_ms": [
+          23.811,
+          24.215
+        ],
+        "baseline_p95_ms": [
+          24.17,
+          24.787
+        ],
+        "within_run_mad_ms": [
+          0.118,
+          0.068
+        ],
+        "median_span_ms": 0.404,
+        "two_run_median_absolute_deviation_ms": 0.202
+      },
+      {
+        "case": "codex.guard.write.escaped-newlines",
+        "baseline_medians_ms": [
+          23.836,
+          24.127
+        ],
+        "baseline_p95_ms": [
+          23.943,
+          24.349
+        ],
+        "within_run_mad_ms": [
+          0.09,
+          0.101
+        ],
+        "median_span_ms": 0.291,
+        "two_run_median_absolute_deviation_ms": 0.146
+      },
+      {
+        "case": "codex.guard.write.utf8-growth",
+        "baseline_medians_ms": [
+          23.711,
+          24.255
+        ],
+        "baseline_p95_ms": [
+          23.871,
+          24.622
+        ],
+        "within_run_mad_ms": [
+          0.112,
+          0.088
+        ],
+        "median_span_ms": 0.544,
+        "two_run_median_absolute_deviation_ms": 0.272
+      },
+      {
+        "case": "codex.guard.write.examples.md",
+        "baseline_medians_ms": [
+          24.048,
+          27.259
+        ],
+        "baseline_p95_ms": [
+          24.497,
+          28.673
+        ],
+        "within_run_mad_ms": [
+          0.094,
+          0.401
+        ],
+        "median_span_ms": 3.211,
+        "two_run_median_absolute_deviation_ms": 1.606
+      },
+      {
+        "case": "codex.guard.write.examples.py",
+        "baseline_medians_ms": [
+          24.074,
+          24.723
+        ],
+        "baseline_p95_ms": [
+          24.285,
+          25.522
+        ],
+        "within_run_mad_ms": [
+          0.108,
+          0.101
+        ],
+        "median_span_ms": 0.649,
+        "two_run_median_absolute_deviation_ms": 0.324
+      },
+      {
+        "case": "codex.guard.write.examples.test.py",
+        "baseline_medians_ms": [
+          24.105,
+          24.953
+        ],
+        "baseline_p95_ms": [
+          24.261,
+          26.315
+        ],
+        "within_run_mad_ms": [
+          0.086,
+          0.175
+        ],
+        "median_span_ms": 0.848,
+        "two_run_median_absolute_deviation_ms": 0.424
+      },
+      {
+        "case": "codex.guard.edit.replacement",
+        "baseline_medians_ms": [
+          24.28,
+          24.819
+        ],
+        "baseline_p95_ms": [
+          24.916,
+          26.453
+        ],
+        "within_run_mad_ms": [
+          0.111,
+          0.125
+        ],
+        "median_span_ms": 0.539,
+        "two_run_median_absolute_deviation_ms": 0.269
+      },
+      {
+        "case": "codex.guard.search.literal",
+        "baseline_medians_ms": [
+          24.038,
+          24.503
+        ],
+        "baseline_p95_ms": [
+          24.469,
+          24.717
+        ],
+        "within_run_mad_ms": [
+          0.125,
+          0.117
+        ],
+        "median_span_ms": 0.465,
+        "two_run_median_absolute_deviation_ms": 0.232
+      },
+      {
+        "case": "codex.guard.search.shell-literal",
+        "baseline_medians_ms": [
+          23.919,
+          24.454
+        ],
+        "baseline_p95_ms": [
+          24.152,
+          24.846
+        ],
+        "within_run_mad_ms": [
+          0.091,
+          0.115
+        ],
+        "median_span_ms": 0.535,
+        "two_run_median_absolute_deviation_ms": 0.268
+      },
+      {
+        "case": "codex.guard.writer.chars-8787-segments-183",
+        "baseline_medians_ms": [
+          23.837,
+          24.482
+        ],
+        "baseline_p95_ms": [
+          23.999,
+          25.064
+        ],
+        "within_run_mad_ms": [
+          0.068,
+          0.107
+        ],
+        "median_span_ms": 0.645,
+        "two_run_median_absolute_deviation_ms": 0.322
+      },
+      {
+        "case": "codex.guard.writer.lines-120-segments-139",
+        "baseline_medians_ms": [
+          23.765,
+          24.268
+        ],
+        "baseline_p95_ms": [
+          24.074,
+          25.162
+        ],
+        "within_run_mad_ms": [
+          0.118,
+          0.137
+        ],
+        "median_span_ms": 0.503,
+        "two_run_median_absolute_deviation_ms": 0.252
+      },
+      {
+        "case": "codex.guard.survey.json-stdin",
+        "baseline_medians_ms": [
+          25.478,
+          26.282
+        ],
+        "baseline_p95_ms": [
+          25.786,
+          27.177
+        ],
+        "within_run_mad_ms": [
+          0.091,
+          0.243
+        ],
+        "median_span_ms": 0.804,
+        "two_run_median_absolute_deviation_ms": 0.402
+      },
+      {
+        "case": "codex.guard.survey.python-subprocess",
+        "baseline_medians_ms": [
+          25.995,
+          26.66
+        ],
+        "baseline_p95_ms": [
+          26.25,
+          27.123
+        ],
+        "within_run_mad_ms": [
+          0.064,
+          0.084
+        ],
+        "median_span_ms": 0.665,
+        "two_run_median_absolute_deviation_ms": 0.332
+      },
+      {
+        "case": "codex.guard.survey.analysis-source",
+        "baseline_medians_ms": [
+          25.812,
+          26.399
+        ],
+        "baseline_p95_ms": [
+          26.068,
+          26.898
+        ],
+        "within_run_mad_ms": [
+          0.117,
+          0.191
+        ],
+        "median_span_ms": 0.587,
+        "two_run_median_absolute_deviation_ms": 0.293
+      },
+      {
+        "case": "codex.guard.write.english-inflection",
+        "baseline_medians_ms": [
+          25.5,
+          26.074
+        ],
+        "baseline_p95_ms": [
+          25.745,
+          26.552
+        ],
+        "within_run_mad_ms": [
+          0.051,
+          0.13
+        ],
+        "median_span_ms": 0.574,
+        "two_run_median_absolute_deviation_ms": 0.287
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_root",
+        "baseline_medians_ms": [
+          25.15,
+          25.711
+        ],
+        "baseline_p95_ms": [
+          25.354,
+          26.193
+        ],
+        "within_run_mad_ms": [
+          0.102,
+          0.112
+        ],
+        "median_span_ms": 0.561,
+        "two_run_median_absolute_deviation_ms": 0.28
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_home",
+        "baseline_medians_ms": [
+          25.113,
+          25.702
+        ],
+        "baseline_p95_ms": [
+          25.279,
+          26.014
+        ],
+        "within_run_mad_ms": [
+          0.068,
+          0.167
+        ],
+        "median_span_ms": 0.589,
+        "two_run_median_absolute_deviation_ms": 0.295
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_current",
+        "baseline_medians_ms": [
+          25.101,
+          25.824
+        ],
+        "baseline_p95_ms": [
+          25.322,
+          26.086
+        ],
+        "within_run_mad_ms": [
+          0.068,
+          0.118
+        ],
+        "median_span_ms": 0.723,
+        "two_run_median_absolute_deviation_ms": 0.362
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_parent",
+        "baseline_medians_ms": [
+          25.207,
+          25.802
+        ],
+        "baseline_p95_ms": [
+          25.522,
+          26.18
+        ],
+        "within_run_mad_ms": [
+          0.106,
+          0.136
+        ],
+        "median_span_ms": 0.595,
+        "two_run_median_absolute_deviation_ms": 0.297
+      },
+      {
+        "case": "codex.guard.danger.remove_env_file",
+        "baseline_medians_ms": [
+          25.203,
+          25.81
+        ],
+        "baseline_p95_ms": [
+          25.388,
+          26.546
+        ],
+        "within_run_mad_ms": [
+          0.068,
+          0.171
+        ],
+        "median_span_ms": 0.607,
+        "two_run_median_absolute_deviation_ms": 0.303
+      },
+      {
+        "case": "codex.guard.danger.remove_git_metadata",
+        "baseline_medians_ms": [
+          25.115,
+          25.925
+        ],
+        "baseline_p95_ms": [
+          25.354,
+          26.438
+        ],
+        "within_run_mad_ms": [
+          0.092,
+          0.18
+        ],
+        "median_span_ms": 0.81,
+        "two_run_median_absolute_deviation_ms": 0.405
+      },
+      {
+        "case": "codex.guard.danger.force_push_protected_branch",
+        "baseline_medians_ms": [
+          25.103,
+          26.245
+        ],
+        "baseline_p95_ms": [
+          25.384,
+          26.646
+        ],
+        "within_run_mad_ms": [
+          0.119,
+          0.198
+        ],
+        "median_span_ms": 1.142,
+        "two_run_median_absolute_deviation_ms": 0.571
+      },
+      {
+        "case": "codex.guard.danger.hard_reset",
+        "baseline_medians_ms": [
+          25.224,
+          26.032
+        ],
+        "baseline_p95_ms": [
+          25.512,
+          26.418
+        ],
+        "within_run_mad_ms": [
+          0.11,
+          0.247
+        ],
+        "median_span_ms": 0.808,
+        "two_run_median_absolute_deviation_ms": 0.404
+      },
+      {
+        "case": "codex.guard.danger.forced_git_clean",
+        "baseline_medians_ms": [
+          25.238,
+          25.818
+        ],
+        "baseline_p95_ms": [
+          25.515,
+          26.394
+        ],
+        "within_run_mad_ms": [
+          0.054,
+          0.185
+        ],
+        "median_span_ms": 0.58,
+        "two_run_median_absolute_deviation_ms": 0.29
+      },
+      {
+        "case": "codex.guard.danger.drop_table",
+        "baseline_medians_ms": [
+          25.305,
+          25.861
+        ],
+        "baseline_p95_ms": [
+          25.567,
+          26.153
+        ],
+        "within_run_mad_ms": [
+          0.122,
+          0.132
+        ],
+        "median_span_ms": 0.556,
+        "two_run_median_absolute_deviation_ms": 0.278
+      },
+      {
+        "case": "codex.guard.danger.drop_database",
+        "baseline_medians_ms": [
+          25.094,
+          25.621
+        ],
+        "baseline_p95_ms": [
+          25.248,
+          26.3
+        ],
+        "within_run_mad_ms": [
+          0.109,
+          0.127
+        ],
+        "median_span_ms": 0.527,
+        "two_run_median_absolute_deviation_ms": 0.263
+      },
+      {
+        "case": "codex.guard.danger.truncate_table",
+        "baseline_medians_ms": [
+          25.313,
+          25.572
+        ],
+        "baseline_p95_ms": [
+          25.762,
+          25.817
+        ],
+        "within_run_mad_ms": [
+          0.197,
+          0.082
+        ],
+        "median_span_ms": 0.259,
+        "two_run_median_absolute_deviation_ms": 0.13
+      },
+      {
+        "case": "codex.guard.danger.delete_without_where",
+        "baseline_medians_ms": [
+          25.4,
+          25.694
+        ],
+        "baseline_p95_ms": [
+          25.686,
+          26.09
+        ],
+        "within_run_mad_ms": [
+          0.128,
+          0.102
+        ],
+        "median_span_ms": 0.294,
+        "two_run_median_absolute_deviation_ms": 0.147
+      },
+      {
+        "case": "codex.guard.danger.recursive_world_writable",
+        "baseline_medians_ms": [
+          25.501,
+          25.576
+        ],
+        "baseline_p95_ms": [
+          25.643,
+          26.025
+        ],
+        "within_run_mad_ms": [
+          0.139,
+          0.078
+        ],
+        "median_span_ms": 0.075,
+        "two_run_median_absolute_deviation_ms": 0.037
+      },
+      {
+        "case": "codex.guard.danger.world_writable",
+        "baseline_medians_ms": [
+          25.362,
+          26.077
+        ],
+        "baseline_p95_ms": [
+          25.572,
+          27.13
+        ],
+        "within_run_mad_ms": [
+          0.138,
+          0.257
+        ],
+        "median_span_ms": 0.715,
+        "two_run_median_absolute_deviation_ms": 0.358
+      },
+      {
+        "case": "codex.guard.danger.download_execute_bash",
+        "baseline_medians_ms": [
+          25.147,
+          25.616
+        ],
+        "baseline_p95_ms": [
+          25.388,
+          27.414
+        ],
+        "within_run_mad_ms": [
+          0.125,
+          0.173
+        ],
+        "median_span_ms": 0.469,
+        "two_run_median_absolute_deviation_ms": 0.235
+      },
+      {
+        "case": "codex.guard.danger.download_execute_sh",
+        "baseline_medians_ms": [
+          24.919,
+          25.633
+        ],
+        "baseline_p95_ms": [
+          25.169,
+          26.969
+        ],
+        "within_run_mad_ms": [
+          0.157,
+          0.183
+        ],
+        "median_span_ms": 0.714,
+        "two_run_median_absolute_deviation_ms": 0.357
+      },
+      {
+        "case": "codex.guard.danger.upload_local_data",
+        "baseline_medians_ms": [
+          26.537,
+          27.758
+        ],
+        "baseline_p95_ms": [
+          28.26,
+          28.342
+        ],
+        "within_run_mad_ms": [
+          1.08,
+          0.47
+        ],
+        "median_span_ms": 1.221,
+        "two_run_median_absolute_deviation_ms": 0.611
+      },
+      {
+        "case": "codex.guard.danger.privileged_command",
+        "baseline_medians_ms": [
+          25.522,
+          25.749
+        ],
+        "baseline_p95_ms": [
+          27.134,
+          26.37
+        ],
+        "within_run_mad_ms": [
+          0.283,
+          0.165
+        ],
+        "median_span_ms": 0.227,
+        "two_run_median_absolute_deviation_ms": 0.114
+      },
+      {
+        "case": "codex.guard.danger.publish_package",
+        "baseline_medians_ms": [
+          25.071,
+          25.861
+        ],
+        "baseline_p95_ms": [
+          25.227,
+          26.09
+        ],
+        "within_run_mad_ms": [
+          0.095,
+          0.137
+        ],
+        "median_span_ms": 0.79,
+        "two_run_median_absolute_deviation_ms": 0.395
+      },
+      {
+        "case": "codex.guard.danger.writer-before",
+        "baseline_medians_ms": [
+          23.699,
+          24.271
+        ],
+        "baseline_p95_ms": [
+          24.137,
+          24.586
+        ],
+        "within_run_mad_ms": [
+          0.079,
+          0.093
+        ],
+        "median_span_ms": 0.572,
+        "two_run_median_absolute_deviation_ms": 0.286
+      },
+      {
+        "case": "codex.guard.danger.writer-after",
+        "baseline_medians_ms": [
+          23.907,
+          24.407
+        ],
+        "baseline_p95_ms": [
+          24.146,
+          25.634
+        ],
+        "within_run_mad_ms": [
+          0.083,
+          0.174
+        ],
+        "median_span_ms": 0.5,
+        "two_run_median_absolute_deviation_ms": 0.25
+      },
+      {
+        "case": "codex.guard.danger.substitution",
+        "baseline_medians_ms": [
+          25.687,
+          24.594
+        ],
+        "baseline_p95_ms": [
+          27.18,
+          26.839
+        ],
+        "within_run_mad_ms": [
+          0.693,
+          0.145
+        ],
+        "median_span_ms": 1.093,
+        "two_run_median_absolute_deviation_ms": 0.546
+      },
+      {
+        "case": "codex.guard.danger.interpreter-sink",
+        "baseline_medians_ms": [
+          24.139,
+          24.767
+        ],
+        "baseline_p95_ms": [
+          24.587,
+          26.0
+        ],
+        "within_run_mad_ms": [
+          0.075,
+          0.299
+        ],
+        "median_span_ms": 0.628,
+        "two_run_median_absolute_deviation_ms": 0.314
+      },
+      {
+        "case": "codex.guard.danger.unicode-normalization",
+        "baseline_medians_ms": [
+          25.192,
+          27.798
+        ],
+        "baseline_p95_ms": [
+          25.654,
+          28.81
+        ],
+        "within_run_mad_ms": [
+          0.098,
+          0.753
+        ],
+        "median_span_ms": 2.606,
+        "two_run_median_absolute_deviation_ms": 1.303
+      },
+      {
+        "case": "codex.guard.danger.extra-field",
+        "baseline_medians_ms": [
+          25.64,
+          25.958
+        ],
+        "baseline_p95_ms": [
+          27.763,
+          27.158
+        ],
+        "within_run_mad_ms": [
+          0.285,
+          0.158
+        ],
+        "median_span_ms": 0.318,
+        "two_run_median_absolute_deviation_ms": 0.159
+      },
+      {
+        "case": "codex.guard.danger.malformed-schema",
+        "baseline_medians_ms": [
+          25.31,
+          25.766
+        ],
+        "baseline_p95_ms": [
+          27.174,
+          26.555
+        ],
+        "within_run_mad_ms": [
+          0.145,
+          0.203
+        ],
+        "median_span_ms": 0.456,
+        "two_run_median_absolute_deviation_ms": 0.228
+      }
+    ]
+  },
+  "first_process_observations": [
+    {
+      "case": "copilot.guard.clean",
+      "samples_ms": [
+        27.663042,
+        21.060916,
+        21.668084,
+        27.776833
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.finding",
+      "samples_ms": [
+        29.851333,
+        22.468416,
+        22.65925,
+        29.103875
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.large",
+      "samples_ms": [
+        69.934667,
+        27.391792,
+        27.378792,
+        73.771125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.failure",
+      "samples_ms": [
+        28.456167,
+        19.939542,
+        20.192792,
+        27.110542
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.clean",
+      "samples_ms": [
+        32.054542,
+        21.312084,
+        21.8185,
+        27.843125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.finding",
+      "samples_ms": [
+        27.997042,
+        22.41175,
+        22.482584,
+        28.76975
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.large",
+      "samples_ms": [
+        112.290083,
+        24.103,
+        24.462208,
+        116.189917
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.failure",
+      "samples_ms": [
+        27.246125,
+        20.16825,
+        20.31175,
+        28.878
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.clean",
+      "samples_ms": [
+        26.500166,
+        18.514333,
+        18.811292,
+        25.260208
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.finding",
+      "samples_ms": [
+        25.413959,
+        19.6965,
+        19.744791,
+        28.309583
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.large",
+      "samples_ms": [
+        109.14775,
+        21.530583,
+        21.412,
+        115.851792
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.failure",
+      "samples_ms": [
+        22.641875,
+        17.726,
+        17.594958,
+        27.389041
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.patch.bytes-46899",
+      "samples_ms": [
+        27.339333,
+        21.527125,
+        21.886125,
+        30.172584
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.patch.lines-330",
+      "samples_ms": [
+        26.35025,
+        20.708667,
+        21.127334,
+        29.00275
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.patch.lines-124-segments-142",
+      "samples_ms": [
+        26.565875,
+        20.860625,
+        21.011125,
+        33.101
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.actual-newlines",
+      "samples_ms": [
+        27.335375,
+        20.916792,
+        21.16425,
+        28.89975
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.escaped-newlines",
+      "samples_ms": [
+        28.404875,
+        21.109,
+        20.928542,
+        27.478083
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.utf8-growth",
+      "samples_ms": [
+        26.405666,
+        21.186625,
+        20.919125,
+        28.052666
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.examples.md",
+      "samples_ms": [
+        27.5695,
+        20.648458,
+        20.819875,
+        28.729458
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.examples.py",
+      "samples_ms": [
+        28.02225,
+        20.840375,
+        20.661208,
+        30.46475
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.examples.test.py",
+      "samples_ms": [
+        27.677625,
+        22.693042,
+        20.678833,
+        28.763166
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.edit.replacement",
+      "samples_ms": [
+        28.041625,
+        20.955542,
+        20.745375,
+        29.07525
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.search.literal",
+      "samples_ms": [
+        28.057,
+        20.486,
+        20.859917,
+        29.964209
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.search.shell-literal",
+      "samples_ms": [
+        26.583041,
+        20.659917,
+        21.1255,
+        27.848625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "samples_ms": [
+        26.484042,
+        22.474083,
+        22.455542,
+        27.581666
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "samples_ms": [
+        26.085916,
+        22.025208,
+        22.171167,
+        27.025291
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.survey.json-stdin",
+      "samples_ms": [
+        27.916375,
+        20.709375,
+        20.687292,
+        28.915541
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.survey.python-subprocess",
+      "samples_ms": [
+        28.484791,
+        22.264041,
+        22.299917,
+        31.127541
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.survey.analysis-source",
+      "samples_ms": [
+        28.546209,
+        21.13475,
+        21.3565,
+        28.714875
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.write.english-inflection",
+      "samples_ms": [
+        29.082042,
+        20.840916,
+        20.907375,
+        29.527625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_root",
+      "samples_ms": [
+        27.731083,
+        22.440833,
+        22.34375,
+        28.446291
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_home",
+      "samples_ms": [
+        27.526792,
+        22.5855,
+        22.743916,
+        28.610416
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_current",
+      "samples_ms": [
+        27.858958,
+        21.96075,
+        22.507666,
+        28.868292
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.recursive_remove_parent",
+      "samples_ms": [
+        27.820958,
+        22.484833,
+        22.136334,
+        34.061042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.remove_env_file",
+      "samples_ms": [
+        27.548458,
+        22.453792,
+        22.3605,
+        28.710375
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "samples_ms": [
+        27.631791,
+        22.393583,
+        22.561875,
+        30.989625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "samples_ms": [
+        27.871042,
+        22.680541,
+        22.488208,
+        28.689583
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.hard_reset",
+      "samples_ms": [
+        27.922792,
+        22.5115,
+        22.535875,
+        28.506
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.forced_git_clean",
+      "samples_ms": [
+        27.473959,
+        22.334792,
+        22.244958,
+        28.7005
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.drop_table",
+      "samples_ms": [
+        28.21075,
+        22.576292,
+        22.444542,
+        28.338041
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.drop_database",
+      "samples_ms": [
+        27.862583,
+        22.573458,
+        22.476667,
+        28.680917
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.truncate_table",
+      "samples_ms": [
+        27.407167,
+        22.472834,
+        22.577125,
+        29.573167
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.delete_without_where",
+      "samples_ms": [
+        27.480958,
+        22.259958,
+        22.899291,
+        30.291333
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "samples_ms": [
+        27.975917,
+        22.28025,
+        22.476042,
+        28.896084
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.world_writable",
+      "samples_ms": [
+        27.985917,
+        22.619917,
+        22.477959,
+        29.312791
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.download_execute_bash",
+      "samples_ms": [
+        27.485792,
+        22.466292,
+        22.068625,
+        29.292333
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.download_execute_sh",
+      "samples_ms": [
+        27.518375,
+        21.989959,
+        22.560292,
+        28.264625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.upload_local_data",
+      "samples_ms": [
+        27.317833,
+        22.038917,
+        22.327083,
+        27.94
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.privileged_command",
+      "samples_ms": [
+        27.812584,
+        22.322209,
+        22.74775,
+        28.54925
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.publish_package",
+      "samples_ms": [
+        28.276167,
+        22.156958,
+        22.372,
+        28.464291
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.writer-before",
+      "samples_ms": [
+        26.167167,
+        24.481917,
+        24.365333,
+        27.263125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.writer-after",
+      "samples_ms": [
+        26.246583,
+        24.466042,
+        24.460292,
+        27.70175
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.substitution",
+      "samples_ms": [
+        26.576291,
+        22.245875,
+        22.978917,
+        27.083042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.interpreter-sink",
+      "samples_ms": [
+        26.621416,
+        23.679417,
+        24.023542,
+        27.154208
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.unicode-normalization",
+      "samples_ms": [
+        27.714791,
+        22.466083,
+        22.331041,
+        28.465083
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.extra-field",
+      "samples_ms": [
+        27.841,
+        22.761291,
+        22.728458,
+        28.789167
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "copilot.guard.danger.malformed-schema",
+      "samples_ms": [
+        27.471542,
+        22.322708,
+        22.957416,
+        28.270042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.patch.bytes-46899",
+      "samples_ms": [
+        26.957084,
+        22.362584,
+        21.684375,
+        27.689833
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.patch.lines-330",
+      "samples_ms": [
+        26.885875,
+        20.945459,
+        21.412042,
+        27.098875
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.patch.lines-124-segments-142",
+      "samples_ms": [
+        26.466666,
+        20.846333,
+        21.335166,
+        28.047042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.actual-newlines",
+      "samples_ms": [
+        26.773042,
+        20.953459,
+        21.244375,
+        27.502375
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.escaped-newlines",
+      "samples_ms": [
+        26.860125,
+        20.911708,
+        21.184667,
+        27.109042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.utf8-growth",
+      "samples_ms": [
+        26.727041,
+        21.175208,
+        20.961167,
+        27.047416
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.examples.md",
+      "samples_ms": [
+        28.379125,
+        20.823583,
+        21.063041,
+        28.586458
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.examples.py",
+      "samples_ms": [
+        28.183625,
+        21.971458,
+        21.641709,
+        28.557542
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.examples.test.py",
+      "samples_ms": [
+        27.805083,
+        21.1525,
+        21.301792,
+        28.535208
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.edit.replacement",
+      "samples_ms": [
+        28.308834,
+        21.194375,
+        27.841792,
+        29.372458
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.search.literal",
+      "samples_ms": [
+        27.597541,
+        20.936625,
+        29.364209,
+        31.211791
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.search.shell-literal",
+      "samples_ms": [
+        26.636916,
+        20.717583,
+        21.046084,
+        27.24025
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "samples_ms": [
+        26.416709,
+        22.571167,
+        22.712584,
+        27.111708
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.writer.lines-120-segments-139",
+      "samples_ms": [
+        26.474083,
+        22.115958,
+        22.802083,
+        26.832584
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.survey.json-stdin",
+      "samples_ms": [
+        28.401375,
+        21.342834,
+        21.160958,
+        28.734125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.survey.python-subprocess",
+      "samples_ms": [
+        28.725875,
+        21.964541,
+        22.327125,
+        29.595333
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.survey.analysis-source",
+      "samples_ms": [
+        28.291792,
+        20.777167,
+        21.088792,
+        29.099125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.write.english-inflection",
+      "samples_ms": [
+        27.846584,
+        20.952834,
+        20.719083,
+        28.947291
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_root",
+      "samples_ms": [
+        27.882584,
+        22.42675,
+        22.412625,
+        28.723709
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_home",
+      "samples_ms": [
+        27.77875,
+        22.409167,
+        22.845667,
+        28.335166
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_current",
+      "samples_ms": [
+        27.92675,
+        25.708667,
+        22.475833,
+        28.894583
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.recursive_remove_parent",
+      "samples_ms": [
+        27.828125,
+        22.8895,
+        22.514458,
+        28.448333
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.remove_env_file",
+      "samples_ms": [
+        27.86725,
+        22.478542,
+        22.396292,
+        28.936584
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.remove_git_metadata",
+      "samples_ms": [
+        27.822,
+        22.606292,
+        22.672708,
+        28.414625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.force_push_protected_branch",
+      "samples_ms": [
+        27.810917,
+        22.52425,
+        22.810583,
+        29.167916
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.hard_reset",
+      "samples_ms": [
+        28.169292,
+        22.302458,
+        22.5565,
+        28.616
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.forced_git_clean",
+      "samples_ms": [
+        28.510375,
+        22.231,
+        22.569041,
+        28.674583
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.drop_table",
+      "samples_ms": [
+        28.247083,
+        22.760292,
+        22.972125,
+        28.52325
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.drop_database",
+      "samples_ms": [
+        28.346208,
+        22.317333,
+        22.808791,
+        28.537417
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.truncate_table",
+      "samples_ms": [
+        30.231125,
+        22.150333,
+        22.718208,
+        28.566792
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.delete_without_where",
+      "samples_ms": [
+        27.803,
+        22.940291,
+        22.543541,
+        28.77725
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.recursive_world_writable",
+      "samples_ms": [
+        27.938667,
+        22.392834,
+        22.6,
+        28.576417
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.world_writable",
+      "samples_ms": [
+        27.96475,
+        22.662458,
+        22.678667,
+        29.145292
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.download_execute_bash",
+      "samples_ms": [
+        27.482333,
+        21.983875,
+        22.64575,
+        28.185708
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.download_execute_sh",
+      "samples_ms": [
+        27.559583,
+        21.864375,
+        21.926458,
+        27.950042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.upload_local_data",
+      "samples_ms": [
+        27.770583,
+        22.140334,
+        22.140875,
+        28.085916
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.privileged_command",
+      "samples_ms": [
+        27.933042,
+        22.031584,
+        22.534083,
+        28.474125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.publish_package",
+      "samples_ms": [
+        27.823542,
+        22.391459,
+        22.664709,
+        28.4885
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.writer-before",
+      "samples_ms": [
+        26.654833,
+        24.820917,
+        24.580792,
+        27.109
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.writer-after",
+      "samples_ms": [
+        26.441542,
+        24.270375,
+        24.922042,
+        27.240625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.substitution",
+      "samples_ms": [
+        26.32425,
+        22.330833,
+        23.232125,
+        26.964
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.interpreter-sink",
+      "samples_ms": [
+        26.824834,
+        23.657708,
+        24.491541,
+        27.254333
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.unicode-normalization",
+      "samples_ms": [
+        28.290542,
+        22.349708,
+        22.687,
+        28.882167
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.extra-field",
+      "samples_ms": [
+        28.752916,
+        22.637958,
+        22.983791,
+        28.650458
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "gemini.guard.danger.malformed-schema",
+      "samples_ms": [
+        28.45625,
+        22.473958,
+        22.676959,
+        28.446083
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.patch.bytes-46899",
+      "samples_ms": [
+        24.360833,
+        18.326417,
+        18.701041,
+        24.592792
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.patch.lines-330",
+      "samples_ms": [
+        26.837541,
+        18.184625,
+        18.247333,
+        24.3875
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "samples_ms": [
+        23.912959,
+        18.082167,
+        18.271625,
+        24.345167
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.actual-newlines",
+      "samples_ms": [
+        24.224292,
+        18.370542,
+        18.348958,
+        24.198084
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.escaped-newlines",
+      "samples_ms": [
+        23.981208,
+        18.092667,
+        18.488916,
+        23.946792
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.utf8-growth",
+      "samples_ms": [
+        23.82375,
+        18.264417,
+        18.382667,
+        24.449625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.examples.md",
+      "samples_ms": [
+        23.975917,
+        17.92775,
+        18.345083,
+        27.025833
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.examples.py",
+      "samples_ms": [
+        24.380875,
+        18.120625,
+        18.269416,
+        25.222584
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.examples.test.py",
+      "samples_ms": [
+        24.100875,
+        18.136334,
+        18.475042,
+        24.927958
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.edit.replacement",
+      "samples_ms": [
+        24.406291,
+        18.090208,
+        18.33275,
+        25.894042
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.search.literal",
+      "samples_ms": [
+        23.855625,
+        18.311417,
+        18.257041,
+        24.718959
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.search.shell-literal",
+      "samples_ms": [
+        23.845666,
+        18.135292,
+        18.189,
+        24.583125
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "samples_ms": [
+        23.948583,
+        19.673875,
+        19.573125,
+        24.461959
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.writer.lines-120-segments-139",
+      "samples_ms": [
+        23.77275,
+        19.266708,
+        19.356666,
+        25.537542
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.survey.json-stdin",
+      "samples_ms": [
+        25.613083,
+        18.041333,
+        18.204792,
+        25.9785
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.survey.python-subprocess",
+      "samples_ms": [
+        26.475,
+        19.5475,
+        19.541167,
+        27.494875
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.survey.analysis-source",
+      "samples_ms": [
+        25.715166,
+        18.2455,
+        18.594125,
+        26.356833
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.write.english-inflection",
+      "samples_ms": [
+        25.597875,
+        17.990375,
+        18.182166,
+        25.983459
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_root",
+      "samples_ms": [
+        25.3805,
+        19.891625,
+        19.987959,
+        25.97425
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_home",
+      "samples_ms": [
+        25.201667,
+        19.323875,
+        19.663167,
+        26.214667
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_current",
+      "samples_ms": [
+        25.141625,
+        19.876416,
+        19.740084,
+        25.5325
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.recursive_remove_parent",
+      "samples_ms": [
+        25.025834,
+        19.741875,
+        19.730958,
+        26.166458
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.remove_env_file",
+      "samples_ms": [
+        25.369291,
+        19.833541,
+        19.612583,
+        25.811708
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.remove_git_metadata",
+      "samples_ms": [
+        26.183583,
+        19.6445,
+        19.921167,
+        26.50075
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.force_push_protected_branch",
+      "samples_ms": [
+        25.212167,
+        19.942708,
+        19.775,
+        25.592209
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.hard_reset",
+      "samples_ms": [
+        25.173792,
+        19.77925,
+        19.85125,
+        25.734792
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.forced_git_clean",
+      "samples_ms": [
+        25.426625,
+        20.171958,
+        19.923209,
+        25.930041
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.drop_table",
+      "samples_ms": [
+        25.495708,
+        19.913041,
+        20.29525,
+        26.147708
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.drop_database",
+      "samples_ms": [
+        24.979458,
+        19.630375,
+        19.977792,
+        25.96325
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.truncate_table",
+      "samples_ms": [
+        25.295625,
+        19.7615,
+        20.356833,
+        26.565958
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.delete_without_where",
+      "samples_ms": [
+        25.735,
+        19.65975,
+        19.924791,
+        25.66625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.recursive_world_writable",
+      "samples_ms": [
+        25.567084,
+        19.802292,
+        19.900709,
+        25.60825
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.world_writable",
+      "samples_ms": [
+        25.670333,
+        19.721458,
+        19.733292,
+        25.810917
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.download_execute_bash",
+      "samples_ms": [
+        24.881208,
+        19.645166,
+        19.612625,
+        25.453375
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.download_execute_sh",
+      "samples_ms": [
+        25.422333,
+        19.170209,
+        19.765708,
+        25.20625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.upload_local_data",
+      "samples_ms": [
+        24.727333,
+        19.313584,
+        19.514875,
+        28.119375
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.privileged_command",
+      "samples_ms": [
+        27.479,
+        19.650458,
+        20.069542,
+        25.950083
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.publish_package",
+      "samples_ms": [
+        25.341416,
+        19.686416,
+        20.00525,
+        26.17375
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.writer-before",
+      "samples_ms": [
+        23.543708,
+        21.841458,
+        22.00225,
+        24.822542
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.writer-after",
+      "samples_ms": [
+        24.011084,
+        22.415792,
+        21.774458,
+        24.240417
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.substitution",
+      "samples_ms": [
+        24.190417,
+        19.837625,
+        23.247834,
+        26.091916
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.interpreter-sink",
+      "samples_ms": [
+        24.346709,
+        21.126042,
+        23.222416,
+        24.90575
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.unicode-normalization",
+      "samples_ms": [
+        25.255333,
+        19.984958,
+        21.45675,
+        26.299459
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.extra-field",
+      "samples_ms": [
+        25.469375,
+        20.072875,
+        20.3075,
+        26.470292
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    },
+    {
+      "case": "codex.guard.danger.malformed-schema",
+      "samples_ms": [
+        28.418041,
+        19.872,
+        24.07675,
+        25.871625
+      ],
+      "order": "B/C/C/B",
+      "definition": "fresh disposable log home, ordinary existing provider bytecode and uncleared OS cache; NOT cold acceptance evidence"
+    }
+  ]
 }
