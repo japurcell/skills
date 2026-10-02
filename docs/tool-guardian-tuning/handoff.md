@@ -31,6 +31,8 @@ The proposed repair replaces per-character literal scans with delimiter search, 
 
 Original milestone3 owns this repair. Root coordinates, validates and integrates only. Independent runtime probes must not overlap measurements. A new bounded dispatch and private worktree follow integration; routing metadata stays outside task prompts. Reuse only original-node repairs. Private branches never push. Integrate serially with clean worktree, rebase, fast-forward, matching tip, then cleanup.
 
+Active repair: `/private/tmp/tool-guardian-literal-repair`, branch `codex/tool-guardian-literal-repair`, original `/root/milestone_3`. Started 2026-10-02 00:33:01 UTC, hard deadline 01:03:01 UTC (30 minutes). Worker owns the exclusive runtime window and must commit a truthful checkpoint before the deadline. Selected/submitted configuration remains explicitly configured gpt-6.1-sol/high; executed configuration is unconfirmed. Routing metadata is outside the task prompt.
+
 Final full `scripts/test-all.py` verification remains pending. At end of entire session activate `update-agent-docs` once before `.agents/` edits, then `okf-authoring`; delegate milestone5 to a fresh implementer. Synchronize hooks/scripts instructions, testing, known issues, FILE_MAP/API_MAP/INDEX as applicable. Preserve installed-old-hook workaround until user installs. Protected AGENTS sections remain intact. No formal final doc pass has run.
 
 ## Durable findings and errors
