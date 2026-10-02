@@ -4,6 +4,7 @@ import importlib.util
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -63,70 +64,73 @@ class TestHookHelpers(unittest.TestCase):
                     with self.assertRaises(TypeError):
                         common.run_command(invalid)
 
-    def _get_common_module(self, path: Path):
-        """
-        Helper method to cleanly load/reload the helpers.common module
-        from a specific hook scripts path without caching issues.
-        """
+    def _load_helper_module(self, path: Path, module_name: str):
+        """Load a provider helper into its own correctly registered package."""
         runtime_name = path.parts[-3].replace(".", "")
-        file_path = path / "helpers" / "common.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+        helpers_dir = path / "helpers"
+        package_name = f"_test_helpers_{runtime_name}_{uuid4().hex}"
 
-    def _get_observability_module(self, path: Path):
-        """
-        Helper method to cleanly load/reload the helpers.observability module
-        from a specific hook scripts path without caching issues.
-        """
-        runtime_name = path.parts[-3].replace(".", "")
-        common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
-        common_mod = importlib.util.module_from_spec(common_spec)
-        common_spec.loader.exec_module(common_mod)
+        package_init = helpers_dir / "__init__.py"
+        if package_init.exists():
+            package_spec = importlib.util.spec_from_file_location(
+                package_name,
+                package_init,
+                submodule_search_locations=[str(helpers_dir)],
+            )
+        else:
+            package_spec = importlib.util.spec_from_loader(
+                package_name,
+                loader=None,
+                is_package=True,
+            )
+            if package_spec is not None:
+                package_spec.submodule_search_locations = [str(helpers_dir)]
+        if package_spec is None or (package_init.exists() and package_spec.loader is None):
+            raise ImportError(f"Cannot load package from {helpers_dir}")
+        package = importlib.util.module_from_spec(package_spec)
+        sys.modules[package_name] = package
+        self.addCleanup(sys.modules.pop, package_name, None)
+        if package_spec.loader is not None:
+            package_spec.loader.exec_module(package)
 
-        file_path = path / "helpers" / "observability.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.observability_{runtime_name}", file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
-        spec.loader.exec_module(module)
-        return module
-
-    def _get_audit_module(self, path: Path):
-        """
-        Helper method to cleanly load/reload the helpers.audit module
-        from a specific hook scripts path without caching issues.
-        """
-        runtime_name = path.parts[-3].replace(".", "")
-        common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
+        common_file = helpers_dir / "common.py"
+        common_spec = importlib.util.spec_from_file_location(
+            f"{package_name}.common",
+            common_file,
+        )
         if common_spec is None or common_spec.loader is None:
             raise ImportError(f"Cannot load module from {common_file}")
-        common_mod = importlib.util.module_from_spec(common_spec)
-        common_spec.loader.exec_module(common_mod)
+        common_module = importlib.util.module_from_spec(common_spec)
+        sys.modules[common_spec.name] = common_module
+        self.addCleanup(sys.modules.pop, common_spec.name, None)
+        common_spec.loader.exec_module(common_module)
+        if module_name == "common":
+            return common_module
 
-        file_path = path / "helpers" / "audit.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.audit_{runtime_name}", file_path)
+        file_path = helpers_dir / f"{module_name}.py"
+        spec = importlib.util.spec_from_file_location(
+            f"{package_name}.{module_name}",
+            file_path,
+        )
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load module from {file_path}")
         module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
+        sys.modules[spec.name] = module
+        self.addCleanup(sys.modules.pop, spec.name, None)
         spec.loader.exec_module(module)
         return module
 
-    def _create_repo_test_dir(self, name: str) -> Path:
-        test_dir = repo_root / ".agents" / "scratchpad" / "test-artifacts" / f"{name}-{uuid4().hex}"
-        test_dir.mkdir(parents=True, exist_ok=True)
-        return test_dir
+    def _get_common_module(self, path: Path):
+        return self._load_helper_module(path, "common")
+
+    def _get_observability_module(self, path: Path):
+        return self._load_helper_module(path, "observability")
+
+    def _get_audit_module(self, path: Path):
+        return self._load_helper_module(path, "audit")
+
+    def _create_disposable_test_dir(self, name: str) -> Path:
+        return Path(tempfile.mkdtemp(prefix=f"{name}-"))
 
     def test_github_convert_windows_path_to_posix(self):
         common = self._get_common_module(github_helpers_path)
@@ -327,7 +331,7 @@ class TestHookHelpers(unittest.TestCase):
 
     def test_github_audit_rotates_primary_and_shadow_logs(self):
         audit = self._get_audit_module(github_helpers_path)
-        workdir = self._create_repo_test_dir("github-audit-rotation")
+        workdir = self._create_disposable_test_dir("github-audit-rotation")
         log_path = workdir / "audit.log"
         shadow_path = workdir / "audit-shadow.log"
 
