@@ -106,3 +106,5 @@ subprocesses invoked by those checks.
 Status at 2026-10-01 23:53Z: all optional evidence collected and measurement
 windows released. No installed hook, canonical policy, generated output, or
 shared test registry was changed. Overall candidate acceptance remains open.
+
+The interrupted worker checkpoint was saved by root, reviewed for source fingerprints, sample counts and CLI evidence, and integrated at `d602bbe1` after a conflict-free rebase. The frozen policy content tested at historical private revision `f47d51dd` is retained on the topic history at `84eae394`. For replay after later policy-helper extraction, create a disposable Git worktree at `84eae394`, then invoke this benchmark helper from the topic checkout with `--root` pointing to that worktree and fresh variant/evidence directories. The current extracted entrypoints are not the original ablation source. The worker reached its runtime deadline before committing; that timed-out status is not final candidate approval.
