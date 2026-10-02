@@ -1,0 +1,5908 @@
+{
+  "method": "Per-case matched B/C and C/B;25 samples,3warmups; each median<=+2ms and p95<=+5ms; no pooling",
+  "all_frozen_sources_unchanged": true,
+  "all_expected_decisions_correct": true,
+  "warm_pairs": [
+    {
+      "baseline_order": 1,
+      "candidate_order": 2,
+      "cases": [
+        {
+          "case": "copilot.guard.clean",
+          "baseline": {
+            "mad_ms": 0.216,
+            "max_ms": 28.866,
+            "median_ms": 26.297,
+            "min_ms": 25.92,
+            "p95_ms": 27.915
+          },
+          "candidate": {
+            "mad_ms": 0.08,
+            "max_ms": 21.721,
+            "median_ms": 20.875,
+            "min_ms": 20.666,
+            "p95_ms": 21.133
+          },
+          "median_delta_ms": -5.422,
+          "p95_delta_ms": -6.782,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.finding",
+          "baseline": {
+            "mad_ms": 0.104,
+            "max_ms": 29.206,
+            "median_ms": 27.671,
+            "min_ms": 27.473,
+            "p95_ms": 27.965
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 22.789,
+            "median_ms": 22.357,
+            "min_ms": 22.092,
+            "p95_ms": 22.733
+          },
+          "median_delta_ms": -5.314,
+          "p95_delta_ms": -5.232,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.large",
+          "baseline": {
+            "mad_ms": 0.415,
+            "max_ms": 72.275,
+            "median_ms": 69.67,
+            "min_ms": 68.611,
+            "p95_ms": 72.019
+          },
+          "candidate": {
+            "mad_ms": 0.132,
+            "max_ms": 27.922,
+            "median_ms": 27.493,
+            "min_ms": 27.201,
+            "p95_ms": 27.849
+          },
+          "median_delta_ms": -42.177,
+          "p95_delta_ms": -44.17,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.failure",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 30.15,
+            "median_ms": 24.853,
+            "min_ms": 24.542,
+            "p95_ms": 26.461
+          },
+          "candidate": {
+            "mad_ms": 0.081,
+            "max_ms": 20.284,
+            "median_ms": 19.882,
+            "min_ms": 19.699,
+            "p95_ms": 20.031
+          },
+          "median_delta_ms": -4.971,
+          "p95_delta_ms": -6.43,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.clean",
+          "baseline": {
+            "mad_ms": 0.097,
+            "max_ms": 26.73,
+            "median_ms": 26.422,
+            "min_ms": 26.247,
+            "p95_ms": 26.727
+          },
+          "candidate": {
+            "mad_ms": 0.049,
+            "max_ms": 20.947,
+            "median_ms": 20.696,
+            "min_ms": 20.397,
+            "p95_ms": 20.91
+          },
+          "median_delta_ms": -5.726,
+          "p95_delta_ms": -5.817,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.finding",
+          "baseline": {
+            "mad_ms": 0.113,
+            "max_ms": 28.395,
+            "median_ms": 27.84,
+            "min_ms": 27.607,
+            "p95_ms": 28.227
+          },
+          "candidate": {
+            "mad_ms": 0.074,
+            "max_ms": 22.529,
+            "median_ms": 22.141,
+            "min_ms": 21.913,
+            "p95_ms": 22.462
+          },
+          "median_delta_ms": -5.699,
+          "p95_delta_ms": -5.765,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.large",
+          "baseline": {
+            "mad_ms": 3.503,
+            "max_ms": 121.059,
+            "median_ms": 117.042,
+            "min_ms": 111.72,
+            "p95_ms": 120.82
+          },
+          "candidate": {
+            "mad_ms": 0.115,
+            "max_ms": 25.577,
+            "median_ms": 24.099,
+            "min_ms": 23.878,
+            "p95_ms": 24.452
+          },
+          "median_delta_ms": -92.943,
+          "p95_delta_ms": -96.368,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.failure",
+          "baseline": {
+            "mad_ms": 0.105,
+            "max_ms": 27.073,
+            "median_ms": 24.973,
+            "min_ms": 24.708,
+            "p95_ms": 26.485
+          },
+          "candidate": {
+            "mad_ms": 0.156,
+            "max_ms": 20.726,
+            "median_ms": 20.064,
+            "min_ms": 19.834,
+            "p95_ms": 20.434
+          },
+          "median_delta_ms": -4.909,
+          "p95_delta_ms": -6.051,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.clean",
+          "baseline": {
+            "mad_ms": 0.089,
+            "max_ms": 24.516,
+            "median_ms": 23.789,
+            "min_ms": 23.517,
+            "p95_ms": 24.1
+          },
+          "candidate": {
+            "mad_ms": 0.082,
+            "max_ms": 18.362,
+            "median_ms": 18.042,
+            "min_ms": 17.678,
+            "p95_ms": 18.257
+          },
+          "median_delta_ms": -5.747,
+          "p95_delta_ms": -5.843,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.finding",
+          "baseline": {
+            "mad_ms": 0.1,
+            "max_ms": 25.379,
+            "median_ms": 25.071,
+            "min_ms": 24.794,
+            "p95_ms": 25.302
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 19.643,
+            "median_ms": 19.425,
+            "min_ms": 19.099,
+            "p95_ms": 19.576
+          },
+          "median_delta_ms": -5.646,
+          "p95_delta_ms": -5.726,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.large",
+          "baseline": {
+            "mad_ms": 0.269,
+            "max_ms": 111.939,
+            "median_ms": 109.872,
+            "min_ms": 108.935,
+            "p95_ms": 110.604
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 22.018,
+            "median_ms": 21.237,
+            "min_ms": 20.926,
+            "p95_ms": 21.817
+          },
+          "median_delta_ms": -88.635,
+          "p95_delta_ms": -88.787,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.failure",
+          "baseline": {
+            "mad_ms": 0.149,
+            "max_ms": 23.024,
+            "median_ms": 22.723,
+            "min_ms": 22.231,
+            "p95_ms": 23.01
+          },
+          "candidate": {
+            "mad_ms": 0.076,
+            "max_ms": 17.938,
+            "median_ms": 17.653,
+            "min_ms": 17.451,
+            "p95_ms": 17.906
+          },
+          "median_delta_ms": -5.07,
+          "p95_delta_ms": -5.104,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.091,
+            "max_ms": 27.338,
+            "median_ms": 26.663,
+            "min_ms": 26.396,
+            "p95_ms": 27.105
+          },
+          "candidate": {
+            "mad_ms": 0.086,
+            "max_ms": 21.494,
+            "median_ms": 21.122,
+            "min_ms": 20.964,
+            "p95_ms": 21.373
+          },
+          "median_delta_ms": -5.541,
+          "p95_delta_ms": -5.732,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 26.563,
+            "median_ms": 26.285,
+            "min_ms": 25.913,
+            "p95_ms": 26.536
+          },
+          "candidate": {
+            "mad_ms": 0.082,
+            "max_ms": 20.879,
+            "median_ms": 20.634,
+            "min_ms": 20.352,
+            "p95_ms": 20.862
+          },
+          "median_delta_ms": -5.651,
+          "p95_delta_ms": -5.674,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.164,
+            "max_ms": 27.99,
+            "median_ms": 26.518,
+            "min_ms": 26.1,
+            "p95_ms": 27.45
+          },
+          "candidate": {
+            "mad_ms": 0.097,
+            "max_ms": 21.129,
+            "median_ms": 20.754,
+            "min_ms": 20.508,
+            "p95_ms": 20.925
+          },
+          "median_delta_ms": -5.764,
+          "p95_delta_ms": -6.525,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.981,
+            "max_ms": 38.565,
+            "median_ms": 27.39,
+            "min_ms": 26.409,
+            "p95_ms": 36.3
+          },
+          "candidate": {
+            "mad_ms": 0.131,
+            "max_ms": 21.02,
+            "median_ms": 20.799,
+            "min_ms": 20.48,
+            "p95_ms": 20.944
+          },
+          "median_delta_ms": -6.591,
+          "p95_delta_ms": -15.356,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.108,
+            "max_ms": 26.893,
+            "median_ms": 26.465,
+            "min_ms": 26.068,
+            "p95_ms": 26.814
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 21.58,
+            "median_ms": 20.794,
+            "min_ms": 20.592,
+            "p95_ms": 21.196
+          },
+          "median_delta_ms": -5.671,
+          "p95_delta_ms": -5.618,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.152,
+            "max_ms": 27.448,
+            "median_ms": 26.194,
+            "min_ms": 25.871,
+            "p95_ms": 26.744
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 21.232,
+            "median_ms": 20.921,
+            "min_ms": 20.714,
+            "p95_ms": 21.115
+          },
+          "median_delta_ms": -5.273,
+          "p95_delta_ms": -5.629,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.107,
+            "max_ms": 28.517,
+            "median_ms": 27.901,
+            "min_ms": 27.475,
+            "p95_ms": 28.477
+          },
+          "candidate": {
+            "mad_ms": 0.115,
+            "max_ms": 20.743,
+            "median_ms": 20.589,
+            "min_ms": 20.282,
+            "p95_ms": 20.743
+          },
+          "median_delta_ms": -7.312,
+          "p95_delta_ms": -7.734,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.099,
+            "max_ms": 28.233,
+            "median_ms": 27.727,
+            "min_ms": 27.49,
+            "p95_ms": 28.008
+          },
+          "candidate": {
+            "mad_ms": 0.694,
+            "max_ms": 23.817,
+            "median_ms": 21.112,
+            "min_ms": 20.401,
+            "p95_ms": 23.767
+          },
+          "median_delta_ms": -6.615,
+          "p95_delta_ms": -4.241,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.103,
+            "max_ms": 28.381,
+            "median_ms": 27.678,
+            "min_ms": 27.387,
+            "p95_ms": 27.958
+          },
+          "candidate": {
+            "mad_ms": 0.677,
+            "max_ms": 32.931,
+            "median_ms": 21.221,
+            "min_ms": 20.517,
+            "p95_ms": 29.576
+          },
+          "median_delta_ms": -6.457,
+          "p95_delta_ms": 1.618,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.096,
+            "max_ms": 28.305,
+            "median_ms": 27.937,
+            "min_ms": 27.581,
+            "p95_ms": 28.174
+          },
+          "candidate": {
+            "mad_ms": 0.093,
+            "max_ms": 21.049,
+            "median_ms": 20.674,
+            "min_ms": 20.455,
+            "p95_ms": 20.942
+          },
+          "median_delta_ms": -7.263,
+          "p95_delta_ms": -7.232,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.123,
+            "max_ms": 28.305,
+            "median_ms": 27.789,
+            "min_ms": 27.533,
+            "p95_ms": 28.05
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 20.832,
+            "median_ms": 20.58,
+            "min_ms": 20.23,
+            "p95_ms": 20.794
+          },
+          "median_delta_ms": -7.209,
+          "p95_delta_ms": -7.256,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.138,
+            "max_ms": 26.762,
+            "median_ms": 26.39,
+            "min_ms": 26.015,
+            "p95_ms": 26.655
+          },
+          "candidate": {
+            "mad_ms": 0.052,
+            "max_ms": 20.836,
+            "median_ms": 20.655,
+            "min_ms": 20.477,
+            "p95_ms": 20.824
+          },
+          "median_delta_ms": -5.735,
+          "p95_delta_ms": -5.831,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.081,
+            "max_ms": 26.653,
+            "median_ms": 26.251,
+            "min_ms": 25.984,
+            "p95_ms": 26.574
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 22.605,
+            "median_ms": 22.179,
+            "min_ms": 21.882,
+            "p95_ms": 22.41
+          },
+          "median_delta_ms": -4.072,
+          "p95_delta_ms": -4.164,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.13,
+            "max_ms": 26.589,
+            "median_ms": 26.19,
+            "min_ms": 25.861,
+            "p95_ms": 26.478
+          },
+          "candidate": {
+            "mad_ms": 0.063,
+            "max_ms": 22.454,
+            "median_ms": 21.881,
+            "min_ms": 21.469,
+            "p95_ms": 22.058
+          },
+          "median_delta_ms": -4.309,
+          "p95_delta_ms": -4.42,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.067,
+            "max_ms": 28.233,
+            "median_ms": 27.939,
+            "min_ms": 27.744,
+            "p95_ms": 28.232
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 21.627,
+            "median_ms": 20.716,
+            "min_ms": 20.4,
+            "p95_ms": 21.067
+          },
+          "median_delta_ms": -7.223,
+          "p95_delta_ms": -7.165,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.16,
+            "max_ms": 29.044,
+            "median_ms": 28.691,
+            "min_ms": 28.375,
+            "p95_ms": 29.009
+          },
+          "candidate": {
+            "mad_ms": 0.101,
+            "max_ms": 22.479,
+            "median_ms": 22.226,
+            "min_ms": 22.054,
+            "p95_ms": 22.384
+          },
+          "median_delta_ms": -6.465,
+          "p95_delta_ms": -6.625,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.105,
+            "max_ms": 28.595,
+            "median_ms": 28.224,
+            "min_ms": 27.804,
+            "p95_ms": 28.493
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 21.369,
+            "median_ms": 20.935,
+            "min_ms": 20.639,
+            "p95_ms": 21.13
+          },
+          "median_delta_ms": -7.289,
+          "p95_delta_ms": -7.363,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.095,
+            "max_ms": 28.06,
+            "median_ms": 27.832,
+            "min_ms": 27.448,
+            "p95_ms": 27.965
+          },
+          "candidate": {
+            "mad_ms": 0.059,
+            "max_ms": 21.714,
+            "median_ms": 20.886,
+            "min_ms": 20.614,
+            "p95_ms": 21.215
+          },
+          "median_delta_ms": -6.946,
+          "p95_delta_ms": -6.75,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.07,
+            "max_ms": 27.916,
+            "median_ms": 27.553,
+            "min_ms": 27.299,
+            "p95_ms": 27.823
+          },
+          "candidate": {
+            "mad_ms": 0.087,
+            "max_ms": 22.656,
+            "median_ms": 22.378,
+            "min_ms": 22.212,
+            "p95_ms": 22.604
+          },
+          "median_delta_ms": -5.175,
+          "p95_delta_ms": -5.219,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.134,
+            "max_ms": 27.942,
+            "median_ms": 27.696,
+            "min_ms": 27.297,
+            "p95_ms": 27.87
+          },
+          "candidate": {
+            "mad_ms": 0.135,
+            "max_ms": 22.596,
+            "median_ms": 22.217,
+            "min_ms": 21.853,
+            "p95_ms": 22.553
+          },
+          "median_delta_ms": -5.479,
+          "p95_delta_ms": -5.317,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.091,
+            "max_ms": 27.985,
+            "median_ms": 27.744,
+            "min_ms": 27.468,
+            "p95_ms": 27.932
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 22.718,
+            "median_ms": 22.122,
+            "min_ms": 21.885,
+            "p95_ms": 22.408
+          },
+          "median_delta_ms": -5.622,
+          "p95_delta_ms": -5.524,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.124,
+            "max_ms": 27.933,
+            "median_ms": 27.659,
+            "min_ms": 27.253,
+            "p95_ms": 27.904
+          },
+          "candidate": {
+            "mad_ms": 0.132,
+            "max_ms": 22.814,
+            "median_ms": 22.221,
+            "min_ms": 22.004,
+            "p95_ms": 22.747
+          },
+          "median_delta_ms": -5.438,
+          "p95_delta_ms": -5.157,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.139,
+            "max_ms": 28.194,
+            "median_ms": 27.513,
+            "min_ms": 27.183,
+            "p95_ms": 27.76
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 22.661,
+            "median_ms": 22.314,
+            "min_ms": 22.093,
+            "p95_ms": 22.566
+          },
+          "median_delta_ms": -5.199,
+          "p95_delta_ms": -5.194,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.056,
+            "max_ms": 27.994,
+            "median_ms": 27.723,
+            "min_ms": 27.474,
+            "p95_ms": 27.823
+          },
+          "candidate": {
+            "mad_ms": 0.091,
+            "max_ms": 22.532,
+            "median_ms": 22.328,
+            "min_ms": 22.011,
+            "p95_ms": 22.518
+          },
+          "median_delta_ms": -5.395,
+          "p95_delta_ms": -5.305,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.149,
+            "max_ms": 28.199,
+            "median_ms": 27.818,
+            "min_ms": 27.458,
+            "p95_ms": 28.087
+          },
+          "candidate": {
+            "mad_ms": 0.441,
+            "max_ms": 25.661,
+            "median_ms": 23.89,
+            "min_ms": 22.413,
+            "p95_ms": 25.016
+          },
+          "median_delta_ms": -3.928,
+          "p95_delta_ms": -3.071,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.092,
+            "max_ms": 28.19,
+            "median_ms": 27.665,
+            "min_ms": 27.31,
+            "p95_ms": 27.898
+          },
+          "candidate": {
+            "mad_ms": 0.076,
+            "max_ms": 22.459,
+            "median_ms": 22.165,
+            "min_ms": 21.911,
+            "p95_ms": 22.381
+          },
+          "median_delta_ms": -5.5,
+          "p95_delta_ms": -5.517,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.099,
+            "max_ms": 28.56,
+            "median_ms": 27.464,
+            "min_ms": 27.25,
+            "p95_ms": 28.39
+          },
+          "candidate": {
+            "mad_ms": 0.065,
+            "max_ms": 22.628,
+            "median_ms": 22.379,
+            "min_ms": 22.113,
+            "p95_ms": 22.578
+          },
+          "median_delta_ms": -5.085,
+          "p95_delta_ms": -5.812,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 27.966,
+            "median_ms": 27.745,
+            "min_ms": 27.419,
+            "p95_ms": 27.943
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 23.0,
+            "median_ms": 22.372,
+            "min_ms": 22.112,
+            "p95_ms": 22.632
+          },
+          "median_delta_ms": -5.373,
+          "p95_delta_ms": -5.311,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.113,
+            "max_ms": 27.869,
+            "median_ms": 27.499,
+            "min_ms": 27.27,
+            "p95_ms": 27.76
+          },
+          "candidate": {
+            "mad_ms": 0.095,
+            "max_ms": 22.6,
+            "median_ms": 22.276,
+            "min_ms": 22.017,
+            "p95_ms": 22.393
+          },
+          "median_delta_ms": -5.223,
+          "p95_delta_ms": -5.367,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.08,
+            "max_ms": 27.779,
+            "median_ms": 27.523,
+            "min_ms": 27.209,
+            "p95_ms": 27.73
+          },
+          "candidate": {
+            "mad_ms": 0.078,
+            "max_ms": 22.279,
+            "median_ms": 22.114,
+            "min_ms": 21.947,
+            "p95_ms": 22.268
+          },
+          "median_delta_ms": -5.409,
+          "p95_delta_ms": -5.462,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.073,
+            "max_ms": 28.098,
+            "median_ms": 27.535,
+            "min_ms": 27.084,
+            "p95_ms": 28.001
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 22.543,
+            "median_ms": 22.132,
+            "min_ms": 21.865,
+            "p95_ms": 22.369
+          },
+          "median_delta_ms": -5.403,
+          "p95_delta_ms": -5.632,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.077,
+            "max_ms": 27.976,
+            "median_ms": 27.581,
+            "min_ms": 27.289,
+            "p95_ms": 27.944
+          },
+          "candidate": {
+            "mad_ms": 0.12,
+            "max_ms": 22.977,
+            "median_ms": 22.541,
+            "min_ms": 22.012,
+            "p95_ms": 22.902
+          },
+          "median_delta_ms": -5.04,
+          "p95_delta_ms": -5.042,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.082,
+            "max_ms": 28.049,
+            "median_ms": 27.739,
+            "min_ms": 27.567,
+            "p95_ms": 27.977
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 24.746,
+            "median_ms": 22.468,
+            "min_ms": 22.083,
+            "p95_ms": 22.826
+          },
+          "median_delta_ms": -5.271,
+          "p95_delta_ms": -5.151,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.109,
+            "max_ms": 27.69,
+            "median_ms": 27.383,
+            "min_ms": 27.076,
+            "p95_ms": 27.621
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 25.988,
+            "median_ms": 21.823,
+            "min_ms": 21.415,
+            "p95_ms": 22.34
+          },
+          "median_delta_ms": -5.56,
+          "p95_delta_ms": -5.281,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.078,
+            "max_ms": 27.657,
+            "median_ms": 27.155,
+            "min_ms": 26.912,
+            "p95_ms": 27.468
+          },
+          "candidate": {
+            "mad_ms": 0.107,
+            "max_ms": 22.108,
+            "median_ms": 21.7,
+            "min_ms": 21.407,
+            "p95_ms": 21.927
+          },
+          "median_delta_ms": -5.455,
+          "p95_delta_ms": -5.541,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 0.088,
+            "max_ms": 28.093,
+            "median_ms": 27.74,
+            "min_ms": 27.477,
+            "p95_ms": 27.979
+          },
+          "candidate": {
+            "mad_ms": 0.061,
+            "max_ms": 22.04,
+            "median_ms": 21.755,
+            "min_ms": 21.492,
+            "p95_ms": 22.008
+          },
+          "median_delta_ms": -5.985,
+          "p95_delta_ms": -5.971,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.099,
+            "max_ms": 28.118,
+            "median_ms": 27.832,
+            "min_ms": 27.64,
+            "p95_ms": 28.099
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 24.275,
+            "median_ms": 22.344,
+            "min_ms": 21.968,
+            "p95_ms": 22.794
+          },
+          "median_delta_ms": -5.488,
+          "p95_delta_ms": -5.305,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.084,
+            "max_ms": 27.689,
+            "median_ms": 27.486,
+            "min_ms": 27.244,
+            "p95_ms": 27.685
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 22.84,
+            "median_ms": 22.394,
+            "min_ms": 22.181,
+            "p95_ms": 22.606
+          },
+          "median_delta_ms": -5.092,
+          "p95_delta_ms": -5.079,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.105,
+            "max_ms": 26.479,
+            "median_ms": 26.139,
+            "min_ms": 25.911,
+            "p95_ms": 26.397
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 24.645,
+            "median_ms": 24.298,
+            "min_ms": 24.148,
+            "p95_ms": 24.535
+          },
+          "median_delta_ms": -1.841,
+          "p95_delta_ms": -1.862,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.058,
+            "max_ms": 26.294,
+            "median_ms": 26.125,
+            "min_ms": 25.815,
+            "p95_ms": 26.272
+          },
+          "candidate": {
+            "mad_ms": 0.103,
+            "max_ms": 24.445,
+            "median_ms": 24.145,
+            "min_ms": 23.907,
+            "p95_ms": 24.378
+          },
+          "median_delta_ms": -1.98,
+          "p95_delta_ms": -1.894,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.114,
+            "max_ms": 26.827,
+            "median_ms": 26.254,
+            "min_ms": 25.941,
+            "p95_ms": 26.523
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 22.662,
+            "median_ms": 22.255,
+            "min_ms": 22.015,
+            "p95_ms": 22.615
+          },
+          "median_delta_ms": -3.999,
+          "p95_delta_ms": -3.908,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.105,
+            "max_ms": 27.179,
+            "median_ms": 26.355,
+            "min_ms": 25.996,
+            "p95_ms": 26.79
+          },
+          "candidate": {
+            "mad_ms": 0.049,
+            "max_ms": 23.898,
+            "median_ms": 23.556,
+            "min_ms": 23.319,
+            "p95_ms": 23.728
+          },
+          "median_delta_ms": -2.799,
+          "p95_delta_ms": -3.062,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.084,
+            "max_ms": 27.834,
+            "median_ms": 27.671,
+            "min_ms": 27.328,
+            "p95_ms": 27.79
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 22.475,
+            "median_ms": 22.11,
+            "min_ms": 21.897,
+            "p95_ms": 22.472
+          },
+          "median_delta_ms": -5.561,
+          "p95_delta_ms": -5.318,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.152,
+            "max_ms": 32.152,
+            "median_ms": 27.807,
+            "min_ms": 27.429,
+            "p95_ms": 32.089
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 23.0,
+            "median_ms": 22.536,
+            "min_ms": 22.301,
+            "p95_ms": 22.907
+          },
+          "median_delta_ms": -5.271,
+          "p95_delta_ms": -9.182,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 0.154,
+            "max_ms": 27.88,
+            "median_ms": 27.575,
+            "min_ms": 27.214,
+            "p95_ms": 27.798
+          },
+          "candidate": {
+            "mad_ms": 0.488,
+            "max_ms": 25.908,
+            "median_ms": 24.208,
+            "min_ms": 22.325,
+            "p95_ms": 25.493
+          },
+          "median_delta_ms": -3.367,
+          "p95_delta_ms": -2.305,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.096,
+            "max_ms": 27.034,
+            "median_ms": 26.699,
+            "min_ms": 26.51,
+            "p95_ms": 27.004
+          },
+          "candidate": {
+            "mad_ms": 0.067,
+            "max_ms": 21.562,
+            "median_ms": 21.236,
+            "min_ms": 20.935,
+            "p95_ms": 21.542
+          },
+          "median_delta_ms": -5.463,
+          "p95_delta_ms": -5.462,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 0.114,
+            "max_ms": 26.584,
+            "median_ms": 26.388,
+            "min_ms": 26.107,
+            "p95_ms": 26.563
+          },
+          "candidate": {
+            "mad_ms": 0.125,
+            "max_ms": 21.37,
+            "median_ms": 20.681,
+            "min_ms": 20.383,
+            "p95_ms": 21.07
+          },
+          "median_delta_ms": -5.707,
+          "p95_delta_ms": -5.493,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 27.004,
+            "median_ms": 26.395,
+            "min_ms": 26.082,
+            "p95_ms": 26.887
+          },
+          "candidate": {
+            "mad_ms": 0.07,
+            "max_ms": 21.065,
+            "median_ms": 20.861,
+            "min_ms": 20.65,
+            "p95_ms": 21.042
+          },
+          "median_delta_ms": -5.534,
+          "p95_delta_ms": -5.845,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.096,
+            "max_ms": 26.766,
+            "median_ms": 26.528,
+            "min_ms": 26.232,
+            "p95_ms": 26.675
+          },
+          "candidate": {
+            "mad_ms": 0.125,
+            "max_ms": 21.033,
+            "median_ms": 20.749,
+            "min_ms": 20.417,
+            "p95_ms": 21.0
+          },
+          "median_delta_ms": -5.779,
+          "p95_delta_ms": -5.675,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 27.088,
+            "median_ms": 26.588,
+            "min_ms": 26.302,
+            "p95_ms": 26.841
+          },
+          "candidate": {
+            "mad_ms": 0.09,
+            "max_ms": 20.837,
+            "median_ms": 20.591,
+            "min_ms": 20.411,
+            "p95_ms": 20.832
+          },
+          "median_delta_ms": -5.997,
+          "p95_delta_ms": -6.009,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.121,
+            "max_ms": 27.201,
+            "median_ms": 26.529,
+            "min_ms": 26.207,
+            "p95_ms": 27.199
+          },
+          "candidate": {
+            "mad_ms": 0.134,
+            "max_ms": 21.621,
+            "median_ms": 20.91,
+            "min_ms": 20.551,
+            "p95_ms": 21.488
+          },
+          "median_delta_ms": -5.619,
+          "p95_delta_ms": -5.711,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.1,
+            "max_ms": 28.047,
+            "median_ms": 27.836,
+            "min_ms": 27.518,
+            "p95_ms": 27.987
+          },
+          "candidate": {
+            "mad_ms": 0.142,
+            "max_ms": 22.074,
+            "median_ms": 20.797,
+            "min_ms": 20.494,
+            "p95_ms": 21.403
+          },
+          "median_delta_ms": -7.039,
+          "p95_delta_ms": -6.584,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.061,
+            "max_ms": 27.952,
+            "median_ms": 27.836,
+            "min_ms": 27.55,
+            "p95_ms": 27.933
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 21.002,
+            "median_ms": 20.744,
+            "min_ms": 20.539,
+            "p95_ms": 20.991
+          },
+          "median_delta_ms": -7.092,
+          "p95_delta_ms": -6.942,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.105,
+            "max_ms": 28.116,
+            "median_ms": 27.839,
+            "min_ms": 27.611,
+            "p95_ms": 27.994
+          },
+          "candidate": {
+            "mad_ms": 0.138,
+            "max_ms": 21.98,
+            "median_ms": 20.833,
+            "min_ms": 20.466,
+            "p95_ms": 21.634
+          },
+          "median_delta_ms": -7.006,
+          "p95_delta_ms": -6.36,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.162,
+            "max_ms": 29.034,
+            "median_ms": 28.228,
+            "min_ms": 27.853,
+            "p95_ms": 28.792
+          },
+          "candidate": {
+            "mad_ms": 0.124,
+            "max_ms": 21.274,
+            "median_ms": 20.639,
+            "min_ms": 20.423,
+            "p95_ms": 21.222
+          },
+          "median_delta_ms": -7.589,
+          "p95_delta_ms": -7.57,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.097,
+            "max_ms": 28.522,
+            "median_ms": 27.74,
+            "min_ms": 27.505,
+            "p95_ms": 28.013
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 20.939,
+            "median_ms": 20.653,
+            "min_ms": 20.383,
+            "p95_ms": 20.905
+          },
+          "median_delta_ms": -7.087,
+          "p95_delta_ms": -7.108,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.12,
+            "max_ms": 26.575,
+            "median_ms": 26.358,
+            "min_ms": 26.039,
+            "p95_ms": 26.546
+          },
+          "candidate": {
+            "mad_ms": 0.072,
+            "max_ms": 21.138,
+            "median_ms": 20.89,
+            "min_ms": 20.614,
+            "p95_ms": 21.119
+          },
+          "median_delta_ms": -5.468,
+          "p95_delta_ms": -5.427,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.089,
+            "max_ms": 26.663,
+            "median_ms": 26.392,
+            "min_ms": 26.16,
+            "p95_ms": 26.632
+          },
+          "candidate": {
+            "mad_ms": 0.072,
+            "max_ms": 22.732,
+            "median_ms": 22.468,
+            "min_ms": 22.232,
+            "p95_ms": 22.663
+          },
+          "median_delta_ms": -3.924,
+          "p95_delta_ms": -3.969,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.074,
+            "max_ms": 26.724,
+            "median_ms": 26.278,
+            "min_ms": 26.056,
+            "p95_ms": 26.67
+          },
+          "candidate": {
+            "mad_ms": 0.076,
+            "max_ms": 22.641,
+            "median_ms": 22.129,
+            "min_ms": 21.975,
+            "p95_ms": 22.547
+          },
+          "median_delta_ms": -4.149,
+          "p95_delta_ms": -4.123,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.072,
+            "max_ms": 28.383,
+            "median_ms": 28.05,
+            "min_ms": 27.781,
+            "p95_ms": 28.268
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 20.967,
+            "median_ms": 20.765,
+            "min_ms": 20.43,
+            "p95_ms": 20.951
+          },
+          "median_delta_ms": -7.285,
+          "p95_delta_ms": -7.317,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.143,
+            "max_ms": 29.642,
+            "median_ms": 28.644,
+            "min_ms": 28.365,
+            "p95_ms": 28.936
+          },
+          "candidate": {
+            "mad_ms": 0.092,
+            "max_ms": 22.219,
+            "median_ms": 21.919,
+            "min_ms": 21.598,
+            "p95_ms": 22.216
+          },
+          "median_delta_ms": -6.725,
+          "p95_delta_ms": -6.72,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.109,
+            "max_ms": 28.577,
+            "median_ms": 28.254,
+            "min_ms": 27.966,
+            "p95_ms": 28.429
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 21.419,
+            "median_ms": 20.82,
+            "min_ms": 20.587,
+            "p95_ms": 21.081
+          },
+          "median_delta_ms": -7.434,
+          "p95_delta_ms": -7.348,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.093,
+            "max_ms": 28.07,
+            "median_ms": 27.908,
+            "min_ms": 27.567,
+            "p95_ms": 28.068
+          },
+          "candidate": {
+            "mad_ms": 0.135,
+            "max_ms": 21.172,
+            "median_ms": 20.796,
+            "min_ms": 20.615,
+            "p95_ms": 21.124
+          },
+          "median_delta_ms": -7.112,
+          "p95_delta_ms": -6.944,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.081,
+            "max_ms": 28.358,
+            "median_ms": 27.755,
+            "min_ms": 27.617,
+            "p95_ms": 28.13
+          },
+          "candidate": {
+            "mad_ms": 0.079,
+            "max_ms": 22.622,
+            "median_ms": 22.344,
+            "min_ms": 21.997,
+            "p95_ms": 22.618
+          },
+          "median_delta_ms": -5.411,
+          "p95_delta_ms": -5.512,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.162,
+            "max_ms": 42.12,
+            "median_ms": 27.826,
+            "min_ms": 27.533,
+            "p95_ms": 28.409
+          },
+          "candidate": {
+            "mad_ms": 0.212,
+            "max_ms": 27.944,
+            "median_ms": 22.494,
+            "min_ms": 22.16,
+            "p95_ms": 26.401
+          },
+          "median_delta_ms": -5.332,
+          "p95_delta_ms": -2.008,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.099,
+            "max_ms": 28.089,
+            "median_ms": 27.766,
+            "min_ms": 27.395,
+            "p95_ms": 27.923
+          },
+          "candidate": {
+            "mad_ms": 0.31,
+            "max_ms": 24.346,
+            "median_ms": 22.411,
+            "min_ms": 22.085,
+            "p95_ms": 24.276
+          },
+          "median_delta_ms": -5.355,
+          "p95_delta_ms": -3.647,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.059,
+            "max_ms": 28.186,
+            "median_ms": 27.794,
+            "min_ms": 27.535,
+            "p95_ms": 28.128
+          },
+          "candidate": {
+            "mad_ms": 0.092,
+            "max_ms": 22.534,
+            "median_ms": 22.244,
+            "min_ms": 21.991,
+            "p95_ms": 22.511
+          },
+          "median_delta_ms": -5.55,
+          "p95_delta_ms": -5.617,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.088,
+            "max_ms": 28.033,
+            "median_ms": 27.761,
+            "min_ms": 27.438,
+            "p95_ms": 27.989
+          },
+          "candidate": {
+            "mad_ms": 0.078,
+            "max_ms": 22.558,
+            "median_ms": 22.362,
+            "min_ms": 22.106,
+            "p95_ms": 22.538
+          },
+          "median_delta_ms": -5.399,
+          "p95_delta_ms": -5.451,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.09,
+            "max_ms": 27.997,
+            "median_ms": 27.718,
+            "min_ms": 27.423,
+            "p95_ms": 27.94
+          },
+          "candidate": {
+            "mad_ms": 0.103,
+            "max_ms": 22.681,
+            "median_ms": 22.41,
+            "min_ms": 22.14,
+            "p95_ms": 22.671
+          },
+          "median_delta_ms": -5.308,
+          "p95_delta_ms": -5.269,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.113,
+            "max_ms": 28.158,
+            "median_ms": 27.843,
+            "min_ms": 27.631,
+            "p95_ms": 28.101
+          },
+          "candidate": {
+            "mad_ms": 0.137,
+            "max_ms": 22.917,
+            "median_ms": 22.395,
+            "min_ms": 22.083,
+            "p95_ms": 22.667
+          },
+          "median_delta_ms": -5.448,
+          "p95_delta_ms": -5.434,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.231,
+            "max_ms": 29.004,
+            "median_ms": 28.064,
+            "min_ms": 27.657,
+            "p95_ms": 28.729
+          },
+          "candidate": {
+            "mad_ms": 0.128,
+            "max_ms": 22.49,
+            "median_ms": 22.214,
+            "min_ms": 21.773,
+            "p95_ms": 22.455
+          },
+          "median_delta_ms": -5.85,
+          "p95_delta_ms": -6.274,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.122,
+            "max_ms": 28.489,
+            "median_ms": 28.213,
+            "min_ms": 27.452,
+            "p95_ms": 28.488
+          },
+          "candidate": {
+            "mad_ms": 0.114,
+            "max_ms": 22.703,
+            "median_ms": 22.183,
+            "min_ms": 21.965,
+            "p95_ms": 22.363
+          },
+          "median_delta_ms": -6.03,
+          "p95_delta_ms": -6.125,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.134,
+            "max_ms": 28.552,
+            "median_ms": 28.306,
+            "min_ms": 27.875,
+            "p95_ms": 28.538
+          },
+          "candidate": {
+            "mad_ms": 0.092,
+            "max_ms": 22.634,
+            "median_ms": 22.272,
+            "min_ms": 21.998,
+            "p95_ms": 22.494
+          },
+          "median_delta_ms": -6.034,
+          "p95_delta_ms": -6.044,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.214,
+            "max_ms": 31.299,
+            "median_ms": 27.832,
+            "min_ms": 27.456,
+            "p95_ms": 31.289
+          },
+          "candidate": {
+            "mad_ms": 0.075,
+            "max_ms": 22.566,
+            "median_ms": 22.124,
+            "min_ms": 21.941,
+            "p95_ms": 22.35
+          },
+          "median_delta_ms": -5.708,
+          "p95_delta_ms": -8.939,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.137,
+            "max_ms": 28.711,
+            "median_ms": 27.769,
+            "min_ms": 27.298,
+            "p95_ms": 28.27
+          },
+          "candidate": {
+            "mad_ms": 0.099,
+            "max_ms": 22.886,
+            "median_ms": 22.39,
+            "min_ms": 21.863,
+            "p95_ms": 22.646
+          },
+          "median_delta_ms": -5.379,
+          "p95_delta_ms": -5.624,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 28.12,
+            "median_ms": 27.737,
+            "min_ms": 27.511,
+            "p95_ms": 28.108
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 22.763,
+            "median_ms": 22.414,
+            "min_ms": 22.158,
+            "p95_ms": 22.709
+          },
+          "median_delta_ms": -5.323,
+          "p95_delta_ms": -5.399,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.051,
+            "max_ms": 28.308,
+            "median_ms": 27.661,
+            "min_ms": 27.384,
+            "p95_ms": 27.912
+          },
+          "candidate": {
+            "mad_ms": 0.122,
+            "max_ms": 22.853,
+            "median_ms": 22.358,
+            "min_ms": 21.901,
+            "p95_ms": 22.581
+          },
+          "median_delta_ms": -5.303,
+          "p95_delta_ms": -5.331,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.107,
+            "max_ms": 27.954,
+            "median_ms": 27.583,
+            "min_ms": 27.354,
+            "p95_ms": 27.91
+          },
+          "candidate": {
+            "mad_ms": 0.107,
+            "max_ms": 22.629,
+            "median_ms": 22.344,
+            "min_ms": 22.002,
+            "p95_ms": 22.485
+          },
+          "median_delta_ms": -5.239,
+          "p95_delta_ms": -5.425,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.104,
+            "max_ms": 27.834,
+            "median_ms": 27.349,
+            "min_ms": 27.129,
+            "p95_ms": 27.619
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 22.156,
+            "median_ms": 21.827,
+            "min_ms": 21.557,
+            "p95_ms": 22.019
+          },
+          "median_delta_ms": -5.522,
+          "p95_delta_ms": -5.6,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.131,
+            "max_ms": 28.046,
+            "median_ms": 27.391,
+            "min_ms": 27.041,
+            "p95_ms": 27.811
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 22.703,
+            "median_ms": 21.856,
+            "min_ms": 21.65,
+            "p95_ms": 22.505
+          },
+          "median_delta_ms": -5.535,
+          "p95_delta_ms": -5.306,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 0.107,
+            "max_ms": 28.924,
+            "median_ms": 27.445,
+            "min_ms": 27.107,
+            "p95_ms": 27.802
+          },
+          "candidate": {
+            "mad_ms": 0.088,
+            "max_ms": 22.504,
+            "median_ms": 21.84,
+            "min_ms": 21.532,
+            "p95_ms": 22.3
+          },
+          "median_delta_ms": -5.605,
+          "p95_delta_ms": -5.502,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.05,
+            "max_ms": 27.985,
+            "median_ms": 27.697,
+            "min_ms": 27.524,
+            "p95_ms": 27.853
+          },
+          "candidate": {
+            "mad_ms": 0.16,
+            "max_ms": 30.152,
+            "median_ms": 22.166,
+            "min_ms": 21.913,
+            "p95_ms": 29.16
+          },
+          "median_delta_ms": -5.531,
+          "p95_delta_ms": 1.307,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.072,
+            "max_ms": 28.238,
+            "median_ms": 27.637,
+            "min_ms": 27.428,
+            "p95_ms": 28.185
+          },
+          "candidate": {
+            "mad_ms": 0.115,
+            "max_ms": 22.526,
+            "median_ms": 22.194,
+            "min_ms": 22.006,
+            "p95_ms": 22.43
+          },
+          "median_delta_ms": -5.443,
+          "p95_delta_ms": -5.755,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.156,
+            "max_ms": 27.974,
+            "median_ms": 26.318,
+            "min_ms": 26.083,
+            "p95_ms": 26.894
+          },
+          "candidate": {
+            "mad_ms": 0.071,
+            "max_ms": 24.572,
+            "median_ms": 24.267,
+            "min_ms": 24.017,
+            "p95_ms": 24.524
+          },
+          "median_delta_ms": -2.051,
+          "p95_delta_ms": -2.37,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.169,
+            "max_ms": 26.933,
+            "median_ms": 26.27,
+            "min_ms": 25.95,
+            "p95_ms": 26.668
+          },
+          "candidate": {
+            "mad_ms": 0.156,
+            "max_ms": 24.715,
+            "median_ms": 24.333,
+            "min_ms": 24.017,
+            "p95_ms": 24.59
+          },
+          "median_delta_ms": -1.937,
+          "p95_delta_ms": -2.078,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.176,
+            "max_ms": 27.048,
+            "median_ms": 26.608,
+            "min_ms": 26.072,
+            "p95_ms": 27.044
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 22.522,
+            "median_ms": 22.283,
+            "min_ms": 22.029,
+            "p95_ms": 22.462
+          },
+          "median_delta_ms": -4.325,
+          "p95_delta_ms": -4.582,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.196,
+            "max_ms": 27.346,
+            "median_ms": 27.01,
+            "min_ms": 26.414,
+            "p95_ms": 27.332
+          },
+          "candidate": {
+            "mad_ms": 0.148,
+            "max_ms": 23.912,
+            "median_ms": 23.607,
+            "min_ms": 23.273,
+            "p95_ms": 23.907
+          },
+          "median_delta_ms": -3.403,
+          "p95_delta_ms": -3.425,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.124,
+            "max_ms": 28.511,
+            "median_ms": 28.305,
+            "min_ms": 27.967,
+            "p95_ms": 28.503
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 22.601,
+            "median_ms": 22.231,
+            "min_ms": 21.961,
+            "p95_ms": 22.588
+          },
+          "median_delta_ms": -6.074,
+          "p95_delta_ms": -5.915,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.116,
+            "max_ms": 28.977,
+            "median_ms": 28.407,
+            "min_ms": 28.163,
+            "p95_ms": 28.653
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 22.84,
+            "median_ms": 22.549,
+            "min_ms": 22.324,
+            "p95_ms": 22.788
+          },
+          "median_delta_ms": -5.858,
+          "p95_delta_ms": -5.865,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 0.117,
+            "max_ms": 28.558,
+            "median_ms": 28.233,
+            "min_ms": 27.717,
+            "p95_ms": 28.535
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 23.245,
+            "median_ms": 22.464,
+            "min_ms": 22.289,
+            "p95_ms": 22.731
+          },
+          "median_delta_ms": -5.769,
+          "p95_delta_ms": -5.804,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.786,
+            "max_ms": 27.538,
+            "median_ms": 24.563,
+            "min_ms": 23.565,
+            "p95_ms": 26.903
+          },
+          "candidate": {
+            "mad_ms": 0.096,
+            "max_ms": 18.508,
+            "median_ms": 18.251,
+            "min_ms": 18.009,
+            "p95_ms": 18.493
+          },
+          "median_delta_ms": -6.312,
+          "p95_delta_ms": -8.41,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 0.386,
+            "max_ms": 27.093,
+            "median_ms": 25.222,
+            "min_ms": 23.81,
+            "p95_ms": 27.001
+          },
+          "candidate": {
+            "mad_ms": 0.114,
+            "max_ms": 18.314,
+            "median_ms": 18.059,
+            "min_ms": 17.836,
+            "p95_ms": 18.294
+          },
+          "median_delta_ms": -7.163,
+          "p95_delta_ms": -8.707,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 24.89,
+            "median_ms": 23.913,
+            "min_ms": 23.629,
+            "p95_ms": 24.375
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 18.815,
+            "median_ms": 18.055,
+            "min_ms": 17.792,
+            "p95_ms": 18.292
+          },
+          "median_delta_ms": -5.858,
+          "p95_delta_ms": -6.083,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.118,
+            "max_ms": 24.178,
+            "median_ms": 23.811,
+            "min_ms": 23.523,
+            "p95_ms": 24.17
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 18.45,
+            "median_ms": 18.017,
+            "min_ms": 17.833,
+            "p95_ms": 18.243
+          },
+          "median_delta_ms": -5.794,
+          "p95_delta_ms": -5.927,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.09,
+            "max_ms": 23.946,
+            "median_ms": 23.836,
+            "min_ms": 23.564,
+            "p95_ms": 23.943
+          },
+          "candidate": {
+            "mad_ms": 0.096,
+            "max_ms": 18.274,
+            "median_ms": 17.926,
+            "min_ms": 17.724,
+            "p95_ms": 18.247
+          },
+          "median_delta_ms": -5.91,
+          "p95_delta_ms": -5.696,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 23.895,
+            "median_ms": 23.711,
+            "min_ms": 23.475,
+            "p95_ms": 23.871
+          },
+          "candidate": {
+            "mad_ms": 0.053,
+            "max_ms": 18.445,
+            "median_ms": 18.095,
+            "min_ms": 17.892,
+            "p95_ms": 18.318
+          },
+          "median_delta_ms": -5.616,
+          "p95_delta_ms": -5.553,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.094,
+            "max_ms": 24.515,
+            "median_ms": 24.048,
+            "min_ms": 23.922,
+            "p95_ms": 24.497
+          },
+          "candidate": {
+            "mad_ms": 0.092,
+            "max_ms": 18.242,
+            "median_ms": 18.02,
+            "min_ms": 17.842,
+            "p95_ms": 18.23
+          },
+          "median_delta_ms": -6.028,
+          "p95_delta_ms": -6.267,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.108,
+            "max_ms": 24.62,
+            "median_ms": 24.074,
+            "min_ms": 23.798,
+            "p95_ms": 24.285
+          },
+          "candidate": {
+            "mad_ms": 0.135,
+            "max_ms": 18.421,
+            "median_ms": 18.044,
+            "min_ms": 17.77,
+            "p95_ms": 18.262
+          },
+          "median_delta_ms": -6.03,
+          "p95_delta_ms": -6.023,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.086,
+            "max_ms": 24.377,
+            "median_ms": 24.105,
+            "min_ms": 23.866,
+            "p95_ms": 24.261
+          },
+          "candidate": {
+            "mad_ms": 0.095,
+            "max_ms": 18.115,
+            "median_ms": 17.917,
+            "min_ms": 17.616,
+            "p95_ms": 18.096
+          },
+          "median_delta_ms": -6.188,
+          "p95_delta_ms": -6.165,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.111,
+            "max_ms": 24.923,
+            "median_ms": 24.28,
+            "min_ms": 24.043,
+            "p95_ms": 24.916
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 18.276,
+            "median_ms": 18.006,
+            "min_ms": 17.634,
+            "p95_ms": 18.253
+          },
+          "median_delta_ms": -6.274,
+          "p95_delta_ms": -6.663,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.125,
+            "max_ms": 24.526,
+            "median_ms": 24.038,
+            "min_ms": 23.739,
+            "p95_ms": 24.469
+          },
+          "candidate": {
+            "mad_ms": 0.057,
+            "max_ms": 18.397,
+            "median_ms": 18.191,
+            "min_ms": 17.931,
+            "p95_ms": 18.361
+          },
+          "median_delta_ms": -5.847,
+          "p95_delta_ms": -6.108,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.091,
+            "max_ms": 24.415,
+            "median_ms": 23.919,
+            "min_ms": 23.67,
+            "p95_ms": 24.152
+          },
+          "candidate": {
+            "mad_ms": 0.086,
+            "max_ms": 18.573,
+            "median_ms": 18.193,
+            "min_ms": 17.845,
+            "p95_ms": 18.38
+          },
+          "median_delta_ms": -5.726,
+          "p95_delta_ms": -5.772,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.068,
+            "max_ms": 24.123,
+            "median_ms": 23.837,
+            "min_ms": 23.64,
+            "p95_ms": 23.999
+          },
+          "candidate": {
+            "mad_ms": 0.075,
+            "max_ms": 19.754,
+            "median_ms": 19.565,
+            "min_ms": 19.255,
+            "p95_ms": 19.657
+          },
+          "median_delta_ms": -4.272,
+          "p95_delta_ms": -4.342,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.118,
+            "max_ms": 24.172,
+            "median_ms": 23.765,
+            "min_ms": 23.418,
+            "p95_ms": 24.074
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 19.7,
+            "median_ms": 19.355,
+            "min_ms": 19.036,
+            "p95_ms": 19.579
+          },
+          "median_delta_ms": -4.41,
+          "p95_delta_ms": -4.495,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.091,
+            "max_ms": 25.792,
+            "median_ms": 25.478,
+            "min_ms": 25.341,
+            "p95_ms": 25.786
+          },
+          "candidate": {
+            "mad_ms": 0.09,
+            "max_ms": 18.683,
+            "median_ms": 18.17,
+            "min_ms": 17.943,
+            "p95_ms": 18.587
+          },
+          "median_delta_ms": -7.308,
+          "p95_delta_ms": -7.199,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.064,
+            "max_ms": 26.364,
+            "median_ms": 25.995,
+            "min_ms": 25.664,
+            "p95_ms": 26.25
+          },
+          "candidate": {
+            "mad_ms": 0.068,
+            "max_ms": 19.873,
+            "median_ms": 19.424,
+            "min_ms": 19.207,
+            "p95_ms": 19.68
+          },
+          "median_delta_ms": -6.571,
+          "p95_delta_ms": -6.57,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.117,
+            "max_ms": 26.35,
+            "median_ms": 25.812,
+            "min_ms": 25.491,
+            "p95_ms": 26.068
+          },
+          "candidate": {
+            "mad_ms": 0.029,
+            "max_ms": 18.276,
+            "median_ms": 18.117,
+            "min_ms": 17.917,
+            "p95_ms": 18.241
+          },
+          "median_delta_ms": -7.695,
+          "p95_delta_ms": -7.827,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.051,
+            "max_ms": 25.771,
+            "median_ms": 25.5,
+            "min_ms": 25.397,
+            "p95_ms": 25.745
+          },
+          "candidate": {
+            "mad_ms": 0.099,
+            "max_ms": 18.454,
+            "median_ms": 18.137,
+            "min_ms": 17.914,
+            "p95_ms": 18.386
+          },
+          "median_delta_ms": -7.363,
+          "p95_delta_ms": -7.359,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.102,
+            "max_ms": 25.54,
+            "median_ms": 25.15,
+            "min_ms": 24.821,
+            "p95_ms": 25.354
+          },
+          "candidate": {
+            "mad_ms": 0.118,
+            "max_ms": 20.223,
+            "median_ms": 19.561,
+            "min_ms": 19.211,
+            "p95_ms": 20.092
+          },
+          "median_delta_ms": -5.589,
+          "p95_delta_ms": -5.262,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.068,
+            "max_ms": 25.765,
+            "median_ms": 25.113,
+            "min_ms": 24.852,
+            "p95_ms": 25.279
+          },
+          "candidate": {
+            "mad_ms": 0.091,
+            "max_ms": 19.87,
+            "median_ms": 19.639,
+            "min_ms": 19.401,
+            "p95_ms": 19.843
+          },
+          "median_delta_ms": -5.474,
+          "p95_delta_ms": -5.436,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.068,
+            "max_ms": 25.353,
+            "median_ms": 25.101,
+            "min_ms": 24.916,
+            "p95_ms": 25.322
+          },
+          "candidate": {
+            "mad_ms": 0.081,
+            "max_ms": 20.291,
+            "median_ms": 19.734,
+            "min_ms": 19.448,
+            "p95_ms": 19.975
+          },
+          "median_delta_ms": -5.367,
+          "p95_delta_ms": -5.347,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.106,
+            "max_ms": 25.999,
+            "median_ms": 25.207,
+            "min_ms": 25.031,
+            "p95_ms": 25.522
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 19.888,
+            "median_ms": 19.695,
+            "min_ms": 19.278,
+            "p95_ms": 19.871
+          },
+          "median_delta_ms": -5.512,
+          "p95_delta_ms": -5.651,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.068,
+            "max_ms": 25.609,
+            "median_ms": 25.203,
+            "min_ms": 25.012,
+            "p95_ms": 25.388
+          },
+          "candidate": {
+            "mad_ms": 0.106,
+            "max_ms": 19.941,
+            "median_ms": 19.666,
+            "min_ms": 19.31,
+            "p95_ms": 19.869
+          },
+          "median_delta_ms": -5.537,
+          "p95_delta_ms": -5.519,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.092,
+            "max_ms": 25.387,
+            "median_ms": 25.115,
+            "min_ms": 24.828,
+            "p95_ms": 25.354
+          },
+          "candidate": {
+            "mad_ms": 0.108,
+            "max_ms": 20.119,
+            "median_ms": 19.531,
+            "min_ms": 19.367,
+            "p95_ms": 19.786
+          },
+          "median_delta_ms": -5.584,
+          "p95_delta_ms": -5.568,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 25.584,
+            "median_ms": 25.103,
+            "min_ms": 24.843,
+            "p95_ms": 25.384
+          },
+          "candidate": {
+            "mad_ms": 0.085,
+            "max_ms": 19.809,
+            "median_ms": 19.579,
+            "min_ms": 19.2,
+            "p95_ms": 19.793
+          },
+          "median_delta_ms": -5.524,
+          "p95_delta_ms": -5.591,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 25.87,
+            "median_ms": 25.224,
+            "min_ms": 24.943,
+            "p95_ms": 25.512
+          },
+          "candidate": {
+            "mad_ms": 0.956,
+            "max_ms": 22.457,
+            "median_ms": 21.025,
+            "min_ms": 19.511,
+            "p95_ms": 22.094
+          },
+          "median_delta_ms": -4.199,
+          "p95_delta_ms": -3.418,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.054,
+            "max_ms": 25.55,
+            "median_ms": 25.238,
+            "min_ms": 24.948,
+            "p95_ms": 25.515
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 20.28,
+            "median_ms": 19.791,
+            "min_ms": 19.486,
+            "p95_ms": 20.12
+          },
+          "median_delta_ms": -5.447,
+          "p95_delta_ms": -5.395,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.122,
+            "max_ms": 25.639,
+            "median_ms": 25.305,
+            "min_ms": 24.988,
+            "p95_ms": 25.567
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 20.297,
+            "median_ms": 19.839,
+            "min_ms": 19.465,
+            "p95_ms": 20.113
+          },
+          "median_delta_ms": -5.466,
+          "p95_delta_ms": -5.454,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.109,
+            "max_ms": 25.375,
+            "median_ms": 25.094,
+            "min_ms": 24.8,
+            "p95_ms": 25.248
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 19.904,
+            "median_ms": 19.676,
+            "min_ms": 19.406,
+            "p95_ms": 19.876
+          },
+          "median_delta_ms": -5.418,
+          "p95_delta_ms": -5.372,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.197,
+            "max_ms": 25.828,
+            "median_ms": 25.313,
+            "min_ms": 24.914,
+            "p95_ms": 25.762
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 19.865,
+            "median_ms": 19.574,
+            "min_ms": 19.287,
+            "p95_ms": 19.78
+          },
+          "median_delta_ms": -5.739,
+          "p95_delta_ms": -5.982,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.128,
+            "max_ms": 25.894,
+            "median_ms": 25.4,
+            "min_ms": 25.004,
+            "p95_ms": 25.686
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 19.853,
+            "median_ms": 19.678,
+            "min_ms": 19.404,
+            "p95_ms": 19.836
+          },
+          "median_delta_ms": -5.722,
+          "p95_delta_ms": -5.85,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.139,
+            "max_ms": 25.684,
+            "median_ms": 25.501,
+            "min_ms": 25.207,
+            "p95_ms": 25.643
+          },
+          "candidate": {
+            "mad_ms": 0.067,
+            "max_ms": 20.036,
+            "median_ms": 19.747,
+            "min_ms": 19.408,
+            "p95_ms": 19.917
+          },
+          "median_delta_ms": -5.754,
+          "p95_delta_ms": -5.726,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.138,
+            "max_ms": 25.611,
+            "median_ms": 25.362,
+            "min_ms": 25.127,
+            "p95_ms": 25.572
+          },
+          "candidate": {
+            "mad_ms": 0.079,
+            "max_ms": 19.961,
+            "median_ms": 19.709,
+            "min_ms": 19.391,
+            "p95_ms": 19.941
+          },
+          "median_delta_ms": -5.653,
+          "p95_delta_ms": -5.631,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.125,
+            "max_ms": 25.412,
+            "median_ms": 25.147,
+            "min_ms": 24.852,
+            "p95_ms": 25.388
+          },
+          "candidate": {
+            "mad_ms": 0.109,
+            "max_ms": 19.577,
+            "median_ms": 19.258,
+            "min_ms": 19.007,
+            "p95_ms": 19.571
+          },
+          "median_delta_ms": -5.889,
+          "p95_delta_ms": -5.817,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.157,
+            "max_ms": 25.184,
+            "median_ms": 24.919,
+            "min_ms": 24.547,
+            "p95_ms": 25.169
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 19.562,
+            "median_ms": 19.293,
+            "min_ms": 19.082,
+            "p95_ms": 19.469
+          },
+          "median_delta_ms": -5.626,
+          "p95_delta_ms": -5.7,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 1.08,
+            "max_ms": 28.322,
+            "median_ms": 26.537,
+            "min_ms": 24.544,
+            "p95_ms": 28.26
+          },
+          "candidate": {
+            "mad_ms": 0.073,
+            "max_ms": 19.358,
+            "median_ms": 19.136,
+            "min_ms": 18.939,
+            "p95_ms": 19.318
+          },
+          "median_delta_ms": -7.401,
+          "p95_delta_ms": -8.942,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.283,
+            "max_ms": 28.321,
+            "median_ms": 25.522,
+            "min_ms": 25.13,
+            "p95_ms": 27.134
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 19.913,
+            "median_ms": 19.612,
+            "min_ms": 19.322,
+            "p95_ms": 19.909
+          },
+          "median_delta_ms": -5.91,
+          "p95_delta_ms": -7.225,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.095,
+            "max_ms": 25.26,
+            "median_ms": 25.071,
+            "min_ms": 24.772,
+            "p95_ms": 25.227
+          },
+          "candidate": {
+            "mad_ms": 0.091,
+            "max_ms": 20.242,
+            "median_ms": 19.733,
+            "min_ms": 19.423,
+            "p95_ms": 20.206
+          },
+          "median_delta_ms": -5.338,
+          "p95_delta_ms": -5.021,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.079,
+            "max_ms": 24.3,
+            "median_ms": 23.699,
+            "min_ms": 23.431,
+            "p95_ms": 24.137
+          },
+          "candidate": {
+            "mad_ms": 0.069,
+            "max_ms": 22.16,
+            "median_ms": 21.727,
+            "min_ms": 21.401,
+            "p95_ms": 21.888
+          },
+          "median_delta_ms": -1.972,
+          "p95_delta_ms": -2.249,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.083,
+            "max_ms": 24.236,
+            "median_ms": 23.907,
+            "min_ms": 23.63,
+            "p95_ms": 24.146
+          },
+          "candidate": {
+            "mad_ms": 0.136,
+            "max_ms": 22.057,
+            "median_ms": 21.693,
+            "min_ms": 21.4,
+            "p95_ms": 21.962
+          },
+          "median_delta_ms": -2.214,
+          "p95_delta_ms": -2.184,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.693,
+            "max_ms": 27.213,
+            "median_ms": 25.687,
+            "min_ms": 23.962,
+            "p95_ms": 27.18
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 19.979,
+            "median_ms": 19.614,
+            "min_ms": 19.362,
+            "p95_ms": 19.8
+          },
+          "median_delta_ms": -6.073,
+          "p95_delta_ms": -7.38,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.075,
+            "max_ms": 24.635,
+            "median_ms": 24.139,
+            "min_ms": 23.73,
+            "p95_ms": 24.587
+          },
+          "candidate": {
+            "mad_ms": 0.094,
+            "max_ms": 21.631,
+            "median_ms": 21.009,
+            "min_ms": 20.603,
+            "p95_ms": 21.501
+          },
+          "median_delta_ms": -3.13,
+          "p95_delta_ms": -3.086,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.098,
+            "max_ms": 25.704,
+            "median_ms": 25.192,
+            "min_ms": 24.94,
+            "p95_ms": 25.654
+          },
+          "candidate": {
+            "mad_ms": 0.107,
+            "max_ms": 19.866,
+            "median_ms": 19.639,
+            "min_ms": 19.447,
+            "p95_ms": 19.85
+          },
+          "median_delta_ms": -5.553,
+          "p95_delta_ms": -5.804,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.285,
+            "max_ms": 27.885,
+            "median_ms": 25.64,
+            "min_ms": 25.216,
+            "p95_ms": 27.763
+          },
+          "candidate": {
+            "mad_ms": 0.103,
+            "max_ms": 20.269,
+            "median_ms": 20.067,
+            "min_ms": 19.727,
+            "p95_ms": 20.256
+          },
+          "median_delta_ms": -5.573,
+          "p95_delta_ms": -7.507,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 0.145,
+            "max_ms": 32.915,
+            "median_ms": 25.31,
+            "min_ms": 25.07,
+            "p95_ms": 27.174
+          },
+          "candidate": {
+            "mad_ms": 0.074,
+            "max_ms": 20.278,
+            "median_ms": 19.905,
+            "min_ms": 19.74,
+            "p95_ms": 20.125
+          },
+          "median_delta_ms": -5.405,
+          "p95_delta_ms": -7.049,
+          "budget_met": true
+        }
+      ],
+      "acceptance": "PASS"
+    },
+    {
+      "baseline_order": 4,
+      "candidate_order": 3,
+      "cases": [
+        {
+          "case": "copilot.guard.clean",
+          "baseline": {
+            "mad_ms": 0.884,
+            "max_ms": 30.985,
+            "median_ms": 28.508,
+            "min_ms": 26.814,
+            "p95_ms": 30.657
+          },
+          "candidate": {
+            "mad_ms": 0.106,
+            "max_ms": 21.491,
+            "median_ms": 21.041,
+            "min_ms": 20.739,
+            "p95_ms": 21.485
+          },
+          "median_delta_ms": -7.467,
+          "p95_delta_ms": -9.172,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.finding",
+          "baseline": {
+            "mad_ms": 0.689,
+            "max_ms": 33.912,
+            "median_ms": 32.005,
+            "min_ms": 28.481,
+            "p95_ms": 32.885
+          },
+          "candidate": {
+            "mad_ms": 0.117,
+            "max_ms": 22.635,
+            "median_ms": 22.265,
+            "min_ms": 21.989,
+            "p95_ms": 22.49
+          },
+          "median_delta_ms": -9.74,
+          "p95_delta_ms": -10.395,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.large",
+          "baseline": {
+            "mad_ms": 0.853,
+            "max_ms": 83.612,
+            "median_ms": 74.906,
+            "min_ms": 72.647,
+            "p95_ms": 78.356
+          },
+          "candidate": {
+            "mad_ms": 0.198,
+            "max_ms": 28.155,
+            "median_ms": 27.619,
+            "min_ms": 27.316,
+            "p95_ms": 28.058
+          },
+          "median_delta_ms": -47.287,
+          "p95_delta_ms": -50.298,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.failure",
+          "baseline": {
+            "mad_ms": 0.113,
+            "max_ms": 26.344,
+            "median_ms": 25.565,
+            "min_ms": 25.259,
+            "p95_ms": 26.086
+          },
+          "candidate": {
+            "mad_ms": 0.072,
+            "max_ms": 20.451,
+            "median_ms": 20.124,
+            "min_ms": 19.724,
+            "p95_ms": 20.307
+          },
+          "median_delta_ms": -5.441,
+          "p95_delta_ms": -5.779,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.clean",
+          "baseline": {
+            "mad_ms": 0.294,
+            "max_ms": 30.159,
+            "median_ms": 27.287,
+            "min_ms": 26.86,
+            "p95_ms": 29.581
+          },
+          "candidate": {
+            "mad_ms": 0.086,
+            "max_ms": 21.22,
+            "median_ms": 20.97,
+            "min_ms": 20.644,
+            "p95_ms": 21.183
+          },
+          "median_delta_ms": -6.317,
+          "p95_delta_ms": -8.398,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.finding",
+          "baseline": {
+            "mad_ms": 0.124,
+            "max_ms": 28.986,
+            "median_ms": 28.633,
+            "min_ms": 28.357,
+            "p95_ms": 28.867
+          },
+          "candidate": {
+            "mad_ms": 0.139,
+            "max_ms": 23.101,
+            "median_ms": 22.438,
+            "min_ms": 22.195,
+            "p95_ms": 22.62
+          },
+          "median_delta_ms": -6.195,
+          "p95_delta_ms": -6.247,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.large",
+          "baseline": {
+            "mad_ms": 2.018,
+            "max_ms": 139.48,
+            "median_ms": 122.688,
+            "min_ms": 119.258,
+            "p95_ms": 133.692
+          },
+          "candidate": {
+            "mad_ms": 0.149,
+            "max_ms": 24.608,
+            "median_ms": 24.188,
+            "min_ms": 23.864,
+            "p95_ms": 24.58
+          },
+          "median_delta_ms": -98.5,
+          "p95_delta_ms": -109.112,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.failure",
+          "baseline": {
+            "mad_ms": 0.422,
+            "max_ms": 28.235,
+            "median_ms": 27.085,
+            "min_ms": 25.865,
+            "p95_ms": 28.168
+          },
+          "candidate": {
+            "mad_ms": 0.154,
+            "max_ms": 20.761,
+            "median_ms": 20.207,
+            "min_ms": 19.915,
+            "p95_ms": 20.52
+          },
+          "median_delta_ms": -6.878,
+          "p95_delta_ms": -7.648,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.clean",
+          "baseline": {
+            "mad_ms": 0.744,
+            "max_ms": 27.042,
+            "median_ms": 26.067,
+            "min_ms": 24.454,
+            "p95_ms": 26.981
+          },
+          "candidate": {
+            "mad_ms": 0.109,
+            "max_ms": 18.467,
+            "median_ms": 18.225,
+            "min_ms": 17.889,
+            "p95_ms": 18.431
+          },
+          "median_delta_ms": -7.842,
+          "p95_delta_ms": -8.55,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.finding",
+          "baseline": {
+            "mad_ms": 0.345,
+            "max_ms": 28.489,
+            "median_ms": 26.385,
+            "min_ms": 25.985,
+            "p95_ms": 28.193
+          },
+          "candidate": {
+            "mad_ms": 0.088,
+            "max_ms": 19.75,
+            "median_ms": 19.578,
+            "min_ms": 19.28,
+            "p95_ms": 19.746
+          },
+          "median_delta_ms": -6.807,
+          "p95_delta_ms": -8.447,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.large",
+          "baseline": {
+            "mad_ms": 0.84,
+            "max_ms": 123.12,
+            "median_ms": 118.728,
+            "min_ms": 116.445,
+            "p95_ms": 122.094
+          },
+          "candidate": {
+            "mad_ms": 0.086,
+            "max_ms": 21.555,
+            "median_ms": 21.246,
+            "min_ms": 20.982,
+            "p95_ms": 21.515
+          },
+          "median_delta_ms": -97.482,
+          "p95_delta_ms": -100.579,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.failure",
+          "baseline": {
+            "mad_ms": 1.47,
+            "max_ms": 28.148,
+            "median_ms": 25.204,
+            "min_ms": 23.274,
+            "p95_ms": 28.084
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 17.997,
+            "median_ms": 17.703,
+            "min_ms": 17.407,
+            "p95_ms": 17.917
+          },
+          "median_delta_ms": -7.501,
+          "p95_delta_ms": -10.167,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.382,
+            "max_ms": 33.611,
+            "median_ms": 29.602,
+            "min_ms": 27.746,
+            "p95_ms": 32.365
+          },
+          "candidate": {
+            "mad_ms": 0.114,
+            "max_ms": 21.739,
+            "median_ms": 21.397,
+            "min_ms": 21.197,
+            "p95_ms": 21.719
+          },
+          "median_delta_ms": -8.205,
+          "p95_delta_ms": -10.646,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 1.288,
+            "max_ms": 42.495,
+            "median_ms": 30.484,
+            "min_ms": 28.154,
+            "p95_ms": 38.87
+          },
+          "candidate": {
+            "mad_ms": 0.09,
+            "max_ms": 21.648,
+            "median_ms": 21.025,
+            "min_ms": 20.689,
+            "p95_ms": 21.315
+          },
+          "median_delta_ms": -9.459,
+          "p95_delta_ms": -17.555,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.606,
+            "max_ms": 31.232,
+            "median_ms": 29.189,
+            "min_ms": 28.025,
+            "p95_ms": 30.797
+          },
+          "candidate": {
+            "mad_ms": 0.108,
+            "max_ms": 21.133,
+            "median_ms": 20.91,
+            "min_ms": 20.587,
+            "p95_ms": 21.125
+          },
+          "median_delta_ms": -8.279,
+          "p95_delta_ms": -9.672,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.356,
+            "max_ms": 29.462,
+            "median_ms": 27.675,
+            "min_ms": 27.051,
+            "p95_ms": 29.079
+          },
+          "candidate": {
+            "mad_ms": 0.132,
+            "max_ms": 21.022,
+            "median_ms": 20.709,
+            "min_ms": 20.496,
+            "p95_ms": 21.02
+          },
+          "median_delta_ms": -6.966,
+          "p95_delta_ms": -8.059,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.213,
+            "max_ms": 29.793,
+            "median_ms": 28.097,
+            "min_ms": 27.645,
+            "p95_ms": 29.604
+          },
+          "candidate": {
+            "mad_ms": 0.053,
+            "max_ms": 20.869,
+            "median_ms": 20.742,
+            "min_ms": 20.544,
+            "p95_ms": 20.856
+          },
+          "median_delta_ms": -7.355,
+          "p95_delta_ms": -8.748,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.7,
+            "max_ms": 30.913,
+            "median_ms": 29.136,
+            "min_ms": 27.113,
+            "p95_ms": 30.463
+          },
+          "candidate": {
+            "mad_ms": 0.091,
+            "max_ms": 21.27,
+            "median_ms": 20.919,
+            "min_ms": 20.562,
+            "p95_ms": 21.202
+          },
+          "median_delta_ms": -8.217,
+          "p95_delta_ms": -9.261,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.771,
+            "max_ms": 32.077,
+            "median_ms": 30.767,
+            "min_ms": 28.903,
+            "p95_ms": 31.912
+          },
+          "candidate": {
+            "mad_ms": 0.106,
+            "max_ms": 21.0,
+            "median_ms": 20.719,
+            "min_ms": 20.432,
+            "p95_ms": 20.98
+          },
+          "median_delta_ms": -10.048,
+          "p95_delta_ms": -10.932,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.095,
+            "max_ms": 29.345,
+            "median_ms": 28.939,
+            "min_ms": 28.534,
+            "p95_ms": 29.162
+          },
+          "candidate": {
+            "mad_ms": 0.05,
+            "max_ms": 20.831,
+            "median_ms": 20.633,
+            "min_ms": 20.311,
+            "p95_ms": 20.813
+          },
+          "median_delta_ms": -8.306,
+          "p95_delta_ms": -8.349,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.106,
+            "max_ms": 29.268,
+            "median_ms": 28.91,
+            "min_ms": 28.727,
+            "p95_ms": 29.229
+          },
+          "candidate": {
+            "mad_ms": 0.129,
+            "max_ms": 21.018,
+            "median_ms": 20.799,
+            "min_ms": 20.538,
+            "p95_ms": 21.005
+          },
+          "median_delta_ms": -8.111,
+          "p95_delta_ms": -8.224,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.095,
+            "max_ms": 29.313,
+            "median_ms": 28.878,
+            "min_ms": 28.662,
+            "p95_ms": 29.166
+          },
+          "candidate": {
+            "mad_ms": 0.118,
+            "max_ms": 21.18,
+            "median_ms": 20.853,
+            "min_ms": 20.47,
+            "p95_ms": 21.093
+          },
+          "median_delta_ms": -8.025,
+          "p95_delta_ms": -8.073,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.479,
+            "max_ms": 30.594,
+            "median_ms": 29.026,
+            "min_ms": 28.448,
+            "p95_ms": 30.578
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 21.093,
+            "median_ms": 20.872,
+            "min_ms": 20.423,
+            "p95_ms": 21.076
+          },
+          "median_delta_ms": -8.154,
+          "p95_delta_ms": -9.502,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.153,
+            "max_ms": 31.315,
+            "median_ms": 27.374,
+            "min_ms": 27.087,
+            "p95_ms": 29.123
+          },
+          "candidate": {
+            "mad_ms": 0.069,
+            "max_ms": 21.244,
+            "median_ms": 20.903,
+            "min_ms": 20.729,
+            "p95_ms": 21.145
+          },
+          "median_delta_ms": -6.471,
+          "p95_delta_ms": -7.978,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.123,
+            "max_ms": 27.743,
+            "median_ms": 27.333,
+            "min_ms": 27.095,
+            "p95_ms": 27.52
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 23.027,
+            "median_ms": 22.295,
+            "min_ms": 21.931,
+            "p95_ms": 22.737
+          },
+          "median_delta_ms": -5.038,
+          "p95_delta_ms": -4.783,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.094,
+            "max_ms": 27.986,
+            "median_ms": 27.176,
+            "min_ms": 26.795,
+            "p95_ms": 27.636
+          },
+          "candidate": {
+            "mad_ms": 0.081,
+            "max_ms": 22.447,
+            "median_ms": 21.97,
+            "min_ms": 21.727,
+            "p95_ms": 22.084
+          },
+          "median_delta_ms": -5.206,
+          "p95_delta_ms": -5.552,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.406,
+            "max_ms": 33.797,
+            "median_ms": 30.468,
+            "min_ms": 29.672,
+            "p95_ms": 31.813
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 21.464,
+            "median_ms": 20.873,
+            "min_ms": 20.563,
+            "p95_ms": 21.141
+          },
+          "median_delta_ms": -9.595,
+          "p95_delta_ms": -10.672,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.412,
+            "max_ms": 32.147,
+            "median_ms": 29.904,
+            "min_ms": 28.964,
+            "p95_ms": 31.603
+          },
+          "candidate": {
+            "mad_ms": 0.072,
+            "max_ms": 22.437,
+            "median_ms": 22.092,
+            "min_ms": 21.815,
+            "p95_ms": 22.328
+          },
+          "median_delta_ms": -7.812,
+          "p95_delta_ms": -9.275,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.992,
+            "max_ms": 32.942,
+            "median_ms": 30.296,
+            "min_ms": 28.885,
+            "p95_ms": 31.995
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 21.204,
+            "median_ms": 20.851,
+            "min_ms": 20.654,
+            "p95_ms": 21.028
+          },
+          "median_delta_ms": -9.445,
+          "p95_delta_ms": -10.967,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.216,
+            "max_ms": 32.087,
+            "median_ms": 28.583,
+            "min_ms": 28.282,
+            "p95_ms": 30.362
+          },
+          "candidate": {
+            "mad_ms": 0.134,
+            "max_ms": 21.284,
+            "median_ms": 20.753,
+            "min_ms": 20.459,
+            "p95_ms": 21.283
+          },
+          "median_delta_ms": -7.83,
+          "p95_delta_ms": -9.079,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.189,
+            "max_ms": 30.933,
+            "median_ms": 28.554,
+            "min_ms": 28.052,
+            "p95_ms": 30.327
+          },
+          "candidate": {
+            "mad_ms": 0.118,
+            "max_ms": 22.575,
+            "median_ms": 22.246,
+            "min_ms": 21.841,
+            "p95_ms": 22.466
+          },
+          "median_delta_ms": -6.308,
+          "p95_delta_ms": -7.861,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.153,
+            "max_ms": 30.768,
+            "median_ms": 28.58,
+            "min_ms": 28.215,
+            "p95_ms": 29.17
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 22.816,
+            "median_ms": 22.313,
+            "min_ms": 21.963,
+            "p95_ms": 22.65
+          },
+          "median_delta_ms": -6.267,
+          "p95_delta_ms": -6.52,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.39,
+            "max_ms": 34.399,
+            "median_ms": 28.855,
+            "min_ms": 28.333,
+            "p95_ms": 34.095
+          },
+          "candidate": {
+            "mad_ms": 0.096,
+            "max_ms": 22.644,
+            "median_ms": 22.281,
+            "min_ms": 21.708,
+            "p95_ms": 22.621
+          },
+          "median_delta_ms": -6.574,
+          "p95_delta_ms": -11.474,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.612,
+            "max_ms": 34.043,
+            "median_ms": 28.832,
+            "min_ms": 28.096,
+            "p95_ms": 32.861
+          },
+          "candidate": {
+            "mad_ms": 0.07,
+            "max_ms": 22.457,
+            "median_ms": 22.23,
+            "min_ms": 22.007,
+            "p95_ms": 22.45
+          },
+          "median_delta_ms": -6.602,
+          "p95_delta_ms": -10.411,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.675,
+            "max_ms": 33.69,
+            "median_ms": 28.65,
+            "min_ms": 27.712,
+            "p95_ms": 32.704
+          },
+          "candidate": {
+            "mad_ms": 0.081,
+            "max_ms": 22.622,
+            "median_ms": 22.39,
+            "min_ms": 22.162,
+            "p95_ms": 22.564
+          },
+          "median_delta_ms": -6.26,
+          "p95_delta_ms": -10.14,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.189,
+            "max_ms": 29.265,
+            "median_ms": 28.4,
+            "min_ms": 28.049,
+            "p95_ms": 28.796
+          },
+          "candidate": {
+            "mad_ms": 0.088,
+            "max_ms": 22.77,
+            "median_ms": 22.359,
+            "min_ms": 22.223,
+            "p95_ms": 22.741
+          },
+          "median_delta_ms": -6.041,
+          "p95_delta_ms": -6.055,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.339,
+            "max_ms": 38.589,
+            "median_ms": 28.809,
+            "min_ms": 28.005,
+            "p95_ms": 31.858
+          },
+          "candidate": {
+            "mad_ms": 0.069,
+            "max_ms": 22.756,
+            "median_ms": 22.416,
+            "min_ms": 22.133,
+            "p95_ms": 22.717
+          },
+          "median_delta_ms": -6.393,
+          "p95_delta_ms": -9.141,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.294,
+            "max_ms": 30.087,
+            "median_ms": 28.797,
+            "min_ms": 28.131,
+            "p95_ms": 29.601
+          },
+          "candidate": {
+            "mad_ms": 0.106,
+            "max_ms": 22.466,
+            "median_ms": 22.214,
+            "min_ms": 22.004,
+            "p95_ms": 22.406
+          },
+          "median_delta_ms": -6.583,
+          "p95_delta_ms": -7.195,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 29.799,
+            "median_ms": 28.277,
+            "min_ms": 28.002,
+            "p95_ms": 29.747
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 22.56,
+            "median_ms": 22.237,
+            "min_ms": 21.861,
+            "p95_ms": 22.556
+          },
+          "median_delta_ms": -6.04,
+          "p95_delta_ms": -7.191,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.174,
+            "max_ms": 29.924,
+            "median_ms": 28.577,
+            "min_ms": 28.167,
+            "p95_ms": 29.651
+          },
+          "candidate": {
+            "mad_ms": 0.128,
+            "max_ms": 22.833,
+            "median_ms": 22.5,
+            "min_ms": 22.211,
+            "p95_ms": 22.753
+          },
+          "median_delta_ms": -6.077,
+          "p95_delta_ms": -6.898,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.135,
+            "max_ms": 30.671,
+            "median_ms": 28.403,
+            "min_ms": 28.071,
+            "p95_ms": 30.146
+          },
+          "candidate": {
+            "mad_ms": 0.875,
+            "max_ms": 25.634,
+            "median_ms": 23.496,
+            "min_ms": 22.173,
+            "p95_ms": 25.182
+          },
+          "median_delta_ms": -4.907,
+          "p95_delta_ms": -4.964,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.989,
+            "max_ms": 35.061,
+            "median_ms": 30.4,
+            "min_ms": 28.392,
+            "p95_ms": 33.823
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 22.803,
+            "median_ms": 22.496,
+            "min_ms": 22.103,
+            "p95_ms": 22.709
+          },
+          "median_delta_ms": -7.904,
+          "p95_delta_ms": -11.114,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.207,
+            "max_ms": 30.588,
+            "median_ms": 28.846,
+            "min_ms": 28.349,
+            "p95_ms": 30.517
+          },
+          "candidate": {
+            "mad_ms": 0.139,
+            "max_ms": 22.862,
+            "median_ms": 22.512,
+            "min_ms": 22.173,
+            "p95_ms": 22.824
+          },
+          "median_delta_ms": -6.334,
+          "p95_delta_ms": -7.693,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.205,
+            "max_ms": 36.994,
+            "median_ms": 28.616,
+            "min_ms": 28.288,
+            "p95_ms": 34.12
+          },
+          "candidate": {
+            "mad_ms": 0.16,
+            "max_ms": 23.004,
+            "median_ms": 22.389,
+            "min_ms": 21.912,
+            "p95_ms": 22.8
+          },
+          "median_delta_ms": -6.227,
+          "p95_delta_ms": -11.32,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.23,
+            "max_ms": 33.869,
+            "median_ms": 28.84,
+            "min_ms": 28.314,
+            "p95_ms": 31.33
+          },
+          "candidate": {
+            "mad_ms": 0.154,
+            "max_ms": 22.714,
+            "median_ms": 22.334,
+            "min_ms": 22.005,
+            "p95_ms": 22.699
+          },
+          "median_delta_ms": -6.506,
+          "p95_delta_ms": -8.631,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.205,
+            "max_ms": 30.693,
+            "median_ms": 28.55,
+            "min_ms": 28.133,
+            "p95_ms": 29.77
+          },
+          "candidate": {
+            "mad_ms": 0.147,
+            "max_ms": 42.918,
+            "median_ms": 22.035,
+            "min_ms": 21.648,
+            "p95_ms": 22.791
+          },
+          "median_delta_ms": -6.515,
+          "p95_delta_ms": -6.979,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.147,
+            "max_ms": 28.58,
+            "median_ms": 28.201,
+            "min_ms": 27.855,
+            "p95_ms": 28.49
+          },
+          "candidate": {
+            "mad_ms": 0.285,
+            "max_ms": 24.689,
+            "median_ms": 22.333,
+            "min_ms": 22.017,
+            "p95_ms": 24.516
+          },
+          "median_delta_ms": -5.868,
+          "p95_delta_ms": -3.974,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 0.113,
+            "max_ms": 28.481,
+            "median_ms": 27.938,
+            "min_ms": 27.626,
+            "p95_ms": 28.281
+          },
+          "candidate": {
+            "mad_ms": 0.118,
+            "max_ms": 22.272,
+            "median_ms": 22.018,
+            "min_ms": 21.86,
+            "p95_ms": 22.25
+          },
+          "median_delta_ms": -5.92,
+          "p95_delta_ms": -6.031,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.091,
+            "max_ms": 28.952,
+            "median_ms": 28.256,
+            "min_ms": 28.107,
+            "p95_ms": 28.875
+          },
+          "candidate": {
+            "mad_ms": 0.093,
+            "max_ms": 22.97,
+            "median_ms": 22.321,
+            "min_ms": 22.136,
+            "p95_ms": 22.938
+          },
+          "median_delta_ms": -5.935,
+          "p95_delta_ms": -5.937,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.083,
+            "max_ms": 28.541,
+            "median_ms": 28.226,
+            "min_ms": 28.023,
+            "p95_ms": 28.538
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 22.611,
+            "median_ms": 22.27,
+            "min_ms": 22.047,
+            "p95_ms": 22.519
+          },
+          "median_delta_ms": -5.956,
+          "p95_delta_ms": -6.019,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.214,
+            "max_ms": 28.773,
+            "median_ms": 26.96,
+            "min_ms": 26.638,
+            "p95_ms": 28.259
+          },
+          "candidate": {
+            "mad_ms": 0.119,
+            "max_ms": 24.738,
+            "median_ms": 24.402,
+            "min_ms": 23.993,
+            "p95_ms": 24.703
+          },
+          "median_delta_ms": -2.558,
+          "p95_delta_ms": -3.556,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.254,
+            "max_ms": 27.913,
+            "median_ms": 26.957,
+            "min_ms": 26.479,
+            "p95_ms": 27.821
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 24.922,
+            "median_ms": 24.564,
+            "min_ms": 24.195,
+            "p95_ms": 24.726
+          },
+          "median_delta_ms": -2.393,
+          "p95_delta_ms": -3.095,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.165,
+            "max_ms": 27.474,
+            "median_ms": 27.016,
+            "min_ms": 26.605,
+            "p95_ms": 27.344
+          },
+          "candidate": {
+            "mad_ms": 0.103,
+            "max_ms": 23.649,
+            "median_ms": 22.546,
+            "min_ms": 22.336,
+            "p95_ms": 22.803
+          },
+          "median_delta_ms": -4.47,
+          "p95_delta_ms": -4.541,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.131,
+            "max_ms": 27.567,
+            "median_ms": 27.127,
+            "min_ms": 26.79,
+            "p95_ms": 27.428
+          },
+          "candidate": {
+            "mad_ms": 0.13,
+            "max_ms": 31.989,
+            "median_ms": 23.884,
+            "min_ms": 23.476,
+            "p95_ms": 25.347
+          },
+          "median_delta_ms": -3.243,
+          "p95_delta_ms": -2.081,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.106,
+            "max_ms": 29.162,
+            "median_ms": 28.44,
+            "min_ms": 28.119,
+            "p95_ms": 28.707
+          },
+          "candidate": {
+            "mad_ms": 0.073,
+            "max_ms": 22.766,
+            "median_ms": 22.322,
+            "min_ms": 22.146,
+            "p95_ms": 22.758
+          },
+          "median_delta_ms": -6.118,
+          "p95_delta_ms": -5.949,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.103,
+            "max_ms": 28.901,
+            "median_ms": 28.471,
+            "min_ms": 28.252,
+            "p95_ms": 28.845
+          },
+          "candidate": {
+            "mad_ms": 0.112,
+            "max_ms": 30.266,
+            "median_ms": 22.723,
+            "min_ms": 22.361,
+            "p95_ms": 24.401
+          },
+          "median_delta_ms": -5.748,
+          "p95_delta_ms": -4.444,
+          "budget_met": true
+        },
+        {
+          "case": "copilot.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 0.081,
+            "max_ms": 29.026,
+            "median_ms": 28.297,
+            "min_ms": 28.08,
+            "p95_ms": 28.932
+          },
+          "candidate": {
+            "mad_ms": 0.113,
+            "max_ms": 22.831,
+            "median_ms": 22.54,
+            "min_ms": 22.169,
+            "p95_ms": 22.819
+          },
+          "median_delta_ms": -5.757,
+          "p95_delta_ms": -6.113,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.076,
+            "max_ms": 27.759,
+            "median_ms": 27.266,
+            "min_ms": 27.077,
+            "p95_ms": 27.515
+          },
+          "candidate": {
+            "mad_ms": 0.761,
+            "max_ms": 24.533,
+            "median_ms": 22.654,
+            "min_ms": 21.153,
+            "p95_ms": 24.147
+          },
+          "median_delta_ms": -4.612,
+          "p95_delta_ms": -3.368,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 0.161,
+            "max_ms": 27.661,
+            "median_ms": 27.09,
+            "min_ms": 26.77,
+            "p95_ms": 27.578
+          },
+          "candidate": {
+            "mad_ms": 0.131,
+            "max_ms": 21.365,
+            "median_ms": 21.18,
+            "min_ms": 20.873,
+            "p95_ms": 21.359
+          },
+          "median_delta_ms": -5.91,
+          "p95_delta_ms": -6.219,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.089,
+            "max_ms": 27.783,
+            "median_ms": 27.069,
+            "min_ms": 26.849,
+            "p95_ms": 27.434
+          },
+          "candidate": {
+            "mad_ms": 0.082,
+            "max_ms": 21.269,
+            "median_ms": 21.066,
+            "min_ms": 20.762,
+            "p95_ms": 21.248
+          },
+          "median_delta_ms": -6.003,
+          "p95_delta_ms": -6.186,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.154,
+            "max_ms": 41.254,
+            "median_ms": 27.058,
+            "min_ms": 26.816,
+            "p95_ms": 34.717
+          },
+          "candidate": {
+            "mad_ms": 0.093,
+            "max_ms": 21.37,
+            "median_ms": 20.992,
+            "min_ms": 20.723,
+            "p95_ms": 21.329
+          },
+          "median_delta_ms": -6.066,
+          "p95_delta_ms": -13.388,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.134,
+            "max_ms": 27.268,
+            "median_ms": 27.01,
+            "min_ms": 26.776,
+            "p95_ms": 27.263
+          },
+          "candidate": {
+            "mad_ms": 0.124,
+            "max_ms": 21.185,
+            "median_ms": 20.896,
+            "min_ms": 20.545,
+            "p95_ms": 21.144
+          },
+          "median_delta_ms": -6.114,
+          "p95_delta_ms": -6.119,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 27.872,
+            "median_ms": 27.004,
+            "min_ms": 26.624,
+            "p95_ms": 27.572
+          },
+          "candidate": {
+            "mad_ms": 0.134,
+            "max_ms": 21.472,
+            "median_ms": 21.118,
+            "min_ms": 20.776,
+            "p95_ms": 21.428
+          },
+          "median_delta_ms": -5.886,
+          "p95_delta_ms": -6.144,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.094,
+            "max_ms": 28.921,
+            "median_ms": 28.482,
+            "min_ms": 28.28,
+            "p95_ms": 28.64
+          },
+          "candidate": {
+            "mad_ms": 0.099,
+            "max_ms": 21.245,
+            "median_ms": 20.966,
+            "min_ms": 20.633,
+            "p95_ms": 21.165
+          },
+          "median_delta_ms": -7.516,
+          "p95_delta_ms": -7.475,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.116,
+            "max_ms": 28.925,
+            "median_ms": 28.508,
+            "min_ms": 28.222,
+            "p95_ms": 28.854
+          },
+          "candidate": {
+            "mad_ms": 0.1,
+            "max_ms": 21.314,
+            "median_ms": 20.983,
+            "min_ms": 20.688,
+            "p95_ms": 21.274
+          },
+          "median_delta_ms": -7.525,
+          "p95_delta_ms": -7.58,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.136,
+            "max_ms": 29.06,
+            "median_ms": 28.564,
+            "min_ms": 28.118,
+            "p95_ms": 28.954
+          },
+          "candidate": {
+            "mad_ms": 0.107,
+            "max_ms": 21.425,
+            "median_ms": 21.03,
+            "min_ms": 20.752,
+            "p95_ms": 21.335
+          },
+          "median_delta_ms": -7.534,
+          "p95_delta_ms": -7.619,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.267,
+            "max_ms": 31.635,
+            "median_ms": 28.94,
+            "min_ms": 28.551,
+            "p95_ms": 31.606
+          },
+          "candidate": {
+            "mad_ms": 0.183,
+            "max_ms": 21.359,
+            "median_ms": 20.917,
+            "min_ms": 20.579,
+            "p95_ms": 21.308
+          },
+          "median_delta_ms": -8.023,
+          "p95_delta_ms": -10.298,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.185,
+            "max_ms": 40.345,
+            "median_ms": 28.663,
+            "min_ms": 28.211,
+            "p95_ms": 37.273
+          },
+          "candidate": {
+            "mad_ms": 0.114,
+            "max_ms": 21.117,
+            "median_ms": 20.918,
+            "min_ms": 20.572,
+            "p95_ms": 21.08
+          },
+          "median_delta_ms": -7.745,
+          "p95_delta_ms": -16.193,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 34.423,
+            "median_ms": 27.241,
+            "min_ms": 26.965,
+            "p95_ms": 27.79
+          },
+          "candidate": {
+            "mad_ms": 0.099,
+            "max_ms": 21.224,
+            "median_ms": 20.82,
+            "min_ms": 20.674,
+            "p95_ms": 21.098
+          },
+          "median_delta_ms": -6.421,
+          "p95_delta_ms": -6.692,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.176,
+            "max_ms": 27.593,
+            "median_ms": 27.15,
+            "min_ms": 26.72,
+            "p95_ms": 27.485
+          },
+          "candidate": {
+            "mad_ms": 0.117,
+            "max_ms": 22.868,
+            "median_ms": 22.411,
+            "min_ms": 22.068,
+            "p95_ms": 22.808
+          },
+          "median_delta_ms": -4.739,
+          "p95_delta_ms": -4.677,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 27.294,
+            "median_ms": 26.883,
+            "min_ms": 26.366,
+            "p95_ms": 27.279
+          },
+          "candidate": {
+            "mad_ms": 0.121,
+            "max_ms": 22.531,
+            "median_ms": 22.273,
+            "min_ms": 21.986,
+            "p95_ms": 22.514
+          },
+          "median_delta_ms": -4.61,
+          "p95_delta_ms": -4.765,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.11,
+            "max_ms": 29.387,
+            "median_ms": 28.766,
+            "min_ms": 28.557,
+            "p95_ms": 29.234
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 21.305,
+            "median_ms": 21.002,
+            "min_ms": 20.827,
+            "p95_ms": 21.244
+          },
+          "median_delta_ms": -7.764,
+          "p95_delta_ms": -7.99,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.085,
+            "max_ms": 30.16,
+            "median_ms": 29.404,
+            "min_ms": 29.059,
+            "p95_ms": 30.124
+          },
+          "candidate": {
+            "mad_ms": 0.155,
+            "max_ms": 22.461,
+            "median_ms": 22.208,
+            "min_ms": 22.017,
+            "p95_ms": 22.441
+          },
+          "median_delta_ms": -7.196,
+          "p95_delta_ms": -7.683,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.17,
+            "max_ms": 30.532,
+            "median_ms": 28.982,
+            "min_ms": 28.589,
+            "p95_ms": 30.184
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 21.568,
+            "median_ms": 20.842,
+            "min_ms": 20.557,
+            "p95_ms": 21.18
+          },
+          "median_delta_ms": -8.14,
+          "p95_delta_ms": -9.004,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.326,
+            "max_ms": 31.556,
+            "median_ms": 29.526,
+            "min_ms": 28.443,
+            "p95_ms": 31.116
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 21.097,
+            "median_ms": 20.83,
+            "min_ms": 20.562,
+            "p95_ms": 20.981
+          },
+          "median_delta_ms": -8.696,
+          "p95_delta_ms": -10.135,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.143,
+            "max_ms": 29.072,
+            "median_ms": 28.472,
+            "min_ms": 28.233,
+            "p95_ms": 28.679
+          },
+          "candidate": {
+            "mad_ms": 0.112,
+            "max_ms": 22.855,
+            "median_ms": 22.563,
+            "min_ms": 22.202,
+            "p95_ms": 22.799
+          },
+          "median_delta_ms": -5.909,
+          "p95_delta_ms": -5.88,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.122,
+            "max_ms": 28.941,
+            "median_ms": 28.364,
+            "min_ms": 28.146,
+            "p95_ms": 28.806
+          },
+          "candidate": {
+            "mad_ms": 0.139,
+            "max_ms": 23.133,
+            "median_ms": 22.561,
+            "min_ms": 22.277,
+            "p95_ms": 22.8
+          },
+          "median_delta_ms": -5.803,
+          "p95_delta_ms": -6.006,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.104,
+            "max_ms": 30.03,
+            "median_ms": 28.293,
+            "min_ms": 28.073,
+            "p95_ms": 29.164
+          },
+          "candidate": {
+            "mad_ms": 0.108,
+            "max_ms": 22.878,
+            "median_ms": 22.543,
+            "min_ms": 22.385,
+            "p95_ms": 22.777
+          },
+          "median_delta_ms": -5.75,
+          "p95_delta_ms": -6.387,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.052,
+            "max_ms": 28.537,
+            "median_ms": 28.327,
+            "min_ms": 27.987,
+            "p95_ms": 28.459
+          },
+          "candidate": {
+            "mad_ms": 0.082,
+            "max_ms": 22.852,
+            "median_ms": 22.46,
+            "min_ms": 22.173,
+            "p95_ms": 22.628
+          },
+          "median_delta_ms": -5.867,
+          "p95_delta_ms": -5.831,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.1,
+            "max_ms": 28.982,
+            "median_ms": 28.17,
+            "min_ms": 27.905,
+            "p95_ms": 28.461
+          },
+          "candidate": {
+            "mad_ms": 0.066,
+            "max_ms": 22.756,
+            "median_ms": 22.389,
+            "min_ms": 22.22,
+            "p95_ms": 22.675
+          },
+          "median_delta_ms": -5.781,
+          "p95_delta_ms": -5.786,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 28.607,
+            "median_ms": 28.313,
+            "min_ms": 27.972,
+            "p95_ms": 28.496
+          },
+          "candidate": {
+            "mad_ms": 0.094,
+            "max_ms": 22.899,
+            "median_ms": 22.481,
+            "min_ms": 22.302,
+            "p95_ms": 22.793
+          },
+          "median_delta_ms": -5.832,
+          "p95_delta_ms": -5.703,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.147,
+            "max_ms": 29.086,
+            "median_ms": 28.373,
+            "min_ms": 28.001,
+            "p95_ms": 28.943
+          },
+          "candidate": {
+            "mad_ms": 0.059,
+            "max_ms": 22.735,
+            "median_ms": 22.467,
+            "min_ms": 22.128,
+            "p95_ms": 22.676
+          },
+          "median_delta_ms": -5.906,
+          "p95_delta_ms": -6.267,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.162,
+            "max_ms": 29.645,
+            "median_ms": 28.407,
+            "min_ms": 28.079,
+            "p95_ms": 29.374
+          },
+          "candidate": {
+            "mad_ms": 0.104,
+            "max_ms": 22.725,
+            "median_ms": 22.423,
+            "min_ms": 22.057,
+            "p95_ms": 22.659
+          },
+          "median_delta_ms": -5.984,
+          "p95_delta_ms": -6.715,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.088,
+            "max_ms": 29.234,
+            "median_ms": 28.413,
+            "min_ms": 28.207,
+            "p95_ms": 28.721
+          },
+          "candidate": {
+            "mad_ms": 0.08,
+            "max_ms": 22.953,
+            "median_ms": 22.532,
+            "min_ms": 22.109,
+            "p95_ms": 22.816
+          },
+          "median_delta_ms": -5.881,
+          "p95_delta_ms": -5.905,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.097,
+            "max_ms": 29.135,
+            "median_ms": 28.546,
+            "min_ms": 28.305,
+            "p95_ms": 29.101
+          },
+          "candidate": {
+            "mad_ms": 0.06,
+            "max_ms": 22.853,
+            "median_ms": 22.641,
+            "min_ms": 22.297,
+            "p95_ms": 22.825
+          },
+          "median_delta_ms": -5.905,
+          "p95_delta_ms": -6.276,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.131,
+            "max_ms": 29.23,
+            "median_ms": 28.323,
+            "min_ms": 28.009,
+            "p95_ms": 28.945
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 22.958,
+            "median_ms": 22.466,
+            "min_ms": 22.18,
+            "p95_ms": 22.915
+          },
+          "median_delta_ms": -5.857,
+          "p95_delta_ms": -6.03,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.039,
+            "max_ms": 29.132,
+            "median_ms": 28.37,
+            "min_ms": 28.057,
+            "p95_ms": 28.704
+          },
+          "candidate": {
+            "mad_ms": 0.131,
+            "max_ms": 22.832,
+            "median_ms": 22.419,
+            "min_ms": 22.19,
+            "p95_ms": 22.647
+          },
+          "median_delta_ms": -5.951,
+          "p95_delta_ms": -6.057,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.125,
+            "max_ms": 28.547,
+            "median_ms": 28.312,
+            "min_ms": 28.079,
+            "p95_ms": 28.546
+          },
+          "candidate": {
+            "mad_ms": 0.078,
+            "max_ms": 23.083,
+            "median_ms": 22.471,
+            "min_ms": 22.217,
+            "p95_ms": 23.027
+          },
+          "median_delta_ms": -5.841,
+          "p95_delta_ms": -5.519,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.126,
+            "max_ms": 28.664,
+            "median_ms": 28.304,
+            "min_ms": 28.055,
+            "p95_ms": 28.451
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 22.936,
+            "median_ms": 22.56,
+            "min_ms": 22.353,
+            "p95_ms": 22.876
+          },
+          "median_delta_ms": -5.744,
+          "p95_delta_ms": -5.575,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.097,
+            "max_ms": 28.671,
+            "median_ms": 28.329,
+            "min_ms": 28.116,
+            "p95_ms": 28.556
+          },
+          "candidate": {
+            "mad_ms": 0.132,
+            "max_ms": 22.948,
+            "median_ms": 22.458,
+            "min_ms": 22.148,
+            "p95_ms": 22.689
+          },
+          "median_delta_ms": -5.871,
+          "p95_delta_ms": -5.867,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.147,
+            "max_ms": 28.596,
+            "median_ms": 28.179,
+            "min_ms": 27.588,
+            "p95_ms": 28.579
+          },
+          "candidate": {
+            "mad_ms": 0.198,
+            "max_ms": 22.804,
+            "median_ms": 22.104,
+            "min_ms": 21.796,
+            "p95_ms": 22.652
+          },
+          "median_delta_ms": -6.075,
+          "p95_delta_ms": -5.927,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.151,
+            "max_ms": 28.662,
+            "median_ms": 28.018,
+            "min_ms": 27.648,
+            "p95_ms": 28.473
+          },
+          "candidate": {
+            "mad_ms": 0.123,
+            "max_ms": 22.455,
+            "median_ms": 22.129,
+            "min_ms": 21.845,
+            "p95_ms": 22.409
+          },
+          "median_delta_ms": -5.889,
+          "p95_delta_ms": -6.064,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 0.134,
+            "max_ms": 28.806,
+            "median_ms": 28.06,
+            "min_ms": 27.698,
+            "p95_ms": 28.359
+          },
+          "candidate": {
+            "mad_ms": 0.088,
+            "max_ms": 22.399,
+            "median_ms": 22.118,
+            "min_ms": 21.673,
+            "p95_ms": 22.333
+          },
+          "median_delta_ms": -5.942,
+          "p95_delta_ms": -6.026,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.084,
+            "max_ms": 28.775,
+            "median_ms": 28.428,
+            "min_ms": 28.054,
+            "p95_ms": 28.687
+          },
+          "candidate": {
+            "mad_ms": 0.094,
+            "max_ms": 23.322,
+            "median_ms": 22.557,
+            "min_ms": 22.158,
+            "p95_ms": 22.827
+          },
+          "median_delta_ms": -5.871,
+          "p95_delta_ms": -5.86,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.111,
+            "max_ms": 28.585,
+            "median_ms": 28.296,
+            "min_ms": 27.897,
+            "p95_ms": 28.472
+          },
+          "candidate": {
+            "mad_ms": 0.072,
+            "max_ms": 22.749,
+            "median_ms": 22.38,
+            "min_ms": 22.21,
+            "p95_ms": 22.691
+          },
+          "median_delta_ms": -5.916,
+          "p95_delta_ms": -5.781,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.087,
+            "max_ms": 27.763,
+            "median_ms": 26.837,
+            "min_ms": 26.553,
+            "p95_ms": 27.375
+          },
+          "candidate": {
+            "mad_ms": 0.08,
+            "max_ms": 24.611,
+            "median_ms": 24.48,
+            "min_ms": 24.254,
+            "p95_ms": 24.602
+          },
+          "median_delta_ms": -2.357,
+          "p95_delta_ms": -2.773,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.088,
+            "max_ms": 27.003,
+            "median_ms": 26.689,
+            "min_ms": 26.456,
+            "p95_ms": 26.938
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 25.275,
+            "median_ms": 24.875,
+            "min_ms": 24.578,
+            "p95_ms": 25.092
+          },
+          "median_delta_ms": -1.814,
+          "p95_delta_ms": -1.846,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.124,
+            "max_ms": 27.749,
+            "median_ms": 27.034,
+            "min_ms": 26.757,
+            "p95_ms": 27.514
+          },
+          "candidate": {
+            "mad_ms": 0.099,
+            "max_ms": 23.168,
+            "median_ms": 22.882,
+            "min_ms": 22.653,
+            "p95_ms": 23.081
+          },
+          "median_delta_ms": -4.152,
+          "p95_delta_ms": -4.433,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.078,
+            "max_ms": 27.321,
+            "median_ms": 27.101,
+            "min_ms": 26.829,
+            "p95_ms": 27.249
+          },
+          "candidate": {
+            "mad_ms": 0.126,
+            "max_ms": 24.625,
+            "median_ms": 23.958,
+            "min_ms": 23.579,
+            "p95_ms": 24.359
+          },
+          "median_delta_ms": -3.143,
+          "p95_delta_ms": -2.89,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.109,
+            "max_ms": 28.892,
+            "median_ms": 28.37,
+            "min_ms": 27.972,
+            "p95_ms": 28.773
+          },
+          "candidate": {
+            "mad_ms": 0.108,
+            "max_ms": 22.739,
+            "median_ms": 22.403,
+            "min_ms": 22.199,
+            "p95_ms": 22.712
+          },
+          "median_delta_ms": -5.967,
+          "p95_delta_ms": -6.061,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.119,
+            "max_ms": 29.097,
+            "median_ms": 28.554,
+            "min_ms": 28.231,
+            "p95_ms": 28.85
+          },
+          "candidate": {
+            "mad_ms": 0.045,
+            "max_ms": 23.106,
+            "median_ms": 22.786,
+            "min_ms": 22.409,
+            "p95_ms": 23.005
+          },
+          "median_delta_ms": -5.768,
+          "p95_delta_ms": -5.845,
+          "budget_met": true
+        },
+        {
+          "case": "gemini.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 2.427,
+            "max_ms": 42.755,
+            "median_ms": 30.932,
+            "min_ms": 28.139,
+            "p95_ms": 39.708
+          },
+          "candidate": {
+            "mad_ms": 0.087,
+            "max_ms": 22.934,
+            "median_ms": 22.605,
+            "min_ms": 22.421,
+            "p95_ms": 22.906
+          },
+          "median_delta_ms": -8.327,
+          "p95_delta_ms": -16.802,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.bytes-46899",
+          "baseline": {
+            "mad_ms": 0.095,
+            "max_ms": 24.756,
+            "median_ms": 24.302,
+            "min_ms": 24.03,
+            "p95_ms": 24.526
+          },
+          "candidate": {
+            "mad_ms": 0.073,
+            "max_ms": 18.667,
+            "median_ms": 18.463,
+            "min_ms": 18.189,
+            "p95_ms": 18.661
+          },
+          "median_delta_ms": -5.839,
+          "p95_delta_ms": -5.865,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.lines-330",
+          "baseline": {
+            "mad_ms": 0.109,
+            "max_ms": 24.587,
+            "median_ms": 24.265,
+            "min_ms": 24.128,
+            "p95_ms": 24.465
+          },
+          "candidate": {
+            "mad_ms": 0.082,
+            "max_ms": 19.043,
+            "median_ms": 18.289,
+            "min_ms": 17.97,
+            "p95_ms": 18.54
+          },
+          "median_delta_ms": -5.976,
+          "p95_delta_ms": -5.925,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.patch.lines-124-segments-142",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 24.735,
+            "median_ms": 24.251,
+            "min_ms": 23.859,
+            "p95_ms": 24.481
+          },
+          "candidate": {
+            "mad_ms": 0.081,
+            "max_ms": 19.876,
+            "median_ms": 18.179,
+            "min_ms": 17.804,
+            "p95_ms": 18.362
+          },
+          "median_delta_ms": -6.072,
+          "p95_delta_ms": -6.119,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.actual-newlines",
+          "baseline": {
+            "mad_ms": 0.068,
+            "max_ms": 24.892,
+            "median_ms": 24.215,
+            "min_ms": 23.982,
+            "p95_ms": 24.787
+          },
+          "candidate": {
+            "mad_ms": 0.115,
+            "max_ms": 19.207,
+            "median_ms": 18.19,
+            "min_ms": 17.905,
+            "p95_ms": 18.497
+          },
+          "median_delta_ms": -6.025,
+          "p95_delta_ms": -6.29,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.escaped-newlines",
+          "baseline": {
+            "mad_ms": 0.101,
+            "max_ms": 24.356,
+            "median_ms": 24.127,
+            "min_ms": 23.954,
+            "p95_ms": 24.349
+          },
+          "candidate": {
+            "mad_ms": 0.083,
+            "max_ms": 18.285,
+            "median_ms": 18.121,
+            "min_ms": 17.908,
+            "p95_ms": 18.26
+          },
+          "median_delta_ms": -6.006,
+          "p95_delta_ms": -6.089,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.utf8-growth",
+          "baseline": {
+            "mad_ms": 0.088,
+            "max_ms": 24.928,
+            "median_ms": 24.255,
+            "min_ms": 24.051,
+            "p95_ms": 24.622
+          },
+          "candidate": {
+            "mad_ms": 0.074,
+            "max_ms": 19.007,
+            "median_ms": 18.297,
+            "min_ms": 17.961,
+            "p95_ms": 18.802
+          },
+          "median_delta_ms": -5.958,
+          "p95_delta_ms": -5.82,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.md",
+          "baseline": {
+            "mad_ms": 0.401,
+            "max_ms": 34.05,
+            "median_ms": 27.259,
+            "min_ms": 25.238,
+            "p95_ms": 28.673
+          },
+          "candidate": {
+            "mad_ms": 0.113,
+            "max_ms": 18.925,
+            "median_ms": 18.23,
+            "min_ms": 17.976,
+            "p95_ms": 18.584
+          },
+          "median_delta_ms": -9.029,
+          "p95_delta_ms": -10.089,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.py",
+          "baseline": {
+            "mad_ms": 0.101,
+            "max_ms": 27.134,
+            "median_ms": 24.723,
+            "min_ms": 24.48,
+            "p95_ms": 25.522
+          },
+          "candidate": {
+            "mad_ms": 0.144,
+            "max_ms": 18.513,
+            "median_ms": 18.169,
+            "min_ms": 17.871,
+            "p95_ms": 18.414
+          },
+          "median_delta_ms": -6.554,
+          "p95_delta_ms": -7.108,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.examples.test.py",
+          "baseline": {
+            "mad_ms": 0.175,
+            "max_ms": 27.394,
+            "median_ms": 24.953,
+            "min_ms": 24.512,
+            "p95_ms": 26.315
+          },
+          "candidate": {
+            "mad_ms": 0.078,
+            "max_ms": 18.43,
+            "median_ms": 18.147,
+            "min_ms": 17.847,
+            "p95_ms": 18.354
+          },
+          "median_delta_ms": -6.806,
+          "p95_delta_ms": -7.961,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.edit.replacement",
+          "baseline": {
+            "mad_ms": 0.125,
+            "max_ms": 26.558,
+            "median_ms": 24.819,
+            "min_ms": 24.537,
+            "p95_ms": 26.453
+          },
+          "candidate": {
+            "mad_ms": 0.209,
+            "max_ms": 19.824,
+            "median_ms": 18.209,
+            "min_ms": 17.785,
+            "p95_ms": 18.875
+          },
+          "median_delta_ms": -6.61,
+          "p95_delta_ms": -7.578,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.search.literal",
+          "baseline": {
+            "mad_ms": 0.117,
+            "max_ms": 24.731,
+            "median_ms": 24.503,
+            "min_ms": 24.174,
+            "p95_ms": 24.717
+          },
+          "candidate": {
+            "mad_ms": 0.13,
+            "max_ms": 18.853,
+            "median_ms": 18.275,
+            "min_ms": 17.94,
+            "p95_ms": 18.655
+          },
+          "median_delta_ms": -6.228,
+          "p95_delta_ms": -6.062,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.search.shell-literal",
+          "baseline": {
+            "mad_ms": 0.115,
+            "max_ms": 24.948,
+            "median_ms": 24.454,
+            "min_ms": 24.266,
+            "p95_ms": 24.846
+          },
+          "candidate": {
+            "mad_ms": 0.108,
+            "max_ms": 18.445,
+            "median_ms": 18.292,
+            "min_ms": 17.848,
+            "p95_ms": 18.439
+          },
+          "median_delta_ms": -6.162,
+          "p95_delta_ms": -6.407,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.writer.chars-8787-segments-183",
+          "baseline": {
+            "mad_ms": 0.107,
+            "max_ms": 25.338,
+            "median_ms": 24.482,
+            "min_ms": 24.072,
+            "p95_ms": 25.064
+          },
+          "candidate": {
+            "mad_ms": 0.085,
+            "max_ms": 19.992,
+            "median_ms": 19.704,
+            "min_ms": 19.476,
+            "p95_ms": 19.938
+          },
+          "median_delta_ms": -4.778,
+          "p95_delta_ms": -5.126,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.writer.lines-120-segments-139",
+          "baseline": {
+            "mad_ms": 0.137,
+            "max_ms": 25.438,
+            "median_ms": 24.268,
+            "min_ms": 23.988,
+            "p95_ms": 25.162
+          },
+          "candidate": {
+            "mad_ms": 0.092,
+            "max_ms": 19.723,
+            "median_ms": 19.491,
+            "min_ms": 19.316,
+            "p95_ms": 19.685
+          },
+          "median_delta_ms": -4.777,
+          "p95_delta_ms": -5.477,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.json-stdin",
+          "baseline": {
+            "mad_ms": 0.243,
+            "max_ms": 27.293,
+            "median_ms": 26.282,
+            "min_ms": 25.761,
+            "p95_ms": 27.177
+          },
+          "candidate": {
+            "mad_ms": 0.125,
+            "max_ms": 18.813,
+            "median_ms": 18.253,
+            "min_ms": 17.953,
+            "p95_ms": 18.604
+          },
+          "median_delta_ms": -8.029,
+          "p95_delta_ms": -8.573,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.python-subprocess",
+          "baseline": {
+            "mad_ms": 0.084,
+            "max_ms": 27.141,
+            "median_ms": 26.66,
+            "min_ms": 26.448,
+            "p95_ms": 27.123
+          },
+          "candidate": {
+            "mad_ms": 0.151,
+            "max_ms": 20.341,
+            "median_ms": 19.572,
+            "min_ms": 19.226,
+            "p95_ms": 19.803
+          },
+          "median_delta_ms": -7.088,
+          "p95_delta_ms": -7.32,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.survey.analysis-source",
+          "baseline": {
+            "mad_ms": 0.191,
+            "max_ms": 27.001,
+            "median_ms": 26.399,
+            "min_ms": 26.01,
+            "p95_ms": 26.898
+          },
+          "candidate": {
+            "mad_ms": 0.109,
+            "max_ms": 18.583,
+            "median_ms": 18.305,
+            "min_ms": 18.029,
+            "p95_ms": 18.447
+          },
+          "median_delta_ms": -8.094,
+          "p95_delta_ms": -8.451,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.write.english-inflection",
+          "baseline": {
+            "mad_ms": 0.13,
+            "max_ms": 26.588,
+            "median_ms": 26.074,
+            "min_ms": 25.792,
+            "p95_ms": 26.552
+          },
+          "candidate": {
+            "mad_ms": 0.111,
+            "max_ms": 18.904,
+            "median_ms": 18.271,
+            "min_ms": 18.11,
+            "p95_ms": 18.703
+          },
+          "median_delta_ms": -7.803,
+          "p95_delta_ms": -7.849,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_root",
+          "baseline": {
+            "mad_ms": 0.112,
+            "max_ms": 27.107,
+            "median_ms": 25.711,
+            "min_ms": 25.407,
+            "p95_ms": 26.193
+          },
+          "candidate": {
+            "mad_ms": 0.127,
+            "max_ms": 19.928,
+            "median_ms": 19.695,
+            "min_ms": 19.455,
+            "p95_ms": 19.896
+          },
+          "median_delta_ms": -6.016,
+          "p95_delta_ms": -6.297,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_home",
+          "baseline": {
+            "mad_ms": 0.167,
+            "max_ms": 26.05,
+            "median_ms": 25.702,
+            "min_ms": 25.472,
+            "p95_ms": 26.014
+          },
+          "candidate": {
+            "mad_ms": 0.095,
+            "max_ms": 19.932,
+            "median_ms": 19.716,
+            "min_ms": 19.358,
+            "p95_ms": 19.895
+          },
+          "median_delta_ms": -5.986,
+          "p95_delta_ms": -6.119,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_current",
+          "baseline": {
+            "mad_ms": 0.118,
+            "max_ms": 26.244,
+            "median_ms": 25.824,
+            "min_ms": 25.41,
+            "p95_ms": 26.086
+          },
+          "candidate": {
+            "mad_ms": 0.093,
+            "max_ms": 20.128,
+            "median_ms": 19.748,
+            "min_ms": 19.549,
+            "p95_ms": 20.024
+          },
+          "median_delta_ms": -6.076,
+          "p95_delta_ms": -6.062,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_remove_parent",
+          "baseline": {
+            "mad_ms": 0.136,
+            "max_ms": 27.071,
+            "median_ms": 25.802,
+            "min_ms": 25.293,
+            "p95_ms": 26.18
+          },
+          "candidate": {
+            "mad_ms": 0.088,
+            "max_ms": 19.874,
+            "median_ms": 19.701,
+            "min_ms": 19.445,
+            "p95_ms": 19.872
+          },
+          "median_delta_ms": -6.101,
+          "p95_delta_ms": -6.308,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.remove_env_file",
+          "baseline": {
+            "mad_ms": 0.171,
+            "max_ms": 26.575,
+            "median_ms": 25.81,
+            "min_ms": 25.49,
+            "p95_ms": 26.546
+          },
+          "candidate": {
+            "mad_ms": 0.091,
+            "max_ms": 19.96,
+            "median_ms": 19.695,
+            "min_ms": 19.486,
+            "p95_ms": 19.928
+          },
+          "median_delta_ms": -6.115,
+          "p95_delta_ms": -6.618,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.remove_git_metadata",
+          "baseline": {
+            "mad_ms": 0.18,
+            "max_ms": 26.686,
+            "median_ms": 25.925,
+            "min_ms": 25.611,
+            "p95_ms": 26.438
+          },
+          "candidate": {
+            "mad_ms": 0.105,
+            "max_ms": 20.177,
+            "median_ms": 19.732,
+            "min_ms": 19.415,
+            "p95_ms": 19.984
+          },
+          "median_delta_ms": -6.193,
+          "p95_delta_ms": -6.454,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.force_push_protected_branch",
+          "baseline": {
+            "mad_ms": 0.198,
+            "max_ms": 26.684,
+            "median_ms": 26.245,
+            "min_ms": 25.552,
+            "p95_ms": 26.646
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 24.448,
+            "median_ms": 19.761,
+            "min_ms": 19.481,
+            "p95_ms": 24.194
+          },
+          "median_delta_ms": -6.484,
+          "p95_delta_ms": -2.452,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.hard_reset",
+          "baseline": {
+            "mad_ms": 0.247,
+            "max_ms": 27.006,
+            "median_ms": 26.032,
+            "min_ms": 25.563,
+            "p95_ms": 26.418
+          },
+          "candidate": {
+            "mad_ms": 0.145,
+            "max_ms": 20.311,
+            "median_ms": 19.698,
+            "min_ms": 19.451,
+            "p95_ms": 20.268
+          },
+          "median_delta_ms": -6.334,
+          "p95_delta_ms": -6.15,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.forced_git_clean",
+          "baseline": {
+            "mad_ms": 0.185,
+            "max_ms": 26.492,
+            "median_ms": 25.818,
+            "min_ms": 25.532,
+            "p95_ms": 26.394
+          },
+          "candidate": {
+            "mad_ms": 0.11,
+            "max_ms": 20.184,
+            "median_ms": 19.79,
+            "min_ms": 19.434,
+            "p95_ms": 20.098
+          },
+          "median_delta_ms": -6.028,
+          "p95_delta_ms": -6.296,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.drop_table",
+          "baseline": {
+            "mad_ms": 0.132,
+            "max_ms": 26.416,
+            "median_ms": 25.861,
+            "min_ms": 25.454,
+            "p95_ms": 26.153
+          },
+          "candidate": {
+            "mad_ms": 0.093,
+            "max_ms": 20.173,
+            "median_ms": 19.997,
+            "min_ms": 19.619,
+            "p95_ms": 20.166
+          },
+          "median_delta_ms": -5.864,
+          "p95_delta_ms": -5.987,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.drop_database",
+          "baseline": {
+            "mad_ms": 0.127,
+            "max_ms": 27.247,
+            "median_ms": 25.621,
+            "min_ms": 25.42,
+            "p95_ms": 26.3
+          },
+          "candidate": {
+            "mad_ms": 0.079,
+            "max_ms": 20.5,
+            "median_ms": 19.825,
+            "min_ms": 19.617,
+            "p95_ms": 20.128
+          },
+          "median_delta_ms": -5.796,
+          "p95_delta_ms": -6.172,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.truncate_table",
+          "baseline": {
+            "mad_ms": 0.082,
+            "max_ms": 25.883,
+            "median_ms": 25.572,
+            "min_ms": 25.326,
+            "p95_ms": 25.817
+          },
+          "candidate": {
+            "mad_ms": 0.103,
+            "max_ms": 20.207,
+            "median_ms": 19.813,
+            "min_ms": 19.633,
+            "p95_ms": 20.114
+          },
+          "median_delta_ms": -5.759,
+          "p95_delta_ms": -5.703,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.delete_without_where",
+          "baseline": {
+            "mad_ms": 0.102,
+            "max_ms": 26.128,
+            "median_ms": 25.694,
+            "min_ms": 25.465,
+            "p95_ms": 26.09
+          },
+          "candidate": {
+            "mad_ms": 0.153,
+            "max_ms": 20.253,
+            "median_ms": 19.863,
+            "min_ms": 19.529,
+            "p95_ms": 20.21
+          },
+          "median_delta_ms": -5.831,
+          "p95_delta_ms": -5.88,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.recursive_world_writable",
+          "baseline": {
+            "mad_ms": 0.078,
+            "max_ms": 26.048,
+            "median_ms": 25.576,
+            "min_ms": 25.32,
+            "p95_ms": 26.025
+          },
+          "candidate": {
+            "mad_ms": 0.077,
+            "max_ms": 19.994,
+            "median_ms": 19.672,
+            "min_ms": 19.365,
+            "p95_ms": 19.904
+          },
+          "median_delta_ms": -5.904,
+          "p95_delta_ms": -6.121,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.world_writable",
+          "baseline": {
+            "mad_ms": 0.257,
+            "max_ms": 27.653,
+            "median_ms": 26.077,
+            "min_ms": 25.569,
+            "p95_ms": 27.13
+          },
+          "candidate": {
+            "mad_ms": 0.107,
+            "max_ms": 20.065,
+            "median_ms": 19.797,
+            "min_ms": 19.377,
+            "p95_ms": 20.037
+          },
+          "median_delta_ms": -6.28,
+          "p95_delta_ms": -7.093,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.download_execute_bash",
+          "baseline": {
+            "mad_ms": 0.173,
+            "max_ms": 29.44,
+            "median_ms": 25.616,
+            "min_ms": 25.099,
+            "p95_ms": 27.414
+          },
+          "candidate": {
+            "mad_ms": 0.139,
+            "max_ms": 19.744,
+            "median_ms": 19.467,
+            "min_ms": 19.143,
+            "p95_ms": 19.687
+          },
+          "median_delta_ms": -6.149,
+          "p95_delta_ms": -7.727,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.download_execute_sh",
+          "baseline": {
+            "mad_ms": 0.183,
+            "max_ms": 28.306,
+            "median_ms": 25.633,
+            "min_ms": 25.27,
+            "p95_ms": 26.969
+          },
+          "candidate": {
+            "mad_ms": 0.116,
+            "max_ms": 19.823,
+            "median_ms": 19.583,
+            "min_ms": 19.222,
+            "p95_ms": 19.807
+          },
+          "median_delta_ms": -6.05,
+          "p95_delta_ms": -7.162,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.upload_local_data",
+          "baseline": {
+            "mad_ms": 0.47,
+            "max_ms": 28.381,
+            "median_ms": 27.758,
+            "min_ms": 25.557,
+            "p95_ms": 28.342
+          },
+          "candidate": {
+            "mad_ms": 0.087,
+            "max_ms": 19.807,
+            "median_ms": 19.416,
+            "min_ms": 19.141,
+            "p95_ms": 19.656
+          },
+          "median_delta_ms": -8.342,
+          "p95_delta_ms": -8.686,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.privileged_command",
+          "baseline": {
+            "mad_ms": 0.165,
+            "max_ms": 27.002,
+            "median_ms": 25.749,
+            "min_ms": 25.48,
+            "p95_ms": 26.37
+          },
+          "candidate": {
+            "mad_ms": 0.102,
+            "max_ms": 20.073,
+            "median_ms": 19.702,
+            "min_ms": 19.437,
+            "p95_ms": 19.918
+          },
+          "median_delta_ms": -6.047,
+          "p95_delta_ms": -6.452,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.publish_package",
+          "baseline": {
+            "mad_ms": 0.137,
+            "max_ms": 26.576,
+            "median_ms": 25.861,
+            "min_ms": 25.434,
+            "p95_ms": 26.09
+          },
+          "candidate": {
+            "mad_ms": 0.112,
+            "max_ms": 20.157,
+            "median_ms": 19.71,
+            "min_ms": 19.53,
+            "p95_ms": 20.01
+          },
+          "median_delta_ms": -6.151,
+          "p95_delta_ms": -6.08,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.writer-before",
+          "baseline": {
+            "mad_ms": 0.093,
+            "max_ms": 24.696,
+            "median_ms": 24.271,
+            "min_ms": 23.924,
+            "p95_ms": 24.586
+          },
+          "candidate": {
+            "mad_ms": 0.098,
+            "max_ms": 22.108,
+            "median_ms": 21.737,
+            "min_ms": 21.483,
+            "p95_ms": 21.997
+          },
+          "median_delta_ms": -2.534,
+          "p95_delta_ms": -2.589,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.writer-after",
+          "baseline": {
+            "mad_ms": 0.174,
+            "max_ms": 26.0,
+            "median_ms": 24.407,
+            "min_ms": 24.084,
+            "p95_ms": 25.634
+          },
+          "candidate": {
+            "mad_ms": 1.742,
+            "max_ms": 25.959,
+            "median_ms": 23.68,
+            "min_ms": 21.612,
+            "p95_ms": 25.834
+          },
+          "median_delta_ms": -0.727,
+          "p95_delta_ms": 0.2,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.substitution",
+          "baseline": {
+            "mad_ms": 0.145,
+            "max_ms": 28.257,
+            "median_ms": 24.594,
+            "min_ms": 24.228,
+            "p95_ms": 26.839
+          },
+          "candidate": {
+            "mad_ms": 0.232,
+            "max_ms": 22.412,
+            "median_ms": 21.861,
+            "min_ms": 20.931,
+            "p95_ms": 22.274
+          },
+          "median_delta_ms": -2.733,
+          "p95_delta_ms": -4.565,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.interpreter-sink",
+          "baseline": {
+            "mad_ms": 0.299,
+            "max_ms": 27.136,
+            "median_ms": 24.767,
+            "min_ms": 24.339,
+            "p95_ms": 26.0
+          },
+          "candidate": {
+            "mad_ms": 0.129,
+            "max_ms": 22.929,
+            "median_ms": 22.421,
+            "min_ms": 22.182,
+            "p95_ms": 22.856
+          },
+          "median_delta_ms": -2.346,
+          "p95_delta_ms": -3.144,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.unicode-normalization",
+          "baseline": {
+            "mad_ms": 0.753,
+            "max_ms": 28.854,
+            "median_ms": 27.798,
+            "min_ms": 25.699,
+            "p95_ms": 28.81
+          },
+          "candidate": {
+            "mad_ms": 0.236,
+            "max_ms": 22.089,
+            "median_ms": 20.99,
+            "min_ms": 19.834,
+            "p95_ms": 21.61
+          },
+          "median_delta_ms": -6.808,
+          "p95_delta_ms": -7.2,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.extra-field",
+          "baseline": {
+            "mad_ms": 0.158,
+            "max_ms": 33.668,
+            "median_ms": 25.958,
+            "min_ms": 25.796,
+            "p95_ms": 27.158
+          },
+          "candidate": {
+            "mad_ms": 2.116,
+            "max_ms": 35.252,
+            "median_ms": 22.571,
+            "min_ms": 19.959,
+            "p95_ms": 29.603
+          },
+          "median_delta_ms": -3.387,
+          "p95_delta_ms": 2.445,
+          "budget_met": true
+        },
+        {
+          "case": "codex.guard.danger.malformed-schema",
+          "baseline": {
+            "mad_ms": 0.203,
+            "max_ms": 26.565,
+            "median_ms": 25.766,
+            "min_ms": 25.472,
+            "p95_ms": 26.555
+          },
+          "candidate": {
+            "mad_ms": 0.186,
+            "max_ms": 23.656,
+            "median_ms": 20.751,
+            "min_ms": 20.189,
+            "p95_ms": 22.058
+          },
+          "median_delta_ms": -5.015,
+          "p95_delta_ms": -4.497,
+          "budget_met": true
+        }
+      ],
+      "acceptance": "PASS"
+    }
+  ],
+  "warm_acceptance": "PASS",
+  "cold_initial": "FAIL3 preserved",
+  "cold_exact_repeat": "PASS3",
+  "resource_acceptance": "PASS90",
+  "max_resource_ms": 49.085958,
+  "max_peak_rss_bytes": 22413312,
+  "overall_acceptance": "PASS"
+}

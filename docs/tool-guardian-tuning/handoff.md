@@ -4,16 +4,16 @@
 
 Complete every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. The user runs real installation later.
 
-**Next step:** finish the active root-owned warm B/C/C/B comparison, verify each of 147 provider/case results against +2 ms median/+5 ms p95, then complete the formal milestone 5 documentation pass. Do not change source during measurement.
+**Next step:** complete the formal milestone 5 documentation pass, integrate its clean private branch, synchronize final plan and handoff, and deliver the topic branch for review.
 
 ## Current state
 
 - Frozen sanitizer repair integrated without conflicts at `1a4610ad60461e1bd00ed220af882c4cfa49ff32`. Root independently matched all 39 source hashes against both the committed manifest and candidate snapshot. Owned implementation worktree and branch were removed.
 - Cold full matrix retains all 7,350 launches and its original three failures. The exact three-case repeat retains 150 launches and passes: Copilot writer-after +4.584/+4.758 ms, Gemini recursive remove current +1.738/+1.889 ms, Codex writer-before +4.650/+4.884 ms. No failed observation was removed.
 - Resource report passes 90 cases with 25 samples and 3 warmups. Maximum elapsed 49.085958 ms, maximum native macOS peak RSS 22,413,312 bytes. All frozen source hashes remain identical.
-- Warm driver `/private/tmp/tool-guardian-root-warm.py` runs alone in root session 63206. Log `/private/tmp/tool-guardian-root-warm.log`. Retained driver `evidence/cold-profile-root-warm-driver.txt`. Four reports and final manifest appear under the feature evidence directory. No other runtime probes may overlap.
+- Warm B/C/C/B run completed. Both pairs pass all 147 cases. Maximum median deltas -1.841/-0.727 ms; maximum p95 deltas +1.618/+2.445 ms. All expected decisions and frozen hashes match. Raw reports, manifest and final comparison remain in feature evidence. No runtime jobs remain.
 - Immutable original baseline `/private/tmp/tool-guardian-baseline`; exact repaired snapshot `/private/tmp/tool-guardian-profile-candidate`; extracted checkpoint `/private/tmp/tool-guardian-profile-checkpoint`. Preserve these snapshots and source/payload/runner/corpus hashes.
-- Milestones 1 and 2 are complete. Milestones 3/4 await final warm acceptance. Milestone 5 remains open. No formal final documentation pass has run.
+- Milestones 1 through 4 and repository fixture repair are complete. Milestone 5 is the remaining frontier. Root activated the formal final documentation pass once at19:53UTC; a fresh implementer follows.
 - Aggregate repository verification passed 39/41 initially. The remaining physical-path and sandbox audit fixture repairs integrated at `a1f3280a`. Both repaired suites now pass in the actual shared-root sandbox: shell root resolution and 16 helper tests with DeprecationWarnings as errors. Assertions remain intact. No conflict-only reruns are required.
 
 ## Decisions and boundaries
