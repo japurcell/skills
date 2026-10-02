@@ -2,7 +2,7 @@
 
 ## Goal and Status
 
-The destination is a completed audit of non-imported maintained skills plus a self-contained implementation ExecPlan. The twenty-ticket map contains six closed tickets and fourteen open tickets. No ticket remains claimed. The current audit pool has 37 candidates: 32 published and five repository-local entry points, after excluding 23 configured imports.
+The destination is a completed audit of non-imported maintained skills plus a self-contained implementation ExecPlan. The twenty-ticket map contains six closed tickets, thirteen open tickets, and one claimed ticket. [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) is claimed by `subagent-vmgmic`; its live human decision session is in progress. The current audit pool has 37 candidates: 32 published and five repository-local entry points, after excluding 23 configured imports.
 
 All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user explicitly requested. Resume from [Skill Authoring Audit](map.md).
 
@@ -22,7 +22,7 @@ All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user
 
 ## Next Focus
 
-Claim [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md), the sole open unblocked ticket. Verify its exact blockers, `set-adoption-rules-and-protected-behavior.md` and `choose-audit-batches-and-evidence-format.md`, are closed. Resolve the gate decision through live Wayfinder and Grilling, with domain modeling still waived. Do not resolve it in the session that closed the batch decision.
+Continue the claimed [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) through live Wayfinder and Grilling, with domain modeling still waived. Both exact blockers, `set-adoption-rules-and-protected-behavior.md` and `choose-audit-batches-and-evidence-format.md`, were verified closed before claim. The human accepted the first three gate policies and the explicit unresolved-proposal tracking clarification on 2026-10-02; the ticket's Decision Checkpoint holds their detail. Settle the remaining deferral rules, implementation acceptance, and final document requirements in the second round. Do not discard unresolved redesigns or proposals requiring new approval.
 
 [Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md#resolution) records all seven human-confirmed policies from four rounds. Twelve static review tickets are created, each blocked by this decision and completion gates; the two resource reviews also depend on their corresponding instructions review. [Reconcile Static Findings and Select Baseline Cases](tickets/reconcile-static-findings-and-select-baseline-cases.md) is blocked by all twelve reviews. Those tickets gather source evidence, then require live human disposition decisions; they do not implement changes.
 
@@ -38,13 +38,13 @@ No complete isolated native launch recipe or grader compatibility check exists y
 
 [Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md#resolution) holds the human-confirmed rubric, behavior contracts, exception policy, finding severities, and evidence fields. Apply it within the reduced scope.
 
-[Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) is now unblocked. Final audit and implementation-plan authoring remain in the fog until actual findings and behavioral evidence make their scopes precise.
+[Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) is claimed in the current session. Final audit and implementation-plan authoring remain in the fog until actual findings and behavioral evidence make their scopes precise.
 
 Read the [authoring checklist](research/authoring-checklist/findings.md) and [provider comparison](research/provider-compatibility/findings.md) as needed. The latter is dated source research; the newer evidence ticket resolves the Terra identity and native IDs/efforts while retaining the runtime verification gaps.
 
 ## Verification
 
-Read-only Python checks pass for the twenty-ticket graph, metadata, exact dependencies, cycles, six closed-ticket resolutions/map links, local effort links, and fog delimiters. Completion gates are the sole frontier. The twelve scopes cover each of the 37 primary candidates exactly once, with two resource scopes contributing to existing skill records. Measurements and selected dependency anchors were checked against current files. `rtk git diff --check` passes. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
+The previous completed session's read-only Python checks passed for the twenty-ticket graph, metadata, exact dependencies, cycles, six closed-ticket resolutions/map links, local effort links, and fog delimiters. The twelve scopes cover each of the 37 primary candidates exactly once, with two resource scopes contributing to existing skill records. Measurements and selected dependency anchors were checked against current files. This resumed session verifies twenty tickets: six closed, thirteen open, and completion gates claimed by `subagent-vmgmic`; every exact dependency target exists. Both claim blockers are closed, and the claim diff passed `rtk git diff --check`. The first three gate policies are confirmed; second-round decisions remain pending. Rerun whitespace and graph checks after resolving the ticket. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
 
 The formal agent-document pass records the human-approved checkpoint rule in `.agents/instructions/repo.md` and updates the existing repository-workflow route in `.agents/memory/INDEX.md`. Existing `FILE_MAP.md` entries cover the effort directory and its map. The OKF representation pass uses `profile` only; the changed canonical types are Agent Instruction and Knowledge Index. `rtk proxy python3 scripts/lint-okf.py` exits 0 across both bundles after the final canonical edit. The scoped canonical diff contains exactly those two authorized paths. No skill source or tooling implementation changes.
 
