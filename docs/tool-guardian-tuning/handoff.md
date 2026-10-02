@@ -4,7 +4,9 @@
 
 Complete every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. User runs installation later. Continue this implementation session.
 
-**Next step:** original milestone 3 implementer profiles the actual cold overhead and repairs a measured cause. Literal scanning was rejected for lacking measurable gain. Three cold writer median violations remain. Do not raise the agreed budgets silently.
+**Next step:** validate the frozen ASCII tool-name fast path against the full cold matrix, resource ceiling and matched warm pairs. Literal scanning was rejected for lacking measurable gain. Do not raise agreed budgets silently.
+
+Profiling is complete. A five-line normalized ASCII tool-name fast path now has passing Python3.13/3.14 public banner14, shell13, native13, limits16, corpus144 and generator25/check29 evidence. Token-prefix exclusions and identical clipping preserve redaction. The candidate froze at19:24:28UTC; full-hook attribution and warm/cold/resource gates are still pending. The original-node hard deadline remains19:41:44UTC.
 
 ## Current state
 
@@ -27,13 +29,15 @@ Complete every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private b
 
 ## Repair boundaries and coordination
 
-The proposed repair replaces per-character literal scans with delimiter search, preserving POSIX single-quote semantics, Python escape parity/triple quotes, malformed-input rejection and every byte/token/depth limit. Canonical changes only in `hooks/families/tool_guard.py`, then regenerate. Public end-to-end quote/backslash/substitution/heredoc controls precede source edits. Warm/cold full-hook measurements determine acceptance; parser timing alone cannot.
+The selected repair skips redaction regex setup only for normalized ASCII word identifiers that cannot match any separator-based credential pattern, with conservative token-prefix exclusions and identical clipping. Public secret-name, Unicode and banner/log controls pass. Canonical changes only in `hooks/families/tool_guard.py`, then regenerate. Focused cold attribution improves all12writer medians by0.318-0.570ms. Full cold7350 launches started19:28:20UTC, worker session71200; resources follow. Root may finish remaining required warm pairs against exact committed frozen source after the worker's hard deadline. Parser/profile timing alone cannot establish acceptance.
 
 Original milestone3 owns this repair. Root coordinates, validates and integrates only. Independent runtime probes must not overlap measurements. A new bounded dispatch and private worktree follow integration; routing metadata stays outside task prompts. Reuse only original-node repairs. Private branches never push. Integrate serially with clean worktree, rebase, fast-forward, matching tip, then cleanup.
 
 The literal-scan dispatch expired after an overnight machine/context clock advance. Worker stopped runtime work on observing the deadline; root interrupted on notification. Root verified 7,350 cold records, restored runtime source, preserved the rejected canonical patch and integrated characterization tests/evidence at15e323e5. Its clean owned worktree/branch were removed. The original worker is idle. No resource or targeted-repeat acceptance exists for the rejected candidate.
 
 Root started sequential repository verification at19:05:46UTC: `rtk proxy python3 scripts/test-all.py`, session83886, log `/private/tmp/tool-guardian-test-all.log`. No worker runtime probes may overlap. Current policy remains the extracted checkpoint; later guardian-only repairs need affected suites, while this run covers unchanged shared helper and delivery changes.
+
+Repository verification finished19:12:06UTC:39/41passed. `test-repo-root.sh` expects a logical macOS /var alias while Git returns /private/var; `test_helpers.py` writes under sandbox-readonly .agents/scratchpad. Fresh `/root/repository_fixtures` owns only those fixtures and its note in `/private/tmp/tool-guardian-test-fixtures`, branch `codex/tool-guardian-test-fixtures`, deadline19:33:50UTC. Fixes preserve all assertions, use writable temporary audit files and correct isolated package specs. Initial validation exposed Codex's namespace helper package; that fixture correction awaits a serialized recheck. No production audit restriction changes. Root must validate repaired suites in the actual shared-root sandbox after integration, then record39earlier passes plus affected repair evidence.
 
 Active original-node repair: `/private/tmp/tool-guardian-cold-profile`, branch `codex/tool-guardian-cold-profile`, `/root/milestone_3`. Start19:06:44UTC, hard deadline19:41:44UTC (35minutes). First profile a measured cold cause; no further speculative scanner changes. Worker performs static preparation until root explicitly releases the test-all runtime window. Selected/submitted gpt-6.1-sol/high, executed configuration unconfirmed. All routing metadata stays outside task prompts.
 
