@@ -19,6 +19,8 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - Load Create Skill and Skill Creator when deciding authoring and evaluation changes. Load ExecPlans before authoring the implementation plan. Preserve invocation controls, approval rules, and the document-only constraints of `dotnet-upgrade` when assessing evidence.
 - Keep the map, tickets, research, handoff, final audit, and self-contained ExecPlan under `docs/skill-audit/`. The user explicitly chose this version-controlled location instead of Wayfinder's scratchpad default.
 - Charting resolves no human decision tickets. Research tickets may close during charting. Later sessions claim and resolve at most one non-research ticket, verify every exact blocking filename, and advance the map.
+- Follow the [repository subagent checkpoint rule](../../.agents/instructions/repo.md#subagent-checkpoints). Use status checks for missed checkpoints and keep runtime limits explicit.
+- The batch decision grants `dotnet-upgrade` a narrow static paper-reading exception for this audit. Preserve all invocation, migration approval, execution, installation, packaging, validator, and live-evaluation restrictions; follow that ticket's exact scope.
 
 ## Decisions so far
 
@@ -29,13 +31,14 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - [Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md): Apply contextual dispositions, preserve intended contracts, document exceptions, and rank findings by consequence with explicit evidence.
 - [Decide Skill Ownership and Import Handling](tickets/decide-skill-ownership-and-import-handling.md): Exclude 23 configured imports; review 37 remaining candidates across both roots with scoped dependency checks and no provenance-ledger work.
 - [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md): Use native Codex CLI, seven models at medium effort, three fresh runs per case, a small safe sample, and explicit trace-backed evidence gaps.
+- [Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md): Review twelve bounded scopes with per-check coverage, one findings register, human review, shared-resource ownership, and static review before sample selection.
 
 ## Not yet specified
 
 <!-- FOG START -->
-Specific review and baseline investigations will become tickets after the batch/report decision and content review identify their exact targets. Actual skill risk, fixture readiness, and additional clear import evidence may change those targets. Native discovery isolation, complete run setup, and existing grader suitability remain unverified; later bounded baseline work must resolve the selected prerequisites or surface them as required evidence gaps.
+The selected skills and exact cases will determine concrete native baseline setup and run scopes, including discovery isolation, required dependencies, safe tools, grader compatibility, and the actual shipped file set. Those prerequisites remain unverified; selected-case work must resolve them or surface required evidence gaps. No baseline sample or launch recipe is selected yet.
 
-The findings may expose interactions between skills, shared reference changes, missing safe evaluation fixtures, or improvements to authoring and validation tools. Expand the map only when an investigation can be bounded around an actual finding.
+Actual findings may expose behavior conflicts, missing safe fixtures, scope changes, or improvements to authoring and validation tools. Create additional decisions only when the evidence makes a precise investigation or human choice possible. Existing batch and reconciliation tickets already own static coverage and shared-resource checks.
 
 The accepted improvements will determine implementation order, baseline and candidate comparisons, provider checks, rollback strategy, and the precise milestones of the final ExecPlan. Finding-specific behavior decisions, missing-evidence work, and additional acceptance decisions will become tickets when actual audit findings make them precise.
 <!-- FOG END -->

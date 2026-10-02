@@ -1,6 +1,6 @@
 ---
 type: Agent Instruction
-description: Repo-wide workflow for top-level docs, install refresh, and documentation sync
+description: Repo-wide workflow for docs, install refresh, documentation sync, and subagent checkpoints
 ---
 
 # Repo Workflow
@@ -17,3 +17,9 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 - Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews.
 - Ignore `skills/**/evals/files/**/AGENTS.md` and `skills/*-workspace/**/sandbox/AGENTS.md` unless task explicitly targets them.
 - When using simplification or refactor help, state intentional path boundaries explicitly, such as `.gemini/` versus `.copilot/`.
+
+## Subagent Checkpoints
+
+- For comparable fact-gathering tasks, start with an explicit 20-minute runtime limit and require usable saved checkpoints every five minutes. Size assignments around complete, independently useful outputs.
+- A missed checkpoint triggers a status check, not an interruption. Inspect progress, tools, and blockers; elapsed time or an unfinished report alone does not establish agent failure.
+- At the declared runtime limit, check status before deciding whether to stop or record a justified extension. Keep the limit and enforcement mechanism explicit. Honor user stop requests and safety constraints.

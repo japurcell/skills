@@ -30,7 +30,7 @@ working in:
 
 | Area | Instruction file (rules + dir detail) | Known issues | Testing | ADRs / Decisions |
 | --- | --- | --- | --- | --- |
-| `AGENTS.md`, `README.md` | [repo](../instructions/repo.md) | empty | empty | empty |
+| Repository workflow, `AGENTS.md`, `README.md`, subagent checkpoints | [repo](../instructions/repo.md) | empty | empty | empty |
 | General provider hooks | [hooks](../instructions/hooks.md) | [hooks](known-issues/hooks.md) | [hooks](testing/hooks.md) | [hooks](adrs/hooks.md) |
 | Hook source auto-ingest | [auto-ingest](../instructions/hooks-auto-ingest.md) | [auto-ingest](known-issues/hooks-auto-ingest.md) | [auto-ingest](testing/hooks-auto-ingest.md) | [hooks](adrs/hooks.md) |
 | Hook observability and trace storage | [observability](../instructions/hooks-observability.md) | [observability](known-issues/hooks-observability.md) | [observability](testing/hooks-observability.md) | [hooks](adrs/hooks.md) |

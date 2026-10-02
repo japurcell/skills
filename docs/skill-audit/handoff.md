@@ -2,7 +2,7 @@
 
 ## Goal and Status
 
-The destination is a completed audit of non-imported maintained skills plus a self-contained implementation ExecPlan. The seven-ticket map contains five closed tickets and two open tickets. No ticket remains claimed. The current audit pool has 37 candidates: 32 published and five repository-local entry points, after excluding 23 configured imports.
+The destination is a completed audit of non-imported maintained skills plus a self-contained implementation ExecPlan. The twenty-ticket map contains six closed tickets and fourteen open tickets. No ticket remains claimed. The current audit pool has 37 candidates: 32 published and five repository-local entry points, after excluding 23 configured imports.
 
 All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user explicitly requested. Resume from [Skill Authoring Audit](map.md).
 
@@ -16,10 +16,17 @@ All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user
 - The user waived `domain-modeling`. Continue with Wayfinder and Grilling.
 - Keep the map, tickets, research, handoff, and final deliverables in `docs/skill-audit/`, not the scratchpad.
 - Final deliverables are `docs/skill-audit/audit.md` and `docs/skill-audit/ExecPlan.md`. Skill implementation, installation, and publication follow this effort.
+- The [batch/report decision](tickets/choose-audit-batches-and-evidence-format.md#resolution) defines twelve review scopes, per-check Markdown coverage, one findings register, shared-resource ownership with consumer checks, and human review after each batch. Complete static review before reconciliation and baseline sample selection. No sample is selected yet.
+- The human authorized a narrow static paper-reading exception for `dotnet-upgrade` within this audit. Preserve all invocation, migration approval, execution, installation, packaging, validator, and live-evaluation restrictions. This does not activate its upgrade procedure.
+- Follow the [canonical subagent checkpoint rule](../../.agents/instructions/repo.md#subagent-checkpoints), approved after repeated premature interruptions. Missed checkpoints trigger status checks. Do not reuse the short historical limits below as defaults.
 
 ## Next Focus
 
-Claim [Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md), the sole open unblocked ticket. Verify its exact blockers, `set-audit-evidence-and-model-coverage.md`, `set-adoption-rules-and-protected-behavior.md`, and `decide-skill-ownership-and-import-handling.md`, are closed. Work the batch/report decision with the human through Wayfinder and Grilling. Do not resolve it in the session that closed the evidence ticket.
+Claim [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md), the sole open unblocked ticket. Verify its exact blockers, `set-adoption-rules-and-protected-behavior.md` and `choose-audit-batches-and-evidence-format.md`, are closed. Resolve the gate decision through live Wayfinder and Grilling, with domain modeling still waived. Do not resolve it in the session that closed the batch decision.
+
+[Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md#resolution) records all seven human-confirmed policies from four rounds. Twelve static review tickets are created, each blocked by this decision and completion gates; the two resource reviews also depend on their corresponding instructions review. [Reconcile Static Findings and Select Baseline Cases](tickets/reconcile-static-findings-and-select-baseline-cases.md) is blocked by all twelve reviews. Those tickets gather source evidence, then require live human disposition decisions; they do not implement changes.
+
+[Batch sizing evidence](batch-sizing-evidence.md) contains all 37 verified measurement rows and a bounded explicit-dependency scan. The second explorer completed without interruption under the longer limit; executed model/effort remain unconfirmed. Parent source checks corrected dependency/role distinctions, an input flag mistaken for a skill dependency, and conditional scope. Complete dependency closure, fixture readiness, and full static compliance remain unverified. Only `dotnet-upgrade/SKILL.md` and its `agents/openai.yaml` were read under the paper exception. No agent remains active and no audit baseline ran.
 
 [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md#resolution) records nine human-confirmed policies from four rounds. [Model and Baseline Evidence](evidence-model-baselines.md) records the native catalog, help and configuration evidence, limited eval-input checks, delegation timeouts, and unverified prerequisites. Handoff, Spec to Tasks, and OKF Authoring have promising existing inputs; they are not selected or certified fixture-ready. Explore and Create Skill illustrate additional limitations.
 
@@ -29,17 +36,17 @@ No complete isolated native launch recipe or grader compatibility check exists y
 
 [Current audit scope](local-inventory.md#current-audit-scope) lists all 32 published candidates. Unknown historical origin alone does not block review, but clear additional import evidence removes a candidate. [Import and Packaging Evidence](import-ownership-evidence.md) records the exclusion mappings, read-only delegation, and parent source checks. The original inventory now correctly attributes `show-me` to `humanlayer/skills` and records the four unprefixed Addy state values.
 
-[Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md#resolution) holds the human-confirmed rubric, behavior contracts, exception policy, finding severities, and evidence fields. Apply it within the reduced scope. The remaining batch/report question explicitly excludes imported skills.
+[Set Adoption Rules and Protected Behavior](tickets/set-adoption-rules-and-protected-behavior.md#resolution) holds the human-confirmed rubric, behavior contracts, exception policy, finding severities, and evidence fields. Apply it within the reduced scope.
 
-[Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) remains blocked by the adoption and batch/report decisions. The map's fog reflects the reduced candidate pool; actual audit batches and finding-specific decisions still depend on later evidence.
+[Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md) is now unblocked. Final audit and implementation-plan authoring remain in the fog until actual findings and behavioral evidence make their scopes precise.
 
 Read the [authoring checklist](research/authoring-checklist/findings.md) and [provider comparison](research/provider-compatibility/findings.md) as needed. The latter is dated source research; the newer evidence ticket resolves the Terra identity and native IDs/efforts while retaining the runtime verification gaps.
 
 ## Verification
 
-The seven-ticket graph is checked for metadata, exact dependencies, cycles, closed-ticket resolutions and map links, local effort links, and fog delimiters. The batch/report decision is the sole frontier ticket. The previous session reconciled the 23 known exclusions and 32 published plus five repository-local candidates with current files; this session does not change that scope. `rtk git diff --check` verifies the planning diff. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
+Read-only Python checks pass for the twenty-ticket graph, metadata, exact dependencies, cycles, six closed-ticket resolutions/map links, local effort links, and fog delimiters. Completion gates are the sole frontier. The twelve scopes cover each of the 37 primary candidates exactly once, with two resource scopes contributing to existing skill records. Measurements and selected dependency anchors were checked against current files. `rtk git diff --check` passes. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
 
-The formal agent-document pass retains existing canonical routing. New evidence and decision details belong in this feature directory; no durable repository convention, public interface, test location, or canonical doc route changes. No `.agents/` document edits or OKF representation pass are needed. Only planning documents change; no skill source or tooling implementation changes.
+The formal agent-document pass records the human-approved checkpoint rule in `.agents/instructions/repo.md` and updates the existing repository-workflow route in `.agents/memory/INDEX.md`. Existing `FILE_MAP.md` entries cover the effort directory and its map. The OKF representation pass uses `profile` only; the changed canonical types are Agent Instruction and Knowledge Index. `rtk proxy python3 scripts/lint-okf.py` exits 0 across both bundles after the final canonical edit. The scoped canonical diff contains exactly those two authorized paths. No skill source or tooling implementation changes.
 
 ## Resolved Execution Friction
 
