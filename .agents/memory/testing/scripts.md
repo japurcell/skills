@@ -18,6 +18,7 @@ description: Test and validation guidance for shell helper scripts under `script
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Python helper module unit tests:
   - `python scripts/test_helpers.py`
+  - Give each imported provider helper an isolated registered package/module spec, including a namespace-package spec for Codex helpers without `__init__.py`. Keep audit/log files and rotation companions under writable `TemporaryDirectory` fixtures; patch log locations rather than writing into protected source or installed trees. Run with warnings as errors when changing import/resource cleanup.
 - OKF linter changes:
   - `bash -n scripts/test-okf-lint.sh && bash scripts/test-okf-lint.sh`
   - The suite copies `scripts/fixtures/okf-valid-repo/` into a fresh `mktemp` directory for each public-CLI case. Do not derive uniqueness from a shell counter mutated inside command substitution; that mutation runs in a subshell and does not persist.
@@ -26,6 +27,7 @@ description: Test and validation guidance for shell helper scripts under `script
   - Keep cross-platform destination cases for Windows drive-rooted and UNC paths, source-summary footnotes, and both nesting directions among HTML comments, fenced code, and exact-run inline code.
 - Hook-tree shell helper changes:
   - `bash scripts/test-repo-root.sh`
+  - Expected Git-root paths must use the physical fixture path (`pwd -P`) on macOS, where `/var` and `/private/var` can identify the same directory. Preserve the public Git-versus-fallback assertions.
 - For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.
 - If a script primarily supports hooks, also run matching checks from `.agents/memory/testing/hooks.md`.
 - If a script primarily supports a specific skill, run that skill's narrow validation path after the script check.

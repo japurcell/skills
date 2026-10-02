@@ -7,19 +7,19 @@ description: General provider-hook failures; specialized auto-ingest and observa
 
 Load this file for general provider-hook work. For source scanners, manifests, summaries, injectors, or pending gates, read [Hook Auto-Ingest - Known Issues](hooks-auto-ingest.md). For emitters, SQLite traces, transcripts, logs, or maintenance, read [Hook Observability - Known Issues](hooks-observability.md).
 
-## Active guards can block their own maintenance
+## Installed Tool Guardian can lag source
 
-Tool Guardian scans patch, search, replacement, and cleanup payloads. Raw dangerous command strings can block safe policy edits or tests; multiline serialized text can also create false matches across escaped newlines. Construct required threat strings dynamically, keep unrelated dangerous lines outside replacement hunks, and keep deletion-target matching bounded to one logical line and a short distance.
+An installed pre-classification guardian can still scan serialized native bodies and literal search examples as command text. It can reject harmless prose, JSON stdin fixtures, or a multiline maintenance patch at its 128-segment limit. Until the user runs the installer, construct dangerous test vocabulary dynamically and split maintenance edits into patches below that old segment budget. Refreshing repository source does not refresh installed hooks; keep the guard enabled and verify the installed copy separately.
 
-Harmless prose, literal search patterns, native file bodies, and JSON stdin test fixtures can match command rules because the current guardian does not distinguish their data roles from executable instructions. Increasing size limits alone does not correct these pattern-based false blocks.
+Current source separates validated native data and proven shell/Python data roles. Unsupported forms still receive strict inspection. Its segment-overflow count can stop at 129, so that diagnostic is neither a physical line count nor the full uncapped count. See the [input policy and limits](../API_MAP.md#tool-guardian-input-policy).
 
-Secret scanning has the same self-edit risk for realistic fake credentials. Use unmistakably fake values such as `fake-api-key`; never write a real secret.
+Secret scanning still detects realistic fake credentials in maintenance fixtures. Use unmistakably fake values such as `fake-api-key`; never write a real secret.
 
-## Structured input can reach its byte limit before text scanning
+## Inspection bounds do not bound raw JSON decoding
 
-Tool Guardian traverses structured input before matching command text. A large `write_file.content` value therefore reports `structured_bytes` first, with its 32768-byte threshold and measured UTF-8 byte count. The generic scan-text limit applies to later text scanning and includes the tool name prefix. Keep those counts and units distinct when adding rule details or tests.
+The shared stdin reader decodes the JSON value before Tool Guardian performs its bounded structured traversal. Native body limits include UTF-8 data, metadata, and dictionary keys; unsupported inputs retain tighter strict limits. Some later parser bounds are dominated by earlier input or token bounds. Report the first actual failure and its true unit rather than claiming every nominal boundary is independently reachable, or a universal memory bound for arbitrarily large raw JSON envelopes.
 
-The segment splitter reports at most 129 segments when the 128-segment bound is exceeded. Literal escaped newlines and punctuation inside file data can consume this budget, so the reported count is not the physical line count or the complete uncapped segment count.
+The data exemption does not inspect a saved script's future execution and does not establish general protection for write/edit destinations. Patch deletion and move-source protections cover the existing environment-file and Git-metadata removal rules only.
 
 ## Same-named hook modules confuse mypy
 

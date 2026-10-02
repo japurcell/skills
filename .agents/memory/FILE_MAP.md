@@ -40,7 +40,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
 | `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
-| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | active plan | Incident-based guardian false-positive repair across three providers, with security and no-added-latency acceptance gates. |
+| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | retained effort | Guardian false-positive repair across three providers, measured latency allowances, resource gates, and historical failed evidence; retention was explicitly requested. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
 
@@ -57,8 +57,14 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-security-banners.py` | Public block, warning, excerpt, redaction, and fallback envelopes across three provider Tool Guardian adapters. |
 | `scripts/test-codex-hooks-tool-guard.sh` | Focused Codex Tool Guardian envelope, limit-advice, warning, and guard-log checks. |
 | `.codex/hooks/tool-guard.py` | Generated Codex Tool Guardian adapter installed through the maintained hook merger. |
+| `hooks/families/tool_guard.py` and provider-local `helpers/tool_guard_policy.py` | Canonical renderer and identical generated local policy helpers, delivered with each adapter. |
+| `scripts/tool_guard_corpus.py`, `scripts/fixtures/tool_guard_vectors.py` | Shared sanitized incident corpus, native provider fixtures, and baseline/candidate decision expectations. |
+| `scripts/test-tool-guard-false-positives.py` | Public three-provider corpus check with an optional frozen baseline root. |
+| `scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py` | Native-schema/data, executable-role/security, and truthful input-bound suites. |
+| `scripts/test-benchmark-high-rate-hooks.py` | Public benchmark CLI contract with isolated fixture entrypoints. |
 | `scripts/test-scan-secrets-capture.py` | Public generated-hook capture regressions shared by the three provider scanner suites. |
 | `scripts/benchmark-high-rate-hooks.py` | Direct macOS subprocess benchmark for retained per-tool and model-chunk hook handlers using disposable Git repositories and homes. |
+| `scripts/benchmark-tool-guard-resources.py`, `scripts/benchmark-tool-guard-optimizations.py` | Native macOS finite-case timing/RSS and isolated whole-hook optimization ablations; interfaces are in [API Map](API_MAP.md#tool-guardian-benchmark-tools). |
 | `scripts/test-scan-secrets-windows.ps1` | Native Windows generated-scanner capture suite used by the focused Windows workflow. |
 | `scripts/test-lifecycle-messages-windows.ps1` | Native Windows lifecycle message envelopes for startup, turn-end, and scanner hooks in disposable fixtures. |
 | `scripts/test-install.ps1` | Fixture-repo test for `scripts/install.ps1` (run with `pwsh -NoProfile -File scripts/test-install.ps1`). |

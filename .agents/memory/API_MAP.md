@@ -25,14 +25,55 @@ description: Public validation entry points and provider adapter contracts for t
 ## Generated provider-hook CLI
 
 - `scripts/generate-hooks.py --write` renders the complete explicit `hooks/manifest.py` target set and transactionally updates only stale generated outputs. `--check` is read-only, reports every stale or missing output, and exits `0` only when source bytes and executable modes are current. Both actions resolve the checkout from the script location; bare invocation and invalid canonical inputs exit `2`.
-- The generator owns 26 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header, remain self-contained at runtime, and are copied unchanged by both installers. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
+- The generator owns 29 executable outputs under `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, `.github/hooks/scripts/`, and `.codex/hooks/`. They carry a `Generated from hooks/families/...` header and are copied unchanged by both installers. Tool Guardian imports its identical policy helper from its own provider tree; no runtime import crosses provider trees. Before any destination mutation, each installer runs bytecode-disabled `scripts/generate-hooks.py --check`: stale output exits `1` with the exact `--write` recovery command, and invalid canonical input exits `2` without write advice.
 - The generated `tool-guard.py` hooks return provider-native block or warning JSON with up to three distinct static rule causes, an omitted count, and one redacted, at-most-160-character `Action:` excerpt. Input-limit causes carry rule ID, threshold, measured count, true unit, and a known provider field only when safely identified. Quoted CLI credentials and JSON credential fields are redacted before truncation. Their owner-only guard records keep the same safe rule metadata and exact displayed excerpt, never raw tool input. Input limits and known inspection failures deny even in warn mode and never advise the allowlist.
 - The generated `scan-secrets.py` hooks read provider JSON from stdin and return JSON with exit `0`. An incomplete Git scan emits a provider-native denial in block mode or a `scan-secrets warning` naming the scan action in warn mode. They never mark incomplete output clean or expose raw Git output in the response.
 - Codex `Stop` scanner success uses `systemMessage` with the count of modified files inspected; a skipped scan says `skipped`. Its `PreToolUse` pass stays `{}`. Copilot and Gemini scanner success at tool or SessionEnd events stays `{}`; their existing warning and denial fields carry actionable results.
 
 ## High-rate hook benchmark
 
-- `scripts/benchmark-high-rate-hooks.py [--samples N] [--warmups N] [--concurrency N] [--output PATH]` runs direct macOS JSON subprocess workloads against retained Copilot, Gemini, and Codex high-rate handlers. Defaults are 25 warm samples, three discarded warmups, and four concurrent calls. It requires RTK on `PATH`, creates disposable Git repositories and homes, verifies expected synthetic denials, and emits JSON with environment, first-call timing, warm median/p95/MAD/min/max, and one concurrent batch per selected handler. It does not install hooks or measure provider dispatch.
+- `scripts/benchmark-high-rate-hooks.py [--samples N] [--warmups N] [--concurrency N] [--output PATH] [--guard-only] [--script-root PATH] [--expected-behavior baseline|candidate]` runs direct macOS JSON subprocess workloads against retained Copilot, Gemini, and Codex high-rate handlers. Defaults are 25 warm samples, three discarded warmups, four concurrent calls, the current checkout, and candidate decisions. Ordinary multi-hook mode requires RTK on `PATH`; `--guard-only` permits missing RTK. It creates disposable Git repositories and homes, verifies expected decisions, and emits JSON with environment, input sizes, raw samples, first-call timing, warm median/p95/MAD/min/max, and one concurrent batch per selected handler. `--guard-only` selects the shared guardian corpus; `--script-root` can select an immutable baseline whose known observations are checked by `--expected-behavior baseline`. Source fingerprints come from the retained external measurement drivers/manifests. It does not install hooks or measure provider dispatch.
+
+## Tool Guardian input policy
+
+These are observed accepted shapes, not complete provider schemas. Native classification requires exact tool spelling, required fields, allowed optional fields, and exact value types. Unless specified below, every field is a string and no additional field is accepted. Unrecognized aliases, malformed shapes, extra fields, and invalid patches retain strict inspection of values, keys, and serialized input.
+
+| Provider | Tool | Required fields | Optional fields |
+| --- | --- | --- | --- |
+| Codex | `Bash` | `command` | None |
+| Codex | `exec_command`, `functions.exec_command` | `cmd` | None |
+| Codex | `apply_patch` | `command` containing a recognized patch | None |
+| Copilot | `bash` | `command` | None |
+| Copilot | `create` | `path`, `file_text` | None |
+| Copilot | `edit` | `path`, `old_str`, `new_str` | None |
+| Copilot | `grep` | Exactly one of `pattern`, `query` | `path`; `paths` string or list of strings; `output_mode`; `head_limit`, `C` integers; `n` boolean or integer; `case_sensitive` boolean |
+| Copilot | `rg` | `pattern` | `paths` string or list of strings; `output_mode`, `glob`; `head_limit`, `-A`, `-C`, `n` integers; `-n`, `-i` booleans |
+| Gemini | `run_shell_command` | `command` | None |
+| Gemini | `write_file` | `file_path`, `content` | None |
+| Gemini | `replace` | `file_path`, `instruction`, `old_string`, `new_string` | `allow_multiple` boolean |
+| Gemini | `grep_search` | `pattern` | `path`, `include` |
+
+Copilot `grep` cannot combine `path` with `paths`. Native file bodies, edit text, search strings, and valid patch hunks are data. Patch delete and move-source headers retain existing environment-file and Git-metadata removal checks; the exemption grants no general destination protection or later saved-script inspection.
+
+Known shell inputs use bounded quote, substitution, redirection, heredoc, and command parsing. Only proven literal search and narrow Python writer/survey forms receive data treatment. Shell/Python execution sinks remain inspected, including through wrappers, interpreter flags, quoted command names, and nested operands. Unknown syntax stays strict; unresolved or malformed inspection denies even in warn mode and with an allowlist. Python parsing is lazy, and shared command helpers import `subprocess` only when called. The reused shell representation preserves raw provenance; linear suffix scans and the ASCII tool-name sanitizer gate preserve rule and redaction semantics. The normalized identifier gate excludes credential-token prefixes and keeps the existing name clipping.
+
+| Inspection budget | Maximum |
+| --- | --- |
+| Validated native data, metadata, and dictionary keys combined | 65,536 UTF-8 bytes |
+| Unsupported structured strings, strict text, normalized text, and aggregate executable source | 32,768 bytes; strict/normalized text also capped at 32,768 characters |
+| Structured depth / nodes / strings | 32 levels / 256 nodes / 128 strings |
+| Nested executable depth / aggregate commands / aggregate tokens | 16 levels / 128 commands / 256 tokens |
+| Python preflight nesting / tokens | 32 levels / 1,024 tokens |
+| Python AST depth / nodes | 32 levels / 2,048 nodes |
+| Python string/bytes constants combined and each resolved concatenation | 32,768 bytes, UTF-8 for strings |
+| Normalized patch-operation paths combined | 32,768 UTF-8 bytes |
+
+Native shell inputs use the tighter executable bound. Strict fallback adds the tool-name prefix before text scanning; limits and their reported units can therefore differ from a native body limit. Earlier budgets can dominate later ones. These are inspection bounds after JSON decoding, not universal raw-envelope memory limits. Missing or corrupt provider-local policy helpers fail closed in both block and warn modes.
+
+## Tool Guardian benchmark tools
+
+- `scripts/benchmark-tool-guard-resources.py --output PATH --ceiling-ms N [--script-root PATH] [--samples N] [--warmups N]` measures bounded native, strict, normalized, shell, and Python cases on native macOS. The root defaults to the checkout; samples/warmups default to 25/3, with at least five samples. It checks provider decisions and unchanged source fingerprints, reports first and sampled direct-process timing, and collects RSS in a separate `/usr/bin/time -l` launch. RSS is in bytes on macOS; the timing excludes that wrapper. Exit `1` means at least one case exceeded the supplied ceiling.
+- `scripts/benchmark-tool-guard-optimizations.py PHASE [--root PATH] [--variant-parent PATH] [--evidence PATH] [--group common|suffix]` exposes `prepare`, `validate`, `measure`, `compare`, `prepare-git`, `validate-git`, and `measure-git`. It freezes isolated ablation variants, validates their public decisions, and measures alternating before/after whole-hook conditions. `prepare` replaces inline matcher functions and cannot use today's extracted entrypoints: replay with a disposable worktree at `84eae394`, invoking the helper from the topic checkout with `--root` pointing there and fresh variant/evidence directories, as documented in [optimization validation notes](../../docs/tool-guardian-tuning/optimization-validation-notes.md). `compare` reports per-case benefits, regressions, or inconclusive results against measured variation. Those optional diagnostics do not certify every optimization as beneficial or replace the acceptance matrix.
 
 ## Lifecycle message envelopes
 
