@@ -1,0 +1,491 @@
+{
+  "method": "36 alternating fresh-copy whole entrypoint observations; each starts with no provider bytecode; normal bytecode writes allowed, standard-library/OS cache not cleared; same Python3.14.6; diagnostic first-install comparisons, not warm corpus acceptance",
+  "results": [
+    {
+      "repeat": 0,
+      "case": "copilot.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 39.99575,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "copilot.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 43.0475,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "gemini.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 38.143666,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "gemini.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 39.885459,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "codex.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 27.624792,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "codex.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 30.226667,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 37.592458,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 40.180666,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 36.365209,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 40.937083,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 27.420625,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 0,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 30.87125,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "copilot.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 39.689542,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "copilot.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 37.597834,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "gemini.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 39.763167,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "gemini.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 38.416459,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "codex.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 32.031,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "codex.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 30.047375,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 43.59925,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 40.031458,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 43.068833,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 37.842459,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 31.5035,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 1,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 27.697708,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "copilot.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 37.352667,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "copilot.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 39.719416,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "gemini.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 36.279833,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "gemini.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 38.827667,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "codex.guard.clean",
+      "behavior": "baseline",
+      "elapsed_ms": 27.127208,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "codex.guard.clean",
+      "behavior": "candidate",
+      "elapsed_ms": 30.357417,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 37.714083,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 40.976583,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 37.175,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "gemini.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 39.996583,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/__init__.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/observability.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "baseline",
+      "elapsed_ms": 27.3805,
+      "decision": "deny",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc"
+      ]
+    },
+    {
+      "repeat": 2,
+      "case": "codex.guard.writer.chars-8787-segments-183",
+      "behavior": "candidate",
+      "elapsed_ms": 30.702625,
+      "decision": "allow",
+      "pycache_before": [],
+      "pycache_after": [
+        "helpers/__pycache__/audit.cpython-314.pyc",
+        "helpers/__pycache__/common.cpython-314.pyc",
+        "helpers/__pycache__/tool_guard_policy.cpython-314.pyc"
+      ]
+    }
+  ]
+}

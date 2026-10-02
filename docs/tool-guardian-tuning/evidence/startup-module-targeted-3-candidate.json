@@ -1,0 +1,205 @@
+{
+  "concurrency": [],
+  "environment": {
+    "git": "git version 2.50.1 (Apple Git-155)",
+    "guard_mode": "block; inherited skip and allowlist removed",
+    "logging": "same disposable provider-specific log home reused for each case",
+    "machine": "arm64",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3",
+    "rtk": "rtk 0.50.0"
+  },
+  "method": {
+    "cold_definition": "first process for each case with a fresh disposable log home; OS file cache is not cleared",
+    "concurrency": 4,
+    "expected_behavior": "candidate",
+    "guard_only": true,
+    "samples": 25,
+    "script_root": "/private/tmp/tool-guardian-startup-module-candidate",
+    "warm_definition": "sequential subprocess calls after discarded warmups using the same log home",
+    "warmups": 3
+  },
+  "results": [
+    {
+      "actual_decision": "deny",
+      "case": "copilot.guard.danger.hard_reset",
+      "cold_ms": 23.349,
+      "exit_code": 0,
+      "expected_decision": "deny",
+      "first_output": {
+        "continue": true,
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "Tool Guardian blocked bash. destructive_git_ops/high [hard_reset]: hard reset can discard local work. Action: git reset --hard; {\"command\":\"git reset --hard\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+        },
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "Tool Guardian blocked bash. destructive_git_ops/high [hard_reset]: hard reset can discard local work. Action: git reset --hard; {\"command\":\"git reset --hard\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+      },
+      "first_run_ms": 23.349083,
+      "fixture": {
+        "category": "protection-control",
+        "input_characters": 16,
+        "input_string_bytes": 16,
+        "naive_segments": 1,
+        "pair": null,
+        "physical_lines": 1,
+        "source": "existing numeric policy rule: hard_reset"
+      },
+      "input_bytes": 93,
+      "sample_count": 25,
+      "samples_ms": [
+        22.949125,
+        22.951083,
+        22.806416,
+        22.867083,
+        22.712625,
+        22.800958,
+        22.832292,
+        22.968,
+        22.876333,
+        22.619542,
+        22.881709,
+        22.94525,
+        22.751708,
+        22.908125,
+        22.797916,
+        22.674541,
+        22.968958,
+        23.026792,
+        22.89575,
+        22.909583,
+        23.074041,
+        23.3645,
+        23.094,
+        22.912625,
+        22.672875
+      ],
+      "warm": {
+        "mad_ms": 0.073,
+        "max_ms": 23.364,
+        "median_ms": 22.896,
+        "min_ms": 22.62,
+        "p95_ms": 23.094
+      }
+    },
+    {
+      "actual_decision": "deny",
+      "case": "copilot.guard.danger.privileged_command",
+      "cold_ms": 23.522,
+      "exit_code": 0,
+      "expected_decision": "deny",
+      "first_output": {
+        "continue": true,
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "Tool Guardian blocked bash. system_danger/high [privileged_command]: command requests elevated privileges. Action: sudo. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+        },
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "Tool Guardian blocked bash. system_danger/high [privileged_command]: command requests elevated privileges. Action: sudo. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+      },
+      "first_run_ms": 23.521625,
+      "fixture": {
+        "category": "protection-control",
+        "input_characters": 7,
+        "input_string_bytes": 7,
+        "naive_segments": 1,
+        "pair": null,
+        "physical_lines": 1,
+        "source": "existing numeric policy rule: privileged_command"
+      },
+      "input_bytes": 84,
+      "sample_count": 25,
+      "samples_ms": [
+        25.085625,
+        24.331042,
+        24.554083,
+        23.921917,
+        24.75725,
+        24.674541,
+        24.395375,
+        24.640834,
+        24.469083,
+        24.693541,
+        23.917584,
+        24.617875,
+        24.500208,
+        24.596708,
+        24.558333,
+        24.384792,
+        23.894917,
+        23.952666,
+        24.490375,
+        24.443667,
+        24.371417,
+        24.545375,
+        24.746291,
+        24.061083,
+        24.602291
+      ],
+      "warm": {
+        "mad_ms": 0.129,
+        "max_ms": 25.086,
+        "median_ms": 24.5,
+        "min_ms": 23.895,
+        "p95_ms": 24.757
+      }
+    },
+    {
+      "actual_decision": "allow",
+      "case": "gemini.guard.write.actual-newlines",
+      "cold_ms": 23.274,
+      "exit_code": 0,
+      "expected_decision": "allow",
+      "first_output": {
+        "decision": "allow"
+      },
+      "first_run_ms": 23.274,
+      "fixture": {
+        "category": "native-write",
+        "input_characters": 1400,
+        "input_string_bytes": 1400,
+        "naive_segments": 141,
+        "pair": "danger.force_push_protected_branch",
+        "physical_lines": 140,
+        "source": "sanitized newline segmentation incident"
+      },
+      "input_bytes": 1658,
+      "sample_count": 25,
+      "samples_ms": [
+        23.333959,
+        22.684875,
+        22.669083,
+        23.336,
+        23.529834,
+        23.199416,
+        23.044083,
+        22.49,
+        22.735333,
+        22.529583,
+        22.400708,
+        22.940792,
+        23.166167,
+        22.549834,
+        22.025208,
+        21.784292,
+        21.689,
+        21.3855,
+        21.489375,
+        21.24675,
+        21.43825,
+        21.776792,
+        21.394375,
+        21.898958,
+        21.667
+      ],
+      "warm": {
+        "mad_ms": 0.706,
+        "max_ms": 23.53,
+        "median_ms": 22.49,
+        "min_ms": 21.247,
+        "p95_ms": 23.336
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -16,6 +17,32 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class ShellDataTests(unittest.TestCase):
+    def test_missing_or_invalid_local_policy_denies_in_block_and_warn_modes(self) -> None:
+        fixture = Fixture('delivery', 'Bash', {'command': 'echo safe'}, 'allow', 'allow', 'delivery', 'local helper boundary')
+        for provider in PROVIDERS:
+            for invalid in (None, 'raise RuntimeError("invalid local policy")\n'):
+                for mode in ('block', 'warn'):
+                    with self.subTest(provider=provider, invalid=invalid, mode=mode), tempfile.TemporaryDirectory() as temporary:
+                        directory = Path(temporary)
+                        script = directory / 'tool-guard.py'
+                        shutil.copy2(script_path(ROOT, provider), script)
+                        helpers = directory / 'helpers'
+                        helpers.mkdir()
+                        for filename in ('common.py', 'audit.py'):
+                            source = script_path(ROOT, provider).parent / 'helpers' / filename
+                            if source.exists():
+                                shutil.copy2(source, helpers / filename)
+                        if invalid is not None:
+                            (helpers / 'tool_guard_policy.py').write_text(invalid)
+                        env = {**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(directory / 'logs'),
+                               'AUDIT_LOG': str(directory / 'audit.log')}
+                        env.pop('SKIP_TOOL_GUARD', None)
+                        env.pop('TOOL_GUARD_ALLOWLIST', None)
+                        result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script)],
+                                                input=encode(envelope(provider, fixture)), capture_output=True, env=env, timeout=5)
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), 'deny', result.stdout)
+
     def check(self, command: str, expected: str, *, mode: str = 'block') -> None:
         fixture = Fixture('shell-control', 'Bash', {'command': command}, expected, expected, 'shell', 'public control')
         for provider in PROVIDERS:

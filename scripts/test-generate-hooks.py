@@ -56,6 +56,11 @@ TOOL_GUARD_TARGETS = (
     ".gemini/hooks/scripts/tool-guard.py",
     ".codex/hooks/tool-guard.py",
 )
+TOOL_GUARD_POLICY_TARGETS = (
+    ".copilot/hooks/scripts/helpers/tool_guard_policy.py",
+    ".gemini/hooks/scripts/helpers/tool_guard_policy.py",
+    ".codex/hooks/helpers/tool_guard_policy.py",
+)
 SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
     ".gemini/hooks/scripts/scan-secrets.py",
@@ -254,7 +259,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (26 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (29 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -295,7 +300,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (26 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (29 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -321,7 +326,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -373,6 +378,8 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertTrue(set(TOOL_GUARD_TARGETS).issubset(rendered))
+        self.assertEqual(len({rendered[target] for target in TOOL_GUARD_POLICY_TARGETS}), 1,
+                         "Provider-local policy helpers must be byte-identical and context neutral.")
 
         shared_sections = []
         for target in TOOL_GUARD_TARGETS:
@@ -554,7 +561,7 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(source.count(ALLOWLIST_SOURCE), 1)
             shared_sections.append(sections)
 
-        for target in TOOL_GUARD_TARGETS:
+        for target in TOOL_GUARD_POLICY_TARGETS:
             self.assertEqual(rendered[target].count(ALLOWLIST_SOURCE), 1)
 
         self.assertEqual(
