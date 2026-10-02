@@ -4,7 +4,7 @@
 
 Implement every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. All harmless preserved cases must allow; real operations must retain protection; no measurable full-hook latency regression. User runs installation later. Continue the active implementation session.
 
-**Next step:** inspect the upcoming frozen startup-module reports; optional proof checkpoint is integrated at `d602bbe1` after root saved and verified the interrupted worker output; `/root/milestone_3` owns the exclusive public correctness/timing window again from 23:52:55 UTC and must finish frozen startup-module comparison before 2026-10-02 00:07:00 UTC. Milestone 4 source and evidence are integrated. Preserve exclusive timing while startup worker edits its isolated candidate.
+**Next step:** finish the original latency node under the user-approved separate budgets: steady-state +2 ms median/+5 ms p95, no-provider-bytecode cold +5 ms median/+10 ms p95, finite resource500 ms. Review all four retained startup-module reports, collect25independent fresh-copy cold samples percondition/case, then commit the preserved source and evidence for integration.
 
 ## Current state
 
@@ -52,3 +52,9 @@ Follow explicitly invoked `execplan-implement` skill: fresh implementer per new 
 Commit guidelines: Conventional title <=72 characters, Summary/Rationale/Tests bullet sections, trailer `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>`. Never use an em dash. RTK prefix mandatory. Persisted docs use normal prose despite terse chat. User asked save this feature checkpoint and then continue, not stop.
 
 Final delivery only after gates pass: branch ready for review; source/generated/tests/evidence committed; real hooks not installed; Windows proof unavailable; user command `rtk proxy ./scripts/install.sh`, then review changed non-managed Codex definitions through `/hooks`. Keep live installed validation distinct.
+
+## Latest steering, 2026-10-02 00:08 UTC
+
+The user asked whether a few milliseconds are acceptable, then authorized defining separate limits. The ExecPlan now records steady-state +2 ms median/+5 ms p95 and cold +5 ms median/+10 ms p95; security and the500 ms finite-resource ceiling stay unchanged. Do not preserve the original zero-regression requirement as current policy. Historical failures remain truthful under their original rule. Cold evidence needs25fresh copies percase/condition; current36first-install observations only have3repeats.
+
+Root interrupted milestone3before00:07deadline to answer and stop, and the resumed user instruction authorizes continuing the original node. The worker checkout is uncommitted and preserved. All four ordinary-cache reports, static audit, frozen manifest and comparison exist; every147decision passes and neither pair has a positive median delta. Review percasep95against revised budget. Root polling session52626 returned Unknown process id; the four completed reports establish measurement completion, but future work must check its own process state. Sandbox ps was denied; do not treat that denial as a hook failure. No formal final doc pass has run.
