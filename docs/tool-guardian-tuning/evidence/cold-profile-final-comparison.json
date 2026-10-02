@@ -5904,5 +5904,11 @@
   "resource_acceptance": "PASS90",
   "max_resource_ms": 49.085958,
   "max_peak_rss_bytes": 22413312,
-  "overall_acceptance": "PASS"
+  "overall_acceptance": "PASS",
+  "concurrency": {
+    "comparison": "cold-profile-concurrency-comparison.json",
+    "raw": "cold-profile-concurrency-repeat.json",
+    "measured_launches": 1200,
+    "acceptance": "PASS repeated individual and batch median/p95 improve for each provider in both pairs; original isolated noisy Gemini p95 retained"
+  }
 }

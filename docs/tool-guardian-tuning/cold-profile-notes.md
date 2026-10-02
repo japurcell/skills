@@ -88,3 +88,11 @@ is `/private/tmp/tool-guardian-baseline`. The maintained prepared warm driver is
 `/private/tmp/tool-guardian-profile-warm.py`, with its retained source in
 `evidence/cold-profile-warm-driver.txt`. Root will finish remaining verification
 against these exact frozen hashes after integration.
+
+## Final root validation
+
+After conflict-free integration at 1a4610ad, root independently matched all 39 frozen source hashes against the committed manifest and candidate snapshot. Root ran the retained adapted warm driver without concurrent probes. Both complete 147-case pairs pass: maximum median deltas -1.841/-0.727 ms and maximum p95 deltas +1.618/+2.445 ms. All responses and source hashes match. The final comparison preserves the original cold failures and passing exact repeats.
+
+The original four-worker diagnostics retain one isolated Gemini p95 increase with only four observations in the first pair; the second pair improves. A separate B/C/C/B repeat ran 25 four-worker batches per provider/condition after three discarded batches, retaining 1,200 measured public calls. Every provider's individual and batch median/p95 improves in both pairs. Sources remain frozen. Raw observations, repeated batches and comparisons are preserved rather than pooled or relabeled.
+
+All source, correctness, latency and resource gates now meet the agreed criteria. Final canonical documentation remains the delivery step. Native Windows validation and real installed-hook validation remain unavailable or user-owned, respectively.
