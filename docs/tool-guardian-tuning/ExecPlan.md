@@ -1,4 +1,4 @@
-# Fix Tool Guardian false positives without adding hook latency
+# Fix Tool Guardian false positives within measured latency budgets
 
 This ExecPlan is a living document. Maintain `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` according to the `exec-plans` skill. Its repository path is `docs/tool-guardian-tuning/ExecPlan.md`.
 
@@ -47,6 +47,10 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Decision Log
 
 
+- Decision: Apply separate steady-state and no-provider-bytecode cold budgets instead of zero measurable regression.
+  Rationale: The user explicitly agrees that a few milliseconds are acceptable for this hook. Steady-state limits are +2 ms median/+5 ms p95; cold limits are +5 ms median/+10 ms p95 per provider and case. Maintain full inspection, successful logging and the 500 ms finite resource ceiling.
+  Date/Author: 2026-10-02 00:09Z, user and implementation orchestrator.
+
 - Decision: Extract unchanged provider-neutral policy into generated local helpers using ordinary Python imports, retaining provider-specific adapters in entrypoints.
   Rationale: The main script recompiles its growing policy on every subprocess launch. Standard helper bytecode caching is simpler than self-managed caches and preserves complete inspection. The original shell worker owns the manifest, generator and disposable installer coverage. Fresh-install/no-bytecode timing remains explicit; the implementation is not accepted until full-hook gates pass.
   Date/Author: 2026-10-01 23:41Z, implementation orchestrator.
@@ -63,7 +67,7 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 - Decision: Keep existing strict scanning for unrecognized inputs, including its resource bounds.
   Rationale: Only reliably classified data may be excluded from executable-command matching. Arbitrary shell or Python bodies receive no blanket exemption.
   Date/Author: 2026-10-01, user.
-- Decision: Do not add measurable latency to existing hook workloads.
+- Historical decision (superseded by the 2026-10-02 revised budgets): Do not add measurable latency to existing hook workloads.
   Rationale: This hook runs frequently. Security, correctness, and speed are simultaneous acceptance gates, not trade-offs to relax silently.
   Date/Author: 2026-10-01, user.
 - Decision: Deliver repository changes and regenerated provider outputs, leaving real installation to the user.
@@ -80,7 +84,7 @@ Milestone 1 is complete. The shared corpus verifies 144 public-entrypoint checks
 
 The reviewed native-classification change has separately been integrated by the orchestrator at e373690d. Its focused native suite is registered here for that integration. Remaining shell classification, truthful raised-native-limit banner coverage, adversarial verification, and candidate timing gates remain open. The formal agent-document pass is deferred until the entire implementation session ends.
 
-Planning established the original unchanged guardian snapshot before implementation. At that checkpoint no guardian implementation, threshold changes, generated output changes, or real installation had occurred. Investigation corrected the original limit-only hypothesis. Implementation acceptance remains unmet until the public-entrypoint reproductions pass, actual dangerous operations remain blocked, and repeated full-hook benchmarks establish no measurable regression.
+Planning established the original unchanged guardian snapshot before implementation. At that checkpoint no guardian implementation, threshold changes, generated output changes, or real installation had occurred. Investigation corrected the original limit-only hypothesis. Implementation acceptance remains unmet until the public-entrypoint reproductions pass, actual dangerous operations remain blocked, and repeated full-hook benchmarks meet the current user-approved per-case budgets.
 
 The inbox item has moved into this plan. The file map, repository routing, and current guardian known issues are synchronized. Canonical-document lint, generator freshness, and whitespace checks pass. These document checks do not establish implementation or performance acceptance.
 
@@ -208,7 +212,7 @@ Acceptance requires all preserved harmless incident shapes to receive an allow r
 
 Over-limit, malformed, and uninspectable input must fail closed with accurate, redacted diagnostics. Allowlisting and warn mode must not bypass incomplete inspection. Existing banner bounds, credential redaction, and banner/log agreement must remain covered. Keep protections for actual force push, destructive cleanup, installer pipelines, and every other current rule family. Do not replace an execution test with a string-only assertion of the new classifier's implementation.
 
-The revised per-case latency budgets apply to the fixed existing corpus. Check complete subprocess runtime per provider and per case, including process startup and repeated first runs. Measurements inside ordinary variation show no measurable change, not a claimed speedup. Retain functionality fixes that meet the agreed no-regression gate, but discard optional optimization complexity that buys no measured improvement. Reject repeatable slowdowns, hidden extra processes, or false speedups from omitted required inspection. Raised resource limits must additionally pass bounded worst-case runtime and memory checks.
+The revised per-case latency budgets apply to the fixed existing corpus. Check complete subprocess runtime per provider and per case, including process startup and repeated first runs. Measurements inside ordinary variation show no measurable change, not a claimed speedup. Retain functionality fixes that meet the agreed per-case latency budgets, but discard optional optimization complexity that buys no measured improvement. Reject repeatable slowdowns exceeding those budgets, hidden extra processes, or false speedups from omitted required inspection. Raised resource limits must additionally pass bounded worst-case runtime and memory checks.
 
 ## Idempotence and Recovery
 

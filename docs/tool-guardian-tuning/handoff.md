@@ -2,7 +2,7 @@
 
 ## Goal and next step
 
-Implement every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. All harmless preserved cases must allow; real operations must retain protection; no measurable full-hook latency regression. User runs installation later. Continue the active implementation session.
+Implement every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. All harmless preserved cases must allow; real operations must retain protection; apply agreed warm/cold full-hook budgets. User runs installation later. Continue the active implementation session.
 
 **Next step:** finish the original latency node under the user-approved separate budgets: steady-state +2 ms median/+5 ms p95, no-provider-bytecode cold +5 ms median/+10 ms p95, finite resource500 ms. Review all four retained startup-module reports, collect25independent fresh-copy cold samples percondition/case, then commit the preserved source and evidence for integration.
 
@@ -55,6 +55,8 @@ Final delivery only after gates pass: branch ready for review; source/generated/
 
 ## Latest steering, 2026-10-02 00:08 UTC
 
-The user asked whether a few milliseconds are acceptable, then authorized defining separate limits. The ExecPlan now records steady-state +2 ms median/+5 ms p95 and cold +5 ms median/+10 ms p95; security and the500 ms finite-resource ceiling stay unchanged. Do not preserve the original zero-regression requirement as current policy. Historical failures remain truthful under their original rule. Cold evidence needs25fresh copies percase/condition; current36first-install observations only have3repeats.
+The user asked whether a few milliseconds are acceptable, then authorized defining separate limits. The ExecPlan now records steady-state +2 ms median/+5 ms p95 and cold +5 ms median/+10 ms p95; security and the500 ms finite-resource ceiling stay unchanged. Do not preserve the original zero-regression requirement as current policy. Historical failures remain truthful under their original rule. Cold evidence needs the complete147fixedscenario matrix at25fresh copies percase/condition (7350launches); current36first-install observations only have3repeats for6cases.
 
 Root interrupted milestone3before00:07deadline to answer and stop, and the resumed user instruction authorizes continuing the original node. The worker checkout is uncommitted and preserved. All four ordinary-cache reports, static audit, frozen manifest and comparison exist; every147decision passes and neither pair has a positive median delta. Review percasep95against revised budget. Root polling session52626 returned Unknown process id; the four completed reports establish measurement completion, but future work must check its own process state. Sandbox ps was denied; do not treat that denial as a hook failure. No formal final doc pass has run.
+
+Resumed original node owns the exclusive sequential measurement window from00:11:33UTC, deadline00:31:02UTC. Full cold7350 launches, targeted3p95 repeats and final90resourcecases must run without overlapping probes; native macOSPython3.13 correctness follows. Rootformal finaldocpass stayspending until allrequiredsourcechecks and revisedbudgetgates finish.
