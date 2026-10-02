@@ -14,6 +14,30 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class SecurityBannerTests(unittest.TestCase):
+    def test_tool_identifiers_preserve_redaction_and_clipping(self) -> None:
+        operation = 'git push' + ' --force origin main'
+        cases = [('Bash', 'Bash'), ('run_shell_command', 'run_shell_command'),
+                 ('exec_command123', 'exec_command123'), ('___', '___'),
+                 ('x' * 170, 'x' * 157 + '...'), ('run-shell-command', 'run-shell-command'),
+                 ('\u212aTool', 'KTool'), ('Bash ghp_FAKE123456', 'Bash [REDACTED]'),
+                 ('Ｂａｓｈ', 'Bash'), ('ＡＫＩＡFAKE123456', '[REDACTED]'),
+                 ('AKıAFAKE123456', '[REDACTED]'), ('ghp_İFAKE123456', '[REDACTED]'),
+                 ('https://user:demo@example.invalid', 'https://[REDACTED]@example.invalid'),
+                 ('tool?token=fake', 'tool?token=[REDACTED]'),
+                 ('Authorization: Bearer fake', 'Authorization: [REDACTED]'),
+                 ('API_KEY=fake', 'API_KEY=[REDACTED]'),
+                 ('--password=fake', '--password=[REDACTED]'),
+                 ('sk-FAKE123456', '[REDACTED]')]
+        cases += [(prefix + 'FAKE123456', '[REDACTED]') for prefix in ('ghp_', 'gho_', 'ghu_', 'ghs_', 'ghr_', 'AkIa')]
+        cases.append(('ghp_' + 'A' * 170, '[REDACTED]'))
+        for provider in ('copilot', 'gemini', 'codex'):
+            for name, expected in cases:
+                with self.subTest(provider=provider, name=name):
+                    response, rows = self.invoke(provider, 'block', name, {'command': operation})
+                    self.assertIn('force_push_protected_branch', self.reason(response))
+                    self.assertEqual(rows[-1]['tool'], expected)
+                    self.assertIn(rows[-1]['excerpt'], self.reason(response))
+
     def invoke(self, provider: str, mode: str, tool: str, value: object) -> tuple[dict, list[dict]]:
         path = ROOT / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
         with tempfile.TemporaryDirectory() as temporary:

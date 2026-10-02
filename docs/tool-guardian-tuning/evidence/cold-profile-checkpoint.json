@@ -1,0 +1,28 @@
+{
+  "overall_acceptance": "pending full matched warm B/C/C/B 147-case 25/3",
+  "source_unchanged": true,
+  "focused_attribution": "all 12 writer/provider medians improved 0.318 to 0.570 ms versus exact checkpoint",
+  "full_cold": {
+    "report": "cold-profile-cold-25.json",
+    "launches": 7350,
+    "result": "FAIL 3 initial cases, preserved"
+  },
+  "targeted_cold_repeat": {
+    "report": "cold-profile-cold-repeat-25.json",
+    "launches": 150,
+    "result": "PASS all 3 exact repeated cases"
+  },
+  "resource": {
+    "report": "cold-profile-resources-25.json",
+    "cases": 90,
+    "samples": 25,
+    "warmups": 3,
+    "ceiling_ms": 500,
+    "result": "PASS",
+    "max_observed_ms": 49.085958,
+    "max_peak_rss_bytes": 22413312
+  },
+  "warm": "NOT RUN in this dispatch; root continues against exact frozen source",
+  "windows": "unavailable",
+  "running_processes": []
+}

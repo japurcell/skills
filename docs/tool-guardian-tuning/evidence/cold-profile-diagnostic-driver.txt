@@ -1,0 +1,99 @@
+from dataclasses import replace
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import pstats
+import shutil
+import sys
+import tempfile
+import time
+
+worktree = Path('/private/tmp/tool-guardian-cold-profile')
+runner_path = Path('/private/tmp/tool-guardian-profile-checkpoint/scripts/benchmark-high-rate-hooks.py')
+sys.path.insert(0, str(runner_path.parent))
+spec = importlib.util.spec_from_file_location('diagnostic_runner', runner_path)
+runner = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = runner
+spec.loader.exec_module(runner)
+roots = {'baseline': Path('/private/tmp/tool-guardian-baseline'), 'checkpoint': Path('/private/tmp/tool-guardian-profile-checkpoint')}
+selected = ('guard.clean', 'guard.writer.chars-8787-segments-183', 'guard.danger.writer-before', 'guard.danger.writer-after')
+cases = {condition:{case.name:case for case in runner.guard_cases(root, 'baseline' if condition == 'baseline' else 'candidate')
+                    if any(case.name.endswith(name) for name in selected)} for condition,root in roots.items()}
+assert all(len(group) == 12 for group in cases.values())
+rows = []
+started = time.time()
+normal_run = runner.subprocess.run
+with tempfile.TemporaryDirectory(prefix='guardian-cold-diagnostic-') as temporary:
+    base = Path(temporary)
+    repo = base/'repo'
+    runner.make_repo(repo, 'clean')
+    for name in cases['baseline']:
+        row = {'case':name,'normal':{'baseline':[],'checkpoint':[]},'profiles':{},'compile':{}}
+        for mode in ('normal', 'importtime', 'cprofile'):
+            for repeat in range(25 if mode == 'normal' else 1):
+                for condition in ('baseline','checkpoint') if repeat % 2 == 0 else ('checkpoint','baseline'):
+                    original = cases[condition][name]
+                    target = base/f'{name}-{mode}-{repeat}-{condition}'
+                    target.mkdir()
+                    script = target/'tool-guard.py'
+                    shutil.copy2(original.script,script)
+                    helpers = target/'helpers'
+                    helpers.mkdir()
+                    hashes = {'tool-guard.py':hashlib.sha256(script.read_bytes()).hexdigest()}
+                    for source in (original.script.parent/'helpers').rglob('*.py'):
+                        dest = helpers/source.relative_to(original.script.parent/'helpers')
+                        dest.parent.mkdir(parents=True,exist_ok=True)
+                        shutil.copy2(source,dest)
+                        hashes[str(dest.relative_to(target))] = hashlib.sha256(dest.read_bytes()).hexdigest()
+                    assert not list(target.rglob('*.pyc'))
+                    home = target/'home'
+                    home.mkdir()
+                    case = replace(original,script=script)
+                    capture = {}
+                    profile_path = target/'profile.stats'
+                    def observed(command, **kwargs):
+                        if mode == 'importtime': command = [command[0],'-X','importtime',*command[1:]]
+                        elif mode == 'cprofile': command = [command[0],'-m','cProfile','-o',str(profile_path),*command[1:]]
+                        result = normal_run(command,**kwargs)
+                        capture['stderr'] = result.stderr.decode('utf-8',errors='replace')
+                        return result
+                    runner.subprocess.run = observed
+                    try:
+                        elapsed,status,output = runner.invoke(case,repo,home)
+                    finally:
+                        runner.subprocess.run = normal_run
+                    runner.verify_outcome(case,status,output)
+                    observation = {'elapsed_ms':elapsed,'status':status,'actual_decision':runner.decision(name.split('.')[0],output),
+                                   'expected_decision':case.expected_decision,'payload_sha256':hashlib.sha256(case.payload).hexdigest(),
+                                   'source_sha256':hashes,'provider_bytecode_before':[]}
+                    if mode == 'normal': row['normal'][condition].append(observation)
+                    else:
+                        observation['stderr'] = capture['stderr']
+                        if mode == 'cprofile':
+                            stats = pstats.Stats(str(profile_path))
+                            observation['function_profiles'] = [{'filename':key[0],'line':key[1],'function':key[2],
+                                'primitive_calls':value[0],'calls':value[1],'self_ms':value[2]*1000,'cumulative_ms':value[3]*1000}
+                                for key,value in sorted(stats.stats.items(),key=lambda item:item[1][3],reverse=True)[:100]]
+                        row['profiles'].setdefault(mode,{})[condition] = observation
+                    shutil.rmtree(target)
+        for condition in roots:
+            original = cases[condition][name]
+            samples = {}
+            for source in [original.script,*(original.script.parent/'helpers').rglob('tool_guard_policy.py')]:
+                data = source.read_bytes()
+                values = []
+                for repeat in range(25):
+                    start = time.perf_counter_ns()
+                    compile(data,str(source),'exec')
+                    values.append((time.perf_counter_ns()-start)/1_000_000)
+                samples[str(source.relative_to(roots[condition]))] = {'sha256':hashlib.sha256(data).hexdigest(),'samples_ms':values,'summary':runner.summary(values)}
+            row['compile'][condition] = samples
+        row['statistics'] = {condition:runner.summary([launch['elapsed_ms'] for launch in values]) for condition,values in row['normal'].items()}
+        rows.append(row)
+        print('Diagnostic complete',name,flush=True)
+report = {'method':'Diagnostic only: 25 alternating fresh-copy complete public entrypoints; one -Ximporttime and one cProfile complete entrypoint percondition. cProfile preloads profiler dependencies and excludes main source compilation. Trusted source-only compile timings separately diagnostic, no payload execution.',
+          'python':sys.version,'started_unix':started,'completed_unix':time.time(),'runner_sha256':hashlib.sha256(runner_path.read_bytes()).hexdigest(),
+          'corpus_sha256':hashlib.sha256((runner_path.parent/'tool_guard_corpus.py').read_bytes()).hexdigest(),
+          'driver_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'results':rows}
+(worktree/'docs/tool-guardian-tuning/evidence/cold-profile-diagnostic.json').write_text(json.dumps(report,indent=2)+'\n')
