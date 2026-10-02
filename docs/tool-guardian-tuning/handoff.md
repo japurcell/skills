@@ -4,7 +4,7 @@
 
 Complete every milestone in `docs/tool-guardian-tuning/ExecPlan.md` on private branch `codex/tool-guardian-tuning`. User runs installation later. Continue this implementation session.
 
-**Next step:** original milestone 3 implementer repairs bounded quoted-literal scanning, preserves complete inspection and reruns frozen full-hook gates. Three cold writer median violations remain. Do not raise the agreed budgets silently.
+**Next step:** original milestone 3 implementer profiles the actual cold overhead and repairs a measured cause. Literal scanning was rejected for lacking measurable gain. Three cold writer median violations remain. Do not raise the agreed budgets silently.
 
 ## Current state
 
@@ -31,7 +31,11 @@ The proposed repair replaces per-character literal scans with delimiter search, 
 
 Original milestone3 owns this repair. Root coordinates, validates and integrates only. Independent runtime probes must not overlap measurements. A new bounded dispatch and private worktree follow integration; routing metadata stays outside task prompts. Reuse only original-node repairs. Private branches never push. Integrate serially with clean worktree, rebase, fast-forward, matching tip, then cleanup.
 
-Active repair: `/private/tmp/tool-guardian-literal-repair`, branch `codex/tool-guardian-literal-repair`, original `/root/milestone_3`. Started 2026-10-02 00:33:01 UTC, hard deadline 01:03:01 UTC (30 minutes). Worker owns the exclusive runtime window and must commit a truthful checkpoint before the deadline. Selected/submitted configuration remains explicitly configured gpt-6.1-sol/high; executed configuration is unconfirmed. Routing metadata is outside the task prompt.
+The literal-scan dispatch expired after an overnight machine/context clock advance. Worker stopped runtime work on observing the deadline; root interrupted on notification. Root verified 7,350 cold records, restored runtime source, preserved the rejected canonical patch and integrated characterization tests/evidence at15e323e5. Its clean owned worktree/branch were removed. The original worker is idle. No resource or targeted-repeat acceptance exists for the rejected candidate.
+
+Root started sequential repository verification at19:05:46UTC: `rtk proxy python3 scripts/test-all.py`, session83886, log `/private/tmp/tool-guardian-test-all.log`. No worker runtime probes may overlap. Current policy remains the extracted checkpoint; later guardian-only repairs need affected suites, while this run covers unchanged shared helper and delivery changes.
+
+Active original-node repair: `/private/tmp/tool-guardian-cold-profile`, branch `codex/tool-guardian-cold-profile`, `/root/milestone_3`. Start19:06:44UTC, hard deadline19:41:44UTC (35minutes). First profile a measured cold cause; no further speculative scanner changes. Worker performs static preparation until root explicitly releases the test-all runtime window. Selected/submitted gpt-6.1-sol/high, executed configuration unconfirmed. All routing metadata stays outside task prompts.
 
 Final full `scripts/test-all.py` verification remains pending. At end of entire session activate `update-agent-docs` once before `.agents/` edits, then `okf-authoring`; delegate milestone5 to a fresh implementer. Synchronize hooks/scripts instructions, testing, known issues, FILE_MAP/API_MAP/INDEX as applicable. Preserve installed-old-hook workaround until user installs. Protected AGENTS sections remain intact. No formal final doc pass has run.
 
