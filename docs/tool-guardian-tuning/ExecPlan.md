@@ -22,7 +22,7 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 - [x] (2026-10-02 19:53Z) [milestone-4] Set measured resource bounds, validate security and latency, and regenerate all three providers.
 - [x] (2026-10-02 19:41Z) [repository verification repair] Fix the reproduced macOS physical-path fixture expectation and sandbox-dependent audit fixture, preserving every assertion; verify affected suites and remaining repository checks.
 - [x] (2026-10-01 23:45Z) [milestone-4] Update the old Gemini 33,000-byte native-write banner assertion to verify truthful overflow beyond the new 65,536-byte native bound, while retaining unsupported-input 32,768-byte strict-limit coverage.
-- [ ] [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
+- [x] (2026-10-02 20:07Z) [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
 
@@ -89,7 +89,7 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 
 Milestones 1 through 4 meet their current acceptance criteria. Frozen sanitizer repair 1a4610ad preserves exact inspection and redaction behavior while improving all 12 focused cold writer medians by 0.318-0.570 ms against the extracted checkpoint. Both full warm pairs pass all 147 cases: maximum median deltas are -1.841 and -0.727 ms; maximum p95 deltas are +1.618 and +2.445 ms. Every actual response is correct and all 39 source hashes remain unchanged. The full cold matrix retains its original three failures; all three exact repeats pass the agreed +5/+10 ms criteria. The 90-case resource run passes with maximum 49.085958 ms and peak macOS RSS 22,413,312 bytes. Evidence is retained in `evidence/cold-profile-final-comparison.json` and its raw reports. Historical failed candidates remain failed under their recorded criteria.
 
-Repository verification passed 39/41 suites before fixture repairs. Both remaining suites now pass in the actual shared-root sandbox with assertions preserved, including 16 helper tests with deprecation warnings treated as errors. The affected guardian and generator suites also pass on native macOS Python 3.14.6 and 3.13.14. Native Windows execution remains unavailable. Milestone 5 is the only remaining implementation task; real installation and live validation belong to the user.
+Repository verification passed 39/41 suites before fixture repairs. Both remaining suites now pass in the actual shared-root sandbox with assertions preserved, including 16 helper tests with deprecation warnings treated as errors. The affected guardian and generator suites also pass on native macOS Python 3.14.6 and 3.13.14. Native Windows execution remains unavailable. Milestone 5 is complete at 37c7cfd7. The single formal documentation pass updated nine canonical documents and its scoped record, with both-bundle OKF lint, 29-file freshness and whitespace checks passing. All owned implementer worktrees and branches are removed; the topic branch is ready for human review. Real installation and live validation belong to the user.
 
 Earlier checkpoint history follows and does not supersede these current results.
 
@@ -177,8 +177,8 @@ Formerly denied legitimate inputs belong in the same-input comparison, not an un
 
 ### Milestone 5: Synchronize documentation and deliver the repository change
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 Run `update-agent-docs` once at the end of implementation. Refresh hook conventions, known issues, testing routes, file and API maps as applicable, and this plan's actual constants, decisions, benchmark results, and milestone state. Preserve historical investigation facts but distinguish them from corrected behavior. The current self-maintenance workaround remains applicable until installed hooks are updated. Record implemented capabilities only after their source acceptance gates pass, and distinguish them from later installed/live validation.
 
@@ -245,7 +245,7 @@ Keep before/after performance reports with the implementation evidence and descr
 
 Investigation dispatch audit follows. The selected and submitted configurations matched. The dispatch system did not report executed model or effort, so both remain unconfirmed. Active orchestrator deadline checks enforced runtime limits. The contract exploration was deliberately interrupted to answer the user's question, and a later exploration completed the remaining incident classifications.
 
-The living implementation audit is `evidence/implementation-dispatch-audit.json`. Original milestone 3 completed the measured sanitizer repair; its rejected literal-scan experiment and all deadlines remain in that audit. The only active implementer is final documentation in `/private/tmp/tool-guardian-final-docs`; private branches remain unpushed. Explicitly configured model/effort values are recorded, with execution configuration unconfirmed. Review timeouts and the one routing-noncompliant startup follow-up remain recorded rather than treated as approvals.
+The living implementation audit is `evidence/implementation-dispatch-audit.json`. Original milestone 3 completed the measured sanitizer repair; its rejected literal-scan experiment and all deadlines remain in that audit. Final documentation integrated at 37c7cfd7 without conflicts, and its owned worktree and private branch were removed. No implementer remains active; the topic branch remains unpushed. Explicitly configured model/effort values are recorded, with execution configuration unconfirmed. Review timeouts and the one routing-noncompliant startup follow-up remain recorded rather than treated as approvals.
 
     dispatches:
       - subtask_id: guardian_evidence
@@ -310,4 +310,6 @@ Revision (2026-10-02 19:47Z): integrated frozen sanitizer repair at 1a4610ad, re
 
 Revision (2026-10-02 19:53Z): both complete warm pairs pass all 147 cases with frozen source and correct decisions. Marked milestones 3/4 and the measured repair complete atomically. Final canonical documentation is the remaining frontier; native Windows proof remains unavailable.
 
-Revision (2026-10-02 19:58Z): retained original four-worker diagnostics and completed a25-batch-per-condition B/C/C/B repeat. All providers improve in individual and batch median/p95 with1,200 correct measured calls and unchanged sources. Clarified that milestone5 may document verified source capabilities while user installation remains outstanding.
+Revision (2026-10-02 19:58Z): retained original four-worker diagnostics and completed a 25-batch-per-condition B/C/C/B repeat. All providers improve in individual and batch median/p95 with 1,200 correct measured calls and unchanged sources. Clarified that milestone 5 may document verified source capabilities while user installation remains outstanding.
+
+Revision (2026-10-02 20:07Z): integrated the verified final documentation pass at 37c7cfd7 without conflicts and cleaned its owned worktree/branch. Atomically marked milestone 5 done and synchronized final outcomes. Every checklist item is complete; user installation/live checks and native Windows proof remain explicitly separate.
