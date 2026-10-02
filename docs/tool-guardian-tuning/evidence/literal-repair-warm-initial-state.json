@@ -1,0 +1,24 @@
+{
+  "method": "ordinary cache state immediately before B/C/C/B; per-case first process and3warmups discarded from warm25samples",
+  "roots": {
+    "baseline": {
+      "root": "/private/tmp/tool-guardian-baseline",
+      "provider_bytecode": [
+        ".codex/hooks/helpers/__pycache__/audit.cpython-314.pyc",
+        ".codex/hooks/helpers/__pycache__/common.cpython-314.pyc",
+        ".copilot/hooks/scripts/helpers/__pycache__/__init__.cpython-314.pyc",
+        ".copilot/hooks/scripts/helpers/__pycache__/audit.cpython-314.pyc",
+        ".copilot/hooks/scripts/helpers/__pycache__/common.cpython-314.pyc",
+        ".copilot/hooks/scripts/helpers/__pycache__/observability.cpython-314.pyc",
+        ".gemini/hooks/scripts/helpers/__pycache__/__init__.cpython-314.pyc",
+        ".gemini/hooks/scripts/helpers/__pycache__/common.cpython-314.pyc",
+        ".gemini/hooks/scripts/helpers/__pycache__/observability.cpython-314.pyc"
+      ]
+    },
+    "candidate": {
+      "root": "/private/tmp/tool-guardian-literal-candidate",
+      "provider_bytecode": []
+    }
+  },
+  "driver_sha256": "4b4bc89c19d190de83ca343665907c0908ec755b978ef8b94949255843092995"
+}

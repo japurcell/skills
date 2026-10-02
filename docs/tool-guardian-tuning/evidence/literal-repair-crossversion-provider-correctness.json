@@ -1,0 +1,74 @@
+[
+  {
+    "command": [
+      "/Users/adam/.pyenv/versions/3.13.14/bin/python3",
+      "scripts/test-tool-guard-shell-data.py"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": ".............\n----------------------------------------------------------------------\nRan 13 tests in 9.806s\n\nOK\n"
+  },
+  {
+    "command": [
+      "/Users/adam/.pyenv/versions/3.13.14/bin/python3",
+      "scripts/test-tool-guard-native-data.py"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": ".............\n----------------------------------------------------------------------\nRan 13 tests in 2.419s\n\nOK\n"
+  },
+  {
+    "command": [
+      "/Users/adam/.pyenv/versions/3.13.14/bin/python3",
+      "scripts/test-tool-guard-limits.py"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": "................\n----------------------------------------------------------------------\nRan 16 tests in 7.027s\n\nOK\n"
+  },
+  {
+    "command": [
+      "/Users/adam/.pyenv/versions/3.13.14/bin/python3",
+      "scripts/test-tool-guard-false-positives.py"
+    ],
+    "status": 0,
+    "stdout": "Guardian public fixtures: 144 passed, 0 failed (candidate).\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "/Users/adam/.pyenv/versions/3.13.14/bin/python3",
+      "scripts/test-security-banners.py"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": ".............\n----------------------------------------------------------------------\nRan 13 tests in 2.203s\n\nOK\n"
+  },
+  {
+    "command": [
+      "bash",
+      "scripts/test-hooks-tool-guard.sh"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": "Observability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\n"
+  },
+  {
+    "command": [
+      "bash",
+      "scripts/test-gemini-hooks-tool-guard.sh"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": "Observability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\nObservability database error in begin_hook_capture: attempt to write a readonly database\n"
+  },
+  {
+    "command": [
+      "bash",
+      "scripts/test-codex-hooks-tool-guard.sh"
+    ],
+    "status": 0,
+    "stdout": "",
+    "stderr": ".............\n----------------------------------------------------------------------\nRan 13 tests in 2.164s\n\nOK\n"
+  }
+]

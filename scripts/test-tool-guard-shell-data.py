@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,22 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class ShellDataTests(unittest.TestCase):
+    def test_literal_delimiters_preserve_data_and_following_execution(self) -> None:
+        operation = OPERATIONS['force_push_protected_branch']
+        literals = [repr(operation + '\\'), repr('\\' * 257 + operation),
+                    json.dumps(operation + '\\' * 2),
+                    '"""' + operation + '\\' + '"""' + 'tail"""',
+                    "'''" + operation + '\\' + "'''" + "tail'''",
+                    repr("quote'" + operation + '"quote')]
+        for literal in literals:
+            source = 'from pathlib import Path;Path("example.txt").write_text(' + literal + ')'
+            self.check('python3 -c ' + shlex.quote(source), 'allow')
+            self.check('python3 -c ' + shlex.quote(source + ';import os;os.system(' + repr(operation) + ')'), 'deny')
+        self.check("rg '" + operation + "\\$(ignored)' docs", 'allow')
+        self.check("rg '" + operation + "' docs; " + operation, 'deny')
+        for literal in ("'unfinished\\", '"""unfinished\\"""', "'''unfinished\\'''"):
+            self.check('python3 -c ' + shlex.quote('value=' + literal), 'deny', mode='warn')
+
     def test_missing_or_invalid_local_policy_denies_in_block_and_warn_modes(self) -> None:
         fixture = Fixture('delivery', 'Bash', {'command': 'echo safe'}, 'allow', 'allow', 'delivery', 'local helper boundary')
         for provider in PROVIDERS:

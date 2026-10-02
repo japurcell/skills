@@ -1,0 +1,4276 @@
+{
+  "runner_sha256": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+  "corpus_sha256": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e",
+  "cases": {
+    "baseline": [
+      {
+        "case": "copilot.guard.clean",
+        "input_bytes": 74,
+        "payload_sha256": "2774a83eeabf1c84091572cd738cc1575a6a001bf155f3195791ef318f0f9b76",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.finding",
+        "input_bytes": 93,
+        "payload_sha256": "7a0a6a8c344a0eb86cf8fe936eb7a77663c6d6e67abda629c39931113f3b06f6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.large",
+        "input_bytes": 24070,
+        "payload_sha256": "914ab1099e853a23290bcdc81a5f83ea45354cc5fc5d5e2d2c558e915e619127",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.clean",
+        "input_bytes": 102,
+        "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.finding",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.large",
+        "input_bytes": 24098,
+        "payload_sha256": "ba6fbd519ddb1819878ccecbcb9670cd1b484c7fc0fe806eccd3ab1fa97f626b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.clean",
+        "input_bytes": 89,
+        "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.finding",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.large",
+        "input_bytes": 24085,
+        "payload_sha256": "e2999286aecbec02ee7ac023b7d29a04f6af464cfd9caed23c58292194e0881b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.patch.bytes-46899",
+        "input_bytes": 47130,
+        "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "copilot.guard.patch.lines-330",
+        "input_bytes": 6384,
+        "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "copilot.guard.patch.lines-124-segments-142",
+        "input_bytes": 2632,
+        "payload_sha256": "2f55c5938549d20ff1231f8eec1eba8d3792584d42adb3c618398299fc66b95b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "copilot.guard.write.actual-newlines",
+        "input_bytes": 1648,
+        "payload_sha256": "18c0766b1e1d4f24734231462dc57622b1a036b8a2856d95e53377b5f730822a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "copilot.guard.write.escaped-newlines",
+        "input_bytes": 1788,
+        "payload_sha256": "908ba454567700c7908c1d03bd99501bb1c7846310266ff2fcc60d149385c4ad",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "copilot.guard.write.utf8-growth",
+        "input_bytes": 36108,
+        "payload_sha256": "c2eb002f88245adbe6e5f330f914592f04cf98932346f10786b819f0f5d7b9cd",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.md",
+        "input_bytes": 135,
+        "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.py",
+        "input_bytes": 135,
+        "payload_sha256": "e6fbf3ee1acf16cb7d2504e24e64090a0dd8bf0438f7fb618055dc6a2efe1512",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.test.py",
+        "input_bytes": 140,
+        "payload_sha256": "8b72fed102d0b2e5c7e968f42f39f8090946821f7a820b1356e65928e9726103",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.edit.replacement",
+        "input_bytes": 153,
+        "payload_sha256": "61ab7a25e5945ac9a3de5027816c3ce0e41442105b2ac45def511423706fc445",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.search.literal",
+        "input_bytes": 116,
+        "payload_sha256": "8a7d7c81efa2e95a5251155a73e651f6a82cef19b4b839316ad76d84ec51df0a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.search.shell-literal",
+        "input_bytes": 118,
+        "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9029,
+        "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "copilot.guard.writer.lines-120-segments-139",
+        "input_bytes": 2500,
+        "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "copilot.guard.survey.json-stdin",
+        "input_bytes": 218,
+        "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "copilot.guard.survey.python-subprocess",
+        "input_bytes": 387,
+        "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "copilot.guard.survey.analysis-source",
+        "input_bytes": 201,
+        "payload_sha256": "1ec61f9c2bfd161c3d68dcacf06b2916ddb40533aba1712823aef4360a00b37b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "copilot.guard.write.english-inflection",
+        "input_bytes": 145,
+        "payload_sha256": "5a01eea224f62c23d36b96a7f9a3dee3b915bead906759c6b2102adb48f713e8",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_root",
+        "input_bytes": 85,
+        "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_home",
+        "input_bytes": 85,
+        "payload_sha256": "6c2e02a4b717a0cd46710f7c6c6097483ec57bed56d6ad03a286474426294170",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_current",
+        "input_bytes": 85,
+        "payload_sha256": "031e1c02143b12003d2e1850a4bd7416a5c393798f6009bbe75c10584e1df5f3",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_parent",
+        "input_bytes": 86,
+        "payload_sha256": "61eb941c7ebc98ccabd0564c94446abe0bd6daf7ba0b01e59be113f4a5b6b856",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.remove_env_file",
+        "input_bytes": 84,
+        "payload_sha256": "83551a28823a196a01445ee777c3a76b6e112fcf07569e42f7b9728f70647379",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.remove_git_metadata",
+        "input_bytes": 88,
+        "payload_sha256": "418907243d7f89255b4d7a1e1d414886d126fdd2e150b4a436df0bca52be1c73",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.force_push_protected_branch",
+        "input_bytes": 105,
+        "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.hard_reset",
+        "input_bytes": 93,
+        "payload_sha256": "c7eaca36d4968512810ee566e4428782fd5dae0de69773be443f983bb1a3e0ed",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.forced_git_clean",
+        "input_bytes": 90,
+        "payload_sha256": "44be073a822b64fac4b34c1e1fe289afc5ba979c0a850c472209ad59ef7853a1",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.drop_table",
+        "input_bytes": 92,
+        "payload_sha256": "0fe26b01889287adc11b14c182d20adb305a992226f7f67b08e6a0d1427145f0",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.drop_database",
+        "input_bytes": 95,
+        "payload_sha256": "c2f83ba08de7aeff3cb668e5b0b647e7c33154c173821b45f0e66c4350a206fe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.truncate_table",
+        "input_bytes": 96,
+        "payload_sha256": "99dace19eae70b79a27e6b4c928255ec479fef74661f2f4f5c85761b1d364dd5",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.delete_without_where",
+        "input_bytes": 93,
+        "payload_sha256": "1a4b5212108799da397e6f8e32bd78c38bcc75a6982e134bdd0db030e06ee0ca",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_world_writable",
+        "input_bytes": 94,
+        "payload_sha256": "167f58a3082c6c5806936b2ab618a939ed155bad8aef84df8d8b362369a2f2b5",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.world_writable",
+        "input_bytes": 91,
+        "payload_sha256": "0e83724248ddcf0665f201cbf9391ee4a365dd95c705d3d898c46b2a9ce5b755",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_bash",
+        "input_bytes": 120,
+        "payload_sha256": "19382b5017ac78ccff7e01719ecd14996553796272b9b3e2004a12bd8f9aa79d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_sh",
+        "input_bytes": 123,
+        "payload_sha256": "2928766f0f7f522d1da612ee4670bfcb2b8a6b121988a5dc77af1ed65af54526",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.upload_local_data",
+        "input_bytes": 122,
+        "payload_sha256": "a12ce435f00493a5f1b55e073107627d8562ab865dd175794adaa3221d065d8c",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.privileged_command",
+        "input_bytes": 84,
+        "payload_sha256": "ae1ad003a5dfbf376876e66464835701fd30bc20fbad84847abdbd40e1a63946",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.publish_package",
+        "input_bytes": 88,
+        "payload_sha256": "3f6191aa995e61d33388eb9418883c69558606d8b55bcf3629cf4ccb6cb1f883",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.writer-before",
+        "input_bytes": 2530,
+        "payload_sha256": "5f99dbe8e400e3f5e2db8a4df2cd2a8098706b371d6a468a944563bf5bd86425",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "copilot.guard.danger.writer-after",
+        "input_bytes": 2530,
+        "payload_sha256": "c823c5b4c8b7fb4cb3ee16d89101f733b16d63f723d43bf271988377a4989676",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "copilot.guard.danger.substitution",
+        "input_bytes": 113,
+        "payload_sha256": "6c03118011abcf26b0ba37be80578b54c9e9016c53910258c3ef5e29912a04cb",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.interpreter-sink",
+        "input_bytes": 144,
+        "payload_sha256": "d700d5b7af5fad7df5437d7170daf0e61df10eacbeaabac2c1aa5eb73acc2813",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "copilot.guard.danger.unicode-normalization",
+        "input_bytes": 153,
+        "payload_sha256": "a9a997bbb40c770db2fe64b6f43e9cc042fa8d55c950e3c811f069249eac46ab",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.extra-field",
+        "input_bytes": 153,
+        "payload_sha256": "110d988636a2c4506cdd941d314018c7b8e52e5b51aa186bdba1f66f0af73ada",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.malformed-schema",
+        "input_bytes": 111,
+        "payload_sha256": "6e4073ced827ca40fac8ad26830d1a4fc48b46c7f5b68c85c6f4ba01aa491fe2",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.patch.bytes-46899",
+        "input_bytes": 47140,
+        "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "gemini.guard.patch.lines-330",
+        "input_bytes": 6394,
+        "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "gemini.guard.patch.lines-124-segments-142",
+        "input_bytes": 2642,
+        "payload_sha256": "c0d528290f5183f9d35658b638a060b0c5ee8f34821766ed0d8a1f8b5f8adb2e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "gemini.guard.write.actual-newlines",
+        "input_bytes": 1658,
+        "payload_sha256": "944a95a3095df9f9ae83186aff478cd9a37f8b17f30a55967c22cebda9691692",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "gemini.guard.write.escaped-newlines",
+        "input_bytes": 1798,
+        "payload_sha256": "aa111e393fb61ad07419d5002f5738ea07279ea5106eb4d49abe090b7182fa62",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "gemini.guard.write.utf8-growth",
+        "input_bytes": 36118,
+        "payload_sha256": "a673f543d7372483d7895b01139a2f468f4c3d4a98b3f035b7e242f172d85018",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.md",
+        "input_bytes": 145,
+        "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.py",
+        "input_bytes": 145,
+        "payload_sha256": "bfe62a9573f2dcc7f90d31d60f4e7682ea9ba2c2857d47bd5641b53f61e757d6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.test.py",
+        "input_bytes": 150,
+        "payload_sha256": "24924416f87263c949c2199216850baafe98ac845191f3529848d4b7fc0d2679",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.edit.replacement",
+        "input_bytes": 241,
+        "payload_sha256": "b24dcd367836654f945f54ca624f2cb48744bf2a045649e5857ed38240a945a4",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.search.literal",
+        "input_bytes": 126,
+        "payload_sha256": "60d4747bb84116439c6231fe9bcf0f83189ba9ab4b033409a509ad5f46278fc6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.search.shell-literal",
+        "input_bytes": 134,
+        "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9045,
+        "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "gemini.guard.writer.lines-120-segments-139",
+        "input_bytes": 2516,
+        "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "gemini.guard.survey.json-stdin",
+        "input_bytes": 234,
+        "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "gemini.guard.survey.python-subprocess",
+        "input_bytes": 403,
+        "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "gemini.guard.survey.analysis-source",
+        "input_bytes": 211,
+        "payload_sha256": "827a53251f869af46f519dcf85960d1780f984148562ee50301792a14880b773",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "gemini.guard.write.english-inflection",
+        "input_bytes": 155,
+        "payload_sha256": "f74dc982caacebf8acde0bbcbdaddacf47a6ffd052f120598241a1da4ddeb6f5",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_root",
+        "input_bytes": 101,
+        "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_home",
+        "input_bytes": 101,
+        "payload_sha256": "b1ed4655ba05882eefc84e26d0e93daed8a4424515938f948fd2396472d8754a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_current",
+        "input_bytes": 101,
+        "payload_sha256": "6885775c1c3f951a9e6126af62f072098894509802dda3a3a2cd7ea94d2ae778",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_parent",
+        "input_bytes": 102,
+        "payload_sha256": "f226eae36007623eaa5b52d37e17a5eeef0a422f86a7ff8202f7639aeb22147f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.remove_env_file",
+        "input_bytes": 100,
+        "payload_sha256": "242e78c25d9788dbf752bc8c907fa566d336acc47d58479a222e85262531abfd",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.remove_git_metadata",
+        "input_bytes": 104,
+        "payload_sha256": "da1cb53cc315be8ad06ebbc743361db283b944af66fc912e050e4b8f044f6938",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.force_push_protected_branch",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.hard_reset",
+        "input_bytes": 109,
+        "payload_sha256": "ec2fc525b428084436959c1fa020339bb70ad479f3faf778dd1b9533bb1c9718",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.forced_git_clean",
+        "input_bytes": 106,
+        "payload_sha256": "ac4e2f0f295f0dda5a287f8945b10d35bd5e9f4219dc4ee4141c226271a20413",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.drop_table",
+        "input_bytes": 108,
+        "payload_sha256": "2e6b07698747f91844c9be5b2006206f24d03ffe41fba5eb91c77ef3295a614e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.drop_database",
+        "input_bytes": 111,
+        "payload_sha256": "0c5bea5d8765c1f953f5e6de3c5111b2633183c40e3883da4dba4c31cbc20958",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.truncate_table",
+        "input_bytes": 112,
+        "payload_sha256": "50bf6787f3db25cb460808827a7e1e2f2c2364a5a86f5bc092c81d5777ae83bd",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.delete_without_where",
+        "input_bytes": 109,
+        "payload_sha256": "808f3f8032645cf9d330556a69f5c87ebf97cbf5104bf9abf307d09bc925a13c",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_world_writable",
+        "input_bytes": 110,
+        "payload_sha256": "39b4cc8955942131bc332fe291afc82686c8688addeca5bf5a57504cac09f0c9",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.world_writable",
+        "input_bytes": 107,
+        "payload_sha256": "5eaddda0e791d9935ab077244c4323daac44dc4e21da6398cc94238acdbdda46",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_bash",
+        "input_bytes": 136,
+        "payload_sha256": "0883441298e1a8d87983f5be8dba7e730166fc7219943eafaab6c8fdaad899f7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_sh",
+        "input_bytes": 139,
+        "payload_sha256": "0a84824d3b6eeaddeca07257f0663641a94b5410866f840c4ab8accf99dabc6a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.upload_local_data",
+        "input_bytes": 138,
+        "payload_sha256": "6f2101d57eebb0eee4754c02226506db11b7a8e631be44d39c0193666472b2ec",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.privileged_command",
+        "input_bytes": 100,
+        "payload_sha256": "9c2348b2314ee3ed7d8c84890f7e7deabfc868a5c8eccbbae612d85f9f25590a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.publish_package",
+        "input_bytes": 104,
+        "payload_sha256": "bb9d064f00d37df5d6c2e22345f71c320d425d5894e37d0b31542d3165240890",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.writer-before",
+        "input_bytes": 2546,
+        "payload_sha256": "1e40b7a60d0338df444d86ab2f3ee789f09cda76421470c9840a3ba4b950a018",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "gemini.guard.danger.writer-after",
+        "input_bytes": 2546,
+        "payload_sha256": "319ca4cb4cd008da9e95d71209bf49bcf59b4fbf775ffb9ff00f45addb454915",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "gemini.guard.danger.substitution",
+        "input_bytes": 129,
+        "payload_sha256": "53c574cb2eadf623a8532227f43dc67b38c6cb4701ddbcc55f3cbd6c619f0f8d",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.interpreter-sink",
+        "input_bytes": 160,
+        "payload_sha256": "341ca3645de4c1ca10c049c01edf262b626b2df522bcf34f3ed92f16cb615c17",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "gemini.guard.danger.unicode-normalization",
+        "input_bytes": 169,
+        "payload_sha256": "a79f9f6e6a4bc6d9fa25e56f3bf5a0d08ef71b370eee4753244333172a2e61ac",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.extra-field",
+        "input_bytes": 163,
+        "payload_sha256": "4dfe6eee285dd0c2b469a4e251440c07d76adc0ead6d0e2bec9879e0ee6033b6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.malformed-schema",
+        "input_bytes": 116,
+        "payload_sha256": "29fd4cb1973d8b9bb13a976c43a25dfaf1b57a69591760664fd18b0e655a75ab",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.patch.bytes-46899",
+        "input_bytes": 47109,
+        "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "codex.guard.patch.lines-330",
+        "input_bytes": 6363,
+        "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "codex.guard.patch.lines-124-segments-142",
+        "input_bytes": 2611,
+        "payload_sha256": "d0c584f4b3b00d5c91253297771899b510588ad8a2043411a17f540d1b41d6eb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "codex.guard.write.actual-newlines",
+        "input_bytes": 1830,
+        "payload_sha256": "90a5212bc89d450a3fc09e11cb43e1eba4eb9c9987e60cd6435c78993e1087d7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "codex.guard.write.escaped-newlines",
+        "input_bytes": 1833,
+        "payload_sha256": "d3204f188670d48a6e7d7eb3af2bb001f415b26bfa104f71308fb3d67e8f8196",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "codex.guard.write.utf8-growth",
+        "input_bytes": 36153,
+        "payload_sha256": "44be8cdbe3f8104391eeb17acd31191ca660045420782d178931da6eef23726d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.md",
+        "input_bytes": 180,
+        "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.py",
+        "input_bytes": 180,
+        "payload_sha256": "97a825359361e1e3422eb7741e71c45bc9b23fe400ea405561a701f2390dbdf3",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.test.py",
+        "input_bytes": 185,
+        "payload_sha256": "387507e3d8e21bbee9969d3e86455d94f9edb9ce4771004faeac5a01c9ebedfd",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.edit.replacement",
+        "input_bytes": 199,
+        "payload_sha256": "87ce6714b340417bccd9d648f977c16273d136d0f1d9990587d7503e8f310d2a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.search.literal",
+        "input_bytes": 118,
+        "payload_sha256": "ce90a989d1e70ddf096d2e1309c906d40c9402da444835f9b5a914af0e89b678",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.search.shell-literal",
+        "input_bytes": 121,
+        "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9032,
+        "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "codex.guard.writer.lines-120-segments-139",
+        "input_bytes": 2503,
+        "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "codex.guard.survey.json-stdin",
+        "input_bytes": 221,
+        "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "codex.guard.survey.python-subprocess",
+        "input_bytes": 390,
+        "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "codex.guard.survey.analysis-source",
+        "input_bytes": 247,
+        "payload_sha256": "47094b250c6ded22aebca4e69ebc602f9d87dfbeaf659610df8ffb41d53f84c8",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "codex.guard.write.english-inflection",
+        "input_bytes": 190,
+        "payload_sha256": "5c4cf7b00e2324ba60df8e795f841fb4e5353bbd977e67366caf0de653b40dcf",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_root",
+        "input_bytes": 88,
+        "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_home",
+        "input_bytes": 88,
+        "payload_sha256": "56cb51961bbebb0d178393833fd637e290e152b5fbb490592ce77121798e4eda",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_current",
+        "input_bytes": 88,
+        "payload_sha256": "e47d32aac568ce636b2b943b1af600316ae514aa561580b9598f5fcd8e006e6e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_parent",
+        "input_bytes": 89,
+        "payload_sha256": "e01624749696eef8c92f4413848c47231ba3e747edabac424b6642e356aafec9",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.remove_env_file",
+        "input_bytes": 87,
+        "payload_sha256": "d1cc2524890ec2cdb409bec234df565cdf4bba3ca18ffab0053312e1a20fd0e0",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.remove_git_metadata",
+        "input_bytes": 91,
+        "payload_sha256": "9d4ccc70b3cd01d31a104fdb45f6713103e17cbb7a2453ed935a377858d1daeb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.force_push_protected_branch",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.hard_reset",
+        "input_bytes": 96,
+        "payload_sha256": "d63425c0e5ba1ce26622a9fde38ae04f59c9d170bca6958724735f30ea177a63",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.forced_git_clean",
+        "input_bytes": 93,
+        "payload_sha256": "a8746a8a369368797d697961f5069c31a6770e88a7bbc732a4e6b74dedda65ed",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.drop_table",
+        "input_bytes": 95,
+        "payload_sha256": "4d622b384e2e55b8334fb0049874bb8c791a66a78c13f563baf5da52813e940f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.drop_database",
+        "input_bytes": 98,
+        "payload_sha256": "7b1f6a6d94939ab0764c9344da82e10e2485e6489cf8f3f96b3d15290a6cf95d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.truncate_table",
+        "input_bytes": 99,
+        "payload_sha256": "9d653c09f17561c02939537b095008e47dff97bcaef0274c07c19117f0d16cfb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.delete_without_where",
+        "input_bytes": 96,
+        "payload_sha256": "45684d806ddfff218fc335e872d4bfed744a9c56031fff91157c172dbc98f75f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_world_writable",
+        "input_bytes": 97,
+        "payload_sha256": "30e946cc260cd81de2dbadb0098a9a52956dbfe7c523479093c00471c6f8babe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.world_writable",
+        "input_bytes": 94,
+        "payload_sha256": "e619262bd13ff4a3de62e256c27f0d0ed274789c77f1c2441b00e0af51b699c7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.download_execute_bash",
+        "input_bytes": 123,
+        "payload_sha256": "1a645fed6d6f086df142eca6fc94ac7d609a73384319b4d17b137daf793eccc7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.download_execute_sh",
+        "input_bytes": 126,
+        "payload_sha256": "d78df264d592d72bd692398050616322a0cb6c45c715e564da51e4095c917280",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.upload_local_data",
+        "input_bytes": 125,
+        "payload_sha256": "52429d6e5cc61b83ba0da27fe7ed4d2cfa1b772c82bb66fe71befb0d371a45e8",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.privileged_command",
+        "input_bytes": 87,
+        "payload_sha256": "406fccec15a472d92948ec9d05e12fd868f1f65a143d21af3240ec05684c1345",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.publish_package",
+        "input_bytes": 91,
+        "payload_sha256": "09026c98494570c8b18bfe1f8fb05faf91ffe143166cc56e36a63bc1fce9042a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.writer-before",
+        "input_bytes": 2533,
+        "payload_sha256": "a8008b25ce0ab682d49da987398e5a531da2c037c81c5cffb9fdfdcb1dddd40d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "codex.guard.danger.writer-after",
+        "input_bytes": 2533,
+        "payload_sha256": "aef9daa7f2d1f6470efdd29e44bc4794801821b6a425397e9f0d0e903c10da35",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "codex.guard.danger.substitution",
+        "input_bytes": 116,
+        "payload_sha256": "e3e9759b0ce02cb531dd03647689841415274abdb4c46157d812dbeaf7f45f3a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.interpreter-sink",
+        "input_bytes": 147,
+        "payload_sha256": "789bea0e0fc29d9b8667750bef91fb2a53aca01aee4547fea7cf87dcd87bad03",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "codex.guard.danger.unicode-normalization",
+        "input_bytes": 156,
+        "payload_sha256": "27b64b01547559942939202de9694db994e5a6db00b22d99d078caacc53d4716",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.extra-field",
+        "input_bytes": 163,
+        "payload_sha256": "d6790d957ca5070fba60013b4acd422dbbdf5cd390e4cd27fba54cd446545095",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.malformed-schema",
+        "input_bytes": 116,
+        "payload_sha256": "82fcd16613392eed4dbc16fb02c2e0000f7e66c4a09d82d4e3ea3cd5ee7dced7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      }
+    ],
+    "candidate": [
+      {
+        "case": "copilot.guard.clean",
+        "input_bytes": 74,
+        "payload_sha256": "2774a83eeabf1c84091572cd738cc1575a6a001bf155f3195791ef318f0f9b76",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.finding",
+        "input_bytes": 93,
+        "payload_sha256": "7a0a6a8c344a0eb86cf8fe936eb7a77663c6d6e67abda629c39931113f3b06f6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.large",
+        "input_bytes": 24070,
+        "payload_sha256": "914ab1099e853a23290bcdc81a5f83ea45354cc5fc5d5e2d2c558e915e619127",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.clean",
+        "input_bytes": 102,
+        "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.finding",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.large",
+        "input_bytes": 24098,
+        "payload_sha256": "ba6fbd519ddb1819878ccecbcb9670cd1b484c7fc0fe806eccd3ab1fa97f626b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "gemini.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.clean",
+        "input_bytes": 89,
+        "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.finding",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.large",
+        "input_bytes": 24085,
+        "payload_sha256": "e2999286aecbec02ee7ac023b7d29a04f6af464cfd9caed23c58292194e0881b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "codex.guard.failure",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "existing-workload"
+        }
+      },
+      {
+        "case": "copilot.guard.patch.bytes-46899",
+        "input_bytes": 47130,
+        "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "copilot.guard.patch.lines-330",
+        "input_bytes": 6384,
+        "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "copilot.guard.patch.lines-124-segments-142",
+        "input_bytes": 2632,
+        "payload_sha256": "2f55c5938549d20ff1231f8eec1eba8d3792584d42adb3c618398299fc66b95b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "copilot.guard.write.actual-newlines",
+        "input_bytes": 1648,
+        "payload_sha256": "18c0766b1e1d4f24734231462dc57622b1a036b8a2856d95e53377b5f730822a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "copilot.guard.write.escaped-newlines",
+        "input_bytes": 1788,
+        "payload_sha256": "908ba454567700c7908c1d03bd99501bb1c7846310266ff2fcc60d149385c4ad",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "copilot.guard.write.utf8-growth",
+        "input_bytes": 36108,
+        "payload_sha256": "c2eb002f88245adbe6e5f330f914592f04cf98932346f10786b819f0f5d7b9cd",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.md",
+        "input_bytes": 135,
+        "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.py",
+        "input_bytes": 135,
+        "payload_sha256": "e6fbf3ee1acf16cb7d2504e24e64090a0dd8bf0438f7fb618055dc6a2efe1512",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.write.examples.test.py",
+        "input_bytes": 140,
+        "payload_sha256": "8b72fed102d0b2e5c7e968f42f39f8090946821f7a820b1356e65928e9726103",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.edit.replacement",
+        "input_bytes": 153,
+        "payload_sha256": "61ab7a25e5945ac9a3de5027816c3ce0e41442105b2ac45def511423706fc445",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.search.literal",
+        "input_bytes": 116,
+        "payload_sha256": "8a7d7c81efa2e95a5251155a73e651f6a82cef19b4b839316ad76d84ec51df0a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.search.shell-literal",
+        "input_bytes": 118,
+        "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9029,
+        "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "copilot.guard.writer.lines-120-segments-139",
+        "input_bytes": 2500,
+        "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "copilot.guard.survey.json-stdin",
+        "input_bytes": 218,
+        "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "copilot.guard.survey.python-subprocess",
+        "input_bytes": 387,
+        "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "copilot.guard.survey.analysis-source",
+        "input_bytes": 201,
+        "payload_sha256": "1ec61f9c2bfd161c3d68dcacf06b2916ddb40533aba1712823aef4360a00b37b",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "copilot.guard.write.english-inflection",
+        "input_bytes": 145,
+        "payload_sha256": "5a01eea224f62c23d36b96a7f9a3dee3b915bead906759c6b2102adb48f713e8",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_root",
+        "input_bytes": 85,
+        "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_home",
+        "input_bytes": 85,
+        "payload_sha256": "6c2e02a4b717a0cd46710f7c6c6097483ec57bed56d6ad03a286474426294170",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_current",
+        "input_bytes": 85,
+        "payload_sha256": "031e1c02143b12003d2e1850a4bd7416a5c393798f6009bbe75c10584e1df5f3",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_remove_parent",
+        "input_bytes": 86,
+        "payload_sha256": "61eb941c7ebc98ccabd0564c94446abe0bd6daf7ba0b01e59be113f4a5b6b856",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.remove_env_file",
+        "input_bytes": 84,
+        "payload_sha256": "83551a28823a196a01445ee777c3a76b6e112fcf07569e42f7b9728f70647379",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.remove_git_metadata",
+        "input_bytes": 88,
+        "payload_sha256": "418907243d7f89255b4d7a1e1d414886d126fdd2e150b4a436df0bca52be1c73",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.force_push_protected_branch",
+        "input_bytes": 105,
+        "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.hard_reset",
+        "input_bytes": 93,
+        "payload_sha256": "c7eaca36d4968512810ee566e4428782fd5dae0de69773be443f983bb1a3e0ed",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.forced_git_clean",
+        "input_bytes": 90,
+        "payload_sha256": "44be073a822b64fac4b34c1e1fe289afc5ba979c0a850c472209ad59ef7853a1",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.drop_table",
+        "input_bytes": 92,
+        "payload_sha256": "0fe26b01889287adc11b14c182d20adb305a992226f7f67b08e6a0d1427145f0",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.drop_database",
+        "input_bytes": 95,
+        "payload_sha256": "c2f83ba08de7aeff3cb668e5b0b647e7c33154c173821b45f0e66c4350a206fe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.truncate_table",
+        "input_bytes": 96,
+        "payload_sha256": "99dace19eae70b79a27e6b4c928255ec479fef74661f2f4f5c85761b1d364dd5",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.delete_without_where",
+        "input_bytes": 93,
+        "payload_sha256": "1a4b5212108799da397e6f8e32bd78c38bcc75a6982e134bdd0db030e06ee0ca",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.recursive_world_writable",
+        "input_bytes": 94,
+        "payload_sha256": "167f58a3082c6c5806936b2ab618a939ed155bad8aef84df8d8b362369a2f2b5",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.world_writable",
+        "input_bytes": 91,
+        "payload_sha256": "0e83724248ddcf0665f201cbf9391ee4a365dd95c705d3d898c46b2a9ce5b755",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_bash",
+        "input_bytes": 120,
+        "payload_sha256": "19382b5017ac78ccff7e01719ecd14996553796272b9b3e2004a12bd8f9aa79d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.download_execute_sh",
+        "input_bytes": 123,
+        "payload_sha256": "2928766f0f7f522d1da612ee4670bfcb2b8a6b121988a5dc77af1ed65af54526",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.upload_local_data",
+        "input_bytes": 122,
+        "payload_sha256": "a12ce435f00493a5f1b55e073107627d8562ab865dd175794adaa3221d065d8c",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.privileged_command",
+        "input_bytes": 84,
+        "payload_sha256": "ae1ad003a5dfbf376876e66464835701fd30bc20fbad84847abdbd40e1a63946",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.publish_package",
+        "input_bytes": 88,
+        "payload_sha256": "3f6191aa995e61d33388eb9418883c69558606d8b55bcf3629cf4ccb6cb1f883",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.writer-before",
+        "input_bytes": 2530,
+        "payload_sha256": "5f99dbe8e400e3f5e2db8a4df2cd2a8098706b371d6a468a944563bf5bd86425",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "copilot.guard.danger.writer-after",
+        "input_bytes": 2530,
+        "payload_sha256": "c823c5b4c8b7fb4cb3ee16d89101f733b16d63f723d43bf271988377a4989676",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "copilot.guard.danger.substitution",
+        "input_bytes": 113,
+        "payload_sha256": "6c03118011abcf26b0ba37be80578b54c9e9016c53910258c3ef5e29912a04cb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.interpreter-sink",
+        "input_bytes": 144,
+        "payload_sha256": "d700d5b7af5fad7df5437d7170daf0e61df10eacbeaabac2c1aa5eb73acc2813",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "copilot.guard.danger.unicode-normalization",
+        "input_bytes": 153,
+        "payload_sha256": "a9a997bbb40c770db2fe64b6f43e9cc042fa8d55c950e3c811f069249eac46ab",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.extra-field",
+        "input_bytes": 153,
+        "payload_sha256": "110d988636a2c4506cdd941d314018c7b8e52e5b51aa186bdba1f66f0af73ada",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "copilot.guard.danger.malformed-schema",
+        "input_bytes": 111,
+        "payload_sha256": "6e4073ced827ca40fac8ad26830d1a4fc48b46c7f5b68c85c6f4ba01aa491fe2",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.patch.bytes-46899",
+        "input_bytes": 47140,
+        "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "gemini.guard.patch.lines-330",
+        "input_bytes": 6394,
+        "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "gemini.guard.patch.lines-124-segments-142",
+        "input_bytes": 2642,
+        "payload_sha256": "c0d528290f5183f9d35658b638a060b0c5ee8f34821766ed0d8a1f8b5f8adb2e",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "gemini.guard.write.actual-newlines",
+        "input_bytes": 1658,
+        "payload_sha256": "944a95a3095df9f9ae83186aff478cd9a37f8b17f30a55967c22cebda9691692",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "gemini.guard.write.escaped-newlines",
+        "input_bytes": 1798,
+        "payload_sha256": "aa111e393fb61ad07419d5002f5738ea07279ea5106eb4d49abe090b7182fa62",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "gemini.guard.write.utf8-growth",
+        "input_bytes": 36118,
+        "payload_sha256": "a673f543d7372483d7895b01139a2f468f4c3d4a98b3f035b7e242f172d85018",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.md",
+        "input_bytes": 145,
+        "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.py",
+        "input_bytes": 145,
+        "payload_sha256": "bfe62a9573f2dcc7f90d31d60f4e7682ea9ba2c2857d47bd5641b53f61e757d6",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.write.examples.test.py",
+        "input_bytes": 150,
+        "payload_sha256": "24924416f87263c949c2199216850baafe98ac845191f3529848d4b7fc0d2679",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.edit.replacement",
+        "input_bytes": 241,
+        "payload_sha256": "b24dcd367836654f945f54ca624f2cb48744bf2a045649e5857ed38240a945a4",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.search.literal",
+        "input_bytes": 126,
+        "payload_sha256": "60d4747bb84116439c6231fe9bcf0f83189ba9ab4b033409a509ad5f46278fc6",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.search.shell-literal",
+        "input_bytes": 134,
+        "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9045,
+        "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "gemini.guard.writer.lines-120-segments-139",
+        "input_bytes": 2516,
+        "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "gemini.guard.survey.json-stdin",
+        "input_bytes": 234,
+        "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "gemini.guard.survey.python-subprocess",
+        "input_bytes": 403,
+        "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "gemini.guard.survey.analysis-source",
+        "input_bytes": 211,
+        "payload_sha256": "827a53251f869af46f519dcf85960d1780f984148562ee50301792a14880b773",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "gemini.guard.write.english-inflection",
+        "input_bytes": 155,
+        "payload_sha256": "f74dc982caacebf8acde0bbcbdaddacf47a6ffd052f120598241a1da4ddeb6f5",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_root",
+        "input_bytes": 101,
+        "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_home",
+        "input_bytes": 101,
+        "payload_sha256": "b1ed4655ba05882eefc84e26d0e93daed8a4424515938f948fd2396472d8754a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_current",
+        "input_bytes": 101,
+        "payload_sha256": "6885775c1c3f951a9e6126af62f072098894509802dda3a3a2cd7ea94d2ae778",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_remove_parent",
+        "input_bytes": 102,
+        "payload_sha256": "f226eae36007623eaa5b52d37e17a5eeef0a422f86a7ff8202f7639aeb22147f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.remove_env_file",
+        "input_bytes": 100,
+        "payload_sha256": "242e78c25d9788dbf752bc8c907fa566d336acc47d58479a222e85262531abfd",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.remove_git_metadata",
+        "input_bytes": 104,
+        "payload_sha256": "da1cb53cc315be8ad06ebbc743361db283b944af66fc912e050e4b8f044f6938",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.force_push_protected_branch",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.hard_reset",
+        "input_bytes": 109,
+        "payload_sha256": "ec2fc525b428084436959c1fa020339bb70ad479f3faf778dd1b9533bb1c9718",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.forced_git_clean",
+        "input_bytes": 106,
+        "payload_sha256": "ac4e2f0f295f0dda5a287f8945b10d35bd5e9f4219dc4ee4141c226271a20413",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.drop_table",
+        "input_bytes": 108,
+        "payload_sha256": "2e6b07698747f91844c9be5b2006206f24d03ffe41fba5eb91c77ef3295a614e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.drop_database",
+        "input_bytes": 111,
+        "payload_sha256": "0c5bea5d8765c1f953f5e6de3c5111b2633183c40e3883da4dba4c31cbc20958",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.truncate_table",
+        "input_bytes": 112,
+        "payload_sha256": "50bf6787f3db25cb460808827a7e1e2f2c2364a5a86f5bc092c81d5777ae83bd",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.delete_without_where",
+        "input_bytes": 109,
+        "payload_sha256": "808f3f8032645cf9d330556a69f5c87ebf97cbf5104bf9abf307d09bc925a13c",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.recursive_world_writable",
+        "input_bytes": 110,
+        "payload_sha256": "39b4cc8955942131bc332fe291afc82686c8688addeca5bf5a57504cac09f0c9",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.world_writable",
+        "input_bytes": 107,
+        "payload_sha256": "5eaddda0e791d9935ab077244c4323daac44dc4e21da6398cc94238acdbdda46",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_bash",
+        "input_bytes": 136,
+        "payload_sha256": "0883441298e1a8d87983f5be8dba7e730166fc7219943eafaab6c8fdaad899f7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.download_execute_sh",
+        "input_bytes": 139,
+        "payload_sha256": "0a84824d3b6eeaddeca07257f0663641a94b5410866f840c4ab8accf99dabc6a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.upload_local_data",
+        "input_bytes": 138,
+        "payload_sha256": "6f2101d57eebb0eee4754c02226506db11b7a8e631be44d39c0193666472b2ec",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.privileged_command",
+        "input_bytes": 100,
+        "payload_sha256": "9c2348b2314ee3ed7d8c84890f7e7deabfc868a5c8eccbbae612d85f9f25590a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.publish_package",
+        "input_bytes": 104,
+        "payload_sha256": "bb9d064f00d37df5d6c2e22345f71c320d425d5894e37d0b31542d3165240890",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.writer-before",
+        "input_bytes": 2546,
+        "payload_sha256": "1e40b7a60d0338df444d86ab2f3ee789f09cda76421470c9840a3ba4b950a018",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "gemini.guard.danger.writer-after",
+        "input_bytes": 2546,
+        "payload_sha256": "319ca4cb4cd008da9e95d71209bf49bcf59b4fbf775ffb9ff00f45addb454915",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "gemini.guard.danger.substitution",
+        "input_bytes": 129,
+        "payload_sha256": "53c574cb2eadf623a8532227f43dc67b38c6cb4701ddbcc55f3cbd6c619f0f8d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.interpreter-sink",
+        "input_bytes": 160,
+        "payload_sha256": "341ca3645de4c1ca10c049c01edf262b626b2df522bcf34f3ed92f16cb615c17",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "gemini.guard.danger.unicode-normalization",
+        "input_bytes": 169,
+        "payload_sha256": "a79f9f6e6a4bc6d9fa25e56f3bf5a0d08ef71b370eee4753244333172a2e61ac",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.extra-field",
+        "input_bytes": 163,
+        "payload_sha256": "4dfe6eee285dd0c2b469a4e251440c07d76adc0ead6d0e2bec9879e0ee6033b6",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "gemini.guard.danger.malformed-schema",
+        "input_bytes": 116,
+        "payload_sha256": "29fd4cb1973d8b9bb13a976c43a25dfaf1b57a69591760664fd18b0e655a75ab",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.patch.bytes-46899",
+        "input_bytes": 47109,
+        "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 348: sanitized 46899-byte patch",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 46899,
+          "input_characters": 46899,
+          "physical_lines": 124,
+          "naive_segments": 124
+        }
+      },
+      {
+        "case": "codex.guard.patch.lines-330",
+        "input_bytes": 6363,
+        "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "incident survey: sanitized 330 physical lines",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 5947,
+          "input_characters": 5947,
+          "physical_lines": 330,
+          "naive_segments": 330
+        }
+      },
+      {
+        "case": "codex.guard.patch.lines-124-segments-142",
+        "input_bytes": 2611,
+        "payload_sha256": "d0c584f4b3b00d5c91253297771899b510588ad8a2043411a17f540d1b41d6eb",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-patch",
+          "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2401,
+          "input_characters": 2401,
+          "physical_lines": 124,
+          "naive_segments": 142
+        }
+      },
+      {
+        "case": "codex.guard.write.actual-newlines",
+        "input_bytes": 1830,
+        "payload_sha256": "90a5212bc89d450a3fc09e11cb43e1eba4eb9c9987e60cd6435c78993e1087d7",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1400,
+          "input_characters": 1400,
+          "physical_lines": 140,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "codex.guard.write.escaped-newlines",
+        "input_bytes": 1833,
+        "payload_sha256": "d3204f188670d48a6e7d7eb3af2bb001f415b26bfa104f71308fb3d67e8f8196",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized escaped newline segmentation incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 1540,
+          "input_characters": 1540,
+          "physical_lines": 1,
+          "naive_segments": 141
+        }
+      },
+      {
+        "case": "codex.guard.write.utf8-growth",
+        "input_bytes": 36153,
+        "payload_sha256": "44be8cdbe3f8104391eeb17acd31191ca660045420782d178931da6eef23726d",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized cumulative UTF-8 byte-limit incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 36000,
+          "input_characters": 12000,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.md",
+        "input_bytes": 180,
+        "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.py",
+        "input_bytes": 180,
+        "payload_sha256": "97a825359361e1e3422eb7741e71c45bc9b23fe400ea405561a701f2390dbdf3",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.write.examples.test.py",
+        "input_bytes": 185,
+        "payload_sha256": "387507e3d8e21bbee9969d3e86455d94f9edb9ce4771004faeac5a01c9ebedfd",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "sanitized command examples in documentation/source/tests",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.edit.replacement",
+        "input_bytes": 199,
+        "payload_sha256": "87ce6714b340417bccd9d648f977c16273d136d0f1d9990587d7503e8f310d2a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-edit",
+          "source": "sanitized native replacement incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 101,
+          "input_characters": 101,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.search.literal",
+        "input_bytes": 118,
+        "payload_sha256": "ce90a989d1e70ddf096d2e1309c906d40c9402da444835f9b5a914af0e89b678",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized literal search pattern incident",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 53,
+          "input_characters": 53,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.search.shell-literal",
+        "input_bytes": 121,
+        "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "read-only-search",
+          "source": "sanitized shell literal search control",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 41,
+          "input_characters": 41,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.writer.chars-8787-segments-183",
+        "input_bytes": 9032,
+        "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 1565: fixed pathlib writer, 8787 characters and 183 segments",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 8787,
+          "input_characters": 8787,
+          "physical_lines": 160,
+          "naive_segments": 183
+        }
+      },
+      {
+        "case": "codex.guard.writer.lines-120-segments-139",
+        "input_bytes": 2503,
+        "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "python-writer",
+          "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 2297,
+          "input_characters": 2297,
+          "physical_lines": 120,
+          "naive_segments": 139
+        }
+      },
+      {
+        "case": "codex.guard.survey.json-stdin",
+        "input_bytes": 221,
+        "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "2026-09-25T00:15:50Z: guardian examples passed as JSON stdin",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 129,
+          "input_characters": 129,
+          "physical_lines": 3,
+          "naive_segments": 3
+        }
+      },
+      {
+        "case": "codex.guard.survey.python-subprocess",
+        "input_bytes": 390,
+        "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "hook-survey",
+          "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 303,
+          "input_characters": 303,
+          "physical_lines": 8,
+          "naive_segments": 8
+        }
+      },
+      {
+        "case": "codex.guard.survey.analysis-source",
+        "input_bytes": 247,
+        "payload_sha256": "47094b250c6ded22aebca4e69ebc602f9d87dfbeaf659610df8ffb41d53f84c8",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "survey-analysis",
+          "source": "sanitized survey analysis source body",
+          "pair": "danger.force_push_protected_branch",
+          "input_string_bytes": 86,
+          "input_characters": 86,
+          "physical_lines": 4,
+          "naive_segments": 5
+        }
+      },
+      {
+        "case": "codex.guard.write.english-inflection",
+        "input_bytes": 190,
+        "payload_sha256": "5c4cf7b00e2324ba60df8e795f841fb4e5353bbd977e67366caf0de653b40dcf",
+        "expected_decision": "allow",
+        "fixture_metadata": {
+          "category": "native-write",
+          "source": "separate plan-authoring reproduction, excluded from original incident count",
+          "pair": "danger.truncate_table",
+          "input_string_bytes": 37,
+          "input_characters": 37,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_root",
+        "input_bytes": 88,
+        "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_root",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_home",
+        "input_bytes": 88,
+        "payload_sha256": "56cb51961bbebb0d178393833fd637e290e152b5fbb490592ce77121798e4eda",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_home",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_current",
+        "input_bytes": 88,
+        "payload_sha256": "e47d32aac568ce636b2b943b1af600316ae514aa561580b9598f5fcd8e006e6e",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_current",
+          "pair": null,
+          "input_string_bytes": 8,
+          "input_characters": 8,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_remove_parent",
+        "input_bytes": 89,
+        "payload_sha256": "e01624749696eef8c92f4413848c47231ba3e747edabac424b6642e356aafec9",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_remove_parent",
+          "pair": null,
+          "input_string_bytes": 9,
+          "input_characters": 9,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.remove_env_file",
+        "input_bytes": 87,
+        "payload_sha256": "d1cc2524890ec2cdb409bec234df565cdf4bba3ca18ffab0053312e1a20fd0e0",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_env_file",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.remove_git_metadata",
+        "input_bytes": 91,
+        "payload_sha256": "9d4ccc70b3cd01d31a104fdb45f6713103e17cbb7a2453ed935a377858d1daeb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: remove_git_metadata",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.force_push_protected_branch",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: force_push_protected_branch",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.hard_reset",
+        "input_bytes": 96,
+        "payload_sha256": "d63425c0e5ba1ce26622a9fde38ae04f59c9d170bca6958724735f30ea177a63",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: hard_reset",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.forced_git_clean",
+        "input_bytes": 93,
+        "payload_sha256": "a8746a8a369368797d697961f5069c31a6770e88a7bbc732a4e6b74dedda65ed",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: forced_git_clean",
+          "pair": null,
+          "input_string_bytes": 13,
+          "input_characters": 13,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.drop_table",
+        "input_bytes": 95,
+        "payload_sha256": "4d622b384e2e55b8334fb0049874bb8c791a66a78c13f563baf5da52813e940f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_table",
+          "pair": null,
+          "input_string_bytes": 15,
+          "input_characters": 15,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.drop_database",
+        "input_bytes": 98,
+        "payload_sha256": "7b1f6a6d94939ab0764c9344da82e10e2485e6489cf8f3f96b3d15290a6cf95d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: drop_database",
+          "pair": null,
+          "input_string_bytes": 18,
+          "input_characters": 18,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.truncate_table",
+        "input_bytes": 99,
+        "payload_sha256": "9d653c09f17561c02939537b095008e47dff97bcaef0274c07c19117f0d16cfb",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: truncate_table",
+          "pair": null,
+          "input_string_bytes": 19,
+          "input_characters": 19,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.delete_without_where",
+        "input_bytes": 96,
+        "payload_sha256": "45684d806ddfff218fc335e872d4bfed744a9c56031fff91157c172dbc98f75f",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: delete_without_where",
+          "pair": null,
+          "input_string_bytes": 16,
+          "input_characters": 16,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.recursive_world_writable",
+        "input_bytes": 97,
+        "payload_sha256": "30e946cc260cd81de2dbadb0098a9a52956dbfe7c523479093c00471c6f8babe",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: recursive_world_writable",
+          "pair": null,
+          "input_string_bytes": 17,
+          "input_characters": 17,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.world_writable",
+        "input_bytes": 94,
+        "payload_sha256": "e619262bd13ff4a3de62e256c27f0d0ed274789c77f1c2441b00e0af51b699c7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: world_writable",
+          "pair": null,
+          "input_string_bytes": 14,
+          "input_characters": 14,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.download_execute_bash",
+        "input_bytes": 123,
+        "payload_sha256": "1a645fed6d6f086df142eca6fc94ac7d609a73384319b4d17b137daf793eccc7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_bash",
+          "pair": null,
+          "input_string_bytes": 43,
+          "input_characters": 43,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.download_execute_sh",
+        "input_bytes": 126,
+        "payload_sha256": "d78df264d592d72bd692398050616322a0cb6c45c715e564da51e4095c917280",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: download_execute_sh",
+          "pair": null,
+          "input_string_bytes": 46,
+          "input_characters": 46,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.upload_local_data",
+        "input_bytes": 125,
+        "payload_sha256": "52429d6e5cc61b83ba0da27fe7ed4d2cfa1b772c82bb66fe71befb0d371a45e8",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: upload_local_data",
+          "pair": null,
+          "input_string_bytes": 45,
+          "input_characters": 45,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.privileged_command",
+        "input_bytes": 87,
+        "payload_sha256": "406fccec15a472d92948ec9d05e12fd868f1f65a143d21af3240ec05684c1345",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: privileged_command",
+          "pair": null,
+          "input_string_bytes": 7,
+          "input_characters": 7,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.publish_package",
+        "input_bytes": 91,
+        "payload_sha256": "09026c98494570c8b18bfe1f8fb05faf91ffe143166cc56e36a63bc1fce9042a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "protection-control",
+          "source": "existing numeric policy rule: publish_package",
+          "pair": null,
+          "input_string_bytes": 11,
+          "input_characters": 11,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.writer-before",
+        "input_bytes": 2533,
+        "payload_sha256": "a8008b25ce0ab682d49da987398e5a531da2c037c81c5cffb9fdfdcb1dddd40d",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "codex.guard.danger.writer-after",
+        "input_bytes": 2533,
+        "payload_sha256": "aef9daa7f2d1f6470efdd29e44bc4794801821b6a425397e9f0d0e903c10da35",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-adjacent-data",
+          "source": "synthetic adversarial control",
+          "pair": null,
+          "input_string_bytes": 2326,
+          "input_characters": 2326,
+          "physical_lines": 121,
+          "naive_segments": 140
+        }
+      },
+      {
+        "case": "codex.guard.danger.substitution",
+        "input_bytes": 116,
+        "payload_sha256": "e3e9759b0ce02cb531dd03647689841415274abdb4c46157d812dbeaf7f45f3a",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 36,
+          "input_characters": 36,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.interpreter-sink",
+        "input_bytes": 147,
+        "payload_sha256": "789bea0e0fc29d9b8667750bef91fb2a53aca01aee4547fea7cf87dcd87bad03",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 65,
+          "input_characters": 65,
+          "physical_lines": 1,
+          "naive_segments": 2
+        }
+      },
+      {
+        "case": "codex.guard.danger.unicode-normalization",
+        "input_bytes": 156,
+        "payload_sha256": "27b64b01547559942939202de9694db994e5a6db00b22d99d078caacc53d4716",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "execution-control",
+          "source": "synthetic adversarial control; baseline gap retained explicitly",
+          "pair": null,
+          "input_string_bytes": 76,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.extra-field",
+        "input_bytes": 163,
+        "payload_sha256": "d6790d957ca5070fba60013b4acd422dbbdf5cd390e4cd27fba54cd446545095",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic executable extra field",
+          "pair": null,
+          "input_string_bytes": 28,
+          "input_characters": 28,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      },
+      {
+        "case": "codex.guard.danger.malformed-schema",
+        "input_bytes": 116,
+        "payload_sha256": "82fcd16613392eed4dbc16fb02c2e0000f7e66c4a09d82d4e3ea3cd5ee7dced7",
+        "expected_decision": "deny",
+        "fixture_metadata": {
+          "category": "unrecognized-schema",
+          "source": "synthetic malformed native schema",
+          "pair": null,
+          "input_string_bytes": 44,
+          "input_characters": 44,
+          "physical_lines": 1,
+          "naive_segments": 1
+        }
+      }
+    ]
+  }
+}
