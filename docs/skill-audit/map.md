@@ -32,15 +32,16 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - [Decide Skill Ownership and Import Handling](tickets/decide-skill-ownership-and-import-handling.md): Exclude 23 configured imports; review 37 remaining candidates across both roots with scoped dependency checks and no provenance-ledger work.
 - [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md): Use native Codex CLI, seven models at medium effort, three fresh runs per case, a small safe sample, and explicit trace-backed evidence gaps.
 - [Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md): Review twelve bounded scopes with per-check coverage, one findings register, human review, shared-resource ownership, and static review before sample selection.
+- [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md): Separate audit completion, executable plan readiness, and implementation acceptance, with explicit deferrals and a visible route for every pending proposal.
 
 ## Not yet specified
 
 <!-- FOG START -->
 The selected skills and exact cases will determine concrete native baseline setup and run scopes, including discovery isolation, required dependencies, safe tools, grader compatibility, and the actual shipped file set. Those prerequisites remain unverified; selected-case work must resolve them or surface required evidence gaps. No baseline sample or launch recipe is selected yet.
 
-Actual findings may expose behavior conflicts, missing safe fixtures, scope changes, or improvements to authoring and validation tools. Create additional decisions only when the evidence makes a precise investigation or human choice possible. Existing batch and reconciliation tickets already own static coverage and shared-resource checks.
+Actual findings may expose behavior conflicts, missing safe fixtures, scope changes, or improvements to authoring and validation tools. Create additional decisions only when the evidence makes a precise investigation or human choice possible. Existing batch and reconciliation tickets already own static coverage, shared-resource checks, and proposal accounting.
 
-The accepted improvements will determine implementation order, baseline and candidate comparisons, provider checks, rollback strategy, and the precise milestones of the final ExecPlan. Finding-specific behavior decisions, missing-evidence work, and additional acceptance decisions will become tickets when actual audit findings make them precise.
+Actual accepted findings and baseline evidence will determine specific implementation targets, milestone order, matched candidate cases, provider checks, recovery steps, and final document authoring scopes. Remaining finding-specific behavior, missing-evidence, and acceptance questions become tickets when precise; the known policy for retaining pending proposals lives in the completion-gates decision.
 <!-- FOG END -->
 
 ## Out of scope
