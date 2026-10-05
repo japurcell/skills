@@ -7,6 +7,7 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 ## Notes
 
 - [Visual design overview](design-map.html) is a dated interactive view for discussion. The owning ticket resolutions remain authoritative; draft annotations do not change decisions or record approval.
+- [Coverage](coverage.md), [batch reports](reports/review-skill-authoring-and-repository-guidance.md), and [the single findings register](findings.md) hold live audit evidence and proposal status. The first six-skill batch's static investigation and human proposal review are complete; four separate decisions remain pending.
 - This effort starts from the SKILL audit idea preserved in [the effort brief](README.md).
 - Apply Wayfinder and Grilling. The user explicitly waived the unavailable `domain-modeling` dependency on 2026-10-01.
 - The user chose a completed audit plus an ExecPlan as the destination. Audit evidence gathering and final document authoring are allowed within this map. Implementing proposed skill changes is a later effort.
@@ -34,13 +35,14 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - [Set Audit Evidence and Model Coverage](tickets/set-audit-evidence-and-model-coverage.md): Use native Codex CLI, seven models at medium effort, three fresh runs per case, a small safe sample, and explicit trace-backed evidence gaps.
 - [Choose Audit Batches and Evidence Format](tickets/choose-audit-batches-and-evidence-format.md): Review twelve bounded scopes with per-check coverage, one findings register, human review, shared-resource ownership, and static review before sample selection.
 - [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md): Separate audit completion, executable plan readiness, and implementation acceptance, with explicit deferrals and a visible route for every pending proposal.
+- [Review Skill Authoring and Repository Guidance](tickets/review-skill-authoring-and-repository-guidance.md): Accept contract-preserving authoring and evaluation repairs for later planning; keep four separate decisions pending and visible.
 
 ## Not yet specified
 
 <!-- FOG START -->
 The selected skills and exact cases will determine concrete native baseline setup and run scopes, including discovery isolation, required dependencies, safe tools, grader compatibility, and the actual shipped file set. Those prerequisites remain unverified; selected-case work must resolve them or surface required evidence gaps. No baseline sample or launch recipe is selected yet.
 
-Actual findings may expose behavior conflicts, missing safe fixtures, scope changes, or improvements to authoring and validation tools. Create additional decisions only when the evidence makes a precise investigation or human choice possible. Existing batch and reconciliation tickets already own static coverage, shared-resource checks, and proposal accounting.
+Additional findings may expose behavior conflicts, missing safe fixtures, scope changes, or improvements to authoring and validation tools. Four precise first-batch questions already have decision tickets linked from the findings register; they are no longer fog. Create further decisions only when evidence makes a precise investigation or human choice possible. Existing batch and reconciliation tickets already own static coverage, shared-resource checks, and proposal accounting.
 
 Actual accepted findings and baseline evidence will determine specific implementation targets, milestone order, matched candidate cases, provider checks, recovery steps, and final document authoring scopes. Remaining finding-specific behavior, missing-evidence, and acceptance questions become tickets when precise; the known policy for retaining pending proposals lives in the completion-gates decision.
 <!-- FOG END -->

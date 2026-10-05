@@ -22,3 +22,7 @@ Layer-specific quirks for skills. Cross-cutting issues live in `.agents/memory/K
 **Affected area:** `skills/skill-creator/scripts/quick_validate.py`
 **Description:** The validator requires the undeclared `PyYAML` package and fails with `ModuleNotFoundError: No module named 'yaml'` when it is unavailable.
 **Workaround:** Do not install dependencies implicitly. Run it with the checked-in runtime: `PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.
+
+**Affected area:** Create Skill refresh and repository installer authority.
+**Description:** Create Skill requires an account-level refresh after edits, and repo workflow requires installed refresh before live checks, while scripts instructions restrict agents to targeted verification/test scripts. The unresolved cross-file authority conflict is recorded once in [SAG-002](../../../docs/skill-audit/findings.md#sag-002-installer-ownership-conflict).
+**Workaround:** Follow the task's actual authorization and [pending authority decision](../../../docs/skill-audit/tickets/resolve-installer-authority-for-skill-authoring.md). This issue record does not select an installer policy or authorize installation, and source edits alone do not prove installed refresh.
