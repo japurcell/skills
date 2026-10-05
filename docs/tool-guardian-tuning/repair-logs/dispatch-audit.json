@@ -1,0 +1,322 @@
+{
+  "scope": "2026-10-05 delegated review repair and original-reviewer cycles",
+  "user_constraints": "none for model or effort",
+  "capability_floor": "Premium: security-sensitive correctness, prior important review misses and exact frozen acceptance",
+  "cost_uncertainty": "Catalog and pricing guidance provisional; actual runtime cost unconfirmed. Both original reviewers retain continuity.",
+  "dispatches": [
+    {
+      "subtask_id": "repair_round_1",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "explicit spawn",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "25 minutes",
+        "deadline": "2026-10-05 14:11:31 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_standards_preparation",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "10 minutes",
+        "deadline": "2026-10-05 14:00:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_spec_preparation",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "10 minutes",
+        "deadline": "2026-10-05 14:00:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "repair_performance_preparation",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "explicit spawn",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "10 minutes",
+        "deadline": "2026-10-05 14:04:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_standards_round_1",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "20 minutes",
+        "deadline": "2026-10-05 14:23:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_spec_round_1",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "20 minutes",
+        "deadline": "2026-10-05 14:23:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "performance_amendment_capacity_failure",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "follow-up rejected before execution: agent thread limit reached",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "10 minutes",
+        "deadline": null,
+        "mechanism": "Root UTC clock checks during bounded waits, interruption at deadline; capacity failure executed no work."
+      },
+      "status": "failed",
+      "output_verified": false,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "repair_round_2",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "25 minutes",
+        "deadline": "2026-10-05 14:35:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "performance_amendment_retry",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "10 minutes",
+        "deadline": "2026-10-05 14:21:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_standards_round_2",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "20 minutes",
+        "deadline": "2026-10-05 14:48:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "original_spec_round_2",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "20 minutes",
+        "deadline": "2026-10-05 14:48:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "repair_performance_run",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submission_mechanism": "retained explicit spawn configuration",
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "40 minutes",
+        "deadline": "2026-10-05 15:16:00 UTC",
+        "mechanism": "Root UTC clock checks during bounded waits and interruption at deadline."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "completion": "2026-10-05 15:08 UTC, within40minutes"
+    }
+  ],
+  "workflow_corrections": [
+    "Initial worker ownership was transferred from shared root into an isolated worktree after root reread the earlier execplan-implement requirement. Exact worker diff and log were preserved, unrelated edits untouched.",
+    "One performance follow-up failed at agent capacity before execution. Root waited for completed reviews and retried once without model escalation.",
+    "Warm attempt 1 failed its logging check because maintained main deleted temporary homes before the external snapshot. Original drivers/freeze/4,275 observations/error were preserved byte-identically. Root authorized deferred external cleanup and a fresh candidate-2 full run with unchanged runtime and gates."
+  ],
+  "integration": {
+    "reviewed_to_rebased": {
+      "94704adb807df98989471bee292e7dc61b4fc377": "fc36d001153551df0739c9bee22735e516f9cc4f",
+      "27062fc6b3b9c9a86e8f6d8838c3926a674faad0": "14c03deeac8943f271c00a274550c6dfa3d60310"
+    },
+    "conflicts": false,
+    "changed_file_hashes_verified": 7,
+    "solely_rebase_retesting": false,
+    "owned_repair_worktree_and_branch_removed": true
+  },
+  "verification": {
+    "runtime_identity": "14c03deeac8943f271c00a274550c6dfa3d60310",
+    "original_reviewers_approve": true,
+    "all_findings_closed": true,
+    "independent_review_public_checks": 696,
+    "root_native_outputs_verified": 28840,
+    "performance_acceptance": "PASS after exact targeted repeats; initial failures retained",
+    "real_installation": false,
+    "push": false
+  }
+}

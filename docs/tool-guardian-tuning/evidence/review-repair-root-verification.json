@@ -1,0 +1,60 @@
+{
+  "verified_at_utc": "2026-10-05 15:05 UTC",
+  "runtime_identity": "14c03deeac8943f271c00a274550c6dfa3d60310",
+  "acceptance": "PASS after exact targeted repeats; initial failures retained",
+  "warm_observations": 17100,
+  "warm_initial_pair_maxima": [
+    {
+      "pair": 1,
+      "median_delta_ms": -1.5552910000000004,
+      "p95_delta_ms": 7.865334000000004
+    },
+    {
+      "pair": 2,
+      "median_delta_ms": -2.010624,
+      "p95_delta_ms": 3.5997920000000008
+    }
+  ],
+  "warm_exact_repeat_observations": 116,
+  "warm_exact_repeat_pairs": [
+    {
+      "budget_met": true,
+      "case": "gemini.guard.patch.bytes-46899",
+      "median_delta_ms": -5.456708000000003,
+      "p95_delta_ms": -3.8520000000000003,
+      "pair": 1
+    },
+    {
+      "budget_met": true,
+      "case": "gemini.guard.patch.bytes-46899",
+      "median_delta_ms": -5.453916999999997,
+      "p95_delta_ms": -5.694873999999999,
+      "pair": 2
+    }
+  ],
+  "cold_initial_launches": 7350,
+  "cold_exact_repeat_launches": 50,
+  "cold_total_verified_launches": 7400,
+  "cold_exact_repeat": [
+    {
+      "case": "codex.guard.danger.writer-before",
+      "median_delta_ms": 4.926082999999998,
+      "p95_delta_ms": 5.795165999999998,
+      "budget_met": true
+    }
+  ],
+  "resource_cases": 96,
+  "resource_max_all_observations_ms": 40.894541,
+  "native_peak_rss_bytes": 22331392,
+  "concurrency_measured_calls": 1200,
+  "logging_verified": true,
+  "frozen_roots_and_driver_hashes_verified": true,
+  "initial_failures_preserved": true,
+  "archived_attempt_files_verified": 10,
+  "verification_script_correction": "First root check hit KeyError case on exact-repeat observations; supplied the manifest target and reran all checks without weakening assertions.",
+  "limitations": [
+    "Exact cold repeat median has 0.073917 ms headroom under the agreed +5 ms budget.",
+    "Native Windows and real installed-provider behavior remain unverified."
+  ],
+  "native_output_decisions_independently_verified": 28840
+}
