@@ -12,8 +12,9 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 ## Progress
 
 
-- [ ] [milestone-6] Reproduce and repair the four findings from the 2026-10-05 review through all three public providers, preserving existing proven data exemptions.
+- [x] (2026-10-05 14:33Z) [milestone-6] Reproduce and repair the four findings through all three public providers; both original reviewers approve frozen 27062fc6 after two repair/review rounds.
 - [ ] [milestone-6] Repeat repair and independent review until every finding closes, then pass fresh frozen warm, cold, and resource gates.
+- [x] (2026-10-05 14:33Z) [milestone-6] Repair and independently close the related inherited-stdin pipeline bypass, producer ordering and shared sequential stdout, preserving proven harmless controls.
 - [ ] [milestone-6] Complete one formal documentation pass, update the feature handoff, and preserve subagent work logs and dispatch audit.
 - [x] (2026-10-01) [planning] Review accessible session and guardian logs and identify false-positive categories.
 - [x] (2026-10-01) [planning] Obtain user agreement on scope, security boundaries, fallback behavior, delivery, and latency requirements.
@@ -29,6 +30,8 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 
 ## Surprises & Discoveries
 
+
+Original-reviewer round 1 closes R2, R3 and R4 but finds that independently inspecting an inline shell body loses its inherited pipeline input. The fixed-point baseline denies or warns for downloader pipelines ending in `sh -c 'bash'` or `sh -c 'exec bash'`, including an intermediate `cat`; candidate 94704adb silently allows. Both reviewers independently reproduced this related R1 gap. Keep producer/consumer execution context while preserving proven data exemptions; isolated fragment checks alone are insufficient.
 
 At the historical extraction checkpoint, the local policy extraction integrated at f6831fe0 after a conflict-free rebase. Its warm medians improve in both pairs for all 147 cases, and targeted repeats clear three isolated p95 outliers. Full cold validation retains 7,350 fresh-copy launches plus 300 targeted repeat launches. Three repeatable median violations remain: Gemini writer-after +5.391 ms, Codex writer-before +5.147 ms and writer-after +5.344 ms. Resource validation passes all 90 cases, with a 43.097 ms maximum and 22,331,392-byte peak RSS. Cold acceptance failed at that checkpoint; the subsequent measured sanitizer repair and passing gates are recorded in Outcomes & Retrospective.
 
