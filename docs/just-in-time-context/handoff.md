@@ -4,9 +4,13 @@
 
 The user confirms Adoption and Validation Contract on 2026-09-30 after accepting Q1-Q19 and the Q20 combined-contract confirmation. All ten Wayfinder tickets are closed. No unresolved planning decision blocks the implementation-ready specification. This closes the planning map, while the feature effort continues into future implementation. Preserve the user-selected docs/just-in-time-context/ artifacts as implementation inputs. No product implementation, installation, migration, live provider probe, or model evaluation is performed.
 
+On 2026-10-05 the user requests a visual overview they can annotate for discussion. An interactive overview presents the accepted design at commit b6dd605f996d4ef3703842566731c1fef1b5c382, with workflow, component responsibilities, and acceptance gates. This is a discussion surface, not a product implementation or a new approval. No accepted contract changes.
+
 ## Next focus and next step
 
-Next work is an implementation plan derived from the ten closed contracts, when requested. Start with [Just-in-time Context](map.md), then [Adoption and Validation Contract](tickets/adoption-and-validation-contract.md) and its linked blockers. Use exec-plans for an implementation plan and spec-to-tasks if converting the specification into task slices. Do not claim or reopen a Wayfinder ticket merely to start building.
+Next focus is discussing the user's annotations to the overview. Selectable topics retain separate notes; Review / export notes compiles them, and Discuss notes can submit them through the conversation host. Treat annotations as questions or proposals until the user agrees to a change. The editable visual source is `/Users/adam/.codex/visualizations/2026/09/29/01a0ef86-3a2f-7c13-85fa-b0b5baaf077f/agent-brain-design.html`.
+
+An implementation plan derived from the ten closed contracts remains future work, when requested. Start with [Just-in-time Context](map.md), then [Adoption and Validation Contract](tickets/adoption-and-validation-contract.md) and its linked blockers. Use exec-plans for an implementation plan and spec-to-tasks if converting the specification into task slices. Do not claim or reopen a Wayfinder ticket merely to start building.
 
 The accepted specification distinguishes target surfaces from certified support. Native timeout-open behavior, advisory events, absent child hooks, and uncertain compaction delivery have explicit per-path tests and unsupported status. Existing knowledge, protected reads, source ingestion, custom hooks, ownership, publication, and recovery have selected handling. No new decision ticket or dependency is needed. Product implementation and live evaluation are separate work.
 
@@ -46,6 +50,8 @@ Dream uses an eligible foreground agent; idle due work stays pending without new
 
 ## Artifacts, evidence, and verification
 
+- Visual review checks all 19 topics, note editing and combined export, literal markup in notes, reload persistence, keyboard tab selection, and saved-state capacity warnings without truncating the in-session export. All three views have no horizontal overflow at 320, 360, and 736 CSS pixels. JavaScript syntax checks pass; synthetic QA notes are cleared. Discuss notes is not invoked during QA. A temporary local preview is used; no provider certification or acceptance measurement occurs.
+- The visual session's formal update-agent-docs pass finds no new repository implementation fact, public interface, test, or knowledge routing change. Added: None. Changed: None. Split or moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. No skill improvement is identified from the one-off viewer corrections.
 - [Just-in-time Context](map.md) indexes all ten closed decisions; its fog is cleared. [Just-in-time Context Brief](brief.md) preserves original scope, and [Current Context Lifecycle](baseline.md) records inspected current behavior.
 - [Semantic stage invocation interfaces](research/context-stage-invocation/findings.md) and [State durability facts](research/state-durability/findings.md) preserve earlier source facts and caveats. No supported desktop attachment or multi-file atomicity is established.
 - Current code still has no agent-brain skill/CLI/registration or unit metadata schema. Existing source hooks detect/gate pending ingestion, while agents perform semantic integration. Planning requirements must not be described as implemented behavior.
@@ -56,6 +62,7 @@ Dream uses an eligible foreground agent; idle due work stays pending without new
 
 ## Review findings and corrections
 
+- Viewer QA removes a duplicate script closure, shortens overflowing mobile labels, reserves diagram connector space, and synchronizes selected-topic details after runtime-managed keyboard tab changes. These corrections affect only the discussion visual and establish no new agent-brain behavior.
 - Final document review updates the CLI briefing after later adoption choices settle its previously pending transports, exit codes, cancellation, and precedence. It repairs the adoption section link after the heading becomes Resolution and checks local fragments as well as file existence. Pilot facts distinguish the auto-ingest renderer from its engine and wrapper sources. These are planning-document corrections, not runtime changes; no new skill rule is identified.
 - The CLI briefing initially links raw sources one directory too shallow; correct to ../../../../.agents/ and verify actual files. The parent incorrectly estimates the closed CLI section near line 145; physical nl/rg output verifies lines 86-96. Prefer stable section links plus verified physical ranges in prose. Do not treat an estimated or filtered-output position as an authoritative source line.
 - Tool Guardian misclassifies documentation-only Round 3 wording as database_destruction/critical. Recording its full diagnostic in a handoff patch triggers the same false positive. Neither rejected patch mutates files. Small independent patches and wording that says undeliverable guidance remains whole resolve the issue without changing guards or meaning. Existing hooks known-issues guidance already covers this outer guard friction; no skill improvement is identified.
