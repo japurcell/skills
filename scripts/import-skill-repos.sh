@@ -45,3 +45,7 @@ fi
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/humanlayer/skills.git" \
   "plugins/show-me/skills/show-me" "skills"
+
+"$SCRIPT_DIR/copy-from-git.sh" \
+  "https://github.com/kunchenguid/lavish-axi.git" \
+  "skills/lavish" "skills"
