@@ -7,6 +7,7 @@ metadata:
   argument-hint: <what the artifact should show>
   hermes-tags: html, review, artifacts, visualization
   hermes-category: productivity
+disable-model-invocation: true
 ---
 
 # Lavish Editor
