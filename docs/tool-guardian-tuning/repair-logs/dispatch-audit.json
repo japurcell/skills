@@ -307,7 +307,12 @@
     "conflicts": false,
     "changed_file_hashes_verified": 7,
     "solely_rebase_retesting": false,
-    "owned_repair_worktree_and_branch_removed": true
+    "owned_repair_worktree_and_branch_removed": true,
+    "evidence_reviewed_to_rebased": {
+      "05bd7a35c528e609704746f1ae16e0090c260d57": "260070f211189096dc4e77d623f004e66b450238"
+    },
+    "evidence_changed_file_hashes_verified": 43,
+    "owned_performance_worktree_and_branch_removed": true
   },
   "verification": {
     "runtime_identity": "14c03deeac8943f271c00a274550c6dfa3d60310",
@@ -318,5 +323,17 @@
     "performance_acceptance": "PASS after exact targeted repeats; initial failures retained",
     "real_installation": false,
     "push": false
+  },
+  "formal_doc_pass": {
+    "canonical_paths": [
+      ".agents/instructions/hooks.md",
+      ".agents/instructions/repo.md",
+      ".agents/memory/testing/hooks.md",
+      ".agents/memory/FILE_MAP.md"
+    ],
+    "okf_lint_exit": 0,
+    "generated_freshness_exit": 0,
+    "generated_files": 29,
+    "protected_AGENTS_sections_changed": false
   }
 }

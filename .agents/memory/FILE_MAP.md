@@ -40,7 +40,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
 | `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
-| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | retained effort | Guardian false-positive repair across three providers, measured latency allowances, resource gates, and historical failed evidence; retention was explicitly requested. |
+| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | retained effort | Guardian repairs across three providers and measured latency/resource gates. The [handoff](../../docs/tool-guardian-tuning/handoff.md), [repair logs and audit](../../docs/tool-guardian-tuning/repair-logs/orchestration.md), and [verified repair evidence](../../docs/tool-guardian-tuning/evidence/review-repair-root-verification.json) retain current closure and historical failed observations; retention was explicitly requested. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
 

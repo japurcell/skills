@@ -13,9 +13,9 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 
 
 - [x] (2026-10-05 14:33Z) [milestone-6] Reproduce and repair the four findings through all three public providers; both original reviewers approve frozen 27062fc6 after two repair/review rounds.
-- [ ] [milestone-6] Repeat repair and independent review until every finding closes, then pass fresh frozen warm, cold, and resource gates.
+- [x] (2026-10-05 15:12Z) [milestone-6] Close both original review axes and pass fresh frozen warm, cold, resource and concurrency validation; retain initial failures and exact targeted repeats.
 - [x] (2026-10-05 14:33Z) [milestone-6] Repair and independently close the related inherited-stdin pipeline bypass, producer ordering and shared sequential stdout, preserving proven harmless controls.
-- [ ] [milestone-6] Complete one formal documentation pass, update the feature handoff, and preserve subagent work logs and dispatch audit.
+- [x] (2026-10-05 15:12Z) [milestone-6] Complete one formal documentation pass, update the feature handoff, preserve every subagent work log and dispatch audit, and clean integrated owned worktrees/branches.
 - [x] (2026-10-01) [planning] Review accessible session and guardian logs and identify false-positive categories.
 - [x] (2026-10-01) [planning] Obtain user agreement on scope, security boundaries, fallback behavior, delivery, and latency requirements.
 - [x] (2026-10-01 22:18Z) [milestone-1] Preserve 47 sanitized fixtures, reproduce baseline failures through 144 public provider checks, and retain two sequential complete-hook timing runs with 147 scenarios each.
@@ -29,6 +29,8 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 - [x] (2026-10-02 20:07Z) [milestone-5] Synchronize documentation and deliver repository changes with user-run installation instructions.
 
 ## Surprises & Discoveries
+
+The first new warm adapter checked batch logs after maintained main had deleted temporary homes. Its exact failed run, original drivers and frozen manifest are archived. Deferring only external cleanup through outside-timer verification, then cleaning in finally, repaired the adapter without runtime or threshold changes. The valid full sequence restarted on a new distinct frozen candidate.
 
 
 Original-reviewer round 1 closes R2, R3 and R4 but finds that independently inspecting an inline shell body loses its inherited pipeline input. The fixed-point baseline denies or warns for downloader pipelines ending in `sh -c 'bash'` or `sh -c 'exec bash'`, including an intermediate `cat`; candidate 94704adb silently allows. Both reviewers independently reproduced this related R1 gap. Keep producer/consumer execution context while preserving proven data exemptions; isolated fragment checks alone are insufficient.
@@ -96,7 +98,11 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Outcomes & Retrospective
 
 
-The 2026-10-05 review reopened acceptance: four issues remain uncorrected at the start of milestone 6. Earlier milestone results below describe historical source only. They do not certify the repaired source. Current work requires public-hook regressions, independent re-review, fresh performance evidence, and synchronized documentation before acceptance is restored.
+Milestone 6 is complete on 2026-10-05. Two repair/review rounds close all four findings and the related inherited-stdin pipeline gap. Both original reviewers approve reviewed 27062fc6; conflict-free integration produces runtime 14c03dee with all seven reviewed changed-file hashes unchanged. Standards independently passes shell 17 and 402 public checks; Spec passes limits 17, native 13, corpus 144 and 294 public checks. The source worker also passes both native Python versions and all provider/generator checks.
+
+Fresh frozen evidence retains 17,100 correct warm observations, 7,350 fresh-copy cold launches, 96 resource cases and 1,200 measured concurrency calls. Initial warm pair 1 fails only Gemini patch p95; both exact repeat pairs pass with median/p95 deltas -5.456708/-3.852000 ms and -5.453917/-5.694874 ms. Initial cold fails only Codex writer-before median; its exact 50-launch repeat passes +4.926083/+5.795166 ms. The cold median headroom is only 0.073917 ms. Initial failures remain labeled FAIL, and acceptance uses the already agreed exact-repeat policy without raising budgets. Maximum resource runtime is 40.894541 ms; peak native macOS RSS is 22,331,392 bytes. Both concurrency pairs improve every provider individual/batch median/p95. Root independently decodes 28,840 native outputs and verifies raw arithmetic, logging, exact repeat sets, copied-source maps, frozen hashes and archived failed-attempt bytes.
+
+Evidence integrates at 260070f2 with all 43 artifact hashes unchanged. The final canonical documentation pass passes both-bundle OKF lint and freshness of all 29 generated files. Owned repair/performance worktrees and branches are removed. The unpushed topic branch is ready for human review; real installation and native Windows/live-provider proof remain separate. Current proof is in `evidence/review-repair-root-verification.json`, `evidence/review-repair-final-verification.json`, and `repair-logs/`. Earlier milestone metrics below describe historical source and are not substitutes for this fresh validation.
 
 Milestones 1 through 4 meet their current acceptance criteria. Frozen sanitizer repair 1a4610ad preserves exact inspection and redaction behavior while improving all 12 focused cold writer medians by 0.318-0.570 ms against the extracted checkpoint. Both full warm pairs pass all 147 cases: maximum median deltas are -1.841 and -0.727 ms; maximum p95 deltas are +1.618 and +2.445 ms. Every actual response is correct and all 39 source hashes remain unchanged. The full cold matrix retains its original three failures; all three exact repeats pass the agreed +5/+10 ms criteria. The 90-case resource run passes with maximum 49.085958 ms and peak macOS RSS 22,413,312 bytes. Evidence is retained in `evidence/cold-profile-final-comparison.json` and its raw reports. Historical failed candidates remain failed under their recorded criteria.
 
@@ -197,8 +203,8 @@ Deliver the canonical change, regenerated outputs, regression tests, documented 
 
 ### Milestone 6: Close the independent review findings
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met under the unchanged exact-targeted-repeat policy
 
 Repair the four 2026-10-05 findings in canonical `hooks/families/tool_guard.py`. Restore installer-pipeline detection through intermediate commands on retained executable text. Inspect shell command bodies without exempting remaining unproved positional arguments or producers feeding an interpreter. Recognize attached Python code options before dismissing nonliteral tokens, and deny unresolved recognized code even in warn mode. Charge normalized UTF-8 bytes, rather than raw bytes, against the existing nested execution aggregate. Preserve raw source provenance, rule identities, provider contracts, and every established proven data exemption. Do not add general shell interpretation or blanket interpreter bans.
 
@@ -259,6 +265,8 @@ Public-entrypoint fixtures represent operations without performing them. Keep al
 Generator write mode is deterministic and may be rerun after canonical edits. If a correctness or timing gate fails, fix or revert the candidate changes while retaining the baseline, incident fixtures, and failed-attempt evidence. Never delete, disable, or weaken a failing protection test to pass acceptance. Restore generated outputs from the canonical renderer rather than manually repairing them. Remove only exact owned temporary paths after recording results.
 
 ## Artifacts and Notes
+
+Current review repair: `repair-logs/dispatch-audit.json` distinguishes selected/submitted settings from unconfirmed execution configuration, deadlines and verified outputs. Each worker/reviewer keeps a separate log; `repair-logs/documentation.md` records the final canonical pass. Fresh proof and preserved failures are under `evidence/review-repair-*`; `evidence/review-repair-attempt-1/` retains the failed temporary-log-lifetime adapter attempt.
 
 
 The original log corpus covered August 19 through October 1, 2026, with two nonempty provider guardian logs, 4,703 Codex records, and 922 Copilot records. Investigation searched 387 active Codex transcripts, two archived transcripts, and 30 primary Copilot event files. Eight saved Copilot transcript copies were excluded from primary counting. Retain these as survey coverage, not a claim that every historical invocation was available.
@@ -339,3 +347,5 @@ Revision (2026-10-02 19:58Z): retained original four-worker diagnostics and comp
 Revision (2026-10-02 20:07Z): integrated the verified final documentation pass at 37c7cfd7 without conflicts and cleaned its owned worktree/branch. Atomically marked milestone 5 done and synchronized final outcomes. Every checklist item is complete; user installation/live checks and native Windows proof remain explicitly separate.
 
 Revision (2026-10-05): reopened acceptance with milestone 6 after four independent review findings. Recorded user acceptance of strict fallback, delegated implementation and repeated review authorization, per-subagent work logs, and the required fresh validation gates. Historical completion remains historical until repaired source passes.
+
+Revision (2026-10-05 15:12Z): completed milestone 6 after two original-reviewer repair cycles, unchanged-source integration, fresh frozen gates with exact targeted repeats, retained failures, independent raw verification, per-subagent logs, dispatch audit, and the single formal canonical documentation pass. Removed only the integrated owned worktrees/branches. User installation and native Windows/live proof remain separate.
