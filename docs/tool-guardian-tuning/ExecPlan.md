@@ -12,6 +12,9 @@ The hook runs frequently. Apply the revised user-approved latency budgets below 
 ## Progress
 
 
+- [ ] [milestone-6] Reproduce and repair the four findings from the 2026-10-05 review through all three public providers, preserving existing proven data exemptions.
+- [ ] [milestone-6] Repeat repair and independent review until every finding closes, then pass fresh frozen warm, cold, and resource gates.
+- [ ] [milestone-6] Complete one formal documentation pass, update the feature handoff, and preserve subagent work logs and dispatch audit.
 - [x] (2026-10-01) [planning] Review accessible session and guardian logs and identify false-positive categories.
 - [x] (2026-10-01) [planning] Obtain user agreement on scope, security boundaries, fallback behavior, delivery, and latency requirements.
 - [x] (2026-10-01 22:18Z) [milestone-1] Preserve 47 sanitized fixtures, reproduce baseline failures through 144 public provider checks, and retain two sequential complete-hook timing runs with 147 scenarios each.
@@ -54,6 +57,9 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 ## Decision Log
 
 
+- Decision: Repair all four new review findings using strict fallback for unproved shell positional arguments, then repeat repair and review until the findings close.
+  Rationale: After seeing execution-versus-printing examples, the user accepted possible false alarms for unproved harmless arguments. Additional positional-data proofs are not required. Existing native, search, writer, and survey exemptions remain required. The user explicitly authorized delegated repairs and requested a work log from every subagent.
+  Date/Author: 2026-10-05, user and repair orchestrator.
 - Decision: Apply separate steady-state and no-provider-bytecode cold budgets instead of zero measurable regression.
   Rationale: The user explicitly agrees that a few milliseconds are acceptable for this hook. Steady-state limits are +2 ms median/+5 ms p95; cold limits are +5 ms median/+10 ms p95 per provider and case. Maintain full inspection, successful logging and the 500 ms finite resource ceiling.
   Date/Author: 2026-10-02 00:09Z, user and implementation orchestrator.
@@ -86,6 +92,8 @@ Plan authoring reproduced another file-write false positive: the SQL rule's keyw
 
 ## Outcomes & Retrospective
 
+
+The 2026-10-05 review reopened acceptance: four issues remain uncorrected at the start of milestone 6. Earlier milestone results below describe historical source only. They do not certify the repaired source. Current work requires public-hook regressions, independent re-review, fresh performance evidence, and synchronized documentation before acceptance is restored.
 
 Milestones 1 through 4 meet their current acceptance criteria. Frozen sanitizer repair 1a4610ad preserves exact inspection and redaction behavior while improving all 12 focused cold writer medians by 0.318-0.570 ms against the extracted checkpoint. Both full warm pairs pass all 147 cases: maximum median deltas are -1.841 and -0.727 ms; maximum p95 deltas are +1.618 and +2.445 ms. Every actual response is correct and all 39 source hashes remain unchanged. The full cold matrix retains its original three failures; all three exact repeats pass the agreed +5/+10 ms criteria. The 90-case resource run passes with maximum 49.085958 ms and peak macOS RSS 22,413,312 bytes. Evidence is retained in `evidence/cold-profile-final-comparison.json` and its raw reports. Historical failed candidates remain failed under their recorded criteria.
 
@@ -183,6 +191,19 @@ Acceptance: met
 Run `update-agent-docs` once at the end of implementation. Refresh hook conventions, known issues, testing routes, file and API maps as applicable, and this plan's actual constants, decisions, benchmark results, and milestone state. Preserve historical investigation facts but distinguish them from corrected behavior. The current self-maintenance workaround remains applicable until installed hooks are updated. Record implemented capabilities only after their source acceptance gates pass, and distinguish them from later installed/live validation.
 
 Deliver the canonical change, regenerated outputs, regression tests, documented benchmark comparisons, and user-run installer instructions. The user runs `rtk proxy ./scripts/install.sh` from the repository root, or the supported PowerShell installer on Windows. They review changed non-managed Codex hook definitions through `/hooks` before live validation. Do not bypass trust, disable guardian protections, rewrite unrelated registrations, or install into the real user home on the user's behalf. Repository validation and later installed/live validation are separate evidence.
+
+### Milestone 6: Close the independent review findings
+
+Status: in progress
+Acceptance: not met
+
+Repair the four 2026-10-05 findings in canonical `hooks/families/tool_guard.py`. Restore installer-pipeline detection through intermediate commands on retained executable text. Inspect shell command bodies without exempting remaining unproved positional arguments or producers feeding an interpreter. Recognize attached Python code options before dismissing nonliteral tokens, and deny unresolved recognized code even in warn mode. Charge normalized UTF-8 bytes, rather than raw bytes, against the existing nested execution aggregate. Preserve raw source provenance, rule identities, provider contracts, and every established proven data exemption. Do not add general shell interpretation or blanket interpreter bans.
+
+Start each fix with a public-provider reproduction that invokes only the hook and never executes the represented dangerous operation. Add maintained regressions for all three providers and both modes where relevant, including paired harmless controls and normalization boundaries. One repair agent owns shared canonical and test files so edits remain serialized. Every subagent maintains a separate work log under `docs/tool-guardian-tuning/repair-logs/` recording observations, edits, exact verification commands, failures, and results.
+
+Ask the original Standards and Spec reviewers to re-review the frozen repair. If those agent instances are no longer callable, record the tool failure and use fresh independent reviewers with the same scopes and original findings; do not claim original-agent continuity. Send actionable remaining findings back to the repair agent and repeat until both reviews close every finding without introducing unresolved regressions. Do not run timing probes concurrently with correctness checks. Once the final runtime source is frozen, retain two alternating warm baseline/candidate pairs, fresh-copy cold comparisons, and resource measurements under the existing +2/+5 ms warm, +5/+10 ms cold, and 500 ms resource gates. Preserve failures and distinguish targeted noise repeats from a changed acceptance criterion.
+
+Complete the formal `update-agent-docs` pass once at the end of this source-edit session. Record dispatch arguments, runtime-limit enforcement, verified outputs, and unconfirmed executed settings separately in a maintained audit. Update this plan and the feature handoff to the actual final state. Real installed hooks and user-global configuration remain untouched; native Windows evidence must remain explicitly unavailable unless actual execution becomes available.
 
 ## Concrete Steps
 
@@ -313,3 +334,5 @@ Revision (2026-10-02 19:53Z): both complete warm pairs pass all 147 cases with f
 Revision (2026-10-02 19:58Z): retained original four-worker diagnostics and completed a 25-batch-per-condition B/C/C/B repeat. All providers improve in individual and batch median/p95 with 1,200 correct measured calls and unchanged sources. Clarified that milestone 5 may document verified source capabilities while user installation remains outstanding.
 
 Revision (2026-10-02 20:07Z): integrated the verified final documentation pass at 37c7cfd7 without conflicts and cleaned its owned worktree/branch. Atomically marked milestone 5 done and synchronized final outcomes. Every checklist item is complete; user installation/live checks and native Windows proof remain explicitly separate.
+
+Revision (2026-10-05): reopened acceptance with milestone 6 after four independent review findings. Recorded user acceptance of strict fallback, delegated implementation and repeated review authorization, per-subagent work logs, and the required fresh validation gates. Historical completion remains historical until repaired source passes.
