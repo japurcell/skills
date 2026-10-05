@@ -103,11 +103,11 @@ Full source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`. Per-file SHA25
 | `create-agentsmd` | `skills/` | [Owner](tickets/review-skill-authoring-and-repository-guidance.md) | Static investigation and human proposal review complete (58 checks) | Not run; not selected |
 | `guidance-review` | `skills/` | [Owner](tickets/review-skill-authoring-and-repository-guidance.md) | Static investigation and human proposal review complete (58 checks) | Not run; not selected |
 | `self-improve` | `skills/` | [Owner](tickets/review-skill-authoring-and-repository-guidance.md) | Static investigation and human proposal review complete (58 checks) | Not run; not selected |
-| `clean-agent-docs` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Not started | Not run; not selected |
-| `exec-plans` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Not started | Not run; not selected |
-| `ingest-source` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Not started | Not run; not selected |
-| `okf-authoring` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Not started | Not run; not selected |
-| `update-agent-docs` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Not started | Not run; not selected |
+| `clean-agent-docs` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Complete investigation (58 checks); human review pending | Not run; not selected |
+| `exec-plans` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Complete investigation (58 checks); human review pending | Not run; not selected |
+| `ingest-source` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Complete investigation (58 checks); human review pending | Not run; not selected |
+| `okf-authoring` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Complete investigation (58 checks); human review pending | Not run; not selected |
+| `update-agent-docs` | `.agents/skills/` | [Owner](tickets/review-repository-local-workflows.md) | Complete investigation (58 checks); human review pending | Not run; not selected |
 | `delegate-to-subagents` | `skills/` | [Owner](tickets/review-delegation-and-discovery.md) | Not started | Not run; not selected |
 | `subagent-model-router` | `skills/` | [Owner](tickets/review-delegation-and-discovery.md) | Not started | Not run; not selected |
 | `explore` | `skills/` | [Owner](tickets/review-delegation-and-discovery.md) | Not started | Not run; not selected |
@@ -150,7 +150,7 @@ The [current inventory](local-inventory.md#current-audit-scope) and [configured-
 | Resource/dependency | Content owner | Consumers checked | Coverage/evidence limit |
 | --- | --- | --- | --- |
 | Excluded `skill-creator` | Excluded imported helper; no primary audit or proposed edits | Authoring batch: bounded consumer checks complete | Check only required invocation, paths and installed helper commands; preserve dependency |
-| Repository `.agents/` documentation contract | Repository-local workflows review | Authoring batch: bounded consumer checks complete | This batch checks consumers; complete owning-workflow content review is later |
+| Repository `.agents/` documentation contract | Repository-local workflows review | Five local bundles and their direct maintenance/OKF chain reviewed statically; first-batch consumer checks retained | Source review complete; native ordering/permission evidence and cross-batch reconciliation remain outstanding |
 | `prd-ralph-loop` self-improve call | Review Execution and Handoff | `self-improve` consumer boundary checked at `prd-ralph-loop/SKILL.md:19-39` | Preserve delayed load/stop and progress-file context; full owning review remains unstarted |
 | Upgrade document-review metadata comparison | Review Upgrade Instructions and Templates | `guidance-review` controls checked at `dotnet-upgrade/references/document-review.md:27` | Bounded paper dependency only; no procedure activation or enforcement claim |
 | Installer shipped-resource set | Authoring/guidance batch owns this bounded consumer check | All six entry/resource sets checked against both installer source exclusions | Non-eval files shipped; installed access untested; no full tooling audit or installer proposal selected |
@@ -158,5 +158,8 @@ The [current inventory](local-inventory.md#current-audit-scope) and [configured-
 ## Review records
 
 - [Review Skill Authoring and Repository Guidance](tickets/review-skill-authoring-and-repository-guidance.md): closed after the 2026-10-05 live human review; [report](reports/review-skill-authoring-and-repository-guidance.md) records 45 bundle files, supporting-source scopes, and six 58-check matrices. All fourteen findings have a recorded disposition; four separate decisions remain pending.
-- [Finding register](findings.md): owns fourteen findings with stable IDs and explicit accepted or pending human states; four precise questions have linked open decision tickets.
+- [Finding register](findings.md): owns seventeen findings with stable IDs and explicit accepted or pending human states; five precise questions have linked decision tickets, with the new prior-plan question blocked by the current review.
+- [Review Repository-local Workflows](tickets/review-repository-local-workflows.md): claimed after both exact blockers were verified closed. Source baseline is `bd7b1a68a081ea847b2e6c1712363000ef01751f`; initial enumeration contains sixteen files across five entry points. Static investigation is complete in the [report](reports/review-repository-local-workflows.md): sixteen unchanged-source files, eighteen fixture dependencies, and five complete matrices (290 rows). RLW-001/002/003 await human disposition; no native baseline exists for this batch.
 - All other batch reports remain unstarted. Full static review, reconciliation, baseline sample selection, native launch setup, required runs, final audit and ExecPlan remain outstanding.
+
+The repository-local report records its own source baseline; the initial catalog revision above is not substituted for later per-batch evidence. Total completed static investigation: eleven candidates, 638 check rows, and 61 primary file hashes. First-batch human dispositions are complete; repository-local disposition remains pending.

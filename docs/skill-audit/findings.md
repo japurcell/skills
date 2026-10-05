@@ -1,8 +1,8 @@
 # Skill Audit Findings
 
-Single owning register, started 2026-10-05 against source revision `91ba7ab941450327c8d178c27966d1150bd0b74b`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
+Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
 
-Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed every proposal on 2026-10-05: authoring and evaluation repairs are accepted for later plan scope, while four separate decisions remain pending. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
+Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 on 2026-10-05: authoring and evaluation repairs are accepted for later plan scope, while four separate decisions remain pending. RLW-001 through RLW-003 await the repository-local batch review; their proposed scope is not accepted yet. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
 
 ## Proposal index
 
@@ -22,10 +22,15 @@ Applicability, adoption disposition, compliance, proposal status, and implementa
 | [SAG-012](#sag-012-argument-binding-and-control-adapter-evidence-gaps) | Argument binding and control adapter evidence gaps | Accepted for later planning | Later authoring plan scope; runtime enforcement unverified |
 | [SAG-013](#sag-013-public-claims-and-command-validation-ambiguity) | Public claims and command validation ambiguity | Documentation accepted; execution decision pending | [Separate decision](tickets/set-safe-command-validation-scope-for-agents-authoring.md) |
 | [SAG-014](#sag-014-trailing-whitespace-in-improve-skill-grader) | Trailing whitespace in Improve Skill grader | Accepted for later planning | Later authoring cleanup scope |
+| [RLW-001](#rlw-001-maintenance-type-table-disagrees-with-the-root-only-okf-contract) | Maintenance type table disagrees with the root-only OKF contract | Pending current-batch review | Authoring clarification in repository-local batch |
+| [RLW-002](#rlw-002-prior-plan-reference-exception-has-unclear-relationship-to-single-file-self-containment) | Prior-plan reference exception has unclear relationship to single-file self-containment | Pending current-batch review | [Separate decision](tickets/resolve-execplan-self-containment-and-prior-plan-references.md) |
+| [RLW-003](#rlw-003-clarify-reported-okf-reference-and-orchestration-evidence) | Clarify reported OKF reference and orchestration evidence | Pending current-batch review | Authoring clarification in repository-local batch |
 
 ## Pending decisions and approval
 
 The 2026-10-05 live review accepted SAG-001, SAG-009, SAG-010, SAG-011, SAG-012, SAG-014 and only SAG-013's documentation cleanup as authoring repairs; SAG-004 through SAG-007 are accepted evaluation repairs. Four precise questions remain pending in separate Wayfinder routes: installer authority (SAG-002), body output structure (SAG-003), compatible unknown metrics (SAG-008), and command-validation authority (SAG-013). The human explicitly chose to keep all four pending and visible. The closed [batch Resolution](tickets/review-skill-authoring-and-repository-guidance.md#resolution) unblocks their tickets without choosing their behavior or design. No proposal was rejected or deferred.
+
+The repository-local batch adds three pending dispositions. RLW-001 proposes alignment with existing root-only typing. RLW-003 proposes wording that distinguishes reported reference/ownership values from independently reconstructed output checks; required native trace grading remains later evidence work. RLW-002 exposes unclear predecessor-plan semantics and has a precise separate decision ticket, blocked by this batch review. No interpretation of that output contract has been selected. The four earlier decisions remain open.
 
 Accepted authoring work may enter the later plan only when its design prerequisites are resolved. SAG-004 needs a grounded fixture/oracle mapping rather than an invented successor. SAG-007's evaluator repair must preserve intended contracts; disputed body structure follows SAG-003. SAG-013 wording cleanup can be independent only when it does not choose execution authority. SAG-012 keeps client enforcement unverified until actual evidence exists.
 
@@ -200,3 +205,42 @@ Both final `audit.md` and `ExecPlan.md` must expose every unresolved proposal by
 - Observed configuration: deterministic source byte inspection; no behavioral model/client run.
 - Human status: accepted authoring repair for later plan scope by the human on 2026-10-05. Preserve the stated contracts and resolve design prerequisites before executable plan readiness. No implementation approval, evidence waiver, or residual-risk acceptance.
 - Exact decision/affected work/route: include this accepted behavior-equivalent cleanup in the later plan. No independent work depends on it.
+
+### RLW-001: Maintenance type table disagrees with the root-only OKF contract
+
+- Severity and confidence: Minor, high confidence from exact static text. When authoring a nested `INDEX.md` or `LOG.md`, the updater's table selects the root-special type while OKF and lint select the matching area/default type. The required later OKF pass can catch it, so this establishes local contradictory guidance, not an unusable whole workflow or observed failure.
+- Source/check and applicability: A02/A16/A19/R04/R06/R09; adopt consistent terminology and adapt path precedence to the actual repository profile. Applies when an updater touches a nested uppercase index/log concept.
+- Evidence and file/line: `.agents/skills/update-agent-docs/refs/indexes-frontmatter.md:19-20` says `.agents/memory/**/INDEX.md` and `**/LOG.md`; `.agents/skills/okf-authoring/references/profile.md:8-9`, `scripts/lint-okf.py:121-124`, and OKF grader :83-86 select only exact root `INDEX.md`/`LOG.md`. No current nested index/log example or executed failure was found in this bounded scope.
+- Affected clients: Provider-neutral repository documentation workflow in Codex, Copilot and Gemini; no model/version/configuration was observed.
+- Exact proposed change: Replace the two wildcard table paths with `.agents/memory/INDEX.md` and `.agents/memory/LOG.md`, retaining order and all other rows. State that nested files follow their area/default type rather than introducing new special types.
+- Protected contract: Preserve path-derived typing, all existing names/paths, metadata-only body preservation, updater semantic ownership and mandatory one-way OKF verification. This is an equivalent authoring repair to the canonical profile, not new behavior.
+- Validation needed: Compare the two tables plus lint/grader derivation statically; later scoped ordinary root and nested index/log examples should derive the same types. No grader/lint execution occurred in this review.
+- Human status: pending live repository-local batch disposition. No implementation approval, evidence waiver, or residual-risk acceptance.
+- Source configuration: static source review at `bd7b1a68a081ea847b2e6c1712363000ef01751f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Route: current repository-local batch human review, then accepted later plan scope or explicit rejection/deferral; native workflow gaps remain separate.
+
+### RLW-002: Prior-plan reference exception has unclear relationship to single-file self-containment
+
+- Severity and confidence: Minor, high confidence in the textual tension; moderate confidence in predicted effect. A restarting reader may require a second plan for essential knowledge, but no concrete broken implementation or recovery run was observed.
+- Source/check and applicability: A17/A32/R05/R06; adapt output guidance only after intended contract is resolved. Applies to a plan building on a checked-in predecessor.
+- Evidence and file/line: `.agents/skills/exec-plans/SKILL.md:8,18,26` requires the current single plan to contain all knowledge and enable restart alone. :34 permits incorporating a checked-in prior plan by reference, while skeleton :129 says not to refer to prior plans. The text does not define whether incorporation means optional evidence or a required external instruction dependency.
+- Affected clients: Any stateless agent or human novice consuming an ExecPlan; Codex/Copilot/Gemini authoring paths. No runtime configuration tested.
+- Exact proposed change and decision: Ask the human whether the prior-plan clause allows required predecessor knowledge outside the current file or only optional historical/evidence links with all executable knowledge embedded. Then align :34 and :129 with that decision and state the allowed link purpose explicitly. Do not silently delete the exception or choose one interpretation in an authoring pass.
+- Protected contract: Self-contained novice output, prior-plan exception, living sections, atomic progress/milestone updates, standalone Markdown envelope and required sync remain protected until the decision resolves their relationship. Autonomous authorized implementation language is not evidence of an approval bypass; no new approval flow is proposed.
+- Validation needed: Paper review a plan with a checked-in predecessor and one with an unavailable predecessor, checking knowledge availability against the chosen rule. Later restart-only baseline if selected. No plan execution occurred.
+- Human status: pending live repository-local batch disposition. No implementation approval, evidence waiver, or residual-risk acceptance.
+- Source configuration: static source review at `bd7b1a68a081ea847b2e6c1712363000ef01751f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve ExecPlan Self-containment and Prior-plan References](tickets/resolve-execplan-self-containment-and-prior-plan-references.md). The current review disposes/routes this finding without selecting the underlying contract. Dependent implementation stays pending.
+
+### RLW-003: Clarify reported OKF reference and orchestration evidence
+
+- Severity and confidence: Observation, high confidence in the predicate boundary and moderate confidence that assertion wording could be misunderstood. No false native-workflow certification or failed behavior was observed. [SAG-007](#sag-007-grader-predicates-do-not-prove-preservation) provides related evidence-integrity context; this is a separate clarification of what this grader already measures, not an automatic extension of its accepted repairs.
+- Source/check and applicability: A22/A26/R04/R11; adapt evaluation guidance to separately measure output, coordinator verification, and model workflow. Applies when reporting the grader's reference/composition expectations as evidence of performed workflow.
+- Evidence and file/line: `.agents/skills/okf-authoring/evals/grade_benchmark.py:219-232` checks `references_loaded` only in model-written outcome JSON. :268-272 checks claimed orchestration plus phrases in current skill sources; it does not inspect the run transcript. `validate_run_artifacts:325-345` requires a nonempty transcript but never validates read/delegation events. Eval assertions at `evals.json:18,32,46` request profile/reference and one-way ownership evidence. Tests at `test_grade_benchmark.py:58-72` use a synthetic transcript and claimed reference/owner values.
+- Affected clients: Provider-neutral local grading used for Codex/Copilot/Gemini output artifacts; no native runtime or model was tested.
+- Exact proposed clarification: Label the `evals.json:18,32,46` profile/reference and ownership assertions as reported references/ownership, consistent with `grade_benchmark.py:219-232,268-272`. Preserve artifact/metadata/body predicates and valid independent coordinator lint/diff evidence. Native required-read and composition ordering evidence belongs to the already-required later baseline trace grading; absent trace evidence remains unverified. Do not add these targets to earlier accepted grader repair scope automatically.
+- Protected contract: Mandatory profile and conditional summary reads, semantic-versus-representation ownership, no reverse updater call, exact authorized output/diff and unknown evidence states. Do not make required dependencies optional or claim trace absence establishes failure.
+- Validation needed: Static review that assertion names describe reported output and coordinator evidence precisely. Later native baseline design can contrast claimed reads with usable reference/order events, including absent events. Distinguish coordinator reconstructed validation-sandbox changes (:191-205) from live model workspace mutations; no baseline containment failure is claimed.
+- Human status: pending live repository-local batch disposition. No implementation approval, evidence waiver, or residual-risk acceptance.
+- Source configuration: static source review at `bd7b1a68a081ea847b2e6c1712363000ef01751f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Route: current repository-local batch human review, then accepted later plan scope or explicit rejection/deferral; native workflow gaps remain separate.
