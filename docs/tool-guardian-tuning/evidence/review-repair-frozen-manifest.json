@@ -1,0 +1,1892 @@
+{
+  "authorization": "root GO with exclusive timing window",
+  "candidate_provider_bytecode_at_freeze": [],
+  "created_unix": 1791211291.075258,
+  "environment": {
+    "guard_mode": "block; inherited skip and allowlist removed",
+    "logging": "maintained Case/invoke disposable provider-specific writable home",
+    "machine": "arm64",
+    "os_and_stdlib_cache": "not cleared",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6 (main, Jul 30 2026, 16:35:50) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_cache_settings": {
+      "PYTHONDONTWRITEBYTECODE": null,
+      "PYTHONPYCACHEPREFIX": null
+    },
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3",
+    "python_executable_sha256": "5433670305b5d2982c7d745687d0d323c1df55d1c65cc72bc773a25ce000a943"
+  },
+  "identity": "14c03deeac8943f271c00a274550c6dfa3d60310",
+  "payloads": {
+    "baseline": {
+      "codex.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 89,
+        "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44"
+      },
+      "codex.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "45684d806ddfff218fc335e872d4bfed744a9c56031fff91157c172dbc98f75f"
+      },
+      "codex.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 123,
+        "payload_sha256": "1a645fed6d6f086df142eca6fc94ac7d609a73384319b4d17b137daf793eccc7"
+      },
+      "codex.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 126,
+        "payload_sha256": "d78df264d592d72bd692398050616322a0cb6c45c715e564da51e4095c917280"
+      },
+      "codex.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 98,
+        "payload_sha256": "7b1f6a6d94939ab0764c9344da82e10e2485e6489cf8f3f96b3d15290a6cf95d"
+      },
+      "codex.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 95,
+        "payload_sha256": "4d622b384e2e55b8334fb0049874bb8c791a66a78c13f563baf5da52813e940f"
+      },
+      "codex.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 163,
+        "payload_sha256": "d6790d957ca5070fba60013b4acd422dbbdf5cd390e4cd27fba54cd446545095"
+      },
+      "codex.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7"
+      },
+      "codex.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "a8746a8a369368797d697961f5069c31a6770e88a7bbc732a4e6b74dedda65ed"
+      },
+      "codex.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "d63425c0e5ba1ce26622a9fde38ae04f59c9d170bca6958724735f30ea177a63"
+      },
+      "codex.guard.danger.interpreter-sink": {
+        "expected_decision": "allow",
+        "input_bytes": 147,
+        "payload_sha256": "789bea0e0fc29d9b8667750bef91fb2a53aca01aee4547fea7cf87dcd87bad03"
+      },
+      "codex.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "82fcd16613392eed4dbc16fb02c2e0000f7e66c4a09d82d4e3ea3cd5ee7dced7"
+      },
+      "codex.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 87,
+        "payload_sha256": "406fccec15a472d92948ec9d05e12fd868f1f65a143d21af3240ec05684c1345"
+      },
+      "codex.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "09026c98494570c8b18bfe1f8fb05faf91ffe143166cc56e36a63bc1fce9042a"
+      },
+      "codex.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "e47d32aac568ce636b2b943b1af600316ae514aa561580b9598f5fcd8e006e6e"
+      },
+      "codex.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "56cb51961bbebb0d178393833fd637e290e152b5fbb490592ce77121798e4eda"
+      },
+      "codex.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 89,
+        "payload_sha256": "e01624749696eef8c92f4413848c47231ba3e747edabac424b6642e356aafec9"
+      },
+      "codex.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe"
+      },
+      "codex.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 97,
+        "payload_sha256": "30e946cc260cd81de2dbadb0098a9a52956dbfe7c523479093c00471c6f8babe"
+      },
+      "codex.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 87,
+        "payload_sha256": "d1cc2524890ec2cdb409bec234df565cdf4bba3ca18ffab0053312e1a20fd0e0"
+      },
+      "codex.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "9d4ccc70b3cd01d31a104fdb45f6713103e17cbb7a2453ed935a377858d1daeb"
+      },
+      "codex.guard.danger.substitution": {
+        "expected_decision": "allow",
+        "input_bytes": 116,
+        "payload_sha256": "e3e9759b0ce02cb531dd03647689841415274abdb4c46157d812dbeaf7f45f3a"
+      },
+      "codex.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 99,
+        "payload_sha256": "9d653c09f17561c02939537b095008e47dff97bcaef0274c07c19117f0d16cfb"
+      },
+      "codex.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 156,
+        "payload_sha256": "27b64b01547559942939202de9694db994e5a6db00b22d99d078caacc53d4716"
+      },
+      "codex.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 125,
+        "payload_sha256": "52429d6e5cc61b83ba0da27fe7ed4d2cfa1b772c82bb66fe71befb0d371a45e8"
+      },
+      "codex.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 94,
+        "payload_sha256": "e619262bd13ff4a3de62e256c27f0d0ed274789c77f1c2441b00e0af51b699c7"
+      },
+      "codex.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2533,
+        "payload_sha256": "aef9daa7f2d1f6470efdd29e44bc4794801821b6a425397e9f0d0e903c10da35"
+      },
+      "codex.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2533,
+        "payload_sha256": "a8008b25ce0ab682d49da987398e5a531da2c037c81c5cffb9fdfdcb1dddd40d"
+      },
+      "codex.guard.edit.replacement": {
+        "expected_decision": "allow",
+        "input_bytes": 199,
+        "payload_sha256": "87ce6714b340417bccd9d648f977c16273d136d0f1d9990587d7503e8f310d2a"
+      },
+      "codex.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "codex.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7"
+      },
+      "codex.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24085,
+        "payload_sha256": "e2999286aecbec02ee7ac023b7d29a04f6af464cfd9caed23c58292194e0881b"
+      },
+      "codex.guard.patch.bytes-46899": {
+        "expected_decision": "deny",
+        "input_bytes": 47109,
+        "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549"
+      },
+      "codex.guard.patch.lines-124-segments-142": {
+        "expected_decision": "deny",
+        "input_bytes": 2611,
+        "payload_sha256": "d0c584f4b3b00d5c91253297771899b510588ad8a2043411a17f540d1b41d6eb"
+      },
+      "codex.guard.patch.lines-330": {
+        "expected_decision": "deny",
+        "input_bytes": 6363,
+        "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132"
+      },
+      "codex.guard.search.literal": {
+        "expected_decision": "allow",
+        "input_bytes": 118,
+        "payload_sha256": "ce90a989d1e70ddf096d2e1309c906d40c9402da444835f9b5a914af0e89b678"
+      },
+      "codex.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 121,
+        "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d"
+      },
+      "codex.guard.survey.analysis-source": {
+        "expected_decision": "deny",
+        "input_bytes": 247,
+        "payload_sha256": "47094b250c6ded22aebca4e69ebc602f9d87dfbeaf659610df8ffb41d53f84c8"
+      },
+      "codex.guard.survey.json-stdin": {
+        "expected_decision": "deny",
+        "input_bytes": 221,
+        "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a"
+      },
+      "codex.guard.survey.python-subprocess": {
+        "expected_decision": "deny",
+        "input_bytes": 390,
+        "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa"
+      },
+      "codex.guard.write.actual-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1830,
+        "payload_sha256": "90a5212bc89d450a3fc09e11cb43e1eba4eb9c9987e60cd6435c78993e1087d7"
+      },
+      "codex.guard.write.english-inflection": {
+        "expected_decision": "deny",
+        "input_bytes": 190,
+        "payload_sha256": "5c4cf7b00e2324ba60df8e795f841fb4e5353bbd977e67366caf0de653b40dcf"
+      },
+      "codex.guard.write.escaped-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1833,
+        "payload_sha256": "d3204f188670d48a6e7d7eb3af2bb001f415b26bfa104f71308fb3d67e8f8196"
+      },
+      "codex.guard.write.examples.md": {
+        "expected_decision": "allow",
+        "input_bytes": 180,
+        "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c"
+      },
+      "codex.guard.write.examples.py": {
+        "expected_decision": "allow",
+        "input_bytes": 180,
+        "payload_sha256": "97a825359361e1e3422eb7741e71c45bc9b23fe400ea405561a701f2390dbdf3"
+      },
+      "codex.guard.write.examples.test.py": {
+        "expected_decision": "allow",
+        "input_bytes": 185,
+        "payload_sha256": "387507e3d8e21bbee9969d3e86455d94f9edb9ce4771004faeac5a01c9ebedfd"
+      },
+      "codex.guard.write.utf8-growth": {
+        "expected_decision": "deny",
+        "input_bytes": 36153,
+        "payload_sha256": "44be8cdbe3f8104391eeb17acd31191ca660045420782d178931da6eef23726d"
+      },
+      "codex.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "deny",
+        "input_bytes": 9032,
+        "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe"
+      },
+      "codex.guard.writer.lines-120-segments-139": {
+        "expected_decision": "deny",
+        "input_bytes": 2503,
+        "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203"
+      },
+      "copilot.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 74,
+        "payload_sha256": "2774a83eeabf1c84091572cd738cc1575a6a001bf155f3195791ef318f0f9b76"
+      },
+      "copilot.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "1a4b5212108799da397e6f8e32bd78c38bcc75a6982e134bdd0db030e06ee0ca"
+      },
+      "copilot.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 120,
+        "payload_sha256": "19382b5017ac78ccff7e01719ecd14996553796272b9b3e2004a12bd8f9aa79d"
+      },
+      "copilot.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 123,
+        "payload_sha256": "2928766f0f7f522d1da612ee4670bfcb2b8a6b121988a5dc77af1ed65af54526"
+      },
+      "copilot.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 95,
+        "payload_sha256": "c2f83ba08de7aeff3cb668e5b0b647e7c33154c173821b45f0e66c4350a206fe"
+      },
+      "copilot.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 92,
+        "payload_sha256": "0fe26b01889287adc11b14c182d20adb305a992226f7f67b08e6a0d1427145f0"
+      },
+      "copilot.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 153,
+        "payload_sha256": "110d988636a2c4506cdd941d314018c7b8e52e5b51aa186bdba1f66f0af73ada"
+      },
+      "copilot.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 105,
+        "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa"
+      },
+      "copilot.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 90,
+        "payload_sha256": "44be073a822b64fac4b34c1e1fe289afc5ba979c0a850c472209ad59ef7853a1"
+      },
+      "copilot.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "c7eaca36d4968512810ee566e4428782fd5dae0de69773be443f983bb1a3e0ed"
+      },
+      "copilot.guard.danger.interpreter-sink": {
+        "expected_decision": "allow",
+        "input_bytes": 144,
+        "payload_sha256": "d700d5b7af5fad7df5437d7170daf0e61df10eacbeaabac2c1aa5eb73acc2813"
+      },
+      "copilot.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 111,
+        "payload_sha256": "6e4073ced827ca40fac8ad26830d1a4fc48b46c7f5b68c85c6f4ba01aa491fe2"
+      },
+      "copilot.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 84,
+        "payload_sha256": "ae1ad003a5dfbf376876e66464835701fd30bc20fbad84847abdbd40e1a63946"
+      },
+      "copilot.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "3f6191aa995e61d33388eb9418883c69558606d8b55bcf3629cf4ccb6cb1f883"
+      },
+      "copilot.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "031e1c02143b12003d2e1850a4bd7416a5c393798f6009bbe75c10584e1df5f3"
+      },
+      "copilot.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "6c2e02a4b717a0cd46710f7c6c6097483ec57bed56d6ad03a286474426294170"
+      },
+      "copilot.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 86,
+        "payload_sha256": "61eb941c7ebc98ccabd0564c94446abe0bd6daf7ba0b01e59be113f4a5b6b856"
+      },
+      "copilot.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e"
+      },
+      "copilot.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 94,
+        "payload_sha256": "167f58a3082c6c5806936b2ab618a939ed155bad8aef84df8d8b362369a2f2b5"
+      },
+      "copilot.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 84,
+        "payload_sha256": "83551a28823a196a01445ee777c3a76b6e112fcf07569e42f7b9728f70647379"
+      },
+      "copilot.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "418907243d7f89255b4d7a1e1d414886d126fdd2e150b4a436df0bca52be1c73"
+      },
+      "copilot.guard.danger.substitution": {
+        "expected_decision": "allow",
+        "input_bytes": 113,
+        "payload_sha256": "6c03118011abcf26b0ba37be80578b54c9e9016c53910258c3ef5e29912a04cb"
+      },
+      "copilot.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "99dace19eae70b79a27e6b4c928255ec479fef74661f2f4f5c85761b1d364dd5"
+      },
+      "copilot.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 153,
+        "payload_sha256": "a9a997bbb40c770db2fe64b6f43e9cc042fa8d55c950e3c811f069249eac46ab"
+      },
+      "copilot.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 122,
+        "payload_sha256": "a12ce435f00493a5f1b55e073107627d8562ab865dd175794adaa3221d065d8c"
+      },
+      "copilot.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "0e83724248ddcf0665f201cbf9391ee4a365dd95c705d3d898c46b2a9ce5b755"
+      },
+      "copilot.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2530,
+        "payload_sha256": "c823c5b4c8b7fb4cb3ee16d89101f733b16d63f723d43bf271988377a4989676"
+      },
+      "copilot.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2530,
+        "payload_sha256": "5f99dbe8e400e3f5e2db8a4df2cd2a8098706b371d6a468a944563bf5bd86425"
+      },
+      "copilot.guard.edit.replacement": {
+        "expected_decision": "deny",
+        "input_bytes": 153,
+        "payload_sha256": "61ab7a25e5945ac9a3de5027816c3ce0e41442105b2ac45def511423706fc445"
+      },
+      "copilot.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "copilot.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "7a0a6a8c344a0eb86cf8fe936eb7a77663c6d6e67abda629c39931113f3b06f6"
+      },
+      "copilot.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24070,
+        "payload_sha256": "914ab1099e853a23290bcdc81a5f83ea45354cc5fc5d5e2d2c558e915e619127"
+      },
+      "copilot.guard.patch.bytes-46899": {
+        "expected_decision": "deny",
+        "input_bytes": 47130,
+        "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea"
+      },
+      "copilot.guard.patch.lines-124-segments-142": {
+        "expected_decision": "deny",
+        "input_bytes": 2632,
+        "payload_sha256": "2f55c5938549d20ff1231f8eec1eba8d3792584d42adb3c618398299fc66b95b"
+      },
+      "copilot.guard.patch.lines-330": {
+        "expected_decision": "deny",
+        "input_bytes": 6384,
+        "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e"
+      },
+      "copilot.guard.search.literal": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "8a7d7c81efa2e95a5251155a73e651f6a82cef19b4b839316ad76d84ec51df0a"
+      },
+      "copilot.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 118,
+        "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8"
+      },
+      "copilot.guard.survey.analysis-source": {
+        "expected_decision": "deny",
+        "input_bytes": 201,
+        "payload_sha256": "1ec61f9c2bfd161c3d68dcacf06b2916ddb40533aba1712823aef4360a00b37b"
+      },
+      "copilot.guard.survey.json-stdin": {
+        "expected_decision": "deny",
+        "input_bytes": 218,
+        "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063"
+      },
+      "copilot.guard.survey.python-subprocess": {
+        "expected_decision": "deny",
+        "input_bytes": 387,
+        "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3"
+      },
+      "copilot.guard.write.actual-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1648,
+        "payload_sha256": "18c0766b1e1d4f24734231462dc57622b1a036b8a2856d95e53377b5f730822a"
+      },
+      "copilot.guard.write.english-inflection": {
+        "expected_decision": "deny",
+        "input_bytes": 145,
+        "payload_sha256": "5a01eea224f62c23d36b96a7f9a3dee3b915bead906759c6b2102adb48f713e8"
+      },
+      "copilot.guard.write.escaped-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1788,
+        "payload_sha256": "908ba454567700c7908c1d03bd99501bb1c7846310266ff2fcc60d149385c4ad"
+      },
+      "copilot.guard.write.examples.md": {
+        "expected_decision": "deny",
+        "input_bytes": 135,
+        "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934"
+      },
+      "copilot.guard.write.examples.py": {
+        "expected_decision": "deny",
+        "input_bytes": 135,
+        "payload_sha256": "e6fbf3ee1acf16cb7d2504e24e64090a0dd8bf0438f7fb618055dc6a2efe1512"
+      },
+      "copilot.guard.write.examples.test.py": {
+        "expected_decision": "deny",
+        "input_bytes": 140,
+        "payload_sha256": "8b72fed102d0b2e5c7e968f42f39f8090946821f7a820b1356e65928e9726103"
+      },
+      "copilot.guard.write.utf8-growth": {
+        "expected_decision": "deny",
+        "input_bytes": 36108,
+        "payload_sha256": "c2eb002f88245adbe6e5f330f914592f04cf98932346f10786b819f0f5d7b9cd"
+      },
+      "copilot.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "deny",
+        "input_bytes": 9029,
+        "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443"
+      },
+      "copilot.guard.writer.lines-120-segments-139": {
+        "expected_decision": "deny",
+        "input_bytes": 2500,
+        "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821"
+      },
+      "gemini.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 102,
+        "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72"
+      },
+      "gemini.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 109,
+        "payload_sha256": "808f3f8032645cf9d330556a69f5c87ebf97cbf5104bf9abf307d09bc925a13c"
+      },
+      "gemini.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 136,
+        "payload_sha256": "0883441298e1a8d87983f5be8dba7e730166fc7219943eafaab6c8fdaad899f7"
+      },
+      "gemini.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 139,
+        "payload_sha256": "0a84824d3b6eeaddeca07257f0663641a94b5410866f840c4ab8accf99dabc6a"
+      },
+      "gemini.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 111,
+        "payload_sha256": "0c5bea5d8765c1f953f5e6de3c5111b2633183c40e3883da4dba4c31cbc20958"
+      },
+      "gemini.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "2e6b07698747f91844c9be5b2006206f24d03ffe41fba5eb91c77ef3295a614e"
+      },
+      "gemini.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 163,
+        "payload_sha256": "4dfe6eee285dd0c2b469a4e251440c07d76adc0ead6d0e2bec9879e0ee6033b6"
+      },
+      "gemini.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b"
+      },
+      "gemini.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 106,
+        "payload_sha256": "ac4e2f0f295f0dda5a287f8945b10d35bd5e9f4219dc4ee4141c226271a20413"
+      },
+      "gemini.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 109,
+        "payload_sha256": "ec2fc525b428084436959c1fa020339bb70ad479f3faf778dd1b9533bb1c9718"
+      },
+      "gemini.guard.danger.interpreter-sink": {
+        "expected_decision": "allow",
+        "input_bytes": 160,
+        "payload_sha256": "341ca3645de4c1ca10c049c01edf262b626b2df522bcf34f3ed92f16cb615c17"
+      },
+      "gemini.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "29fd4cb1973d8b9bb13a976c43a25dfaf1b57a69591760664fd18b0e655a75ab"
+      },
+      "gemini.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 100,
+        "payload_sha256": "9c2348b2314ee3ed7d8c84890f7e7deabfc868a5c8eccbbae612d85f9f25590a"
+      },
+      "gemini.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 104,
+        "payload_sha256": "bb9d064f00d37df5d6c2e22345f71c320d425d5894e37d0b31542d3165240890"
+      },
+      "gemini.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "6885775c1c3f951a9e6126af62f072098894509802dda3a3a2cd7ea94d2ae778"
+      },
+      "gemini.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "b1ed4655ba05882eefc84e26d0e93daed8a4424515938f948fd2396472d8754a"
+      },
+      "gemini.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 102,
+        "payload_sha256": "f226eae36007623eaa5b52d37e17a5eeef0a422f86a7ff8202f7639aeb22147f"
+      },
+      "gemini.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484"
+      },
+      "gemini.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 110,
+        "payload_sha256": "39b4cc8955942131bc332fe291afc82686c8688addeca5bf5a57504cac09f0c9"
+      },
+      "gemini.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 100,
+        "payload_sha256": "242e78c25d9788dbf752bc8c907fa566d336acc47d58479a222e85262531abfd"
+      },
+      "gemini.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 104,
+        "payload_sha256": "da1cb53cc315be8ad06ebbc743361db283b944af66fc912e050e4b8f044f6938"
+      },
+      "gemini.guard.danger.substitution": {
+        "expected_decision": "allow",
+        "input_bytes": 129,
+        "payload_sha256": "53c574cb2eadf623a8532227f43dc67b38c6cb4701ddbcc55f3cbd6c619f0f8d"
+      },
+      "gemini.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 112,
+        "payload_sha256": "50bf6787f3db25cb460808827a7e1e2f2c2364a5a86f5bc092c81d5777ae83bd"
+      },
+      "gemini.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 169,
+        "payload_sha256": "a79f9f6e6a4bc6d9fa25e56f3bf5a0d08ef71b370eee4753244333172a2e61ac"
+      },
+      "gemini.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 138,
+        "payload_sha256": "6f2101d57eebb0eee4754c02226506db11b7a8e631be44d39c0193666472b2ec"
+      },
+      "gemini.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 107,
+        "payload_sha256": "5eaddda0e791d9935ab077244c4323daac44dc4e21da6398cc94238acdbdda46"
+      },
+      "gemini.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2546,
+        "payload_sha256": "319ca4cb4cd008da9e95d71209bf49bcf59b4fbf775ffb9ff00f45addb454915"
+      },
+      "gemini.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2546,
+        "payload_sha256": "1e40b7a60d0338df444d86ab2f3ee789f09cda76421470c9840a3ba4b950a018"
+      },
+      "gemini.guard.edit.replacement": {
+        "expected_decision": "deny",
+        "input_bytes": 241,
+        "payload_sha256": "b24dcd367836654f945f54ca624f2cb48744bf2a045649e5857ed38240a945a4"
+      },
+      "gemini.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "gemini.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b"
+      },
+      "gemini.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24098,
+        "payload_sha256": "ba6fbd519ddb1819878ccecbcb9670cd1b484c7fc0fe806eccd3ab1fa97f626b"
+      },
+      "gemini.guard.patch.bytes-46899": {
+        "expected_decision": "deny",
+        "input_bytes": 47140,
+        "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3"
+      },
+      "gemini.guard.patch.lines-124-segments-142": {
+        "expected_decision": "deny",
+        "input_bytes": 2642,
+        "payload_sha256": "c0d528290f5183f9d35658b638a060b0c5ee8f34821766ed0d8a1f8b5f8adb2e"
+      },
+      "gemini.guard.patch.lines-330": {
+        "expected_decision": "deny",
+        "input_bytes": 6394,
+        "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4"
+      },
+      "gemini.guard.search.literal": {
+        "expected_decision": "deny",
+        "input_bytes": 126,
+        "payload_sha256": "60d4747bb84116439c6231fe9bcf0f83189ba9ab4b033409a509ad5f46278fc6"
+      },
+      "gemini.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 134,
+        "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9"
+      },
+      "gemini.guard.survey.analysis-source": {
+        "expected_decision": "deny",
+        "input_bytes": 211,
+        "payload_sha256": "827a53251f869af46f519dcf85960d1780f984148562ee50301792a14880b773"
+      },
+      "gemini.guard.survey.json-stdin": {
+        "expected_decision": "deny",
+        "input_bytes": 234,
+        "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf"
+      },
+      "gemini.guard.survey.python-subprocess": {
+        "expected_decision": "deny",
+        "input_bytes": 403,
+        "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21"
+      },
+      "gemini.guard.write.actual-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1658,
+        "payload_sha256": "944a95a3095df9f9ae83186aff478cd9a37f8b17f30a55967c22cebda9691692"
+      },
+      "gemini.guard.write.english-inflection": {
+        "expected_decision": "deny",
+        "input_bytes": 155,
+        "payload_sha256": "f74dc982caacebf8acde0bbcbdaddacf47a6ffd052f120598241a1da4ddeb6f5"
+      },
+      "gemini.guard.write.escaped-newlines": {
+        "expected_decision": "deny",
+        "input_bytes": 1798,
+        "payload_sha256": "aa111e393fb61ad07419d5002f5738ea07279ea5106eb4d49abe090b7182fa62"
+      },
+      "gemini.guard.write.examples.md": {
+        "expected_decision": "deny",
+        "input_bytes": 145,
+        "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7"
+      },
+      "gemini.guard.write.examples.py": {
+        "expected_decision": "deny",
+        "input_bytes": 145,
+        "payload_sha256": "bfe62a9573f2dcc7f90d31d60f4e7682ea9ba2c2857d47bd5641b53f61e757d6"
+      },
+      "gemini.guard.write.examples.test.py": {
+        "expected_decision": "deny",
+        "input_bytes": 150,
+        "payload_sha256": "24924416f87263c949c2199216850baafe98ac845191f3529848d4b7fc0d2679"
+      },
+      "gemini.guard.write.utf8-growth": {
+        "expected_decision": "deny",
+        "input_bytes": 36118,
+        "payload_sha256": "a673f543d7372483d7895b01139a2f468f4c3d4a98b3f035b7e242f172d85018"
+      },
+      "gemini.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "deny",
+        "input_bytes": 9045,
+        "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c"
+      },
+      "gemini.guard.writer.lines-120-segments-139": {
+        "expected_decision": "deny",
+        "input_bytes": 2516,
+        "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4"
+      }
+    },
+    "candidate": {
+      "codex.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 89,
+        "payload_sha256": "cbe545b88456ab2fc92055fffdfe79508c2c79e4ab445db235000a8ce8ca7e44"
+      },
+      "codex.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "45684d806ddfff218fc335e872d4bfed744a9c56031fff91157c172dbc98f75f"
+      },
+      "codex.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 123,
+        "payload_sha256": "1a645fed6d6f086df142eca6fc94ac7d609a73384319b4d17b137daf793eccc7"
+      },
+      "codex.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 126,
+        "payload_sha256": "d78df264d592d72bd692398050616322a0cb6c45c715e564da51e4095c917280"
+      },
+      "codex.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 98,
+        "payload_sha256": "7b1f6a6d94939ab0764c9344da82e10e2485e6489cf8f3f96b3d15290a6cf95d"
+      },
+      "codex.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 95,
+        "payload_sha256": "4d622b384e2e55b8334fb0049874bb8c791a66a78c13f563baf5da52813e940f"
+      },
+      "codex.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 163,
+        "payload_sha256": "d6790d957ca5070fba60013b4acd422dbbdf5cd390e4cd27fba54cd446545095"
+      },
+      "codex.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7"
+      },
+      "codex.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "a8746a8a369368797d697961f5069c31a6770e88a7bbc732a4e6b74dedda65ed"
+      },
+      "codex.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "d63425c0e5ba1ce26622a9fde38ae04f59c9d170bca6958724735f30ea177a63"
+      },
+      "codex.guard.danger.interpreter-sink": {
+        "expected_decision": "deny",
+        "input_bytes": 147,
+        "payload_sha256": "789bea0e0fc29d9b8667750bef91fb2a53aca01aee4547fea7cf87dcd87bad03"
+      },
+      "codex.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "82fcd16613392eed4dbc16fb02c2e0000f7e66c4a09d82d4e3ea3cd5ee7dced7"
+      },
+      "codex.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 87,
+        "payload_sha256": "406fccec15a472d92948ec9d05e12fd868f1f65a143d21af3240ec05684c1345"
+      },
+      "codex.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "09026c98494570c8b18bfe1f8fb05faf91ffe143166cc56e36a63bc1fce9042a"
+      },
+      "codex.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "e47d32aac568ce636b2b943b1af600316ae514aa561580b9598f5fcd8e006e6e"
+      },
+      "codex.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "56cb51961bbebb0d178393833fd637e290e152b5fbb490592ce77121798e4eda"
+      },
+      "codex.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 89,
+        "payload_sha256": "e01624749696eef8c92f4413848c47231ba3e747edabac424b6642e356aafec9"
+      },
+      "codex.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "33c7a611ccea4902e85331daa55db798e39fafa82a3d53d5ba5474a4256aaefe"
+      },
+      "codex.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 97,
+        "payload_sha256": "30e946cc260cd81de2dbadb0098a9a52956dbfe7c523479093c00471c6f8babe"
+      },
+      "codex.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 87,
+        "payload_sha256": "d1cc2524890ec2cdb409bec234df565cdf4bba3ca18ffab0053312e1a20fd0e0"
+      },
+      "codex.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "9d4ccc70b3cd01d31a104fdb45f6713103e17cbb7a2453ed935a377858d1daeb"
+      },
+      "codex.guard.danger.substitution": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "e3e9759b0ce02cb531dd03647689841415274abdb4c46157d812dbeaf7f45f3a"
+      },
+      "codex.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 99,
+        "payload_sha256": "9d653c09f17561c02939537b095008e47dff97bcaef0274c07c19117f0d16cfb"
+      },
+      "codex.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 156,
+        "payload_sha256": "27b64b01547559942939202de9694db994e5a6db00b22d99d078caacc53d4716"
+      },
+      "codex.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 125,
+        "payload_sha256": "52429d6e5cc61b83ba0da27fe7ed4d2cfa1b772c82bb66fe71befb0d371a45e8"
+      },
+      "codex.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 94,
+        "payload_sha256": "e619262bd13ff4a3de62e256c27f0d0ed274789c77f1c2441b00e0af51b699c7"
+      },
+      "codex.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2533,
+        "payload_sha256": "aef9daa7f2d1f6470efdd29e44bc4794801821b6a425397e9f0d0e903c10da35"
+      },
+      "codex.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2533,
+        "payload_sha256": "a8008b25ce0ab682d49da987398e5a531da2c037c81c5cffb9fdfdcb1dddd40d"
+      },
+      "codex.guard.edit.replacement": {
+        "expected_decision": "allow",
+        "input_bytes": 199,
+        "payload_sha256": "87ce6714b340417bccd9d648f977c16273d136d0f1d9990587d7503e8f310d2a"
+      },
+      "codex.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "codex.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "7983c6954eab55064554be0741f1c3539ca182f65c2899bef4f7e31c6dc6fcd7"
+      },
+      "codex.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24085,
+        "payload_sha256": "e2999286aecbec02ee7ac023b7d29a04f6af464cfd9caed23c58292194e0881b"
+      },
+      "codex.guard.patch.bytes-46899": {
+        "expected_decision": "allow",
+        "input_bytes": 47109,
+        "payload_sha256": "1c36ed84f02233efc25a513c97f63cff88335de47ec930efbc134620f9057549"
+      },
+      "codex.guard.patch.lines-124-segments-142": {
+        "expected_decision": "allow",
+        "input_bytes": 2611,
+        "payload_sha256": "d0c584f4b3b00d5c91253297771899b510588ad8a2043411a17f540d1b41d6eb"
+      },
+      "codex.guard.patch.lines-330": {
+        "expected_decision": "allow",
+        "input_bytes": 6363,
+        "payload_sha256": "4183c4fb47cc8b292748dcf24cb740aab8d933258ef9ebdc940d8bbf23acd132"
+      },
+      "codex.guard.search.literal": {
+        "expected_decision": "allow",
+        "input_bytes": 118,
+        "payload_sha256": "ce90a989d1e70ddf096d2e1309c906d40c9402da444835f9b5a914af0e89b678"
+      },
+      "codex.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 121,
+        "payload_sha256": "ffa1d3202fd969504c5b7f4a6a16a8fa61cfb88a229b213d2f668f44fa17091d"
+      },
+      "codex.guard.survey.analysis-source": {
+        "expected_decision": "allow",
+        "input_bytes": 247,
+        "payload_sha256": "47094b250c6ded22aebca4e69ebc602f9d87dfbeaf659610df8ffb41d53f84c8"
+      },
+      "codex.guard.survey.json-stdin": {
+        "expected_decision": "allow",
+        "input_bytes": 221,
+        "payload_sha256": "9fc6febca4c78ab16c55f25817f0a456ad207519fc68bd671f35925362b2c77a"
+      },
+      "codex.guard.survey.python-subprocess": {
+        "expected_decision": "allow",
+        "input_bytes": 390,
+        "payload_sha256": "2ddf8ebc39539d8b657abfd8667085b05d3d62433c3f5b48a0164e9fdc64d4aa"
+      },
+      "codex.guard.write.actual-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1830,
+        "payload_sha256": "90a5212bc89d450a3fc09e11cb43e1eba4eb9c9987e60cd6435c78993e1087d7"
+      },
+      "codex.guard.write.english-inflection": {
+        "expected_decision": "allow",
+        "input_bytes": 190,
+        "payload_sha256": "5c4cf7b00e2324ba60df8e795f841fb4e5353bbd977e67366caf0de653b40dcf"
+      },
+      "codex.guard.write.escaped-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1833,
+        "payload_sha256": "d3204f188670d48a6e7d7eb3af2bb001f415b26bfa104f71308fb3d67e8f8196"
+      },
+      "codex.guard.write.examples.md": {
+        "expected_decision": "allow",
+        "input_bytes": 180,
+        "payload_sha256": "a4b5b2abb07652c8a9d78f5c95df97efb8c3026b97494d51b71e37593286647c"
+      },
+      "codex.guard.write.examples.py": {
+        "expected_decision": "allow",
+        "input_bytes": 180,
+        "payload_sha256": "97a825359361e1e3422eb7741e71c45bc9b23fe400ea405561a701f2390dbdf3"
+      },
+      "codex.guard.write.examples.test.py": {
+        "expected_decision": "allow",
+        "input_bytes": 185,
+        "payload_sha256": "387507e3d8e21bbee9969d3e86455d94f9edb9ce4771004faeac5a01c9ebedfd"
+      },
+      "codex.guard.write.utf8-growth": {
+        "expected_decision": "allow",
+        "input_bytes": 36153,
+        "payload_sha256": "44be8cdbe3f8104391eeb17acd31191ca660045420782d178931da6eef23726d"
+      },
+      "codex.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "allow",
+        "input_bytes": 9032,
+        "payload_sha256": "0355b7aea5571b81120235494b1fd99529de7b901280f5078637c6130a6f0cbe"
+      },
+      "codex.guard.writer.lines-120-segments-139": {
+        "expected_decision": "allow",
+        "input_bytes": 2503,
+        "payload_sha256": "a3121ccda69efe19b857c27633a9ec7c2cec4acfff85e65b899106a328c85203"
+      },
+      "copilot.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 74,
+        "payload_sha256": "2774a83eeabf1c84091572cd738cc1575a6a001bf155f3195791ef318f0f9b76"
+      },
+      "copilot.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "1a4b5212108799da397e6f8e32bd78c38bcc75a6982e134bdd0db030e06ee0ca"
+      },
+      "copilot.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 120,
+        "payload_sha256": "19382b5017ac78ccff7e01719ecd14996553796272b9b3e2004a12bd8f9aa79d"
+      },
+      "copilot.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 123,
+        "payload_sha256": "2928766f0f7f522d1da612ee4670bfcb2b8a6b121988a5dc77af1ed65af54526"
+      },
+      "copilot.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 95,
+        "payload_sha256": "c2f83ba08de7aeff3cb668e5b0b647e7c33154c173821b45f0e66c4350a206fe"
+      },
+      "copilot.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 92,
+        "payload_sha256": "0fe26b01889287adc11b14c182d20adb305a992226f7f67b08e6a0d1427145f0"
+      },
+      "copilot.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 153,
+        "payload_sha256": "110d988636a2c4506cdd941d314018c7b8e52e5b51aa186bdba1f66f0af73ada"
+      },
+      "copilot.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 105,
+        "payload_sha256": "67c811039f305e8a9143d8da0d9a9515ad43ced1395b5e73467143a482f579fa"
+      },
+      "copilot.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 90,
+        "payload_sha256": "44be073a822b64fac4b34c1e1fe289afc5ba979c0a850c472209ad59ef7853a1"
+      },
+      "copilot.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "c7eaca36d4968512810ee566e4428782fd5dae0de69773be443f983bb1a3e0ed"
+      },
+      "copilot.guard.danger.interpreter-sink": {
+        "expected_decision": "deny",
+        "input_bytes": 144,
+        "payload_sha256": "d700d5b7af5fad7df5437d7170daf0e61df10eacbeaabac2c1aa5eb73acc2813"
+      },
+      "copilot.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 111,
+        "payload_sha256": "6e4073ced827ca40fac8ad26830d1a4fc48b46c7f5b68c85c6f4ba01aa491fe2"
+      },
+      "copilot.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 84,
+        "payload_sha256": "ae1ad003a5dfbf376876e66464835701fd30bc20fbad84847abdbd40e1a63946"
+      },
+      "copilot.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "3f6191aa995e61d33388eb9418883c69558606d8b55bcf3629cf4ccb6cb1f883"
+      },
+      "copilot.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "031e1c02143b12003d2e1850a4bd7416a5c393798f6009bbe75c10584e1df5f3"
+      },
+      "copilot.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "6c2e02a4b717a0cd46710f7c6c6097483ec57bed56d6ad03a286474426294170"
+      },
+      "copilot.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 86,
+        "payload_sha256": "61eb941c7ebc98ccabd0564c94446abe0bd6daf7ba0b01e59be113f4a5b6b856"
+      },
+      "copilot.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 85,
+        "payload_sha256": "4c35724dc29b505221c7d1b5ccb611e0c76b196b6f9c01831097a737e08e3b8e"
+      },
+      "copilot.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 94,
+        "payload_sha256": "167f58a3082c6c5806936b2ab618a939ed155bad8aef84df8d8b362369a2f2b5"
+      },
+      "copilot.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 84,
+        "payload_sha256": "83551a28823a196a01445ee777c3a76b6e112fcf07569e42f7b9728f70647379"
+      },
+      "copilot.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 88,
+        "payload_sha256": "418907243d7f89255b4d7a1e1d414886d126fdd2e150b4a436df0bca52be1c73"
+      },
+      "copilot.guard.danger.substitution": {
+        "expected_decision": "deny",
+        "input_bytes": 113,
+        "payload_sha256": "6c03118011abcf26b0ba37be80578b54c9e9016c53910258c3ef5e29912a04cb"
+      },
+      "copilot.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 96,
+        "payload_sha256": "99dace19eae70b79a27e6b4c928255ec479fef74661f2f4f5c85761b1d364dd5"
+      },
+      "copilot.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 153,
+        "payload_sha256": "a9a997bbb40c770db2fe64b6f43e9cc042fa8d55c950e3c811f069249eac46ab"
+      },
+      "copilot.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 122,
+        "payload_sha256": "a12ce435f00493a5f1b55e073107627d8562ab865dd175794adaa3221d065d8c"
+      },
+      "copilot.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 91,
+        "payload_sha256": "0e83724248ddcf0665f201cbf9391ee4a365dd95c705d3d898c46b2a9ce5b755"
+      },
+      "copilot.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2530,
+        "payload_sha256": "c823c5b4c8b7fb4cb3ee16d89101f733b16d63f723d43bf271988377a4989676"
+      },
+      "copilot.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2530,
+        "payload_sha256": "5f99dbe8e400e3f5e2db8a4df2cd2a8098706b371d6a468a944563bf5bd86425"
+      },
+      "copilot.guard.edit.replacement": {
+        "expected_decision": "allow",
+        "input_bytes": 153,
+        "payload_sha256": "61ab7a25e5945ac9a3de5027816c3ce0e41442105b2ac45def511423706fc445"
+      },
+      "copilot.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "copilot.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 93,
+        "payload_sha256": "7a0a6a8c344a0eb86cf8fe936eb7a77663c6d6e67abda629c39931113f3b06f6"
+      },
+      "copilot.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24070,
+        "payload_sha256": "914ab1099e853a23290bcdc81a5f83ea45354cc5fc5d5e2d2c558e915e619127"
+      },
+      "copilot.guard.patch.bytes-46899": {
+        "expected_decision": "allow",
+        "input_bytes": 47130,
+        "payload_sha256": "7a49e12b4f2e5f7796e107f6d8fbe8a55923712db38fe11e5a4ad99cd54adfea"
+      },
+      "copilot.guard.patch.lines-124-segments-142": {
+        "expected_decision": "allow",
+        "input_bytes": 2632,
+        "payload_sha256": "2f55c5938549d20ff1231f8eec1eba8d3792584d42adb3c618398299fc66b95b"
+      },
+      "copilot.guard.patch.lines-330": {
+        "expected_decision": "allow",
+        "input_bytes": 6384,
+        "payload_sha256": "592e7a0cf7ad134b4a3fd6248f4793d7fd67a18a70cab271a35146d73ec85f2e"
+      },
+      "copilot.guard.search.literal": {
+        "expected_decision": "allow",
+        "input_bytes": 116,
+        "payload_sha256": "8a7d7c81efa2e95a5251155a73e651f6a82cef19b4b839316ad76d84ec51df0a"
+      },
+      "copilot.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 118,
+        "payload_sha256": "a7e57e3ff0f0d62b6e461e2c0a91315d019e1c6ea174fe45859fcd0b4c2619f8"
+      },
+      "copilot.guard.survey.analysis-source": {
+        "expected_decision": "allow",
+        "input_bytes": 201,
+        "payload_sha256": "1ec61f9c2bfd161c3d68dcacf06b2916ddb40533aba1712823aef4360a00b37b"
+      },
+      "copilot.guard.survey.json-stdin": {
+        "expected_decision": "allow",
+        "input_bytes": 218,
+        "payload_sha256": "67920bbd31c9e82883d9a0b8624ef9d86b29b79e1f46f449e79a1b7af04f5063"
+      },
+      "copilot.guard.survey.python-subprocess": {
+        "expected_decision": "allow",
+        "input_bytes": 387,
+        "payload_sha256": "efeb8ac441de5762013b3141ca89d0e29d65986f506c31ac2257ba2376d432d3"
+      },
+      "copilot.guard.write.actual-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1648,
+        "payload_sha256": "18c0766b1e1d4f24734231462dc57622b1a036b8a2856d95e53377b5f730822a"
+      },
+      "copilot.guard.write.english-inflection": {
+        "expected_decision": "allow",
+        "input_bytes": 145,
+        "payload_sha256": "5a01eea224f62c23d36b96a7f9a3dee3b915bead906759c6b2102adb48f713e8"
+      },
+      "copilot.guard.write.escaped-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1788,
+        "payload_sha256": "908ba454567700c7908c1d03bd99501bb1c7846310266ff2fcc60d149385c4ad"
+      },
+      "copilot.guard.write.examples.md": {
+        "expected_decision": "allow",
+        "input_bytes": 135,
+        "payload_sha256": "7730efe2a70f1907562926af857a9b794217f951ab7a04af7b54c70899b57934"
+      },
+      "copilot.guard.write.examples.py": {
+        "expected_decision": "allow",
+        "input_bytes": 135,
+        "payload_sha256": "e6fbf3ee1acf16cb7d2504e24e64090a0dd8bf0438f7fb618055dc6a2efe1512"
+      },
+      "copilot.guard.write.examples.test.py": {
+        "expected_decision": "allow",
+        "input_bytes": 140,
+        "payload_sha256": "8b72fed102d0b2e5c7e968f42f39f8090946821f7a820b1356e65928e9726103"
+      },
+      "copilot.guard.write.utf8-growth": {
+        "expected_decision": "allow",
+        "input_bytes": 36108,
+        "payload_sha256": "c2eb002f88245adbe6e5f330f914592f04cf98932346f10786b819f0f5d7b9cd"
+      },
+      "copilot.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "allow",
+        "input_bytes": 9029,
+        "payload_sha256": "bfe305d3b43719b1892a5e0ab84892eae667544d25c477531009c0b3599b1443"
+      },
+      "copilot.guard.writer.lines-120-segments-139": {
+        "expected_decision": "allow",
+        "input_bytes": 2500,
+        "payload_sha256": "b629047c59a5c3cccaa37d395356fe7c4d51ff65d10b2e1935283a5216f44821"
+      },
+      "gemini.guard.clean": {
+        "expected_decision": "allow",
+        "input_bytes": 102,
+        "payload_sha256": "2b5bb42462db453785d4571182e5d32c0ad0ca22194fcb4821c4e4b702dfba72"
+      },
+      "gemini.guard.danger.delete_without_where": {
+        "expected_decision": "deny",
+        "input_bytes": 109,
+        "payload_sha256": "808f3f8032645cf9d330556a69f5c87ebf97cbf5104bf9abf307d09bc925a13c"
+      },
+      "gemini.guard.danger.download_execute_bash": {
+        "expected_decision": "deny",
+        "input_bytes": 136,
+        "payload_sha256": "0883441298e1a8d87983f5be8dba7e730166fc7219943eafaab6c8fdaad899f7"
+      },
+      "gemini.guard.danger.download_execute_sh": {
+        "expected_decision": "deny",
+        "input_bytes": 139,
+        "payload_sha256": "0a84824d3b6eeaddeca07257f0663641a94b5410866f840c4ab8accf99dabc6a"
+      },
+      "gemini.guard.danger.drop_database": {
+        "expected_decision": "deny",
+        "input_bytes": 111,
+        "payload_sha256": "0c5bea5d8765c1f953f5e6de3c5111b2633183c40e3883da4dba4c31cbc20958"
+      },
+      "gemini.guard.danger.drop_table": {
+        "expected_decision": "deny",
+        "input_bytes": 108,
+        "payload_sha256": "2e6b07698747f91844c9be5b2006206f24d03ffe41fba5eb91c77ef3295a614e"
+      },
+      "gemini.guard.danger.extra-field": {
+        "expected_decision": "deny",
+        "input_bytes": 163,
+        "payload_sha256": "4dfe6eee285dd0c2b469a4e251440c07d76adc0ead6d0e2bec9879e0ee6033b6"
+      },
+      "gemini.guard.danger.force_push_protected_branch": {
+        "expected_decision": "deny",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b"
+      },
+      "gemini.guard.danger.forced_git_clean": {
+        "expected_decision": "deny",
+        "input_bytes": 106,
+        "payload_sha256": "ac4e2f0f295f0dda5a287f8945b10d35bd5e9f4219dc4ee4141c226271a20413"
+      },
+      "gemini.guard.danger.hard_reset": {
+        "expected_decision": "deny",
+        "input_bytes": 109,
+        "payload_sha256": "ec2fc525b428084436959c1fa020339bb70ad479f3faf778dd1b9533bb1c9718"
+      },
+      "gemini.guard.danger.interpreter-sink": {
+        "expected_decision": "deny",
+        "input_bytes": 160,
+        "payload_sha256": "341ca3645de4c1ca10c049c01edf262b626b2df522bcf34f3ed92f16cb615c17"
+      },
+      "gemini.guard.danger.malformed-schema": {
+        "expected_decision": "deny",
+        "input_bytes": 116,
+        "payload_sha256": "29fd4cb1973d8b9bb13a976c43a25dfaf1b57a69591760664fd18b0e655a75ab"
+      },
+      "gemini.guard.danger.privileged_command": {
+        "expected_decision": "deny",
+        "input_bytes": 100,
+        "payload_sha256": "9c2348b2314ee3ed7d8c84890f7e7deabfc868a5c8eccbbae612d85f9f25590a"
+      },
+      "gemini.guard.danger.publish_package": {
+        "expected_decision": "deny",
+        "input_bytes": 104,
+        "payload_sha256": "bb9d064f00d37df5d6c2e22345f71c320d425d5894e37d0b31542d3165240890"
+      },
+      "gemini.guard.danger.recursive_remove_current": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "6885775c1c3f951a9e6126af62f072098894509802dda3a3a2cd7ea94d2ae778"
+      },
+      "gemini.guard.danger.recursive_remove_home": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "b1ed4655ba05882eefc84e26d0e93daed8a4424515938f948fd2396472d8754a"
+      },
+      "gemini.guard.danger.recursive_remove_parent": {
+        "expected_decision": "deny",
+        "input_bytes": 102,
+        "payload_sha256": "f226eae36007623eaa5b52d37e17a5eeef0a422f86a7ff8202f7639aeb22147f"
+      },
+      "gemini.guard.danger.recursive_remove_root": {
+        "expected_decision": "deny",
+        "input_bytes": 101,
+        "payload_sha256": "e19fc455cd86e1f6fd58e51a72b6a956fe981be250993634138ae6ec47838484"
+      },
+      "gemini.guard.danger.recursive_world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 110,
+        "payload_sha256": "39b4cc8955942131bc332fe291afc82686c8688addeca5bf5a57504cac09f0c9"
+      },
+      "gemini.guard.danger.remove_env_file": {
+        "expected_decision": "deny",
+        "input_bytes": 100,
+        "payload_sha256": "242e78c25d9788dbf752bc8c907fa566d336acc47d58479a222e85262531abfd"
+      },
+      "gemini.guard.danger.remove_git_metadata": {
+        "expected_decision": "deny",
+        "input_bytes": 104,
+        "payload_sha256": "da1cb53cc315be8ad06ebbc743361db283b944af66fc912e050e4b8f044f6938"
+      },
+      "gemini.guard.danger.substitution": {
+        "expected_decision": "deny",
+        "input_bytes": 129,
+        "payload_sha256": "53c574cb2eadf623a8532227f43dc67b38c6cb4701ddbcc55f3cbd6c619f0f8d"
+      },
+      "gemini.guard.danger.truncate_table": {
+        "expected_decision": "deny",
+        "input_bytes": 112,
+        "payload_sha256": "50bf6787f3db25cb460808827a7e1e2f2c2364a5a86f5bc092c81d5777ae83bd"
+      },
+      "gemini.guard.danger.unicode-normalization": {
+        "expected_decision": "deny",
+        "input_bytes": 169,
+        "payload_sha256": "a79f9f6e6a4bc6d9fa25e56f3bf5a0d08ef71b370eee4753244333172a2e61ac"
+      },
+      "gemini.guard.danger.upload_local_data": {
+        "expected_decision": "deny",
+        "input_bytes": 138,
+        "payload_sha256": "6f2101d57eebb0eee4754c02226506db11b7a8e631be44d39c0193666472b2ec"
+      },
+      "gemini.guard.danger.world_writable": {
+        "expected_decision": "deny",
+        "input_bytes": 107,
+        "payload_sha256": "5eaddda0e791d9935ab077244c4323daac44dc4e21da6398cc94238acdbdda46"
+      },
+      "gemini.guard.danger.writer-after": {
+        "expected_decision": "deny",
+        "input_bytes": 2546,
+        "payload_sha256": "319ca4cb4cd008da9e95d71209bf49bcf59b4fbf775ffb9ff00f45addb454915"
+      },
+      "gemini.guard.danger.writer-before": {
+        "expected_decision": "deny",
+        "input_bytes": 2546,
+        "payload_sha256": "1e40b7a60d0338df444d86ab2f3ee789f09cda76421470c9840a3ba4b950a018"
+      },
+      "gemini.guard.edit.replacement": {
+        "expected_decision": "allow",
+        "input_bytes": 241,
+        "payload_sha256": "b24dcd367836654f945f54ca624f2cb48744bf2a045649e5857ed38240a945a4"
+      },
+      "gemini.guard.failure": {
+        "expected_decision": "deny",
+        "input_bytes": 15,
+        "payload_sha256": "13835378e9f21c35ee1c89898a92889b30456d12252995f663410c3e12281e78"
+      },
+      "gemini.guard.finding": {
+        "expected_decision": "deny",
+        "input_bytes": 121,
+        "payload_sha256": "a7857519f5515189476a1ca98f057c10b34c5b4737830e14e2dca8e4fc06251b"
+      },
+      "gemini.guard.large": {
+        "expected_decision": "allow",
+        "input_bytes": 24098,
+        "payload_sha256": "ba6fbd519ddb1819878ccecbcb9670cd1b484c7fc0fe806eccd3ab1fa97f626b"
+      },
+      "gemini.guard.patch.bytes-46899": {
+        "expected_decision": "allow",
+        "input_bytes": 47140,
+        "payload_sha256": "484488e93b81ae220243dce427d0962c9c150f4ec85541e4993bac8c1cb31cb3"
+      },
+      "gemini.guard.patch.lines-124-segments-142": {
+        "expected_decision": "allow",
+        "input_bytes": 2642,
+        "payload_sha256": "c0d528290f5183f9d35658b638a060b0c5ee8f34821766ed0d8a1f8b5f8adb2e"
+      },
+      "gemini.guard.patch.lines-330": {
+        "expected_decision": "allow",
+        "input_bytes": 6394,
+        "payload_sha256": "1d50b7f58ab9f915f13d58ff3f529be553a15f2c76b8f0a6a0821b636dbfa9e4"
+      },
+      "gemini.guard.search.literal": {
+        "expected_decision": "allow",
+        "input_bytes": 126,
+        "payload_sha256": "60d4747bb84116439c6231fe9bcf0f83189ba9ab4b033409a509ad5f46278fc6"
+      },
+      "gemini.guard.search.shell-literal": {
+        "expected_decision": "allow",
+        "input_bytes": 134,
+        "payload_sha256": "e7e577962679e96057e9dd05129311edf7be36867e73ccfed3269f806bdd01c9"
+      },
+      "gemini.guard.survey.analysis-source": {
+        "expected_decision": "allow",
+        "input_bytes": 211,
+        "payload_sha256": "827a53251f869af46f519dcf85960d1780f984148562ee50301792a14880b773"
+      },
+      "gemini.guard.survey.json-stdin": {
+        "expected_decision": "allow",
+        "input_bytes": 234,
+        "payload_sha256": "6dd0e273c236379ccfc2bbd68ebb4bdddd462c55aca4dc769e147abc81ca3aaf"
+      },
+      "gemini.guard.survey.python-subprocess": {
+        "expected_decision": "allow",
+        "input_bytes": 403,
+        "payload_sha256": "b19502291fbc02a33c5923581dd910da9a5d9f64a95bc5bcdd7b8f77d549fd21"
+      },
+      "gemini.guard.write.actual-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1658,
+        "payload_sha256": "944a95a3095df9f9ae83186aff478cd9a37f8b17f30a55967c22cebda9691692"
+      },
+      "gemini.guard.write.english-inflection": {
+        "expected_decision": "allow",
+        "input_bytes": 155,
+        "payload_sha256": "f74dc982caacebf8acde0bbcbdaddacf47a6ffd052f120598241a1da4ddeb6f5"
+      },
+      "gemini.guard.write.escaped-newlines": {
+        "expected_decision": "allow",
+        "input_bytes": 1798,
+        "payload_sha256": "aa111e393fb61ad07419d5002f5738ea07279ea5106eb4d49abe090b7182fa62"
+      },
+      "gemini.guard.write.examples.md": {
+        "expected_decision": "allow",
+        "input_bytes": 145,
+        "payload_sha256": "8dfb7cbf7a61c8bb545c6f56b4478bfb3170bc1f7289cf07577acaed7b7b36b7"
+      },
+      "gemini.guard.write.examples.py": {
+        "expected_decision": "allow",
+        "input_bytes": 145,
+        "payload_sha256": "bfe62a9573f2dcc7f90d31d60f4e7682ea9ba2c2857d47bd5641b53f61e757d6"
+      },
+      "gemini.guard.write.examples.test.py": {
+        "expected_decision": "allow",
+        "input_bytes": 150,
+        "payload_sha256": "24924416f87263c949c2199216850baafe98ac845191f3529848d4b7fc0d2679"
+      },
+      "gemini.guard.write.utf8-growth": {
+        "expected_decision": "allow",
+        "input_bytes": 36118,
+        "payload_sha256": "a673f543d7372483d7895b01139a2f468f4c3d4a98b3f035b7e242f172d85018"
+      },
+      "gemini.guard.writer.chars-8787-segments-183": {
+        "expected_decision": "allow",
+        "input_bytes": 9045,
+        "payload_sha256": "1f9aa8c5ca0b1ad8ceff70cb47126141acec453b7eaed00c05b651289c88586c"
+      },
+      "gemini.guard.writer.lines-120-segments-139": {
+        "expected_decision": "allow",
+        "input_bytes": 2516,
+        "payload_sha256": "02ff89550c8674be68e49530e15d0a46af33aa653f9abdb8e348a447d360f0c4"
+      }
+    }
+  },
+  "roots": {
+    "accepted_runtime": "/private/tmp/tool-guardian-profile-candidate",
+    "baseline": "/private/tmp/tool-guardian-baseline",
+    "candidate": "/private/tmp/tool-guardian-review-candidate-2",
+    "checkpoint": "/private/tmp/tool-guardian-profile-checkpoint",
+    "source": "/Users/adam/.codex/worktrees/e61c/skills"
+  },
+  "state_after": {
+    "checkpoint_scripts": {
+      "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+      "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+      "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+    },
+    "drivers": {
+      "review-repair-cold-driver.txt": "ef18bf8408e7155152d48075ae90d44ec0d1e2977341163a6d841f488570e8d7",
+      "review-repair-common-driver.txt": "d8bf2c10cfbc237ce3980b93ebbfbbf349be4bc465e70f8e7af5939ed36cdda0",
+      "review-repair-comparison-driver.txt": "2a13c642c17ab7bc0ab49c331e7bcf42b077023e4c93d4262688ba475fc23b14",
+      "review-repair-concurrency-driver.txt": "f914b7a8ba10d0412f4664c608773df8fb31a4b51556872f21b5854b91d5cb75",
+      "review-repair-freeze-driver.txt": "cf5d8c2aff154f42acc2cc9b159227eaf5f95301f8d297a48652d421c96b4e8f",
+      "review-repair-resources-driver.txt": "446bc8312255ac44d5da3eabc5c652bcc2427f39fbc435c7faf6f7ffcf4063bd",
+      "review-repair-warm-driver.txt": "0c597f4d37dabdf5e80e13ff2f8e598291fdc188550ca246b3483ab6eeb7079e"
+    },
+    "roots": {
+      "accepted_runtime": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "225c7fda974b96379565d2576d700183c8b7c4fbd8fd4020c9a27560d6e6263b",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      },
+      "baseline": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "8f7f00e0914f0dbb6029bf8ddea89bf0da95d36a42393c232d13e5bd60b96269",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "2c0305db9fe24f3fa3cc786168f2215e2c1d63063f756195882b7cfd5f151a78",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "50ee0409772654054af7b53372a526dde181db16280de692ebacba7e82d621f9",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "7564ecc060d301dc43023f65d1cedf85ea1c1d2c1d5b9452570358c084da1a40"
+      },
+      "candidate": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "0e76a52ebcd1a96bb423693d48918e75557a53ba6f9f780ae34b35a4419257b0",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      },
+      "checkpoint": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "9bbb49bde9763b412fea51889b5e79c1eda75c9c0cb80ec1bbf44c21f8c97c47",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      },
+      "source": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "0e76a52ebcd1a96bb423693d48918e75557a53ba6f9f780ae34b35a4419257b0",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      }
+    }
+  },
+  "state_before": {
+    "checkpoint_scripts": {
+      "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+      "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+      "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+    },
+    "drivers": {
+      "review-repair-cold-driver.txt": "ef18bf8408e7155152d48075ae90d44ec0d1e2977341163a6d841f488570e8d7",
+      "review-repair-common-driver.txt": "d8bf2c10cfbc237ce3980b93ebbfbbf349be4bc465e70f8e7af5939ed36cdda0",
+      "review-repair-comparison-driver.txt": "2a13c642c17ab7bc0ab49c331e7bcf42b077023e4c93d4262688ba475fc23b14",
+      "review-repair-concurrency-driver.txt": "f914b7a8ba10d0412f4664c608773df8fb31a4b51556872f21b5854b91d5cb75",
+      "review-repair-freeze-driver.txt": "cf5d8c2aff154f42acc2cc9b159227eaf5f95301f8d297a48652d421c96b4e8f",
+      "review-repair-resources-driver.txt": "446bc8312255ac44d5da3eabc5c652bcc2427f39fbc435c7faf6f7ffcf4063bd",
+      "review-repair-warm-driver.txt": "0c597f4d37dabdf5e80e13ff2f8e598291fdc188550ca246b3483ab6eeb7079e"
+    },
+    "roots": {
+      "accepted_runtime": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "afc454c8da55a17a6560adde8c24613e57e92b712e19d699c817afd98ad4d87c",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "225c7fda974b96379565d2576d700183c8b7c4fbd8fd4020c9a27560d6e6263b",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      },
+      "baseline": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "8f7f00e0914f0dbb6029bf8ddea89bf0da95d36a42393c232d13e5bd60b96269",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "4dcd1602f64f468dd433007c7db6e64f4a690d284b30ff901a7ca5a83ed2b953",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "2c0305db9fe24f3fa3cc786168f2215e2c1d63063f756195882b7cfd5f151a78",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "50ee0409772654054af7b53372a526dde181db16280de692ebacba7e82d621f9",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "7564ecc060d301dc43023f65d1cedf85ea1c1d2c1d5b9452570358c084da1a40"
+      },
+      "checkpoint": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "ef7e32bb8ea5f7e274dcc9ac3c543d26c06edbdfa985f4a410cd25400100bba6",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "9bbb49bde9763b412fea51889b5e79c1eda75c9c0cb80ec1bbf44c21f8c97c47",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      },
+      "source": {
+        ".codex/hooks/helpers/audit.py": "7d1a0686c036a1664f0e55739f37b3e3e444d600f1c84028d3733368026b2d10",
+        ".codex/hooks/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".codex/hooks/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".codex/hooks/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+        ".codex/hooks/repository-okf.py": "5b2c12e682b5e1ea7d0e4fe988cb3eb42a0917674a3b6752b5a979bde194f2dc",
+        ".codex/hooks/scan-secrets.py": "55fd861931502ee1c2bee8e9011522e8bcfd9d0c4b410a7a3c665c416129b228",
+        ".codex/hooks/tool-guard.py": "d51f25f5164d24be0f5d6019e56a4d12db0a8807da0889d4a8aaa3838af0afe7",
+        ".copilot/hooks/scripts/bell.py": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+        ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+        ".copilot/hooks/scripts/helpers/audit.py": "eadd9ca7ea7754c73bd06ef95bb6abaf8122f2f7c42ad78d5e6440b4e20937f2",
+        ".copilot/hooks/scripts/helpers/common.py": "d88063d442a616b8decd80315ac39a32b1a09f39661e3f46291924d66f61cd42",
+        ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+        ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".copilot/hooks/scripts/load-required-skills.py": "1b36aeb5a1fc31dc2ac7cb890178303b0f6d2bc8d38820dcfa0aa3089e7940ec",
+        ".copilot/hooks/scripts/rtk-hook-copilot.py": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+        ".copilot/hooks/scripts/scan-secrets.py": "575921de20a6d6cd2f9a28b1068af7d64cf66da7af7d1d925af11dbeca9f2d4e",
+        ".copilot/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".copilot/hooks/scripts/tool-guard.py": "36e907c23ecaba98837eec7546c2611b08ec4d522b06e15459ff5440efc795e7",
+        ".gemini/hooks/scripts/auto-ingest.py": "b2386b03e86a8c5ce5b0206bd11b9dbd04d074d5fe99c570193f230a24b88b91",
+        ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+        ".gemini/hooks/scripts/helpers/audit.py": "d75f846aa7e186d16b091cecfbb01daf0e60f7de72cab48f69c77d458121c5f4",
+        ".gemini/hooks/scripts/helpers/common.py": "bf98ac68440213a7cb2467ce0cdca0eedfa92be25b3c4be98b06318a3ab39680",
+        ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+        ".gemini/hooks/scripts/helpers/okf_audit.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+        ".gemini/hooks/scripts/helpers/source_ingest.py": "f06d8823dc430348768a74738417bf3c0b539b61f13bf4f048d6da26de32b764",
+        ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "3e56614196ecdec16a08a2618fc6b46ccede727fc7378b561d61c47c701dd4ed",
+        ".gemini/hooks/scripts/inject-auto-ingest-context.py": "365e4e5a0230a8fb2b553fdd5c702d660b5bf3a28b3427d99a72955252f645d0",
+        ".gemini/hooks/scripts/lint-okf.py": "d4e4a50cf1c72abb28c71db7537be1a6cfe20557db4e772dce73e3e7ec68f254",
+        ".gemini/hooks/scripts/rtk-hook-gemini.py": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+        ".gemini/hooks/scripts/scan-secrets.py": "601ab7da9bc62feeb60941f26b54778d3fa918c31119ef25611418b8b3c9b1cb",
+        ".gemini/hooks/scripts/send-event.py": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+        ".gemini/hooks/scripts/skill-context-injector.py": "5627e26112be6b735430a7f5940f4a32bdb11ed898c66d9eb96c3966379e7207",
+        ".gemini/hooks/scripts/tool-guard.py": "c4c2f40a2049feaabb3e02576365f536684c82f94da30ecfa1d3bdc3f9397bc5",
+        "hooks/families/tool_guard.py": "0e76a52ebcd1a96bb423693d48918e75557a53ba6f9f780ae34b35a4419257b0",
+        "hooks/manifest.py": "8af8b1cbd120e22dbb277e542ce6355ed1d9c2c80813e5a5e2d4947c61efcf68",
+        "scripts/benchmark-high-rate-hooks.py": "a5bb4ff2db82dda16f635460bce1324cbb4f0f6ef4369c1e8c9709e34816b89a",
+        "scripts/benchmark-tool-guard-resources.py": "fcd24f0aad831db6369e14afef239e492e3599dbfb3deb4c2f0bb071bfc3d162",
+        "scripts/tool_guard_corpus.py": "f8d28a89d2a1b764900baa48d66b0c4314859c8e33990f70088506c38d89a20e"
+      }
+    }
+  }
+}

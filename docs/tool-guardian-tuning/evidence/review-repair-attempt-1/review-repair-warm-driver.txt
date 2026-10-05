@@ -1,0 +1,56 @@
+# Adapted from cold-profile-root-warm-driver.txt. Run only after root GO.
+import runpy
+from pathlib import Path
+import threading
+
+globals().update(runpy.run_path(str(Path(__file__).with_name('review-repair-common-driver.txt'))))
+frozen, roots = configured()
+before = state(roots)
+manifest = {'method': 'full fixed147 maintained Case/main/invoke/verify_outcome; B/C/C/B25samples3warmups',
+            'environment': environment(), 'identity': frozen['identity'],
+            'state_before': before, 'payloads': payloads(roots), 'runs': []}
+original_invoke = runner.invoke
+for order, behavior in enumerate(('baseline', 'candidate', 'candidate', 'baseline'), 1):
+    observed = []
+    latest_sequential_logs = {}
+    concurrent_calls = {}
+    def retaining_invoke(case, repo, home, timeout=15.0):
+        sequential = threading.current_thread() is threading.main_thread()
+        prior_log = log_snapshot(case, home) if sequential else None
+        elapsed, status, output = original_invoke(case, repo, home, timeout)
+        item = {'case': case.name, 'home': str(home), 'concurrent': not sequential,
+                **observation(case, elapsed, status, output)}
+        observed.append(item)
+        if sequential:
+            after_log = log_snapshot(case, home)
+            item['logging'] = log_evidence(case, prior_log, after_log)
+            latest_sequential_logs[case.name] = after_log
+            verify_logging(item['logging'])
+        else:
+            concurrent_calls.setdefault(case.name, []).append((case, home))
+        return elapsed, status, output
+    runner.invoke = retaining_invoke
+    path = evidence / f'review-repair-warm-{order}-{behavior}.json'
+    sys.argv = [str(runner_path), '--guard-only', '--script-root', str(roots[behavior]),
+                '--expected-behavior', behavior, '--samples', '25', '--warmups', '3', '--output', str(path)]
+    row = {'order': order, 'behavior': behavior, 'started_unix': time.time()}
+    try:
+        row['exit_code'] = runner.main()
+        assert row['exit_code'] == 0
+        row['report_sha256'] = sha(path)
+        row['concurrency_logging'] = []
+        for name, calls in concurrent_calls.items():
+            case, home = calls[0]
+            record = log_evidence(case, latest_sequential_logs[name], log_snapshot(case, home), len(calls))
+            row['concurrency_logging'].append({'case': name, 'completed_calls': len(calls), 'logging': record})
+            verify_logging(record)
+    finally:
+        row['completed_unix'] = time.time()
+        row['observations'] = observed
+        manifest['runs'].append(row)
+        manifest['state_after'] = state(roots)
+        manifest['sources_unchanged'] = before == manifest['state_after']
+        write('review-repair-warm-manifest.json', manifest)
+    assert manifest['sources_unchanged']
+    print('Warm report complete:', order, behavior, flush=True)
+runner.invoke = original_invoke

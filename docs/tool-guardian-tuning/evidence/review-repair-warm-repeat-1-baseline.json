@@ -1,0 +1,82 @@
+{
+  "concurrency": [],
+  "environment": {
+    "git": "git version 2.54.0 (Apple Git-157)",
+    "guard_mode": "block; inherited skip and allowlist removed",
+    "logging": "same disposable provider-specific log home reused for each case",
+    "machine": "arm64",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3",
+    "rtk": "rtk 0.51.0"
+  },
+  "method": {
+    "cold_definition": "first process for each case with a fresh disposable log home; OS file cache is not cleared",
+    "concurrency": 4,
+    "expected_behavior": "baseline",
+    "guard_only": true,
+    "samples": 25,
+    "script_root": "/private/tmp/tool-guardian-baseline",
+    "warm_definition": "sequential subprocess calls after discarded warmups using the same log home",
+    "warmups": 3
+  },
+  "results": [
+    {
+      "actual_decision": "deny",
+      "case": "gemini.guard.patch.bytes-46899",
+      "cold_ms": 27.913,
+      "exit_code": 0,
+      "expected_decision": "deny",
+      "first_output": {
+        "decision": "deny",
+        "reason": "Tool Guardian blocked write_file. input_limits/critical [structured_bytes]: write_file.content: 46916 bytes exceeds limit 32768 bytes. Action: command omitted."
+      },
+      "first_run_ms": 27.913041,
+      "fixture": {
+        "category": "native-patch",
+        "input_characters": 46899,
+        "input_string_bytes": 46899,
+        "naive_segments": 124,
+        "pair": "danger.force_push_protected_branch",
+        "physical_lines": 124,
+        "source": "codex guardian log line 348: sanitized 46899-byte patch"
+      },
+      "input_bytes": 47140,
+      "sample_count": 25,
+      "samples_ms": [
+        27.273167,
+        27.088625,
+        27.092583,
+        27.229333,
+        27.367709,
+        27.014583,
+        27.066458,
+        26.8665,
+        26.988625,
+        26.973291,
+        27.212958,
+        27.158709,
+        27.131417,
+        27.253208,
+        26.888417,
+        26.513458,
+        27.289416,
+        27.20425,
+        27.050375,
+        26.941209,
+        26.873,
+        27.046083,
+        26.838666,
+        26.775458,
+        27.124958
+      ],
+      "warm": {
+        "mad_ms": 0.138,
+        "max_ms": 27.368,
+        "median_ms": 27.066,
+        "min_ms": 26.513,
+        "p95_ms": 27.289
+      }
+    }
+  ]
+}

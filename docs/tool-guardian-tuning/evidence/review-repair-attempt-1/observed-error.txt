@@ -1,0 +1,14 @@
+Initial warm command exited 1 after its first baseline report completed.
+Traceback (most recent call last):
+  File "/private/tmp/tool-guardian-review-validation/docs/tool-guardian-tuning/evidence/review-repair-warm-driver.txt", line 46, in <module>
+    verify_logging(record)
+    ~~~~~~~~~~~~~~^^^^^^^^
+  File "/private/tmp/tool-guardian-review-validation/docs/tool-guardian-tuning/evidence/review-repair-common-driver.txt", line 120, in verify_logging
+    assert record['required_logging_met'], 'required guardian log write missing or changed log contract'
+           ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: required guardian log write missing or changed log contract
+
+The maintained runner.main cleaned its TemporaryDirectory before the external
+driver's completed-concurrency logging snapshot. All logs were then absent.
+This is an external-driver lifetime failure, not a runtime logging failure or a
+latency acceptance result. No candidate condition or later phase was run.

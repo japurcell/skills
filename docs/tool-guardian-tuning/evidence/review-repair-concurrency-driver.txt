@@ -1,0 +1,54 @@
+# Adapted from cold-profile-concurrency-repeat-driver.txt. Run after root GO.
+import concurrent.futures
+import runpy
+from pathlib import Path
+import tempfile
+
+globals().update(runpy.run_path(str(Path(__file__).with_name('review-repair-common-driver.txt'))))
+frozen, roots = configured()
+before = state(roots)
+report = {'method': 'maintained Case/invoke/verify_outcome; B/C/C/B;25 four-worker batches after3 warmups perprovider/condition',
+          'identity': frozen['identity'], 'environment': environment(), 'state_before': before, 'results': []}
+with tempfile.TemporaryDirectory(prefix='guardian-review-concurrency-') as temporary:
+    base = Path(temporary)
+    repo = base / 'repo'
+    runner.make_repo(repo, 'clean')
+    for order, behavior in enumerate(('baseline', 'candidate', 'candidate', 'baseline'), 1):
+        cases = [case for case in runner.guard_cases(roots[behavior], behavior)
+                 if case.name in {'copilot.guard.clean', 'gemini.guard.clean', 'codex.guard.clean'}]
+        for case in cases:
+            home = base / f'{order}-{case.name}'
+            home.mkdir()
+            row = {'order': order, 'behavior': behavior, 'case': case.name, 'workers': 4,
+                   'payload_sha256': hashlib.sha256(case.payload).hexdigest(),
+                   'calls': [], 'warmups': [], 'batches_ms': [], 'individual_ms': [], 'batch_logging': []}
+            report['results'].append(row)
+            for index in range(28):
+                prior_log = log_snapshot(case, home)
+                start = time.perf_counter_ns()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+                    values = list(pool.map(lambda _: runner.invoke(case, repo, home), range(4)))
+                elapsed = (time.perf_counter_ns() - start) / 1_000_000
+                logging = log_evidence(case, prior_log, log_snapshot(case, home), 4)
+                row['batch_logging'].append({'index': index, 'batch_elapsed_ms': elapsed, 'logging': logging})
+                calls = [observation(case, *value) for value in values]
+                row['warmups' if index < 3 else 'calls'].append(calls)
+                try:
+                    for _, status, output in values:
+                        runner.verify_outcome(case, status, output)
+                    verify_logging(logging)
+                except Exception as error:
+                    row['verification_failure'] = str(error)
+                    write('review-repair-concurrency.json', report)
+                    raise
+                if index >= 3:
+                    row['batches_ms'].append(elapsed)
+                    row['individual_ms'].extend(value[0] for value in values)
+            row['batch_summary'] = runner.summary(row['batches_ms'])
+            row['individual_summary'] = runner.summary(row['individual_ms'])
+            write('review-repair-concurrency.json', report)
+        print('Concurrency condition complete:', order, behavior, flush=True)
+report['state_after'] = state(roots)
+assert before == report['state_after']
+report['sources_unchanged'] = True
+write('review-repair-concurrency.json', report)

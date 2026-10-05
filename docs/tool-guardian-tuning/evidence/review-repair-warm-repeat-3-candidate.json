@@ -1,0 +1,81 @@
+{
+  "concurrency": [],
+  "environment": {
+    "git": "git version 2.54.0 (Apple Git-157)",
+    "guard_mode": "block; inherited skip and allowlist removed",
+    "logging": "same disposable provider-specific log home reused for each case",
+    "machine": "arm64",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3",
+    "rtk": "rtk 0.51.0"
+  },
+  "method": {
+    "cold_definition": "first process for each case with a fresh disposable log home; OS file cache is not cleared",
+    "concurrency": 4,
+    "expected_behavior": "candidate",
+    "guard_only": true,
+    "samples": 25,
+    "script_root": "/private/tmp/tool-guardian-review-candidate-2",
+    "warm_definition": "sequential subprocess calls after discarded warmups using the same log home",
+    "warmups": 3
+  },
+  "results": [
+    {
+      "actual_decision": "allow",
+      "case": "gemini.guard.patch.bytes-46899",
+      "cold_ms": 22.681,
+      "exit_code": 0,
+      "expected_decision": "allow",
+      "first_output": {
+        "decision": "allow"
+      },
+      "first_run_ms": 22.68075,
+      "fixture": {
+        "category": "native-patch",
+        "input_characters": 46899,
+        "input_string_bytes": 46899,
+        "naive_segments": 124,
+        "pair": "danger.force_push_protected_branch",
+        "physical_lines": 124,
+        "source": "codex guardian log line 348: sanitized 46899-byte patch"
+      },
+      "input_bytes": 47140,
+      "sample_count": 25,
+      "samples_ms": [
+        21.466458,
+        21.509541,
+        21.365833,
+        21.688833,
+        21.639333,
+        21.353042,
+        21.390625,
+        21.49675,
+        22.324708,
+        21.689084,
+        21.417583,
+        21.601,
+        21.565875,
+        21.366875,
+        21.3905,
+        21.561375,
+        21.424792,
+        21.560084,
+        21.440083,
+        21.3505,
+        21.328917,
+        21.455,
+        21.187792,
+        21.262042,
+        21.325875
+      ],
+      "warm": {
+        "mad_ms": 0.09,
+        "max_ms": 22.325,
+        "median_ms": 21.44,
+        "min_ms": 21.188,
+        "p95_ms": 21.689
+      }
+    }
+  ]
+}

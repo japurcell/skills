@@ -1,0 +1,116 @@
+# Pure report verification/comparison; run after all authorized measurement stages.
+import runpy
+from pathlib import Path
+import statistics
+
+globals().update(runpy.run_path(str(Path(__file__).with_name('review-repair-common-driver.txt'))))
+frozen, roots = configured()
+report_hashes = {}
+def read(name):
+    path = evidence / name
+    report_hashes[name] = sha(path)
+    return json.loads(path.read_text())
+warm_manifest = read('review-repair-warm-manifest.json')
+warm = [read(f'review-repair-warm-{order}-{behavior}.json')
+        for order, behavior in enumerate(('baseline', 'candidate', 'candidate', 'baseline'), 1)]
+for index, document in enumerate(warm):
+    assert len(document['results']) == 147
+    assert len(warm_manifest['runs'][index]['observations']) == 147 * 29 + 12
+    assert warm_manifest['runs'][index]['report_sha256'] == report_hashes[f'review-repair-warm-{index+1}-' + ('baseline' if index in (0,3) else 'candidate') + '.json']
+    for row in document['results']:
+        assert len(row['samples_ms']) == 25 and row['actual_decision'] == row['expected_decision']
+        assert runner.summary(row['samples_ms']) == row['warm']
+    for observation_row in warm_manifest['runs'][index]['observations']:
+        assert observation_row['exit_code'] == 0
+        assert observation_row['actual_decision'] == observation_row['expected_decision']
+        if not observation_row['concurrent']:
+            verify_logging(observation_row['logging'])
+    for batch in warm_manifest['runs'][index]['concurrency_logging']:
+        assert batch['completed_calls'] == 4
+        verify_logging(batch['logging'])
+    assert len(warm_manifest['runs'][index]['concurrency_logging']) == 3
+comparisons = []
+for pair, baseline_index, candidate_index in ((1, 0, 1), (2, 3, 2)):
+    baseline = {row['case']: row for row in warm[baseline_index]['results']}
+    candidate = {row['case']: row for row in warm[candidate_index]['results']}
+    assert baseline.keys() == candidate.keys()
+    rows = []
+    for case in baseline:
+        a, b = baseline[case]['samples_ms'], candidate[case]['samples_ms']
+        median = statistics.median(b) - statistics.median(a)
+        p95 = runner.percentile(b, .95) - runner.percentile(a, .95)
+        rows.append({'case': case, 'median_delta_ms': median, 'p95_delta_ms': p95,
+                     'budget_met': median <= 2 and p95 <= 5})
+    comparisons.append({'pair': pair, 'results': rows, 'acceptance': 'PASS' if all(row['budget_met'] for row in rows) else 'FAIL'})
+cold = read('review-repair-cold-25.json')
+assert len(cold['results']) == 147
+for row in cold['results']:
+    for behavior, launches in row['launches'].items():
+        assert len(launches) == 25
+        assert all(not launch['provider_bytecode_before'] and launch['copied_source_hashes_verified']
+                   and launch['expected_decision'] == launch['actual_decision'] for launch in launches)
+        for launch in launches:
+            verify_logging(launch['logging'])
+        assert runner.summary([launch['elapsed_ms'] for launch in launches]) == row['statistics'][behavior]
+    a = [launch['elapsed_ms'] for launch in row['launches']['baseline']]
+    b = [launch['elapsed_ms'] for launch in row['launches']['candidate']]
+    median, p95 = statistics.median(b) - statistics.median(a), runner.percentile(b, .95) - runner.percentile(a, .95)
+    assert row['median_delta_ms'] == median and row['p95_delta_ms'] == p95
+    assert row['budget_met'] == (median <= 5 and p95 <= 10)
+resources = read('review-repair-resources-25.json')
+rss = read('review-repair-resources-rss-native.json')
+concurrency = read('review-repair-concurrency.json')
+assert len(resources['results']) == len(rss['results']) == 96
+for row in resources['results']:
+    assert len(row['samples_ms']) == 25 and runner.summary(row['samples_ms']) == row['summary']
+    assert row['ceiling_met'] == (max([row['first_run_ms'], *row['samples_ms']]) <= 500)
+    assert all(call['expected_decision'] == call['actual_decision'] for call in row['observations'])
+    for call in row['observations']:
+        verify_logging(call['logging'])
+assert len(concurrency['results']) == 12
+assert all(len(row['calls']) == 25 and len(row['individual_ms']) == 100 for row in concurrency['results'])
+for row in concurrency['results']:
+    assert len(row['warmups']) == 3 and len(row['batch_logging']) == 28
+    assert runner.summary(row['individual_ms']) == row['individual_summary']
+    assert runner.summary(row['batches_ms']) == row['batch_summary']
+    assert row['individual_ms'] == [call['elapsed_ms'] for batch in row['calls'] for call in batch]
+    assert row['batches_ms'] == [batch['batch_elapsed_ms'] for batch in row['batch_logging'][3:]]
+    for batch in row['batch_logging']:
+        assert batch['logging']['expected_records_added'] == 4
+        verify_logging(batch['logging'])
+    for batch in row['warmups'] + row['calls']:
+        assert len(batch) == 4
+        assert all(call['exit_code'] == 0 and call['actual_decision'] == call['expected_decision'] for call in batch)
+for row in rss['results']:
+    verify_logging(row['logging'])
+concurrency_pairs = []
+for pair, baseline_order, candidate_order in ((1, 1, 2), (2, 4, 3)):
+    baseline = {row['case']: row for row in concurrency['results'] if row['order'] == baseline_order}
+    candidate = {row['case']: row for row in concurrency['results'] if row['order'] == candidate_order}
+    assert baseline.keys() == candidate.keys() == {'copilot.guard.clean', 'gemini.guard.clean', 'codex.guard.clean'}
+    for case in baseline:
+        before_row, after_row = baseline[case], candidate[case]
+        comparison = {'pair': pair, 'case': case, 'baseline_order': baseline_order, 'candidate_order': candidate_order,
+                      'workers': 4, 'measured_batches_per_condition': 25, 'measured_calls_per_condition': 100,
+                      'interpretation': 'diagnostic concurrency comparison; no provider pooling or substituted latency gate'}
+        for metric, key in (('individual', 'individual_ms'), ('batch', 'batches_ms')):
+            a, b = before_row[key], after_row[key]
+            comparison[metric] = {'baseline_summary': runner.summary(a), 'candidate_summary': runner.summary(b),
+                                  'median_delta_ms': statistics.median(b) - statistics.median(a),
+                                  'p95_delta_ms': runner.percentile(b, .95) - runner.percentile(a, .95),
+                                  'baseline_raw_samples_ms': a, 'candidate_raw_samples_ms': b}
+        comparison['raw_calls_reference'] = {'report': 'review-repair-concurrency.json',
+                                              'baseline': {'order': baseline_order, 'case': case},
+                                              'candidate': {'order': candidate_order, 'case': case}}
+        concurrency_pairs.append(comparison)
+assert all(row['payload_sha256'] == other['payload_sha256'] and row['expected_decision'] == other['actual_decision']
+           for row, other in zip(resources['results'], rss['results']))
+result = {'identity': frozen['identity'], 'report_sha256': report_hashes, 'warm_pairs': comparisons,
+          'concurrency_pair_comparisons': concurrency_pairs,
+          'cold_initial_acceptance': cold['acceptance'], 'resources_acceptance': resources['acceptance'],
+          'all_sources_unchanged': all(document['sources_unchanged'] for document in (warm_manifest, cold, resources, rss, concurrency)),
+          'initial_acceptance': 'PASS' if all(pair['acceptance'] == 'PASS' for pair in comparisons)
+                                and cold['acceptance'] == resources['acceptance'] == 'PASS' else 'FAIL',
+          'repeat_policy': 'retain all initial failures; only exact targeted repeats diagnose isolated noise; root reviews unresolved violations'}
+write('review-repair-comparison.json', result)
+print('Initial repair acceptance:', result['initial_acceptance'], flush=True)

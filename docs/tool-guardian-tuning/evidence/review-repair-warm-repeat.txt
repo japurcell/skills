@@ -1,0 +1,87 @@
+# Exact public-runner repeat of the preserved isolated first-pair p95 violation.
+# One B/C/C/B sequence supplies two matched pairs. This name is outside frozen driver glob.
+import runpy
+from pathlib import Path
+import statistics
+
+repeat_driver_path = Path(__file__).resolve()
+globals().update(runpy.run_path(str(repeat_driver_path.with_name('review-repair-common-driver.txt'))))
+frozen, roots = configured()
+before = state(roots)
+driver_hash_before = sha(repeat_driver_path)
+target = 'gemini.guard.patch.bytes-46899'
+original_cases, original_invoke = runner.guard_cases, runner.invoke
+manifest = {'method': 'exact fixed-case maintained Case/main/invoke; B/C/C/B;25samples3warmups plus first; normal caches',
+            'target': target, 'identity': frozen['identity'], 'environment': environment(),
+            'state_before': before, 'driver_sha256_before': driver_hash_before, 'runs': []}
+assert not (evidence / 'review-repair-warm-repeat-manifest.json').exists(), 'preserve earlier observations'
+def exact_cases(root, behavior):
+    full = original_cases(root, behavior)
+    assert len(full) == 147
+    selected = [case for case in full if case.name == target]
+    assert len(selected) == 1
+    expected = frozen['payloads'][behavior][target]
+    assert hashlib.sha256(selected[0].payload).hexdigest() == expected['payload_sha256']
+    assert selected[0].expected_decision == expected['expected_decision']
+    return selected
+
+try:
+    runner.guard_cases = exact_cases
+    for order, behavior in enumerate(('baseline', 'candidate', 'candidate', 'baseline'), 1):
+        observed = []
+        def retaining_invoke(case, repo, home, timeout=15.0):
+            assert case.name == target
+            prior_log = log_snapshot(case, home)
+            elapsed, status, output = original_invoke(case, repo, home, timeout)
+            record = observation(case, elapsed, status, output)
+            record['logging'] = log_evidence(case, prior_log, log_snapshot(case, home))
+            observed.append(record)
+            runner.verify_outcome(case, status, output)
+            verify_logging(record['logging'])
+            return elapsed, status, output
+        runner.invoke = retaining_invoke
+        path = evidence / f'review-repair-warm-repeat-{order}-{behavior}.json'
+        assert not path.exists(), 'preserve earlier observations'
+        sys.argv = [str(runner_path), '--guard-only', '--script-root', str(roots[behavior]),
+                    '--expected-behavior', behavior, '--samples', '25', '--warmups', '3', '--output', str(path)]
+        row = {'order': order, 'behavior': behavior, 'started_unix': time.time()}
+        try:
+            row['exit_code'] = runner.main()
+            assert row['exit_code'] == 0 and len(observed) == 29
+            report = json.loads(path.read_text())
+            assert len(report['results']) == 1 and report['results'][0]['case'] == target
+            assert report['concurrency'] == []
+            result = report['results'][0]
+            assert len(result['samples_ms']) == 25
+            assert result['samples_ms'] == [call['elapsed_ms'] for call in observed[4:]]
+            assert result['first_run_ms'] == observed[0]['elapsed_ms']
+            assert result['warm'] == runner.summary(result['samples_ms'])
+            assert result['actual_decision'] == result['expected_decision']
+            row['report_sha256'] = sha(path)
+            row['statistics'] = result['warm']
+        finally:
+            row['completed_unix'] = time.time()
+            row['observations'] = observed
+            manifest['runs'].append(row)
+            manifest['state_after'] = state(roots)
+            manifest['driver_sha256_after'] = sha(repeat_driver_path)
+            manifest['sources_unchanged'] = before == manifest['state_after']
+            write('review-repair-warm-repeat-manifest.json', manifest)
+        assert manifest['sources_unchanged'] and driver_hash_before == manifest['driver_sha256_after']
+        print('Exact warm repeat complete:', order, behavior, target, flush=True)
+finally:
+    runner.guard_cases, runner.invoke = original_cases, original_invoke
+
+pairs = []
+for pair, baseline_index, candidate_index in ((1, 0, 1), (2, 3, 2)):
+    a = [call['elapsed_ms'] for call in manifest['runs'][baseline_index]['observations'][4:]]
+    b = [call['elapsed_ms'] for call in manifest['runs'][candidate_index]['observations'][4:]]
+    median_delta = statistics.median(b) - statistics.median(a)
+    p95_delta = runner.percentile(b, .95) - runner.percentile(a, .95)
+    pairs.append({'pair': pair, 'case': target, 'median_delta_ms': median_delta, 'p95_delta_ms': p95_delta,
+                  'budget_met': median_delta <= 2 and p95_delta <= 5})
+manifest['pairs'] = pairs
+manifest['repeat_acceptance'] = 'PASS' if all(pair['budget_met'] for pair in pairs) else 'FAIL'
+manifest['original_failed_observation_preserved'] = 'review-repair-warm-pair-1-analysis.json'
+write('review-repair-warm-repeat-manifest.json', manifest)
+print('Exact warm repeat acceptance:', manifest['repeat_acceptance'], pairs, flush=True)
