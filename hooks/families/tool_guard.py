@@ -1193,12 +1193,14 @@ def _strict_threats(text, segments=None, pipeline_text=None):
     return threats
 
 
-def _python_threats(source, budget, depth, permit_data=True):
+def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
     source = budget.source(source, depth)
     proven, sinks, constants = _python_inspection(source)
     proven = proven and permit_data
     threats = []
     if not proven:
+        if pipeline_context is not None:
+            pipeline_context.append(source.replace("|", " "))
         segments = _command_segments(source)
         budget.matcher_tokens(segments, 1)
         threats.extend(_strict_threats(source, segments))
@@ -1208,9 +1210,9 @@ def _python_threats(source, budget, depth, permit_data=True):
             threats.extend(_strict_threats(constant, segments))
     for language, sink in sinks:
         if language == "python":
-            threats.extend(_python_threats(sink, budget, depth + 1))
+            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context))
         else:
-            threats.extend(_shell_threats(sink, budget, depth + 1))
+            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context))
     return threats
 
 
@@ -1247,7 +1249,7 @@ def _inline_operand(words, offset):
     return None
 
 
-def _shell_threats(source, budget, depth=0):
+def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
     commands, nested, strict = _shell_representation(source, budget)
     windows = any(command.words and (
@@ -1257,8 +1259,10 @@ def _shell_threats(source, budget, depth=0):
     strict = strict or windows
     threats = []
     for fragment in nested:
-        threats.extend(_shell_threats(fragment, budget, depth + 1))
+        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context))
     if strict:
+        if pipeline_context is not None:
+            pipeline_context.append(source)
         if windows:
             segments = [[token for word in command.words for token in word.value.split()] for command in commands]
         else:
@@ -1276,12 +1280,12 @@ def _shell_threats(source, budget, depth=0):
     rendered, segments, pipeline_rendered = [], [], []
     pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
     unsafe_pipeline = set()
-    output_is_code = False
+    inherited_output_is_code = output_is_code
     for offset in range(len(commands) - 1, -1, -1):
         command = commands[offset]
         if not command.pipe:
-            output_is_code = False
-        if command.pipe and output_is_code:
+            output_is_code = inherited_output_is_code
+        if output_is_code:
             unsafe_pipeline.add(id(command))
         if command.words:
             consumer = _executable_basename(command.words[0].value)
@@ -1292,6 +1296,7 @@ def _shell_threats(source, budget, depth=0):
         if not words:
             continue
         executable = _executable_basename(words[0])
+        body_context = []
         # Wrappers never obtain a data proof, but established interpreter operands
         # still require their language inspection, including execution sinks.
         for offset in range(len(command.words)):
@@ -1300,7 +1305,7 @@ def _shell_threats(source, budget, depth=0):
                 language, operand, argument = inline
                 exact = offset == 0 and argument == 1 and len(words) == 3 and words[0] in {"python", "python3", sys.executable, "sh", "bash"}
                 if not exact:
-                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
         stdin = [(operator, operand) for operator, operand in command.redirects if operator in {"<", "<<", "<<-"}]
         body = command.heredocs[-1] if command.heredocs and stdin and stdin[-1][0] in {"<<", "<<-"} else None
         python_code = shell_code = None
@@ -1345,24 +1350,29 @@ def _shell_threats(source, budget, depth=0):
                     budget.matcher_tokens(sql_segments, 1)
                     threats.extend(_strict_threats(operand.value, sql_segments))
         if python_code is not None:
-            threats.extend(_python_threats(python_code, budget, depth + 1))
+            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context))
             proven = True
         elif shell_code is not None:
-            threats.extend(_shell_threats(shell_code, budget, depth + 1))
+            threats.extend(_shell_threats(shell_code, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
             proven = True
         # Inspecting a shell body proves only that operand. Its remaining words
         # retain strict policy checks, including arguments consumed via "$@".
         retained = words[:2] + words[3:] if shell_code is not None and shell_inline else words
         retain_shell = shell_code is not None and executable in {"sh", "bash"}
+        pipeline_words = ""
         if retain_shell or python_code is None and shell_code is None and not proven and (id(command) in unsafe_pipeline or not _literal_search(command)):
             rendered.append(" ".join(retained) + (" |" if command.pipe else ""))
             # Literal pipe characters are data; only parsed operators form a
             # pipeline. Keep the original bounded matchers across intermediates.
-            pipeline_rendered.append(" ".join(retained).replace("|", " ") + (" |" if command.pipe else ""))
+            pipeline_words = " ".join(retained).replace("|", " ")
             # Unproved consumers retain strict inspection of complete literal values.
             flattened = [token for value in retained for token in value.split()]
             budget.matcher_tokens([flattened], len(words))
             segments.append(flattened)
+        # Reuse inspected executable context so an inline consumer inherits the
+        # outer pipeline. Proven search, writer, and survey data is absent.
+        if pipeline_words or body_context:
+            pipeline_rendered.append("\n".join([pipeline_words, *body_context]) + (" |" if command.pipe else ""))
         for operator, operand in command.redirects:
             if operator not in {"<<", "<<-"}:
                 operand_segments = _command_segments(operand.value)
@@ -1373,6 +1383,8 @@ def _shell_threats(source, budget, depth=0):
                 heredoc_segments = _command_segments(heredoc)
                 budget.matcher_tokens(heredoc_segments)
                 threats.extend(_strict_threats(heredoc, heredoc_segments))
+    if pipeline_context is not None:
+        pipeline_context.extend(pipeline_rendered)
     if rendered:
         pipeline_text = "\n".join(pipeline_rendered) if any(command.pipe for command in commands) else ""
         threats.extend(_strict_threats("\n".join(rendered), segments, pipeline_text))

@@ -204,6 +204,41 @@ class ShellDataTests(unittest.TestCase):
         self.check('python3 "-cprint(1)"', 'allow')
         self.check('python3 demo.py "-c$BODY"', 'allow')
 
+    def test_pipeline_nested_consumers_keep_inherited_input_context(self) -> None:
+        operation = OPERATIONS['download_execute_bash']
+        prefix = operation.rsplit(chr(124), 1)[0] + chr(124) + ' '
+        consumers = ["sh -c 'bash'", "sh -c 'exec bash'", "cat " + chr(124) + " sh -c 'bash'",
+                     "sh -c 'env bash'", 'sh -c ' + shlex.quote("sh -c 'bash'"),
+                     "sh -c 'eval bash'", 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote('import os;os.system("bash")'))]
+        commands = [prefix + consumer for consumer in consumers]
+        other = OPERATIONS['download_execute_sh'].rsplit(chr(124), 1)[0] + chr(124) + ' '
+        commands.append(other + 'python3 -c ' + shlex.quote('import os;os.system("sh")'))
+        commands.append(other + "bash -c 'exec sh'")
+        producer = operation.rsplit(chr(124), 1)[0].strip()
+        commands.append('sh -c ' + shlex.quote(producer) + ' ' + chr(124) + ' bash')
+        commands.append('sh -c ' + shlex.quote('eval ' + shlex.quote(producer)) + ' ' + chr(124) + ' bash')
+        commands.append('sh -c ' + shlex.quote('rg -n ' + shlex.quote(operation) + ' docs') + ' ' + chr(124) + ' bash')
+        sequential_search = 'rg -n ' + shlex.quote(operation) + ' docs; printf safe'
+        commands.append('sh -c ' + shlex.quote(sequential_search) + ' ' + chr(124) + ' bash')
+        for command in commands:
+            self.check(command, 'deny')
+            self.check(command, 'warn', mode='warn')
+        controls = [prefix + "sh -c 'printf safe'", other + 'python3 -c ' + shlex.quote('print("safe")'),
+                    prefix + 'sh -c ' + shlex.quote("eval 'printf safe'")]
+        search = 'rg -n ' + shlex.quote(operation) + ' docs'
+        controls.append(prefix + 'sh -c ' + shlex.quote(search))
+        controls.append(prefix + 'sh -c ' + shlex.quote(sequential_search))
+        controls.append(prefix + 'sh -c ' + shlex.quote('eval ' + shlex.quote(search)))
+        writer = 'from pathlib import Path;Path("example.txt").write_text(' + repr(operation) + ')'
+        controls.append(prefix + 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer)))
+        controls.append('sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer) + '; printf safe') + ' ' + chr(124) + ' bash')
+        for fixture in fixtures():
+            if fixture.name in {'survey.json-stdin', 'survey.python-subprocess'}:
+                controls.append(prefix + 'sh -c ' + shlex.quote(fixture.value['command']))
+        for command in controls:
+            for mode in ('block', 'warn'):
+                self.check(command, 'allow', mode=mode)
+
     def test_sql_interpreter_arguments_keep_policy(self) -> None:
         self.check("sqlite3 demo.db '" + OPERATIONS['delete_without_where'] + "'", 'deny')
         self.check("psql -c '" + OPERATIONS['drop_table'] + "'", 'deny')
