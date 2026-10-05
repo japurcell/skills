@@ -123,6 +123,23 @@ class ResourceLimitTests(unittest.TestCase):
             self.assert_boundary(provider, 'X', maximum, overflow,
                                  'normalized_scan_text_bytes', '32769 bytes', valid_allowlist=True)
 
+    def test_nested_execution_charges_normalized_aggregate_bytes(self) -> None:
+        # U+FDFA expands to 33 UTF-8 bytes. The quoted body has 16,380
+        # normalized bytes and its shell invocation adds eight more.
+        body = 'echo "' + '\ufdfa' * 496 + 'x' * 5 + '"'
+        maximum = {'command': 'sh -c ' + shlex.quote(body)}
+        overflow = {'command': maximum['command'] + ' '}
+        for provider in PROVIDERS:
+            self.assert_boundary(provider, SHELL_TOOLS[provider], maximum, overflow,
+                                 'executable_bytes', '32769 bytes', valid_allowlist=True)
+            command = 'sh -c ' + shlex.quote('echo ' + '\ufdfa' * 700)
+            for mode in ('block', 'warn'):
+                with self.subTest(provider=provider, mode=mode, case='review reproduction'):
+                    response = self.invoke(provider, SHELL_TOOLS[provider], {'command': command},
+                                           mode=mode, allowlist=True)
+                    self.assert_decision(response, 'deny')
+                    self.assertIn('46218 bytes', json.dumps(response))
+
     def test_shell_command_and_total_token_maxima(self) -> None:
         for provider in PROVIDERS:
             tool = SHELL_TOOLS[provider]

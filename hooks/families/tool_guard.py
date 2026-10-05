@@ -759,8 +759,8 @@ class _InspectionBudget:
     def source(self, source: str, depth: int) -> str:
         if depth > 16:
             raise ScanLimitExceeded("executable_depth", 16, depth, "levels")
-        _bounded_normalized_text(source)
-        self.bytes += len(source.encode("utf-8"))
+        normalized = _bounded_normalized_text(source)
+        self.bytes += len(normalized.encode("utf-8"))
         if self.bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
         return source
@@ -1179,13 +1179,15 @@ def _python_inspection(source):
     return supported and (wrote or surveyed), sinks, [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)]
 
 
-def _strict_threats(text, segments=None, pipelines=None):
+def _strict_threats(text, segments=None, pipeline_text=None):
     normalized = _bounded_normalized_text(text)
     tokens = [[unicodedata.normalize("NFKC", token) for token in segment] for segment in segments] if segments is not None else _command_segments(normalized)
     scanned = _ScanText(normalized, tokens)
+    pipeline_text = _bounded_normalized_text(pipeline_text) if pipeline_text is not None else normalized
+    pipeline_lower = pipeline_text.lower()
     lower, threats = normalized.lower(), []
     for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
-        match = pipelines.get(matcher.pipe_names) if pipelines is not None and hasattr(matcher, "pipe_names") else matcher(scanned, lower)
+        match = matcher(pipeline_text, pipeline_lower) if hasattr(matcher, "pipe_names") else matcher(scanned, lower)
         if match:
             threats.append({"category": category, "severity": severity, "rule_id": rule_id, "cause": cause, "matched": match})
     return threats
@@ -1221,8 +1223,12 @@ def _inline_operand(words, offset):
     while index < len(words):
         word = words[index]
         option = word.value
+        if python and option.startswith("-c") and len(option) > 2:
+            if not word.literal:
+                raise InspectionFailure("unresolved interpreter operand")
+            return ("python", option[2:], index)
         if not word.literal:
-            if any(later.value == "-c" for later in words[index + 1:]):
+            if any(later.value == "-c" or python and later.value.startswith("-c") for later in words[index + 1:]):
                 raise InspectionFailure("unresolved interpreter option prefix")
             return None
         if option == "-c" or not python and option.startswith("-") and not option.startswith("--") and "c" in option[1:]:
@@ -1232,8 +1238,6 @@ def _inline_operand(words, offset):
             if not operand.literal:
                 raise InspectionFailure("unresolved interpreter operand")
             return ("python" if python else "shell", operand.value, index)
-        if python and option.startswith("-c") and len(option) > 2:
-            return ("python", option[2:], index)
         if python and option in {"-W", "-X"} or not python and option in {"--rcfile", "--init-file", "-o", "-O", "+o", "+O"}:
             index += 2
         elif option.startswith("-") and option != "-m":
@@ -1269,17 +1273,8 @@ def _shell_threats(source, budget, depth=0):
                     language, operand, _index = inline
                     threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1))
         return threats
-    rendered, segments, pipelines = [], [], {}
+    rendered, segments, pipeline_rendered = [], [], []
     pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
-    for offset, command in enumerate(commands[:-1]):
-        if command.pipe and command.words and commands[offset + 1].words:
-            before = _executable_basename(command.words[0].value)
-            after = _executable_basename(commands[offset + 1].words[0].value)
-            if before not in pipeline_commands or after not in pipeline_commands:
-                pipelines = None
-                break
-            if (before, after) in {(R(99, 117, 114, 108), "bash"), (R(119, 103, 101, 116), "sh")}:
-                pipelines.setdefault((before, after), before + " | " + after)
     unsafe_pipeline = set()
     output_is_code = False
     for offset in range(len(commands) - 1, -1, -1):
@@ -1355,10 +1350,17 @@ def _shell_threats(source, budget, depth=0):
         elif shell_code is not None:
             threats.extend(_shell_threats(shell_code, budget, depth + 1))
             proven = True
-        if python_code is None and shell_code is None and not proven and (id(command) in unsafe_pipeline or not _literal_search(command)):
-            rendered.append(" ".join(words) + (" |" if command.pipe else ""))
+        # Inspecting a shell body proves only that operand. Its remaining words
+        # retain strict policy checks, including arguments consumed via "$@".
+        retained = words[:2] + words[3:] if shell_code is not None and shell_inline else words
+        retain_shell = shell_code is not None and executable in {"sh", "bash"}
+        if retain_shell or python_code is None and shell_code is None and not proven and (id(command) in unsafe_pipeline or not _literal_search(command)):
+            rendered.append(" ".join(retained) + (" |" if command.pipe else ""))
+            # Literal pipe characters are data; only parsed operators form a
+            # pipeline. Keep the original bounded matchers across intermediates.
+            pipeline_rendered.append(" ".join(retained).replace("|", " ") + (" |" if command.pipe else ""))
             # Unproved consumers retain strict inspection of complete literal values.
-            flattened = [token for value in words for token in value.split()]
+            flattened = [token for value in retained for token in value.split()]
             budget.matcher_tokens([flattened], len(words))
             segments.append(flattened)
         for operator, operand in command.redirects:
@@ -1372,7 +1374,8 @@ def _shell_threats(source, budget, depth=0):
                 budget.matcher_tokens(heredoc_segments)
                 threats.extend(_strict_threats(heredoc, heredoc_segments))
     if rendered:
-        threats.extend(_strict_threats("\n".join(rendered), segments, pipelines))
+        pipeline_text = "\n".join(pipeline_rendered) if any(command.pipe for command in commands) else ""
+        threats.extend(_strict_threats("\n".join(rendered), segments, pipeline_text))
     order = {rule: index for index, (rule, _cause) in enumerate(RULE_DETAILS)}
     ordered, seen = [], set()
     for threat in sorted(threats, key=lambda threat: order.get(threat["rule_id"], -1)):

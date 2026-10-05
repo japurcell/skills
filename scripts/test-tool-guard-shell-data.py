@@ -70,7 +70,15 @@ class ShellDataTests(unittest.TestCase):
                 result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script_path(ROOT, provider))],
                                         input=encode(envelope(provider, fixture)), capture_output=True, env=env, timeout=5)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(decision(provider, json.loads(result.stdout)), expected, result.stdout)
+                response = json.loads(result.stdout)
+                if expected == 'warn':
+                    native = response.get('permissionDecision') or response.get('decision') or response.get('hookSpecificOutput', {}).get('permissionDecision')
+                    if provider == 'codex' and set(response) == {'systemMessage'}:
+                        native = 'allow'
+                    self.assertEqual(native, 'allow', result.stdout)
+                    self.assertIn('Tool Guardian warning', json.dumps(response))
+                else:
+                    self.assertEqual(decision(provider, response), expected, result.stdout)
 
     def test_recorded_writers_and_execution_gaps(self) -> None:
         names = {'writer.chars-8787-segments-183', 'writer.lines-120-segments-139', 'danger.substitution',
@@ -164,6 +172,37 @@ class ShellDataTests(unittest.TestCase):
         force = OPERATIONS['force_push_protected_branch']
         self.check("rg -n '" + force + "' docs " + chr(124) + ' env bash', 'deny')
         self.check("rg -n '" + force + "' docs " + chr(124) + ' env cat ' + chr(124) + ' command sh', 'deny')
+
+    def test_installer_pipeline_intermediates_keep_existing_protection(self) -> None:
+        for operation in (OPERATIONS['download_execute_bash'], OPERATIONS['download_execute_sh']):
+            for intermediary in ('cat', 'tee /tmp/guardian-demo', 'head -c 100000', 'cat ' + chr(124) + ' tee'):
+                command = operation.replace(chr(124), chr(124) + ' ' + intermediary + ' ' + chr(124), 1)
+                self.check(command, 'deny')
+                self.check(command, 'warn', mode='warn')
+        self.check("echo '" + OPERATIONS['download_execute_bash'] + "'", 'allow')
+        self.check('printf safe ' + chr(124) + ' cat ' + chr(124) + ' bash', 'allow')
+
+    def test_inline_shell_arguments_and_input_remain_inspected(self) -> None:
+        operation = OPERATIONS['force_push_protected_branch']
+        for launcher in ('sh -c', 'bash -lc'):
+            for body, argument in (("exec \"$@\"", operation), ('eval "$1"', shlex.quote(operation)),
+                                   ('printf "%s" "$1"', shlex.quote(operation))):
+                command = launcher + ' ' + shlex.quote(body) + ' _ ' + argument
+                self.check(command, 'deny')
+                self.check(command, 'deny' if body.startswith('eval') else 'warn', mode='warn')
+            self.check(launcher + ' ' + shlex.quote('exec "$@"') + ' _ printf safe', 'allow')
+            self.check(launcher + ' ' + shlex.quote("rg -n '" + operation + "' docs"), 'allow')
+        self.check("rg -n '" + operation + "' docs " + chr(124) + " sh -c 'sh'", 'deny')
+        self.check(OPERATIONS['download_execute_bash'] + " -c 'true'", 'deny')
+
+    def test_attached_unresolved_python_code_fails_closed(self) -> None:
+        for launcher in ('python3', 'python3 -I', 'env python3', 'command python3', 'python3 "$FLAGS"'):
+            for operand in ('-c "$BODY"', '-c"$BODY"', '"-c$BODY"'):
+                for mode in ('block', 'warn'):
+                    self.check(launcher + ' ' + operand, 'deny', mode=mode)
+        self.check('python3 -c"print(1)"', 'allow')
+        self.check('python3 "-cprint(1)"', 'allow')
+        self.check('python3 demo.py "-c$BODY"', 'allow')
 
     def test_sql_interpreter_arguments_keep_policy(self) -> None:
         self.check("sqlite3 demo.db '" + OPERATIONS['delete_without_where'] + "'", 'deny')
