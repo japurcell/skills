@@ -1,0 +1,360 @@
+<style>
+  #skill-audit-design { color: var(--foreground); }
+  #skill-audit-design .audit-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; padding-right: 90px; }
+  #skill-audit-design .audit-heading h2 { margin: 0; }
+  #skill-audit-design .audit-flow { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  #skill-audit-design .audit-flow li { min-width: 0; position: relative; }
+  #skill-audit-design .audit-flow li:not(:last-child)::after { content: ""; position: absolute; width: 1rem; right: -1rem; top: 1rem; border-top: 1px solid var(--border); }
+  #skill-audit-design .audit-flow small { display: block; margin-top: .4rem; }
+  #skill-audit-design .audit-topics { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+  #skill-audit-design .audit-detail { margin: 1rem 0; }
+  #skill-audit-design .audit-detail h3 { margin: 0 0 .7rem; }
+  #skill-audit-design .audit-facts { padding-left: 1.3rem; margin: .5rem 0 1rem; }
+  #skill-audit-design .audit-facts li { margin: .5rem 0; }
+  #skill-audit-design .audit-scope { display: flex; height: .8rem; gap: 3px; margin: 1rem 0 .5rem; }
+  #skill-audit-design .audit-scope span:nth-child(1) { flex: 32; background: var(--viz-series-1); }
+  #skill-audit-design .audit-scope span:nth-child(2) { flex: 5; background: var(--viz-series-2); }
+  #skill-audit-design .audit-scope span:nth-child(3) { flex: 23; background: var(--muted); }
+  #skill-audit-design .audit-legend { display: flex; flex-wrap: wrap; gap: .5rem 1.3rem; }
+  #skill-audit-design .audit-legend span::before { content: ""; display: inline-block; width: .6rem; height: .6rem; margin-right: .4rem; background: var(--muted); }
+  #skill-audit-design .audit-legend span:nth-child(1)::before { background: var(--viz-series-1); }
+  #skill-audit-design .audit-legend span:nth-child(2)::before { background: var(--viz-series-2); }
+  #skill-audit-design .audit-batches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem 1.4rem; padding-left: 1.3rem; }
+  #skill-audit-design .audit-batches li { padding: .35rem 0; min-width: 0; }
+  #skill-audit-design .audit-batches p { margin: .4rem 0; }
+  #skill-audit-design code { overflow-wrap: anywhere; }
+  #skill-audit-design .audit-source { margin-top: .75rem; overflow-wrap: anywhere; }
+  #skill-audit-design .audit-note-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+  #skill-audit-design .audit-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .7rem; }
+  #skill-audit-design [hidden] { display: none; }
+  @media (max-width: 620px) {
+    #skill-audit-design .audit-flow { grid-template-columns: 1fr; gap: .8rem; }
+    #skill-audit-design .audit-flow li { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .8rem; }
+    #skill-audit-design .audit-flow li::after { display: none; }
+    #skill-audit-design .audit-flow small { margin: 0; }
+    #skill-audit-design .audit-batches { grid-template-columns: 1fr; }
+  }
+</style>
+<section id="skill-audit-design" aria-label="Skill audit design and discussion notes">
+  <div class="audit-heading">
+    <h2>Skill audit: the agreed design</h2>
+    <span class="text-small text-muted">Snapshot: 5 Oct 2026</span>
+  </div>
+  <p>7 decisions settled. 12 static review scopes remain. No model baselines have run.</p>
+  <ol class="audit-flow" aria-label="Audit sequence">
+    <li><button class="btn" type="button" data-topic="scope" aria-pressed="true">1. Set rules</button><small class="text-small">Agreed</small></li>
+    <li><button class="btn" type="button" data-topic="reviews" aria-pressed="false">2. Review skills</button><small class="text-small">Next: authoring + guidance</small></li>
+    <li><button class="btn" type="button" data-topic="proposals" aria-pressed="false">3. Reconcile</button><small class="text-small">After all 12 scopes</small></li>
+    <li><button class="btn" type="button" data-topic="evidence" aria-pressed="false">4. Run baselines</button><small class="text-small">Sample not selected</small></li>
+    <li><button class="btn" type="button" data-topic="outputs" aria-pressed="false">5. Audit + plan</button><small class="text-small">Evidence still required</small></li>
+  </ol>
+  <div class="text-small text-muted">Skill implementation, installation, and publication follow this effort and require their own authorization.</div>
+  <hr>
+  <div class="audit-topics" role="group" aria-label="Explore agreed policies">
+    <button class="btn" type="button" data-topic="scope" aria-pressed="true">Scope</button>
+    <button class="btn" type="button" data-topic="rubric" aria-pressed="false">Authoring rubric</button>
+    <button class="btn" type="button" data-topic="contracts" aria-pressed="false">Protected behavior</button>
+    <button class="btn" type="button" data-topic="reviews" aria-pressed="false">12 review scopes</button>
+    <button class="btn" type="button" data-topic="evidence" aria-pressed="false">Model evidence</button>
+    <button class="btn" type="button" data-topic="gates" aria-pressed="false">Completion gates</button>
+    <button class="btn" type="button" data-topic="proposals" aria-pressed="false">Pending proposals</button>
+    <button class="btn" type="button" data-topic="outputs" aria-pressed="false">Final documents</button>
+  </div>
+  <div class="audit-detail" aria-live="polite" aria-atomic="true">
+    <h3 id="audit-detail-title">37 candidates across two roots</h3>
+    <div id="audit-detail-content">
+      <div class="audit-scope" role="img" aria-label="Of 60 maintained entry points, 32 published and 5 repository-local candidates are included; 23 configured imports are excluded."><span></span><span></span><span></span></div>
+      <div class="audit-legend text-small"><span>32 published</span><span>5 repository-local</span><span>23 imports excluded</span></div>
+    </div>
+    <div class="audit-source text-small text-muted" id="audit-detail-source"></div>
+  </div>
+  <hr>
+  <div class="audit-note-head">
+    <label class="form-label" for="audit-note" id="audit-note-label">Discussion note: Scope</label>
+    <span class="text-small text-muted" id="audit-note-count">0 sections with notes</span>
+  </div>
+  <textarea class="form-control" id="audit-note" rows="3" maxlength="1500" placeholder="Questions, changes, or concerns about this section" aria-describedby="audit-note-status"></textarea>
+  <div class="audit-actions">
+    <button type="button" class="btn" id="audit-export">Export discussion notes</button>
+    <span class="text-small" id="audit-note-status" role="status">Notes are drafts, not approval or changes to agreed decisions.</span>
+  </div>
+  <div id="audit-export-panel" hidden>
+    <label class="form-label" for="audit-export-text">All discussion notes, ready to copy into this chat</label>
+    <textarea class="form-control" id="audit-export-text" rows="7" readonly></textarea>
+  </div>
+</section>
+<script>
+(() => {
+  const root = document.getElementById('skill-audit-design');
+  const topics = {
+    scope: {
+      label: 'Scope', title: '37 candidates across two roots',
+      source: 'decide-skill-ownership-and-import-handling.md',
+      facts: [
+        'Review 32 published skills in skills/ and all 5 repository-local skills in .agents/skills/. Remove further imports only when clear evidence establishes them.',
+        'Exclude the 23 configured imports, generated outputs, snapshots, and fixture skills. The original 60 entries remain inventory history.',
+        'Check shared resources only where included skills depend on them. Do not audit or revise excluded bundles.',
+        'No imported-derivative maintenance, historical provenance recovery, or lasting provenance ledger. Keep planning records in docs/skill-audit/.'
+      ]
+    },
+    rubric: {
+      label: 'Authoring rubric', title: 'Contextual criteria, explicit evidence',
+      source: 'set-adoption-rules-and-protected-behavior.md',
+      facts: [
+        'Use the complete Claude authoring guidance and its security clarification, qualified by Codex, Copilot, and Gemini requirements. Do not transfer one provider\'s rules to another without evidence.',
+        'For every check: adopt, adapt, not applicable, or incompatible with a required provider. Give reasons for adaptations and exclusions.',
+        'Keep applicability, adoption disposition, and current compliance separate. Missing evidence remains unresolved; it proves neither success nor incompatibility.',
+        'Repository and required-client rules bind within their scope. Advisory targets, including 500 body lines and 100 reference lines, prompt inspection rather than automatic failure.',
+        'Severity follows consequence: blocker = unsafe or unusable required operation; major = likely wrong results or workflow failure; minor = local clarity/navigation; observation = no demonstrated impact.',
+        'Each finding has a source/check, file and line, concrete evidence, failure mechanism, affected client, proposed change, contract boundary, severity, confidence, and validation needed.',
+        'Static observations, observed runtime behavior, and untested claims remain distinct. Prefer equivalent adaptation; preserve controls when a validator rejects them.'
+      ]
+    },
+    contracts: {
+      label: 'Protected behavior', title: 'Improve authoring while preserving the contract',
+      source: 'set-adoption-rules-and-protected-behavior.md; choose-audit-batches-and-evidence-format.md',
+      facts: [
+        'Preserve intended scope and triggers, invocation controls, approval boundaries, required dependencies/delegation, stopping/handoff rules, output contracts, and names.',
+        'Wording, ordering, deduplication, reference moves, and descriptions within intended scope qualify only when observable outcomes remain equivalent.',
+        'Scope expansion, making required dependencies optional, new autonomy, renamed skills, changed outputs, and unclear intent need separate human decisions.',
+        'Intent comes from documented purpose, explicit instructions, and approved decisions. Existing evals support intent; they cannot override it.',
+        'dotnet-upgrade has an audit-only static paper-reading exception. Retain its invocation and migration approval controls. No validator, packaging, installer, live eval, or migration execution.',
+        'The domain-modeling waiver applies to this effort. It does not authorize changing the required dependency throughout the repository.'
+      ]
+    },
+    reviews: {
+      label: '12 review scopes', title: 'Static review first; human review after each batch',
+      source: 'choose-audit-batches-and-evidence-format.md',
+      facts: [
+        'Every primary skill has one owner. Review bundled resources and eval definitions as static evidence; generated results are excluded.',
+        'coverage.md holds stable check IDs, scope/exclusions, source revision, resource owners, and separate static/behavioral coverage.',
+        'reports/<batch-slug>.md has per-skill contracts and a row for every check. findings.md holds each finding once, with a stable ID and human disposition.',
+        'One owner reviews each shared resource; every consumer receives path and contract checks. Split bundles stay partially reviewed until both parts and integration are covered.',
+        '10 scopes are ready; the two resource scopes wait for their respective instructions reviews. None is claimed or completed.',
+        'Comparable delegated fact gathering: 20-minute initial limit, saved checkpoints every 5 minutes. Missed checkpoints trigger status checks, not interruption.'
+      ]
+    },
+    evidence: {
+      label: 'Model evidence', title: 'A small diagnostic sample across seven models',
+      source: 'set-audit-evidence-and-model-coverage.md',
+      facts: [
+        'After all static reviews, select up to 3 fixture-ready, in-scope skills for distinct concrete risks. No skill or scenario is selected yet.',
+        'Use native Codex CLI. Capture discovery and activation. Explicit-path replay cannot prove automatic triggering. Copilot/Gemini remain static comparisons.',
+        'Cases cover explicit invocation, intended automatic activation where allowed, an adjacent negative case, and a safe failure/boundary case.',
+        'Every selected model/scenario configuration gets 3 fresh sessions and fresh fixture states. Retain failures and timeouts; this is diagnostic evidence, not statistical reliability.',
+        'Use disposable fixtures, restricted tools, and controlled discovery. Preserve dependencies and approvals. No global installer, live repository mutation, publication, or dotnet-upgrade run.',
+        'Define expected outcomes before running. Grade activation, workflow/approval boundaries, and output separately using traces and artifacts. Model self-reports are not proof.',
+        'Keep an unchanged snapshot, hashes, prompts, discovery set, client version, requested/reported settings, permissions, raw JSONL, outputs, grades, failures, timing, and reported usage.',
+        'All models use medium effort. Catalog advertisement is recorded; actual account access, isolated launch setup, grader compatibility, and execution remain unverified.'
+      ],
+      models: ['gpt-5.6-sol', 'gpt-6-sol', 'gpt-6.1-sol', 'gpt-5.6-luna', 'gpt-6-luna', 'gpt-6-astra', 'gpt-5.6-terra']
+    },
+    gates: {
+      label: 'Completion gates', title: 'Three different gates',
+      source: 'set-audit-completion-and-implementation-gates.md',
+      facts: [
+        'AUDIT COMPLETE: full static coverage, shared/split reconciliation, human finding dispositions, and required native evidence or explicit scoped waivers. Defects may remain.',
+        'Missing required model access, safe isolation, usable traces, or other required evidence blocks completion unless the human waives that exact scope. A usable failed skill run still counts as diagnostic evidence.',
+        'EXECPLAN READY: design choices for accepted authoring work are resolved. Exact targets, steps, expected outcomes, gates, validation, and recovery make that scope executable.',
+        'CANDIDATE ACCEPTED LATER: protected contracts, applicable checks, matched baseline/candidate cases for affected tested behavior, and finding-specific validation for other changes.',
+        'Control violations or unresolved blocker/major regressions block affected acceptance. Scoped risk acceptance cannot bypass protected controls or turn failed checks into passing results.',
+        'Existing blocker/major findings gate affected implementation milestones until fixed or explicitly accepted as scoped remaining risk. Independent milestones can proceed.',
+        'Deferrals, evidence waivers, and residual-risk decisions record rationale, affected work, risk, and revisit trigger. An audit waiver is not automatically a candidate-validation waiver.'
+      ]
+    },
+    proposals: {
+      label: 'Pending proposals', title: 'Nothing disappears between review and implementation',
+      source: 'set-audit-completion-and-implementation-gates.md; reconcile-static-findings-and-select-baseline-cases.md',
+      facts: [
+        'Capture each proposal once in findings.md: stable ID, rationale, exact decision or approval needed, affected work, and current human disposition.',
+        'Statuses include accepted authoring improvement, rejected, deferred, or separate behavior decision required. Create a linked decision ticket when its question becomes precise.',
+        'Before a ticket is precise, keep its unresolved question visible in the finding. Do not lose it in generic fog.',
+        'Final reconciliation accounts for every proposal. Accepted authoring proposals map to executable plan work; pending redesigns never silently enter it.',
+        'Both audit.md and ExecPlan.md expose every unresolved proposal by ID and link to its owning finding/ticket.',
+        'Dependent implementation stays blocked until a human decision makes the remaining scope independent. Deferral cannot erase a genuine dependency; unrelated accepted work can proceed.',
+        'Actual findings, selected baseline cases, concrete skill changes, and their implementation milestones remain undecided.'
+      ]
+    },
+    outputs: {
+      label: 'Final documents', title: 'Completed audit plus a self-contained implementation plan',
+      source: 'map.md; set-audit-completion-and-implementation-gates.md',
+      facts: [
+        'docs/skill-audit/audit.md: scope/revision, exclusions, static coverage, findings and decisions, native results, exceptions/waivers, pending proposals, and evidence limits.',
+        'docs/skill-audit/ExecPlan.md: exact accepted targets in both roots, embedded context, protected contracts, ordered milestones, working directories/commands, outcomes, gates, validation, and recovery.',
+        'The ExecPlan keeps Progress, Surprises & Discoveries, Decision Log, Outcomes & Retrospective, and a visible pending-decisions section.',
+        'Working evidence links connect the coverage index, batch reports, one findings register, and generated run records in sibling workspace layouts.',
+        'Neither final document exists yet. Concrete authoring scopes follow the actual findings and baseline evidence.',
+        'Current next decision ticket: Review Skill Authoring and Repository Guidance, covering six skills and their maintained resources.'
+      ]
+    }
+  };
+  const batches = [
+    ['Authoring + repository guidance', 'create-skill, improve-skill, agents-md-improver, create-agentsmd, guidance-review, self-improve', 'Ready; next'],
+    ['Repository-local workflows', 'clean-agent-docs, exec-plans, ingest-source, okf-authoring, update-agent-docs', 'Ready'],
+    ['Delegation + discovery', 'delegate-to-subagents, subagent-model-router, explore, official-sources, explain-your-thinking', 'Ready'],
+    ['Quality + harness', 'adversarial-review, code-review, code-simplify, fixing-accessibility, techdebt, harness-analysis, improve-repo-harness', 'Ready'],
+    ['Requirements + task planning', 'prd, spec-to-tasks, to-issues, architecture-design-contest', 'Ready'],
+    ['Execution + handoff', 'prd-ralph, prd-ralph-loop, execplan-implement, commit, handoff', 'Ready'],
+    ['GitHub CLI', 'gh-cli', 'Ready'],
+    ['.NET + UI', 'dotnet, dotnet-ui-app', 'Ready'],
+    ['Modernization instructions', 'code-modernization: SKILL.md, agents/, commands/', 'Ready'],
+    ['Modernization resources', 'code-modernization: workflows/, assets/ and integration', 'Waits for modernization instructions'],
+    ['Upgrade instructions + templates', 'dotnet-upgrade: SKILL.md, agents/, assets/, evals/, top-level references, case studies', 'Ready; paper review only'],
+    ['Upgrade routes + source records', 'dotnet-upgrade: references/routes/, references/provenance/ and integration', 'Waits for upgrade instructions; paper review only']
+  ];
+  const heading = root.querySelector('#audit-detail-title');
+  const content = root.querySelector('#audit-detail-content');
+  const source = root.querySelector('#audit-detail-source');
+  const note = root.querySelector('#audit-note');
+  const noteLabel = root.querySelector('#audit-note-label');
+  const noteCount = root.querySelector('#audit-note-count');
+  const status = root.querySelector('#audit-note-status');
+  const exportPanel = root.querySelector('#audit-export-panel');
+  const exportText = root.querySelector('#audit-export-text');
+  const scopeGraphic = content.cloneNode(true);
+  let selected = 'scope';
+  let notes = {};
+  let saveTimer;
+  let lastEdit = 0;
+
+  function exportNotes() {
+    const entries = Object.keys(topics).filter(key => notes[key]);
+    exportText.value = entries.length
+      ? ['Skill audit design discussion (5 Oct 2026)', 'Draft notes; no policy changes or approvals recorded.',
+        ...entries.map(key => '\n## ' + topics[key].label + '\n' + notes[key])].join('\n')
+      : 'No discussion notes yet.';
+  }
+
+  function updateNoteCount() {
+    const count = Object.keys(notes).filter(key => notes[key]).length;
+    noteCount.textContent = count + (count === 1 ? ' section with notes' : ' sections with notes');
+    if (!exportPanel.hidden) exportNotes();
+  }
+
+  function restore(saved) {
+    if (!saved || saved.modelContent?.version !== 1 || saved.modelContent?.designRevision !== 'bfa2f5f0') return;
+    if ((saved.privateContent?.updatedAt || 0) < lastEdit) return;
+    const incoming = saved.modelContent.discussionNotes;
+    if (incoming && typeof incoming === 'object') {
+      const restored = {};
+      for (const key of Object.keys(topics)) {
+        if (typeof incoming[key] === 'string') restored[key] = incoming[key].slice(0, 1500);
+      }
+      notes = restored;
+    }
+    const candidate = saved.privateContent?.topic;
+    if (Object.hasOwn(topics, candidate)) selected = candidate;
+    lastEdit = saved.privateContent?.updatedAt || 0;
+  }
+
+  async function save() {
+    const snapshot = {
+      modelContent: { version: 1, designRevision: 'bfa2f5f0', discussionNotes: { ...notes } },
+      privateContent: { topic: selected, updatedAt: lastEdit }
+    };
+    if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 15000) {
+      status.textContent = 'Long draft exceeds saved-state capacity. Export all notes before closing; earlier saved notes remain.';
+      return;
+    }
+    if (!window.openai?.setWidgetState) {
+      status.textContent = 'Notes stay in this view. Export them before closing.';
+      return;
+    }
+    try {
+      await window.openai.setWidgetState(snapshot);
+      status.textContent = 'Draft state saved. Export notes into this chat for discussion; notes do not approve policy changes.';
+    } catch {
+      status.textContent = 'Could not save draft state. Export notes before closing.';
+    }
+  }
+
+  function render() {
+    const topic = topics[selected];
+    heading.textContent = topic.title;
+    content.replaceChildren();
+    if (selected === 'scope') {
+      for (const child of scopeGraphic.children) content.append(child.cloneNode(true));
+    }
+    const list = document.createElement('ul');
+    list.className = 'audit-facts';
+    for (const fact of topic.facts) {
+      const item = document.createElement('li');
+      item.textContent = fact;
+      list.append(item);
+    }
+    content.append(list);
+    if (topic.models) {
+      const models = document.createElement('div');
+      models.className = 'viz-row';
+      models.setAttribute('aria-label', 'Seven native model IDs, all at medium effort');
+      for (const model of topic.models) {
+        const code = document.createElement('code');
+        code.textContent = model;
+        models.append(code);
+      }
+      content.append(models);
+    }
+    if (selected === 'reviews') {
+      const batchList = document.createElement('ol');
+      batchList.className = 'audit-batches';
+      for (const [label, members, readiness] of batches) {
+        const item = document.createElement('li');
+        const detail = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.className = 'cursor-interaction';
+        summary.textContent = label;
+        const state = document.createElement('p');
+        state.className = 'text-small text-muted';
+        state.textContent = readiness;
+        const code = document.createElement('code');
+        code.textContent = members;
+        detail.append(summary, state, code);
+        item.append(detail);
+        batchList.append(item);
+      }
+      content.append(batchList);
+    }
+    source.textContent = 'Decision source: ' + topic.source.split('; ').map(file =>
+      'docs/skill-audit/' + (file === 'map.md' ? '' : 'tickets/') + file
+    ).join('; ');
+    noteLabel.textContent = 'Discussion note: ' + topic.label;
+    const currentNote = notes[selected] || '';
+    if (note.value !== currentNote) note.value = currentNote;
+    root.querySelectorAll('[data-topic]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.topic === selected));
+    });
+    updateNoteCount();
+  }
+
+  root.querySelectorAll('[data-topic]').forEach(button => {
+    button.addEventListener('click', () => {
+      selected = button.dataset.topic;
+      lastEdit = Date.now();
+      render();
+      void save();
+    });
+  });
+  note.addEventListener('input', () => {
+    lastEdit = Date.now();
+    if (note.value) notes[selected] = note.value;
+    else delete notes[selected];
+    updateNoteCount();
+    status.textContent = 'Draft changed. Notes do not approve policy changes.';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => void save(), 300);
+  });
+  note.addEventListener('change', () => { clearTimeout(saveTimer); void save(); });
+  root.querySelector('#audit-export').addEventListener('click', () => {
+    exportPanel.hidden = false;
+    exportNotes();
+    exportText.focus();
+    exportText.select();
+  });
+  window.addEventListener('openai:set_globals', event => {
+    const saved = event.detail?.globals?.widgetState;
+    if (saved) { restore(saved); render(); }
+  });
+  restore(window.openai?.widgetState);
+  render();
+})();
+</script>

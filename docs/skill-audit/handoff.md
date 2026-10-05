@@ -6,6 +6,8 @@ The destination is a completed audit of non-imported maintained skills plus a se
 
 All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user explicitly requested. Resume from [Skill Authoring Audit](map.md).
 
+The current discussion surface is [the visual design overview](design-map.html), dated 2026-10-05. It presents the agreed scope, rubric, protected behavior, twelve review scopes, seven-model evidence contract, completion gates, proposal tracking, and final documents. Section notes use host draft-state storage and export together as text for this chat. Host restoration is best-effort; exporting makes notes available for explicit discussion. Notes are drafts, not approvals or policy edits. The view is an inline HTML fragment; use the Codex visualization surface rather than treating it as a standalone web page. No ticket status changed while creating it.
+
 ## Confirmed Constraints
 
 - Review the 32 remaining published candidates and all five repository-local candidates. Remove any additional imports established by clear evidence. The original 60-entry total remains inventory history, not current audit scope. Exclude snapshots, generated benchmark outputs, and fixtures.
@@ -22,6 +24,8 @@ All planning artifacts are feature-scoped under `docs/skill-audit/`, as the user
 - Follow the [canonical subagent checkpoint rule](../../.agents/instructions/repo.md#subagent-checkpoints), approved after repeated premature interruptions. Missed checkpoints trigger status checks. Do not reuse the short historical limits below as defaults.
 
 ## Next Focus
+
+Discuss the human's visual annotations when supplied. The audit review frontier below remains unchanged; creating the overview did not start a review batch.
 
 Claim [Review Skill Authoring and Repository Guidance](tickets/review-skill-authoring-and-repository-guidance.md), the first allocated review scope. Verify its exact blockers, `choose-audit-batches-and-evidence-format.md` and `set-audit-completion-and-implementation-gates.md`, are closed before assigning a new six-character claim. Review its six primary skills and maintained resources; create the shared check catalog/coverage index, findings register, and batch report when review begins, without prefilled passing claims. Gather source facts, then obtain the human's proposal dispositions through Grilling. Use the approved subagent checkpoint rule for delegated fact gathering. Do not resolve a second non-research ticket in the session that closed completion gates.
 
@@ -47,9 +51,11 @@ Read the [authoring checklist](research/authoring-checklist/findings.md) and [pr
 
 ## Verification
 
-Read-only Python checks pass for the twenty-ticket graph, metadata, exact dependencies, cycles, seven closed-ticket resolutions and named map links, local Markdown links/anchors, whitespace, and fog delimiters. The graph has seven closed tickets, thirteen open tickets, and no claims. Ten independent review scopes are unblocked; both resource reviews and reconciliation remain blocked by their retained dependencies. The next named review is verified eligible. `rtk git diff --check` passes. All six gate policies and the proposal-tracking clarification are confirmed; no human gate answer remains pending. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
+The previous gate session verified graph metadata, exact dependencies, cycles, resolutions, named map links, local Markdown anchors, whitespace, and fog delimiters. The 2026-10-05 view checks reconfirm twenty tickets with seven closed and thirteen open, verify all eight view source records and new local links, and pass whitespace and JavaScript syntax checks. No ticket changed. Ten independent review scopes remain unblocked; both resource reviews and reconciliation remain blocked by their retained dependencies. No human gate answer remains pending. No behavioral baseline, full skill audit, or implementation acceptance run has occurred.
 
-The formal Update Agent Docs pass reviewed the final diff, user clarification, routing, document quality, and indexes. This session changes four effort documents only. Existing canonical workflow guidance and `FILE_MAP.md` routes already cover this effort; feature-specific gate and proposal policies remain in their owning decision. Added: None. Changed: None. Split or moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. No canonical semantic edit requires an OKF pass in this session. The earlier checkpoint-rule update remains in `.agents/instructions/repo.md`, routed by `.agents/memory/INDEX.md`; its previously recorded OKF result is historical. No skill source or tooling implementation changes.
+Browser preview checks pass for section selection, batch expansion, seven model IDs, per-section notes, export of all notes, and note restoration after reload. Normal and 736-pixel layouts were inspected; 320-pixel scope/review geometry has no horizontal overflow. Full narrow-screen interaction remains unverified: the sandboxed preview returned a hit-testing error despite a visible matching control. Preview notes were removed, and the temporary viewport was reset. The final two content-only additions were source-checked and syntax-checked after these interaction checks. Host draft-state delivery is best-effort; export notes into the chat for explicit discussion.
+
+The formal Update Agent Docs pass reviewed the final diff, user request, routing, document quality, and indexes. This session adds the visual overview and updates the effort map and handoff only. Existing canonical workflow guidance and `FILE_MAP.md` routes already cover this effort; feature-specific policy remains in its owning decisions. Added: None. Changed: None. Split or moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. No canonical semantic edit requires an OKF pass in this session. The earlier checkpoint-rule update remains in `.agents/instructions/repo.md`, routed by `.agents/memory/INDEX.md`; its previously recorded OKF result is historical. No skill source or audit tooling implementation changes.
 
 ## Resolved Execution Friction
 

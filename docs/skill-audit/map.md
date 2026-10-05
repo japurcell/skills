@@ -6,6 +6,7 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 
 ## Notes
 
+- [Visual design overview](design-map.html) is a dated interactive view for discussion. The owning ticket resolutions remain authoritative; draft annotations do not change decisions or record approval.
 - This effort starts from the SKILL audit idea preserved in [the effort brief](README.md).
 - Apply Wayfinder and Grilling. The user explicitly waived the unavailable `domain-modeling` dependency on 2026-10-01.
 - The user chose a completed audit plus an ExecPlan as the destination. Audit evidence gathering and final document authoring are allowed within this map. Implementing proposed skill changes is a later effort.
