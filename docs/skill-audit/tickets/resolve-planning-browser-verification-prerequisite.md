@@ -17,6 +17,8 @@ Preserve skill names, invocation controls where present, UI-visible verification
 
 Both final audit and ExecPlan must expose RPT-005 and this route. Genuinely dependent work remains pending; independent evaluation repairs may proceed only after their exact oracles and dependencies are settled. This ticket does not authorize browser runs, plugins, installation or implementation and supplies no evidence waiver.
 
+The human accepted retaining this separate pending route on 2026-10-06 in [Review Requirements and Task Planning](review-requirements-and-task-planning.md#resolution). The batch is closed and unblocks this ticket. Retention selects no underlying behavior and grants no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->

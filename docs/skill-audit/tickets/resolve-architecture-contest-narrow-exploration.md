@@ -17,6 +17,8 @@ Preserve current two-explorer and three-architect minima, named roles, required 
 
 Both final audit and ExecPlan must expose RPT-003 and this route. Genuinely dependent work remains pending. Later validation must distinguish narrow existing-code, broad existing-code and greenfield cases, with source checks and actual dispatch evidence separate. No native run or waiver follows from this ticket.
 
+The human accepted retaining this separate pending route on 2026-10-06 in [Review Requirements and Task Planning](review-requirements-and-task-planning.md#resolution). The batch is closed and unblocks this ticket. Retention selects no underlying behavior and grants no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->

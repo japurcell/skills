@@ -17,6 +17,8 @@ Preserve the skill name and explicit invocation control, known tracker and label
 
 Both final audit and ExecPlan must expose RPT-002 and this route. Genuinely dependent changes remain pending until the human decides or explicitly defers with rationale, affected work, remaining risk and a revisit trigger. A batch retention decision does not choose the setup procedure or waive evidence.
 
+The human accepted retaining this separate pending route on 2026-10-06 in [Review Requirements and Task Planning](review-requirements-and-task-planning.md#resolution). The batch is closed and unblocks this ticket. Retention selects no underlying behavior and grants no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->
