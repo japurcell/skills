@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: MANDATORY first action whenever user mentions 'handoff', 'handoff.md', 'read handoff', or any path ending in '/handoff.md'; including requests to read, summarize, check, or update it. Also trigger on resume, continue, pick up, next step, checkpoint, or transfer context. Load before any tool call; update handoff whenever scope, status, blockers, or next step changes, and before stopping.
+description: MANDATORY first action whenever user, task, spec, or workflow mentions, reads, touches, or updates 'handoff', 'handoff.md', or any path ending in 'handoff.md'. Also trigger on resume, continue, pick up, next step, checkpoint, or transfer context. Load before any tool call touching handoff files; update handoff whenever scope, status, blockers, or next step changes, and before stopping.
 ---
 
 # Handoff
