@@ -1,8 +1,8 @@
 # Skill Audit Findings
 
-Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
+Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
 
-Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05. Authoring and evaluation repairs are accepted for later plan scope; five separate decisions remain pending. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
+Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05. Their accepted repairs remain later plan scope and five earlier decisions remain pending. DD-001 through DD-005 await live review and DD-004 has a sixth separate route. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
 
 ## Proposal index
 
@@ -25,6 +25,11 @@ Applicability, adoption disposition, compliance, proposal status, and implementa
 | [RLW-001](#rlw-001-maintenance-type-table-disagrees-with-the-root-only-okf-contract) | Maintenance type table disagrees with the root-only OKF contract | Accepted for later planning | Later authoring clarification scope |
 | [RLW-002](#rlw-002-prior-plan-reference-exception-has-unclear-relationship-to-single-file-self-containment) | Prior-plan reference exception has unclear relationship to single-file self-containment | Pending separate decision | [Separate decision](tickets/resolve-execplan-self-containment-and-prior-plan-references.md) |
 | [RLW-003](#rlw-003-clarify-reported-okf-reference-and-orchestration-evidence) | Clarify reported OKF reference and orchestration evidence | Accepted for later planning | Later authoring clarification scope; native trace evidence outstanding |
+| [DD-001](#dd-001-explore-spawn-grading-omits-independent-area-assertions) | Explore spawn grading omits independent-area assertions | Not reviewed | Proposed later plan scope; batch review pending |
+| [DD-002](#dd-002-evaluation-setup-does-not-establish-required-prior-context-or-cache-hit) | Evaluation setup does not establish required prior context or cache hit | Not reviewed | Proposed later plan scope; batch review pending |
+| [DD-003](#dd-003-official-source-graders-equate-text-mentions-with-citation-and-cache-evidence) | Official-source graders equate text mentions with citation and cache evidence | Not reviewed | Proposed later plan scope; batch review pending |
+| [DD-004](#dd-004-graders-can-announce-success-without-grading-runs-and-do-not-validate-json-shape) | Graders can announce success without grading runs and do not validate JSON shape | Not reviewed | [Separate decision](tickets/define-benchmark-grader-failure-outcomes.md); exact protocol pending |
+| [DD-005](#dd-005-explore-grader-contains-prohibited-blank-line-whitespace) | Explore grader contains prohibited blank-line whitespace | Not reviewed | Proposed later plan scope; batch review pending |
 
 ## Pending decisions and approval
 
@@ -35,6 +40,8 @@ The repository-local live review accepted RLW-001/RLW-003 for later authoring pl
 Accepted authoring work may enter the later plan only when its design prerequisites are resolved. SAG-004 needs a grounded fixture/oracle mapping rather than an invented successor. SAG-007's evaluator repair must preserve intended contracts; disputed body structure follows SAG-003. SAG-013 wording cleanup can be independent only when it does not choose execution authority. SAG-012 keeps client enforcement unverified until actual evidence exists.
 
 Both final `audit.md` and `ExecPlan.md` must expose every unresolved proposal by stable ID and link its owner and route. Reconciliation accounts for accepted, rejected, deferred, and unresolved items. A deferral requires rationale, affected work, remaining risk, and revisit trigger. Evidence waiver and residual-risk acceptance are separate.
+
+The delegation/discovery static investigation adds DD-001 through DD-005, all awaiting live human review. DD-004's exact invalid/incomplete grading outcomes have a sixth separate decision, [Define Benchmark Grader Failure Outcomes](tickets/define-benchmark-grader-failure-outcomes.md), blocked by this batch review. The five earlier decisions remain open and unblocked. Two newly evidenced producer targets are proposed for SAG-008's existing metric decision; its original scope and pending choice remain intact until the human reviews that addition. DD-001/002/003/005 propose independent area checks, reproducible inputs and cache branches, honest citation/trace grading, and five whitespace-line cleanups. DD-004's type/error protocol is not silently selected by those proposals. No new proposal has been accepted, rejected or deferred.
 
 ## Findings
 
@@ -125,6 +132,7 @@ Both final `audit.md` and `ExecPlan.md` must expose every unresolved proposal by
 ### SAG-008: Unmeasured metrics become zero
 
 - Checks/applicability/disposition: A22/R11; all three grader outputs; adapt.
+- Additional static evidence, pending target disposition: `skills/explore/evals/grade_benchmark.py:49,59-70` and `skills/official-sources/evals/grade_benchmark.py:38,47-58` use the same zero-filling pattern. The delegation/discovery report records these unchanged producers. They are proposed additions to the existing metric decision, not an approved representation, automatic target expansion, or duplicate finding.
 - Evidence: create-skill grader `331-342`, improve-skill `59-70`, self-improve `51-62` hardcode tool calls/steps/errors/grader time to zero; missing timing also defaults zero. Exact imported consumer anchors inspected as dependency only: `skill-creator/scripts/aggregate_benchmark.py:137-154` defaults omitted time/tool/error fields to zero, uses them in aggregation/output (`186-218,248-250,311-323`); `references/schemas.md:110-125,155,169-191` describes numeric measurements and executor metrics source. No nullable/availability-aware representation is established by this source inspection.
 - Mechanism/impact: output does not distinguish unknown from measured zero; consumers may infer no errors/steps without trace analysis. Downstream behavior untested.
 - Severity/confidence/client: Minor/high; local benchmark/viewer consumers.
@@ -244,3 +252,60 @@ Both final `audit.md` and `ExecPlan.md` must expose every unresolved proposal by
 - Human status: accepted authoring clarification for later plan scope by the human on 2026-10-05. Preserve the stated contracts and valid independent checks; do not expand SAG-007's targets. No implementation approval, evidence waiver, or residual-risk acceptance.
 - Source configuration: static source review at `bd7b1a68a081ea847b2e6c1712363000ef01751f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
 - Route: accepted later authoring plan scope, subject to stated prerequisites and final reconciliation; required native trace evidence remains outstanding. The [batch Resolution](tickets/review-repository-local-workflows.md#resolution) records the human answer.
+
+
+### DD-001: Explore spawn grading omits independent-area assertions
+
+- Checks/applicability/disposition: A22/A27/R11; inspectable exploration evaluations and deterministic grading; adapt to artifact grading rather than native dispatch claims.
+- Evidence: `skills/explore/SKILL.md:15,21-31` requires independent focused areas. `skills/explore/evals/evals.json:9-21` asserts valid JSON and distinct areas. `skills/explore/evals/grade_benchmark.py:117-135` checks count/agent/parallel flags, then concatenates every prompt and accepts `has_backend or has_frontend or has_db` (:129). It emits no pairwise distinction check. JSON/schema validation is a separate DD-004 mechanism.
+- Mechanism/consequence: lexical relevance in one prompt can satisfy the area predicate while other spawns repeat the same area or are irrelevant. Predicted false-positive grading, not observed execution. Major severity; high confidence from exact predicates and asserted contract. Affected surface is provider-neutral local output grading, not demonstrated host dispatch behavior.
+- Behavior-preserving proposal: grade each spawn's bounded relevant area and pairwise independence, retain valid agent/count/parallel checks, and consume structurally validated data under DD-004. Preserve the allowed 1-3 areas; the three listed directories are examples, not an all-three requirement. Output-only spawns remain declared plans; actual routing/dispatch must be established later from coordinator traces.
+- Later validation: duplicate/irrelevant spawn artifacts and valid one-, two-, three-area plans; DD-004 owns malformed schema inputs. Independent native trace checks belong only in later authorized evidence work.
+- Human status: not reviewed; awaiting the live delegation/discovery batch disposition. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
+- Route: proposed later plan scope, pending [Review Delegation and Discovery](tickets/review-delegation-and-discovery.md) and stated design prerequisites. No skill change has been implemented.
+
+### DD-002: Evaluation setup does not establish required prior context or cache hit
+
+- Checks/applicability/disposition: A12/A21/A22/R08/R11; declared evaluation inputs; adapt with explicit fixture/setup evidence.
+- Evidence: `skills/explore/evals/evals.json:26-30,44-47` references `.agents/scratchpad/exploration_results.md` and `backend/auth/constants.py`; neither is bundled in Explore's maintained set and no `evals/files/` exists there. `skills/official-sources/evals/evals.json:106` permits hit or miss, but :107 requires hit, and :108-110 supplies only React files. Seven official fixtures were read; none seeds `official-sources-cache.json`. Historical external-runner provisioning was not inspected and remains unknown.
+- Mechanism/consequence: the checked-in definitions alone cannot recreate the prior-context/cache-hit precondition. A correct cache miss/fetch branch may be penalized by an unconditional hit oracle. Major severity for reproducibility and branch scoring; high confidence in missing declared setup, unobserved runtime impact. Provider-neutral fixture setup affects all future native evaluations.
+- Behavior-preserving proposal: bundle or declare deterministic prior-context and exact-match cache setup; distinguish cache-hit/miss inputs and expectations, preserve optional cache and narrow direct-read exploration. Clarify `should_explore: false` as skipping redundant/broad exploration or delegation where applicable; it does not assert that relevant direct reads were forbidden or absent.
+- Later validation: fresh isolated fixture construction, provided/missing context, exact hit/miss/mismatched version/topic cases, and coordinator file-read/network evidence. No new skill output or autonomy contract is selected.
+- Human status: not reviewed; awaiting the live delegation/discovery batch disposition. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
+- Route: proposed later plan scope, pending [Review Delegation and Discovery](tickets/review-delegation-and-discovery.md) and stated design prerequisites. No skill change has been implemented.
+
+### DD-003: Official-source graders equate text mentions with citation and cache evidence
+
+- Checks/applicability/disposition: A14/A22/R11; citations, bounded-fetch and cache assertions; adapt to separate report-shape/content checks from trace checks.
+- Evidence: `skills/official-sources/evals/grade_benchmark.py:105-106` tests only a domain substring for an official citation. :170-180 and :283-290 inspect self-written phrases for failed-fetch/fallback assertions. :299-315 accepts any cache-path/scratchpad mention; cache reuse :314 passes `has_cache_note or "usenavigate" in normalized`. Eval :107 requests no new fetching, but no corresponding trace predicate exists. :36 reads transcript solely to count its characters. The grader retains independently useful section/version/API/conflict/UNVERIFIED checks.
+- Mechanism/consequence: a plain `reactrouter.com` mention or a lookalike URL can meet the domain check; `useNavigate` alone can meet cache reuse, and reported stopping/caching does not establish actual fetch/read order. Major severity; high confidence from exact predicate insufficiency. Predicted false-positive compliance claims remain untested. Affected surface: provider-neutral artifact grader; required later audit traces apply only to selected native Codex cases. Copilot/Gemini compatibility remains static within this audit.
+- Behavior-preserving proposal: parse actual citation URLs and official host identity for report-level citation claims; label stopping/cache statements as reported behavior; keep useful independent content predicates. Grade file reads, failed fetch counts, fallback, cache load and absence of extra fetches separately from usable coordinator traces. Do not require fake cache-hit phrases on a valid miss path.
+- Later validation: domain-only/lookalike/proper URLs; cache mention without loaded data; correct hit/miss outputs; reported stops versus independent traces. This does not claim a source was visited, official, correct for the version, or fetched by the current audit.
+- Human status: not reviewed; awaiting the live delegation/discovery batch disposition. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
+- Route: proposed later plan scope, pending [Review Delegation and Discovery](tickets/review-delegation-and-discovery.md) and stated design prerequisites. No skill change has been implemented.
+
+### DD-004: Graders can announce success without grading runs and do not validate JSON shape
+
+- Checks/applicability/disposition: A27/R11; executable evaluation helpers; adapt to explicit artifact validation and no-run outcome.
+- Evidence: Explore `skills/explore/evals/grade_benchmark.py:13-19` catches JSON syntax only; :85-91,107-109,141-155 assume dict-like metadata/decision values, and :100-101,119-120 assume spawn containers and records. :177-188 returns zero and prints "Wrote grading.json files" even when no matching runs exist. Official-source :17-24 similarly accepts any JSON timing value used with `.get` at :38; :332-344 has an empty-loop success path. This finding owns structure/error/no-run outcomes; DD-001 owns relevance/independence of valid spawn records.
+- Mechanism/consequence: valid JSON with the wrong root/value shape can raise errors instead of a structured invalid-artifact result. An empty or mislaid iteration can report a successful write operation despite writing no grades. Major severity for claimed grading completeness; high confidence in control flow, untested observed failure. All local grading providers affected.
+- Behavior-preserving proposal: validate metadata/decision/timing mappings and spawn list/record shapes, preserve all useful predicates, and explicitly report no eligible runs or invalid artifacts without claiming completed grading. Do not silently skip invalid expected runs. Existing source does not establish a clear consumer contract for failure outcomes, so exact statuses, exit codes and error/result schemas remain a design prerequisite. No new representation or incompatible exit behavior is selected by this proposal.
+- Exact unresolved design question: what honest incomplete/invalid outcomes can existing aggregate/report consumers distinguish, and which status/exit/result schema preserves their compatibility? Parent reconciliation must keep that question explicit and route a separate decision if source investigation cannot establish an equivalent contract.
+- Later validation: empty/mislaid iterations, wrong-root metadata/decision/spawns/timing JSON, unsupported eval IDs, valid canonical directories, and downstream outcome compatibility. No grader was run for this review.
+- Human status: not reviewed; awaiting the live delegation/discovery batch disposition. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
+- Owning decision: [Define Benchmark Grader Failure Outcomes](tickets/define-benchmark-grader-failure-outcomes.md). Exact failure-status, exit-code and result-schema changes remain pending; retain this ID and route in both final documents.
+
+### DD-005: Explore grader contains prohibited blank-line whitespace
+
+- Checks/applicability/disposition: R12; repository source formatting; adopt.
+- Evidence: `skills/explore/evals/grade_benchmark.py:116,121,143,145,156` contain whitespace-only lines. Non-mutating source inspection detected five; no CR bytes were found.
+- Consequence/severity/confidence: Minor/high; repository formatting violation without observed runtime impact, provider-neutral source.
+- Behavior-preserving proposal: remove whitespace from those blank lines only, preserving predicates and control flow.
+- Later validation: scoped diff/whitespace check; no broad rewrite or evaluation weakening.
+- Human status: not reviewed; awaiting the live delegation/discovery batch disposition. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
+- Route: proposed later plan scope, pending [Review Delegation and Discovery](tickets/review-delegation-and-discovery.md) and stated design prerequisites. No skill change has been implemented.
