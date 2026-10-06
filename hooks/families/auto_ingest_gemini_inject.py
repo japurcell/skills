@@ -18,6 +18,7 @@ from helpers.source_ingest import (  # noqa: E402
     build_block_reason,
     build_context,
     ingest_skill_available,
+    join_agent_brain,
     load_manifest,
     manifest_path_for_payload,
     reconcile_manifest,
@@ -53,6 +54,15 @@ def main() -> int:
             return 0
         if not event_name:
             event_name = "BeforeAgent"
+        joined = join_agent_brain(repo_root_for_payload(payload), payload)
+        if joined is not None:
+            if event_name == "AfterAgent":
+                emit_json({"systemMessage": "block-pending-ingest: pass; joined learn completed"} if joined["completed"] else {"decision": "deny", "reason": joined["reason"]})
+            elif not joined["completed"]:
+                emit_json({"hookSpecificOutput": {"hookEventName": "BeforeAgent", "additionalContext": joined["reason"]}, "suppressOutput": True})
+            else:
+                emit_json({})
+            return 0
         if event_name == "AfterAgent" and (payload.get("stop_hook_active") or payload.get("stopHookActive")):
             emit_json({"systemMessage": "block-pending-ingest: retry allowed; pending state not rechecked"})
             return 0
@@ -106,10 +116,10 @@ def main() -> int:
         return 0
     except ValueError as exc:
         log_event(f"Error: {sanitize_log_field(str(exc))}")
-        emit_json({"systemMessage": "block-pending-ingest: incomplete"} if event_name == "AfterAgent" else {})
+        emit_json({"decision": "deny", "reason": "block-pending-ingest: incomplete; restore expected manifest and source access"} if event_name == "AfterAgent" else {})
     except Exception as exc:  # noqa: BLE001 - fail open on context-injection errors
         log_event(f"Error: Unexpected exception: {sanitize_log_field(str(exc))}")
-        emit_json({"systemMessage": "block-pending-ingest: incomplete"} if event_name == "AfterAgent" else {})
+        emit_json({"decision": "deny", "reason": "block-pending-ingest: incomplete; restore expected manifest and source access"} if event_name == "AfterAgent" else {})
     return 0
 
 

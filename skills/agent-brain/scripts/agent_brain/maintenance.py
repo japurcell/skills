@@ -169,6 +169,9 @@ def assigned_guidance(config, root, obligation, *, store=None, ignore_publicatio
 
 def session_completion(record, session, config, root, today):
     """All assigned obligations settle; unassigned cycle work may remain due."""
+    if session.get("source_work") and session["checkpoint"] not in ("ready_to_complete", "completed"):
+        session["status"] = session["checkpoint"]
+        return
     pending = any(item["status"] != "completed" for item in session["obligations"].values())
     session.update(status="ready_to_complete" if pending else "completed",
                    checkpoint="ready_to_complete" if pending else "completed")

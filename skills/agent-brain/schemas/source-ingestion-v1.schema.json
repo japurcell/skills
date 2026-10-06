@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/source-ingestion-v1.schema.json",
+  "title": "Optional foreground source integration v1",
+  "$defs": {
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entries",
+        "orphans"
+      ],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_path",
+              "source_revision",
+              "summary_revision",
+              "knowledge_ids",
+              "note"
+            ],
+            "properties": {
+              "source_path": {
+                "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+              },
+              "source_revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "summary_revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "knowledge_ids": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "orphans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_path",
+              "summary_revision",
+              "disposition",
+              "note"
+            ],
+            "properties": {
+              "source_path": {
+                "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+              },
+              "summary_revision": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "disposition": {
+                "enum": [
+                  "retained",
+                  "removed"
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "configuration": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "const": false
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "engine_path",
+            "engine_revision",
+            "bridge_path",
+            "bridge_revision"
+          ],
+          "properties": {
+            "enabled": {
+              "const": true
+            },
+            "engine_path": {
+              "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+            },
+            "engine_revision": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bridge_path": {
+              "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+            },
+            "bridge_revision": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

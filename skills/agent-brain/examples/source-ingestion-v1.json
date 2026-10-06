@@ -1,0 +1,9 @@
+{
+  "source_ingestion": {
+    "enabled": true,
+    "engine_path": ".github/hooks/scripts/helpers/auto_ingest.py",
+    "engine_revision": "0000000000000000000000000000000000000000000000000000000000000000",
+    "bridge_path": "tools/agent-brain/scripts/integration-bridge.py",
+    "bridge_revision": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

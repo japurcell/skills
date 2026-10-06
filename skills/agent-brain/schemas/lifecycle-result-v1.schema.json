@@ -11,6 +11,16 @@
     "work_session_status"
   ],
   "properties": {
+    "action_ready": {
+      "type": "boolean"
+    },
+    "source_work": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+      }
+    },
     "maintenance": {
       "$ref": "maintenance-v1.schema.json"
     },

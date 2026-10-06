@@ -394,7 +394,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if result.setup_status == "configured":
             from .lifecycle import inspection
             config_path = Path(arguments.config) if arguments.config is not None else DEFAULT_CONFIG
-            details = inspection(load_config(config_path), Path.cwd().resolve())
+            details = inspection(load_config(config_path), Path.cwd().resolve(), config_path)
             if arguments.json_output:
                 print(json.dumps(result.as_json_object() | details, ensure_ascii=False, sort_keys=True))
             else:
@@ -426,6 +426,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                 all_guidance=arguments.all_guidance,
             )
             result = retrieve(config, knowledge, scope)
+            from .source_ingestion import snapshot, pending
+            from .state import LifecycleError
+            from dataclasses import replace
+            gaps = []
+            try:
+                source_state = snapshot(config, Path.cwd().resolve())
+                if source_state is not None and (source_state["blocking"] or source_state["changes"]):
+                    gaps.append({"code": "SOURCE_INGESTION_PENDING", "path": ".agents/sources", "message": "Focused source ingestion and current redelivery are required before a dependent action or conclusion."})
+                if source_state is not None:
+                    from .lifecycle import inspection
+                    inspected = inspection(config, Path.cwd().resolve(), config_path)
+                    if inspected["state_status"] == "unavailable" or any(session.get("source_work") and not session.get("action_ready") for session in inspected["work_sessions"]):
+                        gaps.append({"code": "SOURCE_REDELIVERY_REQUIRED", "path": ".agents/context", "message": "Current foreground source evidence and redelivery are incomplete."})
+            except LifecycleError as exc:
+                gaps.append({"code": exc.code, "path": ".agents/sources", "message": str(exc)})
+            if gaps:
+                result = replace(result, recall=replace(result.recall, complete=False, gaps=result.recall.gaps + tuple(gaps)), exit_code=1)
         except ConfigurationError as exc:
             _print_error(
                 "CONFIGURATION_INVALID",

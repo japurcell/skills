@@ -62,6 +62,7 @@ def _build_transformed_prompt(context: str, transformed_prompt: str) -> str:
 
 
 def main() -> int:
+    event_name = ""
     try:
         payload = read_json_input()
         if not isinstance(payload, dict):
@@ -87,6 +88,16 @@ def main() -> int:
                         "reason": "Pending ingest blocks normal work. Restore `.agents/skills/ingest-source/SKILL.md` and rerun.",
                     }
                 )
+            else:
+                emit_json({})
+            return 0
+
+        joined = helper.join_agent_brain(repo_root, payload)
+        if joined is not None:
+            if event_name in {"agentStop", "subagentStop"}:
+                emit_json({"decision": "allow"} if joined["completed"] else {"decision": "block", "reason": joined["reason"]})
+            elif transformed_prompt and not joined["completed"]:
+                emit_json({"modifiedTransformedPrompt": _build_transformed_prompt(joined["reason"], transformed_prompt)})
             else:
                 emit_json({})
             return 0
@@ -135,10 +146,10 @@ def main() -> int:
         return 0
     except ValueError as exc:
         log_event(f"Error: {sanitize_log_field(str(exc))}")
-        emit_json({})
+        emit_json({"decision": "block", "reason": "Source ingestion is incomplete; restore the expected manifest and rerun."} if event_name in {"agentStop", "subagentStop"} else {})
     except Exception as exc:  # noqa: BLE001 - fail open on prompt rewrite errors
         log_event(f"Error: Unexpected exception: {sanitize_log_field(str(exc))}")
-        emit_json({})
+        emit_json({"decision": "block", "reason": "Source ingestion is incomplete; restore source access and rerun."} if event_name in {"agentStop", "subagentStop"} else {})
     return 0
 
 

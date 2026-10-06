@@ -17,6 +17,8 @@ Use agent-brain to load the repository's configured guidance before relying on r
 
 ## Metadata and delivery
 
+For optional source work, obey `action_ready`, source gaps and the focused ingestion instructions in learn. Early source prerequisites can be learned while the objective remains active; final task learning still requires its own post-work check.
+
 Guidance can use the namespaced JSON comments described in [the authoring example](examples/metadata-authoring-v1.md) and [metadata schema](schemas/metadata-v1.schema.json). Stable UUIDs survive moves; defaults provide inherited fields but never an identity. Protected documents can be indexed through read-only selectors in configuration.
 
 Treat candidate units as investigation material only. They never satisfy established policy or a mandatory startup/reference read. Check `complete`, `gaps`, and `scope_status`; an uncertain selector broadens recall and leaves an explicit scope gap. Default evidence output contains availability and source references. `--show-evidence` requests details. A whole-artifact read preserves exact source text, including metadata comments that may contain detail, and says so in its result.

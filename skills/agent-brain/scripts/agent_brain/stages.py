@@ -170,7 +170,7 @@ def validate_links(documents: dict[str, str], root: Path, changes: list[dict]) -
 
 
 def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revision: str, *, assigned_ids=None) -> dict:
-    _keys(payload, "changed input", {"schema_version", "outcome", "review", "proposal"} | ({"dispositions"} if "dispositions" in payload else set()))
+    _keys(payload, "changed input", {"schema_version", "outcome", "review", "proposal"} | (payload.keys() & {"dispositions", "source_ingestion"}))
     if payload["schema_version"] != 1 or payload["outcome"] != "changed":
         raise LifecycleError("PROPOSAL_INVALID", "expected a versioned changed proposal")
     proposal = _object(payload["proposal"], "proposal")
@@ -189,6 +189,8 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
         item = _object(value, "change")
         _keys(item, "change", {"path", "base_revision", "content"})
         path = _relative_path(item["path"], "change path")
+        if path == ".agents/sources" or path.startswith(".agents/sources/"):
+            raise LifecycleError("RAW_SOURCE_IMMUTABLE", "raw source inputs never belong to automatic publication")
         target = local_path(root, path)
         owned = [owner for owner in config.knowledge_roots if path.startswith(owner.path + "/") or owner.path == "."]
         candidate_owned = path.startswith(config.candidate_dir + "/") and not owned
@@ -346,6 +348,9 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
         delivered = assigned_guidance(config, store.root, obligation, store=store)
         validated = validate_proposal(payload, config, store.root, obligation["scope"], session["input_revision"],
                                      assigned_ids=[unit["id"] for unit in delivered["units"]] if stage == "dream" else None)
+        from .source_ingestion import validate_preview
+        if obligation["kind"] == "learn":
+            validate_preview(payload, validated["changes"], config, store.root, obligation["scope"], session.get("source_work", []))
         if stage == "dream" and any(item["disposition"] == "resolved" and item["id"] not in validated["affected_ids"]
                                     for item in payload["dispositions"]):
             raise LifecycleError("DREAM_DISPOSITION_INVALID", "a resolved disposition must name a target actually changed by this publication")
@@ -396,7 +401,8 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
     current = store.read()
     current_session = next(value for value in current["sessions"].values() if value["id"] == session["id"])
     current_agent = next(value for value in current_session["agents"].values() if value["id"] == agent["id"])
-    result = event_result(current, current_session, current_agent, None, "none")
+    delivery = guidance(config, store.root, current_session["scope"], ignore_publication=True) if operation in ("publish", "complete") else None
+    result = event_result(current, current_session, current_agent, delivery, "none")
     result.update(stage=stage, operation=operation, publication=publication.summary(path, journal),
         check_receipts=current_session["obligations"][obligation["id"]]["check_receipts"])
     result["stage_outcome"] = "changed" if operation == "complete" else "incomplete"

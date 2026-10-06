@@ -8,6 +8,12 @@ description: >
 
 Keep agent documentation small, current, and easy to route.
 
+## Agent-brain compatibility
+
+When a supported, activated agent-brain registration supplies a current learn invocation, follow the canonical [learn procedure](../../../skills/agent-brain/references/learn.md). Join that existing obligation and current input generation. Apply this skill's routing, document quality, and mandatory knowledge-refresh obligations within that foreground pass. A stage-generated callback joins its registered attempt; it never starts another learn pass. Completion requires current controlling sources, affected knowledge, semantic evidence, actual checks, and successful output settlement.
+
+For an unactivated repository, unsupported integration, or absent current invocation, complete the full Workflow below. A missing or interrupted activated invocation stays visibly incomplete while foreground context is restored; do not claim a legacy pass settles it. Optional blocking source work uses the separate focused ingest-source skill once for every blocking entry before refreshed guidance and learn checks. Scanner success or a manifest edit alone cannot complete ingestion.
+
 ## Workflow
 
 1. Review the final diff and session history.

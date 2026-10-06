@@ -15,7 +15,7 @@ from .state import LifecycleError, digest, local_path
 def checked_review(payload: dict, config: AgentBrainConfig, root: Path,
                    scope: dict, guidance: dict) -> tuple[list[dict], str]:
     from .lifecycle import file_revision, scope_record
-    _keys(payload, "stage input", {"schema_version", "outcome", "review"})
+    _keys(payload, "stage input", {"schema_version", "outcome", "review"} | ({"source_ingestion"} if "source_ingestion" in payload else set()))
     if type(payload["schema_version"]) is not int or payload["schema_version"] != 1 or payload["outcome"] != "no_change":
         raise LifecycleError("REVIEW_INVALID", "expected a versioned scoped no-change review")
     review = _object(payload["review"], "review")
@@ -29,6 +29,9 @@ def checked_review(payload: dict, config: AgentBrainConfig, root: Path,
     if not isinstance(review["sources"], list) or not review["sources"]:
         raise LifecycleError("REVIEW_EVIDENCE_REQUIRED", "review requires attributable current source identities and verification notes")
     known_sources = {item["path"] for item in guidance["artifacts"]}
+    if config.source_ingestion["enabled"]:
+        from .source_ingestion import snapshot
+        known_sources.update(snapshot(config, root)["files"])
     for selector in scope["paths"]:
         if not any(char in selector for char in "*?["):
             known_sources.add(selector)

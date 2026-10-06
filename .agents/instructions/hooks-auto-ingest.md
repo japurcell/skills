@@ -13,6 +13,9 @@ Load this file only for source auto-ingest work. General hook contracts remain i
 - Scaffold conforming draft `Source Summary` concepts. Quote dynamic YAML scalars and percent-encode `sources[].resource` paths while preserving `/`.
 - Detect unresolved summaries from normalized top-level `type` and `status` scalar values. Ignore matching body text.
 - Hold one platform-neutral `ManifestLock` across the complete read, reconcile, and save sequence.
+- Lock with POSIX flock or Windows byte locking; unavailable or timed-out locks fail closed without unlocked reconciliation. Validate expected manifest types, duplicate/finite JSON and source identities before effects; preserve damaged/missing expected input. Keep legacy summary-path basename sanitization.
+- Optional agent-brain source integration pins this canonical engine and its registered bridge paths/revisions. The bundle calls this engine as the single freshness/reconciliation owner; repositories without the integration need neither engine nor focused skill. Reject linked components in raw, summary, manifest, lock and skill access before scanner effects.
+- Activated gates join one current-generation foreground learn obligation. The focused skill proposes semantic summary/knowledge bytes through checked reversible publication; scanner exit or manifest state alone grants no semantic completion. Distinguish existing blocking sources from renamed/removed orphans, retain current revision evidence, and require actual redelivery before dependent action. Keep ManifestLock's ten-second wait and scanner/check work outside future native watchdog callbacks and semantic retry accounting.
 - Stream source hashing in 64 KiB chunks.
 - Catch scaffold `OSError` failures. Clean manifest `.tmp` files in `finally` after write or replace failures.
 - Keep scanners, prompt-time injectors, and final-response backstops aligned on manifest schema, summary naming, pending-entry text, and source-ingest-first ordering.

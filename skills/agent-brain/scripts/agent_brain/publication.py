@@ -53,6 +53,15 @@ def relevant_files(config, root: Path, scope: dict, delivery: dict) -> dict:
         if len(matches) > 2000:
             raise LifecycleError("INPUT_SCOPE_UNBOUNDED", "narrow the relevant source scope")
         paths.update(path.relative_to(root).as_posix() for path in matches if path.is_file())
+    from .source_ingestion import snapshot
+    source_state = snapshot(config, root)
+    if source_state is not None:
+        # Source integration may introduce required references to existing
+        # undisclosed knowledge. Bind their pre-pass bytes as well as delivered
+        # artifacts before any source semantic publication.
+        from .knowledge import load_knowledge
+        paths.update(load_knowledge(config, repository_root=root, ignore_publication=True).documents)
+        paths.update(path for path in source_state["files"] if path != ".agents/memory/sources/source-ingest-manifest.json")
     return {path: file_revision(local_path(root, path)) for path in sorted(paths)
             if local_path(root, path).is_file() and not path.startswith(config.state_dir + "/")}
 
@@ -89,6 +98,8 @@ def prepare_journal(validated: dict, payload: dict, config, config_path: Path, r
         "base_input_revision": session["input_revision"], "config_revision": file_revision(config_path),
         "relevant_files": relevant_files(config, root, session["scope"], guidance(config, root, session["scope"], ignore_publication=True)),
         "check_receipts": checks}
+    if "source_work" in session:
+        journal["source_work"] = session["source_work"]
     # Reserve the final bound receipt shape plus small status/recovery metadata.
     # A small proposal can still have a large indivisible before-image.
     final_receipts = [{"id": identity, **check, "input_revision": session["input_revision"],
@@ -109,6 +120,11 @@ def post_checks(journal: dict, config, root: Path) -> list[dict]:
         raise LifecycleError("GUIDANCE_INVALID", "published metadata/reference integrity is incomplete", exit_code=1)
     if any(current_bytes(root, item) != item["after"] for item in journal["changes"]):
         raise LifecycleError("PUBLICATION_CONFLICT", "actual resulting bytes differ from the validated set", exit_code=1)
+    from .source_ingestion import validate_review
+    from .lifecycle import guidance
+    if journal["payload"].get("dispositions") is None:
+        validate_review(journal["payload"], config, root, journal["scope"],
+            guidance(config, root, journal["scope"], ignore_publication=True), journal.get("source_work", []))
     receipts = run_checks(config, root)
     if not all(item["exit_code"] == 0 and not item["timed_out"] for item in receipts):
         raise LifecycleError("CHECK_FAILED", "an actual configured publication check failed", exit_code=1, retry_eligible=True)
@@ -240,8 +256,14 @@ def finish(store, state, config, config_path: Path, path: str, journal: dict,
            checks: list[dict], *, complete: bool, recovered: bool = False) -> dict:
     from .lifecycle import guidance, inputs, file_revision, revoke_agent, children_pending, mark_output_pending, identities
     bound = next(value for value in state["sessions"].values() if value["id"] == journal["work_session_id"])
+    if journal.get("source_work", []) != bound.get("source_work", []):
+        raise LifecycleError("SOURCE_EVIDENCE_STALE", "publication source work differs from the current joined obligation", exit_code=1)
+    from .source_ingestion import settle, knowledge_bases
+    if complete:
+        settle(journal["payload"], config, store.root)
     delivery = guidance(config, store.root, bound["scope"], ignore_publication=True)
     resulting_input = inputs(config, store.root, file_revision(config_path), bound["scope"], delivery)
+    resulting_bases = knowledge_bases(config, store.root) if bound.get("source_work") else None
     journal.update(status="checked" if complete else "published", resulting_input_revision=resulting_input)
     history.save(store.root, path, journal)
     if complete:
@@ -261,12 +283,16 @@ def finish(store, state, config, config_path: Path, path: str, journal: dict,
         if not owner or owner["generation"] != journal["owner_generation"] or owner["expires_at"] <= time.time():
             raise LifecycleError("OWNER_STALE", "publication owner changed or expired")
         session["input_revision"] = resulting_input
+        if complete and session.get("source_work"):
+            session["source_checked"] = resulting_input
+        if session.get("source_work"):
+            session["source_baseline"] = resulting_bases
         for inv in record["invocations"].values():
             if inv["obligation_id"] == obligation["id"]:
                 inv["input_revision"] = resulting_input
         agent = next(value for value in session["agents"].values() if value["id"] == journal["agent_id"])
         if agent.get("delivery"):
-            agent["delivery"].update(input_revision=resulting_input, guidance_revision=digest(delivery))
+            agent["delivery"].update(input_revision=resulting_input, guidance_revision=digest(delivery), complete=delivery["complete"])
         receipts = [{"id": uid(), **check, "input_revision": resulting_input,
                      "config_revision": file_revision(config_path), "owner_generation": journal["owner_generation"],
                      "attempt_id": journal["attempt_id"], "checked_at": time.time()} for check in checks]

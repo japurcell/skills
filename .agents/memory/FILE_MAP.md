@@ -107,3 +107,6 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `scripts/test-agent-brain-publication.py` | Public-process/file proof for evidence, policy protection, relocation, source notes, raw inverse history, interrupted recovery, exclusive ownership, and incomplete output. |
 | `skills/agent-brain/schemas/maintenance-v1.schema.json`, `examples/dream-review-v1.json` | Cycle/target/credit/batch/disposition records and an illustrative exact assigned review. |
 | `scripts/test-agent-brain-maintenance.py` | Public-process/file proof for UTC cadence, finite current coverage, quiet progress, candidates, cleanup references, and recovery delivery. |
+| `skills/agent-brain/scripts/agent_brain/source_ingestion.py` | Optional pinned canonical-engine boundary, current source evidence, semantic pre-pass bases, isolated proposal validation and checked mechanical settlement. No second freshness detector. |
+| `skills/agent-brain/schemas/source-ingestion-v1.schema.json`, `examples/source-ingestion-v1.json` | Optional configured engine/bridge pins and current source/summary/knowledge plus orphan-review evidence shapes. |
+| `scripts/test-agent-brain-compatibility.py` | Public bridge/CLI/generated-gate proof for joined source learning, reversible summary/KB publication, early delivery, drift, unavailable access and inactive legacy behavior. |

@@ -7,6 +7,12 @@ description: Audit and simplify repository agent instructions, memory, and routi
 
 Reduce agent-doc context cost while preserving durable guidance.
 
+## Agent-brain compatibility
+
+When a supported, activated agent-brain registration supplies a current dream invocation, follow the canonical [dream procedure](../../../skills/agent-brain/references/dream.md). Join that existing assigned batch and current input generation. Apply this skill's audit and preservation requirements within the foreground procedure. Join an assigned learn prerequisite when source integration or final task knowledge still needs work. Stage-generated callbacks join their registered attempt instead of recursively starting learn or dream.
+
+For an unactivated repository, unsupported integration, or absent current invocation, complete the full Workflow below, including update-agent-docs and mandatory document obligations. Missing or interrupted activated authority remains visibly incomplete until current foreground context returns. Quiet guidance still receives its assigned review; pruning requires current evidence of error, obsolescence, or complete redundancy, and unavailable evidence preserves uncertainty.
+
 ## Workflow
 
 1. Inventory relevant files:

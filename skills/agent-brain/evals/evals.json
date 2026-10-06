@@ -66,6 +66,39 @@
         "Separates factual verification from reviewed coverage and preserves inaccessible candidates.",
         "Completes only checked assigned work, keeps later targets and unfinished coverage visible, and launches no background model."
       ]
+    },
+    {
+      "id": 7,
+      "prompt": "The objective is active. Startup reports action_ready false and a source-ingestion learn package with three blocking originals and one removed-source orphan. Update-agent-docs and two source gates request the same work. Use the registered foreground procedure.",
+      "expected_output": "Invokes focused ingest-source once for all existing blocking sources, separately reviews orphan provenance, proposes exact summary and knowledge bytes outside canonical paths, and uses checked reversible learn publication with actual current redelivery. Joins one obligation without treating the active objective as completed. Final task learning still checks post-work inputs; assigned dream joins current checked sources without recursive ingestion.",
+      "files": [],
+      "expectations": [
+        "Uses the current registered invocation and same joined obligation.",
+        "Preserves raw originals and source-summary provenance.",
+        "Requires pre-effect inverse history, actual summary and attributable knowledge evidence, not scanner success or direct edits followed by recover."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "A source changes while learn checks run. The expected source manifest is then damaged and the focused ingestion skill is inaccessible. A gate says its previous scanner exited zero. Finish the pass.",
+      "expected_output": "Leaves the pass incomplete, preserves damaged state and pending work, restores source/skill access and current foreground authority before any review. Rejects old evidence and scanner success as completion.",
+      "files": [],
+      "expectations": [
+        "Rejects stale generations and unknown pending state.",
+        "Keeps long scan/check work in foreground and preserves finite attempts.",
+        "Makes no completion, native consumption or live-certification claim."
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "This repository has no configured source ingestion and no activated supported agent-brain integration. Perform the existing update-agent-docs and clean-agent-docs workflows.",
+      "expected_output": "Uses the complete legacy workflows and mandatory documentation obligations without requiring an engine or focused ingestion skill. It neither silently bypasses the doc pass nor fabricates activated authority.",
+      "files": [],
+      "expectations": [
+        "Preserves inactive legacy behavior and mandatory doc obligations.",
+        "Keeps focused source ingestion optional.",
+        "Does not activate a provider, install into an actual home, or launch a model."
+      ]
     }
   ]
 }

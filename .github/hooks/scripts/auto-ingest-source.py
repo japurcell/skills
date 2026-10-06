@@ -16,6 +16,7 @@ from helpers.auto_ingest import (
     ManifestLock,
     build_context,
     ingest_skill_available,
+    join_agent_brain,
     load_manifest,
     manifest_path,
     reconcile_manifest,
@@ -86,6 +87,11 @@ def main() -> int:
             return 0
 
         root = _repo_root(payload)
+        joined = join_agent_brain(root, payload)
+        if joined is not None:
+            emit_json({"type": "progress", "message": "auto-ingest-source: joined learn"})
+            emit_json(build_output(joined["reason"], event_name))
+            return 0
         sources_dir = source_root(root)
         summaries_dir = summary_root(root)
         manifest_file = manifest_path(summaries_dir)

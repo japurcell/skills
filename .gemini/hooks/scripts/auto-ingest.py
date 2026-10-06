@@ -17,6 +17,7 @@ from helpers.source_ingest import (  # noqa: E402
     ManifestLock,
     build_context,
     ingest_skill_available,
+    join_agent_brain,
     load_manifest,
     manifest_path_for_payload,
     reconcile_manifest,
@@ -58,6 +59,11 @@ def main() -> int:
             return 0
 
         session_id = str(input_payload.get("session_id") or "")
+        joined = join_agent_brain(repo_root_for_payload(input_payload), input_payload)
+        if joined is not None:
+            emit_json({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": joined["reason"]},
+                "systemMessage": "auto-ingest: joined learn"})
+            return 0
         timestamp = str(input_payload.get("timestamp") or "")
         cwd = str(input_payload.get("cwd") or "")
 

@@ -6,6 +6,9 @@
   "additionalProperties": false,
   "required": ["schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"],
   "properties": {
+    "source_ingestion": {
+      "$ref": "source-ingestion-v1.schema.json#/$defs/configuration"
+    },
     "candidate_dir": {
       "$ref": "#/$defs/repositoryPath"
     },

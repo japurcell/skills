@@ -73,6 +73,8 @@ def guidance(config: AgentBrainConfig, root: Path, scope: dict, *, ignore_public
 
 def inputs(config: AgentBrainConfig, root: Path, config_revision: str,
            scope: dict, delivery: dict) -> str:
+    from .source_ingestion import snapshot
+    source_inputs = snapshot(config, root)
     files: dict[str, str] = {}
     for selector in scope["paths"]:
         if any(char in selector for char in "*?["):
@@ -90,6 +92,7 @@ def inputs(config: AgentBrainConfig, root: Path, config_revision: str,
             checked = local_path(root, relative)
             files[relative] = file_revision(checked) if checked.is_file() else "missing"
     return digest({"config_revision": config_revision, "scope": scope, "files": files,
+        "source_ingestion": source_inputs,
         "units": [(unit["id"], unit["content_revision"], unit["input_revision"]) for unit in delivery["units"]],
         "artifacts": [(item["id"], item["loading_mode"], item["content_revision"], item["input_revision"])
                       for item in delivery["artifacts"]], "gaps": delivery["gaps"]})
@@ -177,7 +180,7 @@ def project_obligation(item: dict) -> dict:
 
 
 def project_session(item: dict) -> dict:
-    return {"work_session_id": item["id"], "task_id": item["task_id"],
+    result = {"work_session_id": item["id"], "task_id": item["task_id"],
             "checkpoint": item["checkpoint"], "work_session_status": item["status"],
             "input_generation": item["input_generation"], "input_revision": item["input_revision"],
             "obligations": [project_obligation(value) for value in item["obligations"].values()],
@@ -187,15 +190,20 @@ def project_session(item: dict) -> dict:
                                                   and value.get("delivery", {}).get("input_generation") == item["input_generation"]
                                                   and value.get("delivery", {}).get("context_generation") == value["context_generation"]),
                         "assigned_obligations": value["assigned"]} for value in item["agents"].values()]}
+    if item.get("source_work"):
+        result.update(source_work=item["source_work"], action_ready=item.get("source_checked") == item["input_revision"])
+    return result
 
 
-def inspection(config: AgentBrainConfig, root: Path) -> dict:
+def inspection(config: AgentBrainConfig, root: Path, config_path: Path | None = None) -> dict:
     result: dict[str, object] = {"state_status": "absent", "work_sessions": [], "sqlite_capabilities": {}}
     try:
         store = StateStore(root, config.state_dir, float(config.limits["contention_seconds"]))
         if not store.path.exists() and not store.marker.exists():
             return result
         state = store.read()
+        from .source_ingestion import snapshot
+        source_state = snapshot(config, root)
         if local_path(root, config.state_dir + "/output-pending.json").exists():
             raise LifecycleError("DELIVERY_RECONCILIATION_REQUIRED", "unfinished output settlement is retained; next eligible event restores authority/context", exit_code=1)
         from .history import pending
@@ -207,6 +215,11 @@ def inspection(config: AgentBrainConfig, root: Path) -> dict:
         result.update(state_status="available", worktree_id=state["worktree_id"],
                       work_sessions=[project_session(value) for value in state["sessions"].values()],
                       sqlite_capabilities=store.capabilities)
+        if source_state is not None:
+            for session, projected in zip(state["sessions"].values(), result["work_sessions"]):
+                current = inputs(config, root, file_revision(config_path or root / ".agents/context/config.json"), session["scope"], guidance(config, root, session["scope"], store=store))
+                if current != session["input_revision"]:
+                    projected.update(action_ready=False, work_session_status="incomplete")
         from .maintenance import projection
         result["maintenance"] = projection(state)
     except (LifecycleError, ValueError, KeyError, TypeError, OSError) as exc:
@@ -232,6 +245,11 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
     if (event["binding"]["repository_root"], event["binding"]["worktree_root"]) != (actual_repository, actual_worktree):
         raise LifecycleError("BINDING_INVALID", "event binding does not match the actual repository/worktree")
     provider = configured_provider(config, config_path, root, event["integration"], event["event"])
+    from .source_ingestion import snapshot, pending
+    # Fixture callbacks are explicit foreground process boundaries. Native
+    # adapters must defer this lock/scan work before claiming a semantic attempt.
+    source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture")
+    source_pending = pending(source_state)
     for knowledge_root in config.knowledge_roots:
         if knowledge_root.ownership == "agent_brain":
             local_path(root, knowledge_root.path)
@@ -255,9 +273,23 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
         state = store.read()
         recovery = recover(store, config, config_path, allow_checks=provider["kind"] == "protocol_fixture")
         state = store.read()
+        if recovery is not None:
+            source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture")
+            source_pending = pending(source_state)
     key = session_key(str(event["integration"]["id"]), event["binding"])
     akey = agent_key(str(event["integration"]["id"]), event["binding"]["provider_agent_id"])
     previous = state["sessions"].get(key)
+    from .source_ingestion import prior_work
+    if event["event"] not in ("pause", "cancel"):
+        source_pending = sorted(set(source_pending) | set(prior_work(config, root, state, key, event["scope"], source_state, config_path)))
+    if source_state is not None and previous and previous.get("source_work") and event["event"] not in ("pause", "cancel"):
+        from .source_ingestion import validate_bases
+        # Only the canonical scanner can add inert scaffolds without a semantic
+        # journal. Existing summaries and guidance keep their pre-pass bases.
+        for entry in source_state["blocking"]:
+            if not entry["summary_resolved"] and entry["summary_path"] not in previous.get("source_baseline", {}):
+                previous.setdefault("source_baseline", {})[entry["summary_path"]] = entry["summary_revision"]
+        validate_bases(config, root, previous, source_state)
     scope = merge_scope(previous["scope"] if previous else {}, event["scope"])
     aggregate_guidance = guidance(config, root, scope, store=store)
     previous_agent = previous["agents"].get(akey) if previous else None
@@ -280,6 +312,8 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
         maintenance.assign(planning, planning_session, config, root, current_targets, store=store)
     planned_dream = next((item for item in planning_session["obligations"].values() if item["kind"] == "dream"), None)
     dream_delivery = maintenance.assigned_guidance(config, root, planned_dream, store=store) if planned_dream else None
+    from .source_ingestion import knowledge_bases
+    source_bases = knowledge_bases(config, root, source_state) if source_state is not None else None
 
     def update(record: dict) -> tuple[dict, int]:
         if "maintenance" in planning:
@@ -296,6 +330,13 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
                        "scope": scope, "input_generation": 1, "input_revision": revision,
                        "agents": {}, "obligations": {}, "root_agent": akey}
             record["sessions"][key] = session
+        if source_state is not None:
+            session["source_work"] = sorted(set(session.get("source_work", [])) | set(source_pending))
+            if session["source_work"]:
+                if previous and "source_baseline" in previous:
+                    session["source_baseline"] = previous["source_baseline"]
+                elif "source_baseline" not in session:
+                    session["source_baseline"] = source_bases
         agent = session["agents"].get(akey)
         if agent is None:
             if akey != session["root_agent"] and event["event"] not in ("startup", "task", "child_start"):
@@ -358,6 +399,13 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
                        for inv in record["invocations"].values()):
                 raise LifecycleError("CALLBACK_INVALID", "stage-generated callback does not belong to this agent/attempt")
             return event_result(record, session, agent, None, "none"), 0
+        # An early source pass settles prerequisite knowledge, not the user's
+        # active objective. Its final checkpoint must review post-work inputs.
+        early_learn = next((item for item in session["obligations"].values() if item["kind"] == "learn"), None)
+        if (event.get("classification") == "ready_to_complete" and session["checkpoint"] != "ready_to_complete"
+                and early_learn and early_learn["status"] == "completed" and session.get("source_work")):
+            session["input_generation"] += 1
+            invalidate_results(record, session, "final objective learning requires a post-work review")
         agent["delivery"] = {"complete": delivery["complete"], "context_generation": agent["context_generation"],
                              "input_generation": session["input_generation"], "input_revision": revision,
                              "guidance_revision": digest(delivery), "config_revision": event["integration"]["config_revision"],
@@ -389,6 +437,9 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
                     session["status"] = classification
                 next_kind = "none"
         if kind in ("startup", "task", "resume", "recover", "context_lost") and session["checkpoint"] == "ready_to_complete":
+            next_kind = "learn"
+        if (not agent["parent"] and session.get("source_work") and session.get("source_checked") != revision
+                and kind in ("startup", "task", "scope", "resume", "recover", "context_lost")):
             next_kind = "learn"
         if next_kind == "learn":
             claim = claim_obligation(record, session, agent, config, config_path, event, provider, store)
@@ -613,7 +664,8 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
     store, state, handle, config, config_path, binding = active_invocation(path_argument, config_argument, stage)
     invocation, session, agent, obligation = binding
     if stage in ("learn", "dream"):
-        if operation in ("publish", "complete") and obligation.get("publication"):
+        if (operation in ("publish", "complete") and obligation.get("publication")
+                and obligation["publication"]["status"] not in ("checked", "reversed")):
             if input_argument is not None:
                 raise LifecycleError("PUBLICATION_INPUT_UNEXPECTED", "publish/complete use the exact prepared set without replacement input")
             from .stages import changed_operation
@@ -627,6 +679,11 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
             "guidance": assigned_guidance(config, store.root, obligation, store=store)}
         if stage == "dream":
             result["work_package"]["batch"] = obligation["batch"]
+        else:
+            from .source_ingestion import package
+            source_package = package(config, store.root, session)
+            if source_package is not None:
+                result["work_package"]["source_ingestion"] = source_package
         return result, 0, store
     if operation not in ("prepare", "complete"):
         raise LifecycleError("OPERATION_UNAVAILABLE", "publish requires an exact prepared change set")
@@ -643,12 +700,16 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
             sys.stdin.reconfigure(encoding="utf-8", errors="strict")
         source = sys.stdin.read(1024 * 1024 + 1) if input_argument == "-" else Path(input_argument).read_text(encoding="utf-8")
         payload = read_json(source)
+        from .source_ingestion import validate_stage, validate_bases
+        validate_bases(config, store.root, session)
         if stage == "dream":
             payload, dispositions = validate_review(payload, obligation, config, store.root, store=store)
             payload["dispositions"] = dispositions
+            validate_stage(payload, config, store.root, obligation["scope"], current, session, stage)
         if payload.get("outcome") == "changed":
             from .stages import changed_operation
             return changed_operation(operation, store, state, handle, config, config_path, binding, payload)
+        validate_stage(payload, config, store.root, obligation["scope"], current, session, stage)
         checked_payload = {key: value for key, value in payload.items() if key != "dispositions"}
         checks, _ = checked_review(checked_payload, config, store.root, obligation["scope"], current)
         review_revision = digest(payload)
@@ -661,6 +722,8 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
         store.change(state["revision"], interrupted)
         raise
     except (ValueError, OSError, TypeError, KeyError) as exc:
+        if isinstance(exc, LifecycleError) and exc.code.startswith("SOURCE_"):
+            raise
         semantic_failure(store, state, handle, stage, config, config_path, str(exc))
         raise
     if operation == "complete" and obligation.get("prepared") != review_revision:
@@ -670,15 +733,22 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
     latest = guidance(config, store.root, session["scope"], store=store)
     if inputs(config, store.root, file_revision(config_path), session["scope"], latest) != session["input_revision"]:
         raise LifecycleError("INPUTS_STALE", "relevant inputs changed while checks ran", exit_code=1)
+    validate_bases(config, store.root, session)
     if operation == "complete":
         mark_output_pending(store, identities(state, session, agent), session["input_generation"], agent["context_generation"])
+        from .source_ingestion import settle
+        if all(check["exit_code"] == 0 and not check["timed_out"] for check in checks):
+            settle(payload, config, store.root)
+            resulting_input = inputs(config, store.root, file_revision(config_path), session["scope"], latest)
+        else:
+            resulting_input = session["input_revision"]
     completed_on = utc_day(config, store.root, config_path)
 
     def update(record: dict) -> tuple[dict, int]:
         inv, current_session, current_agent, current_obligation = validate_invocation(record, handle, stage, config, store.root, config_path)
         if checks:
             current_obligation["check_receipts"] = [{"id": uid(), "checker_id": check["checker_id"],
-                "exit_code": check["exit_code"], "timed_out": check["timed_out"], "input_revision": session["input_revision"],
+                "exit_code": check["exit_code"], "timed_out": check["timed_out"], "input_revision": resulting_input if operation == "complete" else session["input_revision"],
                 "config_revision": file_revision(config_path), "owner_generation": inv["owner_generation"],
                 "attempt_id": inv["attempt_id"], "checked_at": time.time()} for check in checks]
         passed = all(check["exit_code"] == 0 and not check["timed_out"] for check in checks)
@@ -699,6 +769,11 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
             if not current_agent["parent"] and children_pending(current_session):
                 raise LifecycleError("CHILD_OBLIGATIONS_PENDING", "registered children must settle assigned scope obligations before parent completion", exit_code=1)
             current_obligation.update(status="completed", stage_outcome="no_change")
+            if stage == "learn" and current_session.get("source_work"):
+                current_session["input_revision"] = resulting_input
+                current_session["source_checked"] = resulting_input
+                inv["input_revision"] = resulting_input
+                current_agent["delivery"]["input_revision"] = resulting_input
             current_obligation.pop("reason", None)
             revoke_agent(record, current_agent["id"])
             if current_agent["parent"]:
@@ -734,6 +809,7 @@ def revoke_session(state: dict, session: dict) -> None:
 
 
 def invalidate_results(state: dict, session: dict, reason: str) -> None:
+    session.pop("source_checked", None)
     for obligation in session["obligations"].values():
         cycle = state.get("maintenance", {}).get("cycle")
         if obligation["kind"] == "dream" and obligation["status"] == "completed" and (cycle is None or obligation["batch"]["cycle_id"] != cycle["id"]):
@@ -778,6 +854,9 @@ def event_result(state: dict, session: dict, agent: dict, delivery: dict | None,
         "next_action": {"kind": next_kind}, "support": "common_protocol_fixture_only"}
     from .maintenance import projection
     result["maintenance"] = projection(state)
+    if session.get("source_work"):
+        result["action_ready"] = session.get("source_checked") == session["input_revision"]
+        result["source_work"] = session["source_work"]
     if next_kind == "checkpoint":
         result["next_action"]["instruction"] = "Classify this same objective: active, awaiting_user, or ready_to_complete."
     elif next_kind in ("recall", "learn", "dream"):
@@ -882,6 +961,7 @@ def settle_output(result: dict, config_argument: str | None, *, delivered: bool,
                 credit(record, session, config, root, today, *credit_inputs, checked_publications)
             return
         agent["context_generation"] += 1
+        session.pop("source_checked", None)
         agent.pop("delivery", None)
         revoke_agent(record, agent["id"])
         for obligation in session["obligations"].values():

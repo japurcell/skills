@@ -239,24 +239,59 @@ def scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
     return records
 
 
-def load_manifest(path: Path) -> dict[str, Any]:
+def load_manifest(path: Path, *, expected: bool = False) -> dict[str, Any]:
     if not path.exists():
+        if expected or path.with_suffix(".expected").exists():
+            raise ValueError("Expected source-ingest manifest is unavailable; restore it before proceeding.")
         return default_manifest()
 
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return default_manifest()
-
-    if not isinstance(payload, dict):
-        return default_manifest()
-
-    entries = payload.get("entries")
-    if not isinstance(entries, list):
-        payload["entries"] = []
-    if payload.get("version") != 1:
-        payload["version"] = 1
+        payload = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_manifest_object,
+            parse_constant=_manifest_constant, parse_float=_manifest_float)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("Source-ingest manifest is damaged; preserve and restore it before proceeding.") from exc
+    if not isinstance(payload, dict) or type(payload.get("version")) is not int or payload.get("version") != 1 or not isinstance(payload.get("entries"), list):
+        raise ValueError("Source-ingest manifest schema is invalid.")
+    seen = set()
+    for entry in payload["entries"]:
+        if not isinstance(entry, dict) or not isinstance(entry.get("source_path"), str) or not entry["source_path"]:
+            raise ValueError("Source-ingest manifest entry is invalid.")
+        if entry["source_path"] in seen or _entry_state(entry) not in {"active", "needs_summary", "stale", "orphan"}:
+            raise ValueError("Source-ingest manifest identity or state is invalid.")
+        seen.add(entry["source_path"])
+        source = entry["source_path"]
+        if "\\" in source or "\0" in source or source.startswith("/") or any(part in ("", ".", "..") for part in source.split("/")) or (len(source) > 1 and source[1] == ":"):
+            raise ValueError("Source-ingest manifest source path is invalid.")
+        for field in ("content_hash", "summary_hash", "summary_path", "reason", "related_source", "orphan_summary_path", "state"):
+            if field in entry and not isinstance(entry[field], str):
+                raise ValueError("Source-ingest manifest field type is invalid.")
+        if "size" in entry and (type(entry["size"]) is not int or entry["size"] < 0):
+            raise ValueError("Source-ingest manifest size is invalid.")
+        # Legacy summary paths are intentionally treated as local basenames
+        # by _entry_summary_path, including old absolute/traversal spellings.
+        # They remain typed strings and never grant access to that location.
     return payload
+
+
+def _manifest_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Source-ingest manifest has duplicate JSON keys.")
+        result[key] = value
+    return result
+
+
+def _manifest_constant(value: str) -> None:
+    raise ValueError("Source-ingest manifest contains non-finite JSON.")
+
+
+def _manifest_float(value: str) -> float:
+    import math
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError("Source-ingest manifest contains non-finite JSON.")
+    return result
 
 
 def _normalized_entries(manifest: dict[str, Any]) -> list[dict[str, Any]]:
@@ -430,8 +465,8 @@ def reconcile_manifest(
             previous_state = _entry_state(previous)
             if previous_state in {"needs_summary", "stale"}:
                 if _summary_is_resolved(record, previous):
-                    next_entries[record.source_path] = _set_entry_state(
-                        previous,
+                    next_entries[record.source_path] = _entry_for_record(
+                        record,
                         state="active",
                         reason="",
                     )
@@ -581,6 +616,7 @@ def save_manifest(path: Path, manifest: dict[str, Any]) -> None:
             encoding="utf-8",
         )
         temp_path.replace(path)
+        path.with_suffix(".expected").write_text("source-ingest-manifest-v1\n", encoding="utf-8")
     finally:
         try:
             if temp_path.exists():
@@ -604,19 +640,30 @@ class ManifestLock:
         try:
             self.lock_path.parent.mkdir(parents=True, exist_ok=True)
             self.lock_fd = os.open(str(self.lock_path), os.O_CREAT | os.O_RDWR, 0o600)
-        except OSError:
-            return self
+        except OSError as exc:
+            raise ValueError("Source-ingest manifest lock is unavailable.") from exc
 
         if fcntl is None:
-            return self
+            import msvcrt
+            if os.fstat(self.lock_fd).st_size == 0:
+                os.write(self.lock_fd, b"\0")
 
         import time
         deadline = time.monotonic() + self.timeout_seconds
         while True:
             try:
-                fcntl.flock(self.lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                if fcntl is not None:
+                    fcntl.flock(self.lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                else:
+                    os.lseek(self.lock_fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.lock_fd, msvcrt.LK_NBLCK, 1)
                 return self
-            except BlockingIOError:
+            except OSError as exc:
+                import errno
+                if exc.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                    os.close(self.lock_fd)
+                    self.lock_fd = None
+                    break
                 if time.monotonic() >= deadline:
                     try:
                         os.close(self.lock_fd)
@@ -625,21 +672,21 @@ class ManifestLock:
                     self.lock_fd = None
                     break
                 time.sleep(0.05)
-            except OSError:
-                try:
-                    os.close(self.lock_fd)
-                except OSError:
-                    pass
-                self.lock_fd = None
-                break
-        return self
+        raise ValueError("Source-ingest manifest lock could not be acquired.")
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.lock_fd is not None:
             try:
                 import fcntl
                 fcntl.flock(self.lock_fd, fcntl.LOCK_UN)
-            except (ImportError, OSError):
+            except ImportError:
+                try:
+                    import msvcrt
+                    os.lseek(self.lock_fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.lock_fd, msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass
+            except OSError:
                 pass
             try:
                 os.close(self.lock_fd)
@@ -676,3 +723,175 @@ def build_context(report_entries: list[dict[str, Any]], manifest_file: Path, ski
 
     lines.extend(_build_orphan_context(orphan_entries))
     return "\n".join(lines).rstrip() + "\n"
+
+
+def context_snapshot(repo_root: Path, *, reconcile: bool = False) -> dict[str, Any]:
+    """Canonical standalone bridge protocol. Environment overrides are legacy-only."""
+    sources = repo_root / ".agents/sources"
+    summaries = repo_root / ".agents/memory/sources"
+    manifest_file = summaries / MANIFEST_FILE_NAME
+    skill = repo_root / ".agents/skills/ingest-source/SKILL.md"
+    for path in (sources, summaries, manifest_file, skill):
+        ordinary_repository_path(repo_root, path)
+    for directory in (sources, summaries):
+        if directory.exists():
+            for path in directory.rglob("*"):
+                ordinary_repository_path(repo_root, path)
+    for path in (manifest_file.with_suffix(".expected"), manifest_file.with_suffix(manifest_file.suffix + ".lock")):
+        ordinary_repository_path(repo_root, path)
+    load_manifest(manifest_file, expected=True)
+    if reconcile:
+        with ManifestLock(manifest_file):
+            manifest = load_manifest(manifest_file, expected=True)
+            records = scan_sources(sources, summaries)
+            prior = _entry_by_source(manifest["entries"])
+            changed_sources = sorted({record.source_path for record in records if record.source_path not in prior or record.content_hash != _entry_hash(prior[record.source_path])}
+                | {name for name, entry in prior.items() if name not in {record.source_path for record in records} and _entry_state(entry) != "orphan"})
+            _, manifest = reconcile_manifest(manifest, records, summaries)
+            save_manifest(manifest_file, manifest)
+    manifest = load_manifest(manifest_file, expected=True)
+    records = scan_sources(sources, summaries)
+    previous = _entry_by_source(manifest["entries"])
+    if not reconcile:
+        changed_sources = sorted({record.source_path for record in records if record.source_path not in previous or record.content_hash != _entry_hash(previous[record.source_path])}
+            | {name for name, entry in previous.items() if name not in {record.source_path for record in records} and _entry_state(entry) != "orphan"})
+    entries = []
+    files = {manifest_file.relative_to(repo_root).as_posix(): _read_file_hash(manifest_file)}
+    for record in records:
+        path = sources / record.source_path
+        summary = summaries / record.summary_path
+        for target in (path, summary):
+            if target.is_symlink() or not target.resolve().is_relative_to(repo_root.resolve()):
+                raise ValueError("Source or summary access escapes the repository.")
+        prior = previous.get(record.source_path)
+        state = _entry_state(prior) if prior else "needs_summary"
+        if prior and record.content_hash != _entry_hash(prior):
+            state = "stale"
+        if not record.summary_exists or record.summary_is_scaffold:
+            state = "needs_summary" if state != "stale" else state
+        entry = {"source_path": record.source_path, "source_revision": record.content_hash,
+            "summary_path": summary.relative_to(repo_root).as_posix(),
+            "summary_revision": record.summary_hash if record.summary_exists else None,
+            "state": state, "summary_resolved": record.summary_exists and not record.summary_is_scaffold}
+        entries.append(entry)
+        files[path.relative_to(repo_root).as_posix()] = record.content_hash
+        if record.summary_exists:
+            files[entry["summary_path"]] = record.summary_hash
+    orphans = []
+    current = {record.source_path for record in records}
+    for entry in manifest["entries"]:
+        if entry["source_path"] in current:
+            continue
+        summary = summaries / Path(_entry_summary_path(entry, summary_name_for_source(entry["source_path"]))).name
+        if summary.is_symlink() or not summary.resolve().is_relative_to(repo_root.resolve()):
+            raise ValueError("Orphan summary access escapes the repository.")
+        _, summary_hash, _ = _summary_details(summary)
+        orphans.append({"source_path": entry["source_path"], "summary_path": summary.relative_to(repo_root).as_posix(),
+            "summary_revision": summary_hash if summary.is_file() else None, "state": "orphan"})
+        if summary.is_file():
+            files[summary.relative_to(repo_root).as_posix()] = summary_hash
+    available = skill.is_file() and os.access(skill, os.R_OK)
+    if available:
+        files[skill.relative_to(repo_root).as_posix()] = _read_file_hash(skill)
+    return {"schema_version": 1, "entries": entries, "blocking": [entry for entry in entries if entry["state"] != "active"],
+        "orphans": orphans, "changes": changed_sources, "files": files, "skill_path": skill.relative_to(repo_root).as_posix(),
+        "skill_available": available}
+
+
+def ordinary_repository_path(root: Path, path: Path) -> None:
+    """Reject every linked component before a scanner can read or write it."""
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise ValueError("Source-ingest paths must remain ordinary repository-local inputs.")
+    current = root
+    for part in path.relative_to(root).parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError("Linked source-ingest path components are unsupported.")
+
+
+def bridge_main() -> int:
+    import argparse
+    import sys
+    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument("--repository-root", type=Path, required=True)
+    parser.add_argument("--reconcile", action="store_true")
+    parser.add_argument("--settle", type=Path)
+    parser.add_argument("--json", action="store_true", required=True)
+    args = parser.parse_args()
+    try:
+        if args.settle is not None:
+            settle_sources(args.repository_root.resolve(), json.loads(args.settle.read_text(encoding="utf-8")))
+        result = context_snapshot(args.repository_root.resolve(), reconcile=args.reconcile)
+        print(json.dumps(result, ensure_ascii=False))
+        return 0
+    except (ValueError, OSError, UnicodeError) as exc:
+        print(json.dumps({"schema_version": 1, "error": str(exc)}))
+        print(str(exc), file=sys.stderr)
+        return 1
+
+
+def settle_sources(root: Path, evidence: dict[str, Any]) -> None:
+    """Mechanical settlement of foreground-checked current artifacts only.
+
+    This operation grants no semantic authority. Agent-brain separately checks
+    pre-pass bases, attributable knowledge, actual checks and registered owners.
+    """
+    before = context_snapshot(root)
+    if before["files"] != evidence["checked_files"]:
+        raise ValueError("Source inputs differ from checked settlement files.")
+    manifest_file = root / ".agents/memory/sources" / MANIFEST_FILE_NAME
+    with ManifestLock(manifest_file):
+        current = context_snapshot(root)
+        if current != before:
+            raise ValueError("Source inputs changed before manifest settlement.")
+        records = {entry["source_path"]: entry for entry in current["entries"]}
+        manifest = load_manifest(manifest_file, expected=True)
+        for entry in evidence["entries"]:
+            actual = records.get(entry["source_path"])
+            if (not actual or not actual["summary_resolved"] or actual["source_revision"] != entry["source_revision"]
+                    or actual["summary_revision"] != entry["summary_revision"]):
+                raise ValueError("Source settlement evidence is not current.")
+            target = next(item for item in manifest["entries"] if item["source_path"] == entry["source_path"])
+            target.update(state="active", reason="", content_hash=actual["source_revision"], summary_hash=actual["summary_revision"])
+        save_manifest(manifest_file, manifest)
+
+
+def join_agent_brain(repo_root: Path, payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Join a registered common-protocol obligation; never synthesize authority."""
+    import subprocess
+    import sys
+    config_path = repo_root / ".agents/context/config.json"
+    if not config_path.is_file():
+        return None
+    try:
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        integration = config.get("source_ingestion", {})
+        if not integration.get("enabled", False):
+            return None
+        path = integration["bridge_path"]
+        target = repo_root / path
+        if not isinstance(path, str) or Path(path).is_absolute() or ".." in Path(path).parts or target.is_symlink() or not target.resolve().is_relative_to(repo_root.resolve()):
+            raise ValueError("Configured bridge path is not repository-local.")
+        if _read_file_hash(target) != integration["bridge_revision"]:
+            raise ValueError("Configured bridge bytes differ from their trusted revision.")
+        event = payload.get("agent_brain_event")
+        if not isinstance(event, dict):
+            return {"completed": False, "reason": "Source ingestion joins agent-brain learn. Restore the registered foreground event; pending work remains incomplete."}
+        result = subprocess.run([sys.executable, str(target), "--json"], cwd=repo_root,
+            input=json.dumps(event).encode("utf-8"), capture_output=True, timeout=60, check=False)
+        response = json.loads(result.stdout.decode("utf-8"))
+        completed = result.returncode == 0 and response.get("work_session_status") == "completed"
+        reason = "Source-ingest gate joined the current agent-brain learn obligation."
+        if result.returncode or response.get("operation_status") != "ok":
+            reason += " Current registration or source inputs are unavailable; restore foreground context."
+        elif not completed:
+            reason += " Complete the canonical foreground learn procedure before concluding."
+            if response.get("invocation_file"):
+                reason += " Invocation file: " + response["invocation_file"]
+        return {"completed": completed, "reason": reason}
+    except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError):
+        return {"completed": False, "reason": "Source-ingest gate is incomplete; restore the configured agent-brain bridge and foreground registration."}
+
+
+if __name__ == "__main__":
+    raise SystemExit(bridge_main())

@@ -276,6 +276,20 @@ def validate_state(record: dict) -> None:
             raise ValueError("invalid durable work-session status")
         integer(session["input_generation"], 1)
         revision(session["input_revision"])
+        if "source_work" in session:
+            from .config import _relative_path
+            if not isinstance(session["source_work"], list) or session["source_work"] != sorted(set(session["source_work"])):
+                raise ValueError("invalid durable source work")
+            for path in session["source_work"]:
+                _relative_path(path, "durable source identity")
+        if "source_checked" in session:
+            revision(session["source_checked"])
+        if "source_baseline" in session:
+            from .config import _relative_path
+            object_fields(session["source_baseline"], set())
+            for path, value in session["source_baseline"].items():
+                _relative_path(path, "source baseline path")
+                revision(value)
         scope(session["scope"])
         object_fields(session["agents"], {session["root_agent"]})
         object_fields(session["obligations"], set())

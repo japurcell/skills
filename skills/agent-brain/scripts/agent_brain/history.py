@@ -127,6 +127,12 @@ def read(root: Path, path: str) -> dict:
             raise ValueError("invalid history status")
         if not isinstance(journal["relevant_files"], dict) or not isinstance(journal["payload"], dict) or not isinstance(journal["affected_ids"], list):
             raise ValueError("invalid history records")
+        if "source_work" in journal:
+            work = journal["source_work"]
+            if not isinstance(work, list) or work != sorted(set(work)):
+                raise ValueError("invalid history source work")
+            for source in work:
+                _relative_path(source, "history source identity")
         for identity in journal["affected_ids"]:
             _uuid(identity, "affected identity")
         for key, value in journal["relevant_files"].items():

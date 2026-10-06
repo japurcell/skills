@@ -11,6 +11,9 @@
     "proposal"
   ],
   "properties": {
+    "source_ingestion": {
+      "$ref": "source-ingestion-v1.schema.json#/$defs/review"
+    },
     "schema_version": {
       "const": 1
     },

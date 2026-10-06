@@ -105,7 +105,7 @@ def load_config(path: Path) -> AgentBrainConfig:
 
     root = _object(value, "configuration")
     required = {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"}
-    optional = {"providers", "checks", "limits", "state_dir", "history_dir", "candidate_dir", "maintenance"}
+    optional = {"providers", "checks", "limits", "state_dir", "history_dir", "candidate_dir", "maintenance", "source_ingestion"}
     _keys(root, "configuration", required | (root.keys() & optional))
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
         raise ConfigurationError("configuration schema_version must be 1")
@@ -245,6 +245,18 @@ def load_config(path: Path) -> AgentBrainConfig:
             _number(maintenance[field], "maintenance." + field, maximum, integer=True)
     if maintenance.get("retention_days", 30) < 30:
         raise ConfigurationError("maintenance.retention_days must be at least 30")
+    ingestion = _object(root.get("source_ingestion", {"enabled": False}), "source_ingestion")
+    enabled = ingestion.get("enabled")
+    if type(enabled) is not bool:
+        raise ConfigurationError("source_ingestion.enabled must be boolean")
+    _keys(ingestion, "source_ingestion", {"enabled"} | ({"engine_path", "engine_revision", "bridge_path", "bridge_revision"} if enabled else set()))
+    if enabled:
+        for field in ("engine_path", "bridge_path"):
+            _relative_path(ingestion[field], "source_ingestion." + field)
+        for field in ("engine_revision", "bridge_revision"):
+            value = ingestion[field]
+            if not isinstance(value, str) or len(value) != 64 or any(char not in "0123456789abcdef" for char in value):
+                raise ConfigurationError("source_ingestion." + field + " must be SHA-256")
     return AgentBrainConfig(
         schema_version=1,
         repository_id=repository_id,
@@ -252,7 +264,7 @@ def load_config(path: Path) -> AgentBrainConfig:
         mapped_units=tuple(units),
         startup=tuple(startup),
         providers=providers, checks=checks, limits=limits, state_dir=state_dir, history_dir=history_dir,
-        candidate_dir=candidate_dir, maintenance=defaults | maintenance,
+        candidate_dir=candidate_dir, maintenance=defaults | maintenance, source_ingestion=ingestion,
     )
 
 
