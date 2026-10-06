@@ -1,6 +1,6 @@
 # Review Repository-local Workflows
 
-Static investigation complete. Human proposal review is pending. Source baseline: `bd7b1a68a081ea847b2e6c1712363000ef01751f`. The source reviewer edited only this report; parent then reconciled the shared records. No audited workflow, installer, importer, linter, grader, package, native model run, or behavioral baseline was executed by that reviewer. Parent audit-record and canonical-document checks are separate verification, not skill baseline evidence.
+Static investigation and live human proposal review complete. Source baseline: `bd7b1a68a081ea847b2e6c1712363000ef01751f`. The source reviewer edited only this report; parent then reconciled the shared records and recorded the human's answers. No audited workflow, installer, importer, linter, grader, package, native model run, or behavioral baseline was executed by that reviewer. Parent audit-record and canonical-document checks are separate verification, not skill baseline evidence.
 
 ## Scope and evidence limits
 
@@ -20,7 +20,7 @@ The [58-check catalog](../coverage.md#check-catalog), [adoption policy](../ticke
 
 ## Source reading checkpoint
 
-All sixteen primary files have been read statically. The five YAML entry records and the evaluation JSON have been parsed non-mutatingly using the checked-in YAML runtime; source files have been compared against the declared baseline. The inventory, bounded dependency/consumer checks, candidate findings and five 58-check matrices are complete below. This completes static investigation only; human proposal disposition and required later behavioral evidence remain pending.
+All sixteen primary files have been read statically. The five YAML entry records and the evaluation JSON have been parsed non-mutatingly using the checked-in YAML runtime; source files have been compared against the declared baseline. The inventory, bounded dependency/consumer checks, finding records and five 58-check matrices are complete below. Human proposal dispositions are recorded in the owning Resolution; required later behavioral evidence remains pending.
 
 ## Exact reviewed inventory
 
@@ -85,7 +85,7 @@ The OKF grader copies `scripts/fixtures/okf-valid-repo/` in full (`grade_benchma
 
 ## Findings and human review
 
-The single [finding register](../findings.md) owns [RLW-001](../findings.md#rlw-001-maintenance-type-table-disagrees-with-the-root-only-okf-contract), [RLW-002](../findings.md#rlw-002-prior-plan-reference-exception-has-unclear-relationship-to-single-file-self-containment), [RLW-003](../findings.md#rlw-003-clarify-reported-okf-reference-and-orchestration-evidence). Each record contains severity, exact evidence, protected contracts, validation needs, and pending human disposition. Two authoring clarifications and retention of one separate prior-plan decision are ready for live human review. No implementation, evidence waiver, or residual-risk acceptance is recorded. The four earlier separate decisions retain their open status.
+The single [finding register](../findings.md) owns [RLW-001](../findings.md#rlw-001-maintenance-type-table-disagrees-with-the-root-only-okf-contract), [RLW-002](../findings.md#rlw-002-prior-plan-reference-exception-has-unclear-relationship-to-single-file-self-containment), [RLW-003](../findings.md#rlw-003-clarify-reported-okf-reference-and-orchestration-evidence). Each record contains severity, exact evidence, protected contracts, validation needs, and the human disposition. On 2026-10-05 the human answered "accept all" to both review questions. The [batch Resolution](../tickets/review-repository-local-workflows.md#resolution) accepts RLW-001/RLW-003 for later authoring scope and retains RLW-002's separate prior-plan decision. No implementation, evidence waiver, or residual-risk acceptance is recorded. All five separate decisions remain open; no proposal was rejected or deferred.
 
 ## Positive results and unresolved evidence
 
@@ -428,15 +428,15 @@ These files remain owned by their original workflow/tooling batches. Whole-file 
 
 ## Completion and verification state
 
-Static investigation accounts for sixteen primary files (85,512 bytes), eighteen fixture dependencies, five entry points and 290 individual check rows. All primary bytes match `bd7b1a68a081ea847b2e6c1712363000ef01751f`. Three candidates remain pending: an equivalent type-table repair, a prior-plan intended-output decision, and an evidence-label observation. Earlier SAG findings retain their owners and original accepted target scopes.
+Static investigation accounts for sixteen primary files (85,512 bytes), eighteen fixture dependencies, five entry points and 290 individual check rows. All primary bytes match `bd7b1a68a081ea847b2e6c1712363000ef01751f`. Human review accepted the equivalent type-table repair and evidence-label clarification for later planning; the prior-plan intended-output decision remains pending. Earlier SAG findings retain their owners and original accepted target scopes.
 
-Verification in this session consisted of source reads, non-mutating YAML/JSON parsing, source-baseline comparisons, SHA256/whitespace checks, exact check-ID accounting and local Markdown target existence. No source/eval/fixture or tooling workflow was run by the source reviewer. Parent canonical-document validation, when recorded, verifies the audit documentation only. No native runtime behavior or model configuration was observed. Human review and any later required baseline/waiver are outstanding, so this report does not close the batch ticket or completed-audit gate.
+Verification in this session consisted of source reads, non-mutating YAML/JSON parsing, source-baseline comparisons, SHA256/whitespace checks, exact check-ID accounting and local Markdown target existence. No source/eval/fixture or tooling workflow was run by the source reviewer. Parent canonical-document validation, when recorded, verifies the audit documentation only. No native runtime behavior or model configuration was observed. Static investigation plus live human review closes this batch ticket; the required later baseline/waiver and full-audit completion gates remain outstanding.
 
 ## Parent reconciliation and delegation record
 
 Parent verified consequential source anchors against the current instructions and bounded lint/hook/grader implementations. Corrections retained exact `composition_ok` lines 268-272 and `_summary_is_resolved` lines 371-374. The reconstructed output/lint/diff oracle remains valid; source reports do not prove native reference reads or ordering. The original stronger RLW-003 interpretation was narrowed to an observation before human review and does not expand accepted SAG-007 targets.
 
-Combined record checks passed for 25 tickets (eight closed, sixteen open, one claimed), 638 check rows, 61 unchanged primary hashes, eighteen fixture hashes, seventeen unique findings, local links/anchors, formatting and fog delimiters. Parent separately verified the five bounded dependency hashes unchanged. `rtk git diff --check` passed; the protected source diff is empty. Human disposition remains pending.
+After human disposition, combined closure-record checks passed for 25 tickets (nine closed, sixteen open, zero claimed), 638 check rows, 61 unchanged primary hashes, eighteen fixture hashes, seventeen unique findings, local links/anchors, formatting and fog delimiters. Parent separately verified the five bounded dependency hashes unchanged. `rtk git diff --check` passed; the protected source diff is empty. All five separate decisions remain open and unblocked.
 
 Selected and submitted settings: `gpt-6.1-sol` / `high`, with Premium routing for trust-boundary and grading-integrity review. Fallback `gpt-6-sol` / `high` was not used. Executed settings, duration and usage are unconfirmed. Dispatch started at 16:40:49 UTC with a twenty-minute initial limit through 17:00:49 UTC and five-minute saved checkpoints. Parent inspected saved progress and requested status; completion was observed at 16:59:03 UTC before the limit. No interruption or extension occurred. Report ownership was released before parent edits. Routing was compliant; this dispatch is not a native baseline.
 
@@ -460,6 +460,6 @@ dispatches:
     routing_compliant: true
 ```
 
-The parent formal Update Agent Docs pass added the RLW-001 pointer to the existing skills known-issues record; the protected local skill bundle remains unchanged. Existing INDEX/FILE_MAP routes cover these records, so no new index, API or test-strategy entry is needed. OKF Authoring used the profile branch for this canonical documentation edit. `rtk proxy ./scripts/lint-okf.py` exited 0. This canonical-document validation is distinct from running an audited skill or behavioral baseline. Added: None. Changed: skills known-issues pointer. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None.
+The parent formal closure Update Agent Docs pass synchronized the existing RLW-001 pointer's accepted planning status and retained the explicit unimplemented-source qualification. The only canonical path changed is `.agents/memory/known-issues/skills.md`, derived type `Known Issue`; the protected local skill bundle remains unchanged. Existing INDEX/FILE_MAP routes still apply, so no new index, API or test-strategy entry is needed. OKF Authoring loaded only `profile`, retained metadata and file-relative links, and `rtk proxy ./scripts/lint-okf.py` exited 0 across both canonical bundles. The scoped canonical diff contains only the authorized pointer update. This documentation validation is distinct from running an audited skill or behavioral baseline. Added: None. Changed: skills known-issues pointer. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None.
 
 Tool Guardian rejected one long reviewer helper command; direct helper patches plus short RTK commands recovered it without changing controls or running audited workflows. Parent recovered an incorrect guessed hook filename through enumeration and corrected a disposable extraction regex before canonical records were written. Assertions were retained; the final canonical finding index is one continuous table. These are record-processing corrections, not skill-source defects.

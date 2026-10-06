@@ -1,7 +1,7 @@
 # Review Repository-local Workflows
 
 **Type:** grilling
-**Status:** claimed by subagent-xS437U
+**Status:** closed
 **Blocked By:** choose-audit-batches-and-evidence-format.md, set-audit-completion-and-implementation-gates.md
 **Research Dir:** not applicable
 
@@ -19,8 +19,6 @@ Write the scope's evidence to `docs/skill-audit/reports/review-repository-local-
 
 ---
 
-<!-- Resolution will be appended here. -->
-
 ## Review checkpoint
 
 2026-10-05: claimed after verifying both exact blocking tickets are closed. Source baseline is `bd7b1a68a081ea847b2e6c1712363000ef01751f`. Initial enumeration contains sixteen maintained files across the five owned entry points, bundled references, and OKF evaluation helpers/tests. All skill source remains read-only.
@@ -29,4 +27,17 @@ Source investigation is delegated with report-only write ownership; parent owns 
 
 Static investigation is now complete in the [report](../reports/review-repository-local-workflows.md): sixteen unchanged primary files, eighteen inspected fixture dependencies, five bounded dependency fingerprints, and five 58-check matrices (290 rows). Completion was observed at 16:59:03 UTC before the limit, with no interruption or extension. Parent canonicalized RLW-001/002/003 into the [single register](../findings.md), checked consequential anchors, and verified the combined records: 638 rows, 61 unchanged primary hashes, eighteen fixture hashes, seventeen unique findings, graph metadata, links/anchors and formatting.
 
-Two live human questions remain pending: accept RLW-001/RLW-003 as later authoring clarifications, and retain RLW-002 in its separate intended-output decision. No current-batch answer, waiver, residual-risk acceptance, or implementation approval is recorded. Keep this ticket claimed until its live human disposition and shared understanding are recorded. The four earlier separate decisions remain open; do not infer an interpretation from their routing or the audit destination.
+Two live human questions were presented: accept RLW-001/RLW-003 as later authoring clarifications, and retain RLW-002 in its separate intended-output decision. The human answered "accept all" on 2026-10-05. The Resolution below records both dispositions; no implementation approval, evidence waiver, or residual-risk acceptance was given.
+
+## Resolution
+
+Closed on 2026-10-05 after the completed static investigation and live human review. The human accepted both recommended answers and confirmed the proposed batch disposition:
+
+1. Accept RLW-001 and RLW-003 for later authoring plan scope. RLW-001 replaces the updater table's two wildcard INDEX/LOG paths with the exact root paths, retaining the existing OKF type precedence and other rows. RLW-003 labels reference/ownership assertions as reported values while preserving valid independent artifact, metadata, body, lint and diff checks. Required reference reads and workflow ordering still need later native trace evidence. This does not expand SAG-007's previously accepted targets.
+2. Keep RLW-002 unresolved in [Resolve ExecPlan Self-containment and Prior-plan References](resolve-execplan-self-containment-and-prior-plan-references.md). The human approved retention and routing, not either interpretation of the predecessor-plan clause. Dependent wording changes stay pending. Both final audit and ExecPlan must expose RLW-002 and its route alongside the four earlier pending decisions.
+
+Preserve names, triggers and invocation controls, approval boundaries, required dependencies, stopping rules, semantic/representation ownership, output contracts and document-only restrictions. No proposal was rejected or deferred. These answers accept later planning scope and shared understanding only; they do not authorize skill implementation, installation, publication, evidence waivers or residual-risk acceptance.
+
+The [report](../reports/review-repository-local-workflows.md) owns the sixteen-file static investigation, eighteen fixture dependencies, bounded consumer checks and five 58-check matrices. The [single register](../findings.md) owns the three findings and their exact evidence. Static source coverage is complete for this scope; native behavior remains unverified.
+
+Closing this review unblocks RLW-002's exact decision ticket without resolving it. The four older separate decisions remain open. No additional precise question was exposed by these answers; the remaining native setup and implementation details stay in the map's fog until their prerequisites settle. This logical session resolves only this review ticket. Next allocated scope: [Review Delegation and Discovery](review-delegation-and-discovery.md).
