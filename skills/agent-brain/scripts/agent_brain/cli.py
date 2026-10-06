@@ -19,8 +19,8 @@ from .records import RetrievalScope
 
 COMMANDS = {
     "recall": "Read complete mapped guidance for informational use.",
-    "learn": "Request an evidenced lesson update through a registered integration.",
-    "dream": "Request a knowledge review through a registered integration.",
+    "learn": "A registered integration is required for an evidenced lesson update.",
+    "dream": "A registered integration is required for a knowledge review.",
     "setup": "Repository setup is not available from this CLI.",
     "doctor": "Check the repository configuration without changing it.",
     "status": "Show repository configuration and state without changing them.",
@@ -39,15 +39,15 @@ COMMAND_DETAILS = {
     ),
     "learn": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
-        "Effects: this standalone CLI reports that registered active context is unavailable before it "
-        "reads input or changes files.\n"
+        "Effects: start delivers a foreground work package; prepare checks a scoped no-change review; "
+        "complete repeats configured checks and settles current obligations. Publication is unavailable. "
+        "Invalid authority fails before semantic input.\n"
         "Active agent: a registered integration is required; the CLI never launches a model.\n"
         "Example: agent-brain learn --input notes.json --invocation-file /path/to/invocation.json"
     ),
     "dream": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
-        "Effects: this standalone CLI reports that registered active context is unavailable before it "
-        "reads input or changes files.\n"
+        "Effects: dream is unavailable in this milestone. Invalid authority fails before semantic input.\n"
         "Active agent: a registered integration is required; the CLI never launches a model.\n"
         "Example: agent-brain dream --input review.json --invocation-file /path/to/invocation.json"
     ),
@@ -141,6 +141,8 @@ def _parser(*, json_errors: bool) -> tuple[argparse.ArgumentParser, dict[str, ar
         _add_shared_options(command_parser, inherited=True)
         command_parsers[name] = command_parser
     for name in ("learn", "dream"):
+        command_parsers[name].add_argument("operation", nargs="?", default="start",
+            choices=("start", "prepare", "publish", "complete"), help="Start foreground work or validate a scoped no-change.")
         command_parsers[name].add_argument(
             "--input",
             metavar="PATH",
@@ -211,15 +213,16 @@ def _add_shared_options(parser: argparse.ArgumentParser, *, inherited: bool = Fa
 def _inspection_result(command: str, config_argument: str | None) -> InspectionResult:
     config_path = Path(config_argument) if config_argument is not None else DEFAULT_CONFIG
     config_present = config_path.is_file()
-    runtime_present = DEFAULT_RUNTIME_STATE.is_file()
+    runtime_state_path = DEFAULT_RUNTIME_STATE
     if config_present:
         try:
-            load_config(config_path)
+            config = load_config(config_path)
         except ConfigurationError as exc:
             setup_status = "invalid"
             config_check = Diagnostic("portable configuration", "invalid", str(exc))
         else:
             setup_status = "configured"
+            runtime_state_path = Path(config.state_dir) / "brain.sqlite3"
             config_check = Diagnostic(
                 "portable configuration",
                 "present",
@@ -232,12 +235,13 @@ def _inspection_result(command: str, config_argument: str | None) -> InspectionR
             "missing",
             f"Not found: {config_path.as_posix()}.",
         )
+    runtime_present = runtime_state_path.is_file()
     checks = (
         config_check,
         Diagnostic(
             "runtime state",
             "present" if runtime_present else "missing",
-            f"{'Found' if runtime_present else 'Not found'}: {DEFAULT_RUNTIME_STATE.as_posix()}.",
+            f"{'Found' if runtime_present else 'Not found'}: {runtime_state_path.as_posix()}.",
         ),
         Diagnostic(
             "active integration context",
@@ -257,7 +261,7 @@ def _inspection_result(command: str, config_argument: str | None) -> InspectionR
         setup_status=setup_status,  # type: ignore[arg-type]
         config_path=config_path.as_posix(),
         config_present=config_present,
-        runtime_state_path=DEFAULT_RUNTIME_STATE.as_posix(),
+        runtime_state_path=runtime_state_path.as_posix(),
         runtime_state_present=runtime_present,
         active_context="unavailable",
         model_execution="disabled",
@@ -382,7 +386,19 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if arguments.command in ("status", "doctor"):
         result = _inspection_result(arguments.command, arguments.config)
-        _print_inspection(result, json_output=arguments.json_output)
+        if result.setup_status == "configured":
+            from .lifecycle import inspection
+            config_path = Path(arguments.config) if arguments.config is not None else DEFAULT_CONFIG
+            details = inspection(load_config(config_path), Path.cwd().resolve())
+            if arguments.json_output:
+                print(json.dumps(result.as_json_object() | details, ensure_ascii=False, sort_keys=True))
+            else:
+                _print_inspection(result, json_output=False)
+                print(f"Lifecycle state: {details['state_status']}")
+                for session in details["work_sessions"]:
+                    print(f"Work session {session['work_session_id']}: {session['work_session_status']}")
+        else:
+            _print_inspection(result, json_output=arguments.json_output)
         return 0
 
     if arguments.command == "recall":
@@ -426,6 +442,48 @@ def main(argv: Sequence[str] | None = None) -> int:
         return result.exit_code
 
     if arguments.command in ("learn", "dream"):
+        if arguments.invocation_file:
+            from .lifecycle import stage_operation, error_result
+            from .state import LifecycleError
+            try:
+                result, code, store = stage_operation(arguments.command, arguments.operation,
+                    arguments.invocation_file, arguments.config, arguments.input)
+            except (LifecycleError, ConfigurationError, OSError, ValueError, TypeError, KeyError) as exc:
+                if isinstance(exc, LifecycleError) and exc.code == "ACTIVE_CONTEXT_REQUIRED":
+                    pass
+                else:
+                    error = exc if isinstance(exc, LifecycleError) else LifecycleError("INPUT_INVALID", str(exc))
+                    if arguments.json_output:
+                        print(json.dumps(error_result(error), ensure_ascii=False, sort_keys=True))
+                    print(f"agent-brain: {error.code}: {error}", file=sys.stderr)
+                    print(f"Next action: {error.next_action}", file=sys.stderr)
+                    return error.exit_code
+            except KeyboardInterrupt:
+                error = LifecycleError("INTERRUPTED", "interrupted attempt preserves pending work", exit_code=130)
+                if arguments.json_output:
+                    print(json.dumps(error_result(error), sort_keys=True))
+                print("agent-brain: INTERRUPTED: pending work is retained.", file=sys.stderr)
+                return 130
+            else:
+                if code != 0 and "error" in result:
+                    print(f"agent-brain: {result['error']['code']}: {result['error']['cause']}", file=sys.stderr)
+                    print(f"Next action: {result['error']['next_action']}", file=sys.stderr)
+                try:
+                    if arguments.json_output:
+                        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+                    else:
+                        print(f"Stage: {result['stage_outcome']}; work session: {result['work_session_status']}")
+                        if "work_package" in result:
+                            print(json.dumps(result["work_package"], ensure_ascii=False, indent=2, sort_keys=True))
+                            print(f"Current input revision: {result['input_revision']}")
+                        if "check_receipts" in result:
+                            print(json.dumps(result["check_receipts"], indent=2, sort_keys=True))
+                    sys.stdout.flush()
+                except BrokenPipeError:
+                    from .lifecycle import failed_output
+                    failed_output(result, arguments.config, store=store)
+                    return 1
+                return code
         _print_error(
             "ACTIVE_CONTEXT_REQUIRED",
             f"{arguments.command} requires registered active agent context; "

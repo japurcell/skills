@@ -16,7 +16,7 @@ This plan derives execution steps from the ten closed Wayfinder contracts. The p
 
 - [x] [milestone-1] Deliver the bundled CLI and an informational recall through the public process boundary.
 - [x] (2026-10-06) [milestone-2] Retrieve complete, revision-bound guidance units and validate authoring.
-- [ ] [milestone-3] Automatically coordinate lifecycle checkpoints and verified no-change completion.
+- [x] (2026-10-06) [milestone-3] Automatically coordinate lifecycle checkpoints and verified no-change completion.
 - [ ] [milestone-4] Publish evidenced learn changes with interruption-safe recovery.
 - [ ] [milestone-5] Execute finite, bounded dream cycles and retention-safe cleanup.
 - [ ] [milestone-6] Join legacy skills and optional source ingestion into one lifecycle obligation.
@@ -31,17 +31,23 @@ This plan derives execution steps from the ten closed Wayfinder contracts. The p
 ## Surprises & Discoveries
 
 
-The current checkout has no `skills/agent-brain/` directory, stage schema, or agent-brain registration. Source inspection on 2026-10-05 finds the explicit generated-output registry in `hooks/manifest.py`, the maintained test registry in `scripts/test-all.py`, and separate Bash/PowerShell installers. These are extension points, not an existing implementation.
+Initial source inspection on 2026-10-05 found no `skills/agent-brain/` directory, stage schema, or agent-brain registration. It found the explicit generated-output registry in `hooks/manifest.py`, the maintained test registry in `scripts/test-all.py`, and separate Bash/PowerShell installers. These became extension points for the implementation.
 
 Native events have different guarantees. The accepted contracts record Copilot timeouts as open, Gemini compression as advisory, uncertain Codex desktop behavior, and incomplete child-event coverage. Offline envelope tests cannot certify native delivery or enforcement. A target may remain unsupported after implementation if those constraints cannot be overcome within the selected core.
 
 The pilot's protected whole-document reads can limit attainable context savings. Preserve those obligations and measure the result. Missing the savings gate requires improving retrieval or reporting an unmet target, never weakening policy.
 
-The shared public-hook baseline previously wrote observability traces under the real `Path.home()` when a suite redirected only `AUDIT_LOG`; test fixtures also compared canonical `/var` paths against `/private/var`, leaked temporary-home cleanup, and left helper artifacts and probe streams behind. The M9 test-isolation repair is integrated: both observability suites pass after routing state to disposable homes, correcting path comparison and cleanup, and closing test artifacts/streams. The historical aggregate result remains 36 passed/1 failed from before that repair; the parent owns the full rerun after M2.
+The shared public-hook baseline previously wrote observability traces under the real `Path.home()` when a suite redirected only `AUDIT_LOG`; test fixtures also compared canonical `/var` paths against `/private/var`, leaked temporary-home cleanup, and left helper artifacts and probe streams behind. The M9 test-isolation repair is integrated. The parent verified `rtk proxy python3 scripts/test-all.py` at M2 integrated commit `02ab8c36deb07a186d5f99e764903e5764fdd7e2`: exit 0, 38 suites passed/0 failed in 316.0 seconds, both observability suites passing, and Windows-native cases visibly skipped on macOS. M9 full acceptance remains open.
 
 M2 review exposed closure and delivery edges that need public tests: startup without a task should not preload conditional facts; contained units of whole reads must expand their own requirements even after a late loading-mode upgrade; candidates cannot satisfy required established policy even when already selected; and section artifacts must partition nested annotations without losing later parent exceptions. Ordinary evidence output is summarized per delivered unit, while explicit whole-artifact reads preserve source comments exactly.
 
 The public recall suite reproduced Unicode output failures under `PYTHONIOENCODING=cp1252` for both text and JSON streams; configuring CLI output streams as UTF-8 fixed the complete-artifact paths. This subprocess check validates output behavior under that environment setting, not native Windows support. A final config review also found that `PurePosixPath` removes dot segments while the schema rejects them; typed validation now rejects dot and dot-dot path segments before normalization, and the schema rejects NUL characters as well.
+
+M3 public fault slices exposed provisional output delivery, expanded child assignments, malformed nested durable state, and a reset contention allowance during output settlement. A closed output pipe now revokes authority and leaves completion incomplete; child scope changes require current assigned review; corrupt records return machine-readable unavailable/incomplete status; and one store carries the cumulative contention allowance through output settlement. Restoring the fresh-store behavior reproduced a 0.430-second settlement wait against the controlled 0.4-second operation budget. Raw UTF-8 stdin under cp1252 also reproduced REVIEW_SOURCE_INVALID for a non-ASCII source path; bridge and registered stage input now use UTF-8/strict, with authority validated before semantic input.
+
+Final identity review reproduced startup accepting an uppercase configured certification UUID before later state validation rejected it. Provider certification UUIDs now require lowercase canonical formatting at configuration load, before any state mutation; support/event identities compare exactly, with matching schema patterns. Public coverage proves invalid registration creates no state and corrected registration completes normally.
+
+Malformed numeric input also reproduced empty stdout and tracebacks: a 5000-digit configuration integer exceeded Python's decoder limit, and a 400-digit durable expiry overflowed float conversion. Decoder limits remain enabled; config errors are structured invalid setup/recall results, and oversized expected-state times report unavailable/incomplete without recreation. Nested malformed JSON is also exercised at configuration, bridge, and durable-state seams.
 
 ## Decision Log
 
@@ -60,10 +66,12 @@ Decision: Configure CLI output as UTF-8 and reject noncanonical dot path segment
 
 Decision: Unknown task scope returns required startup and universal policy; full-library retrieval is explicit, and every delivery gap remains visible in JSON and stderr. Rationale: avoid preloading unrelated guidance while preserving mandatory obligations and actionable failures. Date/Author: 2026-10-06, Codex.
 
+Decision: Keep protocol delivery provisional until stdout flush, carry one contention allowance across operation phases, and bind no-change to actual foreground checks and current review revisions. Rationale: process exit, unseen output, stale receipts, and caller assertions cannot establish available guidance or semantic completion. Native output consumption remains a separate certification gate. Date/Author: 2026-10-06, Codex.
+
 ## Outcomes & Retrospective
 
 
-Milestones 1-2 provide a staged source-checkout skill and stdlib CLI with UTF-8 startup, scoped document/section retrieval, conservative routing, stable identities/revisions, transitive required-reference closure, evidence controls, and structured gaps. Retrieval tests pass 22/22 with ResourceWarning treated as an error; M1 CLI tests pass 26/26; OKF public fixtures, full-corpus linter, registry tests, skill validation, and skill packaging pass. The earlier aggregate result was 36 passed/1 failed before the observability fixture repair; both observability suites passed after that repair, and the parent owns the post-M2 aggregate. M3-M8 remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. No provider combination is certified and no quality, savings, timing, usage, or durability target is measured. The closed Wayfinder map remains unchanged.
+Milestones 1-3 provide the staged source-checkout skill, scoped revision-bound retrieval, and automatic common-protocol lifecycle coordination with checked no-change. Lifecycle tests pass 38/38 with ResourceWarning treated as an error, CLI tests 26/26, and retrieval tests 22/22 on Python 3.12.14, 3.13.14, and 3.14.6. OKF public fixtures, full-corpus linter, registry tests 14/14, skill validation and packaging, JSON/example/schema alignment, 19 JSON parses, 15 source compilations, and whitespace checks pass. The parent verified the integrated M2 aggregate at 38 suites passed/0 failed in 316.0 seconds; the M3 aggregate remains parent-owned. M4-M8 and M9 full acceptance remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. No native provider combination is certified and no quality, savings, timing, usage, or filesystem durability target is measured. The closed Wayfinder map remains unchanged.
 
 ## Context and Orientation
 
@@ -143,9 +151,9 @@ Extend `scripts/lint-okf.py` to call the common annotation/reference validator o
 ### Milestone 3: Coordinate automatic checkpoints and checked no-change
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met. The public common-protocol lifecycle suite passes 38/38 on exact Python 3.12.14, 3.13.14, and 3.14.6 builds, including objective continuity, unknown checkpoints, actual checked no-change, joined callbacks, input/context drift, finite handles, ownership/recovery, isolated worktrees, missing/corrupt state, pause/cancel, child scope/settlement, failed output, cumulative contention, strict UTF-8/standard JSON input, canonical certification identity, and decoder-limit/durable-time rejection. CLI 26/26 and retrieval 22/22 pass on all three builds; registry 14/14, OKF fixture/linter, skill validation/package, JSON/schema/example alignment, compilation, and diff checks pass. Provider support records exist only in disposable protocol fixtures. Native support, source/publication/dream behavior, and live acceptance measurement remain later milestones.
 
 Add `state.py`, `lifecycle.py`, `checks.py`, and `scripts/integration-bridge.py` to the bundle. The bridge receives normalized lifecycle events from enabled adapters, binds repository/worktree/work-session/task/agent identities, records scoped delivery, issues finite invocation files, and requests the progressively loaded foreground procedure. Add `scripts/test-agent-brain-lifecycle.py` using a disposable registered adapter fixture at the public bridge process boundary. Such fixtures prove protocol behavior, never provider support.
 

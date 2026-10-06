@@ -33,6 +33,28 @@
         "Consults the dream reference and accurately reports the standalone CLI guard.",
         "Does not launch a provider/model or claim cleanup occurred."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "An enabled test adapter supplied a current agent-brain learn work package and invocation file for this ready objective. Learn start exited zero. Explain what remains, then use the current assigned scope and controlling-source revisions to complete a scoped no-change review.",
+      "expected_output": "Reads the foreground learn procedure, treats start as incomplete work delivery, prepares attributable current review evidence, runs actual configured checks, and completes only after the current prepared review and child obligations are settled. It makes no native-certification claim.",
+      "files": [],
+      "expectations": [
+        "Distinguishes operation success, incomplete stage, and completed work session.",
+        "Uses delivered scope and guidance/source revisions rather than illustrative hashes or invented receipts.",
+        "Runs prepare and complete with the integration-issued invocation file; does not launch a model or activate a provider."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "A registered child finished its original assigned review, then its assigned scope expanded and context was lost. The parent has an older no-change result. Use agent-brain's current lifecycle guidance to recover and finish the same objective.",
+      "expected_output": "Restores current scoped guidance, rejects the old generation/results, settles the child's current assignment, and leaves aggregate learning with the parent. Duplicate or child-stop callbacks do not create a second full maintenance pass.",
+      "files": [],
+      "expectations": [
+        "Keeps one objective across recovery and does not reset pause/cancel or attempt limits.",
+        "Requires current child delivery and assigned-scope settlement before parent completion.",
+        "Does not assume an old receipt restores context, create a maintenance subagent, or claim native provider support."
+      ]
     }
   ]
 }

@@ -19,6 +19,13 @@
     "runtime_state_present": {"type": "boolean"},
     "active_context": {"const": "unavailable"},
     "model_execution": {"const": "disabled"},
+    "state_status": {"enum": ["absent", "available", "unavailable"]},
+    "worktree_id": {"type": "string", "format": "uuid"},
+    "work_sessions": {"type": "array", "items": {"type": "object"}},
+    "work_session_status": {"const": "incomplete"},
+    "pending_work": {"const": "unknown"},
+    "error": {"type": "object"},
+    "sqlite_capabilities": {"type": "object", "description": "Observed connection settings with read-only/read-write access identified; filesystem durability remains unverified."},
     "checks": {
       "type": "array",
       "items": {"$ref": "#/$defs/check"}

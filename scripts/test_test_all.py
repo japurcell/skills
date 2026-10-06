@@ -103,6 +103,7 @@ class TestTestAll(unittest.TestCase):
         }
         expected.add("scripts/test-agent-brain-cli.py")
         expected.add("scripts/test-agent-brain-retrieval.py")
+        expected.add("scripts/test-agent-brain-lifecycle.py")
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")

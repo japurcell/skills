@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "event_id": "checkpoint-example",
+  "event": "checkpoint",
+  "integration": {
+    "id": "fixture",
+    "core_version": "0.1.0",
+    "adapter_version": "fixture-1",
+    "certification_id": "ac617ddc-59f6-47be-8268-095bcad216c9",
+    "config_revision": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "binding": {
+    "repository_root": "/tmp/agent-brain-protocol-example",
+    "worktree_root": "/tmp/agent-brain-protocol-example",
+    "provider_session_id": "conversation",
+    "provider_task_id": "objective",
+    "provider_agent_id": "parent"
+  },
+  "scope": {
+    "paths": [
+      "src/app.py"
+    ]
+  },
+  "classification": "ready_to_complete"
+}

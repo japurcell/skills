@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/lifecycle-result-v1.schema.json",
+  "title": "Bridge or foreground stage result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "operation_status",
+    "stage_outcome",
+    "work_session_status"
+  ],
+  "properties": {
+    "stage": {"enum": ["learn", "dream"]},
+    "operation": {"enum": ["start", "prepare", "publish", "complete"]},
+    "schema_version": {
+      "const": 1
+    },
+    "operation_status": {
+      "enum": [
+        "ok",
+        "error"
+      ]
+    },
+    "stage_outcome": {
+      "enum": [
+        "completed",
+        "no_change",
+        "incomplete"
+      ]
+    },
+    "work_session_status": {
+      "enum": [
+        "active",
+        "awaiting_user",
+        "ready_to_complete",
+        "completed",
+        "incomplete",
+        "paused",
+        "cancelled"
+      ]
+    },
+    "checkpoint": {
+      "enum": [
+        "active",
+        "awaiting_user",
+        "ready_to_complete",
+        "completed"
+      ]
+    },
+    "identities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "worktree_id",
+        "work_session_id",
+        "task_id",
+        "agent_id"
+      ],
+      "properties": {
+        "repository_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "worktree_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "work_session_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "task_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "agent_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "input_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "context_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "input_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "ownership_generation": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "delivery": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "next_action": {
+      "type": "object"
+    },
+    "support": {
+      "const": "common_protocol_fixture_only"
+    },
+    "sqlite_capabilities": {
+      "type": "object"
+    },
+    "invocation_file": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "attempt_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "pending_reason": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "work_package": {
+      "type": "object"
+    },
+    "check_receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "checker_id",
+          "exit_code",
+          "timed_out",
+          "input_revision",
+          "config_revision",
+          "owner_generation",
+          "attempt_id",
+          "checked_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "checker_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "timed_out": {
+            "type": "boolean"
+          },
+          "input_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "config_revision": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "owner_generation": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "attempt_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "checked_at": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "cause",
+        "affected_scope",
+        "retry_eligible",
+        "next_action"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "cause": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "affected_scope": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "retry_eligible": {
+          "type": "boolean"
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        }
+      }
+    }
+  }
+}

@@ -21,6 +21,29 @@
       "items": {"$ref": "#/$defs/mappedUnit"},
       "description": "The typed validator also rejects duplicate IDs and repeated selectors for one source path. All mappings are read-only."
     },
+    "providers": {
+      "type": "object", "propertyNames": {"$ref": "#/$defs/text"}, "additionalProperties": {"$ref": "#/$defs/provider"},
+      "description": "Absent or unconfigured integrations are disabled. M3 accepts only disposable protocol fixtures; native kind remains unsupported."
+    },
+    "state_dir": {"allOf": [{"$ref": "#/$defs/repositoryPath"}, {"pattern": "^\\.agents/context/.+"}]},
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "lease_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 1800},
+        "contention_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 2},
+        "max_attempts": {"type": "integer", "minimum": 1, "maximum": 3},
+        "check_timeout_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 60}
+      }
+    },
+    "checks": {
+      "type": "object", "additionalProperties": false, "required": ["required", "trusted"],
+      "properties": {
+        "required": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/text"},
+          "allOf": [{"contains": {"const": "guidance"}}, {"contains": {"const": "review_sources"}}]},
+        "trusted": {"type": "array", "items": {"$ref": "#/$defs/checker"}}
+      },
+      "description": "Required IDs must resolve to built-ins or unique explicitly trusted IDs. No caller-supplied receipt or passed flag is accepted."
+    },
     "startup": {
       "type": "array",
       "minItems": 1,
@@ -30,6 +53,28 @@
     }
   },
   "$defs": {
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "provider": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "kind", "core_version", "adapter_version", "schema_version", "certification_id", "support_record", "events", "max_attempts"],
+      "properties": {
+        "enabled": {"type": "boolean"}, "kind": {"enum": ["native", "protocol_fixture"]},
+        "core_version": {"$ref": "#/$defs/text"}, "adapter_version": {"$ref": "#/$defs/text"},
+        "schema_version": {"const": 1}, "certification_id": {"type": "string", "format": "uuid", "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"},
+        "support_record": {"$ref": "#/$defs/repositoryPath"},
+        "max_attempts": {"type": "integer", "minimum": 1, "maximum": 3},
+        "events": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {
+          "enum": ["startup", "task", "scope", "checkpoint", "resume", "context_lost", "recover", "pause", "cancel", "child_start", "child_stop"]}}
+      }
+    },
+    "checker": {
+      "type": "object", "additionalProperties": false, "required": ["id", "argv", "timeout_seconds"],
+      "properties": {
+        "id": {"$ref": "#/$defs/text"},
+        "argv": {"type": "array", "minItems": 1, "items": {"allOf": [{"$ref": "#/$defs/text"}, {"pattern": "^[^\\u0000]*$"}]}},
+        "timeout_seconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 60}
+      }
+    },
     "repositoryPath": {
       "type": "string",
       "minLength": 1,

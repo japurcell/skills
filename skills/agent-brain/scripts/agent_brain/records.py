@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Literal
 
 
@@ -50,6 +50,15 @@ class AgentBrainConfig:
     knowledge_roots: tuple[KnowledgeRoot, ...]
     mapped_units: tuple[MappedUnit, ...]
     startup: tuple[StartupRead, ...]
+    providers: dict[str, dict[str, object]] = field(default_factory=dict)
+    checks: dict[str, object] = field(default_factory=lambda: {
+        "required": ["guidance", "review_sources"], "trusted": [],
+    })
+    limits: dict[str, float | int] = field(default_factory=lambda: {
+        "lease_seconds": 1800, "contention_seconds": 2, "max_attempts": 3,
+        "check_timeout_seconds": 60,
+    })
+    state_dir: str = ".agents/context/state"
 
 
 @dataclass(frozen=True, slots=True)

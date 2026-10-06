@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import uuid
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
@@ -13,6 +14,17 @@ from .records import AgentBrainConfig, KnowledgeRoot, MappedUnit, StartupRead
 
 class ConfigurationError(ValueError):
     """The selected configuration is unreadable or outside the M1 schema."""
+
+
+def _reject_constant(value: str) -> None:
+    raise ConfigurationError(f"non-finite JSON constant {value} is not supported")
+
+
+def _finite_float(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise ConfigurationError("JSON number exceeds the supported finite range")
+    return parsed
 
 
 def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -81,20 +93,20 @@ def load_config(path: Path) -> AgentBrainConfig:
         raise ConfigurationError(f"cannot read configuration {path}: {exc}") from exc
 
     try:
-        value = json.loads(source, object_pairs_hook=_unique_object)
+        value = json.loads(source, object_pairs_hook=_unique_object, parse_constant=_reject_constant, parse_float=_finite_float)
     except ConfigurationError:
         raise
     except json.JSONDecodeError as exc:
         raise ConfigurationError(
             f"invalid JSON in {path}: {exc.msg} at line {exc.lineno} column {exc.colno}"
         ) from exc
+    except (ValueError, OverflowError) as exc:
+        raise ConfigurationError(f"unsupported JSON numeric value in {path}: {exc}") from exc
 
     root = _object(value, "configuration")
-    _keys(
-        root,
-        "configuration",
-        {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"},
-    )
+    required = {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"}
+    optional = {"providers", "checks", "limits", "state_dir"}
+    _keys(root, "configuration", required | (root.keys() & optional))
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
         raise ConfigurationError("configuration schema_version must be 1")
     repository_id = _uuid(root["repository_id"], "repository_id")
@@ -213,12 +225,14 @@ def load_config(path: Path) -> AgentBrainConfig:
             raise ConfigurationError(f"{field}.loading_mode must be unit or whole")
         startup.append(StartupRead(unit_id, item["loading_mode"]))  # type: ignore[arg-type]
 
+    providers, checks, limits, state_dir = _lifecycle_fields(root)
     return AgentBrainConfig(
         schema_version=1,
         repository_id=repository_id,
         knowledge_roots=tuple(roots),
         mapped_units=tuple(units),
         startup=tuple(startup),
+        providers=providers, checks=checks, limits=limits, state_dir=state_dir,
     )
 
 
@@ -226,3 +240,88 @@ def _is_under_root(path: str, root: str) -> bool:
     candidate = PurePosixPath(path)
     root_path = PurePosixPath(root)
     return root == "." or candidate.is_relative_to(root_path)
+
+
+LIFECYCLE_EVENTS = (
+    "startup", "task", "scope", "checkpoint", "resume", "context_lost", "recover",
+    "pause", "cancel", "child_start", "child_stop",
+)
+BUILTIN_CHECKS = ("guidance", "review_sources")
+
+
+def _number(value: Any, field: str, maximum: float, *, integer: bool = False) -> float | int:
+    if type(value) not in (int, float) or not 0 < value <= maximum:
+        raise ConfigurationError(f"{field} must be greater than zero and at most {maximum}")
+    if integer and type(value) is not int:
+        raise ConfigurationError(f"{field} must be an integer")
+    return value
+
+
+def _strings(value: Any, field: str, *, nonempty: bool = True) -> list[str]:
+    if not isinstance(value, list) or (nonempty and not value):
+        raise ConfigurationError(f"{field} must be {'a non-empty' if nonempty else 'an'} array")
+    items = [_string(item, field) for item in value]
+    if len(items) != len(set(items)):
+        raise ConfigurationError(f"{field} must not contain duplicate values")
+    return items
+
+
+def _lifecycle_fields(root: dict[str, Any]) -> tuple[dict, dict, dict, str]:
+    providers = _object(root.get("providers", {}), "providers")
+    for provider_id, provider in providers.items():
+        _string(provider_id, "integration id")
+        item = _object(provider, f"providers.{provider_id}")
+        _keys(item, f"providers.{provider_id}", {
+            "enabled", "kind", "core_version", "adapter_version", "schema_version",
+            "certification_id", "support_record", "events", "max_attempts",
+        })
+        if type(item["enabled"]) is not bool or item["kind"] not in ("native", "protocol_fixture"):
+            raise ConfigurationError("provider enabled must be boolean and kind must be native or protocol_fixture")
+        for field in ("core_version", "adapter_version"):
+            _string(item[field], field)
+        if type(item["schema_version"]) is not int or item["schema_version"] != 1:
+            raise ConfigurationError("provider schema_version must be 1")
+        if _uuid(item["certification_id"], "certification_id") != item["certification_id"]:
+            raise ConfigurationError("certification_id must use lowercase canonical UUID formatting")
+        _relative_path(item["support_record"], "support_record")
+        events = _strings(item["events"], "provider events")
+        if set(events) - set(LIFECYCLE_EVENTS):
+            raise ConfigurationError("provider events contain an unsupported event")
+        _number(item["max_attempts"], "provider max_attempts", 3, integer=True)
+
+    checks = _object(root.get("checks", {"required": list(BUILTIN_CHECKS), "trusted": []}), "checks")
+    _keys(checks, "checks", {"required", "trusted"})
+    required = _strings(checks["required"], "checks.required")
+    if not set(BUILTIN_CHECKS).issubset(required):
+        raise ConfigurationError("checks.required must include guidance and review_sources")
+    if not isinstance(checks["trusted"], list):
+        raise ConfigurationError("checks.trusted must be an array")
+    checker_ids = set(BUILTIN_CHECKS)
+    for checker in checks["trusted"]:
+        item = _object(checker, "trusted checker")
+        _keys(item, "trusted checker", {"id", "argv", "timeout_seconds"})
+        checker_id = _string(item["id"], "checker id")
+        if checker_id in checker_ids:
+            raise ConfigurationError("checker IDs must be unique and not shadow built-ins")
+        checker_ids.add(checker_id)
+        if not isinstance(item["argv"], list) or not item["argv"]:
+            raise ConfigurationError("checker argv must be a non-empty array")
+        for argument in item["argv"]:
+            _string(argument, "checker argument")
+            if "\x00" in argument:
+                raise ConfigurationError("checker argument contains NUL")
+        _number(item["timeout_seconds"], "checker timeout_seconds", 60)
+    if set(required) - checker_ids:
+        raise ConfigurationError("required check is not a built-in or explicitly trusted checker ID")
+
+    defaults = {"lease_seconds": 1800, "contention_seconds": 2, "max_attempts": 3, "check_timeout_seconds": 60}
+    limits = _object(root.get("limits", {}), "limits")
+    if limits.keys() - defaults.keys():
+        raise ConfigurationError("limits contains an unsupported field")
+    for field, value in limits.items():
+        _number(value, f"limits.{field}", defaults[field], integer=field == "max_attempts")
+    limits = defaults | limits
+    state_dir = _relative_path(root.get("state_dir", ".agents/context/state"), "state_dir")
+    if not state_dir.startswith(".agents/context/") or state_dir == ".agents/context/":
+        raise ConfigurationError("state_dir must be local under .agents/context/")
+    return providers, checks, limits, state_dir
