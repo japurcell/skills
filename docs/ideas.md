@@ -1,10 +1,10 @@
 # Ideas
 
-Use this file as a lightweight inbox for ideas that are not ready for research or planning.
-Add each idea as one short bullet. When work starts, move the idea into the appropriate
-research, planning, or implementation artifact.
+Use this file as a lightweight inbox for ideas that are not ready for research or planning. Add each idea as one short bullet. When work starts, move the idea into the appropriate research, planning, or implementation artifact.
 
 ## Inbox
+
+- [ ] **exec-plans progress disclosure**: exec plans can get really large, so it would be helpful to implement a progressive disclosure mechanism into the [exec-plans skill](../.agents/skills/exec-plans/SKILL.md) to show only the most relevant parts initially and reveal more details as needed.
 
 - [ ] **SKILL audit**: Claude released updates to skill authoring best practices: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). Even though I don't use Claude, I still want to incorporate these best practices into all skills in this repo unless they are blatantly incompatible with codex, copilot, or gemini: [../.agents/skills/](../.agents/skills/) and [../skills/](../skills/). Our audit will include all of the best practices, but a few stood out to me:
   - **Structure longer reference files with table of contents**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#structure-longer-reference-files-with-table-of-contents)
