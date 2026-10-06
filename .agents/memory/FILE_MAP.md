@@ -93,3 +93,5 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
 | `.agents/skills/ingest-source/SKILL.md` | The canonical repo-local `/ingest-source` recovery skill used by the pending-ingest gate. |
+| `skills/agent-brain/SKILL.md` | Staged source-checkout skill, bundled Python CLI, progressive references, typed v1 schemas, examples, and evals. |
+| `scripts/test-agent-brain-cli.py` | Public subprocess tests for CLI presentation, read-only commands, guarded inputs, config validation, and whole-artifact recall. |

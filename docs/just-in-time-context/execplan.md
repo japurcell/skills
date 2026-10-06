@@ -9,12 +9,12 @@ After this work, an agent starting a task receives a compact knowledge map and t
 
 The observable demonstration is a disposable repository with a policy, an outdated fact, and an unrelated custom hook. A certified provider must retrieve the policy before its governed action, correct the fact through a checked foreground learn pass, preserve the unrelated hook, and restore the corrected fact in a fresh session. An interrupted publication remains visibly incomplete and recovers at the next eligible event. A stopped turn alone never establishes successful task completion.
 
-This plan derives execution steps from the ten closed Wayfinder contracts. Creating it authorizes no implementation, installation, activation, provider launch, or model-evaluation spending. A later implementation request can execute offline milestones 1-9. Live milestones 10-11 require explicit authorization after their frozen run counts and usage visibility are available. Milestone 12 cannot claim full success while a required target or acceptance gate is unmet.
+This plan derives execution steps from the ten closed Wayfinder contracts. The plan itself authorizes no implementation, installation, activation, provider launch, or model-evaluation spending. On 2026-10-05, the user invoked execplan-implement and authorized offline implementation milestones 1-9. Live milestones 10-11 still require explicit authorization after their frozen run counts and usage visibility are available. Actual-home installation, pilot activation, provider/model launch, and reopening Lavish remain out of scope. Milestone 12 cannot claim full success while a required target or acceptance gate is unmet.
 
 ## Progress
 
 
-- [ ] [milestone-1] Deliver the bundled CLI and an informational recall through the public process boundary.
+- [x] [milestone-1] Deliver the bundled CLI and an informational recall through the public process boundary.
 - [ ] [milestone-2] Retrieve complete, revision-bound guidance units and validate authoring.
 - [ ] [milestone-3] Automatically coordinate lifecycle checkpoints and verified no-change completion.
 - [ ] [milestone-4] Publish evidenced learn changes with interruption-safe recovery.
@@ -23,6 +23,7 @@ This plan derives execution steps from the ten closed Wayfinder contracts. Creat
 - [ ] [milestone-7] Generate and package provider-local native adapters.
 - [ ] [milestone-8] Install versioned bundles and apply reversible repository activation.
 - [ ] [milestone-9] Complete offline acceptance and freeze live certification inputs and counts.
+- [x] [milestone-9] Repair public-hook suite isolation so baseline observability writes stay in disposable homes.
 - [ ] [milestone-10] Certify selected native provider paths through separately authorized live tests.
 - [ ] [milestone-11] Map the pilot KB and measure paired quality, guidance, duration, and usage.
 - [ ] [milestone-12] Release only verified combinations and complete documentation and handoff.
@@ -36,6 +37,10 @@ Native events have different guarantees. The accepted contracts record Copilot t
 
 The pilot's protected whole-document reads can limit attainable context savings. Preserve those obligations and measure the result. Missing the savings gate requires improving retrieval or reporting an unmet target, never weakening policy.
 
+The shared public-hook test baseline writes observability traces under the real `Path.home()` when a suite overrides only `AUDIT_LOG`; test fixtures also compare canonical `/var` paths against `/private/var`. Under the current sandbox this produces readonly-database errors even when those suites pass. Baseline findings also include helper-test artifacts in protected `.agents/scratchpad`, unclosed probe `BufferedReader` pipes, and test-loader package-mismatch warnings. A separate test-isolation repair owns those fixtures, including `scripts/test_helpers.py` and `test-repo-root.sh`, for offline acceptance; production hook behavior remains outside its scope unless reproduction proves it necessary.
+
+The public recall suite reproduced Unicode output failures under `PYTHONIOENCODING=cp1252` for both text and JSON streams; configuring CLI output streams as UTF-8 fixed the complete-artifact paths. This subprocess check validates output behavior under that environment setting, not native Windows support. A final config review also found that `PurePosixPath` removes dot segments while the schema rejects them; typed validation now rejects dot and dot-dot path segments before normalization, and the schema rejects NUL characters as well.
+
 ## Decision Log
 
 
@@ -47,10 +52,14 @@ Decision: Use a bundled `agent_brain` Python package, a public CLI entrypoint, a
 
 Decision: Publish immutable software bundles under `~/.agents/agent-brain/versions/<version>/`, expose platform launchers, and pin repository activation to an installed bundle and certification identity. Rationale: the accepted immutable-version contract needs a concrete installation location; it stays separate from portable repository knowledge and worktree-local state. This path is a software layout choice, not a replacement for accepted repository-scoped paths. Date/Author: 2026-10-05, Codex.
 
+Decision: Keep the initial bundle standard-library-only and make `repository_id` a canonical UUID in the typed validator and versioned schema from its first public release. Rationale: M1 can run without dependency installation, and the accepted repository identity must not acquire a looser schema meaning before later lifecycle milestones. Date/Author: 2026-10-05, Codex.
+
+Decision: Configure CLI output as UTF-8 and reject noncanonical dot path segments before path normalization. Rationale: complete Unicode artifacts must remain printable under legacy ambient encodings, and runtime config validation must agree with its schema. Date/Author: 2026-10-05, Codex.
+
 ## Outcomes & Retrospective
 
 
-Planning output is this self-contained execution sequence. Implementation has not started. Every implementation milestone remains open, with acceptance not met. No provider combination is certified and no quality, savings, timing, usage, or durability target is measured. The closed Wayfinder map remains unchanged.
+Milestone 1 is implemented as a bundled skill and Python CLI. It provides side-effect-free help/version and read-only status, doctor, and whole-artifact recall, with guarded learn/dream responses when no registered active context exists. The public subprocess suite passes 26/26 on Python 3.14.6 and 3.13.14; the skill validator passes; the maintained-suite registry test passes 14/14; all bundled JSON schemas/examples/evals parse and all seven Python sources compile. Python 3.12 was unavailable and is not certified. Milestones 2-8 remain open, and Milestone 9 offline acceptance remains open; its public-hook suite-isolation repair is complete. Live milestones 10-11 remain unauthorized. No provider combination is certified and no quality, savings, timing, usage, or durability target is measured. The closed Wayfinder map remains unchanged.
 
 ## Context and Orientation
 
@@ -104,9 +113,9 @@ Execute milestones in order. Each adds usable behavior through an agreed public 
 ### Milestone 1: Run the bundled CLI and informational recall
 
 
-Status: open
+Status: complete
 
-Acceptance: not met
+Acceptance: met. Public subprocess behavior passes 26/26 under Python 3.14.6 and 3.13.14, including copied-bundle help/version bytecode checks, argument-placement and abbreviation rules, JSON/plain streams, guarded learn/dream inputs, read-only state commands, Unicode full-artifact recall under cp1252 ambient encoding, and invalid config paths. `quick_validate.py` reports the skill valid; the registry-focused suite passes 14/14; all 11 bundled JSON schema/example/eval files parse; seven Python sources compile; direct `--version` prints `agent-brain 0.1.0`. These checks do not certify Python 3.12 or native provider support.
 
 Create `skills/agent-brain/SKILL.md`, progressive references `recall.md`, `learn.md`, and `dream.md` under its `references/`, and `scripts/agent-brain.py` under the skill as the source-checkout entrypoint. Put implementation in `skills/agent-brain/scripts/agent_brain/`. Start with `cli.py`, `config.py`, `records.py`, and `knowledge.py`; introduce later modules only with their behavior tests. Add version metadata and versioned schemas under `skills/agent-brain/schemas/`, with examples under `skills/agent-brain/examples/`.
 

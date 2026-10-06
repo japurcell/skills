@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "operation_status": "ok",
+  "command": "status",
+  "setup_status": "uninitialized",
+  "config_path": ".agents/context/config.json",
+  "config_present": false,
+  "runtime_state_path": ".agents/context/state/brain.sqlite3",
+  "runtime_state_present": false,
+  "active_context": "unavailable",
+  "model_execution": "disabled",
+  "checks": []
+}

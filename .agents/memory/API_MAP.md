@@ -57,3 +57,8 @@ description: Public validation entry points and provider adapter contracts for t
 - `.gemini/hooks/scripts/lint-okf.py` is registered only for project `AfterAgent`. Clean validation emits `systemMessage: lint-okf: pass; 0 diagnostics`; definite findings emit `decision: deny` with a reason once, then `continue: true` with a visible `systemMessage`; an incomplete `AfterAgent` check emits a visible `OKF900` warning and permits completion. Source ingest runs first in the sequential group.
 - `.codex/hooks.json` registers only project-local `Stop` with `.codex/hooks/repository-okf.py`; the user-global `.codex/global-hooks.json` does not own it. Clean validation emits `systemMessage: repository-okf: pass; 0 diagnostics`, definite findings block once, a retry emits `systemMessage`, and incomplete checks emit an `OKF900` `systemMessage`.
 - All three adapters execute only the central linter from their containing checkout, accept nested payload working directories within that checkout, reject external working directories as `OKF900`, and keep serialized output below 8 KiB with at most 20 displayed diagnostics. Their provider-local audit helpers write content-free, deduplicated `audit.log` entries capped at 4 KiB; a retry is a distinct attempt.
+
+## agent-brain CLI
+
+- The staged source CLI provides help/version, read-only status/doctor, and complete UTF-8 whole-artifact recall. JSON results are on stdout; diagnostics are on stderr.
+- Config v1 uses canonical UUIDs and relative POSIX paths. Learn/dream reject missing registered context before input or mutation. No model, native lifecycle, installation, or activation support is claimed.

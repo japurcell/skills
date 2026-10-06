@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/recall-v1.schema.json",
+  "title": "agent-brain informational recall result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "operation_status", "command", "informational_only", "notice", "artifacts"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "operation_status": {"const": "ok"},
+    "command": {"const": "recall"},
+    "informational_only": {"const": true},
+    "notice": {"type": "string", "minLength": 1},
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "loading_mode", "content"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "path": {"type": "string", "minLength": 1},
+        "loading_mode": {"const": "whole"},
+        "content": {"type": "string"}
+      }
+    }
+  }
+}

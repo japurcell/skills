@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "operation_status": "error",
+  "error": {
+    "code": "ACTIVE_CONTEXT_REQUIRED",
+    "cause": "learn requires registered active agent context; this standalone CLI cannot establish it.",
+    "affected_scope": "learn",
+    "retry_eligible": false,
+    "next_action": "Use recall for informational reads. Run learn or dream only through a registered integration; this CLI never launches a model."
+  }
+}

@@ -24,3 +24,5 @@ description: Rules and conventions for repository helper scripts under `scripts/
 - **Agent-restricted scripts:** Never run human-only orchestration scripts (such as `import-skill-repos.sh` or `pull-skill-repos.sh`). Agents must strictly run only targeted verification and test scripts (such as `test-*.sh`).
 - PowerShell-specific guidance lives in `.agents/instructions/powershell.md`; shell-focused validation lives in `.agents/memory/testing/scripts.md`.
 - If the change also affects repo-local hook behavior, read `.agents/instructions/hooks.md` and the matching hook validation docs instead of treating hooks as generic shell scripts.
+
+- `scripts/test-agent-brain-cli.py` is a registered public subprocess suite. Preserve CLI stream rules: JSON results on stdout, actionable diagnostics on stderr, and no option abbreviation; read-only recall must print the complete UTF-8 artifact.

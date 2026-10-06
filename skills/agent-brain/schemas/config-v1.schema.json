@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/config-v1.schema.json",
+  "title": "agent-brain repository configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "repository_id": {"type": "string", "format": "uuid"},
+    "knowledge_roots": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/knowledgeRoot"}
+    },
+    "mapped_units": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/mappedUnit"}
+    },
+    "startup": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/startupRead"}
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(/|$))(?!.*\\\\)(?!.*\\u0000)[^\\\\]+$",
+      "description": "Repository-relative POSIX path; the typed validator rejects absolute paths, Windows drives, dot segments, NUL characters, and backslashes."
+    },
+    "knowledgeRoot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "ownership"],
+      "properties": {
+        "path": {
+          "oneOf": [
+            {"const": "."},
+            {"$ref": "#/$defs/repositoryPath"}
+          ]
+        },
+        "ownership": {"enum": ["read_only", "agent_brain"]}
+      }
+    },
+    "mappedUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "unit"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "path": {"$ref": "#/$defs/repositoryPath"},
+        "unit": {"const": "whole"}
+      }
+    },
+    "startupRead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "loading_mode"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "loading_mode": {"const": "whole"}
+      }
+    }
+  }
+}

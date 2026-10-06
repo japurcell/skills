@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "operation_status": "ok",
+  "command": "recall",
+  "informational_only": true,
+  "notice": "Informational output only; this does not confirm agent delivery or application.",
+  "artifacts": [
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "path": "guidance/startup.md",
+      "loading_mode": "whole",
+      "content": "# Startup guidance\nRead this complete artifact before work.\n"
+    }
+  ]
+}

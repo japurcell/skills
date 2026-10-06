@@ -34,3 +34,5 @@ description: Test and validation guidance for shell helper scripts under `script
 - If a script primarily supports a specific skill, run that skill's narrow validation path after the script check.
 - In `scripts/test-common.sh`, keep `mock_bin` on `printf "%b\n"` so escaped newlines render into executable mock scripts.
 - In `scripts/test-common.sh`, `write_required_skill_fixtures` writes mock skill files (`caveman`, `universal-guidelines`, `cli-compression`, `writing-great-skills`) to a test directory for skill hook tests.
+
+- Agent-brain public CLI: `python3 scripts/test-agent-brain-cli.py`, then `python3 skills/skill-creator/scripts/quick_validate.py skills/agent-brain`. The subprocess suite covers CLI streams, no-side-effect help/version, guarded inputs, config validation, Unicode whole-artifact recall, and read-only status/doctor.

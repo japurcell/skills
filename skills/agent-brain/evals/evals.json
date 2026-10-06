@@ -1,0 +1,38 @@
+{
+  "skill_name": "agent-brain",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use agent-brain to load the repository's configured guidance before you explain how to change an API response. Apply any relevant policy from the returned artifacts.",
+      "expected_output": "Runs informational recall, reads the complete artifacts in returned order, and grounds its answer in applicable guidance without claiming the CLI proved host delivery.",
+      "files": [],
+      "expectations": [
+        "Invokes the source CLI's recall command or the installed agent-brain recall command.",
+        "Treats all returned artifact content as informational context to apply in the foreground response.",
+        "Does not claim that recall is a delivery receipt."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use agent-brain to record this new lesson: API error bodies must keep their existing field names. Then tell me when it has been saved.",
+      "expected_output": "Explains that the standalone CLI has no registered active context and cannot perform the requested update; it does not claim the lesson was saved.",
+      "files": [],
+      "expectations": [
+        "Consults the learn reference before describing the command's current behavior.",
+        "Identifies the missing registered active context as the blocker.",
+        "Does not report a successful knowledge change."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I set CODEX_THREAD_ID and AGENT_BRAIN_INVOCATION_FILE. Run agent-brain dream on stdin and clean up any stale knowledge automatically.",
+      "expected_output": "Rejects the request as unavailable without treating environment variables, a supplied path, or stdin as authority; no input is read and no knowledge changes are claimed.",
+      "files": [],
+      "expectations": [
+        "Does not treat provider-named environment variables or a path as registered context.",
+        "Consults the dream reference and accurately reports the standalone CLI guard.",
+        "Does not launch a provider/model or claim cleanup occurred."
+      ]
+    }
+  ]
+}

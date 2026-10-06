@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/version-v1.schema.json",
+  "title": "agent-brain bundle metadata v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "name", "bundle_version", "minimum_python"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "name": {"const": "agent-brain"},
+    "bundle_version": {"type": "string", "minLength": 1},
+    "minimum_python": {"type": "string", "minLength": 1}
+  }
+}
