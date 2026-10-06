@@ -220,6 +220,7 @@ class ProbeTests(unittest.TestCase):
             prepared = self.cli(home, "prepare", "--provider", "codex")
             self.assertEqual(prepared.returncode, 0, prepared.stderr)
             info = json.loads(prepared.stdout)
+            process = None
             try:
                 process = subprocess.Popen([sys.executable, info["handler"], "PreToolUse"],
                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -231,9 +232,23 @@ class ProbeTests(unittest.TestCase):
                 process.stdin.flush()
                 self.assertTrue(select.select([process.stdout], [], [], 2)[0], "handler waited for stdin EOF")
                 self.assertIn("systemMessage", json.loads(process.stdout.readline()))
-                process.stdin.close()
-                self.assertEqual(process.wait(timeout=2), 0)
+                _, stderr = process.communicate(timeout=2)
+                self.assertEqual(process.returncode, 0, stderr.decode(errors="replace"))
+                self.assertTrue(process.stdin.closed, "handler stdin pipe was not closed")
+                self.assertTrue(process.stdout.closed, "handler stdout pipe was not closed")
+                self.assertTrue(process.stderr.closed, "handler stderr pipe was not closed")
             finally:
+                if process is not None:
+                    if process.poll() is None:
+                        process.kill()
+                    try:
+                        process.communicate(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.communicate()
+                    for stream in (process.stdin, process.stdout, process.stderr):
+                        if stream is not None and not stream.closed:
+                            stream.close()
                 self.cli(home, "cleanup", "--provider", "codex", "--id", info["id"])
 
     def test_timeout_has_entry_markers_without_completed_response(self) -> None:

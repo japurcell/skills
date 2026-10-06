@@ -17,7 +17,9 @@ description: Test and validation guidance for shell helper scripts under `script
   - Codex custom-agent conversion and global instructions: `python3 scripts/test-codex-agents.py`, then `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture suite parses generated TOML, checks exact instruction preservation, managed cleanup, `CODEX_HOME` selection, and replacement of `$HOME/.codex/AGENTS.md` from `.codex/AGENTS.md`. It always checks case-folded source-output collision at the converter decision seam and also through two real source files when the filesystem supports both names.
   - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
 - Python helper module unit tests:
-  - `python scripts/test_helpers.py`
+  - `PYTHONWARNINGS=error::DeprecationWarning python3 scripts/test_helpers.py`; dynamic helper packages need package-aware specs and cleanup of all unique package-prefixed `sys.modules` entries.
+  - Audit rotation fixtures must use a disposable fixture repository, not the checkout’s protected `.agents/` tree.
+  - Popen hook-delivery checks must drain and close all three pipes with `communicate()` and assert stream closure; run with `PYTHONWARNINGS=always::ResourceWarning`.
 - OKF linter changes:
   - `bash -n scripts/test-okf-lint.sh && bash scripts/test-okf-lint.sh`
   - The suite copies `scripts/fixtures/okf-valid-repo/` into a fresh `mktemp` directory for each public-CLI case. Do not derive uniqueness from a shell counter mutated inside command substitution; that mutation runs in a subshell and does not persist.
@@ -25,7 +27,8 @@ description: Test and validation guidance for shell helper scripts under `script
   - Keep assertions at the public `./scripts/lint-okf.py [--format human|json]` seam, including exact one-based diagnostic locations and exit codes.
   - Keep cross-platform destination cases for Windows drive-rooted and UNC paths, source-summary footnotes, and both nesting directions among HTML comments, fenced code, and exact-run inline code.
 - Hook-tree shell helper changes:
-  - `bash scripts/test-repo-root.sh`
+  - `bash scripts/test-repo-root.sh`; normalize the expected fixture root with `pwd -P` on macOS while retaining repository-root binding assertions.
+- Provider subprocess fixtures must use `with_disposable_hook_home` or equivalent disposable `HOME`: `AUDIT_LOG` and scanner/guard overrides do not redirect default observability or SQLite storage. Seed provider `.maintenance_last_run` sentinels unless maintenance is under test, and verify a sentinel stand-in home remains unchanged.
 - For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.
 - If a script primarily supports hooks, also run matching checks from `.agents/memory/testing/hooks.md`.
 - If a script primarily supports a specific skill, run that skill's narrow validation path after the script check.

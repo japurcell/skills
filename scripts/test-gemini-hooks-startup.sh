@@ -8,8 +8,9 @@ run_skill_context_injector() {
   local skills_dir="$1"
   local payload="$2"
 
-  AGENTS_SKILLS_DIR="$skills_dir" \
-  python3 "$REPO_ROOT/.gemini/hooks/scripts/skill-context-injector.py" <<<"$payload"
+  with_disposable_hook_home env \
+    AGENTS_SKILLS_DIR="$skills_dir" \
+    python3 "$REPO_ROOT/.gemini/hooks/scripts/skill-context-injector.py" <<<"$payload"
 }
 
 strip_frontmatter() {

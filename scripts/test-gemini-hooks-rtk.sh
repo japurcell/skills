@@ -9,7 +9,8 @@ run_rtk_hook() {
   local payload="$2"
   shift 2
 
-  env AUDIT_LOG="$audit_log" "$@" python3 "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.py" <<<"$payload"
+  with_disposable_hook_home env AUDIT_LOG="$audit_log" "$@" \
+    python3 "$REPO_ROOT/.gemini/hooks/scripts/rtk-hook-gemini.py" <<<"$payload"
 }
 
 test_valid_rewrite_is_forwarded_and_stdin_is_preserved() {
@@ -67,6 +68,8 @@ from pathlib import Path
 
 wrapper = Path(sys.argv[1])
 workdir = Path(sys.argv[2])
+hook_home = workdir / "home"
+hook_home.mkdir()
 bin_dir = workdir / "bin"
 bin_dir.mkdir()
 mock_rtk = bin_dir / "rtk"
@@ -89,6 +92,8 @@ def run_open_pipe_case(name: str, writer, expected_input: bytes | None, expected
     read_fd, write_fd = os.pipe()
     env = os.environ | {
         "AUDIT_LOG": str(workdir / f"{name}.audit.log"),
+        "HOME": str(hook_home),
+        "USERPROFILE": str(hook_home),
         "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
         "RTK_STDIN_FILE": str(record),
     }

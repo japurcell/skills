@@ -20,6 +20,8 @@ assert_repo_root_with_common_sh() {
   fallback_dir="$workdir/fallback"
 
   mkdir -p "$git_repo_dir/subdir" "$fallback_dir"
+  git_repo_dir="$(cd "$git_repo_dir" && pwd -P)"
+  fallback_dir="$(cd "$fallback_dir" && pwd -P)"
 
   pushd "$git_repo_dir" >/dev/null
   git init >/dev/null

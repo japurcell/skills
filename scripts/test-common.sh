@@ -41,6 +41,31 @@ setup_test_workdir() {
   echo "$workdir"
 }
 
+# Run hook test subprocesses with a disposable home so their default trace
+# storage never falls back to the developer's real home directory.
+with_disposable_hook_home() (
+  local hook_home
+  local status
+
+  hook_home="$(mktemp -d)"
+  cleanup_hook_home() {
+    rm -rf -- "$hook_home"
+  }
+  trap cleanup_hook_home EXIT
+
+  mkdir -p "$hook_home/.copilot/hooks/logs" "$hook_home/.gemini/hooks/logs"
+  : > "$hook_home/.copilot/hooks/logs/.maintenance_last_run"
+  : > "$hook_home/.gemini/hooks/logs/.maintenance_last_run"
+
+  if HOME="$hook_home" USERPROFILE="$hook_home" "$@"; then
+    status=0
+  else
+    status=$?
+  fi
+
+  return "$status"
+)
+
 # Usage: mock_bin <workdir> <command_name> <script_content>
 # Example: mock_bin "$workdir" "dotnet" '#!/bin/env bash\nexit 0'
 mock_bin() {
@@ -94,12 +119,14 @@ run_copilot_hook() {
   done
 
   # Execute the hook
-    if [[ "$hook_name" == *.py ]]; then
-      env "${env_cmd[@]}" python3 "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
-    else
-      env "${env_cmd[@]}" bash "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
-    fi
-  }
+  if [[ "$hook_name" == *.py ]]; then
+    with_disposable_hook_home env "${env_cmd[@]}" \
+      python3 "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
+  else
+    with_disposable_hook_home env "${env_cmd[@]}" \
+      bash "$REPO_ROOT/.copilot/hooks/scripts/$hook_name" <<<"$payload"
+  fi
+}
 
 install_into_temp_home() {
   local home="$1"
@@ -148,4 +175,3 @@ description: Terse style.
 Line D.
 EOF
 }
-

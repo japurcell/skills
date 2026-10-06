@@ -49,6 +49,10 @@ Wrap chunk and final transcript writes in `try...finally`; remove the `.tmp` pat
 
 Ignore payloads with `type: progress` in `complete_hook_capture`. Finalize capture only for the actual hook result.
 
+## Domain log overrides do not isolate observability storage
+
+`AUDIT_LOG` and scanner or guard paths select their own logs; they do not change provider observability NDJSON or its adjacent SQLite database. Keep logging active and run children under a disposable `HOME`.
+
 ## Empty Gemini probe logs can hide fallback writes
 
 An empty file selected through `GEMINI_OBSERVABILITY_LOG_PATH` does not by itself prove that Gemini skipped a hook. If the CLI does not pass that variable to the hook process, the emitter falls back to `$HOME/.gemini/hooks/logs/observability.ndjson`. Check that default log, then invoke the installed emitter directly with the override before classifying the failure as event dispatch, environment propagation, or emitter failure.

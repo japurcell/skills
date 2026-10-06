@@ -9,9 +9,10 @@ run_gemini_tool_guard() {
   local mode="$2"
   local payload="$3"
 
-  TOOL_GUARD_LOG_DIR="$log_dir" \
-  GUARD_MODE="$mode" \
-  python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" <<<"$payload"
+  with_disposable_hook_home env \
+    TOOL_GUARD_LOG_DIR="$log_dir" \
+    GUARD_MODE="$mode" \
+    python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
 test_structured_allowlist_is_tool_scoped_and_exact() {
@@ -37,7 +38,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   allowlist="$(jq -cn --arg tool run_shell_command --arg input "$risky_input" '[{tool:$tool,input:$input}]')"
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')"
   )"
@@ -45,7 +47,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     "Expected an exact tool-scoped Gemini allowlist entry to allow its declared invocation."
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input && echo unsafe" '{tool_name:"run_shell_command",tool_input:$input}')"
   )"
@@ -53,7 +56,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     "Expected surrounding content to invalidate a Gemini allowlist input."
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input" '{tool_name:"write_file",tool_input:$input}')"
   )"
@@ -64,7 +68,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     separated_input="${risky_input}${separator}echo safe"
     allowlist="$(jq -cn --arg tool run_shell_command --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
     output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      with_disposable_hook_home env \
+        TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
         python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
         <<<"$(jq -cn --arg input "$separated_input" '{tool_name:"run_shell_command",tool_input:$input}')"
     )"
@@ -77,7 +82,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     compatibility_input="${risky_input} ${fullwidth_shell_chars[$compatibility_index]} echo safe"
     allowlist="$(jq -cn --arg tool run_shell_command --arg input "$allowlisted_input" '[{tool:$tool,input:$input}]')"
     output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      with_disposable_hook_home env \
+        TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
         python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
         <<<"$(jq -cn --arg input "$compatibility_input" '{tool_name:"run_shell_command",tool_input:$input}')"
     )"
@@ -173,7 +179,8 @@ test_parser_limits_and_complete_command_forms_fail_closed() {
   local limit_allowlist
   limit_allowlist="$(jq -cn --arg tool run_shell_command --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$many_segments" '{tool_name:"run_shell_command",tool_input:$input}')"
   )"
@@ -283,7 +290,7 @@ test_gemini_log_is_owner_only_locked_and_no_follow() {
 
   : >"$log_dir/guard.log"
   for process_id in $(seq 1 12); do
-    TOOL_GUARD_LOG_DIR="$log_dir" GUARD_MODE=block \
+    with_disposable_hook_home env TOOL_GUARD_LOG_DIR="$log_dir" GUARD_MODE=block \
       python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
       <<<'{"tool_name":"run_shell_command","tool_input":"echo safe"}' \
       >"$workdir/concurrent-$process_id.json" &
@@ -429,7 +436,7 @@ test_skip_mode_returns_explicit_allow_json() {
   log_dir="$workdir/logs"
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" \
+    with_disposable_hook_home env TOOL_GUARD_LOG_DIR="$log_dir" \
     GUARD_MODE="block" \
     SKIP_TOOL_GUARD="true" \
     python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
@@ -504,7 +511,7 @@ test_tool_guard_denies_unexpected_input_exception() {
     '    raise RuntimeError("forced input failure")' \
     >"$workdir/helpers/common.py"
 
-  output="$(python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
+  output="$(with_disposable_hook_home python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
 
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini Tool Guardian to deny unexpected input failures."

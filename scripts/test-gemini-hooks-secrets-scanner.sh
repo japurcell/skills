@@ -25,7 +25,7 @@ run_gemini_scan_hook() {
 
   (
     cd "$repo_dir"
-    env "${env_cmd[@]}" \
+    with_disposable_hook_home env "${env_cmd[@]}" \
       python3 -I -S -B "$REPO_ROOT/.gemini/hooks/scripts/scan-secrets.py" <<<"$payload"
   )
 }
@@ -1003,7 +1003,7 @@ test_gemini_settings_register_before_tool_scanner() {
 }
 
 main() {
-  python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" gemini
+  with_disposable_hook_home python3 "$REPO_ROOT/scripts/test-scan-secrets-capture.py" gemini
   test_stalled_git_is_bounded_by_timeout
   test_stalled_git_denies_in_block_mode
   test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode

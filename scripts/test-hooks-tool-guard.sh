@@ -9,9 +9,10 @@ run_tool_guard() {
   local mode="$2"
   local payload="$3"
 
-  TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
-  GUARD_MODE="$mode" \
-  python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" <<<"$payload"
+  with_disposable_hook_home env \
+    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
+    GUARD_MODE="$mode" \
+    python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
 test_structured_allowlist_is_tool_scoped_and_exact() {
@@ -37,7 +38,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
   allowlist="$(jq -cn --arg tool bash --arg input "$risky_input" '[{tool:$tool,input:$input}]')"
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')"
   )"
@@ -45,7 +47,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     "Expected an exact tool-scoped allowlist entry to allow only its declared invocation."
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "echo safe && $risky_input" '{toolName:"bash",toolArgs:$input}')"
   )"
@@ -53,7 +56,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     "Expected surrounding content to invalidate an otherwise matching allowlist input."
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input" '{toolName:"write_file",toolArgs:$input}')"
   )"
@@ -61,7 +65,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     "Expected the same input under a different tool to remain blocked."
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$risky_input" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$risky_input" GUARD_MODE=block \
       python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$risky_input" '{toolName:"bash",toolArgs:$input}')"
   )"
@@ -72,7 +77,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     separated_input="${risky_input}${separator}echo safe"
     allowlist="$(jq -cn --arg tool bash --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
     output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      with_disposable_hook_home env \
+        TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
         python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
         <<<"$(jq -cn --arg input "$separated_input" '{toolName:"bash",toolArgs:$input}')"
     )"
@@ -85,7 +91,8 @@ test_structured_allowlist_is_tool_scoped_and_exact() {
     compatibility_input="${risky_input} ${fullwidth_shell_chars[$compatibility_index]} echo safe"
     allowlist="$(jq -cn --arg tool bash --arg input "$allowlisted_input" '[{tool:$tool,input:$input}]')"
     output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      with_disposable_hook_home env \
+        TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
         python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
         <<<"$(jq -cn --arg input "$compatibility_input" '{toolName:"bash",toolArgs:$input}')"
     )"
@@ -181,7 +188,8 @@ test_parser_limits_and_complete_command_forms_fail_closed() {
   local limit_allowlist
   limit_allowlist="$(jq -cn --arg tool bash --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
+    with_disposable_hook_home env \
+      TOOL_GUARD_LOG_DIR="$log_dir/guard.log" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
       python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
       <<<"$(jq -cn --arg input "$many_segments" '{toolName:"bash",toolArgs:$input}')"
   )"
@@ -381,7 +389,7 @@ test_skip_mode_returns_explicit_allow_json() {
   log_dir="$workdir/logs"
 
   output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
+    with_disposable_hook_home env TOOL_GUARD_LOG_DIR="$log_dir/guard.log" \
     GUARD_MODE="block" \
     SKIP_TOOL_GUARD="true" \
     python3 "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" \
@@ -444,7 +452,7 @@ test_tool_guard_denies_unexpected_input_exception() {
     '    return True' \
     >"$workdir/helpers/audit.py"
 
-  output="$(python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
+  output="$(with_disposable_hook_home python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
 
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected Tool Guardian to deny unexpected input failures."

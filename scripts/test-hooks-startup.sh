@@ -70,14 +70,16 @@ run_session_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" \
+    "COPILOT_SKILLS_DIR=$REPO_ROOT/skills" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 run_subagent_start_hook() {
   local audit_log="$1"
   local payload="$2"
 
-  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
+  run_copilot_hook "load-required-skills.py" "$audit_log" "$payload" "" \
+    "COPILOT_SKILLS_DIR=$REPO_ROOT/skills" "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
 }
 
 test_session_start_outputs_cli_schema_with_caveman_only_context() {
@@ -326,6 +328,7 @@ test_compact_mode_override_is_ignored() {
       '{"sessionId":"compact-mode-session","timestamp":"2026-05-21T09:00:04Z","source":"copilot-cli","initialPrompt":"hello"}' \
       "" \
       "COPILOT_REQUIRED_SKILL_CONTEXT_MODE=compact" \
+      "COPILOT_SKILLS_DIR=$REPO_ROOT/skills" \
       "AGENTS_REQUIRED_SKILL_FILES=caveman/SKILL.md"
   )"
   output="$(hook_final_json "$output")"

@@ -4,6 +4,7 @@ import importlib.util
 import os
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -17,68 +18,73 @@ copilot_helpers_path = repo_root / ".copilot" / "hooks" / "scripts"
 
 
 class TestHookHelpers(unittest.TestCase):
+    def test_dynamic_helper_loads_do_not_leak_package_modules(self):
+        package_prefix = "_test_helpers_"
+        before = {name for name in sys.modules if name.startswith(package_prefix)}
+
+        for helpers_path in (github_helpers_path, gemini_helpers_path, copilot_helpers_path):
+            for helper_name in ("common", "observability", "audit"):
+                if (helpers_path / "helpers" / f"{helper_name}.py").exists():
+                    self._load_helper_module(helpers_path, helper_name)
+
+        after = {name for name in sys.modules if name.startswith(package_prefix)}
+        self.assertEqual(after, before, f"Dynamic helper modules leaked: {sorted(after - before)}")
+
+    def _load_helper_module(self, path: Path, helper_name: str):
+        runtime_name = path.parts[-3].replace(".", "")
+        package_name = f"_test_helpers_{runtime_name}_{uuid4().hex}"
+        helpers_dir = path / "helpers"
+        package_spec = importlib.util.spec_from_file_location(
+            package_name,
+            helpers_dir / "__init__.py",
+            submodule_search_locations=[str(helpers_dir)],
+        )
+        if package_spec is None or package_spec.loader is None:
+            raise ImportError(f"Cannot load package from {helpers_dir}")
+
+        package = importlib.util.module_from_spec(package_spec)
+        sys.modules[package_name] = package
+        try:
+            package_spec.loader.exec_module(package)
+            file_path = helpers_dir / f"{helper_name}.py"
+            spec = importlib.util.spec_from_file_location(f"{package_name}.{helper_name}", file_path)
+            if spec is None or spec.loader is None:
+                raise ImportError(f"Cannot load module from {file_path}")
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)
+            return module
+        finally:
+            for module_name in tuple(sys.modules):
+                if module_name == package_name or module_name.startswith(f"{package_name}."):
+                    sys.modules.pop(module_name, None)
+
     def _get_common_module(self, path: Path):
         """
         Helper method to cleanly load/reload the helpers.common module
         from a specific hook scripts path without caching issues.
         """
-        runtime_name = path.parts[-3].replace(".", "")
-        file_path = path / "helpers" / "common.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
+        return self._load_helper_module(path, "common")
 
     def _get_observability_module(self, path: Path):
         """
         Helper method to cleanly load/reload the helpers.observability module
         from a specific hook scripts path without caching issues.
         """
-        runtime_name = path.parts[-3].replace(".", "")
-        common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
-        common_mod = importlib.util.module_from_spec(common_spec)
-        common_spec.loader.exec_module(common_mod)
-
-        file_path = path / "helpers" / "observability.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.observability_{runtime_name}", file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
-        spec.loader.exec_module(module)
-        return module
+        return self._load_helper_module(path, "observability")
 
     def _get_audit_module(self, path: Path):
         """
         Helper method to cleanly load/reload the helpers.audit module
         from a specific hook scripts path without caching issues.
         """
-        runtime_name = path.parts[-3].replace(".", "")
-        common_file = path / "helpers" / "common.py"
-        common_spec = importlib.util.spec_from_file_location(f"helpers.common_{runtime_name}", common_file)
-        if common_spec is None or common_spec.loader is None:
-            raise ImportError(f"Cannot load module from {common_file}")
-        common_mod = importlib.util.module_from_spec(common_spec)
-        common_spec.loader.exec_module(common_mod)
-
-        file_path = path / "helpers" / "audit.py"
-        spec = importlib.util.spec_from_file_location(f"helpers.audit_{runtime_name}", file_path)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from {file_path}")
-        module = importlib.util.module_from_spec(spec)
-        module.__package__ = f"helpers_{runtime_name}"
-        sys.modules[f"helpers_{runtime_name}"] = common_mod
-        sys.modules[f"helpers_{runtime_name}.common"] = common_mod
-        spec.loader.exec_module(module)
-        return module
+        return self._load_helper_module(path, "audit")
 
     def _create_repo_test_dir(self, name: str) -> Path:
-        test_dir = repo_root / ".agents" / "scratchpad" / "test-artifacts" / f"{name}-{uuid4().hex}"
+        temporary = tempfile.TemporaryDirectory(prefix="hook-helper-repo-")
+        self.addCleanup(temporary.cleanup)
+        fixture_repo = Path(temporary.name) / "repo"
+        test_dir = fixture_repo / ".agents" / "scratchpad" / "test-artifacts" / f"{name}-{uuid4().hex}"
         test_dir.mkdir(parents=True, exist_ok=True)
         return test_dir
 
