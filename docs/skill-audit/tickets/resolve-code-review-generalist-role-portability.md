@@ -13,6 +13,8 @@ How should Code Review provide its required `generalist` agent type across the r
 
 Keep the general-quality reference inputs, exact changed-scope review, no unsolicited validation and missing-dependency stop. Both final audit and ExecPlan must expose [QH-002](../findings.md#qh-002-required-generalist-role-lacks-a-repository-source-definition) and this route; genuinely dependent changes stay pending until the contract and required compatibility evidence are settled.
 
+The human accepted retention of this separate route on 2026-10-06 in [Review Quality and Harness Skills](review-quality-and-harness-skills.md#resolution). That ticket is closed and this route is now unblocked. The underlying choice stays pending; retention gives no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->

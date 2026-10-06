@@ -1,6 +1,6 @@
 # Review Quality and Harness Skills
 
-Status: full static investigation complete; parent reconciliation complete; human proposal review pending. No audited workflows or helpers executed. Parent owns shared records and final documentation pass.
+Status: full static investigation complete; parent reconciliation complete; human proposal review complete on 2026-10-06. No audited workflows or helpers executed. Parent owns shared records and final documentation pass.
 
 Source baseline: `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`. All listed file bytes compared directly with the Git baseline.
 
@@ -71,7 +71,7 @@ The Delegation and Discovery batch owns Delegate, Router, Explore and their refe
 | Techdebt -> Explore/code-explorer | techdebt/SKILL.md:17-30; explore/SKILL.md:13-15,32-33; agents/code-explorer.md:7-55 | Same 1-3 broad-area count, but narrow direct-read branch conflicts with unconditional dispatch wording. Do not silently select which contract overrides |
 | Techdebt -> TDD | techdebt/SKILL.md:69-77; tdd/SKILL.md:3,18-24,35-38 | Conditional test-edit activation differs from helper's mandatory source-edit activation. TDD's existing seam approval remains protected; changing its dependency scope is a separate choice |
 | Fixing Accessibility file argument | fixing-accessibility/SKILL.md:12-19 | Explicit source argument/mode exists; actual host argument binding and invocation trace untested. SAG-012 is an analogous consumer limitation, not an automatic expansion of accepted targets |
-| Harness Analysis and Improve Repo Harness sidecars | harness-analysis/agents/openai.yaml:2-5; improve-repo-harness/agents/openai.yaml:2-5; harness-analysis/SKILL.md:3,9-17; improve-repo-harness/SKILL.md:3,9 | Both sidecars say test harness. Harness Analysis actually audits agent/session process. Improve Repo Harness's desired meaning is unresolved. SAG-011 owns the existing analogous issue; proposed additions require parent/human reconciliation |
+| Harness Analysis and Improve Repo Harness sidecars | harness-analysis/agents/openai.yaml:2-5; improve-repo-harness/agents/openai.yaml:2-5; harness-analysis/SKILL.md:3,9-17; improve-repo-harness/SKILL.md:3,9 | Both sidecars say test harness. Harness Analysis actually audits agent/session process. Improve Repo Harness's desired meaning is unresolved. SAG-011 owns the accepted Harness Analysis sidecar addition; Improve Repo Harness meaning stays pending QH-009 |
 | Installed skill file selection | scripts/install.sh:40-55; scripts/install.ps1:251-276 | 19 of these 26 files ship by source selection: seven entries, seven review references and five sidecars. Four eval definitions and three graders are pruned. None of the entries requires a stripped eval file. Actual installed access untested |
 | Custom-agent installation | scripts/install.sh:58-61; scripts/install.ps1:279-281; scripts/install-codex-agents.py:174-187,280-291 | Top-level Markdown is copied to Copilot/Gemini and converted to Codex TOML. Source definition absence cannot be repaired by a skill sidecar. No installer execution or full installer audit |
 | Other maintained consumers | tdd/SKILL.md:38; dotnet/SKILL.md:3 | TDD places refactoring in Code Review stage; .NET consumer says load .NET context before review. Imported TDD is not primary audit scope. No code-review bypass of framework dependencies proposed |
@@ -79,9 +79,9 @@ The Delegation and Discovery batch owns Delegate, Router, Explore and their refe
 
 Consumer searches excluded `**/*-workspace/**`, `**/evals/**` and `**/archive/**`. Generated artifacts do not support these conclusions. Shared-root reference existence was checked as navigation only; this batch does not own imported helpers or redesign their shared material.
 
-## Findings and proposed additions
+## Findings and accepted scope additions
 
-The [single finding register](../findings.md) owns all ten findings below and the additional SAG-008, DD-004 and SAG-011 evidence. Human dispositions and target expansions remain pending. No native behavior was observed. This report retains source coverage and links the owning records.
+The [single finding register](../findings.md) owns all ten findings below and the additional SAG-008, DD-004 and SAG-011 evidence. Human dispositions and exact target expansions are recorded in the [batch Resolution](../tickets/review-quality-and-harness-skills.md#resolution); underlying intent/protocol choices remain pending. No native behavior was observed. This report retains source coverage and links the owning records.
 
 - [QH-001: Code Review eval oracles disagree with the maintained contract](../findings.md#qh-001-code-review-eval-oracles-disagree-with-the-maintained-contract).
 - [QH-002: Required generalist role lacks a repository source definition](../findings.md#qh-002-required-generalist-role-lacks-a-repository-source-definition).
@@ -94,7 +94,7 @@ The [single finding register](../findings.md) owns all ten findings below and th
 - [QH-009: Improve Repo Harness has unresolved recommendation versus execution intent](../findings.md#qh-009-improve-repo-harness-has-unresolved-recommendation-versus-execution-intent).
 - [QH-010: Adversarial typo oracle leaves explicit invocation versus need assessment unresolved](../findings.md#qh-010-adversarial-typo-oracle-leaves-explicit-invocation-versus-need-assessment-unresolved).
 
-The existing SAG-008 metric and DD-004 protocol decisions may add Adversarial Review, Code Review and Harness Analysis graders only after live scope review. SAG-011 may add only Harness Analysis sidecar wording; Improve Repo Harness sidecar meaning stays with QH-009. Existing accepted scopes remain unchanged.
+The human accepted Adversarial Review, Code Review and Harness Analysis grader additions to SAG-008/DD-004, retaining their original targets. Metric representation and protocol choices remain pending. SAG-011 adds only Harness Analysis sidecar wording, retaining Create AgentsMD. Improve Repo Harness sidecar meaning stays with QH-009.
 
 ## Positive results and evidence limits
 
@@ -102,11 +102,11 @@ Code Review separates changed-line evidence from nearby context, cites explicit 
 
 Four evaluation files contain fifteen scenarios and no bundled fixture references. They are inspectable paper inputs; Adversarial and Code Review ask for planned/checklist artifacts, Harness uses supplied synthetic evidence, and Techdebt relies on unprovisioned current repository context. No reproducible native discovery, fixture state, external-source retrieval, executed role availability, enforced read-only behavior, timed hook behavior or successful refactor is established. Code Simplify, Accessibility and Improve Repo Harness have no bundled eval definitions; this is an evidence gap, not an automatic authoring defect.
 
-No required-client incompatibility is selected merely from missing runtime evidence. Required later native Codex cases/models/repeats follow the approved evidence contract. Copilot/Gemini comparisons remain static; no desktop or universal enforcement claim. Proposed intent resolutions remain outside executable authoring scope until human disposition.
+No required-client incompatibility is selected merely from missing runtime evidence. Required later native Codex cases/models/repeats follow the approved evidence contract. Copilot/Gemini comparisons remain static; no desktop or universal enforcement claim. Unresolved intent changes remain outside executable authoring scope until their separate decisions resolve.
 
 ## Per-skill coverage matrices
 
-Each matrix contains the exact 58 catalog IDs in catalog order. Criterion sources, strength and applicability conditions are owned by [coverage.md](../coverage.md#check-catalog). Evidence paths are relative to the skill unless another root is named. A disposition selects a criterion, not passing behavior. QH IDs link the canonical findings above; existing finding producer additions require parent/human reconciliation. Static investigation can finish with defective, partial or unresolved compliance. Native evidence remains unrun.
+Each matrix contains the exact 58 catalog IDs in catalog order. Criterion sources, strength and applicability conditions are owned by [coverage.md](../coverage.md#check-catalog). Evidence paths are relative to the skill unless another root is named. A disposition selects a criterion, not passing behavior. QH IDs link the canonical findings above; existing finding producer additions have accepted target scope; representation/protocol choices remain pending. Static investigation can finish with defective, partial or unresolved compliance. Native evidence remains unrun.
 
 ### adversarial-review
 
@@ -140,8 +140,8 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | A24 | Fresh-session iteration evidence | adapt | Unresolved: no fresh-session runs | SKILL.md:2-4; ../tickets/set-audit-evidence-and-model-coverage.md#resolution |  | No matched fresh-state iterations |
 | A25 | Team-use feedback evidence | adapt | Unresolved: source alone is not team feedback | SKILL.md:1-19 |  | No team-use corpus inspected |
 | A26 | Observed activation/navigation | adapt | Unresolved: no native activation/load trace | SKILL.md:2-4; SKILL.md:9; skills/delegate-to-subagents/SKILL.md:17,85-110 |  | Explicit and permitted implicit activation remain later work |
-| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:10-12,26-44,60-102 | DD-004 (proposed producer addition) | Existing failure-outcome protocol pending; no grader executed |
-| A28 | Evaluator constants/defaults | adapt | Partial: literal thresholds/metric defaults inspectable | evals/grade_benchmark.py:10-12,26-44,60-102 | SAG-008 (proposed producer addition) | Unknown metric representation pending |
+| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:10-12,26-44,60-102 | DD-004 (accepted producer scope) | Existing failure-outcome protocol pending; no grader executed |
+| A28 | Evaluator constants/defaults | adapt | Partial: literal thresholds/metric defaults inspectable | evals/grade_benchmark.py:10-12,26-44,60-102 | SAG-008 (accepted producer scope) | Unknown metric representation pending |
 | A29 | Repeated deterministic evaluation | adapt | Static: reusable grader utility exists | evals/grade_benchmark.py:10-12,26-44,60-102 |  | Utility correctness untested |
 | A30 | Bundled evaluator versus task procedure | adapt | Static: evaluator separate from entry; read only in audit | evals/grade_benchmark.py:10-12,26-44,60-102; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No execution permission inferred |
 | A31 | No layout/spatial input contract | not applicable | Not applicable: condition absent | SKILL.md:1-19 |  | No behavior claim |
@@ -154,7 +154,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | File/tool access scope | adapt | Partial: relevant resources described | SKILL.md:9; skills/delegate-to-subagents/SKILL.md:17,85-110 |  | No actual tool access trace |
 | S03 | Inputs/results may contain sensitive data | adapt | Unresolved: output redaction and sensitive-input handling not exercised | SKILL.md:9-19 |  | No real input/output disclosure test; static read is not vulnerability clearance |
 | S04 | Untrusted input/dependency instructions | adapt | Unresolved: no adversarial instruction-trust evidence | SKILL.md:9; skills/delegate-to-subagents/SKILL.md:17,85-110 |  | No prompt-injection or external instruction trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | Existing invocation controls | adopt | Static: disable-model-invocation and sidecar false retained | SKILL.md:4; agents/openai.yaml:4-5 | SAG-001/SAG-012 (bounded consumer facts) | Required-host enforcement untested |
 | R03 | Suggestions-only autonomy | adopt | Static: no fixes or other changes allowed | SKILL.md:13,19 |  | Native write prohibition untested |
 | R04 | Required dependencies/delegation | adapt | Partial: dependency consumers inspected | SKILL.md:9; skills/delegate-to-subagents/SKILL.md:17,85-110 |  | Actual helper loading/dispatch availability untested |
@@ -164,7 +164,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | R08 | Maintained source versus generated artifacts | adopt | Static: entry/resources/eval definitions separated from runs | SKILL.md:1-19; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No generated run primary evidence |
 | R09 | Later source-validation prerequisites | adapt | Partial: source JSON/YAML/AST parsed; no helper executed | SKILL.md:1-19; ../../../.agents/memory/testing/skills.md:8-14 | SAG-001 (bounded consumer fact) | Later accepted changes need exact scoped validation; retained controls stay |
 | R10 | No Upgrade procedure or proposed Upgrade consumer | not applicable | Not applicable: condition absent | SKILL.md:1-19 |  | No behavior claim |
-| R11 | Plan grading versus task behavior | adapt | Partial: declared review/router flags graded, not performed review | evals/grade_benchmark.py:60-85 | QH-010; DD-004 (proposed addition); SAG-008 (proposed addition) | Trace-backed read-only/routing evidence later; existing protocols pending |
+| R11 | Plan grading versus task behavior | adapt | Partial: declared review/router flags graded, not performed review | evals/grade_benchmark.py:60-85 | QH-010; DD-004 (accepted target scope); SAG-008 (accepted target scope) | Trace-backed read-only/routing evidence later; existing protocols pending |
 | R12 | Source formatting | adopt | Static: LF; no trailing/blank whitespace in 26-file inventory | SKILL.md:1-19; ../../../.editorconfig:6-19 |  | Source em dashes were not changed; new report contains none |
 | C01 | Native discovery/activation | adapt | Unresolved: source metadata is not activation evidence | SKILL.md:2-4 |  | No native Codex discovery or permitted implicit trace |
 | C02 | Shipped resources | adapt | Static: non-eval files selected; evals stripped | ../../../scripts/install.sh:40-55; ../../../scripts/install.ps1:251-276 |  | No installed file access trace |
@@ -203,8 +203,8 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | A24 | Fresh-session iteration evidence | adapt | Unresolved: no fresh-session runs | SKILL.md:2-4,30-38; ../tickets/set-audit-evidence-and-model-coverage.md#resolution |  | No matched fresh-state iterations |
 | A25 | Team-use feedback evidence | adapt | Unresolved: source alone is not team feedback | SKILL.md:1-117 |  | No team-use corpus inspected |
 | A26 | Observed activation/navigation | adapt | Unresolved: no native activation/load trace | SKILL.md:2-4,30-38; SKILL.md:25-28,54-66; skills/delegate-to-subagents/SKILL.md:85-110 |  | Explicit and permitted implicit activation remain later work |
-| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:19-58,78-105,114-242 | DD-004 (proposed producer addition) | Existing failure-outcome protocol pending; no grader executed |
-| A28 | Review thresholds and metric defaults | adapt | Partial: 80+ and triage reasons evident; stale oracle and zero defaults | SKILL.md:20,42; references/false-positive-rubric.md:3-17; evals/grade_benchmark.py:38,48-58,149-150 | QH-001; SAG-008 (proposed addition) | Metric protocol pending; thresholds are not automatic defect signals |
+| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:19-58,78-105,114-242 | DD-004 (accepted producer scope) | Existing failure-outcome protocol pending; no grader executed |
+| A28 | Review thresholds and metric defaults | adapt | Partial: 80+ and triage reasons evident; stale oracle and zero defaults | SKILL.md:20,42; references/false-positive-rubric.md:3-17; evals/grade_benchmark.py:38,48-58,149-150 | QH-001; SAG-008 (accepted target scope) | Metric protocol pending; thresholds are not automatic defect signals |
 | A29 | Repeated deterministic evaluation | adapt | Static: reusable grader utility exists | evals/grade_benchmark.py:19-58,78-105,114-242 |  | Utility correctness untested |
 | A30 | Bundled evaluator versus task procedure | adapt | Static: evaluator separate from entry; read only in audit | evals/grade_benchmark.py:19-58,78-105,114-242; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No execution permission inferred |
 | A31 | No layout/spatial input contract | not applicable | Not applicable: condition absent | SKILL.md:1-117 |  | No behavior claim |
@@ -217,7 +217,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | Repository read and requested PR comment | adapt | Static: requested mode and PR recheck bound external write | SKILL.md:87-100; references/pr-protocol.md:29-33 |  | No live GitHub read/post; host consent untested |
 | S03 | Inputs/results may contain sensitive data | adapt | Unresolved: output redaction and sensitive-input handling not exercised | SKILL.md:9-117 |  | No real input/output disclosure test; static read is not vulnerability clearance |
 | S04 | Repo/spec/issue/dependency content | adapt | Partial: explicit cited standards and change evidence required | SKILL.md:19,44-52,79-85; references/code-smells.md:3-10 |  | No embedded-instruction trust trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,30-38; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,30-38; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | Existing invocation controls | adopt | Static: disable-model-invocation and sidecar false retained | SKILL.md:4; agents/openai.yaml:4-5 | SAG-001/SAG-012 (bounded consumer facts) | Required-host enforcement untested |
 | R03 | Review-only and requested comment mode | adopt | Static: no unsolicited validation; requested mode governs posting | SKILL.md:16,87-100; references/pr-protocol.md:29-33 |  | Role prompts must retain consumer boundary; no runtime consent evidence |
 | R04 | Mandatory helpers/four roles/routing | adapt | Unresolved: role absence and Fast-floor conflict | SKILL.md:25-28,54-66,79-85; skills/subagent-model-router/reference/review-routing.md:7-9,40-49 | QH-002; QH-003 | Exact dependency/role interpretation requires decision |
@@ -227,7 +227,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | R08 | Maintained source versus generated artifacts | adopt | Static: entry/resources/eval definitions separated from runs | SKILL.md:1-117; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No generated run primary evidence |
 | R09 | Later source-validation prerequisites | adapt | Partial: source JSON/YAML/AST parsed; no helper executed | SKILL.md:1-117; ../../../.agents/memory/testing/skills.md:8-14 | SAG-001 (bounded consumer fact) | Later accepted changes need exact scoped validation; retained controls stay |
 | R10 | No Upgrade procedure or proposed Upgrade consumer | not applicable | Not applicable: condition absent | SKILL.md:1-117 |  | No behavior claim |
-| R11 | Evaluation and actual-review evidence | adapt | Defective: stale artifact oracle; runtime traces absent | evals/grade_benchmark.py:114-214,227-242 | QH-001; DD-004 (proposed addition); SAG-008 (proposed addition) | No checklist accepted as proof of dispatch or review |
+| R11 | Evaluation and actual-review evidence | adapt | Defective: stale artifact oracle; runtime traces absent | evals/grade_benchmark.py:114-214,227-242 | QH-001; DD-004 (accepted target scope); SAG-008 (accepted target scope) | No checklist accepted as proof of dispatch or review |
 | R12 | Source formatting | adopt | Static: LF; no trailing/blank whitespace in 26-file inventory | SKILL.md:1-117; ../../../.editorconfig:6-19 |  | Source em dashes were not changed; new report contains none |
 | C01 | Native discovery/activation | adapt | Unresolved: source metadata is not activation evidence | SKILL.md:2-4,30-38 |  | No native Codex discovery or permitted implicit trace |
 | C02 | Shipped resources | adapt | Static: non-eval files selected; evals stripped | ../../../scripts/install.sh:40-55; ../../../scripts/install.ps1:251-276 |  | No installed file access trace |
@@ -280,7 +280,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | File/tool access scope | adapt | Partial: relevant resources described | SKILL.md:6,10; skills/addy-code-simplification/SKILL.md:101-105,157-185 |  | No actual tool access trace |
 | S03 | Inputs/results may contain sensitive data | adapt | Unresolved: output redaction and sensitive-input handling not exercised | SKILL.md:6-22 |  | No real input/output disclosure test; static read is not vulnerability clearance |
 | S04 | Untrusted input/dependency instructions | adapt | Unresolved: no adversarial instruction-trust evidence | SKILL.md:6,10; skills/addy-code-simplification/SKILL.md:101-105,157-185 |  | No prompt-injection or external instruction trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-3,8,12; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-3,8,12; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | No invocation control or sidecar exists | not applicable | Not applicable: condition absent | SKILL.md:1-22 |  | No behavior claim |
 | R03 | Source refactoring authority | adopt | Partial: exact behavior/scope; helper approval contracts preserved | SKILL.md:6,8,12,20; skills/addy-code-simplification/SKILL.md:32-59,157-185 |  | No external or broad mutation authority inferred |
 | R04 | Required Addy simplification and Delegate | adapt | Static: both helpers exist; delegation conditional on usefulness | SKILL.md:6,10; bounded dependency section |  | Actual helper loading/dispatch untested |
@@ -343,7 +343,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | Given-file review or UI constraints | adapt | Static: source mode and minimal edits stated | SKILL.md:12-21,111-113 |  | No UI or network access exercised |
 | S03 | Inputs/results may contain sensitive data | adapt | Unresolved: output redaction and sensitive-input handling not exercised | SKILL.md:6-136 |  | No real input/output disclosure test; static read is not vulnerability clearance |
 | S04 | Untrusted input/dependency instructions | adapt | Unresolved: no adversarial instruction-trust evidence | SKILL.md:111-113,136 |  | No prompt-injection or external instruction trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-3,12-29; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-3,12-29; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | No invocation control or sidecar exists | not applicable | Not applicable: condition absent | SKILL.md:1-136 |  | No behavior claim |
 | R03 | Mode-specific review versus fixes | adopt | Static: file mode reports; no large UI rewriting | SKILL.md:12-21,111-113 |  | No ambiguity resolved by extra global approval gate |
 | R04 | No required delegated role/helper | not applicable | Not applicable: no named mandatory skill/agent | SKILL.md:1-136 |  | Established accessible primitives are advice, not a named dependency |
@@ -406,7 +406,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | File/tool access scope | adapt | Partial: relevant resources described | SKILL.md:13,30,69-76; skills/explore/SKILL.md:13-15,33; skills/tdd/SKILL.md:3,18-24,38 |  | No actual tool access trace |
 | S03 | Inputs/results may contain sensitive data | adapt | Unresolved: output redaction and sensitive-input handling not exercised | SKILL.md:9-98 |  | No real input/output disclosure test; static read is not vulnerability clearance |
 | S04 | Untrusted input/dependency instructions | adapt | Unresolved: no adversarial instruction-trust evidence | SKILL.md:13,30,69-76; skills/explore/SKILL.md:13-15,33; skills/tdd/SKILL.md:3,18-24,38 |  | No prompt-injection or external instruction trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,15-26; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,15-26; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | Existing invocation controls | adopt | Static: disable-model-invocation and sidecar false retained | SKILL.md:4; agents/openai.yaml:4-5 | SAG-001/SAG-012 (bounded consumer facts) | Required-host enforcement untested |
 | R03 | Explicit high-risk change approvals | adopt | Static: public API/architecture/UI/naming/unrelated changes ask | SKILL.md:81-87 | QH-006 | TDD seam approval preserved if activated; no new approvals inferred |
 | R04 | Required Delegate/Explore/TDD consumer contract | adapt | Unresolved: narrow dispatch and conditional TDD conflict | SKILL.md:13,30,69-76; skills/explore/SKILL.md:13,33; skills/tdd/SKILL.md:3,18-24 | QH-005; QH-006 | Human resolves caller exceptions versus helper conditions |
@@ -434,7 +434,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | A04-N | Name syntax and directory match | adapt | Static: matching lowercase kebab-case; under 64 characters | SKILL.md:2 |  | Required-host discovery not exercised |
 | A04-D | Description bounds | adapt | Static: nonempty; 443 characters; no XML tags | SKILL.md:3 |  | 1024-character advice is source-specific |
 | A05 | Preserved meaningful identity | adopt | Static: name matches declared purpose | SKILL.md:2-3 |  | No rename proposed |
-| A06 | Agent/session audit description and sidecar | adapt | Partial: trigger metadata specific; sidecar advertises test harness | SKILL.md:3,13-17; agents/openai.yaml:3 | SAG-011 (proposed target addition) | No expanded accepted target or native activation claim |
+| A06 | Agent/session audit description and sidecar | adapt | Partial: trigger metadata specific; sidecar advertises test harness | SKILL.md:3,13-17; agents/openai.yaml:3 | SAG-011 (accepted target scope) | Target addition accepted; no native activation claim |
 | A07 | Focused entry body | adapt | Static: task-focused entry; length is review signal | SKILL.md:9-235 |  | No automatic defect from line count |
 | A08 | Core controls plus inline technique/template | adapt | Static: bounded workflow, evidence ledger and template | SKILL.md:19-62,66-94,130-202 |  | No unnecessary extraction inferred from length |
 | A09 | Sparse data/failure/strong evidence branches | adopt | Static: fallback stops and candidate versus high-impact condition | SKILL.md:35,57,89-94,202 |  | No measured-impact branch exercised |
@@ -444,7 +444,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | A13 | Bounded six-step audit | adopt | Static: inventory/counts before justified deep reading | SKILL.md:30-62,228-234 |  | Actual order untested |
 | A14 | Evidence/uncertainty and final quality gate | adopt | Static: validation paired with recommendations and checklist | SKILL.md:108-118,224-235 |  | No measured recommendation improvement |
 | A15 | No dated or historical factual instructions | not applicable | Not applicable: condition absent | SKILL.md:1-235 |  | No behavior claim |
-| A16 | Agent harness versus test harness terminology | adapt | Partial: entry consistent; sidecar scope differs | SKILL.md:3,11,15-17; agents/openai.yaml:3 | SAG-011 (proposed target addition) | Parent/human target reconciliation outstanding |
+| A16 | Agent harness versus test harness terminology | adapt | Partial: entry consistent; sidecar scope differs | SKILL.md:3,11,15-17; agents/openai.yaml:3 | SAG-011 (accepted target scope) | Wording target accepted; repair unimplemented |
 | A17 | Exact report headings and read-only attestation | adapt | Unresolved: eval artifact writes versus absolute no-file rule | SKILL.md:21,130-202,235; evals/evals.json:6,24,42,56,76 | QH-008 | Capture/approved artifact boundary needs intent decision |
 | A18 | Evidence ledger, recommendation and report examples | adopt | Static: good/weak evidence and concrete template | SKILL.md:75-85,120-128,134-200 |  | Example metrics illustrative, not observed work |
 | A19 | Missing data/tool/path/URL/regex/sensitive stops | adopt | Static: explicit bounded branches and fallback | SKILL.md:89-94,202 |  | Native stop behavior untested; grader wording does not prove it |
@@ -455,8 +455,8 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | A24 | Fresh-session iteration evidence | adapt | Unresolved: no fresh-session runs | SKILL.md:2-4,13-17; ../tickets/set-audit-evidence-and-model-coverage.md#resolution |  | No matched fresh-state iterations |
 | A25 | Team-use feedback evidence | adapt | Unresolved: source alone is not team feedback | SKILL.md:1-235 |  | No team-use corpus inspected |
 | A26 | Observed activation/navigation | adapt | Unresolved: no native activation/load trace | SKILL.md:2-4,13-17; SKILL.md:38-41,77,89-94 |  | Explicit and permitted implicit activation remain later work |
-| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:30-37,40-218 | DD-004 (proposed producer addition) | Existing failure-outcome protocol pending; no grader executed |
-| A28 | Sampling and grader constants | adapt | Partial: limits serve bounded audit; unknown metrics zero-filled | SKILL.md:32-35,89-94; evals/grade_benchmark.py:166-177 | SAG-008 (proposed producer addition) | No arbitrary defect from count; unknown-metric choice pending |
+| A27 | Bundled evaluator error handling | adapt | Partial: static CLI/error branches; shape/no-run gap | evals/grade_benchmark.py:30-37,40-218 | DD-004 (accepted producer scope) | Existing failure-outcome protocol pending; no grader executed |
+| A28 | Sampling and grader constants | adapt | Partial: limits serve bounded audit; unknown metrics zero-filled | SKILL.md:32-35,89-94; evals/grade_benchmark.py:166-177 | SAG-008 (accepted producer scope) | No arbitrary defect from count; unknown-metric choice pending |
 | A29 | Repeated deterministic evaluation | adapt | Static: reusable grader utility exists | evals/grade_benchmark.py:30-37,40-218 |  | Utility correctness untested |
 | A30 | Bundled evaluator versus task procedure | adapt | Static: evaluator separate from entry; read only in audit | evals/grade_benchmark.py:30-37,40-218; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No execution permission inferred |
 | A31 | No layout/spatial input contract | not applicable | Not applicable: condition absent | SKILL.md:1-235 |  | No behavior claim |
@@ -469,7 +469,7 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | S02 | Local instruction/session/hook source access | adapt | Static: bounded candidates; no hook script execution | SKILL.md:22,30-52,89-94 |  | No home-directory or log access actually performed |
 | S03 | Sensitive logs and personal data | adopt | Static: no pasting; stop sensitive body and recommend redaction | SKILL.md:24,52,94,113 |  | No sensitive-input native trace |
 | S04 | Logs/user prompts/vendor/external content | adopt | Static: explicitly treat as untrusted evidence | SKILL.md:52 |  | Native embedded-instruction handling untested |
-| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,13-17; protected contracts |  | Human disposition pending; no change authorized |
+| R01 | Scope/name/trigger preservation | adopt | Static: protected contracts recorded | SKILL.md:2-4,13-17; protected contracts |  | Human disposition complete; protected contracts govern later work |
 | R02 | Existing invocation controls | adopt | Static: disable-model-invocation and sidecar false retained | SKILL.md:4; agents/openai.yaml:4-5 | SAG-001/SAG-012 (bounded consumer facts) | Required-host enforcement untested |
 | R03 | Absolute no-write and no hook execution | adopt | Unresolved: report artifact prompts clash with absolute scope | SKILL.md:21-24; evals/evals.json:6,24,42,56,76 | QH-008 | Human must distinguish harness capture from approved artifact writes |
 | R04 | No required helper skill or delegated role | not applicable | Not applicable: condition absent | SKILL.md:1-235 |  | No behavior claim |
@@ -479,11 +479,11 @@ Each matrix contains the exact 58 catalog IDs in catalog order. Criterion source
 | R08 | Maintained source versus generated artifacts | adopt | Static: entry/resources/eval definitions separated from runs | SKILL.md:1-235; ../tickets/choose-audit-batches-and-evidence-format.md#resolution |  | No generated run primary evidence |
 | R09 | Later source-validation prerequisites | adapt | Partial: source JSON/YAML/AST parsed; no helper executed | SKILL.md:1-235; ../../../.agents/memory/testing/skills.md:8-14 | SAG-001 (bounded consumer fact) | Later accepted changes need exact scoped validation; retained controls stay |
 | R10 | No Upgrade procedure or proposed Upgrade consumer | not applicable | Not applicable: condition absent | SKILL.md:1-235 |  | No behavior claim |
-| R11 | Semantic output grading versus actual workflow | adapt | Defective: lexeme predicates can misgrade meaning | evals/grade_benchmark.py:60,78,96,131,142,148,166-218 | QH-007; QH-008; DD-004 (proposed addition); SAG-008 (proposed addition) | No native stopping/latency/authorization inference from report text |
+| R11 | Semantic output grading versus actual workflow | adapt | Defective: lexeme predicates can misgrade meaning | evals/grade_benchmark.py:60,78,96,131,142,148,166-218 | QH-007; QH-008; DD-004 (accepted target scope); SAG-008 (accepted target scope) | No native stopping/latency/authorization inference from report text |
 | R12 | Source formatting | adopt | Static: LF; no trailing/blank whitespace in 26-file inventory | SKILL.md:1-235; ../../../.editorconfig:6-19 |  | Source em dashes were not changed; new report contains none |
 | C01 | Native discovery/activation | adapt | Unresolved: source metadata is not activation evidence | SKILL.md:2-4,13-17 |  | No native Codex discovery or permitted implicit trace |
 | C02 | Shipped resources | adapt | Static: non-eval files selected; evals stripped | ../../../scripts/install.sh:40-55; ../../../scripts/install.ps1:251-276 |  | No installed file access trace |
-| C03 | Codex sidecar meaning and control | adapt | Partial: control parsed, short description misstates scope | agents/openai.yaml:2-5; SKILL.md:3 | SAG-011 (proposed target addition) | Keep control; sidecar scope addition not yet accepted |
+| C03 | Codex sidecar meaning and control | adapt | Partial: control parsed, short description misstates scope | agents/openai.yaml:2-5; SKILL.md:3 | SAG-011 (accepted target scope) | Keep control; sidecar scope addition accepted, unimplemented |
 | C04 | Tool/activation consent | adapt | Unresolved: source invocation is not portable tool consent | SKILL.md:2-4,13-17; SKILL.md:38-41,77,89-94 |  | Required-host consent/isolation untested |
 
 ### improve-repo-harness
@@ -592,9 +592,9 @@ Custom-agent name discovery inspected all nineteen top-level source filenames an
 
 All 26 primary maintained files were read in full. Eighteen bounded dependencies have distinct read scopes and fingerprints; all 44 fingerprinted files match baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f` and current bytes. The seven matrices contain exactly 58 unique catalog IDs in catalog order, 406 rows total, each with the required seven-column shape. Every numeric matrix source anchor was checked against an existing file and its current physical line count. JSON/YAML parsing, Python AST parsing, source formatting and report whitespace/no-em-dash checks passed without executing any audited helper. Code Review's seven references exist and remain selected by their intended branches; fixture inventory is empty.
 
-These checks validate the saved static evidence record, not task behavior or grader correctness. Native Codex evidence, installed access, client enforcement, actual tool/role availability, human finding disposition and underlying behavior/protocol decisions remain open. No static pass waives them. Create Skill and Skill Creator were loaded solely as paper-review guidance; no authoring workflow, baseline or installation was activated. Domain-modeling was waived for this effort.
+These checks validate the saved static evidence record, not task behavior or grader correctness. Native Codex evidence, installed access, client enforcement, actual tool/role availability, underlying behavior/protocol decisions remain open; human finding dispositions are recorded. No static pass waives them. Create Skill and Skill Creator were loaded solely as paper-review guidance; no authoring workflow, baseline or installation was activated. Domain-modeling was waived for this effort.
 
-Report ownership is released to the parent for independent validation and reconciliation. The parent owns canonical findings, coverage, tickets, map, planning handoff and the final end-of-session agent-document pass. No commit was created.
+The source reviewer released report ownership to the parent for independent validation and reconciliation. The parent owns canonical findings, coverage, tickets, map, planning handoff and the final end-of-session agent-document pass. The source reviewer created no commit.
 
 ## Parent source-review dispatch audit
 
@@ -627,10 +627,20 @@ dispatches:
     runtime_check_at_limit: delayed 21 seconds
 ```
 
-## Parent reconciliation verification and documentation pass
+## Source-checkpoint reconciliation verification and documentation pass
 
-Parent registered QH-001 through QH-010 once, removed draft duplication and linked seven blocked decision routes. SAG-008/DD-004/SAG-011 additions remain proposed; accepted scopes and unresolved choices stay unchanged. Claim release leaves the batch open for three prepared live questions, without Resolution.
+At the source checkpoint, parent registered QH-001 through QH-010 once, removed draft duplication and linked seven blocked routes. SAG-008/DD-004/SAG-011 additions were then proposed; accepted scopes and unresolved choices stayed unchanged. Claim release left the batch open for the three prepared live questions, without Resolution.
 
 `rtk proxy python3 /private/tmp/skill-audit-verify-four-batches.py` passed: 33-ticket acyclic graph (ten closed/twenty-three open/no claims), 1,334 rows, 102 primary hashes, twenty-five separately declared fixture hashes, eighteen bounded quality/harness dependencies, thirty-two unique findings/index, preserved existing decisions/scopes, links/anchors, formatting, fog and unchanged protected sources. These are source/record checks, not runtime or grader-correctness tests.
 
-Formal Update Agent Docs changes only `.agents/memory/known-issues/skills.md`, type Known Issue: broaden grader-integrity pointer and add bounded caller/helper-contract pointer. Existing routing/index coverage suffices; no API, skill, installer or test strategy changed. OKF loaded profile only; `rtk proxy ./scripts/lint-okf.py` exited 0 across both bundles. Added: caller/helper-contract pointer. Changed: grader-integrity pointer. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. Human disposition, native evidence and implementation acceptance remain outstanding.
+Formal Update Agent Docs changes only `.agents/memory/known-issues/skills.md`, type Known Issue: broaden grader-integrity pointer and add bounded caller/helper-contract pointer. Existing routing/index coverage suffices; no API, skill, installer or test strategy changed. OKF loaded profile only; `rtk proxy ./scripts/lint-okf.py` exited 0 across both bundles. Added: caller/helper-contract pointer. Changed: grader-integrity pointer. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. At that source checkpoint, human disposition, native evidence and implementation acceptance remained outstanding. The closure below records subsequent disposition only.
+
+## Live human-review closure
+
+On 2026-10-06 the human accepted all three prepared planning questions. [Resolution](../tickets/review-quality-and-harness-skills.md#resolution) owns the answer. QH-001/QH-007 are accepted later evaluation scope, with exact fixture/oracle choices and genuine DD-004 prerequisites unresolved. SAG-011 adds only Harness Analysis sidecar wording. SAG-008/DD-004 add exactly the three recorded graders, preserving all original targets, useful predicates and computed character counts. Their representation/status/exit/schema/compatibility choices stay pending.
+
+Eight findings retain seven separate decision routes, now unblocked alongside the earlier six. All thirteen underlying decisions remain pending and visible in both final documents. No rejected/deferred proposal, implementation permission, evidence waiver or residual-risk acceptance. Source compliance and native evidence have not changed. Closure ends this batch only; no next batch or audited workflow began.
+
+Closure verification passed with `/private/tmp/skill-audit-verify-four-batches.py` expecting eleven closed/twenty-two open tickets, all thirty-two recorded dispositions, thirteen unblocked underlying decisions and exact eight metric/five protocol targets. All source hashes, matrices, findings/index, links/anchors, formatting, fog and protected-source checks remained intact. The bounded dependency/Git-state check and scoped diff checks also passed.
+
+The closure Update Agent Docs pass changes only the existing grader-integrity pointer in `.agents/memory/known-issues/skills.md`, type Known Issue, to distinguish accepted target scope from pending representation/outcome choices. OKF loaded profile only; `rtk proxy ./scripts/lint-okf.py` exited 0 across both bundles. Scoped canonical diff contains exactly this authorized pointer. Existing INDEX/FILE_MAP/instruction routes remain sufficient; no API, test strategy or skill changed. Added: None. Changed: grader-integrity scope pointer. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None.

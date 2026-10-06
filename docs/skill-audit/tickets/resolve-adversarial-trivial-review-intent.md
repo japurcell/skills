@@ -13,6 +13,8 @@ Is Adversarial Review's typo case an adjacent negative need/discovery classifica
 
 Preserve both invocation controls, expert delegation for actual reviews, issues/suggested-fixes-only output, no praise and no implementation. Keep routing sensitive to actual task risk rather than freezing one tier for all reviews. Later cases must separately grade explicit typo invocation, adjacent need classification and substantive review, distinguishing activation, workflow and output. Both final documents retain [QH-010](../findings.md#qh-010-adversarial-typo-oracle-leaves-explicit-invocation-versus-need-assessment-unresolved) and this route; dependent oracle/procedure changes stay pending.
 
+The human accepted retention of this separate route on 2026-10-06 in [Review Quality and Harness Skills](review-quality-and-harness-skills.md#resolution). That ticket is closed and this route is now unblocked. The underlying choice stays pending; retention gives no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->

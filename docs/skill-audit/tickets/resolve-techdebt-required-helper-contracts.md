@@ -13,6 +13,8 @@ Are Techdebt's unconditional explorer dispatch and test-edit-only TDD activation
 
 Preserve relevant duplication search, broad-area independence, supplied-candidate discovery bypass, bounded changed scope, no redundant exploration, meaningful validation and TDD's existing seam approval. Keep user-approved exceptions scoped. Validate narrow/provided/multi-area cases and source-only/test-edit/non-code cases separately. Both final documents retain both IDs and this route; dependent consumer changes remain pending until each actual choice is resolved.
 
+The human accepted retention of this separate route on 2026-10-06 in [Review Quality and Harness Skills](review-quality-and-harness-skills.md#resolution). That ticket is closed and this route is now unblocked. The underlying choice stays pending; retention gives no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->

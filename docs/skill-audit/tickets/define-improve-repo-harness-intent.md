@@ -13,6 +13,8 @@ Is Improve Repo Harness a recommendation skill, an implementation workflow, or a
 
 Preserve the existing skill name and both invocation controls. Do not default to implementation, rewrite the sidecar's disputed scope, or treat the external repository as a grant of authority. Relevant changes remain a separate design proposal until the human settles intent; both final documents retain [QH-009](../findings.md#qh-009-improve-repo-harness-has-unresolved-recommendation-versus-execution-intent) and this route.
 
+The human accepted retention of this separate route on 2026-10-06 in [Review Quality and Harness Skills](review-quality-and-harness-skills.md#resolution). That ticket is closed and this route is now unblocked. The underlying choice stays pending; retention gives no implementation authority, evidence waiver or residual-risk acceptance.
+
 ---
 
 <!-- Resolution will be appended here. -->
