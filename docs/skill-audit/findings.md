@@ -1,8 +1,8 @@
 # Skill Audit Findings
 
-Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
+Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`; quality/harness source revision: `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
 
-Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. All twenty-two findings have recorded dispositions. Accepted repairs remain later plan scope; six underlying decisions remain pending, including DD-004. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
+Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. The twenty-two earlier findings have recorded dispositions. Ten quality/harness findings await live proposal review, bringing the register to thirty-two findings. Accepted repairs remain later plan scope; six previously retained underlying decisions remain pending, including DD-004. Seven new blocked routes retain eight further finding-specific questions without selecting behavior. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
 
 ## Proposal index
 
@@ -31,6 +31,17 @@ Applicability, adoption disposition, compliance, proposal status, and implementa
 | [DD-004](#dd-004-graders-can-announce-success-without-grading-runs-and-do-not-validate-json-shape) | Graders can announce success without grading runs and do not validate JSON shape | Pending separate decision | [Separate decision](tickets/define-benchmark-grader-failure-outcomes.md); exact protocol pending |
 | [DD-005](#dd-005-explore-grader-contains-prohibited-blank-line-whitespace) | Explore grader contains prohibited blank-line whitespace | Accepted for later planning | Later authoring cleanup scope |
 
+| [QH-001](#qh-001-code-review-eval-oracles-disagree-with-the-maintained-contract) | Code Review eval oracles disagree with the maintained contract | Pending live proposal review | Proposed later evaluation scope; exact oracles and genuine DD-004 dependencies |
+| [QH-002](#qh-002-required-generalist-role-lacks-a-repository-source-definition) | Required generalist role lacks a repository source definition | Pending live proposal review | [Resolve Code Review Generalist Role Portability](tickets/resolve-code-review-generalist-role-portability.md) |
+| [QH-003](#qh-003-fast-verification-tier-conflicts-with-required-review-routing-floors) | Fast verification tier conflicts with required review routing floors | Pending live proposal review | [Resolve Code Review Verification Routing Floor](tickets/resolve-code-review-verification-routing-floor.md) |
+| [QH-004](#qh-004-techdebt-rollback-condition-has-competing-readings) | Techdebt rollback condition has competing readings | Pending live proposal review | [Resolve Techdebt Validation and Rollback](tickets/resolve-techdebt-validation-and-rollback.md) |
+| [QH-005](#qh-005-techdebt-unconditional-exploration-conflicts-with-explores-narrow-branch) | Techdebt unconditional exploration conflicts with Explore's narrow branch | Pending live proposal review | [Resolve Techdebt Required Helper Contracts](tickets/resolve-techdebt-required-helper-contracts.md) |
+| [QH-006](#qh-006-techdebt-limits-tdd-activation-contrary-to-its-required-helper) | Techdebt limits TDD activation contrary to its required helper | Pending live proposal review | [Resolve Techdebt Required Helper Contracts](tickets/resolve-techdebt-required-helper-contracts.md) |
+| [QH-007](#qh-007-harness-grader-uses-lexemes-where-assertion-polarity-and-meaning-matter) | Harness grader uses lexemes where assertion polarity and meaning matter | Pending live proposal review | Proposed later evaluation scope; exact oracles and genuine DD-004 dependencies |
+| [QH-008](#qh-008-harness-eval-artifact-writes-conflict-with-the-absolute-read-only-statement) | Harness eval artifact writes conflict with the absolute read-only statement | Pending live proposal review | [Resolve Harness Analysis Report Capture](tickets/resolve-harness-analysis-report-capture.md) |
+| [QH-009](#qh-009-improve-repo-harness-has-unresolved-recommendation-versus-execution-intent) | Improve Repo Harness has unresolved recommendation versus execution intent | Pending live proposal review | [Define Improve Repo Harness Intent](tickets/define-improve-repo-harness-intent.md) |
+| [QH-010](#qh-010-adversarial-typo-oracle-leaves-explicit-invocation-versus-need-assessment-unresolved) | Adversarial typo oracle leaves explicit invocation versus need assessment unresolved | Pending live proposal review | [Resolve Adversarial Trivial Review Intent](tickets/resolve-adversarial-trivial-review-intent.md) |
+
 ## Pending decisions and approval
 
 The 2026-10-05 live review accepted SAG-001, SAG-009, SAG-010, SAG-011, SAG-012, SAG-014 and only SAG-013's documentation cleanup as authoring repairs; SAG-004 through SAG-007 are accepted evaluation repairs. Four precise questions remain pending in separate Wayfinder routes: installer authority (SAG-002), body output structure (SAG-003), compatible unknown metrics (SAG-008), and command-validation authority (SAG-013). The human explicitly chose to keep all four pending and visible. The closed [batch Resolution](tickets/review-skill-authoring-and-repository-guidance.md#resolution) unblocks their tickets without choosing their behavior or design. No proposal was rejected or deferred.
@@ -42,6 +53,10 @@ Accepted authoring work may enter the later plan only when its design prerequisi
 Both final `audit.md` and `ExecPlan.md` must expose every unresolved proposal by stable ID and link its owner and route. Reconciliation accounts for accepted, rejected, deferred, and unresolved items. A deferral requires rationale, affected work, remaining risk, and revisit trigger. Evidence waiver and residual-risk acceptance are separate.
 
 The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06: independent area checks, reproducible inputs and cache branches, honest citation/trace grading, and five whitespace-line cleanups. DD-004's exact invalid/incomplete grading outcomes remain in [Define Benchmark Grader Failure Outcomes](tickets/define-benchmark-grader-failure-outcomes.md). The closed [delegation/discovery Resolution](tickets/review-delegation-and-discovery.md#resolution) unblocks that route; all six underlying decisions are now open and unblocked. The human also accepted Explore and Official Sources as additional SAG-008 producer targets, retaining the original three and the unresolved representation. DD-004's type/error protocol is not selected by the accepted repairs. Preserve valid predicates, allowed exploration scope, direct narrow reads, optional cache, dependencies, names, controls and approvals; exact fixture/oracle choices and genuine protocol dependencies precede affected executable work. No proposal was rejected or deferred.
+
+The Quality and Harness source investigation is complete for seven candidates, but its ten finding dispositions and three proposed target expansions await live review. QH-001/QH-007 propose evaluation repairs; QH-002/QH-003/QH-004/QH-005/QH-006/QH-008/QH-009/QH-010 retain seven blocked decision routes. Together with the six previously retained decisions, thirteen underlying routes remain visible. The new routes stay blocked until the batch review closes; retention is not selection of their behavior. No new proposal is accepted, rejected or deferred yet. Every unresolved ID and route belongs in both final documents.
+
+Three existing finding expansions are proposed, not approved: SAG-008 adds the three quality/harness metric producers; DD-004 adds those three graders to protocol scope; SAG-011 adds only Harness Analysis's sidecar. Existing accepted targets and unresolved protocols remain unchanged. Improve Repo Harness's sidecar meaning depends on QH-009 and is not added automatically. SAG-001/SAG-012 analogies do not expand accepted scope.
 
 ## Findings
 
@@ -141,6 +156,7 @@ The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06:
 - Observed configuration: no behavioral run; model/client runtime values not applicable.
 - Human status: the human confirmed a separate pending decision on 2026-10-05. The authority or design choice remains unresolved. No implementation approval, evidence waiver, or residual-risk acceptance.
 - Owning decision: [Question](tickets/choose-unknown-benchmark-metric-representation.md). Affected implementation stays pending until that choice is resolved or explicitly deferred with independent scope.
+- Proposed additional evidence, not accepted target scope: `skills/adversarial-review/evals/grade_benchmark.py:28,37-41`, `skills/code-review/evals/grade_benchmark.py:38,48-58` and `skills/harness-analysis/evals/grade_benchmark.py:166-177` zero-fill unmeasured metrics. Preserve actually computed output/transcript character counts. Adding these three producers awaits the Quality and Harness live review; the five accepted targets and unresolved representation remain unchanged. Source baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; static only.
 
 ### SAG-009: Capped/unscoped AGENTS discovery
 
@@ -177,6 +193,7 @@ The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06:
 - Observed configuration: no behavioral run; model/client runtime values not applicable.
 - Human status: accepted authoring repair for later plan scope by the human on 2026-10-05. Preserve the stated contracts and resolve design prerequisites before executable plan readiness. No implementation approval, evidence waiver, or residual-risk acceptance.
 - Route: accepted later plan scope, subject to stated design prerequisites and final reconciliation. No implementation authorization.
+- Proposed additional evidence, not accepted target scope: `skills/harness-analysis/agents/openai.yaml:3` describes test-harness analysis while `skills/harness-analysis/SKILL.md:3,9-17` audits agent/session processes. Add only this sidecar if the Quality and Harness live review accepts it, retaining :4-5 controls. Existing Create AgentsMD target remains accepted. Improve Repo Harness sidecar depends on QH-009 and is not added. Source baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; static only.
 
 ### SAG-012: Argument binding and control adapter evidence gaps
 
@@ -298,6 +315,7 @@ The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06:
 - Human status: separate pending decision retained by the human on 2026-10-06. Failure statuses, exit codes, schemas and compatibility remain unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
 - Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
 - Owning decision: [Define Benchmark Grader Failure Outcomes](tickets/define-benchmark-grader-failure-outcomes.md). Exact failure-status, exit-code and result-schema changes remain pending; retain this ID and route in both final documents.
+- Proposed additional evidence, not accepted protocol scope: `skills/adversarial-review/evals/grade_benchmark.py:10-12,28,49,62-64,90-102` has JSON-shape assumptions and no-run success; `skills/code-review/evals/grade_benchmark.py:19-26,38,78-86,94-105,227-242` adds shape/no-run and first-known-output identity issues. `skills/harness-analysis/evals/grade_benchmark.py:198-200,207-218` uses directory identity and has no-run success; :212 matches only `*_skill` configurations and repeats `without_skill`. `old_skill` is matched, while other explicit baseline names can be omitted. These three graders are proposed additions pending the Quality and Harness live review; the original two targets and unresolved status/exit/schema protocol remain unchanged. Preserve valid artifact checks. Source baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; static only.
 
 ### DD-005: Explore grader contains prohibited blank-line whitespace
 
@@ -309,3 +327,122 @@ The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06:
 - Human status: accepted authoring cleanup for later planning on 2026-10-06. Preserve predicates and control flow. No implementation authorization, evidence waiver or residual-risk acceptance.
 - Source configuration: static source review at `991b14b86440dab452ac28312c5f05a2b4a42266`; no behavioral model/client run.
 - Route: accepted later plan scope, subject to stated design prerequisites and final reconciliation. The [batch Resolution](tickets/review-delegation-and-discovery.md#resolution) records the human answer. No skill change has been implemented.
+
+### QH-001: Code Review eval oracles disagree with the maintained contract
+
+- Severity/confidence: Major, high confidence in textual mismatch; predicted false failures or reward for stale workflow.
+- Checks/surface: A12/A17/A22/R04/R06/R11; adapt to source-grounded artifact checks; all clients using repository benchmark inputs, not native activation evidence.
+- Evidence: `skills/code-review/SKILL.md:20,60-63,84` names hyphenated lower-case references and an 80+ cutoff. `skills/code-review/evals/evals.json:11-19,40-48` expects old intake restrictions, 75/100 and uppercase underscore paths. `skills/code-review/evals/grade_benchmark.py:128-150,174-186` requires corresponding stale phrases and an additional `already reviewed by you` stop absent from `skills/code-review/references/pr-protocol.md:22-26`. Correct current paths fail these string predicates; output mentioning stale paths can satisfy them.
+- Proposal: align eval descriptions and artifact predicates with current 80+, actual bundled paths, CLI/API intake rule and existing three PR stop states. Preserve fixed-point exact-question case, all four responsibilities, no-spec branch, native controls, user-requested output mode and no-unsolicited-validation rule. Do not invent an already-reviewed stop rule or change supported intake authority.
+- Later validation: valid current/stale path artifacts, 79/80/100 boundary, current PR eligibility states, no-spec and negative task classification. Actual workflow requires separate trace-backed checks; expected output text alone is not proof of performed review.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Route: proposed later evaluation plan scope, subject to live disposition, exact fixture/oracle design and final reconciliation. Genuine DD-004 invalid/no-output protocol dependencies remain pending. No implementation authorization.
+
+
+### QH-002: Required generalist role lacks a repository source definition
+
+- Severity/confidence: Major, high confidence in repository source absence, moderate confidence in predicted host failure. No native failure or universal incompatibility established.
+- Checks/surface: A36/R04/C04; required Code Review role across Codex/Copilot/Gemini.
+- Evidence: `skills/code-review/SKILL.md:54-66` requires available catalog names and all four roles; :59 names `generalist`; :21 requires stopping if a required subagent is unavailable. Repository top-level agent inventory includes the three named Addy roles and no generalist. Source installation cannot generate a missing definition.
+- Separate decision: should the existing general-quality responsibility get a maintained `generalist` definition, a documented supported host mapping, or another explicitly approved role contract? Preserve all four concurrent perspectives, general-quality reference inputs, names of existing roles and stop-on-unavailable behavior. Do not silently replace/remove a required role.
+- Later validation: supported-role discovery on each required host statically, then authorized Codex missing-role/available-role traces and all-four accounting. Copilot/Gemini enforcement remains static unless scope changes.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Code Review Generalist Role Portability](tickets/resolve-code-review-generalist-role-portability.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-003: Fast verification tier conflicts with required review routing floors
+
+- Severity/confidence: Major, high confidence in conditional contract tension; predicted under-capability review or incompatible dispatch instructions.
+- Checks/surface: A02/A19/A20/R04; Code Review plus shared Delegate/Router consumers.
+- Evidence: `skills/code-review/SKILL.md:79-85` requires Fast false-positive verifiers. Mandatory `skills/delegate-to-subagents/SKILL.md:85-110` routes each material subtask; `skills/subagent-model-router/reference/review-routing.md:7-9,27-34,40-49` requires Standard substantive review and Premium security/high-stakes review. Exact-diff verification can be substantive or security-sensitive. Fast is valid for mechanical checks; it is not established as valid for every filtering task.
+- Separate decision: is Fast wording only a default for genuinely mechanical filters, or an intended exception to mandatory floors? Preserve meaningful independent filtering, 80+, exact hunk evidence and required Router. Human must resolve before a dependent authoring rewrite selects an interpretation.
+- Later validation: mechanical filter, cross-file false positive, auth/security finding and important prior-miss cases with actual route/dispatch traces; no new runtime claim from model-written plans.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Code Review Verification Routing Floor](tickets/resolve-code-review-verification-routing-floor.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-004: Techdebt rollback condition has competing readings
+
+- Severity/confidence: Major, high confidence in ambiguity, moderate confidence in predicted effect.
+- Checks/surface: A02/A14/A19/R03/R05/R06; Techdebt refactor/validation flow on all hosts.
+- Evidence: `skills/techdebt/SKILL.md:77` says if validation fails, fix and revalidate; otherwise revert the candidate. Literal conditional attaches otherwise to validation failure and reverts passing changes. Another reading attaches otherwise to inability to fix/revalidate and keeps passing candidates. :9,69-76,93-97 requests validated deduplication and reports kept/fixed/reverted candidates but does not resolve the branch grammar.
+- Separate decision: does successful validation keep the candidate, and exactly when does failed revalidation require rollback or user choice? Record explicit pass, initial failure, repair success and unresolved failure branches only after the human resolves intended semantics. Preserve behavior, small diffs, meaningful validation, user changes and existing approval gates. Do not choose a rollback command or broaden authority.
+- Later validation: disposable candidate fixtures for all four branches, retained user edits, failure reports and stop/approval traces.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Techdebt Validation and Rollback](tickets/resolve-techdebt-validation-and-rollback.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-005: Techdebt unconditional exploration conflicts with Explore's narrow branch
+
+- Severity/confidence: Minor, high confidence in textual conflict; predicted unnecessary dispatch or contradictory dependency handling in a narrow task.
+- Checks/surface: A02/A13/A19/R04; Techdebt/Explore/Delegate.
+- Evidence: `skills/techdebt/SKILL.md:30` activates Explore to dispatch 1-3 code-explorer agents. `skills/explore/SKILL.md:13,33` skips/prohibits subagents for narrow scope; :14 uses 1-3 only for otherwise independent areas. Techdebt can have provided one-file candidates (:17), so the narrow condition is reachable.
+- Separate decision: retain mandatory explorer dispatch as an approved caller exception, or retain Explore's narrow/direct branch in this caller? Preserve Explore dependency, relevant nearby duplication search, broad-area independence, changed scope and no re-exploration rule. No dependency becomes optional by inference.
+- Later validation: supplied narrow candidate, one endpoint and multi-area dedupe cases with allowed read/dispatch traces and preserved scope.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Techdebt Required Helper Contracts](tickets/resolve-techdebt-required-helper-contracts.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-006: Techdebt limits TDD activation contrary to its required helper
+
+- Severity/confidence: Major, high confidence in contract conflict; predicted omission of mandatory guidance for source edits.
+- Checks/surface: A13/R03/R04; Techdebt refactoring prompt on all hosts.
+- Evidence: `skills/techdebt/SKILL.md:74` requires TDD only when tests must be added or changed. Required helper `skills/tdd/SKILL.md:3` says mandatory whenever source code is designed/edited and requires explicit subagent activation. Its :18-24 preserves user-confirmed test seams; :38 separates refactoring from the red/green loop. Activation is distinct from adding tests, so existing-test-only source refactoring still reaches conflicting instructions.
+- Separate decision: is conditional TDD loading an intentional waiver or should the caller retain mandatory activation while applying relevant refactor/testing branches? Do not create unnecessary tests, waive existing seam approval, or change the imported dependency. Preserve user-authorized exceptions locally.
+- Later validation: source-only refactor with existing tests, added-test refactor and non-code dedupe; record helper loading separately from test writing and approval.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Techdebt Required Helper Contracts](tickets/resolve-techdebt-required-helper-contracts.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-007: Harness grader uses lexemes where assertion polarity and meaning matter
+
+- Severity/confidence: Major, high confidence in static false-positive/false-negative mechanisms; no grader executed.
+- Checks/surface: A22/R11; Harness Analysis output artifact grading, not native behavior certification.
+- Evidence: `skills/harness-analysis/evals/grade_benchmark.py:60,148` rejects any output containing measured-latency phrases, including a truthful caveat that latency was not measured. :78 accepts the mere unavailable-LSP error as proof of a stopping recommendation. :131 and :142 accept 0-row wording anywhere as a no-retry rule and as placement under Uncertainty. :96 infers no audit only from absent two headings. These predicates can reward repeating evidence or penalize the required caveats at `skills/harness-analysis/SKILL.md:25-26,57,61,151-154`.
+- Proposal: preserve valid heading/order/count checks and scenario intent; grade positive/negative claim polarity, actual bounded-stop recommendation and section placement with evidence-cited judgment or supported deterministic structure. Distinguish reported recommendations from performed stop behavior; native behavior stays trace-backed. Do not substitute a keyword synonym list as proof.
+- Later validation: truthful unmeasured-latency caveat versus affirmative claim; error quote with/without stop; 0 rows placed in/out of Uncertainty; implementation redirect versus invented audit; valid grouping and sparse-evidence outputs. Invalid/no-output protocols depend on DD-004's pending choice.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Route: proposed later evaluation plan scope, subject to live disposition, exact fixture/oracle design and final reconciliation. Genuine DD-004 invalid/no-output protocol dependencies remain pending. No implementation authorization.
+
+
+### QH-008: Harness eval artifact writes conflict with the absolute read-only statement
+
+- Severity/confidence: Minor, high confidence in textual conflict; predicted misleading attestation or unresolved artifact workflow.
+- Checks/surface: A17/A22/R03/R06/R11; Harness Analysis eval prompts and report output.
+- Evidence: `skills/harness-analysis/SKILL.md:21` prohibits creating/editing any files and :235 requires an exact no-files-modified statement. All five `skills/harness-analysis/evals/evals.json` prompts (:6,24,42,56,76) request writing `outputs/report.md`; grader :171,212-216 consumes that file. A user can authorize an artifact, but writing it cannot also establish the literal no-files-modified statement. The analysis read-only boundary and harness capture boundary are not distinguished.
+- Separate decision: should the model produce a chat report captured by the harness, or is a report-artifact write an approved exception with a scoped attestation? Preserve read-only audited systems, no hook execution, sensitive-data stops, evidence/uncertainty and refusal of implementation. Do not silently loosen every file boundary or discard report capture.
+- Later validation: chat-only report capture, explicitly authorized artifact case if chosen, denied target writes and accurate final attestation with tool traces.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Harness Analysis Report Capture](tickets/resolve-harness-analysis-report-capture.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-009: Improve Repo Harness has unresolved recommendation versus execution intent
+
+- Severity/confidence: Major, high confidence in underspecified action boundary; moderate confidence in predicted wrong-scope work.
+- Checks/surface: A02/A06/A13/A14/A17/A19/A32/A36/S04/R01/R03/R05/R06; all required hosts.
+- Evidence: `skills/improve-repo-harness/SKILL.md:3` says add features/fix bugs/enhance performance. :9 asks how to improve this repo from an external repository; no output, execution/approval or stopping branch is specified. The sidecar :3 says test harness, while the named remote repo is the only methodology pointer. Local source cannot determine authority from remote content.
+- Separate decision: is this an evidence-backed recommendation skill, an approved implementation workflow, or an explicit staged proposal/approval/implementation flow? What does repository harness include, and what retrieval/absent-source/output/stopping contract applies? Preserve both invocation controls and name; no implementation default or remote-instruction authority selected.
+- Later validation: requested recommendation, explicit approved change, adjacent ordinary coding request, missing remote source and injected/untrusted remote content under the resolved contract.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Define Improve Repo Harness Intent](tickets/define-improve-repo-harness-intent.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### QH-010: Adversarial typo oracle leaves explicit invocation versus need assessment unresolved
+
+- Severity/confidence: Minor, high confidence in oracle/procedure tension; no automatic-activation or user-intent failure demonstrated.
+- Checks/surface: A19/A22/R01/R04/R05/R11/C01; Adversarial Review eval versus explicit-only invocation.
+- Evidence: `skills/adversarial-review/SKILL.md:4,9-13` disables implicit invocation and instructs delegation without a triviality branch. Eval 2 `skills/adversarial-review/evals/evals.json:38-47` and grader :82-83 reward should-review=false for a typo. That may be intended adjacent need classification outside activation, or a skip branch inside explicit invocation; source does not say.
+- Separate decision: is the typo case only negative discovery/need classification, or does explicit invocation permit skipping trivial changes? Preserve explicit controls, expert delegation for actual reviews, no praise, suggestions-only and no implementation. Do not add a broad skip policy without resolving intent.
+- Later validation: explicit typo invocation, adjacent typo need assessment and substantive adversarial review, separately graded activation/workflow/output. No frozen Premium tier for all tasks; security example keeps its actual risk floor.
+- Human status: pending live proposal review. No acceptance, behavior selection, implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
+- Owning decision: [Resolve Adversarial Trivial Review Intent](tickets/resolve-adversarial-trivial-review-intent.md), currently blocked by the open batch review. Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
