@@ -17,7 +17,7 @@ def checked_review(payload: dict, config: AgentBrainConfig, root: Path,
     from .lifecycle import file_revision, scope_record
     _keys(payload, "stage input", {"schema_version", "outcome", "review"})
     if type(payload["schema_version"]) is not int or payload["schema_version"] != 1 or payload["outcome"] != "no_change":
-        raise LifecycleError("REVIEW_INVALID", "M3 supports only versioned scoped no-change reviews")
+        raise LifecycleError("REVIEW_INVALID", "expected a versioned scoped no-change review")
     review = _object(payload["review"], "review")
     _keys(review, "review", {"scope", "guidance", "sources", "note"})
     _string(review["note"], "review note")
@@ -45,6 +45,11 @@ def checked_review(payload: dict, config: AgentBrainConfig, root: Path,
         if not actual.is_file() or item["revision"] != file_revision(actual):
             raise LifecycleError("REVIEW_SOURCE_STALE", "review source bytes no longer match their attributable revision")
 
+    return run_checks(config, root), digest(payload)
+
+
+def run_checks(config: AgentBrainConfig, root: Path) -> list[dict]:
+    """Run configured trusted argv with one foreground time bound and no shell."""
     results = []
     deadline = time.monotonic() + float(config.limits["check_timeout_seconds"])
     trusted = {item["id"]: item for item in config.checks["trusted"]}
@@ -73,7 +78,7 @@ def checked_review(payload: dict, config: AgentBrainConfig, root: Path,
             if process is not None:
                 _stop(process)
             raise
-    return results, digest(payload)
+    return results
 
 
 def _stop(process: subprocess.Popen) -> None:

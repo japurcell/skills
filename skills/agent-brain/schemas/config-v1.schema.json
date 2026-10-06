@@ -25,6 +25,7 @@
       "type": "object", "propertyNames": {"$ref": "#/$defs/text"}, "additionalProperties": {"$ref": "#/$defs/provider"},
       "description": "Absent or unconfigured integrations are disabled. M3 accepts only disposable protocol fixtures; native kind remains unsupported."
     },
+    "history_dir": {"$ref":"#/$defs/repositoryPath","default":".agents/context/history"},
     "state_dir": {"allOf": [{"$ref": "#/$defs/repositoryPath"}, {"pattern": "^\\.agents/context/.+"}]},
     "limits": {
       "type": "object", "additionalProperties": false,

@@ -17,7 +17,7 @@ This plan derives execution steps from the ten closed Wayfinder contracts. The p
 - [x] [milestone-1] Deliver the bundled CLI and an informational recall through the public process boundary.
 - [x] (2026-10-06) [milestone-2] Retrieve complete, revision-bound guidance units and validate authoring.
 - [x] (2026-10-06) [milestone-3] Automatically coordinate lifecycle checkpoints and verified no-change completion.
-- [ ] [milestone-4] Publish evidenced learn changes with interruption-safe recovery.
+- [x] (2026-10-06) [milestone-4] Publish evidenced learn changes with interruption-safe recovery.
 - [ ] [milestone-5] Execute finite, bounded dream cycles and retention-safe cleanup.
 - [ ] [milestone-6] Join legacy skills and optional source ingestion into one lifecycle obligation.
 - [ ] [milestone-7] Generate and package provider-local native adapters.
@@ -49,6 +49,12 @@ Final identity review reproduced startup accepting an uppercase configured certi
 
 Malformed numeric input also reproduced empty stdout and tracebacks: a 5000-digit configuration integer exceeded Python's decoder limit, and a 400-digit durable expiry overflowed float conversion. Decoder limits remain enabled; config errors are structured invalid setup/recall results, and oversized expected-state times report unavailable/incomplete without recreation. Nested malformed JSON is also exercised at configuration, bridge, and durable-state seams.
 
+M4 public failures established publication boundaries beyond successful writes. Raw CRLF before-images must survive exact inverse restoration; competing eligible recovery events require exclusive effect ownership; missing/corrupt journals and inconsistent affected-path markers remain unavailable. Interrupted checked completion, including recovered completion, keeps durable delivery pending until flush. Failed-output reconciliation under a held SQLite lock reports unavailable, preserves the marker, and reconciles at a later eligible event using the exact selected config path. Ctrl-C and a second interrupt return structured interruption without a traceback.
+
+Final output-marker review reproduced a damaged identity record escaping initial reconciliation and failing during bridge output settlement. Finite typed marker validation now runs before effects, damaged bytes remain unavailable without a traceback, clearing requires matching input/context generations, and restoring the exact recorded marker permits the next eligible recovery event.
+
+Reference-style Markdown definitions, angle-wrapped paths with spaces, and affected heading fragments must be repaired with stable relocation. Whole-file membership alone overstates affected evidence: a public two-section correction now requires evidence for the changed unit while preserving its untouched neighbor and inherited notes. New/corrected learned units retain compact colocated source/verification notes, with full evidence in inverse history and selective recall detail. A small deletion of a JSON-escaped before-image previously prepared an unreadable journal; preparation now rejects an encoded set over the 8 MiB history limit before persisting preparation or changing guidance.
+
 ## Decision Log
 
 
@@ -68,10 +74,16 @@ Decision: Unknown task scope returns required startup and universal policy; full
 
 Decision: Keep protocol delivery provisional until stdout flush, carry one contention allowance across operation phases, and bind no-change to actual foreground checks and current review revisions. Rationale: process exit, unseen output, stale receipts, and caller assertions cannot establish available guidance or semantic completion. Native output consumption remains a separate certification gate. Date/Author: 2026-10-06, Codex.
 
+Decision: Validate foreground-authored proposals mechanically and publish only their exact recorded set, with portable raw-byte history, exclusive effect ownership, and managed affected gaps. Rationale: semantic evidence remains proportional and agent-authored while deterministic revisions, protected policy, references, actual checks, and attributable inverses prevent unsupported completion. One indivisible journal over 8 MiB remains unsupported without truncation. Date/Author: 2026-10-06, Codex.
+
+Decision: Defer required native recovery checks to foreground work through an explicit recovery seam. Rationale: trusted subprocess checks can exceed the native callback watchdog; fixture bridge recovery proves the common protocol only. M7 must issue a supported foreground recovery stage without spending/resetting attempts on callback timeout. Date/Author: 2026-10-06, Codex.
+
 ## Outcomes & Retrospective
 
 
-Milestones 1-3 provide the staged source-checkout skill, scoped revision-bound retrieval, and automatic common-protocol lifecycle coordination with checked no-change. Lifecycle tests pass 38/38 with ResourceWarning treated as an error, CLI tests 26/26, and retrieval tests 22/22 on Python 3.12.14, 3.13.14, and 3.14.6. OKF public fixtures, full-corpus linter, registry tests 14/14, skill validation and packaging, JSON/example/schema alignment, 19 JSON parses, 15 source compilations, and whitespace checks pass. The parent verified the integrated M2 aggregate at 38 suites passed/0 failed in 316.0 seconds; the integrated M3 aggregate at `270bce3de06b33cf26020a1e513c8718a58940a5` passes 39 suites/0 failures in 344.0 seconds, with host-specific Windows skips explicit. The clean M3 private worktree and branch are removed after exact-tip integration. M4-M8 and M9 full acceptance remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. No native provider combination is certified and no quality, savings, timing, usage, or filesystem durability target is measured. The closed Wayfinder map remains unchanged.
+Milestones 1-4 provide the staged source-checkout skill, scoped revision-bound retrieval, common-protocol lifecycle coordination, checked no-change, and evidenced exact-set learn publication with reversible interrupted recovery. M4's public publication suite passes 36/36 with ResourceWarning treated as an error on Python 3.14.6 (21.237 seconds), 3.13.14 (20.812 seconds), and bundled 3.12.14 (21.769 seconds). Final default-runtime lifecycle 38/38 (24.784 seconds), CLI 26/26 (3.078 seconds), retrieval 22/22 (2.652 seconds), and registry 14/14 (10.215 seconds) pass. Applicable OKF public fixtures and full-corpus linter, quick skill validation, disposable packaging/content verification, 21 JSON parses with local schema references resolved, 18 Python source compilations, and whitespace checks pass. The one formal update-agent-docs/OKF pass synchronizes eight existing instruction/memory documents; FILE_MAP/API_MAP/TESTING_STRATEGY route the new boundaries, and INDEX needs no new entry. Protected AGENTS sections and the pilot KB remain unchanged.
+
+The parent verified the integrated M2 aggregate at 38 suites passed/0 failed in 316.0 seconds and integrated M3 at `270bce3de06b33cf26020a1e513c8718a58940a5` at 39 suites/0 failures in 344.0 seconds, with host-specific Windows skips explicit. M4's broad aggregate and integration belong to parent review; this private worktree records the observed targeted checks only. M5 is next; M5-M8 and M9 full acceptance remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. Native foreground recovery issuance, provider builds/consumption/watchdogs, native Windows locking, quality, savings, timing, usage, and OS-crash/power-loss guarantees remain unobserved. One coherent encoded journal over 8 MiB is unsupported without truncation; individual replacements provide no unmanaged set-level atomic visibility. The closed Wayfinder map remains unchanged.
 
 ## Context and Orientation
 
@@ -164,9 +176,9 @@ Exercise invalid/expired/mismatched handles, restoration after context-generatio
 ### Milestone 4: Publish evidenced learn changes and recover interruption
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 Add `stages.py`, `publication.py`, and `history.py`. Implement learn start/prepare/publish/complete, with the foreground agent creating a proposed change/evidence record outside canonical guidance. Prepare checks scope, authority, references, evidence requirements, current owner, input revisions, and configured check results. Publish writes only that validated set. Complete rechecks actual resulting artifacts and receipts against current inputs. No-change skips publication but still verifies review and applicable checks.
 

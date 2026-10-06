@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "outcome": "changed",
+  "review": {
+    "scope": {
+      "paths": [
+        "src/app.py"
+      ],
+      "concepts": [],
+      "actions": [],
+      "dependencies": [],
+      "providers": [],
+      "runtimes": []
+    },
+    "guidance": [
+      {
+        "id": "a928f167-d7c1-4e49-890e-f1844aff5c03",
+        "content_revision": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_revision": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "sources": [
+      {
+        "path": "guidance/policy.md",
+        "revision": "0000000000000000000000000000000000000000000000000000000000000000",
+        "note": "Verify the current controlling source before submitting this illustrative review."
+      }
+    ],
+    "note": "Illustration only; replace scope, identities, and hashes with the current delivered work package."
+  },
+  "proposal": {
+    "base_input_revision": "0000000000000000000000000000000000000000000000000000000000000000",
+    "rationale": "Retain a scoped successful workaround.",
+    "changes": [
+      {
+        "path": ".agents/memory/known-issues/patch.md",
+        "base_revision": null,
+        "content": "# Small patch tip\n<!-- agent-brain {\"schema_version\":1,\"id\":\"7e8f1c31-c38c-4f40-91e9-972b73882f49\",\"kind\":\"fact\",\"status\":\"established\",\"applies\":{\"paths\":[\"src/app.py\"]},\"evidence\":{\"sources\":[{\"source\":\"foreground task observation\"}],\"verified_at\":\"2026-10-06\",\"verification_note\":\"Oversized patch rejected; smaller focused patches succeeded.\"}} -->\nUse smaller focused patches when an oversized patch fails.\n"
+      }
+    ],
+    "claims": [
+      {
+        "id": "7e8f1c31-c38c-4f40-91e9-972b73882f49",
+        "type": "tip",
+        "action": "add",
+        "scope": {
+          "paths": [
+            "src/app.py"
+          ]
+        },
+        "evidence": {
+          "failure": "An oversized patch was rejected.",
+          "workaround": "Smaller focused patches succeeded.",
+          "verified_at": "2026-10-06",
+          "result": "observed"
+        }
+      }
+    ]
+  }
+}

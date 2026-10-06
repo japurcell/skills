@@ -59,6 +59,7 @@ class AgentBrainConfig:
         "check_timeout_seconds": 60,
     })
     state_dir: str = ".agents/context/state"
+    history_dir: str = ".agents/context/history"
 
 
 @dataclass(frozen=True, slots=True)

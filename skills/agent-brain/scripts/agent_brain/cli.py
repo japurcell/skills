@@ -39,11 +39,13 @@ COMMAND_DETAILS = {
     ),
     "learn": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
-        "Effects: start delivers a foreground work package; prepare checks a scoped no-change review; "
-        "complete repeats configured checks and settles current obligations. Publication is unavailable. "
+        "Effects: start delivers a foreground work package; prepare validates an evidenced proposal or scoped no-change review; "
+        "publish writes the exact prepared set with inverse history; complete checks resulting files and settles current obligations. "
         "Invalid authority fails before semantic input.\n"
         "Active agent: a registered integration is required; the CLI never launches a model.\n"
-        "Example: agent-brain learn --input notes.json --invocation-file /path/to/invocation.json"
+        "Example: agent-brain learn prepare --input proposal.json --invocation-file /path/to/invocation.json; "
+        "agent-brain learn publish --invocation-file /path/to/invocation.json; "
+        "agent-brain learn complete --invocation-file /path/to/invocation.json"
     ),
     "dream": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
@@ -142,7 +144,7 @@ def _parser(*, json_errors: bool) -> tuple[argparse.ArgumentParser, dict[str, ar
         command_parsers[name] = command_parser
     for name in ("learn", "dream"):
         command_parsers[name].add_argument("operation", nargs="?", default="start",
-            choices=("start", "prepare", "publish", "complete"), help="Start foreground work or validate a scoped no-change.")
+            choices=("start", "prepare", "publish", "complete"), help="Start foreground work, prepare evidence, publish exact changes, or verify completion.")
         command_parsers[name].add_argument(
             "--input",
             metavar="PATH",
@@ -459,6 +461,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"Next action: {error.next_action}", file=sys.stderr)
                     return error.exit_code
             except KeyboardInterrupt:
+                import signal
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
                 error = LifecycleError("INTERRUPTED", "interrupted attempt preserves pending work", exit_code=130)
                 if arguments.json_output:
                     print(json.dumps(error_result(error), sort_keys=True))
@@ -469,6 +473,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                     print(f"agent-brain: {result['error']['code']}: {result['error']['cause']}", file=sys.stderr)
                     print(f"Next action: {result['error']['next_action']}", file=sys.stderr)
                 try:
+                    if arguments.operation == "complete" and code == 0:
+                        from .publication import barrier
+                        barrier(load_config(Path(arguments.config or ".agents/context/config.json")), Path.cwd().resolve(), "after_completion")
                     if arguments.json_output:
                         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
                     else:
@@ -479,10 +486,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                         if "check_receipts" in result:
                             print(json.dumps(result["check_receipts"], indent=2, sort_keys=True))
                     sys.stdout.flush()
+                    if arguments.operation == "complete" and code == 0:
+                        from .lifecycle import settle_output
+                        settle_output(result, arguments.config, delivered=True, store=store)
                 except BrokenPipeError:
                     from .lifecycle import failed_output
                     failed_output(result, arguments.config, store=store)
                     return 1
+                except (LifecycleError, ConfigurationError, OSError) as exc:
+                    print(f"agent-brain: DELIVERY_RECONCILIATION_REQUIRED: {exc}", file=sys.stderr)
+                    return 1
+                except KeyboardInterrupt:
+                    import signal
+                    signal.signal(signal.SIGINT, signal.SIG_IGN)
+                    error = LifecycleError("INTERRUPTED", "unfinished completion output remains pending", exit_code=130)
+                    if arguments.json_output:
+                        print(json.dumps(error_result(error), sort_keys=True))
+                    print("agent-brain: INTERRUPTED: pending output reconciliation is retained.", file=sys.stderr)
+                    return 130
                 return code
         _print_error(
             "ACTIVE_CONTEXT_REQUIRED",

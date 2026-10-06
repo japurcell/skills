@@ -299,7 +299,7 @@ def validate_state(record: dict) -> None:
             identity(obligation_id)
             object_fields(obligation, {"id", "kind", "scope", "input_generation", "status", "stage_outcome",
                                       "attempt_count", "semantic_repairs", "assigned_agent_id", "check_receipts"})
-            if obligation["id"] != obligation_id or obligation["kind"] not in ("learn", "child_review") or obligation["status"] not in ("pending", "active", "completed") or obligation["stage_outcome"] not in ("no_change", "incomplete"):
+            if obligation["id"] != obligation_id or obligation["kind"] not in ("learn", "child_review") or obligation["status"] not in ("pending", "active", "completed") or obligation["stage_outcome"] not in ("no_change", "changed", "incomplete"):
                 raise ValueError("invalid durable obligation")
             scope(obligation["scope"])
             integer(obligation["input_generation"], 1)
@@ -315,6 +315,17 @@ def validate_state(record: dict) -> None:
                 integer(obligation["owner_generation"], 1)
             if "prepared" in obligation:
                 revision(obligation["prepared"])
+            if "publication" in obligation:
+                publication = object_fields(obligation["publication"], {"id", "history_path", "status", "affected_ids", "paths"})
+                identity(publication["id"])
+                text(publication["history_path"])
+                if publication["status"] not in ("prepared", "intent", "checked", "published", "completed", "reversed", "conflict"):
+                    raise ValueError("invalid durable publication status")
+                for field in ("affected_ids", "paths"):
+                    if not isinstance(publication[field], list):
+                        raise ValueError("invalid durable publication members")
+                    for part in publication[field]:
+                        identity(part) if field == "affected_ids" else text(part)
             if not isinstance(obligation["check_receipts"], list):
                 raise ValueError("invalid durable receipts")
             for receipt in obligation["check_receipts"]:

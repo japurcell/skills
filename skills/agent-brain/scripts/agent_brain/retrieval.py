@@ -84,6 +84,7 @@ def retrieve(
         select(startup_read.id, startup_read.loading_mode, mandatory=True)
 
     has_task_scope = bool(scope.query) or any(scope.selectors.get(field) for field in SCOPE_FIELDS)
+    uncertain_fields: set[str] = set()
     if not has_task_scope and not scope.all_guidance:
         routed = [unit for unit in by_id.values()
                   if unit.kind == "policy" and unit.status == "established"
@@ -223,6 +224,17 @@ def retrieve(
         )
 
     artifacts = _delivery_artifacts(selected, knowledge, whole_unit_revisions)
+    startup_ids = {item.id for item in config.startup}
+    def affected(issue):
+        if issue.code != "ABM007" or issue.path not in knowledge.unavailable:
+            return True
+        units = knowledge.unavailable[issue.path]
+        if not units:
+            return True
+        return scope.all_guidance or any(unit.id in startup_ids or (
+            _matches_scope(unit, scope, uncertain_fields=uncertain_fields) if has_task_scope
+            else unit.kind == "policy" and all(not values for values in unit.applies.values())) for unit in units)
+    issues = [issue for issue in issues if affected(issue)]
     gaps = tuple(_gap(issue) for issue in _deduplicate_issues(issues))
     has_blocking_gap = any(gap["code"] != "ABM010" for gap in gaps)
     recall = RecallResult(

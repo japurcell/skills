@@ -11,6 +11,94 @@
     "work_session_status"
   ],
   "properties": {
+      "publication": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "history_path",
+          "status",
+          "affected_ids",
+          "paths"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "history_path": {
+            "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+          },
+          "status": {
+            "enum": [
+              "prepared",
+              "intent",
+              "published",
+              "checked",
+              "completed",
+              "reversed",
+              "conflict"
+            ]
+          },
+          "affected_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+            }
+          }
+        }
+      },
+      "publication_recovery": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "history_path",
+          "status",
+          "affected_ids",
+          "paths"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "history_path": {
+            "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+          },
+          "status": {
+            "enum": [
+              "prepared",
+              "intent",
+              "published",
+              "checked",
+              "completed",
+              "reversed",
+              "conflict"
+            ]
+          },
+          "affected_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+            }
+          }
+        }
+      },
     "stage": {"enum": ["learn", "dream"]},
     "operation": {"enum": ["start", "prepare", "publish", "complete"]},
     "schema_version": {
@@ -26,6 +114,7 @@
       "enum": [
         "completed",
         "no_change",
+        "changed",
         "incomplete"
       ]
     },

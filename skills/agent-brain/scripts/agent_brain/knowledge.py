@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from collections import Counter
 from pathlib import Path
 
@@ -17,6 +17,7 @@ class KnowledgeBase:
     issues: tuple[MetadataIssue, ...]
     documents: dict[str, str]
     contained_ids: dict[str, tuple[str, ...]]
+    unavailable: dict[str, tuple[GuidanceUnit, ...]] = field(default_factory=dict)
 
 
 def validate_guidance_references(knowledge: KnowledgeBase) -> tuple[MetadataIssue, ...]:
@@ -41,7 +42,7 @@ def validate_guidance_references(knowledge: KnowledgeBase) -> tuple[MetadataIssu
     return tuple(issues)
 
 
-def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> KnowledgeBase:
+def load_knowledge(config: AgentBrainConfig, *, repository_root: Path, ignore_publication: bool = False, state_store=None) -> KnowledgeBase:
     repository = repository_root.resolve(strict=True)
     root_paths: list[tuple[str, Path]] = []
     issues: list[MetadataIssue] = []
@@ -58,6 +59,29 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> Knowle
         root_paths.append((root.path, resolved))
 
     documents: dict[str, str] = {}
+    blocked: set[str] = set()
+    unavailable: dict[str, tuple[GuidanceUnit, ...]] = {}
+    if not ignore_publication:
+        from .history import pending
+        from .state import LifecycleError
+        try:
+            publication = pending(repository, config, state_store)
+            blocked = set(publication["paths"]) if publication else set()
+            if publication:
+                from .history import read
+                journal = read(repository, publication["history_path"])
+                current = load_knowledge(config, repository_root=repository, ignore_publication=True)
+                for item in journal["changes"]:
+                    units = [unit for unit in current.units if unit.path == item["path"]]
+                    for content in (item["before"], item["after"]):
+                        if content is not None:
+                            parsed, _ = parse_document_metadata(item["path"], content)
+                            units.extend(parsed)
+                    unavailable[item["path"]] = tuple(units)
+        except LifecycleError:
+            blocked = {path.relative_to(repository).as_posix() for _, owner in root_paths for path in owner.rglob("*.md")}
+        for path in sorted(blocked):
+            issues.append(MetadataIssue("ABM007", path, 1, 1, "publication/recovery pending; affected guidance is unavailable"))
     for root_name, resolved_root in root_paths:
         candidates = sorted(resolved_root.rglob("*.md")) if resolved_root.is_dir() else []
         for candidate in candidates:
@@ -72,6 +96,8 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> Knowle
                                             "guidance file resolves outside its declared knowledge root"))
                 continue
             relative = _repo_relative(repository, candidate)
+            if relative in blocked:
+                continue
             if relative in documents:
                 continue
             content, issue = _read_utf8(relative, resolved)
@@ -87,6 +113,8 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> Knowle
         issues.extend(parse_issues)
 
     for mapped in config.mapped_units:
+        if mapped.path in blocked:
+            continue
         content = documents.get(mapped.path)
         if content is None:
             artifact = repository / Path(*mapped.path.split("/"))
@@ -135,7 +163,7 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> Knowle
     for unit in units:
         ids_by_path.setdefault(unit.path, []).append(unit.id)
     contained_ids = {path: tuple(dict.fromkeys(ids)) for path, ids in ids_by_path.items()}
-    return KnowledgeBase(tuple(units), tuple(issues), documents, contained_ids)
+    return KnowledgeBase(tuple(units), tuple(issues), documents, contained_ids, unavailable)
 
 
 def _repo_relative(repository: Path, path: Path) -> str:

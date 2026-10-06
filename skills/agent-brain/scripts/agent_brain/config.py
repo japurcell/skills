@@ -105,7 +105,7 @@ def load_config(path: Path) -> AgentBrainConfig:
 
     root = _object(value, "configuration")
     required = {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"}
-    optional = {"providers", "checks", "limits", "state_dir"}
+    optional = {"providers", "checks", "limits", "state_dir", "history_dir"}
     _keys(root, "configuration", required | (root.keys() & optional))
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
         raise ConfigurationError("configuration schema_version must be 1")
@@ -226,13 +226,16 @@ def load_config(path: Path) -> AgentBrainConfig:
         startup.append(StartupRead(unit_id, item["loading_mode"]))  # type: ignore[arg-type]
 
     providers, checks, limits, state_dir = _lifecycle_fields(root)
+    history_dir = _relative_path(root.get("history_dir", ".agents/context/history"), "history_dir")
+    if history_dir == state_dir or history_dir.startswith(state_dir + "/") or state_dir.startswith(history_dir + "/"):
+        raise ConfigurationError("portable history_dir must be separate from ignored runtime state_dir")
     return AgentBrainConfig(
         schema_version=1,
         repository_id=repository_id,
         knowledge_roots=tuple(roots),
         mapped_units=tuple(units),
         startup=tuple(startup),
-        providers=providers, checks=checks, limits=limits, state_dir=state_dir,
+        providers=providers, checks=checks, limits=limits, state_dir=state_dir, history_dir=history_dir,
     )
 
 

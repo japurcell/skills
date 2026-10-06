@@ -65,8 +65,8 @@ def merge_scope(left: dict, right: dict) -> dict[str, list[str]]:
     return {field: sorted(set(left.get(field, [])) | set(right.get(field, []))) for field in SCOPE_FIELDS}
 
 
-def guidance(config: AgentBrainConfig, root: Path, scope: dict) -> dict:
-    result = retrieve(config, load_knowledge(config, repository_root=root),
+def guidance(config: AgentBrainConfig, root: Path, scope: dict, *, ignore_publication: bool = False, store: StateStore | None = None) -> dict:
+    result = retrieve(config, load_knowledge(config, repository_root=root, ignore_publication=ignore_publication, state_store=store),
         RetrievalScope(None, {field: tuple(scope.get(field, [])) for field in SCOPE_FIELDS}))
     return result.recall.as_json_object()
 
@@ -168,7 +168,7 @@ def agent_key(integration_id: str, provider_agent_id: str) -> str:
 
 def project_obligation(item: dict) -> dict:
     fields = ("id", "kind", "status", "stage_outcome", "input_generation", "attempt_count",
-              "semantic_repairs", "owner_agent_id", "owner_generation", "scope", "reason", "check_receipts")
+              "semantic_repairs", "owner_agent_id", "owner_generation", "scope", "reason", "check_receipts", "publication")
     return {field: item[field] for field in fields if field in item}
 
 
@@ -192,6 +192,12 @@ def inspection(config: AgentBrainConfig, root: Path) -> dict:
         if not store.path.exists() and not store.marker.exists():
             return result
         state = store.read()
+        if local_path(root, config.state_dir + "/output-pending.json").exists():
+            raise LifecycleError("DELIVERY_RECONCILIATION_REQUIRED", "unfinished output settlement is retained; next eligible event restores authority/context", exit_code=1)
+        from .history import pending
+        outstanding = pending(root, config, store)
+        if outstanding:
+            result["publication_recovery"] = outstanding
         if state["repository_id"] != config.repository_id:
             raise LifecycleError("STATE_UNAVAILABLE", "repository identity differs from expected local state", exit_code=1)
         result.update(state_status="available", worktree_id=state["worktree_id"],
@@ -235,15 +241,22 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
     state = store.read()
     if state["repository_id"] != config.repository_id or state["repository_root"] != actual_repository:
         raise LifecycleError("BINDING_INVALID", "expected durable repository identity differs")
+    recovery = None
+    from .publication import recover
+    if event["event"] in ("startup", "task", "resume", "recover", "context_lost"):
+        reconcile_output(store, config, config_path)
+        state = store.read()
+        recovery = recover(store, config, config_path, allow_checks=provider["kind"] == "protocol_fixture")
+        state = store.read()
     key = session_key(str(event["integration"]["id"]), event["binding"])
     akey = agent_key(str(event["integration"]["id"]), event["binding"]["provider_agent_id"])
     previous = state["sessions"].get(key)
     scope = merge_scope(previous["scope"] if previous else {}, event["scope"])
-    aggregate_guidance = guidance(config, root, scope)
+    aggregate_guidance = guidance(config, root, scope, store=store)
     previous_agent = previous["agents"].get(akey) if previous else None
     is_child = event["event"] == "child_start" or bool(previous_agent and previous_agent["parent"])
     assigned_scope = merge_scope(previous_agent["scope"] if previous_agent else {}, event["scope"])
-    delivery = guidance(config, root, assigned_scope) if is_child else aggregate_guidance
+    delivery = guidance(config, root, assigned_scope, store=store) if is_child else aggregate_guidance
     revision = inputs(config, root, str(event["integration"]["config_revision"]), scope, aggregate_guidance)
 
     def update(record: dict) -> tuple[dict, int]:
@@ -359,6 +372,8 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
         invocation_path.parent.mkdir(mode=0o700, exist_ok=True)
         write_private(invocation_path, private)
     result["sqlite_capabilities"] = store.capabilities
+    if recovery:
+        result["publication_recovery"] = recovery
     return result, code, store
 
 
@@ -491,7 +506,7 @@ def active_invocation(path_argument: str | None, config_argument: str | None,
         raise LifecycleError("BINDING_INVALID", "durable identity differs from the actual worktree")
     binding = validate_invocation(state, handle, stage, config, root, config_path)
     _, session, _, _ = binding
-    current = guidance(config, root, session["scope"])
+    current = guidance(config, root, session["scope"], ignore_publication=bool(binding[3].get("publication")), store=store)
     if inputs(config, root, file_revision(config_path), session["scope"], current) != session["input_revision"]:
         raise LifecycleError("INPUTS_STALE", "relevant inputs changed; restore guidance at the next eligible event")
     return store, state, handle, config, config_path, binding
@@ -541,26 +556,35 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
                     config_argument: str | None, input_argument: str | None) -> tuple[dict, int, StateStore]:
     store, state, handle, config, config_path, binding = active_invocation(path_argument, config_argument, stage)
     invocation, session, agent, obligation = binding
+    if stage == "learn":
+        if operation in ("publish", "complete") and obligation.get("publication"):
+            if input_argument is not None:
+                raise LifecycleError("PUBLICATION_INPUT_UNEXPECTED", "publish/complete use the exact prepared set without replacement input")
+            from .stages import changed_operation
+            return changed_operation(operation, store, state, handle, config, config_path, binding, None)
     if operation == "start":
         result = event_result(state, session, agent, None, "none")
         result.update(stage=stage, operation=operation, attempt_id=invocation["attempt_id"], ownership_generation=invocation["owner_generation"])
         result["work_package"] = {"obligation": project_obligation(obligation), "scope": obligation["scope"],
             "procedure": procedure("learn"), "next_operation": "prepare",
-            "guidance": guidance(config, store.root, obligation["scope"])}
+            "guidance": guidance(config, store.root, obligation["scope"], store=store)}
         return result, 0, store
     if operation not in ("prepare", "complete"):
-        raise LifecycleError("OPERATION_UNAVAILABLE", "publication and dream implementation belong to later milestones")
+        raise LifecycleError("OPERATION_UNAVAILABLE", "publish requires an exact prepared change set")
     if input_argument is None:
-        raise LifecycleError("INPUT_REQUIRED", "a scoped no-change review is required")
+        raise LifecycleError("INPUT_REQUIRED", "an evidenced proposal or scoped no-change review is required")
     state, binding = retry_attempt(store, state, handle, stage, config, config_path, binding)
     invocation, session, agent, obligation = binding
     from .checks import checked_review
-    current = guidance(config, store.root, obligation["scope"])
+    current = guidance(config, store.root, obligation["scope"], store=store)
     try:
         if input_argument == "-":
             sys.stdin.reconfigure(encoding="utf-8", errors="strict")
         source = sys.stdin.read(1024 * 1024 + 1) if input_argument == "-" else Path(input_argument).read_text(encoding="utf-8")
         payload = read_json(source)
+        if stage == "learn" and payload.get("outcome") == "changed":
+            from .stages import changed_operation
+            return changed_operation(operation, store, state, handle, config, config_path, binding, payload)
         checks, review_revision = checked_review(payload, config, store.root, obligation["scope"], current)
     except KeyboardInterrupt:
         def interrupted(record: dict) -> None:
@@ -577,9 +601,11 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
         raise LifecycleError("REVIEW_NOT_PREPARED", "the current review has not been prepared by configured checks", exit_code=1)
     # No transaction spans the foreground checks. Re-read actual input files
     # and authority again before saving their attributable receipts.
-    latest = guidance(config, store.root, session["scope"])
+    latest = guidance(config, store.root, session["scope"], store=store)
     if inputs(config, store.root, file_revision(config_path), session["scope"], latest) != session["input_revision"]:
         raise LifecycleError("INPUTS_STALE", "relevant inputs changed while checks ran", exit_code=1)
+    if operation == "complete":
+        mark_output_pending(store, identities(state, session, agent), session["input_generation"], agent["context_generation"])
 
     def update(record: dict) -> tuple[dict, int]:
         inv, current_session, current_agent, current_obligation = validate_invocation(record, handle, stage, config, store.root, config_path)
@@ -709,6 +735,9 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
     except KeyboardInterrupt:
         result, code = error_result(LifecycleError("INTERRUPTED", "interrupted operation preserves pending work", exit_code=130)), 130
     try:
+        if result.get("publication_recovery", {}).get("status") == "completed":
+            from .publication import barrier
+            barrier(load_config(Path(args.config).absolute()), Path.cwd().resolve(), "before_bridge_output")
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         sys.stdout.flush()
         if result.get("delivery") is not None:
@@ -719,6 +748,12 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
     except (LifecycleError, ConfigurationError, OSError) as exc:
         print(f"agent-brain: DELIVERY_INCOMPLETE: {exc}", file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        import signal
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        print(json.dumps(error_result(LifecycleError("INTERRUPTED", "unfinished bridge output remains pending", exit_code=130)), sort_keys=True))
+        print("agent-brain: INTERRUPTED: pending output reconciliation is retained.", file=sys.stderr)
+        return 130
     return code
 
 
@@ -734,6 +769,9 @@ def settle_output(result: dict, config_argument: str | None, *, delivered: bool,
     root = Path.cwd().resolve()
     config = load_config(Path(config_argument or ".agents/context/config.json"))
     store = store or StateStore(root, config.state_dir, float(config.limits["contention_seconds"]))
+    output_marker = local_path(root, config.state_dir + "/output-pending.json")
+    if output_marker.exists():
+        read_output_pending(output_marker)
     state = store.read()
 
     def update(record: dict) -> None:
@@ -752,18 +790,66 @@ def settle_output(result: dict, config_argument: str | None, *, delivered: bool,
             if obligation.get("owner_agent_id") == agent["id"]:
                 obligation.update(status="pending", stage_outcome="incomplete", reason="foreground output delivery failed")
                 obligation.pop("prepared", None)
+                if not local_path(root, config.state_dir + "/publication.json").exists():
+                    obligation.pop("publication", None)
         if session["status"] not in ("paused", "cancelled"):
             session["status"] = "incomplete"
             if session["checkpoint"] == "completed":
                 session["checkpoint"] = "ready_to_complete"
     store.change(state["revision"], update)
+    if output_marker.exists():
+        marker = read_output_pending(output_marker)
+        if (marker["identities"] == identity and marker["input_generation"] == result["input_generation"]
+                and marker["context_generation"] == result["context_generation"]):
+            output_marker.unlink()
+            from .history import sync_directory
+            sync_directory(output_marker.parent)
+
+
+def mark_output_pending(store: StateStore, identity: dict, input_generation: int, context_generation: int) -> None:
+    from .history import sync_directory
+    marker = local_path(store.root, str(store.directory.relative_to(store.root)) + "/output-pending.json")
+    write_private(marker, {"identities": identity, "input_generation": input_generation, "context_generation": context_generation})
+    sync_directory(marker.parent)
+
+
+def read_output_pending(path: Path) -> dict:
+    from .config import _uuid
+    try:
+        raw = path.read_bytes()
+        if len(raw) > 16 * 1024:
+            raise ValueError("pending output record exceeds finite bound")
+        marker = read_json(raw.decode("utf-8"))
+        _keys(marker, "pending output", {"identities", "input_generation", "context_generation"})
+        identity = _object(marker["identities"], "pending identities")
+        _keys(identity, "pending identities", {"repository_id", "worktree_id", "work_session_id", "task_id", "agent_id"})
+        for field, value in identity.items():
+            _uuid(value, field)
+        for field in ("input_generation", "context_generation"):
+            if type(marker[field]) is not int or marker[field] < 1:
+                raise ValueError("invalid pending generation")
+        return marker
+    except (LifecycleError, ValueError, TypeError, OSError, RecursionError) as exc:
+        raise LifecycleError("DELIVERY_RECONCILIATION_REQUIRED", "preserve missing/corrupt pending output record; unfinished delivery is unavailable", exit_code=1) from exc
+
+
+def reconcile_output(store: StateStore, config: AgentBrainConfig, config_path: Path) -> None:
+    marker = local_path(store.root, config.state_dir + "/output-pending.json")
+    if marker.exists():
+        result = read_output_pending(marker)
+        settle_output(result, str(config_path), delivered=False, store=store)
 
 
 def failed_output(result: dict, config_argument: str | None, *, store: StateStore | None = None) -> None:
+    reconciled = False
     try:
+        if store and result.get("identities"):
+            mark_output_pending(store, result["identities"], result["input_generation"], result["context_generation"])
         settle_output(result, config_argument, delivered=False, store=store)
+        reconciled = True
     except (LifecycleError, ConfigurationError, OSError):
         print("agent-brain: DELIVERY_RECONCILIATION_REQUIRED: preserve pending work and restore context at an eligible event.", file=sys.stderr)
     with open(os.devnull, "w", encoding="utf-8") as sink:
         os.dup2(sink.fileno(), sys.stdout.fileno())
-    print("agent-brain: DELIVERY_INCOMPLETE: output closed; authority revoked and pending work retained.", file=sys.stderr)
+    message = "authority revoked and pending work retained" if reconciled else "reconciliation unavailable; retain pending work and recover at an eligible event"
+    print(f"agent-brain: DELIVERY_INCOMPLETE: output closed; {message}.", file=sys.stderr)

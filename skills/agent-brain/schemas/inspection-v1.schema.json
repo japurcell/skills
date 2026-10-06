@@ -9,6 +9,25 @@
     "config_present", "runtime_state_path", "runtime_state_present", "active_context", "model_execution", "checks"
   ],
   "properties": {
+      "publication_recovery": {
+        "type": "object",
+        "required": [
+          "history_path",
+          "paths"
+        ],
+        "properties": {
+          "history_path": {
+            "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
     "schema_version": {"const": 1},
     "operation_status": {"const": "ok"},
     "command": {"enum": ["doctor", "status"]},
