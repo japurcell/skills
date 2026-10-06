@@ -1,8 +1,8 @@
 # Skill Audit Findings
 
-Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`; quality/harness source revision: `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
+Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`; quality/harness source revision: `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`. Requirements/planning source revision: `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
 
-Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. All thirty-two findings have recorded human dispositions, including QH-001 through QH-010 on 2026-10-06. Accepted repairs remain later plan scope; thirteen underlying decisions remain pending and unblocked, including DD-004 and seven quality/harness routes. Retention selects no underlying behavior. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
+Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. All thirty-two earlier findings have recorded human dispositions, including QH-001 through QH-010 on 2026-10-06. Five requirements/planning findings await live batch review. Accepted repairs remain later plan scope; thirteen underlying decisions remain pending and unblocked, including DD-004 and seven quality/harness routes. Retention selects no underlying behavior. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
 
 ## Proposal index
 
@@ -40,6 +40,11 @@ Applicability, adoption disposition, compliance, proposal status, and implementa
 | [QH-008](#qh-008-harness-eval-artifact-writes-conflict-with-the-absolute-read-only-statement) | Harness eval artifact writes conflict with the absolute read-only statement | Pending separate decision | [Resolve Harness Analysis Report Capture](tickets/resolve-harness-analysis-report-capture.md) |
 | [QH-009](#qh-009-improve-repo-harness-has-unresolved-recommendation-versus-execution-intent) | Improve Repo Harness has unresolved recommendation versus execution intent | Pending separate decision | [Define Improve Repo Harness Intent](tickets/define-improve-repo-harness-intent.md) |
 | [QH-010](#qh-010-adversarial-typo-oracle-leaves-explicit-invocation-versus-need-assessment-unresolved) | Adversarial typo oracle leaves explicit invocation versus need assessment unresolved | Pending separate decision | [Resolve Adversarial Trivial Review Intent](tickets/resolve-adversarial-trivial-review-intent.md) |
+| [RPT-001](#rpt-001-spec-evaluations-require-obsolete-schema-and-horizontal-tasks) | Spec evaluations require obsolete schema and horizontal tasks | Pending human batch review | Proposed later evaluation scope; exact fixtures/oracles required |
+| [RPT-002](#rpt-002-to-issues-names-an-unshipped-setup-helper) | To Issues names an unshipped setup helper | Pending human batch review | [Resolve To Issues Tracker Setup](tickets/resolve-to-issues-tracker-setup.md) |
+| [RPT-003](#rpt-003-architecture-contest-conflicts-with-explores-narrow-branch) | Architecture Contest conflicts with Explore's narrow branch | Pending human batch review | [Resolve Architecture Contest Narrow Exploration](tickets/resolve-architecture-contest-narrow-exploration.md) |
+| [RPT-004](#rpt-004-architecture-evaluations-bind-local-absolute-fixture-paths) | Architecture evaluations bind local absolute fixture paths | Pending human batch review | Proposed later evaluation scope; exact fixtures/oracles required |
+| [RPT-005](#rpt-005-ui-planning-prescribes-an-unshipped-browser-helper) | UI planning prescribes an unshipped browser helper | Pending human batch review | [Resolve Planning Browser Verification Prerequisite](tickets/resolve-planning-browser-verification-prerequisite.md) |
 
 ## Pending decisions and approval
 
@@ -56,6 +61,8 @@ The human accepted DD-001/DD-002/DD-003/DD-005 for later planning on 2026-10-06:
 The human accepted all three Quality and Harness planning questions on 2026-10-06 in the [batch Resolution](tickets/review-quality-and-harness-skills.md#resolution). QH-001/QH-007 are accepted later evaluation scope; SAG-011 adds only Harness Analysis sidecar wording. Eight findings retain seven separate intent/contract routes, now unblocked by batch closure. All six earlier decisions remain pending as well: thirteen underlying routes remain visible in both final documents. Genuinely dependent work stays pending. No proposal was rejected or deferred.
 
 The human also accepted exactly Adversarial Review, Code Review and Harness Analysis graders as additional SAG-008 metric producers and DD-004 protocol targets, retaining original scope. SAG-008 now has eight producers and DD-004 five graders. Metric representation, statuses, exits, schemas and consumer compatibility remain unresolved; useful predicates and measured character counts remain protected. Improve Repo Harness sidecar meaning stays with QH-009 and is not added to SAG-011. SAG-001/SAG-012 analogies do not expand accepted scope. No implementation permission, evidence waiver or residual-risk acceptance was given.
+
+Five Requirements and Task Planning findings await live review. RPT-001/RPT-004 propose contract-preserving evaluation repairs. RPT-002/RPT-003/RPT-005 have three precise proposed decision routes blocked by their batch. These routes join the thirteen earlier pending decisions for sixteen visible underlying questions; their retention and underlying choices are not approved by this source checkpoint. Spec to Tasks is also a proposed exact addition to SAG-008/DD-004; current accepted target counts remain eight metric producers and five protocol graders. Both final documents must expose all pending IDs and routes. No behavior, target expansion or evidence waiver is selected.
 
 ## Findings
 
@@ -156,6 +163,8 @@ The human also accepted exactly Adversarial Review, Code Review and Harness Anal
 - Human status: the human confirmed a separate pending decision on 2026-10-05. The authority or design choice remains unresolved. No implementation approval, evidence waiver, or residual-risk acceptance.
 - Owning decision: [Question](tickets/choose-unknown-benchmark-metric-representation.md). Affected implementation stays pending until that choice is resolved or explicitly deferred with independent scope.
 - Additional evidence and accepted producer scope: `skills/adversarial-review/evals/grade_benchmark.py:28,37-41`, `skills/code-review/evals/grade_benchmark.py:38,48-58` and `skills/harness-analysis/evals/grade_benchmark.py:166-177` zero-fill unmeasured metrics. Preserve actually computed output/transcript character counts. The human accepted these three additions on 2026-10-06 in the Quality and Harness review, retaining the original five for eight targets. Representation remains unresolved. Source baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; static only.
+
+- Additional static evidence, proposed producer scope only: `skills/spec-to-tasks/evals/grade_benchmark.py:52,62-72` defaults missing timing and unmeasured tool calls/steps/errors/grader duration to zero. Preserve actually computed output/transcript character counts (:44-50). Adding exactly this producer awaits live Requirements and Task Planning scope acceptance; the accepted eight targets and pending representation remain unchanged. Baseline `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; static only.
 
 ### SAG-009: Capped/unscoped AGENTS discovery
 
@@ -316,6 +325,8 @@ The human also accepted exactly Adversarial Review, Code Review and Harness Anal
 - Owning decision: [Define Benchmark Grader Failure Outcomes](tickets/define-benchmark-grader-failure-outcomes.md). Exact failure-status, exit-code and result-schema changes remain pending; retain this ID and route in both final documents.
 - Additional evidence and accepted protocol target scope: `skills/adversarial-review/evals/grade_benchmark.py:10-12,28,49,62-64,90-102` has JSON-shape assumptions and no-run success; `skills/code-review/evals/grade_benchmark.py:19-26,38,78-86,94-105,227-242` adds shape/no-run and first-known-output identity issues. `skills/harness-analysis/evals/grade_benchmark.py:198-200,207-218` uses directory identity and has no-run success; :212 matches only `*_skill` configurations and repeats `without_skill`. `old_skill` is matched, while other explicit baseline names can be omitted. The human accepted these three target additions on 2026-10-06, retaining the original two for five graders. The status/exit/schema protocol remains unresolved. Preserve valid artifact checks. Source baseline `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; static only.
 
+- Additional static evidence, proposed protocol target only: `skills/spec-to-tasks/evals/grade_benchmark.py:17-20,27-30,52,91-94,116-117,132-138,163-170,405-416,464-475` has JSON-shape assumptions, potentially invalid story/timing/metadata records, unidentified-eval skipping and no-run success. First-known-output selection (:102-111) can choose a stale path before the requested generated path. Adding exactly this grader awaits live Requirements and Task Planning scope acceptance; the accepted five targets and pending status/exit/schema/compatibility contract remain unchanged. Preserve useful predicates and separate valid-task oracle repair from invalid/no-output protocol choices. Baseline `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no grader executed.
+
 ### DD-005: Explore grader contains prohibited blank-line whitespace
 
 - Checks/applicability/disposition: R12; repository source formatting; adopt.
@@ -445,3 +456,63 @@ The human also accepted exactly Adversarial Review, Code Review and Harness Anal
 - Human status: separate pending decision retained by the human on 2026-10-06. The underlying contract remains unresolved; the closed batch unblocks its route without selecting behavior. No implementation authorization, evidence waiver or residual-risk acceptance.
 - Source configuration: static source review at `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`; no behavioral model/client run. Source-review delegation is not native baseline evidence.
 - Owning decision: [Resolve Adversarial Trivial Review Intent](tickets/resolve-adversarial-trivial-review-intent.md), unblocked by the closed [batch review](tickets/review-quality-and-harness-skills.md#resolution). Both final audit and ExecPlan must expose this ID and route; genuinely dependent work remains pending.
+
+
+### RPT-001: Spec evaluations require obsolete schema and horizontal tasks
+
+- Checks: A17/A18/A19/A22/A29/R06/R11; adapt criteria/oracles to maintained output and end-to-end slices.
+- Exact evidence: skills/spec-to-tasks/SKILL.md:23-31,53-62,94-100; references/task-schema.md:9-55 specify tasks.json/tasks/T001 and no automatic dependency/batch fields. evals/evals.json:6-15,21-29,35-42,47-52 ask for prd.json/user stories, dependsOn/parallelBatch, extra summary and storage/backend/UI splits. grade_benchmark.py:102-117 loads only prd.json/userStories; :148-151 expects US IDs; :163-231 grades required dependency/batch fields; :302-439 encodes the mismatched scenarios.
+- Mechanism/consequence: compliant tasks.json can be rejected or ignored; obsolete horizontal decomposition is rewarded while end-to-end independent slices can fail the minimum/exact story or storage prerequisite oracle. Major severity; high confidence in source contradiction, predicted grading result not executed. Affected surface: repository benchmark consumers on any client.
+- Proposed change: align eval prompts, filenames, schema and rubric around current tasks contract and vertical slices; retain useful requirement coverage/known-command/UI checks and two fixture behavior requirements. Preserve names, task schema/output precedence, false defaults and final response. Exact fixture/oracle choices must be specified before later implementation; this report does not add dependsOn or change production tasks output.
+- Necessary validation: current-contract valid outputs, wrong schema/path, missing requirement, horizontal-only versus independently valuable prefactor and full vertical slice, raw requirements, safe/unsafe conflicts, known/unknown commands and UI/backend cases. Native workflow evidence must be separate from artifact validity. No observed configuration or grades exist; human status pending review.
+- Human status: pending live batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no behavioral model/client run.
+- Proposed route: later evaluation repair scope, subject to live acceptance, exact fixture/oracle design and genuine prerequisite decisions. No production output or execution boundary changes.
+
+
+### RPT-002: To Issues names an unshipped setup helper
+
+- Checks: A12/A19/A36/R04/C02; adapt prerequisite handling while preserving tracker/triage requirements.
+- Exact evidence: skills/to-issues/SKILL.md:11 requires /setup-matt-pocock-skills if tracker/triage vocabulary is missing. Maintained skills inventory has no skills/setup-matt-pocock-skills/SKILL.md and no other maintained entry references it. Both installers copy only current source skills (install.sh:40-55; install.ps1:251-276).
+- Mechanism/consequence: an agent entering the absent-context branch receives no shipped setup procedure; publishing with invented labels or wrong tracker would violate intended workflow. Major predicted consequence for that branch; high confidence in source absence, moderate confidence in host effect. All required clients; separately supplied host helper availability unverified.
+- Proposed decision: establish the supported prerequisite acquisition path or required external setup supply, then clarify the actual stop/request behavior. Making the named dependency optional or replacing it changes a protected contract and needs a separate human behavior choice. Do not infer permission to publish from invocation.
+- Necessary validation: missing tracker, missing labels, supported setup available/unavailable, denied authentication, live approval iteration and mocked dependency-order publication with parent non-mutation. No tracker fetch/publication or native failure observed; human status pending review.
+- Human status: pending live batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no behavioral model/client run.
+- Proposed owning decision: [Resolve To Issues Tracker Setup](tickets/resolve-to-issues-tracker-setup.md), blocked by the current batch. Retain this ID and route in both final documents; dependent behavior remains pending.
+
+
+### RPT-003: Architecture Contest conflicts with Explore's narrow branch
+
+- Checks: A19/A20/R04; adapt only after resolving caller/helper precedence.
+- Exact evidence: skills/architecture-design-contest/SKILL.md:39-41 requires 2+ code-explorer agents for an existing codebase using Explore. skills/explore/SKILL.md:13,32-33 requires direct reads and no agents for a narrow scope such as 1-3 known files. A contest limited to a known module or one request path in an existing repository satisfies both conditions. A mere minimum-two versus range-one-to-three is compatible and is not this finding.
+- Mechanism/consequence: following the unconditional contest count violates the narrow helper stop; following the helper violates the contest minimum. Major textual workflow conflict; high confidence in reachable branch, no runtime failure observed. All hosts with these required helpers.
+- Proposed decision: explicitly establish whether the contest mandate overrides narrow Explore, or the contest should use a different approved narrow method. Preserve the two-explorer/three-architect minima and roles until human choice; do not silently lower counts or make Explore optional.
+- Necessary validation: narrow known-file existing-code contest, broad existing-code contest, greenfield contest, exact routing/ownership, and design diversity/required own reads. Source clarification and native dispatch trace are separate. Human status pending review.
+- Human status: pending live batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no behavioral model/client run.
+- Proposed owning decision: [Resolve Architecture Contest Narrow Exploration](tickets/resolve-architecture-contest-narrow-exploration.md), blocked by the current batch. Retain this ID and route in both final documents; dependent behavior remains pending.
+
+
+### RPT-004: Architecture evaluations bind local absolute fixture paths
+
+- Checks: A12/A22/A34/A36/R11; adapt fixture provision to controlled source paths.
+- Exact evidence: skills/architecture-design-contest/evals/evals.json:9-13,27-31,56-60,73-78 contains /home/adam/dev/personal/skills paths. They differ from this task checkout and are unbundled external source dependencies. Scenarios 2/5 use no files. Prompt 3 refers to a repository installer but no isolated checkout contract exists.
+- Mechanism/consequence: eval provisioning can fail or read a competing/stale checkout, making claimed codebase-grounded comparisons unreproducible. Minor/high static confidence; predicted harness effect, no provision attempted. Required native Codex fixtures and other potential benchmark hosts.
+- Proposed change: explicitly provision repository/skill dependencies into an isolated fixture and use verified relative or parameterized fixture references, recording source/fixture hashes and discoverable skills. Preserve six scenario intents, controls, required independent agents and no-implementation boundary; exact fixture setup remains later design work.
+- Necessary validation: relocated checkout, missing dependency, rival same-name skill, untrusted source text, narrow/broad/greenfield cases and fresh sessions under enforceable permission isolation. No hard-coded-path fixture executed; human status pending review.
+- Human status: pending live batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no behavioral model/client run.
+- Proposed route: later evaluation repair scope, subject to live acceptance, exact fixture/oracle design and genuine prerequisite decisions. No production output or execution boundary changes.
+
+
+### RPT-005: UI planning prescribes an unshipped browser helper
+
+- Checks: A12/A31/A36/R04; qualified dependency mapping.
+- Exact evidence: skills/prd/SKILL.md:70,105 and skills/spec-to-tasks/SKILL.md:81-84; references/validation.md:17 require verification using playwright-cli skill. No skills/playwright-cli/SKILL.md exists in the maintained repository; the source selection routines do not provide it. Source absence is not universal host unavailability.
+- Mechanism/consequence: planning can mark outputs ready while prescribing a named verification prerequisite whose supply is not documented in this repository. The planning procedures prescribe acceptance-criterion text; they do not themselves require invoking that browser helper during PRD/task generation. A downstream execution agent could be blocked if the host does not supply it or might substitute without authority. Minor severity; high confidence in source fact, moderate in predicted downstream effect. All required clients for UI planning/execution consumers. No impossible operation or universal host absence is established.
+- Proposed decision: establish whether the literal named helper is intended as a required downstream dependency or prescribed verification wording with a supported host equivalent, then document verified external supply or approve the exact mapping. Preserve UI-visible verification and literal output contract until human decides whether helper identity may change. This is not permission to install a browser plugin or weaken verification.
+- Necessary validation: host with/without named helper, denied browser permissions, UI versus backend output, downstream verification and literal schema/criteria compatibility. No browser run observed; human status pending review.
+- Human status: pending live batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Source configuration: static source review at `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no behavioral model/client run.
+- Proposed owning decision: [Resolve Planning Browser Verification Prerequisite](tickets/resolve-planning-browser-verification-prerequisite.md), blocked by the current batch. Retain this ID and route in both final documents; dependent behavior remains pending.
