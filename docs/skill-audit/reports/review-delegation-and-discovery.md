@@ -1,6 +1,6 @@
 # Review Delegation and Discovery
 
-Started 2026-10-05. Source baseline: `991b14b86440dab452ac28312c5f05a2b4a42266`. Static source investigation complete; human proposal review and all runtime evidence remain pending. Source-review ownership was released before parent reconciliation.
+Started 2026-10-05. Source baseline: `991b14b86440dab452ac28312c5f05a2b4a42266`. Static source investigation and human proposal review are complete; runtime evidence remains pending. The human accepted the three review dispositions on 2026-10-06. Source-review ownership was released before parent reconciliation.
 
 ## Scope and evidence boundary
 
@@ -86,9 +86,9 @@ An initial consumer search used a glob that did not exclude nested workspace pat
 
 ## Findings and live review
 
-The single [finding register](../findings.md) owns all five records once. Static investigation is complete; the human has not reviewed their proposals. [DD-001](../findings.md#dd-001-explore-spawn-grading-omits-independent-area-assertions), [DD-002](../findings.md#dd-002-evaluation-setup-does-not-establish-required-prior-context-or-cache-hit), [DD-003](../findings.md#dd-003-official-source-graders-equate-text-mentions-with-citation-and-cache-evidence), [DD-004](../findings.md#dd-004-graders-can-announce-success-without-grading-runs-and-do-not-validate-json-shape), [DD-005](../findings.md#dd-005-explore-grader-contains-prohibited-blank-line-whitespace). DD-004's exact incomplete/invalid outcome protocol has a separate [failure-outcome decision](../tickets/define-benchmark-grader-failure-outcomes.md), blocked by this batch review. Existing five decision routes remain open and unblocked.
+The single [finding register](../findings.md) owns all five records once. The human accepted DD-001/DD-002/DD-003/DD-005 for later planning and retained DD-004's separate decision on 2026-10-06. The [batch Resolution](../tickets/review-delegation-and-discovery.md#resolution) owns the exact accepted scope and preserved contracts. DD-004's exact incomplete/invalid outcome protocol remains in the now-unblocked [failure-outcome decision](../tickets/define-benchmark-grader-failure-outcomes.md). All six underlying routes remain open and unblocked; no protocol or execution approval is implied.
 
-Two newly evidenced zero-filling producers are recorded under [SAG-008](../findings.md#sag-008-unmeasured-metrics-become-zero): Explore grader :49,59-70 and Official Sources grader :38,47-58. Including these targets in the existing [metric decision](../tickets/choose-unknown-benchmark-metric-representation.md) awaits human disposition; the representation remains unchosen. Analogous SAG-001/SAG-012 consumer links do not expand earlier accepted targets.
+Two newly evidenced zero-filling producers are recorded under [SAG-008](../findings.md#sag-008-unmeasured-metrics-become-zero): Explore grader :49,59-70 and Official Sources grader :38,47-58. The human accepted both additions to the existing [metric decision](../tickets/choose-unknown-benchmark-metric-representation.md), retaining its original three targets. Representation remains unchosen. Analogous SAG-001/SAG-012 consumer links do not expand earlier accepted targets.
 
 ## Positive results and unresolved evidence
 
@@ -98,7 +98,7 @@ Explore's three and Official Sources' six evals are inspectable scenario definit
 
 ## Static completion checkpoint
 
-Source reads/hashes, contracts, bounded consumer checks, candidate records and five independent 58-check matrices are complete. Static source investigation is complete with disclosed defects and evidence gaps. Human disposition and runtime evidence remain pending.
+Source reads/hashes, contracts, bounded consumer checks, candidate records and five independent 58-check matrices are complete. Static source investigation and human disposition are complete with disclosed defects and evidence gaps. Runtime evidence and underlying design decisions remain pending.
 
 Non-mutating record verification independently counted all five matrices as 58 unique catalog IDs in catalog order, 290 rows total, and rechecked all twenty-two hashes against current bytes. Both evaluation Python files parse as AST without importing or executing them. JSON/YAML data parsing and source whitespace inspection were scoped to this inventory. Parent independently checked the declared Git baseline; no primary source changed. Final report whitespace/table-shape checks passed. These checks verify the saved audit record, not grader behavior or native skill compliance. Parent owns shared finding/coverage/ticket reconciliation, human review, and the single end-of-session canonical document pass.
 
@@ -153,7 +153,7 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | S02 | Runtime controls/coordination | adapt | Static: resources/ownership, gate and mismatch recovery | SKILL.md:51-52,71,193-208 |  | No unexpected live access evidence |
 | S03 | Inputs/outputs may contain sensitive data | adapt | Partial: no secret literals in maintained inputs | Exact reviewed inventory; SKILL.md:8-59,65-110,152-248,258-308 |  | Real input/output redaction and exposure untested |
 | S04 | Source/dependency instruction trust | adapt | Unresolved: source is evidence, trust handling untested | SKILL.md:8-59,65-110,152-248,258-308; dependency section |  | No embedded-instruction adversarial trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Proposals preserve intent; human review pending |
+| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Human disposition complete; preserved contracts govern later work |
 | R02 | No invocation control or sidecar present | not applicable | Not applicable: stated condition absent | Reviewed primary inventory |  | No behavior claim |
 | R03 | No invented model approval, retain required approval | adopt | Static: route before preexisting/runtime-required approval | SKILL.md:25-29,179-189 |  | Native permission gate untested |
 | R04 | Mandatory routing and cross-batch delegation | adapt | Partial: router exists; consumer call sites checked | SKILL.md:17,85; consumer section |  | Dependent consumer full review belongs to owning batches |
@@ -216,7 +216,7 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | S02 | Provider source refresh and runtime inspection | adapt | Static: targets explicit and purpose-bound | reference/model-catalog.md:5-9,131-138; pricing.md:3,106 |  | Network refresh not run |
 | S03 | Inputs/outputs may contain sensitive data | adapt | Partial: no secret literals in maintained inputs | Exact reviewed inventory; SKILL.md:8-108,112-168 |  | Real input/output redaction and exposure untested |
 | S04 | External guidance/catalog authority | adapt | Static: source dates and evidence hierarchy qualify claims | SKILL.md:101-108; reference/model-catalog.md:115-138 |  | External content trust and fresh correctness untested |
-| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Proposals preserve intent; human review pending |
+| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Human disposition complete; preserved contracts govern later work |
 | R02 | No invocation control or sidecar present | not applicable | Not applicable: stated condition absent | Reviewed primary inventory |  | No behavior claim |
 | R03 | Explicit constraints/no extra model confirmation | adopt | Static: prior constraints honored; failed exact route stops | SKILL.md:34-48 |  | Host permissions remain separate from route |
 | R04 | Owned references and delegation consumer | adopt | Static: authoritative owners and exact output consumer agree | SKILL.md:73-79,164-168; delegate-to-subagents:98-110 |  | Other consumer runtime resolution untested |
@@ -279,7 +279,7 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | S02 | Notes/read-only agent investigation/grader writes | adapt | Static: bounded area and direct dependencies; utility output explicit | SKILL.md:13-17,21; grade_benchmark.py:185 |  | Scratchpad/source permissions untested |
 | S03 | Inputs/outputs may contain sensitive data | adapt | Partial: no secret literals in maintained inputs | Exact reviewed inventory; SKILL.md:8-17,21-38 |  | Real input/output redaction and exposure untested |
 | S04 | Source/dependency instruction trust | adapt | Unresolved: source is evidence, trust handling untested | SKILL.md:8-17,21-38; dependency section |  | No embedded-instruction adversarial trace |
-| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Proposals preserve intent; human review pending |
+| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Human disposition complete; preserved contracts govern later work |
 | R02 | No invocation control or sidecar present | not applicable | Not applicable: stated condition absent | Reviewed primary inventory |  | No behavior claim |
 | R03 | Approval/autonomy boundary | adapt | Static: present controls retained | Protected-contract table; SKILL.md:8-17,21-38 |  | Host permission behavior remains untested |
 | R04 | Required delegation for broad branch | adapt | Static: mandatory helper and role exist | SKILL.md:15; agents/code-explorer.md:1-20 |  | Full external consumers owned by requirements/execution batches |
@@ -342,7 +342,7 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | S02 | Official API URLs and third-party renderers | adapt | Partial: declared URLs, renderers only when available and safe | SKILL.md:19,23-27 |  | No renderer use, network trace or URL disclosure observed |
 | S03 | Inputs/outputs may contain sensitive data | adapt | Partial: no secret literals in maintained inputs | Exact reviewed inventory; SKILL.md:10-55 |  | Real input/output redaction and exposure untested |
 | S04 | External docs/cache provenance | adapt | Partial: official-source preference and weak-source exclusion | SKILL.md:14-25,37 |  | Third-party transformation/cache trust and embedded instructions untested |
-| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Proposals preserve intent; human review pending |
+| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Human disposition complete; preserved contracts govern later work |
 | R02 | No invocation control or sidecar present | not applicable | Not applicable: stated condition absent | Reviewed primary inventory |  | No behavior claim |
 | R03 | Material uncertainty/docs-versus-convention choice | adopt | Static: asks when material and preserves human conflict choice | SKILL.md:12,31 |  | No autonomy redesign proposed |
 | R04 | Useful delegation and optional Upgrade consumer | adapt | Static: helper call and optional consumer contract retained | SKILL.md:48; dotnet-upgrade/SKILL.md:19 |  | No Upgrade procedure activation; caller full review separate |
@@ -405,7 +405,7 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | S02 | No file/network/tool access instructed | not applicable | Not applicable: stated condition absent | SKILL.md:7-14 |  | No behavior claim |
 | S03 | Prior conversation and relevant rules | adapt | Partial: no secret literals; rationale scope is concise | SKILL.md:9-12 |  | Actual sensitive-data/context disclosure untested |
 | S04 | ARGUMENTS as action-bearing input | adapt | Static: explicit non-execution interpretation | SKILL.md:7 |  | Adversarial and host argument binding traces absent |
-| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Proposals preserve intent; human review pending |
+| R01 | Scope/name/trigger preservation | adopt | Static: exact contracts recorded | Protected-contract table; SKILL.md:2-3 |  | Human disposition complete; preserved contracts govern later work |
 | R02 | Both invocation controls | adopt | Static: frontmatter true and sidecar implicit false retained | SKILL.md:4; agents/openai.yaml:1-2 |  | No equivalent all-client enforcement claim |
 | R03 | Explanation-only autonomy | adopt | Static: never redo/reverse/carry out prior action | SKILL.md:7 |  | No consent to execute inferred |
 | R04 | No named skill/helper dependency | not applicable | Not applicable: stated condition absent | SKILL.md:7-14 |  | No behavior claim |
@@ -422,13 +422,15 @@ Each matrix contains every stable catalog ID exactly once. The catalog owns crit
 | C03 | Codex sidecar and invocation field adapter | adapt | Partial: two exact controls present; equivalence unverified | SKILL.md:4; agents/openai.yaml:1-2; dated provider comparison:18-21 | SAG-012 (analogous scope only) | Copilot VS Code/Gemini equivalence remains unverified static comparison |
 | C04 | Explicit activation and consent | adapt | Unresolved: invocation controls are not universal consent adapter | SKILL.md:4; agents/openai.yaml:1-2 |  | No tool operation requested; native activation behavior untested |
 
-## Parent record verification and documentation pass
+## Source-investigation record verification and documentation pass
 
 `rtk proxy python3 /private/tmp/skill-audit-verify-three-batches.py` passed: 26-ticket acyclic graph (nine closed, seventeen open, zero claimed), 928 rows, 76 unchanged primary inventory hashes, twenty-five additional fixture hashes, twenty-two unique findings with matching index, links/anchors, formatting, fog and unchanged protected sources. The first batch's 45-file inventory includes its bundled fixture files; later reports separately declare twenty-five fixture dependencies. These ownership categories do not add primary skill entry points. The five bounded dependency/Git-state checker and scoped diff checks also passed.
 
 Tool Guardian rejected a long inline check at 334 command tokens against its 256 limit. A disposable helper plus a short RTK command preserved the same checks. Its first fixture-classification assertion failed; explicit per-report inventory ownership corrected the checker and retained exact expected totals. A stale intro patch anchor was reread and corrected. These process corrections do not establish source defects or native failures.
 
 The formal Update Agent Docs pass added only a bounded grader-integrity pointer to `.agents/memory/known-issues/skills.md`, type Known Issue. Existing INDEX/FILE_MAP/instruction routes cover these files; no API, test strategy or routing changed. OKF loaded profile only; `rtk proxy ./scripts/lint-okf.py` exited 0 and the scoped canonical diff is exactly that pointer. Added: known-issues pointer. Changed: None. Split/moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. No skill source or audited workflow was changed or executed.
+
+The 2026-10-06 live-review closure reran record checks with the graph totals updated to ten closed/sixteen open, preserving all other assertions. Verification passed for coverage, hashes, findings, links, formatting and protected sources. Closure docs lint also passed; its sole canonical change clarifies that metric representation remains pending after producer scope acceptance. The [handoff](../handoff.md#documentation-pass-and-process-notes) records that pass and the inspectable-checker recovery. These are record checks, not native baselines or implementation acceptance.
 
 ## Source-review dispatch audit
 

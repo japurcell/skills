@@ -7,9 +7,9 @@
 
 ## Question
 
-How can the three included graders distinguish unmeasured metrics from measured zero while preserving supported benchmark consumers and the exclusion of imported helpers?
+How can the five included graders distinguish unmeasured metrics from measured zero while preserving supported benchmark consumers and the exclusion of imported helpers?
 
-The delegation/discovery review has found the same producer pattern in `skills/explore/evals/grade_benchmark.py:49,59-70` and `skills/official-sources/evals/grade_benchmark.py:38,47-58`. These are proposed additional consumer targets for this existing decision, awaiting that batch's live human disposition. Keep its original three targets and prior pending status intact. Evidence accumulation does not choose a representation or authorize producer/consumer edits.
+The human accepted the additional producer scope on 2026-10-06 in [Review Delegation and Discovery](review-delegation-and-discovery.md#resolution). The five targets are `skills/create-skill/evals/grade_benchmark.py`, `skills/improve-skill/evals/grade_benchmark.py`, `skills/self-improve/evals/grade_benchmark.py`, `skills/explore/evals/grade_benchmark.py` and `skills/official-sources/evals/grade_benchmark.py`. The original three targets remain included. Additional source anchors are Explore :49,59-70 and Official Sources :38,47-58. This scope acceptance does not choose a representation or authorize producer/consumer edits; the underlying decision remains pending.
 
 [SAG-008](../findings.md#sag-008-unmeasured-metrics-become-zero) owns the evidence. The graders supply literal zero for several unmeasured counts and times. A bounded imported-consumer check found defaults that turn omitted values into zero and arithmetic that expects numbers. Omitting fields or using null is not a verified compatible solution. No actual aggregation or viewer run established behavior.
 

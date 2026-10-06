@@ -7,7 +7,7 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 ## Notes
 
 - [Visual design overview](design-map.html) is a dated interactive view for discussion. The owning ticket resolutions remain authoritative; draft annotations do not change decisions or record approval.
-- [Coverage](coverage.md), [the first batch report](reports/review-skill-authoring-and-repository-guidance.md), [the repository-local report](reports/review-repository-local-workflows.md), [the delegation/discovery report](reports/review-delegation-and-discovery.md), and [the single findings register](findings.md) hold live evidence and proposal status. Static investigation covers sixteen skills; human proposal review covers eleven. Seventeen findings have recorded dispositions, while five new findings await live review. Five earlier separate questions remain open and unblocked; a sixth grader failure-outcome decision waits on the current batch review.
+- [Coverage](coverage.md), [the first batch report](reports/review-skill-authoring-and-repository-guidance.md), [the repository-local report](reports/review-repository-local-workflows.md), [the delegation/discovery report](reports/review-delegation-and-discovery.md), and [the single findings register](findings.md) hold live evidence and proposal status. Static investigation and human proposal review cover sixteen skills. All twenty-two findings have recorded dispositions; six underlying questions remain open and unblocked. Accepted repairs are later plan scope, not implemented changes.
 - This effort starts from the SKILL audit idea preserved in [the effort brief](README.md).
 - Apply Wayfinder and Grilling. The user explicitly waived the unavailable `domain-modeling` dependency on 2026-10-01.
 - The user chose a completed audit plus an ExecPlan as the destination. Audit evidence gathering and final document authoring are allowed within this map. Implementing proposed skill changes is a later effort.
@@ -37,6 +37,7 @@ Complete an evidence-backed audit of non-imported maintained skills in `skills/`
 - [Set Audit Completion and Implementation Gates](tickets/set-audit-completion-and-implementation-gates.md): Separate audit completion, executable plan readiness, and implementation acceptance, with explicit deferrals and a visible route for every pending proposal.
 - [Review Skill Authoring and Repository Guidance](tickets/review-skill-authoring-and-repository-guidance.md): Accept contract-preserving authoring and evaluation repairs for later planning; keep four separate decisions pending and visible.
 - [Review Repository-local Workflows](tickets/review-repository-local-workflows.md): Accept two authoring clarifications for later planning; retain the prior-plan contract question separately alongside the four earlier pending decisions.
+- [Review Delegation and Discovery](tickets/review-delegation-and-discovery.md): Accept four repairs for later planning; retain grader failure outcomes separately and add two producers to the pending metric decision.
 
 ## Not yet specified
 

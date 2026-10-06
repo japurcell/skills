@@ -1,7 +1,7 @@
 # Review Delegation and Discovery
 
 **Type:** grilling
-**Status:** open
+**Status:** closed
 **Blocked By:** choose-audit-batches-and-evidence-format.md, set-audit-completion-and-implementation-gates.md
 **Research Dir:** not applicable
 
@@ -33,6 +33,28 @@ The parent verified fifteen unchanged primary files, seven fixture dependencies 
 2. Keep DD-004's shape/error/no-run protocol pending in [Define Benchmark Grader Failure Outcomes](define-benchmark-grader-failure-outcomes.md). Its precise statuses, exit codes and result schemas require a separate decision. Do not choose these during batch disposition.
 3. Add Explore and Official Sources' newly evidenced zero-filling producers to SAG-008's existing [metric decision](choose-unknown-benchmark-metric-representation.md), pending the human's target-scope answer. Preserve all earlier decisions and expose all six underlying routes in both final documents. No representation, implementation approval, evidence waiver or residual-risk acceptance follows from retaining a route.
 
-The bounded PRD retry-counting consumer check is recorded in [Review Execution and Handoff](review-execution-and-handoff.md), preserving both existing limits without asserting a contradiction or selecting authorization behavior. Grilling resumes with the three prepared dispositions; this logical session may close only the current review.
+The bounded PRD retry-counting consumer check is recorded in [Review Execution and Handoff](review-execution-and-handoff.md), preserving both existing limits without asserting a contradiction or selecting authorization behavior. The prepared continuation required live answers to these three dispositions; the Resolution below records them. This logical session closes only the current review.
 
-<!-- Resolution will be appended here. -->
+## Resolution
+
+The human answered "accept all" on 2026-10-06, accepting all three Prepared Live Review recommendations. Before recording the answer, the parent reclaimed this ticket as `subagent-K8m4P2` after verifying both exact blockers remained closed. This resolves the batch's proposal review and shared understanding; it does not approve implementation, installation, publication, evidence waivers or residual risk.
+
+### Accepted repairs for later planning
+
+Accept DD-001/DD-002/DD-003/DD-005: per-area relevance and independence grading; deterministic prior-context and cache fixtures with correct hit/miss expectations; actual citation URL/host checks and separate reported versus trace-backed workflow evidence; and five whitespace-only line cleanups. The [single findings register](../findings.md) owns each finding's evidence and exact proposed change.
+
+Preserve valid grading predicates, the allowed 1-3 exploration areas, relevant direct narrow reads, optional cache, required dependencies, names, invocation controls and approval rules. Output-only spawn plans do not prove actual dispatch. Citation syntax does not prove a source was visited or correct for the version. Keep useful independent artifact checks. Exact fixture/oracle choices and genuine DD-004 protocol dependencies must be settled before affected work enters executable plan scope.
+
+### Retained separate decisions
+
+Retain DD-004 in [Define Benchmark Grader Failure Outcomes](define-benchmark-grader-failure-outcomes.md). Its exact invalid/incomplete statuses, exit codes, result schemas and consumer compatibility remain unresolved. Closing this review unblocks that decision; dependent protocol changes remain pending.
+
+Add `skills/explore/evals/grade_benchmark.py` and `skills/official-sources/evals/grade_benchmark.py` to SAG-008's [Choose Unknown Benchmark Metric Representation](choose-unknown-benchmark-metric-representation.md), retaining the original Create Skill, Improve Skill and Self-improve grader targets. The five-producer scope is accepted; null, omission, zero and availability representations remain unchosen. Imported-helper exclusions remain intact.
+
+Preserve all six underlying pending routes: SAG-002, SAG-003, SAG-008, SAG-013, RLW-002 and DD-004. Both final audit and ExecPlan must expose each ID and route; affected work remains pending until its actual prerequisite is resolved. No proposal was rejected or deferred. Analogous SAG-001/SAG-012 evidence links do not expand accepted targets. The execution review retains its bounded retry-counting consumer check without an established contradiction or chosen behavior.
+
+### Evidence and next frontier
+
+The [report](../reports/review-delegation-and-discovery.md) records five complete 58-check matrices, fifteen unchanged primary files and seven separately declared fixture dependencies. Human review is complete; defects and runtime gaps remain. No native baseline or audited helper ran, and no skill source changed.
+
+This session closes only this non-research ticket. Continue the static batch sequence with [Review Quality and Harness Skills](review-quality-and-harness-skills.md), verifying its exact blockers before claiming. Reconcile every static batch before selecting native baseline cases.

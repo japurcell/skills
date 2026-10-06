@@ -13,7 +13,7 @@ How should the included Explore and Official Sources graders distinguish a grade
 
 Keep valid artifact predicates and grading identity. Missing required evidence must not become a pass. Coordinate unmeasured timing with [Choose Unknown Benchmark Metric Representation](choose-unknown-benchmark-metric-representation.md); do not select a null, omitted-key or zero representation here. Preserve the exclusion of imported helpers. Broader helper changes need separate scope approval.
 
-Human retention of this route does not select failure outcomes or authorize execution. Exact dependent protocol changes remain outside executable plan scope until the decision and necessary compatibility evidence are settled. Both final audit and ExecPlan must expose DD-004 and its route.
+The human accepted retention of this route on 2026-10-06 in [Review Delegation and Discovery](review-delegation-and-discovery.md#resolution), which is now closed and unblocks this ticket. Retention does not select failure outcomes or authorize execution. Exact dependent protocol changes remain outside executable plan scope until the decision and necessary compatibility evidence are settled. Both final audit and ExecPlan must expose DD-004 and its route.
 
 ---
 
