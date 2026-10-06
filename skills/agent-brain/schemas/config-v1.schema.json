@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"],
   "properties": {
+    "software": {"$ref": "software-v1.schema.json#/$defs/pin"},
     "source_ingestion": {
       "$ref": "source-ingestion-v1.schema.json#/$defs/configuration"
     },
@@ -129,8 +130,10 @@
       "required": ["path", "ownership"],
       "properties": {
         "path": {"oneOf": [{"const": "."}, {"$ref": "#/$defs/repositoryPath"}]},
-        "ownership": {"enum": ["read_only", "agent_brain"]}
-      }
+        "ownership": {"enum": ["read_only", "agent_brain"]},
+        "type": {"enum": ["directory", "file"], "default": "directory"}
+      },
+      "allOf": [{"if": {"required": ["type"], "properties": {"type": {"const": "file"}}}, "then": {"properties": {"ownership": {"const": "read_only"}}}}]
     },
     "mappedUnit": {
       "oneOf": [

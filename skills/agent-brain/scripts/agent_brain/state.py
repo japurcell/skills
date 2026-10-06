@@ -43,6 +43,8 @@ def local_path(root: Path, relative: str) -> Path:
         current /= part
         if current.is_symlink():
             raise LifecycleError("BINDING_INVALID", "runtime/configuration path is linked or ambiguous")
+        if current.exists() and getattr(current.lstat(), "st_file_attributes", 0) & 0x400:
+            raise LifecycleError("BINDING_INVALID", "runtime/configuration path traverses an ambiguous reparse point")
     if not target.resolve().is_relative_to(root):
         raise LifecycleError("BINDING_INVALID", "runtime path resolves outside the worktree")
     return target
@@ -73,6 +75,7 @@ class StateStore:
         self.directory = local_path(root, state_dir)
         self.path = local_path(root, state_dir + "/brain.sqlite3")
         self.marker = local_path(root, state_dir + "/binding.json")
+        self.expected = local_path(root, ".agents/context/expected-runtime.json")
         self.budget = budget
         self.attempts = attempts
         self.remaining_contention = budget
@@ -112,7 +115,10 @@ class StateStore:
             connection.close()
             raise
 
-    def initialize(self, repository_id: str, repository_root: str) -> None:
+    def initialize(self, repository_id: str, repository_root: str, *, initial_setup: bool = False) -> None:
+        if self.expected.exists() and not initial_setup:
+            self.read()
+            return
         if self.marker.exists() or self.path.exists():
             self.read()
             return
@@ -156,6 +162,17 @@ class StateStore:
         if type(record["schema_version"]) is not int or record["schema_version"] != 1 or record["worktree_root"] != str(self.root):
             raise ValueError("unsupported or relocated state")
         validate_state(record)
+        if self.expected.exists():
+            expected = json.loads(self.expected.read_text(encoding="utf-8"), **options)
+            if (set(expected) != {"schema_version", "repository_id", "repository_root", "worktree_root", "state_dir", "worktree_id", "status"}
+                    or type(expected["schema_version"]) is not int or expected["schema_version"] != 1
+                    or expected["status"] not in ("initializing", "expected")
+                    or expected["repository_root"] != record["repository_root"]
+                    or expected.get("status") != "initializing" and expected.get("worktree_id") != record["worktree_id"]
+                    or expected.get("repository_id") != record["repository_id"]
+                    or expected.get("worktree_root") != str(self.root)
+                    or expected.get("state_dir") != self.directory.relative_to(self.root).as_posix()):
+                raise ValueError("activation expected-state identity differs")
         return record
 
     def read(self) -> dict[str, Any]:

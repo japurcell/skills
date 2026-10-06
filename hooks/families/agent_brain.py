@@ -30,6 +30,10 @@ MAX_BYTES = 1024 * 1024
 DEADLINE = float("inf")
 
 
+class StateUnavailable(ValueError):
+    pass
+
+
 def tick():
     if time.monotonic() >= DEADLINE:
         raise TimeoutError()
@@ -191,7 +195,37 @@ def registration(root, path):
             raise ValueError("unmatched binding")
     if record["provider"] != PROVIDER or support["adapter_revision"] != sha(Path(__file__)):
         raise ValueError("unmatched adapter")
-    bundle = local(root, record["bundle_path"])
+    if Path(record["bundle_path"]).is_absolute():
+        pin = config["software"]
+        if pin["bundle_path"] != record["bundle_path"]:
+            raise ValueError("unmatched external software pin")
+        bundle = Path(record["bundle_path"])
+        current = Path(bundle.anchor)
+        for part in bundle.parts[1:]:
+            current /= part
+            if current.is_symlink() or (current.exists() and getattr(current.lstat(), "st_file_attributes", 0) & 0x400):
+                raise ValueError("linked external software path")
+        raw = read_file(bundle / "software.json")
+        if hashlib.sha256(raw).hexdigest() != pin["manifest_revision"]:
+            raise ValueError("unmatched software manifest")
+        software = decode(raw)
+        for name in ("bundle_path", "core_version", "adapter_version", "schema_version"):
+            if software[name] != pin[name]:
+                raise ValueError("unmatched software versions")
+        for name, expected in software["files"].items():
+            if sha(local(bundle, name)) != expected:
+                raise ValueError("unmatched immutable software bytes")
+        activation = decode(read_file(local(root, ".agents/context/activation-local.json")))
+        if activation["status"] != "active" or activation["worktree_root"] != str(root) or record not in activation["integrations"]:
+            raise ValueError("activation incomplete or unavailable")
+        journal = decode(read_file(local(root, activation["journal_path"])))
+        if journal["status"] != "applied":
+            raise ValueError("activation apply incomplete")
+        state = config.get("state_dir", ".agents/context/state")
+        if local(root, ".agents/context/expected-runtime.json").exists() and (not (root / state / "brain.sqlite3").is_file() or not (root / state / "binding.json").is_file()):
+            raise StateUnavailable("expected runtime is missing")
+    else:
+        bundle = local(root, record["bundle_path"])
     if bundle_revision(bundle) != support["bundle_revision"]:
         raise ValueError("unmatched bundle")
     return record, support, bundle
@@ -306,7 +340,7 @@ def main():
         # Reserve bounded output time without that alarm interrupting denial.
         if os.name != "nt":
             signal.setitimer(signal.ITIMER_REAL, 0)
-        code = "INTERNAL_WATCHDOG_INCOMPLETE" if isinstance(error, TimeoutError) or time.monotonic() >= deadline else "NATIVE_UNSUPPORTED"
+        code = "STATE_UNAVAILABLE" if isinstance(error, StateUnavailable) else "INTERNAL_WATCHDOG_INCOMPLETE" if isinstance(error, TimeoutError) or time.monotonic() >= deadline else "NATIVE_UNSUPPORTED"
         print("agent-brain adapter: " + code + "; native consumption and provider timeout behavior remain unverified.", file=sys.stderr)
         if not emitted:
             emit(failure(event, code, payload), time.monotonic() + 0.05)

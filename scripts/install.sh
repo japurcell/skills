@@ -21,6 +21,9 @@ readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
 readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
 readonly CONFIGURE_RTK="${REPO_ROOT}/scripts/configure-rtk.py"
+readonly AGENT_BRAIN_INSTALLER="${REPO_ROOT}/scripts/install-agent-brain.py"
+readonly AGENT_BRAIN_SOFTWARE_DEST="${AGENT_BRAIN_SOFTWARE_DIR:-${HOME}/.local/share/agent-brain}"
+readonly AGENT_BRAIN_BIN_DEST="${AGENT_BRAIN_BIN_DIR:-${HOME}/.local/bin}"
 readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
 
 readonly SKILLS_DEST="${HOME}/.agents/skills"
@@ -156,7 +159,7 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
+for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS" "$CONFIGURE_RTK" "$AGENT_BRAIN_INSTALLER"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
@@ -182,7 +185,9 @@ fi
 
 python3 "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME" --check
 python3 "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME" --check
+python3 "$AGENT_BRAIN_INSTALLER" --software-dir "$AGENT_BRAIN_SOFTWARE_DEST" --bin-dir "$AGENT_BRAIN_BIN_DEST" --python "$(command -v python3)" --check
 
+python3 "$AGENT_BRAIN_INSTALLER" --software-dir "$AGENT_BRAIN_SOFTWARE_DEST" --bin-dir "$AGENT_BRAIN_BIN_DEST" --python "$(command -v python3)"
 python3 "$CONFIGURE_RTK" --home "$HOME"
 python3 "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 

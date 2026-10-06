@@ -59,7 +59,7 @@ def main() -> int:
             return 0
 
         session_id = str(input_payload.get("session_id") or "")
-        joined = join_agent_brain(repo_root_for_payload(input_payload), input_payload)
+        joined = join_agent_brain(repo_root_for_payload(input_payload), input_payload, native_provider="gemini")
         if joined is not None:
             emit_json({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": joined["reason"]},
                 "systemMessage": "auto-ingest: joined learn"})

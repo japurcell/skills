@@ -168,7 +168,7 @@ def pending(root: Path, config, store=None) -> dict | None:
     if not path.exists():
         from .state import StateStore
         store = store or StateStore(root, config.state_dir, float(config.limits["contention_seconds"]))
-        if not store.path.exists() and not store.marker.exists():
+        if not store.path.exists() and not store.marker.exists() and not store.expected.exists():
             return None
         state = store.read()
         found = []

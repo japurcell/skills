@@ -87,7 +87,7 @@ def main() -> int:
             return 0
 
         root = _repo_root(payload)
-        joined = join_agent_brain(root, payload)
+        joined = join_agent_brain(root, payload, native_provider="copilot")
         if joined is not None:
             emit_json({"type": "progress", "message": "auto-ingest-source: joined learn"})
             emit_json(build_output(joined["reason"], event_name))

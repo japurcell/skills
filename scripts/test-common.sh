@@ -38,7 +38,7 @@ assert_file_contains() {
 setup_test_workdir() {
   local workdir
   workdir="$(mktemp -d)"
-  echo "$workdir"
+  (cd "$workdir" && pwd -P)
 }
 
 # Run hook test subprocesses with a disposable home so their default trace

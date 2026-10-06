@@ -21,7 +21,7 @@ COMMANDS = {
     "recall": "Read complete mapped guidance for informational use.",
     "learn": "A registered integration is required for an evidenced lesson update.",
     "dream": "A registered integration is required for a knowledge review.",
-    "setup": "Repository setup is not available from this CLI.",
+    "setup": "Plan repository setup or apply a reviewed exact plan.",
     "doctor": "Check the repository configuration without changing it.",
     "status": "Show repository configuration and state without changing them.",
 }
@@ -57,10 +57,11 @@ COMMAND_DETAILS = {
         "agent-brain dream complete --input review.json --invocation-file /path/to/invocation.json"
     ),
     "setup": (
-        "Inputs: none.\n"
-        "Effects: setup is not available from this CLI, and no repository files are changed.\n"
-        "Active agent: none.\n"
-        "Example: agent-brain setup"
+        "Inputs: --config selects mappings; --apply --plan requires a still-valid reviewed plan.\n"
+        "Effects: plain setup is read-only. Apply/rollback journal exact managed effects; retained private operational ignore guards survive rollback.\n"
+        "Active agent: no model is launched; matching certification is required for activation.\n"
+        "Privacy: raw plans contain provider setting snapshots. Save to an owner-only private file outside the worktree.\n"
+        "Example: agent-brain setup --json; save privately and review, then agent-brain setup --apply --plan /private/outside-worktree/plan.json --json"
     ),
     "doctor": (
         "Inputs: --config PATH selects a repository configuration; otherwise the default is used.\n"
@@ -159,6 +160,12 @@ def _parser(*, json_errors: bool) -> tuple[argparse.ArgumentParser, dict[str, ar
             metavar="PATH",
             help="Integration-issued context; a path alone cannot grant authority.",
         )
+    setup_parser = command_parsers["setup"]
+    setup_parser.add_argument("--apply", action="store_true", help="Apply a still-valid reviewed plan.")
+    setup_parser.add_argument("--plan", metavar="PATH", help="Private reviewed plan file, preferably outside the worktree.")
+    setup_parser.add_argument("--rollback", metavar="PATH", help="Reverse only exact owned effects from a setup journal.")
+    setup_parser.add_argument("--deactivate", action="store_true", help="Plan removal of owned registrations and authority.")
+    setup_parser.add_argument("--shell", choices=("posix", "powershell"), help="Explicit configured shell command representation.")
     recall_parser = command_parsers["recall"]
     recall_parser.add_argument("--query", metavar="TEXT", help="Search guidance text and routed concepts.")
     recall_parser.add_argument(
@@ -389,21 +396,58 @@ def main(argv: Sequence[str] | None = None) -> int:
             command_parsers[arguments.command_name].print_help()
         return 0
 
+    if arguments.command == "setup":
+        from .setup import run
+        from .state import LifecycleError
+        try:
+            result = run(arguments, Path.cwd().resolve())
+        except (LifecycleError, ConfigurationError, OSError, ValueError, KeyError, TypeError) as exc:
+            _print_error(getattr(exc, "code", "SETUP_INVALID"), str(exc), "repository setup",
+                getattr(exc, "next_action", "Correct the configuration, exact reviewed plan or certified software inputs and retry."),
+                json_output=arguments.json_output)
+            return getattr(exc, "exit_code", 2)
+        except KeyboardInterrupt:
+            _print_error("SETUP_INTERRUPTED", "apply or inverse is incomplete; the durable journal retains recoverable effects", "repository setup",
+                "Inspect status and use setup --rollback PATH with the retained setup journal.", json_output=arguments.json_output)
+            return 130
+        if arguments.json_output:
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        else:
+            print("agent-brain setup\nActivation: " + result["activation"])
+            for item in result.get("changes", []):
+                print(f"Change: {item['path']} ({item['before_revision']} -> {item['after_revision']})")
+            for prerequisite in result.get("prerequisites", []):
+                print(f"Prerequisite: {prerequisite['name']}: {prerequisite['status']}")
+            if "journal_path" in result:
+                print("Managed inverse journal: " + result["journal_path"])
+            else:
+                print("Save raw setup --json output to an owner-only private file outside the worktree; it contains provider setting snapshots. Review it, then run setup --apply --plan PATH.")
+        return 0
+
     if arguments.command in ("status", "doctor"):
         result = _inspection_result(arguments.command, arguments.config)
         if result.setup_status == "configured":
             from .lifecycle import inspection
             config_path = Path(arguments.config) if arguments.config is not None else DEFAULT_CONFIG
             details = inspection(load_config(config_path), Path.cwd().resolve(), config_path)
+            from .diagnostics import diagnose
+            details.update(diagnose(load_config(config_path), Path.cwd().resolve()))
             if arguments.json_output:
                 print(json.dumps(result.as_json_object() | details, ensure_ascii=False, sort_keys=True))
             else:
                 _print_inspection(result, json_output=False)
                 print(f"Lifecycle state: {details['state_status']}")
+                print(f"Activation: {details['activation_status']}; software: {details['software_status']}")
                 for session in details["work_sessions"]:
                     print(f"Work session {session['work_session_id']}: {session['work_session_status']}")
         else:
-            _print_inspection(result, json_output=arguments.json_output)
+            from .diagnostics import diagnose
+            details = diagnose(None, Path.cwd().resolve())
+            if arguments.json_output:
+                print(json.dumps(result.as_json_object() | details, ensure_ascii=False, sort_keys=True))
+            else:
+                _print_inspection(result, json_output=False)
+                print(f"Activation: {details['activation_status']}; software: {details['software_status']}")
         return 0
 
     if arguments.command == "recall":

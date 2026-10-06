@@ -11,6 +11,7 @@ description: PowerShell (`pwsh`) rules for installer and validation scripts unde
 - PowerShell matching that must mirror case-sensitive Bash `[[ == pattern ]]` or `find -name` must use explicit case-sensitive primitives (`-ceq`, `-clike`, `.EndsWith`); see `.agents/memory/known-issues/powershell.md` for host-specific quirks.
 - `Get-Command -CommandType Application` can return multiple PATH matches. Select one command explicitly before invoking `.Source`; do not let an array stringify into a combined executable path.
 - Keep Codex custom-agent installation equivalent to Bash: invoke `install-codex-agents.py` before provider copy operations and resolve `$env:CODEX_HOME/agents` when set, otherwise `$HOME/.codex/agents`.
+- Agent-brain software preflight/install also uses the explicitly discovered compatible Python target. Windows software lives under `%LOCALAPPDATA%/agent-brain` with `.cmd`/`.ps1` bin launchers, unless explicit overrides are supplied. Generated PowerShell commands use `&` plus literal single quotes with doubled embedded apostrophes; exact native admission parses the same representation. macOS `pwsh` fixture execution proves shell portability, not native Windows certification.
 - Run syntax check plus narrow script validation from `.agents/memory/testing/powershell.md`.
 
 ## Scope note

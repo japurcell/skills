@@ -879,13 +879,14 @@ def settle_sources(root: Path, evidence: dict[str, Any]) -> None:
         save_manifest(manifest_file, manifest)
 
 
-def join_agent_brain(repo_root: Path, payload: dict[str, Any]) -> dict[str, Any] | None:
+def join_agent_brain(repo_root: Path, payload: dict[str, Any], *, native_provider: str | None = None) -> dict[str, Any] | None:
     """Join a registered common-protocol obligation; never synthesize authority."""
     import subprocess
     import sys
     config_path = repo_root / ".agents/context/config.json"
     if not config_path.is_file():
         return None
+    interpreter = sys.executable
     try:
         config = json.loads(config_path.read_text(encoding="utf-8"))
         integration = config.get("source_ingestion", {})
@@ -893,7 +894,52 @@ def join_agent_brain(repo_root: Path, payload: dict[str, Any]) -> dict[str, Any]
             return None
         path = integration["bridge_path"]
         target = repo_root / path
-        if not isinstance(path, str) or Path(path).is_absolute() or ".." in Path(path).parts or target.is_symlink() or not target.resolve().is_relative_to(repo_root.resolve()):
+        if isinstance(path, str) and Path(path).is_absolute():
+            pin = config["software"]
+            bundle = Path(pin["bundle_path"])
+            target = Path(path)
+            if not target.is_relative_to(bundle) or ".." in target.parts:
+                raise ValueError("Configured bridge differs from the pinned software root.")
+            for candidate in [bundle, target, bundle / "software.json"]:
+                current = Path(candidate.anchor)
+                for part in candidate.parts[1:]:
+                    current /= part
+                    if current.is_symlink() or (current.exists() and getattr(current.lstat(), "st_file_attributes", 0) & 0x400):
+                        raise ValueError("Configured software bridge has linked components.")
+            manifest_file = bundle / "software.json"
+            if not manifest_file.is_file() or manifest_file.stat().st_size > 8 * 1024 * 1024:
+                raise ValueError("Pinned bridge manifest is unavailable or oversized.")
+            raw = manifest_file.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != pin["manifest_revision"]:
+                raise ValueError("Pinned bridge software manifest differs.")
+            software = json.loads(raw)
+            actual = {}
+            for candidate in bundle.rglob("*"):
+                current = Path(candidate.anchor)
+                for part in candidate.parts[1:]:
+                    current /= part
+                    if current.is_symlink() or (current.exists() and getattr(current.lstat(), "st_file_attributes", 0) & 0x400):
+                        raise ValueError("Pinned software has linked components.")
+                if "__pycache__" in candidate.parts or candidate.suffix == ".pyc":
+                    raise ValueError("Unpinned bytecode is unavailable.")
+                if candidate.is_file() and candidate != manifest_file:
+                    if candidate.stat().st_size > 8 * 1024 * 1024 or len(actual) >= 2000:
+                        raise ValueError("Pinned software exceeds the bounded inventory.")
+                    actual[candidate.relative_to(bundle).as_posix()] = _read_file_hash(candidate)
+                elif not candidate.is_file() and not candidate.is_dir():
+                    raise ValueError("Pinned software is not an ordinary file or directory.")
+            if actual != software["files"]:
+                raise ValueError("Pinned software bytes differ.")
+            interpreter = software["interpreter"]["executable"]
+            executable = Path(interpreter)
+            current = Path(executable.anchor)
+            if not executable.is_absolute() or not executable.is_file():
+                raise ValueError("Pinned interpreter is unavailable.")
+            for part in executable.parts[1:]:
+                current /= part
+                if current.is_symlink() or (current.exists() and getattr(current.lstat(), "st_file_attributes", 0) & 0x400):
+                    raise ValueError("Pinned interpreter has linked components.")
+        elif not isinstance(path, str) or ".." in Path(path).parts or target.is_symlink() or not target.resolve().is_relative_to(repo_root.resolve()):
             raise ValueError("Configured bridge path is not repository-local.")
         if _read_file_hash(target) != integration["bridge_revision"]:
             raise ValueError("Configured bridge bytes differ from their trusted revision.")
@@ -902,13 +948,13 @@ def join_agent_brain(repo_root: Path, payload: dict[str, Any]) -> dict[str, Any]
             # Native providers never inject the fixture-only private event.
             # The pinned bridge validates the activated native registration;
             # this gate neither synthesizes authority nor reconciles sources.
-            result = subprocess.run([sys.executable, str(target), "--json", "--native-gate"], cwd=repo_root,
+            result = subprocess.run([interpreter, str(target), "--json", "--native-gate", *(["--native-provider", native_provider] if native_provider else [])], cwd=repo_root,
                 input=json.dumps(payload).encode("utf-8"), capture_output=True, timeout=3.5, check=False)
             response = json.loads(result.stdout.decode("utf-8"))
             if result.returncode or type(response.get("completed")) is not bool or not isinstance(response.get("reason"), str):
                 raise ValueError("Validated native join is unavailable.")
             return response
-        result = subprocess.run([sys.executable, str(target), "--json"], cwd=repo_root,
+        result = subprocess.run([interpreter, str(target), "--json"], cwd=repo_root,
             input=json.dumps(event).encode("utf-8"), capture_output=True, timeout=60, check=False)
         response = json.loads(result.stdout.decode("utf-8"))
         completed = result.returncode == 0 and response.get("work_session_status") == "completed"

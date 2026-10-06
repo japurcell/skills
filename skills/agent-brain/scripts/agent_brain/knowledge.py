@@ -47,14 +47,19 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path, ignore_pu
     root_paths: list[tuple[str, Path]] = []
     issues: list[MetadataIssue] = []
     for root in config.knowledge_roots:
-        declared = repository if root.path == "." else repository / Path(*root.path.split("/"))
+        from .state import local_path
+        declared = repository if root.path == "." else local_path(repository, root.path)
+        if root.ownership == "agent_brain" and root.type == "directory" and not declared.exists():
+            # An explicitly owned future knowledge directory is an empty KB,
+            # created only by an actual checked publication.
+            continue
         try:
             resolved = declared.resolve(strict=True)
         except OSError as exc:
             issues.append(MetadataIssue("ABM004", root.path, 1, 1, f"knowledge root unavailable: {exc}"))
             continue
-        if not resolved.is_relative_to(repository) or not resolved.is_dir():
-            issues.append(MetadataIssue("ABM004", root.path, 1, 1, "knowledge root is not a repository directory"))
+        if not resolved.is_relative_to(repository) or not (resolved.is_file() if root.type == "file" else resolved.is_dir()):
+            issues.append(MetadataIssue("ABM004", root.path, 1, 1, "knowledge root is not the declared repository file or directory"))
             continue
         root_paths.append((root.path, resolved))
 

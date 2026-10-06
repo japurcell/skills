@@ -34,6 +34,22 @@ def file_revision(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def configuration_revision(path: Path) -> str:
+    """Keep checked live bindings across explicit semantic-equivalent updates."""
+    actual = file_revision(path)
+    root = Path.cwd().resolve()
+    from .setup import LOCAL, checked_local, checked_journal, encoded
+    if local_path(root, LOCAL).is_file():
+        activation = checked_local(root)
+        if activation["status"] == "active":
+            journal = checked_journal(root, activation["journal_path"])
+            plan = journal["plan"]
+            if (journal["status"] == "applied" and local_path(root, plan["config_path"]) == path
+                    and actual == hashlib.sha256(encoded(plan["configuration"]).encode()).hexdigest()):
+                return activation["binding_revision"]
+    return actual
+
+
 def actual_binding(root: Path) -> tuple[str, str]:
     try:
         def git(*args: str) -> str:
@@ -108,7 +124,7 @@ def configured_provider(config: AgentBrainConfig, config_path: Path, root: Path,
     provider = config.providers.get(identity["id"])
     if not provider or not provider["enabled"]:
         raise LifecycleError("INTEGRATION_DISABLED", "this integration is not configured and enabled")
-    if identity["config_revision"] != file_revision(config_path):
+    if identity["config_revision"] != configuration_revision(config_path):
         raise LifecycleError("CONFIGURATION_STALE", "effective configuration revision no longer matches")
     if identity["core_version"] != __version__:
         raise LifecycleError("INTEGRATION_MISMATCH", "core version is outside the configured support identity")
@@ -205,7 +221,7 @@ def inspection(config: AgentBrainConfig, root: Path, config_path: Path | None = 
     result: dict[str, object] = {"state_status": "absent", "work_sessions": [], "sqlite_capabilities": {}}
     try:
         store = StateStore(root, config.state_dir, float(config.limits["contention_seconds"]))
-        if not store.path.exists() and not store.marker.exists():
+        if not store.path.exists() and not store.marker.exists() and not store.expected.exists():
             return result
         state = store.read()
         from .source_ingestion import snapshot
@@ -267,7 +283,7 @@ def bridge_event(event: dict, config_path: Path, *, native_callback: bool = Fals
     # adapters must defer this lock/scan work before claiming a semantic attempt.
     if native_callback and config.source_ingestion["enabled"]:
         from .native import captured_sources
-        source_state = captured_sources(config, root, file_revision(config_path))
+        source_state = captured_sources(config, root, configuration_revision(config_path))
     else:
         source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture" or native_foreground)
     source_pending = pending(source_state)
@@ -280,7 +296,7 @@ def bridge_event(event: dict, config_path: Path, *, native_callback: bool = Fals
                              timeout=1, check=False, capture_output=True)
     if ignored.returncode != 0:
         raise LifecycleError("STATE_NOT_IGNORED", "the configured worktree-local state directory must be ignored")
-    if not store.path.exists() and not store.marker.exists() and event["event"] not in ("startup", "task"):
+    if not store.path.exists() and not store.marker.exists() and not store.expected.exists() and event["event"] not in ("startup", "task"):
         raise LifecycleError("OBJECTIVE_UNREGISTERED", "only eligible startup/task events initialize local state")
     store.initialize(config.repository_id, actual_repository)
     state = store.read()
@@ -648,7 +664,7 @@ def active_invocation(path_argument: str | None, config_argument: str | None,
     binding = validate_invocation(state, handle, stage, config, root, config_path)
     _, session, _, _ = binding
     current = guidance(config, root, session["scope"], ignore_publication=bool(binding[3].get("publication")), store=store)
-    if inputs(config, root, file_revision(config_path), session["scope"], current) != session["input_revision"]:
+    if inputs(config, root, configuration_revision(config_path), session["scope"], current) != session["input_revision"]:
         raise LifecycleError("INPUTS_STALE", "relevant inputs changed; restore guidance at the next eligible event")
     if stage == "dream" and not binding[3].get("publication"):
         from .maintenance import snapshot
@@ -770,7 +786,7 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
     # No transaction spans the foreground checks. Re-read actual input files
     # and authority again before saving their attributable receipts.
     latest = guidance(config, store.root, session["scope"], store=store)
-    if inputs(config, store.root, file_revision(config_path), session["scope"], latest) != session["input_revision"]:
+    if inputs(config, store.root, configuration_revision(config_path), session["scope"], latest) != session["input_revision"]:
         raise LifecycleError("INPUTS_STALE", "relevant inputs changed while checks ran", exit_code=1)
     validate_bases(config, store.root, session)
     if operation == "complete":
@@ -778,7 +794,7 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
         from .source_ingestion import settle
         if all(check["exit_code"] == 0 and not check["timed_out"] for check in checks):
             settle(payload, config, store.root)
-            resulting_input = inputs(config, store.root, file_revision(config_path), session["scope"], latest)
+            resulting_input = inputs(config, store.root, configuration_revision(config_path), session["scope"], latest)
         else:
             resulting_input = session["input_revision"]
     completed_on = utc_day(config, store.root, config_path)
@@ -788,7 +804,7 @@ def stage_operation(stage: str, operation: str, path_argument: str | None,
         if checks:
             current_obligation["check_receipts"] = [{"id": uid(), "checker_id": check["checker_id"],
                 "exit_code": check["exit_code"], "timed_out": check["timed_out"], "input_revision": resulting_input if operation == "complete" else session["input_revision"],
-                "config_revision": file_revision(config_path), "owner_generation": inv["owner_generation"],
+                "config_revision": configuration_revision(config_path), "owner_generation": inv["owner_generation"],
                 "attempt_id": inv["attempt_id"], "checked_at": time.time()} for check in checks]
         passed = all(check["exit_code"] == 0 and not check["timed_out"] for check in checks)
         if not passed:
@@ -917,6 +933,7 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--config", default=".agents/context/config.json")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--native-gate", action="store_true")
+    parser.add_argument("--native-provider", choices=("codex", "copilot", "gemini"))
     args = parser.parse_args(argv)
     store = None
     try:
@@ -924,7 +941,7 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
         event = read_json(sys.stdin.read(1024 * 1024 + 1))
         if args.native_gate:
             from .native import gate
-            result = gate(event)
+            result = gate(event, args.native_provider)
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
             return 0
         result, code, store = bridge_event(event, Path(args.config).absolute())

@@ -128,7 +128,9 @@
               "pattern": "^[0-9a-f]{64}$"
             },
             "bridge_path": {
-              "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+              "type": "string",
+              "minLength": 1,
+              "description": "Repository-local or within the exact configured absolute immutable software pin. Linked/reparse components are rejected."
             },
             "bridge_revision": {
               "type": "string",

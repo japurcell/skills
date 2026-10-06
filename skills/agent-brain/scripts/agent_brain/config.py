@@ -84,9 +84,9 @@ def _uuid(value: Any, field: str) -> str:
     return raw.lower()
 
 
-def load_config(path: Path) -> AgentBrainConfig:
+def load_config(path: Path, *, source: bytes | None = None) -> AgentBrainConfig:
     try:
-        source = path.read_bytes().decode("utf-8")
+        source = (path.read_bytes() if source is None else source).decode("utf-8")
     except FileNotFoundError as exc:
         raise ConfigurationError(f"configuration file not found: {path}") from exc
     except (OSError, UnicodeDecodeError) as exc:
@@ -105,7 +105,7 @@ def load_config(path: Path) -> AgentBrainConfig:
 
     root = _object(value, "configuration")
     required = {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"}
-    optional = {"providers", "checks", "limits", "state_dir", "history_dir", "candidate_dir", "maintenance", "source_ingestion"}
+    optional = {"providers", "checks", "limits", "state_dir", "history_dir", "candidate_dir", "maintenance", "source_ingestion", "software"}
     _keys(root, "configuration", required | (root.keys() & optional))
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
         raise ConfigurationError("configuration schema_version must be 1")
@@ -119,7 +119,7 @@ def load_config(path: Path) -> AgentBrainConfig:
     for index, raw_root in enumerate(roots_value):
         field = f"knowledge_roots[{index}]"
         item = _object(raw_root, field)
-        _keys(item, field, {"path", "ownership"})
+        _keys(item, field, {"path", "ownership"} | ({"type"} if "type" in item else set()))
         root_path = _relative_path(item["path"], f"{field}.path", allow_dot=True)
         ownership = _string(item["ownership"], f"{field}.ownership")
         if ownership not in ("read_only", "agent_brain"):
@@ -127,7 +127,10 @@ def load_config(path: Path) -> AgentBrainConfig:
         if root_path in root_paths:
             raise ConfigurationError(f"duplicate knowledge root path {root_path!r}")
         root_paths.add(root_path)
-        roots.append(KnowledgeRoot(root_path, ownership))
+        root_type = item.get("type", "directory")
+        if root_type not in ("directory", "file") or root_type == "file" and ownership != "read_only":
+            raise ConfigurationError(f"{field}.type must be directory or a read_only file")
+        roots.append(KnowledgeRoot(root_path, ownership, root_type))
 
     units_value = root["mapped_units"]
     if not isinstance(units_value, list) or not units_value:
@@ -146,7 +149,7 @@ def load_config(path: Path) -> AgentBrainConfig:
             raise ConfigurationError(f"duplicate mapped unit id {unit_id}")
         unit_ids.add(unit_id)
         unit_path = _relative_path(item["path"], f"{field}.path")
-        if not any(_is_under_root(unit_path, root.path) for root in roots):
+        if not any(unit_path == root.path if root.type == "file" else _is_under_root(unit_path, root.path) for root in roots):
             raise ConfigurationError(f"{field}.path must be under a declared knowledge root")
 
         if "unit" in item:
@@ -252,11 +255,28 @@ def load_config(path: Path) -> AgentBrainConfig:
     _keys(ingestion, "source_ingestion", {"enabled"} | ({"engine_path", "engine_revision", "bridge_path", "bridge_revision"} if enabled else set()))
     if enabled:
         for field in ("engine_path", "bridge_path"):
-            _relative_path(ingestion[field], "source_ingestion." + field)
+            if field == "bridge_path" and isinstance(ingestion[field], str) and Path(ingestion[field]).is_absolute():
+                bundle = root.get("software", {}).get("bundle_path")
+                if not bundle or not Path(ingestion[field]).is_relative_to(Path(bundle)) or ".." in Path(ingestion[field]).parts:
+                    raise ConfigurationError("external bridge must be inside the exact pinned installed software root")
+            else:
+                _relative_path(ingestion[field], "source_ingestion." + field)
         for field in ("engine_revision", "bridge_revision"):
             value = ingestion[field]
             if not isinstance(value, str) or len(value) != 64 or any(char not in "0123456789abcdef" for char in value):
                 raise ConfigurationError("source_ingestion." + field + " must be SHA-256")
+    software = _object(root.get("software", {}), "software")
+    if software:
+        _keys(software, "software", {"bundle_path", "manifest_revision", "core_version", "adapter_version", "schema_version"})
+        if not Path(_string(software["bundle_path"], "software.bundle_path")).is_absolute():
+            raise ConfigurationError("software.bundle_path must be an explicit absolute installed bundle path")
+        for name in ("manifest_revision",):
+            if not isinstance(software[name], str) or len(software[name]) != 64 or set(software[name]) - set("0123456789abcdef"):
+                raise ConfigurationError("software manifest_revision must be SHA-256")
+        for name in ("core_version", "adapter_version"):
+            _string(software[name], "software." + name)
+        if type(software["schema_version"]) is not int or software["schema_version"] != 1:
+            raise ConfigurationError("software schema_version must be 1")
     return AgentBrainConfig(
         schema_version=1,
         repository_id=repository_id,
@@ -264,7 +284,7 @@ def load_config(path: Path) -> AgentBrainConfig:
         mapped_units=tuple(units),
         startup=tuple(startup),
         providers=providers, checks=checks, limits=limits, state_dir=state_dir, history_dir=history_dir,
-        candidate_dir=candidate_dir, maintenance=defaults | maintenance, source_ingestion=ingestion,
+        candidate_dir=candidate_dir, maintenance=defaults | maintenance, source_ingestion=ingestion, software=software,
     )
 
 

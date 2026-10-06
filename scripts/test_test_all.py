@@ -108,6 +108,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-agent-brain-maintenance.py")
         expected.add("scripts/test-agent-brain-compatibility.py")
         expected.add("scripts/test-agent-brain-adapters.py")
+        expected.add("scripts/test-agent-brain-setup.py")
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
@@ -261,9 +262,9 @@ class TestTestAll(unittest.TestCase):
                     "pathlib.Path('suite-pid').write_text(str(os.getpid()))\n"
                     "def stop(signum, frame):\n"
                     "    pathlib.Path('leader-stopped').touch()\n"
-                    "    sys.exit(0)\n"
+                    "    os._exit(0)\n"
                     "signal.signal(signal.SIGINT, stop)\n"
-                    "subprocess.Popen([sys.executable, '-c', '''\n"
+                    "descendant = subprocess.Popen([sys.executable, '-c', '''\n"
                     "import pathlib, signal, time\n"
                     "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
                     "signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"

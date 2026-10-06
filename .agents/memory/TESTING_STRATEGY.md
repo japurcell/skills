@@ -30,7 +30,7 @@ aggregate suite. Use `--write` only to intentionally refresh checked-in outputs.
 - source auto-ingest hooks → `.agents/memory/testing/hooks-auto-ingest.md`
 - hook observability and trace storage → `.agents/memory/testing/hooks-observability.md`
 - skills (`skills/`) → `.agents/memory/testing/skills.md`
-- agent-brain public CLI/retrieval/lifecycle/publication/maintenance/source compatibility/native adapters → [focused scripts testing](testing/scripts.md); offline protocol/native payload fixtures do not certify native providers
+- agent-brain public CLI/retrieval/lifecycle/publication/maintenance/source compatibility/native adapters and immutable setup → [focused scripts testing](testing/scripts.md); offline protocol/native payload and PowerShell fixtures do not certify native providers or Windows
 - scripts (`scripts/`) → `.agents/memory/testing/scripts.md`
 - PowerShell scripts (`scripts/*.ps1`) → `.agents/memory/testing/powershell.md`
 

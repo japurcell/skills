@@ -40,7 +40,15 @@ description: Repo structure, install flows, and how top-level areas relate
 
 `scripts/addy-install.sh` is upstream-ingestion path. It syncs `../addy-agent-skills`, copies selected upstream agents, skills, and top-level references into this repository, prefixes imported names with `addy-`, and refreshes `.addy-skills` with source skill names that were installed.
 
+
+
 `scripts/import-skill-repos.sh` is separate multi-source importer. It refreshes selected skills from upstream repositories, including `web-accessibility`, `web-best-practices`, and `web-performance` from `addyosmani/web-quality-skills`.
+
+### Agent-brain software and activation
+
+Setup privacy is persistent operational metadata: scoped local ignore markers precede the first journal/runtime/lock write and survive inverse removal of root ignore effects. Setup journals/backups and runtime source snapshots remain private; portable config, maps, candidates and semantic history remain visible. Tracked private artifacts or runtime overlap with portable ownership fail before effects.
+
+Both repository installers preserve their existing global flows and separately preflight/install immutable versioned agent-brain software. Repository-local setup uses the selected bundle's exact external pin, read-only reviewed plans, distinct native selectors and durable owned forward/inverse history. Expected runtime identity lives outside the ignored deletable state directory. Knowledge remains portable and grows only through checked actual foreground work, including in initially empty writable roots. [Setup](../../skills/agent-brain/references/setup.md) owns the detailed trust, mapping, migration and recovery contract; [scripts testing](testing/scripts.md) owns process acceptance. Installation alone adds no lifecycle authority or native certification.
 
 ### Documentation flow
 

@@ -93,7 +93,10 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
 | `.agents/skills/ingest-source/SKILL.md` | The canonical repo-local `/ingest-source` recovery skill used by the pending-ingest gate. |
-| `skills/agent-brain/SKILL.md` | Staged source-checkout skill, bundled Python CLI, progressive references, typed v1 schemas, examples, and evals. |
+| `skills/agent-brain/SKILL.md` | Bundled Python CLI, progressive references, typed v1 schemas, examples and evals, installed as immutable software separately from repository activation. |
+| `scripts/install-agent-brain.py`, `skills/agent-brain/scripts/agent_brain/software.py` | Explicit immutable software/interpreter installation, exact manifest/inventory trust and shell-specific launchers. |
+| `skills/agent-brain/scripts/agent_brain/setup.py`, `diagnostics.py`, `references/setup.md` | Read-only reviewed planning/status, durable ownership-only apply/inverse, external expected runtime identity and supported SQLite-backed inventory updates. |
+| `scripts/test-agent-brain-setup.py` | Public disposable bundle/launcher/setup, multi-provider, protected/fresh knowledge, interruption, upgrade, lock and deleted-runtime process proofs. |
 | `skills/agent-brain/scripts/agent_brain/metadata.py`, `retrieval.py` | Standard-library annotation parser, stable unit records, conservative scope matching, transitive required-reference closure, and read-only section/document delivery. |
 | `skills/agent-brain/schemas/metadata-v1.schema.json`, `examples/metadata-authoring-v1.md` | Namespaced Markdown metadata schema and authoring examples for defaults, policies, facts, exceptions, and references. |
 | `scripts/test-agent-brain-cli.py` | Public subprocess tests for CLI presentation, read-only commands, guarded inputs, config validation, streams, and whole-artifact recall. |

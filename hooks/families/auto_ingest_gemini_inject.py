@@ -54,7 +54,7 @@ def main() -> int:
             return 0
         if not event_name:
             event_name = "BeforeAgent"
-        joined = join_agent_brain(repo_root_for_payload(payload), payload)
+        joined = join_agent_brain(repo_root_for_payload(payload), payload, native_provider="gemini")
         if joined is not None:
             if event_name == "AfterAgent":
                 emit_json({"systemMessage": "block-pending-ingest: pass; joined learn completed"} if joined["completed"] else {"decision": "deny", "reason": joined["reason"]})

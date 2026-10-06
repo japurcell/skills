@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/setup-plan-v1.schema.json",
+  "title": "Bounded reviewed exact setup plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "command",
+    "operation_status",
+    "id",
+    "repository_root",
+    "worktree_root",
+    "config_path",
+    "configuration",
+    "software",
+    "inputs",
+    "changes",
+    "prerequisites",
+    "activation",
+    "deactivate",
+    "shell",
+    "managed",
+    "selectors",
+    "integrations",
+    "prior_integrations",
+    "binding_revision"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "command": {
+      "const": "setup"
+    },
+    "operation_status": {
+      "const": "ok"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "repository_root": {
+      "type": "string"
+    },
+    "worktree_root": {
+      "type": "string"
+    },
+    "config_path": {
+      "type": "string"
+    },
+    "configuration": {
+      "$ref": "config-v1.schema.json"
+    },
+    "software": {
+      "oneOf": [
+        {
+          "$ref": "software-v1.schema.json"
+        },
+        {
+          "type": "object",
+          "maxProperties": 0
+        }
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/change"
+      }
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "unsupported"
+            ]
+          },
+          "certification": {
+            "enum": [
+              "offline_fixture",
+              "certified"
+            ]
+          },
+          "cause": {
+            "type": "string"
+          },
+          "next_action": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "activation": {
+      "enum": [
+        "active",
+        "disabled"
+      ]
+    },
+    "deactivate": {
+      "type": "boolean"
+    },
+    "shell": {
+      "enum": [
+        "posix",
+        "powershell"
+      ]
+    },
+    "managed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "event",
+          "entry"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          },
+          "entry": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "selectors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "integrations": {
+      "type": "array",
+      "items": {
+        "$ref": "native-registration-v1.schema.json"
+      }
+    },
+    "prior_integrations": {
+      "type": "array",
+      "items": {
+        "$ref": "native-registration-v1.schema.json"
+      }
+    },
+    "binding_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "change": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "before",
+        "after",
+        "before_revision",
+        "after_revision"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "before": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "after": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "before_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "after_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

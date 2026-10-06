@@ -242,7 +242,8 @@ class AgentBrainCliTests(unittest.TestCase):
                     self.assertIn("registered integration is required", result.stdout)
                     self.assertIn("UTF-8 JSON", result.stdout)
                 if command == "setup":
-                    self.assertIn("not available from this CLI", result.stdout)
+                    self.assertIn("reviewed plan", result.stdout)
+                    self.assertIn("private file outside the worktree", result.stdout)
                 self.assertEqual(result.stderr, "")
                 self.assertEqual(self.tree_snapshot(), {})
 
@@ -569,7 +570,7 @@ class AgentBrainCliTests(unittest.TestCase):
                     self.assertEqual(result.stderr, "")
                     self.assertFalse(any(bundle.rglob("__pycache__")))
 
-    def test_setup_is_explicitly_unavailable_without_mutation(self) -> None:
+    def test_setup_rejects_non_git_workspaces_without_mutation(self) -> None:
         before = self.tree_snapshot()
         for arguments in (("setup",), ("--json", "setup"), ("setup", "--json")):
             with self.subTest(arguments=arguments):
@@ -577,11 +578,11 @@ class AgentBrainCliTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2)
                 if "--json" in arguments:
                     record = json.loads(result.stdout)
-                    self.assertEqual(record["error"]["code"], "COMMAND_NOT_AVAILABLE")
-                    self.assertIn("COMMAND_NOT_AVAILABLE", result.stderr)
+                    self.assertEqual(record["error"]["code"], "BINDING_INVALID")
+                    self.assertIn("BINDING_INVALID", result.stderr)
                 else:
                     self.assertEqual(result.stdout, "")
-                    self.assertIn("COMMAND_NOT_AVAILABLE", result.stderr)
+                    self.assertIn("BINDING_INVALID", result.stderr)
                 self.assertEqual(self.tree_snapshot(), before)
 
 

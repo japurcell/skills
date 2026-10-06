@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "repository_id": "57e75257-70b9-47e9-b6d9-5fbb51e82618",
+  "knowledge_roots": [
+    {
+      "path": "AGENTS.md",
+      "ownership": "read_only",
+      "type": "file"
+    },
+    {
+      "path": ".agents/instructions",
+      "ownership": "agent_brain"
+    },
+    {
+      "path": ".agents/memory",
+      "ownership": "agent_brain"
+    }
+  ],
+  "mapped_units": [
+    {
+      "id": "728d0678-7bf5-45bd-8564-42d3aa83cac5",
+      "path": "AGENTS.md",
+      "selector": {
+        "type": "document"
+      },
+      "kind": "policy",
+      "status": "established",
+      "applies": {
+        "paths": [
+          "**"
+        ]
+      }
+    }
+  ],
+  "startup": [
+    {
+      "id": "728d0678-7bf5-45bd-8564-42d3aa83cac5",
+      "loading_mode": "whole"
+    }
+  ],
+  "providers": {}
+}

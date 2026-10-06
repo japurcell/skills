@@ -9,5 +9,8 @@
   "runtime_state_present": false,
   "active_context": "unavailable",
   "model_execution": "disabled",
-  "checks": []
+  "checks": [],
+  "activation_status": "uninitialized",
+  "software_status": "unconfigured",
+  "integrations": []
 }

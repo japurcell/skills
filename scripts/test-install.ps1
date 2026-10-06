@@ -129,7 +129,8 @@ function Write-FixtureFile {
 function New-TestWorkdir {
     $path = Join-Path ([System.IO.Path]::GetTempPath()) "test-install-$([System.IO.Path]::GetRandomFileName())"
     New-Item -ItemType Directory -Path $path -Force | Out-Null
-    return $path
+    $python = Get-PythonForFixture
+    return (& $python.Path @($python.Arguments) -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' $path)
 }
 
 function Remove-Workdir {
@@ -163,6 +164,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-agent-brain.py') -Destination (Join-Path $Repo 'scripts/install-agent-brain.py') -Force
     $bin = Join-Path $Repo 'bin'
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
     if ($IsWindows) {
@@ -251,6 +253,8 @@ from pathlib import Path
 
 source_root = Path(sys.argv[1])
 fixture_root = Path(sys.argv[2])
+shutil.copytree(source_root / 'skills/agent-brain', fixture_root / 'skills/agent-brain', dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
 sys.path.insert(0, str(fixture_root))
 from hooks.manifest import targets
 

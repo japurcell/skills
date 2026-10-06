@@ -50,6 +50,9 @@ $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
 $GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
 $ConfigureRtkSrc = Join-Path $RepoRoot 'scripts/configure-rtk.py'
+$AgentBrainInstallerSrc = Join-Path $RepoRoot 'scripts/install-agent-brain.py'
+$AgentBrainSoftwareDest = if ($env:AGENT_BRAIN_SOFTWARE_DIR) { $env:AGENT_BRAIN_SOFTWARE_DIR } elseif ($IsWindows) { Join-Path $env:LOCALAPPDATA 'agent-brain' } else { Join-Path $HOME '.local/share/agent-brain' }
+$AgentBrainBinDest = if ($env:AGENT_BRAIN_BIN_DIR) { $env:AGENT_BRAIN_BIN_DIR } elseif ($IsWindows) { Join-Path $AgentBrainSoftwareDest 'bin' } else { Join-Path $HOME '.local/bin' }
 $CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
 
 $SkillsDest = Join-Path $HOME '.agents/skills'
@@ -463,6 +466,10 @@ foreach ($config in @(
     if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
 }
 
+& $pythonCommand.Path @($pythonCommand.Arguments) $AgentBrainInstallerSrc --software-dir $AgentBrainSoftwareDest --bin-dir $AgentBrainBinDest --python $pythonCommand.Path --check
+if ($LASTEXITCODE -ne 0) { Fail "Agent-brain software preflight exited with code $LASTEXITCODE." }
+& $pythonCommand.Path @($pythonCommand.Arguments) $AgentBrainInstallerSrc --software-dir $AgentBrainSoftwareDest --bin-dir $AgentBrainBinDest --python $pythonCommand.Path
+if ($LASTEXITCODE -ne 0) { Fail "Agent-brain software installation exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest

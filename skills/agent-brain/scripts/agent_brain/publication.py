@@ -46,7 +46,7 @@ def current_bytes(root: Path, item: dict) -> str | None:
 
 
 def relevant_files(config, root: Path, scope: dict, delivery: dict) -> dict:
-    from .lifecycle import file_revision
+    from .lifecycle import configuration_revision, file_revision
     paths = {item["path"] for item in delivery["artifacts"]}
     for selector in scope["paths"]:
         if any(char in selector for char in "*?["):
@@ -71,8 +71,8 @@ def relevant_files(config, root: Path, scope: dict, delivery: dict) -> dict:
 
 
 def validate_inputs(journal: dict, config, config_path: Path, root: Path) -> None:
-    from .lifecycle import file_revision, guidance
-    if file_revision(config_path) != journal["config_revision"]:
+    from .lifecycle import configuration_revision, file_revision, guidance
+    if configuration_revision(config_path) != journal["config_revision"]:
         raise LifecycleError("INPUTS_STALE", "publication configuration changed")
     versions = {item["path"]: (item["before_revision"], item["after_revision"]) for item in journal["changes"]}
     for path, revision in journal["relevant_files"].items():
@@ -92,14 +92,14 @@ def validate_inputs(journal: dict, config, config_path: Path, root: Path) -> Non
 
 def prepare_journal(validated: dict, payload: dict, config, config_path: Path, root: Path,
                     invocation: dict, session: dict, obligation: dict, checks: list[dict]) -> tuple[str, dict]:
-    from .lifecycle import file_revision, guidance
+    from .lifecycle import configuration_revision, file_revision, guidance
     identity = uid()
     path = config.history_dir + "/" + identity + ".json"
     journal = validated | {"schema_version": 1, "id": identity, "status": "prepared", "intent": "publish exact validated changes",
         "created_at": time.time(), "payload": payload, "obligation_id": obligation["id"],
         "work_session_id": session["id"], "agent_id": invocation["agent_id"], "attempt_id": invocation["attempt_id"],
         "owner_generation": invocation["owner_generation"], "scope": obligation["scope"],
-        "base_input_revision": session["input_revision"], "config_revision": file_revision(config_path),
+        "base_input_revision": session["input_revision"], "config_revision": configuration_revision(config_path),
         "relevant_files": relevant_files(config, root, session["scope"], guidance(config, root, session["scope"], ignore_publication=True)),
         "check_receipts": checks}
     if "source_work" in session:
@@ -125,7 +125,7 @@ def post_checks(journal: dict, config, root: Path) -> list[dict]:
     if any(current_bytes(root, item) != item["after"] for item in journal["changes"]):
         raise LifecycleError("PUBLICATION_CONFLICT", "actual resulting bytes differ from the validated set", exit_code=1)
     from .source_ingestion import validate_review
-    from .lifecycle import guidance
+    from .lifecycle import configuration_revision, guidance
     if journal["payload"].get("dispositions") is None:
         validate_review(journal["payload"], config, root, journal["scope"],
             guidance(config, root, journal["scope"], ignore_publication=True), journal.get("source_work", []))
@@ -258,7 +258,7 @@ def _recover(store, config, config_path: Path, *, allow_checks: bool) -> dict | 
 
 def finish(store, state, config, config_path: Path, path: str, journal: dict,
            checks: list[dict], *, complete: bool, recovered: bool = False) -> dict:
-    from .lifecycle import guidance, inputs, file_revision, revoke_agent, children_pending, mark_output_pending, identities
+    from .lifecycle import configuration_revision, guidance, inputs, file_revision, revoke_agent, children_pending, mark_output_pending, identities
     bound = next(value for value in state["sessions"].values() if value["id"] == journal["work_session_id"])
     if journal.get("source_work", []) != bound.get("source_work", []):
         raise LifecycleError("SOURCE_EVIDENCE_STALE", "publication source work differs from the current joined obligation", exit_code=1)
@@ -266,7 +266,7 @@ def finish(store, state, config, config_path: Path, path: str, journal: dict,
     if complete:
         settle(journal["payload"], config, store.root)
     delivery = guidance(config, store.root, bound["scope"], ignore_publication=True)
-    resulting_input = inputs(config, store.root, file_revision(config_path), bound["scope"], delivery)
+    resulting_input = inputs(config, store.root, configuration_revision(config_path), bound["scope"], delivery)
     resulting_bases = knowledge_bases(config, store.root) if bound.get("source_work") else None
     journal.update(status="checked" if complete else "published", resulting_input_revision=resulting_input)
     history.save(store.root, path, journal)
@@ -298,7 +298,7 @@ def finish(store, state, config, config_path: Path, path: str, journal: dict,
         if agent.get("delivery"):
             agent["delivery"].update(input_revision=resulting_input, guidance_revision=digest(delivery), complete=delivery["complete"])
         receipts = [{"id": uid(), **check, "input_revision": resulting_input,
-                     "config_revision": file_revision(config_path), "owner_generation": journal["owner_generation"],
+                     "config_revision": configuration_revision(config_path), "owner_generation": journal["owner_generation"],
                      "attempt_id": journal["attempt_id"], "checked_at": time.time()} for check in checks]
         obligation["check_receipts"] = receipts
         obligation["publication"] = summary(path, journal)

@@ -24,6 +24,7 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
   cp -p "$REPO_ROOT/scripts/configure-rtk.py" "$repo/scripts/configure-rtk.py"
+  cp -p "$REPO_ROOT/scripts/install-agent-brain.py" "$repo/scripts/install-agent-brain.py"
   mkdir -p "$repo/bin"
   printf '%s\n' '#!/bin/sh' 'printf "rtk 0.50.0\\n"' > "$repo/bin/rtk"
   chmod 755 "$repo/bin/rtk"
@@ -72,6 +73,8 @@ from pathlib import Path
 
 source_root = Path(sys.argv[1])
 fixture_root = Path(sys.argv[2])
+shutil.copytree(source_root / 'skills/agent-brain', fixture_root / 'skills/agent-brain', dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
 sys.path.insert(0, str(fixture_root))
 from hooks.manifest import targets
 

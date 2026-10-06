@@ -91,7 +91,7 @@ def main() -> int:
                 emit_json({})
             return 0
 
-        joined = helper.join_agent_brain(repo_root, payload)
+        joined = helper.join_agent_brain(repo_root, payload, native_provider="copilot")
         if joined is not None:
             if event_name in {"agentStop", "subagentStop"}:
                 emit_json({"decision": "allow"} if joined["completed"] else {"decision": "block", "reason": joined["reason"]})

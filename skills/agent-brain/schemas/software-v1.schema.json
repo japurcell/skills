@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/software-v1.schema.json",
+  "title": "Exact installed immutable software pin v1",
+  "$ref": "#/$defs/pin",
+  "$defs": {
+    "pin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_path",
+        "manifest_revision",
+        "core_version",
+        "adapter_version",
+        "schema_version"
+      ],
+      "properties": {
+        "bundle_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Explicit absolute versioned bundle with no linked/reparse component."
+        },
+        "manifest_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "core_version": {
+          "const": "0.1.0"
+        },
+        "adapter_version": {
+          "const": "native-1"
+        },
+        "schema_version": {
+          "const": 1
+        }
+      }
+    }
+  }
+}

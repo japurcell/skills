@@ -17,4 +17,7 @@ from agent_brain.cli import main
 
 
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["--native-foreground"]:
+        from agent_brain.native import main as native_main
+        raise SystemExit(native_main(["foreground", *sys.argv[2:]]))
     raise SystemExit(main())

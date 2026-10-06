@@ -14,9 +14,10 @@ import time
 
 from . import __version__
 from .config import load_config, _keys, _string
-from .lifecycle import (actual_binding, bridge_event, error_result, file_revision,
+from .lifecycle import (configuration_revision, actual_binding, bridge_event, error_result, file_revision,
     read_json, scope_record, settle_output, validate_event, session_key, agent_key, mark_output_pending)
 from .state import LifecycleError, StateStore, digest, local_path, uid, write_private
+from .software import software_path, validate_software, command as shell_command, command_words
 
 ADAPTER_VERSION = "native-1"
 EVENTS = {
@@ -68,7 +69,7 @@ def capture_sources(config, root, config_path, store):
     """Foreground-only canonical scan records exact immutable input inventory."""
     from .source_ingestion import snapshot
     value = snapshot(config, root)
-    cache = {"config_revision": file_revision(config_path), "snapshot": value,
+    cache = {"config_revision": configuration_revision(config_path), "snapshot": value,
         "snapshot_revision": digest(value), "topology": source_topology(config, root)}
     state = store.read()
     store.change(state["revision"], lambda record: record.update(native_sources=cache))
@@ -121,7 +122,7 @@ def support_record(config, root: Path, provider: dict) -> dict:
         _keys(record[name], name, {"path", "revision"})
         if file_revision(local_path(root, record[name]["path"])) != record[name]["revision"]:
             raise LifecycleError("INTEGRATION_MISMATCH", "native permissions/lifecycle configuration changed")
-    if file_revision(local_path(root, record["adapter_path"])) != record["adapter_revision"] or bundle_revision(local_path(root, record["bundle_path"])) != record["bundle_revision"]:
+    if file_revision(software_path(config, root, record["adapter_path"])) != record["adapter_revision"] or bundle_revision(software_path(config, root, record["bundle_path"])) != record["bundle_revision"]:
         raise LifecycleError("INTEGRATION_MISMATCH", "native runnable bytes changed")
     deadline = record["native_deadline_seconds"]
     if type(deadline) not in (float, int) or not 0.1 < deadline <= 600:
@@ -149,7 +150,7 @@ def support_record(config, root: Path, provider: dict) -> dict:
     return record
 
 
-def registration(value: dict, root: Path):
+def registration(value: dict, root: Path, *, issued_foreground=False):
     _keys(value, "native registration", {"schema_version", "integration_id", "config_path", "bundle_path", "provider", "provider_version", "entry_mode"})
     if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         raise LifecycleError("INPUT_INVALID", "native registration schema must be 1")
@@ -159,8 +160,21 @@ def registration(value: dict, root: Path):
     if not provider or not provider["enabled"] or provider["kind"] != "native":
         raise LifecycleError("INTEGRATION_DISABLED", "native integration is not configured and enabled")
     support = support_record(config, root, provider)
-    if any(value[key] != support[key] for key in ("provider", "provider_version", "entry_mode", "bundle_path")):
+    historical = False
+    if issued_foreground and config.software:
+        from .setup import checked_local
+        activation = checked_local(root)
+        historical = bool(activation and value in activation["prior_integrations"] and any(
+            all(value[key] == item[key] for key in value if key != "bundle_path") for item in activation["integrations"]))
+    if any(value[key] != support[key] for key in ("provider", "provider_version", "entry_mode")) or value["bundle_path"] != support["bundle_path"] and not historical:
         raise LifecycleError("INTEGRATION_MISMATCH", "launcher does not match the frozen native binding")
+    if Path(value["bundle_path"]).is_absolute():
+        from .setup import checked_local, checked_journal
+        activation = checked_local(root)
+        if not activation or activation["status"] != "active" or value not in activation["integrations"] and not historical:
+            raise LifecycleError("ACTIVATION_UNAVAILABLE", "the exact managed activation is absent, incomplete or deactivated")
+        if checked_journal(root, activation["journal_path"])["status"] != "applied":
+            raise LifecycleError("ACTIVATION_UNAVAILABLE", "managed activation has not completed its durable apply")
     return config, config_path, provider, support
 
 
@@ -236,7 +250,7 @@ def normalized(value: dict, payload: dict, root: Path) -> tuple[dict, tuple]:
     event = {"schema_version": 1, "event_id": digest([value, payload]), "event": kind,
         "integration": {"id": value["integration_id"], "core_version": provider["core_version"],
             "adapter_version": provider["adapter_version"], "certification_id": provider["certification_id"],
-            "config_revision": file_revision(config_path)},
+            "config_revision": configuration_revision(config_path)},
         "binding": {"repository_root": repository, "worktree_root": worktree,
             "provider_session_id": session, "provider_task_id": task_id, "provider_agent_id": session + ":" + agent},
         "scope": scope}
@@ -292,7 +306,7 @@ def released_turn(event, value, config, config_path, store):
     agent = (session or {}).get("agents", {}).get(agent_key(value["integration_id"], event["binding"]["provider_agent_id"]))
     if not released or not session or not agent or local_path(store.root, config.state_dir + "/output-pending.json").exists():
         return False
-    if (ticket["config_revision"] != file_revision(config_path) or released["registration_revision"] != digest(value)
+    if (ticket["config_revision"] != configuration_revision(config_path) or released["registration_revision"] != digest(value)
             or released["status"] != session["status"] or session["status"] not in ("active", "awaiting_user", "paused", "cancelled")
             or released["input_generation"] != session["input_generation"] or released["input_revision"] != session["input_revision"]
             or released["scope_revision"] != digest(event["scope"])
@@ -301,7 +315,7 @@ def released_turn(event, value, config, config_path, store):
     from .lifecycle import guidance, inputs
     try:
         delivered = guidance(config, store.root, session["scope"], store=store)
-        return inputs(config, store.root, file_revision(config_path), session["scope"], delivered, native_callback=True) == session["input_revision"]
+        return inputs(config, store.root, configuration_revision(config_path), session["scope"], delivered, native_callback=True) == session["input_revision"]
     except LifecycleError as error:
         if error.code == "RECOVERY_FOREGROUND_REQUIRED":
             return False
@@ -324,15 +338,21 @@ def issue(event, config, config_path, value, store):
         write_private(path, private)
         def update(record):
             record.setdefault("native_foreground", {})[key] = {"path": path.relative_to(store.root).as_posix(),
-                "revision": file_revision(path), "config_revision": file_revision(config_path), "expires_at": private["expires_at"],
+                "revision": file_revision(path), "config_revision": configuration_revision(config_path), "expires_at": private["expires_at"],
                 "session_key": session_key(value["integration_id"], event["binding"])}
         store.change(state["revision"], update)
         if pending:
             # Reissue only this expired opaque ticket. Semantic ownership,
             # attempt counters and pending publication remain untouched.
             local_path(store.root, pending["path"]).unlink(missing_ok=True)
-    command = shlex.join([sys.executable, str(local_path(store.root, value["bundle_path"]) / "scripts/native-integration.py"),
-        "foreground", "--invocation-file", str(path)])
+    if config.software:
+        software = validate_software(config.software)
+        from .setup import checked_local
+        command = shell_command([software["launcher"], "--native-foreground", "--invocation-file", str(path),
+            "--config", str(config_path)], checked_local(store.root)["shell"])
+    else:
+        command = shell_command([sys.executable, str(software_path(config, store.root, value["bundle_path"]) / "scripts/native-integration.py"),
+            "foreground", "--invocation-file", str(path)])
     current = store.read()["sessions"].get(session_key(value["integration_id"], event["binding"]))
     intent = event["event"] == "task" and current and current["status"] in ("paused", "cancelled")
     return {"schema_version": 1, "operation_status": "ok", "stage_outcome": "incomplete", "work_session_status": "incomplete",
@@ -418,6 +438,12 @@ def callback(value, payload):
     if command is not None and foreground_command(command, value, config, config_path, store):
         result = {"operation_status": "ok", "next_action": {"kind": "none"}}
         return {"envelope": envelope(support, payload, result)}
+    if isinstance(command, str) and ("--native-foreground" in command or "--invocation-file" in command):
+        # A malformed or composed continuation cannot fall through to ordinary
+        # tool admission after failing the exact registered-command check.
+        result = {"operation_status": "unavailable", "next_action": {"kind": "none"},
+            "diagnostics": [{"code": "CONTINUATION_COMMAND_INVALID", "message": "Use the exact issued command without shell composition."}]}
+        return {"envelope": envelope(support, payload, result)}
     current = store.read().get("sessions", {}).get(session_key(value["integration_id"], event["binding"]))
     if released_turn(event, value, config, config_path, store):
         result = {"operation_status": "ok", "next_action": {"kind": "none"}}
@@ -450,6 +476,7 @@ def callback(value, payload):
         return {"envelope": envelope(support, payload, issued), "completed": False, "reason": context(issued)}
     if result.get("delivery"):
         mark_output_pending(store, result["identities"], result["input_generation"], result["context_generation"])
+    installed_stage_command(result, config, store.root, config_path)
     settlement = None
     if result.get("delivery"):
         handle = uid() + uid()
@@ -499,20 +526,51 @@ def foreground_command(command, value, config, config_path, store):
     if not isinstance(command, str):
         return False
     try:
-        words = literal_command_words(command)
+        if config.software:
+            from .setup import checked_local
+            words = command_words(command, checked_local(store.root)["shell"])
+        else:
+            words = literal_command_words(command)
     except ValueError:
         return False
+    bundle = software_path(config, store.root, value["bundle_path"])
+    if config.software:
+        software = validate_software(config.software)
+        if words and words[0] == software["launcher"]:
+            if len(words) > 1 and words[1] == "--native-foreground":
+                words = [sys.executable, str(bundle / "scripts/native-integration.py"), "foreground", *words[2:]]
+            else:
+                words = [sys.executable, str(bundle / "scripts/agent-brain.py"), *words[1:]]
     if len(words) < 5 or words[0] != sys.executable:
         return False
-    bundle = local_path(store.root, value["bundle_path"])
     if words[1:4] == [str(bundle / "scripts/native-integration.py"), "foreground", "--invocation-file"]:
+        options = {}
+        allowed = {"--classification": ("active", "awaiting_user", "ready_to_complete"),
+            "--objective": ("new", "resume", "retain_stopped"), "--control": ("pause", "cancel")}
+        if len(words[5:]) % 2:
+            return False
+        for flag, argument in zip(words[5::2], words[6::2]):
+            if flag in options or flag != "--config" and (flag not in allowed or argument not in allowed[flag]):
+                return False
+            options[flag] = argument
+        if len(set(options) & set(allowed)) > 1:
+            return False
+        if config.software or "--config" in options:
+            selected = Path(options.get("--config", ".agents/context/config.json"))
+            if not selected.is_absolute():
+                selected = store.root / selected
+            if local_path(store.root, selected.relative_to(store.root).as_posix()) != config_path:
+                return False
         path = local_path(store.root, Path(words[4]).relative_to(store.root).as_posix())
         private = read_json(path.read_bytes().decode("utf-8"))
         expected = store.read().get("native_foreground", {}).get(ticket_key(private["event"], private["registration"]))
-        return bool(private["registration"] == value and expected and expected["revision"] == file_revision(path)
-            and expected["config_revision"] == file_revision(config_path) and expected["expires_at"] > time.time()
-            and (len(words) == 5 or len(words) == 7 and (words[5] == "--classification" and words[6] in ("active", "awaiting_user", "ready_to_complete")
-                or words[5] == "--objective" and words[6] in ("new", "resume", "retain_stopped") or words[5] == "--control" and words[6] in ("pause", "cancel"))))
+        registered = private["registration"] == value
+        if not registered and config.software:
+            from .setup import checked_local
+            registered = private["registration"] in checked_local(store.root)["prior_integrations"] and all(
+                private["registration"][name] == value[name] for name in value if name != "bundle_path")
+        return bool(registered and expected and expected["revision"] == file_revision(path)
+            and expected["config_revision"] == configuration_revision(config_path) and expected["expires_at"] > time.time())
     if words[1] == str(bundle / "scripts/agent-brain.py") and words[2] in ("learn", "dream") and words[3] in ("start", "prepare", "publish", "complete"):
         try:
             options = {}
@@ -547,11 +605,39 @@ def foreground_command(command, value, config, config_path, store):
     return False
 
 
-def gate(payload):
+def installed_stage_command(result, config, root, config_path):
+    """Supply the same literal command representation which admission checks."""
+    kind = result.get("next_action", {}).get("kind")
+    if config.software and result.get("invocation_file") and kind in ("learn", "dream"):
+        from .setup import checked_local
+        software = validate_software(config.software)
+        commands = []
+        for stage in ("start", "prepare", "publish", "complete"):
+            argv = [software["launcher"], kind, stage, "--invocation-file", result["invocation_file"], "--config", str(config_path)]
+            if stage == "prepare":
+                argv.extend(["--input", "REVIEW.json"])
+            commands.append(shell_command([*argv, "--json"], checked_local(root)["shell"]))
+        result["next_action"]["procedure"] = ("Registered commands for the selected configuration (write the reviewed input to REVIEW.json before prepare; for no-change skip publish and append --input REVIEW.json to complete):\n"
+            + "\n".join(commands) + "\n\n" + result["next_action"].get("procedure", ""))
+
+
+def gate(payload, native_provider=None):
     """Existing canonical source gates join ordinary native payloads."""
     root = Path.cwd().resolve()
-    path = local_path(root, ".agents/context/native-registration.json")
-    value = read_json(path.read_bytes().decode("utf-8"))
+    index = local_path(root, ".agents/context/native-registrations.json")
+    if index.exists():
+        from .setup import checked_local
+        activation = checked_local(root)
+        known = read_json(index.read_bytes().decode("utf-8"))["integrations"]
+        matches = [item for item in known if item["provider"] == native_provider and item in activation["integrations"]]
+        if len(matches) != 1:
+            raise LifecycleError("NATIVE_UNSUPPORTED", "the known source handler does not select one exact activated native integration")
+        value = matches[0]
+    else:
+        path = local_path(root, ".agents/context/native-registration.json")
+        value = read_json(path.read_bytes().decode("utf-8"))
+        if native_provider and value["provider"] != native_provider:
+            raise LifecycleError("NATIVE_UNSUPPORTED", "the source handler provider differs from the registered native integration")
     event = payload.get("hook_event_name", payload.get("hookEventName"))
     if not event:
         if "source" in payload:
@@ -577,8 +663,8 @@ def gate(payload):
         from .source_ingestion import pending
         delivered = guidance(config, root, current["scope"], store=store)
         if (not local_path(root, config.state_dir + "/output-pending.json").exists()
-                and not pending(captured_sources(config, root, file_revision(config_path)) if config.source_ingestion["enabled"] else None)
-                and inputs(config, root, file_revision(config_path), current["scope"], delivered, native_callback=True) == current["input_revision"]
+                and not pending(captured_sources(config, root, configuration_revision(config_path)) if config.source_ingestion["enabled"] else None)
+                and inputs(config, root, configuration_revision(config_path), current["scope"], delivered, native_callback=True) == current["input_revision"]
                 and agent["delivery"]["guidance_revision"] == digest(delivered)
                 and (not config.source_ingestion["enabled"] or current.get("source_checked") == current["input_revision"])):
             return {"completed": True, "reason": "Source-ingest gate joined the current checked agent-brain learn obligation."}
@@ -612,18 +698,24 @@ def settle_native(value, payload):
     store.change(state["revision"], lambda record: record["native_output"].pop(digest(payload["handle"])))
 
 
-def foreground(path: Path, classification: str | None, control: str | None = None, objective: str | None = None):
+def foreground(path: Path, classification: str | None, control: str | None = None, objective: str | None = None, config_argument: str | None = None):
     root = Path.cwd().resolve()
     path = local_path(root, path.absolute().relative_to(root).as_posix())
     private = read_json(path.read_bytes().decode("utf-8"))
     _keys(private, "issued foreground stage", {"schema_version", "registration", "event", "expires_at"})
-    config, config_path, _, _ = registration(private["registration"], root)
+    config, config_path, _, _ = registration(private["registration"], root, issued_foreground=True)
+    if config_argument is not None:
+        selected = Path(config_argument)
+        if not selected.is_absolute():
+            selected = root / selected
+        if local_path(root, selected.relative_to(root).as_posix()) != config_path:
+            raise LifecycleError("INVOCATION_MISMATCH", "selected configuration differs from the issued native integration")
     store = StateStore(root, config.state_dir, float(config.limits["contention_seconds"]))
     state = store.read()
     key = ticket_key(private["event"], private["registration"])
     expected = state.get("native_foreground", {}).get(key)
     if (not expected or expected["path"] != path.relative_to(root).as_posix() or expected["revision"] != file_revision(path)
-            or expected["config_revision"] != file_revision(config_path) or expected["expires_at"] <= time.time()):
+            or expected["config_revision"] != configuration_revision(config_path) or expected["expires_at"] <= time.time()):
         raise LifecycleError("INVOCATION_INVALID", "foreground stage is unregistered, stale, or expired before work")
     event = validate_event(private["event"])
     parent_checkpoint = event["event"] == "checkpoint"
@@ -644,6 +736,7 @@ def foreground(path: Path, classification: str | None, control: str | None = Non
             raise LifecycleError("INVOCATION_MISMATCH", "classification applies only to the issued checkpoint")
         event["classification"] = classification
     result, code, store = bridge_event(event, config_path, native_foreground=True, resume_paused=objective == "resume")
+    installed_stage_command(result, config, root, config_path)
     if objective == "new":
         state = store.read()
         objective_key = digest([private["registration"]["integration_id"], event["binding"]["provider_session_id"]])
@@ -683,6 +776,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("action", choices=("callback", "settle", "foreground", "gate"))
     parser.add_argument("--invocation-file")
+    parser.add_argument("--config")
     parser.add_argument("--classification", choices=("active", "awaiting_user", "ready_to_complete"))
     parser.add_argument("--control", choices=("pause", "cancel"))
     parser.add_argument("--objective", choices=("new", "resume", "retain_stopped"))
@@ -691,7 +785,7 @@ def main(argv=None):
         if args.action == "foreground":
             if not args.invocation_file:
                 raise LifecycleError("INVOCATION_INVALID", "foreground recovery requires an issued file before inputs")
-            return foreground(Path(args.invocation_file), args.classification, args.control, args.objective)
+            return foreground(Path(args.invocation_file), args.classification, args.control, args.objective, args.config)
         request = read_json(sys.stdin.read(1024 * 1024 + 1))
         if args.action == "settle":
             settle_native(request["registration"], request["payload"])

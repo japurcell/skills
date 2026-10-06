@@ -192,7 +192,8 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
         if path == ".agents/sources" or path.startswith(".agents/sources/"):
             raise LifecycleError("RAW_SOURCE_IMMUTABLE", "raw source inputs never belong to automatic publication")
         target = local_path(root, path)
-        owned = [owner for owner in config.knowledge_roots if path.startswith(owner.path + "/") or owner.path == "."]
+        owned = [owner for owner in config.knowledge_roots if (path == owner.path if owner.type == "file"
+            else path.startswith(owner.path + "/") or owner.path == ".")]
         candidate_owned = path.startswith(config.candidate_dir + "/") and not owned
         if (not candidate_owned and (len(owned) != 1 or owned[0].ownership != "agent_brain")) or not path.endswith(".md") or path.startswith(config.state_dir + "/"):
             raise LifecycleError("WRITABLE_SCOPE_INVALID", "publication requires one exclusively owned Markdown knowledge path")
@@ -221,7 +222,8 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8")
         for owner in config.knowledge_roots:
-            (preview / owner.path).mkdir(parents=True, exist_ok=True)
+            if owner.type == "directory":
+                (preview / owner.path).mkdir(parents=True, exist_ok=True)
         for item in changes:
             target = preview / item["path"]
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -239,7 +241,7 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
     affected = {identity for identity in prior.keys() | following.keys() if prior.get(identity) != following.get(identity)}
     if assigned_ids is not None and not affected.issubset(set(assigned_ids)):
         raise LifecycleError("DREAM_SCOPE_MISMATCH", "dream changes must stay within the delivered assigned batch closure")
-    from .lifecycle import guidance
+    from .lifecycle import configuration_revision, guidance
     delivered = guidance(config, root, scope, ignore_publication=True)
     affected.update(unit["id"] for unit in delivered["units"] if unit["loading_mode"] == "whole" and unit["path"] in paths)
     # Policy meaning is deliberately protected conservatively by exact prose,
@@ -253,7 +255,7 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
             raise LifecycleError("POLICY_PROTECTED", "automatic publication preserves existing policy meaning, scope, references and exceptions")
     if any(unit.kind == "policy" and (identity not in prior or prior[identity].kind != "policy") for identity, unit in following.items()):
         raise LifecycleError("POLICY_PROTECTED", "automatic evidence promotion cannot introduce new instruction authority")
-    from .lifecycle import scope_record
+    from .lifecycle import configuration_revision, scope_record
     claims = {}
     for value in proposal["claims"]:
         claim = _object(value, "claim")
@@ -269,7 +271,7 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
             raise LifecycleError("EVIDENCE_SCOPE_INVALID", "evidence applicability differs from guidance scope")
         if not any(set(values) & set(scope[field]) for field, values in claim_scope.items()):
             # Existing scoped units can use globs, but they must be delivered.
-            from .lifecycle import guidance
+            from .lifecycle import configuration_revision, guidance
             scoped = guidance(config, root, scope, ignore_publication=True)
             if identity not in {unit["id"] for unit in scoped["units"]}:
                 raise LifecycleError("EVIDENCE_SCOPE_INVALID", "changed guidance is outside the assigned foreground scope")
@@ -321,7 +323,7 @@ def changed_operation(operation, store, state, handle, config, config_path, bind
             return _changed_operation(operation, store, state, handle, config, config_path, binding, payload)
     except LifecycleError as exc:
         if operation != "prepare" and exc.code == "CHECK_FAILED":
-            from .lifecycle import validate_invocation
+            from .lifecycle import configuration_revision, validate_invocation
             latest = store.read()
             def failed(record):
                 _, session, _, obligation = validate_invocation(record, handle, binding[0]["stage"], config, store.root, config_path)
@@ -334,7 +336,7 @@ def changed_operation(operation, store, state, handle, config, config_path, bind
 def _changed_operation(operation, store, state, handle, config, config_path, binding, payload):
     from . import history, publication
     from .checks import checked_review
-    from .lifecycle import (guidance, inputs, file_revision, validate_invocation,
+    from .lifecycle import (configuration_revision, guidance, inputs, file_revision, validate_invocation,
                             event_result)
     from .state import digest
     invocation, session, agent, obligation = binding
@@ -359,7 +361,7 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
         if not all(check["exit_code"] == 0 and not check["timed_out"] for check in checks):
             raise LifecycleError("CHECK_FAILED", "configured prepare checks failed", exit_code=1, retry_eligible=True)
         latest = guidance(config, store.root, session["scope"], store=store)
-        if inputs(config, store.root, file_revision(config_path), session["scope"], latest) != session["input_revision"]:
+        if inputs(config, store.root, configuration_revision(config_path), session["scope"], latest) != session["input_revision"]:
             raise LifecycleError("INPUTS_STALE", "relevant inputs changed while preparing", exit_code=1)
         path, journal = publication.prepare_journal(validated, payload, config, config_path, store.root, invocation, session, obligation, checks)
         def save(record):
@@ -369,7 +371,7 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
             if stage == "dream":
                 item["dispositions"] = payload["dispositions"]
             item["check_receipts"] = [{"id": uid(), **check,
-                "input_revision": bound["input_revision"], "config_revision": file_revision(config_path),
+                "input_revision": bound["input_revision"], "config_revision": configuration_revision(config_path),
                 "owner_generation": inv["owner_generation"], "attempt_id": inv["attempt_id"],
                 "checked_at": time.time()} for check in checks]
         store.change(state["revision"], save)
