@@ -14,7 +14,7 @@ For canonical observability renderer changes, also run `python3 scripts/test-gen
 
 The suites exercise installed hook copies and validate event capture, span records, transcript rollup, lock-wait fail-open behavior, redaction and capping, rotation, and the kill switch. They keep stdin open after compact or multiline JSON, require prompt exit, reject buffered trailing data, verify owner-only primary and shadow logs, test runtime-specific variable precedence over generic fallbacks, and keep stale-backup pruning active when a zero-byte maximum disables rotation.
 
-Keep each provider test subprocess under `with_disposable_hook_home` or an equivalent disposable `HOME`: `AUDIT_LOG` does not redirect default observability or SQLite storage. Verify a sentinel stand-in home remains unchanged. In rotation fixtures unrelated to maintenance, create a fresh `.maintenance_last_run` sentinel before `SessionEnd` so detached maintenance does not race cleanup. Leave intentional maintenance tests without that sentinel.
+Keep each provider test subprocess under `with_disposable_hook_home` or an equivalent disposable `HOME`: `AUDIT_LOG` does not redirect default observability or SQLite storage. The shared install fixture seeds fresh sentinels for both providers, preventing unrelated lifecycle events from launching detached maintenance. Intentional maintenance tests must remove the relevant sentinel before the triggering event. Sentinel creation signals startup, not completion; wait bounded for a test-owned stale active-directory marker to be removed by the final scavenging pass before fixture cleanup.
 
 Use installed-path benchmarks for Gemini Tool Guardian; direct repo invocation can miss the `<40ms` target even when installed behavior passes.
 

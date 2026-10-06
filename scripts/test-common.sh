@@ -130,9 +130,17 @@ run_copilot_hook() {
 
 install_into_temp_home() {
   local home="$1"
+  local provider
+  local sentinel
 
   mkdir -p "$home"
   TMPDIR="$REPO_ROOT/.tmp" HOME="$home" "$REPO_ROOT/scripts/install.sh" >/dev/null
+
+  for provider in copilot gemini; do
+    sentinel="$home/.$provider/hooks/logs/.maintenance_last_run"
+    mkdir -p "$(dirname "$sentinel")"
+    : > "$sentinel"
+  done
 }
 
 write_required_skill_fixtures() {

@@ -166,6 +166,7 @@ test_structured_observability_records_session_rollup_and_mutation() {
   local workdir
   local home
   local obs_log
+  local maintenance_sentinel
   local payload
   local long_tail
   local token_tail
@@ -177,6 +178,9 @@ test_structured_observability_records_session_rollup_and_mutation() {
   trap 'rm -rf "'"$workdir"'"' RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  maintenance_sentinel="$home/.copilot/hooks/logs/.maintenance_last_run"
+  assert_equals true "$(test -f "$maintenance_sentinel" && echo true || echo false)" \
+    "Expected unrelated observability fixtures to seed a maintenance sentinel."
   obs_log="$home/.copilot/hooks/logs/observability.ndjson"
   long_tail="$(python3 - <<'PY'
 print("x" * 2000, end="")
@@ -1150,6 +1154,12 @@ test_sqlite_finalization_and_transcripts() {
 
   # --- TEST 4: Detached maintenance, rate-limiting, retention, scavenging, vacuum ---
   local sentinel="$home/.copilot/hooks/logs/.maintenance_last_run"
+  local maintenance_progress_dir="$home/.copilot/hooks/logs/transcripts/active/detached-maintenance-progress"
+  local completion_stale_epoch
+  mkdir -p "$maintenance_progress_dir"
+  completion_stale_epoch="$(python3 -c 'import time; print(int(time.time() - 30 * 3600))')"
+  python3 -c 'import os, sys; stamp = int(sys.argv[1]); os.utime(sys.argv[2], (stamp, stamp))' \
+    "$completion_stale_epoch" "$maintenance_progress_dir"
   rm -f "$sentinel"
 
   payload="$(jq -nc '{
@@ -1169,6 +1179,17 @@ test_sqlite_finalization_and_transcripts() {
 
   if [[ ! -f "$sentinel" ]]; then
     echo "Expected maintenance sentinel file to be created: $sentinel" >&2
+    exit 1
+  fi
+
+  local completion_count=0
+  # Final scavenging removes this marker after maintenance's database work.
+  while [[ -d "$maintenance_progress_dir" && $completion_count -lt $limit ]]; do
+    sleep 0.1
+    completion_count=$((completion_count + 1))
+  done
+  if [[ -d "$maintenance_progress_dir" ]]; then
+    echo "Expected detached maintenance to remove its stale progress marker before fixture cleanup: $maintenance_progress_dir" >&2
     exit 1
   fi
 
