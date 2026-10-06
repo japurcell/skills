@@ -105,7 +105,7 @@ def load_config(path: Path) -> AgentBrainConfig:
 
     root = _object(value, "configuration")
     required = {"schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"}
-    optional = {"providers", "checks", "limits", "state_dir", "history_dir"}
+    optional = {"providers", "checks", "limits", "state_dir", "history_dir", "candidate_dir", "maintenance"}
     _keys(root, "configuration", required | (root.keys() & optional))
     if type(root["schema_version"]) is not int or root["schema_version"] != 1:
         raise ConfigurationError("configuration schema_version must be 1")
@@ -229,6 +229,22 @@ def load_config(path: Path) -> AgentBrainConfig:
     history_dir = _relative_path(root.get("history_dir", ".agents/context/history"), "history_dir")
     if history_dir == state_dir or history_dir.startswith(state_dir + "/") or state_dir.startswith(history_dir + "/"):
         raise ConfigurationError("portable history_dir must be separate from ignored runtime state_dir")
+    candidate_dir = _relative_path(root.get("candidate_dir", ".agents/context/candidates"), "candidate_dir")
+    if any(candidate_dir == path or candidate_dir.startswith(path + "/") or path.startswith(candidate_dir + "/")
+           for path in (state_dir, history_dir)):
+        raise ConfigurationError("candidate_dir must be separate from runtime state and inverse history")
+    defaults = {"enabled": True, "interval_days": 7, "primary_limit": 5,
+                "guidance_bytes": 32768, "retention_days": 30}
+    maintenance = _object(root.get("maintenance", {}), "maintenance")
+    _keys(maintenance, "maintenance", set(maintenance) & set(defaults))
+    if "enabled" in maintenance and type(maintenance["enabled"]) is not bool:
+        raise ConfigurationError("maintenance.enabled must be boolean")
+    for field in ("interval_days", "primary_limit", "guidance_bytes", "retention_days"):
+        if field in maintenance:
+            maximum = {"interval_days": 366, "primary_limit": 5, "guidance_bytes": 32768, "retention_days": 36500}[field]
+            _number(maintenance[field], "maintenance." + field, maximum, integer=True)
+    if maintenance.get("retention_days", 30) < 30:
+        raise ConfigurationError("maintenance.retention_days must be at least 30")
     return AgentBrainConfig(
         schema_version=1,
         repository_id=repository_id,
@@ -236,6 +252,7 @@ def load_config(path: Path) -> AgentBrainConfig:
         mapped_units=tuple(units),
         startup=tuple(startup),
         providers=providers, checks=checks, limits=limits, state_dir=state_dir, history_dir=history_dir,
+        candidate_dir=candidate_dir, maintenance=defaults | maintenance,
     )
 
 

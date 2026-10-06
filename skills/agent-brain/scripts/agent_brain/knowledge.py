@@ -58,6 +58,15 @@ def load_knowledge(config: AgentBrainConfig, *, repository_root: Path, ignore_pu
             continue
         root_paths.append((root.path, resolved))
 
+    # Portable unresolved candidates share the same metadata/reference parser.
+    # Their absence is a valid empty queue; linked writable roots are rejected.
+    from .state import local_path
+    candidate_root = local_path(repository, config.candidate_dir)
+    if candidate_root.exists():
+        if not candidate_root.is_dir():
+            raise ConfigurationError("candidate_dir is not a directory")
+        root_paths.append((config.candidate_dir, candidate_root))
+
     documents: dict[str, str] = {}
     blocked: set[str] = set()
     unavailable: dict[str, tuple[GuidanceUnit, ...]] = {}

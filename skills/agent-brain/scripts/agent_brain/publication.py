@@ -239,14 +239,17 @@ def _recover(store, config, config_path: Path, *, allow_checks: bool) -> dict | 
 def finish(store, state, config, config_path: Path, path: str, journal: dict,
            checks: list[dict], *, complete: bool, recovered: bool = False) -> dict:
     from .lifecycle import guidance, inputs, file_revision, revoke_agent, children_pending, mark_output_pending, identities
-    delivery = guidance(config, store.root, journal["scope"], ignore_publication=True)
-    resulting_input = inputs(config, store.root, file_revision(config_path), journal["scope"], delivery)
+    bound = next(value for value in state["sessions"].values() if value["id"] == journal["work_session_id"])
+    delivery = guidance(config, store.root, bound["scope"], ignore_publication=True)
+    resulting_input = inputs(config, store.root, file_revision(config_path), bound["scope"], delivery)
     journal.update(status="checked" if complete else "published", resulting_input_revision=resulting_input)
     history.save(store.root, path, journal)
     if complete:
         bound = next(value for value in state["sessions"].values() if value["id"] == journal["work_session_id"])
         executing = next(value for value in bound["agents"].values() if value["id"] == journal["agent_id"])
         mark_output_pending(store, identities(state, bound, executing), bound["input_generation"], executing["context_generation"])
+    from .maintenance import session_completion, utc_day
+    completed_on = utc_day(config, store.root, config_path)
     def update(record):
         session = next(value for value in record["sessions"].values() if value["id"] == journal["work_session_id"])
         obligation = session["obligations"][journal["obligation_id"]]
@@ -272,7 +275,7 @@ def finish(store, state, config, config_path: Path, path: str, journal: dict,
         if complete:
             obligation.update(status="completed", stage_outcome="changed")
             obligation.pop("reason", None)
-            session.update(status="completed", checkpoint="completed")
+            session_completion(record, session, config, store.root, completed_on)
             revoke_agent(record, agent["id"])
         return receipts
     receipts = store.change(state["revision"], update)

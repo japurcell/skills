@@ -55,6 +55,17 @@
         "Requires current child delivery and assigned-scope settlement before parent completion.",
         "Does not assume an old receipt restores context, create a maintenance subagent, or claim native provider support."
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "A current registered dream work package assigns a finite batch with one unresolved candidate and quiet guidance. Its review finds no eligible change; the candidate's evidence is inaccessible. Finish this assigned batch and explain the remaining due coverage.",
+      "expected_output": "Reviews the exact assigned revisions and required references, records unresolved/unavailable separately from review completion, and prepares/completes a scoped no-change. Retains the candidate, reports remaining unassigned coverage, and does not reset the full-cycle clock or invent pruning evidence.",
+      "files": [],
+      "expectations": [
+        "Uses current batch identities, revisions and complete required closure.",
+        "Separates factual verification from reviewed coverage and preserves inaccessible candidates.",
+        "Completes only checked assigned work, keeps later targets and unfinished coverage visible, and launches no background model."
+      ]
     }
   ]
 }

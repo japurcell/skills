@@ -36,6 +36,7 @@ def retrieve(
     config: AgentBrainConfig,
     knowledge: KnowledgeBase,
     scope: RetrievalScope,
+    *, target_ids: tuple[str, ...] | None = None,
 ) -> RetrievalResult:
     issues = list(knowledge.issues)
     counts = Counter(unit.id for unit in knowledge.units)
@@ -83,6 +84,9 @@ def retrieve(
     for startup_read in config.startup:
         select(startup_read.id, startup_read.loading_mode, mandatory=True)
 
+    if target_ids is not None:
+        for identity in target_ids:
+            select(identity, "unit", reason_path="assigned dream batch")
     has_task_scope = bool(scope.query) or any(scope.selectors.get(field) for field in SCOPE_FIELDS)
     uncertain_fields: set[str] = set()
     if not has_task_scope and not scope.all_guidance:
@@ -126,6 +130,8 @@ def retrieve(
                                   1 if unit.status == "established" else 2,
                                   unit.path, unit.heading or "", unit.id))
     for unit in routed:
+        if target_ids is not None:
+            continue
         if unit.status == "candidate" and not scope.investigate:
             continue
         select(unit.id, "unit", reason_path=unit.path)

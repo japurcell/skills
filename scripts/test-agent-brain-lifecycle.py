@@ -55,6 +55,7 @@ class LifecycleTests(unittest.TestCase):
                 "certification_id": self.cert, "support_record": ".agents/context/fixture.json",
                 "events": EVENTS, "max_attempts": 3}},
             "checks": {"required": ["guidance", "review_sources"], "trusted": []},
+            "maintenance": {"enabled": False},
         }
         self.save_config()
         (self.config_path.parent / "fixture.json").write_text(json.dumps({

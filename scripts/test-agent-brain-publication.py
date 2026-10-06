@@ -61,12 +61,12 @@ class PublicationTests(unittest.TestCase):
             return "<!-- agent-brain " + json.dumps(fields) + " -->"
         return re.sub(r"<!-- agent-brain (\{[^\n]+\}) -->", annotate, content)
 
-    def interrupted(self, ready, name, *, operation="publish", second=False, payload=None, config_path=None):
+    def interrupted(self, ready, name, *, operation="publish", second=False, payload=None, config_path=None, stage_name="learn"):
         environment = dict(os.environ, AGENT_BRAIN_FIXTURE_BARRIER=name)
         marker = self.config_path.parent / "state/barrier.json"
         marker.unlink(missing_ok=True)
         marker.with_suffix(".release").unlink(missing_ok=True)
-        args = [sys.executable, str(fixture.CLI), "learn", operation, "--json", "--invocation-file", ready["invocation_file"]]
+        args = [sys.executable, str(fixture.CLI), stage_name, operation, "--json", "--invocation-file", ready["invocation_file"]]
         if config_path:
             args += ["--config", str(config_path)]
         if payload:

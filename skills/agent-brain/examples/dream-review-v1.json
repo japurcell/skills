@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "outcome": "no_change",
+  "review": {
+    "scope": {
+      "paths": [
+        "src/app.py"
+      ],
+      "concepts": [],
+      "actions": [],
+      "dependencies": [],
+      "providers": [],
+      "runtimes": []
+    },
+    "guidance": [
+      {
+        "id": "a928f167-d7c1-4e49-890e-f1844aff5c03",
+        "content_revision": "0000000000000000000000000000000000000000000000000000000000000000",
+        "input_revision": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "sources": [
+      {
+        "path": "guidance/policy.md",
+        "revision": "0000000000000000000000000000000000000000000000000000000000000000",
+        "note": "Verify the current controlling source before submitting this illustrative review."
+      }
+    ],
+    "note": "Illustration only; replace scope, identities, and hashes with the current delivered work package."
+  },
+  "dispositions": [
+    {
+      "id": "a928f167-d7c1-4e49-890e-f1844aff5c03",
+      "revision": "0000000000000000000000000000000000000000000000000000000000000000",
+      "disposition": "reviewed",
+      "factual_verification": "uncertain",
+      "note": "Reviewed this exact assigned revision; no new source verification is claimed."
+    }
+  ]
+}

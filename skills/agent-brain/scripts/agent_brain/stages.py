@@ -169,8 +169,8 @@ def validate_links(documents: dict[str, str], root: Path, changes: list[dict]) -
                     raise LifecycleError("REFERENCE_INVALID", "affected heading fragment is unresolved")
 
 
-def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revision: str) -> dict:
-    _keys(payload, "changed input", {"schema_version", "outcome", "review", "proposal"})
+def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revision: str, *, assigned_ids=None) -> dict:
+    _keys(payload, "changed input", {"schema_version", "outcome", "review", "proposal"} | ({"dispositions"} if "dispositions" in payload else set()))
     if payload["schema_version"] != 1 or payload["outcome"] != "changed":
         raise LifecycleError("PROPOSAL_INVALID", "expected a versioned changed proposal")
     proposal = _object(payload["proposal"], "proposal")
@@ -191,7 +191,8 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
         path = _relative_path(item["path"], "change path")
         target = local_path(root, path)
         owned = [owner for owner in config.knowledge_roots if path.startswith(owner.path + "/") or owner.path == "."]
-        if len(owned) != 1 or owned[0].ownership != "agent_brain" or not path.endswith(".md") or path.startswith(config.state_dir + "/"):
+        candidate_owned = path.startswith(config.candidate_dir + "/") and not owned
+        if (not candidate_owned and (len(owned) != 1 or owned[0].ownership != "agent_brain")) or not path.endswith(".md") or path.startswith(config.state_dir + "/"):
             raise LifecycleError("WRITABLE_SCOPE_INVALID", "publication requires one exclusively owned Markdown knowledge path")
         if target.exists() and not target.is_file():
             raise LifecycleError("WRITABLE_SCOPE_INVALID", "destination is not an ordinary file")
@@ -234,6 +235,8 @@ def validate_proposal(payload: dict, config, root: Path, scope: dict, input_revi
     validate_links(after.documents, root, changes)
     paths = {item["path"] for item in changes}
     affected = {identity for identity in prior.keys() | following.keys() if prior.get(identity) != following.get(identity)}
+    if assigned_ids is not None and not affected.issubset(set(assigned_ids)):
+        raise LifecycleError("DREAM_SCOPE_MISMATCH", "dream changes must stay within the delivered assigned batch closure")
     from .lifecycle import guidance
     delivered = guidance(config, root, scope, ignore_publication=True)
     affected.update(unit["id"] for unit in delivered["units"] if unit["loading_mode"] == "whole" and unit["path"] in paths)
@@ -319,7 +322,7 @@ def changed_operation(operation, store, state, handle, config, config_path, bind
             from .lifecycle import validate_invocation
             latest = store.read()
             def failed(record):
-                _, session, _, obligation = validate_invocation(record, handle, "learn", config, store.root, config_path)
+                _, session, _, obligation = validate_invocation(record, handle, binding[0]["stage"], config, store.root, config_path)
                 obligation.update(status="pending", stage_outcome="incomplete", retry_needed=True, reason=str(exc))
                 session["status"] = "incomplete"
             store.change(latest["revision"], failed)
@@ -333,14 +336,21 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
                             event_result)
     from .state import digest
     invocation, session, agent, obligation = binding
+    stage = invocation["stage"]
+    from .maintenance import assigned_guidance
     if agent["parent"]:
         raise LifecycleError("PUBLICATION_SCOPE_INVALID", "aggregate publication belongs to the root foreground obligation")
     if operation == "prepare":
         if history.pending(store.root, config, store):
             raise LifecycleError("PUBLICATION_PENDING", "reconcile the prior publication at an eligible event first", exit_code=1)
-        validated = validate_proposal(payload, config, store.root, obligation["scope"], session["input_revision"])
-        checks, _ = checked_review({key: value for key, value in payload.items() if key != "proposal"} | {"outcome": "no_change"},
-            config, store.root, obligation["scope"], guidance(config, store.root, obligation["scope"], store=store))
+        delivered = assigned_guidance(config, store.root, obligation, store=store)
+        validated = validate_proposal(payload, config, store.root, obligation["scope"], session["input_revision"],
+                                     assigned_ids=[unit["id"] for unit in delivered["units"]] if stage == "dream" else None)
+        if stage == "dream" and any(item["disposition"] == "resolved" and item["id"] not in validated["affected_ids"]
+                                    for item in payload["dispositions"]):
+            raise LifecycleError("DREAM_DISPOSITION_INVALID", "a resolved disposition must name a target actually changed by this publication")
+        checks, _ = checked_review({key: value for key, value in payload.items() if key not in ("proposal", "dispositions")} | {"outcome": "no_change"},
+            config, store.root, obligation["scope"], delivered)
         if not all(check["exit_code"] == 0 and not check["timed_out"] for check in checks):
             raise LifecycleError("CHECK_FAILED", "configured prepare checks failed", exit_code=1, retry_eligible=True)
         latest = guidance(config, store.root, session["scope"], store=store)
@@ -348,9 +358,11 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
             raise LifecycleError("INPUTS_STALE", "relevant inputs changed while preparing", exit_code=1)
         path, journal = publication.prepare_journal(validated, payload, config, config_path, store.root, invocation, session, obligation, checks)
         def save(record):
-            inv, bound, executing, item = validate_invocation(record, handle, "learn", config, store.root, config_path)
+            inv, bound, executing, item = validate_invocation(record, handle, stage, config, store.root, config_path)
             item["publication"] = publication.summary(path, journal)
             item["prepared"] = digest(payload)
+            if stage == "dream":
+                item["dispositions"] = payload["dispositions"]
             item["check_receipts"] = [{"id": uid(), **check,
                 "input_revision": bound["input_revision"], "config_revision": file_revision(config_path),
                 "owner_generation": inv["owner_generation"], "attempt_id": inv["attempt_id"],
@@ -364,7 +376,7 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
             raise LifecycleError("PUBLICATION_STALE", "publication is not bound to the current exact prepared attempt", exit_code=1)
         def validate_owner():
             current = store.read()
-            validate_invocation(current, handle, "learn", config, store.root, config_path)
+            validate_invocation(current, handle, stage, config, store.root, config_path)
             publication.validate_inputs(journal, config, config_path, store.root)
         validate_owner()
         if operation == "publish":
@@ -385,7 +397,7 @@ def _changed_operation(operation, store, state, handle, config, config_path, bin
     current_session = next(value for value in current["sessions"].values() if value["id"] == session["id"])
     current_agent = next(value for value in current_session["agents"].values() if value["id"] == agent["id"])
     result = event_result(current, current_session, current_agent, None, "none")
-    result.update(stage="learn", operation=operation, publication=publication.summary(path, journal),
+    result.update(stage=stage, operation=operation, publication=publication.summary(path, journal),
         check_receipts=current_session["obligations"][obligation["id"]]["check_receipts"])
     result["stage_outcome"] = "changed" if operation == "complete" else "incomplete"
     return result, 0, store

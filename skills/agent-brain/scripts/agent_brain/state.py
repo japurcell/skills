@@ -263,6 +263,9 @@ def validate_state(record: dict) -> None:
     integer(record["ownership_generation"])
     object_fields(record["sessions"], set())
     object_fields(record["invocations"], set())
+    if "maintenance" in record:
+        from .maintenance import validate_state as validate_maintenance
+        validate_maintenance(record["maintenance"], record)
     for key, session in record["sessions"].items():
         revision(key)
         object_fields(session, {"id", "task_id", "status", "checkpoint", "scope", "input_generation",
@@ -299,7 +302,7 @@ def validate_state(record: dict) -> None:
             identity(obligation_id)
             object_fields(obligation, {"id", "kind", "scope", "input_generation", "status", "stage_outcome",
                                       "attempt_count", "semantic_repairs", "assigned_agent_id", "check_receipts"})
-            if obligation["id"] != obligation_id or obligation["kind"] not in ("learn", "child_review") or obligation["status"] not in ("pending", "active", "completed") or obligation["stage_outcome"] not in ("no_change", "changed", "incomplete"):
+            if obligation["id"] != obligation_id or obligation["kind"] not in ("learn", "dream", "child_review") or obligation["status"] not in ("pending", "active", "completed") or obligation["stage_outcome"] not in ("no_change", "changed", "incomplete"):
                 raise ValueError("invalid durable obligation")
             scope(obligation["scope"])
             integer(obligation["input_generation"], 1)
@@ -358,7 +361,7 @@ def validate_state(record: dict) -> None:
         boolean(invocation["revoked"])
         text(invocation["file"])
         text(invocation["config_path"])
-        if invocation["stage"] != "learn":
+        if invocation["stage"] not in ("learn", "dream"):
             raise ValueError("unsupported durable stage")
         integration = object_fields(invocation["integration"], {"id", "core_version", "adapter_version", "certification_id", "config_revision"})
         identity(integration["certification_id"])

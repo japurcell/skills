@@ -49,9 +49,12 @@ COMMAND_DETAILS = {
     ),
     "dream": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
-        "Effects: dream is unavailable in this milestone. Invalid authority fails before semantic input.\n"
+        "Effects: checks an assigned finite review batch, publishes evidenced changes, and records exact coverage. "
+        "Routine coverage stays due until every current target is reviewed; unfinished assigned work blocks session completion.\n"
         "Active agent: a registered integration is required; the CLI never launches a model.\n"
-        "Example: agent-brain dream --input review.json --invocation-file /path/to/invocation.json"
+        "Example: agent-brain dream start --invocation-file /path/to/invocation.json; "
+        "agent-brain dream prepare --input review.json --invocation-file /path/to/invocation.json; "
+        "agent-brain dream complete --input review.json --invocation-file /path/to/invocation.json"
     ),
     "setup": (
         "Inputs: none.\n"

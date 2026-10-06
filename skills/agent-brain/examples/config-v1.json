@@ -1,4 +1,12 @@
 {
+  "candidate_dir": ".agents/context/candidates",
+  "maintenance": {
+    "enabled": true,
+    "interval_days": 7,
+    "primary_limit": 5,
+    "guidance_bytes": 32768,
+    "retention_days": 30
+  },
   "schema_version": 1,
   "repository_id": "e246a8b7-2671-4ec3-aa93-a64d17b2ab23",
   "knowledge_roots": [

@@ -11,6 +11,9 @@
     "work_session_status"
   ],
   "properties": {
+    "maintenance": {
+      "$ref": "maintenance-v1.schema.json"
+    },
       "publication": {
         "type": "object",
         "additionalProperties": false,

@@ -1,0 +1,331 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/maintenance-v1.schema.json",
+  "title": "Finite maintenance coverage v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "due",
+    "cycle",
+    "closed_cycles"
+  ],
+  "properties": {
+    "due": {
+      "type": "boolean"
+    },
+    "last_completed_on": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "format": "date"
+        }
+      ]
+    },
+    "cycle": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/cycle"
+        }
+      ]
+    },
+    "closed_cycles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/cycle"
+      }
+    },
+    "retired_sessions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pending_files",
+        "removed_files"
+      ],
+      "properties": {
+        "pending_files": {
+          "type": "array",
+          "items": {
+            "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+          }
+        },
+        "removed_files": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "$defs": {
+    "cycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "started_on",
+        "targets",
+        "later_ids",
+        "structural_complete"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "started_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "closed_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "targets": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "path",
+              "status",
+              "revision",
+              "credit"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+              },
+              "path": {
+                "$ref": "config-v1.schema.json#/$defs/repositoryPath"
+              },
+              "status": {
+                "enum": [
+                  "established",
+                  "candidate"
+                ]
+              },
+              "revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "credit": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "revision",
+                      "disposition",
+                      "factual_verification",
+                      "note",
+                      "obligation_id",
+                      "reviewed_on"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "disposition": {
+                        "enum": [
+                          "reviewed",
+                          "unresolved",
+                          "resolved"
+                        ]
+                      },
+                      "factual_verification": {
+                        "enum": [
+                          "verified",
+                          "uncertain",
+                          "unavailable"
+                        ]
+                      },
+                      "note": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "obligation_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      },
+                      "reviewed_on": {
+                        "type": "string",
+                        "format": "date"
+                      },
+                      "reviewed_revision": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "publication_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "later_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "structural_complete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cycle_id",
+        "primary_ids",
+        "targets",
+        "content_bytes",
+        "markdown_content_bytes",
+        "guidance_metadata_bytes",
+        "oversized",
+        "quiet_id"
+      ],
+      "properties": {
+        "cycle_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "primary_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          }
+        },
+        "targets": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 5,
+          "propertyNames": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "content_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "markdown_content_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "guidance_metadata_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "oversized": {
+          "type": "boolean"
+        },
+        "quiet_id": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+            }
+          ]
+        }
+      }
+    },
+    "disposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "revision",
+        "disposition",
+        "factual_verification",
+        "note"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "disposition": {
+          "enum": [
+            "reviewed",
+            "unresolved",
+            "resolved"
+          ]
+        },
+        "factual_verification": {
+          "enum": [
+            "verified",
+            "uncertain",
+            "unavailable"
+          ]
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

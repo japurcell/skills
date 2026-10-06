@@ -43,6 +43,7 @@ SUITES = (
     ("python3", "scripts/test-agent-brain-retrieval.py"),
     ("python3", "scripts/test-agent-brain-lifecycle.py"),
     ("python3", "scripts/test-agent-brain-publication.py"),
+    ("python3", "scripts/test-agent-brain-maintenance.py"),
     ("python3", "scripts/test-install-codex-hooks.py"),
     ("python3", "scripts/test-probe-provider-hook-delivery.py"),
     ("python3", "scripts/test-generate-hooks.py"),

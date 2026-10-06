@@ -60,6 +60,11 @@ class AgentBrainConfig:
     })
     state_dir: str = ".agents/context/state"
     history_dir: str = ".agents/context/history"
+    candidate_dir: str = ".agents/context/candidates"
+    maintenance: dict[str, object] = field(default_factory=lambda: {
+        "enabled": True, "interval_days": 7, "primary_limit": 5,
+        "guidance_bytes": 32768, "retention_days": 30,
+    })
 
 
 @dataclass(frozen=True, slots=True)

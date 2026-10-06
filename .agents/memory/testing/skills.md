@@ -10,4 +10,4 @@ description: Test and validation guidance for skills under `skills/`
 - If a skill ships `evals/grade_benchmark.py` and you edited it, run `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`.
 - If benchmark grading behavior changed, run `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`.
 - Treat `skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
-- Agent-brain changes use its public CLI, retrieval, lifecycle, and publication suites, followed by quick validation and disposable packaging; [scripts testing](scripts.md) owns the fixture, stream/generation, and journal recovery proof details. Native certification and model benchmarks remain separate from these offline checks.
+- Agent-brain changes use its public CLI, retrieval, lifecycle, publication, and maintenance suites, followed by quick validation and disposable packaging; [scripts testing](scripts.md) owns the fixture, stream/generation, finite coverage, retention, and journal recovery proof details. Native certification and model benchmarks remain separate from these offline checks.

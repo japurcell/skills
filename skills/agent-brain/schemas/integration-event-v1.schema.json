@@ -202,6 +202,15 @@
         "number"
       ],
       "description": "Diagnostic only; never used for expiry, renewal, or authority."
+    },
+    "review_flags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      }
     }
   }
 }

@@ -6,6 +6,44 @@
   "additionalProperties": false,
   "required": ["schema_version", "repository_id", "knowledge_roots", "mapped_units", "startup"],
   "properties": {
+    "candidate_dir": {
+      "$ref": "#/$defs/repositoryPath"
+    },
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "interval_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 366,
+          "default": 7
+        },
+        "primary_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 5
+        },
+        "guidance_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32768,
+          "default": 32768
+        },
+        "retention_days": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 36500,
+          "default": 30
+        }
+      }
+    },
     "schema_version": {"const": 1},
     "repository_id": {"type": "string", "format": "uuid"},
     "knowledge_roots": {

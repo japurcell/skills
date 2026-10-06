@@ -9,6 +9,9 @@
     "config_present", "runtime_state_path", "runtime_state_present", "active_context", "model_execution", "checks"
   ],
   "properties": {
+    "maintenance": {
+      "$ref": "maintenance-v1.schema.json"
+    },
       "publication_recovery": {
         "type": "object",
         "required": [

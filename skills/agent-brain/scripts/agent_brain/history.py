@@ -172,7 +172,7 @@ def pending(root: Path, config, store=None) -> dict | None:
                 if publication is None or obligation["status"] == "completed":
                     continue
                 journal = read(root, publication["history_path"])
-                if journal["status"] in ("intent", "published", "checked"):
+                if journal["status"] in ("intent", "published", "checked") or (obligation["kind"] == "dream" and journal["status"] == "completed"):
                     found.append({"history_path": publication["history_path"], "paths": [item["path"] for item in journal["changes"]]})
         if len(found) > 1:
             raise LifecycleError("PUBLICATION_HISTORY_UNAVAILABLE", "multiple pending publication sets require reconciliation", exit_code=1)

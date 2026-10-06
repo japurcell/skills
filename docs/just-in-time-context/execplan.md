@@ -18,7 +18,7 @@ This plan derives execution steps from the ten closed Wayfinder contracts. The p
 - [x] (2026-10-06) [milestone-2] Retrieve complete, revision-bound guidance units and validate authoring.
 - [x] (2026-10-06) [milestone-3] Automatically coordinate lifecycle checkpoints and verified no-change completion.
 - [x] (2026-10-06) [milestone-4] Publish evidenced learn changes with interruption-safe recovery.
-- [ ] [milestone-5] Execute finite, bounded dream cycles and retention-safe cleanup.
+- [x] (2026-10-06) [milestone-5] Execute finite, bounded dream cycles and retention-safe cleanup.
 - [ ] [milestone-6] Join legacy skills and optional source ingestion into one lifecycle obligation.
 - [ ] [milestone-7] Generate and package provider-local native adapters.
 - [ ] [milestone-8] Install versioned bundles and apply reversible repository activation.
@@ -55,6 +55,8 @@ Final output-marker review reproduced a damaged identity record escaping initial
 
 Reference-style Markdown definitions, angle-wrapped paths with spaces, and affected heading fragments must be repaired with stable relocation. Whole-file membership alone overstates affected evidence: a public two-section correction now requires evidence for the changed unit while preserving its untouched neighbor and inherited notes. New/corrected learned units retain compact colocated source/verification notes, with full evidence in inverse history and selective recall detail. A small deletion of a JSON-escaped before-image previously prepared an unreadable journal; preparation now rejects an encoded set over the 8 MiB history limit before persisting preparation or changing guidance.
 
+M5 public recovery tests exposed credit and delivery identity gaps: a recovered dream publication needs exact checked resulting-revision credit, and a new task's startup must settle the recovered prior task's marker before its own context. Final publication can change a previously credited required reference, so full-cycle closure rechecks all credits against current guidance. A structural gap must retain the mapped primary identity and incomplete assignment. Malformed targets, credits, batches, dispositions, and cleanup paths require typed cross-reference validation before projection or mutation. Python 3.13 also exposed unclosed fault-fixture SQLite connections; those fixtures now explicitly close them.
+
 ## Decision Log
 
 
@@ -78,12 +80,17 @@ Decision: Validate foreground-authored proposals mechanically and publish only t
 
 Decision: Defer required native recovery checks to foreground work through an explicit recovery seam. Rationale: trusted subprocess checks can exceed the native callback watchdog; fixture bridge recovery proves the common protocol only. M7 must issue a supported foreground recovery stage without spending/resetting attempts on callback timeout. Date/Author: 2026-10-06, Codex.
 
+Decision: Freeze finite cycle identities and revisions, assign one bounded foreground dream batch at eligible completion, and credit only checked exact dispositions after successful output settlement. Rationale: later additions cannot grow the current cycle indefinitely, changed targets cannot retain stale credit, and output failure/recovery cannot silently complete required work. Required references and guidance metadata count toward the batch target; oversized closures remain whole. Date/Author: 2026-10-06, Codex.
+
 ## Outcomes & Retrospective
 
+M5 adds finite UTC-calendar dream cycles, foreground batches, exact revision/disposition credit, whole oversized and undeliverable closures, and selective 30-day operational retention through the existing publication engine. Its 17 independent public subprocess cases pass with ResourceWarning treated as an error on exact Python 3.12.14 (24.037 seconds), 3.13.14 (22.824 seconds), and 3.14.6 (21.120 seconds). Shared fixture helpers do not inherit publication checks. Final default-runtime lifecycle 38/38 (23.144 seconds), publication 36/36 (19.470 seconds), retrieval 22/22 (2.417 seconds), CLI 26/26 (2.935 seconds), and registry 14/14 pass. OKF fixtures/full corpus, quick skill validation, disposable package content, 23 JSON parses/local schema references, 21 source compilations, and diff checks pass. The formal update-agent-docs/OKF pass synchronizes eight existing canonical documents without protected AGENTS or pilot KB edits.
+
+Parent public fault reproductions independently verify exact checked resulting-revision credit after interrupted dream recovery, including startup for a different task. The prior task's pending marker clears, its cycle closes with both exact credits, and the new task remains active/available. Parent malformed-credit injection verifies unavailable/incomplete public status without counting damaged credit. Full-cycle closure revalidates every prior credit after final publication or concurrent learn; required learn/child/source obligations remain separate completion gates. No reproduced blocking M5 review finding remains. No new broad aggregate, native support, semantic quality, total delivered tokens, timing/usage benefit, or OS-crash/power-loss proof is claimed.
 
 Milestones 1-4 provide the staged source-checkout skill, scoped revision-bound retrieval, common-protocol lifecycle coordination, checked no-change, and evidenced exact-set learn publication with reversible interrupted recovery. M4's public publication suite passes 36/36 with ResourceWarning treated as an error on Python 3.14.6 (21.237 seconds), 3.13.14 (20.812 seconds), and bundled 3.12.14 (21.769 seconds). Final default-runtime lifecycle 38/38 (24.784 seconds), CLI 26/26 (3.078 seconds), retrieval 22/22 (2.652 seconds), and registry 14/14 (10.215 seconds) pass. Applicable OKF public fixtures and full-corpus linter, quick skill validation, disposable packaging/content verification, 21 JSON parses with local schema references resolved, 18 Python source compilations, and whitespace checks pass. The one formal update-agent-docs/OKF pass synchronizes eight existing instruction/memory documents; FILE_MAP/API_MAP/TESTING_STRATEGY route the new boundaries, and INDEX needs no new entry. Protected AGENTS sections and the pilot KB remain unchanged.
 
-The parent verified the integrated M2 aggregate at 38 suites passed/0 failed in 316.0 seconds and integrated M3 at `270bce3de06b33cf26020a1e513c8718a58940a5` at 39 suites/0 failures in 344.0 seconds, with host-specific Windows skips explicit. M4 is reviewed and integrated at `0d7148fa04d456cb690a08632127d6b0d43409bf` through a conflict-free rebase and exact-tip fast-forward; its clean private worktree and branch are removed. Targeted M4 checks and parent public fault reproductions pass with no unresolved review finding. No new broad aggregate is claimed; M9 retains full offline aggregate acceptance. M5 is next; M5-M8 and M9 full acceptance remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. Native foreground recovery issuance, provider builds/consumption/watchdogs, native Windows locking, quality, savings, timing, usage, and OS-crash/power-loss guarantees remain unobserved. One coherent encoded journal over 8 MiB is unsupported without truncation; individual replacements provide no unmanaged set-level atomic visibility. The closed Wayfinder map remains unchanged.
+The parent verified the integrated M2 aggregate at 38 suites passed/0 failed in 316.0 seconds and integrated M3 at `270bce3de06b33cf26020a1e513c8718a58940a5` at 39 suites/0 failures in 344.0 seconds, with host-specific Windows skips explicit. M4 is reviewed and integrated at `0d7148fa04d456cb690a08632127d6b0d43409bf` through a conflict-free rebase and exact-tip fast-forward; its clean private worktree and branch are removed. Targeted M4 checks and parent public fault reproductions pass with no unresolved review finding. No new broad aggregate is claimed; M9 retains full offline aggregate acceptance. M5 is complete on private unpushed branch `codex/agent-brain-m5`, awaiting parent integration. M6 is next; M6-M8 and M9 full acceptance remain open. Offline milestones 1-9 are authorized; live milestones 10-11 require separate explicit authorization. Native foreground recovery issuance, provider builds/consumption/watchdogs, native Windows locking, quality, savings, timing, usage, and OS-crash/power-loss guarantees remain unobserved. One coherent encoded journal over 8 MiB is unsupported without truncation; individual replacements provide no unmanaged set-level atomic visibility. The closed Wayfinder map remains unchanged.
 
 ## Context and Orientation
 
@@ -189,9 +196,9 @@ Interrupt the public process before durable intent, after intent before files, b
 ### Milestone 5: Complete bounded dream batches without losing coverage
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
 Add `maintenance.py` and extend dream's common stage operations. Activation makes the first routine cycle due. Use UTC calendar dates and a seven-day default, coalescing missed intervals. On an eligible completion assign one batch of at most five primary units/candidates, targeting at most 32 KiB UTF-8 complete guidance including references. Reserve one slot for rotating quiet-area review when available. Review flagged guidance and relevant candidates; cheap structural checks cover the mapped KB. An indivisible oversized closure runs alone, is marked oversized, and counts in measurements. Undeliverable content remains whole and the required batch remains incomplete.
 
@@ -452,3 +459,5 @@ These bindings reproduce accepted planning inputs, not current-version certifica
 Support records key exact core/adapter/schema versions, provider build, platform/filesystem, entry mode, permissions, lifecycle config, native/fallback path, and child delivery when used. Record model/settings for semantic/performance results separately. Configuration/version changes outside the record need updated certification before re-enablement. Record quality/capability proof separately from measured guidance/performance proof, so a native contract test cannot stand in for the accepted product gates.
 
 Revision note: 2026-10-05, replace the initial skeleton with twelve executable milestones, public interfaces, conservative provider boundaries, and the accepted offline/live acceptance procedure. The completed map remains closed; execution and live spending remain separate authorization steps.
+
+Revision note: 2026-10-06, close M5 Progress/Status/Acceptance together after three-runtime public acceptance and parent fault review; make M6 the next open milestone. Record guidance byte accounting, current revision credit, exact recovered delivery identities, and reference-aware retention without expanding offline authorization.
