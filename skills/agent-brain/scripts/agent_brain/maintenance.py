@@ -18,10 +18,14 @@ def utc_day(config, root: Path, config_path: Path) -> str:
     if clock.exists():
         from .lifecycle import configured_provider, file_revision, read_json
         provider_id = next((key for key, value in config.providers.items()
-                            if value["enabled"] and value["kind"] == "protocol_fixture"), None)
+                            if value["enabled"] and value["kind"] in ("protocol_fixture", "native")), None)
         if provider_id is None:
             raise LifecycleError("FIXTURE_SCOPE_INVALID", "fixture clock requires a registered disposable protocol fixture")
         provider = config.providers[provider_id]
+        if provider["kind"] == "native":
+            from .native import support_record
+            if support_record(config, root, provider)["status"] != "offline_fixture":
+                raise LifecycleError("FIXTURE_SCOPE_INVALID", "native fixture clocks require validated disposable offline records")
         # configured_provider also checks the actual disposable root and support.
         identity = {"id": provider_id, "core_version": provider["core_version"],
                     "adapter_version": provider["adapter_version"], "certification_id": provider["certification_id"],
@@ -307,7 +311,7 @@ def validate_state(value, record):
         raise ValueError("invalid cleanup queue")
     for path in cleanup["pending_files"]:
         _relative_path(path, "cleanup path")
-        if not path.startswith(".agents/context/") or Path(path).parent.name != "invocations" or Path(path).suffix != ".json":
+        if not path.startswith(".agents/context/") or Path(path).parent.name not in ("invocations", "foreground") or Path(path).suffix != ".json":
             raise ValueError("invalid operational cleanup path")
         _uuid(Path(path).stem, "cleanup filename")
     cycles = {}
@@ -410,6 +414,25 @@ def prepare_cleanup(record, config, root, today, *, retain_session=None):
     retention = config.maintenance["retention_days"]
     def old(closed):
         return closed is not None and (date.fromisoformat(today) - date.fromisoformat(closed)).days >= retention
+    for identity, ticket in list(record.get("native_foreground", {}).items()):
+        session = record["sessions"].get(ticket["session_key"])
+        if not old(ticket.get("closed_on")) or session and session["status"] != "completed":
+            continue
+        if session and session["id"] in pins["work_session_ids"]:
+            continue
+        path = ticket["path"]
+        if Path(path).parent.as_posix() != config.state_dir + "/foreground":
+            raise LifecycleError("RETENTION_REFERENCES_UNAVAILABLE", "preserve unexpected native ticket path", exit_code=1)
+        value["cleanup"]["pending_files"].append(path)
+        del record["native_foreground"][identity]
+    for identity, output in list(record.get("native_output", {}).items()):
+        session = record["sessions"].get(output["session_key"])
+        agent = (session or {}).get("agents", {}).get(output["agent_key"])
+        # Remove only an already superseded opaque settlement capability. The
+        # current unfinished-output marker and semantic obligations survive.
+        if (not session or not agent or output["input_generation"] != session["input_generation"]
+                or output["context_generation"] != agent["context_generation"]):
+            del record["native_output"][identity]
     retained_cycles = [cycle for cycle in value["closed_cycles"]
                        if cycle["id"] in pins["cycle_ids"] or not old(cycle.get("closed_on"))]
     references = {credit["obligation_id"] for cycle in retained_cycles + ([value["cycle"]] if value["cycle"] else [])
@@ -431,6 +454,12 @@ def prepare_cleanup(record, config, root, today, *, retain_session=None):
             del record["invocations"][identity]
         value["retired_sessions"].append(session["id"])
         del record["sessions"][key]
+        for identity, output in list(record.get("native_output", {}).items()):
+            if output["session_key"] == key:
+                del record["native_output"][identity]
+        for identity, objective in list(record.get("native_objectives", {}).items()):
+            if objective["session_key"] == key:
+                del record["native_objectives"][identity]
     referenced_cycles = {item["batch"]["cycle_id"] for session in record["sessions"].values()
                          for item in session["obligations"].values() if item["kind"] == "dream"}
     value["closed_cycles"] = [cycle for cycle in value["closed_cycles"]
@@ -443,7 +472,7 @@ def clean_files(store, config):
     removed = []
     for path in pending:
         # No database, binding, evidence, history, candidate or recovery path is eligible.
-        if not path.startswith(config.state_dir + "/invocations/") or Path(path).parent.as_posix() != config.state_dir + "/invocations":
+        if Path(path).parent.as_posix() not in (config.state_dir + "/invocations", config.state_dir + "/foreground"):
             raise LifecycleError("RETENTION_REFERENCES_UNAVAILABLE", "preserve unexpected cleanup path", exit_code=1)
         _uuid(Path(path).stem, "retired invocation filename")
         try:

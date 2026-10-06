@@ -242,6 +242,60 @@ def validate_state(record: dict) -> None:
         if type(value) is not bool:
             raise ValueError("invalid durable boolean")
 
+    for key, item in object_fields(record.get("native_foreground", {}), set()).items():
+        revision(key)
+        object_fields(item, {"path", "revision", "config_revision", "expires_at", "session_key"})
+        text(item["path"])
+        if Path(item["path"]).is_absolute() or ".." in Path(item["path"]).parts:
+            raise ValueError("invalid foreground path")
+        revision(item["revision"])
+        revision(item["config_revision"])
+        number(item["expires_at"])
+        revision(item["session_key"])
+        if "turn_release" in item:
+            released = object_fields(item["turn_release"], {"registration_revision", "status", "input_generation", "input_revision", "scope_revision", "context_generation", "receipt_revision"})
+            for field in ("registration_revision", "input_revision", "scope_revision", "receipt_revision"):
+                revision(released[field])
+            for field in ("input_generation", "context_generation"):
+                integer(released[field], 1)
+            if released["status"] not in ("active", "awaiting_user", "paused", "cancelled") or "closed_on" not in item:
+                raise ValueError("invalid native turn release")
+        if "closed_on" in item:
+            from datetime import date
+            if not isinstance(item["closed_on"], str) or date.fromisoformat(item["closed_on"]).isoformat() != item["closed_on"]:
+                raise ValueError("invalid native ticket closing day")
+    for key, item in object_fields(record.get("native_objectives", {}), set()).items():
+        revision(key)
+        object_fields(item, {"task_id", "session_key"})
+        text(item["task_id"])
+        revision(item["session_key"])
+    for key, item in object_fields(record.get("native_output", {}), set()).items():
+        revision(key)
+        object_fields(item, {"result_revision", "registration_revision", "expires_at", "session_key", "agent_key", "input_generation", "context_generation"})
+        revision(item["result_revision"])
+        revision(item["registration_revision"])
+        number(item["expires_at"])
+        revision(item["session_key"])
+        revision(item["agent_key"])
+        integer(item["input_generation"], 1)
+        integer(item["context_generation"], 1)
+    if "native_sources" in record:
+        item = object_fields(record["native_sources"], {"config_revision", "snapshot_revision", "snapshot", "topology"})
+        revision(item["config_revision"])
+        revision(item["snapshot_revision"])
+        if digest(item["snapshot"]) != item["snapshot_revision"]:
+            raise ValueError("damaged native source snapshot")
+        object_fields(item["snapshot"], {"schema_version", "entries", "blocking", "orphans", "changes", "files", "skill_path", "skill_available"})
+        for path, value in object_fields(item["snapshot"]["files"], set()).items():
+            text(path)
+            revision(value)
+        for path, values in object_fields(item["topology"], set()).items():
+            text(path)
+            if not isinstance(values, list) or len(set(values)) != len(values):
+                raise ValueError("damaged native source topology")
+            for value in values:
+                text(value)
+
     def scope(value: Any) -> None:
         fields = {"paths", "concepts", "actions", "dependencies", "providers", "runtimes"}
         item = object_fields(value, fields)

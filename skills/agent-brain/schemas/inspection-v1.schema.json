@@ -9,6 +9,7 @@
     "config_present", "runtime_state_path", "runtime_state_present", "active_context", "model_execution", "checks"
   ],
   "properties": {
+    "native_foreground": {"type": "object", "additionalProperties": false, "required": ["pending", "closed"], "properties": {"pending": {"type": "integer", "minimum": 0}, "closed": {"type": "integer", "minimum": 0}}},
     "maintenance": {
       "$ref": "maintenance-v1.schema.json"
     },

@@ -45,4 +45,11 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("auto_ingest", "gemini", PurePosixPath(".gemini/hooks/scripts/inject-auto-ingest-context.py")),
         GeneratedTarget("rtk", "copilot", PurePosixPath(".copilot/hooks/scripts/rtk-hook-copilot.py")),
         GeneratedTarget("rtk", "gemini", PurePosixPath(".gemini/hooks/scripts/rtk-hook-gemini.py")),
+        GeneratedTarget("agent_brain", "codex", PurePosixPath(".codex/hooks/agent-brain.py")),
+        GeneratedTarget("agent_brain", "copilot", PurePosixPath(".copilot/hooks/scripts/agent-brain.py")),
+        GeneratedTarget("agent_brain", "github", PurePosixPath(".github/hooks/scripts/agent-brain.py")),
+        GeneratedTarget("agent_brain", "gemini", PurePosixPath(".gemini/hooks/scripts/agent-brain.py")),
+        GeneratedTarget("agent_brain", "codex", PurePosixPath("skills/agent-brain/assets/adapters/codex.py")),
+        GeneratedTarget("agent_brain", "copilot", PurePosixPath("skills/agent-brain/assets/adapters/copilot.py")),
+        GeneratedTarget("agent_brain", "gemini", PurePosixPath("skills/agent-brain/assets/adapters/gemini.py")),
     )

@@ -144,7 +144,7 @@ def validate_bases(config, root, session, source_state=None):
         raise LifecycleError("SOURCE_UNJOURNALED_CHANGE", "foreground source integration changed canonical artifacts outside checked reversible publication; preserve edits and restore exact pre-pass bases", exit_code=1)
 
 
-def prior_work(config, root, state, current_key, scope, source_state, config_path):
+def prior_work(config, root, state, current_key, scope, source_state, config_path, *, native_callback=False):
     """A new task cannot erase a known unresolved source provenance gap."""
     if source_state is None:
         return []
@@ -155,7 +155,7 @@ def prior_work(config, root, state, current_key, scope, source_state, config_pat
     resolved = set()
     for session in state["sessions"].values():
         if session.get("source_checked") == session["input_revision"] and session.get("source_work"):
-            current = inputs(config, root, file_revision(config_path), session["scope"], guidance(config, root, session["scope"], ignore_publication=True))
+            current = inputs(config, root, file_revision(config_path), session["scope"], guidance(config, root, session["scope"], ignore_publication=True), native_callback=native_callback)
             if session["source_checked"] == current:
                 resolved.update(session["source_work"])
     carried = set()

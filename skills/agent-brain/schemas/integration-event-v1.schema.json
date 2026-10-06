@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agent-brain.invalid/schemas/integration-event-v1.schema.json",
-  "title": "Normalized integration event v1 (fixture protocol only)",
+  "title": "Normalized integration event v1 (requires validated integration authority)",
   "type": "object",
   "additionalProperties": false,
   "required": [

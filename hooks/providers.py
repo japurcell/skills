@@ -16,6 +16,10 @@ class Provider:
     observability_environment_prefix: str
     auto_ingest_helper_name: str
 
+    @property
+    def native_name(self) -> str:
+        return "copilot" if self.name == "github" else self.name
+
 
 PROVIDERS = {
     "codex": Provider("codex", PurePosixPath(".codex/hooks"), ".codex", "CODEX", "source_ingest"),

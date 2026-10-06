@@ -878,7 +878,15 @@ def join_agent_brain(repo_root: Path, payload: dict[str, Any]) -> dict[str, Any]
             raise ValueError("Configured bridge bytes differ from their trusted revision.")
         event = payload.get("agent_brain_event")
         if not isinstance(event, dict):
-            return {"completed": False, "reason": "Source ingestion joins agent-brain learn. Restore the registered foreground event; pending work remains incomplete."}
+            # Native providers never inject the fixture-only private event.
+            # The pinned bridge validates the activated native registration;
+            # this gate neither synthesizes authority nor reconciles sources.
+            result = subprocess.run([sys.executable, str(target), "--json", "--native-gate"], cwd=repo_root,
+                input=json.dumps(payload).encode("utf-8"), capture_output=True, timeout=3.5, check=False)
+            response = json.loads(result.stdout.decode("utf-8"))
+            if result.returncode or type(response.get("completed")) is not bool or not isinstance(response.get("reason"), str):
+                raise ValueError("Validated native join is unavailable.")
+            return response
         result = subprocess.run([sys.executable, str(target), "--json"], cwd=repo_root,
             input=json.dumps(event).encode("utf-8"), capture_output=True, timeout=60, check=False)
         response = json.loads(result.stdout.decode("utf-8"))

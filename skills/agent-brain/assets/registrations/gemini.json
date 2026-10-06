@@ -1,0 +1,70 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event SessionStart",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event BeforeAgent",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event BeforeTool",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "BeforeModel": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event BeforeModel",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event AfterAgent",
+            "timeout": 5000
+          }
+        ]
+      }
+    ],
+    "PreCompress": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/gemini.py --registration .agents/context/native-registration.json --event PreCompress",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

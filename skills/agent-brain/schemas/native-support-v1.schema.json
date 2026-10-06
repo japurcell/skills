@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/native-support-v1.schema.json",
+  "title": "Exact native build/configuration identity; offline fixtures are not certification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "status", "repository_id", "repository_root", "worktree_root", "core_version", "adapter_version", "certification_id", "events", "provider", "provider_version", "entry_mode", "platform", "filesystem_id", "permissions", "lifecycle_config", "native_events", "adapter_path", "adapter_revision", "bundle_path", "bundle_revision", "native_deadline_seconds", "immediate_model_boundary", "child_delivery", "evidence", "scope"],
+  "properties": {
+    "schema_version": {"const": 1}, "kind": {"const": "native"},
+    "status": {"enum": ["offline_fixture", "certified"]},
+    "repository_id": {"type": "string", "format": "uuid"},
+    "repository_root": {"type": "string"}, "worktree_root": {"type": "string"},
+    "core_version": {"type": "string"}, "adapter_version": {"const": "native-1"},
+    "certification_id": {"type": "string", "format": "uuid"},
+    "events": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "provider": {"enum": ["codex", "copilot", "gemini"]},
+    "provider_version": {"type": "string", "minLength": 1}, "entry_mode": {"enum": ["cli", "desktop"]},
+    "platform": {"type": "string"}, "filesystem_id": {"type": "string"},
+    "permissions": {"$ref": "#/$defs/pin"}, "lifecycle_config": {"$ref": "#/$defs/pin"},
+    "native_events": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "adapter_path": {"type": "string"}, "adapter_revision": {"$ref": "#/$defs/revision"},
+    "bundle_path": {"type": "string"}, "bundle_revision": {"$ref": "#/$defs/revision"},
+    "native_deadline_seconds": {"type": "number", "exclusiveMinimum": 0.1, "maximum": 600},
+    "immediate_model_boundary": {"type": "boolean"}, "child_delivery": {"type": "boolean"},
+    "scope": {"$ref": "integration-event-v1.schema.json#/properties/scope"},
+    "evidence": {"oneOf": [{"const": "offline_translation_only"}, {"$ref": "#/$defs/pin"}]}
+  },
+  "$defs": {
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "pin": {"type": "object", "additionalProperties": false, "required": ["path", "revision"], "properties": {"path": {"type": "string", "minLength": 1}, "revision": {"$ref": "#/$defs/revision"}}}
+  }
+}

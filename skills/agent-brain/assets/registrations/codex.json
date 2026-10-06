@@ -1,0 +1,81 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event SessionStart",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event UserPromptSubmit",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event PreToolUse",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event PreCompact",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event SubagentStart",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event SubagentStop",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __BUNDLE__/assets/adapters/codex.py --registration .agents/context/native-registration.json --event Stop",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

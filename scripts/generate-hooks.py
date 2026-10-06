@@ -41,6 +41,7 @@ ALLOWED_HOOK_ROOTS = (
     PurePosixPath(".gemini/hooks"),
     PurePosixPath(".github/hooks"),
     PurePosixPath(".codex/hooks"),
+    PurePosixPath("skills/agent-brain/assets/adapters"),
 )
 
 

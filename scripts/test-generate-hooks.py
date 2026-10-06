@@ -77,6 +77,12 @@ RTK_TARGETS = (
     ".copilot/hooks/scripts/rtk-hook-copilot.py",
     ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
+AGENT_BRAIN_TARGETS = (
+    ".codex/hooks/agent-brain.py", ".copilot/hooks/scripts/agent-brain.py",
+    ".github/hooks/scripts/agent-brain.py", ".gemini/hooks/scripts/agent-brain.py",
+    "skills/agent-brain/assets/adapters/codex.py", "skills/agent-brain/assets/adapters/copilot.py",
+    "skills/agent-brain/assets/adapters/gemini.py",
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -254,7 +260,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (26 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (33 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -295,7 +301,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (26 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (33 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -321,7 +327,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(AGENT_BRAIN_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -334,6 +340,14 @@ class GenerateHooksTests(unittest.TestCase):
                     f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
                 )
                 self.assertEqual(sha256("".join(lines[2:]).encode("utf-8")).hexdigest(), expected_digest)
+
+    def test_native_adapters_have_exact_owned_targets_and_copied_runtime_bytes(self):
+        outputs = load_generator().render_all(ROOT)
+        actual = {output.target.output_path.as_posix(): output.content for output in outputs if output.target.family == "agent_brain"}
+        self.assertEqual(set(actual), set(AGENT_BRAIN_TARGETS))
+        for provider, target in (("codex", ".codex/hooks/agent-brain.py"), ("copilot", ".copilot/hooks/scripts/agent-brain.py"), ("gemini", ".gemini/hooks/scripts/agent-brain.py")):
+            self.assertEqual(actual[target], actual["skills/agent-brain/assets/adapters/" + provider + ".py"])
+        self.assertEqual(actual[".github/hooks/scripts/agent-brain.py"], actual[".copilot/hooks/scripts/agent-brain.py"])
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         generator = load_generator()

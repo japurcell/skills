@@ -72,9 +72,13 @@ def guidance(config: AgentBrainConfig, root: Path, scope: dict, *, ignore_public
 
 
 def inputs(config: AgentBrainConfig, root: Path, config_revision: str,
-           scope: dict, delivery: dict) -> str:
+           scope: dict, delivery: dict, *, native_callback: bool = False) -> str:
     from .source_ingestion import snapshot
-    source_inputs = snapshot(config, root)
+    if native_callback and config.source_ingestion["enabled"]:
+        from .native import captured_sources
+        source_inputs = captured_sources(config, root, config_revision)
+    else:
+        source_inputs = snapshot(config, root)
     files: dict[str, str] = {}
     for selector in scope["paths"]:
         if any(char in selector for char in "*?["):
@@ -113,8 +117,10 @@ def configured_provider(config: AgentBrainConfig, config_path: Path, root: Path,
             raise LifecycleError("INTEGRATION_MISMATCH", f"{field} is outside the configured support identity")
     if event is not None and event not in provider["events"]:
         raise LifecycleError("EVENT_INELIGIBLE", "event is outside the configured supported events")
-    if provider["kind"] != "protocol_fixture":
-        raise LifecycleError("NATIVE_SUPPORT_UNAVAILABLE", "no native path is certified by the common-protocol implementation")
+    if provider["kind"] == "native":
+        from .native import support_record
+        support_record(config, root, provider)
+        return provider
     # A fixture is only eligible in a disposable Git repository below the OS
     # temporary directory. Its registration must bind that exact worktree.
     if not root.is_relative_to(Path(tempfile.gettempdir()).resolve()) and not root.is_relative_to(Path("/private/tmp")):
@@ -215,6 +221,11 @@ def inspection(config: AgentBrainConfig, root: Path, config_path: Path | None = 
         result.update(state_status="available", worktree_id=state["worktree_id"],
                       work_sessions=[project_session(value) for value in state["sessions"].values()],
                       sqlite_capabilities=store.capabilities)
+        tickets = list(state.get("native_foreground", {}).values())
+        result["native_foreground"] = {"pending": sum("closed_on" not in value for value in tickets),
+                                       "closed": sum("closed_on" in value for value in tickets)}
+        if result["native_foreground"]["pending"]:
+            result["work_session_status"] = "incomplete"
         if source_state is not None:
             for session, projected in zip(state["sessions"].values(), result["work_sessions"]):
                 current = inputs(config, root, file_revision(config_path or root / ".agents/context/config.json"), session["scope"], guidance(config, root, session["scope"], store=store))
@@ -236,19 +247,29 @@ def identities(state: dict, session: dict, agent: dict) -> dict:
             "work_session_id": session["id"], "task_id": session["task_id"], "agent_id": agent["id"]}
 
 
-def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]:
+def bridge_event(event: dict, config_path: Path, *, native_callback: bool = False,
+                 native_foreground: bool = False, resume_paused: bool = False) -> tuple[dict, int, StateStore]:
     root = Path.cwd().resolve()
     event = validate_event(event)
+    if resume_paused and (not native_foreground or event["event"] != "task"):
+        raise LifecycleError("OBJECTIVE_RESUME_INVALID", "paused resumption requires an issued native foreground task intent")
     config_path = local_path(root, config_path.relative_to(root).as_posix())
     config = load_config(config_path)
     actual_repository, actual_worktree = actual_binding(root)
     if (event["binding"]["repository_root"], event["binding"]["worktree_root"]) != (actual_repository, actual_worktree):
         raise LifecycleError("BINDING_INVALID", "event binding does not match the actual repository/worktree")
+    candidate = config.providers.get(event["integration"].get("id"))
+    if candidate and candidate["kind"] == "native" and not (native_callback or native_foreground):
+        raise LifecycleError("NATIVE_SUPPORT_UNAVAILABLE", "native events require the validated adapter or issued foreground boundary")
     provider = configured_provider(config, config_path, root, event["integration"], event["event"])
     from .source_ingestion import snapshot, pending
     # Fixture callbacks are explicit foreground process boundaries. Native
     # adapters must defer this lock/scan work before claiming a semantic attempt.
-    source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture")
+    if native_callback and config.source_ingestion["enabled"]:
+        from .native import captured_sources
+        source_state = captured_sources(config, root, file_revision(config_path))
+    else:
+        source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture" or native_foreground)
     source_pending = pending(source_state)
     for knowledge_root in config.knowledge_roots:
         if knowledge_root.ownership == "agent_brain":
@@ -271,17 +292,17 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
     if event["event"] in ("startup", "task", "resume", "recover", "context_lost"):
         reconcile_output(store, config, config_path)
         state = store.read()
-        recovery = recover(store, config, config_path, allow_checks=provider["kind"] == "protocol_fixture")
+        recovery = recover(store, config, config_path, allow_checks=provider["kind"] == "protocol_fixture" or native_foreground)
         state = store.read()
         if recovery is not None:
-            source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture")
+            source_state = snapshot(config, root, reconcile=provider["kind"] == "protocol_fixture" or native_foreground)
             source_pending = pending(source_state)
     key = session_key(str(event["integration"]["id"]), event["binding"])
     akey = agent_key(str(event["integration"]["id"]), event["binding"]["provider_agent_id"])
     previous = state["sessions"].get(key)
     from .source_ingestion import prior_work
     if event["event"] not in ("pause", "cancel"):
-        source_pending = sorted(set(source_pending) | set(prior_work(config, root, state, key, event["scope"], source_state, config_path)))
+        source_pending = sorted(set(source_pending) | set(prior_work(config, root, state, key, event["scope"], source_state, config_path, native_callback=native_callback)))
     if source_state is not None and previous and previous.get("source_work") and event["event"] not in ("pause", "cancel"):
         from .source_ingestion import validate_bases
         # Only the canonical scanner can add inert scaffolds without a semantic
@@ -296,7 +317,11 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
     is_child = event["event"] == "child_start" or bool(previous_agent and previous_agent["parent"])
     assigned_scope = merge_scope(previous_agent["scope"] if previous_agent else {}, event["scope"])
     delivery = guidance(config, root, assigned_scope, store=store) if is_child else aggregate_guidance
-    revision = inputs(config, root, str(event["integration"]["config_revision"]), scope, aggregate_guidance)
+    revision = inputs(config, root, str(event["integration"]["config_revision"]), scope, aggregate_guidance,
+                      native_callback=native_callback)
+    if native_callback and source_state is not None and (source_pending or not previous
+            or previous.get("source_checked") != revision):
+        raise LifecycleError("RECOVERY_FOREGROUND_REQUIRED", "source reconciliation/checks require the issued foreground stage before effects or attempt claims", exit_code=1)
     from . import maintenance
     today = maintenance.utc_day(config, root, config_path)
     current_targets, structural_complete = maintenance.snapshot(config, root, store=store)
@@ -318,6 +343,12 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
     def update(record: dict) -> tuple[dict, int]:
         if "maintenance" in planning:
             record["maintenance"] = planning["maintenance"]
+            if "native_foreground" in planning:
+                record["native_foreground"] = planning["native_foreground"]
+            if "native_output" in planning:
+                record["native_output"] = planning["native_output"]
+            if "native_objectives" in planning:
+                record["native_objectives"] = planning["native_objectives"]
             for retired_key in set(record["sessions"]) - set(planning["sessions"]):
                 del record["sessions"][retired_key]
             for retired_invocation in set(record["invocations"]) - set(planning["invocations"]):
@@ -362,6 +393,10 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
             expected_parent = agent_key(str(event["integration"]["id"]), str(event.get("parent_agent_id", "")))
             if session["agents"].get(expected_parent, {}).get("id") != agent["parent"]:
                 raise LifecycleError("CHILD_UNREGISTERED", "child parent binding changed")
+        if resume_paused:
+            if session["status"] != "paused":
+                raise LifecycleError("OBJECTIVE_RESUME_INVALID", "only the exact paused objective may explicitly resume")
+            session.update(status="active", checkpoint="active")
         if session["status"] in ("paused", "cancelled"):
             return event_result(record, session, agent, None, "none"), 0
         agent["scope"] = merge_scope(agent["scope"], event["scope"])
@@ -441,6 +476,10 @@ def bridge_event(event: dict, config_path: Path) -> tuple[dict, int, StateStore]
         if (not agent["parent"] and session.get("source_work") and session.get("source_checked") != revision
                 and kind in ("startup", "task", "scope", "resume", "recover", "context_lost")):
             next_kind = "learn"
+        if resume_paused:
+            # Intent restores the same objective and context. It never claims
+            # another semantic attempt; pending source/action gates survive.
+            next_kind = "recall"
         if next_kind == "learn":
             claim = claim_obligation(record, session, agent, config, config_path, event, provider, store)
             if not agent["parent"] and planned_dream:
@@ -877,11 +916,17 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="agent-brain integration bridge", allow_abbrev=False)
     parser.add_argument("--config", default=".agents/context/config.json")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--native-gate", action="store_true")
     args = parser.parse_args(argv)
     store = None
     try:
         sys.stdin.reconfigure(encoding="utf-8", errors="strict")
         event = read_json(sys.stdin.read(1024 * 1024 + 1))
+        if args.native_gate:
+            from .native import gate
+            result = gate(event)
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+            return 0
         result, code, store = bridge_event(event, Path(args.config).absolute())
     except (ConfigurationError, OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError) as exc:
         error = exc if isinstance(exc, LifecycleError) else LifecycleError("INPUT_INVALID", str(exc))
@@ -913,7 +958,8 @@ def bridge_main(argv: Sequence[str] | None = None) -> int:
     return code
 
 
-def settle_output(result: dict, config_argument: str | None, *, delivered: bool, store: StateStore | None = None) -> None:
+def settle_output(result: dict, config_argument: str | None, *, delivered: bool, store: StateStore | None = None,
+                  native_callback: bool = False) -> None:
     """Flush completion makes pending protocol context available to the next process.
 
     Failed output revokes authority and invalidates prepared review. Successful
@@ -939,9 +985,13 @@ def settle_output(result: dict, config_argument: str | None, *, delivered: bool,
             recovered_session = next(value for value in recovered_state["sessions"].values() if value["id"] == journal["work_session_id"])
             recovered_obligation = recovered_session["obligations"][journal["obligation_id"]]
             settle_output(marker | {"stage": recovered_obligation["kind"], "operation": "complete"}, config_argument,
-                          delivered=delivered, store=store)
+                          delivered=delivered, store=store, native_callback=native_callback)
     if not delivered and not output_marker.exists():
         mark_output_pending(store, identity, result["input_generation"], result["context_generation"])
+    if delivered and not native_callback and config.source_ingestion["enabled"] and any(
+            value["enabled"] and value["kind"] == "native" for value in config.providers.values()):
+        from .native import capture_sources
+        capture_sources(config, root, Path(config_argument or ".agents/context/config.json").absolute(), store)
     state = store.read()
     from .maintenance import snapshot, credit, utc_day, verified_publications
     completed_output = result.get("operation") == "complete" or result.get("publication_recovery", {}).get("status") == "completed"

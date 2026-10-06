@@ -15,8 +15,12 @@ def barrier(config, root: Path, name: str) -> None:
     Environment data can pause an already authorized operation, never issue
     authority or change proposed bytes. Native provider configurations ignore it.
     """
-    if not all(provider["kind"] == "protocol_fixture" for provider in config.providers.values() if provider["enabled"]):
-        return
+    for provider in config.providers.values():
+        if not provider["enabled"] or provider["kind"] == "protocol_fixture":
+            continue
+        from .native import support_record
+        if support_record(config, root, provider)["status"] != "offline_fixture":
+            return
     selected = os.environ.get("AGENT_BRAIN_FIXTURE_BARRIER")
     if selected != name:
         return

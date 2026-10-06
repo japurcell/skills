@@ -1,0 +1,61 @@
+{
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event sessionStart",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event sessionStart",
+        "timeoutSec": 5
+      }
+    ],
+    "userPromptTransformed": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event userPromptTransformed",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event userPromptTransformed",
+        "timeoutSec": 5
+      }
+    ],
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event preToolUse",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event preToolUse",
+        "timeoutSec": 5
+      }
+    ],
+    "preCompact": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event preCompact",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event preCompact",
+        "timeoutSec": 5
+      }
+    ],
+    "subagentStart": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event subagentStart",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event subagentStart",
+        "timeoutSec": 5
+      }
+    ],
+    "subagentStop": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event subagentStop",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event subagentStop",
+        "timeoutSec": 5
+      }
+    ],
+    "agentStop": [
+      {
+        "type": "command",
+        "bash": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event agentStop",
+        "powershell": "python3 __BUNDLE__/assets/adapters/copilot.py --registration .agents/context/native-registration.json --event agentStop",
+        "timeoutSec": 5
+      }
+    ]
+  },
+  "version": 1
+}

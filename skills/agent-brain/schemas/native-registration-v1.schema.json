@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/native-registration-v1.schema.json",
+  "title": "Frozen native launcher selector; requires exact observed support",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "integration_id", "config_path", "bundle_path", "provider", "provider_version", "entry_mode"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "integration_id": {"type": "string", "minLength": 1},
+    "config_path": {"type": "string", "minLength": 1},
+    "bundle_path": {"type": "string", "minLength": 1},
+    "provider": {"enum": ["codex", "copilot", "gemini"]},
+    "provider_version": {"type": "string", "minLength": 1},
+    "entry_mode": {"enum": ["cli", "desktop"]}
+  }
+}
