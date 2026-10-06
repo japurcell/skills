@@ -46,7 +46,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 
 | Path | Why it matters |
 | --- | --- |
-| `docs/just-in-time-context/map.md` | Closed context management decision map; its `tickets/` own accepted contracts. Read [execplan.md](../../docs/just-in-time-context/execplan.md) for implementation milestones and separate offline/live validation boundaries. |
+| `docs/just-in-time-context/map.md` | Closed context management decision map; its `tickets/` own accepted contracts. Read [execplan.md](../../docs/just-in-time-context/execplan.md) for implementation milestones and offline/live boundaries, or [the visual explanation](../../docs/just-in-time-context/agent-brain-execplan.html) for human review. |
 | `scripts/install.sh` | Installs repo assets into `~/.agents`, `~/.copilot`, `~/.gemini`, and `~/.codex` targets, including generated Codex agents at `${CODEX_HOME:-$HOME/.codex}/agents`. |
 | `scripts/install.ps1` | PowerShell 7 port of `scripts/install.sh`; same sources, destinations, exclusions, and installed layout, including `$CODEX_HOME/agents` when set (run with `pwsh scripts/install.ps1`). |
 | `scripts/install-codex-agents.py` | Strict, transactional converter from top-level `agents/*.md` sources to manifest-managed personal Codex TOML agents. |
