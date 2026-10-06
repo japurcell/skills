@@ -18,4 +18,6 @@ Keep each provider test subprocess under `with_disposable_hook_home` or an equiv
 
 Use installed-path benchmarks for Gemini Tool Guardian; direct repo invocation can miss the `<40ms` target even when installed behavior passes.
 
+The corruption-recovery and intentional detached-maintenance public cases run with `PYTHONWARNINGS=error::ResourceWarning` and reject resource warnings in captured emitter stderr. Both retain the existing rebuild, transcript, sentinel and final-scavenging assertions. The disposable maintenance entrypoint sleeps three seconds, while the emitter must return its neutral JSON within a 1.5-second subprocess bound; completion is then awaited through the existing progress marker before cleanup. This tests nonblocking launch and ordinary process resource ownership on the host, not native Windows or graceful shutdown/power-loss durability.
+
 For shared Python helpers, run `python scripts/test_helpers.py`. The tests cover path conversion, UTF-8 `emit_json`, path merging, frontmatter stripping, log sanitization, audit timeout and rotation, and payload-capping parity. Load modules with isolated `importlib.util.spec_from_file_location` objects to avoid `sys.modules` leakage. For stdout reconfiguration tests, wrap `io.BytesIO` in `io.TextIOWrapper` so `reconfigure(encoding="utf-8")` remains available under a simulated CP1252 stream.

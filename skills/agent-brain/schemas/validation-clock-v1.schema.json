@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/validation-clock-v1.schema.json",
+  "title": "Selected exact frozen UTC point for a disposable certified experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["integration_id", "plan_revision", "utc"],
+  "properties": {
+    "integration_id": {"type": "string", "minLength": 1},
+    "plan_revision": {"$ref": "native-support-v1.schema.json#/$defs/revision"},
+    "utc": {"type": "string", "format": "date-time"}
+  }
+}

@@ -21,6 +21,7 @@ Load this file only for observability, trace-store, transcript, log-rotation, or
 - Run detached maintenance at most once per 24 hours. Touch its sentinel only in the started child. Delete files outside SQLite transactions, then remove rows and compact in a separate write transaction.
 - Scavenge active directories and registries only when older than 24 hours and terminal or absent from the database.
 - Launch maintenance as `python3 -m helpers.observability --maintenance` with `cwd` at the runtime scripts directory.
+- Close an acquired SQLite connection if setup PRAGMAs, schema initialization or recovery fail, including interruption. Establish a daemon reaping owner before spawning detached maintenance, signal it after the spawn attempt, and never join it from the emitter. The waiter owns no semantic or database work; it waits for the existing child while the emitter remains alive. Daemon shutdown is not a graceful-cleanup guarantee.
 - On Windows, bypass `os.kill(pid, 0)` for the current PID.
 - Rotation must fail open without clearing active logs. Always prune stale backups, honor `GEMINI_` or `COPILOT_OBSERVABILITY_LOG_*` variables before generic `OBSERVABILITY_LOG_*` variables, default to 10 MB and 100 backups, allow zero-byte rotation disablement, and pre-scan backup directories. Do not clamp user maxima.
 

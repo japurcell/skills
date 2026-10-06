@@ -14,7 +14,7 @@
       "reason": "Pending integration fixture",
       "size": 74,
       "source_path": "pending.md",
-      "state": "pending",
+      "state": "needs_summary",
       "summary_hash": "9da390f192191e8e4bb2b29f7f40cccb06c74a597680de9d6ca126dce8b179d1",
       "summary_path": "pending-md.summary.md"
     }

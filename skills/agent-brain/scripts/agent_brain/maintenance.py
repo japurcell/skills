@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone, date
 import json
+import hashlib
+import tempfile
 from pathlib import Path
 
 from .config import _keys, _object, _relative_path, _string, _uuid
@@ -12,9 +14,60 @@ from .retrieval import SCOPE_FIELDS, retrieve
 from .state import LifecycleError, digest, local_path, uid
 
 
+def validation_clock_plan(config, root, provider_id, support, config_path=None):
+    """Explicit disposable experiment pin; never creates native authority."""
+    from .lifecycle import file_revision, read_json
+    if support["status"] != "certified" or not (root.is_relative_to(Path(tempfile.gettempdir()).resolve()) or root.is_relative_to(Path("/private/tmp"))):
+        raise LifecycleError("VALIDATION_CLOCK_SCOPE_INVALID", "validation clock requires exact certified configuration in a disposable temporary Git worktree")
+    pin = support["validation_clock"]
+    _keys(pin, "validation clock pin", {"path", "revision"})
+    plan_path = local_path(root, pin["path"])
+    if file_revision(plan_path) != pin["revision"]:
+        raise LifecycleError("VALIDATION_CLOCK_STALE", "frozen disposable clock plan changed")
+    plan = read_json(plan_path.read_bytes().decode("utf-8"))
+    _keys(plan, "validation clock plan", {"schema_version", "kind", "integration_id", "worktree_root", "config_path", "config_revision", "support_binding", "allowed_utc"})
+    binding = {key: value for key, value in support.items() if key != "validation_clock"}
+    revision = hashlib.sha256(json.dumps(binding, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    selected_config = local_path(root, plan["config_path"])
+    expected = {"schema_version": 1, "kind": "disposable_validation_clock", "integration_id": provider_id,
+        "worktree_root": str(root), "config_revision": file_revision(selected_config), "support_binding": revision}
+    if any(type(plan[key]) is not type(value) or plan[key] != value for key, value in expected.items()) or (config_path is not None and selected_config != config_path):
+        raise LifecycleError("VALIDATION_CLOCK_STALE", "clock plan differs from the exact certified/configured identity")
+    dates = plan["allowed_utc"]
+    if not isinstance(dates, list) or len(dates) < 2 or len(set(dates)) != len(dates):
+        raise LifecycleError("VALIDATION_CLOCK_INVALID", "freeze at least two distinct calendar points before validation")
+    for value in dates:
+        moment = datetime.fromisoformat(_string(value, "frozen validation UTC").replace("Z", "+00:00"))
+        if moment.tzinfo is None or moment.utcoffset().total_seconds() != 0:
+            raise LifecycleError("VALIDATION_CLOCK_INVALID", "frozen validation timestamps require UTC")
+    return plan
+
+
 def utc_day(config, root: Path, config_path: Path) -> str:
     """A fixture clock affects cadence/retention, never authority or leases."""
+    validation_clock = local_path(root, config.state_dir + "/validation-clock.json")
     clock = local_path(root, config.state_dir + "/fixture-clock.json")
+    if validation_clock.exists():
+        from .lifecycle import configured_provider, configuration_revision, read_json
+        from .native import support_record
+        if clock.exists():
+            raise LifecycleError("VALIDATION_CLOCK_INVALID", "legacy fixture and certified validation clocks cannot be combined")
+        value = read_json(validation_clock.read_bytes().decode("utf-8"))
+        _keys(value, "validation clock", {"integration_id", "plan_revision", "utc"})
+        provider_id = value["integration_id"]
+        provider = config.providers.get(provider_id)
+        if not provider or not provider["enabled"] or provider["kind"] != "native":
+            raise LifecycleError("VALIDATION_CLOCK_SCOPE_INVALID", "clock cannot authorize an unregistered/native-unverified integration")
+        support = support_record(config, root, provider)
+        if "validation_clock" not in support:
+            raise LifecycleError("VALIDATION_CLOCK_SCOPE_INVALID", "exact native configuration has no frozen validation clock")
+        identity = {"id": provider_id, "core_version": provider["core_version"], "adapter_version": provider["adapter_version"],
+            "certification_id": provider["certification_id"], "config_revision": configuration_revision(config_path)}
+        configured_provider(config, config_path, root, identity)
+        plan = validation_clock_plan(config, root, provider_id, support, config_path)
+        if value["plan_revision"] != support["validation_clock"]["revision"] or value["utc"] not in plan["allowed_utc"]:
+            raise LifecycleError("VALIDATION_CLOCK_STALE", "date is outside the frozen disposable experiment")
+        return datetime.fromisoformat(value["utc"].replace("Z", "+00:00")).date().isoformat()
     if clock.exists():
         from .lifecycle import configured_provider, file_revision, read_json
         provider_id = next((key for key, value in config.providers.items()

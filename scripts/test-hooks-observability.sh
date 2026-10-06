@@ -773,9 +773,15 @@ test_sqlite_observability_persistence() {
   echo "NOT A DATABASE AT ALL" > "$db_path"
 
   output="$(
-    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
-      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload"
+    env HOME="$home" PYTHONWARNINGS=error::ResourceWarning OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" 2>"$workdir/corrupt.stderr"
   )"
+
+  if grep -q ResourceWarning "$workdir/corrupt.stderr"; then
+    cat "$workdir/corrupt.stderr" >&2
+    echo "Expected failed database initialization to close its connection." >&2
+    exit 1
+  fi
 
   local uv_corrupt
   uv_corrupt="$(sqlite3 "$db_path" "PRAGMA user_version;")"
@@ -1162,12 +1168,31 @@ test_sqlite_finalization_and_transcripts() {
     "$completion_stale_epoch" "$maintenance_progress_dir"
   rm -f "$sentinel"
 
+  # A deliberately slow child must not hold the emitting foreground process.
+  python3 - "$home/.copilot/hooks/scripts/helpers/observability.py" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+text = path.read_text()
+assert text.count("        _run_maintenance_work()") == 1
+path.write_text(text.replace("        _run_maintenance_work()", "        time.sleep(3)\n        _run_maintenance_work()"))
+PY
+
   payload="$(jq -nc '{
     sessionId: "maint-session-startup",
     timestamp: "2026-06-23T23:50:00.000Z"
   }')"
-  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
-    python3 "$home/.copilot/hooks/scripts/send-event.py" <<<"$payload" >/dev/null
+  env HOME="$home" PYTHONWARNINGS=error::ResourceWarning OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    python3 - "$home" "$payload" "$workdir/detached.stderr" <<'PY'
+from pathlib import Path
+import subprocess, sys, time
+started = time.monotonic()
+with Path(sys.argv[3]).open("wb") as error:
+    result = subprocess.run([sys.executable, sys.argv[1] + "/.copilot/hooks/scripts/send-event.py"],
+        input=sys.argv[2].encode(), stdout=subprocess.PIPE, stderr=error, timeout=1.5, check=True)
+assert result.stdout.strip() == b"{}", result.stdout
+assert time.monotonic() - started < 1.5, "emitter waited for its three-second detached child"
+PY
 
   # Wait for the sentinel file using a polling loop (up to 5s)
   local limit=50
@@ -1190,6 +1215,11 @@ test_sqlite_finalization_and_transcripts() {
   done
   if [[ -d "$maintenance_progress_dir" ]]; then
     echo "Expected detached maintenance to remove its stale progress marker before fixture cleanup: $maintenance_progress_dir" >&2
+    exit 1
+  fi
+  if grep -q ResourceWarning "$workdir/detached.stderr"; then
+    cat "$workdir/detached.stderr" >&2
+    echo "Expected the detached child to retain a reaping owner." >&2
     exit 1
   fi
 

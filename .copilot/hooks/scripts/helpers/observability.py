@@ -754,9 +754,13 @@ def _connect_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection:
         except Exception:
             pass
     conn = sqlite3.connect(str(db_path), timeout=busy_timeout / 1000.0)
-    conn.execute(f"PRAGMA busy_timeout = {busy_timeout};")
-    conn.execute("PRAGMA synchronous=NORMAL;")
-    conn.execute("PRAGMA foreign_keys=ON;")
+    try:
+        conn.execute(f"PRAGMA busy_timeout = {busy_timeout};")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA foreign_keys=ON;")
+    except BaseException:
+        conn.close()
+        raise
     for suffix in ["-wal", "-shm"]:
         side_file = Path(str(db_path) + suffix)
         if side_file.exists():
@@ -827,7 +831,7 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
         try:
             _init_schema_if_needed(conn)
             return conn
-        except Exception as e:
+        except BaseException as e:
             conn.close()
             raise e
     except Exception as e:
@@ -850,16 +854,19 @@ def _connect_and_init_db(db_path: Path, busy_timeout: int) -> sqlite3.Connection
             except Exception:
                 pass
             conn = _connect_db(db_path, busy_timeout)
-            conn.execute("BEGIN IMMEDIATE")
             try:
+                conn.execute("BEGIN IMMEDIATE")
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA journal_mode=WAL;")
                 cursor.execute("PRAGMA auto_vacuum=INCREMENTAL;")
                 cursor.executescript(SCHEMA_DDL)
                 cursor.execute("PRAGMA user_version = 1;")
                 conn.commit()
-            except Exception:
-                conn.rollback()
+            except BaseException:
+                try:
+                    conn.rollback()
+                finally:
+                    conn.close()
                 raise
             return conn
         else:
@@ -1533,16 +1540,35 @@ def _launch_detached_maintenance(sentinel_path: Path) -> None:
         _ensure_parent(sentinel_path)
         
         import subprocess
+        from threading import Event, Thread
         scripts_dir = str(Path(__file__).resolve().parent.parent)
-        subprocess.Popen(
-            [sys.executable, "-m", "helpers.observability", "--maintenance"],
-            cwd=scripts_dir,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-            close_fds=True,
-            start_new_session=True
-        )
+        ready = Event()
+        child = []
+
+        def reap():
+            ready.wait()
+            if child:
+                try:
+                    child[0].wait()
+                except Exception:
+                    pass
+
+        # Establish the handle owner before spawning. The emitter never joins
+        # this daemon waiter; interpreter shutdown leaves the detached child
+        # running under the OS rather than waiting or killing it.
+        Thread(target=reap, daemon=True, name="observability-maintenance-reaper").start()
+        try:
+            child.append(subprocess.Popen(
+                [sys.executable, "-m", "helpers.observability", "--maintenance"],
+                cwd=scripts_dir,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                close_fds=True,
+                start_new_session=True
+            ))
+        finally:
+            ready.set()
     except Exception:
         pass
 

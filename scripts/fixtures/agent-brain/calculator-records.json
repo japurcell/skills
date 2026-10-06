@@ -1,0 +1,351 @@
+{
+  "schema_version": 1,
+  "spec_revision": "00f76063361f35dd7642054db9839f809eb5acb3dbc57494f319d60fd2352933",
+  "observations": [
+    {
+      "configuration": "fixture-config-v1",
+      "tokenizer": "literal-fixture-counts-v1",
+      "window": "arrival-through-settled-maintenance-v1",
+      "cohort": "fixture",
+      "pair_id": "p1",
+      "variant": "fixture-policy",
+      "order": "baseline_first",
+      "system_caused_regression": false,
+      "baseline": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 100,
+        "duration_seconds": 10,
+        "retrieval_seconds": 0,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "observed",
+          "value": 1,
+          "unit": "credits"
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p1/baseline",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p1/baseline/review.json",
+            "revision": "a70eaed928bfd48e342631a4c586ef0186243539fd19261fa71853965ede72a8",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      },
+      "candidate": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 60,
+        "duration_seconds": 10,
+        "retrieval_seconds": 0,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "unavailable",
+          "value": null,
+          "unit": null
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p1/candidate",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p1/candidate/review.json",
+            "revision": "d3da30529b3aa5f938dec8556baca5ed499aadf62932e90bf550722d41141f1e",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      }
+    },
+    {
+      "configuration": "fixture-config-v1",
+      "tokenizer": "literal-fixture-counts-v1",
+      "window": "arrival-through-settled-maintenance-v1",
+      "cohort": "fixture",
+      "pair_id": "p2",
+      "variant": "fixture-policy",
+      "order": "candidate_first",
+      "system_caused_regression": false,
+      "baseline": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 200,
+        "duration_seconds": 11,
+        "retrieval_seconds": 0,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "observed",
+          "value": 1,
+          "unit": "credits"
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p2/baseline",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p2/baseline/review.json",
+            "revision": "9962fc477a3c3c3e6700bfbfa0180e593d8d260bfad3516dc2d6b3c6e2a1d358",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      },
+      "candidate": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 120,
+        "duration_seconds": 11,
+        "retrieval_seconds": 1,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "unavailable",
+          "value": null,
+          "unit": null
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p2/candidate",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p2/candidate/review.json",
+            "revision": "dd9f7ae22e24cb5cb0d974aac1b1e1c5bfc4040b9494c512ad825534609fd8a1",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      }
+    },
+    {
+      "configuration": "fixture-config-v1",
+      "tokenizer": "literal-fixture-counts-v1",
+      "window": "arrival-through-settled-maintenance-v1",
+      "cohort": "fixture",
+      "pair_id": "p3",
+      "variant": "fixture-policy",
+      "order": "baseline_first",
+      "system_caused_regression": false,
+      "baseline": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 300,
+        "duration_seconds": 12,
+        "retrieval_seconds": 0,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "observed",
+          "value": 1,
+          "unit": "credits"
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p3/baseline",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p3/baseline/review.json",
+            "revision": "879a2d6e92321684e93464d5cbcc77d0fd7f70c4e62819740b4f458457c33984",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      },
+      "candidate": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 180,
+        "duration_seconds": 12,
+        "retrieval_seconds": 2,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "unavailable",
+          "value": null,
+          "unit": null
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p3/candidate",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p3/candidate/review.json",
+            "revision": "61d5eadde5fcb23590d6c7606e787b33b89bfdf9611070e5d491f88c43731fff",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      }
+    },
+    {
+      "configuration": "fixture-config-v1",
+      "tokenizer": "literal-fixture-counts-v1",
+      "window": "arrival-through-settled-maintenance-v1",
+      "cohort": "fixture",
+      "pair_id": "p4",
+      "variant": "fixture-policy",
+      "order": "candidate_first",
+      "system_caused_regression": false,
+      "baseline": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 400,
+        "duration_seconds": 13,
+        "retrieval_seconds": 0,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "observed",
+          "value": 1,
+          "unit": "credits"
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p4/baseline",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p4/baseline/review.json",
+            "revision": "0c8998bc9ca617eb6070db45dc09bc9bca61f1012941421770af29e124e7cb35",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      },
+      "candidate": {
+        "model": "no-model-fixture",
+        "settings": "fixture-settings",
+        "knowledge_revision": "fixture-knowledge",
+        "guidance_tokens": 240,
+        "duration_seconds": 13,
+        "retrieval_seconds": 3,
+        "delivery_complete": true,
+        "window_complete": true,
+        "independent_review": true,
+        "task_outcome": "passed",
+        "checks": {
+          "policy-retained": "passed"
+        },
+        "usage": {
+          "status": "unavailable",
+          "value": null,
+          "unit": null
+        },
+        "stage_boundaries": [
+          "arrival",
+          "recall",
+          "learn",
+          "dream",
+          "settled"
+        ],
+        "evidence": {
+          "snapshot": "p4/candidate",
+          "artifacts": {
+            "policy-retained": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995"
+          },
+          "review": {
+            "path": "p4/candidate/review.json",
+            "revision": "bfe86002ee8d550b831013c90c5caa1bb94763b98a6d00520521f194dd2dd145",
+            "reviewer": "offline-fixture-human"
+          }
+        }
+      }
+    }
+  ],
+  "critical_observations": []
+}

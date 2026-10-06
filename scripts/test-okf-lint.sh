@@ -761,7 +761,8 @@ import json
 import sys
 
 path = sys.argv[1]
-payload = json.load(open(path, encoding="utf-8"))
+with open(path, encoding="utf-8") as stream:
+    payload = json.load(stream)
 payload["entries"] = []
 with open(path, "w", encoding="utf-8") as stream:
     json.dump(payload, stream, indent=2)
@@ -776,7 +777,8 @@ import json
 import sys
 
 path = sys.argv[1]
-payload = json.load(open(path, encoding="utf-8"))
+with open(path, encoding="utf-8") as stream:
+    payload = json.load(stream)
 payload["entries"].append(dict(payload["entries"][0]))
 with open(path, "w", encoding="utf-8") as stream:
     json.dump(payload, stream, indent=2)
@@ -791,7 +793,8 @@ import json
 import sys
 
 path = sys.argv[1]
-payload = json.load(open(path, encoding="utf-8"))
+with open(path, encoding="utf-8") as stream:
+    payload = json.load(stream)
 payload["entries"][0]["source_path"] = "other.md"
 with open(path, "w", encoding="utf-8") as stream:
     json.dump(payload, stream, indent=2)

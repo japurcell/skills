@@ -17,6 +17,7 @@
     "provider_version": {"type": "string", "minLength": 1}, "entry_mode": {"enum": ["cli", "desktop"]},
     "platform": {"type": "string"}, "filesystem_id": {"type": "string"},
     "permissions": {"$ref": "#/$defs/pin"}, "lifecycle_config": {"$ref": "#/$defs/pin"},
+    "validation_clock": {"$ref": "#/$defs/pin", "description": "Optional exact certified disposable experiment calendar plan; never ordinary production or native authority."},
     "native_events": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
     "adapter_path": {"type": "string"}, "adapter_revision": {"$ref": "#/$defs/revision"},
     "bundle_path": {"type": "string"}, "bundle_revision": {"$ref": "#/$defs/revision"},
@@ -25,6 +26,7 @@
     "scope": {"$ref": "integration-event-v1.schema.json#/properties/scope"},
     "evidence": {"oneOf": [{"const": "offline_translation_only"}, {"$ref": "#/$defs/pin"}]}
   },
+  "allOf": [{"if": {"required": ["validation_clock"]}, "then": {"properties": {"status": {"const": "certified"}}}}],
   "$defs": {
     "revision": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "pin": {"type": "object", "additionalProperties": false, "required": ["path", "revision"], "properties": {"path": {"type": "string", "minLength": 1}, "revision": {"$ref": "#/$defs/revision"}}}

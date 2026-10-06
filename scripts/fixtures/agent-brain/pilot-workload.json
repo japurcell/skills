@@ -1,0 +1,3261 @@
+{
+  "schema_version": 1,
+  "freeze_id": "m9-existing-kb-whole-unit-v1",
+  "variants": [
+    {
+      "id": "limits",
+      "task": "Answer how the observed 128-command-segment Tool Guardian limit differs from the 32768-byte structured-input limit. Retain observed-case qualification, units and field names; do not invent replay evidence.",
+      "source": ".agents/memory/known-issues/hooks.md#active-guards-can-block-their-own-maintenance",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "layout",
+      "task": "Explain canonical agents, software installation, protected KB loading order and configuration locations. Distinguish immutable software installation from reviewed local activation and native certification.",
+      "source": ".agents/memory/ARCHITECTURE.md#agent-brain-software-and-activation",
+      "contract": "docs/just-in-time-context/tickets/adoption-and-validation-contract.md",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "skill-help",
+      "task": "In a disposable copy of skills/code-simplify, add references/pilot-help.md containing the exact help sentence below and a SKILL.md reference. Preserve name/frontmatter and run quick_validate.",
+      "source": ".agents/instructions/skills.md",
+      "contract": "docs/just-in-time-context/tickets/context-organization-and-skill-boundary.md",
+      "checks": [
+        "skill-help-artifact",
+        "skill-help-quality"
+      ]
+    },
+    {
+      "id": "hook-guard",
+      "task": "Clarify the canonical hooks/families/tool_guard.py commentary about structured-byte versus command-segment diagnostics. Preserve runtime behavior, regenerate maintained outputs and run freshness plus security banners.",
+      "source": "hooks/families/tool_guard.py",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md",
+      "checks": [
+        "hook-guard-artifact",
+        "hook-guard-quality"
+      ]
+    },
+    {
+      "id": "hook-source",
+      "task": "Clarify canonical auto-ingest family commentary that draft detection reads source-summary frontmatter rather than body mentions. Preserve runtime behavior, regenerate and run both source hook suites.",
+      "source": "hooks/families/auto_ingest_engine.py",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md",
+      "checks": [
+        "hook-source-artifact",
+        "hook-source-quality"
+      ]
+    },
+    {
+      "id": "source-correction",
+      "task": "Correct only harness-owned .agents/sources/pilot-json.md from duplicate keys permitted to duplicate keys unavailable. Update its summary/manifest through the supported scoped ingest/learn path; retain all actual original raw sources.",
+      "source": ".agents/skills/ingest-source/SKILL.md",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md",
+      "checks": [
+        "source-correction-artifact",
+        "source-correction-quality"
+      ]
+    },
+    {
+      "id": "source-rename",
+      "task": "Rename harness pilot-json.md to pilot-json-renamed.md and remove harness pilot-obsolete.md. Reconcile summaries/manifest and orphan references through supported source learning; never delete actual repository raw inputs.",
+      "source": ".agents/memory/known-issues/hooks-auto-ingest.md",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md",
+      "checks": [
+        "source-rename-artifact",
+        "source-rename-quality"
+      ]
+    },
+    {
+      "id": "guidance-move",
+      "task": "Move the harness stable guidance unit from .agents/memory/pilot-move.md to .agents/memory/pilot-moved.md. Retain its UUID and content, update index and all inline/reference/fragment links. Preserve unrelated bytes.",
+      "source": "skills/agent-brain/references/learn.md",
+      "contract": "docs/just-in-time-context/tickets/context-retrieval-contract.md",
+      "checks": [
+        "guidance-move-artifact",
+        "guidance-move-quality"
+      ]
+    },
+    {
+      "id": "correction-pruning",
+      "task": "Correct harness pilot-error.md claiming a 128-byte universal Tool Guardian limit. Remove only the completely redundant harness duplicate tip after reference repair and checks. Retain the qualified counterexample and actual policy.",
+      "source": ".agents/memory/known-issues/hooks.md",
+      "contract": "docs/just-in-time-context/tickets/maintenance-scheduling-and-pruning.md",
+      "checks": [
+        "correction-pruning-artifact",
+        "correction-pruning-quality"
+      ]
+    },
+    {
+      "id": "expanded-resume",
+      "task": "Initially answer the layout question. At the frozen clarification, expand to the hook-source commentary task after interruption/resume. Restore newly relevant guidance before editing; finish the same objective and checked learn/dream obligations.",
+      "source": "skills/agent-brain/references/lifecycle.md",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md",
+      "checks": [
+        "expanded-resume-artifact",
+        "expanded-resume-quality"
+      ]
+    }
+  ],
+  "knowledge_inventory": [
+    {
+      "path": ".agents/instructions/agents.md",
+      "revision": "b135a08e25acfa8dac447caa5702776a9903d7d09e4fd0f29797f5ffaaaa07d6",
+      "bytes": 862,
+      "mapping": "protected-whole-file",
+      "external_id": "d8a4a728-67e4-54ca-8014-d3ea87c79b55"
+    },
+    {
+      "path": ".agents/instructions/hooks-auto-ingest.md",
+      "revision": "3c78158916d4e1a56d66f0383102a4fffb92be21e2e5cf62c0247b74d0a45ffb",
+      "bytes": 4673,
+      "mapping": "protected-whole-file",
+      "external_id": "e9760e9d-492c-512e-80d3-ae108f8a5ba8"
+    },
+    {
+      "path": ".agents/instructions/hooks-observability.md",
+      "revision": "5c3a0c72317153a4427d84fb0f3b27a88fddca202c4b4bd33179519104968af3",
+      "bytes": 3635,
+      "mapping": "protected-whole-file",
+      "external_id": "873ea032-e587-58fd-a08a-5c600f97982d"
+    },
+    {
+      "path": ".agents/instructions/hooks.md",
+      "revision": "f01a97d6eb5ec68de0bf123dace1b256c3404445f5c482c645a4dcf53978651d",
+      "bytes": 18714,
+      "mapping": "protected-whole-file",
+      "external_id": "c7ddacc1-b152-5721-bd83-844926ba8bd0"
+    },
+    {
+      "path": ".agents/instructions/powershell.md",
+      "revision": "62bd096c61a61906e6de033316ccd28cd6398a20ed3edc68754d10076e1759ed",
+      "bytes": 2163,
+      "mapping": "protected-whole-file",
+      "external_id": "a1308bb0-d8c4-57e0-9333-e48255a9fe27"
+    },
+    {
+      "path": ".agents/instructions/repo.md",
+      "revision": "b69114925e99fecd4cfc305e665fc1ffe6cedf42b6b6f0bf423ace4c39ca6ed9",
+      "bytes": 2228,
+      "mapping": "protected-whole-file",
+      "external_id": "91c92c3d-e62e-5137-8578-2300ecb887e9"
+    },
+    {
+      "path": ".agents/instructions/scripts.md",
+      "revision": "08f20b96f7923485eb252077ba913d32d4126d1f3b5a74289035e578c58607ab",
+      "bytes": 10647,
+      "mapping": "protected-whole-file",
+      "external_id": "209ef256-d9d4-5a18-831a-0ade1c4f6ecc"
+    },
+    {
+      "path": ".agents/instructions/skills.md",
+      "revision": "6f8bfe78cad9ce7a2fe56e61742edb46753144a7d2de99500a4701646e3ff3e1",
+      "bytes": 4213,
+      "mapping": "protected-whole-file",
+      "external_id": "b65801c7-5089-5ef7-a3b4-61ad9a303832"
+    },
+    {
+      "path": ".agents/memory/API_MAP.md",
+      "revision": "aec9999627c625c880f3f4988bfa4d1255a9030cf8bc83ae52e467e00ab496a6",
+      "bytes": 26106,
+      "mapping": "protected-whole-file",
+      "external_id": "a0f4a95c-beac-59b3-aa67-7a93e2361628"
+    },
+    {
+      "path": ".agents/memory/ARCHITECTURE.md",
+      "revision": "4185235cd74545fc95fe5f88223ba21a42b780a5927c4697913639a6d37d2407",
+      "bytes": 6432,
+      "mapping": "protected-whole-file",
+      "external_id": "0c5ac9b5-1bbc-5969-abf8-cc39687f1651"
+    },
+    {
+      "path": ".agents/memory/CONVENTIONS.md",
+      "revision": "a6da962bc0127e428f76576c7de91bb6b7190c8ae4bbc0edaa33ccec89588bde",
+      "bytes": 1818,
+      "mapping": "protected-whole-file",
+      "external_id": "6650b274-4688-5e95-b488-a0ecf33b29b6"
+    },
+    {
+      "path": ".agents/memory/FILE_MAP.md",
+      "revision": "2c35a9288eda2b6aa782d8bdf1025da9b8decf0fa8b636818806bf5b25c21a12",
+      "bytes": 16584,
+      "mapping": "protected-whole-file",
+      "external_id": "d10fe116-881e-5592-b983-0782d591d44d"
+    },
+    {
+      "path": ".agents/memory/INDEX.md",
+      "revision": "9874fd51e9c7bc040f6bdf0c9a0e9bbdf59aeda5b1fb3fe643d1ec6412ad2ee1",
+      "bytes": 9196,
+      "mapping": "protected-whole-file",
+      "external_id": "7d230ce6-5721-5687-9403-85931ed79301"
+    },
+    {
+      "path": ".agents/memory/KNOWN_ISSUES.md",
+      "revision": "7bd7112a70def741ccf58497e4f16908d77bf894268e9657a485a8e9d1016526",
+      "bytes": 1012,
+      "mapping": "protected-whole-file",
+      "external_id": "2db3e69a-d6cc-57cb-96ec-2bc3a113e385"
+    },
+    {
+      "path": ".agents/memory/LOG.md",
+      "revision": "8c9df0a3289e87cc9c17b74bb96527c255d57d65b2655b3698eb7e77214fd4cd",
+      "bytes": 2215,
+      "mapping": "protected-whole-file",
+      "external_id": "da47bed1-3c65-5331-ade5-69a11a9fc13a"
+    },
+    {
+      "path": ".agents/memory/TESTING_STRATEGY.md",
+      "revision": "6c6c741bceb02e00bebe9ca2440af144faa121ce1b199244ba1edb935ff96e6e",
+      "bytes": 2880,
+      "mapping": "protected-whole-file",
+      "external_id": "54b67ad8-5cb6-5c4a-a5a0-dfb0f852cbbf"
+    },
+    {
+      "path": ".agents/memory/adrs/hooks.md",
+      "revision": "b296bd03f4fcaca128e03d84da40a7813f46632551ac6d0492b7a56071a77175",
+      "bytes": 9688,
+      "mapping": "protected-whole-file",
+      "external_id": "3140df6e-c3bc-51c7-ba0c-6ccbb7085aae"
+    },
+    {
+      "path": ".agents/memory/known-issues/hooks-auto-ingest.md",
+      "revision": "af2b77dedffeb4cc6286d0db053b09dbfb532875214d68b1b77a858b56bb0d0e",
+      "bytes": 3015,
+      "mapping": "protected-whole-file",
+      "external_id": "ea954cd1-5488-5cee-8285-c4c93682aa91"
+    },
+    {
+      "path": ".agents/memory/known-issues/hooks-observability.md",
+      "revision": "ee959669ef3ad68400c820df0a2bc4758242874b3cda87dddcbfe1e685e0e77b",
+      "bytes": 4546,
+      "mapping": "protected-whole-file",
+      "external_id": "192cf8bf-1b96-585f-a99c-41a13636613b"
+    },
+    {
+      "path": ".agents/memory/known-issues/hooks.md",
+      "revision": "1a6f12aac77dd2a16ccd0e9c9c6a3cca3a15e5a3f94fa1c5b1c5a545066bb69e",
+      "bytes": 8629,
+      "mapping": "protected-whole-file",
+      "external_id": "16335b87-5031-5b43-b166-627d8c964f05"
+    },
+    {
+      "path": ".agents/memory/known-issues/powershell.md",
+      "revision": "4c7d838a1e972445884803da3d73848c98c13b039989d8b5a9709e205c423105",
+      "bytes": 2589,
+      "mapping": "protected-whole-file",
+      "external_id": "32e1f843-9745-53f6-bab1-abd8b4e04781"
+    },
+    {
+      "path": ".agents/memory/known-issues/scripts.md",
+      "revision": "a46468f17f484cfac0bc1cf58828c43bcf697df5ec4046083db06e949939dc1a",
+      "bytes": 7703,
+      "mapping": "protected-whole-file",
+      "external_id": "8a7aad7b-9f1f-599c-8a72-c74450107ecb"
+    },
+    {
+      "path": ".agents/memory/known-issues/skills.md",
+      "revision": "dcd29e6ed2317706e426aae39b644c635ee0c3ebba086765c850657edcecc987",
+      "bytes": 8174,
+      "mapping": "protected-whole-file",
+      "external_id": "ed944185-d740-5c93-9dac-effc2379cb8e"
+    },
+    {
+      "path": ".agents/memory/sources/12-factor-cli-apps-md.summary.md",
+      "revision": "8f5bdbda05eba78603f676e12d1c3eb1ad46fdc461405457f8b9f866fb026ed0",
+      "bytes": 2008,
+      "mapping": "protected-whole-file",
+      "external_id": "f40deb58-f870-578d-9a53-f0c9f3894cde"
+    },
+    {
+      "path": ".agents/memory/sources/cli-design-guidelines-md.summary.md",
+      "revision": "967838a24c562ceea8585ba6697070f2537f9dbcdf7e26e4a2714d7769da3753",
+      "bytes": 1778,
+      "mapping": "protected-whole-file",
+      "external_id": "afd8f95b-cd4d-5fb8-8553-4d9fd16b7b23"
+    },
+    {
+      "path": ".agents/memory/sources/clig-dev-md.summary.md",
+      "revision": "fba41dcca3ae89bc0d71442a09b35006baf7ac94f67581312883a4338b399b42",
+      "bytes": 2012,
+      "mapping": "protected-whole-file",
+      "external_id": "fd52f4eb-3e2a-54e9-96ba-42575bc5b7d0"
+    },
+    {
+      "path": ".agents/memory/sources/copilot-hooks-ref-md.summary.md",
+      "revision": "9cd904ba9eee68dd2ca1168d674a286e0f82205ba19669c5be6d427f48f93f24",
+      "bytes": 2020,
+      "mapping": "protected-whole-file",
+      "external_id": "c83a5958-52e7-5d12-a381-d239fa810290"
+    },
+    {
+      "path": ".agents/memory/sources/gemini-hooks-best-practices-md.summary.md",
+      "revision": "4e1e0d563bf0b1def2b024c2a6a3fa8386df862573d95eae6b69f41498f6cffb",
+      "bytes": 2086,
+      "mapping": "protected-whole-file",
+      "external_id": "2615b80c-d157-5c97-ba34-b8c918fef9b4"
+    },
+    {
+      "path": ".agents/memory/sources/gemini-hooks-md.summary.md",
+      "revision": "5e96b95111dfad6673d8d057a6ba29e86941c85ab8265c9e508c9f03dce28160",
+      "bytes": 1887,
+      "mapping": "protected-whole-file",
+      "external_id": "dd6bb734-e531-5a38-9975-5adbce4bd12a"
+    },
+    {
+      "path": ".agents/memory/sources/gemini-hooks-writing-md.summary.md",
+      "revision": "57a6d87f61005d00991cd8f54f03fd524abfcec59080d64c0306736569be8796",
+      "bytes": 1893,
+      "mapping": "protected-whole-file",
+      "external_id": "ba818a5a-55d1-5a71-a338-68cbb76f3cc9"
+    },
+    {
+      "path": ".agents/memory/sources/llm-wiki-md.summary.md",
+      "revision": "c2151bfc4814e148ce39e9223b1d179a911d89c1650915d39b21ea6860a01162",
+      "bytes": 1803,
+      "mapping": "protected-whole-file",
+      "external_id": "a06ad159-d8ee-5317-b86f-3b5ed6fe68cd"
+    },
+    {
+      "path": ".agents/memory/sources/vscode-agent-hooks-md.summary.md",
+      "revision": "e207b1714d99c0daa624b3e37997d7018e40f2dd5995091785e65d8a62b42cef",
+      "bytes": 2038,
+      "mapping": "protected-whole-file",
+      "external_id": "f833c64d-ae30-572c-87ba-f74edc97e48b"
+    },
+    {
+      "path": ".agents/memory/testing/hooks-auto-ingest.md",
+      "revision": "335f6bb8f98d7f46940386a71e8f60ec77b2b88929ba3090446f3f7c5ff6beb6",
+      "bytes": 2008,
+      "mapping": "protected-whole-file",
+      "external_id": "2870079d-7e65-5a33-96d7-fac4e28bdf5d"
+    },
+    {
+      "path": ".agents/memory/testing/hooks-observability.md",
+      "revision": "b520a6b08f02a94391d25b041980437353d56931029225d88a814bfe1832a9e1",
+      "bytes": 2981,
+      "mapping": "protected-whole-file",
+      "external_id": "a1b29c52-195e-511f-8f62-d7bb6fd5aaf9"
+    },
+    {
+      "path": ".agents/memory/testing/hooks.md",
+      "revision": "45682d1fc186eb06a31af75eb36d622e0f5146b8810f19dcb92f8663f47d07d3",
+      "bytes": 12706,
+      "mapping": "protected-whole-file",
+      "external_id": "24c6a374-9bf5-5491-9127-1b096fde1c4c"
+    },
+    {
+      "path": ".agents/memory/testing/powershell.md",
+      "revision": "e37862ec90a5f1d4167b2937a4265ae91a8ee8dc14836e0fe07d873658238fb9",
+      "bytes": 2710,
+      "mapping": "protected-whole-file",
+      "external_id": "62d41d87-d806-5d13-9011-2dbf717c87d7"
+    },
+    {
+      "path": ".agents/memory/testing/scripts.md",
+      "revision": "56c7cab24497eef107589256f2df061d05f3dfe8a56109bad5c691b8d05e7f86",
+      "bytes": 14732,
+      "mapping": "protected-whole-file",
+      "external_id": "0a767b67-efec-5fe3-94b3-96d64f777d19"
+    },
+    {
+      "path": ".agents/memory/testing/skills.md",
+      "revision": "b0f5c7bef5effa0643588443e43a22d7adb9854d316bf68a090e372baf487e36",
+      "bytes": 1203,
+      "mapping": "protected-whole-file",
+      "external_id": "765246d1-4ccb-5802-b6c1-6794c80ce18f"
+    },
+    {
+      "path": ".agents/skills/ingest-source/SKILL.md",
+      "revision": "770e0d0cd8cc68d0fa638c27465d54867b466e7c8941fd556cdd6108377e2f67",
+      "bytes": 2949,
+      "mapping": "protected-whole-file",
+      "external_id": "4a07fade-6318-5899-be00-fb29217d84fd"
+    },
+    {
+      "path": ".agents/skills/okf-authoring/SKILL.md",
+      "revision": "9849cde245b8ed6ff3d718764a9c43bb8760d5b1ce157b8046561cb9ccb656df",
+      "bytes": 3006,
+      "mapping": "protected-whole-file",
+      "external_id": "b6ae2547-a5d3-5ce1-9796-e95612bf9150"
+    },
+    {
+      "path": ".agents/skills/okf-authoring/references/profile.md",
+      "revision": "a884e703bcb9794181056b6d1d813b6d6224f9a27c9bf091fb1dc5a4dbef047b",
+      "bytes": 2192,
+      "mapping": "protected-whole-file",
+      "external_id": "45c9b711-a2de-5850-8e34-fa547f36a92f"
+    },
+    {
+      "path": ".agents/skills/okf-authoring/references/source-summaries.md",
+      "revision": "75c167719bdd1552c6934b250bff5d9c3019b4a19335423a8f534efed205e27a",
+      "bytes": 1076,
+      "mapping": "protected-whole-file",
+      "external_id": "a8687507-b2ad-5975-bed9-2f41d8f0c386"
+    },
+    {
+      "path": ".codex/AGENTS.md",
+      "revision": "57e72a3c008c420d5af016aaf900a15f02d2d86754e674c8c68f756c8d9977e8",
+      "bytes": 3559,
+      "mapping": "protected-whole-file",
+      "external_id": "36e7658c-0cc5-54cb-a8c1-0ccbd89cc28e"
+    },
+    {
+      "path": ".copilot/copilot-instructions.md",
+      "revision": "57e72a3c008c420d5af016aaf900a15f02d2d86754e674c8c68f756c8d9977e8",
+      "bytes": 3559,
+      "mapping": "protected-whole-file",
+      "external_id": "bf9e1dd1-b621-5cb1-a333-1fd4aebaf45b"
+    },
+    {
+      "path": ".gemini/GEMINI.md",
+      "revision": "57e72a3c008c420d5af016aaf900a15f02d2d86754e674c8c68f756c8d9977e8",
+      "bytes": 3559,
+      "mapping": "protected-whole-file",
+      "external_id": "3b8cdf8a-cac0-52d6-b6e9-8374f2c935a0"
+    },
+    {
+      "path": "AGENTS.md",
+      "revision": "bcfe4743e13f92949752c3422f8b3804bcbb1539055e88f53817a655ea456013",
+      "bytes": 4434,
+      "mapping": "protected-whole-file",
+      "external_id": "43560302-fa9e-514a-8693-9b61b8e0145c"
+    },
+    {
+      "path": "README.md",
+      "revision": "7f1509cbed9d5b85aa35d7ba7ad0c3ac9a48d408017da24cebd3119582104aa7",
+      "bytes": 10891,
+      "mapping": "protected-whole-file",
+      "external_id": "55aa17ab-cb62-57ac-a186-87a7d1084134"
+    }
+  ],
+  "harness_primary_units": [
+    "pilot-counterexample",
+    "pilot-stable-tip"
+  ],
+  "primary_unit_count": 49,
+  "sequence_length": 98,
+  "cycle_boundary": 49,
+  "cycles_per_sequence": 2,
+  "sequence_count": 2,
+  "fresh_session_pairs": 2,
+  "isolated_repetitions": 4,
+  "batch_primary_limit": 5,
+  "batch_guidance_bytes": 32768,
+  "capacity_rationale": "Each successful eligible dream completion credits at least one whole frozen primary closure. Use the conservative one-unit bound, including full metadata and all quiet/oversized closures; do not truncate. Two read-only sequences leave target revisions stable. Unexpected growth or incomplete delivery is incomplete coverage, never an unapproved extension.",
+  "cohort_ids": [
+    "codex-desktop-interactive",
+    "codex-cli-interactive",
+    "codex-cli-noninteractive",
+    "copilot-cli-interactive",
+    "copilot-cli-noninteractive",
+    "gemini-cli-interactive",
+    "gemini-cli-noninteractive"
+  ],
+  "schedule": [
+    {
+      "id": "I-limits-1",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "I-layout-1",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "I-skill-help-1",
+      "variant": "skill-help",
+      "order": "baseline_first",
+      "checks": [
+        "skill-help-artifact",
+        "skill-help-quality"
+      ]
+    },
+    {
+      "id": "I-hook-guard-1",
+      "variant": "hook-guard",
+      "order": "candidate_first",
+      "checks": [
+        "hook-guard-artifact",
+        "hook-guard-quality"
+      ]
+    },
+    {
+      "id": "I-hook-source-1",
+      "variant": "hook-source",
+      "order": "baseline_first",
+      "checks": [
+        "hook-source-artifact",
+        "hook-source-quality"
+      ]
+    },
+    {
+      "id": "I-source-correction-1",
+      "variant": "source-correction",
+      "order": "candidate_first",
+      "checks": [
+        "source-correction-artifact",
+        "source-correction-quality"
+      ]
+    },
+    {
+      "id": "I-source-rename-1",
+      "variant": "source-rename",
+      "order": "baseline_first",
+      "checks": [
+        "source-rename-artifact",
+        "source-rename-quality"
+      ]
+    },
+    {
+      "id": "I-guidance-move-1",
+      "variant": "guidance-move",
+      "order": "candidate_first",
+      "checks": [
+        "guidance-move-artifact",
+        "guidance-move-quality"
+      ]
+    },
+    {
+      "id": "I-correction-pruning-1",
+      "variant": "correction-pruning",
+      "order": "baseline_first",
+      "checks": [
+        "correction-pruning-artifact",
+        "correction-pruning-quality"
+      ]
+    },
+    {
+      "id": "I-expanded-resume-1",
+      "variant": "expanded-resume",
+      "order": "candidate_first",
+      "checks": [
+        "expanded-resume-artifact",
+        "expanded-resume-quality"
+      ]
+    },
+    {
+      "id": "I-limits-2",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "I-layout-2",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "I-skill-help-2",
+      "variant": "skill-help",
+      "order": "candidate_first",
+      "checks": [
+        "skill-help-artifact",
+        "skill-help-quality"
+      ]
+    },
+    {
+      "id": "I-hook-guard-2",
+      "variant": "hook-guard",
+      "order": "baseline_first",
+      "checks": [
+        "hook-guard-artifact",
+        "hook-guard-quality"
+      ]
+    },
+    {
+      "id": "I-hook-source-2",
+      "variant": "hook-source",
+      "order": "candidate_first",
+      "checks": [
+        "hook-source-artifact",
+        "hook-source-quality"
+      ]
+    },
+    {
+      "id": "I-source-correction-2",
+      "variant": "source-correction",
+      "order": "baseline_first",
+      "checks": [
+        "source-correction-artifact",
+        "source-correction-quality"
+      ]
+    },
+    {
+      "id": "I-source-rename-2",
+      "variant": "source-rename",
+      "order": "candidate_first",
+      "checks": [
+        "source-rename-artifact",
+        "source-rename-quality"
+      ]
+    },
+    {
+      "id": "I-guidance-move-2",
+      "variant": "guidance-move",
+      "order": "baseline_first",
+      "checks": [
+        "guidance-move-artifact",
+        "guidance-move-quality"
+      ]
+    },
+    {
+      "id": "I-correction-pruning-2",
+      "variant": "correction-pruning",
+      "order": "candidate_first",
+      "checks": [
+        "correction-pruning-artifact",
+        "correction-pruning-quality"
+      ]
+    },
+    {
+      "id": "I-expanded-resume-2",
+      "variant": "expanded-resume",
+      "order": "baseline_first",
+      "checks": [
+        "expanded-resume-artifact",
+        "expanded-resume-quality"
+      ]
+    },
+    {
+      "id": "I-limits-3",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "I-layout-3",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "I-skill-help-3",
+      "variant": "skill-help",
+      "order": "baseline_first",
+      "checks": [
+        "skill-help-artifact",
+        "skill-help-quality"
+      ]
+    },
+    {
+      "id": "I-hook-guard-3",
+      "variant": "hook-guard",
+      "order": "candidate_first",
+      "checks": [
+        "hook-guard-artifact",
+        "hook-guard-quality"
+      ]
+    },
+    {
+      "id": "I-hook-source-3",
+      "variant": "hook-source",
+      "order": "baseline_first",
+      "checks": [
+        "hook-source-artifact",
+        "hook-source-quality"
+      ]
+    },
+    {
+      "id": "I-source-correction-3",
+      "variant": "source-correction",
+      "order": "candidate_first",
+      "checks": [
+        "source-correction-artifact",
+        "source-correction-quality"
+      ]
+    },
+    {
+      "id": "I-source-rename-3",
+      "variant": "source-rename",
+      "order": "baseline_first",
+      "checks": [
+        "source-rename-artifact",
+        "source-rename-quality"
+      ]
+    },
+    {
+      "id": "I-guidance-move-3",
+      "variant": "guidance-move",
+      "order": "candidate_first",
+      "checks": [
+        "guidance-move-artifact",
+        "guidance-move-quality"
+      ]
+    },
+    {
+      "id": "I-correction-pruning-3",
+      "variant": "correction-pruning",
+      "order": "baseline_first",
+      "checks": [
+        "correction-pruning-artifact",
+        "correction-pruning-quality"
+      ]
+    },
+    {
+      "id": "I-expanded-resume-3",
+      "variant": "expanded-resume",
+      "order": "candidate_first",
+      "checks": [
+        "expanded-resume-artifact",
+        "expanded-resume-quality"
+      ]
+    },
+    {
+      "id": "I-limits-4",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "I-layout-4",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "I-skill-help-4",
+      "variant": "skill-help",
+      "order": "candidate_first",
+      "checks": [
+        "skill-help-artifact",
+        "skill-help-quality"
+      ]
+    },
+    {
+      "id": "I-hook-guard-4",
+      "variant": "hook-guard",
+      "order": "baseline_first",
+      "checks": [
+        "hook-guard-artifact",
+        "hook-guard-quality"
+      ]
+    },
+    {
+      "id": "I-hook-source-4",
+      "variant": "hook-source",
+      "order": "candidate_first",
+      "checks": [
+        "hook-source-artifact",
+        "hook-source-quality"
+      ]
+    },
+    {
+      "id": "I-source-correction-4",
+      "variant": "source-correction",
+      "order": "baseline_first",
+      "checks": [
+        "source-correction-artifact",
+        "source-correction-quality"
+      ]
+    },
+    {
+      "id": "I-source-rename-4",
+      "variant": "source-rename",
+      "order": "candidate_first",
+      "checks": [
+        "source-rename-artifact",
+        "source-rename-quality"
+      ]
+    },
+    {
+      "id": "I-guidance-move-4",
+      "variant": "guidance-move",
+      "order": "baseline_first",
+      "checks": [
+        "guidance-move-artifact",
+        "guidance-move-quality"
+      ]
+    },
+    {
+      "id": "I-correction-pruning-4",
+      "variant": "correction-pruning",
+      "order": "candidate_first",
+      "checks": [
+        "correction-pruning-artifact",
+        "correction-pruning-quality"
+      ]
+    },
+    {
+      "id": "I-expanded-resume-4",
+      "variant": "expanded-resume",
+      "order": "baseline_first",
+      "checks": [
+        "expanded-resume-artifact",
+        "expanded-resume-quality"
+      ]
+    },
+    {
+      "id": "L1-001",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-002",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-003",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-004",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-005",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-006",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-007",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-008",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-009",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-010",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-011",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-012",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-013",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-014",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-015",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-016",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-017",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-018",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-019",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-020",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-021",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-022",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-023",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-024",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-025",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-026",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-027",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-028",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-029",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-030",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-031",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-032",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-033",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-034",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-035",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-036",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-037",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-038",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-039",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-040",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-041",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-042",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-043",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-044",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-045",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-046",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-047",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-048",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-049",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-050",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-051",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-052",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-053",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-054",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-055",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-056",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-057",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-058",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-059",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-060",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-061",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-062",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-063",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-064",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-065",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-066",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-067",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-068",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-069",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-070",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-071",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-072",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-073",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-074",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-075",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-076",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-077",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-078",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-079",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-080",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-081",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-082",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-083",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-084",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-085",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-086",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-087",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-088",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-089",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-090",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-091",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-092",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-093",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-094",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-095",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-096",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L1-097",
+      "variant": "limits",
+      "order": "baseline_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L1-098",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "F1",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-001",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-002",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-003",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-004",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-005",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-006",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-007",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-008",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-009",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-010",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-011",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-012",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-013",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-014",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-015",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-016",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-017",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-018",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-019",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-020",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-021",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-022",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-023",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-024",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-025",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-026",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-027",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-028",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-029",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-030",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-031",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-032",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-033",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-034",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-035",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-036",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-037",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-038",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-039",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-040",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-041",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-042",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-043",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-044",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-045",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-046",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-047",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-048",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-049",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-050",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-051",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-052",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-053",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-054",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-055",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-056",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-057",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-058",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-059",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-060",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-061",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-062",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-063",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-064",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-065",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-066",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-067",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-068",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-069",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-070",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-071",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-072",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-073",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-074",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-075",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-076",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-077",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-078",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-079",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-080",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-081",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-082",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-083",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-084",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-085",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-086",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-087",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-088",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-089",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-090",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-091",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-092",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-093",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-094",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-095",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-096",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "L2-097",
+      "variant": "layout",
+      "order": "candidate_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    },
+    {
+      "id": "L2-098",
+      "variant": "limits",
+      "order": "candidate_first",
+      "checks": [
+        "limits-artifact",
+        "limits-quality"
+      ]
+    },
+    {
+      "id": "F2",
+      "variant": "layout",
+      "order": "baseline_first",
+      "checks": [
+        "layout-artifact",
+        "layout-quality"
+      ]
+    }
+  ],
+  "critical_schedule": [
+    {
+      "id": "native-before-conclusion-1",
+      "check_id": "native-before-conclusion",
+      "pair_id": "I-limits-1"
+    },
+    {
+      "id": "native-before-conclusion-2",
+      "check_id": "native-before-conclusion",
+      "pair_id": "I-limits-2"
+    },
+    {
+      "id": "native-before-conclusion-3",
+      "check_id": "native-before-conclusion",
+      "pair_id": "I-limits-3"
+    },
+    {
+      "id": "native-policy-order-1",
+      "check_id": "native-policy-order",
+      "pair_id": "I-layout-1"
+    },
+    {
+      "id": "native-policy-order-2",
+      "check_id": "native-policy-order",
+      "pair_id": "I-layout-2"
+    },
+    {
+      "id": "native-policy-order-3",
+      "check_id": "native-policy-order",
+      "pair_id": "I-layout-3"
+    },
+    {
+      "id": "native-checked-learn-stop-1",
+      "check_id": "native-checked-learn-stop",
+      "pair_id": "I-skill-help-1"
+    },
+    {
+      "id": "native-checked-learn-stop-2",
+      "check_id": "native-checked-learn-stop",
+      "pair_id": "I-skill-help-2"
+    },
+    {
+      "id": "native-checked-learn-stop-3",
+      "check_id": "native-checked-learn-stop",
+      "pair_id": "I-skill-help-3"
+    },
+    {
+      "id": "native-source-correction-1",
+      "check_id": "native-source-correction",
+      "pair_id": "I-source-correction-1"
+    },
+    {
+      "id": "native-source-correction-2",
+      "check_id": "native-source-correction",
+      "pair_id": "I-source-correction-2"
+    },
+    {
+      "id": "native-source-correction-3",
+      "check_id": "native-source-correction",
+      "pair_id": "I-source-correction-3"
+    },
+    {
+      "id": "native-source-removal-1",
+      "check_id": "native-source-removal",
+      "pair_id": "I-source-rename-1"
+    },
+    {
+      "id": "native-source-removal-2",
+      "check_id": "native-source-removal",
+      "pair_id": "I-source-rename-2"
+    },
+    {
+      "id": "native-source-removal-3",
+      "check_id": "native-source-removal",
+      "pair_id": "I-source-rename-3"
+    },
+    {
+      "id": "native-expanded-resume-1",
+      "check_id": "native-expanded-resume",
+      "pair_id": "I-expanded-resume-1"
+    },
+    {
+      "id": "native-expanded-resume-2",
+      "check_id": "native-expanded-resume",
+      "pair_id": "I-expanded-resume-2"
+    },
+    {
+      "id": "native-expanded-resume-3",
+      "check_id": "native-expanded-resume",
+      "pair_id": "I-expanded-resume-3"
+    },
+    {
+      "id": "native-two-cycle-dream-1",
+      "check_id": "native-two-cycle-dream",
+      "pair_id": "L1-098"
+    },
+    {
+      "id": "native-two-cycle-dream-2",
+      "check_id": "native-two-cycle-dream",
+      "pair_id": "L2-098"
+    },
+    {
+      "id": "native-two-cycle-dream-3",
+      "check_id": "native-two-cycle-dream",
+      "pair_id": null
+    },
+    {
+      "id": "native-discovery-trust-1",
+      "check_id": "native-discovery-trust",
+      "pair_id": null
+    },
+    {
+      "id": "native-discovery-trust-2",
+      "check_id": "native-discovery-trust",
+      "pair_id": null
+    },
+    {
+      "id": "native-discovery-trust-3",
+      "check_id": "native-discovery-trust",
+      "pair_id": null
+    },
+    {
+      "id": "native-compaction-restoration-1",
+      "check_id": "native-compaction-restoration",
+      "pair_id": null
+    },
+    {
+      "id": "native-compaction-restoration-2",
+      "check_id": "native-compaction-restoration",
+      "pair_id": null
+    },
+    {
+      "id": "native-compaction-restoration-3",
+      "check_id": "native-compaction-restoration",
+      "pair_id": null
+    },
+    {
+      "id": "native-pause-cancel-recovery-1",
+      "check_id": "native-pause-cancel-recovery",
+      "pair_id": null
+    },
+    {
+      "id": "native-pause-cancel-recovery-2",
+      "check_id": "native-pause-cancel-recovery",
+      "pair_id": null
+    },
+    {
+      "id": "native-pause-cancel-recovery-3",
+      "check_id": "native-pause-cancel-recovery",
+      "pair_id": null
+    },
+    {
+      "id": "native-retry-stop-continuation-1",
+      "check_id": "native-retry-stop-continuation",
+      "pair_id": null
+    },
+    {
+      "id": "native-retry-stop-continuation-2",
+      "check_id": "native-retry-stop-continuation",
+      "pair_id": null
+    },
+    {
+      "id": "native-retry-stop-continuation-3",
+      "check_id": "native-retry-stop-continuation",
+      "pair_id": null
+    },
+    {
+      "id": "native-internal-watchdog-1",
+      "check_id": "native-internal-watchdog",
+      "pair_id": null
+    },
+    {
+      "id": "native-internal-watchdog-2",
+      "check_id": "native-internal-watchdog",
+      "pair_id": null
+    },
+    {
+      "id": "native-internal-watchdog-3",
+      "check_id": "native-internal-watchdog",
+      "pair_id": null
+    },
+    {
+      "id": "native-native-timeout-1",
+      "check_id": "native-native-timeout",
+      "pair_id": null
+    },
+    {
+      "id": "native-native-timeout-2",
+      "check_id": "native-native-timeout",
+      "pair_id": null
+    },
+    {
+      "id": "native-native-timeout-3",
+      "check_id": "native-native-timeout",
+      "pair_id": null
+    },
+    {
+      "id": "native-advisory-missing-events-1",
+      "check_id": "native-advisory-missing-events",
+      "pair_id": null
+    },
+    {
+      "id": "native-advisory-missing-events-2",
+      "check_id": "native-advisory-missing-events",
+      "pair_id": null
+    },
+    {
+      "id": "native-advisory-missing-events-3",
+      "check_id": "native-advisory-missing-events",
+      "pair_id": null
+    },
+    {
+      "id": "native-child-delivery-1",
+      "check_id": "native-child-delivery",
+      "pair_id": null
+    },
+    {
+      "id": "native-child-delivery-2",
+      "check_id": "native-child-delivery",
+      "pair_id": null
+    },
+    {
+      "id": "native-child-delivery-3",
+      "check_id": "native-child-delivery",
+      "pair_id": null
+    },
+    {
+      "id": "native-missing-child-hooks-1",
+      "check_id": "native-missing-child-hooks",
+      "pair_id": null
+    },
+    {
+      "id": "native-missing-child-hooks-2",
+      "check_id": "native-missing-child-hooks",
+      "pair_id": null
+    },
+    {
+      "id": "native-missing-child-hooks-3",
+      "check_id": "native-missing-child-hooks",
+      "pair_id": null
+    }
+  ],
+  "checks": [
+    {
+      "id": "limits-artifact",
+      "kind": "contains",
+      "path": "answer.txt",
+      "expected": "128",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md"
+    },
+    {
+      "id": "limits-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Both thresholds, different units/fields, scoped observations, no universal or replay claim.",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md"
+    },
+    {
+      "id": "layout-artifact",
+      "kind": "contains",
+      "path": "answer.txt",
+      "expected": "agents/",
+      "contract": "docs/just-in-time-context/tickets/adoption-and-validation-contract.md"
+    },
+    {
+      "id": "layout-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Canonical agents, .codex distinction, INDEX first, scoped instruction loading, explicit setup authority.",
+      "contract": "docs/just-in-time-context/tickets/adoption-and-validation-contract.md"
+    },
+    {
+      "id": "skill-help-artifact",
+      "kind": "contains",
+      "path": "skills/code-simplify/references/pilot-help.md",
+      "expected": "Read the existing behavior before simplifying it.",
+      "contract": "docs/just-in-time-context/tickets/context-organization-and-skill-boundary.md"
+    },
+    {
+      "id": "skill-help-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Frontmatter preserved, requested reference exists and is linked, actual quick_validate succeeds.",
+      "contract": "docs/just-in-time-context/tickets/context-organization-and-skill-boundary.md"
+    },
+    {
+      "id": "hook-guard-artifact",
+      "kind": "contains",
+      "path": "checks/generator.stdout",
+      "expected": "Generated hooks are current",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md"
+    },
+    {
+      "id": "hook-guard-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Canonical edit only, no weakened rules or tests, deterministic generated freshness and relevant public suites pass.",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md"
+    },
+    {
+      "id": "hook-source-artifact",
+      "kind": "contains",
+      "path": "checks/source-suites.json",
+      "expected": "\"failures\": 0",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "hook-source-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Canonical edit, body marker remains nonblocking, both provider source suites and freshness pass.",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "source-correction-artifact",
+      "kind": "contains",
+      "path": ".agents/memory/sources/pilot-json-md.summary.md",
+      "expected": "duplicate keys unavailable",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "source-correction-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Exact harness source and summary reflect correction with scoped evidence; canonical manifest is current and originals unchanged.",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "source-rename-artifact",
+      "kind": "contains",
+      "path": "checks/source-inventory.txt",
+      "expected": "pilot-json-renamed.md",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "source-rename-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "New source registered, obsolete source absent, orphan disposition explicit, no broken references or original-source change.",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "guidance-move-artifact",
+      "kind": "contains",
+      "path": ".agents/memory/pilot-moved.md",
+      "expected": "930d793f-9312-4db4-b09f-36e18b6df923",
+      "contract": "docs/just-in-time-context/tickets/context-retrieval-contract.md"
+    },
+    {
+      "id": "guidance-move-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Stable ID and required order retained, old path absent, all declared references resolve, inverse history restores exact raw bytes.",
+      "contract": "docs/just-in-time-context/tickets/context-retrieval-contract.md"
+    },
+    {
+      "id": "correction-pruning-artifact",
+      "kind": "contains",
+      "path": ".agents/memory/pilot-counterexample.md",
+      "expected": "32768",
+      "contract": "docs/just-in-time-context/tickets/maintenance-scheduling-and-pruning.md"
+    },
+    {
+      "id": "correction-pruning-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Error corrected proportionally, complete redundancy demonstrated, counterexample/policy retained, links resolve and publication is reversible.",
+      "contract": "docs/just-in-time-context/tickets/maintenance-scheduling-and-pruning.md"
+    },
+    {
+      "id": "expanded-resume-artifact",
+      "kind": "contains",
+      "path": "checks/restored-guidance.txt",
+      "expected": "hooks-auto-ingest",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "expanded-resume-quality",
+      "kind": "independent_human",
+      "path": "independent-quality.json",
+      "expected": "Equivalent scripted clarification/resume, newly required guidance precedes dependent action, attempts retained, same objective completes required maintenance.",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "native-before-conclusion",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native before-conclusion through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "native-policy-order",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native policy-order through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/context-retrieval-contract.md"
+    },
+    {
+      "id": "native-checked-learn-stop",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native checked-learn-stop through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "native-source-correction",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native source-correction through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "native-source-removal",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native source-removal through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/knowledge-evidence-policy.md"
+    },
+    {
+      "id": "native-expanded-resume",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native expanded-resume through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/lifecycle-guarantees.md"
+    },
+    {
+      "id": "native-two-cycle-dream",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native two-cycle-dream through original delivery/event traces and independent semantic/artifact checks, three times per claimed entry path. Retain critical failures.",
+      "contract": "docs/just-in-time-context/tickets/maintenance-scheduling-and-pruning.md"
+    },
+    {
+      "id": "native-discovery-trust",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Actual selected native config/trust/permissions discovery, unrelated handlers retained. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-compaction-restoration",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Actual compaction/context loss and delivery of current scoped guidance before dependent action. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-pause-cancel-recovery",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Actual pause/cancel revokes authority; next eligible native event recovers pending work without restarting canceled objective. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-retry-stop-continuation",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Actual native completion continuation shares three-attempt/one-repair budget and retains exhaustion. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-internal-watchdog",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Force cumulative internal watchdog expiration without claiming native provider timeout. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-native-timeout",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe actual native hook timeout, tool/decision consumption and timeout-open behavior independently of process simulation. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-advisory-missing-events",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Force missing/advisory event and observe explicit unsupported gap with no automatic guarantee. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-child-delivery",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "Observe the exact selected native child launch path, verified assigned context before child action, child checked learning and parent aggregate learning/routine dream. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    },
+    {
+      "id": "native-missing-child-hooks",
+      "kind": "independent_human",
+      "path": "native-observation.json",
+      "expected": "After actual child context delivery, suppress the selected child completion event; parent must retain the missing child obligation and block completion/recover without invented child proof. Three independent repetitions on exact claimed path; fixture outputs never establish consumption.",
+      "contract": "docs/just-in-time-context/tickets/provider-lifecycle-capabilities.md"
+    }
+  ],
+  "probe_execution_counts": {
+    "native-two-cycle-dream-3": 98,
+    "native-discovery-trust-1": 1,
+    "native-discovery-trust-2": 1,
+    "native-discovery-trust-3": 1,
+    "native-compaction-restoration-1": 1,
+    "native-compaction-restoration-2": 1,
+    "native-compaction-restoration-3": 1,
+    "native-pause-cancel-recovery-1": 1,
+    "native-pause-cancel-recovery-2": 1,
+    "native-pause-cancel-recovery-3": 1,
+    "native-retry-stop-continuation-1": 1,
+    "native-retry-stop-continuation-2": 1,
+    "native-retry-stop-continuation-3": 1,
+    "native-internal-watchdog-1": 1,
+    "native-internal-watchdog-2": 1,
+    "native-internal-watchdog-3": 1,
+    "native-native-timeout-1": 1,
+    "native-native-timeout-2": 1,
+    "native-native-timeout-3": 1,
+    "native-advisory-missing-events-1": 1,
+    "native-advisory-missing-events-2": 1,
+    "native-advisory-missing-events-3": 1,
+    "native-child-delivery-1": 2,
+    "native-child-delivery-2": 2,
+    "native-child-delivery-3": 2,
+    "native-missing-child-hooks-1": 2,
+    "native-missing-child-hooks-2": 2,
+    "native-missing-child-hooks-3": 2
+  },
+  "probe_session_counts": {
+    "native-two-cycle-dream-3": 1,
+    "native-discovery-trust-1": 1,
+    "native-discovery-trust-2": 1,
+    "native-discovery-trust-3": 1,
+    "native-compaction-restoration-1": 1,
+    "native-compaction-restoration-2": 1,
+    "native-compaction-restoration-3": 1,
+    "native-pause-cancel-recovery-1": 1,
+    "native-pause-cancel-recovery-2": 1,
+    "native-pause-cancel-recovery-3": 1,
+    "native-retry-stop-continuation-1": 1,
+    "native-retry-stop-continuation-2": 1,
+    "native-retry-stop-continuation-3": 1,
+    "native-internal-watchdog-1": 1,
+    "native-internal-watchdog-2": 1,
+    "native-internal-watchdog-3": 1,
+    "native-native-timeout-1": 1,
+    "native-native-timeout-2": 1,
+    "native-native-timeout-3": 1,
+    "native-advisory-missing-events-1": 1,
+    "native-advisory-missing-events-2": 1,
+    "native-advisory-missing-events-3": 1,
+    "native-child-delivery-1": 2,
+    "native-child-delivery-2": 2,
+    "native-child-delivery-3": 2,
+    "native-missing-child-hooks-1": 2,
+    "native-missing-child-hooks-2": 2,
+    "native-missing-child-hooks-3": 2
+  },
+  "counts": {
+    "pairs_per_cohort": 238,
+    "workload_executions": 3332,
+    "standalone_executions": 917,
+    "total_task_executions": 4249,
+    "workload_sessions_per_cohort": 88,
+    "standalone_sessions_per_cohort": 34,
+    "total_sessions": 854
+  },
+  "clock_points": [
+    "2026-10-01T00:00:00Z",
+    "2026-10-08T00:00:00Z",
+    "2026-11-01T00:00:00Z",
+    "2026-11-08T00:00:00Z",
+    "2026-12-01T00:00:00Z",
+    "2026-12-08T00:00:00Z"
+  ],
+  "clarification_timing_seconds": 2,
+  "resume_timing_seconds": 5,
+  "child_paths": {
+    "codex-desktop-interactive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "codex-cli-interactive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "codex-cli-noninteractive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "copilot-cli-interactive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "copilot-cli-noninteractive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "gemini-cli-interactive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    },
+    "gemini-cli-noninteractive": {
+      "status": "pending",
+      "selected_native_launch_path": null,
+      "positive_repetitions": 3,
+      "missing_completion_hook_repetitions": 3,
+      "executors_per_probe": 2,
+      "claim": "Unsupported or unobserved exact path keeps affected M10/M12 acceptance open; no child launches occur offline."
+    }
+  },
+  "third_cycle_probe": {
+    "critical_id": "native-two-cycle-dream-3",
+    "candidate_tasks": 98,
+    "sessions": 1,
+    "variants": [
+      "limits",
+      "layout"
+    ],
+    "dates": [
+      "2026-12-01T00:00:00Z",
+      "2026-12-08T00:00:00Z"
+    ],
+    "purpose": "Third independent two-full-cycle repetition; one completed cycle never substitutes for two."
+  },
+  "source_fixtures": {
+    "pilot-json.md": "Duplicate keys permitted.\n",
+    "pilot-json-corrected.md": "Duplicate keys unavailable.\n",
+    "pilot-obsolete.md": "Obsolete harness fact, not an actual repository source.\n"
+  },
+  "seeded_move_unit": {
+    "id": "930d793f-9312-4db4-b09f-36e18b6df923",
+    "content": "Keep the observed 32768-byte structured-input threshold qualified.\n"
+  },
+  "longitudinal_mutations": "No semantic changes during sequences; all ten variants run in isolated paired copies. Dream reviews retain current correct guidance without inventing evidence. Any warranted correction remains a retained regression/incomplete coverage requiring refreeze."
+}

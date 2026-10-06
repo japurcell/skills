@@ -1,0 +1,148 @@
+{
+  "schema_version": 1,
+  "kind": "passive-discovery-only",
+  "observed_date": "2026-10-06",
+  "os": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "architecture": "arm64",
+  "filesystem": "local APFS; /sbin/mount observed Data volume",
+  "filesystem_device_id": "16777232",
+  "python_sqlite": [
+    {
+      "python": "3.12.14",
+      "sqlite": "3.53.1",
+      "interpreter": "/Users/adam/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3"
+    },
+    {
+      "python": "3.13.14",
+      "sqlite": "3.51.0",
+      "interpreter": "/Users/adam/.pyenv/versions/3.13.14/bin/python3"
+    },
+    {
+      "python": "3.14.6",
+      "sqlite": "3.51.0",
+      "interpreter": "/Users/adam/.pyenv/versions/3.14.6/bin/python3"
+    }
+  ],
+  "providers": {
+    "codex_cli": {
+      "executable": "/Users/adam/homebrew/bin/codex",
+      "resolved_executable": "/Users/adam/homebrew/Caskroom/codex/0.160.0/bin/codex",
+      "sha256": "112fae7a5a1223e673c8a1791d32338f37df8b527ff1159bb8adac6c4dbf1b4b",
+      "build": "0.160.0",
+      "method": "documented --version only",
+      "warning": "PATH aliases could not be created: Operation not permitted"
+    },
+    "codex_desktop": {
+      "build": null,
+      "method": "standard /Applications and user Applications Info.plist not found; current app build independently pending"
+    },
+    "copilot_cli": {
+      "executable": null,
+      "build": null,
+      "availability": "user-confirmed-unavailable-on-initial-macOS-host",
+      "method": "User confirms local unavailability; passive PATH/Homebrew bin discovery found no executable",
+      "other_host": {
+        "availability": "user-reports-installed-on-Windows-and-Linux-computers",
+        "os": "exact OS versions/distributions unknown",
+        "architecture": null,
+        "filesystem": null,
+        "executable": null,
+        "build": null,
+        "access": null,
+        "authorization": "pending-host-specific-refreeze-and-explicit-live-authorization",
+        "platforms_user_reported": [
+          "Windows",
+          "Linux"
+        ]
+      }
+    },
+    "gemini_cli": {
+      "executable": null,
+      "build": null,
+      "availability": "user-confirmed-unavailable-on-initial-macOS-host",
+      "method": "User confirms local unavailability; passive PATH/Homebrew bin discovery found no executable",
+      "other_host": {
+        "availability": "user-reports-installed-on-Windows-and-Linux-computers",
+        "os": "exact OS versions/distributions unknown",
+        "architecture": null,
+        "filesystem": null,
+        "executable": null,
+        "build": null,
+        "access": null,
+        "authorization": "pending-host-specific-refreeze-and-explicit-live-authorization",
+        "platforms_user_reported": [
+          "Windows",
+          "Linux"
+        ]
+      }
+    }
+  },
+  "adapter_version": "native-1",
+  "core_version": "0.1.0",
+  "schema_version_pin": 1,
+  "core_source_inventory": {
+    "scripts/agent-brain.py": "4ac40efc77995052764e794fd77e33c63ce61952bc44808bcb1fe6a85ae0cade",
+    "scripts/agent_brain/__init__.py": "d3a371efc5f804e9e124b6130de204c7d2dfd78659e7514055e85059b214a832",
+    "scripts/agent_brain/checks.py": "542552453f5ebf86ac7b461dd226e18071667e5b7bbe15c9276804c3e2904b3c",
+    "scripts/agent_brain/cli.py": "e558cf653c23aed3490902c382c3155b9b5ffe42286f952cad8aea1114effa83",
+    "scripts/agent_brain/config.py": "8377ce67e7fb2c3cd1b1af7da4aa7e669773b3309bae997f9a7059f40f6db1b1",
+    "scripts/agent_brain/diagnostics.py": "94e821b11f841af21ff9f7daac7b627e70b5217e1adf52104c7202c9ae0b0a2b",
+    "scripts/agent_brain/history.py": "03dff9f944ca80c321173f49cfc9f9440583f96a3acd71e87014c8f258fd09a3",
+    "scripts/agent_brain/knowledge.py": "80f8ce8b986b69ae700f69a99044ac16d814e61cec0ab786e963a25a098b3287",
+    "scripts/agent_brain/lifecycle.py": "955bb3213b3b27d3764a8ae4806ca877b3afa71e8e2c78e38b4491afc554e1c0",
+    "scripts/agent_brain/maintenance.py": "eed30c9b2259f4ab65904567d82fa673a672ff3c312c7bf37da6579c90a4b93e",
+    "scripts/agent_brain/metadata.py": "f5ed0f10f5f4bb515452935c506759c044161f7ee810604252886809e8a0a342",
+    "scripts/agent_brain/native.py": "519c4de2d78d2f4b4498064ef0cae45d9df804b5ff57a8fd27b49f2e98b3a013",
+    "scripts/agent_brain/publication.py": "62c8ee14212bd8f08b9875bb0f83ca09bfaa29971f2081d6030e1a31a6a99b25",
+    "scripts/agent_brain/records.py": "66f1724c6f0604604bae4cd38c9c81e9951415ea4796653497356ad9b9bf770a",
+    "scripts/agent_brain/retrieval.py": "5389703181add895a0badd396e484df8818c713d908732bfb2247416b249dd97",
+    "scripts/agent_brain/setup.py": "fc9707dd8f1a2ab117016ed9974501b7b32e7bd1685bd167898f27d1c58fd156",
+    "scripts/agent_brain/software.py": "ca58b77f8ec3282ff861fb9391f7cbe8f8c0ba6dd763c2e70f7e9b58f80d4467",
+    "scripts/agent_brain/source_ingestion.py": "368f18d5ab6f7349af4b529f5e234191b7ff2987e387f174e45e2e3da0bad081",
+    "scripts/agent_brain/stages.py": "3bf87a7a0ff4ba5d2584af8da66f6de35c4bbc000868492d50df73a0fb3d117e",
+    "scripts/agent_brain/state.py": "1171a3429779eb86f0161439542144bad571f5a32550bba09aa0f83167f91442",
+    "scripts/integration-bridge.py": "3122b0d8af0d4421db295f0839622bcb145eeadeb765597da686119e952a184b",
+    "scripts/native-integration.py": "b830bb41c7e9eb7bce49f737389c11a99704a1d81b052b987b71b5bff58c4406"
+  },
+  "native_certification": "none",
+  "models_settings": "not observed; pending for each cohort",
+  "permissions_lifecycle_configuration": "not observed/frozen; separate exact disposable setup review required",
+  "tokenizer_delivery_capture": "not observed or validated; product measurement pending",
+  "diskutil": "passive info query unavailable in sandbox; /sbin/mount confirms local APFS",
+  "expansion": "Linux CLI separate; native Windows limited to Copilot/Gemini, no Codex desktop/CLI",
+  "schema_source_inventory": {
+    "schemas/config-v1.schema.json": "86d99416b95424f5712db7191d06f6f235d7c073031a4bce6a6a4c81bdbd56b1",
+    "schemas/error-v1.schema.json": "15894303b60e8ce24e3e87bab26e966e72ac90d5015ad47fafe8d676f8d822d7",
+    "schemas/fixture-support-v1.schema.json": "bd53a296c91907081be1ccac23ac75c405dcace5e216c962f5f34a83a79045bb",
+    "schemas/foreground-recovery-v1.schema.json": "9e4b1a0d4508c0938ede20b3b9502473524f02ea29de0560d319b863e898cdff",
+    "schemas/inspection-v1.schema.json": "1471ee2f4c72ab9da108daea7bf0605e9613d59cd4b42a2911326aa1ced14e83",
+    "schemas/integration-event-v1.schema.json": "589eaee687cf0e2b1f7024f37930a93c0fea80c1537d933e021fe843a3170ac2",
+    "schemas/lifecycle-result-v1.schema.json": "c636578cca563ea5ad81acf660a43e5f1e802efd9bb6025da4246f2fd7449a36",
+    "schemas/maintenance-v1.schema.json": "6870f80a9b30c45e8c03763351af33bba82b35d354e1f603bfb24606850ee745",
+    "schemas/metadata-v1.schema.json": "0493eafdb0883b7014453fffb40fd78910690fae7fd0a3f50be63f8d2ca205e2",
+    "schemas/native-registration-v1.schema.json": "792b1433b98f4b7ae2aab018aea06f2bf9216ed41ee0f8f41e0461dcdbf8b1f1",
+    "schemas/native-support-v1.schema.json": "a72152728266ce9ad27b67679ed213ea53f8d1534f7a50de77c9dea75c791d56",
+    "schemas/proposal-v1.schema.json": "a5c24380d01f8f634bff4471b87e7904fec2829639e451a1c8eae666e224a720",
+    "schemas/recall-v1.schema.json": "9563ece09e10d8f2e9a0c9d03d61fde4f7828d250a361950fb1d6688a8759503",
+    "schemas/review-v1.schema.json": "1f65a2af39be4c05468ce12e5ee2f715202912fe05b9ae14ae7ae0b4db97b22a",
+    "schemas/setup-plan-v1.schema.json": "a9328432022e5b2e5dd76d946aa1680d933048a2b2c5a7a3d50161f770552719",
+    "schemas/software-v1.schema.json": "cc77409fbbdf6dfb14727b1c1663d98b6b47b5a22df2ce8d941d062945043d21",
+    "schemas/source-ingestion-v1.schema.json": "cedeac0e4cef479d0c4ce72ffef20b9b5c5405a293a20ae64da61e51886b9e98",
+    "schemas/validation-clock-plan-v1.schema.json": "7126f3cb3bc0f31710d4212b59c5562b59f0a4be49fad8227e09ca114fb66946",
+    "schemas/validation-clock-v1.schema.json": "df47aa39bd2b4d478401744c449748b35fe0596e7acb88e1db1f69b079d70c3a",
+    "schemas/version-v1.schema.json": "9e766f60b5c3ed4c29f86377f7ad43e2ea796a4df8b484b5e60aea4569230a95",
+    "schemas/version.json": "b57f786b91ed3b315c4b1f7f57e462b34ff3da1f0d8ffa84884a9df389b4ee82"
+  },
+  "adapter_source_inventory": {
+    "hooks/families/agent_brain.py": "68c6b121134c51dd64b1ca070e07431469635fa158946db5b9a5c7cf24fd7938",
+    ".codex/hooks/agent-brain.py": "7763c35ceacd0366431952175905635b07c3c3266024f1c6b5661603adee4f3b",
+    ".gemini/hooks/scripts/agent-brain.py": "18aad8109f7f4b7c6ab9c828b2f72e978c1237fb6b4c6e45f9615ef2b4aa195c",
+    ".copilot/hooks/scripts/agent-brain.py": "1e6bef0584e43f3ccf13828c44e03b5a404f114ec6d3e152b444a0b984cefdcb",
+    ".github/hooks/scripts/agent-brain.py": "1e6bef0584e43f3ccf13828c44e03b5a404f114ec6d3e152b444a0b984cefdcb"
+  },
+  "observability_source_inventory": {
+    "hooks/families/observability.py": "312c3c1efa24e633d44d20222d11f2cd06df878c09b3fcc488e8106181fe4d57",
+    ".copilot/hooks/scripts/helpers/observability.py": "7a59d5be2c249b4b4efcde5273c3affacffa3a7ed2c4dd8f063da61d6d95759c",
+    ".gemini/hooks/scripts/helpers/observability.py": "199ffbfe6de5ff1c9eb5a6ccbc1ffbae3df2f3e44d6657d782dee4bafa06b5d6"
+  }
+}

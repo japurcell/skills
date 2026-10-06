@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/validation-clock-plan-v1.schema.json",
+  "title": "Frozen certified disposable experiment calendar; no production override",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "integration_id", "worktree_root", "config_path", "config_revision", "support_binding", "allowed_utc"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "kind": {"const": "disposable_validation_clock"},
+    "integration_id": {"type": "string", "minLength": 1},
+    "worktree_root": {"type": "string", "minLength": 1},
+    "config_path": {"type": "string", "minLength": 1},
+    "config_revision": {"$ref": "native-support-v1.schema.json#/$defs/revision"},
+    "support_binding": {"$ref": "native-support-v1.schema.json#/$defs/revision"},
+    "allowed_utc": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "format": "date-time"}}
+  }
+}

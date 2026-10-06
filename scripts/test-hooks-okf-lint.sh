@@ -20,9 +20,14 @@ test_clean_post_tool_use_returns_empty_object() {
   assert_equals "{}" "$output" "Expected a clean Copilot postToolUse result to be a JSON no-op."
 }
 
-test_adapter_contract() {
-  python3 - "$REPO_ROOT" <<'PY'
+test_adapter_contract() (
+  local fixture_stderr
+  local fixture_status=0
+  fixture_stderr="$(mktemp)"
+  trap 'rm -f -- "$fixture_stderr"' EXIT
+  PYTHONWARNINGS=error::ResourceWarning python3 - "$REPO_ROOT" 2>"$fixture_stderr" <<'PY' || fixture_status=$?
 import json
+import hashlib
 import os
 import shutil
 import subprocess
@@ -40,6 +45,19 @@ def make_repo() -> tuple[tempfile.TemporaryDirectory[str], Path]:
     shutil.copytree(source / "scripts" / "fixtures" / "okf-valid-repo", root)
     shutil.copytree(source / "scripts", root / "scripts")
     shutil.copytree(source / ".github", root / ".github")
+    # This hook baseline is source-clean. The shared OKF corpus intentionally
+    # includes a draft summary; resolve only this disposable copy and retain
+    # the separate pending-source hook cases below.
+    summary = root / ".agents/memory/sources/pending-md.summary.md"
+    text = summary.read_text(encoding="utf-8").replace("status: draft\n", "")
+    text = text.replace("This source summary is intentionally unresolved but structurally conforming.",
+        "This source summary is resolved for the source-clean hook fixture.")
+    summary.write_text(text, encoding="utf-8")
+    manifest_path = root / ".agents/memory/sources/source-ingest-manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    entry = next(item for item in manifest["entries"] if item["source_path"] == "pending.md")
+    entry.update(state="active", reason="", summary_hash=hashlib.sha256(summary.read_bytes()).hexdigest())
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     return tempdir, root
 
 
@@ -121,6 +139,10 @@ def run_with_open_stdin(program: Path, payload: dict[str, object] | None = None,
             process.wait()
         if process.stdin is not None:
             process.stdin.close()
+        if process.stdout is not None:
+            process.stdout.close()
+        if process.stderr is not None:
+            process.stderr.close()
 
 
 def run_stop_hook_bytes(root: Path, payload: dict[str, object], extra_env: dict[str, str] | None = None) -> bytes:
@@ -497,7 +519,12 @@ with repo() as root:
     assert reason.index("Pending ingest blocks normal work.") < reason.index("OKF validation failed:"), reason
     assert "truncated" in reason.lower(), reason
 PY
-}
+  if [[ -s "$fixture_stderr" ]]; then
+    cat "$fixture_stderr" >&2
+    return 1
+  fi
+  return "$fixture_status"
+)
 
 main() {
   test_clean_post_tool_use_returns_empty_object

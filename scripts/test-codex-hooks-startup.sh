@@ -231,6 +231,8 @@ assert payload["systemMessage"] == "load-required-skills: pass; 1 skill file"
 process.stdin.close()
 assert process.wait(timeout=2) == 0
 assert b"audit unavailable" in process.stderr.read()
+process.stdout.close()
+process.stderr.close()
 PY
 }
 
@@ -470,6 +472,8 @@ for incomplete_prefix in (b"", b'{"x":"\xe2'):
     assert incomplete_response["continue"] is False
     incomplete.stdin.close()
     assert incomplete.wait(timeout=2) == 0
+    incomplete.stdout.close()
+    incomplete.stderr.close()
 
 for invalid_prefix in (
     b"{not json",
@@ -493,6 +497,8 @@ for invalid_prefix in (
     assert invalid_response["continue"] is False
     invalid.stdin.close()
     assert invalid.wait(timeout=2) == 0
+    invalid.stdout.close()
+    invalid.stderr.close()
 
 valid = subprocess.Popen(
     [sys.executable, sys.argv[1]], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment
@@ -508,6 +514,8 @@ valid_response = json.loads(valid.stdout.readline().decode("utf-8"))
 assert valid_response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 valid.stdin.close()
 assert valid.wait(timeout=2) == 0
+valid.stdout.close()
+valid.stderr.close()
 
 number = subprocess.Popen(
     [sys.executable, sys.argv[1]], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment
@@ -523,6 +531,8 @@ number_response = json.loads(number.stdout.readline().decode("utf-8"))
 assert number_response["systemMessage"] == "load-required-skills: pass; 1 skill file"
 number.stdin.close()
 assert number.wait(timeout=2) == 0
+number.stdout.close()
+number.stderr.close()
 PY
 }
 

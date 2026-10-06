@@ -98,7 +98,7 @@ def support_record(config, root: Path, provider: dict) -> dict:
         "entry_mode", "platform", "filesystem_id", "permissions", "lifecycle_config", "native_events",
         "adapter_path", "adapter_revision", "bundle_path", "bundle_revision", "native_deadline_seconds",
         "immediate_model_boundary", "child_delivery", "evidence", "scope"}
-    _keys(record, "native support record", fields)
+    _keys(record, "native support record", fields | ({"validation_clock"} if "validation_clock" in record else set()))
     repository, worktree = actual_binding(root)
     expected = {"schema_version": 1, "kind": "native", "repository_id": config.repository_id,
         "repository_root": repository, "worktree_root": worktree, "platform": sys.platform,
@@ -140,13 +140,18 @@ def support_record(config, root: Path, provider: dict) -> dict:
         if file_revision(proof) != record["evidence"]["revision"]:
             raise LifecycleError("NATIVE_SUPPORT_UNAVAILABLE", "observed native certification evidence is unavailable")
         evidence = read_json(proof.read_bytes().decode("utf-8"))
-        if evidence != {"schema_version": 1, "certification_id": record["certification_id"],
+        expected_evidence = {"schema_version": 1, "certification_id": record["certification_id"],
             "provider": record["provider"], "provider_version": record["provider_version"],
             "entry_mode": record["entry_mode"], "context_consumed": True, "decisions_consumed": True,
-            "events": record["native_events"], "watchdog_observed": True, "foreground_route_observed": True}:
+            "events": record["native_events"], "watchdog_observed": True, "foreground_route_observed": True}
+        if evidence != expected_evidence or any(type(evidence[key]) is not type(value) for key, value in expected_evidence.items()):
             raise LifecycleError("NATIVE_SUPPORT_UNAVAILABLE", "exact observed native certification is required")
     else:
         raise LifecycleError("NATIVE_SUPPORT_UNAVAILABLE", "unconfigured/unverified native paths are unsupported")
+    if "validation_clock" in record:
+        from .maintenance import validation_clock_plan
+        provider_id = next((key for key, value in config.providers.items() if value is provider), None)
+        validation_clock_plan(config, root, provider_id, record)
     return record
 
 
@@ -160,6 +165,10 @@ def registration(value: dict, root: Path, *, issued_foreground=False):
     if not provider or not provider["enabled"] or provider["kind"] != "native":
         raise LifecycleError("INTEGRATION_DISABLED", "native integration is not configured and enabled")
     support = support_record(config, root, provider)
+    # Calendar input is an invocation prerequisite. Validate it before any
+    # native runtime/identity initialization, not only during cycle detection.
+    from .maintenance import utc_day
+    utc_day(config, root, config_path)
     historical = False
     if issued_foreground and config.software:
         from .setup import checked_local

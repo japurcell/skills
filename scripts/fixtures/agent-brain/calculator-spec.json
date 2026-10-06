@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "kind": "offline_calculator_fixture",
+  "freeze_id": "independent-four-pair-literals-v1",
+  "checks": [
+    {
+      "id": "policy-retained",
+      "kind": "contains",
+      "path": "result.txt",
+      "expected": "Required policy retained.",
+      "contract": "docs/just-in-time-context/tickets/success-criteria.md"
+    }
+  ],
+  "cohorts": [
+    {
+      "id": "fixture",
+      "configuration": "fixture-config-v1",
+      "tokenizer": "literal-fixture-counts-v1",
+      "window": "arrival-through-settled-maintenance-v1",
+      "model": "no-model-fixture",
+      "settings": "fixture-settings",
+      "knowledge_revision": "fixture-knowledge",
+      "prerequisites": {
+        "provider_build": "not-a-native-build",
+        "native_certification": "offline-only",
+        "delivery_observation": "literal-calculator-fixture",
+        "tokenizer_validation": "literal-calculator-fixture"
+      },
+      "schedule": [
+        {
+          "id": "p1",
+          "variant": "fixture-policy",
+          "order": "baseline_first",
+          "checks": [
+            "policy-retained"
+          ]
+        },
+        {
+          "id": "p2",
+          "variant": "fixture-policy",
+          "order": "candidate_first",
+          "checks": [
+            "policy-retained"
+          ]
+        },
+        {
+          "id": "p3",
+          "variant": "fixture-policy",
+          "order": "baseline_first",
+          "checks": [
+            "policy-retained"
+          ]
+        },
+        {
+          "id": "p4",
+          "variant": "fixture-policy",
+          "order": "candidate_first",
+          "checks": [
+            "policy-retained"
+          ]
+        }
+      ],
+      "required_checks": [
+        "policy-retained"
+      ],
+      "critical_schedule": []
+    }
+  ]
+}
