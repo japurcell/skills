@@ -1,0 +1,755 @@
+{
+  "schema_version": 1,
+  "task": "agent-brain offline implementation milestones1-9",
+  "date": "2026-10-06",
+  "base_branch": "codex/plan-just-in-time-context",
+  "status": "offline_milestones_1_to_9_verified_integrated",
+  "integrated_implementation_tip": "48d641ffa9ac096043435ac880b8926f01d281cf",
+  "authorization": {
+    "offline_milestones": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "live_milestones": [
+      10,
+      11
+    ],
+    "live_authorized": false,
+    "actual_home_installation": false,
+    "pilot_activation": false,
+    "push": false
+  },
+  "dispatches": [
+    {
+      "subtask_id": "milestone_1",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "45 minutes",
+        "mechanism": "UTC deadline checked between bounded 45-second waits; interrupt_agent on expiry",
+        "revision_reason": "Additional public contract repair tracers and required skill/schema/doc validation increased the initial scope estimate"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m1",
+      "branch": "codex/agent-brain-m1",
+      "commits": [
+        "bc4757e8d28dd643657ad9b58ba8ea3d42ecb3c4"
+      ],
+      "integrated_tip": "bc4757e8d28dd643657ad9b58ba8ea3d42ecb3c4",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "provider_contract_recheck",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "20 minutes",
+        "mechanism": "UTC deadline checked between bounded 45-second waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "worktree": "/private/tmp/agent-brain-provider-facts",
+      "branch": "codex/agent-brain-provider-facts",
+      "commits": [
+        "e0bde397ace9ff87a3f03ec43035cd346ba25c30",
+        "c9ebae69"
+      ],
+      "integrated_tip": "c9ebae6968200e77c58f34edca586da5606e8370",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "baseline_test_hygiene",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "30 minutes",
+        "mechanism": "UTC deadline checked between bounded 45-second waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "worktree": "/private/tmp/agent-brain-baseline-hygiene",
+      "branch": "codex/agent-brain-baseline-hygiene",
+      "commits": [
+        "0a111a7cdaf2feeb9455a38100a895499eac941c"
+      ],
+      "integrated_tip": "0a111a7cdaf2feeb9455a38100a895499eac941c",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "milestone_2",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "75 minutes",
+        "mechanism": "UTC deadline checked between bounded 45-second waits; interrupt_agent on expiry",
+        "revision_reason": "Final review found an unannotated whole-document freshness gap after the planned checks; an added public tracer, verified repair, and synchronized acceptance/commit are necessary."
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": false,
+      "worktree": "/private/tmp/agent-brain-m2",
+      "branch": "codex/agent-brain-m2",
+      "prompt_isolation_compliant": false,
+      "compliance_note": "A follow-up included the revised runtime audit record. Model/effort submission and enforced deadline remained correct; subsequent prompts omit orchestration audit metadata.",
+      "commits": [
+        "02ab8c36deb07a186d5f99e764903e5764fdd7e2"
+      ],
+      "integrated_tip": "02ab8c36deb07a186d5f99e764903e5764fdd7e2",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "baseline_test_hygiene_repair",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "30 minutes",
+        "mechanism": "UTC deadline checked between bounded 45-second waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "worktree": "/private/tmp/agent-brain-baseline-repair",
+      "branch": "codex/agent-brain-baseline-repair",
+      "original_node": "baseline_test_hygiene",
+      "commits": [
+        "6b031dd9fd4b1d5c172025ad9c2645d3eb969b29"
+      ],
+      "integrated_tip": "6b031dd9fd4b1d5c172025ad9c2645d3eb969b29",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "milestone_3",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "90 minutes",
+        "mechanism": "UTC deadline checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m3",
+      "branch": "codex/agent-brain-m3",
+      "commits": [
+        "270bce3de06b33cf26020a1e513c8718a58940a5"
+      ],
+      "integrated_tip": "270bce3de06b33cf26020a1e513c8718a58940a5",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "milestone_4",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "120 minutes",
+        "mechanism": "UTC deadline 2026-10-06 09:02:54 checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m4",
+      "branch": "codex/agent-brain-m4",
+      "base": "865c9ce17f074a86e476472d21ea539f5dd79f41",
+      "commits": [
+        "0d7148fa04d456cb690a08632127d6b0d43409bf"
+      ],
+      "integrated_tip": "0d7148fa04d456cb690a08632127d6b0d43409bf",
+      "worktree_removed": true,
+      "branch_deleted": true
+    },
+    {
+      "subtask_id": "milestone_5",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "120 minutes",
+        "mechanism": "UTC deadline 2026-10-06 09:52:09 checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m5",
+      "branch": "codex/agent-brain-m5",
+      "base": "0595158a890ef4eea09df9e3cb5c55f017a76676",
+      "commits": [
+        "bb99a386e2cd60269cfcff64dfdac4fb60bf1e15"
+      ],
+      "integrated_tip": "bb99a386e2cd60269cfcff64dfdac4fb60bf1e15",
+      "worktree_removed": true,
+      "branch_deleted": true,
+      "route": {
+        "dispatchable": true,
+        "tier": "Premium",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "reason": "Evidence-backed pruning, expiring authority, current-revision coverage and retention require difficult state reasoning. M3/M4 demonstrate success on similar work; expected-cost fit remains provisional and public checks are required.",
+        "escalation_trigger": "Diagnose any repeated authority/coverage failure before one higher-capability retry; preserve artifacts and stop on runtime expiry.",
+        "fallback": {
+          "model": "gpt-6-sol",
+          "reasoning_effort": "high"
+        }
+      }
+    },
+    {
+      "subtask_id": "milestone_6",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "120 minutes",
+        "mechanism": "UTC deadline 2026-10-06 10:30:43 checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m6",
+      "branch": "codex/agent-brain-m6",
+      "base": "f49cf5b320436aa75311fbb4115c8902166cb934",
+      "commits": [
+        "9d8b5d9ccb66e2229b305ff408da18e2c84665de"
+      ],
+      "integrated_tip": "9d8b5d9ccb66e2229b305ff408da18e2c84665de",
+      "worktree_removed": true,
+      "branch_deleted": true,
+      "route": {
+        "dispatchable": true,
+        "tier": "Premium",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "reason": "Joining one source manifest owner with publication generations, legacy gates and untrusted source evidence needs security-sensitive state reasoning. Similar M3-M5 work passed public verification; cost fit remains provisional.",
+        "escalation_trigger": "Diagnose repeated authority/freshness failure before one higher-capability retry; preserve artifacts and interrupt on runtime expiry.",
+        "fallback": {
+          "model": "gpt-6-sol",
+          "reasoning_effort": "high"
+        }
+      }
+    },
+    {
+      "subtask_id": "milestone_7",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "120 minutes",
+        "mechanism": "UTC deadline 2026-10-06 11:29:08 checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m7",
+      "branch": "codex/agent-brain-m7",
+      "base": "20e896fb5b410b8a41fa3a8d5f8fe929a6edd267",
+      "commits": [
+        "befee596a50ffc330bbcd57e544aad0982987b13"
+      ],
+      "integrated_tip": "befee596a50ffc330bbcd57e544aad0982987b13",
+      "worktree_removed": true,
+      "branch_deleted": true,
+      "route": {
+        "dispatchable": true,
+        "tier": "Premium",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "reason": "Native binding, incomplete callback deadlines, foreground recovery and ordinary legacy hook joins require security-sensitive cross-provider authority reasoning. Prior similar state work succeeded after independent public review; pricing guidance is provisional for this runtime.",
+        "fallback": {
+          "model": "gpt-6-sol",
+          "reasoning_effort": "high"
+        },
+        "escalation_trigger": "Diagnose failed critical acceptance or deadline expiry before at most one replacement",
+        "userConstraints": "none"
+      }
+    },
+    {
+      "subtask_id": "milestone_8",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "150 minutes",
+        "mechanism": "UTC deadline 2026-10-06T13:14:40.000Z checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m8",
+      "branch": "codex/agent-brain-m8",
+      "base": "f2c2fe8ea7d80ae8c897538449d6df994f70a3d7",
+      "repairs": [
+        {
+          "id": "operational_history_privacy",
+          "original_node": true,
+          "unintegrated_commit": "71124cfd85fb4ad9d2132afc68a4563dfa3e6771",
+          "submitted_configuration": "original agent configuration unchanged",
+          "deadline_unchanged": true
+        }
+      ],
+      "commits": [
+        "e84de5392973528903f5f179aed5b641fdda4706"
+      ],
+      "integrated_tip": "e84de5392973528903f5f179aed5b641fdda4706",
+      "worktree_removed": true,
+      "branch_deleted": true,
+      "route": {
+        "dispatchable": true,
+        "tier": "Premium",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "reason": "Reversible activation controls native authority, external immutable bundle trust, upgrades and expected identity after runtime loss. These security and recovery boundaries require Premium reasoning. Verified M3-M7 delivery supports this route on similar work; no task-specific comparison establishes a cheaper capable route. Catalog pricing is provisional Copilot guidance, not actual Codex billing.",
+        "escalation_trigger": "Interrupt at enforced deadline or diagnose repeated authority/recovery misses; preserve artifacts before at most one replacement.",
+        "fallback": {
+          "model": "gpt-6-sol",
+          "reasoning_effort": "high"
+        }
+      }
+    },
+    {
+      "subtask_id": "milestone_9",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "150 minutes",
+        "mechanism": "UTC deadline 2026-10-06T14:47:57.000Z checked between bounded waits; interrupt_agent on expiry"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "prompt_isolation_compliant": true,
+      "worktree": "/private/tmp/agent-brain-m9",
+      "branch": "codex/agent-brain-m9",
+      "base": "d6f1ad689801010cc1d48941c633925a98f48f6f",
+      "commits": [
+        "48d641ffa9ac096043435ac880b8926f01d281cf"
+      ],
+      "integrated_tip": "48d641ffa9ac096043435ac880b8926f01d281cf",
+      "worktree_removed": true,
+      "branch_deleted": true,
+      "route": {
+        "dispatchable": true,
+        "tier": "Premium",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "reason": "M9 combines independent acceptance truth, complete accounting, native certification boundaries, and a constrained validation-clock repair. These false-pass and authority risks require Premium. This exact configuration succeeded on M3-M8; Copilot catalog prices are provisional and do not establish Codex billing.",
+        "escalation_trigger": "Reassess if public boundary checks expose repeated reasoning gaps after inputs and environment are verified.",
+        "fallback": {
+          "model": "gpt-6-sol",
+          "reasoning_effort": "high"
+        }
+      }
+    }
+  ],
+  "route_record_scope": "Selected/submitted configurations and bounds are retained for every dispatch. Full contemporaneous route objects retained here are M5-M9; earlier missing route objects are not reconstructed.",
+  "exceptions": [
+    {
+      "subtask_id": "milestone_2",
+      "requirement": "routing/audit metadata must remain outside worker prompts",
+      "status": "noncompliant",
+      "note": "A follow-up included the revised runtime audit record. Submitted model/effort and enforced deadline were correct. Later prompts omit orchestration metadata."
+    }
+  ],
+  "runtime_confirmation": "Runtime did not independently report executed model/effort; all executed values remain unconfirmed.",
+  "cost_limit": "Local router catalog provides provisional guidance for Copilot. It does not establish actual Codex billing or task usage.",
+  "parent_review": {
+    "milestone_9": {
+      "status": "verified_integrated",
+      "targets": [
+        "Independent expected checks and attributable artifact snapshots per pair/arm",
+        "Exact cohort/build/config/tokenizer/windows and unknown prerequisites",
+        "Actual pilot KB finite closure inventory and two complete cycles per sequence",
+        "Complete task/session/critical probe accounting, minimum840 before expansion",
+        "Retained failed observations and per-cohort empirical gates",
+        "Delivered guidance across startup/repeated reads/all stages/executors plus total task usage visibility",
+        "Narrow certified disposable validation clock, real-time ownership/leases preserved",
+        "All new exact runtime tests, justified shared checks, serialized final freshness/full aggregate",
+        "Offline calculator success never native certification or measured product success"
+      ],
+      "findings": [
+        {
+          "id": "measured_fixture_false_product_acceptance",
+          "priority": "blocking",
+          "publicly_reproduced": true,
+          "repair_verified": true,
+          "evidence": "Public calculator accepts60 distinct single-variant fixture pairs, no longitudinal cycles/fresh sessions, one3-repeat critical case and explicit offline/native/tokenizer fixture prerequisites; exits0 product_acceptance met.",
+          "probe": "/private/tmp/agent-brain-parent-measured-completeness.py",
+          "remaining_acceptance": []
+        },
+        {
+          "id": "unfrozen_clock_initializes_state_before_denial",
+          "priority": "blocking",
+          "publicly_reproduced": true,
+          "reproduction_by": "original worker after parent flagged ineffective wrong-filename assertion",
+          "repair_verified": true,
+          "evidence": "Parent independent five ValidationClockTests pass with ResourceWarning errors in1.920s after native pre-init calendar validation.",
+          "remaining_acceptance": []
+        },
+        {
+          "id": "two_cycle_critical_repeat_overlaps_first_cycle_only",
+          "priority": "blocking",
+          "publicly_reproduced": false,
+          "evidence": "Independent frozen workload lists native-two-cycle-dream-1 at L1-049 but cycle_boundary49/sequence98 means only cycle1. Only2 whole two-cycle sequences exist for3 required critical repetitions.",
+          "repair_verified": true,
+          "remaining_acceptance": []
+        },
+        {
+          "id": "child_path_requirements_omitted_from_live_budget",
+          "priority": "blocking",
+          "publicly_reproduced": false,
+          "evidence": "Frozen child_paths unclaimed/no model and critical matrix omit child context/missing hooks; accepted Q4/M10 require separately tested or explicit unsupported/pending paths without closing overall gates.",
+          "repair_verified": true,
+          "remaining_acceptance": []
+        },
+        {
+          "id": "input_only_usage_labeled_observed_total",
+          "priority": "material",
+          "publicly_reproduced": false,
+          "evidence": "usage units permits input_tokens with observed status; total task usage contract needs input/output/all executor totals or explicit unavailable/incomplete.",
+          "repair_verified": true,
+          "remaining_acceptance": []
+        },
+        {
+          "id": "calculator_unicode_json_fails_under_legacy_encoding",
+          "priority": "material",
+          "publicly_reproduced": true,
+          "repair_verified": true,
+          "evidence": "Valid Unicode fixture freeze_id under PYTHONIOENCODING=cp1252 exits2 with charmap encoding diagnostic and no JSON.",
+          "probe": "/private/tmp/agent-brain-parent-pilot-encoding.py",
+          "remaining_acceptance": []
+        },
+        {
+          "id": "nonobject_measured_cohort_traceback",
+          "priority": "material",
+          "publicly_reproduced": true,
+          "reproduction_by": "original worker final malformed-input review",
+          "repair_verified": true,
+          "remaining_acceptance": []
+        }
+      ],
+      "public_suite": {
+        "cases": 29,
+        "runtime": "Python 3.14.6",
+        "resourceWarnings": "error",
+        "seconds": 9.905,
+        "source_current": true,
+        "pinned_input_files": 70,
+        "exit": 0,
+        "prerequisite_pin_changes": [
+          "scripts/fixtures/agent-brain/host-metadata.json",
+          "scripts/fixtures/agent-brain/pilot-records-pending.json",
+          "scripts/fixtures/agent-brain/pilot-spec.json"
+        ]
+      },
+      "input_pins": {
+        "verification": "All 70 SHA-256 values match the integrated implementation tip",
+        "sha256_by_path": {
+          "scripts/fixtures/agent-brain/calculator-artifacts/p1/baseline/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p1/baseline/review.json": "a70eaed928bfd48e342631a4c586ef0186243539fd19261fa71853965ede72a8",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p1/candidate/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p1/candidate/review.json": "d3da30529b3aa5f938dec8556baca5ed499aadf62932e90bf550722d41141f1e",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p2/baseline/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p2/baseline/review.json": "9962fc477a3c3c3e6700bfbfa0180e593d8d260bfad3516dc2d6b3c6e2a1d358",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p2/candidate/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p2/candidate/review.json": "dd9f7ae22e24cb5cb0d974aac1b1e1c5bfc4040b9494c512ad825534609fd8a1",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p3/baseline/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p3/baseline/review.json": "879a2d6e92321684e93464d5cbcc77d0fd7f70c4e62819740b4f458457c33984",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p3/candidate/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p3/candidate/review.json": "61d5eadde5fcb23590d6c7606e787b33b89bfdf9611070e5d491f88c43731fff",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p4/baseline/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p4/baseline/review.json": "0c8998bc9ca617eb6070db45dc09bc9bca61f1012941421770af29e124e7cb35",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p4/candidate/result.txt": "1876468d1a87e64b4b80eef746441a62bd428b7c2d9079ec3677b8862dbea995",
+          "scripts/fixtures/agent-brain/calculator-artifacts/p4/candidate/review.json": "bfe86002ee8d550b831013c90c5caa1bb94763b98a6d00520521f194dd2dd145",
+          "scripts/fixtures/agent-brain/calculator-records.json": "2d1159a0026b033a7f45373d1a79559a7d5697d77110bbb78f17904594120ec1",
+          "scripts/fixtures/agent-brain/calculator-spec.json": "00f76063361f35dd7642054db9839f809eb5acb3dbc57494f319d60fd2352933",
+          "scripts/fixtures/agent-brain/host-metadata.json": "8c408b39fe387097b18c8c6ff01ed48257e8f835dc5b58884be4044f0a8eefad",
+          "scripts/fixtures/agent-brain/pilot-records-pending.json": "2734ec77e6eb0a1b099b3c1ae1250758cfb96643d082fa04dcdb96f0736e2779",
+          "scripts/fixtures/agent-brain/pilot-spec.json": "4c587495567fedde6a804ffc1808fffd933eb89fd7bb3cf63519be8030e68d8a",
+          "scripts/fixtures/agent-brain/pilot-workload.json": "280e3142a05a34d2429986c1fa5cd6866ab81f63c9e03767fc80d4b6b7783af4",
+          "scripts/test-agent-brain-pilot.py": "94cdddc0d6b543fcd89f7ecc3b77795b2e198ce8cc862b5788bbca711b96ed38",
+          "scripts/validate-agent-brain-pilot.py": "86d0d2086c628a39f133d5e66c102baf57fcf6060e54b50d8c94042ecc5a28ac",
+          "skills/agent-brain/assets/adapters/codex.py": "7763c35ceacd0366431952175905635b07c3c3266024f1c6b5661603adee4f3b",
+          "skills/agent-brain/assets/adapters/copilot.py": "1e6bef0584e43f3ccf13828c44e03b5a404f114ec6d3e152b444a0b984cefdcb",
+          "skills/agent-brain/assets/adapters/gemini.py": "18aad8109f7f4b7c6ab9c828b2f72e978c1237fb6b4c6e45f9615ef2b4aa195c",
+          "skills/agent-brain/schemas/config-v1.schema.json": "86d99416b95424f5712db7191d06f6f235d7c073031a4bce6a6a4c81bdbd56b1",
+          "skills/agent-brain/schemas/error-v1.schema.json": "15894303b60e8ce24e3e87bab26e966e72ac90d5015ad47fafe8d676f8d822d7",
+          "skills/agent-brain/schemas/fixture-support-v1.schema.json": "bd53a296c91907081be1ccac23ac75c405dcace5e216c962f5f34a83a79045bb",
+          "skills/agent-brain/schemas/foreground-recovery-v1.schema.json": "9e4b1a0d4508c0938ede20b3b9502473524f02ea29de0560d319b863e898cdff",
+          "skills/agent-brain/schemas/inspection-v1.schema.json": "1471ee2f4c72ab9da108daea7bf0605e9613d59cd4b42a2911326aa1ced14e83",
+          "skills/agent-brain/schemas/integration-event-v1.schema.json": "589eaee687cf0e2b1f7024f37930a93c0fea80c1537d933e021fe843a3170ac2",
+          "skills/agent-brain/schemas/lifecycle-result-v1.schema.json": "c636578cca563ea5ad81acf660a43e5f1e802efd9bb6025da4246f2fd7449a36",
+          "skills/agent-brain/schemas/maintenance-v1.schema.json": "6870f80a9b30c45e8c03763351af33bba82b35d354e1f603bfb24606850ee745",
+          "skills/agent-brain/schemas/metadata-v1.schema.json": "0493eafdb0883b7014453fffb40fd78910690fae7fd0a3f50be63f8d2ca205e2",
+          "skills/agent-brain/schemas/native-registration-v1.schema.json": "792b1433b98f4b7ae2aab018aea06f2bf9216ed41ee0f8f41e0461dcdbf8b1f1",
+          "skills/agent-brain/schemas/native-support-v1.schema.json": "a72152728266ce9ad27b67679ed213ea53f8d1534f7a50de77c9dea75c791d56",
+          "skills/agent-brain/schemas/proposal-v1.schema.json": "a5c24380d01f8f634bff4471b87e7904fec2829639e451a1c8eae666e224a720",
+          "skills/agent-brain/schemas/recall-v1.schema.json": "9563ece09e10d8f2e9a0c9d03d61fde4f7828d250a361950fb1d6688a8759503",
+          "skills/agent-brain/schemas/review-v1.schema.json": "1f65a2af39be4c05468ce12e5ee2f715202912fe05b9ae14ae7ae0b4db97b22a",
+          "skills/agent-brain/schemas/setup-plan-v1.schema.json": "a9328432022e5b2e5dd76d946aa1680d933048a2b2c5a7a3d50161f770552719",
+          "skills/agent-brain/schemas/software-v1.schema.json": "cc77409fbbdf6dfb14727b1c1663d98b6b47b5a22df2ce8d941d062945043d21",
+          "skills/agent-brain/schemas/source-ingestion-v1.schema.json": "cedeac0e4cef479d0c4ce72ffef20b9b5c5405a293a20ae64da61e51886b9e98",
+          "skills/agent-brain/schemas/validation-clock-plan-v1.schema.json": "7126f3cb3bc0f31710d4212b59c5562b59f0a4be49fad8227e09ca114fb66946",
+          "skills/agent-brain/schemas/validation-clock-v1.schema.json": "df47aa39bd2b4d478401744c449748b35fe0596e7acb88e1db1f69b079d70c3a",
+          "skills/agent-brain/schemas/version-v1.schema.json": "9e766f60b5c3ed4c29f86377f7ad43e2ea796a4df8b484b5e60aea4569230a95",
+          "skills/agent-brain/schemas/version.json": "b57f786b91ed3b315c4b1f7f57e462b34ff3da1f0d8ffa84884a9df389b4ee82",
+          "skills/agent-brain/scripts/agent-brain.py": "4ac40efc77995052764e794fd77e33c63ce61952bc44808bcb1fe6a85ae0cade",
+          "skills/agent-brain/scripts/agent_brain/__init__.py": "d3a371efc5f804e9e124b6130de204c7d2dfd78659e7514055e85059b214a832",
+          "skills/agent-brain/scripts/agent_brain/checks.py": "542552453f5ebf86ac7b461dd226e18071667e5b7bbe15c9276804c3e2904b3c",
+          "skills/agent-brain/scripts/agent_brain/cli.py": "e558cf653c23aed3490902c382c3155b9b5ffe42286f952cad8aea1114effa83",
+          "skills/agent-brain/scripts/agent_brain/config.py": "8377ce67e7fb2c3cd1b1af7da4aa7e669773b3309bae997f9a7059f40f6db1b1",
+          "skills/agent-brain/scripts/agent_brain/diagnostics.py": "94e821b11f841af21ff9f7daac7b627e70b5217e1adf52104c7202c9ae0b0a2b",
+          "skills/agent-brain/scripts/agent_brain/history.py": "03dff9f944ca80c321173f49cfc9f9440583f96a3acd71e87014c8f258fd09a3",
+          "skills/agent-brain/scripts/agent_brain/knowledge.py": "80f8ce8b986b69ae700f69a99044ac16d814e61cec0ab786e963a25a098b3287",
+          "skills/agent-brain/scripts/agent_brain/lifecycle.py": "955bb3213b3b27d3764a8ae4806ca877b3afa71e8e2c78e38b4491afc554e1c0",
+          "skills/agent-brain/scripts/agent_brain/maintenance.py": "eed30c9b2259f4ab65904567d82fa673a672ff3c312c7bf37da6579c90a4b93e",
+          "skills/agent-brain/scripts/agent_brain/metadata.py": "f5ed0f10f5f4bb515452935c506759c044161f7ee810604252886809e8a0a342",
+          "skills/agent-brain/scripts/agent_brain/native.py": "519c4de2d78d2f4b4498064ef0cae45d9df804b5ff57a8fd27b49f2e98b3a013",
+          "skills/agent-brain/scripts/agent_brain/publication.py": "62c8ee14212bd8f08b9875bb0f83ca09bfaa29971f2081d6030e1a31a6a99b25",
+          "skills/agent-brain/scripts/agent_brain/records.py": "66f1724c6f0604604bae4cd38c9c81e9951415ea4796653497356ad9b9bf770a",
+          "skills/agent-brain/scripts/agent_brain/retrieval.py": "5389703181add895a0badd396e484df8818c713d908732bfb2247416b249dd97",
+          "skills/agent-brain/scripts/agent_brain/setup.py": "fc9707dd8f1a2ab117016ed9974501b7b32e7bd1685bd167898f27d1c58fd156",
+          "skills/agent-brain/scripts/agent_brain/software.py": "ca58b77f8ec3282ff861fb9391f7cbe8f8c0ba6dd763c2e70f7e9b58f80d4467",
+          "skills/agent-brain/scripts/agent_brain/source_ingestion.py": "368f18d5ab6f7349af4b529f5e234191b7ff2987e387f174e45e2e3da0bad081",
+          "skills/agent-brain/scripts/agent_brain/stages.py": "3bf87a7a0ff4ba5d2584af8da66f6de35c4bbc000868492d50df73a0fb3d117e",
+          "skills/agent-brain/scripts/agent_brain/state.py": "1171a3429779eb86f0161439542144bad571f5a32550bba09aa0f83167f91442",
+          "skills/agent-brain/scripts/integration-bridge.py": "3122b0d8af0d4421db295f0839622bcb145eeadeb765597da686119e952a184b",
+          "skills/agent-brain/scripts/native-integration.py": "b830bb41c7e9eb7bce49f737389c11a99704a1d81b052b987b71b5bff58c4406"
+        }
+      },
+      "aggregate_attempts": [
+        {
+          "exit": 1,
+          "passed": 42,
+          "failed": 3,
+          "seconds": 646.3,
+          "accepted": false,
+          "record": "aggregate.log"
+        },
+        {
+          "exit": 0,
+          "passed": 45,
+          "failed": 0,
+          "seconds": 664.6,
+          "resource_warning_records": 20,
+          "accepted": false,
+          "record": "aggregate-final.log"
+        },
+        {
+          "record": "aggregate-clean.log",
+          "passed": 45,
+          "failed": 0,
+          "seconds": 680.3,
+          "resource_warning_records": 0,
+          "exit": 0,
+          "revision": "1e64f1167db51439c5054745a18fdb35d8556ec7f31c9dcf6db67d24e1f74414",
+          "accepted": true
+        }
+      ],
+      "resource_warning_repair": {
+        "public_command": "ordinary Copilot OKF suite with strict ResourceWarning capture",
+        "exit": 1,
+        "record": "copilot-okf-warning-red.log",
+        "revision": "1eccf1bd4c0e6f0f33c2055fbaf1733fbcd314766f52ccd75240de3e2056c26f",
+        "permanent_guard": {
+          "exit": 1,
+          "resource_warning_records": 20,
+          "record": "copilot-okf-stderr-red.log",
+          "revision": "744e969e1e363e0f83e6bf6ef39cc431c5f2b222861b480f80f3f5f2b6727f86"
+        },
+        "repair": {
+          "exit": 0,
+          "resource_warning_records": 0
+        }
+      },
+      "mechanical_preflight": {
+        "strict_json": 50,
+        "local_schema_refs": 98,
+        "example_shapes": 11,
+        "python_compilations": 70,
+        "shipping_files": 68,
+        "kb_pins": 47,
+        "contract_paths_anchors": 56,
+        "status": "passed",
+        "source_settled": true
+      },
+      "integration": {
+        "conflict_free": true,
+        "tested_tip": "48d641ffa9ac096043435ac880b8926f01d281cf",
+        "base_exact_tip": true,
+        "worktree_removed": true,
+        "branch_deleted": true
+      }
+    }
+  },
+  "raw_retention": {
+    "path": "/Users/adam/.codex/worktrees/171e/skills/.validation/m9",
+    "records": 138,
+    "files": 139,
+    "ledger": "28ce81c9c16afb88d1b2c96c71b8fe3aa5d82fca4087df2ee9a1dfe0bd1a3078",
+    "hashes_permissions": "verified",
+    "ignored": true
+  },
+  "live_plan": {
+    "status": "not executed; prerequisites pending",
+    "conditional_macOS_cohorts": 7,
+    "workload_tasks": 3332,
+    "standalone_tasks": 917,
+    "total_tasks": 4249,
+    "total_sessions": 854,
+    "reported_alternate_platforms": [
+      "Windows",
+      "Linux"
+    ],
+    "copilot_gemini_on_current_mac": "unavailable, confirmed by user",
+    "copilot_gemini_on_alternate_hosts": "available, reported by user; exact hosts/builds/access/model settings unverified",
+    "alternate_host_policy": "Separate host-specific freeze, counts, certification and explicit live authorization. No substitution or expansion of the macOS manifest.",
+    "native_windows_scope": "Copilot CLI and Gemini CLI only; Codex desktop/CLI excluded",
+    "model_usage": "No live task usage or cost measured; executed implementation model/effort unconfirmed."
+  },
+  "final_root_knowledge_review": {
+    "skill": ".agents/skills/update-agent-docs/SKILL.md",
+    "mode": "Full legacy workflow; repository not activated",
+    "outcome": "Node passes already synchronize durable current behavior. Existing INDEX/FILE_MAP routes cover feature artifacts. Coordinator task history stays with this audit, ExecPlan and handoff.",
+    "Added": "None",
+    "Changed": "None",
+    "Split or moved": "None",
+    "Deduplicated": "None",
+    "Index updates": "None",
+    "Remaining doc quality TODOs": "None"
+  }
+}
