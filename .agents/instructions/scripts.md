@@ -26,3 +26,4 @@ description: Rules and conventions for repository helper scripts under `scripts/
 - If the change also affects repo-local hook behavior, read `.agents/instructions/hooks.md` and the matching hook validation docs instead of treating hooks as generic shell scripts.
 
 - `scripts/test-agent-brain-cli.py` is a registered public subprocess suite. Preserve CLI stream rules: JSON results on stdout, actionable diagnostics on stderr, and no option abbreviation; read-only recall must print the complete UTF-8 artifact.
+- `scripts/lint-okf.py` applies agent-brain metadata checks only when the repository context config is present; preserve the existing no-config diagnostic behavior and use the bundled standard-library validator rather than adding another schema dependency.

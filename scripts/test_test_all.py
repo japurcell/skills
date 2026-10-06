@@ -102,6 +102,7 @@ class TestTestAll(unittest.TestCase):
             if path.name not in ("test-common.sh", "test-rtk-stable-windows.ps1")
         }
         expected.add("scripts/test-agent-brain-cli.py")
+        expected.add("scripts/test-agent-brain-retrieval.py")
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
@@ -115,6 +116,7 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(len(commands), len(expected))
         self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
         self.assertIn(["python3", "scripts/test-agent-brain-cli.py"], commands)
+        self.assertIn(["python3", "scripts/test-agent-brain-retrieval.py"], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
         root, env = self.fixture()

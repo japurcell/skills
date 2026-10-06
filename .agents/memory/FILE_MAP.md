@@ -94,4 +94,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
 | `.agents/skills/ingest-source/SKILL.md` | The canonical repo-local `/ingest-source` recovery skill used by the pending-ingest gate. |
 | `skills/agent-brain/SKILL.md` | Staged source-checkout skill, bundled Python CLI, progressive references, typed v1 schemas, examples, and evals. |
-| `scripts/test-agent-brain-cli.py` | Public subprocess tests for CLI presentation, read-only commands, guarded inputs, config validation, and whole-artifact recall. |
+| `skills/agent-brain/scripts/agent_brain/metadata.py`, `retrieval.py` | Standard-library annotation parser, stable unit records, conservative scope matching, transitive required-reference closure, and read-only section/document delivery. |
+| `skills/agent-brain/schemas/metadata-v1.schema.json`, `examples/metadata-authoring-v1.md` | Namespaced Markdown metadata schema and authoring examples for defaults, policies, facts, exceptions, and references. |
+| `scripts/test-agent-brain-cli.py` | Public subprocess tests for CLI presentation, read-only commands, guarded inputs, config validation, streams, and whole-artifact recall. |
+| `scripts/test-agent-brain-retrieval.py` | Public subprocess tests for metadata parsing, scoped retrieval, closure, evidence disclosure, revisions, gaps, and external read-only mappings. |

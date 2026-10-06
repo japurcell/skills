@@ -4,30 +4,110 @@
   "title": "agent-brain informational recall result v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "operation_status", "command", "informational_only", "notice", "artifacts"],
+  "required": ["schema_version", "operation_status", "command", "informational_only", "notice", "scope_status", "complete", "gaps", "units", "artifacts"],
   "properties": {
     "schema_version": {"const": 1},
-    "operation_status": {"const": "ok"},
+    "operation_status": {"enum": ["ok", "error"]},
     "command": {"const": "recall"},
     "informational_only": {"const": true},
     "notice": {"type": "string", "minLength": 1},
-    "artifacts": {
-      "type": "array",
-      "minItems": 1,
-      "items": {"$ref": "#/$defs/artifact"}
-    }
+    "scope_status": {"enum": ["task_unknown", "scoped", "broadened", "library"]},
+    "complete": {"type": "boolean"},
+    "gaps": {"type": "array", "items": {"$ref": "#/$defs/gap"}},
+    "units": {"type": "array", "items": {"$ref": "#/$defs/unit"}},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}}
   },
   "$defs": {
-    "artifact": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "gap": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "path", "loading_mode", "content"],
+      "required": ["code", "path", "message"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^ABM[0-9]{3}$"},
+        "path": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1}
+      }
+    },
+    "applies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paths", "concepts", "actions", "dependencies", "providers", "runtimes"],
+      "properties": {
+        "paths": {"$ref": "#/$defs/strings"},
+        "concepts": {"$ref": "#/$defs/strings"},
+        "actions": {"$ref": "#/$defs/strings"},
+        "dependencies": {"$ref": "#/$defs/strings"},
+        "providers": {"$ref": "#/$defs/strings"},
+        "runtimes": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "loading_mode"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "loading_mode": {"enum": ["unit", "whole"]}
+      }
+    },
+    "evidenceSummary": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["available", "sources"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "source": {"type": "string"},
+              "revision": {"type": "string"},
+              "uri": {"type": "string"}
+            }
+          }
+        }
+      }
+    },
+    "unit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "kind", "status", "loading_mode", "source", "applies", "content_revision", "input_revision", "requires", "evidence"],
       "properties": {
         "id": {"type": "string", "format": "uuid"},
         "path": {"type": "string", "minLength": 1},
-        "loading_mode": {"const": "whole"},
-        "content": {"type": "string"}
-      }
+        "kind": {"enum": ["policy", "fact"]},
+        "status": {"enum": ["established", "candidate"]},
+        "loading_mode": {"enum": ["unit", "whole"]},
+        "source": {"enum": ["annotation", "mapping"]},
+        "applies": {"$ref": "#/$defs/applies"},
+        "content_revision": {"$ref": "#/$defs/sha256"},
+        "input_revision": {"$ref": "#/$defs/sha256"},
+        "requires": {"type": "array", "items": {"$ref": "#/$defs/reference"}},
+        "evidence": {"type": "object", "additionalProperties": true}
+      },
+      "description": "Unit content_revision hashes the rendered guidance text with agent-brain comments omitted; input_revision also binds typed metadata and required references."
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "loading_mode", "applies", "evidence_details_included", "content", "content_bytes", "content_revision", "input_revision", "contained_unit_ids"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "path": {"type": "string", "minLength": 1},
+        "loading_mode": {"enum": ["unit", "whole"]},
+        "applies": {"$ref": "#/$defs/applies"},
+        "evidence_details_included": {"type": "boolean"},
+        "content": {"type": "string"},
+        "content_bytes": {"type": "integer", "minimum": 0},
+        "content_revision": {"$ref": "#/$defs/sha256"},
+        "input_revision": {"$ref": "#/$defs/sha256"},
+        "contained_unit_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}}
+      },
+      "description": "Artifact content_revision hashes the exact content string delivered. Whole reads preserve source metadata comments and set evidence_details_included true."
     }
   }
 }

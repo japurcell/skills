@@ -266,7 +266,10 @@ class AgentBrainCliTests(unittest.TestCase):
         config_path.write_bytes(example_path.read_bytes())
         artifact = self.repository / ".agents" / "instructions" / "repo.md"
         artifact.parent.mkdir(parents=True)
-        content = "# Repository instruction\n\nRead this complete artifact.\n"
+        content = (
+            "# Repository instruction\n\nRead this complete artifact.\n\n"
+            "## Protected deployment\n\nKeep this mapped section available.\n"
+        )
         artifact.write_text(content, encoding="utf-8")
         before = self.tree_snapshot()
         result = self.run_cli("--json", "recall")

@@ -49,4 +49,4 @@ python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspa
 
 - `skills/subagent-model-router/reference/model-catalog.md` owns tier membership and the task-default model table. Other routing references use named defaults instead of copying preferred model IDs.
 
-- `skills/agent-brain/` is a staged, source-checkout skill with a standard-library CLI at `skills/agent-brain/scripts/agent-brain.py`. Validate it with the skill quick validator and `python3 scripts/test-agent-brain-cli.py`; do not imply lifecycle or provider support from this first CLI surface.
+- `skills/agent-brain/` is a staged, source-checkout skill with a standard-library CLI at `skills/agent-brain/scripts/agent-brain.py`. Retrieval uses namespaced JSON comments for defaults and stable unit metadata, selects conservatively by known scope, and returns required-reference closure with explicit gaps. Validate it with `python3 scripts/test-agent-brain-retrieval.py`, `python3 scripts/test-agent-brain-cli.py`, and the skill quick validator; do not imply lifecycle or provider support from this CLI surface.

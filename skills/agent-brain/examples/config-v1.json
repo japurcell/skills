@@ -12,12 +12,26 @@
       "id": "7e8f1c31-c38c-4f40-91e9-972b73882f41",
       "path": ".agents/instructions/repo.md",
       "unit": "whole"
+    },
+    {
+      "id": "7e8f1c31-c38c-4f40-91e9-972b73882f45",
+      "path": ".agents/instructions/repo.md",
+      "selector": {"type": "section", "heading": "Protected deployment"},
+      "kind": "policy",
+      "status": "established",
+      "applies": {"concepts": ["deployment"]},
+      "requires": [],
+      "evidence": {"sources": [{"source": "deployment-policy.md", "revision": "r2"}]}
     }
   ],
   "startup": [
     {
       "id": "7e8f1c31-c38c-4f40-91e9-972b73882f41",
       "loading_mode": "whole"
+    },
+    {
+      "id": "7e8f1c31-c38c-4f40-91e9-972b73882f45",
+      "loading_mode": "unit"
     }
   ]
 }

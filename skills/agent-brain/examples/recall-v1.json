@@ -4,12 +4,50 @@
   "command": "recall",
   "informational_only": true,
   "notice": "Informational output only; this does not confirm agent delivery or application.",
+  "scope_status": "task_unknown",
+  "complete": true,
+  "gaps": [],
+  "units": [
+    {
+      "id": "22222222-2222-4222-8222-222222222222",
+      "path": "guidance/startup.md",
+      "kind": "policy",
+      "status": "established",
+      "loading_mode": "whole",
+      "source": "mapping",
+      "applies": {
+        "paths": [],
+        "concepts": [],
+        "actions": [],
+        "dependencies": [],
+        "providers": [],
+        "runtimes": []
+      },
+      "content_revision": "7d12eff8156f5e57c43a1d8c09b3f3610832995082b9ab709de300e0fe039277",
+      "input_revision": "7ea437a9682204bf07d5500004e62c23bc9b4fc47026847543539e6d2f4cc98c",
+      "requires": [],
+      "evidence": {"available": false, "sources": []}
+    }
+  ],
   "artifacts": [
     {
       "id": "22222222-2222-4222-8222-222222222222",
       "path": "guidance/startup.md",
       "loading_mode": "whole",
-      "content": "# Startup guidance\nRead this complete artifact before work.\n"
+      "applies": {
+        "paths": [],
+        "concepts": [],
+        "actions": [],
+        "dependencies": [],
+        "providers": [],
+        "runtimes": []
+      },
+      "evidence_details_included": true,
+      "content": "# Startup guidance\nRead this complete artifact before work.\n",
+      "content_bytes": 62,
+      "content_revision": "7d12eff8156f5e57c43a1d8c09b3f3610832995082b9ab709de300e0fe039277",
+      "input_revision": "41aaa4965ef3b9afa321524ca474c0f1b562602bf447b01124008de814acd31f",
+      "contained_unit_ids": ["22222222-2222-4222-8222-222222222222"]
     }
   ]
 }

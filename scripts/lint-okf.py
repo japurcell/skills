@@ -133,6 +133,46 @@ def expected_type(path: str) -> str:
     return "Agent Memory"
 
 
+def agent_brain_diagnostics(root: Path) -> list[Diagnostic]:
+    """Validate namespaced guidance only when a repository opts into its index."""
+    config_path = root / ".agents/context/config.json"
+    if not config_path.is_file():
+        return []
+
+    package_scripts = Path(__file__).resolve().parent.parent / "skills/agent-brain/scripts"
+    sys.path.insert(0, str(package_scripts))
+    try:
+        from agent_brain.config import load_config
+        from agent_brain.knowledge import load_knowledge, validate_guidance_references
+        from agent_brain.metadata import MetadataIssue
+
+        config = load_config(config_path)
+        knowledge = load_knowledge(config, repository_root=root)
+    except Exception as error:
+        return [diagnostic("ABM007", ".agents/context/config.json", 1, 1,
+                           f"configured agent-brain metadata cannot be validated: {error}")]
+
+    issues = list(knowledge.issues)
+    issues.extend(validate_guidance_references(knowledge))
+    counts: dict[str, int] = {}
+    units_by_id = {}
+    for unit in knowledge.units:
+        counts[unit.id] = counts.get(unit.id, 0) + 1
+        units_by_id[unit.id] = unit
+    for startup in config.startup:
+        if counts.get(startup.id) != 1:
+            issues.append(MetadataIssue(
+                "ABM003", ".agents/context/config.json", 1, 1,
+                f"startup unit {startup.id} is unresolved",
+            ))
+        elif units_by_id[startup.id].status == "candidate":
+            issues.append(MetadataIssue(
+                "ABM003", ".agents/context/config.json", 1, 1,
+                f"candidate {startup.id} cannot satisfy mandatory startup guidance",
+            ))
+    return [diagnostic(item.code, item.path, item.line, item.column, item.message) for item in issues]
+
+
 def is_nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -570,6 +610,7 @@ def lint(root: Path) -> list[Diagnostic]:
             findings.extend(frontmatter_resource_diagnostics(root, document, path, data, locations))
             concepts.append((document, path, data, locations))
     findings.extend(manifest_diagnostics(root, concepts))
+    findings.extend(agent_brain_diagnostics(root))
     return sorted(findings, key=lambda item: (item.path, item.line, item.column, item.id))
 
 

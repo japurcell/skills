@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
+from .metadata import _parse_fields
 from .records import AgentBrainConfig, KnowledgeRoot, MappedUnit, StartupRead
 
 
@@ -121,24 +122,79 @@ def load_config(path: Path) -> AgentBrainConfig:
         raise ConfigurationError("mapped_units must be a non-empty array")
     units: list[MappedUnit] = []
     unit_ids: set[str] = set()
-    unit_paths: set[str] = set()
+    mapping_selectors: set[tuple[str, str, str | None]] = set()
     for index, raw_unit in enumerate(units_value):
         field = f"mapped_units[{index}]"
         item = _object(raw_unit, field)
-        _keys(item, field, {"id", "path", "unit"})
+        missing = {"id", "path"} - item.keys()
+        if missing:
+            raise ConfigurationError(f"{field} is missing field(s): {', '.join(sorted(missing))}")
         unit_id = _uuid(item["id"], f"{field}.id")
         if unit_id in unit_ids:
             raise ConfigurationError(f"duplicate mapped unit id {unit_id}")
         unit_ids.add(unit_id)
         unit_path = _relative_path(item["path"], f"{field}.path")
-        if unit_path in unit_paths:
-            raise ConfigurationError(f"duplicate whole-artifact path {unit_path!r}")
-        unit_paths.add(unit_path)
-        if item["unit"] != "whole":
-            raise ConfigurationError(f"{field}.unit must be whole in this CLI")
         if not any(_is_under_root(unit_path, root.path) for root in roots):
             raise ConfigurationError(f"{field}.path must be under a declared knowledge root")
-        units.append(MappedUnit(unit_id, unit_path, "whole"))
+
+        if "unit" in item:
+            _keys(item, field, {"id", "path", "unit"})
+            if item["unit"] != "whole":
+                raise ConfigurationError(f"{field}.unit must be whole")
+            selector_type = "document"
+            heading = None
+            metadata: dict[str, Any] = {
+                "kind": "policy", "status": "established", "applies": {},
+                "requires": [], "evidence": {},
+            }
+        else:
+            allowed = {"id", "path", "selector", "kind", "status", "applies", "requires", "evidence"}
+            unknown = item.keys() - allowed
+            required = {"id", "path", "selector", "kind", "status"}
+            missing = required - item.keys()
+            if missing:
+                raise ConfigurationError(f"{field} is missing field(s): {', '.join(sorted(missing))}")
+            if unknown:
+                raise ConfigurationError(f"{field} has unknown field(s): {', '.join(sorted(unknown))}")
+            selector = _object(item["selector"], f"{field}.selector")
+            selector_type = _string(selector.get("type"), f"{field}.selector.type")
+            if selector_type == "document":
+                _keys(selector, f"{field}.selector", {"type"})
+                heading = None
+            elif selector_type == "section":
+                _keys(selector, f"{field}.selector", {"type", "heading"})
+                heading = _string(selector["heading"], f"{field}.selector.heading")
+            else:
+                raise ConfigurationError(f"{field}.selector.type must be document or section")
+            try:
+                metadata = _parse_fields(
+                    {key: item[key] for key in ("kind", "status", "applies", "requires", "evidence")
+                     if key in item},
+                    is_defaults=True,
+                )
+            except ValueError as exc:
+                raise ConfigurationError(f"{field}: {exc}") from exc
+            if "kind" not in metadata or "status" not in metadata:
+                raise ConfigurationError(f"{field} must define kind and status")
+        key = (unit_path, selector_type, heading)
+        if key in mapping_selectors:
+            selector_label = "document" if heading is None else f"section {heading!r}"
+            raise ConfigurationError(f"duplicate mapped {selector_label} in {unit_path!r}")
+        mapping_selectors.add(key)
+
+        normalized_applies = {name: tuple(metadata.get("applies", {}).get(name, ()))
+                              for name in ("paths", "concepts", "actions", "dependencies", "providers", "runtimes")}
+        units.append(MappedUnit(
+            unit_id,
+            unit_path,
+            selector_type,  # type: ignore[arg-type]
+            heading,
+            metadata["kind"],  # type: ignore[arg-type]
+            metadata["status"],  # type: ignore[arg-type]
+            normalized_applies,
+            tuple(metadata.get("requires", ())),
+            metadata.get("evidence", {}),
+        ))
 
     startup_value = root["startup"]
     if not isinstance(startup_value, list) or not startup_value:
@@ -150,14 +206,12 @@ def load_config(path: Path) -> AgentBrainConfig:
         item = _object(raw_read, field)
         _keys(item, field, {"id", "loading_mode"})
         unit_id = _uuid(item["id"], f"{field}.id")
-        if unit_id not in unit_ids:
-            raise ConfigurationError(f"{field}.id references an unknown mapped unit {unit_id}")
         if unit_id in startup_ids:
             raise ConfigurationError(f"duplicate startup reference {unit_id}")
         startup_ids.add(unit_id)
-        if item["loading_mode"] != "whole":
-            raise ConfigurationError(f"{field}.loading_mode must be whole in this CLI")
-        startup.append(StartupRead(unit_id, "whole"))
+        if item["loading_mode"] not in ("unit", "whole"):
+            raise ConfigurationError(f"{field}.loading_mode must be unit or whole")
+        startup.append(StartupRead(unit_id, item["loading_mode"]))  # type: ignore[arg-type]
 
     return AgentBrainConfig(
         schema_version=1,

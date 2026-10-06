@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from . import __version__
 from .config import ConfigurationError, load_config
-from .knowledge import recall_whole_artifacts
+from .knowledge import load_knowledge
+from .retrieval import retrieve
 from .records import CommandError, Diagnostic, ErrorDetail, InspectionResult, RecallResult
+from .records import RetrievalScope
 
 
 COMMANDS = {
@@ -26,10 +29,13 @@ COMMANDS = {
 COMMAND_DETAILS = {
     "recall": (
         "Inputs: --config PATH selects a repository configuration; otherwise the default is used.\n"
-        "Effects: reads each configured startup artifact in full and prints it as informational context. "
-        "It does not confirm agent delivery.\n"
+        "Effects: reads configured startup guidance and relevant indexed units; --path, --concept, "
+        "--action, --dependency, --provider, and --runtime add known scope, while --query searches text. "
+        "Without task scope, recall shows startup plus universal policy. --all-guidance browses the full library. "
+        "--investigate includes candidate guidance; --show-evidence discloses evidence details. "
+        "The result does not confirm agent delivery.\n"
         "Active agent: the foreground agent applies relevant context; receipt is not confirmed.\n"
-        "Example: agent-brain recall --config .agents/context/config.json"
+        "Example: agent-brain recall --path src/app.py --concept python"
     ),
     "learn": (
         "Inputs: UTF-8 JSON from --input PATH (or - for stdin) and an integration-issued --invocation-file.\n"
@@ -146,6 +152,26 @@ def _parser(*, json_errors: bool) -> tuple[argparse.ArgumentParser, dict[str, ar
             metavar="PATH",
             help="Integration-issued context; a path alone cannot grant authority.",
         )
+    recall_parser = command_parsers["recall"]
+    recall_parser.add_argument("--query", metavar="TEXT", help="Search guidance text and routed concepts.")
+    recall_parser.add_argument(
+        "--all-guidance", action="store_true",
+        help="Browse all established guidance when no task scope is supplied.",
+    )
+    for field in ("path", "concept", "action", "dependency", "provider", "runtime"):
+        plural = field[:-1] + "ies" if field.endswith("y") else field + "s"
+        recall_parser.add_argument(
+            f"--{field}", dest=plural, action="append", default=[], metavar="VALUE",
+            help=f"Add a known {field} to retrieval scope; may be repeated.",
+        )
+    recall_parser.add_argument(
+        "--investigate", action="store_true",
+        help="Include applicable candidate units for investigation; they never satisfy policy references.",
+    )
+    recall_parser.add_argument(
+        "--show-evidence", action="store_true",
+        help="Include detailed evidence notes for a relevant investigation or precision request.",
+    )
     help_parser = subparsers.add_parser(
         "help",
         description="Show help for a command.",
@@ -289,14 +315,40 @@ def _print_error(
 def _print_recall(result: RecallResult, *, json_output: bool) -> None:
     if json_output:
         print(json.dumps(result.as_json_object(), ensure_ascii=False, indent=2, sort_keys=True))
+        _print_recall_gaps(result)
         return
 
     print(result.notice)
+    if result.scope_status == "task_unknown":
+        print("Task scope: unknown; showing required startup guidance and universal policy only.")
+    elif result.scope_status == "library":
+        print("Scope: complete indexed guidance library.")
+    elif result.scope_status == "broadened":
+        print("Scope: broadened because one or more selectors were uncertain.")
     for artifact in result.artifacts:
-        print(f"\n## {artifact.path} [whole artifact]")
+        label = "whole artifact" if artifact.loading_mode == "whole" else "guidance unit"
+        print(f"\n## {artifact.path} [{label}]")
+        scope_parts = [
+            f"{field}={', '.join(values)}"
+            for field, values in artifact.applies.items()
+            if values
+        ]
+        print(f"Applies: {'; '.join(scope_parts) if scope_parts else 'unspecified'}")
+        if artifact.evidence_details_included:
+            print("Whole-artifact read preserves source metadata comments and any detailed evidence they contain.")
         sys.stdout.write(artifact.content)
         if not artifact.content.endswith(("\n", "\r")):
             sys.stdout.write("\n")
+        contained_ids = set(artifact.contained_unit_ids)
+        for unit in result.units:
+            if unit.id in contained_ids and unit.evidence:
+                print(f"Evidence for {unit.id}: {json.dumps(unit.evidence, ensure_ascii=False, sort_keys=True)}")
+    _print_recall_gaps(result)
+
+
+def _print_recall_gaps(result: RecallResult) -> None:
+    for gap in result.gaps:
+        print(f"agent-brain: CONTEXT_GAP: {gap['path']}: {gap['message']}", file=sys.stderr)
 
 
 def _configure_output_encoding() -> None:
@@ -337,7 +389,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         config_path = Path(arguments.config) if arguments.config is not None else DEFAULT_CONFIG
         try:
             config = load_config(config_path)
-            result = recall_whole_artifacts(config, repository_root=Path.cwd())
+            knowledge = load_knowledge(config, repository_root=Path.cwd())
+            scope = RetrievalScope(
+                query=arguments.query,
+                selectors={
+                    "paths": tuple(arguments.paths),
+                    "concepts": tuple(arguments.concepts),
+                    "actions": tuple(arguments.actions),
+                    "dependencies": tuple(arguments.dependencies),
+                    "providers": tuple(arguments.providers),
+                    "runtimes": tuple(arguments.runtimes),
+                },
+                investigate=arguments.investigate,
+                show_evidence=arguments.show_evidence,
+                all_guidance=arguments.all_guidance,
+            )
+            result = retrieve(config, knowledge, scope)
         except ConfigurationError as exc:
             _print_error(
                 "CONFIGURATION_INVALID",
@@ -348,8 +415,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json_output=arguments.json_output,
             )
             return 2
-        _print_recall(result, json_output=arguments.json_output)
-        return 0
+        try:
+            _print_recall(result.recall, json_output=arguments.json_output)
+            sys.stdout.flush()
+        except BrokenPipeError:
+            with open(os.devnull, "w", encoding="utf-8") as sink:
+                os.dup2(sink.fileno(), sys.stdout.fileno())
+            print("agent-brain: DELIVERY_INCOMPLETE: output closed before recall completed.", file=sys.stderr)
+            return 1
+        return result.exit_code
 
     if arguments.command in ("learn", "dream"):
         _print_error(

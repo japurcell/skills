@@ -12,7 +12,10 @@ CheckStatus = Literal["present", "missing", "invalid", "unavailable", "disabled"
 InspectionCommand = Literal["doctor", "status"]
 RetryEligibility = Literal[True, False]
 KnowledgeOwnership = Literal["read_only", "agent_brain"]
-LoadingMode = Literal["whole"]
+LoadingMode = Literal["unit", "whole"]
+GuidanceLoadingMode = Literal["unit", "whole"]
+GuidanceKind = Literal["policy", "fact"]
+GuidanceStatus = Literal["established", "candidate"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,13 +28,19 @@ class KnowledgeRoot:
 class MappedUnit:
     id: str
     path: str
-    unit: Literal["whole"]
+    selector: Literal["document", "section"]
+    heading: str | None
+    kind: GuidanceKind
+    status: GuidanceStatus
+    applies: dict[str, tuple[str, ...]]
+    requires: tuple["RequiredReference", ...]
+    evidence: dict[str, object]
 
 
 @dataclass(frozen=True, slots=True)
 class StartupRead:
     id: str
-    loading_mode: LoadingMode
+    loading_mode: GuidanceLoadingMode
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +50,65 @@ class AgentBrainConfig:
     knowledge_roots: tuple[KnowledgeRoot, ...]
     mapped_units: tuple[MappedUnit, ...]
     startup: tuple[StartupRead, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class GuidanceUnit:
+    id: str
+    path: str
+    selector: Literal["document", "section"]
+    heading: str | None
+    kind: GuidanceKind
+    status: GuidanceStatus
+    applies: dict[str, tuple[str, ...]]
+    requires: tuple["RequiredReference", ...]
+    evidence: dict[str, object]
+    content: str
+    source: Literal["annotation", "mapping"]
+
+
+@dataclass(frozen=True, slots=True)
+class RequiredReference:
+    id: str
+    loading_mode: GuidanceLoadingMode
+
+
+@dataclass(frozen=True, slots=True)
+class RetrievalScope:
+    query: str | None
+    selectors: dict[str, tuple[str, ...]]
+    investigate: bool = False
+    show_evidence: bool = False
+    all_guidance: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class RecalledUnit:
+    id: str
+    path: str
+    kind: GuidanceKind
+    status: GuidanceStatus
+    loading_mode: GuidanceLoadingMode
+    source: Literal["annotation", "mapping"]
+    applies: dict[str, tuple[str, ...]]
+    content_revision: str
+    input_revision: str
+    requires: tuple[RequiredReference, ...]
+    evidence: dict[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class DeliveryArtifact:
+    id: str
+    path: str
+    loading_mode: GuidanceLoadingMode
+    applies: dict[str, tuple[str, ...]]
+    evidence_details_included: bool
+    content: str
+    content_bytes: int
+    content_revision: str
+    input_revision: str
+    contained_unit_ids: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,7 +151,11 @@ class RecallResult:
     command: Literal["recall"]
     informational_only: Literal[True]
     notice: str
-    artifacts: tuple[RecalledArtifact, ...]
+    scope_status: Literal["task_unknown", "scoped", "broadened", "library"]
+    complete: bool
+    gaps: tuple[dict[str, str], ...]
+    units: tuple[RecalledUnit, ...]
+    artifacts: tuple[DeliveryArtifact, ...]
 
     def as_json_object(self) -> dict[str, object]:
         return asdict(self)

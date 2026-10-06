@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-brain.invalid/schemas/metadata-v1.schema.json",
+  "title": "agent-brain Markdown comment v1",
+  "description": "The parsed JSON value inside one <!-- agent-brain ... --> comment. A document uses one defaults object and zero or more unit objects. Defaults never have an ID; each unit has a stable UUID. The typed validator checks inheritance and cross-comment references.",
+  "oneOf": [
+    {"$ref": "#/$defs/defaultsComment"},
+    {"$ref": "#/$defs/unitComment"}
+  ],
+  "$defs": {
+    "defaultsComment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "defaults"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "defaults": {"$ref": "#/$defs/fields"}
+      }
+    },
+    "unitComment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "id"],
+      "properties": {
+        "schema_version": {"const": 1},
+        "id": {"type": "string", "format": "uuid"},
+        "kind": {"enum": ["policy", "fact"]},
+        "status": {"enum": ["established", "candidate"]},
+        "applies": {"$ref": "#/$defs/applies"},
+        "requires": {"$ref": "#/$defs/requires"},
+        "evidence": {"type": "object"}
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"enum": ["policy", "fact"]},
+        "status": {"enum": ["established", "candidate"]},
+        "applies": {"$ref": "#/$defs/applies"},
+        "requires": {"$ref": "#/$defs/requires"},
+        "evidence": {"type": "object"}
+      }
+    },
+    "applies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {"$ref": "#/$defs/selectorList"},
+        "concepts": {"$ref": "#/$defs/selectorList"},
+        "actions": {"$ref": "#/$defs/selectorList"},
+        "dependencies": {"$ref": "#/$defs/selectorList"},
+        "providers": {"$ref": "#/$defs/selectorList"},
+        "runtimes": {"$ref": "#/$defs/selectorList"}
+      }
+    },
+    "selectorList": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "loading_mode"],
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "loading_mode": {"enum": ["unit", "whole"]}
+        }
+      },
+      "description": "The typed validator rejects repeated IDs even when loading modes differ."
+    }
+  }
+}

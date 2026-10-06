@@ -18,13 +18,15 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": {"$ref": "#/$defs/mappedUnit"}
+      "items": {"$ref": "#/$defs/mappedUnit"},
+      "description": "The typed validator also rejects duplicate IDs and repeated selectors for one source path. All mappings are read-only."
     },
     "startup": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": {"$ref": "#/$defs/startupRead"}
+      "items": {"$ref": "#/$defs/startupRead"},
+      "description": "References may target inline annotations or mapped units; unresolved IDs, duplicate IDs, and candidate startup guidance are rejected or surfaced as gaps by the typed validator."
     }
   },
   "$defs": {
@@ -39,24 +41,83 @@
       "additionalProperties": false,
       "required": ["path", "ownership"],
       "properties": {
-        "path": {
-          "oneOf": [
-            {"const": "."},
-            {"$ref": "#/$defs/repositoryPath"}
-          ]
-        },
+        "path": {"oneOf": [{"const": "."}, {"$ref": "#/$defs/repositoryPath"}]},
         "ownership": {"enum": ["read_only", "agent_brain"]}
       }
     },
     "mappedUnit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "path", "unit"],
+          "properties": {
+            "id": {"type": "string", "format": "uuid"},
+            "path": {"$ref": "#/$defs/repositoryPath"},
+            "unit": {"const": "whole"}
+          },
+          "description": "Legacy M1 shorthand for an established whole-document policy mapping."
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "path", "selector", "kind", "status"],
+          "properties": {
+            "id": {"type": "string", "format": "uuid"},
+            "path": {"$ref": "#/$defs/repositoryPath"},
+            "selector": {"$ref": "#/$defs/selector"},
+            "kind": {"enum": ["policy", "fact"]},
+            "status": {"enum": ["established", "candidate"]},
+            "applies": {"$ref": "#/$defs/applies"},
+            "requires": {"$ref": "#/$defs/requires"},
+            "evidence": {"type": "object"}
+          },
+          "description": "Read-only external mapping. The selector and metadata live in config so a protected source document need not be edited."
+        }
+      ]
+    },
+    "selector": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type"],
+          "properties": {"type": {"const": "document"}}
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "heading"],
+          "properties": {"type": {"const": "section"}, "heading": {"type": "string", "minLength": 1, "pattern": "\\S"}}
+        }
+      ]
+    },
+    "applies": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "path", "unit"],
       "properties": {
-        "id": {"type": "string", "format": "uuid"},
-        "path": {"$ref": "#/$defs/repositoryPath"},
-        "unit": {"const": "whole"}
+        "paths": {"$ref": "#/$defs/selectorList"},
+        "concepts": {"$ref": "#/$defs/selectorList"},
+        "actions": {"$ref": "#/$defs/selectorList"},
+        "dependencies": {"$ref": "#/$defs/selectorList"},
+        "providers": {"$ref": "#/$defs/selectorList"},
+        "runtimes": {"$ref": "#/$defs/selectorList"}
       }
+    },
+    "selectorList": {"type": "array", "items": {"type": "string", "minLength": 1, "pattern": "\\S"}},
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "loading_mode"],
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "loading_mode": {"enum": ["unit", "whole"]}
+        }
+      },
+      "description": "The typed validator also rejects repeated reference IDs, even when their loading modes differ."
     },
     "startupRead": {
       "type": "object",
@@ -64,7 +125,7 @@
       "required": ["id", "loading_mode"],
       "properties": {
         "id": {"type": "string", "format": "uuid"},
-        "loading_mode": {"const": "whole"}
+        "loading_mode": {"enum": ["unit", "whole"]}
       }
     }
   }

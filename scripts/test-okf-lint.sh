@@ -848,6 +848,89 @@ test_stable_ordering_locations_and_human_json_parity() {
   assert_human_json_parity "$case_repo"
 }
 
+test_agent_brain_metadata_is_opt_in_and_checks_identity_and_references() {
+  local no_config_repo
+  local candidate_repo
+  local invalid_reference_repo
+
+  no_config_repo="$(new_case_repo agent-brain-no-config)"
+  printf '%s\n' '<!-- agent-brain {broken metadata} -->' >>"$no_config_repo/.agents/memory/DRAFT.md"
+  run_linter "$no_config_repo" --format json
+  assert_status 0
+  assert_json_envelope
+  assert_json_clean
+
+  candidate_repo="$(new_case_repo agent-brain-candidate-startup)"
+  ROOT="$candidate_repo" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+root = Path(os.environ["ROOT"])
+candidate_id = "11111111-1111-4111-8111-111111111111"
+config = {
+    "schema_version": 1,
+    "repository_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "knowledge_roots": [
+        {"path": ".agents/instructions", "ownership": "read_only"},
+        {"path": ".agents/memory", "ownership": "read_only"},
+    ],
+    "mapped_units": [{
+        "id": "22222222-2222-4222-8222-222222222222",
+        "path": ".agents/instructions/repo.md",
+        "unit": "whole",
+    }],
+    "startup": [{"id": candidate_id, "loading_mode": "unit"}],
+}
+config_path = root / ".agents/context/config.json"
+config_path.parent.mkdir(parents=True)
+config_path.write_text(json.dumps(config), encoding="utf-8")
+doc = root / ".agents/memory/DRAFT.md"
+annotation = "<!-- agent-brain {\"schema_version\":1,\"id\":\"" + candidate_id + "\",\"kind\":\"policy\",\"status\":\"candidate\",\"applies\":{},\"requires\":[],\"evidence\":{}} -->\n"
+doc.write_text(doc.read_text(encoding="utf-8") + "\n" + annotation, encoding="utf-8")
+PY
+  run_linter "$candidate_repo" --format json
+  assert_status 1
+  assert_json_envelope
+  assert_json_has ABM003 .agents/context/config.json
+
+  invalid_reference_repo="$(new_case_repo agent-brain-unresolved-reference)"
+  ROOT="$invalid_reference_repo" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+root = Path(os.environ["ROOT"])
+unit_id = "33333333-3333-4333-8333-333333333333"
+missing_id = "44444444-4444-4444-8444-444444444444"
+startup_id = "55555555-5555-4555-8555-555555555555"
+config = {
+    "schema_version": 1,
+    "repository_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "knowledge_roots": [
+        {"path": ".agents/instructions", "ownership": "read_only"},
+        {"path": ".agents/memory", "ownership": "read_only"},
+    ],
+    "mapped_units": [{"id": startup_id, "path": ".agents/instructions/repo.md", "unit": "whole"}],
+    "startup": [{"id": startup_id, "loading_mode": "whole"}],
+}
+config_path = root / ".agents/context/config.json"
+config_path.parent.mkdir(parents=True)
+config_path.write_text(json.dumps(config), encoding="utf-8")
+annotation = "<!-- agent-brain {\"schema_version\":1,\"id\":\"" + unit_id + "\",\"kind\":\"policy\",\"status\":\"established\",\"applies\":{},\"requires\":[{\"id\":\"" + missing_id + "\",\"loading_mode\":\"unit\"}],\"evidence\":{}} -->\n"
+draft = root / ".agents/memory/DRAFT.md"
+draft.write_text(draft.read_text(encoding="utf-8") + "\n" + annotation, encoding="utf-8")
+other = root / ".agents/memory/OTHER.md"
+other.write_text(draft.read_text(encoding="utf-8"), encoding="utf-8")
+PY
+  run_linter "$invalid_reference_repo" --format json
+  assert_status 1
+  assert_json_envelope
+  assert_json_has ABM002 .agents/memory/DRAFT.md
+  assert_json_has ABM003 .agents/memory/DRAFT.md
+  echo "PASSED: configured agent-brain metadata, candidate startup, duplicate identity, and unresolved references"
+}
+
 test_okf900_untrusted_result() {
   local empty_repo="$TEST_ROOT/no-bundles"
 
@@ -935,6 +1018,7 @@ main() {
   test_okf104_manifest_binding
   test_okf105_legacy_lifecycle
   test_stable_ordering_locations_and_human_json_parity
+  test_agent_brain_metadata_is_opt_in_and_checks_identity_and_references
   test_okf900_untrusted_result
   test_okf900_exit_precedence_with_ordinary_findings
   test_okf900_requires_vendored_pyyaml

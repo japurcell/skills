@@ -1,51 +1,161 @@
-"""Read complete, explicitly mapped artifacts for informational recall."""
+"""Read indexed guidance from declared repository roots without modifying it."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from collections import Counter
 from pathlib import Path
 
 from .config import ConfigurationError
-from .records import AgentBrainConfig, RecalledArtifact, RecallResult
+from .metadata import MetadataIssue, extract_section_content, parse_document_metadata
+from .records import AgentBrainConfig, GuidanceUnit, RequiredReference
 
 
-NOTICE = "Informational output only; this does not confirm agent delivery or application."
+@dataclass(frozen=True, slots=True)
+class KnowledgeBase:
+    units: tuple[GuidanceUnit, ...]
+    issues: tuple[MetadataIssue, ...]
+    documents: dict[str, str]
+    contained_ids: dict[str, tuple[str, ...]]
 
 
-def recall_whole_artifacts(config: AgentBrainConfig, *, repository_root: Path) -> RecallResult:
+def validate_guidance_references(knowledge: KnowledgeBase) -> tuple[MetadataIssue, ...]:
+    """Validate identity and reference closure across configured guidance roots."""
+    issues: list[MetadataIssue] = []
+    counts = Counter(unit.id for unit in knowledge.units)
+    for unit_id, count in counts.items():
+        if count > 1:
+            duplicate = next(unit for unit in knowledge.units if unit.id == unit_id)
+            issues.append(MetadataIssue("ABM002", duplicate.path, 1, 1,
+                                        f"duplicate guidance unit id {unit_id}"))
+    by_id = {unit.id: unit for unit in knowledge.units if counts[unit.id] == 1}
+    for unit in knowledge.units:
+        for reference in unit.requires:
+            target = by_id.get(reference.id)
+            if target is None:
+                issues.append(MetadataIssue("ABM003", unit.path, 1, 1,
+                                            f"required reference {reference.id} is unresolved"))
+            elif unit.status == "established" and target.status == "candidate":
+                issues.append(MetadataIssue("ABM003", unit.path, 1, 1,
+                                            f"candidate {reference.id} cannot satisfy established guidance"))
+    return tuple(issues)
+
+
+def load_knowledge(config: AgentBrainConfig, *, repository_root: Path) -> KnowledgeBase:
     repository = repository_root.resolve(strict=True)
-    units_by_id = {unit.id: unit for unit in config.mapped_units}
-    artifacts: list[RecalledArtifact] = []
-    for startup_read in config.startup:
-        unit = units_by_id[startup_read.id]
-        artifact_path = repository / Path(*unit.path.split("/"))
+    root_paths: list[tuple[str, Path]] = []
+    issues: list[MetadataIssue] = []
+    for root in config.knowledge_roots:
+        declared = repository if root.path == "." else repository / Path(*root.path.split("/"))
         try:
-            resolved = artifact_path.resolve(strict=True)
-        except FileNotFoundError as exc:
-            raise ConfigurationError(f"mapped artifact not found: {unit.path}") from exc
+            resolved = declared.resolve(strict=True)
         except OSError as exc:
-            raise ConfigurationError(f"cannot read mapped artifact {unit.path}: {exc}") from exc
-        if not resolved.is_relative_to(repository):
-            raise ConfigurationError(f"mapped artifact escapes repository: {unit.path}")
-        matching_roots: list[Path] = []
-        for root in config.knowledge_roots:
-            if root.path != "." and not unit.path.startswith(f"{root.path}/"):
-                continue
+            issues.append(MetadataIssue("ABM004", root.path, 1, 1, f"knowledge root unavailable: {exc}"))
+            continue
+        if not resolved.is_relative_to(repository) or not resolved.is_dir():
+            issues.append(MetadataIssue("ABM004", root.path, 1, 1, "knowledge root is not a repository directory"))
+            continue
+        root_paths.append((root.path, resolved))
+
+    documents: dict[str, str] = {}
+    for root_name, resolved_root in root_paths:
+        candidates = sorted(resolved_root.rglob("*.md")) if resolved_root.is_dir() else []
+        for candidate in candidates:
             try:
-                resolved_root = (repository / Path(*root.path.split("/"))).resolve(strict=True)
+                resolved = candidate.resolve(strict=True)
             except OSError as exc:
-                raise ConfigurationError(f"declared knowledge root unavailable: {root.path}") from exc
-            if not resolved_root.is_relative_to(repository):
-                raise ConfigurationError(f"declared knowledge root escapes repository: {root.path}")
-            matching_roots.append(resolved_root)
-        if not matching_roots:
-            raise ConfigurationError(f"mapped artifact is outside declared knowledge roots: {unit.path}")
-        if not any(resolved.is_relative_to(root) for root in matching_roots):
-            raise ConfigurationError(
-                f"mapped artifact resolves outside declared knowledge roots: {unit.path}"
+                issues.append(MetadataIssue("ABM004", _repo_relative(repository, candidate), 1, 1,
+                                            f"guidance file unavailable: {exc}"))
+                continue
+            if not resolved.is_relative_to(resolved_root):
+                issues.append(MetadataIssue("ABM004", _repo_relative(repository, candidate), 1, 1,
+                                            "guidance file resolves outside its declared knowledge root"))
+                continue
+            relative = _repo_relative(repository, candidate)
+            if relative in documents:
+                continue
+            content, issue = _read_utf8(relative, resolved)
+            if issue is not None:
+                issues.append(issue)
+            elif content is not None:
+                documents[relative] = content
+
+    units: list[GuidanceUnit] = []
+    for relative, content in sorted(documents.items()):
+        parsed, parse_issues = parse_document_metadata(relative, content)
+        units.extend(parsed)
+        issues.extend(parse_issues)
+
+    for mapped in config.mapped_units:
+        content = documents.get(mapped.path)
+        if content is None:
+            artifact = repository / Path(*mapped.path.split("/"))
+            try:
+                resolved = artifact.resolve(strict=True)
+            except OSError as exc:
+                issues.append(MetadataIssue("ABM004", mapped.path, 1, 1,
+                                            f"mapped guidance is unavailable: {exc}"))
+                continue
+            allowed_roots = [root for _, root in root_paths if resolved.is_relative_to(root)]
+            if not resolved.is_relative_to(repository) or not allowed_roots:
+                raise ConfigurationError(
+                    f"mapped artifact resolves outside declared knowledge roots: {mapped.path}"
+                )
+            content, issue = _read_utf8(mapped.path, resolved)
+            if issue is not None:
+                issues.append(issue)
+                continue
+            assert content is not None
+            documents[mapped.path] = content
+        if mapped.selector == "section":
+            assert mapped.heading is not None
+            selected_content, issue = extract_section_content(mapped.path, content, mapped.heading)
+            if issue is not None:
+                issues.append(issue)
+                continue
+            assert selected_content is not None
+            content = selected_content
+        units.append(
+            GuidanceUnit(
+                id=mapped.id,
+                path=mapped.path,
+                selector=mapped.selector,
+                heading=mapped.heading,
+                kind=mapped.kind,
+                status=mapped.status,
+                applies=mapped.applies,
+                requires=mapped.requires,
+                evidence=mapped.evidence,
+                content=content,
+                source="mapping",
             )
-        try:
-            content = resolved.read_bytes().decode("utf-8")
-        except (OSError, UnicodeDecodeError) as exc:
-            raise ConfigurationError(f"cannot read mapped artifact {unit.path}: {exc}") from exc
-        artifacts.append(RecalledArtifact(unit.id, unit.path, startup_read.loading_mode, content))
-    return RecallResult(1, "ok", "recall", True, NOTICE, tuple(artifacts))
+        )
+
+    ids_by_path: dict[str, list[str]] = {}
+    for unit in units:
+        ids_by_path.setdefault(unit.path, []).append(unit.id)
+    contained_ids = {path: tuple(dict.fromkeys(ids)) for path, ids in ids_by_path.items()}
+    return KnowledgeBase(tuple(units), tuple(issues), documents, contained_ids)
+
+
+def _repo_relative(repository: Path, path: Path) -> str:
+    try:
+        return path.absolute().relative_to(repository).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _read_utf8(relative: str, resolved: Path) -> tuple[str | None, MetadataIssue | None]:
+    try:
+        before = resolved.stat()
+        raw = resolved.read_bytes()
+        after = resolved.stat()
+    except OSError as exc:
+        return None, MetadataIssue("ABM004", relative, 1, 1, f"guidance file unavailable: {exc}")
+    if len(raw) != before.st_size or before.st_size != after.st_size or before.st_mtime_ns != after.st_mtime_ns:
+        return None, MetadataIssue("ABM006", relative, 1, 1, "guidance changed while it was being read; delivery is incomplete")
+    try:
+        return raw.decode("utf-8"), None
+    except UnicodeDecodeError as exc:
+        return None, MetadataIssue("ABM006", relative, 1, 1,
+                                   f"guidance is not complete UTF-8 text at byte {exc.start}")

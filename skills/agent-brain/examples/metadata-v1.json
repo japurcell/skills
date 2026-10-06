@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "7e8f1c31-c38c-4f40-91e9-972b73882f42",
+  "kind": "policy",
+  "status": "established",
+  "applies": {
+    "paths": ["src/**"],
+    "concepts": ["python"]
+  },
+  "requires": [
+    {"id": "7e8f1c31-c38c-4f40-91e9-972b73882f43", "loading_mode": "whole"}
+  ],
+  "evidence": {
+    "sources": [
+      {"source": "policy.md", "revision": "r3", "note": "Detailed support note is shown only with --show-evidence."}
+    ]
+  }
+}
