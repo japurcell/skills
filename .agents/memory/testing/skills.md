@@ -15,6 +15,8 @@ description: Validation and public grader tests for publishable and repo-local s
 
 `skills/handoff/evals/` covers creation, feature updates, invalid-path fallback, stale-history resume, and pending owner rollout. `.agents/skills/exec-plans/evals/` covers novice plan creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Each contains its own fixtures, assertions, grader, and public-CLI tests.
 
+ExecPlan [authoring scenarios](../../skills/exec-plans/evals/authoring-scenarios.md) add a qualitative prototype/migration case using the large-input brief and existing create-plan project. Review independent feasibility, prototype decisions, both-path validation, retirement, and exact command/error guidance manually; this case is outside the deterministic grader's three supported scenarios. Preserve instruction-coverage findings separately from sampled agent-performance claims.
+
 Run the focused suites from the repository root:
 
 ```bash
@@ -22,7 +24,7 @@ rtk proxy python3 -m unittest discover -s skills/handoff/evals -p test_grade_ben
 rtk proxy python3 -m unittest discover -s .agents/skills/exec-plans/evals -p test_grade_benchmark.py
 ```
 
-Both graders consume canonical iteration directories; their exit and output contract is in the [API Map](../API_MAP.md#document-maintenance-graders). Public cases cover valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions, and contradictory proof claims. These are scenario-specific heuristics, not a general natural-language verifier.
+Both graders consume canonical iteration directories; their exit and output contract is in the [API Map](../API_MAP.md#document-maintenance-graders). Public cases cover valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent or contributor actions, and contradictory proof claims. Conditional wording and descriptive modifiers must not hide a separate factual claim in a comma, coordinated, or contrasting clause. These are scenario-specific heuristics, not a general natural-language verifier.
 
 Use `PYTHONPATH=scripts/vendor` for skill definition validation. In a sandbox that protects `.agents/`, compile with `PYTHONPYCACHEPREFIX` pointing to a writable temporary directory so bytecode generation does not attempt to edit the protected bundle. See [benchmark reporting limitations](../known-issues/skills.md) before interpreting absent runtime metrics.
 

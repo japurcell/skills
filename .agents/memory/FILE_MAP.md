@@ -27,7 +27,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `hooks/` | hooks | Canonical build-time renderers, provider metadata, and explicit generated-output ownership manifest. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
 | `skills/handoff/` | skills | Independent handoff maintenance skill and creation/update/resume evaluation bundle. |
-| `.agents/skills/exec-plans/` | repo-local skills | Independent execution-plan workflow and creation/resume/recovery evaluation bundle. |
+| `.agents/skills/exec-plans/` | repo-local skills | Independent execution-plan workflow, creation/resume/recovery grader, and qualitative prototype/migration [authoring scenario](../skills/exec-plans/evals/authoring-scenarios.md). |
 | `skills/dotnet-upgrade/` | skills | Explicitly invoked .NET upgrade source bundle with standalone templates, dated route research and provenance; its document-only acceptance record is [references/document-review.md](../../skills/dotnet-upgrade/references/document-review.md). Use [skills instructions](../instructions/skills.md#dotnet-upgrade) for approval and review boundaries. |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |

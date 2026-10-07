@@ -60,6 +60,7 @@ Review the authored documents and retained evidence as well as the scores. A fix
 ## Refactor boundaries
 
 - For large skill refactors, preserve any explicit exclusions or approval requirements already documented for that skill.
+- Before pruning a skill, map its existing behavioral obligations to the replacement. Keep actionable authoring and validation detail unless its removal is in scope; passing evals cover only the branches they exercise.
 
 ## dotnet-upgrade
 
