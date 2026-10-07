@@ -1,11 +1,11 @@
 ---
 type: Agent Memory
-title: Fixture architecture
-description: Rich valid metadata and repository structure.
+title: Fixture telemetry
+description: Rich valid metadata for a focused telemetry fact.
 resource: ../../README.md
 tags:
   - fixture
-  - architecture
+  - telemetry
 sources:
   - resource: https://example.com/reference
     id: external-reference
@@ -31,6 +31,6 @@ x-fixture-extension:
   accepted: true
 ---
 
-# Architecture
+# Telemetry
 
 The fixture deliberately includes every supported standard metadata family.

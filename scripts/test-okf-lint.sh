@@ -73,8 +73,6 @@ PY
     "Knowledge Index" \
     "Source Ingestion Log" \
     "Known Issue" \
-    "Testing Guidance" \
-    "Architecture Decision" \
     "Source Summary"; do
     grep -R -Fq "type: $expected_type" \
       "$FIXTURE_ROOT/.agents/instructions" "$FIXTURE_ROOT/.agents/memory" || \
@@ -462,8 +460,9 @@ test_okf007_lowercase_reserved_paths() {
   assert_json_only_id OKF007
 
   case_repo="$(new_case_repo okf007-nested-log)"
-  cp "$case_repo/.agents/memory/DRAFT.md" "$case_repo/.agents/memory/testing/log.md"
-  expect_diagnostic "$case_repo" OKF007 .agents/memory/testing/log.md 1 1
+  mkdir -p "$case_repo/.agents/memory/notes"
+  cp "$case_repo/.agents/memory/DRAFT.md" "$case_repo/.agents/memory/notes/log.md"
+  expect_diagnostic "$case_repo" OKF007 .agents/memory/notes/log.md 1 1
   assert_json_only_id OKF007
 
   case_repo="$(new_case_repo okf007-instruction-index)"
@@ -483,14 +482,11 @@ test_okf101_every_path_derived_type() {
   local case_repo
   local paths=(
     '.agents/instructions/repo.md'
-    '.agents/memory/ARCHITECTURE.md'
+    '.agents/memory/telemetry.md'
     '.agents/memory/INDEX.md'
     '.agents/memory/LOG.md'
-    '.agents/memory/KNOWN_ISSUES.md'
-    '.agents/memory/known-issues/scripts.md'
-    '.agents/memory/TESTING_STRATEGY.md'
-    '.agents/memory/testing/scripts.md'
-    '.agents/memory/adrs/hooks.md'
+    '.agents/memory/known-issues/skills.md'
+    '.agents/instructions/testing/scripts.md'
     '.agents/memory/sources/example-md.summary.md'
   )
 

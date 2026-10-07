@@ -33,7 +33,7 @@ If any gate fails, omit the fact rather than inventing provenance. A no-change d
 
 - Put required actions under `.agents/instructions/`; put admitted descriptive facts under `.agents/memory/`.
 - Keep entry points short. Split when tasks have distinct loading triggers, not to meet a line target. Give each rule one owner and link directly to it.
-- Update [instruction routes](INDEX.md), the [memory index](../memory/INDEX.md), and affected inbound links when documents move or change purpose. Do not automatically recreate removed maps or broad caches. Any proposed replacement must pass the same claim-level admission gates.
+- Update [instruction routes](INDEX.md), the [memory index](../memory/INDEX.md), and affected inbound links when documents move or change purpose.
 - Keep temporary working notes in `.agents/scratchpad/` or a disposable external directory. Follow [repository retention rules](repo.md#documentation-retention) for completed plans and research.
 - Routine documentation maintenance may edit only the instruction and memory bundles. `.agents/sources/` is immutable. Changes to local workflow skills require task authorization; the maintained `ingest-source` recovery skill remains the existing exception for ingest workflow changes.
 
