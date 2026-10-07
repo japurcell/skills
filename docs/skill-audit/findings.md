@@ -2,7 +2,7 @@
 
 Single owning register, started 2026-10-05. First-batch source revision: `91ba7ab941450327c8d178c27966d1150bd0b74b`; repository-local review source revision: `bd7b1a68a081ea847b2e6c1712363000ef01751f`; delegation/discovery source revision: `991b14b86440dab452ac28312c5f05a2b4a42266`; quality/harness source revision: `72a3ae956e3533aaddf33eb1e8d8ecf30b69d08f`. Requirements/planning source revision: `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`. Execution/handoff source revision: `8d563fae209c5b3583eacb7e7f4056783279aff0`. Static observations and predicted consequences remain separate from observed runtime behavior. No native audit baseline has run.
 
-Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. Thirty-seven earlier findings have recorded human dispositions, including QH-001 through QH-010 and RPT-001 through RPT-005 on 2026-10-06. Ten Execution and Handoff findings await live batch review. Five proposed new routes are blocked by that batch. Accepted repairs remain later plan scope; sixteen underlying decisions remain pending and unblocked, including DD-004, seven quality/harness routes and three requirements/planning routes. Retention selects no underlying behavior. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
+Applicability, adoption disposition, compliance, proposal status, and implementation acceptance are distinct. The human reviewed SAG-001 through SAG-014 and RLW-001 through RLW-003 on 2026-10-05, then DD-001 through DD-005 on 2026-10-06. All forty-seven findings have recorded human dispositions, including QH-001 through QH-010 and RPT-001 through RPT-005 on 2026-10-06, then EH-001 through EH-010 on 2026-10-07. Accepted repairs and coverage remain later plan scope; twenty-one underlying decisions remain pending and unblocked, including the five retained Execution and Handoff routes. Retention selects no underlying behavior. RLW-001/RLW-003 are accepted clarifications, while RLW-002 retains its separate intended-output decision. None authorizes implementation, installation, or publication. Model/client run configuration: none for these static findings. Source-review delegation settings belong in the batch report, not behavioral evidence.
 
 ## Proposal index
 
@@ -45,16 +45,16 @@ Applicability, adoption disposition, compliance, proposal status, and implementa
 | [RPT-003](#rpt-003-architecture-contest-conflicts-with-explores-narrow-branch) | Architecture Contest conflicts with Explore's narrow branch | Pending separate decision | [Resolve Architecture Contest Narrow Exploration](tickets/resolve-architecture-contest-narrow-exploration.md) |
 | [RPT-004](#rpt-004-architecture-evaluations-bind-local-absolute-fixture-paths) | Architecture evaluations bind local absolute fixture paths | Accepted for later planning | Later evaluation scope; exact fixtures/oracles required |
 | [RPT-005](#rpt-005-ui-planning-prescribes-an-unshipped-browser-helper) | UI planning prescribes an unshipped browser helper | Pending separate decision | [Resolve Planning Browser Verification Prerequisite](tickets/resolve-planning-browser-verification-prerequisite.md) |
-| [EH-001](#eh-001-loop-paper-grader-does-not-establish-blind-orchestration) | Loop paper grader does not establish blind orchestration | Pending human batch review | Proposed later evaluation scope; exact fixture/oracle choices required |
-| [EH-002](#eh-002-commit-evaluations-cover-a-pr-title-override-without-default-coverage) | Commit evaluations cover a PR title override without default coverage | Pending human batch review | Proposed later evaluation scope; exact fixture/oracle choices required |
-| [EH-003](#eh-003-handoff-grader-rejects-a-valid-requested-path) | Handoff grader rejects a valid requested path | Pending human batch review | Proposed later evaluation scope; exact fixture/oracle choices required |
-| [EH-004](#eh-004-handoff-evaluations-declare-two-missing-logs) | Handoff evaluations declare two missing logs | Pending human batch review | Proposed later evaluation scope; exact fixture/oracle choices required |
-| [EH-005](#eh-005-ralph-loop-failure-counting-and-retry-consent-are-unresolved) | Ralph Loop failure counting and retry consent are unresolved | Pending human batch review | [Resolve Ralph Loop Failure Counting and Retry Consent](tickets/resolve-ralph-loop-failure-counting-and-retry-consent.md) |
-| [EH-006](#eh-006-ralph-and-tdd-have-unresolved-approval-and-refactor-ordering) | Ralph and TDD have unresolved approval and refactor ordering | Pending human batch review | [Resolve Ralph TDD Approval and Refactor Ordering](tickets/resolve-ralph-tdd-approval-and-refactor-ordering.md) |
-| [EH-007](#eh-007-execplan-integration-has-unresolved-tested-tip-validation) | ExecPlan integration has unresolved tested-tip validation | Pending human batch review | [Resolve ExecPlan Integration Validation](tickets/resolve-execplan-integration-validation.md) |
-| [EH-008](#eh-008-published-execplan-requires-a-helper-with-unestablished-supply) | Published Execplan requires a helper with unestablished supply | Pending human batch review | [Resolve Published ExecPlans Helper Supply](tickets/resolve-published-execplans-helper-supply.md) |
-| [EH-009](#eh-009-loop-and-commit-graders-inspect-unrelated-current-source-headings) | Loop and Commit graders inspect unrelated current-source headings | Pending human batch review | Proposed later evaluation scope; exact fixture/oracle choices required |
-| [EH-010](#eh-010-commit-dry-run-mutation-and-output-boundaries-are-unclear) | Commit dry-run mutation and output boundaries are unclear | Pending human batch review | [Resolve Commit Dry-run Mutation and Output Boundaries](tickets/resolve-commit-dry-run-mutation-and-output-boundaries.md) |
+| [EH-001](#eh-001-loop-paper-grader-does-not-establish-blind-orchestration) | Loop paper grader does not establish blind orchestration | Accepted for later planning | Later evaluation scope; exact fixture/oracle choices required |
+| [EH-002](#eh-002-commit-evaluations-cover-a-pr-title-override-without-default-coverage) | Commit evaluations cover a PR title override without default coverage | Accepted for later planning | Later evaluation scope; exact fixture/oracle choices required |
+| [EH-003](#eh-003-handoff-grader-rejects-a-valid-requested-path) | Handoff grader rejects a valid requested path | Accepted for later planning | Later evaluation scope; exact fixture/oracle choices required |
+| [EH-004](#eh-004-handoff-evaluations-declare-two-missing-logs) | Handoff evaluations declare two missing logs | Accepted for later planning | Later evaluation scope; exact fixture/oracle choices required |
+| [EH-005](#eh-005-ralph-loop-failure-counting-and-retry-consent-are-unresolved) | Ralph Loop failure counting and retry consent are unresolved | Pending separate decision | [Resolve Ralph Loop Failure Counting and Retry Consent](tickets/resolve-ralph-loop-failure-counting-and-retry-consent.md) |
+| [EH-006](#eh-006-ralph-and-tdd-have-unresolved-approval-and-refactor-ordering) | Ralph and TDD have unresolved approval and refactor ordering | Pending separate decision | [Resolve Ralph TDD Approval and Refactor Ordering](tickets/resolve-ralph-tdd-approval-and-refactor-ordering.md) |
+| [EH-007](#eh-007-execplan-integration-has-unresolved-tested-tip-validation) | ExecPlan integration has unresolved tested-tip validation | Pending separate decision | [Resolve ExecPlan Integration Validation](tickets/resolve-execplan-integration-validation.md) |
+| [EH-008](#eh-008-published-execplan-requires-a-helper-with-unestablished-supply) | Published Execplan requires a helper with unestablished supply | Pending separate decision | [Resolve Published ExecPlans Helper Supply](tickets/resolve-published-execplans-helper-supply.md) |
+| [EH-009](#eh-009-loop-and-commit-graders-inspect-unrelated-current-source-headings) | Loop and Commit graders inspect unrelated current-source headings | Accepted for later planning | Later evaluation scope; exact fixture/oracle choices required |
+| [EH-010](#eh-010-commit-dry-run-mutation-and-output-boundaries-are-unclear) | Commit dry-run mutation and output boundaries are unclear | Pending separate decision | [Resolve Commit Dry-run Mutation and Output Boundaries](tickets/resolve-commit-dry-run-mutation-and-output-boundaries.md) |
 
 ## Pending decisions and approval
 
@@ -74,7 +74,7 @@ The human also accepted exactly Adversarial Review, Code Review and Harness Anal
 
 The human accepted all three Requirements and Task Planning recommendations on 2026-10-06 in the [batch Resolution](tickets/review-requirements-and-task-planning.md#resolution). RPT-001/RPT-004 are accepted later evaluation repairs; RPT-002/RPT-003/RPT-005 retain their three separate pending routes, now unblocked by batch closure. All sixteen underlying questions remain visible in both final documents; genuinely dependent behavior stays pending. Exactly Spec to Tasks grader is added to SAG-008/DD-004, retaining earlier scope for nine metric producers and six protocol graders. Representation, statuses, exits, schemas and compatibility remain unresolved. No proposal was rejected or deferred. No implementation authority, evidence waiver or residual-risk acceptance was given.
 
-Execution and Handoff static review adds EH-001 through EH-010, all awaiting live human disposition. Five proposed behavior routes cover retry/terminal handling, TDD approval/refactor ordering, integration validation, published helper supply and dry-run authority. They join sixteen earlier underlying decisions without selecting behavior. Three additional graders are proposed for SAG-008/DD-004; accepted scope remains nine producers and six protocol graders until explicit human acceptance. Both final documents must expose every ID and route; genuinely dependent work stays pending.
+The human accepted all three Execution and Handoff recommendations on 2026-10-07 in the [batch Resolution](tickets/review-execution-and-handoff.md#resolution). EH-001/EH-003/EH-004/EH-009 are accepted later evaluation repairs; EH-002 is accepted default-coverage work behind a valid explicit title override, retaining Observation severity. EH-005/EH-006/EH-007/EH-008/EH-010 retain five separate behavior routes, now unblocked by batch closure. All twenty-one underlying decisions remain visible in both final documents; genuinely dependent work stays pending. Exactly Loop, Commit and Handoff graders are added to SAG-008/DD-004, retaining earlier targets for twelve producers/nine protocol graders. Representation, outcomes, exits, schemas and compatibility remain unresolved. No proposal was rejected or deferred. No implementation authority, evidence waiver or residual-risk acceptance was given.
 
 ## Findings
 
@@ -164,7 +164,7 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 
 ### SAG-008: Unmeasured metrics become zero
 
-- Checks/applicability/disposition: A22/R11; all nine included grader outputs; adapt.
+- Checks/applicability/disposition: A22/R11; all twelve included grader outputs; adapt.
 - Additional static evidence and accepted target scope: `skills/explore/evals/grade_benchmark.py:49,59-70` and `skills/official-sources/evals/grade_benchmark.py:38,47-58` use the same zero-filling pattern. The human accepted both additions on 2026-10-06, retaining Create Skill, Improve Skill and Self-improve. The delegation/discovery report records these unchanged producers. Representation and producer/consumer edits remain pending in the existing decision; no duplicate finding is created.
 - Evidence: create-skill grader `331-342`, improve-skill `59-70`, self-improve `51-62` hardcode tool calls/steps/errors/grader time to zero; missing timing also defaults zero. Exact imported consumer anchors inspected as dependency only: `skill-creator/scripts/aggregate_benchmark.py:137-154` defaults omitted time/tool/error fields to zero, uses them in aggregation/output (`186-218,248-250,311-323`); `references/schemas.md:110-125,155,169-191` describes numeric measurements and executor metrics source. No nullable/availability-aware representation is established by this source inspection.
 - Mechanism/impact: output does not distinguish unknown from measured zero; consumers may infer no errors/steps without trace analysis. Downstream behavior untested.
@@ -178,7 +178,7 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 
 - Additional static evidence and accepted producer scope: `skills/spec-to-tasks/evals/grade_benchmark.py:52,62-72` defaults missing timing and unmeasured tool calls/steps/errors/grader duration to zero. Preserve actually computed output/transcript character counts (:44-50). The human accepted exactly this producer on 2026-10-06 in the Requirements and Task Planning review, retaining the earlier eight for nine targets. Representation remains pending. Baseline `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; static only.
 
-- Additional proposed producer scope, awaiting human review: `skills/prd-ralph-loop/evals/grade_benchmark.py:57-78`, `skills/commit/evals/grade_benchmark.py:94-115` and `skills/handoff/evals/grade_benchmark.py:50-71` zero-fill unmeasured counts/duration while computing output/transcript character counts. Baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; static only. Accepting exactly these three would retain earlier nine targets and make twelve; representation and excluded-consumer scope remain unresolved. No source edit or execution is authorized.
+- Additional accepted producer scope, approved on 2026-10-07 in the [batch Resolution](tickets/review-execution-and-handoff.md#resolution): `skills/prd-ralph-loop/evals/grade_benchmark.py:57-78`, `skills/commit/evals/grade_benchmark.py:94-115` and `skills/handoff/evals/grade_benchmark.py:50-71` zero-fill unmeasured counts/duration while computing output/transcript character counts. Baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; static only. The human accepted exactly these three, retaining the earlier nine targets for twelve; representation and excluded-consumer scope remain unresolved. No source edit or execution is authorized.
 
 ### SAG-009: Capped/unscoped AGENTS discovery
 
@@ -341,7 +341,7 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 
 - Additional static evidence and accepted protocol scope: `skills/spec-to-tasks/evals/grade_benchmark.py:17-20,27-30,52,91-94,116-117,132-138,163-170,405-416,464-475` has JSON-shape assumptions, potentially invalid story/timing/metadata records, unidentified-eval skipping and no-run success. First-known-output selection (:102-111) can choose a stale path before the requested generated path. The human accepted exactly this grader on 2026-10-06 in the Requirements and Task Planning review, retaining the earlier five for six targets. The status/exit/schema/compatibility contract remains pending. Preserve useful predicates and separate valid-task oracle repair from invalid/no-output protocol choices. Baseline `b4d0b428aaccdc1d4f7661129c7e4c78ef85425f`; no grader executed.
 
-- Additional proposed protocol scope, awaiting human review: `skills/prd-ralph-loop/evals/grade_benchmark.py:24-30,119-156`, `skills/commit/evals/grade_benchmark.py:27-33,250-288` and `skills/handoff/evals/grade_benchmark.py:13-29,86-98,262-273` assume JSON shapes and can finish with no graded runs; Handoff can skip unidentified evaluations. Baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no grader ran. Accepting exactly these three would retain earlier six targets and make nine. Statuses, exits, schema, output/source identity and consumer compatibility remain pending.
+- Additional accepted protocol scope, approved on 2026-10-07 in the [batch Resolution](tickets/review-execution-and-handoff.md#resolution): `skills/prd-ralph-loop/evals/grade_benchmark.py:24-30,119-156`, `skills/commit/evals/grade_benchmark.py:27-33,250-288` and `skills/handoff/evals/grade_benchmark.py:13-29,86-98,262-273` assume JSON shapes and can finish with no graded runs; Handoff can skip unidentified evaluations. Baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no grader ran. The human accepted exactly these three, retaining earlier six targets for nine. Statuses, exits, schema, output/source identity and consumer compatibility remain pending.
 
 ### DD-005: Explore grader contains prohibited blank-line whitespace
 
@@ -544,8 +544,10 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation needed: complete worker signal, successful one-task progression, blocked/invalid input worker report, extra-text COMPLETE, mention-only route, no-spawn paper case versus real trace, dependency-gated tasks and current criteria-bearing fixtures.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Human status: accepted evaluation repair for later planning by the human on 2026-10-07. No implementation authorization, evidence waiver or residual-risk acceptance.
 
+
+- Route: accepted later evaluation scope, subject to exact fixture/oracle/source-identity design and genuine shared prerequisites. The [batch Resolution](tickets/review-execution-and-handoff.md#resolution) owns approval and protected contracts. No source repair or native validation occurred.
 
 ### EH-002: Commit evaluations cover a PR title override without default coverage
 
@@ -558,8 +560,10 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: current conventional/scoped first lines, wrong bare titles, body omission, staged-only scope, ambiguous multi-root ask, generated staged stop, explicit artifact request, no push permission, PR-required push and decline default co-author.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Human status: accepted evaluation coverage proposal for later planning by the human on 2026-10-07. No implementation authorization, evidence waiver or residual-risk acceptance.
 
+
+- Route: accepted later evaluation scope, subject to exact fixture/oracle/source-identity design and genuine shared prerequisites. The [batch Resolution](tickets/review-execution-and-handoff.md#resolution) owns approval and protected contracts. No source repair or native validation occurred.
 
 ### EH-003: Handoff grader rejects a valid requested path
 
@@ -571,8 +575,10 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: explicit docs and effort paths, single matching feature without explicit path, no feature root default, multiple plausible features, truly invalid path, write failure with inline handoff, existing hidden-feature update and inherited-next-step closure.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Human status: accepted evaluation repair for later planning by the human on 2026-10-07. No implementation authorization, evidence waiver or residual-risk acceptance.
 
+
+- Route: accepted later evaluation scope, subject to exact fixture/oracle/source-identity design and genuine shared prerequisites. The [batch Resolution](tickets/review-execution-and-handoff.md#resolution) owns approval and protected contracts. No source repair or native validation occurred.
 
 ### EH-004: Handoff evaluations declare two missing logs
 
@@ -584,8 +590,10 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: relocated complete fixture provision, missing input rejection, exact source-linked error summary, all trigger classes and adjacent negative case, no raw noise/secrets, write-denied inline result.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Human status: accepted evaluation repair for later planning by the human on 2026-10-07. No implementation authorization, evidence waiver or residual-risk acceptance.
 
+
+- Route: accepted later evaluation scope, subject to exact fixture/oracle/source-identity design and genuine shared prerequisites. The [batch Resolution](tickets/review-execution-and-handoff.md#resolution) owns approval and protected contracts. No source repair or native validation occurred.
 
 ### EH-005: Ralph Loop failure counting and retry consent are unresolved
 
@@ -597,8 +605,8 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: successful distinct nodes, same-node failed executions, normal blocked reports, timeout, one replacement, explicit authorized additional retry, denied/no consent, reset after success and stop with evidence.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
-- Owning decision: [Resolve Ralph Loop Failure Counting and Retry Consent](tickets/resolve-ralph-loop-failure-counting-and-retry-consent.md); proposed route is blocked by the unclosed batch, not an accepted behavior choice.
+- Human status: separate pending decision retained by the human on 2026-10-07. The underlying behavior remains unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Owning decision: [Resolve Ralph Loop Failure Counting and Retry Consent](tickets/resolve-ralph-loop-failure-counting-and-retry-consent.md); now open and unblocked by the closed [batch Resolution](tickets/review-execution-and-handoff.md#resolution). Retain this ID and route in both final documents; dependent behavior remains pending.
 - Additional stopping question: `skills/prd-ralph-loop/SKILL.md:28-30,34-39` does not define whether the failure stop performs post-loop learning/reporting; retain this terminal branch in the owning decision.
 
 
@@ -612,8 +620,8 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: pre-agreed seam, missing seam, user refusal, doc/config case, task requiring review-stage refactor, exact no-test-before-consent evidence. No tests were written or executed.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
-- Owning decision: [Resolve Ralph TDD Approval and Refactor Ordering](tickets/resolve-ralph-tdd-approval-and-refactor-ordering.md); proposed route is blocked by the unclosed batch, not an accepted behavior choice.
+- Human status: separate pending decision retained by the human on 2026-10-07. The underlying behavior remains unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Owning decision: [Resolve Ralph TDD Approval and Refactor Ordering](tickets/resolve-ralph-tdd-approval-and-refactor-ordering.md); now open and unblocked by the closed [batch Resolution](tickets/review-execution-and-handoff.md#resolution). Retain this ID and route in both final documents; dependent behavior remains pending.
 
 
 ### EH-007: ExecPlan integration has unresolved tested-tip validation
@@ -626,8 +634,8 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: divergent but conflict-free behavior dependencies, true no-op rebase, conflict repair/failure pause, plan-only SHA update, stale test result, branch-tip evidence and serialized completions.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
-- Owning decision: [Resolve ExecPlan Integration Validation](tickets/resolve-execplan-integration-validation.md); proposed route is blocked by the unclosed batch, not an accepted behavior choice.
+- Human status: separate pending decision retained by the human on 2026-10-07. The underlying behavior remains unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Owning decision: [Resolve ExecPlan Integration Validation](tickets/resolve-execplan-integration-validation.md); now open and unblocked by the closed [batch Resolution](tickets/review-execution-and-handoff.md#resolution). Retain this ID and route in both final documents; dependent behavior remains pending.
 
 
 ### EH-008: Published Execplan requires a helper with unestablished supply
@@ -640,8 +648,8 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Validation: checkout-local supply, separately provided supported supply, absent helper, denied read/activation and installed-path discovery. No installer or native client ran.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
-- Owning decision: [Resolve Published ExecPlans Helper Supply](tickets/resolve-published-execplans-helper-supply.md); proposed route is blocked by the unclosed batch, not an accepted behavior choice.
+- Human status: separate pending decision retained by the human on 2026-10-07. The underlying behavior remains unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Owning decision: [Resolve Published ExecPlans Helper Supply](tickets/resolve-published-execplans-helper-supply.md); now open and unblocked by the closed [batch Resolution](tickets/review-execution-and-handoff.md#resolution). Retain this ID and route in both final documents; dependent behavior remains pending.
 
 
 ### EH-009: Loop and Commit graders inspect unrelated current-source headings
@@ -651,11 +659,13 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Mechanism: eval zero adds an unrelated rewritten-skill anatomy expectation by reading `skills/<name>/SKILL.md` relative to cwd. It can fail a correct paper decision because the unchanged current source lacks headings. It also grades old/current run folders against the same current source, so the predicate cannot establish preservation in per-run snapshots. This is static control-flow analysis, not an executed grade.
 - Proposal: grade the requested paper artifact and applicable preserved contract against identified run/source metadata; keep useful decision/message predicates and separate source-authoring validation where actually requested. Do not impose headings globally or change skill purpose, controls or names.
 - Decision boundary: exact snapshot/provisioning identity and applicable artifact contracts need later design. SAG-003 continues to own Create Skill's separate body-contract decision; this concrete caller-grader repair does not expand that decision or SAG-007 targets automatically.
-- Validation: unchanged current entry with correct paper artifact, incorrect artifact with heading-rich source, relocated cwd, matched old/current source snapshots, missing/competing source and source-identity audit. No grader ran. Human disposition pending.
+- Validation: unchanged current entry with correct paper artifact, incorrect artifact with heading-rich source, relocated cwd, matched old/current source snapshots, missing/competing source and source-identity audit. No grader ran. The accepted proposal remains subject to its design prerequisites.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Human status: accepted evaluation repair for later planning by the human on 2026-10-07. No implementation authorization, evidence waiver or residual-risk acceptance.
 
+
+- Route: accepted later evaluation scope, subject to exact fixture/oracle/source-identity design and genuine shared prerequisites. The [batch Resolution](tickets/review-execution-and-handoff.md#resolution) owns approval and protected contracts. No source repair or native validation occurred.
 
 ### EH-010: Commit dry-run mutation and output boundaries are unclear
 
@@ -664,8 +674,8 @@ Execution and Handoff static review adds EH-001 through EH-010, all awaiting liv
 - Mechanism: numbered workflow performs the one-commit step before choosing push/PR/dry-run handling. Dry-run reference defines a report but does not establish an earlier mutation gate. Paper evals explicitly prohibit git and therefore do not exercise native dry-run state inspection or mutation authority. Source ordering does not establish an observed unintended commit or prove how a model would interpret ordinary dry-run intent.
 - Separate behavior decision: confirm whether dry run permits read-only git-state inspection; whether staging, branch creation, commit and push are excluded; where the early dry-run branch belongs; and how required final commit-SHA output changes for that branch. Preserve one-commit behavior for a real commit and explicit publication/artifact approval rules. Do not choose mutation authority by inference.
 - Contract-preserving proposal after choice: document the approved early branch, exact allowed inspection and dry-run report/stop behavior before any excluded mutation.
-- Validation needed: dry-run normal/staged/generated/ambiguous/PR requests with independently observed read and mutation events, explicit title override, no-SHA final outcome and required-command failure. No dry-run/git fixture or native tool action was executed. Human disposition pending.
+- Validation needed: dry-run normal/staged/generated/ambiguous/PR requests with independently observed read and mutation events, explicit title override, no-SHA final outcome and required-command failure. No dry-run/git fixture or native tool action was executed. The retained underlying decision remains pending.
 - Checks/applicability/disposition: the cited checklist checks apply to this caller/evaluation branch; adapt to its protected contract, without claiming native compliance.
 - Source configuration: static baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; no audited workflow, grader or native model run.
-- Human status: pending live human batch review. No implementation authorization, evidence waiver or residual-risk acceptance.
-- Owning decision: [Resolve Commit Dry-run Mutation and Output Boundaries](tickets/resolve-commit-dry-run-mutation-and-output-boundaries.md); proposed route is blocked by the unclosed batch, not an accepted behavior choice.
+- Human status: separate pending decision retained by the human on 2026-10-07. The underlying behavior remains unresolved. No implementation authorization, evidence waiver or residual-risk acceptance.
+- Owning decision: [Resolve Commit Dry-run Mutation and Output Boundaries](tickets/resolve-commit-dry-run-mutation-and-output-boundaries.md); now open and unblocked by the closed [batch Resolution](tickets/review-execution-and-handoff.md#resolution). Retain this ID and route in both final documents; dependent behavior remains pending.

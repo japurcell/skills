@@ -1,7 +1,7 @@
 # Review Execution and Handoff
 
 **Type:** grilling
-**Status:** claimed by subagent-E7q2Hs
+**Status:** closed
 **Blocked By:** choose-audit-batches-and-evidence-format.md, set-audit-completion-and-implementation-gates.md
 **Research Dir:** not applicable
 
@@ -23,6 +23,8 @@ Write the scope's evidence to `docs/skill-audit/reports/review-execution-and-han
 
 ## Source Checkpoint
 
+This section records the proposed 2026-10-06 checkpoint. The subsequent Resolution owns the 2026-10-07 human decisions and supersedes its pending-review instructions.
+
 Static investigation and parent source reconciliation are complete; live human proposal review remains pending. The [report](../reports/review-execution-and-handoff.md) records five skills, 22 primary files, 20 fixtures, nine bounded source dependencies, seventeen checkpoint-only support hashes and five exact 58-check matrices (290 rows). All 51 source/fixture/dependency fingerprints match unchanged baseline `8d563fae209c5b3583eacb7e7f4056783279aff0`; checkpoint records can change during reconciliation. Sixteen primary files ship under both inspected selection routines; six eval resources and twenty fixtures are pruned. Installed access and native behavior remain untested.
 
 The [single register](../findings.md#eh-001-loop-paper-grader-does-not-establish-blind-orchestration) owns EH-001 through EH-010. EH-002 is an observation about missing default-title coverage behind a valid explicit override; EH-009 owns the separate concrete unrelated-source predicate problem. Five precise behavior questions have proposed tickets blocked by this unclosed batch. No authoring or evaluation repair, behavior choice, grader addition, implementation, evidence waiver or residual risk has been approved in this checkpoint.
@@ -37,4 +39,38 @@ The reviewer released report ownership before the twenty-minute limit. Status ch
 
 ---
 
-<!-- Resolution will be appended here. -->
+## Resolution
+
+On 2026-10-07 the human explicitly accepted all three Execution and Handoff recommendations, first with “accept all” and then through the matching question reply. This closes the batch's live proposal review. Source evidence remains static at `8d563fae209c5b3583eacb7e7f4056783279aff0`; human approval does not establish passing native behavior. The [report](../reports/review-execution-and-handoff.md) owns the five-skill inventory, protected contracts, 290 checklist rows and bounded source/dispatch evidence. The [single register](../findings.md#eh-001-loop-paper-grader-does-not-establish-blind-orchestration) owns the ten findings once.
+
+### Accepted evaluation repairs and coverage
+
+EH-001/EH-003/EH-004/EH-009 are accepted evaluation repairs for later planning. EH-002 is an accepted evaluation-coverage proposal, retaining its Observation severity and the valid higher-priority PR-title override. No wrong native PR behavior is established.
+
+- Loop: distinguish paper simulations from performed native orchestration, model worker responses explicitly, preserve blind parent selection and exact completion identity, and align active fixture requirements with the current Ralph contract. Keep useful status/output predicates; route mentions are not dispatch proof.
+- Commit: retain the explicit title-override case and add default full-first-line title coverage. Repair unrelated current-source heading checks against identified requested artifacts and applicable source metadata; preserve useful message/body/trailer predicates.
+- Handoff: honor the explicitly requested path, define genuinely invalid/ambiguous fallback fixtures separately, provision the two declared missing logs as deliberately synthetic inputs, and cover current trigger/error/fallback behavior with independent expected facts. Preserve named-path precedence, root/feature defaults, inherited next step, concision, source anchors and redaction.
+
+Known owning evaluation files are `skills/prd-ralph-loop/evals/evals.json`, `skills/prd-ralph-loop/evals/grade_benchmark.py`, `skills/commit/evals/evals.json`, `skills/commit/evals/grade_benchmark.py`, `skills/handoff/evals/evals.json` and `skills/handoff/evals/grade_benchmark.py`. The missing declared log targets are `skills/handoff/evals/files/root-create-fixture/logs/test-failure.txt` and `skills/handoff/evals/files/fallback-noise-fixture/logs/retry.log`; their synthetic bytes and expected facts remain to be designed, not recovered or fabricated as history. Current criteria-bearing fixture repairs and any additional fixture paths must be specified from these accepted proposals before executable plan readiness. Exact paper schemas, fixture/oracle mappings, provisioning/source identity and genuinely dependent shared protocol choices remain prerequisites for affected executable work.
+
+Preserve triggers, invocation controls, required dependencies/delegation, approvals, stopping rules, names and output contracts. Do not change production instructions to satisfy stale evaluator rules. EH-009 does not create a global body-heading requirement, expand SAG-003's Create Skill question or automatically expand SAG-007's accepted targets. Artifact text does not prove actual loading, routing, tool use or permission containment. Baseline selection and launch remain later work.
+
+### Retained separate behavior decisions
+
+The human accepted retaining five precise routes, now open and unblocked by this batch closure:
+
+- EH-005: [Resolve Ralph Loop Failure Counting and Retry Consent](resolve-ralph-loop-failure-counting-and-retry-consent.md), including blocked/failed/replacement categories, identity/reset/consent and terminal maintenance after failure stop.
+- EH-006: [Resolve Ralph TDD Approval and Refactor Ordering](resolve-ralph-tdd-approval-and-refactor-ordering.md), preserving required TDD and confirmed seams before tests.
+- EH-007: [Resolve ExecPlan Integration Validation](resolve-execplan-integration-validation.md), including conflict-free rebase, tested state and plan-only SHA updates.
+- EH-008: [Resolve Published ExecPlans Helper Supply](resolve-published-execplans-helper-supply.md), retaining mandatory helper supply and repository-local protection.
+- EH-010: [Resolve Commit Dry-run Mutation and Output Boundaries](resolve-commit-dry-run-mutation-and-output-boundaries.md), without inferring inspection, staging, branch, commit or publication authority.
+
+All sixteen earlier routes remain pending as well, making 21 underlying decisions. Both final audit and ExecPlan must expose every unresolved ID and route; genuinely dependent work stays pending. Retention does not select behavior or count as rejection, deferral, evidence waiver, implementation approval or residual-risk acceptance. No proposal was rejected or deferred in this review. Imported TDD/Skill Creator helpers remain excluded from primary audit and edit scope.
+
+### Accepted shared grader scope
+
+Add exactly `skills/prd-ralph-loop/evals/grade_benchmark.py`, `skills/commit/evals/grade_benchmark.py` and `skills/handoff/evals/grade_benchmark.py` to [Choose Unknown Benchmark Metric Representation](choose-unknown-benchmark-metric-representation.md) and [Define Benchmark Grader Failure Outcomes](define-benchmark-grader-failure-outcomes.md), retaining every earlier accepted target. SAG-008 now covers twelve metric producers; DD-004 covers nine protocol graders.
+
+Unknown representation, failure statuses, exits, schemas, eligible-run/output/source identity and consumer compatibility remain unresolved. Preserve computed output/transcript character counts and independently useful predicates. This scope acceptance does not choose null, omitted keys, zeros or a result/exit protocol, expand excluded-helper scope, authorize edits or execute graders. Exact dependent design and necessary compatibility evidence precede executable readiness.
+
+The approved destination, import exclusions, static-first twelve-scope sequence, native seven-model medium-effort matrix, three fresh repetitions and completion gates remain unchanged. This review accepts later planning scope and visible routes only. No implementation, installer/import refresh, packaging, audited validator/grader, native baseline, publication, evidence waiver or residual risk was authorized or performed.
