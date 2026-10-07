@@ -37,6 +37,8 @@ If the orchestrator improperly solicits a model or effort before routing:
 
 ## Dispatch gate
 
+Enforce runtime limits as warning thresholds. When a subagent exceeds its limit, send a non-interrupting warning and request its current status, completed work, blockers, and updated ETA. Keep it running to preserve partial work; do not interrupt, cancel, or replace it solely because it is overdue.
+
 Dispatch only when:
 
 ```text
