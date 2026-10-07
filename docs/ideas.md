@@ -4,8 +4,6 @@ Use this file as a lightweight inbox for ideas that are not ready for research o
 
 ## Inbox
 
-- [ ] **Prevent stale exec-plans and handoffs**: the [exec-plans](../.agents/skills/exec-plans/SKILL.md) and [handoff](../skills/handoff/SKILL.md) tend to carry forward stale content in long-running sessions. Suggestion from an agent session that reported this: separate current guidance from historical evidence. The ExecPlan exceeds 1,200 lines, and the handoff repeats substantial expired-run history. Keep the active contract and recovery rules self-contained, move historical transcripts behind references, and keep the handoff to current status, evidence pointers and the next authorized action. This reduces both loading cost and stale-status drift.
-
 - [ ] **Exec plan tasks improvements**: [exec-plan-tasks-improvements.md](exec-plan-tasks-improvements.md)
 
 - [ ] **Durable learning skill**: Many skills define what a durable learning is. I want to create a skill that defines what a durable learning is so that other skills can reference it.

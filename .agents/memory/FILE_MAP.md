@@ -26,6 +26,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.codex/` | hooks | Project-local OKF Stop registration and adapter, plus separate inactive user-global hook sources and install-time configuration template. |
 | `hooks/` | hooks | Canonical build-time renderers, provider metadata, and explicit generated-output ownership manifest. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
+| `skills/handoff/` | skills | Independent handoff maintenance skill, creation/update/resume grader, and supplemental [guidance scenarios](../../skills/handoff/evals/guidance-scenarios.json). |
+| `.agents/skills/exec-plans/` | repo-local skills | Independent execution-plan workflow, creation/resume/recovery grader, and qualitative prototype/migration [authoring scenario](../skills/exec-plans/evals/authoring-scenarios.md). |
 | `skills/dotnet-upgrade/` | skills | Explicitly invoked .NET upgrade source bundle with standalone templates, dated route research and provenance; its document-only acceptance record is [references/document-review.md](../../skills/dotnet-upgrade/references/document-review.md). Use [skills instructions](../instructions/skills.md#dotnet-upgrade) for approval and review boundaries. |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
@@ -40,7 +42,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.agents/instructions/` | canonical | Agent-facing workflow rules and area conventions. |
 | `.agents/memory/` | canonical | Durable repo facts, file maps, testing routes, and known issues. |
 | `docs/ideas.md` | companion | Lightweight inbox for one-line ideas that are not ready for research or planning. |
-| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | retained effort | Guardian repairs across three providers and measured latency/resource gates. The [handoff](../../docs/tool-guardian-tuning/handoff.md), [repair logs and audit](../../docs/tool-guardian-tuning/repair-logs/orchestration.md), and [verified repair evidence](../../docs/tool-guardian-tuning/evidence/review-repair-root-verification.json) retain current closure and historical failed observations; retention was explicitly requested. |
+| [docs/tool-guardian-tuning/ExecPlan.md](../../docs/tool-guardian-tuning/ExecPlan.md) | retained effort | Reconciled Guardian plan with completed code and pending owner review, installation, and platform/provider proof. The [handoff](../../docs/tool-guardian-tuning/handoff.md) gives the current action; the [prior plan](../../docs/tool-guardian-tuning/history/2026-10-07-plan-before-reconciliation.md), [prior handoff](../../docs/tool-guardian-tuning/history/2026-10-07-handoff-before-reconciliation.md), [repair logs and audit](../../docs/tool-guardian-tuning/repair-logs/orchestration.md), and [verified repair evidence](../../docs/tool-guardian-tuning/evidence/review-repair-root-verification.json) preserve historical evidence. Retention was explicitly requested. |
 | `README.md` | companion | Repo overview and install entry point. |
 | `AGENTS.md` | companion | Quickstart, loading contract, and top-level links for agents. |
 
@@ -96,4 +98,5 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.nvmrc` | Node version hint for local tooling. |
 | `skills/skill-creator/scripts/quick_validate.py` | Narrow validation entry point for skill definitions. |
 | `skills/skill-creator/scripts/package_skill.py` | Packages a skill directory into a distributable `.skill` archive. |
+| `skills/handoff/evals/grade_benchmark.py`, `.agents/skills/exec-plans/evals/grade_benchmark.py` | Independent document-maintenance graders; public CLI contracts are in [API Map](API_MAP.md#document-maintenance-graders), and their `test_grade_benchmark.py` suites are routed by [skills testing](testing/skills.md#document-maintenance-graders). |
 | `.agents/skills/ingest-source/SKILL.md` | The canonical repo-local `/ingest-source` recovery skill used by the pending-ingest gate. |

@@ -15,7 +15,7 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 | **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Load when task needs repo structure, install flows, or docs boundaries |
 | **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide formatting and agent-workspace boundaries                     | When writing or reviewing code                |
 | **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
-| **[API_MAP.md](API_MAP.md)**           | Public test-runner, validation and benchmark CLIs, provider envelopes, and Tool Guardian schema/budget contract | When changing a public CLI, hook envelope, or guardian input classification/limits |
+| **[API_MAP.md](API_MAP.md)**           | Public test-runner, document-grader, validation and benchmark CLIs, provider envelopes, and Tool Guardian schema/budget contract | When changing a public CLI, hook envelope, or guardian input classification/limits |
 | **[LOG.md](LOG.md)**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
 | **[KNOWN_ISSUES.md](KNOWN_ISSUES.md)**      | Repo-wide / cross-cutting quirks & workarounds                          | Code review or cross-cutting troubleshooting  |
 | **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)**  | Test layout, shared authoring conventions & how to run tests            | When writing tests or debugging test failures |
@@ -34,7 +34,7 @@ working in:
 | General provider hooks | [hooks](../instructions/hooks.md) | [hooks](known-issues/hooks.md) | [hooks](testing/hooks.md) | [hooks](adrs/hooks.md) |
 | Hook source auto-ingest | [auto-ingest](../instructions/hooks-auto-ingest.md) | [auto-ingest](known-issues/hooks-auto-ingest.md) | [auto-ingest](testing/hooks-auto-ingest.md) | [hooks](adrs/hooks.md) |
 | Hook observability and trace storage | [observability](../instructions/hooks-observability.md) | [observability](known-issues/hooks-observability.md) | [observability](testing/hooks-observability.md) | [hooks](adrs/hooks.md) |
-| `skills/` | [skills](../instructions/skills.md) | [skills](known-issues/skills.md) | [skills](testing/skills.md) | empty |
+| `skills/` and repo-local skill evals | [skills](../instructions/skills.md) | [skills](known-issues/skills.md) | [skills](testing/skills.md) | empty |
 | `agents/` | [agents](../instructions/agents.md) | empty | empty | empty |
 | `scripts/` (shell) | [scripts](../instructions/scripts.md) | [scripts](known-issues/scripts.md) | [scripts](testing/scripts.md) | empty |
 | `scripts/*.ps1` (PowerShell) | [PowerShell](../instructions/powershell.md) | [PowerShell](known-issues/powershell.md) | [PowerShell](testing/powershell.md) | empty |

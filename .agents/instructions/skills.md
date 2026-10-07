@@ -34,6 +34,8 @@ For existing-skill comparisons:
 
 Keep each benchmark eval in one canonical `iteration-N/eval-*/` directory with a single `eval_metadata.json` beside all config run folders. Split eval directories break local helper scripts (`grade_benchmark.py`, `aggregate_benchmark.py`).
 
+Repo-local skill evaluations may use a disposable external workspace with the same layout. Keep generated runs and snapshots outside maintained skill bundles.
+
 ### Live model reruns
 
 - For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/<skill>/SKILL.md` or baseline snapshot path and tell the model to ignore other installed copies of the same skill name.
@@ -47,9 +49,18 @@ If a skill ships `evals/grade_benchmark.py`, use it to grade iteration artifacts
 python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>
 ```
 
+Review the authored documents and retained evidence as well as the scores. A fixture-specific text check can mistake valid wording for a failure or miss contradictory current guidance. Correct the rubric with positive and negative public-CLI cases before comparing runs; preserve earlier valid failures and identify the selected run per scenario. State intended write boundaries in the scenario prompt. If an assertion adds an unstated restriction, preserve the original output and grade, clarify the prompt, and rerun instead of relabeling the failed assertion as a pass.
+
+## Document-maintenance skills
+
+- Keep `skills/handoff/` and `.agents/skills/exec-plans/` independently usable, including their evaluation bundles. Neither bundle may reference or depend on the other.
+- Route their grader tests through [skills testing](../memory/testing/skills.md#document-maintenance-graders). Repository documents may link both workflows.
+- Keep completed-artifact retention and cleanup in [repository documentation policy](../memory/ARCHITECTURE.md#documentation-flow), outside both reusable workflows.
+
 ## Refactor boundaries
 
 - For large skill refactors, preserve any explicit exclusions or approval requirements already documented for that skill.
+- Before pruning a skill, map its existing behavioral obligations to the replacement. Keep actionable authoring and validation detail unless its removal is in scope; passing evals cover only the branches they exercise.
 
 ## dotnet-upgrade
 

@@ -1,0 +1,6 @@
+Synthetic fixture: focused retry test failed before the next edit.
+Command: python3 -m pytest tests/test_auth_refresh.py -q
+tests/test_auth_refresh.py:5: AssertionError
+Expected: [0.5, 1.0, 2.0]
+Actual: [0.5, 0.5, 0.5]
+FAILED tests/test_auth_refresh.py::test_refresh_retries_backoff
