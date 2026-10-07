@@ -13,6 +13,12 @@ description: Rules and conventions for skills under `skills/`.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 - Validate skill changes with `.agents/memory/testing/skills.md`.
 
+## Reference Files
+
+Skills link to reference files for optimal performance by keeping SKILL.md bodies under 500 lines and by allowing conditional loading of relevant context.
+
+- Reference files longer than 100 lines MUST include a table of contents at the top so that agents can see the full scope of available information even when previewing for partial reads (see [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#structure-longer-reference-files-with-table-of-contents)).
+
 ## Benchmarking
 
 Manage skill benchmark evals and iterations using this workflow.
