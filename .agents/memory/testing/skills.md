@@ -1,6 +1,6 @@
 ---
 type: Testing Guidance
-description: Test and validation guidance for skills under `skills/`
+description: Validation and public grader tests for publishable and repo-local skills
 ---
 
 # Skills - Testing
@@ -10,6 +10,21 @@ description: Test and validation guidance for skills under `skills/`
 - If a skill ships `evals/grade_benchmark.py` and you edited it, run `python3 -m py_compile skills/<skill-name>/evals/grade_benchmark.py`.
 - If benchmark grading behavior changed, run `python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`.
 - Treat `skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
+
+## Document-maintenance graders
+
+`skills/handoff/evals/` covers creation, feature updates, invalid-path fallback, stale-history resume, and pending owner rollout. `.agents/skills/exec-plans/evals/` covers novice plan creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Each contains its own fixtures, assertions, grader, and public-CLI tests.
+
+Run the focused suites from the repository root:
+
+```bash
+rtk proxy python3 -m unittest discover -s skills/handoff/evals -p test_grade_benchmark.py
+rtk proxy python3 -m unittest discover -s .agents/skills/exec-plans/evals -p test_grade_benchmark.py
+```
+
+Both graders consume canonical iteration directories; their exit and output contract is in the [API Map](../API_MAP.md#document-maintenance-graders). Public cases cover valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions, and contradictory proof claims. These are scenario-specific heuristics, not a general natural-language verifier.
+
+Use `PYTHONPATH=scripts/vendor` for skill definition validation. In a sandbox that protects `.agents/`, compile with `PYTHONPYCACHEPREFIX` pointing to a writable temporary directory so bytecode generation does not attempt to edit the protected bundle. See [benchmark reporting limitations](../known-issues/skills.md) before interpreting absent runtime metrics.
 
 ## dotnet-upgrade document review
 

@@ -1,0 +1,58 @@
+{
+  "skill_name": "exec-plans",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "create-self-contained-plan",
+      "prompt": "Use $exec-plans to create an implementation-ready plan from evals/files/create-plan/brief.md and the supplied project tree. Save only outputs/ExecPlan.md. The work has not started, so do not edit application code. Make the plan sufficient for a novice who has only this file and the supplied project. Include exact files, commands, observable acceptance, milestone states, progress entries, and safe recovery steps. The plan itself must be the only pre-code deliverable.",
+      "expected_output": "A single self-contained ExecPlan that lets a novice add JSON output and prove the behavior without changing the existing text default.",
+      "files": [
+        "evals/files/create-plan/brief.md",
+        "evals/files/create-plan/project/README.md",
+        "evals/files/create-plan/project/src/report_cli.py",
+        "evals/files/create-plan/project/src/summary.py",
+        "evals/files/create-plan/project/tests/test_summary.py"
+      ],
+      "assertions": [
+        "The plan includes all required living sections and concrete repository paths.",
+        "The plan states exact commands and observable text and JSON output.",
+        "The plan has milestone status and a matching unchecked progress entry."
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "resume-stale-plan-two-checkpoints",
+      "prompt": "Use $exec-plans to resume evals/files/resume-plan/project/ExecPlan.md in a copy under outputs/project/. Inspect the copied source and tests before acting. The current plan contradicts the code and repeats older run notes. First confirm the existing JSON behavior and update the plan as checkpoint one. Then add --limit with the documented default and negative-value behavior, add meaningful tests, run the suite and command-level checks, and update the plan as checkpoint two. Stop before the open documentation milestone. Replace obsolete claims throughout active sections. Preserve useful decisions and test evidence in the current plan. Before removing the dated run record from the plan, preserve it in a clearly labeled sibling history file, link that file from a Historical Records section, and verify that the file exists and retains its date, test count, command, and JSON output. Do not create a second active plan.",
+      "expected_output": "The copied project passes its suite and direct CLI checks; its plan marks the already implemented JSON milestone and the new row-limit milestone done with matching progress entries, keeps documentation open, and prevents old history from controlling current work.",
+      "files": [
+        "evals/files/resume-plan/project/ExecPlan.md",
+        "evals/files/resume-plan/project/README.md",
+        "evals/files/resume-plan/project/src/report_cli.py",
+        "evals/files/resume-plan/project/tests/test_cli.py"
+      ],
+      "assertions": [
+        "The two completed milestones match checked progress entries and the next milestone remains open.",
+        "The suite and direct CLI checks prove JSON, row-limit, and invalid-limit behavior.",
+        "No superseded JSON claim remains in active instructions, and the linked archive exists with the unique dated evidence.",
+        "Completed implementation work is not left as current Concrete Steps."
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "preserve-owner-recovery-after-code",
+      "prompt": "Use $exec-plans to reconcile evals/files/preserve-recovery/project/ExecPlan.md against the copied source and local tests in outputs/project/. The code is already complete. Update the plan only; do not change code, deploy, rotate keys, execute rollback, contact an owner, or run external validation. Keep completed code milestones complete, but leave owner approval and staged device validation pending. Put the owner-only recovery command, its trigger, and snapshot-retention requirement in the active plan so a novice can recover safely. Reconcile every active section and preserve useful evidence without making the reader consult history to proceed.",
+      "expected_output": "A current plan that distinguishes completed local code from pending human and device-owner actions, retains active recovery instructions and authorization boundaries, and records local test evidence without claiming release completion.",
+      "files": [
+        "evals/files/preserve-recovery/project/ExecPlan.md",
+        "evals/files/preserve-recovery/project/README.md",
+        "evals/files/preserve-recovery/project/src/guardian.py",
+        "evals/files/preserve-recovery/project/tests/test_guardian.py"
+      ],
+      "assertions": [
+        "Local code and tests are recorded complete while owner approval and external validation remain pending.",
+        "Active recovery instructions include the owner-only command, trigger, and retention period.",
+        "The supplied source is unchanged and the local test suite passes."
+      ]
+    }
+  ]
+}

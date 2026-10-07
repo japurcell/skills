@@ -5,6 +5,12 @@ description: Public validation entry points and provider adapter contracts for t
 
 # API Map
 
+## Document-maintenance graders
+
+- `skills/handoff/evals/grade_benchmark.py ITERATION_DIR` and `.agents/skills/exec-plans/evals/grade_benchmark.py ITERATION_DIR` independently grade `eval-*/CONFIG/run-*/outputs/` and write a `grading.json` beside each run. Scenario metadata belongs in the enclosing `eval-*/eval_metadata.json`.
+- Exit `0` means grading files were written, including failing assertions; inspect `expectations` and `summary.failed` for behavior acceptance. Invalid invocation, a missing iteration directory, or an unhandled input error exits nonzero. The graders do not run agents or install skills. The plan grader runs the supplied fixture unittest and CLI checks during grading.
+- Timing defaults and output-size counters do not establish measured agent duration or token usage. See [known reporting limitations](known-issues/skills.md) and [focused public tests](testing/skills.md#document-maintenance-graders).
+
 ## Codex custom-agent installer
 
 - `scripts/install-codex-agents.py --source-dir PATH --destination-dir PATH` converts valid top-level canonical agent Markdown into personal Codex TOML. It owns only TOML paths listed in `.skills-repo-agents.json`, removes stale manifest-owned output, and preserves unmanaged personal agents. It reports a concise install/update/unchanged/removal summary on stdout; status and failures use stderr. Exit `0` is success, `1` is a validation or installation failure, and argparse usage failures use `2`.

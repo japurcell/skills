@@ -18,3 +18,11 @@ Layer-specific quirks for skills. Cross-cutting issues live in `.agents/memory/K
 **Affected area:** `skills/skill-creator/scripts/quick_validate.py`
 **Description:** The validator requires the undeclared `PyYAML` package and fails with `ModuleNotFoundError: No module named 'yaml'` when it is unavailable.
 **Workaround:** Do not install dependencies implicitly. Run it with the checked-in runtime: `PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.
+
+**Affected area:** Maintained evaluation fixtures under `skills/handoff/evals/files/`
+**Description:** Repository-wide log and release-directory ignores can silently exclude synthetic inputs needed for fixture reproduction.
+**Workaround:** Keep narrow `.gitignore` exceptions for maintained fixture inputs and verify them with `git ls-files --others --exclude-standard` before staging. Do not treat generated run logs as maintained fixtures.
+
+**Affected area:** `skills/skill-creator/scripts/aggregate_benchmark.py`
+**Description:** Missing duration becomes zero, output characters can become the token proxy, metadata defaults to three runs, and the delta follows discovered configuration order.
+**Workaround:** Preserve raw results, state which runs were selected, correct metadata and delta direction, and omit unavailable time/token metrics from reported comparisons. A single selected run per scenario does not establish repeated-run variance.

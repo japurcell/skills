@@ -607,3 +607,17 @@ $RECYCLE.BIN/
 *.lock
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,python,vs
+
+# Retained synthetic evaluation inputs.
+!skills/handoff/evals/files/root-create-fixture/logs/
+skills/handoff/evals/files/root-create-fixture/logs/*
+!skills/handoff/evals/files/root-create-fixture/logs/test-failure.txt
+!skills/handoff/evals/files/fallback-noise-fixture/logs/
+skills/handoff/evals/files/fallback-noise-fixture/logs/*
+!skills/handoff/evals/files/fallback-noise-fixture/logs/retry.log
+!skills/handoff/evals/files/history-resume-fixture/logs/
+skills/handoff/evals/files/history-resume-fixture/logs/*
+!skills/handoff/evals/files/history-resume-fixture/logs/purge-run-history.log
+!skills/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/
+skills/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/*
+!skills/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/handoff.md
