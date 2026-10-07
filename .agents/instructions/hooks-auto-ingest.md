@@ -13,6 +13,7 @@ Load this file only for source auto-ingest work. General hook contracts remain i
 - Scaffold conforming draft `Source Summary` concepts. Quote dynamic YAML scalars and percent-encode `sources[].resource` paths while preserving `/`.
 - Detect unresolved summaries from normalized top-level `type` and `status` scalar values. Ignore matching body text.
 - Hold one platform-neutral `ManifestLock` across the complete read, reconcile, and save sequence.
+- Persist the current source record when a pending summary becomes active, including its completed summary hash. A later raw-source change must reopen review.
 - Stream source hashing in 64 KiB chunks.
 - Catch scaffold `OSError` failures. Clean manifest `.tmp` files in `finally` after write or replace failures.
 - Keep scanners, prompt-time injectors, and final-response backstops aligned on manifest schema, summary naming, pending-entry text, and source-ingest-first ordering.
@@ -23,6 +24,6 @@ Load this file only for source auto-ingest work. General hook contracts remain i
 - Treat manifest `summary_path` as untrusted; reduce previous paths to `Path(summary_name).name` before joining below the summary directory.
 - Preserve startup scanning, prompt injection, and final-response denial as distinct stages. Copilot prompt transformation may precede startup; use one stop coordinator to retain source-ingest-first reasons when OKF also fails.
 - Gemini final-response enforcement belongs at `AfterAgent`; reserve `AfterModel` for per-output work. Keep the pending gate closed when recovery is unavailable, with the inline checklist as fallback.
-- Apply [knowledge admission](knowledge-base.md) before promoting source material into the KB. A source summary may be complete without adding another policy or memory file.
+- Apply [knowledge admission](knowledge-base.md) before promoting source material into the KB. Generated checklists must require that assessment and explicitly allow a completed source summary with no promotion.
 
 For rationale, read the retained [runtime-shape decision](../../docs/adr/0001-auto-ingest-runtime-shape.md) or [pending-gate decision](../../docs/adr/0002-pending-ingest-gate.md) only when reconsidering those boundaries. Use [source-ingestion tests](testing/hooks-auto-ingest.md) for validation.
