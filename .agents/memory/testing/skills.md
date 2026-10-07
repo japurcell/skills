@@ -15,6 +15,8 @@ description: Validation and public grader tests for publishable and repo-local s
 
 `skills/handoff/evals/` covers creation, feature updates, invalid-path fallback, stale-history resume, and pending owner rollout. `.agents/skills/exec-plans/evals/` covers novice plan creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Each contains its own fixtures, assertions, grader, and public-CLI tests.
 
+Handoff [guidance scenarios](../../../skills/handoff/evals/guidance-scenarios.json) supplement the deterministic suite with read-only review, a supplied path among several feature folders, and history updates with retained lessons and existing archive content. They use `files/guidance-edges-fixture/` and are outside the public grader's five supported cases. Check fixture bytes before and after each run, then review commands, observed errors, lesson placement, owner limits, and reporting semantics; passing selected assertions does not establish every output requirement.
+
 ExecPlan [authoring scenarios](../../skills/exec-plans/evals/authoring-scenarios.md) add a qualitative prototype/migration case using the large-input brief and existing create-plan project. Review independent feasibility, prototype decisions, both-path validation, retirement, and exact command/error guidance manually; this case is outside the deterministic grader's three supported scenarios. Preserve instruction-coverage findings separately from sampled agent-performance claims.
 
 Run the focused suites from the repository root:

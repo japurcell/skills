@@ -49,7 +49,7 @@ If a skill ships `evals/grade_benchmark.py`, use it to grade iteration artifacts
 python3 skills/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>
 ```
 
-Review the authored documents and retained evidence as well as the scores. A fixture-specific text check can mistake valid wording for a failure or miss contradictory current guidance. Correct the rubric with positive and negative public-CLI cases before comparing runs; preserve earlier valid failures and identify the selected run per scenario.
+Review the authored documents and retained evidence as well as the scores. A fixture-specific text check can mistake valid wording for a failure or miss contradictory current guidance. Correct the rubric with positive and negative public-CLI cases before comparing runs; preserve earlier valid failures and identify the selected run per scenario. State intended write boundaries in the scenario prompt. If an assertion adds an unstated restriction, preserve the original output and grade, clarify the prompt, and rerun instead of relabeling the failed assertion as a pass.
 
 ## Document-maintenance skills
 

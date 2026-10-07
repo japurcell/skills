@@ -1,0 +1,42 @@
+{
+  "skill_name": "handoff",
+  "grading": "Review output evidence and compare fixture bytes. These supplemental cases are outside grade_benchmark.py's five supported scenarios.",
+  "evals": [
+    {
+      "id": 5,
+      "name": "read-only-review",
+      "prompt": "Review repo/.agents/scratchpad/retries/handoff.md against repo/session_notes.md. Explain contradictions, missing evidence, and the correct next action. Save your review as response.md outside repo/.",
+      "files": ["files/guidance-edges-fixture/"],
+      "assertions": [
+        "The fixture repository is byte-for-byte unchanged, with no added handoff or history files.",
+        "The review identifies the stale implementation step and the current owner action.",
+        "The review distinguishes the observed timeout from its suspected cause and keeps staging verification pending."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "explicit-path-and-evidence",
+      "prompt": "Use repo/session_notes.md and the existing task artifacts to save the current retry handoff at repo/notes/retry-recovery.md. Leave the existing handoff files unchanged. Next session should focus on the pending staging verification. Report the written path, scope, and next step in response.md outside repo/.",
+      "files": ["files/guidance-edges-fixture/"],
+      "assertions": [
+        "The handoff is written at notes/retry-recovery.md despite multiple feature folders; existing handoffs are unchanged.",
+        "The handoff retains the exact owner command, repository-root working directory, and observed error without claiming its suspected cause is proven.",
+        "The rerun cache lesson remains inline even though no current implementation decision depends on it.",
+        "The current owner boundary and pending staging result remain inline, with an accurate path, scope, and next action reported."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "history-collision-and-lessons",
+      "prompt": "Update repo/.agents/scratchpad/retries/handoff.md from repo/session_notes.md for the next session. Preserve useful evidence and make the current action clear. Report the result in response.md outside repo/.",
+      "files": ["files/guidance-edges-fixture/"],
+      "assertions": [
+        "The existing handoff is updated in place and stale implementation work is replaced by the current owner action.",
+        "The unique OLD-RUN-741 result is retained in a verified history artifact linked from the active handoff.",
+        "The earlier ARCHIVE-82 evidence remains in the existing history file; any append preserves its existing contents.",
+        "The rerun cache lesson, recovery command, owner boundary, and pending staging proof remain inline.",
+        "The retired parser lesson survives in historical evidence without becoming a current instruction."
+      ]
+    }
+  ]
+}

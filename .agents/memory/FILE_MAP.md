@@ -26,7 +26,7 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `.codex/` | hooks | Project-local OKF Stop registration and adapter, plus separate inactive user-global hook sources and install-time configuration template. |
 | `hooks/` | hooks | Canonical build-time renderers, provider metadata, and explicit generated-output ownership manifest. |
 | `skills/` | skills | One directory per skill, centered on `SKILL.md`; may include scripts, references, assets, evals, and grader tests (see skills instructions). |
-| `skills/handoff/` | skills | Independent handoff maintenance skill and creation/update/resume evaluation bundle. |
+| `skills/handoff/` | skills | Independent handoff maintenance skill, creation/update/resume grader, and supplemental [guidance scenarios](../../skills/handoff/evals/guidance-scenarios.json). |
 | `.agents/skills/exec-plans/` | repo-local skills | Independent execution-plan workflow, creation/resume/recovery grader, and qualitative prototype/migration [authoring scenario](../skills/exec-plans/evals/authoring-scenarios.md). |
 | `skills/dotnet-upgrade/` | skills | Explicitly invoked .NET upgrade source bundle with standalone templates, dated route research and provenance; its document-only acceptance record is [references/document-review.md](../../skills/dotnet-upgrade/references/document-review.md). Use [skills instructions](../instructions/skills.md#dotnet-upgrade) for approval and review boundaries. |
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
