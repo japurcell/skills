@@ -1,0 +1,163 @@
+## Codebase Patterns
+
+- In native Windows PowerShell under tool guard, avoid `@()` or `$()` subexpression syntax; use simple commands or pipeline execution.
+- Native `rtk grep` requires `grep` binary on PATH; on Windows PowerShell, use `Select-String`, `cmd /c dir /b`, or Python scripts.
+- `read_file` tool only operates inside workspace roots; use shell commands (`cmd /c dir /b`, `Get-FileHash`, `Get-ChildItem`) to inspect paths outside workspace (e.g. `~/.copilot/session-state/`).
+- Markdown files under `.agents/` must satisfy OKF profile linting via `python scripts/lint-okf.py`.
+- Tool Guardian enforces a 32,768-character input bound and 128-segment bound on edits; keep patch edits small and focused.
+
+---
+
+## 2026-10-06 14:15 UTC - T001
+- Implemented: Completed read-only inventory of surviving repository refs and task-owned session artifact paths for Checkpoint 6A. Verified repository root, HEAD, worktree list, and ref absence using Concrete Steps read-only Git commands. Inspected task-owned session directories under C:\Users\jeffreypurcell\.copilot\session-state\: verified m6-windows-safe-writer directory contains only repository skills/ trees with no candidate source/test files; verified present diagnostic helpers and reports under aa05f60b..., 03b0b060..., 6905b7ed..., and 6c19d8c6... with computed SHA-256 hashes; verified historical absence of windows-source-policy-repair.txt, windows-retained-file-recheck.txt, and m6-windows-resume.txt. Recorded explicit determination that candidate source/test snapshots were not found in inspected refs and task-owned paths, and updated ExecPlan.md, handoff.md, and tasks.json.
+- Files changed:
+  - docs/agent-asset-installer/ExecPlan.md
+  - docs/agent-asset-distribution/handoff.md
+  - docs/agent-asset-installer/tasks.json
+  - docs/agent-asset-installer/progress.txt
+- Verification:
+  - rtk proxy git --no-optional-locks -c core.fsmonitor=false rev-parse --show-toplevel: PASS (output: D:/Projects/personal/skills, exit: 0)
+  - rtk proxy git --no-optional-locks -c core.fsmonitor=false rev-parse HEAD: PASS (output: ec3ded78a719900019114b762b6b75965e8e2662, exit: 0)
+  - rtk proxy git --no-optional-locks -c core.fsmonitor=false worktree list --porcelain: PASS (exactly 1 registered worktree, exit: 0)
+  - rtk proxy git --no-optional-locks -c core.fsmonitor=false for-each-ref --format="%(refname) %(objectname)" refs/heads/copilot/m6-windows-safe-writer: PASS (empty output: ref absent, exit: 0)
+  - rtk proxy git --no-optional-locks -c core.fsmonitor=false branch -a: PASS (no safe-writer ref in branches, exit: 0)
+  - cmd /c dir /b C:\Users\jeffreypurcell\.copilot\session-state\250c3c51-b3fa-4151-8fb0-0b72008068ea\files\m6-windows-safe-writer: PASS (only skills/ directory present, no .git, no source/test deltas, exit: 0)
+  - cmd /c dir /b on session dirs aa05f60b, 03b0b060, 6905b7ed, 6c19d8c6: PASS (17 surviving files listed, exit: 0)
+  - Get-FileHash -Algorithm SHA256 on all 17 session files: PASS (exact hashes computed and recorded in ExecPlan.md, exit: 0)
+  - Get-ChildItem check for historically absent files: PASS (confirmed absent, exit: 0)
+  - rtk proxy python scripts/lint-okf.py --format json: PASS ({"schema_version":1,"diagnostics":[]}, exit: 0)
+  - Typecheck: NOT APPLICABLE (documentation/evidence-only task; repository has no dedicated typecheck command)
+- Browser verification:
+  - Required: no
+  - Evidence: not required
+- Command/tool failures:
+  - read_file docs/agent-asset-installer/progress.txt: File not found (file missing before first task, non-blocking)
+  - rtk grep: Binary 'grep' not found on PATH in Windows environment (exit code: 1, worked around with Select-String / cmd, non-blocking)
+  - run_shell_command with @(...) array subexpression: blocked by command injection policy against array/command subexpressions (worked around with individual cmdlets, non-blocking)
+  - run_shell_command with \$_.Name: PowerShell string interpolation error (worked around with dir /b and Get-ChildItem pipeline, non-blocking)
+  - read_file on C:\Users\jeffreypurcell\.copilot\session-state\...: path outside allowed workspace roots (worked around using run_shell_command cmd/PowerShell tools, non-blocking)
+- Commit:
+  - Mode: disabled
+  - Task commit: disabled by input
+  - Gate: PASS
+  - Session start HEAD: ec3ded78a719900019114b762b6b75965e8e2662
+  - Session commits: none
+- Assumptions:
+  - User instruction explicitly requested: "Only complete T001 and then stop. Do not commit."
+  - Surviving session diagnostic probe scripts and report logs under ~/.copilot/session-state/ provide sufficient historical evidence to construct the 6A metadata packet (T002) without needing unintegrated source code.
+- Learnings:
+  - When inspecting paths outside workspace root on Windows, use cmd /c dir /b or powershell with Get-FileHash rather than read_file.
+  - Avoid subexpression syntax @(...) and $() in tool commands to comply with shell command guard policy.
+  - Candidate worktree 250c3c51-b3fa-4151-8fb0-0b72008068ea\files\m6-windows-safe-writer was removed and its remaining filesystem artifact holds only repository skills/ trees; candidate Windows source (windows.py, probe, test additions) was not found in inspected refs or task-owned paths.
+---
+
+## 2026-10-06 15:00 UTC - T002 (prior entry; approval withdrawn)
+- Provenance correction: this prior entry asserted independent review but supplied no independently attributable reviewer output or packet digest. Its APPROVE and completion claims are withdrawn; prior test/review provenance remains unverified. The following dated assertions are historical, not validation of the corrected packet or native support.
+- Previously reported: Authored a metadata packet inside ExecPlan.md and claimed five gaps resolved:
+  1. Crash windows across rename/flush boundaries: Recovery explicitly reconciles recorded journal phases (PREPARED, DISPLACED, PUBLISHED) with authenticated live filesystem state (volume serial, 128-bit file ID, content SHA-256, exact DACL/label) rather than blindly trusting phase strings. Detects post-rename/pre-flush crashes and performs deterministic pre-operation rollback.
+  2. Authority retention & cleanup: Preimage originals (.agent-preimage-*) are retained across all target publications until transaction-wide COMMITTED is durably flushed. Journal is retained throughout cleanup and deleted LAST after residual unlinks, preventing authority loss on interrupted cleanup.
+  3. Journal security preservation: Distinguished new journal creation (parent directory inheritance) from existing journal rewrite (queries, authenticates, and preserves existing journal's exact DACL/label and required stream bytes). Prohibits overwriting distinct journal descriptors with parent inheritance.
+  4. Win32 ReplaceFileW failure states: the prior summary was incomplete. Corrected from Microsoft's reference: 1175 retains both original names; 1176 retains both names with lpBackupFileName, but without backup the replaced file no longer exists and replacement retains its original name; 1177 leaves replacement at its original name with inherited streams/attributes and replaced file at a different name (supplied backup when present). ReplaceFileW remains rejected.
+  5. Prior review assertion: named an uncommitted working copy on base ec3ded78a719900019114b762b6b75965e8e2662 and claimed windows-boundary 2/2, compileall 0 errors and lint 0 diagnostics, but no independently attributable output supports approval. No corrected-packet approval is inferred.
+  The prior entry marked T002 true and 6A done/met; those unsupported completion states are reversed by the documentation correction below. Negative unprotected-DACL/whole-EA evidence and production ASSET_PLATFORM_UNSUPPORTED refusal remain unchanged.
+- Files changed:
+  - docs/agent-asset-installer/ExecPlan.md
+  - docs/agent-asset-distribution/handoff.md
+  - docs/agent-asset-installer/windows-established-practice.md
+  - docs/agent-asset-installer/windows-filesystem-research.md
+  - docs/agent-asset-installer/tasks.json
+  - docs/agent-asset-installer/progress.txt
+- Prior recorded verification (unverified provenance; not rerun for this correction):
+  - rtk proxy python scripts/test-agent-assets.py --group windows-boundary: PASS (2 passed in 6.328s, exit: 0)
+  - rtk proxy python scripts/lint-okf.py --format json: PASS ({"schema_version":1,"diagnostics":[]}, exit: 0)
+  - rtk proxy python -m compileall scripts/agent_assets/: PASS (0 errors, exit: 0)
+  - rtk proxy git diff HEAD --stat: PASS (exact documentation and tasks.json diff confirmed, exit: 0)
+  - rtk proxy git log --oneline ec3ded78a719900019114b762b6b75965e8e2662..HEAD: PASS (no session commits, exit: 0)
+  - Typecheck: NOT APPLICABLE (documentation/evidence-only task; repository has no dedicated typecheck command)
+- Browser verification:
+  - Required: no
+  - Evidence: not required
+- Command/tool failures:
+  - None
+- Commit:
+  - Mode: disabled
+  - Task commit: disabled by input
+  - Gate: PASS
+  - Session start HEAD: ec3ded78a719900019114b762b6b75965e8e2662
+  - Session commits: none
+- Prior assumptions (not current authorization or approval):
+  - User instruction explicitly requested: "Only complete T002 and then stop. Do not commit."
+  - Claimed independent review of uncommitted worktree changes on base ec3ded78 was not independently attributable.
+- Learnings:
+  - Filesystem transaction crash consistency requires reconciling recorded journal phase with authenticated filesystem state (file ID, volume serial, hash, DACL/label) because crashes between filesystem renames and journal flushes leave durable state lagging or leading filesystem reality.
+  - In multi-file transactions, preimage originals must never be deleted upon individual file publication; they must be retained until transaction-wide COMMITTED is flushed to permit pre-operation rollback if later files crash.
+  - The transaction journal must be deleted LAST, after all residual preimages are unlinked, to maintain cleanup authority across crashes during cleanup.
+  - Existing journal rewrites must preserve authenticated existing DACL/label and stream bytes rather than reapplying parent directory inheritance.
+  - On Microsoft Win32 error 1177 (ERROR_UNABLE_TO_MOVE_REPLACEMENT_2), replacement remains under its original staged name but has inherited streams/attributes; replaced file is under a different name, using the supplied backup name when present.
+---
+
+## 2026-10-06 - T002 documentation correction, pending parent review
+- Scope: documentation/evidence only in the six existing owned paths listed below. No product code/tests, .agents docs/skills, AGENTS.md, hook/config outputs or unrelated files edited. Existing staged work is left intact; no staging, unstaging, commit or push. No nested agent/workflow, metadata experiment, source recovery, install, native session, personal-state access or T003 work.
+- Corrected rules:
+  1. Restartable rollback authenticates an original already back at its baseline name even with stale PUBLISHED, no preimage and an already-deleted stage when durable deletion authority explains it. Move candidate to its recorded stage, restore original where applicable, authorize residual deletion, verify progress, and remove journal last. Missing/tampered original or unexplained candidate disappearance refuses.
+  2. Creation/replacement/pruning have distinct before/after authority and forward/rollback/committed states, including rename/marker-flush windows. Preflight the entire payload/paired-record/configuration/residual set read-only before any recovery writes, then recheck each mutation boundary. Preserve all originals until transaction-wide durable COMMITTED and journal until all rollback/cleanup completes. Later edits stop further writes without pretending earlier primitives never occurred.
+  3. Microsoft ReplaceFileW reference fetched for this correction: 1175 retains both original names; 1176 retains both with backup but without backup the replaced file no longer exists; 1177 leaves replacement under its original name with inherited streams/attributes and replaced file under a different name (supplied backup when present). ReplaceFileW remains rejected. Negative unprotected-DACL 72 bytes/3 ACEs -> 136 bytes/6 ACEs and whole-kernel-EA findings remain, with no metadata-policy workaround.
+  4. Withdraw unsupported prior inline APPROVE. Its independently attributable reviewer/test provenance remains unverified. T001 stays true; T002 stays false; 6A is open/not met/unchecked pending parent independent review. The finite 15-point plan overlaps T003-T014, not a 1:1 mapping, and includes creation/pruning, second rollback interruption, multi-target refusal-before-writes, marker/rename and committed-cleanup boundaries. This design is not future 6B empirical production proof.
+- Files changed:
+  - docs\agent-asset-installer\ExecPlan.md
+  - docs\agent-asset-installer\tasks.json (T002 only; other task execution states unchanged)
+  - docs\agent-asset-installer\progress.txt
+  - docs\agent-asset-distribution\handoff.md
+  - docs\agent-asset-installer\windows-established-practice.md
+  - docs\agent-asset-installer\windows-filesystem-research.md
+- Actual verification (RTK 0.51.0; every native exit propagated with `exit $LASTEXITCODE`):
+  - Every Python command sets `$env:PYTHON_MANAGER_AUTOMATIC_INSTALL = 'false'` and `$AgentAssetsPython = 'D:\Users\jeffreypurcell\AppData\Local\Programs\Python\Python314\python.exe'`; no python/py/WindowsApps alias used.
+  - `rtk proxy $AgentAssetsPython scripts\lint-okf.py --format json`: PASS, `{"schema_version":1,"diagnostics":[]}`, native exit 0.
+  - `rtk proxy git --no-pager diff --check`: PASS, no output, native exit 0.
+  - `rtk proxy git --no-pager diff --cached --check`: PASS, no output, native exit 0.
+  - Inline read-only validator supplied on stdin to `rtk proxy $AgentAssetsPython -`: PASS, native exit 0. Parses task JSON, compares every non-T002 task object against the existing index (29 unchanged), checks all 30 IDs/priorities and only T001 true, seven milestone states and eight open/unchecked checkpoints, current handoff/research/progress agreement, 15 finite-plan points, 15 local Markdown targets/three anchors, six owned unstaged paths and all nine preexisting staged paths. All six files are UTF-8/no BOM/LF with no trailing whitespace; added prose is ASCII. Reads both production refusal guards without exercising them.
+  - Mechanical LF normalization supplied on stdin to the same pinned/guarded `rtk proxy $AgentAssetsPython -`: exit 0; only CRLF bytes in tasks.json and progress.txt normalized, no task state or semantic change.
+  - Build/typecheck: NOT APPLICABLE. Product suites and source compilation: NOT RUN for this documentation-only correction. No native preservation/transaction proof is claimed.
+- Packet-byte binding for parent review, not approval: SHA-256 `5d13b577203167aca88de414c572d3b7bd46e976c4abfda8340e73fa2dce9d57`, 27,238 bytes, ExecPlan.md lines 795-902 inclusive. Read ExecPlan.md as raw bytes, take the unique byte offset beginning `##### Windows publication and recovery authority packet (2026-10-06)\n` through the offset immediately before `##### Independent review of metadata packet and refusal boundaries (2026-10-06)\n`. Hash that exact slice with SHA-256, including heading and all intervening LF/blank lines, excluding the Independent review heading and everything after it. No decoding, newline normalization or whitespace trimming during extraction/digest.
+- Tool friction: one apply_patch attempt failed on an inexact prior cleanup line and made no mutation; rereading the exact affected section allowed the corrected patch. One view range exceeded the shortened file's end; a bounded valid range was then used. No safeguard changed or test weakened.
+- Next action: parent independently inspect final packet bytes, publish attributable review in this existing progress.txt and reference it from ExecPlan with packet SHA-256/extraction convention. No self-approval or T002 pass is recorded here. The parent owns the single session-end update-agent-docs pass after review.
+---
+
+## 2026-10-06T23:59:45Z - T002 independent parent review
+- Reviewer: Copilot CLI parent orchestrator, session d8187b01-a110-48ae-907f-3381dd925d1a. This review is separate from the worker admitted by workflow run d0f2afce-8801-4c32-8ece-852db5a8b095; the runtime confirms that run completed with one subagent. The worker returned a pending-review packet, not its own independent approval.
+- Reviewed source: actual uncommitted ExecPlan.md authority packet on base ec3ded78a719900019114b762b6b75965e8e2662. Parent first independently matched the worker's 27,238-byte SHA-256 5d13b577203167aca88de414c572d3b7bd46e976c4abfda8340e73fa2dce9d57. Parent then made introductory wording status-neutral and restored the manifest's mandatory literal Typecheck passes criterion. Neither adjustment changes the reviewed recovery or metadata design.
+- Final reviewed packet: SHA-256 d3b4552d94240ad3065be2ccb1eb0eae9491f453b3a437763ec2c5e557adc7a0, 27,242 raw UTF-8/LF bytes. Extract the unique authority-packet heading beginning "##### Windows publication and recovery authority packet (2026-10-06)\n" inclusive through the byte immediately before "##### Independent review of metadata packet and refusal boundaries (2026-10-06)\n". Include all intervening whitespace; no decoding, trimming or newline normalization. The independent-review section and subsequent status/log edits are outside this slice.
+- Preserved exact reviewed bytes: C:\Users\jeffreypurcell\.copilot\session-state\d8187b01-a110-48ae-907f-3381dd925d1a\files\T002-reviewed-packet.txt. Parent generated this from actual source bytes and independently reread it byte-for-byte. A changed packet digest requires renewed review.
+- Counterexample review, using the actual documented rules rather than worker approval assertions:
+  1. Replacement rollback can pause with candidate at T, candidate moved back to S, original restored from B to T, or stage removed under durable deletion intent. The rollback-direction marker is flushed before writes; stale PUBLISHED does not invalidate authentic O already at T. Missing O or unexplained C disappearance still refuses. Creation restores checked absence with no original; pruning restores the same O with no candidate stage. These fix the original repeated-interruption and replacement-only-state defects.
+  2. PREPARED/DISPLACED/PUBLISHED reconcile both sides of each permitted rename/marker-flush window by operation kind. Complete payload/paired-record/configuration/residual preflight occurs before progress writes or rollback/cleanup. A conflicting later entry therefore cannot trigger writes to an earlier entry. A subsequent edit causes boundary refusal with retained restartable authority, not a false promise that prior writes never occurred.
+  3. Originals survive every target publication until transaction-wide commit; uncommitted recovery restores all baselines. Committed recovery retains after states, authenticates residuals and records deletion intent before unlink, so absent preimages after an interrupted deletion are explained without accepting arbitrary absence. Journal removal is last after complete reconciliation. Parent checked the rollback and committed-cleanup cases separately.
+  4. Journal creation and rewrite have distinct security rules; rewrites preserve authenticated existing owner/group, exact DACL/control bits, known label and required stream bytes. Endpoint streams remain strict byte authority; narrow measured kernel-EA changes do not permit arbitrary metadata loss. Negative unprotected-DACL/whole-EA evidence, no elevation/copy/ignore/protected-DACL workaround, unknown-stream refusal and production refusal remain.
+  5. The error table agrees with the independently fetched Microsoft ReplaceFileW reference: 1175 retains both names, 1176 depends on supplied backup name, and 1177 leaves the un-published replacement at its original name with inherited streams/attributes. The rejected API is not silently reintroduced.
+  6. The finite 15-point plan explicitly includes creation/pruning, marker/rename windows, second interruption during rollback, whole-set refusal-before-writes and committed-cleanup boundaries without invented selectors or a false 1:1 mapping. Control-journal proof, empirical stream/security/native behavior and Windows power-loss durability remain explicit future 6B proof boundaries, not claims of measured success.
+- Actual parent verification: RTK 0.51.0, PYTHON_MANAGER_AUTOMATIC_INSTALL=false and the existing D:\Users\jeffreypurcell\AppData\Local\Programs\Python\Python314\python.exe.
+  - Independent read-only packet/task validator: native exit 0; worker digest/byte count matched and all 29 non-T002 task objects matched the prior index. It detected the omitted literal Typecheck passes criterion, restored above without weakening assertions.
+  - rtk proxy pinned-Python scripts\lint-okf.py --format json: native exit 0, {"schema_version":1,"diagnostics":[]}.
+  - rtk proxy git --no-pager diff --check and diff --cached --check: native exits 0, no whitespace errors.
+  - rtk proxy git --no-pager diff HEAD --name-only -- scripts distribution hooks .github .copilot .gemini .codex AGENTS.md: native exit 0, empty output. No product/source/test/catalog/provider/configuration or protected AGENTS changes.
+  - Exact packet extraction/archive validation: native exit 0; final digest and 27,242-byte archive matched the inspected source.
+- Verdict: APPROVE the T002 documentation/design packet and finite plan. Record T002 passes true and checkpoint 6A done/met/checked only. This does not approve implementation, prove native transactions or power-loss durability, authorize T003 or validate historical unattributed reviews. T001 remains true; T003-T030 remain false; M6/M7 remain in progress/not met.
+- Build/typecheck: NOT APPLICABLE for this documentation-only task, explicitly recorded instead of claiming an unrun source check. Product/native suites: NOT RUN. No source recovery, metadata experiment, provisioning, personal-state access, commit or push.
+- Session-end knowledge pass: route the existing task verification log from repo.md and FILE_MAP.md, retaining canonical frontmatter and avoiding duplicated feature-state rules. Final closing validation is recorded after synchronization.
+---
+
+## T002 closing synchronization verification
+- Final read-only parent validator: native exit 0. All 30 task IDs/priorities/schema fields and mandatory Typecheck passes criteria agree; only T001/T002 pass. Seven milestone states and eight checkpoint states agree with Progress (6A alone complete). The finite public plan has 15 points; 32 local Markdown targets and three anchors resolve. The final packet digest remains d3b4552d94240ad3065be2ccb1eb0eae9491f453b3a437763ec2c5e557adc7a0 and its 27,242-byte reviewed archive is byte-identical.
+- Final OKF command: rtk proxy D:\Users\jeffreypurcell\AppData\Local\Programs\Python\Python314\python.exe scripts\lint-okf.py --format json, with PYTHON_MANAGER_AUTOMATIC_INSTALL=false; native exit 0, zero diagnostics. Staged and unstaged whitespace checks also exit 0.
+- Scope verification: eight authorized documentation paths changed; the unrelated preexisting .agents\skills\exec-plans\SKILL.md change remains untouched. No product diff across scripts, distribution, hooks, provider/config roots or AGENTS.md. HEAD remains ec3ded78a719900019114b762b6b75965e8e2662; git rev-list reports zero session commits.
+- Formal update-agent-docs/OKF report:
+  - Added: None.
+  - Changed: .agents\instructions\repo.md (Agent Instruction) and .agents\memory\FILE_MAP.md (Agent Memory), only routing to the existing verification log and inspected-byte review evidence.
+  - Split or moved: None.
+  - Deduplicated: None; feature state remains in ExecPlan/handoff/progress rather than duplicated in canonical knowledge.
+  - Index updates: FILE_MAP verification-log entry; no new canonical concept or INDEX.md change.
+  - Remaining doc quality TODOs: None for this scoped pass.
+  - Representation branch loaded: references\profile.md only; no Source Summary targets and no source-summary branch. Existing frontmatter/types remain valid; scoped canonical diff contains exactly the two authorized routing paths.
+- Delegation audit: fix-t002 selected and submitted gpt-6.1-sol/high explicitly; executed model/effort remain unconfirmed because runtime metadata does not expose them. Approved workflow timeoutSeconds=1800, maxTotalSubagents=1, maxConcurrentSubagents=1 enforced outside the prompt, with no invocation override. Runtime confirms completed and one subagent; output independently verified, routing compliant. No replacement or nested delegation.
+- Skill-improvement pass: no additional scoped skill edits identified; no skill files modified. All four original documentation findings are resolved and the review binding is persistent. T003 remains unstarted; no commit or product execution.
+---

@@ -29,6 +29,8 @@ This file is a **top-level map only**. For area detail and working rules, read t
 | `agents/` | agents | Canonical Markdown custom-agent prompt files for Copilot, Gemini, and generated Codex TOML. |
 | `docs/<effort>/` | repo docs | Active research and execution plans that need version history while work is in progress. |
 | `docs/agent-asset-installer/usage.md` | repo docs | Public usage, scope behavior, checkout policy, and evidence limits for selected agent assets. |
+| `docs/agent-asset-installer/tasks.json` | repo docs | Remaining installer closeout tasks; consult the adjacent ExecPlan and distribution handoff for current evidence, dependencies and execution authorization. |
+| `docs/agent-asset-installer/progress.txt` | repo docs | Task verification history and attributable independent packet reviews; consult when checking completion claims against inspected bytes, not as implementation authorization. |
 | `docs/adr/` | repo docs | Human-facing ADRs that complement `.agents/` canonical guidance. |
 | `scripts/` | scripts | Installers, importers, the aggregate test runner, validation helpers, and shared shell utilities. |
 | `distribution/` | scripts | Committed asset catalog with explicit source-file and checkout policy declarations. |

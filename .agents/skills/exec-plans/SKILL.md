@@ -1,6 +1,6 @@
 ---
 name: exec-plans
-description: Mandatory whenever starting, executing, orchestrating, or modifying any exec-plan/ExecPlan/execution plan. Always use when implementing complex tasks touching files in multiple layers, creating multiple scripts, system-wide refactors, multi-milestone features, or executing in multiple phases without a plan. Use when the user mentions 'execute {plan,ExecPlan,exec-plan}', 'continue {plan,ExecPlan,exec-plan}', 'continue progress on {plan,ExecPlan,exec-plan}' or similar. Load before the first code edit.
+description: Mandatory whenever starting, executing, orchestrating, reading, modifying, or touching any 'exec-plan', 'ExecPlan', 'execution plan', '*ExecPlan*.md', or '*exec-plan*.md' file. Always use when implementing complex tasks touching files in multiple layers, creating multiple scripts, system-wide refactors, multi-milestone features, or executing in multiple phases without a plan. Use when the user mentions 'execute {plan,ExecPlan,exec-plan}', 'continue {plan,ExecPlan,exec-plan}', 'continue progress on {plan,ExecPlan,exec-plan}' or similar. Load before inspecting or editing ExecPlan files.
 ---
 
 # Execution Plans (ExecPlans)

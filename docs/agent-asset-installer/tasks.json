@@ -1,0 +1,743 @@
+{
+  "project": "Agent Asset Installer Closeout",
+  "branchName": "agent-asset-installer-closeout",
+  "description": "Remaining ExecPlan checkpoints 6A-6F and 7A-7B only. M1-M5 and integrated M6/M7 work are not reopened. This manifest grants no implementation, experiment, native-session, push, provisioning, or renewed execution authorization. Keep codex/research-agent-distribution-options as the integration base. branchName is a manifest label, not branch-creation permission. Each future authorized attempt needs one owner, one named public failure or bounded verification objective, baseline, expected result, and a stop time within 1800 active seconds including validation/review. No automatic renewal, replacement worker, or invented credit ceiling. Pin existing executables, disable Python-manager provisioning, propagate native exits, use disposable roots, and never install tools, elevate, touch personal state, or weaken tests. Source slices require public test-first reproduction, independent focused approval before serialized integration, durable dirty/untracked source preservation, synchronized ExecPlan/handoff, and one session-end update-agent-docs pass. Native/Gemini restrictions remain until separately lifted. No dedicated repository typecheck command was identified: determine the applicable existing check without inventing tooling. Documentation/evidence-only slices must record non-applicability instead of claiming an unrun source check.",
+  "tasks": [
+    {
+      "id": "T001",
+      "parentStoryId": "US-001",
+      "title": "Inventory surviving Windows source and evidence",
+      "description": "6A: inspect surviving repository refs and only task-owned artifact paths named in the handoff. Record recoverable source/test snapshots, provenance, hashes, and gaps inside the ExecPlan. This is read-only source inventory, not restoration, checkout recreation, product validation, or experimentation.",
+      "acceptanceCriteria": [
+        "Record authorized checkout root/HEAD, worktree registrations, and surviving copilot/m6-windows-safe-writer ref using ExecPlan Concrete Steps' read-only Git commands.",
+        "Check the named endpoint-publication report, task-owned patches/archives, source snapshots, and handoff evidence paths. Distinguish verified presence from historical references.",
+        "Record exact source/test paths, SHA-256 hashes, provenance, and recoverability of dirty tracked and untracked deltas for each snapshot.",
+        "A ref at bca7c079c99588172ad30b4d0abfb7ed83e74384 or a passing-test log alone does not establish recovered source.",
+        "If no source survives, record it unavailable and proceed toward the metadata packet using integrated code and available reports. Do not infer all evidence was deleted.",
+        "Do not mutate refs, recreate the removed checkout, restore source, run product suites, or inspect unrelated personal state.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [
+        {
+          "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6a-define-metadata-publication-and-recovery-authority",
+          "description": "First remaining objective. Historical private anchors and approvals are recovery leads, not current source or approval.",
+          "rationale": "The removed checkout held unintegrated dirty/untracked Windows source."
+        }
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "T001 complete: read-only inventory verifies HEAD ec3ded78a719900019114b762b6b75965e8e2662, one registered worktree, and no surviving copilot/m6-windows-safe-writer ref. Base tip bca7c079 is documentation-only. Task-owned session directory 250c3c51-b3fa-4151-8fb0-0b72008068ea\\files\\m6-windows-safe-writer contains only repository skills/ trees; candidate source/test deltas, patches, and archives were not found in inspected locations. Diagnostic probe helpers and reports survive under aa05f60b..., 03b0b060..., 6905b7ed..., and 6c19d8c6... with verified SHA-256 hashes recorded in ExecPlan. Historically absent reports are confirmed absent. No refs mutated, no checkout recreated, no source restored, and no product suites executed. Proceed toward T002 using integrated code and available reports."
+    },
+    {
+      "id": "T002",
+      "parentStoryId": "US-001",
+      "title": "Review Windows publication and recovery authority",
+      "description": "6A: use T001's inventory to write and independently review the metadata packet inside the ExecPlan before source changes. Define stable installer authority, measured independently changing Windows state, and a finite public test plan. Transition experiments require separate bounded authorization. Unanswered preservation questions leave 6A open.",
+      "acceptanceCriteria": [
+        "Define creation, journal rewrite, existing-file publication, owned-file pruning, interrupted restoration, and committed cleanup with retained originals and before/after checks.",
+        "Protect identity, default bytes, ownership, required streams, exact ordinary DACLs, and known integrity labels. Authenticate the complete affected payload/paired-record/configuration set read-only before any recovery writes; ordinary preexisting data/security edits refuse the whole recovery without writes. Recheck authority at each mutation boundary.",
+        "Define operation-specific baseline/after authority and live states across rename/marker-flush windows. Creation restores authenticated absence, pruning restores the retained original without a candidate stage, and replacement recognizes authenticated already-restored originals. Unexplained missing/tampered authority refuses; second interruption during rollback and committed cleanup is restartable.",
+        "Retain originals until transaction-wide durable COMMITTED, and retain the journal until all rollback/cleanup completes; remove it last. The finite public plan covers multi-target refusal-before-writes, paired records/configuration, deletion-authority and second-interruption boundaries without claiming invented existing selectors or a 1:1 task mapping.",
+        "Preserve negative unprotected-DACL and whole-kernel-EA results. Distinguish measured endpoint-state changes from stable authority without declaring arbitrary metadata changes harmless.",
+        "Do not copy kernel EAs, strip/ignore endpoint metadata, force protected DACLs, change endpoint policy, elevate, or weaken assertions.",
+        "Justify the smallest composition using verified recovered or integrated code. Include partial-mutation and interruption states if ReplaceFileW is chosen.",
+        "Independent review approves the actual finite public plan and explicit unknown/known-loss refusal boundaries with attributable reviewer output in progress.txt and an exact packet digest/extraction convention, or records the unresolved blocker. An author's inline approval is not independent evidence; do not mark T002 passed or close 6A before actual independent approval.",
+        "Keep production ASSET_PLATFORM_UNSUPPORTED refusal and verified recovered guards until composition is measured.",
+        "Documentation/evidence-only: record build/typecheck and product suites as not applicable/not run, validate task JSON and checkpoint/handoff agreement, run existing OKF lint and staged/unstaged whitespace checks with pinned Python and native exits.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md", "docs\\agent-asset-installer\\windows-filesystem-research.md", "docs\\agent-asset-installer\\windows-established-practice.md"],
+      "designGuidance": [
+        {
+          "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6a-define-metadata-publication-and-recovery-authority",
+          "description": "Requires T001. Missing snapshots are recorded gaps, not endless recovery prerequisites. No backend implementation belongs here.",
+          "rationale": "Primitive success and historical review do not prove persistent product-journal composition."
+        }
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "T002 complete: corrected design independently approved by Copilot CLI parent reviewer in session d8187b01-a110-48ae-907f-3381dd925d1a, separate from documentation worker workflow d0f2afce-8801-4c32-8ece-852db5a8b095. Attributable output is the 2026-10-06T23:59:45Z independent-parent-review entry in progress.txt, bound to 27,242 raw packet bytes with SHA-256 d3b4552d94240ad3065be2ccb1eb0eae9491f453b3a437763ec2c5e557adc7a0 and exact extraction convention. 6A is done/met/checked. Reviewed creation/replacement/pruning and already-restored authority, repeated-interruption rollback, whole-set preflight and boundary rechecks, deletion intent, original retention until transaction-wide commit, journal removal last, exact security/streams and finite 15-point plan. Correct Win32 backup-dependent 1176 and metadata-inheriting 1177 semantics; ReplaceFileW remains rejected. Prior unsupported approval stays withdrawn. Typecheck/build are explicitly not applicable; documentation checks passed and product suites were not run. Production refusal and all later task states remain unchanged; no T003, source recovery, implementation, experiment, native session or commit."
+    },
+    {
+      "id": "T003",
+      "parentStoryId": "US-002",
+      "title": "Deliver one Windows team install and no-write repeat",
+      "description": "6B: after reviewed T002 and new bounded authorization, prepare a fresh isolated checkout from the integrated base. Recover only verified deltas or reconstruct the smallest adaptation. Prove first install, then repetition as separately recorded objectives. Keep ordinary production writes disabled until complete 6B composition passes. Justify any private candidate seam.",
+      "acceptanceCriteria": [
+        "Record baseline, recovered/reconstructed paths/hashes, pinned executables, disposable roots, one objective per attempt, and the 1800-second active stop time.",
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group team-install -k test_installs_one_committed_skill_with_provenance_and_untouched_index and retain actual red/green output and native exit.",
+        "Install exact committed skill bytes with independent hashes, full source commit/digest, matching ownership records, narrow checkout rules, and untouched source/target indexes.",
+        "Then run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group team-install -k test_repeated_install_makes_no_writes. Repeat preserves bytes, identity, mtimes, and zero added/updated/removed items.",
+        "Exercise naturally endpoint-tagged payloads/state under T002's stream/security rules. Occupied, malformed, linked/reparse, case-colliding, and incompatible-checkout destinations refuse without writes.",
+        "Retain durable source/test bytes and focused independent approval. Missing native fixture privileges stay explicit gaps.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle",
+        "description": "Requires T002 and new bounded implementation authorization. Add a focused Windows module only if the reviewed design requires it. Its filename is not established.",
+        "rationale": "The integrated base has no Windows backend/probe or windows-mutation group."
+      }],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T004",
+      "parentStoryId": "US-002",
+      "title": "Make private Windows installs preserve Git state",
+      "description": "6B: after T003, reproduce the endpoint-tagged local-journal failure through the existing private-install case. Deliver exact Git-resolved excludes, consistent local records, and no tracked/index changes. Extend only fixtures needed for the actual public failure. Additional backend filenames depend on T002.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group scopes -k test_local_install_is_private_and_preserves_git_metadata_and_indexes before/after repair.",
+        "Private payloads/records stay absent from Git status. Existing excludes, tracked files, Git metadata, and source/target indexes remain unchanged.",
+        "Install/repeat handle naturally endpoint-tagged journal creation/rewrite without stripping metadata or weakening T002 checks.",
+        "Tracked payload/configuration conflicts and ineffective/negated excludes refuse the whole operation without target changes.",
+        "Linked-worktree cases resolve correct Git state and preserve other worktrees' private files/excludes.",
+        "Repeat performs no payload/configuration writes and fresh focused review approves the actual repaired bytes.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\transaction.py", "scripts\\agent_assets\\scopes.py", "scripts\\agent_assets\\core.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle; scripts\\test-agent-assets.py:2134",
+        "description": "Requires T003. Preserve complete existing file/index/privacy assertions, including installer state.",
+        "rationale": "Team installation does not exercise local excludes and journal rewrite."
+      }],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T005",
+      "parentStoryId": "US-002",
+      "title": "Preserve explicit bare-repository acquisition policy",
+      "description": "6B: recover or recreate the unintegrated acquired-bare Git regression at the public seam. Deliver remote installation and saved-branch lifecycle under safe.bareRepository=explicit without overrides. The historical test_remote_immutable_reads_and_lifecycle_respect_explicit_bare_policy is absent in the integrated base. Verify/recover it or author its public equivalent before invoking it.",
+      "acceptanceCriteria": [
+        "Reproduce remote default-branch acquisition using disposable Git remotes, literal committed fixtures, and safe.bareRepository=explicit.",
+        "Owned disposable bare acquisition uses explicit Git-directory authority for immutable ref/tree/blob reads without weakening policy.",
+        "Install, branch-advancing preview/update, and current-record restore preserve exact content, source policy, and both indexes.",
+        "Invalid/option-like refs and credential-bearing URLs refuse without exposing credentials or executing acquired code/clean filters.",
+        "Record exact red/green commands for the actual recovered/new test name, source hashes, and focused independent approval.",
+        "Existing team-install acquisition and saved-branch lifecycle coverage passes without overriding safe.bareRepository=explicit.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\sources.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle; Outcomes & Retrospective",
+        "description": "Requires T003. Historical source hash/red-green evidence guides recovery but does not certify restored/reconstructed bytes.",
+        "rationale": "Remote updates must respect security policy rather than permissive fixtures."
+      }],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T006",
+      "parentStoryId": "US-002",
+      "title": "Make Windows preview and updates honor saved policy",
+      "description": "6B: deliver branch-following and pinned preview/update through real disposable commits A/B. Cover retained edits and whole-operation conflicts with journal/security preservation. Select one named lifecycle case per bounded attempt. Broader relevant coverage follows focused repair.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group lifecycle -k test_preview_and_update_follow_saved_remote_branch with actual red/green evidence.",
+        "Preview/application agree on proposed changes. Preview changes no payloads, records, configuration, Git excludes, or indexes.",
+        "Branch advancement updates exact bytes/provenance. Pins remain pinned and explicit source-policy changes persist only after success.",
+        "Unchanged-upstream local edits retain original baseline/origin. Incompatible changes refuse the entire operation without writes.",
+        "Records/settings/publication preserve unrelated data and T002's exact stream/security guarantees.",
+        "Existing test_pins_branch_overrides_and_failed_policy_changes and test_retained_edits_preserve_baseline_origin_and_later_conflict pass on the measured host.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\agent_assets\\sources.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle; Milestone 3",
+        "description": "Requires T004 and T005. Reuse shared planning, ownership/origin authentication, and edit policy.",
+        "rationale": "Windows filesystem support must not change explicit-update semantics."
+      }],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T007",
+      "parentStoryId": "US-002",
+      "title": "Verify Windows offline audit and exact-record restoration",
+      "description": "6B: deliver source-independent strict audit and authorized current-record restore on Windows. Use independent fingerprints/hashes to prove audit never repairs and restore never follows an advanced branch. Preserve exact-byte checkout policy, record agreement, and pending-operation semantics.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group lifecycle -k test_strict_status_is_offline_read_only_and_reports_all_payload_drift with saved source unavailable.",
+        "Clean strict status exits 0. Missing/modified payloads, owned settings/attributes, and selection disagreement report ASSET_DRIFT and exit 1 without changes.",
+        "Malformed/unsupported records and pending operations exit 2 without acquisition, recovery, Git-filter/hook/client execution, or target mutation.",
+        "Existing test_restore_uses_recorded_commit_and_digest_without_changing_policy passes after branch advancement using the exact recorded revision/digest.",
+        "Missing commits, digest/rendered-baseline mismatch, unsupported transforms, and edited conflicts refuse without overwriting data or changing policy.",
+        "Authentic older records migrate only on explicit update/restore. Mixed/current malformed pairs refuse and unrelated settings do not cause drift.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Interfaces and Dependencies; Validation and Acceptance",
+        "description": "Requires T006. Read-only audit remains independent of writer availability and cannot recover pending operations.",
+        "rationale": "Repair-before-audit can conceal corruption and falsely establish acceptance."
+      }],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T008",
+      "parentStoryId": "US-002",
+      "title": "Complete Windows personal installation and verified adoption",
+      "description": "6B: deliver personal-scope installation, no-write repeat, exact legacy adoption, and saved-selection update/restore in an explicit disposable home. Start with the existing personal lifecycle case. Preserve native destinations, external Codex authority, unrelated settings, and legacy backups without real personal-state access.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group scopes -k test_personal_saved_selection_update_restore_and_verified_adoption.",
+        "Fresh install/repeat produce exact native bytes and consistent immutable records with no writes outside authorized disposable roots.",
+        "Adoption accepts only exact immutable regular files and known native registration groups. Edited, unknown, linked, hard-linked, duplicate, or malformed candidates refuse without writes.",
+        "Saved selection drives branch/pin update and current-record restore while unrelated settings/handlers and legacy manifests/backups survive.",
+        "External Codex destinations require explicit matching persisted authority. Inherited CODEX_HOME cannot redirect explicit test homes into personal state.",
+        "Exercise personal journals/configuration replacement under T002's metadata rules and obtain focused independent approval.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\personal.py", "scripts\\agent_assets\\scopes.py", "scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#milestone-5-add-private-repository-and-personal-lifecycle-support; Checkpoint 6B",
+        "description": "Requires T007. Reuse implemented personal layouts and immutable adoption, not legacy-copy fallback.",
+        "rationale": "Windows parity includes personal lifecycle, not only repository installs."
+      }],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T009",
+      "parentStoryId": "US-002",
+      "title": "Preserve shared ownership across Windows scope transitions",
+      "description": "6B: deliver authenticated team/local borrowing, explicit promotion, and release while preserving remaining scope requirements. Verify ownership and exact bytes instead of trusting companion records alone. Select one existing transition case per authorized attempt and keep native configuration/Git privacy consistent.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group scopes -k test_team_local_share_and_prune_keeps_remaining_requirement.",
+        "Identical authenticated items share without duplicate payload writes. Different shared bytes/configuration refuse the whole operation.",
+        "Explicit promotion preserves unchanged bytes/identity/mtime and never hides tracked team files through private excludes.",
+        "Pruning one scope retains other requirements and adds only necessary exact excludes for released untracked items.",
+        "Codex borrowing/promotion, linked-worktree records, and forged companion ownership retain their existing refusal/preservation assertions.",
+        "Record native public evidence and focused independent review without claiming client discovery.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\scopes.py", "scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle; scripts\\test-agent-assets.py:1806-1860,2073-2155",
+        "description": "Requires T008. Preserve source-authenticated companion ownership and common-exclude protection across worktrees.",
+        "rationale": "Single-scope success does not prove safe release of shared files."
+      }],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T010",
+      "parentStoryId": "US-002",
+      "title": "Prune only unchanged unused Windows assets",
+      "description": "6B: deliver explicit selection changes that remove only authenticated unchanged items unused by all remaining dependencies/scopes. Cover payloads, native entries, and narrow owned checkout rules through public effects. Protect retained originals/security before removal under T002. No rollback history or recursive installation-tree deletion.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group lifecycle -k test_selection_change_prunes_only_unused_owned_paths_and_rules.",
+        "Recalculate dependency closure and remove only unchanged owned files/entries/rules with no remaining owner.",
+        "Edited obsolete payloads, entries, modes, or owned attributes refuse the whole operation before writes.",
+        "Borrowed/unowned files, compatible unowned attributes, unrelated settings, and nonempty directories survive.",
+        "Malformed/future scope records and tampered ownership/origin cannot authorize removal. Preserve complete fingerprints on refusal.",
+        "Retained-original identity/data/streams/DACLs/known labels remain available for interruption recovery and are cleaned only under reviewed authority.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#milestone-3-update-restore-and-prune-owned-content-safely; Checkpoint 6B",
+        "description": "Requires T009. Preserve immutable ownership/origin checks, edit policy, and existing useful stronger safeguards.",
+        "rationale": "Deletion requires authentic unchanged ownership, not native-root membership."
+      }],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T011",
+      "parentStoryId": "US-002",
+      "title": "Exclude simultaneous Windows writers safely",
+      "description": "6B: demonstrate ordinary concurrent installer exclusion through real public processes and Git-resolved worktree state. Reproduce the busy-mutex case before synchronization edits. Preserve ordinary external edits while staging. Do not expand trusted-workspace safety into mandatory malicious-substitution proof.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group lifecycle -k test_busy_mutex_refuses_without_changes_in_linked_worktree.",
+        "An overlapping installer reports the existing busy diagnostic and leaves complete target/Git fingerprints unchanged.",
+        "Repository exclusion resolves per-worktree Git state and personal exclusion uses authorized installation state.",
+        "Writers recheck ordinary observed file/security state before mutation and preserve conflicting external edits.",
+        "Existing link/reparse and unsupported-host refusal assertions remain intact. Missing fixture permissions are documented, not skipped or substituted.",
+        "Retain real process evidence and focused independent approval, not private-helper synchronization mocks.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Current accepted contract; Checkpoint 6B",
+        "description": "Requires T010. Trusted-workspace safety includes simultaneous installers and ordinary edits, not universal deliberate substitution resistance.",
+        "rationale": "Synchronization must match accepted behavior without reopening rejected threat-model scope."
+      }],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T012",
+      "parentStoryId": "US-002",
+      "title": "Recover a genuinely interrupted Windows update",
+      "description": "6B: recover/reconstruct the public real-process interruption fixture. Interrupt only an owned child after observed product mutation and persistent journal state. Prove restoration before a new plan, endpoint-tagged journal composition, and external-edit refusal. Additional native case names are unknown until source recovery or public test-first reconstruction.",
+      "acceptanceCriteria": [
+        "Start from test_interrupted_update_is_read_only_error_then_recovers_before_new_plan and retain public semantics while adapting genuine Windows interruption.",
+        "Observe changed payload and persistent journal before terminating the specific owned child PID. A before-mutation stop is not interrupted-write acceptance.",
+        "Strict status reports interruption without writes. The next authorized mutation first coherently restores pre-operation state.",
+        "Recovery preserves source-authenticated data, identity authority, required streams, exact DACLs, known labels, unrelated settings, and Git state.",
+        "Ordinary external content/security edits, malformed authority, or missing required originals refuse with unchanged evidence and pending journal.",
+        "Exercise publication/error/interruption states required by T002. Unexplained red-then-green intermittence is not a repair.",
+        "Successful recovery removes only authenticated pending-operation residue and creates no rollback history. Obtain fresh focused review.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Checkpoints 6A/6B; Idempotence and Recovery",
+        "description": "Requires T011. Do not invoke the old windows-mutation group unless its tests were verified recovered or added through public reconstruction.",
+        "rationale": "Primitive success did not establish persistent product-journal guarantees."
+      }],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T013",
+      "parentStoryId": "US-002",
+      "title": "Restore interrupted pruning and restart committed cleanup",
+      "description": "6B: deliver restoration after actual owned-file pruning and restartable committed cleanup. Recover verified regressions or recreate the same public behavior one boundary per attempt. Preserve descriptor-substitution negative evidence without adding universal hostile-authority proof. Unknown new selector names must be recorded after tests exist.",
+      "acceptanceCriteria": [
+        "A real interrupted prune restores exact pre-operation bytes/streams/DACLs/known labels using independently checked retained-original authority.",
+        "Known invalid/missing/substituted authority or ordinary external edits refuse with originals/journal retained and no recovery writes.",
+        "Permitted independently changing endpoint state follows T002's measured rule, not stale whole-EA equality or arbitrary metadata disregard.",
+        "After committed success, interruption at each required cleanup boundary permits restart without rolling back completed payload/records.",
+        "Cleanup verifies retained identity/ownership and removes only authenticated residue while preserving unrelated files/directories.",
+        "Record actual current test names, commands, red/green results, source hashes, and fresh independent approval. Historical scoped APPROVE is insufficient.",
+        "If publication/recovery cannot be established, retain a precise blocker and stop automatic retries for a release decision.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Checkpoints 6A/6B; Surprises & Discoveries",
+        "description": "Requires T012. Keep product retained-original/cleanup composition distinct from disposable API success.",
+        "rationale": "Earlier pruning lost a label and ordinary mutation success did not resolve later metadata refusal."
+      }],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T014",
+      "parentStoryId": "US-002",
+      "title": "Enable only the reviewed Windows lifecycle boundary",
+      "description": "6B: after T003-T013, review actual combined source/test bytes and enable ordinary mutation only on the measured boundary. Reconcile refusal tests with supported/refused states rather than deleting them. Serially integrate reviewed passing changes into the base, preserving dirty/untracked source durably before later checkout cleanup.",
+      "acceptanceCriteria": [
+        "Required scopes, acquisition, preview/update/restore, conflicts, sharing/prune, concurrency, and interruption/cleanup have current passing evidence without unexplained metadata refusal.",
+        "Fresh independent review approves complete 6B preservation/recovery composition before ordinary Windows mutation is enabled.",
+        "Supported public invocation succeeds without experimental opt-in. Unsupported host/filesystem/security states refuse before writes.",
+        "Retain build-22631/AMD64/fixed-local-NTFS support bounds unless new native evidence justifies expansion.",
+        "Reconcile WindowsBoundaryTests while preserving meaningful unsupported-boundary and pending-evidence assertions. Strict audit never recovers.",
+        "Run relevant complete lifecycle/mutation coverage only after focused repairs and prerequisites. Missing link fixtures remain explicitly incomplete.",
+        "Record reviewed integration commit, source/test hashes, durable retained state, and measured evidence without claiming whole M6/M7 acceptance.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\agent_assets\\core.py", "scripts\\agent_assets\\transaction.py", "scripts\\test-agent-assets.py", ".github\\workflows\\agent-assets.yml", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6b-recover-or-rebuild-the-public-windows-lifecycle",
+        "description": "Requires T003, T004, T005, T006, T007, T008, T009, T010, T011, T012, and T013. Keep production refusal until required composition passes.",
+        "rationale": "Private scoped successes do not certify hooks, clones, OS/runtime combinations, or native clients."
+      }],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T015",
+      "parentStoryId": "US-003",
+      "title": "Repair installed Windows required-context protocols",
+      "description": "6C: reproduce the current required-skills startup/context failure after T014. Deliver useful context through installed provider scripts in a source-absent relocated clone started from a nested directory. Preserve all full adapters and unrelated configuration. These are installed-script checks, not authorized native sessions.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group providers -k test_installed_required_hooks_survive_clone_and_nested_start_without_personal_state.",
+        "Codex/Copilot/Gemini startup registrations execute packaged scripts with valid envelopes, required skill context, exact exits, and provider-specific external audit state.",
+        "Remove source and launch from nested quoted paths. Unrelated settings/handlers survive and clone audit remains clean.",
+        "Use verified existing Git Bash/runtime, empty disposable homes, and external state. Do not access personal state or launch provider clients.",
+        "Canonical changes regenerate manifest-owned outputs through generate-hooks.py --write, followed by --check and test-generate-hooks.py. Never hand-edit generated outputs.",
+        "Run affected existing startup suites and obtain focused independent approval while retaining dependency closure and skill/custom-agent file assertions.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["hooks\\families\\required_skills.py", "hooks\\families\\repository_runtime.py", "scripts\\agent_assets\\providers.py", "scripts\\agent_assets\\hook_rendering.py", "scripts\\test-agent-assets.py", "scripts\\generate-hooks.py", "scripts\\test-generate-hooks.py", "scripts\\test-codex-hooks-startup.sh", "scripts\\test-hooks-startup.sh", "scripts\\test-gemini-hooks-startup.sh", ".codex\\hooks\\load-required-skills.py", ".copilot\\hooks\\scripts\\load-required-skills.py", ".gemini\\hooks\\scripts\\skill-context-injector.py", ".codex\\hooks\\repository-launcher.py", ".copilot\\hooks\\scripts\\repository-launcher.py", ".gemini\\hooks\\scripts\\repository-launcher.py", ".codex\\hooks\\helpers\\runtime_config.py", ".copilot\\hooks\\scripts\\helpers\\runtime_config.py", ".gemini\\hooks\\scripts\\helpers\\runtime_config.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6c-repair-installed-hooks-capture-and-wrappers; hooks\\manifest.py",
+        "description": "Requires T014. Historical failure lines are not selectors. Edit canonical families, then regenerate corresponding owned provider outputs.",
+        "rationale": "File/protocol evidence cannot establish native trust or discovery."
+      }],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T016",
+      "parentStoryId": "US-003",
+      "title": "Preserve Windows security-hook tool and end protocols",
+      "description": "6C: deliver Tool Guardian and secret scanning through installed registrations for every full adapter. Start with the existing security provider case and retain block/warning, scanner, dependency, registration, exit, and unrelated-setting assertions. Address one named public failure per bounded attempt.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group providers -k test_security_hooks_install_all_dependencies_and_native_tool_and_end_registrations.",
+        "Codex/Copilot/Gemini retain all declared Guardian/scanner helpers and native tool/end registrations with valid provider envelopes.",
+        "Harmless and refusal fixtures produce expected exits/output without weakening policy or removing assertions.",
+        "Installed scripts use packaged dependencies and external disposable state without provider binaries or personal paths.",
+        "Canonical tool_guard.py/scan_secrets.py changes regenerate owned outputs and pass freshness, generator, and affected existing security suites.",
+        "Preserve unrelated settings/handlers and obtain focused independent approval of measured installed-script behavior.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["hooks\\families\\tool_guard.py", "hooks\\families\\scan_secrets.py", "hooks\\families\\repository_runtime.py", "scripts\\agent_assets\\providers.py", "scripts\\agent_assets\\hook_rendering.py", "scripts\\test-agent-assets.py", "scripts\\test-security-banners.py", "scripts\\generate-hooks.py", "scripts\\test-generate-hooks.py", ".codex\\hooks\\tool-guard.py", ".copilot\\hooks\\scripts\\tool-guard.py", ".gemini\\hooks\\scripts\\tool-guard.py", ".codex\\hooks\\scan-secrets.py", ".copilot\\hooks\\scripts\\scan-secrets.py", ".gemini\\hooks\\scripts\\scan-secrets.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Current accepted contract; Checkpoint 6C",
+        "description": "Requires T015 under closeout order. Windows keeps required-skills, Tool Guardian, and scanning. Skills/agents-only is not accepted.",
+        "rationale": "Separate capability gates do not permit omission of broken required hooks."
+      }],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T017",
+      "parentStoryId": "US-003",
+      "title": "Make optional Windows hook capture self-contained",
+      "description": "6C: repair opted-in capture through installed scripts and external disposable state. Capture accompanies hooks, not a new selectable asset. Reproduce the existing capture case, preserving default-off behavior and all provider assertions. Load focused observability guidance before changes.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group providers -k test_installed_hook_optional_capture_is_self_contained_and_external.",
+        "OBSERVABILITY_CAPTURE_EVENT=true creates valid capture state under AGENT_ASSETS_STATE_DIR without payload or empty-home writes.",
+        "Default-off capture stays off and protocols/exits remain valid with capture enabled and disabled.",
+        "State partitions by provider/normalized target path so independent clones do not share sessions or commit personal paths.",
+        "Source-absent/nested scripts retain capture dependencies without personal credentials or client prerequisites.",
+        "Regenerate canonical outputs and run freshness/generator tests, existing observability suites, and affected capture suites before focused review.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["hooks\\families\\observability.py", "hooks\\families\\repository_runtime.py", "hooks\\families\\send_event.py", "scripts\\agent_assets\\hook_rendering.py", "scripts\\test-agent-assets.py", "scripts\\test-scan-secrets-capture.py", "scripts\\test-hooks-observability.sh", "scripts\\test-gemini-hooks-observability.sh", "scripts\\generate-hooks.py", "scripts\\test-generate-hooks.py", ".copilot\\hooks\\scripts\\helpers\\observability.py", ".gemini\\hooks\\scripts\\helpers\\observability.py", ".copilot\\hooks\\scripts\\send-event.py", ".gemini\\hooks\\scripts\\send-event.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6c-repair-installed-hooks-capture-and-wrappers; scripts\\test-agent-assets.py:1589-1603",
+        "description": "Requires T016 under closeout order. Use owned output paths from hooks\\manifest.py and disposable capture/maintenance fixtures.",
+        "rationale": "Protocol success does not prove enabled capture remains isolated and usable."
+      }],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T018",
+      "parentStoryId": "US-003",
+      "title": "Prove Windows Bash and PowerShell lifecycle forwarding",
+      "description": "6C: repair/verify both wrappers using pinned existing executables and disposable homes. Preserve explicit forwarding, legacy behavior before adoption, and saved-selection refresh afterward. Remove fixture paths that trigger runtime provisioning without weakening checks.",
+      "acceptanceCriteria": [
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group scopes -k test_wrappers_forward_scopes_and_saved_selection_refuses_tampering.",
+        "Explicit scoped arguments and quoted paths reach Python unchanged through verified Git Bash and PowerShell.",
+        "No-argument refresh preserves legacy behavior before adoption and uses saved selection afterward, including missing-file restore.",
+        "Malformed/tampered records return the real nonzero exit without fallback copying or target changes.",
+        "Set PYTHON_MANAGER_AUTOMATIC_INSTALL=false, exclude WindowsApps aliases, and use only existing runtimes. Unexpected provisioning is a failure.",
+        "PowerShell propagates $LASTEXITCODE. A trailing successful command cannot mask native failure.",
+        "Run existing test-install.sh through verified Git Bash and rtk proxy pwsh -NoProfile -File scripts\\test-install.ps1 after prerequisites, then obtain focused approval.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\install.sh", "scripts\\install.ps1", "scripts\\test-agent-assets.py", "scripts\\test-install.sh", "scripts\\test-install.ps1", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Checkpoint 6C; docs\\agent-asset-distribution\\handoff.md",
+        "description": "Requires T017 under closeout order. Historical wrapper passes and unintended provisioning are distinct evidence.",
+        "rationale": "Disposable profiles can activate manager aliases and silently modify shared runtime state."
+      }],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T019",
+      "parentStoryId": "US-004",
+      "title": "Audit and relocate genuine Windows-installed clones",
+      "description": "6D: adapt CloneTests.prepare_bundle to produce a genuine Windows-installed commit after T014-T018. Preserve POSIX producer/export and independent bytes/hashes/damage/launcher assertions. Audit source-absent untouched clones before repair. No provider binaries are required.",
+      "acceptanceCriteria": [
+        "Create/commit a genuine disposable Windows team installation, record payload commit and OS/runtime versions, and remove source checkout.",
+        "Run rtk proxy $AgentAssetsPython scripts\\test-agent-assets.py --group clone with core.autocrlf true and false.",
+        "Before install/restore, strict audit checks independent LF/CRLF/binary bytes and hashes with unchanged payload/Git metadata.",
+        "Committed binary damage fails audit and stays damaged. Incompatible attributes retain no-write refusal.",
+        "Execute all startup registrations through their actual Windows shell fields from relocated nested Unicode/apostrophe/ampersand/space paths.",
+        "Preserve POSIX producer/export and every semantic assertion. Do not fabricate bundles or generate missing payload after cloning.",
+        "Use a separate command checkout/external state and obtain focused independent approval before fixture integration.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\test-agent-assets.py", "scripts\\agent_assets\\providers.py", "hooks\\families\\repository_runtime.py", ".codex\\hooks\\repository-launcher.py", ".copilot\\hooks\\scripts\\repository-launcher.py", ".gemini\\hooks\\scripts\\repository-launcher.py", ".codex\\hooks\\helpers\\runtime_config.py", ".copilot\\hooks\\scripts\\helpers\\runtime_config.py", ".gemini\\hooks\\scripts\\helpers\\runtime_config.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6d-prove-committed-windows-clone-and-relocation; scripts\\test-agent-assets.py:2175-2207",
+        "description": "Requires T014, T015, T016, T017, and T018. Regenerate any changed canonical runtime outputs. Windows-only proof is not shared-payload or native-client certification.",
+        "rationale": "The existing POSIX assertion is a fixture limitation, not permission to weaken clone semantics."
+      }],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T020",
+      "parentStoryId": "US-005",
+      "title": "Close demonstrated Windows generator portability failures",
+      "description": "6E: inspect prerequisites and reproduce one named generator failure before each repair. Deliver public generation/check behavior preserving deterministic output, ownership, transaction recovery, and link assertions. Historical failures/errors are not assumed to share a cause. Missing ordinary-rights symlink authority stays pending.",
+      "acceptanceCriteria": [
+        "Locate current generator failures and separate path/process/mode product defects from unavailable fixture capabilities.",
+        "Run the actual named test-generate-hooks.py case with pinned interpreter before/after each focused repair and record exact commands/results.",
+        "Public --check stays read-only and --write repairs only owned outputs deterministically and repeatably.",
+        "Preserve POSIX executable intent and existing Windows mode semantics. Never substitute ordinary files for link fixtures or skip assertions.",
+        "Run rtk proxy $AgentAssetsPython scripts\\generate-hooks.py --check and relevant generator tests after repairs without concurrent checkout mutation.",
+        "Record unresolved privilege-dependent evidence incomplete. Obtain focused approval for source changes and keep product failures open.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\generate-hooks.py", "scripts\\test-generate-hooks.py", "hooks\\manifest.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6e-collect-complete-automated-os-and-runtime-evidence; .agents\\memory\\testing\\scripts.md",
+        "description": "Requires T019 under mandatory closeout order. Inspect prerequisites before broad validation.",
+        "rationale": "Historical freshness passed while generator portability/setup failures remained."
+      }],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T021",
+      "parentStoryId": "US-005",
+      "title": "Close demonstrated Windows agent-converter failures",
+      "description": "6E: verify public strict conversion on Windows and repair only reproduced portability bugs. Distinguish historical symlink setup errors from product defects. Preserve serialization, managed cleanup, collisions, and unmanaged files. Missing ordinary-rights link capability cannot be relabeled a pass.",
+      "acceptanceCriteria": [
+        "Inspect converter fixtures and existing runtime/link capabilities without elevation or installation. Record unavailable prerequisites.",
+        "Run rtk proxy $AgentAssetsPython scripts\\test-codex-agents.py after focused failures are understood, retaining case names/results.",
+        "Public conversion produces strict TOML with exact canonical instructions and removes only unchanged manifest-owned stale outputs.",
+        "Malformed frontmatter, case-fold collisions, linked destinations, and unmanaged conflicts retain refusal/preservation assertions.",
+        "For a real defect, reproduce one public case red/green and obtain focused independent approval before integration.",
+        "If only link setup is unavailable, record incomplete evidence and observed WinError 1314. Do not weaken tests or invent repairs.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["scripts\\install-codex-agents.py", "scripts\\canonical_agents.py", "scripts\\test-codex-agents.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6e-collect-complete-automated-os-and-runtime-evidence; .agents\\memory\\testing\\scripts.md",
+        "description": "Requires T019. T020 is independent generator behavior, not a converter prerequisite.",
+        "rationale": "Privilege-dependent setup errors do not prove converter bugs or justify bypassing coverage."
+      }],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T022",
+      "parentStoryId": "US-005",
+      "title": "Record complete actual OS and Python suite evidence",
+      "description": "6E: after focused repairs and prerequisite inspection, run complete applicable suites on each separately authorized capable host/runtime. Use existing CI wiring without starting remote runs or provisioning from this manifest alone. Separate actual Python 3.11 execution from newer runtimes, grammar parsing, and authored CI.",
+      "acceptanceCriteria": [
+        "Inventory existing tools, actual interpreter/OS versions, link capability, and authorized hosts before broad runs.",
+        "Run unfiltered test-agent-assets.py, applicable test-codex-agents.py/test-generate-hooks.py, freshness, and wrapper suites only after focused failures are repaired.",
+        "Run existing POSIX test-all.py only on authorized POSIX hosts with its prerequisites. macOS PowerShell is not native Windows evidence.",
+        "Record exact command, versions, counts, exits, failures/skips, elapsed time, and unavailable gates in client-validation.md.",
+        "Actual Python 3.11 and newer-runtime results are required before advertising their combinations. Missing hosts/runtimes/link fixtures remain pending.",
+        "Keep Windows mutation distinct from clone/refusal evidence and reconcile boundary cases with reviewed support.",
+        "Never suppress failures or claim unexplained green retries stable. Unavailable prerequisites retain incomplete checkpoint state.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [".github\\workflows\\agent-assets.yml", "scripts\\test-agent-assets.py", "scripts\\test-codex-agents.py", "scripts\\test-generate-hooks.py", "scripts\\generate-hooks.py", "scripts\\test-install.sh", "scripts\\test-install.ps1", "scripts\\test-all.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ci-runtime-audit.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6e-collect-complete-automated-os-and-runtime-evidence; .github\\workflows\\agent-assets.yml",
+        "description": "Requires T019 and T020/T021 product-repair outcomes. Documented missing fixtures do not satisfy corresponding certification. Runs stay individually authorized/bounded.",
+        "rationale": "Existing CI, old-source measurements, and 3.11 grammar parsing are not current runtime evidence."
+      }],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T023",
+      "parentStoryId": "US-005",
+      "title": "Audit one immutable payload across authorized operating systems",
+      "description": "6E: export one genuine installed committed bundle and consume the identical payload on authorized Windows/Linux/macOS hosts. Preserve audit-before-repair, independent bytes/hashes, autocrlf variants, damaged-clone refusal, and relocated installed shells. This is distinct from Windows-produced local proof and native discovery.",
+      "acceptanceCriteria": [
+        "Use existing --export-clone-bundle on an authorized verified producer and record bundle hash, payload commit, and source provenance.",
+        "Set AGENT_ASSETS_CLONE_BUNDLE and run existing --group clone on each authorized consumer against the identical bundle without re-rendering.",
+        "Audit untouched autocrlf true/false clones before install/restore with independent LF/CRLF/binary bytes and hashes.",
+        "Retain committed-damage refusal and installed launchers running from source-absent relocated nested paths.",
+        "Record actual OS/runtime and consumer results. Do not infer unrun combinations or substitute host-generated payloads.",
+        "Unavailable producer/consumer gates stay pending without invalidating T019 Windows-only evidence.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": [".github\\workflows\\agent-assets.yml", "scripts\\test-agent-assets.py", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ci-runtime-audit.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md:Checkpoints 6D/6E; .github\\workflows\\agent-assets.yml:payload/clone",
+        "description": "Requires T019 and authorized producer/consumer prerequisites, not all unavailable T022 combinations. Remote runs need separate authorization.",
+        "rationale": "Independent host-produced installs do not establish reuse of one committed payload."
+      }],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T024",
+      "parentStoryId": "US-006",
+      "title": "Verify authorized Windows Copilot CLI native loading",
+      "description": "6F: only after separately authorized disposable isolation/authentication and normal trust, use existing Windows Copilot CLI for distinctive skill/agent activation and registered harmless events before/after clone relocation. No native session command is established. Determine the authorized client's normal workflow without inventing commands or accessing personal credentials.",
+      "acceptanceCriteria": [
+        "Record new authorization, installed client/OS versions, containment/authentication, normal trust actions, and active stop time before launch.",
+        "Native CLI discovers/activates the distinctive committed skill and custom agent without source or duplicate registrations.",
+        "Deliver required-context, Guardian, and scanner events supported by this surface through native registrations with exact triggers/output and opted-in capture evidence where claimed.",
+        "Repeat loading/events after committed-clone relocation and record actual trust/relocation results.",
+        "No personal-state access, credential copying, trust bypass, provider installation, or inferred VS Code/cloud certification.",
+        "Missing isolation/authentication/authorization leaves certification pending. Direct installed-script output cannot satisfy this task.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6f-verify-native-client-discovery-trust-and-events; docs\\agent-asset-installer\\client-validation.md:Client gates",
+        "description": "Requires T019 and relevant T015-T018 evidence plus separate native-session authorization. Unavailable T022/T023 combinations do not prevent this independently supported pair.",
+        "rationale": "Script output does not prove native discovery or event delivery."
+      }],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T025",
+      "parentStoryId": "US-006",
+      "title": "Verify authorized Windows Gemini CLI native loading",
+      "description": "6F: blocked until explicit separate authorization lifts native/Gemini-specific restrictions and approves isolation/authentication. Then use existing Windows Gemini CLI for normal trust, distinctive skill/agent activation, and registered harmless events before/after relocation. Native commands are unknown and must not be invented.",
+      "acceptanceCriteria": [
+        "Before Gemini inspection/launch, record lifted restrictions, authorization, isolation/authentication, installed version/OS, and bounded stop time.",
+        "Normal trusted native Gemini discovers/activates committed skill/custom agent from a source-absent clone.",
+        "Supported required-context, Guardian, and scanner events produce expected native envelopes/context/exits and capture where claimed.",
+        "Repeat loading/events after clone relocation and retain trust actions, triggers, outputs, and measured results.",
+        "Do not inspect/launch Gemini incidentally during filesystem/protocol work, install tools, copy credentials, use personal state, or bypass trust.",
+        "Missing authorization/containment leaves native certification pending, not satisfied by direct script/file checks.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6f-verify-native-client-discovery-trust-and-events; docs\\agent-asset-distribution\\handoff.md",
+        "description": "Requires T019 and relevant T015-T018 evidence plus explicit lifting of native/Gemini restrictions. T024 is independent.",
+        "rationale": "Reported installed availability did not authorize a Gemini session or certify native behavior."
+      }],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T026",
+      "parentStoryId": "US-006",
+      "title": "Establish non-Windows Codex trust and native events",
+      "description": "6F: on a separately authorized non-Windows host, resolve isolated managed-preference synchronization through the approved normal environment. Only after trust persistence and separate hook review pass, prove skill/agent activation and native events before/after relocation. Exact commands depend on the authorized installed client.",
+      "acceptanceCriteria": [
+        "Read codex-native-probe.md and record containment sentinels, client/OS versions, authentication route, authorization, and bounded objective.",
+        "Address Failed to synchronize managed preferences (code -32603) without personal state, copied credentials, weakened policy, or trust bypass.",
+        "Normal folder trust persists and non-managed hooks receive separate normal review. Never fabricate trusted-project records or hook hashes.",
+        "After trust gates pass, activate a distinctive committed skill, spawn the custom agent, and deliver supported native required-context/security events.",
+        "Repeat discovery/events after source-absent clone relocation with trust/trigger/output evidence.",
+        "If synchronization remains blocked, retain the exact blocker and pending certification. Direct hook output is not a substitute.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\codex-native-probe.md", "docs\\agent-asset-installer\\codex-cli-prerequisites.md", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6f-verify-native-client-discovery-trust-and-events; docs\\agent-asset-installer\\codex-native-probe.md",
+        "description": "Requires T019 and relevant T014-T018 evidence plus a separately authorized non-Windows host. T024/T025 are independent.",
+        "rationale": "Earlier containment reached trust UI but failed before persistence/discovery/events."
+      }],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T027",
+      "parentStoryId": "US-006",
+      "title": "Verify non-Windows Copilot VS Code native behavior",
+      "description": "6F: in a separately authorized disposable non-Windows editor profile, prove actual Copilot VS Code skill/agent loading and supported hook events before/after relocation. Record editor/extension versions and normal workspace trust. This is native IDE evidence, not web UI work. Launch/activation commands are unknown until the authorized environment is inspected.",
+      "acceptanceCriteria": [
+        "Record authorization, host/editor/extension versions, disposable containment/authentication, workspace trust, and bounded stop time.",
+        "The extension discovers/activates distinctive committed skill/custom agent without source checkout.",
+        "Supported required-context/security events run through native registrations with valid output and preserved unrelated workspace settings.",
+        "Repeat actual IDE discovery/events after relocation and record trust/trigger/output evidence.",
+        "Do not infer extension/cloud/Windows support from CLI or another OS. Do not install clients or use personal profile/credentials.",
+        "Unavailable editor/profile/session leaves certification pending, not satisfied by file layout or direct scripts.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6f-verify-native-client-discovery-trust-and-events; docs\\agent-asset-installer\\client-validation.md",
+        "description": "Requires T019 and relevant T014-T018 evidence plus separately authorized non-Windows editor isolation. No web-interface changes belong here.",
+        "rationale": "CLI-native evidence does not establish IDE discovery, trust, or events."
+      }],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T028",
+      "parentStoryId": "US-006",
+      "title": "Verify non-Windows OpenCode skills and references",
+      "description": "6F: use existing OpenCode on a separately authorized non-Windows host for committed skill activation/reference access before/after source-absent relocation. Keep skills-only scope without agents/hooks. Normal commands and isolation/authentication prerequisites are unknown until the authorized environment is inspected.",
+      "acceptanceCriteria": [
+        "Record existing client/OS versions, authorized disposable isolation/authentication, normal trust, and bounded stop time.",
+        "Native OpenCode discovers/activates a distinctive installed skill and reads its supporting reference without source checkout.",
+        "Repeat skills/reference behavior after clone relocation and record actual actions/output/trust.",
+        "Keep skills/reference-only scope. Do not advertise custom agents/hooks or infer Windows/other-client loading.",
+        "No provisioning, personal credentials/state, or trust bypass. Unavailable allocated client/session stays pending.",
+        "Claude Code/Cursor native verification remains deferred on all OSes while their automated file/path assertions remain.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-6f-verify-native-client-discovery-trust-and-events; docs\\agent-asset-installer\\client-validation.md:Client gates",
+        "description": "Requires T019 and reviewed skills/reference installation evidence plus separately authorized non-Windows isolation. Other native clients are independent.",
+        "rationale": "Skills-only native proof is narrower than full-adapter acceptance."
+      }],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T029",
+      "parentStoryId": "US-007",
+      "title": "Reconcile integrated help and support evidence",
+      "description": "7A: reconcile existing integrated usage/help with newly integrated capability evidence. Document only delivered behavior and distinguish targets from measured support. This task can finish with truthful pending certifications and does not finish acceptance. No reusable link-validator command or dedicated typecheck command was identified. Locate applicable existing checks without inventing tooling.",
+      "acceptanceCriteria": [
+        "README/usage/help/client-validation distinguish lifecycle, skills/agents, each hook family, capture, clone, actual OS/runtime runs, and native loading.",
+        "Do not advertise historical/private/unintegrated source or direct scripts as integrated/native-certified support.",
+        "Retain team/private/personal selection, explicit updates, offline audit-before-repair, current-record restore, checkout policy, migration, authority limits, and clone-delivered payload examples.",
+        "Validate public --help, freshness, full-corpus OKF, local Markdown links/anchors, whitespace, and matching ExecPlan/checkpoint/handoff states.",
+        "Run existing generate-hooks.py --check and lint-okf.py with verified interpreter plus rtk git diff --check. Documentation-only edits do not require product-suite replay.",
+        "Run update-agent-docs once at session end, synchronize applicable file/API/test/known-issue maps, apply okf-authoring to canonical edits, and preserve protected AGENTS sections.",
+        "Truthful unavailable certifications can coexist with completed 7A. Broken required behavior remains unmet.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["README.md", "scripts\\agent_assets\\cli.py", "scripts\\generate-hooks.py", "scripts\\lint-okf.py", "docs\\agent-asset-installer\\usage.md", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-distribution\\handoff.md", ".agents\\memory\\FILE_MAP.md", ".agents\\memory\\API_MAP.md", ".agents\\instructions\\scripts.md", ".agents\\memory\\known-issues\\scripts.md", ".agents\\memory\\testing\\scripts.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-7a-reconcile-documentation-and-support-claims",
+        "description": "Reconcile each relevant reviewed integration. T014-T028 supply outcomes. Pending environments do not prevent truthful documentation.",
+        "rationale": "Approved M7 usage/help is already integrated and must not be rewritten as missing work."
+      }],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "T030",
+      "parentStoryId": "US-008",
+      "title": "Assess acceptance without shrinking Windows scope",
+      "description": "7B: after T029, assess each advertised capability against current integrated evidence. Keep broken behavior unmet and unavailable certification pending. Tasks/docs alone do not complete M6/M7. If publication/recovery remains blocked, retain the technical blocker for explicit contract decision instead of retrying automatically.",
+      "acceptanceCriteria": [
+        "Map advertised scopes/lifecycle, skills/agents, three required hook families, capture, clone, OS/runtime combinations, and allocated native pairs to evidence/limitations.",
+        "Windows product failures stay unmet. Missing links/runtime/cross-OS/native prerequisites stay pending, not passed or blanket invalidation of proven capabilities.",
+        "Only checkpoints with complete evidence become done/met with matching dated Progress checkboxes in the same edit.",
+        "Native-Windows-mutation deferral requires explicit user approval and live contract-ticket amendment before gates change. Deferral is not a passing test.",
+        "Close M7 only when required claims are justified with explicit certification limits under capability-specific gates. Otherwise retain in-progress/not-met and precise blockers.",
+        "Record reviewed synchronized source/docs integration and clean reconciled state under applicable explicit commit workflow. Never automatically commit installed team payloads or publish packages.",
+        "No automatic retries, renewed budgets, replacement workers, provisioning, or unsupported compatibility claims.",
+        "Typecheck passes"
+      ],
+      "filesLikelyTouched": ["docs\\agent-asset-installer\\ExecPlan.md", "docs\\agent-asset-installer\\client-validation.md", "docs\\agent-asset-distribution\\handoff.md", "docs\\agent-asset-distribution\\tickets\\choose-distribution-contract.md"],
+      "designGuidance": [{
+        "source": "docs\\agent-asset-installer\\ExecPlan.md#checkpoint-7b-close-required-capability-acceptance; Current closeout sequence",
+        "description": "Requires T029 and recorded required-product outcomes. Unavailable T022-T028 certifications stay pending. Only an accepted amendment changes the full Windows target.",
+        "rationale": "Historical/private evidence, missing environments, and unaccepted fallback proposals cannot become completion."
+      }],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
