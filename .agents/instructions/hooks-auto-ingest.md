@@ -20,4 +20,9 @@ Load this file only for source auto-ingest work. General hook contracts remain i
 - Use `.agents/skills/ingest-source/SKILL.md` as the only canonical recovery path; it must process every blocking entry in one run.
 - Audit failures, injected findings with path/state/reason, and non-injection causes to the runtime-local audit log. Distinguish all-summaries-current from no-sources-found.
 
-For architecture decisions, read [hooks ADRs](../memory/adrs/hooks.md). For failures and recovery, read [auto-ingest known issues](../memory/known-issues/hooks-auto-ingest.md). For tests, read [auto-ingest hook testing](../memory/testing/hooks-auto-ingest.md).
+- Treat manifest `summary_path` as untrusted; reduce previous paths to `Path(summary_name).name` before joining below the summary directory.
+- Preserve startup scanning, prompt injection, and final-response denial as distinct stages. Copilot prompt transformation may precede startup; use one stop coordinator to retain source-ingest-first reasons when OKF also fails.
+- Gemini final-response enforcement belongs at `AfterAgent`; reserve `AfterModel` for per-output work. Keep the pending gate closed when recovery is unavailable, with the inline checklist as fallback.
+- Apply [knowledge admission](knowledge-base.md) before promoting source material into the KB. A source summary may be complete without adding another policy or memory file.
+
+For rationale, read the retained [runtime-shape decision](../../docs/adr/0001-auto-ingest-runtime-shape.md) or [pending-gate decision](../../docs/adr/0002-pending-ingest-gate.md) only when reconsidering those boundaries. Use [source-ingestion tests](testing/hooks-auto-ingest.md) for validation.

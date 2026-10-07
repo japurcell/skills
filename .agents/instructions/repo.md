@@ -5,9 +5,9 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 
 # Repo Workflow
 
-- Treat `.agents/instructions/` and `.agents/memory/` as canonical home for agent-facing repo guidance.
+- Treat `.agents/instructions/` and `.agents/memory/` as canonical home for agent-facing repo guidance under [knowledge admission](knowledge-base.md).
 - Keep `README.md` aligned when install, validation, or hook behavior changes, and keep `AGENTS.md` aligned with the `.agents/` loading contract.
-- Keep top-level docs short. Put durable rules in `.agents/instructions/` and durable repo facts in `.agents/memory/`.
+- Keep top-level docs short. Put established rules in `.agents/instructions/` and only admitted, evidence-backed facts in `.agents/memory/`.
 - Put repository-local workflow skills under `.agents/skills/`; put publishable skills installed into user environments under `skills/`. Confirm which boundary a new skill belongs to before applying generic skill workspace or installation conventions.
 - Put active research and planning artifacts that require version control under a focused `docs/<effort>/` subtree; keep transient, disposable working state under `.agents/scratchpad/` unless the user explicitly promotes it.
 - For Tool Guardian work, follow the retained [execution plan](../../docs/tool-guardian-tuning/ExecPlan.md), including its security and latency gates. Use the [feature handoff](../../docs/tool-guardian-tuning/handoff.md) for current state, [repair logs](../../docs/tool-guardian-tuning/repair-logs/orchestration.md) for delegated evidence, and the [prior plan](../../docs/tool-guardian-tuning/history/2026-10-07-plan-before-reconciliation.md) and [prior handoff](../../docs/tool-guardian-tuning/history/2026-10-07-handoff-before-reconciliation.md) as historical evidence. The user owns real installation for this effort.
@@ -18,3 +18,7 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 - Ignore `skills/**/evals/files/**/AGENTS.md` and `skills/*-workspace/**/sandbox/AGENTS.md` unless task explicitly targets them.
 - When using simplification or refactor help, state intentional path boundaries explicitly, such as `.gemini/` versus `.copilot/`.
 - Treat a subagent runtime target as a required status-check point. If work exceeds the target, inspect its status and give an overrun warning; let the work continue. Do not interrupt ongoing work solely because the target elapsed.
+
+## Documentation retention
+
+After an effort finishes, retain unique agent knowledge only when it passes [knowledge admission](knowledge-base.md). Remove completed research and working plans unless historical retention was requested; retain ADRs by default. Current owner actions and unresolved acceptance remain in the active effort's documents. Keep retained decisions under `docs/adr/` instead of copying them into memory.

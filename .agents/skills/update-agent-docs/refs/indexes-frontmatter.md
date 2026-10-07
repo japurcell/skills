@@ -11,7 +11,7 @@ description: What this document covers and when to read it
 ---
 ```
 
-Use the first matching type:
+Use the first matching type. Legacy memory paths remain supported by the representation profile; this table does not require recreating removed documents. Admission and placement follow [knowledge admission](../../../instructions/knowledge-base.md):
 
 | Path | `type` |
 | --- | --- |

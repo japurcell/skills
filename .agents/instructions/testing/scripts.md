@@ -1,5 +1,5 @@
 ---
-type: Testing Guidance
+type: Agent Instruction
 description: Test and validation guidance for shell helper scripts under `scripts/`
 ---
 
@@ -28,8 +28,13 @@ description: Test and validation guidance for shell helper scripts under `script
 - Hook-tree shell helper changes:
   - `bash scripts/test-repo-root.sh`
   - Expected Git-root paths must use the physical fixture path (`pwd -P`) on macOS, where `/var` and `/private/var` can identify the same directory. Preserve the public Git-versus-fallback assertions.
-- For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/memory/testing/powershell.md` instead of treating the check as generic shell validation.
-- If a script primarily supports hooks, also run matching checks from `.agents/memory/testing/hooks.md`.
+- For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/instructions/testing/powershell.md` instead of treating the check as generic shell validation.
+- If a script primarily supports hooks, also run matching checks from `.agents/instructions/testing/hooks.md`.
 - If a script primarily supports a specific skill, run that skill's narrow validation path after the script check.
 - In `scripts/test-common.sh`, keep `mock_bin` on `printf "%b\n"` so escaped newlines render into executable mock scripts.
 - In `scripts/test-common.sh`, `write_required_skill_fixtures` writes mock skill files (`caveman`, `universal-guidelines`, `cli-compression`, `writing-great-skills`) to a test directory for skill hook tests.
+
+## Fixture portability
+
+- For reserved-name OKF cases on case-insensitive filesystems, remove the fixture's `INDEX.md` before creating `index.md`; verify the intended diagnostic. Test case-folded agent-output collisions through the supported validation seam on all hosts and two physical files where supported.
+- On native Windows, emulated Unix mode bits do not prove NTFS access control. Keep POSIX mode assertions on POSIX and inspect Windows ACLs when access control is under test.

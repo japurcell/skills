@@ -30,22 +30,22 @@ Run repository commands from `/Users/adam/.codex/worktrees/2af1/skills`, or the 
 
 | File | Role in this change |
 | --- | --- |
-| [ExecPlan skill](../skills/exec-plans/SKILL.md) | Repository-local authoritative skill. Change its milestone, current-design, and integration guidance. |
-| [Task-decomposition skill](../../skills/spec-to-tasks/SKILL.md) | Publishable source. Change sizing and verification requirements and route readers to its references. |
-| [Task schema](../../skills/spec-to-tasks/references/task-schema.md) | Define the proposed fields and their meanings. |
-| [Task validation checklist](../../skills/spec-to-tasks/references/validation.md) | Validate dependencies, coverage, context, sizing, and verification applicability. |
-| [PRD handling](../../skills/spec-to-tasks/references/prd-handling.md) | Inspect for conflicting task/output rules when changing the main contract. |
-| [Existing evaluations](../../skills/spec-to-tasks/evals/evals.json) | Update prompts and expectations to match the task contract; add the cases described below. |
-| [Existing grader](../../skills/spec-to-tasks/evals/grade_benchmark.py) | Align artifact discovery and semantic checks with the revised schema. |
-| [Single-task consumer](../../skills/prd-ralph/SKILL.md) | Already reads `dependsOn`; inspect and update its explicit task-reading list when adding fields. |
-| [Loop consumer](../../skills/prd-ralph-loop/SKILL.md) | Inspect forwarding, selection, and completion behavior for compatibility. Change only demonstrated incompatibilities. |
-| [Installer ExecPlan](../../docs/agent-asset-installer/ExecPlan.md) | Existing worked example, not an implementation target for this skill improvement. |
-| [Installer task file](../../docs/agent-asset-installer/tasks.json) | Existing decomposition used to explain the recommendations and construct fixtures. |
-| [Skill conventions](../instructions/skills.md) and [skill testing](../memory/testing/skills.md) | Repository requirements for authoring, snapshots, evaluation layout, and validation. |
+| [ExecPlan skill](../.agents/skills/exec-plans/SKILL.md) | Repository-local authoritative skill. Change its milestone, current-design, and integration guidance. |
+| [Task-decomposition skill](../skills/spec-to-tasks/SKILL.md) | Publishable source. Change sizing and verification requirements and route readers to its references. |
+| [Task schema](../skills/spec-to-tasks/references/task-schema.md) | Define the proposed fields and their meanings. |
+| [Task validation checklist](../skills/spec-to-tasks/references/validation.md) | Validate dependencies, coverage, context, sizing, and verification applicability. |
+| [PRD handling](../skills/spec-to-tasks/references/prd-handling.md) | Inspect for conflicting task/output rules when changing the main contract. |
+| [Existing evaluations](../skills/spec-to-tasks/evals/evals.json) | Update prompts and expectations to match the task contract; add the cases described below. |
+| [Existing grader](../skills/spec-to-tasks/evals/grade_benchmark.py) | Align artifact discovery and semantic checks with the revised schema. |
+| [Single-task consumer](../skills/prd-ralph/SKILL.md) | Already reads `dependsOn`; inspect and update its explicit task-reading list when adding fields. |
+| [Loop consumer](../skills/prd-ralph-loop/SKILL.md) | Inspect forwarding, selection, and completion behavior for compatibility. Change only demonstrated incompatibilities. |
+| Historical installer ExecPlan, recorded as `docs/agent-asset-installer/ExecPlan.md` | Unavailable in this checkout. Recover the original example before using it as evidence or fixture input; it is not an implementation target. |
+| Historical installer task file, recorded as `docs/agent-asset-installer/tasks.json` | Unavailable in this checkout. The discussion below preserves the recorded example, not a verified current decomposition. |
+| [Skill conventions](../.agents/instructions/skills.md) and [skill testing](../.agents/instructions/testing/skills.md) | Repository requirements for authoring, snapshots, evaluation layout, and validation. |
 
 The earlier discussion read the installed `spec-to-tasks` copy under `/Users/adam/.agents/skills/`. Its main skill, schema, and validation reference currently match the repository source byte for byte. Implement changes in `skills/spec-to-tasks/`, not the installed personal copy. A source edit does not refresh installed skills. The repository-local ExecPlan skill lives under `.agents/skills/`; implementation requires an instruction that actually authorizes editing that protected skill, rather than treating this saved proposal as such authorization.
 
-The current task file contains 30 tasks covering the remaining portions of installer milestones 6 and 7. Checkpoint 6B becomes T003-T014, while checkpoint 6D remains essentially T019. T012/T013 still require deep interruption/recovery reasoning. T014 collects integration reasoning. These examples demonstrate why a task label or a high task count does not guarantee a small assignment.
+The historical task-file example was recorded as 30 tasks covering the remaining portions of installer milestones 6 and 7. In that example, checkpoint 6B became T003-T014, checkpoint 6D remained essentially T019, T012/T013 required deep interruption/recovery reasoning, and T014 collected integration reasoning. The source artifacts are absent from this checkout, so these details need rechecking before constructing fixtures. They illustrate why a task label or a high task count does not guarantee a small assignment.
 
 ## Surprises & Discoveries
 

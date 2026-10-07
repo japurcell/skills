@@ -1,5 +1,5 @@
 ---
-type: Testing Guidance
+type: Agent Instruction
 description: Auto-ingest hook tests; load only for source scanners, prompt injectors, pending gates, summaries, or manifest behavior
 ---
 

@@ -11,7 +11,8 @@ description: Rules and conventions for skills under `skills/`.
 - Keep `description` concrete and trigger-oriented.
 - Do not remove an existing `disable-model-invocation: true` frontmatter key from a skill without explicit human approval.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
-- Validate skill changes with `.agents/memory/testing/skills.md`.
+- Treat `skills/archive/` as historical reference; use it as an edit target or current baseline only when the task explicitly calls for it.
+- Validate skill changes with `.agents/instructions/testing/skills.md`.
 
 ## Reference Files
 
@@ -54,8 +55,8 @@ Review the authored documents and retained evidence as well as the scores. A fix
 ## Document-maintenance skills
 
 - Keep `skills/handoff/` and `.agents/skills/exec-plans/` independently usable, including their evaluation bundles. Neither bundle may reference or depend on the other.
-- Route their grader tests through [skills testing](../memory/testing/skills.md#document-maintenance-graders). Repository documents may link both workflows.
-- Keep completed-artifact retention and cleanup in [repository documentation policy](../memory/ARCHITECTURE.md#documentation-flow), outside both reusable workflows.
+- Route their grader tests through [skills testing](testing/skills.md#document-maintenance-graders). Repository documents may link both workflows.
+- Keep completed-artifact retention and cleanup in [repository documentation policy](repo.md#documentation-retention), outside both reusable workflows.
 
 ## Refactor boundaries
 
@@ -68,7 +69,7 @@ Review the authored documents and retained evidence as well as the scores. A fix
 - Keep general procedure separate from dated route research and historical project decisions. Reconcile substantive reference changes with the bundled provenance ledger.
 - Invocation alone does not approve migration edits. Require approval of the concrete plan and refreshed necessary evidence; material scope or strategy changes require renewed approval.
 - Do not install the bundle, run account-wide installers, execute trial migrations or live evaluations, or change shared knowledge without separate authorization. Authoring scenarios are paper-review inputs, not evidence of runtime behavior.
-- Keep local and deployment readiness distinct. Follow the [document-only review guidance](../memory/testing/skills.md#dotnet-upgrade-document-review) and use the bundled [document review](../../skills/dotnet-upgrade/references/document-review.md) as its acceptance record; it does not prove cross-project execution or client enforcement.
+- Keep local and deployment readiness distinct. Follow the [document-only review guidance](testing/skills.md#dotnet-upgrade-document-review) and use the bundled [document review](../../skills/dotnet-upgrade/references/document-review.md) as its acceptance record; it does not prove cross-project execution or client enforcement.
 
 ## Subagent router maintenance
 
