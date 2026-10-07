@@ -19,7 +19,7 @@ Keep agent documentation small, current, and easy to route.
 7. When shortening or splitting a doc, preserve established rules in the appropriate focused doc. Keep descriptive memory only when the admission gates pass; batch consequential authority conflicts for the user.
 8. Apply [document quality](refs/doc-quality.md).
 9. Update frontmatter, indexes, and links using [indexes and frontmatter](refs/indexes-frontmatter.md).
-10. After semantic changes to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract.
+10. After semantic changes to canonical documents, activate the `okf-authoring` skill to apply and verify the OKF representation contract.
 11. Report the result.
 
 ## Rules
