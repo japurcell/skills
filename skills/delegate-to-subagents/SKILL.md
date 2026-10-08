@@ -14,7 +14,7 @@ This workflow authorizes and requires the orchestrator to select and explicitly 
 For each routing attempt:
 
 1. Collect explicit model or effort constraints already stated by the user.
-2. Pass those constraints to `subagent-model-router`; use `none` when absent.
+2. Activate the `subagent-model-router` skill with those constraints; use `none` when absent.
 3. Let the router select and validate the exact model-and-effort configuration.
 4. Do not use configured, inherited, or runtime defaults unless the user explicitly requested them.
 
@@ -84,7 +84,7 @@ If essential task information is missing, ask only for that information. Do not 
 
 Route before any model-selection confirmation.
 
-Run `subagent-model-router` for each materially different subtask using:
+Activate the `subagent-model-router` skill for each materially different subtask using:
 
 - objective
 - stakes and security sensitivity
