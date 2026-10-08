@@ -85,10 +85,31 @@ def eval_zero(result: dict, decision_md: str) -> list[dict]:
 
 
 def eval_one(result: dict, decision_md: str) -> list[dict]:
+    # Frozen dependent/worker.json reports US-002 success, prerequisite proof,
+    # and an audited commit. This is a fixture heuristic, not a summary verifier.
+    text = normalize(decision_md)
+    retained_summary = all(re.search(pattern, text) for pattern in (
+        r"\bus-002\b",
+        r"\b(?:passed|completed|succeeded|successful)\b",
+        r"\b(?:prerequisite|prerequisites|prereq|prereqs|precondition|preconditions|dependency|dependencies)\b",
+        r"\b(?:evidence|proof|verified|validated|checked)\b",
+        r"\bcommit\b",
+        r"\b(?:audited|reviewed|inspected)\b|\baudit\s+(?:(?:was|is)\s+)?(?:passed|complete|completed|successful)\b",
+    )) and set(re.findall(r"\bus-\d+\b", text)) == {"us-002"}
+    contradictions = (
+        r"\b(?:us-002|tests?|checks?|verification)\s+(?:(?:has|have|had|still|were|was)\s+)*(?:failed|failing|fails)\b",
+        r"\b(?:us-002|tests?|checks?|verification)\s+(?:(?:did|does|has|have|was|were|is|are)\s+)?not\s+(?:pass|passed|complete|completed|successful|verified)\b",
+        r"\b(?:no|without|missing|unaudited|unreviewed)\s+(?:(?:an?|the|audited|reviewed)\s+)?commit\b",
+        r"\bcommit(?:\s+\w+){0,3}\s+(?:not|never)\s+(?:audited|reviewed|inspected|created|made|recorded)\b",
+        r"\bcommit\s+(?:is|was|remains)\s+(?:missing|absent|unaudited|unreviewed)\b",
+        r"\bcommit\s+(?:(?:audit|review)\s+)?(?:(?:is|was|remains)\s+)?(?:failed|pending|unavailable)\b",
+    )
+    retained_summary = retained_summary and not any(re.search(pattern, text) for pattern in contradictions)
     return [
         expectation("Returns a looping status.", result.get("status") == "looping", result.get("status", "<missing>")),
         expectation("Leaves task selection to the worker.", result.get("target_task_id") is None, str(result.get("target_task_id"))),
         expectation("Continues after TASK_COMPLETE with a fresh Ralph worker.", decision_md.startswith("<promise>TASK_COMPLETE</promise>") and "fresh" in decision_md.lower() and "ralph" in decision_md.lower(), decision_md or "<empty md>"),
+        expectation("Retains the completed worker task and its prerequisite and commit evidence.", retained_summary, decision_md or "<empty md>"),
     ]
 
 

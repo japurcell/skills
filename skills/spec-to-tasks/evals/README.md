@@ -14,6 +14,16 @@ then `<config>/run-*/outputs/tasks.json`. Eval 1 uses the explicitly requested
 Exit zero means the CLI wrote grades. Read each run's `grading.json` assertions.
 The grader checks generated tasks against the complete current task schema.
 
+Missing, malformed or unusable task artifacts fail every applicable assertion.
+Scenario-specific assertions contribute to the score only for their scenario.
+Any supported required check kind can establish the structural outcome-check
+requirement; its suitability for the actual outcome still needs semantic review.
+
+[Completion reconciliation scenarios](update-scenarios.md) cover unchanged
+meaning, changed prerequisite guarantees and additional required checks when
+updating completed tasks. Review these separately: the CLI rubric evaluates
+fresh manifests and does not establish whether historical evidence remains valid.
+
 Schema, fresh defaults, graph order, explicit prerequisite IDs, available
 references, and fixture-scoped requirement terms are deterministic checks.
 File references resolve from the repository containing this grader, not from the

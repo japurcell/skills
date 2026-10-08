@@ -89,6 +89,8 @@ def check_dependencies(task, index, ids, errors):
     deps = task.get('dependsOn')
     if not strings(deps):
         schema.append(f'{tid}: dependsOn array required')
+        for category in ('Dependency graph', 'Explicit prerequisite'):
+            errors[category].append(f'{tid}: valid dependsOn array required')
         deps = []
     if len(set(deps)) != len(deps):
         errors['Dependency graph'].append(f'{tid}: duplicate edges {deps}')
@@ -108,6 +110,7 @@ def check_references(task, errors):
         refs = task.get(field)
         if not isinstance(refs, list) or not all(isinstance(r, dict) for r in refs) or (field == 'sourceRefs' and not refs):
             schema.append(f'{tid}: invalid/missing {field}')
+            errors['Source and context references'].append(f'{tid}: invalid/missing {field}')
             continue
         for ref in refs:
             if not all(k in ref for k in ('path', 'section', detail)):
@@ -129,9 +132,11 @@ def check_references(task, errors):
 def check_verification(task, errors):
     tid = task.get('id')
     schema = errors['Enriched schema']
+    schema_start = len(schema)
     checks = task.get('verification')
     if not isinstance(checks, list) or not checks or not all(isinstance(check, dict) for check in checks):
         schema.append(f'{tid}: verification records required')
+        errors['Verification readiness'].append(f'{tid}: verification records required')
         return
     check_ids = []
     for check in checks:
@@ -158,8 +163,10 @@ def check_verification(task, errors):
             errors['Verification readiness'].append(f'{tid}/{check_id}: unresolved {check.get("reason")}')
     if not any(check.get('kind') == 'typecheck' for check in checks):
         schema.append(f'{tid}: explicit typecheck applicability required')
-    if not any(check.get('kind') in ('test', 'manual') and check.get('applicability') == 'required' for check in checks):
-        schema.append(f'{tid}: required behavior check missing')
+    if not any(check.get('applicability') == 'required' for check in checks):
+        schema.append(f'{tid}: required outcome check missing')
+    if len(schema) != schema_start:
+        errors['Verification readiness'].append(f'{tid}: verification records must be structurally valid')
 
 
 def check_scenario(eval_id, data, tasks, errors):
@@ -217,9 +224,16 @@ def check_manifest(eval_id, run):
     raw = data.get('tasks')
     tasks = raw if isinstance(raw, list) and all(isinstance(task, dict) for task in raw) else []
     labels = ('Enriched schema', 'Dependency graph', 'Source and context references',
-              'Explicit prerequisite', 'Domain coverage', 'Verification readiness',
-              'UI browser verification', 'Backend-only scope', 'Feature branch', 'Assignment boundaries')
+              'Explicit prerequisite', 'Domain coverage', 'Verification readiness')
+    labels += {0: ('UI browser verification',),
+               1: ('Feature branch', 'Assignment boundaries'),
+               2: ('Assignment boundaries',),
+               3: ('Backend-only scope',)}.get(eval_id, ())
     errors = {label: [] for label in labels}
+    if not tasks or not any(nonempty(task.get(field)) for task in tasks
+                            for field in ('title', 'description')):
+        return [{'text': label, 'passed': False,
+                 'evidence': 'Missing, malformed or unusable tasks artifact'} for label in labels]
     schema = errors['Enriched schema']
     if not tasks or not all(nonempty(data.get(field)) for field in ('project', 'branchName', 'description')):
         schema.append('Nonempty tasks and project/branchName/description required')

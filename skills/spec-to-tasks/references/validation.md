@@ -19,7 +19,7 @@ Validate both coverage and dispatch clarity. Parseable JSON alone does not estab
 - [ ] Every task includes the existing fields: `id`, `parentStoryId`, `title`, `description`, `acceptanceCriteria`, `filesLikelyTouched`, `designGuidance`, `priority`, `passes`, and `notes`.
 - [ ] `filesLikelyTouched` includes confidently inferable source, test, script, config, migration, fixture, and command-target files; use `[]` when paths cannot be inferred confidently.
 - [ ] Every task includes `dependsOn`, nonempty `sourceRefs`, `requiredContext`, `taskType`, and `verification`.
-- [ ] Fresh tasks have `passes: false` and `notes: ""`; existing task IDs, pass values, notes, and completion evidence remain unchanged when updating tasks.
+- [ ] Fresh tasks have `passes: false` and `notes: ""`. Existing IDs, notes and historical evidence are preserved; completion is reconciled using [Updating existing tasks](task-schema.md#updating-existing-tasks), including affected downstream guarantees and reasons for reopening.
 - [ ] An empty `requiredContext` is used only when the task and manifest already contain all context needed to finish the task.
 - [ ] A file reference has a nonempty repository-relative string `path` and nonempty string `section`. Inline source or context uses both `path: null` and `section: null`, plus nonempty `content`; one null without the other, absolute paths, and invented paths are invalid.
 - [ ] New task IDs are unique and sequential. Priorities are unique and ascending, with mandatory source order represented in the task order and dependency graph.

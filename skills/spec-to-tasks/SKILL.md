@@ -47,7 +47,7 @@ Create directories as needed. Paths in task references and `workingDirectory` ar
 
 ## Task shape
 
-Keep the top-level fields `project`, `branchName`, `description`, and `tasks`. Every task must use the complete shape in [task-schema.md](references/task-schema.md). New tasks start with `passes: false` and `notes: ""`; when updating existing tasks, preserve their IDs, pass values, notes, and completion evidence.
+Keep the top-level fields `project`, `branchName`, `description`, and `tasks`. Every task must use the complete shape in [task-schema.md](references/task-schema.md). New tasks start with `passes: false` and `notes: ""`. When updating existing tasks, preserve IDs and historical evidence, and reconcile completion using [Updating existing tasks](references/task-schema.md#updating-existing-tasks) before saving.
 
 Implementation tasks remain vertical slices through the layers required for their behavior. Decision, verification, integration, and documentation tasks may have other outcomes, but each must still be independently valuable and verifiable. A task type does not justify a code-only or test-only fragment with no independent value.
 

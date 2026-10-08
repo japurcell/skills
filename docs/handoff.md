@@ -2,23 +2,34 @@
 
 ## Goal and status
 
-Completed the authorized revisions to [the plan](exec-plan-tasks-improvements.md), `.agents/skills/exec-plans/`, `skills/execplan-implement/`, `skills/spec-to-tasks/`, `skills/prd-ralph/`, and `skills/prd-ralph-loop/`. Final source review, paired comparisons, fresh-reader exercises and documentation pass finished on 2026-10-07. All changes remain uncommitted.
+The original revisions to [the plan](exec-plan-tasks-improvements.md) and its five skills are committed in `b69c0c45`. All five authorized adversarial-review findings are fixed and verified: completion invalidation, honest producer grading, complete Ralph fixtures, supported verification kinds and retained loop summaries. Main `5b760d4c` is merged in `f051a34` on `codex/update-dependent-skills`; no conflicts remain. The fix diff remains uncommitted.
 
-This is a feature-scoped handoff retained beside the plan at the user's explicit request. No implementation step remains. Next review action: inspect [the existing review viewer](/private/tmp/exec-plan-tasks-improvements/comparison/review.html) and the uncommitted diff from `/Users/adam/.codex/worktrees/3e77/skills`. Do not repeat completed revisions, reset the working tree, or install personal copies to resume. Reopen only acceptance affected by a later requirement or edit.
+This is a feature-scoped handoff retained beside the plan at the user's explicit request. No implementation or merge step remains. Next review action: run `rtk git diff` against HEAD `f051a34` and read [current sandbox evidence](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/review-summary.md). Baseline skill copies are in `/tmp/task-workflow-fixes.sfVWC0/skills/`. Do not reset the working tree or install personal copies for source-copy evaluation.
 
 ## Contracts to preserve
 
+- Apply main's [knowledge admission rules](../.agents/instructions/knowledge-base.md). Keep its obsolete maps deleted and use [instruction routes](../.agents/instructions/INDEX.md); retained testing guidance now lives under `.agents/instructions/testing/`. No new memory is required for a completed session.
 - User boundary: `exec-plans` must not reference `execplan-implement`; neither ExecPlan skill may reference `spec-to-tasks` or know its schema. Tasks, prerequisites and integrated acceptance live in the plan. The optional manifest bridge was removed.
-- The producer owns the complete task schema, and Ralph validates every task against it before selection or completion detection. Require all schema fields, including `dependsOn`; preserve recorded IDs, pass flags, notes and evidence when reporting invalid input.
+- The producer owns the complete task schema and completion reconciliation. Updates retain historical evidence but reopen uncovered outcomes and affected downstream guarantees. Ralph validates every task and retained pass before selection or completion detection, reading existing progress evidence when needed; invalid input is blocked without rewriting IDs, flags, notes or history.
 - Every dependency needs a consumed outcome/artifact or mandatory source order. Complete available authoring coverage reviews immediately; do not defer them behind implementation.
 - Ralph validates intake before all-true completion, consumes explicit context/checks and prerequisite evidence, and leaves unresolved work unfinished. `commit:false` permits a read-only deliverable only with actual evidence and zero session commits; default `commit:true` still needs a real committable deliverable.
 - `COMPLETE` means all validated tasks pass. `TASK_COMPLETE` means the selected task succeeded with work remaining. `BLOCKED` stops the blind loop; unchanged owner prerequisites are not retried.
 - Preserve `disable-model-invocation: true` in both protected consumers and the existing `execplan-implement/agents/openai.yaml`.
 - The historical installer example under `docs/agent-asset-installer/` is absent. The lifecycle fixture is self-contained; no installer content or product execution should be invented.
 
-## Evidence and limits
+## Current evidence and limits
 
-Final commands run from the repository root:
+Merge verification passed 117 Python tests: 38 producer, 13 loop, 35 ExecPlan, 14 runner and 17 OKF grader tests. OKF public CLI, startup, both ingestion suites, generated-hook freshness, supported skill validators and canonical lint also passed. Restored skill sources match the saved fixes byte-for-byte; raw sources and the ingestion manifest match main. [Merge evidence](/tmp/skills-main-merge.gEoUnX/review-summary.md) records exact commands and limitations. The independent KB reviewer was blocked by its scanner, so the coordinator performed the conflict and preservation review directly.
+
+From the repository root, 38 producer and 13 loop public CLI tests pass. Both affected skill validators, all 15 JSON files under the four publishable eval directories, changed Python compilation, whitespace checks and canonical OKF lint pass.
+
+The reviewer applied the current repository Ralph skill in disposable Git sandboxes. Eval 0 completed after actual manual comparison; its repeat invocation used genuine progress evidence and left manifest/progress byte-identical. Eval 2 blocked on current-evidence, eval 4 blocked on no committable task changes, and new eval 5 blocked stale all-true completion on inventory-review. Every task session recorded zero commits, notes were preserved and source fixtures remained unchanged during execution. Only temporary fixture-initialization commits were created. [Flag/audit results](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/verification-results.json) and [repeat hashes](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/eval-0/outputs/repeat-integrity.json) retain the proof. Two recovered harness errors are recorded in eval 0 progress.
+
+The producer's three new [update scenarios](../skills/spec-to-tasks/evals/update-scenarios.md) were reviewed semantically, not as a blind model benchmark. The sandbox runs establish application of the skill by the reviewer on synthetic input, not independent model compliance or real installer behavior. No personal installation or source-repository commit occurred during that fix pass. Its canonical pass updated skills instructions, the former API/file maps and skills testing; OKF profile lint exited 0, with no new canonical files or index changes. The subsequent merge adopts main's map deletions and focused testing routes.
+
+## Earlier evidence and limits
+
+The following commands and comparisons predate the adversarial-review fixes and changed grading denominators. They remain historical evidence only. Original checkpoint commands ran from the repository root:
 
 - `rtk proxy python3 skills/spec-to-tasks/evals/test_grade_benchmark.py`: 34 tests pass.
 - `rtk proxy python3 skills/prd-ralph-loop/evals/test_grade_benchmark.py`: 10 tests pass.
@@ -47,4 +58,4 @@ Tool Guardian rejected shell writes over its 256-token command limit; file patch
 
 The [earlier audit](/private/tmp/exec-plan-tasks-improvements/dispatch-audit.json) and [resumed audit](/private/tmp/exec-plan-tasks-improvements/dispatch-audit-resumed.json) retain explicit routes, unconfirmed execution settings, rejected/excluded outputs, the corrected implicit dispatch and missed warning checkpoints. The final grader repair's warning compliance is recorded as unverified/noncompliant, not hidden.
 
-The final canonical pass updated skills instructions/testing, grader API guidance and the retained-effort map; earlier repository/index/runner-test routing updates remain synchronized. OKF profile only; no canonical additions, moves, splits or remaining quality TODOs. Temporary evidence is disposable, so preserve it elsewhere if later work needs long-term artifact retention.
+The current canonical pass retained applicable skill rules and testing requirements in `.agents/instructions/skills.md` and `.agents/instructions/testing/skills.md`. Main's routing indexes remain intact, lookup descriptions were not recovered into replacement maps, and no new memory was admitted. OKF profile lint passed. Temporary evidence is disposable, so preserve it elsewhere if later work needs long-term artifact retention.

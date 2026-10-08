@@ -116,6 +116,9 @@ class GraderCliTests(unittest.TestCase):
         self.assertEqual(self.grade(data)['summary']['failed'], 0)
 
     def grade(self, data, eval_id=3, timing_text=None):
+        return self.grade_output(json.dumps(data), eval_id, timing_text)
+
+    def grade_output(self, output_text, eval_id=3, timing_text=None):
         with tempfile.TemporaryDirectory() as tmp:
             iteration = Path(tmp)/'iteration-1'
             run = iteration/f'eval-{eval_id}'/'with_skill'/'run-1'
@@ -123,12 +126,26 @@ class GraderCliTests(unittest.TestCase):
             (run.parents[1]/'eval_metadata.json').write_text(json.dumps({'eval_id': eval_id}))
             output = run/'outputs'/('generated/tasks.json' if eval_id == 1 else 'tasks.json')
             output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(json.dumps(data))
+            if output_text is not None:
+                output.write_text(output_text)
             if timing_text is not None:
                 (run/'timing.json').write_text(timing_text)
             result = subprocess.run(['python3', str(GRADER), str(iteration)], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             return json.loads((run/'grading.json').read_text())
+
+    def test_unusable_artifacts_receive_no_credit_for_applicable_checks(self):
+        totals = {0: 7, 1: 8, 2: 7, 3: 7, 4: 6, 5: 6}
+        artifacts = (None, '', '{invalid', 'null', '[]', '{}',
+                     '{"tasks": []}', '{"tasks": [null]}', '{"tasks": [{}]}')
+        for eval_id, total in totals.items():
+            for output_text in artifacts:
+                with self.subTest(eval_id=eval_id, output_text=output_text):
+                    grading = self.grade_output(output_text, eval_id)
+                    self.assertEqual(grading['summary']['passed'], 0, grading['summary'])
+                    self.assertEqual(grading['summary']['total'], total)
+                    for expectation in grading['expectations']:
+                        self.assertFalse(expectation['passed'], expectation)
 
     def assert_failed(self, data, term, eval_id=3):
         failures = [x for x in self.grade(data, eval_id)['expectations'] if not x['passed']]
@@ -136,6 +153,60 @@ class GraderCliTests(unittest.TestCase):
 
     def test_complete_enriched_tasks_are_accepted(self):
         self.assertEqual(self.grade(manifest())['summary']['failed'], 0)
+
+    def test_inspectable_incomplete_output_preserves_partial_credit(self):
+        data = manifest()
+        del data['tasks'][0]['parentStoryId']
+        grading = self.grade(data)
+        self.assertEqual(grading['summary'], dict(passed=6, failed=1, total=7, pass_rate=0.86))
+        self.assertFalse(next(x for x in grading['expectations'] if x['text'] == 'Enriched schema')['passed'])
+
+    def test_inspectable_tasks_need_inputs_for_each_credited_check(self):
+        fields = {'dependsOn': ('Dependency graph', 'Explicit prerequisite'),
+                  'sourceRefs': ('Source and context references',),
+                  'requiredContext': ('Source and context references',),
+                  'verification': ('Verification readiness',)}
+        for field, categories in fields.items():
+            for value in ('missing', None, {}, [None], [{}]):
+                with self.subTest(field=field, value=value):
+                    data = manifest()
+                    task = data['tasks'][0]
+                    if value == 'missing':
+                        del task[field]
+                    else:
+                        task[field] = value
+                    expectations = {x['text']: x for x in self.grade(data)['expectations']}
+                    for category in categories:
+                        self.assertFalse(expectations[category]['passed'], expectations[category])
+
+        data = manifest()
+        for task in data['tasks']:
+            for field in fields:
+                del task[field]
+        grading = self.grade(data)
+        self.assertEqual(grading['summary'], dict(passed=2, failed=5, total=7, pass_rate=0.29))
+
+    def test_supported_required_check_kinds_are_structurally_accepted(self):
+        for kind in ('test', 'typecheck', 'build', 'lint', 'manual'):
+            with self.subTest(kind=kind):
+                data = manifest()
+                data['tasks'] = [data['tasks'][0]]
+                task = data['tasks'][0]
+                criterion = 'Verify retention and owner approval policy'
+                task.update(title=criterion, description=criterion,
+                            acceptanceCriteria=[criterion], taskType='verification')
+                task['sourceRefs'][0].update(content=criterion, requirements=[criterion])
+                task['verification'] = [dict(id='outcome', kind=kind, applicability='required',
+                    command=None if kind == 'manual' else 'python3 verify_policy.py',
+                    workingDirectory='.', expected='Retention and owner approval policy is verified',
+                    reason='Directly establishes the assigned policy outcome')]
+                if kind != 'typecheck':
+                    task['verification'].append(dict(id='types', kind='typecheck',
+                        applicability='not-applicable', command=None, workingDirectory='.',
+                        expected='No typed source is in scope', reason='Policy verification only'))
+                grading = self.grade(data, 5)
+                self.assertEqual(grading['summary']['failed'], 0, grading['expectations'])
+                self.assertEqual(grading['summary']['total'], 6)
 
     def test_existing_domain_requirements_remain_covered(self):
         cases = {
@@ -364,12 +435,13 @@ class GraderCliTests(unittest.TestCase):
                                     acceptanceCriteria=[criterion.replace(omitted, '')])
             self.assert_failed(data, 'Domain coverage', 0)
 
-    def test_false_fresh_defaults_or_missing_behavior_check(self):
+    def test_false_fresh_defaults_or_missing_required_check(self):
         data = manifest()
         data['tasks'][0]['passes'] = True
         self.assert_failed(data, 'Enriched schema')
         data = manifest()
         data['tasks'][0]['verification'] = data['tasks'][0]['verification'][1:]
+        data['tasks'][0]['verification'][0].update(applicability='not-applicable', command=None)
         self.assert_failed(data, 'Enriched schema')
 
 

@@ -5,6 +5,7 @@
 - [Complete example](#complete-example)
 - [Top-level fields](#top-level-fields)
 - [Existing task fields](#existing-task-fields)
+- [Updating existing tasks](#updating-existing-tasks)
 - [Enriched task fields](#enriched-task-fields)
 - [Task types](#task-types)
 - [Verification checks](#verification-checks)
@@ -101,8 +102,19 @@ Preserve these fields and their meanings:
 - `filesLikelyTouched`: confidently inferable repository-relative paths; use `[]` when none can be inferred.
 - `designGuidance`: useful decisions or patterns, each with `source`, `description`, and `rationale`; use `[]` when none is needed.
 - `priority`: unique ascending integer. It records task ordering, not permission to bypass prerequisites.
-- `passes`: `false` for every new task. Preserve the current value and its evidence when updating an existing manifest.
+- `passes`: `false` for every new task. For an existing task, apply [Updating existing tasks](#updating-existing-tasks) before retaining completion.
 - `notes`: `""` for every new task. Preserve existing notes and completion evidence during an update.
+
+## Updating existing tasks
+
+Read the existing definitions and completion evidence before changing the manifest. Preserve stable IDs, notes and historical evidence. Reconcile completion against the current contract in prerequisite order:
+
+1. Compare each task's outcome, acceptance criteria, source/context requirements, consumed prerequisite guarantees and required checks with the evidence that established its pass.
+2. Retain `passes: true` only when that evidence still covers the current contract. A wording correction or reference relocation that leaves the verified meaning unchanged does not reopen the task.
+3. Set `passes: false` when a changed requirement or check lacks covering evidence, or when coverage cannot be established. Append the reason to `notes` while retaining the prior evidence as history. Authoring an update cannot turn an unfinished task into a passed task.
+4. Reassess downstream tasks transitively. Reopen a passed dependent when its proof relies on a changed or now-unverified guarantee; preserve completion where the consumed guarantees and proof remain valid. Unrelated tasks retain their recorded state.
+
+Report which tasks reopened and why. Historical proof remains useful, but it cannot certify added acceptance criteria or substitute for missing current evidence.
 
 ## Enriched task fields
 

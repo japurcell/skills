@@ -5,10 +5,49 @@
   "tasks": [
     {
       "id": "T001",
+      "parentStoryId": "US-001",
       "title": "Record refusal decision",
+      "description": "Record the supplied refusal and metadata-preservation decision, including the owner deployment boundary.",
+      "acceptanceCriteria": [
+        "The recorded decision requires refusal before writes and unchanged metadata for conflicting destinations.",
+        "Owner-controlled deployment is explicitly excluded."
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
       "passes": true,
-      "priority": 2,
-      "notes": "No-write refusal and metadata preservation required. Owner deployment is excluded."
+      "priority": 1,
+      "notes": "Supplied fixture history: decision-review compared the recorded decision with REQ-REFUSAL and REQ-OWNER; both matched. Recorded decision: conflicting destinations require refusal before writes and unchanged metadata; owner deployment is excluded. Typecheck was inapplicable to this decision-only outcome. This establishes the decision, not product execution.",
+      "dependsOn": [],
+      "sourceRefs": [
+        {
+          "path": null,
+          "section": null,
+          "requirements": ["REQ-REFUSAL", "REQ-OWNER"],
+          "content": "REQ-REFUSAL: Conflicting destinations must refuse before writes and preserve metadata. REQ-OWNER: Owner-controlled deployment is excluded from this task."
+        }
+      ],
+      "requiredContext": [],
+      "taskType": "decision",
+      "verification": [
+        {
+          "id": "typecheck",
+          "kind": "typecheck",
+          "applicability": "not-applicable",
+          "command": null,
+          "workingDirectory": ".",
+          "expected": "The decision-only outcome contains no executable source or type declarations.",
+          "reason": "This task records the supplied policy decision."
+        },
+        {
+          "id": "decision-review",
+          "kind": "manual",
+          "applicability": "required",
+          "command": null,
+          "workingDirectory": ".",
+          "expected": "Procedure: compare the recorded decision in notes with REQ-REFUSAL and REQ-OWNER. Evidence: identify its refusal-before-write, unchanged-metadata and excluded-deployment statements.",
+          "reason": "Agreement with the supplied requirements establishes the decision outcome."
+        }
+      ]
     },
     {
       "id": "T002",
@@ -20,7 +59,7 @@
       ],
       "filesLikelyTouched": [],
       "designGuidance": [],
-      "priority": 1,
+      "priority": 2,
       "passes": false,
       "notes": "",
       "dependsOn": [
@@ -41,7 +80,7 @@
           "path": null,
           "section": null,
           "purpose": "Carry prerequisite guarantee into verification.",
-          "content": "Owner-controlled deployment remains out of scope. Current inspection evidence shows refusal before writes and unchanged metadata."
+          "content": "Owner-controlled deployment remains out of scope. Supplied synthetic inspection record: input=conflicting destination; result=REFUSED_CONFLICT; destinationWriteEvents=[]; metadataBefore=meta-1; metadataAfter=meta-1. This task compares the supplied record with the decision; it does not execute or certify a real installer."
         }
       ],
       "taskType": "verification",

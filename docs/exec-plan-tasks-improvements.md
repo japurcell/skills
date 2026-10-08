@@ -1,7 +1,7 @@
 # Improve ExecPlans and task decomposition
 
 
-Prepared and reconciled 2026-10-07. Status: done for the authorized skill revisions and source/read-only acceptance described below. This living ExecPlan is saved at `docs/exec-plan-tasks-improvements.md` and follows `.agents/skills/exec-plans/SKILL.md`. Changes are uncommitted. Product execution, personal installation and runtime performance are outside the observed evidence.
+Prepared and reconciled 2026-10-07. Status: done for the five authorized adversarial-review fixes and the requested main-branch merge. The earlier revisions are committed in `b69c0c45`; main `5b760d4c` is merged in `f051a34`. The verified fixes remain uncommitted. This living ExecPlan is saved at `docs/exec-plan-tasks-improvements.md` and follows `.agents/skills/exec-plans/SKILL.md`. Synthetic sandbox execution is verified below; real product execution, personal installation and runtime performance are outside the evidence.
 
 Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. The coordinator owns contract decisions, this plan, integration, and final acceptance. Delegate independent implementation and review with explicit file ownership.
 
@@ -9,6 +9,8 @@ Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospecti
 
 
 Improve two independent workflows: `exec-plans` describes design, constraints, tasks and final acceptance; `spec-to-tasks` produces structured tasks from supplied requirements. Each workflow's consumers must preserve its contract. Neither ExecPlan skill depends on the decomposition workflow.
+
+The current integration checkpoint also adopts main's focused KB routes and knowledge admission rules while preserving the completed skill work and its uncommitted fixes.
 
 Reduce reasoning breadth without hiding necessary technical depth. A smaller task reduces the number of unrelated facts, decisions, and failures an agent must track. It does not make a difficult recovery algorithm easy. Preserve the full correctness contract when splitting work, including negative cases and integration proof.
 
@@ -28,6 +30,14 @@ Success means a fresh agent can identify its prerequisites, required design cont
 - [x] (2026-10-07) [milestone-4] Review six paired outputs and three fresh-reader exercises, including missing prerequisite evidence; retain earlier rejected/excluded outputs and selection provenance.
 - [x] (2026-10-07) [milestone-4] Complete the checkpoint canonical documentation pass; OKF lint passed and the handoff records unfinished acceptance.
 - [x] (2026-10-07) [milestone-4] Complete final source review, generate the existing review viewer, reconcile canonical docs, and pass final OKF lint.
+- [x] (2026-10-07) [milestone-5] T1: Reconcile completion flags against changed task contracts; preserve historical evidence and unchanged completion. Review three update scenarios and execute stale/valid completion checks.
+- [x] (2026-10-07) [milestone-5] T2: Make missing producer output fail grading and accept all supported required verification kinds; 38 public CLI tests pass.
+- [x] (2026-10-07) [milestone-5] T3: Repair Ralph execution fixtures; sandbox runs reach completion, unresolved-evidence and no-committable-change gates as intended.
+- [x] (2026-10-07) [milestone-5] T4: Require the loop continuation evaluation to retain the worker's selected-task summary; 13 public CLI tests pass.
+- [x] (2026-10-07) [milestone-5] Verify the integrated fixes, preserve repeat-completion state, pass skill/JSON/syntax/whitespace checks, and complete canonical documentation with OKF lint exit 0.
+- [x] (2026-10-07) [milestone-6] T1: Preserve the uncommitted fixes and resolve main's KB conflicts using its admission policy and focused instruction routes.
+- [x] (2026-10-07) [milestone-6] T2: Restore the fixes, retain required guidance at current paths, and verify source preservation and integrated checks.
+- [x] (2026-10-07) [milestone-6] Commit only the merge as `f051a34`, verify main ancestry and no unresolved entries, and retain the fixes as uncommitted work.
 
 ## Context and Orientation
 
@@ -54,6 +64,8 @@ Historical examples in this proposal describe a 30-task installer manifest: 6B b
 
 ## Surprises & Discoveries
 
+
+Adversarial review of `8b5596d1..b69c0c45` found five remaining defects despite 93 passing targeted tests: unconditional preservation of stale passes, missing producer output scoring 8/10, incomplete completed-task fixtures, rejection of required build/typecheck/lint outcomes, and full loop credit after dropping the worker summary. Milestone 5 repairs these defects. Pre-fix skill snapshots are retained in `/tmp/task-workflow-fixes.sfVWC0/skills/`. Completion intake also needs existing progress evidence before its shortcut, since ordinary successful workers need not copy their proof into task notes.
 
 The schema and consumer previously disagreed on whether `dependsOn` was mandatory. The producer and consumer now require the same complete contract for every task, including explicit dependencies and verification.
 
@@ -86,12 +98,16 @@ Decision, 2026-10-07, user and coordinator: use one complete task contract throu
 
 The decisions define implementation targets. Only observed checks establish completion.
 
+Decision, 2026-10-07, coordinator: preserve IDs, notes and historical evidence when updating tasks, but retain a pass only when evidence still covers the current outcome, prerequisites and required checks. Reopen affected tasks and downstream guarantees when their prior proof no longer applies; leave unchanged tasks complete. Separate valid-shape grading from semantic evidence review, and give unavailable artifacts no passing credit.
+
 Decision, 2026-10-07, coordinator: accept source changes using public grader tests, preserved output comparisons and fresh-reader interpretation. Keep the unchanged broad rubric distinct from supplemental semantic findings. These observations do not establish live sandbox consumer execution, owner-host product acceptance, repeated-run variance or efficiency savings.
+
+Decision, 2026-10-07, user and coordinator: resolve KB conflicts under main's [knowledge admission rules](../.agents/instructions/knowledge-base.md). Keep the obsolete memory maps deleted, preserve established skill constraints in focused instructions, and route tests through `.agents/instructions/testing/skills.md`. Source descriptions and session history do not justify recreating the maps. The existing skill fixes remain outside the merge commit.
 
 ## Interfaces and Dependencies
 
 
-Preserve the existing top-level `project`, `branchName`, `description`, and `tasks` fields. Preserve each task's existing ID, story mapping, title, description, acceptance criteria, likely files, design guidance, priority, `passes`, and `notes` fields. Newly generated tasks still start with `passes: false` and `notes: ""`. Reading or migrating an in-progress manifest must not reset completed work.
+Preserve the existing top-level `project`, `branchName`, `description`, and `tasks` fields. Keep each task's existing fields and stable ID. Newly generated tasks still start with `passes: false` and `notes: ""`. Reading an in-progress manifest must not reset completed work. During an authorized update, reconcile changed contracts with the evidence before retaining completion; preserve notes and historical evidence when reopening affected work.
 
 The following fields are implemented in `skills/spec-to-tasks/references/task-schema.md` and consumed by `skills/prd-ralph/references/intake.md`.
 
@@ -239,7 +255,7 @@ Status: done
 
 Acceptance: met
 
-Consumer edits and grader review are complete; 34 producer and 10 loop CLI tests pass. A new complete documentation artifact passes 10/10 assertions; the lifecycle artifact passes nine and correctly fails readiness because commands/environment are unresolved. Read-only Ralph and loop responses preserve context, commit constraints and result protocol. The following specification records completed work. Readiness is not execution authorization, and these interpretations do not establish execution of every disposable consumer scenario.
+The original milestone completed with 34 producer and 10 loop CLI tests passing. Its documentation artifact scored 10/10 and lifecycle artifact failed readiness only under the earlier rubric. Those historical scores predate milestone 5, which repairs vacuous credit and changes applicable assertion totals. The following specification records completed work. Readiness is not execution authorization, and earlier read-only responses do not establish sandbox execution.
 
 The single-task consumer validates the complete task contract before selection or completion detection, consumes every field and inline content, resolves references, and applies checks by task type. Preserve existing IDs, completion evidence, one-task-per-run behavior, user limits, and commit policy. Mark only the selected task passed after its full applicable checks pass; unresolved or failed checks remain unfinished.
 
@@ -270,10 +286,38 @@ Use a separate run with only the generated task, manifest constraints, prerequis
 
 The next section supplies the acceptance cases. Check semantic completeness first. Compare time, tokens, and tool calls only when actually measured. More task sessions can increase repeated setup and integration work; do not claim total reasoning savings from a larger task count.
 
+### Milestone 5: Repair adversarial-review findings
+
+Status: done
+
+Acceptance: met
+
+T1 was coordinator-owned with no implementation prerequisite. The producer's skill/schema/validation guidance now reconciles retained passes with current evidence and affected downstream guarantees. Ralph intake blocks stale completion without changing input history and resolves existing progress evidence before completion detection. Three supplemental producer scenarios cover unchanged meaning, changed guarantees and added checks by semantic inspection; they are not a blind model benchmark.
+
+T2 owned `skills/spec-to-tasks/evals/manifest_checks.py` and its CLI tests, with no prerequisite. Public CLI regressions reproduced vacuous artifact credit and rejection of supported check kinds. The repaired grader gives absent/unusable output zero credit, fails categories whose inputs are unavailable, accepts all supported required check kinds, and excludes scenario-inapplicable assertions. All 38 tests pass while preserving partial credit for unrelated inspectable categories.
+
+T3 repaired the enriched and unresolved Ralph fixtures, with no prerequisite. Both now contain complete T001 decision records and ascending priorities. The enriched fixture supplies a concrete synthetic inspection record. Actual manual comparisons in isolated Git sandboxes reached the intended completion, unresolved-check and commit-policy gates without product execution.
+
+T4 owned the loop grader and tests, with no prerequisite. It reproduced full credit after deleting the worker summary and now checks the completed task identity, prerequisite evidence and audited commit while accepting tested paraphrases. All 13 CLI tests pass. The loop stays blind to manifests and next-task selection.
+
+Integrated proof: the coordinator reran both grader suites (51 tests), validated both affected skill definitions, parsed all 15 JSON files under the four publishable evaluation directories, compiled changed Python modules, and passed whitespace and canonical OKF checks. The sandbox reviewer executed evals 0, 2, 4 and 5, plus a second eval-0 invocation: completion was retained only with current evidence; blocked cases preserved flags/history; all task sessions recorded zero commits. The repeat invocation left manifest and progress byte-identical. [Sandbox evidence](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/review-summary.md) states the synthetic scope and recovered harness errors. Personal installation, real product work and source-repository commits were not performed.
+
+### Milestone 6: Integrate main's KB maintenance changes
+
+Status: done
+
+Acceptance: met
+
+T1 required the existing fix snapshot and main `5b760d4c`. The coordinator preserved the fixes, resolved the two map deletions and memory-index conflict in favor of main's KB structure, and retained the current plan contract with repaired links. No policy conflict required a user choice.
+
+T2 depended on that resolved merge. The coordinator restored the skill fixes byte-for-byte, adapted their KB guidance to the moved instruction paths, and checked the integrated working tree. The final canonical pass added no memory. Source inputs and the ingestion manifest match main.
+
+Integrated proof: merge `f051a34` has parents `b69c0c45` and `5b760d4c`, with no unresolved index entries. Tests passed: 38 producer, 13 loop, 35 ExecPlan, 14 runner, and 17 OKF grader tests; OKF public CLI, startup, both ingestion suites, generated-hook freshness, supported skill validators, and canonical lint also passed. The original skill fixes remain uncommitted. [Merge evidence](/tmp/skills-main-merge.gEoUnX/review-summary.md) records commands, preservation checks, and the delegated review limitation.
+
 ## Concrete Steps
 
 
-No implementation step remains for this request. The next review action is to inspect [the comparison viewer](/private/tmp/exec-plan-tasks-improvements/comparison/review.html) and the uncommitted source diff. [Selection provenance](/private/tmp/exec-plan-tasks-improvements/comparison/selected/iteration-1/selection-provenance.json) identifies every preserved source run, hash and viewer-only adaptation. Do not rerun completed work or install personal copies merely to resume this plan. A later changed requirement should reopen only affected acceptance.
+No implementation or merge step remains. Next review action: run `rtk git diff` against current HEAD `f051a34` to inspect the uncommitted fixes and read [current sandbox evidence](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/review-summary.md). Earlier [selection provenance](/private/tmp/exec-plan-tasks-improvements/comparison/selected/iteration-1/selection-provenance.json) identifies preserved runs and viewer-only adaptations; those comparisons do not establish acceptance of these fixes. Do not install personal copies for source-copy evaluation.
 
 From the repository root, these existing commands support inspection and static verification:
 
@@ -300,12 +344,12 @@ The final producer CLI run used this retained directory, with comparison cases m
 
 Inspect each run's `grading.json`, including failed expectations and evidence. Do not treat the grader's process exit alone as acceptance. Validate generated `tasks.json` files for JSON syntax and the semantic rules below. No general-purpose task-schema validator has been established by this guide; extend the existing grader or add a narrowly scoped validator only if needed, and document its actual invocation after it exists.
 
-At the end of implementation, run the required documentation maintenance pass once. Update canonical instructions/memory only for implemented durable changes and new verified gotchas. Apply their formatting rules if those files change. Do not document these proposals as existing behavior before implementation.
+For subsequent changes, complete one end-of-session documentation pass under [knowledge admission](../.agents/instructions/knowledge-base.md). Preserve established rules in focused instructions; add memory only when every evidence gate passes. A pass may add no memory. The current merge pass is complete.
 
 ## Validation and Acceptance
 
 
-Use the following fixtures and deliberate mutations. Lifecycle, inline-document, consumer, and loop scenarios now exist under the relevant skill's `evals/` tree. The resumed check parsed all 16 JSON scenario and fixture files. Repository-local ExecPlan evaluations use the disposable external workspace with the canonical layout; the skill remains repository-local.
+Use the following fixtures and deliberate mutations. Lifecycle, inline-document, consumer, and loop scenarios exist under the relevant skill's `evals/` tree. The current pass parsed all 15 JSON files under the four publishable evaluation directories. Repository-local ExecPlan evaluations use a disposable external workspace with the canonical layout; the skill remains repository-local.
 
 | Case | Required result |
 | --- | --- |
@@ -324,6 +368,12 @@ Use the following fixtures and deliberate mutations. Lifecycle, inline-document,
 | Existing domain fixtures | Preserve all explicit behaviors and negative cases while switching their output/schema expectations to the chosen contract. |
 | Inline-only source input | Preserve required source/context in the inline reference form. Reject fabricated paths and missing inline content. |
 | Consumer readiness | A dependent task remains ineligible until prerequisites pass. Required context/checks are read even when the task description is short. |
+| Changed completed task | Reopen unsupported completion and affected dependent guarantees while retaining IDs, historical evidence and unaffected passes. |
+| Stale all-true manifest | Block on the uncovered current check before COMPLETE, preserving input flags and notes. |
+| Valid repeated completion | Consume existing progress evidence and return COMPLETE without changing manifest or progress. |
+| Missing producer artifact | Fail every applicable assertion; missing fields fail categories that need them, and inapplicable categories add no score. |
+| Required build, lint or typecheck outcome | Accept supported required check kinds structurally; semantic review still checks whether they prove the outcome. |
+| Lost loop worker summary | Reject continuation that drops completed-task identity or prerequisite/commit evidence. |
 
 Structural validation must confirm required fields, allowed types, unique sequential IDs, ascending priorities, valid dependencies, source/context destinations, and fresh-task defaults. Coverage validation maps every explicit requirement, edge case, fallback, negative state, and integration gate to at least one task or acceptance check. Being parseable JSON is necessary but insufficient.
 
@@ -341,11 +391,11 @@ If the producer and consumer disagree on the contract, keep the change unpublish
 ## Outcomes & Retrospective
 
 
-All five skill entry points and dependent references are revised and reviewed. The producer defines dependencies, current context, task types and applicable checks; Ralph intake applies the complete contract to every task and explicitly blocks incomplete input or evidence. The loop remains blind. Both ExecPlan skills preserve the user's independence boundary. The runner registers the two new public grader suites.
+All five findings against `b69c0c45` are fixed and verified in milestone 5; the fix diff remains uncommitted. Milestone 6 merges main in `f051a34` and adopts its KB maintenance rules. Changed contracts cannot silently inherit unsupported passes, invalid output no longer earns vacuous grading credit, worker fixtures reach their intended gates, supported verification kinds pass structural grading, and loop continuation retains worker evidence. Both ExecPlan skills preserve the user's independence boundary.
 
-Final observed checks: 34 producer grader tests, 10 loop grader tests, all 16 scenario/fixture JSON files, Python compilation, supported skill validators, whitespace review and OKF lint pass. Earlier 35 ExecPlan grader and 14 runner tests apply to unchanged source. The generic validator still rejects required `disable-model-invocation` frontmatter in two consumers; those controls and `execplan-implement/agents/openai.yaml` remain intact. This is a known validation limitation, not a passing result.
+Current observed checks: 38 producer and 13 loop CLI tests, 15 evaluation JSON files, changed-module compilation, spec-to-tasks/prd-ralph validators, whitespace review and OKF lint pass. Five sandbox checks establish the intended protocol and flag behavior with real manual comparisons and Git audits. The three producer update scenarios were inspected semantically, not run as a blind benchmark. Earlier 35 ExecPlan grader and 14 runner tests apply to unchanged source. The generic validator's known rejection of protected `disable-model-invocation` keys is unchanged; no control was removed.
 
-The complete documentation manifest passes all ten producer CLI assertions. The valid lifecycle shape correctly fails only readiness, since its fixture has no runtime/commands. Earlier six paired outputs yield 18/18 revised versus 17/18 baseline shared assertions. All three fresh-reader exercises identify the required action/check/boundary, including the intended missing-decision stop. These comparisons predate the removal of compatibility guidance; its acceptance uses source review, the 44 existing grader tests, 16 JSON parses, and skill validation. The obsolete compatibility scenario and fixture were removed; no new regression tests were added for that deletion. The review viewer and provenance are retained. No consumer sandbox execution, product work, owner-host memory measurement, personal installation, Git commit or push was performed.
+Historical acceptance used the earlier 10-assertion producer rubric and six selected paired outputs scoring 18/18 revised versus 17/18 baseline. Three fresh-reader exercises identified the required action/check/boundary and intended missing-decision stop. Those comparisons predate later contract cleanup and the current fixes; retain their viewer and provenance without treating them as current performance evidence. The current synthetic sandbox runs do not establish real installer behavior, owner-host acceptance or independent model compliance. No personal installation, source-repository commit or push was performed during this fix pass.
 
 Expected benefit is less repeated interpretation during worker execution. Hard technical reasoning and cross-task integration remain explicit responsibilities. Total project effort may include additional context loading, review, and integration, so efficiency claims require measured comparisons.
 
@@ -354,7 +404,9 @@ Expected benefit is less repeated interpretation during worker execution. Hard t
 
 This guide preserves all seven original recommendation groups: three for ExecPlans (task boundaries, current design extraction, integration proof) and four for task decomposition (sizing, structured dependencies/context/type, applicable verification, semantic validation). It also includes the shared fresh-worker evaluation method and the newly verified consumer/evaluation compatibility issues.
 
-The requested plan and [feature handoff](handoff.md) remain beside each other. The final canonical pass updated skills guidance, grader contracts/testing, and the retained-effort map; existing routing/index changes remain. Only the OKF profile branch applied, and lint exited 0. No canonical file was added, split, moved or removed; no documentation quality TODO remains.
+The requested plan and [feature handoff](handoff.md) remain beside each other. The pre-merge fix pass updated skill instructions, the former API/file maps, and the former memory testing route; its OKF lint passed. Main subsequently removed those maps and moved testing into the instruction bundle. The current pass preserves applicable rules in `.agents/instructions/skills.md` and `.agents/instructions/testing/skills.md`, both Agent Instruction documents. Main's instruction and memory indexes remain intact; no new memory was admitted. Only the OKF profile branch applied; `rtk proxy python3 scripts/lint-okf.py` exited 0. No documentation quality TODO remains.
+
+Current evidence lives under `/tmp/task-workflow-fixes.sfVWC0/`: baseline skill copies, [sandbox review](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/review-summary.md), [flags and audits](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/verification-results.json), and [repeat integrity](/tmp/task-workflow-fixes.sfVWC0/fixture-checks/eval-0/outputs/repeat-integrity.json). These local files are disposable.
 
 Evidence is local and disposable under `/private/tmp/exec-plan-tasks-improvements/`: [review notes](/private/tmp/exec-plan-tasks-improvements/comparison/review-notes.md), [benchmark](/private/tmp/exec-plan-tasks-improvements/comparison/selected/iteration-1/benchmark.json), [fresh plan reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/plan/result.md), [fresh task reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/task/result.md), and [missing-context reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/missing-context/result.md). Earlier outputs, invalid fixtures and public reproductions remain unchanged.
 

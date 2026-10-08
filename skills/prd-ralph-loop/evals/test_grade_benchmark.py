@@ -50,9 +50,44 @@ class PublicGraderTests(unittest.TestCase):
 
     def test_task_complete_continues_without_manifest_selection(self):
         result = {'status': 'looping', 'next_action': 'spawn fresh worker', 'target_task_id': None, 'routing_decision': 'delegate-to-subagents'}
-        self.assertEqual(self.grade(1, result, '<promise>TASK_COMPLETE</promise>\nUS-002 passed; dispatch a fresh prd-ralph worker without reading manifest or progress.'), 0)
+        self.assertEqual(self.grade(1, result, '<promise>TASK_COMPLETE</promise>\nUS-002 passed with prerequisite evidence and audited commit. More work remains; dispatch a fresh prd-ralph worker without reading manifest or progress.'), 0)
         result['target_task_id'] = 'US-003'
         self.assertGreater(self.grade(1, result, 'Read prd.json to choose US-003.'), 0)
+
+    def test_task_complete_requires_retained_worker_summary(self):
+        result = {'status': 'looping', 'next_action': 'spawn fresh worker', 'target_task_id': None, 'routing_decision': 'delegate-to-subagents'}
+        response = '<promise>TASK_COMPLETE</promise>\nDispatch a fresh prd-ralph worker.'
+        self.assertGreater(self.grade(1, result, response), 0)
+
+    def test_task_complete_accepts_equivalent_worker_evidence(self):
+        result = {'status': 'looping', 'next_action': 'spawn fresh worker', 'target_task_id': None, 'routing_decision': 'delegate-to-subagents'}
+        summaries = (
+            'Worker completed US-002 successfully. Its dependencies were verified and the commit was reviewed. Further work remains.',
+            'US-002 succeeded with proof of prerequisites; the commit audit passed. Additional work remains.',
+        )
+        for summary in summaries:
+            with self.subTest(summary=summary):
+                response = '<promise>TASK_COMPLETE</promise>\n' + summary + '\nDispatch a fresh prd-ralph worker.'
+                self.assertEqual(self.grade(1, result, response), 0)
+
+    def test_task_complete_rejects_missing_or_contradictory_worker_evidence(self):
+        result = {'status': 'looping', 'next_action': 'spawn fresh worker', 'target_task_id': None, 'routing_decision': 'delegate-to-subagents'}
+        summaries = (
+            'US-003 passed with prerequisite evidence and audited commit.',
+            'US-002 passed with an audited commit.',
+            'US-002 passed with prerequisite evidence.',
+            'US-002 passed with prerequisite evidence and audited commit. Select US-003 next.',
+            'US-002 passed with prerequisite evidence and audited commit, but US-002 failed.',
+            'US-002 passed with prerequisite evidence and audited commit, but tests failed.',
+            'US-002 passed with prerequisite evidence and audited commit, but the commit was not audited.',
+            'US-002 passed with prerequisite evidence and audited commit, but no commit was created.',
+            'US-002 passed with prerequisite evidence and audited commit, but the commit audit failed.',
+            'US-002 passed with prerequisite evidence and audited commit, but the commit audit is pending.',
+        )
+        for summary in summaries:
+            with self.subTest(summary=summary):
+                response = '<promise>TASK_COMPLETE</promise>\n' + summary + '\nDispatch a fresh prd-ralph worker.'
+                self.assertGreater(self.grade(1, result, response), 0)
 
     def test_blocked_stops_and_preserves_actionable_reason(self):
         result = {'status': 'blocked', 'next_action': 'stop', 'target_task_id': None, 'routing_decision': None}
