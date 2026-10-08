@@ -1750,6 +1750,14 @@ class ProviderTests(Fixture):
                 payload = {"hook_event_name": tool_event, "tool_name": "Bash" if provider != "gemini" else "run_shell_command",
                            "tool_input": {"command": "echo fixture"}, "cwd": str(nested), "session_id": "safe"}
                 if "tool-guard" in command:
+                    allowed = subprocess.run(["bash", "-c", command], input=json.dumps(payload), text=True,
+                                             capture_output=True, cwd=nested, env=env, timeout=20)
+                    self.assertEqual(allowed.returncode, 0, provider + allowed.stderr)
+                    response = json.loads(allowed.stdout.splitlines()[-1])
+                    decision = (response.get("permissionDecision") or response.get("decision")
+                                or response.get("hookSpecificOutput", {}).get("permissionDecision")
+                                or ("allow" if response == {} else None))
+                    self.assertEqual(decision, "allow", provider + allowed.stdout)
                     payload["tool_input"]["command"] = "r" + "m -rf /"
                 completed = subprocess.run(["bash", "-c", command], input=json.dumps(payload), text=True,
                                            capture_output=True, cwd=nested, env=env, timeout=20)
@@ -2036,6 +2044,15 @@ class ScopeTests(Fixture):
             config = json.loads(home.joinpath(path).read_bytes())
             handler = config["hooks"][event][0] if provider == "copilot" else config["hooks"][event][0]["hooks"][0]
             command = handler.get("bash", handler.get("command"))
+            allowed = subprocess.run(["bash", "-c", command], input=json.dumps({"tool_name": "Bash" if provider != "gemini" else "run_shell_command", "tool_input": {"command": "echo fixture"}, "cwd": str(self.target)}),
+                                     env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)}, cwd=self.target,
+                                     text=True, capture_output=True, timeout=20)
+            self.assertEqual(allowed.returncode, 0, provider + allowed.stderr)
+            response = json.loads(allowed.stdout.splitlines()[-1])
+            decision = (response.get("permissionDecision") or response.get("decision")
+                        or response.get("hookSpecificOutput", {}).get("permissionDecision")
+                        or ("allow" if response == {} else None))
+            self.assertEqual(decision, "allow", provider + allowed.stdout)
             result = subprocess.run(["bash", "-c", command], input=json.dumps({"tool_name": "Bash" if provider != "gemini" else "run_shell_command", "tool_input": {"command": "r" + "m -rf /"}, "cwd": str(self.target)}),
                                     env={**os.environ, "HOME": str(home), "USERPROFILE": str(home)}, cwd=self.target,
                                     text=True, capture_output=True)

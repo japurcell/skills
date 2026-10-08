@@ -1,26 +1,40 @@
 # Pricing Reference
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Verified **2026-09-29**. All prices are USD per 1 million tokens for GitHub Copilot. Check the source when exact cost matters; these are not direct-provider API or other-platform prices.
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-09-29**.
 
-If prices are shown in GitHub AI Credits: 1 credit = $0.01 USD.
+Prices are USD per 1 million tokens for GitHub Copilot. They are not direct-provider API prices. Where GitHub AI Credits are used, 1 credit = $0.01 USD.
 
-## Cost rules
+Pricing does not establish capability or availability. Compare only configurations that satisfy the capability floor and are accepted by the target runtime.
 
-1. First satisfy task capability.
-2. Then minimize expected total cost of successful completion: input, output, cache writes/reads, retries, and verification. Use dominant token cost only as a shortcut when other factors are comparable.
-3. Never choose Fast for normal code review only because it is cheaper.
-4. Never pay Premium for bounded execution unless stakes require it.
+## Cost rule
 
-| Token shape | Optimize for |
+Estimate:
+
+```text
+expected_cost =
+    uncached_input
+  + cached_input
+  + cache_write
+  + output
+  + retries
+  + verification
+```
+
+Also consider tool use and additional workers. Use a dominant token rate as a shortcut only when other factors are comparable.
+
+Assume uncached input unless cache reuse is confirmed for the platform, model, and request shape. A higher token rate may cost less overall when it reduces retries, token volume, or verification.
+
+| Token shape | Compare primarily |
 | --- | --- |
-| Reads a lot, writes little | input cost |
-| Writes a lot | output cost |
-| Reuses large context | confirmed cache hits plus any cache-write charges |
-| Models with cache-write charges | cache write + cached input |
-
-Shared repo context across workers does not guarantee cache hits. Verify cache behavior for the platform, model, and request shape; otherwise estimate uncached input. A slightly higher token rate can be cheaper overall if it avoids retries or reduces token volume.
+| Large input, short output | Input and cached-input rates |
+| Large output | Output rate |
+| Reused context | Cache write plus confirmed cached-input savings |
+| Uncertain task fit | Retries and verification |
+| Input crossing a threshold | The matching long-context row |
 
 ## Prices
+
+`default` in the `Condition` column identifies the ordinary pricing row. It is not a model or reasoning-effort dispatch value and does not authorize default-based routing.
 
 `N/A` means not listed or not applicable.
 
@@ -76,12 +90,17 @@ Shared repo context across workers does not guarantee cache hits. Verify cache b
 
 ## Notes
 
-- Conditions are input-token thresholds; choose the matching row before comparing costs.
-- This table preserves all published rates, including retired models. Check [the catalog](model-catalog.md) and supported-models before routing: Claude Sonnet 4 is retired, Claude Sonnet 4.6 has restricted legacy availability, and GPT-5.4 nano is limited to the Codex VS Code extension on Copilot Pro+.
-- GPT-6.1 Sol matches GPT-6 Sol's input, output, and cache-write rates, with half the cached-input rate. Confirm model availability and pricing in the target runtime before routing; Copilot rates do not apply to other platforms.
-- Anthropic, GPT-5.6 Luna/Sol/Terra, GPT-6 Astra, GPT-6 Luna, GPT-6 Sol, and GPT-6.1 Sol have published cache-write charges. Earlier OpenAI models do not.
-- Gemini 3.6/3.7/3.8 Flash promotional rates apply through **2026-12-31**; recheck afterward.
-- Existing annual Copilot Pro/Pro+ subscriptions still using request-based billing have [legacy model multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans). Verify the applicable billing model before estimating usage.
-- Cheapest model within a tier can vary by token mix.
-- If platform auto-selects models, do not claim precise per-model cost control.
-- Capability floors override price.
+- Conditions are input-token thresholds, not necessarily context-window limits.
+- Check [`model-catalog.md`](model-catalog.md) and the supported-models source before routing; this table may retain retired or restricted entries.
+- Claude Sonnet 4 is retired; Claude Sonnet 4.6 has restricted legacy availability.
+- GPT-5.4 Nano is limited to the Codex VS Code extension on Copilot Pro+.
+- GPT-6.1 Sol matches GPT-6 Sol's input, output, and cache-write rates and has half its cached-input rate.
+- Anthropic models and the listed GPT-5.6/GPT-6 families have published cache-write charges; earlier OpenAI models shown do not.
+- Gemini 3.6, 3.7, and 3.8 Flash promotional rates apply through **2026-12-31**.
+- Legacy annual Copilot Pro or Pro+ plans may use [request multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
+- If the platform selects models automatically, do not claim precise per-model cost control.
+- Use the target platform's prices outside GitHub Copilot.
+
+## Refresh
+
+Fetch the live pricing source, reconcile all rows and thresholds, preserve cache charges and promotion dates, distinguish selectable from retired entries, verify the applicable billing model, bypass stale caches before claiming a price is absent, and update the snapshot date.

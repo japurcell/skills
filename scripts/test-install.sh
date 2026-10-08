@@ -517,13 +517,42 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py tool-guard.py helpers/common.py helpers/audit.py; do
+  for installed in scan-secrets.py tool-guard.py helpers/common.py helpers/audit.py helpers/tool_guard_policy.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
     fi
     cmp "$repo/.codex/hooks/$installed" "$home/.codex/hooks/$installed"
   done
+  python3 - "$home" <<'PY'
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+home = Path(sys.argv[1])
+operation = ''.join(map(chr, (103,105,116,32,112,117,115,104,32,45,45,102,111,114,99,101,32,111,114,105,103,105,110,32,109,97,105,110)))
+for provider in ('copilot', 'gemini', 'codex'):
+    script = home / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
+    for command, expected in (('echo safe', 'allow'), (operation, 'deny')):
+        if provider == 'copilot':
+            payload = {'hook_event_name': 'preToolUse', 'toolName': 'bash', 'toolArgs': {'command': command}}
+        else:
+            payload = {'hook_event_name': 'PreToolUse' if provider == 'codex' else 'BeforeTool',
+                       'tool_name': 'Bash' if provider == 'codex' else 'run_shell_command', 'tool_input': {'command': command}}
+        env = {**os.environ, 'HOME': str(home), 'GUARD_MODE': 'block',
+               'TOOL_GUARD_LOG_DIR': str(home / ('guard-install-test-' + provider)), 'AUDIT_LOG': str(home / 'guard-audit.log')}
+        env.pop('SKIP_TOOL_GUARD', None)
+        env.pop('TOOL_GUARD_ALLOWLIST', None)
+        result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script)],
+                                input=json.dumps(payload), capture_output=True, text=True, env=env, timeout=5)
+        assert result.returncode == 0, (provider, result.stderr)
+        response = json.loads(result.stdout)
+        actual = (response.get('permissionDecision') if provider == 'copilot' else response.get('decision')
+                  if provider == 'gemini' else 'allow' if response == {} else response['hookSpecificOutput']['permissionDecision'])
+        assert actual == expected, (provider, response)
+PY
   if [[ -e "$home/.codex/hooks.json.bak" ]]; then
     echo "Expected a fresh Codex install not to create a backup." >&2
     exit 1

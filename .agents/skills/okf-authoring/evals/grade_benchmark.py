@@ -29,26 +29,26 @@ TARGET_LISTS = {
         (".agents/memory/telemetry.md", "Agent Memory"),
         (".agents/memory/INDEX.md", "Knowledge Index"),
         (".agents/memory/LOG.md", "Source Ingestion Log"),
-        (".agents/memory/adrs/retention.md", "Architecture Decision"),
+        (".agents/instructions/retention.md", "Agent Instruction"),
     ],
     1: [(".agents/instructions/hooks.md", "Agent Instruction")],
     2: [(".agents/memory/sources/pending-md.summary.md", "Source Summary")],
     3: [(".agents/memory/sources/example-md.summary.md", "Source Summary")],
-    4: [(".agents/memory/testing/skills.md", "Testing Guidance")],
-    5: [(".agents/memory/KNOWN_ISSUES.md", "Known Issue")],
+    4: [(".agents/instructions/testing/skills.md", "Agent Instruction")],
+    5: [(".agents/memory/known-issues/skills.md", "Known Issue")],
     6: [("docs/outside.md", "out_of_scope")],
-    7: [(".agents/memory/ARCHITECTURE.md", "Agent Memory")],
+    7: [(".agents/memory/hook-delivery.md", "Agent Memory")],
 }
 EXPECTED_BODIES = {
     ".agents/memory/telemetry.md": "# Telemetry\n\nRecord durable telemetry guidance.\n",
     ".agents/memory/INDEX.md": "# Index\n\nRoute canonical knowledge.\n",
     ".agents/memory/LOG.md": "# Log\n\nRecord source ingestion.\n",
-    ".agents/memory/adrs/retention.md": "# Retention\n\nKeep stable paths.\n",
+    ".agents/instructions/retention.md": "# Retention\n\nKeep stable paths.\n",
     ".agents/instructions/hooks.md": "# Hook Guidance\n\nRetain this sentence exactly.\n",
     ".agents/memory/sources/pending-md.summary.md": "# Pending example summary\n\nThis source summary is intentionally unresolved but structurally conforming.\n",
     ".agents/memory/sources/example-md.summary.md": "# Example source summary\n\nThe source demonstrates a completed manifest-backed summary.\n",
-    ".agents/memory/testing/skills.md": "# Skills Testing\n\nRun targeted skill validation.\n",
-    ".agents/memory/ARCHITECTURE.md": "# Architecture\n\nPreserve this canonical body.\n",
+    ".agents/instructions/testing/skills.md": "# Skills Testing\n\nRun targeted skill validation.\n",
+    ".agents/memory/hook-delivery.md": "# Hook delivery\n\nPreserve this canonical body.\n",
 }
 EXPECTED_EVAL_IDS = set(TARGET_LISTS)
 EXPECTED_CONFIGS = {"with_skill", "without_skill"}
@@ -84,12 +84,8 @@ def expected_type(path: str) -> str:
         return "Knowledge Index"
     if memory_path == "LOG.md":
         return "Source Ingestion Log"
-    if memory_path == "KNOWN_ISSUES.md" or memory_path.startswith("known-issues/"):
+    if memory_path.startswith("known-issues/"):
         return "Known Issue"
-    if memory_path == "TESTING_STRATEGY.md" or memory_path.startswith("testing/"):
-        return "Testing Guidance"
-    if memory_path.startswith("adrs/"):
-        return "Architecture Decision"
     if memory_path.startswith("sources/") and memory_path.endswith(".summary.md"):
         return "Source Summary"
     return "Agent Memory"
@@ -269,7 +265,7 @@ def composition_ok(outcome: dict) -> tuple[bool, str]:
     skill = read_text(REPO_ROOT / ".agents/skills/okf-authoring/SKILL.md")
     updater = read_text(REPO_ROOT / ".agents/skills/update-agent-docs/SKILL.md")
     expected = {"semantic_owner": "update-agent-docs", "representation_owner": "okf-authoring", "reverse_invocation": False}
-    return outcome.get("orchestration") == expected and "invoke `okf-authoring`" in updater and "does not invoke `update-agent-docs`" in skill, json.dumps(outcome.get("orchestration"), sort_keys=True)
+    return outcome.get("orchestration") == expected and "activate the `okf-authoring` skill" in updater and "does not invoke `update-agent-docs`" in skill, json.dumps(outcome.get("orchestration"), sort_keys=True)
 
 
 def grade_case(eval_id: int, run_dir: Path) -> list[dict]:

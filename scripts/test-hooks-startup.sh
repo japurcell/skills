@@ -307,7 +307,7 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
 }
 
 test_validation_doc_records_vscode_subagent_start_strategy() {
-  assert_file_contains "$REPO_ROOT/.agents/memory/testing/hooks.md" \
+  assert_file_contains "$REPO_ROOT/.agents/instructions/testing/hooks-live.md" \
     "If VS Code omits \`SubagentStart\` for \`runSubagent\` child sessions, verify the direct \`SubagentStart\` hook is installed and use \`SessionStart\` as the fallback evidence." \
     "Expected validation guidance to codify the VS Code SubagentStart fallback strategy."
 }

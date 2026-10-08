@@ -30,6 +30,7 @@ from helpers.common import emit_json, read_json_input  # noqa: E402
 SCRIPT_NAME = Path(__file__).name
 TOOL_NAME_KEYS = ("toolName", "tool_name")
 TOOL_INPUT_KEYS = ("toolArgs", "toolInput", "tool_input")
+TOOL_PROVIDER = "copilot"
 
 
 def emit_skip_allow_response() -> None:
@@ -94,6 +95,7 @@ from helpers.common import emit_json, read_json_input  # noqa: E402
 
 TOOL_NAME_KEYS = ("tool_name", "toolName")
 TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
+TOOL_PROVIDER = "gemini"
 
 
 def emit_skip_allow_response() -> None:
@@ -131,6 +133,7 @@ from helpers.common import emit_json, read_json_input  # noqa: E402
 SCRIPT_NAME = Path(__file__).name
 TOOL_NAME_KEYS = ("tool_name", "toolName")
 TOOL_INPUT_KEYS = ("tool_input", "toolInput", "toolArgs")
+TOOL_PROVIDER = "codex"
 
 
 def emit_skip_allow_response() -> None:
@@ -156,11 +159,11 @@ def emit_deny_response(reason: str) -> None:
 _POLICY_SOURCE = r'''
 
 import re
-import shlex
 import unicodedata
 
 
 MAX_SCAN_TEXT = 32768
+MAX_NATIVE_DATA_BYTES = 65536
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -243,6 +246,9 @@ def _bounded_normalized_text(text: str) -> str:
 
 
 def _command_segments(text: str) -> list[list[str]]:
+    if isinstance(text, _ScanText):
+        return text.segments
+    import shlex
     normalized = _bounded_normalized_text(text)
     raw_segments = re.split(
         r"(?:\r?\n|\\[nr]|&&|\|\||;)",
@@ -263,6 +269,13 @@ def _command_segments(text: str) -> list[list[str]]:
         if tokens:
             segments.append(tokens)
     return segments
+
+
+class _ScanText(str):
+    def __new__(cls, text: str, segments: list[list[str]]):
+        value = str.__new__(cls, text)
+        value.segments = segments
+        return value
 
 
 def _executable_basename(token: str) -> str:
@@ -308,31 +321,28 @@ def _match_recursive_rm_target(*target_codes: int):
     def matcher(text: str, lower_text: str) -> str | None:
         del lower_text
         for tokens in _command_segments(text):
+            recursive = force = False
+            protected_index = None
+            summaries = [(False, False, None)] * (len(tokens) + 1)
+            for offset in range(len(tokens) - 1, -1, -1):
+                option = tokens[offset].casefold()
+                if _matches_protected_remove_target(tokens[offset], target_kind):
+                    protected_index = offset
+                if option == "--":
+                    recursive = force = False
+                elif option in {"--recursive", "--dir"}:
+                    recursive = True
+                elif option == "--force":
+                    force = True
+                elif option.startswith("-") and not option.startswith("--"):
+                    recursive = recursive or "r" in option[1:]
+                    force = force or "f" in option[1:]
+                summaries[offset] = (recursive, force, protected_index)
             for index, token in enumerate(tokens):
-                if _executable_basename(token) != "rm":
-                    continue
-                recursive = False
-                force = False
-                operands: list[tuple[int, str]] = []
-                options_done = False
-                for target_index in range(index + 1, len(tokens)):
-                    option = tokens[target_index].casefold()
-                    if option == "--":
-                        options_done = True
-                    elif not options_done and option in {"--recursive", "--dir"}:
-                        recursive = True
-                    elif not options_done and option == "--force":
-                        force = True
-                    elif not options_done and option.startswith("-") and not option.startswith("--"):
-                        flags = option[1:]
-                        recursive = recursive or "r" in flags or "R" in option[1:]
-                        force = force or "f" in flags
-                    else:
-                        operands.append((target_index, tokens[target_index]))
-                if recursive and force:
-                    for target_index, operand in operands:
-                        if _matches_protected_remove_target(operand, target_kind):
-                            return " ".join(tokens[index : target_index + 1])
+                if _executable_basename(token) == "rm":
+                    recursive, force, target_index = summaries[index + 1]
+                    if recursive and force and target_index is not None:
+                        return " ".join(tokens[index:target_index + 1])
         return None
 
     return matcher
@@ -449,27 +459,28 @@ def _match_git_push(*prefix_codes: int):
         del lower_text
         for tokens in _command_segments(text):
             folded = [token.casefold() for token in tokens]
+            suffix = [(None, None, None)] * (len(tokens) + 1)
+            force_index = branch_index = forced_index = None
+            for offset in range(len(tokens) - 1, -1, -1):
+                token = folded[offset]
+                if token == force_option:
+                    force_index = offset
+                if token.lstrip("+").split(":")[-1].removeprefix("refs/heads/") in protected:
+                    branch_index = offset
+                    if token.startswith("+"):
+                        forced_index = offset
+                suffix[offset] = (force_index, branch_index, forced_index)
             for index in range(len(tokens)):
                 if _executable_basename(tokens[index]) != "git":
                     continue
                 command_index = push_index(tokens, index)
                 if command_index is None:
                     continue
-                tail = folded[command_index + 1 :]
-                force_indexes = [offset for offset, token in enumerate(tail) if token == force_option]
-                branch_indexes = [
-                    offset for offset, token in enumerate(tail)
-                    if token.lstrip("+").split(":")[-1].removeprefix("refs/heads/") in protected
-                ]
-                forced_refspecs = [
-                    offset for offset in branch_indexes if tail[offset].startswith("+")
-                ]
-                if force_indexes and branch_indexes:
-                    end = max(force_indexes[0], branch_indexes[0]) + command_index + 2
-                    return " ".join(tokens[index:end])
-                if force_option == "--force" and forced_refspecs:
-                    end = forced_refspecs[0] + command_index + 2
-                    return " ".join(tokens[index:end])
+                force_index, branch_index, forced_index = suffix[command_index + 1]
+                if force_index is not None and branch_index is not None:
+                    return " ".join(tokens[index:max(force_index, branch_index) + 1])
+                if force_option == "--force" and forced_index is not None:
+                    return " ".join(tokens[index:forced_index + 1])
         return None
 
     return matcher
@@ -527,7 +538,8 @@ def _sql_code_without_comments_or_literals(text: str) -> str:
 
 
 def _match_delete_from(text: str, lower_text: str) -> str | None:
-    del lower_text
+    if _find_word(lower_text, R(100, 101, 108, 101, 116, 101)) == -1:
+        return None
     normalized = _sql_code_without_comments_or_literals(_bounded_normalized_text(text))
     statement_pattern = re.compile(
         R(92, 98, 100, 101, 108, 101, 116, 101, 92, 115, 43, 102, 114, 111, 109, 92, 115, 43)
@@ -557,6 +569,7 @@ def _match_pipe_chain(*codes: int):
             return None
         return text[index : tail + len(second)]
 
+    matcher.pipe_names = (first, second)
     return matcher
 
 
@@ -626,73 +639,772 @@ RULE_DETAILS = (
 
 
 # __ALLOWLIST_SOURCE__
-def read_tool_name(payload: dict) -> str:
-    for key in TOOL_NAME_KEYS:
-        value = payload.get(key)
-        if value is not None:
-            return str(value)
-    return ""
 
 
-def _read_tool_input_value(payload: dict) -> object:
-    for key in TOOL_INPUT_KEYS:
-        if key not in payload:
+
+
+
+
+class NativeToolInput:
+    """Validated native arguments, with file operations separate from inert data."""
+    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = ()) -> None:
+        self.kind = kind
+        self.metadata = metadata
+        self.data = data
+        self.operations = operations
+
+
+def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
+    fields = {**required, **(optional or {})}
+    if not len(required) <= len(value) <= len(fields):
+        return False
+    return required.keys() <= value.keys() <= fields.keys() and all(type(child) is fields[key] for key, child in value.items())
+
+
+
+
+def _parse_native_patch(patch: str) -> NativeToolInput | None:
+    lines = patch.splitlines()
+    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
+        return None
+    operations: list[tuple[str, str]] = []
+    metadata: list[str] = []
+    kind = ""
+    body_seen = False
+    moved = False
+    for line in lines[1:-1]:
+        header = next((prefix for prefix in ("*** Add File: ", "*** Update File: ", "*** Delete File: ") if line.startswith(prefix)), None)
+        if header:
+            if kind in {"add", "update"} and not body_seen:
+                return None
+            path = line[len(header):]
+            if not path or "\x00" in path:
+                return None
+            kind = {"*** Add File: ": "add", "*** Update File: ": "update", "*** Delete File: ": "delete"}[header]
+            metadata.append(path)
+            if kind == "delete":
+                operations.append(("delete", path))
+            body_seen = moved = False
+        elif line.startswith("*** Move to: "):
+            if kind != "update" or body_seen or moved:
+                return None
+            destination = line[len("*** Move to: "):]
+            if not destination or "\x00" in destination:
+                return None
+            operations.append(("move", metadata[-1]))
+            metadata.append(destination)
+            moved = True
+        elif kind == "add" and line.startswith("+"):
+            body_seen = True
+        elif kind == "update" and (line.startswith((" ", "+", "-", "@@ ")) or line in {"@@", "*** End of File"}):
+            body_seen = True
+        else:
+            return None
+    if not kind or (kind in {"add", "update"} and not body_seen):
+        return None
+    return NativeToolInput("patch", tuple(metadata), (patch,), tuple(operations))
+
+
+def _native_operation_threats(native: NativeToolInput) -> list[dict[str, str]]:
+    threats: list[dict[str, str]] = []
+    seen: set[str] = set()
+    normalized_bytes = 0
+    for operation, path in native.operations:
+        # Move removes its source. Apply the existing environment/Git removal
+        # rules to that operation without treating a filename as shell code.
+        normalized = unicodedata.normalize("NFKC", path).casefold().replace("\\", "/")
+        normalized_bytes += len(normalized.encode("utf-8"))
+        if normalized_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("normalized_operation_bytes", MAX_SCAN_TEXT, normalized_bytes, "bytes")
+        for suffix, rule_id, cause in ((".env", "remove_env_file", "removal targets an environment file"),
+                                     (".git", "remove_git_metadata", "removal targets Git metadata")):
+            start = 0
+            protected = False
+            while (index := normalized.find(suffix, start)) != -1:
+                after = index + len(suffix)
+                if after == len(normalized) or not _is_word_char(normalized[after]):
+                    protected = True
+                    break
+                start = after
+            if protected and rule_id not in seen:
+                seen.add(rule_id)
+                threats.append({"category": "destructive_file_ops", "severity": "critical", "rule_id": rule_id,
+                                "cause": cause, "matched": f"patch {operation} {suffix}"})
+    return threats
+
+
+
+
+class InspectionFailure(ValueError):
+    pass
+
+
+class _ShellWord:
+    def __init__(self, value: str, literal: bool = True, quoted: bool = False) -> None:
+        self.value, self.literal, self.quoted = value, literal, quoted
+
+
+class _ShellCommand:
+    def __init__(self) -> None:
+        self.words = []
+        self.heredocs = []
+        self.redirects = []
+        self.pipe = False
+
+
+class _InspectionBudget:
+    def __init__(self) -> None:
+        self.bytes = self.commands = self.tokens = 0
+
+    def source(self, source: str, depth: int) -> str:
+        if depth > 16:
+            raise ScanLimitExceeded("executable_depth", 16, depth, "levels")
+        normalized = _bounded_normalized_text(source)
+        self.bytes += len(normalized.encode("utf-8"))
+        if self.bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
+        return source
+
+    def matcher_tokens(self, segments, charged=0):
+        self.tokens += max(0, sum(len(segment) for segment in segments) - charged)
+        if self.tokens > MAX_COMMAND_TOKENS:
+            raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, self.tokens, "tokens")
+
+
+def _shell_representation(source: str, budget: _InspectionBudget):
+    commands, nested, pending = [], [], []
+    command = _ShellCommand()
+    pieces = []
+    active = quoted = False
+    literal = True
+    quote = redirect = ""
+    strict = False
+    index = 0
+
+    def word():
+        nonlocal pieces, active, quoted, literal, redirect
+        if not active:
+            return
+        value = _ShellWord("".join(pieces), literal, quoted)
+        if redirect:
+            command.redirects.append((redirect, value))
+            if redirect in {"<<", "<<-"}:
+                pending.append((command, value, redirect == "<<-"))
+            redirect = ""
+        else:
+            command.words.append(value)
+        pieces = []
+        active = quoted = False
+        literal = True
+
+    def finish(pipe=False):
+        nonlocal command
+        word()
+        if redirect:
+            raise InspectionFailure("missing redirection operand")
+        if command.words or command.redirects:
+            budget.commands += 1
+            budget.tokens += len(command.words) + len(command.redirects)
+            if budget.commands > MAX_COMMAND_SEGMENTS:
+                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments")
+            if budget.tokens > MAX_COMMAND_TOKENS:
+                raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, budget.tokens, "tokens")
+            command.pipe = pipe
+            commands.append(command)
+        command = _ShellCommand()
+
+    def substitution(start, backtick=False):
+        cursor = start + (1 if backtick else 2)
+        body_start, nesting, state = cursor, 1, ""
+        while cursor < len(source):
+            ch = source[cursor]
+            if ch == "\\" and state != "'":
+                cursor += 2
+                continue
+            if backtick:
+                if ch == chr(96):
+                    nested.append(source[body_start:cursor])
+                    return cursor + 1
+            elif state:
+                if ch == state:
+                    state = ""
+            elif ch in "'\"":
+                state = ch
+            elif ch == "(":
+                nesting += 1
+                if nesting > 16:
+                    raise ScanLimitExceeded("executable_depth", 16, nesting, "levels")
+            elif ch == ")":
+                nesting -= 1
+                if nesting == 0:
+                    nested.append(source[body_start:cursor])
+                    return cursor + 1
+            cursor += 1
+        raise InspectionFailure("unterminated shell substitution")
+
+    while index < len(source):
+        ch = source[index]
+        if quote == "'":
+            if ch == "'":
+                quote = ""
+            else:
+                pieces.append(ch)
+            index += 1
             continue
-        value = payload.get(key)
-        if value is None:
-            return ""
-        return value
-    return ""
+        if ch == "\\":
+            if index + 1 >= len(source):
+                raise InspectionFailure("unfinished shell escape")
+            following = source[index + 1]
+            if following == "\n":
+                index += 2
+                continue
+            if quote == '"' and following not in '$\"\\' + chr(96):
+                pieces.append("\\")
+                index += 1
+                continue
+            active = True
+            pieces.append(following)
+            index += 2
+            continue
+        if ch == chr(96) or source.startswith("$(", index):
+            active, literal = True, False
+            strict = strict or source.startswith("$((", index)
+            end = substitution(index, ch == chr(96))
+            pieces.append(source[index:end])
+            index = end
+            continue
+        if ch == "$":
+            active, literal = True, False
+            strict = strict or source.startswith("${", index)
+        if quote == '"':
+            if ch == '"':
+                quote = ""
+            else:
+                pieces.append(ch)
+            index += 1
+            continue
+        if ch in "'\"":
+            active = quoted = True
+            quote = ch
+            index += 1
+            continue
+        if ch == "#" and not active:
+            end = source.find("\n", index)
+            index = len(source) if end < 0 else end
+            continue
+        if ch in " \t\r":
+            word()
+            index += 1
+            continue
+        if ch in ";|&\n":
+            finish(ch == "|" and not source.startswith("||", index))
+            index += 2 if source[index:index + 2] in {"&&", "||"} else 1
+            if ch == "\n" and pending:
+                for owner, delimiter, strip_tabs in pending:
+                    body_start, body_lines = index, []
+                    while index < len(source):
+                        end = source.find("\n", index)
+                        end = len(source) if end < 0 else end
+                        line = source[index:end]
+                        compared = line.lstrip("\t") if strip_tabs else line
+                        index = end + 1 if end < len(source) else end
+                        if compared == delimiter.value:
+                            break
+                        body_lines.append(compared)
+                    else:
+                        raise InspectionFailure("unterminated heredoc")
+                    strict = strict or not delimiter.literal
+                    owner.heredocs.append(("\n".join(body_lines), delimiter.quoted))
+                    if not delimiter.quoted:
+                        cursor = body_start
+                        body_end = index - len(delimiter.value) - 1
+                        while cursor < body_end:
+                            if source[cursor] == "\\":
+                                cursor += 2
+                            elif source[cursor] == chr(96) or source.startswith("$(", cursor):
+                                cursor = substitution(cursor, source[cursor] == chr(96))
+                            else:
+                                cursor += 1
+                pending.clear()
+            continue
+        if ch in "<>":
+            if source[index:index + 2] in {"<(", ">("}:
+                strict = True
+                end = substitution(index)
+                active, literal = True, False
+                pieces.append(source[index:end])
+                index = end
+                continue
+            descriptor = ""
+            if active and pieces and all(c.isdecimal() for c in pieces):
+                descriptor, pieces, active = "".join(pieces), [], False
+            else:
+                word()
+            operator = source[index:index + 2] if source[index:index + 2] in {"<<", ">>", "<&", ">&"} else ch
+            if source.startswith("<<-", index):
+                operator = "<<-"
+            strict = strict or operator in {"<&", ">&"} or descriptor not in {"", "0", "1", "2"}
+            strict = strict or operator.startswith("<<") and descriptor not in {"", "0"}
+            redirect = operator
+            index += len(operator)
+            continue
+        strict = strict or ch in "(){}" or ch == "\x00"
+        active = True
+        pieces.append(ch)
+        index += 1
+    if quote or pending:
+        raise InspectionFailure("unterminated shell quote or heredoc")
+    finish()
+    return commands, nested, strict
 
 
-def read_tool_input(payload: dict) -> str:
-    value = _read_tool_input_value(payload)
-    if isinstance(value, str):
-        return value
-    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+_GUARD_TARGETS = frozenset({".codex/hooks/tool-guard.py", ".copilot/hooks/scripts/tool-guard.py", ".gemini/hooks/scripts/tool-guard.py"})
 
 
-def read_tool_scan_inputs(payload: dict) -> tuple[str, ...]:
-    value = _read_tool_input_value(payload)
-    if isinstance(value, str):
-        return (value,)
+def _literal_search(command):
+    words = command.words
+    if not words or words[0].value != "rg" or not all(word.literal for word in words):
+        return False
+    pattern_seen = positional = needs_pattern = False
+    for word in words[1:]:
+        value = word.value
+        if needs_pattern:
+            pattern_seen, needs_pattern = True, False
+        elif value == "--" and not positional:
+            positional = True
+        elif not positional and value == "-n":
+            continue
+        elif not positional and value in {"-e", "--regexp"}:
+            needs_pattern = True
+        elif not positional and value.startswith("--regexp="):
+            pattern_seen = True
+        elif not positional and value.startswith("-"):
+            return False
+        elif not pattern_seen:
+            pattern_seen = True
+    return pattern_seen and not needs_pattern
+def _python_preflight(source):
+    """Bound parser work before ast.parse without importing another lexer."""
+    index = depth = tokens = 0
+    while index < len(source):
+        char = source[index]
+        if char == "#":
+            end = source.find("\n", index)
+            index = len(source) if end < 0 else end
+            continue
+        if char in "'\"":
+            delimiter = char * 3 if source.startswith(char * 3, index) else char
+            index += len(delimiter)
+            while index < len(source) and not source.startswith(delimiter, index):
+                index += 2 if source[index] == "\\" else 1
+            if index >= len(source):
+                raise InspectionFailure("unterminated Python literal")
+            index += len(delimiter)
+            tokens += 1
+            if tokens > 1024:
+                raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
+            continue
+        if char in "([{":
+            depth += 1
+            if depth > 32:
+                raise ScanLimitExceeded("python_syntax_depth", 32, depth, "levels")
+        elif char in ")]}":
+            depth -= 1
+        if not char.isspace():
+            tokens += 1
+            if char.isalnum() or char == "_":
+                while index + 1 < len(source) and (source[index + 1].isalnum() or source[index + 1] == "_"):
+                    index += 1
+        if tokens > 1024:
+            raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
+        index += 1
 
-    tool_name = read_tool_name(payload).casefold()
-    known_fields = KNOWN_TOOL_FIELDS.get(tool_name, frozenset())
-    stack: list[tuple[object, int, str]] = [(value, 0, "tool input")]
-    strings: list[str] = []
-    node_count = 0
-    total_string_bytes = 0
+
+def _python_inspection(source):
+    """Prove whole writers/surveys, discovering execution sinks independently."""
+    _python_preflight(source)
+    import ast
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError, RecursionError) as error:
+        raise InspectionFailure("Python parse failed") from error
+    stack, nodes, constant_bytes = [(tree, 0)], [], 0
     while stack:
-        current, depth, field = stack.pop()
-        node_count += 1
-        if node_count > MAX_STRUCTURED_NODES:
-            raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
-        if depth > MAX_STRUCTURED_DEPTH:
-            raise ScanLimitExceeded("structured_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
-        if isinstance(current, str):
-            strings.append(current)
-            current_bytes = len(current.encode("utf-8"))
-            total_string_bytes += current_bytes
-            if len(strings) > MAX_STRUCTURED_STRINGS:
-                raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
-            if total_string_bytes > MAX_SCAN_TEXT:
-                source = field if current_bytes > MAX_SCAN_TEXT else "tool input"
-                raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes", source)
-        elif isinstance(current, dict):
-            stack.extend(
-                (child, depth + 1, f"{tool_name}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input")
-                for key, child in reversed(tuple(current.items()))
-            )
-        elif isinstance(current, (list, tuple)):
-            stack.extend((child, depth + 1, "tool input") for child in reversed(current))
+        node, depth = stack.pop()
+        nodes.append(node)
+        if len(nodes) > 2048:
+            raise ScanLimitExceeded("python_ast_nodes", 2048, len(nodes), "nodes")
+        if depth > 32:
+            raise ScanLimitExceeded("python_ast_depth", 32, depth, "levels")
+        if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
+            constant_bytes += len(node.value.encode("utf-8") if isinstance(node.value, str) else node.value)
+            if constant_bytes > MAX_SCAN_TEXT:
+                raise ScanLimitExceeded("python_constant_bytes", MAX_SCAN_TEXT, constant_bytes, "bytes")
+        stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
+    symbols = {}
+    sink_aliases = {}
+    for node in nodes:
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in {"os", "subprocess"}:
+                    sink_aliases[alias.asname or alias.name] = ("module", alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module in {"os", "subprocess"}:
+            for alias in node.names:
+                sink_aliases[alias.asname or alias.name] = ("function", node.module + "." + alias.name)
+    supported = True
+    wrote = surveyed = False
+    sinks, inspected = [], set()
 
-    serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
-    return tuple(strings) + (serialized,)
+    def resolve(node):
+        if isinstance(node, ast.Constant) and type(node.value) in {str, int, bool, type(None)}:
+            return ("literal", node.value)
+        if isinstance(node, ast.Name):
+            return symbols.get(node.id)
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+            left, right = resolve(node.left), resolve(node.right)
+            if left and right and left[0] == right[0] == "literal" and isinstance(left[1], str) and isinstance(right[1], str):
+                value = left[1] + right[1]
+                if len(value.encode("utf-8")) > MAX_SCAN_TEXT:
+                    raise ScanLimitExceeded("python_resolved_bytes", MAX_SCAN_TEXT, len(value.encode("utf-8")), "bytes")
+                return ("literal", value)
+        if isinstance(node, (ast.List, ast.Tuple)):
+            values = [resolve(item) for item in node.elts]
+            return ("sequence", values) if all(values) else None
+        if isinstance(node, ast.Dict) and all(key is not None for key in node.keys):
+            values = [(resolve(key), resolve(value)) for key, value in zip(node.keys, node.values)]
+            return ("json", values) if all(key and value and key[0] == "literal" and value[0] in {"literal", "json", "sequence"} for key, value in values) else None
+        if isinstance(node, ast.Attribute):
+            base = resolve(node.value)
+            if base == ("module", "sys") and node.attr == "executable":
+                return ("python", None)
+            if base and base[0] == "survey_result" and node.attr == "stdout":
+                return ("survey_output", None)
+            if base and base[0] == "module":
+                return ("function", base[1] + "." + node.attr)
+        if isinstance(node, ast.Call):
+            function = resolve(node.func)
+            args = [resolve(argument) for argument in node.args]
+            kwargs = {keyword.arg: resolve(keyword.value) for keyword in node.keywords}
+            if None in kwargs or any(value is None for value in args) or any(value is None for value in kwargs.values()):
+                return None
+            if function == ("function", "pathlib.Path") and len(args) == 1 and args[0][0] == "literal" and isinstance(args[0][1], str) and not kwargs:
+                return ("path", args[0][1])
+            if isinstance(node.func, ast.Attribute):
+                base = resolve(node.func.value)
+                if base and base[0] == "path" and node.func.attr == "read_text" and not args and not kwargs:
+                    return ("data", base[1])
+                if base and base[0] == "data" and node.func.attr == "replace" and len(args) == 2 and all(arg[0] == "literal" and isinstance(arg[1], str) for arg in args) and not kwargs:
+                    return base
+                if base and base[0] == "path" and node.func.attr == "write_text" and len(args) == 1 and not kwargs and (args[0][0] == "literal" and isinstance(args[0][1], str) or args[0] == ("data", base[1])):
+                    return ("write", base[1])
+            if function == ("function", "json.dumps") and len(args) == 1 and args[0][0] == "json" and not kwargs:
+                return ("json_input", None)
+            if function == ("function", "subprocess.run") and len(args) == 1 and args[0][0] == "sequence" and len(args[0][1]) == 2 and args[0][1][0] == ("python", None) and args[0][1][1][0] == "literal" and args[0][1][1][1] in _GUARD_TARGETS and kwargs == {"input": ("json_input", None), "capture_output": ("literal", True), "text": ("literal", True)}:
+                return ("survey_result", None)
+            if function == ("function", "json.loads") and args == [("survey_output", None)] and not kwargs:
+                return ("survey_display", None)
+            if isinstance(node.func, ast.Name) and node.func.id == "print" and node.func.id not in symbols and args == [("survey_display", None)] and not kwargs:
+                return ("survey_print", None)
+        return None
+
+    def inspect_sink(node):
+        if not isinstance(node, ast.Call) or id(node) in inspected:
+            return
+        inspected.add(id(node))
+        function = resolve(node.func)
+        name = function[1] if function and function[0] == "function" else None
+        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+            root = node.func.value.id
+            alias = sink_aliases.get(root, ("module", root) if root in {"os", "subprocess"} else None)
+            if alias and alias[0] == "module" and name is None:
+                name = alias[1] + "." + node.func.attr
+        elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Call):
+            call = node.func.value
+            if isinstance(call.func, ast.Name) and call.func.id == "__import__" and call.args and isinstance(call.args[0], ast.Constant) and call.args[0].value in {"os", "subprocess"}:
+                name = call.args[0].value + "." + node.func.attr
+        elif isinstance(node.func, ast.Name) and name is None:
+            alias = sink_aliases.get(node.func.id)
+            if alias and alias[0] == "function":
+                name = alias[1]
+        if isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec"} and node.func.id not in symbols:
+            name = node.func.id
+        if name in {"os.system", "os.popen", "eval", "exec", "subprocess.run", "subprocess.call", "subprocess.Popen", "subprocess.check_call", "subprocess.check_output"}:
+            if resolve(node) == ("survey_result", None):
+                return
+            first = node.args[0] if node.args else next((keyword.value for keyword in node.keywords if keyword.arg in {"args", "command", "object"}), None)
+            value = resolve(first) if first is not None else None
+            if value and value[0] == "literal" and isinstance(value[1], str):
+                sinks.append(("python" if name in {"eval", "exec"} else "shell", value[1]))
+            elif value and value[0] == "sequence" and all(item and item[0] == "literal" and isinstance(item[1], str) for item in value[1]):
+                import shlex
+                sinks.append(("shell", " ".join(shlex.quote(item[1]) for item in value[1])))
+            else:
+                raise InspectionFailure("unresolved Python execution sink")
+
+    for statement in tree.body:
+        for node in ast.walk(statement):
+            inspect_sink(node)
+        if isinstance(statement, ast.Import) and all(alias.name in {"os", "subprocess", "json", "sys"} for alias in statement.names):
+            for alias in statement.names:
+                key = alias.asname or alias.name
+                if key in symbols:
+                    supported = False
+                symbols[key] = ("module", alias.name)
+            supported = supported and all(alias.name in {"subprocess", "json", "sys"} for alias in statement.names)
+        elif isinstance(statement, ast.ImportFrom) and statement.level == 0 and statement.module in {"os", "subprocess"}:
+            supported = False
+            for alias in statement.names:
+                symbols[alias.asname or alias.name] = ("function", statement.module + "." + alias.name)
+        elif isinstance(statement, ast.ImportFrom) and statement.module == "pathlib" and statement.level == 0 and len(statement.names) == 1 and statement.names[0].name == "Path":
+            key = statement.names[0].asname or "Path"
+            if key in symbols:
+                supported = False
+            symbols[key] = ("function", "pathlib.Path")
+        elif isinstance(statement, ast.Assign) and len(statement.targets) == 1 and isinstance(statement.targets[0], ast.Name):
+            name, value = statement.targets[0].id, resolve(statement.value)
+            if name in symbols or value is None:
+                supported = False
+            symbols[name] = value or ("unknown", None)
+            surveyed = surveyed or value == ("survey_result", None)
+        elif isinstance(statement, ast.Expr):
+            value = resolve(statement.value)
+            wrote = wrote or bool(value and value[0] == "write")
+            if not value or value[0] not in {"write", "survey_print"}:
+                supported = False
+        else:
+            supported = False
+            for node in ast.walk(statement):
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+                    symbols[node.id] = ("unknown", None)
+    return supported and (wrote or surveyed), sinks, [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)]
+
+
+def _strict_threats(text, segments=None, pipeline_text=None):
+    normalized = _bounded_normalized_text(text)
+    tokens = [[unicodedata.normalize("NFKC", token) for token in segment] for segment in segments] if segments is not None else _command_segments(normalized)
+    scanned = _ScanText(normalized, tokens)
+    pipeline_text = _bounded_normalized_text(pipeline_text) if pipeline_text is not None else normalized
+    pipeline_lower = pipeline_text.lower()
+    lower, threats = normalized.lower(), []
+    for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
+        match = matcher(pipeline_text, pipeline_lower) if hasattr(matcher, "pipe_names") else matcher(scanned, lower)
+        if match:
+            threats.append({"category": category, "severity": severity, "rule_id": rule_id, "cause": cause, "matched": match})
+    return threats
+
+
+def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
+    source = budget.source(source, depth)
+    proven, sinks, constants = _python_inspection(source)
+    proven = proven and permit_data
+    threats = []
+    if not proven:
+        if pipeline_context is not None:
+            pipeline_context.append(source.replace("|", " "))
+        segments = _command_segments(source)
+        budget.matcher_tokens(segments, 1)
+        threats.extend(_strict_threats(source, segments))
+        for constant in constants:
+            segments = _command_segments(constant)
+            budget.matcher_tokens(segments)
+            threats.extend(_strict_threats(constant, segments))
+    for language, sink in sinks:
+        if language == "python":
+            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context))
+        else:
+            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context))
+    return threats
+
+
+def _inline_operand(words, offset):
+    launcher = _executable_basename(words[offset].value)
+    python = re.fullmatch(r"python(?:[23](?:\.[0-9]{1,2})?)?", launcher) is not None
+    if not python and launcher not in {"sh", "bash"}:
+        return None
+    index = offset + 1
+    while index < len(words):
+        word = words[index]
+        option = word.value
+        if python and option.startswith("-c") and len(option) > 2:
+            if not word.literal:
+                raise InspectionFailure("unresolved interpreter operand")
+            return ("python", option[2:], index)
+        if not word.literal:
+            if any(later.value == "-c" or python and later.value.startswith("-c") for later in words[index + 1:]):
+                raise InspectionFailure("unresolved interpreter option prefix")
+            return None
+        if option == "-c" or not python and option.startswith("-") and not option.startswith("--") and "c" in option[1:]:
+            if index + 1 >= len(words):
+                raise InspectionFailure("missing interpreter operand")
+            operand = words[index + 1]
+            if not operand.literal:
+                raise InspectionFailure("unresolved interpreter operand")
+            return ("python" if python else "shell", operand.value, index)
+        if python and option in {"-W", "-X"} or not python and option in {"--rcfile", "--init-file", "-o", "-O", "+o", "+O"}:
+            index += 2
+        elif option.startswith("-") and option != "-m":
+            index += 1
+        else:
+            return None
+    return None
+
+
+def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_code=False):
+    source = budget.source(source, depth)
+    commands, nested, strict = _shell_representation(source, budget)
+    windows = any(command.words and (
+        "\\" in command.words[0].value or command.words[0].value.casefold().endswith((".exe", ".cmd", ".bat"))
+        or _executable_basename(command.words[0].value) in {"pwsh", "powershell", "cmd"}
+    ) for command in commands)
+    strict = strict or windows
+    threats = []
+    for fragment in nested:
+        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context))
+    if strict:
+        if pipeline_context is not None:
+            pipeline_context.append(source)
+        if windows:
+            segments = [[token for word in command.words for token in word.value.split()] for command in commands]
+        else:
+            segments = _command_segments(source)
+        budget.matcher_tokens(segments, sum(len(command.words) + len(command.redirects) for command in commands))
+        threats.extend(_strict_threats(source, segments))
+        # Unsupported surrounding syntax cannot hide established interpreter operands.
+        for command in commands:
+            for offset in range(len(command.words)):
+                inline = _inline_operand(command.words, offset)
+                if inline:
+                    language, operand, _index = inline
+                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1))
+        return threats
+    rendered, segments, pipeline_rendered = [], [], []
+    pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
+    unsafe_pipeline = set()
+    inherited_output_is_code = output_is_code
+    for offset in range(len(commands) - 1, -1, -1):
+        command = commands[offset]
+        if not command.pipe:
+            output_is_code = inherited_output_is_code
+        if output_is_code:
+            unsafe_pipeline.add(id(command))
+        if command.words:
+            consumer = _executable_basename(command.words[0].value)
+            if consumer in {"sh", "bash", "python", "python3"} or consumer not in pipeline_commands:
+                output_is_code = True
+    for command in commands:
+        words = [word.value for word in command.words]
+        if not words:
+            continue
+        executable = _executable_basename(words[0])
+        body_context = []
+        # Wrappers never obtain a data proof, but established interpreter operands
+        # still require their language inspection, including execution sinks.
+        for offset in range(len(command.words)):
+            inline = _inline_operand(command.words, offset)
+            if inline:
+                language, operand, argument = inline
+                exact = offset == 0 and argument == 1 and len(words) == 3 and words[0] in {"python", "python3", sys.executable, "sh", "bash"}
+                if not exact:
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
+        stdin = [(operator, operand) for operator, operand in command.redirects if operator in {"<", "<<", "<<-"}]
+        body = command.heredocs[-1] if command.heredocs and stdin and stdin[-1][0] in {"<<", "<<-"} else None
+        python_code = shell_code = None
+        proven = False
+        shell_inline = executable in {"sh", "bash"} and len(words) >= 3 and words[1].startswith("-") and "c" in words[1][1:]
+        if (executable in {"python", "python3"} and words[1:2] == ["-c"] or shell_inline) and len(words) >= 3 and not command.words[2].literal:
+            raise InspectionFailure("unresolved interpreter operand")
+        if words[0] in {"python", "python3", sys.executable} and all(word.literal for word in command.words):
+            if len(words) == 3 and words[1] == "-c":
+                python_code = words[2]
+            elif words == [words[0], "-"] and body and len(stdin) == 1 and body[1]:
+                python_code = body[0]
+            elif len(words) == 2 and words[1] in _GUARD_TARGETS and body and body[1] and len(stdin) == 1:
+                try:
+                    proven = isinstance(json.loads(body[0]), dict)
+                except (ValueError, RecursionError) as error:
+                    raise InspectionFailure("invalid guardian survey JSON") from error
+        elif executable in {"sh", "bash"}:
+            if shell_inline and command.words[2].literal:
+                shell_code = words[2]
+            elif len(words) == 1 and body:
+                shell_code = body[0]
+        elif executable == "eval":
+            if not all(word.literal for word in command.words[1:]):
+                raise InspectionFailure("unresolved shell evaluation operand")
+            shell_code = " ".join(words[1:])
+        elif executable in {"psql", "mysql", "sqlite3"}:
+            for offset, word in enumerate(command.words[1:], 1):
+                operand = None
+                if word.value in {"-c", "-e", "--command", "--execute"}:
+                    if offset + 1 >= len(command.words):
+                        raise InspectionFailure("missing SQL interpreter operand")
+                    operand = command.words[offset + 1]
+                elif word.value.startswith(("--command=", "--execute=")):
+                    operand = _ShellWord(word.value.split("=", 1)[1], word.literal)
+                elif executable == "sqlite3" and offset == 2:
+                    operand = word
+                if operand is not None:
+                    if not operand.literal:
+                        raise InspectionFailure("unresolved SQL interpreter operand")
+                    sql_segments = _command_segments(operand.value)
+                    budget.matcher_tokens(sql_segments, 1)
+                    threats.extend(_strict_threats(operand.value, sql_segments))
+        if python_code is not None:
+            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context))
+            proven = True
+        elif shell_code is not None:
+            threats.extend(_shell_threats(shell_code, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
+            proven = True
+        # Inspecting a shell body proves only that operand. Its remaining words
+        # retain strict policy checks, including arguments consumed via "$@".
+        retained = words[:2] + words[3:] if shell_code is not None and shell_inline else words
+        retain_shell = shell_code is not None and executable in {"sh", "bash"}
+        pipeline_words = ""
+        if retain_shell or python_code is None and shell_code is None and not proven and (id(command) in unsafe_pipeline or not _literal_search(command)):
+            rendered.append(" ".join(retained) + (" |" if command.pipe else ""))
+            # Literal pipe characters are data; only parsed operators form a
+            # pipeline. Keep the original bounded matchers across intermediates.
+            pipeline_words = " ".join(retained).replace("|", " ")
+            # Unproved consumers retain strict inspection of complete literal values.
+            flattened = [token for value in retained for token in value.split()]
+            budget.matcher_tokens([flattened], len(words))
+            segments.append(flattened)
+        # Reuse inspected executable context so an inline consumer inherits the
+        # outer pipeline. Proven search, writer, and survey data is absent.
+        if pipeline_words or body_context:
+            pipeline_rendered.append("\n".join([pipeline_words, *body_context]) + (" |" if command.pipe else ""))
+        for operator, operand in command.redirects:
+            if operator not in {"<<", "<<-"}:
+                operand_segments = _command_segments(operand.value)
+                budget.matcher_tokens(operand_segments, 1)
+                threats.extend(_strict_threats(operand.value, operand_segments))
+        if command.heredocs and (python_code is None and shell_code is None and not proven or len(stdin) != 1 or words[1:2] == ["-c"]):
+            for heredoc, _quoted in command.heredocs:
+                heredoc_segments = _command_segments(heredoc)
+                budget.matcher_tokens(heredoc_segments)
+                threats.extend(_strict_threats(heredoc, heredoc_segments))
+    if pipeline_context is not None:
+        pipeline_context.extend(pipeline_rendered)
+    if rendered:
+        pipeline_text = "\n".join(pipeline_rendered) if any(command.pipe for command in commands) else ""
+        threats.extend(_strict_threats("\n".join(rendered), segments, pipeline_text))
+    order = {rule: index for index, (rule, _cause) in enumerate(RULE_DETAILS)}
+    ordered, seen = [], set()
+    for threat in sorted(threats, key=lambda threat: order.get(threat["rule_id"], -1)):
+        if threat["rule_id"] not in seen:
+            seen.add(threat["rule_id"])
+            ordered.append(threat)
+    return ordered
+
 
 
 def sanitize_tool_name(value: str) -> str:
     sanitized = unicodedata.normalize("NFKC", value[:4096])
+    # ASCII identifiers have no credential separators; token matches can only
+    # start at their first character because every character is a word character.
+    if (sanitized.isascii() and sanitized.replace("_", "").isalnum()
+            and not sanitized.lower().startswith(("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "akia"))):
+        return sanitized if len(sanitized) <= MAX_TOOL_NAME_LENGTH else sanitized[:MAX_TOOL_NAME_LENGTH - 3] + "..."
     sanitized = re.sub(
         r"(?i)\b(https?://)([^/\s@]+)@",
         lambda match: f"{match.group(1)}{REDACTED}@",
@@ -736,27 +1448,19 @@ def sanitize_tool_name(value: str) -> str:
 
 def build_threats(tool_text: str) -> list[dict[str, str]]:
     try:
-        _command_segments(tool_text)
+        return _strict_threats(tool_text)
     except ScanLimitExceeded as limit:
         return [limit.threat()]
-    lower_tool_text = tool_text.lower()
-    threats: list[dict[str, str]] = []
-    for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
-        match = matcher(tool_text, lower_tool_text)
-        if match:
-            threats.append(
-                {
-                    "category": category,
-                    "severity": severity,
-                    "rule_id": rule_id,
-                    "cause": cause,
-                    "matched": match,
-                }
-            )
-    return threats
 
 
-def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...]) -> list[dict[str, str]]:
+def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToolInput) -> list[dict[str, str]]:
+    if isinstance(tool_inputs, NativeToolInput):
+        if tool_inputs.kind == "shell":
+            try:
+                return _shell_threats(tool_inputs.data[0], _InspectionBudget())
+            except InspectionFailure:
+                return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
+        return _native_operation_threats(tool_inputs)
     threats: list[dict[str, str]] = []
     seen: set[str] = set()
     for tool_input in tool_inputs:
@@ -895,6 +1599,222 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
     if not any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
         message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     return message
+'''
+
+
+_PROVIDER_POLICY_SOURCE = r'''
+try:
+    from helpers.tool_guard_policy import (
+        MAX_SCAN_TEXT,
+        MAX_NATIVE_DATA_BYTES,
+        MAX_COMMAND_SEGMENTS,
+        MAX_COMMAND_TOKENS,
+        MAX_STRUCTURED_DEPTH,
+        MAX_STRUCTURED_NODES,
+        MAX_STRUCTURED_STRINGS,
+        MAX_TOOL_NAME_LENGTH,
+        MAX_EXCERPT_LENGTH,
+        REDACTED,
+        KNOWN_TOOL_FIELDS,
+        ScanLimitExceeded,
+        R,
+        _is_word_char,
+        _find_word,
+        _simple_match,
+        _bounded_normalized_text,
+        _command_segments,
+        _ScanText,
+        _executable_basename,
+        _matches_protected_remove_target,
+        _match_recursive_rm_target,
+        _match_rm_env,
+        _match_rm_git,
+        _match_git_push,
+        _sql_code_without_comments_or_literals,
+        _match_delete_from,
+        _match_pipe_chain,
+        _match_data_upload,
+        PATTERNS,
+        RULE_DETAILS,
+        NativeToolInput,
+        _matches_native_schema,
+        _parse_native_patch,
+        _native_operation_threats,
+        InspectionFailure,
+        _ShellWord,
+        _ShellCommand,
+        _InspectionBudget,
+        _shell_representation,
+        _GUARD_TARGETS,
+        _literal_search,
+        _python_preflight,
+        _python_inspection,
+        _strict_threats,
+        _python_threats,
+        _inline_operand,
+        _shell_threats,
+        sanitize_tool_name,
+        build_threats,
+        build_input_threats,
+        sanitize_excerpt,
+        safe_excerpt_context,
+        safe_git_push_match,
+        build_action_excerpt,
+        log_threat_metadata,
+        build_block_reason,
+        _normalize_allowlist_value,
+        _has_forbidden_allowlist_separator,
+        parse_allowlist,
+        allowlist_contains,
+    )
+except Exception:
+    emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+
+
+def read_tool_name(payload: dict) -> str:
+    for key in TOOL_NAME_KEYS:
+        value = payload.get(key)
+        if value is not None:
+            return str(value)
+    return ""
+
+
+
+def _read_tool_input_value(payload: dict) -> object:
+    for key in TOOL_INPUT_KEYS:
+        if key not in payload:
+            continue
+        value = payload.get(key)
+        if value is None:
+            return ""
+        return value
+    return ""
+
+
+
+def read_tool_input(payload: dict) -> str:
+    value = _read_tool_input_value(payload)
+    if isinstance(value, str):
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+
+def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
+    if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
+        return None
+    shell_tools = {"codex": {"Bash", "exec_command", "functions.exec_command"}, "copilot": {"bash"}, "gemini": {"run_shell_command"}}
+    if tool_name in shell_tools.get(TOOL_PROVIDER, set()):
+        key = "cmd" if tool_name in {"exec_command", "functions.exec_command"} else "command"
+        if _matches_native_schema(value, {key: str}):
+            return NativeToolInput("shell", (), (value[key],))
+    if TOOL_PROVIDER == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
+        return NativeToolInput("patch", (), (value["command"],))
+    if TOOL_PROVIDER == "gemini":
+        if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
+            return NativeToolInput("write", (value["file_path"],), (value["content"],))
+        if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
+            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]))
+        if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
+            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],))
+    if TOOL_PROVIDER == "copilot":
+        if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
+            return NativeToolInput("write", (value["path"],), (value["file_text"],))
+        if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
+            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]))
+        if tool_name in {"grep", "rg"}:
+            # Observed CLI arguments, not a guessed complete provider schema.
+            pattern_keys = value.keys() & {"pattern", "query"}
+            if len(pattern_keys) != 1 or (tool_name == "rg" and "query" in value):
+                return None
+            pattern_key = next(iter(pattern_keys))
+            fields = {"path": str, "paths": (str, list), "output_mode": str, "head_limit": int,
+                      "n": (bool, int), "C": int, "case_sensitive": bool} if tool_name == "grep" else {
+                          "paths": (str, list), "output_mode": str, "head_limit": int, "glob": str,
+                          "-n": bool, "-i": bool, "-A": int, "-C": int, "n": int}
+            if not value.keys() <= fields.keys() | {pattern_key} or type(value[pattern_key]) is not str:
+                return None
+            if "path" in value and "paths" in value:
+                return None
+            for key, child in value.items():
+                if key == pattern_key:
+                    continue
+                allowed_types = fields[key] if isinstance(fields[key], tuple) else (fields[key],)
+                if type(child) not in allowed_types or (type(child) is list and (
+                    len(child) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in child)
+                )):
+                    return None
+            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)))
+    return None
+
+
+
+def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
+    value = _read_tool_input_value(payload)
+    if isinstance(value, str):
+        return (value,)
+
+    tool_name = read_tool_name(payload)
+    native = _native_tool_shape(tool_name, value)
+    byte_limit = MAX_NATIVE_DATA_BYTES if native and native.kind != "shell" else MAX_SCAN_TEXT
+    known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
+    stack = [iter(((value, 0, "tool input"),))]
+    strings: list[str] = []
+    node_count = 0
+    total_string_bytes = 0
+    keys: list[str] = []
+
+    def dictionary_children(mapping, depth):
+        for key, child in mapping.items():
+            keys.append(key)
+            field = f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input"
+            yield child, depth + 1, field
+
+    def sequence_children(sequence, depth):
+        for child in sequence:
+            yield child, depth + 1, "tool input"
+
+    while stack:
+        try:
+            current, depth, field = next(stack[-1])
+        except StopIteration:
+            stack.pop()
+            continue
+        node_count += 1
+        if node_count > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("structured_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, str):
+            strings.append(current)
+            current_bytes = len(current.encode("utf-8"))
+            total_string_bytes += current_bytes
+            if len(strings) > MAX_STRUCTURED_STRINGS:
+                raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
+            if total_string_bytes > byte_limit:
+                source = field if current_bytes > byte_limit else "tool input"
+                raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
+        elif isinstance(current, dict):
+            stack.append(dictionary_children(current, depth))
+        elif isinstance(current, (list, tuple)):
+            stack.append(sequence_children(current, depth))
+
+    key_bytes = sum(len(key.encode("utf-8")) for key in keys)
+    if native:
+        aggregate_bytes = total_string_bytes + key_bytes
+        if aggregate_bytes > byte_limit:
+            raise ScanLimitExceeded("structured_bytes", byte_limit, aggregate_bytes, "bytes")
+        if native.kind == "patch":
+            native = _parse_native_patch(native.data[0])
+        if native is not None:
+            return native
+        if total_string_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
+    elif key_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
+    serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return tuple(strings) + tuple(keys) + (serialized,)
+
 '''
 
 
@@ -1152,9 +2072,11 @@ def _adapter_sources(provider: Provider) -> tuple[str, str]:
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
-    """Render one self-contained Tool Guardian script."""
+    """Render a provider entrypoint or its local, provider-neutral policy helper."""
     if target.provider != provider.name or provider.name not in {"copilot", "gemini", "codex"}:
         raise ValueError(f"Unsupported Tool Guardian target/provider: {target.output_path}")
+    if target.output_path.name == "tool_guard_policy.py":
+        return SHEBANG + HEADER + "\nfrom __future__ import annotations\n\nimport json\nimport sys\n" + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
     import_adapter, logging_adapter = _adapter_sources(provider)
     return (
         SHEBANG
@@ -1163,7 +2085,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
         + ADAPTER_START
         + import_adapter
         + ADAPTER_END
-        + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
+        + _PROVIDER_POLICY_SOURCE
         + "\n"
         + ADAPTER_START
         + logging_adapter

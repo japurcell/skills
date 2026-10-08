@@ -122,12 +122,8 @@ def expected_type(path: str) -> str:
         return "Knowledge Index"
     if memory_path == "LOG.md":
         return "Source Ingestion Log"
-    if memory_path == "KNOWN_ISSUES.md" or memory_path.startswith("known-issues/"):
+    if memory_path.startswith("known-issues/"):
         return "Known Issue"
-    if memory_path == "TESTING_STRATEGY.md" or memory_path.startswith("testing/"):
-        return "Testing Guidance"
-    if memory_path.startswith("adrs/"):
-        return "Architecture Decision"
     if memory_path.startswith("sources/") and memory_path.endswith(".summary.md"):
         return "Source Summary"
     return "Agent Memory"

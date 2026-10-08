@@ -5,11 +5,13 @@ from __future__ import annotations
 import codecs
 import json
 import os
-import subprocess
 import sys
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
+
+if TYPE_CHECKING:
+    import subprocess
 
 
 def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
@@ -264,6 +266,8 @@ def run_command(
 ) -> subprocess.CompletedProcess[str]:
     if isinstance(args, (str, bytes)):
         raise TypeError("run_command requires a sequence of arguments; shell execution is disabled")
+
+    import subprocess
 
     return subprocess.run(
         list(args),

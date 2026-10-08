@@ -362,6 +362,22 @@ test_agent_stop_blocks_pending_ingest() {
     "Expected Copilot agentStop block reason to call out pending ingest."
   assert_file_contains <(jq -r '.reason' <<<"$output") 'pending.md' \
     "Expected Copilot agentStop block reason to list the pending source."
+
+  make_text_file "$workdir/.agents/memory/sources/pending-md.summary.md" \
+    $'---\ntype: Source Summary\ndescription: Attributed source reference\nsources:\n  - resource: ../../sources/pending.md\n---\n\n# Source reference\n\nThe saved source contains pending source v1.\n'
+  output="$(run_agent_stop_auto_ingest_hook "$audit_log" \
+    '{"hookEventName":"agentStop","cwd":"'"$workdir"'"}' "$workdir" "$home_dir")"
+  assert_equals 'allow' "$(jq -r '.decision' <<<"$output")" \
+    "Expected a completed source summary to clear the gate without adding another KB fact or rule."
+
+  # Change only the source immediately after completion, before another scan.
+  make_text_file "$workdir/.agents/sources/pending.md" $'pending source v2\n'
+  output="$(run_agent_stop_auto_ingest_hook "$audit_log" \
+    '{"hookEventName":"agentStop","cwd":"'"$workdir"'"}' "$workdir" "$home_dir")"
+  assert_equals 'block' "$(jq -r '.decision' <<<"$output")" \
+    "Expected a source changed after ingestion to require a fresh summary."
+  assert_equals 'stale' "$(jq -r '.entries[0].state' "$workdir/.agents/memory/sources/source-ingest-manifest.json")" \
+    "Expected the manifest to track the changed source as stale."
 }
 
 test_session_start_auto_ingest_outputs_vscode_schema_for_new_sources() {

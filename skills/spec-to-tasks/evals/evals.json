@@ -3,52 +3,88 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use the skill under test to convert `evals/files/task-statuses-prd.md` into `outputs/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
-      "expected_output": "A parallel-ready prd.json that splits the task-statuses feature into atomic prerequisite and UI stories with explicit dependencies and safe batches.",
-      "files": ["evals/files/task-statuses-prd.md"],
+      "prompt": "Use the skill under test to convert `skills/spec-to-tasks/evals/files/task-statuses-prd.md` into `outputs/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
+      "files": [
+        "skills/spec-to-tasks/evals/files/task-statuses-prd.md"
+      ],
       "assertions": [
-        "The output is valid prd.json with at least 5 user stories.",
-        "The stories separately cover status storage, backend status updates, badge display, status controls, and filtering.",
-        "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
-        "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
-        "UI stories include Verify in browser using playwright-cli skill."
+        "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
+        "Tasks preserve every explicit domain requirement and negative case.",
+        "Sequential T001 IDs, ascending priorities and valid structured dependencies preserve actual prerequisites.",
+        "Source and context references resolve or carry complete inline content.",
+        "Required behavior checks and explicit typecheck applicability preserve unresolved prerequisites.",
+        "Model semantic review confirms context sufficiency, justified boundaries, command provenance, decision authority and integration proof."
       ]
     },
     {
       "id": 1,
-      "prompt": "Use the skill under test to convert `evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/prd.json`. Also write `outputs/summary.md` with the story count and output path.",
-      "expected_output": "A dependency-ordered, parallel-ready prd.json saved to the requested output directory, with separate stories for inviting members, changing roles, revoking access, and viewing audit data.",
-      "files": ["evals/files/workspace-member-management-prd.md"],
+      "prompt": "Use the skill under test to convert `skills/spec-to-tasks/evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
+      "files": [
+        "skills/spec-to-tasks/evals/files/workspace-member-management-prd.md"
+      ],
       "assertions": [
-        "The output is saved to outputs/generated/prd.json.",
-        "branchName is derived from the feature title.",
-        "The stories separately cover invite, role change, revoke access, and audit-log or audit-view work.",
-        "Dependencies point backward, batches are dense, and at least one batch contains parallel-safe stories.",
-        "No story title is a horizontal layer split such as build backend or build frontend."
+        "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
+        "Tasks preserve every explicit domain requirement and negative case.",
+        "Sequential T001 IDs, ascending priorities and valid structured dependencies preserve actual prerequisites.",
+        "Source and context references resolve or carry complete inline content.",
+        "Required behavior checks and explicit typecheck applicability preserve unresolved prerequisites.",
+        "Model semantic review confirms context sufficiency, justified boundaries, command provenance, decision authority and integration proof."
       ]
     },
     {
       "id": 2,
-      "prompt": "Use the skill under test to convert this raw PRD text into `outputs/prd.json`, then write `outputs/summary.md` with the story count and output path. PRD text: ```markdown\n# Notification Center\nUsers need a notification center where they can see unread badges, open a notification list, mark notifications read or unread, filter by read state, and clear all read notifications. Store read state so it persists across sessions.\n```",
-      "expected_output": "A prd.json that splits the notification-center feature into multiple atomic stories with explicit dependencies and batches instead of one umbrella story.",
+      "prompt": "Use the skill under test to convert this raw PRD text into `outputs/tasks.json`, then write `outputs/summary.md` with the task count and output path. PRD text: ```markdown\n# Notification Center\nUsers need a notification center where they can see unread badges, open a notification list, mark notifications read or unread, filter by read state, and clear all read notifications. Store read state so it persists across sessions.\n``` Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
       "files": [],
       "assertions": [
-        "The output is valid prd.json with multiple user stories.",
-        "The stories separately cover persistence, badge or list UI, read-state updates, filtering, and clearing read notifications.",
-        "The output does not collapse the feature into one umbrella implementation story.",
-        "Each story has sequential IDs, ascending priorities, valid dependsOn fields, and valid parallelBatch values."
+        "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
+        "Tasks preserve every explicit domain requirement and negative case.",
+        "Sequential T001 IDs, ascending priorities and valid structured dependencies preserve actual prerequisites.",
+        "Source and context references resolve or carry complete inline content.",
+        "Required behavior checks and explicit typecheck applicability preserve unresolved prerequisites.",
+        "Model semantic review confirms context sufficiency, justified boundaries, command provenance, decision authority and integration proof."
       ]
     },
     {
       "id": 3,
-      "prompt": "Use the skill under test to convert this raw PRD text into `outputs/prd.json`, then write `outputs/summary.md` with the story count and output path. PRD text: ```markdown\n# Personal Access Token Backend\n- Add hashed token storage with `revokedAt` defaulting to null.\n- Add a create-token server action that validates label length and returns the plaintext token once.\n- Add a revoke-token server action that marks the token revoked without deleting it.\n```",
-      "expected_output": "A backend-only prd.json that preserves the already-atomic requirements, keeps the work UI-free, and exposes create/revoke as parallel-ready follow-up stories after storage.",
+      "prompt": "Use the skill under test to convert this raw PRD text into `outputs/tasks.json`, then write `outputs/summary.md` with the task count and output path. PRD text: ```markdown\n# Personal Access Token Backend\n- Add hashed token storage with `revokedAt` defaulting to null.\n- Add a create-token server action that validates label length and returns the plaintext token once.\n- Add a revoke-token server action that marks the token revoked without deleting it.\n``` Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
       "files": [],
       "assertions": [
-        "The output contains exactly 3 user stories and does not invent UI stories or browser verification.",
-        "The stories separately cover token storage, create token, and revoke token work.",
-        "Every story includes dependsOn, parallelBatch, passes=false, notes=\"\", and Typecheck passes.",
-        "The create-token and revoke-token stories share a later parallel batch after the storage story."
+        "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
+        "Tasks preserve every explicit domain requirement and negative case.",
+        "Sequential T001 IDs, ascending priorities and valid structured dependencies preserve actual prerequisites.",
+        "Source and context references resolve or carry complete inline content.",
+        "Required behavior checks and explicit typecheck applicability preserve unresolved prerequisites.",
+        "Model semantic review confirms context sufficiency, justified boundaries, command provenance, decision authority and integration proof."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Convert skills/spec-to-tasks/evals/files/lifecycle-prd.md into outputs/tasks.json and outputs/summary.md. Preserve the active authority, interruption and repeated recovery, refusal and missing-authority cases, design decision, dependencies and final integration proof. Use the enriched contract; retain unresolved runtime checks. Plan only; do not execute product work.",
+      "expected_output": "Bounded lifecycle assignments, complete negative behavior and current contract references; unavailable checks stay unresolved.",
+      "files": [
+        "skills/spec-to-tasks/evals/files/lifecycle-prd.md"
+      ],
+      "assertions": [
+        "Full lifecycle requirements including negative cases are assigned.",
+        "Decision precedes dependent implementation and final integration proof is explicit.",
+        "Automated verification remains unresolved; this run is not execution-ready.",
+        "Model review checks required context and indivisible recovery boundaries."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Convert this inline documentation request into outputs/tasks.json and outputs/summary.md: Document retention and owner approval in the policy. No source code or typed project is involved. Use inline source content, a concrete manual document review recording evidence, and a justified not-applicable typecheck. Explain why the assignment is self-contained. Plan only.",
+      "expected_output": "An enriched documentation task with inline authority, evidence review and honest typecheck applicability.",
+      "files": [],
+      "assertions": [
+        "Inline source content is complete and no file is invented.",
+        "Required manual check names the procedure and evidence.",
+        "Typecheck is explicitly not-applicable for documentation-only work.",
+        "Model review confirms the task can be executed from its manifest."
       ]
     }
   ]

@@ -16,15 +16,15 @@ EVAL_PATHS = {
         (".agents/memory/telemetry.md", "Agent Memory", "# Telemetry\n\nRecord durable telemetry guidance.\n"),
         (".agents/memory/INDEX.md", "Knowledge Index", "# Index\n\nRoute canonical knowledge.\n"),
         (".agents/memory/LOG.md", "Source Ingestion Log", "# Log\n\nRecord source ingestion.\n"),
-        (".agents/memory/adrs/retention.md", "Architecture Decision", "# Retention\n\nKeep stable paths.\n"),
+        (".agents/instructions/retention.md", "Agent Instruction", "# Retention\n\nKeep stable paths.\n"),
     ],
     1: [(".agents/instructions/hooks.md", "Agent Instruction", "# Hook Guidance\n\nRetain this sentence exactly.\n")],
     2: [(".agents/memory/sources/pending-md.summary.md", "Source Summary", "# Pending example summary\n\nThis source summary is intentionally unresolved but structurally conforming.\n")],
     3: [(".agents/memory/sources/example-md.summary.md", "Source Summary", "# Example source summary\n\nThe source demonstrates a completed manifest-backed summary.\n")],
-    4: [(".agents/memory/testing/skills.md", "Testing Guidance", "# Skills Testing\n\nRun targeted skill validation.\n")],
-    5: [(".agents/memory/KNOWN_ISSUES.md", "Known Issue", "")],
+    4: [(".agents/instructions/testing/skills.md", "Agent Instruction", "# Skills Testing\n\nRun targeted skill validation.\n")],
+    5: [(".agents/memory/known-issues/skills.md", "Known Issue", "")],
     6: [("docs/outside.md", "out_of_scope", "")],
-    7: [(".agents/memory/ARCHITECTURE.md", "Agent Memory", "# Architecture\n\nPreserve this canonical body.\n")],
+    7: [(".agents/memory/hook-delivery.md", "Agent Memory", "# Hook delivery\n\nPreserve this canonical body.\n")],
 }
 
 

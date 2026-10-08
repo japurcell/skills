@@ -11,6 +11,7 @@ assert_repo_root_with_common_sh() {
   local workdir
   local output
   local git_repo_dir
+  local expected_git_repo_dir
   local fallback_dir
 
   workdir="$(mktemp -d)"
@@ -21,6 +22,7 @@ assert_repo_root_with_common_sh() {
   fallback_dir="$workdir/fallback"
 
   mkdir -p "$git_repo_dir/subdir" "$fallback_dir"
+  expected_git_repo_dir="$(cd "$git_repo_dir" && pwd -P)"
 
   pushd "$git_repo_dir" >/dev/null
   git init >/dev/null
@@ -34,8 +36,8 @@ EOF
   output=$(bash test_script.sh)
   popd >/dev/null
 
-  if [[ "$output" != "REPO_ROOT=$git_repo_dir" ]]; then
-    echo "FAILED: REPO_ROOT should be $git_repo_dir, got $output"
+  if [[ "$output" != "REPO_ROOT=$expected_git_repo_dir" ]]; then
+    echo "FAILED: REPO_ROOT should be $expected_git_repo_dir, got $output"
     return 1
   fi
   echo "PASSED: REPO_ROOT correctly identified in git repo"

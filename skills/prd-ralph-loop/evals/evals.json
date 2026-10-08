@@ -3,41 +3,57 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Read the fixture in evals/files/complete/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error. Since all tasks are complete, output exactly <promise>COMPLETE</promise> in the decision.md file.",
-      "expected_output": "Detects that all tasks in prd.json are complete, stops immediately, and outputs <promise>COMPLETE</promise>.",
+      "prompt": "Apply prd-ralph-loop as a dry-run protocol simulation. Read only evals/files/complete/worker.json, which is a simulated worker return or caller input, not a manifest. Do not read prd.json or progress files and do not spawn real workers. Save outputs/decision.json and outputs/decision.md. Include status, next_action, target_task_id (null because worker owns selection), routing_decision. Use complete, looping, or blocked. All tasks passed. Stop; no task selection. decision.md must contain exactly <promise>COMPLETE</promise>.",
+      "expected_output": "All tasks passed. Stop; no task selection.",
       "files": [
-        "evals/files/complete/prd.json"
+        "evals/files/complete/worker.json"
       ],
       "assertions": [
-        "Returns a complete status.",
-        "Outputs exactly <promise>COMPLETE</promise>.",
-        "Has no target_task_id."
+        "All tasks passed. Stop; no task selection."
       ]
     },
     {
       "id": 1,
-      "prompt": "Read the fixture in evals/files/incomplete/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error.",
-      "expected_output": "Detects that task US-002 is incomplete and eligible, invokes model router, and plans to spawn a subagent to run prd-ralph.",
+      "prompt": "Apply prd-ralph-loop as a dry-run protocol simulation. Read only evals/files/dependent/worker.json, which is a simulated worker return or caller input, not a manifest. Do not read prd.json or progress files and do not spawn real workers. Save outputs/decision.json and outputs/decision.md. Include status, next_action, target_task_id (null because worker owns selection), routing_decision. Use complete, looping, or blocked. Dispatch one fresh worker without reading manifest/progress or choosing an ID. Begin decision.md with the TASK_COMPLETE protocol, retain the worker selected-task summary, and describe fresh prd-ralph dispatch.",
+      "expected_output": "Dispatch one fresh worker without reading manifest/progress or choosing an ID.",
       "files": [
-        "evals/files/incomplete/prd.json"
+        "evals/files/dependent/worker.json"
       ],
       "assertions": [
-        "Returns a looping status.",
-        "Identifies US-002 as the next target task.",
-        "Plans to invoke subagent-model-router and spawn subagent for prd-ralph."
+        "Dispatch one fresh worker without reading manifest/progress or choosing an ID."
       ]
     },
     {
       "id": 2,
-      "prompt": "Read the fixture in evals/files/invalid/prd.json and apply the prd-ralph-loop skill as a dry run. Do not spawn real subagents. Save outputs/decision.json and outputs/decision.md. decision.json must include: status, next_action, target_task_id, routing_decision. Use status=complete, status=looping, or status=error.",
-      "expected_output": "Detects that the tasks array is missing or invalid, stops, and flags an error requiring user clarification.",
+      "prompt": "Apply prd-ralph-loop as a dry-run protocol simulation. Read only evals/files/invalid/worker.json, which is a simulated worker return or caller input, not a manifest. Do not read prd.json or progress files and do not spawn real workers. Save outputs/decision.json and outputs/decision.md. Include status, next_action, target_task_id (null because worker owns selection), routing_decision. Use complete, looping, or blocked. Stop on invalid worker intake; preserve the actionable blocker. Begin decision.md with BLOCKED protocol and retain the actionable reason.",
+      "expected_output": "Stop on invalid worker intake; preserve the actionable blocker.",
       "files": [
-        "evals/files/invalid/prd.json"
+        "evals/files/invalid/worker.json"
       ],
       "assertions": [
-        "Returns an error status.",
-        "Explains that the tasks are missing or invalid.",
-        "Does not proceed with routing or looping."
+        "Stop on invalid worker intake; preserve the actionable blocker."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Apply prd-ralph-loop as a dry-run protocol simulation. Read only evals/files/blocked/worker.json, which is a simulated worker return or caller input, not a manifest. Do not read prd.json or progress files and do not spawn real workers. Save outputs/decision.json and outputs/decision.md. Include status, next_action, target_task_id (null because worker owns selection), routing_decision. Use complete, looping, or blocked. Stop without retrying unchanged unavailable verification. Begin decision.md with BLOCKED protocol and retain the actionable reason.",
+      "expected_output": "Stop without retrying unchanged unavailable verification.",
+      "files": [
+        "evals/files/blocked/worker.json"
+      ],
+      "assertions": [
+        "Stop without retrying unchanged unavailable verification."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Apply prd-ralph-loop as a dry-run protocol simulation. Read only evals/files/enriched/worker.json, which is a simulated worker return or caller input, not a manifest. Do not read prd.json or progress files and do not spawn real workers. Save outputs/decision.json and outputs/decision.md. Include status, next_action, target_task_id (null because worker owns selection), routing_decision. Use complete, looping, or blocked. Forward explicit inputs, user scope and owner limits without reading manifest or progress. In decision.md state prd_file=tasks.json progress_file=audit.txt commit=false, docs-only scope, owner approval boundary, and do not read manifest or progress.",
+      "expected_output": "Forward explicit inputs, user scope and owner limits without reading manifest or progress.",
+      "files": [
+        "evals/files/enriched/worker.json"
+      ],
+      "assertions": [
+        "Forward explicit inputs, user scope and owner limits without reading manifest or progress."
       ]
     }
   ]

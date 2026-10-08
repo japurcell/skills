@@ -7,7 +7,7 @@ description: Hook observability and trace-store rules; load only when changing e
 
 Load this file only for observability, trace-store, transcript, log-rotation, or maintenance work. General hook contracts remain in [hooks.md](hooks.md).
 
-- Before operational shell suites invoke hooks, call `setup_hook_observability_test_state` from `scripts/test-common.sh`. Its provider-specific log overrides keep capture enabled and isolate inherited subprocesses; it seeds maintenance sentinels and cleans state on exit. Dedicated observability fixtures use disposable installed homes and fresh sentinels except when deliberately testing detached maintenance.
+- Before operational shell suites invoke hooks, call `setup_hook_observability_test_state` from `scripts/test-common.sh`. Its provider-specific log overrides keep capture enabled and isolate inherited subprocesses; it seeds maintenance sentinels and cleans state on exit. Dedicated observability fixtures use disposable installed homes and fresh sentinels except when deliberately testing detached maintenance. `AUDIT_LOG` alone does not isolate trace databases or transcripts; a maintenance sentinel records child startup, not completion.
 - Keep `send-event.py` registered for every supported Copilot and Gemini event, including Gemini lifecycle events with no other operational behavior.
 - `send-event.py` and the Copilot/Gemini observability helpers are generated from canonical `hooks/families/` sources. Regenerate with `python3 scripts/generate-hooks.py --write` and require a clean `--check`; their installed copies remain runtime-local and self-contained.
 - Create primary and shadow audit files with `0o600` at descriptor creation. Create shadow parents first and keep paired writes inside one lock section.
@@ -25,4 +25,9 @@ Load this file only for observability, trace-store, transcript, log-rotation, or
 - On Windows, bypass `os.kill(pid, 0)` for the current PID.
 - Rotation must fail open without clearing active logs. Always prune stale backups, honor `GEMINI_` or `COPILOT_OBSERVABILITY_LOG_*` variables before generic `OBSERVABILITY_LOG_*` variables, default to 10 MB and 100 backups, allow zero-byte rotation disablement, and pre-scan backup directories. Do not clamp user maxima.
 
-For architecture decisions, read [hooks ADRs](../memory/adrs/hooks.md). For failures and recovery, read [observability known issues](../memory/known-issues/hooks-observability.md). For tests, read [observability hook testing](../memory/testing/hooks-observability.md).
+- Reapply owner-only modes to recreated SQLite side files, tolerating transient permission errors so observability remains fail open.
+- Reuse the existing unlocked fallback where POSIX locking is unavailable. Replace cyclical payload references with a sentinel.
+- Both maintenance and finalization must accept stale `finalizing` and `sealing` states; require a successful guarded transition before merging or cleaning transcripts.
+- Ignore `type: progress` in hook-result capture completion; finalize only on the real result.
+
+Read the [SQLite decision](../../docs/adr/0003-sqlite-backed-hook-observability.md) only when reconsidering storage. Use [observability tests](testing/hooks-observability.md) for validation and [live probes](testing/hooks-live.md) when diagnosing event delivery or environment propagation.

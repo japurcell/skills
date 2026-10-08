@@ -23,6 +23,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from tool_guard_corpus import PROVIDERS, decision, dimensions, encode, envelope, fixtures, script_path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -34,6 +36,8 @@ class Case:
     payload: bytes
     repo: str
     environment: dict[str, str]
+    expected_decision: str | None = None
+    fixture_metadata: dict | None = None
 
 
 def run_git(repo: Path, *args: str) -> None:
@@ -61,11 +65,11 @@ def encoded(value: object) -> bytes:
     return (json.dumps(value, separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def cases() -> list[Case]:
+def cases(root: Path = ROOT) -> list[Case]:
     result: list[Case] = []
     invalid = b'{"incomplete":\n'
     for provider in ("copilot", "gemini", "codex"):
-        base = ROOT / (".codex/hooks" if provider == "codex" else f".{provider}/hooks/scripts")
+        base = root / (".codex/hooks" if provider == "codex" else f".{provider}/hooks/scripts")
         if provider == "copilot":
             clean = {"hook_event_name": "preToolUse", "toolName": "bash", "toolArgs": "echo safe"}
             finding = {**clean, "toolArgs": "git push --force origin main"}
@@ -83,7 +87,7 @@ def cases() -> list[Case]:
             result.append(Case(f"{provider}.scan.{name}", base / "scan-secrets.py", payload, "finding" if name == "finding" else "large" if name == "large" else "clean", {"SCAN_MODE": "block", "SCAN_SCOPE": "diff"}))
 
     for provider in ("copilot", "gemini"):
-        base = ROOT / f".{provider}/hooks/scripts"
+        base = root / f".{provider}/hooks/scripts"
         event_name = "preToolUse" if provider == "copilot" else "BeforeTool"
         payload = encoded({"hook_event_name": event_name, "session_id": "bench-session", "tool_name": "run_shell_command", "tool_input": {"command": "echo safe"}})
         large_payload = encoded({"hook_event_name": event_name, "session_id": "bench-session", "tool_name": "run_shell_command", "tool_input": {"command": "echo " + "a" * 24000}})
@@ -115,6 +119,22 @@ def cases() -> list[Case]:
     return result
 
 
+def guard_cases(root: Path, behavior: str) -> list[Case]:
+    result = []
+    # Preserve the original four byte-for-byte workloads and their case names.
+    for case in cases(root):
+        if ".guard." in case.name:
+            expected = "deny" if case.name.endswith((".finding", ".failure")) else "allow"
+            result.append(Case(case.name,case.script,case.payload,case.repo,case.environment,expected,{"category":"existing-workload"}))
+    for provider in PROVIDERS:
+        for fixture in fixtures():
+            if fixture.name in {"clean", "large"}:
+                continue
+            metadata = {"category":fixture.category,"source":fixture.source,"pair":fixture.pair,**dimensions(fixture)}
+            result.append(Case(f"{provider}.guard.{fixture.name}",script_path(root,provider),encode(envelope(provider,fixture)),"clean",{"GUARD_MODE":"block"},fixture.expected(behavior,provider),metadata))
+    return result
+
+
 def percentile(values: list[float], fraction: float) -> float:
     ordered = sorted(values)
     return ordered[max(0, math.ceil(len(ordered) * fraction) - 1)]
@@ -132,6 +152,11 @@ def summary(values: list[float]) -> dict[str, float]:
 
 
 def verify_outcome(case: Case, exit_code: int, output: dict) -> None:
+    if case.expected_decision is not None:
+        provider = case.name.split(".",1)[0]
+        if exit_code or output.get("invalid_stdout") or decision(provider,output) != case.expected_decision:
+            raise RuntimeError(f"{case.name}: expected {case.expected_decision}, received invalid or unexpected permission response (exit {exit_code})")
+        return
     if case.name.endswith(".failure") and ".telemetry." in case.name:
         if exit_code != 1 or not output.get("invalid_stdout"):
             raise RuntimeError(f"{case.name} did not fail on invalid JSON as expected")
@@ -149,6 +174,8 @@ def verify_outcome(case: Case, exit_code: int, output: dict) -> None:
 
 def invoke(case: Case, repo: Path, home: Path, timeout: float = 15.0) -> tuple[float, int, dict]:
     env = os.environ.copy()
+    for key in ("SKIP_TOOL_GUARD", "TOOL_GUARD_ALLOWLIST"):
+        env.pop(key,None)
     env.update({
         "HOME": str(home),
         "XDG_CONFIG_HOME": str(home / ".config"),
@@ -179,17 +206,24 @@ def main() -> int:
     parser.add_argument("--warmups", type=int, default=3, help="warm calls to discard before samples")
     parser.add_argument("--concurrency", type=int, default=4, help="simultaneous calls in a separate batch")
     parser.add_argument("--output", type=Path, help="write machine-readable JSON to this path")
+    parser.add_argument("--guard-only", action="store_true", help="measure guardian workloads and the sanitized incident corpus")
+    parser.add_argument("--script-root", type=Path, default=ROOT, help="root containing provider scripts, including a preserved baseline")
+    parser.add_argument("--expected-behavior", choices=("baseline","candidate"), default="candidate", help="validate known baseline decisions or desired candidate decisions")
     args = parser.parse_args()
     if args.samples < 5 or args.warmups < 0 or args.concurrency < 2:
         parser.error("samples must be at least 5, warmups nonnegative, and concurrency at least 2")
     if platform.system() != "Darwin":
         parser.error("this milestone benchmark is macOS only")
+    selected_cases = guard_cases(args.script_root.resolve(),args.expected_behavior) if args.guard_only else cases(args.script_root.resolve())
+    missing = [str(case.script) for case in selected_cases if case.script is not None and not case.script.is_file()]
+    if missing:
+        parser.error("missing hook entrypoints: "+", ".join(dict.fromkeys(missing)))
     rtk_path = shutil.which("rtk")
-    if not rtk_path:
+    if not rtk_path and not args.guard_only:
         parser.error("rtk 0.50.0 or newer is required for the RTK forwarder scenarios")
-    rtk_version = subprocess.run([rtk_path, "--version"], capture_output=True, text=True, check=True).stdout.strip()
+    rtk_version = subprocess.run([rtk_path, "--version"], capture_output=True, text=True, check=True).stdout.strip() if rtk_path else "not required (guard-only)"
     try:
-        version_parts = tuple(int(part) for part in rtk_version.split()[1].split(".")[:3])
+        version_parts = (0,50,0) if args.guard_only else tuple(int(part) for part in rtk_version.split()[1].split(".")[:3])
     except (IndexError, ValueError) as exc:
         parser.error(f"cannot parse RTK version: {rtk_version!r} ({exc})")
     if version_parts < (0, 50, 0):
@@ -201,7 +235,7 @@ def main() -> int:
         for kind, path in repos.items():
             make_repo(path, kind)
         results: list[dict] = []
-        for case in cases():
+        for case in selected_cases:
             home = temporary_root / "homes" / case.name
             home.mkdir(parents=True)
             timings: list[float] = []
@@ -214,11 +248,12 @@ def main() -> int:
                 elif index > args.warmups:
                     timings.append(elapsed)
                     outcomes.append(output)
-            results.append({"case": case.name, "input_bytes": len(case.payload), "cold_ms": round(cold_ms, 3), "warm": summary(timings), "sample_count": len(timings), "first_output": outcomes[0], "exit_code": exit_code})
+            actual = decision(case.name.split(".",1)[0],outcomes[0]) if case.expected_decision else None
+            results.append({"case": case.name, "input_bytes": len(case.payload), "cold_ms": round(cold_ms, 3), "first_run_ms":cold_ms, "samples_ms":timings, "warm": summary(timings), "sample_count": len(timings), "first_output": outcomes[0], "exit_code": exit_code,"expected_decision":case.expected_decision,"actual_decision":actual,"fixture":case.fixture_metadata})
 
         concurrency_results: list[dict] = []
         selected = {"copilot.guard.clean", "gemini.guard.clean", "codex.guard.clean", "copilot.scan.clean", "gemini.scan.clean", "codex.scan.clean", "copilot.rtk.clean", "gemini.rtk.clean", "copilot.telemetry.tool", "gemini.telemetry.model"}
-        for case in cases():
+        for case in selected_cases:
             if case.name not in selected:
                 continue
             home = temporary_root / "homes" / case.name
@@ -228,11 +263,11 @@ def main() -> int:
             batch_ms = (time.perf_counter_ns() - batch_start) / 1_000_000
             for _, exit_code, output in calls:
                 verify_outcome(case, exit_code, output)
-            concurrency_results.append({"case": case.name, "workers": args.concurrency, "batch_ms": round(batch_ms, 3), "individual": summary([elapsed for elapsed, _, _ in calls])})
+            concurrency_results.append({"case": case.name, "workers": args.concurrency, "batch_ms": batch_ms, "samples_ms":[elapsed for elapsed,_,_ in calls], "individual": summary([elapsed for elapsed, _, _ in calls])})
 
         result = {
-            "environment": {"platform": platform.platform(), "python": sys.version.split()[0], "rtk": rtk_version, "git": subprocess.run(["git", "--version"], capture_output=True, text=True, check=True).stdout.strip()},
-            "method": {"samples": args.samples, "warmups": args.warmups, "concurrency": args.concurrency, "cold_definition": "first process for each case with a fresh disposable log home; OS file cache is not cleared", "warm_definition": "sequential subprocess calls after discarded warmups using the same log home"},
+            "environment": {"platform": platform.platform(), "machine":platform.machine(), "python": sys.version.split()[0], "python_executable":sys.executable, "rtk": rtk_version, "git": subprocess.run(["git", "--version"], capture_output=True, text=True, check=True).stdout.strip(),"logging":"same disposable provider-specific log home reused for each case","guard_mode":"block; inherited skip and allowlist removed"},
+            "method": {"samples": args.samples, "warmups": args.warmups, "concurrency": args.concurrency, "cold_definition": "first process for each case with a fresh disposable log home; OS file cache is not cleared", "warm_definition": "sequential subprocess calls after discarded warmups using the same log home","guard_only":args.guard_only,"script_root":str(args.script_root.resolve()),"expected_behavior":args.expected_behavior},
             "results": results,
             "concurrency": concurrency_results,
         }

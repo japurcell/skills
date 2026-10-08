@@ -17,7 +17,7 @@ Use real date/time and task ID.
 - Implemented: ...
 - Files changed: ...
 - Verification:
-  - [exact command/check]: [PASS/FAIL/BLOCKED + concise evidence]
+  - [check ID]: [exact command/manual procedure]; cwd: [directory]; result: [PASS/FAIL/BLOCKED]; exit: [code or not applicable]; evidence: [concise observed evidence]
 - Browser verification:
   - Required: yes/no
   - Evidence: [exact playwright-cli command + result, "not required", or "blocked: <reason>"]

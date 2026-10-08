@@ -1,97 +1,57 @@
 ---
 name: handoff
-description: MANDATORY first action whenever user mentions 'handoff', 'handoff.md', 'read handoff', or any path ending in '/handoff.md'; including requests to read, summarize, check, or update it. Also trigger on resume, continue, pick up, next step, checkpoint, or transfer context. Load before any tool call; update handoff whenever scope, status, blockers, or next step changes, and before stopping.
+description: Maintain concise, current task handoffs. MANDATORY first action whenever a task mentions a handoff or handoff.md, or involves resume, continue, pick up, next step, checkpoint, or context transfer. Load before touching handoff files; loading the skill does not authorize file changes.
 ---
 
 # Handoff
-
-## Overview
 
 Capture one concise handoff another agent can resume from immediately. Preserve state, evidence, and the first safe next action without copying the whole chat.
 
 ## Workflow
 
-1. **Gather only active context**
-   - Capture goal, status, next focus, exact next step, blockers, decisions, constraints, important files, commands/results, durable learnings from failures/mistakes/human corrections/workarounds, and any evidence that changed the plan.
-   - Preserve high-signal review findings, corrected assumptions, rejected options, and unresolved risks when they affect what the next agent should trust or avoid.
-   - When a specific code location matters, record it as `path:line` or `path:start-end` instead of naming only the file.
-   - Record verification state explicitly: what was run or measured, what passed or failed, and what still needs rerunning.
-   - Read only artifacts needed to summarize accurately. Do not reread the whole repo or paste full chat, logs, or diffs.
+1. **Confirm the requested action**
+   - For a read-only question, review, or audit, inspect only the relevant artifacts and report findings. Do not create or update handoff or history files.
+   - For authorized handoff maintenance or ongoing task work, follow the steps below. Reconcile the relevant handoff at resume, scope changes, milestone completion, and before stopping.
 
-2. **Choose an allowed path**
-   - Use user-provided focus as next-agent focus.
-   - If the user names a path, honor it.
-   - Otherwise, if one feature folder under `.agents/scratchpad/` clearly matches, write `<that-folder>/handoff.md`.
-   - Otherwise write `.agents/scratchpad/handoff.md`.
-   - If the requested path is invalid or multiple folders are plausible, fall back to the root handoff and note why.
+2. **Reconcile current state**
+   - Compare the inherited snapshot with the latest user direction, current notes, changed files, and verification results. Current evidence determines scope, status, and remaining work. Read only the artifacts needed; do not reread the whole repository.
+   - When asked to resume work, continue the inherited next step only if it remains current and authorized. Otherwise choose the current safe next action. Replace superseded active instructions instead of appending another status layer.
+   - Keep the current goal, done/in-progress/remaining status, user-provided next focus, exact next step, blockers, decisions, constraints, authorization limits, recovery path, and verification state inline.
+   - Preserve review findings, corrected assumptions, rejected options and their reasons, unresolved questions, and risks that affect what the next agent should trust or avoid.
+   - Record exact runnable commands, including the working directory and necessary arguments, and concise observed error text when needed for next work. Distinguish verified causes from hypotheses.
+   - State what was run or measured, what passed or failed, and what remains unverified or needs rerunning. An older pass does not prove a later change. Include the path of any retained log or report supporting a result.
+   - Name important files and explain why they matter. When a specific location matters, use `path:line` or `path:start-end`, verified against line-numbered source output rather than inferred from a filtered or compressed read.
 
-3. **Write or update `handoff.md`**
-   - Create `.agents/scratchpad/` if needed.
-   - Update an existing handoff in place and remove stale or duplicate content.
-   - When resuming from an existing handoff, treat its stated `Next step` as work to close: after completing it, update `handoff.md` before stopping so the status and next step reflect the new state.
-   - Before editing an existing handoff, reread the exact section being replaced; prefer small independent patches when changing multiple files or sections so stale context cannot reject unrelated updates.
-   - Prefer compact bullets or short sections. Default shape when it fits: Goal, Status, Next focus, Next step, Decisions/constraints, Review findings/corrections, Relevant files/artifacts, Commands/results, Verification state, Errors/blockers, Durable learnings, Suggested skills, Briefing.
-   - Include exact paths, commands, errors, verification state, and measured results when relevant.
-   - Include code review or QA findings when they changed the diagnosis, scope, or next step.
-   - Use `path:line` anchors for source, test, config, or docs references when the next agent should inspect a specific location.
-   - Reference artifacts by path or URL instead of copying them.
-   - Redact secrets and unnecessary personal data.
-   - If file write fails, emit the handoff inline and explain the failure.
+3. **Choose the destination**
+   - Honor a valid user-supplied path, even when several feature folders are plausible.
+   - With no supplied path, reuse the known handoff for the current task. Otherwise use `.agents/scratchpad/<feature>/handoff.md` for the single clearly matching feature folder; if none or several match, use `.agents/scratchpad/handoff.md` and explain any ambiguity.
+   - A supplied path is invalid if it cannot name a file, a parent component is a file, it is outside the authorized scope, or it remains unwritable after permitted recovery. Fall back to `.agents/scratchpad/handoff.md` and state the reason. A missing parent directory alone is not invalid.
 
-4. **Report outcome**
-   - State the written path.
-   - State whether it is `root-scoped` or `feature-scoped`.
-   - State the single most important next step.
+4. **Preserve lessons and history**
+   - Redact secrets and unnecessary personal data before writing any handoff, history file, or inline fallback.
+   - Keep lessons needed for current decisions, constraints, or prevention of repeated mistakes inline. Preserve other unique lessons and evidence in history. Move superseded run details and repeated error output behind clearly labeled historical references; archives are evidence, not current guidance.
+   - Prefer an existing retained artifact that preserves the required evidence. If the old handoff is the only copy, save that evidence to a sibling history file before replacing it.
+   - For a new archive, choose an unused filename such as `handoff.history-YYYY-MM-DD.md`, adding a suffix if needed. When extending an existing archive, read it first and append a dated entry without replacing earlier unique evidence.
+   - Verify each reference target exists and contains the evidence before removing it from the active handoff. Never point back to the handoff being replaced. If preservation cannot be verified, keep the needed evidence inline and report the limitation. Current blockers, owner actions, recovery instructions, and pending proof stay inline regardless of related archives.
 
-## Specific Techniques
+5. **Write a compact handoff**
+   - Create parent directories for the selected destination if needed. Update that file in place when it exists.
+   - Before editing, reread the exact section being replaced. Prefer small independent patches so stale context cannot reject unrelated updates.
+   - Use compact bullets or short sections. A useful shape is Goal/status, Next focus/action, Decisions/constraints, Review findings, Relevant files, Commands/results, Blockers/recovery, Lessons, and Historical references. Omit empty sections; include suggested skills only when they materially help.
+   - Prefer dense evidence: one measured benchmark delta or failing assertion beats a pasted log. Reference artifacts by path or URL. Include raw logs, screenshots, large diffs, or full chat only when essential.
+   - If writing fails, emit the redacted handoff inline and explain the failure.
 
-### Keep it resume-ready
-
-- Distinguish done, in-progress, and remaining work.
-- Preserve what changed the plan: review findings, failed assumptions, rejected options, and why they were rejected.
-- Prefer `path:line` pointers over vague file mentions when they help the next agent jump straight to the right code.
-- If verification is incomplete, say exactly what ran, what happened, and what must be rerun.
-- Preserve unresolved questions and rejected options.
-- Make the first action obvious for a fresh, weaker model.
-- Include suggested skills only when they materially help.
-
-### Keep it small
-
-- Prefer dense evidence over long prose: one benchmark delta or failing assertion beats a pasted log.
-- Omit empty sections.
-- Never dump raw logs, screenshots, large diffs, or full chat unless essential.
-
-## Common Rationalizations
-
-| Rationalization                                            | Reality                                                                                                                                                               |
-| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Copying chat is safest."                                  | Fresh agent needs state, not transcript noise. Summarize and point at artifacts.                                                                                      |
-| "Existing handoff is close enough."                        | Update it in place; stale next steps waste the next session.                                                                                                          |
-| "Concise means skip blockers or constraints."              | Remove noise, not decision-critical context.                                                                                                                          |
-| "File names are enough."                                   | When a specific code block matters, `path:line` saves rediscovery and avoids edits in the wrong place.                                                                |
-| "Review findings already live in PR comments."             | If review or QA changed the diagnosis, copy the actionable finding into the handoff so the next agent inherits the corrected plan.                                    |
-| "I worked around my mistakes, so no need to mention them." | Durable learnings from failures, mistakes, or human corrections are mandatory. They inform future agents, prevent repeated errors, and ultimately reduce token costs. |
-
-## Red Flags
-
-- Creates a new handoff.md instead of updating the existing one.
-- Completes the inherited `Next step` but stops without updating the existing handoff.
-- Pastes logs, diffs, or chat instead of referencing them.
-- Leaves stale next steps, duplicate bullets, or unverifiable completion claims.
-- Omits the review finding, rejected option, or failed assumption that changed the plan.
-- Lists files without telling the next agent where to look.
-- Omits blockers, constraints, or the first next action.
+6. **Report the outcome**
+   - On success, state the written path, whether the context is root-scoped or feature-scoped, and the single most important next step.
+   - On failure, state the intended path and scope, report any partial write or uncertain file state, and provide the inline handoff and next step without claiming success.
 
 ## Verification
 
-- [ ] Handoff is concise and free of stale or duplicate context
-- [ ] Done, in-progress, and remaining work are distinguishable
-- [ ] Exact next step is explicit
-- [ ] If resuming from an existing handoff, the inherited `Next step` is completed and the handoff is updated before stopping
-- [ ] Review findings, rejected options, or corrected assumptions are captured when they affect next work
-- [ ] Specific code references use `path:line` when a location matters
-- [ ] Relevant files or artifacts include why they matter
-- [ ] Verification state says what ran or was measured and what is still pending
-- [ ] ALL mistakes, failures, or human corrections are captured as durable learnings
-- [ ] Sensitive information is redacted
-- [ ] Suggested skills appear only when useful
+- [ ] Read-only requests produced findings without document changes
+- [ ] Maintenance used the requested valid path or explained the fallback
+- [ ] Current scope, status, next action, and verification agree with the latest evidence
+- [ ] Necessary decisions, lessons, owner limits, blockers, recovery, and pending proof remain inline
+- [ ] Commands, observed errors, evidence paths, and source anchors are precise where needed
+- [ ] Historical references preserve unique evidence without overwriting earlier entries
+- [ ] The handoff is concise, redacted, and free of stale active instructions
+- [ ] The outcome accurately reports the write result and next step

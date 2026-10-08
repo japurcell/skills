@@ -80,6 +80,8 @@ LOG_LOCK_POLL_SECONDS = 0.05
 CANDIDATE_STAGED = "staged"
 CANDIDATE_WORKTREE = "worktree"
 CANDIDATE_UNTRACKED = "untracked"
+CANDIDATE_UNMERGED_STAGES = ("unmerged-base", "unmerged-ours", "unmerged-theirs")
+CANDIDATE_UNMERGED_WORKTREE = "unmerged-worktree"
 INCOMPLETE_LOG: dict[str, object] | None = None
 SCAN_ACTION = "scan"
 
@@ -451,6 +453,35 @@ def decode_nul_paths(output: bytes) -> list[str]:
     return [os.fsdecode(path) for path in output[:-1].split(b"\0") if path]
 
 
+def collect_unmerged_files(
+    root: Path, *, deadline: float | None = None,
+) -> list[tuple[str, str]]:
+    output = run_git(
+        ["ls-files", "--unmerged", "-z", "--"],
+        cwd=root, text=False, deadline=deadline,
+    )
+    if not isinstance(output, bytes) or (output and not output.endswith(b"\0")):
+        raise GitCommandError("Git returned malformed unmerged entries")
+    candidates: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for record in output[:-1].split(b"\0") if output else []:
+        header, separator, raw_path = record.partition(b"\t")
+        match = re.fullmatch(rb"[0-7]{6} (?:[0-9a-f]{40}|[0-9a-f]{64}) ([123])", header)
+        if not separator or not raw_path or match is None:
+            raise GitCommandError("Git returned malformed unmerged entries")
+        path = os.fsdecode(raw_path)
+        _validate_candidate_parts(path)
+        source = CANDIDATE_UNMERGED_STAGES[int(match.group(1)) - 1]
+        candidate = (source, path)
+        if candidate in seen:
+            raise GitCommandError("Git returned duplicate unmerged entries")
+        seen.add(candidate)
+        candidates.append(candidate)
+        if len(candidates) > MAX_FILES:
+            raise ScanLimitExceeded("modified file count exceeds the scanner limit")
+    return candidates
+
+
 def collect_files(
     root: Path,
     scope: str,
@@ -458,7 +489,8 @@ def collect_files(
     *,
     deadline: float | None = None,
 ) -> list[tuple[str, str]]:
-    candidates: list[tuple[str, str]] = []
+    candidates = collect_unmerged_files(root, deadline=deadline)
+    unmerged_paths = {path for _, path in candidates}
     diff_options = [
         "--name-only",
         "-z",
@@ -479,6 +511,7 @@ def collect_files(
         if isinstance(output, bytes):
             candidates.extend(
                 (CANDIDATE_STAGED, path) for path in decode_nul_paths(output)
+                if path not in unmerged_paths
             )
 
     if scope == "diff":
@@ -490,7 +523,8 @@ def collect_files(
         )
         if isinstance(output, bytes):
             candidates.extend(
-                (CANDIDATE_WORKTREE, path) for path in decode_nul_paths(output)
+                (CANDIDATE_UNMERGED_WORKTREE if path in unmerged_paths else CANDIDATE_WORKTREE, path)
+                for path in decode_nul_paths(output)
             )
         output = run_git(
             ["ls-files", "-z", "--others", "--exclude-standard"],
@@ -544,7 +578,7 @@ def _read_bounded_descriptor(descriptor: int) -> bytes:
             raise ScanLimitExceeded("candidate file exceeds the scanner limit")
 
 
-def _read_worktree_candidate(root: Path, path: str) -> bytes:
+def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = False) -> bytes | None:
     parts = _validate_candidate_parts(path)
     root_path = root.resolve(strict=True)
     no_follow = getattr(os, "O_NOFOLLOW", 0)
@@ -572,6 +606,8 @@ def _read_worktree_candidate(root: Path, path: str) -> bytes:
             descriptors.append(descriptor)
             return _read_bounded_descriptor(descriptor)
         except (OSError, ValueError) as exc:
+            if allow_missing and isinstance(exc, FileNotFoundError):
+                return None
             if isinstance(exc, ScanSecurityError):
                 raise
             raise ScanSecurityError("unable to open candidate safely") from exc
@@ -594,6 +630,8 @@ def _read_worktree_candidate(root: Path, path: str) -> bytes:
         resolved.relative_to(root_path)
         descriptor = os.open(candidate, os.O_RDONLY | no_follow)
     except (OSError, ValueError) as exc:
+        if allow_missing and isinstance(exc, FileNotFoundError):
+            return None
         if isinstance(exc, ScanSecurityError):
             raise
         raise ScanSecurityError("unable to open candidate safely") from exc
@@ -609,10 +647,14 @@ def read_candidate_bytes(
     source: str,
     *,
     deadline: float | None = None,
-) -> bytes:
-    if source == CANDIDATE_STAGED:
+) -> bytes | None:
+    if source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES:
         _validate_candidate_parts(path)
-        index_object = f":./{path}"
+        if source == CANDIDATE_STAGED:
+            index_object = f":./{path}"
+        else:
+            stage = CANDIDATE_UNMERGED_STAGES.index(source) + 1
+            index_object = f":{stage}:./{path}"
         size_output = run_git(
             ["cat-file", "-s", index_object],
             cwd=root,
@@ -637,7 +679,7 @@ def read_candidate_bytes(
             raise GitCommandError("Git returned invalid staged content")
         return output
 
-    return _read_worktree_candidate(root, path)
+    return _read_worktree_candidate(root, path, allow_missing=source == CANDIDATE_UNMERGED_WORKTREE)
 
 
 def is_env_path(path: str) -> bool:
@@ -1243,6 +1285,8 @@ def main() -> int:
     for source, path in candidates:
         enforce_scan_budget(scan_started, total_bytes)
         raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
+        if raw_bytes is None:
+            continue
         total_bytes += len(raw_bytes)
         enforce_scan_budget(scan_started, total_bytes)
 
@@ -1263,7 +1307,8 @@ def main() -> int:
 
         if not is_text_candidate(path, raw_bytes):
             candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
-        elif scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED:
+        elif (scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED
+              or source in CANDIDATE_UNMERGED_STAGES or source == CANDIDATE_UNMERGED_WORKTREE):
             candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
         else:
             candidate_lines = emit_diff_added_lines(

@@ -1,0 +1,3 @@
+{
+  "worker_response": "<promise>BLOCKED</promise>\nInvalid manifest: tasks is missing. Supply a valid task array."
+}

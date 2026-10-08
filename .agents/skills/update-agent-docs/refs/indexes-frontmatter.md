@@ -11,18 +11,7 @@ description: What this document covers and when to read it
 ---
 ```
 
-Use the first matching type:
-
-| Path | `type` |
-| --- | --- |
-| `.agents/instructions/**` | `Agent Instruction` |
-| `.agents/memory/**/INDEX.md` | `Knowledge Index` |
-| `.agents/memory/**/LOG.md` | `Source Ingestion Log` |
-| `.agents/memory/KNOWN_ISSUES.md` or `.agents/memory/known-issues/**` | `Known Issue` |
-| `.agents/memory/TESTING_STRATEGY.md` or `.agents/memory/testing/**` | `Testing Guidance` |
-| `.agents/memory/adrs/**` | `Architecture Decision` |
-| `.agents/memory/sources/**/*.summary.md` | `Source Summary` |
-| Other `.agents/memory/**` | `Agent Memory` |
+Derive `type` from the [repository OKF profile](../../okf-authoring/references/profile.md). Admission and placement follow [knowledge admission](../../../instructions/knowledge-base.md).
 
 Rules:
 

@@ -1,0 +1,5 @@
+Synthetic fixture: repeated retry output from the unresolved sync timeout.
+attempt 1: vendor timeout at stack frame 27; request token=tok_prod_999secret
+attempt 2: vendor timeout at stack frame 27; request token=tok_prod_999secret
+attempt 3: vendor timeout at stack frame 27; request token=tok_prod_999secret
+attempt 4: vendor timeout at stack frame 27; request token=tok_prod_999secret

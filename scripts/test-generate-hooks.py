@@ -56,6 +56,11 @@ TOOL_GUARD_TARGETS = (
     ".gemini/hooks/scripts/tool-guard.py",
     ".codex/hooks/tool-guard.py",
 )
+TOOL_GUARD_POLICY_TARGETS = (
+    ".copilot/hooks/scripts/helpers/tool_guard_policy.py",
+    ".gemini/hooks/scripts/helpers/tool_guard_policy.py",
+    ".codex/hooks/helpers/tool_guard_policy.py",
+)
 SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
     ".gemini/hooks/scripts/scan-secrets.py",
@@ -265,7 +270,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (35 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (38 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -306,7 +311,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (35 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (38 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -325,14 +330,14 @@ class GenerateHooksTests(unittest.TestCase):
             rendered = next(output.content.decode("utf-8") for output in outputs if output.target.output_path.as_posix() == target)
             self.assertEqual(rendered, expected)
 
-    def test_common_and_audit_renderings_preserve_pre_generation_runtime_bodies(self) -> None:
+    def test_common_and_audit_preserve_runtime_bodies_except_lazy_process_import(self) -> None:
         generator = load_generator()
         rendered = {
             output.target.output_path.as_posix(): output.content
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(REPOSITORY_RUNTIME_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(REPOSITORY_RUNTIME_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -344,7 +349,21 @@ class GenerateHooksTests(unittest.TestCase):
                     lines[1],
                     f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
                 )
-                self.assertEqual(sha256("".join(lines[2:]).encode("utf-8")).hexdigest(), expected_digest)
+                body = "".join(lines[2:])
+                if target.endswith("common.py"):
+                    # Keep the historical fingerprint for every byte outside the
+                    # three intentional subprocess import placement changes.
+                    import_changes = (
+                        ("import sys\n", "import subprocess\nimport sys\n"),
+                        ("from typing import TYPE_CHECKING, Any, Sequence\n\nif TYPE_CHECKING:\n    import subprocess\n",
+                         "from typing import Any, Sequence\n"),
+                        ("\n    import subprocess\n\n    return subprocess.run(",
+                         "\n    return subprocess.run("),
+                    )
+                    for current, historical in import_changes:
+                        self.assertEqual(body.count(current), 1)
+                        body = body.replace(current, historical)
+                self.assertEqual(sha256(body.encode("utf-8")).hexdigest(), expected_digest)
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         generator = load_generator()
@@ -370,6 +389,8 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertTrue(set(TOOL_GUARD_TARGETS).issubset(rendered))
+        self.assertEqual(len({rendered[target] for target in TOOL_GUARD_POLICY_TARGETS}), 1,
+                         "Provider-local policy helpers must be byte-identical and context neutral.")
 
         shared_sections = []
         for target in TOOL_GUARD_TARGETS:
@@ -551,7 +572,7 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(source.count(ALLOWLIST_SOURCE), 1)
             shared_sections.append(sections)
 
-        for target in TOOL_GUARD_TARGETS:
+        for target in TOOL_GUARD_POLICY_TARGETS:
             self.assertEqual(rendered[target].count(ALLOWLIST_SOURCE), 1)
 
         self.assertEqual(
@@ -748,15 +769,18 @@ class GenerateHooksTests(unittest.TestCase):
                 with mock.patch.object(
                     module,
                     "run_git",
-                    side_effect=(cached_output, worktree_output, untracked_output),
+                    side_effect=(b"", cached_output, worktree_output, untracked_output),
                 ) as run:
                     self.assertEqual(
                         module.collect_files(ROOT, "diff", True),
                         expected_candidates,
                     )
-                cached_args = run.call_args_list[0].args[0]
-                worktree_args = run.call_args_list[1].args[0]
-                ls_args = run.call_args_list[2].args[0]
+                unmerged_args = run.call_args_list[0].args[0]
+                cached_args = run.call_args_list[1].args[0]
+                worktree_args = run.call_args_list[2].args[0]
+                ls_args = run.call_args_list[3].args[0]
+                self.assertIn("--unmerged", unmerged_args)
+                self.assertIn("-z", unmerged_args)
                 self.assertIn("-z", cached_args)
                 self.assertIn("--cached", cached_args)
                 self.assertIn("HEAD", cached_args)
@@ -848,7 +872,7 @@ class GenerateHooksTests(unittest.TestCase):
                 with mock.patch.object(
                     module,
                     "run_git",
-                    side_effect=(too_many_paths, b"", b""),
+                    side_effect=(b"", too_many_paths, b"", b""),
                 ):
                     with self.assertRaises(module.ScanLimitExceeded):
                         module.collect_files(ROOT, "diff", True)

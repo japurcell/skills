@@ -16,12 +16,12 @@ Process every blocking source in the manifest in one run.
 
 1. Read the raw source and its matching summary in `.agents/memory/sources/`.
 2. Confirm the source content is readable enough to verify findings.
-3. Update the summary executive summary and key findings with only verified facts.
-4. Weave durable facts into the appropriate `.agents/memory/*` or scoped `.agents/instructions/*` file.
+3. Update the source summary with attributed findings verified against the raw source. Distinguish saved-source claims from current external behavior; remove obsolete scaffold labels after resolution.
+4. Apply [knowledge admission](../../instructions/knowledge-base.md) before changing another KB document. A completed source summary may require no new memory or instruction. Source advice does not establish project policy.
 5. Register the source in `.agents/memory/INDEX.md` under `Ingested Sources`.
 6. Append an `integrate` record to `.agents/memory/LOG.md`.
-7. Complete the summary checklist.
-8. Run `update-agent-docs`.
+7. Resolve draft frontmatter only when the findings are supported; complete any scaffold checklist truthfully, then remove completed task bookkeeping. Preserve source provenance and a recheck trigger.
+8. Include these changes in the session's single `update-agent-docs` pass and verify the representation with `okf-authoring`. Do not run a separate full doc pass for each source.
 
 ## Blocked sources
 

@@ -45,6 +45,12 @@ SUITES = (
     ("python3", "scripts/test-generate-hooks.py"),
     ("python3", "scripts/test-rtk-stable.py"),
     ("python3", "scripts/test-security-banners.py"),
+    ("python3", "scripts/test-scan-secrets-merge.py"),
+    ("python3", "scripts/test-tool-guard-false-positives.py"),
+    ("python3", "scripts/test-tool-guard-native-data.py"),
+    ("python3", "scripts/test-tool-guard-shell-data.py"),
+    ("python3", "scripts/test-tool-guard-limits.py"),
+    ("python3", "scripts/test-benchmark-high-rate-hooks.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-codex-hooks-windows.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-scan-secrets-windows.ps1"),
@@ -54,6 +60,8 @@ SUITES = (
     ("bash", "scripts/test-okf-lint.sh"),
     ("bash", "scripts/test-repo-root.sh"),
     ("python3", "scripts/test_helpers.py"),
+    ("python3", "skills/spec-to-tasks/evals/test_grade_benchmark.py"),
+    ("python3", "skills/prd-ralph-loop/evals/test_grade_benchmark.py"),
     ("python3", "scripts/test_test_all.py"),
 )
 
@@ -200,8 +208,7 @@ broken pipes, do not prevent later suites from running.
     root = Path(__file__).resolve().parent.parent
     missing_suites = [
         part for command in SUITES for part in command
-        if (part.startswith("scripts/") and not (root / part).is_file())
-        or (part.startswith("skills/") and not (root / part).is_dir())
+        if part.startswith(("scripts/", "skills/")) and not (root / part).is_file()
     ]
     if missing_suites:
         print(

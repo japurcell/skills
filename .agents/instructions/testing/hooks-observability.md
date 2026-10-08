@@ -1,0 +1,19 @@
+---
+type: Agent Instruction
+description: Observability hook tests; load only for emitters, trace storage, transcript finalization, audit logs, rotation, or maintenance
+---
+
+# Hook Observability Testing
+
+Run both suites for shared observability changes:
+
+- `bash scripts/test-hooks-observability.sh`
+- `bash scripts/test-gemini-hooks-observability.sh`
+
+For canonical observability renderer changes, also run `python3 scripts/test-generate-hooks.py` and a read-only `python3 scripts/generate-hooks.py --check` after regeneration. The installed smoke test must exercise copied provider-local scripts, not a canonical renderer.
+
+The suites exercise installed hook copies and validate event capture, span records, transcript rollup, lock-wait fail-open behavior, redaction and capping, rotation, and the kill switch. They keep stdin open after compact or multiline JSON, require prompt exit, reject buffered trailing data, verify owner-only primary and shadow logs, test runtime-specific variable precedence over generic fallbacks, and keep stale-backup pruning active when a zero-byte maximum disables rotation.
+
+Keep each test subprocess under its disposable `HOME`. In installed fixtures unrelated to maintenance, create a fresh `.maintenance_last_run` sentinel before session startup or termination so detached maintenance does not race SQLite mutation or cleanup. Both provider suites centralize this in `install_observability_test_home` from `scripts/test-common.sh`; intentional maintenance launch coverage removes the sentinel explicitly. Operational shell suites use the common setup described in [observability rules](../hooks-observability.md), and the two RTK suites assert that capture remains active in their disposable trace directories.
+
+For shared Python helpers, run `python scripts/test_helpers.py`. The tests cover path conversion, UTF-8 `emit_json`, path merging, frontmatter stripping, log sanitization, audit timeout and rotation, and payload-capping parity. Load modules with isolated `importlib.util.spec_from_file_location` objects to avoid `sys.modules` leakage. For stdout reconfiguration tests, wrap `io.BytesIO` in `io.TextIOWrapper` so `reconfigure(encoding="utf-8")` remains available under a simulated CP1252 stream.

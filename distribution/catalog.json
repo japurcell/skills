@@ -2512,12 +2512,27 @@
           "line_endings": "lf"
         },
         {
+          "path": ".codex/hooks/helpers/tool_guard_policy.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
           "path": ".copilot/hooks/scripts/tool-guard.py",
           "content": "text",
           "line_endings": "lf"
         },
         {
+          "path": ".copilot/hooks/scripts/helpers/tool_guard_policy.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
           "path": ".gemini/hooks/scripts/tool-guard.py",
+          "content": "text",
+          "line_endings": "lf"
+        },
+        {
+          "path": ".gemini/hooks/scripts/helpers/tool_guard_policy.py",
           "content": "text",
           "line_endings": "lf"
         },

@@ -30,7 +30,7 @@ Official release pages were fetched on 2026-09-30: [checkout v7.0.1](https://git
 
 - `scripts/test-install.ps1:1-55` is a self-contained PowerShell 7+ fixture: temporary workdir/repo/home, invokes the real installer in a child process, captures stdout/stderr separately, asserts resulting layout/content, and cleans up. Command: `pwsh -NoProfile -File scripts/test-install.ps1`.
 - It deliberately prints skips when symlink, hard-link, or junction creation is unsupported (`:632-640,669-689,711-735`). Junction type/target and an unchanged external sentinel are asserted after successful fixture creation (`:737-746`). Unix mode assertions are guarded off on Windows (`:701-704`). macOS PowerShell results are PowerShell-on-macOS evidence only, not native-Windows proof.
-- Other Windows-named PowerShell suites are in the aggregate and Windows workflow. Their documented non-Windows runs skip and are syntax-only evidence; see `.agents/memory/testing/powershell.md`. Attribute platform evidence only to actual Windows runner execution.
+- Other Windows-named PowerShell suites are in the aggregate and Windows workflow. Their documented non-Windows runs skip and are syntax-only evidence; see `.agents/instructions/testing/powershell.md`. Attribute platform evidence only to actual Windows runner execution.
 
 ## M6 reuse and coverage notes
 

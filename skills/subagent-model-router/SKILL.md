@@ -1,68 +1,168 @@
 ---
 name: subagent-model-router
-description: Route subagent work to the cheapest capable model. Use before launching subagents, task tools, background agents, code reviewers, security reviewers, or parallel workers when model must be selected.
+description: Route subagent work to the cheapest capable model. Use before dispatching subagents, task tools, background agents, code reviewers, security reviewers, or parallel workers when a model must be selected.
 ---
 
 # Subagent Model Router
 
-Choose the cheapest capable model that satisfies the required tier.
+Choose the lowest-cost dispatchable model-and-effort configuration that satisfies the task's capability floor.
 
-## Tier guide
+## Dispatchable routes
 
-- **Fast**: bounded, low-risk work with clear requirements, codebase exploration, fast help with simple or repetitive tasks.
-- **Standard**: general purpose and interactive coding, agentic tasks, deep reasoning and debugging, and meaningful code review.
-- **Premium**: complex reasoning over large codebases and long-running agentic work, long-horizon autonomous coding, high-stakes, repeated failure, prior missed issue, or user-requested best quality.
+A dispatchable route contains:
 
-## Selection Guidelines
+- one capability tier
+- one exact model ID accepted by the dispatch interface
+- one exact reasoning-effort value accepted by the dispatch interface
 
-- Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
-- If this is code or security review, apply `reference/review-routing.md`.
-- Pick the lowest capable tier after accounting for isolation, tests, and review. For bounded, low-risk fixes, choose Fast unless a concrete interaction or ambiguity cannot be settled by focused verification. File count, language mix, platform scope, and test count alone do not justify escalation. Consider
-  - task complexity and stakes
-  - context size
-  - review history
-  - user/model constraints
-- Use `reference/model-catalog.md` to choose a capable model in the tier, restricted to models exposed by the current runtime. Confirm its exact model ID before launching.
-- If several models fit, use `reference/pricing.md` to compare Copilot costs for the token shape, including cache writes, long-context rates, retries, and verification. Optimize expected cost to complete the task successfully, not just token rates. For other platforms, use their pricing.
-- If unavailable, prefer a same-tier fallback. Change tier only if needed.
-- For large context, prefer a same-tier long-context model before escalating, unless reasoning difficulty also increases.
+Implicit, inherited, conditional, ranged, or unresolved values are not dispatchable. This includes:
 
-## Common defaults
+- `default`
+- `auto`
+- `runtime-selected`
+- `runtime default`
+- “runtime-supported”
+- “high or greater”
+- “strongest available”
+- “if applicable”
+- an unexpanded placeholder
 
-Use the single [task defaults table](reference/model-catalog.md#task-defaults): bounded work, budget review, general work, demanding review, or demanding autonomous work. Examples describe task classes; that table owns model preferences.
+If exact accepted values cannot be confirmed, return `dispatchable: false`.
 
-Tiers describe capability requirements, not expense or latency. Choose the cheapest model demonstrated to meet the requirement; a higher price is not evidence of better review quality. Starting candidates are provisional until task-specific evaluations support them.
+## Selection precedence and independence
 
-## Output format
+Apply selection rules in this order:
 
-Return:
+1. Explicit model or effort constraints already stated by the user before the current routing attempt.
+2. The capability and cost rules in this skill.
+3. No implicit, inherited, configured, or runtime default.
 
-- tier:
-- model:
-- effort, if specified:
-- reason (task fit, cost assumptions, and evidence or uncertainty):
-- escalation_trigger, if any:
-- fallback, if any:
+Absent model or effort instructions mean `none`; they are not ambiguity. Independently select the route without asking the user to choose, approve, confirm, or restate a model, effort, or configured default.
 
-## Red Flags
+Persistent configuration does not override the router. If the user explicitly requested configured defaults before the attempt, resolve them to exact values and verify that they satisfy the capability floor.
 
-- Defaulting to Standard or Premium without justifying escalation.
-- Using Premium for bounded execution when stakes/security do not require judgment.
-- Using Fast for high-stakes work.
-- Escalating without a concrete trigger.
+A routing attempt uses the task facts, runtime capabilities, and user constraints already in scope when it begins. A solicited model preference cannot retroactively justify that attempt. If constraints change, begin a fresh attempt.
+
+If essential task facts are missing, request only those facts. If exact runtime values cannot be determined or an explicit constraint prevents the floor from being met, return `dispatchable: false`.
+
+For delegation, the returned model and effort must be explicitly applied. No separate model-selection permission or confirmation is required.
+
+## Capability tiers
+
+- **Fast**: bounded, low-risk work with clear requirements and straightforward verification, including exploration and mechanical or repetitive tasks.
+- **Standard**: substantive judgment, cross-file behavioral reasoning, interactive or agentic coding, deep debugging, or ordinary substantive review.
+- **Premium**: security-sensitive or high-stakes work, difficult long-horizon reasoning, complex large-codebase work, prior important review misses, repeated reasoning failures, or user-requested best quality.
+
+Tiers classify task requirements and model-and-effort configurations—not price, latency, provider, or model family.
+
+File count, language mix, platform scope, and test count do not determine a tier by themselves.
+
+The capability floor is the lowest permitted tier. If availability requires a higher-tier configuration, report the selected configuration's tier and explain the availability-driven increase.
+
+## Routing procedure
+
+1. Gather:
+   - objective and work class
+   - stakes and security sensitivity
+   - ambiguity and reasoning difficulty
+   - expected context size
+   - review history
+   - verification approach
+   - model or effort constraints already in scope, or `none`
+   - exact models and effort values accepted by the dispatch interface
+2. For code review, PR review, auditing, or security review, determine the floor using [`reference/review-routing.md`](reference/review-routing.md).
+3. Otherwise, determine the floor from risk, ambiguity, reasoning, context, and verification needs.
+4. Apply [`reference/escalation-policy.md`](reference/escalation-policy.md).
+5. Identify eligible configurations using [`reference/model-catalog.md`](reference/model-catalog.md).
+6. Restrict candidates to exact configurations accepted by the dispatch interface.
+7. Among capable candidates, use [`reference/pricing.md`](reference/pricing.md) to minimize expected completion cost.
+8. Select one exact configuration and, when available, one exact same-tier fallback.
+9. Return `dispatchable: false` if the selected model or effort cannot be resolved exactly.
+
+Capability floors override price, convenience, and defaults. Availability never permits routing below the floor.
+
+## Selection rules
+
+- Return the route as a decision, not an approval request.
+- Reuse a route only when work class, stakes, security sensitivity, ambiguity, affected behavior, review history, context, verification, constraints, and runtime capabilities are materially unchanged.
+- Use the catalog's task defaults as provisional starting points.
+- Resolve every catalog entry to one exact model and effort accepted by the dispatch interface.
+- Prefer Fast for bounded, low-risk work unless a concrete requirement establishes a higher floor.
+- Mechanical multi-file work may remain Fast when verification is straightforward.
+- Cross-file behavioral reasoning is normally at least Standard.
+- For large context, first seek a same-tier configuration confirmed to support it.
+- Prefer a same-tier fallback when the first configuration is unavailable.
+- If none is available, use the lowest-cost capable higher-tier configuration unless a user constraint prohibits it.
+- Prefer the latest model version unless an older version has lower expected cost or demonstrated better task fit.
+- Do not infer capability from price, recency, provider, or model name.
+- Optimize expected completion cost, including tokens, cache behavior, retries, tool use, and verification.
+- Do not select a model scheduled to retire before the subtask is expected to run.
+
+Use evidence in this order:
+
+1. task-specific local evaluation
+2. demonstrated success on materially similar work
+3. platform or provider guidance
+4. provisional catalog defaults
+
+When relying on provisional guidance, state the uncertainty and require verification appropriate to the stakes.
+
+## Output
+
+Always return:
+
+```yaml
+dispatchable: <true|false>
+tier: <Fast|Standard|Premium>
+model: <exact dispatch value or unresolved>
+reasoning_effort: <exact dispatch value or unresolved>
+reason: <task fit, capability floor, cost assumptions, and uncertainty>
+escalation_trigger: <concrete trigger or none>
+fallback:
+  model: <exact same-tier dispatch value>
+  reasoning_effort: <exact dispatch value>
+```
+
+Use `fallback: none` when no exact same-tier fallback exists.
+
+For an availability-driven higher-tier selection, report the selected tier and explain the lower capability floor and availability-driven increase in `reason`.
+
+A dispatchable result is a routing decision, not an approval request. Do not mark it tentative or pending confirmation.
+
+Example:
+
+```yaml
+dispatchable: true
+tier: Standard
+model: gpt-6-luna
+reasoning_effort: max
+reason: A bounded substantive review requires Standard capability. This provisional budget-review configuration is accepted by the current dispatch interface.
+escalation_trigger: Escalate if verification exposes a reasoning gap or the task becomes security-sensitive.
+fallback:
+  model: gpt-5.6-luna
+  reasoning_effort: max
+```
+
+If exact values cannot be confirmed:
+
+```yaml
+dispatchable: false
+tier: Standard
+model: unresolved
+reasoning_effort: unresolved
+reason: The task requires Standard capability, but an exact accepted model-and-effort configuration could not be confirmed.
+escalation_trigger: none
+fallback: none
+```
+
+A route with `dispatchable: false` must not be used for dispatch.
 
 ## References
 
 Load only when needed:
 
-- `reference/review-routing.md`: code-review/security-review routing.
-- `reference/model-catalog.md`: models by routing tier.
-- `reference/pricing.md`: token-cost optimization.
-- `reference/escalation-policy.md`: escalation and missed-issue rules.
-- `reference/patterns.md`: examples and edge cases.
-
-## Sources
-
-Catalog and pricing references were verified against [Supported AI models in GitHub Copilot](https://docs.github.com/en/copilot/reference/ai-models/supported-models), [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison), and [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing) on **2026-09-29**. Recheck those sources when current pricing is required; plan and runtime availability can differ. Use supported-models for availability and retirement, model-comparison for task guidance, and models-and-pricing for rates. A published price does not establish that a model is selectable.
-
-For refreshes, fetch live sources directly. Reconcile every supported model and pricing row, including context thresholds and cache charges; document exclusions and availability restrictions before completion. If retrieval disagrees with the user's live page, bypass caches before claiming an entry is absent.
+- [`reference/review-routing.md`](reference/review-routing.md): review floors.
+- [`reference/escalation-policy.md`](reference/escalation-policy.md): escalation and failure diagnosis.
+- [`reference/model-catalog.md`](reference/model-catalog.md): configurations and task defaults.
+- [`reference/pricing.md`](reference/pricing.md): Copilot rates and expected-cost comparison.
+- [`reference/patterns.md`](reference/patterns.md): non-authoritative examples.

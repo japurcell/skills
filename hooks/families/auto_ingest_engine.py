@@ -430,8 +430,8 @@ def reconcile_manifest(
             previous_state = _entry_state(previous)
             if previous_state in {"needs_summary", "stale"}:
                 if _summary_is_resolved(record, previous):
-                    next_entries[record.source_path] = _set_entry_state(
-                        previous,
+                    next_entries[record.source_path] = _entry_for_record(
+                        record,
                         state="active",
                         reason="",
                     )
@@ -561,7 +561,7 @@ def scaffold_summary(summary_dir: Path, source_relpath: str, reason: str) -> Pat
                 "- [ ] Read the raw source.",
                 "- [ ] Update the executive summary with verified facts.",
                 "- [ ] Update the key findings with verified facts.",
-                "- [ ] Weave durable facts into `.agents/memory/*` or `.agents/instructions/*`.",
+                "- [ ] Assess source claims under the knowledge admission rubric; promote only qualifying claims. No promotion is a valid outcome.",
                 "- [ ] Append an integrate record to `.agents/memory/LOG.md` after successful ingestion.",
                 "",
             ]

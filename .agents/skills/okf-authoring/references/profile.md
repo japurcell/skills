@@ -7,9 +7,7 @@ Every canonical Markdown concept has parseable YAML frontmatter with non-empty s
 - `.agents/instructions/**/*.md` → `Agent Instruction`
 - `.agents/memory/INDEX.md` → `Knowledge Index`
 - `.agents/memory/LOG.md` → `Source Ingestion Log`
-- `.agents/memory/KNOWN_ISSUES.md` and `.agents/memory/known-issues/**/*.md` → `Known Issue`
-- `.agents/memory/TESTING_STRATEGY.md` and `.agents/memory/testing/**/*.md` → `Testing Guidance`
-- `.agents/memory/adrs/**/*.md` → `Architecture Decision`
+- `.agents/memory/known-issues/**/*.md` → `Known Issue`
 - `.agents/memory/sources/**/*.summary.md` → `Source Summary`
 - other `.agents/memory/**/*.md` → `Agent Memory`
 

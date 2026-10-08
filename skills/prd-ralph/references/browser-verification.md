@@ -4,7 +4,7 @@ Use only when the selected task mentions or implies browser-visible behavior.
 
 ## Required when mentioned or implied
 
-Browser verification is required if task title, description, acceptance criteria, design guidance, likely files, or notes mention or imply:
+Browser verification is required if any task field, loaded source/context, prerequisite guarantee, or verification check mentions or implies:
 
 - Playwright or `playwright-cli`
 - browser, UI, rendering, DOM, or client-side behavior
@@ -28,6 +28,7 @@ Do not accept unexecuted browser checks.
 Record in `progress_file`:
 
 - exact command
+- check ID, working directory, and exit code when applicable
 - pass/fail result
 - concise relevant output
 

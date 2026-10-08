@@ -1,10 +1,21 @@
 # Ideas
 
-Use this file as a lightweight inbox for ideas that are not ready for research or planning.
-Add each idea as one short bullet. When work starts, move the idea into the appropriate
-research, planning, or implementation artifact.
+Use this file as a lightweight inbox for ideas that are not ready for research or planning. Add each idea as one short bullet. When work starts, move the idea into the appropriate research, planning, or implementation artifact.
 
 ## Inbox
+
+- [ ] **Durable learning skill**: Many skills define what a durable learning is. I want to create a skill that defines what a durable learning is so that other skills can reference it.
+
+- [ ] **SKILL audit**: Claude released updates to skill authoring best practices: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). Even though I don't use Claude, I still want to incorporate these best practices into all skills in this repo unless they are blatantly incompatible with codex, copilot, or gemini: [../.agents/skills/](../.agents/skills/) and [../skills/](../skills/). Our audit will include all of the best practices, but a few stood out to me:
+  - **Structure longer reference files with table of contents**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#structure-longer-reference-files-with-table-of-contents)
+  - **Workflows and feedback loops**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#workflows-and-feedback-loops)
+  - **Conditional workflow pattern**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#conditional-workflow-pattern)
+  - **Concise is key**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#concise-is-key)
+  - **Set appropriate degrees of freedom**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#set-appropriate-degrees-of-freedom)
+  - **Test with all models you plan to use**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#test-with-all-models-you-plan-to-use)
+    - we will keep this scoped to OpenAI models for the purposes of this audit
+  - **Writing effective descriptions**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#writing-effective-descriptions)
+  - **Progressive disclosure patterns**: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#progressive-disclosure-patterns)
 
 - [ ] **Just-in-time context**: The agents kb/memory management system is currently spread across AGENTS.md, .agents/skills/clean-agent-docs, .agents/skills/update-agent-docs. It tries to guide agents through a workflow:
   1. Session Start -> AGENTS.md##Agent Orientation: load the knowledge base map to find relevant context for a task
@@ -27,10 +38,9 @@ research, planning, or implementation artifact.
 
   **Goal**: a self-improving context management system the doesn't rely on agents remembering when to update or refresh their knowledge, but instead manages it autonomously through structured processes and hooks.
 
-- [ ] **exec-plans tasks**: Should 'exec-plans' breakdown milestones into tasks similarly to how 'spec-to-tasks' does so that weaker models can handle them more effectively?
-
 - [ ] **agentic workflows**: I want to investigate ways to run agent workflows (e.g. plan -> implement -> checkpoints -> prototypes -> review/fix loops).
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
+  - [Super Simple Software Factory](https://github.com/disler/super-simple-software-factory)
 
 - [ ] Look at migrating agent kb/memory to nested AGENTS.md files like [https://github.com/lopopolo/harness-engineering](https://github.com/lopopolo/harness-engineering)

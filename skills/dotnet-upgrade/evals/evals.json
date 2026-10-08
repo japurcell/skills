@@ -1,0 +1,75 @@
+{
+  "skill_name": "dotnet-upgrade",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Explicitly use dotnet-upgrade to plan a .NET 8-to-10 upgrade, not execute it. Input descriptions: the target has a web host, a separate identity host, two command-line tools, EF Core with SQLite and SQL Server, a JavaScript frontend, container images, and external deployment owners. Its project rules and current build/test commands are available for inspection. Assess both crossed versions and prepare a concrete approval-ready plan. Do not assume the historical case study's package pins or security exceptions apply.",
+      "expected_output": "Authoring-only scenario, not a run result: a target-specific inventory, compatibility decisions and plan covering .NET 9 and 10, staging rationale, exact target commands, behavior preservation, recovery and owner boundaries. Migration remains unapproved. Documentation coverage is not runtime proof.",
+      "files": [],
+      "expectations": [
+        "The plan distinguishes SDK selection, targets, packages, tools, images and external workers.",
+        "It requires fresh necessary official evidence and approval of the concrete scope, dependency strategy, staging, checks, rollback and owner boundaries before migration.",
+        "It assesses actual usage rather than importing original not-applicable assessments, pins or accepted risks.",
+        "It separates local verification from deployment gates and does not automatically invoke code-modernization."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Explicitly use dotnet-upgrade to execute the approved .NET 8-to-10 plan. Input descriptions: a concrete plan with recorded owner approval, freshly retrieved required official/package evidence, target rules, successful baseline logs and exact authorized commands is available. Approval covers only listed projects and disposable local resources; deployment is owned externally. During the first stage, host startup exposes a dependency constraint requiring a different package major outside the approved strategy. Explain the permitted work and stopping boundary, and draft stage evidence and a candidate lesson.",
+      "expected_output": "Authoring-only scenario, not a run result: execution is limited to the approved plan while evidence stays valid. The unexpected package-major change is reported and migration pauses for revised evidence, plan and renewed approval. Stage reporting records real results only, distinguishes deployment deferral, and retains candidate lessons locally.",
+      "files": [],
+      "expectations": [
+        "Compilation alone is not treated as proof of startup or behavior.",
+        "A material dependency-strategy change requires renewed approval before related migration edits.",
+        "Failed, blocked and deferred gates remain explicit and no tests are weakened.",
+        "Local readiness is separate from deployment readiness and candidates do not mutate authoritative skill source or installed copies."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Explicitly use dotnet-upgrade for a .NET 8-to-10 upgrade while offline. Input descriptions: only bundled historical research and the target's repository files are available; no current support-policy, package or migration-guide retrieval is possible. I say 'go ahead and upgrade' but have not approved a concrete plan. Produce advice in the response only, with no file writes or execution.",
+      "expected_output": "Authoring-only scenario, not a run result: read-only offline advice marked draft, historical dates and unknowns distinguished, required refreshes identified, and no generated files or migration edits. Initial authorization does not substitute for concrete-plan approval or fresh necessary evidence.",
+      "files": [],
+      "expectations": [
+        "Historical support dates and package research are not presented as current verified facts.",
+        "The output identifies unavailable execution-critical evidence and stays draft-only.",
+        "No migration proceeds despite the initial upgrade request.",
+        "Read-only advice does not authorize writing templates into the target."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Explicitly use dotnet-upgrade to take a .NET Framework 4.8 desktop application to a newer .NET release. Input descriptions: project files and current behavior contracts are available, but this bundle has no reviewed route-specific guidance for that starting and destination pair. Start the conversion now using the net8-to-net10 route as a shortcut.",
+      "expected_output": "Authoring-only scenario, not a run result: discovery and route-specific research only. The response explains the missing reviewed route guidance, inventories desktop and dependency constraints, and does not execute conversion or automatically hand off to code-modernization.",
+      "files": [],
+      "expectations": [
+        "Unsupported routes remain discovery/research until their own guidance has been researched and reviewed.",
+        "The .NET 8-to-10 route is not substituted for a Framework migration.",
+        "No automatic code-modernization invocation or migration edits occur."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Explicitly use dotnet-upgrade to prepare a plan in a new target repository. Input descriptions: the complete bundle is available with its references and five templates, but neither dotnet nor official-sources companion skills is installed and the original WorkPlanReports checkout is absent. The target's project rules, project files, baseline commands and current official online sources are available. Explain the full workflow without importing anything else.",
+      "expected_output": "Authoring-only scenario, not a run result: a standalone target-specific workflow using bundled navigation and templates, primary-source refresh, approval gates, behavior checks, recovery and owner reporting. No companion skill, original checkout, root README or eval data is required at runtime.",
+      "files": [],
+      "expectations": [
+        "Missing companions do not block the bundled core procedure.",
+        "Original application paths are provenance only and not runtime dependencies.",
+        "The plan can be resumed from its own facts, commands, evidence and approval record.",
+        "New lessons stay target-local pending explicit approval for authoritative source updates."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Fix a cancellation-token propagation bug in this C# service and add a focused regression test. Input descriptions: a .NET 8 project and its existing tests are available; I have not mentioned or explicitly invoked dotnet-upgrade, and I am not requesting a version change.",
+      "expected_output": "Authoring-only negative scenario, not a run result: ordinary C# engineering proceeds under target rules and applicable dotnet guidance without loading dotnet-upgrade, proposing a version migration or generating upgrade artifacts. This expectation is not proof of client enforcement.",
+      "files": [],
+      "expectations": [
+        "Routine C# work without explicit invocation does not activate this upgrade workflow.",
+        "No upgrade plan, migration edits or automatic code-modernization handoff are introduced.",
+        "The scenario does not claim all clients enforce the requested metadata identically."
+      ]
+    }
+  ]
+}

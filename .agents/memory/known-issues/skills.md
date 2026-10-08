@@ -1,16 +1,18 @@
 ---
 type: Known Issue
-description: Known issues, quirks, and workarounds for `skills`.
+description: Read when skill validation rejects invocation controls or benchmark reports imply measurements that were not collected.
 ---
 
-# Skills - Known Issues
+# Skill Tooling Limitations
 
-Layer-specific quirks for skills. Cross-cutting issues live in `.agents/memory/KNOWN_ISSUES.md`.
+## Invocation controls and validation
 
-**Affected area:** `skills/*/SKILL.md`
-**Description:** `python3 skills/skill-creator/scripts/quick_validate.py` rejects `disable-model-invocation` frontmatter even when a skill needs to keep it.
-**Workaround:** Preserve the key when a human has approved it; expect validation to fail until the validator supports it.
+The repository's [quick validator](../../../skills/skill-creator/scripts/quick_validate.py) does not allow `disable-model-invocation` in its frontmatter allowlist. A rejection therefore does not authorize removing a user-required invocation control. The scoped [dotnet-upgrade acceptance record](../../../skills/dotnet-upgrade/references/document-review.md) retains this incompatibility and distinguishes document review from client enforcement. Follow [skill validation instructions](../../instructions/testing/skills.md) for the approved acceptance scope and vendored YAML runtime.
 
-**Affected area:** `skills/skill-creator/scripts/quick_validate.py`
-**Description:** The validator requires the undeclared `PyYAML` package and fails with `ModuleNotFoundError: No module named 'yaml'` when it is unavailable.
-**Workaround:** Do not install dependencies implicitly. Run it with the checked-in runtime: `PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py skills/<skill-name>`.
+Evidence checked: 2026-10-07 against the validator allowlist and retained acceptance scope. Recheck when the validator or invocation controls change; this does not certify enforcement in any deployed client.
+
+## Benchmark measurements can be proxies
+
+The [benchmark aggregator](../../../skills/skill-creator/scripts/aggregate_benchmark.py) substitutes zero for missing duration and can use output characters as its token metric. Its metadata defaults and configuration ordering can also mislead comparisons. Preserve raw artifacts, identify selected runs and delta direction, and label missing or proxy metrics. A single selected run per scenario does not establish repeated-run variance.
+
+Evidence checked: 2026-10-07 against metric extraction and aggregate metadata construction. Recheck when those paths or the artifact schema change; an aggregate field alone does not prove measured time or token usage.

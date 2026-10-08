@@ -1,0 +1,6 @@
+{
+  "prd_file": "tasks.json",
+  "progress_file": "audit.txt",
+  "commit": false,
+  "user_constraints": "docs-only scope; stop before owner approval"
+}

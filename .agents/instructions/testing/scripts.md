@@ -1,0 +1,43 @@
+---
+type: Agent Instruction
+description: Test and validation guidance for shell helper scripts under `scripts/`
+---
+
+# Shell Scripts - Testing
+
+For selected-asset catalog or lifecycle changes, follow [installer tests](agent-assets.md).
+
+
+- Use syntax check plus the smallest relevant script test when one exists.
+- In disposable Git fixture tests on hosts with globally enabled commit signing, pass `-c commit.gpgsign=false` alongside fixture-local identity; do not change user Git configuration.
+- Generated-hook CLI changes: `python3 scripts/test-generate-hooks.py` and `python3 scripts/generate-hooks.py --check`. The test suite covers deterministic rendering, freshness, ownership, executable modes, and transactional write recovery. Run it without simultaneous checkout edits or other tests that mutate generated files because its read-only checks snapshot the entire repository; `--check` must not mutate the checkout.
+- Stable RTK configuration and installer preflight: `python3 scripts/test-rtk-stable.py`. It uses disposable homes, checks config paths, backup/idempotence, missing or old versions, and Bash/PowerShell installs. Native Windows proof is `pwsh -NoProfile -File scripts/test-rtk-stable-windows.ps1` in the dedicated workflow with real stable RTK on `PATH`.
+- Aggregate runner changes: `python3 scripts/test_test_all.py`. These public-CLI tests need Python and Bash, not the full suite toolchain. They copy the runner into temporary checkouts, substitute suite/tool executables at the process boundary, and cover registry completeness, file-based skill suite paths, preflight failures, stdin/stream separation, aggregate exits, broken pipes, and cancellation. Full integration is `./scripts/test-all.py` after its prerequisites are available.
+- Cancellation fixtures inherit output pipes. A successful bounded `communicate()` requires EOF from descendants as well as the runner; cleanup-only kills happen after assertions and cannot make a leaked descendant pass. The suite verifies both graceful shutdown and forced termination after the suite leader exits.
+- Shell installer changes:
+  - `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture must prove stale generated output stops before destination mutation with the exact `--write` recovery command, while controlled generator failure stops without that advice.
+  - Provider configuration refresh fixtures use disposable homes with retired Copilot/Gemini registrations, unrelated settings and handlers, a second install, and a fresh install. Malformed and duplicate-key JSON or linked configuration parent directories must leave the whole home fingerprint unchanged. Hard-linked destination checks must show the external inode and mode remain unchanged while the installed file becomes an owner-only independent copy.
+  - Codex custom-agent conversion and global instructions: `python3 scripts/test-codex-agents.py`, then `bash -n scripts/install.sh && bash scripts/test-install.sh`; the fixture suite parses generated TOML, checks exact instruction preservation, managed cleanup, `CODEX_HOME` selection, and replacement of `$HOME/.codex/AGENTS.md` from `.codex/AGENTS.md`. It always checks case-folded source-output collision at the converter decision seam and also through two real source files when the filesystem supports both names.
+  - `bash -n scripts/addy-install.sh && bash scripts/test-addy-install.sh`
+- Python helper module unit tests:
+  - `python scripts/test_helpers.py`
+  - Give each imported provider helper an isolated registered package/module spec, including a namespace-package spec for Codex helpers without `__init__.py`. Keep audit/log files and rotation companions under writable `TemporaryDirectory` fixtures; patch log locations rather than writing into protected source or installed trees. Run with warnings as errors when changing import/resource cleanup.
+- OKF linter changes:
+  - `bash -n scripts/test-okf-lint.sh && bash scripts/test-okf-lint.sh`
+  - The suite copies `scripts/fixtures/okf-valid-repo/` into a fresh `mktemp` directory for each public-CLI case. Do not derive uniqueness from a shell counter mutated inside command substitution; that mutation runs in a subshell and does not persist.
+  - Exercise dependency-failure cases from an isolated copied linter/vendor layout. Never move or hide the live `scripts/vendor/yaml/` tree during a test.
+  - Keep assertions at the public `./scripts/lint-okf.py [--format human|json]` seam, including exact one-based diagnostic locations and exit codes.
+  - Keep cross-platform destination cases for Windows drive-rooted and UNC paths, source-summary footnotes, and both nesting directions among HTML comments, fenced code, and exact-run inline code.
+- Hook-tree shell helper changes:
+  - `bash scripts/test-repo-root.sh`
+  - Expected Git-root paths must use the physical fixture path (`pwd -P`) on macOS, where `/var` and `/private/var` can identify the same directory. Preserve the public Git-versus-fallback assertions.
+- For any `scripts/*.ps1` or PowerShell-specific install logic, use `.agents/instructions/testing/powershell.md` instead of treating the check as generic shell validation.
+- If a script primarily supports hooks, also run matching checks from `.agents/instructions/testing/hooks.md`.
+- If a script primarily supports a specific skill, run that skill's narrow validation path after the script check.
+- In `scripts/test-common.sh`, keep `mock_bin` on `printf "%b\n"` so escaped newlines render into executable mock scripts.
+- In `scripts/test-common.sh`, `write_required_skill_fixtures` writes mock skill files (`caveman`, `universal-guidelines`, `cli-compression`, `writing-great-skills`) to a test directory for skill hook tests.
+
+## Fixture portability
+
+- For reserved-name OKF cases on case-insensitive filesystems, remove the fixture's `INDEX.md` before creating `index.md`; verify the intended diagnostic. Test case-folded agent-output collisions through the supported validation seam on all hosts and two physical files where supported.
+- On native Windows, emulated Unix mode bits do not prove NTFS access control. Keep POSIX mode assertions on POSIX and inspect Windows ACLs when access control is under test.

@@ -126,7 +126,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 1. Edit source files in `skills/`, `agents/`, `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
-3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from `.agents/memory/TESTING_STRATEGY.md`.
+3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](.agents/instructions/testing.md).
 
 ### Generated provider hooks
 
@@ -202,9 +202,9 @@ runner, and model-router grader tests. It excludes lint-only checks, formatting,
 live model evaluations, archived tests, and generated fixtures. Native Windows is
 not supported by this aggregate command; individual PowerShell tests remain usable.
 
-Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in `.agents/memory/TESTING_STRATEGY.md`.
+Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in [testing guidance](.agents/instructions/testing.md).
 
-For hook changes, run `./scripts/install.sh` first and then the targeted regressions listed in `.agents/memory/testing/hooks.md`; the current hook validation set starts with auto-ingest/startup, observability, secrets, tool-guard, and RTK checks.
+For hook changes, use the targeted [source checks](.agents/instructions/testing/hooks.md). Before authorized live validation, refresh installed copies and follow [live-hook testing](.agents/instructions/testing/hooks-live.md); honor task-specific installation ownership.
 
 For the Codex required-skills hook and installer, run:
 
@@ -230,12 +230,7 @@ The installer output identifies the resolved Codex agent destination. Parse an i
 
 ## Additional docs
 
-- `.agents/memory/ARCHITECTURE.md`
-- `.agents/memory/FILE_MAP.md`
-- `.agents/memory/TESTING_STRATEGY.md`
-- `.agents/instructions/repo.md`
-- `.agents/instructions/hooks.md`
-- `.agents/instructions/skills.md`
-- `.agents/instructions/agents.md`
-- `.agents/instructions/scripts.md`
-- `.agents/instructions/powershell.md`
+- [Instruction routes](.agents/instructions/INDEX.md) - select guidance by task.
+- [Knowledge admission](.agents/instructions/knowledge-base.md) - what earns a place in instructions or memory.
+- [Testing guidance](.agents/instructions/testing.md) - focused validation routes.
+- [Memory index](.agents/memory/INDEX.md) - optional limitations and source references.

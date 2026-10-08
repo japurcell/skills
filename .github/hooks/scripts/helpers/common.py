@@ -6,12 +6,14 @@ import codecs
 import json
 import os
 import select
-import subprocess
 import sys
 import time
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
+
+if TYPE_CHECKING:
+    import subprocess
 
 
 INPUT_COMPLETION_IDLE_SECONDS = 0.5
@@ -284,6 +286,8 @@ def run_command(
 ) -> subprocess.CompletedProcess[str]:
     if isinstance(args, (str, bytes)):
         raise TypeError("run_command requires a sequence of arguments; shell execution is disabled")
+
+    import subprocess
 
     return subprocess.run(
         list(args),

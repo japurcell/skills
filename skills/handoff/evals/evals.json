@@ -55,7 +55,7 @@
     },
     {
       "id": 2,
-      "prompt": "Use the handoff skill on the fixture repo in `evals/files/fallback-noise-fixture/`. Copy the repo to `outputs/repo/`. The user says: `write this to docs/handoff.md so I can find it later. We were debugging sync retries; next time start with the failing integration test.` Use `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py` as the relevant artifacts. Create or update the handoff, write `outputs/result.json` with `written_path`, `scope`, and `next_step`, and do not ask follow-up questions.",
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/fallback-noise-fixture/`. Copy the repo to `outputs/repo/`. The user says: `write this to src/sync_retry.py/handoff.md so I can find it later. We were debugging sync retries; next time start with the failing integration test.` Use `session_notes.md`, `logs/retry.log`, `diffs/patch.diff`, `src/sync_retry.py`, and `tests/test_sync_retry.py` as the relevant artifacts. Create or update the handoff, write `outputs/result.json` with `written_path`, `scope`, and `next_step`, and do not ask follow-up questions.",
       "expected_output": "Falls back to an allowed root handoff, references noisy artifacts by path instead of pasting them, anchors the next fix with line-numbered code refs, and keeps the handoff concise.",
       "files": [
         "evals/files/fallback-noise-fixture/session_notes.md",
@@ -66,17 +66,72 @@
       ],
       "expectations": [
         "outputs/repo/.agents/scratchpad/handoff.md is created.",
-        "`outputs/repo/docs/handoff.md` is not created.",
+        "`outputs/repo/src/sync_retry.py/handoff.md` is not created.",
         "The handoff references `logs/retry.log` and `diffs/patch.diff` by path and anchors `src/sync_retry.py:2` plus `tests/test_sync_retry.py:5`.",
         "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
         "outputs/result.json reports the root-scoped fallback path."
       ],
       "assertions": [
         "outputs/repo/.agents/scratchpad/handoff.md is created.",
-        "`outputs/repo/docs/handoff.md` is not created.",
+        "`outputs/repo/src/sync_retry.py/handoff.md` is not created.",
         "The handoff references `logs/retry.log` and `diffs/patch.diff` by path and anchors `src/sync_retry.py:2` plus `tests/test_sync_retry.py:5`.",
         "The handoff stays concise and does not expose the secret token or raw stack frame spam.",
         "outputs/result.json reports the root-scoped fallback path."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/history-resume-fixture/`. Copy the repo to `outputs/repo/`. Continue the work from the existing feature-scoped handoff at `.agents/scratchpad/search/handoff.md`, using the latest owner update and current code/test state in `session_notes.md`, `src/cdn_purge.py`, and `tests/test_cdn_purge.py` to bring the handoff up to date and make it resume-ready. The owner changed the effort's scope from local TTL cleanup to tenant-scoped CDN invalidation. Include the current goal, status, next action, relevant durable context, and verification state. Write `outputs/result.json` with `written_path`, `scope`, and `next_step`. Do not ask follow-up questions.",
+      "expected_output": "Updates the existing feature-scoped handoff to reflect the latest CDN invalidation scope, keeps the tenant boundary rule current, replaces the old local TTL next step, and references repeated historical errors without copying the trace into active status. It accurately says the focused CDN test remains unverified.",
+      "files": [
+        "evals/files/history-resume-fixture/.agents/scratchpad/search/handoff.md",
+        "evals/files/history-resume-fixture/session_notes.md",
+        "evals/files/history-resume-fixture/logs/purge-run-history.log",
+        "evals/files/history-resume-fixture/src/cdn_purge.py",
+        "evals/files/history-resume-fixture/tests/test_cdn_purge.py"
+      ],
+      "expectations": [
+        "outputs/repo/.agents/scratchpad/search/handoff.md is updated in place.",
+        "The current status and next action reflect tenant-scoped CDN invalidation, not the superseded local TTL task.",
+        "The tenant-boundary rule remains current guidance, and the current action points to `src/cdn_purge.py` plus `tests/test_cdn_purge.py`.",
+        "Repeated error details are represented by a labeled historical reference to `logs/purge-run-history.log`, without copying raw stack frames into the handoff.",
+        "The handoff does not treat the earlier local TTL pass as proof that the CDN test passed.",
+        "outputs/result.json reports the existing feature-scoped handoff path and current next action."
+      ],
+      "assertions": [
+        "outputs/repo/.agents/scratchpad/search/handoff.md is updated in place.",
+        "The current status and next action reflect tenant-scoped CDN invalidation, not the superseded local TTL task.",
+        "The tenant-boundary rule remains current guidance, and the current action points to `src/cdn_purge.py` plus `tests/test_cdn_purge.py`.",
+        "Repeated error details are represented by a labeled historical reference to `logs/purge-run-history.log`, without copying raw stack frames into the handoff.",
+        "The handoff does not treat the earlier local TTL pass as proof that the CDN test passed.",
+        "outputs/result.json reports the existing feature-scoped handoff path and current next action."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use the handoff skill on the fixture repo in `evals/files/owner-action-fixture/`. Copy the repo to `outputs/repo/`. Update the existing feature-scoped handoff at `.agents/scratchpad/releases/handoff.md` using the current implementation and `session_notes.md`. The code and local unit tests are complete, but the workspace owner must enable `TENANT_PURGE_ENABLED` in the staging secret store and run the release smoke test. You have no access or authorization to change rollout settings or deploy. Update the status and next action to reflect the owner action, preserve the passing local test evidence, and state that staging proof is still unverified. Do not perform the owner action or claim the rollout is complete. Write `outputs/result.json` with `written_path`, `scope`, and `next_step`. Do not ask follow-up questions.",
+      "expected_output": "Updates the existing handoff to show implementation and local tests complete, keeps the rollout pending, and gives the owner action as the first safe next step. It preserves the boundary that no staging action occurred and clearly labels staging smoke-test proof as unverified.",
+      "files": [
+        "evals/files/owner-action-fixture/.agents/scratchpad/releases/handoff.md",
+        "evals/files/owner-action-fixture/session_notes.md",
+        "evals/files/owner-action-fixture/src/tenant_purge.py",
+        "evals/files/owner-action-fixture/tests/test_tenant_purge.py"
+      ],
+      "expectations": [
+        "outputs/repo/.agents/scratchpad/releases/handoff.md is updated in place.",
+        "The handoff distinguishes completed implementation and passing local tests from the pending staging rollout.",
+        "The next safe action is for the workspace owner to enable the staging flag and run the release smoke test.",
+        "The handoff preserves the access and authorization boundary around the owner-only action.",
+        "The handoff says staging verification is still unverified and does not claim deployment or rollout completion.",
+        "outputs/result.json reports the feature-scoped path and the owner action as the next step."
+      ],
+      "assertions": [
+        "outputs/repo/.agents/scratchpad/releases/handoff.md is updated in place.",
+        "The handoff distinguishes completed implementation and passing local tests from the pending staging rollout.",
+        "The next safe action is for the workspace owner to enable the staging flag and run the release smoke test.",
+        "The handoff preserves the access and authorization boundary around the owner-only action.",
+        "The handoff says staging verification is still unverified and does not claim deployment or rollout completion.",
+        "outputs/result.json reports the feature-scoped path and the owner action as the next step."
       ]
     }
   ]

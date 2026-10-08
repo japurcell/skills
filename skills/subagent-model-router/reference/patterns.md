@@ -1,57 +1,61 @@
 # Routing Patterns
 
-Use when examples help.
+These examples are non-authoritative. If they conflict with `SKILL.md`, [`review-routing.md`](review-routing.md), or [`escalation-policy.md`](escalation-policy.md), follow the authoritative rule.
 
-Use named defaults from [the catalog](model-catalog.md#task-defaults).
+## Reuse
 
-## Reuse vs fresh routing
-
-Reuse a route only when work class, stakes, ambiguity, touched areas, review history, and model constraints are unchanged.
-
-| Situation | Decision |
+| Situation | Route |
 | --- | --- |
-| Same deterministic fixture checks across workers | Route once as Fast; reuse. |
-| Similar reviews with same risk/model constraints | Route once; reuse while constraints match. |
-| Tests change to architecture analysis | Fresh route. |
-| Prior same-class review missed a bug | Fresh route; escalate one tier. |
+| Identical deterministic checks under unchanged constraints | Reuse a Fast route |
+| Reviews with unchanged scope, risk, behavior, history, and runtime constraints | Reuse the route |
+| Execution changes to architecture analysis | Route again |
+| A non-review task previously missed an important constraint | Route again and apply general escalation |
+| A similar review previously missed an important issue | Route again with a Premium floor |
+| Runtime model or effort availability changes | Route again |
 
-## Examples
+## Task examples
 
-| Request | Route |
+| Request | Tier |
 | --- | --- |
-| Run tests and summarize failures | Fast |
-| Search repo for token lifecycle code | Fast |
-| Format files or apply mechanical edits | Fast |
-| Edit connected files | Standard |
-| Debug multi-file behavior | Standard |
-| Debug auth/cache/concurrency interaction | Premium when security or subtle correctness is involved |
-| Review whitespace/comment-only single-file diff | Fast |
-| Review bounded ordinary feature PR | Standard + budget-review default |
-| Review backend + frontend PR | Standard + general-work default |
-| Review tests/guard logic | Standard; Premium if false-pass risk is subtle |
-| Review auth callback or redirect validation | Premium |
-| Run security audit | Premium |
+| Run tests and summarize explicit failures | Fast |
+| Search a repository for relevant code | Fast |
+| Apply formatting or a specified mechanical edit | Fast |
+| Rename a symbol mechanically across many files | Fast |
+| Change behavior across connected files | Standard |
+| Debug a multi-component interaction | Standard |
+| Analyze subtle authentication, cache, or concurrency risk | Premium |
+| Perform long-horizon autonomous work over a large codebase | Premium |
 
-## Availability fallback
+## Review examples
 
-When a model is unavailable:
-
-1. Keep the same tier if possible.
-2. Pick the next cheapest suitable model in that tier.
-3. Change tier only if no same-tier model fits or task requirements changed.
-4. Mention the availability-driven fallback.
-
-For review:
-
-- Preserve the review floor.
-- Do not fall back to the bounded-work default unless the review is single-file or style-only.
-- If the demanding-review default is unavailable, choose another Premium code/security reasoning model.
-
-## Token-shape examples
-
-| Request | Optimize for |
+| Request | Tier or default |
 | --- | --- |
-| Huge logs, short diagnosis | input cost |
-| Long proposal from short prompt | output cost |
-| Same repo context across subagents | actual cache reuse; budget uncached input if unconfirmed |
-| Reusable context on models charging cache writes | cache write + cached input |
+| Review whitespace, comments, or reproducible generated output | Fast |
+| Review a substantive one-file change | Standard |
+| Review an ordinary bounded feature change | Standard; budget-review default |
+| Review cross-component behavior | Standard; general-work default |
+| Review tests or guard logic | Standard |
+| Review security-sensitive false-pass behavior | Premium |
+| Review authentication, authorization, redirects, or trust boundaries | Premium |
+| Conduct a security audit | Premium |
+| Repeat a similar review after an important miss | Premium |
+
+## Failure examples
+
+| Situation | Response |
+| --- | --- |
+| Tests fail | Diagnose before escalating |
+| A dependency is missing | Fix or report the environment problem |
+| The selected configuration is unavailable | Reroute within the same tier; move higher only if no same-tier configuration qualifies |
+| Verification repeatedly exposes reasoning gaps | Apply the escalation policy |
+| A task becomes security-sensitive | Reclassify the floor as Premium |
+| Premium work still fails | Change Premium configuration, split the task, strengthen verification, or seek human review |
+
+## Cost examples
+
+| Request shape | Primary consideration |
+| --- | --- |
+| Large input, short answer | Input and context-threshold cost |
+| Short input, long answer | Output cost |
+| Reused context | Confirmed cache behavior and cache-write cost |
+| Likely retries | Expected retry and verification cost |

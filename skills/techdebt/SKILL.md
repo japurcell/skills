@@ -27,7 +27,7 @@ Build a shortlist of changed functions, classes, modules, tests, configs, script
 
 ## 3. Find duplication
 
-Activate or load the `explore` skill to spawn 1-3 `code-explorer` subagents scaled to scope size.
+Activate or load the `explore` skill to dispatch 1-3 `code-explorer` subagents scaled to scope size.
 
 Search shortlist items against relevant nearby/codebase patterns for:
 
@@ -66,13 +66,13 @@ Default to the top 1–3 safest candidates unless the user requested broader cle
 
 For each selected candidate:
 
-1. Launch one refactoring subagent.
+1. Dispatch one refactoring subagent.
 2. Refactoring subagent must:
    - make the smallest behavior-preserving change
    - reuse existing structure and conventions
    - avoid new top-level patterns if equivalent ones exist
    - activate or load the `tdd` skill only when tests must be added or changed
-3. Launch one validation subagent.
+3. Dispatch one validation subagent.
 4. Validation subagent runs relevant checks: tests, lint, type-check, build, or targeted commands.
 5. If validation fails, fix and revalidate; otherwise revert that candidate.
 

@@ -10,7 +10,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
 
 ## Core rules
 
-- Do not run the review yourself in the main thread. Spawning subagents preserves your context window from large diff files and runs deep specialist logic.
+- Do not run the review yourself in the main thread. Dispatching subagents preserves your context window from large diff files and runs deep specialist logic.
 - Do not expand scope beyond the requested PR, diff, commit range, branch, or local changes.
 - If the review target is unclear, ask one clarifying question and stop.
 - Do not run builds, tests, linters, typechecks, benchmarks, or broad validation unless asked.
@@ -52,7 +52,7 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - If none exists, record `no spec available` and skip spec compliance review.
 
 7. **Review**
-   Spawn parallel subagents concurrently in a single turn (do NOT run them sequentially across multiple turns) using available catalog names as the `agent_type`:
+   Dispatch parallel subagents concurrently in a single turn (do NOT run them sequentially across multiple turns) using available catalog names as the `agent_type`:
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries. The subagent prompt should require activating the `addy-code-review-and-quality` skill.
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface. The subagent prompt should require activating the `addy-security-and-hardening` skill.
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior

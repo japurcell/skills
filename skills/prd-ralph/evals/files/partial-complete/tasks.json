@@ -1,0 +1,50 @@
+{
+  "project": "Private install",
+  "branchName": "verify-refusal",
+  "description": "Verify current contract",
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Record refusal decision",
+      "passes": true,
+      "priority": 2,
+      "notes": "No-write refusal and metadata preservation required. Owner deployment is excluded."
+    },
+    {
+      "id": "T002",
+      "parentStoryId": "US-001",
+      "title": "Verify refusal contract",
+      "description": "Review inline current refusal contract and document reproducible evidence in progress without product edits.",
+      "acceptanceCriteria": [
+        "No-write refusal and preserved metadata guarantees are confirmed from current evidence."
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": true,
+      "notes": "",
+      "dependsOn": [
+        "T001"
+      ],
+      "sourceRefs": [
+        {
+          "path": null,
+          "section": null,
+          "requirements": [
+            "REQ-REFUSAL"
+          ],
+          "content": "REQ-REFUSAL: Conflicting destination refuses before writes and preserves metadata."
+        }
+      ],
+      "requiredContext": [
+        {
+          "path": null,
+          "section": null,
+          "purpose": "Carry prerequisite guarantee into verification.",
+          "content": "Owner-controlled deployment remains out of scope. Current inspection evidence shows refusal before writes and unchanged metadata."
+        }
+      ],
+      "taskType": "verification"
+    }
+  ]
+}

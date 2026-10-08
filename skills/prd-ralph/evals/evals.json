@@ -1,0 +1,70 @@
+{
+  "skill_name": "prd-ralph",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "In a disposable Git sandbox, apply prd-ralph to a copy of evals/files/enriched/tasks.json; never edit source fixtures. Use a separate progress file. commit=false. Use inline source/context and current supplied evidence; complete only T002 with real manual evidence and zero-session-commit audit. All tasks then complete. Save final response, copied manifest, progress, and Git audit evidence under outputs/.",
+      "expected_output": "Consumes complete enriched context, prerequisite prose, typecheck non-applicability, and records per-check evidence; exact COMPLETE only after gates.",
+      "files": [
+        "evals/files/enriched/tasks.json"
+      ],
+      "assertions": [
+        "Consumes complete enriched context, prerequisite prose, typecheck non-applicability, and records per-check evidence; exact COMPLETE only after gates.",
+        "Preserves owner/user scope and performs at most one selected task.",
+        "No invented checks or fabricated completion evidence."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "In a disposable Git sandbox, apply prd-ralph to a copy of evals/files/partial-complete/tasks.json; never edit source fixtures. Use a separate progress file. commit=false. Every pass flag is true but verification is missing. Save final response, copied manifest, progress, and Git audit evidence under outputs/.",
+      "expected_output": "BLOCKED before all-true shortcut; preserves existing pass flags and identifies partial enriched record.",
+      "files": [
+        "evals/files/partial-complete/tasks.json"
+      ],
+      "assertions": [
+        "BLOCKED before all-true shortcut; preserves existing pass flags and identifies partial enriched record.",
+        "Preserves owner/user scope and performs at most one selected task.",
+        "No invented checks or fabricated completion evidence."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "In a disposable Git sandbox, apply prd-ralph to a copy of evals/files/unresolved/tasks.json; never edit source fixtures. Use a separate progress file. commit=false. Do not fabricate missing current evidence or obtain owner access. Save final response, copied manifest, progress, and Git audit evidence under outputs/.",
+      "expected_output": "BLOCKED with unresolved check ID/reason and no pass or commit.",
+      "files": [
+        "evals/files/unresolved/tasks.json"
+      ],
+      "assertions": [
+        "BLOCKED with unresolved check ID/reason and no pass or commit.",
+        "Preserves owner/user scope and performs at most one selected task.",
+        "No invented checks or fabricated completion evidence."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "In a disposable Git sandbox, apply prd-ralph to a copy of evals/files/enriched/tasks.json; never edit source fixtures. Use a separate progress file. Default commit mode is enabled. This is read-only evidence review and no real durable output is authorized. Do not fabricate changes. Save final response, copied manifest, progress, and Git audit evidence under outputs/.",
+      "expected_output": "BLOCKED for no committable scoped changes; no empty commit and no silent commit disable.",
+      "files": [
+        "evals/files/enriched/tasks.json"
+      ],
+      "assertions": [
+        "BLOCKED for no committable scoped changes; no empty commit and no silent commit disable.",
+        "Preserves owner/user scope and performs at most one selected task.",
+        "No invented checks or fabricated completion evidence."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "In a disposable Git sandbox, prepare a copy of evals/files/enriched/tasks.json; never edit source fixtures. For setup only, set T002.passes=true and record supplied historical evidence that the existing inspection record satisfied the original contract-review check. Then add REQ-INVENTORY to T002's inline source and acceptance: the supplied metadata must agree with an independent inventory. Add a verification record with id=inventory-review, kind=manual, applicability=required, command=null, workingDirectory=., expected=Compare the independent inventory with the recorded metadata and retain the comparison evidence, reason=REQ-INVENTORY requires independent corroboration. No inventory or evidence for this new check is available. Keep both pass flags true deliberately. Now activate the `prd-ralph` skill on this copied manifest with commit=false and a separate progress file. Save final response, copied manifest and Git audit evidence under outputs/.",
+      "expected_output": "BLOCKED before the all-true shortcut because inventory-review lacks evidence for the current contract. Preserve both input pass flags and historical notes; identify T002 as needing reconciliation.",
+      "files": [
+        "evals/files/enriched/tasks.json"
+      ],
+      "assertions": [
+        "A structurally complete all-true manifest with newly required unverified acceptance is BLOCKED rather than COMPLETE.",
+        "The blocker identifies T002 and inventory-review without rewriting input completion flags or historical evidence.",
+        "No invented inventory, fabricated verification or session commit."
+      ]
+    }
+  ]
+}
