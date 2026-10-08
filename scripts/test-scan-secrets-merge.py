@@ -80,7 +80,8 @@ class MergeScannerTests(unittest.TestCase):
         self.assertTrue((self.repo / ".git/MERGE_HEAD").exists(), "fixture must have an active merge")
         self.assertTrue(self.git("ls-files", "--unmerged").stdout, "fixture must have unresolved paths")
 
-    def scan(self, provider: str, mode: str = "block", scope: str = "diff") -> tuple[dict, dict]:
+    def scan(self, provider: str, mode: str = "block", scope: str = "diff",
+             *, stop: bool = False) -> tuple[dict, dict]:
         log_dir = self.root / f"logs-{provider}-{mode}-{scope}"
         log_dir.mkdir(exist_ok=True)
         env = {**self.env, "SCAN_MODE": mode, "SCAN_SCOPE": scope,
@@ -94,6 +95,10 @@ class MergeScannerTests(unittest.TestCase):
                        "hook_event_name": "BeforeTool" if provider == "gemini" else "PreToolUse",
                        "tool_name": "run_shell_command" if provider == "gemini" else "exec_command",
                        "tool_input": {"command": "git status"}}
+        if stop:
+            payload["hook_event_name"] = {
+                "copilot": "agentStop", "gemini": "SessionEnd", "codex": "Stop",
+            }[provider]
         result = subprocess.run(
             [sys.executable, "-I", "-S", "-B", str(HOOKS[provider])],
             cwd=self.repo, env=env, input=json.dumps(payload), text=True, capture_output=True, timeout=12,
@@ -145,6 +150,349 @@ class MergeScannerTests(unittest.TestCase):
                 for scope in ("diff", "staged"):
                     with self.subTest(provider=provider, mode=mode, scope=scope):
                         self.assert_outcome(provider, mode, scope, status, finding_path)
+
+    def large_resolved_merge(self) -> None:
+        self.write_files({f"file-{index:03}.txt": "baseline\n" for index in range(250)})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "base")
+        self.git("checkout", "-qb", "other")
+        self.write_files({f"file-{index:03}.txt": f"safe merged content {index}\n" * 128
+                          for index in range(250)})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "incoming changes")
+        self.git("checkout", "-q", "main")
+        self.write_files({"README.md": "independent local change\n"})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "local change")
+        self.git("merge", "--no-commit", "other")
+        self.assertTrue((self.repo / ".git/MERGE_HEAD").exists())
+        self.assertEqual(self.git("ls-files", "--unmerged").stdout, "")
+
+    def test_large_resolved_merge_allows_session_end(self) -> None:
+        self.large_resolved_merge()
+        for provider in PROVIDERS:
+            with self.subTest(provider=provider):
+                response, record = self.scan(provider, stop=True)
+                expected = ({"systemMessage": "scan-secrets: pass; 250 modified files"}
+                            if provider == "codex" else {})
+                self.assertEqual(response, expected)
+                self.assertEqual(record["status"], "clean")
+
+    def test_large_resolved_merge_detects_secret_in_final_path(self) -> None:
+        self.large_resolved_merge()
+        self.write_files({"file-249.txt": f"fake_token={FAKE_TOKEN}\n"})
+        self.git("add", "--all")
+        for provider in PROVIDERS:
+            with self.subTest(provider=provider):
+                response, record = self.scan(provider, stop=True)
+                self.assertEqual(record["status"], "findings")
+                self.assertIn("potential secrets detected.", json.dumps(response))
+                self.assertTrue(any(finding["pattern"] == "github_classic_pat"
+                                    and finding["path"] == "file-249.txt"
+                                    for finding in record["findings"]))
+
+    def stage_pair(self, contents: dict[str, str]) -> None:
+        self.write_files({name: "baseline\n" for name in contents})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "base")
+        self.write_files(contents)
+        self.git("add", "--all")
+
+    def test_pre_238_git_allows_clean_index_and_detects_staged_secret(self) -> None:
+        fake_bin = self.root / "old-git-bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args == ['cat-file', '--batch-check', '-z']:\n"
+            "    sys.stderr.write('error: unknown switch z\\n')\n"
+            "    sys.exit(129)\n"
+            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
+                        REAL_GIT=str(self.git_path))
+        path = "line\nbreak\tname.txt"
+        self.stage_pair({path: "safe changed content\n", ":0:notes.txt": "safe\n"})
+        self.assert_all_scans("clean")
+        self.write_files({path: f"fake_token={FAKE_TOKEN}\n"})
+        self.git("add", "--all")
+        self.assert_all_scans("findings", path)
+
+    def test_batch_paths_preserve_newlines_tabs_and_colons(self) -> None:
+        # Constructing the index references must never treat path delimiters as
+        # separate requests. The leading colon is an ordinary filename byte.
+        path = "line\nbreak\tname.txt"
+        self.stage_pair({path: f"fake_token={FAKE_TOKEN}\n", ":0:notes.txt": "safe\n"})
+        self.assert_all_scans("findings", path)
+
+    def test_batch_long_paths_fit_bounded_git_command_lines(self) -> None:
+        contents = {f"entry-{index:03}-" + "x" * 190 + ".txt": "safe changed content\n"
+                    for index in range(256)}
+        self.stage_pair(contents)
+        fake_bin = self.root / "argv-bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args[:5] == ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']:\n"
+            "    if sum(len(os.fsencode(path)) * 2 + 3 for path in args[5:]) > 8192:\n"
+            "        sys.stderr.write('command line exceeds fixture limit\\n')\n"
+            "        sys.exit(129)\n"
+            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
+                        REAL_GIT=str(self.git_path))
+        self.assert_all_scans("clean")
+        last_path = sorted(contents)[-1]
+        self.write_files({last_path: f"fake_token={FAKE_TOKEN}\n"})
+        self.git("add", "--all")
+        self.assert_all_scans("findings", last_path)
+
+    def directory_file_batch_merge(self, secret_source: str | None = None) -> None:
+        # These 16 names put the unresolved parent at the end of the first
+        # argument batch, while its staged child belongs to the next batch.
+        filler = {f"a-{index:02}-" + "x" * 248: "baseline\n" for index in range(16)}
+        self.write_files({"zconflict": "base\n", **filler})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "base")
+        self.git("branch", "other")
+        parent = f"fake_token={FAKE_TOKEN}\n" if secret_source == "parent" else "ours\n"
+        self.write_files({"zconflict": parent})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "ours")
+        self.git("checkout", "-q", "other")
+        self.write_files({"zconflict": None})
+        child = f"fake_token={FAKE_TOKEN}\n" if secret_source == "child" else "theirs\n"
+        self.write_files({"zconflict/child": child,
+                          **{name: "safe changed\n" for name in filler}})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "theirs")
+        self.git("checkout", "-q", "main")
+        self.git("merge", "-s", "resolve", "--no-commit", "other", expected=1)
+        self.assertTrue((self.repo / ".git/MERGE_HEAD").exists())
+        self.assertTrue(self.git("ls-files", "--unmerged").stdout)
+        self.assertTrue((self.repo / "zconflict").is_dir())
+
+    def test_directory_file_batch_allows_staged_and_keeps_diff_incomplete(self) -> None:
+        self.directory_file_batch_merge()
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                with self.subTest(provider=provider, mode=mode, scope="staged"):
+                    self.assert_outcome(provider, mode, "staged", "clean")
+                with self.subTest(provider=provider, mode=mode, scope="diff"):
+                    self.assert_outcome(provider, mode, "diff", "incomplete")
+
+    def test_directory_file_batch_detects_parent_snapshot_secret(self) -> None:
+        self.directory_file_batch_merge("parent")
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                with self.subTest(provider=provider, mode=mode):
+                    self.assert_outcome(provider, mode, "staged", "findings", "zconflict")
+
+    def test_directory_file_batch_detects_child_snapshot_secret(self) -> None:
+        self.directory_file_batch_merge("child")
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                with self.subTest(provider=provider, mode=mode):
+                    self.assert_outcome(provider, mode, "staged", "findings", "zconflict/child")
+
+    def test_directory_file_batch_validates_unselected_descendant_records(self) -> None:
+        self.directory_file_batch_merge()
+        fake_bin = self.root / "prefix-bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if (args[:5] != ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']\n"
+            "        or 'zconflict' not in args[5:]):\n"
+            "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args],\n"
+            "                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)\n"
+            "output = result.stdout\n"
+            "header = output.split(b'\\t', 1)[0]\n"
+            "path = b'zconflict/unchanged'\n"
+            "fault = os.environ['PREFIX_FAULT']\n"
+            "if fault == 'malformed-object':\n"
+            "    header = b'100644 not-an-object 0'\n"
+            "elif fault == 'invalid-stage':\n"
+            "    header = header.rsplit(b' ', 1)[0] + b' 4'\n"
+            "elif fault == 'escaping-descendant':\n"
+            "    path = b'zconflict/../private-outside'\n"
+            "elif fault == 'dot-component':\n"
+            "    path = b'zconflict/./private-outside'\n"
+            "elif fault == 'empty-component':\n"
+            "    path = b'zconflict//private-outside'\n"
+            "elif fault == 'sibling-prefix':\n"
+            "    path = b'zconflict-sibling/private-outside'\n"
+            "sys.stdout.buffer.write(output + header + b'\\t' + path + b'\\0')\n"
+            "sys.exit(result.returncode)\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
+                        REAL_GIT=str(self.git_path))
+        for fault in ("valid-descendant", "malformed-object", "invalid-stage",
+                      "escaping-descendant", "dot-component", "empty-component", "sibling-prefix"):
+            self.env["PREFIX_FAULT"] = fault
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    with self.subTest(fault=fault, provider=provider, mode=mode):
+                        self.assert_outcome(provider, mode, "staged",
+                                            "clean" if fault == "valid-descendant" else "incomplete")
+        all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
+        self.assertNotIn(b"not-an-object", all_logs)
+        self.assertNotIn(b"private-outside", all_logs)
+
+    def test_batch_keeps_staged_secret_when_worktree_matches_head(self) -> None:
+        self.stage_pair({"hidden.txt": f"fake_token={FAKE_TOKEN}\n", "safe.txt": "safe\n"})
+        self.write_files({"hidden.txt": "baseline\n"})
+        self.assert_all_scans("findings", "hidden.txt")
+
+    def test_batch_diff_ignores_unchanged_secrets(self) -> None:
+        self.write_files({name: f"fake_token={FAKE_TOKEN}\nbaseline\n"
+                          for name in ("first.txt", "second.txt")})
+        self.git("add", "--all")
+        self.git("commit", "-qm", "historical fixture")
+        self.write_files({name: f"fake_token={FAKE_TOKEN}\nsafe change\n"
+                          for name in ("first.txt", "second.txt")})
+        self.git("add", "--all")
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                with self.subTest(provider=provider, mode=mode):
+                    self.assert_outcome(provider, mode, "diff", "clean")
+                    self.assert_outcome(provider, mode, "staged", "findings", "first.txt")
+
+    def test_batch_at_total_byte_limit_allows_framing_overhead(self) -> None:
+        self.stage_pair({f"file-{index}.txt": "safe\n" + "x" * (1048576 - 5)
+                         for index in range(8)})
+        self.assert_all_scans("clean")
+
+    def test_batch_binary_and_empty_blobs_keep_content_boundaries(self) -> None:
+        self.stage_pair({"empty.txt": "", "binary.bin": f"\0fake_token={FAKE_TOKEN}\0"})
+        self.assert_all_scans("findings", "binary.bin")
+
+    def test_batch_corrupt_git_responses_remain_incomplete(self) -> None:
+        self.stage_pair({"first.txt": "first changed\n", "second.txt": "second changed\n"})
+        fake_bin = self.root / "bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args not in (['cat-file', '--batch-check'], ['cat-file', '--batch']):\n"
+            "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args], input=sys.stdin.buffer.read(),\n"
+            "                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)\n"
+            "output = result.stdout\n"
+            "fault = os.environ['BATCH_FAULT']\n"
+            "metadata = '--batch-check' in args\n"
+            "if fault == 'missing-object' and metadata:\n"
+            "    output = b'private missing object\\n'\n"
+            "elif fault == 'wrong-type' and metadata:\n"
+            "    output = output.replace(b' blob ', b' tree ', 1)\n"
+            "elif fault == 'invalid-size' and metadata:\n"
+            "    output = output.split(b'\\n', 1)[0].rsplit(b' ', 1)[0] + b' -1\\n'\n"
+            "elif fault == 'extra-metadata' and metadata:\n"
+            "    output += output.split(b'\\n', 1)[0] + b'\\n'\n"
+            "elif fault == 'wrong-metadata-object' and metadata:\n"
+            "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
+            "elif fault == 'oversized-blob' and metadata:\n"
+            "    first, rest = output.split(b'\\n', 1)\n"
+            "    output = first.rsplit(b' ', 1)[0] + b' 1048577\\n' + rest\n"
+            "elif fault == 'truncated' and not metadata:\n"
+            "    output = output[:-1]\n"
+            "elif fault == 'extra-content' and not metadata:\n"
+            "    output += b'private unexpected content'\n"
+            "elif fault == 'wrong-object' and not metadata:\n"
+            "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
+            "elif fault == 'bad-separator' and not metadata:\n"
+            "    output = output[:-1] + b'x'\n"
+            "elif fault == 'nonzero' and not metadata:\n"
+            "    sys.exit(9)\n"
+            "sys.stdout.buffer.write(output)\n"
+            "sys.exit(result.returncode)\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"], REAL_GIT=str(self.git_path))
+        for fault in ("missing-object", "wrong-type", "invalid-size", "extra-metadata",
+                      "wrong-metadata-object",
+                      "oversized-blob", "truncated", "extra-content", "wrong-object",
+                      "bad-separator", "nonzero"):
+            self.env["BATCH_FAULT"] = fault
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    with self.subTest(fault=fault, provider=provider, mode=mode):
+                        self.assert_outcome(provider, mode, "diff", "incomplete")
+        all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
+        self.assertNotIn(b"private missing object", all_logs)
+        self.assertNotIn(b"private unexpected content", all_logs)
+
+    def test_batch_corrupt_index_resolution_remains_incomplete(self) -> None:
+        self.stage_pair({"first.txt": "first changed\n", "second.txt": "second changed\n"})
+        fake_bin = self.root / "index-bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args[:5] != ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']:\n"
+            "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args],\n"
+            "                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)\n"
+            "output = result.stdout\n"
+            "records = output[:-1].split(b'\\0')\n"
+            "fault = os.environ['INDEX_FAULT']\n"
+            "if fault == 'truncated':\n"
+            "    output = output[:-1]\n"
+            "elif fault == 'missing':\n"
+            "    output = records[0] + b'\\0'\n"
+            "elif fault == 'duplicate':\n"
+            "    output += records[0] + b'\\0'\n"
+            "elif fault == 'empty-record':\n"
+            "    output += b'\\0'\n"
+            "elif fault == 'invalid-object':\n"
+            "    fields = records[0].split(b' ', 2)\n"
+            "    records[0] = fields[0] + b' not-an-object ' + fields[2]\n"
+            "    output = b'\\0'.join(records) + b'\\0'\n"
+            "elif fault == 'invalid-stage':\n"
+            "    output = output.replace(b' 0\\t', b' 4\\t', 1)\n"
+            "elif fault == 'unexpected-stage':\n"
+            "    output = output.replace(b' 0\\t', b' 2\\t', 1)\n"
+            "elif fault == 'unexpected-path':\n"
+            "    header, _ = records[0].split(b'\\t', 1)\n"
+            "    records[0] = header + b'\\tprivate unrequested path'\n"
+            "    output = b'\\0'.join(records) + b'\\0'\n"
+            "elif fault == 'nonzero':\n"
+            "    sys.exit(9)\n"
+            "sys.stdout.buffer.write(output)\n"
+            "sys.exit(result.returncode)\n",
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
+                        REAL_GIT=str(self.git_path))
+        for fault in ("truncated", "missing", "duplicate", "empty-record", "invalid-object",
+                      "invalid-stage", "unexpected-stage", "unexpected-path", "nonzero"):
+            self.env["INDEX_FAULT"] = fault
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    with self.subTest(fault=fault, provider=provider, mode=mode):
+                        self.assert_outcome(provider, mode, "diff", "incomplete")
+        all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
+        self.assertNotIn(b"private unrequested path", all_logs)
 
     def test_clean_content_and_modify_delete_merge_allows_tool(self) -> None:
         self.merge(

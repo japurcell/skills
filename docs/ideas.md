@@ -42,5 +42,7 @@ Use this file as a lightweight inbox for ideas that are not ready for research o
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>
   - validation pipeline: <https://github.com/kunchenguid/no-mistakes>
   - [Super Simple Software Factory](https://github.com/disler/super-simple-software-factory)
+  - [Noodle](https://github.com/poteto/noodle)
+  - [Plugins](https://github.com/poteto/plugins)
 
 - [ ] Look at migrating agent kb/memory to nested AGENTS.md files like [https://github.com/lopopolo/harness-engineering](https://github.com/lopopolo/harness-engineering)

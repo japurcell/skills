@@ -2,6 +2,7 @@
 # Generated from hooks/families/scan_secrets.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -152,6 +153,7 @@ def run_git(
     text: bool = True,
     allow_nonzero: bool = False,
     deadline: float | None = None,
+    input_bytes: bytes | None = None,
 ) -> str | bytes | None:
     import subprocess
 
@@ -173,6 +175,7 @@ def run_git(
     popen_options: dict[str, object] = {
         "cwd": str(cwd),
         "env": env,
+        "stdin": subprocess.DEVNULL,
         "stderr": subprocess.DEVNULL,
     }
     if os.name == "posix":
@@ -181,7 +184,15 @@ def run_git(
         popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
     try:
-        with tempfile.TemporaryFile(mode="w+b") as capture:
+        with contextlib.ExitStack() as resources:
+            capture = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+            if input_bytes is not None:
+                if len(input_bytes) > MAX_GIT_OUTPUT_BYTES:
+                    raise ScanLimitExceeded("Git input exceeds the scanner limit")
+                request = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+                request.write(input_bytes)
+                request.seek(0)
+                popen_options["stdin"] = request
             process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
             observed_descendants: list[int] = []
             try:
@@ -672,6 +683,134 @@ def read_candidate_bytes(
         return output
 
     return _read_worktree_candidate(root, path, allow_missing=source == CANDIDATE_UNMERGED_WORKTREE)
+
+
+def read_index_candidates(
+    root: Path, candidates: list[tuple[str, str]], *, deadline: float | None = None,
+) -> dict[tuple[str, str], bytes]:
+    index_candidates = [candidate for candidate in candidates
+                        if candidate[0] == CANDIDATE_STAGED
+                        or candidate[0] in CANDIDATE_UNMERGED_STAGES]
+    if not index_candidates:
+        return {}
+    if len(index_candidates) == 1:
+        source, path = index_candidates[0]
+        content = read_candidate_bytes(root, path, source, deadline=deadline)
+        if content is None:
+            raise GitCommandError("Git returned invalid staged content")
+        return {(source, path): content}
+
+    paths: list[str] = []
+    for source, path in index_candidates:
+        _validate_candidate_parts(path)
+        if path not in paths:
+            paths.append(path)
+    resolved: dict[tuple[str, str], bytes] = {}
+    expected_candidates = set(index_candidates)
+    cursor = 0
+    while cursor < len(paths):
+        start = cursor
+        argument_bytes = 0
+        while cursor < len(paths):
+            # Allow for Windows quoting/escaping and separators as well as
+            # POSIX encoded arguments. Keep long path lists below argv limits.
+            path_bytes = len(os.fsencode(paths[cursor])) * 2 + 3
+            if cursor > start and argument_bytes + path_bytes > 8192:
+                break
+            argument_bytes += path_bytes
+            cursor += 1
+        batch_paths = paths[start:cursor]
+        index_output = run_git(
+            ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", *batch_paths],
+            cwd=root, text=False, deadline=deadline,
+        )
+        if not isinstance(index_output, bytes) or not index_output.endswith(b"\0"):
+            raise GitCommandError("Git returned malformed index entries")
+        for record in index_output[:-1].split(b"\0"):
+            enforce_deadline(deadline)
+            header, separator, raw_path = record.partition(b"\t")
+            match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
+            if not separator or not raw_path or match is None:
+                raise GitCommandError("Git returned malformed index entries")
+            path = os.fsdecode(raw_path)
+            if "/".join(_validate_candidate_parts(path)) != path:
+                raise GitCommandError("Git returned malformed index paths")
+            if path not in batch_paths:
+                # Literal pathspecs still expand directory prefixes. Resolve a
+                # descendant only when its own exact path is selected, so it
+                # cannot be counted twice when it belongs to a later batch.
+                if any(path.startswith(parent + "/") for parent in batch_paths):
+                    continue
+                raise GitCommandError("Git returned unexpected index entries")
+            stage = int(match.group(2))
+            source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
+            candidate = (source, path)
+            if candidate not in expected_candidates or candidate in resolved:
+                raise GitCommandError("Git returned unexpected index entries")
+            resolved[candidate] = match.group(1)
+    if len(resolved) != len(index_candidates):
+        raise GitCommandError("Git returned incomplete index entries")
+
+    # Only object IDs enter the line-delimited batch protocol, so filenames with
+    # delimiters stay safe without the NUL batch-input option added in Git 2.38.
+    metadata = run_git(
+        ["cat-file", "--batch-check"], cwd=root, text=False,
+        input_bytes=b"".join(resolved[candidate] + b"\n" for candidate in index_candidates),
+        deadline=deadline,
+    )
+    if not isinstance(metadata, bytes) or not metadata.endswith(b"\n"):
+        raise GitCommandError("Git returned malformed index metadata")
+    headers = metadata[:-1].split(b"\n")
+    if len(headers) != len(index_candidates):
+        raise GitCommandError("Git returned incomplete index metadata")
+
+    # Resolve and bound every snapshot before requesting content. Use immutable
+    # object IDs for the second call, so index edits cannot change these reads.
+    objects: list[tuple[tuple[str, str], bytes, int, bytes]] = []
+    total_bytes = 0
+    for candidate, header in zip(index_candidates, headers):
+        enforce_deadline(deadline)
+        match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) blob ([0-9]+)", header)
+        if match is None or match.group(1) != resolved[candidate]:
+            raise GitCommandError("Git returned malformed index metadata")
+        size = int(match.group(2))
+        if size > MAX_FILE_BYTES:
+            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+        total_bytes += size
+        if total_bytes > MAX_TOTAL_BYTES:
+            raise ScanLimitExceeded("secret scan exceeds the total-byte limit")
+        objects.append((candidate, match.group(1), size, header + b"\n"))
+
+    contents: dict[tuple[str, str], bytes] = {}
+    cursor = 0
+    while cursor < len(objects):
+        start = cursor
+        capture_bytes = 0
+        while cursor < len(objects):
+            _, _, size, header = objects[cursor]
+            framed_size = len(header) + size + 1
+            if capture_bytes + framed_size > MAX_GIT_OUTPUT_BYTES:
+                break
+            capture_bytes += framed_size
+            cursor += 1
+        batch = objects[start:cursor]
+        output = run_git(
+            ["cat-file", "--batch"], cwd=root, text=False,
+            input_bytes=b"".join(oid + b"\n" for _, oid, _, _ in batch), deadline=deadline,
+        )
+        if not isinstance(output, bytes) or len(output) != capture_bytes:
+            raise GitCommandError("Git returned invalid staged content")
+        offset = 0
+        for candidate, _, size, header in batch:
+            if output[offset:offset + len(header)] != header:
+                raise GitCommandError("Git returned mismatched staged content")
+            offset += len(header)
+            end = offset + size
+            if output[end:end + 1] != b"\n":
+                raise GitCommandError("Git returned malformed staged content")
+            contents[candidate] = output[offset:end]
+            offset = end + 1
+    return contents
 
 
 def is_env_path(path: str) -> bool:
@@ -1273,10 +1412,14 @@ def main() -> int:
     processed_findings = 0
     stop_scanning = False
     total_bytes = 0
+    index_contents = read_index_candidates(root, candidates, deadline=scan_deadline)
 
     for source, path in candidates:
         enforce_scan_budget(scan_started, total_bytes)
-        raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
+        if (source, path) in index_contents:
+            raw_bytes = index_contents.pop((source, path))
+        else:
+            raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
         if raw_bytes is None:
             continue
         total_bytes += len(raw_bytes)
