@@ -44,6 +44,7 @@ SUITES = (
     ("python3", "scripts/test-generate-hooks.py"),
     ("python3", "scripts/test-rtk-stable.py"),
     ("python3", "scripts/test-security-banners.py"),
+    ("python3", "scripts/test-scan-secrets-merge.py"),
     ("python3", "scripts/test-tool-guard-false-positives.py"),
     ("python3", "scripts/test-tool-guard-native-data.py"),
     ("python3", "scripts/test-tool-guard-shell-data.py"),

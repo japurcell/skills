@@ -7,7 +7,7 @@ description: Select source suites for hook runtime and registration changes; liv
 
 ## Repo checks
 
-For generated hook changes, run `rtk proxy python3 scripts/generate-hooks.py --check` before and after the affected suites, plus `rtk proxy python3 scripts/test-generate-hooks.py`. Use `--write` only to refresh manifest-owned output. Keep generator and installer fixture mutations serialized.
+For generated hook changes, run `rtk proxy python3 scripts/generate-hooks.py --check` before and after the affected suites, plus `rtk proxy python3 scripts/test-generate-hooks.py`. Use `--write` only to refresh manifest-owned output. Keep generator and installer fixture mutations serialized. Pause all repository edits during the generator suite: its read-only assertions compare whole-checkout snapshots, including unrelated files.
 
 Select the affected provider and behavior; do not run every row for a documentation-only change:
 

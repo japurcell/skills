@@ -758,15 +758,18 @@ class GenerateHooksTests(unittest.TestCase):
                 with mock.patch.object(
                     module,
                     "run_git",
-                    side_effect=(cached_output, worktree_output, untracked_output),
+                    side_effect=(b"", cached_output, worktree_output, untracked_output),
                 ) as run:
                     self.assertEqual(
                         module.collect_files(ROOT, "diff", True),
                         expected_candidates,
                     )
-                cached_args = run.call_args_list[0].args[0]
-                worktree_args = run.call_args_list[1].args[0]
-                ls_args = run.call_args_list[2].args[0]
+                unmerged_args = run.call_args_list[0].args[0]
+                cached_args = run.call_args_list[1].args[0]
+                worktree_args = run.call_args_list[2].args[0]
+                ls_args = run.call_args_list[3].args[0]
+                self.assertIn("--unmerged", unmerged_args)
+                self.assertIn("-z", unmerged_args)
                 self.assertIn("-z", cached_args)
                 self.assertIn("--cached", cached_args)
                 self.assertIn("HEAD", cached_args)
@@ -858,7 +861,7 @@ class GenerateHooksTests(unittest.TestCase):
                 with mock.patch.object(
                     module,
                     "run_git",
-                    side_effect=(too_many_paths, b"", b""),
+                    side_effect=(b"", too_many_paths, b"", b""),
                 ):
                     with self.assertRaises(module.ScanLimitExceeded):
                         module.collect_files(ROOT, "diff", True)

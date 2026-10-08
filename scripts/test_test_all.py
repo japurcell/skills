@@ -108,6 +108,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-probe-provider-hook-delivery.py")
         expected.add("scripts/test-rtk-stable.py")
         expected.add("scripts/test-security-banners.py")
+        expected.add("scripts/test-scan-secrets-merge.py")
         expected.add("scripts/test-tool-guard-false-positives.py")
         expected.add("scripts/test-tool-guard-native-data.py")
         expected.add("scripts/test-tool-guard-shell-data.py")
