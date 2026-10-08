@@ -82,6 +82,14 @@ RTK_TARGETS = (
     ".copilot/hooks/scripts/rtk-hook-copilot.py",
     ".gemini/hooks/scripts/rtk-hook-gemini.py",
 )
+OKF_TARGETS = (
+    ".github/hooks/scripts/helpers/okf_audit.py",
+    ".gemini/hooks/scripts/helpers/okf_audit.py",
+    ".codex/hooks/helpers/okf_audit.py",
+    ".github/hooks/scripts/helpers/okf.py",
+    ".gemini/hooks/scripts/helpers/okf.py",
+    ".codex/hooks/helpers/okf.py",
+)
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
     ('_truthy_env("COPILOT_OBSERVABILITY_DISABLE", "OBSERVABILITY_DISABLE")',
@@ -100,12 +108,12 @@ OBSERVABILITY_ALLOWED_DIFFERENCES = (
      'os.environ.get("GEMINI_OBSERVABILITY_SOURCE_EVENT_NAME")'),
 )
 COMMON_AUDIT_TARGETS = {
-    ".copilot/hooks/scripts/helpers/common.py": "ce024e0062ba449229b2ca2f79b44f5409f0df5e40764fafa81ad98efc27ac3f",
-    ".gemini/hooks/scripts/helpers/common.py": "9e67b30751c3fbae8716a2fbb7bd544dfb213b7fcd285999c6f4651b17662e44",
-    ".github/hooks/scripts/helpers/common.py": "6efd2a563b2e8012fe0e8c813630c94a50d3ed5f8cc6cb7c6507c8771dc357be",
-    ".copilot/hooks/scripts/helpers/audit.py": "ffe27670de493f4d07285093927ea1a9bc06b2096941c3f6d52277447407edeb",
-    ".gemini/hooks/scripts/helpers/audit.py": "6a5f20c4af7c4e9eeb7d187c0e24d1e340f15d82634f3de96ddbb2d79e1fcaa5",
-    ".github/hooks/scripts/helpers/audit.py": "4b8fa5f1cfce5b948c3ef54230fa1ead4a5c7ebb6ea125dd45222b9968f403a9",
+    ".copilot/hooks/scripts/helpers/common.py": "92c25ee29b350875b58959fa74fc7a3742736e348d9e94e438cf77acf64c115d",
+    ".gemini/hooks/scripts/helpers/common.py": "4686fb77389cf579febd805cfe670aa0f5451cb37dfbb5e40433c38864aa8d1b",
+    ".github/hooks/scripts/helpers/common.py": "92e1efbc2573c79c42103cf063f0e596841c5b0ffabb743b2a6a4d4f2e67fc6c",
+    ".copilot/hooks/scripts/helpers/audit.py": "042d556890bea3596780d8e6f0ec162d71d242fdd2be32604123534961e7dc6b",
+    ".gemini/hooks/scripts/helpers/audit.py": "a423db01bbf25bc7434299f3062a3e6ee40daac82e7a17f64e53e89036ab01fc",
+    ".github/hooks/scripts/helpers/audit.py": "4e4a18539d107c2358d0976adffa6faf602c9421b5b99da52c944cfee87b60f4",
 }
 
 
@@ -259,7 +267,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (29 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (35 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -300,7 +308,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (29 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (35 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -319,14 +327,14 @@ class GenerateHooksTests(unittest.TestCase):
             rendered = next(output.content.decode("utf-8") for output in outputs if output.target.output_path.as_posix() == target)
             self.assertEqual(rendered, expected)
 
-    def test_common_and_audit_preserve_runtime_bodies_except_lazy_process_import(self) -> None:
+    def test_common_and_audit_match_reviewed_runtime_body_snapshots(self) -> None:
         generator = load_generator()
         rendered = {
             output.target.output_path.as_posix(): output.content
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(OKF_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -339,20 +347,27 @@ class GenerateHooksTests(unittest.TestCase):
                     f"# Generated from hooks/families/{'common' if target.endswith('common.py') else 'audit'}.py by scripts/generate-hooks.py. Do not edit.\n",
                 )
                 body = "".join(lines[2:])
-                if target.endswith("common.py"):
-                    # Keep the historical fingerprint for every byte outside the
-                    # three intentional subprocess import placement changes.
-                    import_changes = (
-                        ("import sys\n", "import subprocess\nimport sys\n"),
-                        ("from typing import TYPE_CHECKING, Any, Sequence\n\nif TYPE_CHECKING:\n    import subprocess\n",
-                         "from typing import Any, Sequence\n"),
-                        ("\n    import subprocess\n\n    return subprocess.run(",
-                         "\n    return subprocess.run("),
-                    )
-                    for current, historical in import_changes:
-                        self.assertEqual(body.count(current), 1)
-                        body = body.replace(current, historical)
                 self.assertEqual(sha256(body.encode("utf-8")).hexdigest(), expected_digest)
+
+    def test_okf_helpers_are_owned_and_identical_across_providers(self) -> None:
+        generator = load_generator()
+        rendered = {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in generator.render_all(ROOT)
+        }
+        self.assertTrue(set(OKF_TARGETS).issubset(rendered))
+        for filename in ("okf.py", "okf_audit.py"):
+            bodies = []
+            for target in OKF_TARGETS:
+                if not target.endswith("/" + filename):
+                    continue
+                with self.subTest(target=target):
+                    lines = rendered[target].splitlines(keepends=True)
+                    self.assertEqual(lines[0], "#!/usr/bin/env python3\n")
+                    self.assertEqual(lines[1], "# Generated from hooks/families/okf.py by scripts/generate-hooks.py. Do not edit.\n")
+                    bodies.append("".join(lines[2:]))
+            self.assertEqual(len(bodies), 3)
+            self.assertEqual(bodies, [bodies[0]] * 3)
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         generator = load_generator()

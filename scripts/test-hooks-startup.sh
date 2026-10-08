@@ -3,6 +3,7 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+clear_observability_test_overrides
 
 assert_caveman_context_shape() {
   local context="$1"
@@ -86,7 +87,7 @@ test_session_start_outputs_cli_schema_with_caveman_only_context() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"sessionId":"cli-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
@@ -108,7 +109,7 @@ test_session_start_emits_copilot_progress_announcement() {
   local final_json
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"copilot-cli","initialPrompt":"hello"}')"
@@ -127,7 +128,7 @@ test_session_start_emits_progress_for_camel_case_event_name() {
   local final_json
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"hookEventName":"sessionStart","sessionId":"progress-session","timestamp":"2026-05-21T09:00:00Z","source":"startup","initialPrompt":"hello"}')"
@@ -144,7 +145,7 @@ test_session_start_outputs_vscode_schema_with_caveman_only_context() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_session_start_hook "$audit_log" '{"hook_event_name":"SessionStart","session_id":"vscode-session","timestamp":"2026-05-21T09:00:01Z","source":"vscode","initial_prompt":"hello"}')"
@@ -164,7 +165,7 @@ test_subagent_start_outputs_cli_schema_with_caveman_only_context() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_subagent_start_hook "$audit_log" '{"sessionId":"cli-subagent-session","timestamp":"2026-05-21T09:00:02Z","transcriptPath":"workspace/transcript.jsonl","agentName":"code-review","agentId":"agent-42"}')"
@@ -186,7 +187,7 @@ test_subagent_start_outputs_vscode_schema_with_caveman_only_context() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(run_subagent_start_hook "$audit_log" '{"hookEventName":"SubagentStart","sessionId":"vscode-subagent-session","timestamp":"2026-05-21T09:00:03Z","agent_id":"vscode-agent-42","agent_type":"Plan"}')"
@@ -316,7 +317,7 @@ test_compact_mode_override_is_ignored() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(
@@ -342,7 +343,7 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
 
   output="$(
@@ -372,7 +373,7 @@ test_multiple_skills_loading_works_correctly() {
   local context
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   audit_log="$workdir/audit.log"
   write_required_skill_fixtures "$workdir/skills"
 
@@ -416,4 +417,22 @@ main() {
   test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output
 }
 
-main "$@"
+STARTUP_SUITE_WORKDIR="$(setup_test_workdir)"
+STARTUP_SUITE_HOME="$(test_home_for_workdir "$STARTUP_SUITE_WORKDIR")"
+mkdir -p "$STARTUP_SUITE_HOME/.agents/skills/caveman"
+cat > "$STARTUP_SUITE_HOME/.agents/skills/caveman/SKILL.md" <<'EOF'
+---
+name: caveman
+description: Fixture for startup hook tests.
+---
+Respond terse like smart caveman.
+EOF
+
+cleanup_startup_suite_home() {
+  local workdir="${STARTUP_SUITE_WORKDIR:-}"
+  cleanup_test_workdir
+}
+
+trap cleanup_startup_suite_home EXIT
+export USERPROFILE="$STARTUP_SUITE_HOME"
+with_hook_test_environment "$STARTUP_SUITE_HOME" -- main "$@"

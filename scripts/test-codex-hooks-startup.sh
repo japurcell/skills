@@ -2,7 +2,8 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+
 HOOK="$REPO_ROOT/.codex/hooks/load-required-skills.py"
 workdir=""
 
@@ -22,14 +23,6 @@ trap cleanup EXIT
 fail() {
   printf 'FAIL: %s\n' "$1" >&2
   exit 1
-}
-
-assert_equals() {
-  local expected="$1"
-  local actual="$2"
-  local description="$3"
-
-  [[ "$actual" == "$expected" ]] || fail "$description: expected '$expected', got '$actual'"
 }
 
 test_startup_loads_required_skill_context() {

@@ -1,0 +1,519 @@
+#!/usr/bin/env bash
+# Shared fixtures and scenarios; suites supply the actual provider adapters.
+
+cleanup_security_suite() {
+  local workdir="$security_suite_workdir"
+  cleanup_test_workdir
+}
+
+security_run_suite() (
+  security_suite_workdir="$(setup_test_workdir)"
+  trap cleanup_security_suite EXIT
+  with_hook_test_environment "$(test_home_for_workdir "$security_suite_workdir")" -- "$@"
+)
+
+security_guard_payload() {
+  local input="$1"
+  local tool="${2:-$SECURITY_SHELL_TOOL}"
+  local session="${3-}"
+  jq -cn --arg input "$input" --arg tool "$tool" --arg session "$session" \
+    --arg tool_key "$SECURITY_GUARD_TOOL_KEY" --arg input_key "$SECURITY_GUARD_INPUT_KEY" \
+    --arg session_key "$SECURITY_GUARD_SESSION_KEY" \
+    '{($tool_key):$tool,($input_key):$input} + (if $session == "" then {} else {($session_key):$session} end)'
+}
+
+security_guard_decision() {
+  jq -r "$SECURITY_GUARD_DECISION_FILTER"
+}
+
+security_guard_log_target() {
+  if [[ "$SECURITY_PROVIDER" == copilot ]]; then
+    printf '%s/guard.log\n' "$1"
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
+security_guard_log_rows() {
+  if [[ "$SECURITY_PROVIDER" == copilot ]]; then
+    sed 's/^[^{]*//' "$1"
+  else
+    cat "$1"
+  fi
+}
+
+security_run_scan() {
+  local repo_dir="$1"
+  local log_dir="$2"
+  local mode="$3"
+  local scope="$4"
+  local payload="$5"
+  shift 5
+
+  local env_cmd=(
+    "SECRETS_LOG_DIR=$log_dir$SECURITY_SCANNER_LOG_SUFFIX"
+    "SCAN_MODE=$mode"
+    "SCAN_SCOPE=$scope"
+  )
+  env_cmd+=("$@")
+  (
+    cd "$repo_dir"
+    env "${env_cmd[@]}" "${SECURITY_SCANNER_COMMAND[@]}" <<<"$payload"
+  )
+}
+
+test_equivalent_and_json_encoded_threats_are_denied() {
+  local workdir
+  local log_dir
+  local reordered_remove
+  local trailing_force
+  local unfiltered_delete
+  local encoded_payload
+  local risky_input
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+  reordered_remove="rm"
+  reordered_remove+=" -fr"
+  reordered_remove+=" /"
+  trailing_force="git push"
+  trailing_force+=" origin main"
+  trailing_force+=" --force"
+  unfiltered_delete="DELETE"
+  unfiltered_delete+=" FROM"
+  unfiltered_delete+=" users"
+
+  for risky_input in "$reordered_remove" "$trailing_force" "$unfiltered_delete"; do
+    output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected equivalent destructive syntax to remain blocked."
+  done
+
+  encoded_payload="$(python3 - "$trailing_force" "$SECURITY_GUARD_TOOL_KEY" "$SECURITY_SHELL_TOOL" "$SECURITY_GUARD_INPUT_KEY" <<'PY'
+import sys
+
+encoded = "".join(f"\\u{ord(character):04x}" for character in sys.argv[1])
+print('{"' + sys.argv[2] + '":"' + sys.argv[3] + '","' + sys.argv[4] + '":"' + encoded + '"}')
+PY
+  )"
+  output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$encoded_payload")"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected JSON-escaped destructive syntax to be decoded and blocked."
+}
+
+
+test_parser_limits_and_complete_command_forms_fail_closed() {
+  local workdir
+  local log_dir
+  local risky_input
+  local output
+  local long_input
+  local many_segments
+  local many_tokens
+  local index
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+
+  local later_operand; later_operand="rm"; later_operand+=" -rf cache"; later_operand+=" /"
+  local qualified_remove; qualified_remove="/usr/bin/rm"; qualified_remove+=" -rf"; qualified_remove+=" /"
+  local qualified_git; qualified_git="/usr/bin/git push"; qualified_git+=" origin feature:refs/heads/main"; qualified_git+=" --force"
+  local forced_refspec; forced_refspec="git push"; forced_refspec+=" origin +feature:refs/heads/master"
+  local block_comment; block_comment="DELETE"; block_comment+=" FROM users"; block_comment+=" /* where archived */"
+  local line_comment; line_comment="DELETE"; line_comment+=" FROM users"; line_comment+=" -- where archived"; line_comment+=$'\n'
+
+  for risky_input in "$later_operand" "$qualified_remove" "$qualified_git" "$forced_refspec" "$block_comment" "$line_comment"; do
+    output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected $SECURITY_PROVIDER_LABEL to inspect complete normalized command forms."
+  done
+
+  long_input="$(printf 'x%.0s' {1..32768})"
+  many_segments="echo safe"
+  for index in {1..128}; do many_segments+=";echo safe"; done
+  many_tokens="echo"
+  for index in {1..256}; do many_tokens+=" safe"; done
+
+  for risky_input in "$long_input" "$many_segments" "$many_tokens"; do
+    output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected $SECURITY_PROVIDER_LABEL to fail closed when a parser bound is exceeded."
+  done
+
+  output="$("$SECURITY_GUARD_RUNNER" "$log_dir" warn "$(security_guard_payload "$long_input")")"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected parser-bound overflow to fail closed even when $SECURITY_PROVIDER_LABEL warning mode is configured."
+
+  local limit_allowlist
+  limit_allowlist="$(jq -cn --arg tool "$SECURITY_SHELL_TOOL" --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
+  output="$(
+    TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
+      python3 "$SECURITY_GUARD_SCRIPT" \
+      <<<"$(security_guard_payload "$many_segments")"
+  )"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected parser-bound overflow to fail closed before $SECURITY_PROVIDER_LABEL allowlist authorization."
+}
+
+
+test_home_variable_removals_and_git_global_options_are_denied() {
+  local workdir
+  local log_dir
+  local home_target
+  local risky_input
+  local output
+  local -a home_targets=('$HOME' '${HOME}' '"$HOME"' '"${HOME}"' '$env:HOME' '${env:HOME}' '$env:USERPROFILE' '%USERPROFILE%' '%HOMEDRIVE%%HOMEPATH%')
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+
+  for home_target in "${home_targets[@]}"; do
+    risky_input="rm"; risky_input+=" -rf"; risky_input+=" $home_target"
+    output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected $SECURITY_PROVIDER_LABEL to deny forced recursive removal through home-variable form $home_target."
+  done
+
+  risky_input="git"; risky_input+=" -C repo"; risky_input+=" -c advice.detachedHead=false"; risky_input+=" --no-pager"
+  risky_input+=" push origin refs/heads/main"; risky_input+=" --force"
+  output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected $SECURITY_PROVIDER_LABEL to parse Git global options before a protected forced push."
+
+  risky_input="/usr/bin/git"; risky_input+=" --git-dir repo/.git"; risky_input+=" --work-tree=repo"; risky_input+=" --no-optional-locks"
+  risky_input+=" push origin master"; risky_input+=" -f"
+  output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$(security_guard_payload "$risky_input")")"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected $SECURITY_PROVIDER_LABEL to parse Git global option/value forms before push."
+}
+
+
+test_structured_allowlist_is_tool_scoped_and_exact() {
+  local workdir
+  local log_dir
+  local risky_input
+  local allowlist
+  local output
+  local separator
+  local separated_input
+  local compatibility_index
+  local allowlisted_input
+  local compatibility_input
+  local -a ascii_shell_chars=(';' '&' '|' '$' '"' "'" '`')
+  local -a fullwidth_shell_chars=('；' '＆' '｜' '＄' '＂' '＇' '｀')
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+  risky_input="git push"
+  risky_input+=" --force"
+  risky_input+=" origin main"
+  allowlist="$(jq -cn --arg tool "$SECURITY_SHELL_TOOL" --arg input "$risky_input" '[{tool:$tool,input:$input}]')"
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$SECURITY_GUARD_SCRIPT" \
+      <<<"$(security_guard_payload "$risky_input")"
+  )"
+  assert_equals "allow" "$(security_guard_decision <<<"$output")" \
+    "Expected an exact tool-scoped allowlist entry to allow only its declared invocation."
+
+  local surrounding_input
+  if [[ "$SECURITY_PROVIDER" == copilot ]]; then
+    surrounding_input="echo safe && $risky_input"
+  else
+    surrounding_input="$risky_input && echo unsafe"
+  fi
+  output="$(
+    TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$SECURITY_GUARD_SCRIPT" \
+      <<<"$(security_guard_payload "$surrounding_input")"
+  )"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected surrounding content to invalidate an otherwise matching allowlist input."
+
+  output="$(
+    TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+      python3 "$SECURITY_GUARD_SCRIPT" \
+      <<<"$(security_guard_payload "$risky_input" write_file)"
+  )"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected the same input under a different tool to remain blocked."
+
+  if [[ "$SECURITY_PROVIDER" == copilot ]]; then
+    output="$(
+      TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$risky_input" GUARD_MODE=block \
+        python3 "$SECURITY_GUARD_SCRIPT" \
+        <<<"$(security_guard_payload "$risky_input")"
+    )"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected legacy unstructured allowlist text to fail closed."
+
+  fi
+
+  for separator in $'\n' $'\r' $'\t' '\n'; do
+    separated_input="${risky_input}${separator}echo safe"
+    allowlist="$(jq -cn --arg tool "$SECURITY_SHELL_TOOL" --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
+    output="$(
+      TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+        python3 "$SECURITY_GUARD_SCRIPT" \
+        <<<"$(security_guard_payload "$separated_input")"
+    )"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected control and escaped separators to be rejected from $SECURITY_PROVIDER_LABEL allowlist entries."
+  done
+
+  for compatibility_index in "${!ascii_shell_chars[@]}"; do
+    allowlisted_input="${risky_input} ${ascii_shell_chars[$compatibility_index]} echo safe"
+    compatibility_input="${risky_input} ${fullwidth_shell_chars[$compatibility_index]} echo safe"
+    allowlist="$(jq -cn --arg tool "$SECURITY_SHELL_TOOL" --arg input "$allowlisted_input" '[{tool:$tool,input:$input}]')"
+    output="$(
+      TOOL_GUARD_LOG_DIR="$(security_guard_log_target "$log_dir")" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
+        python3 "$SECURITY_GUARD_SCRIPT" \
+        <<<"$(security_guard_payload "$compatibility_input")"
+    )"
+    assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+      "Expected fullwidth shell punctuation variant $compatibility_index to remain distinct during $SECURITY_PROVIDER_LABEL allowlist equality."
+  done
+}
+
+
+test_block_response_and_audit_omit_sensitive_evidence() {
+  local workdir
+  local log_dir
+  local url_password
+  local query_token
+  local bearer_token
+  local api_key
+  local risky_input
+  local payload
+  local output
+  local sensitive_value
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+  url_password="fake-url-password"
+  query_token="fake-query-token"
+  bearer_token="fake-bearer-token"
+  api_key="fake-api-key"
+  risky_input="rm Authorization: Bearer ${bearer_token} API_KEY=${api_key} .env && git push"
+  risky_input+=" https://tester:${url_password}@example.invalid/repo?access_token=${query_token}"
+  risky_input+=" origin main"
+  risky_input+=" --force"
+  payload="$(security_guard_payload "$risky_input")"
+
+  output="$("$SECURITY_GUARD_RUNNER" "$log_dir" block "$payload")"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected the sensitive destructive invocation to be denied."
+  if ! security_guard_log_rows "$log_dir/guard.log" \
+    | jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","cause","rule_id","severity"])' \
+      >/dev/null; then
+    echo "Expected audit threats to contain only safe rule metadata." >&2
+    exit 1
+  fi
+
+  for sensitive_value in "$url_password" "$query_token" "$bearer_token" "$api_key"; do
+    if [[ "$output" == *"$sensitive_value"* ]]; then
+      echo "Expected block output to omit sensitive values." >&2
+      exit 1
+    fi
+    if grep -Fq "$sensitive_value" "$log_dir/guard.log"; then
+      echo "Expected Tool Guardian audit output to omit sensitive values." >&2
+      exit 1
+    fi
+  done
+}
+
+
+test_tool_guard_rm_env_and_rm_git() {
+  local workdir
+  local log_dir
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  log_dir="$workdir/logs"
+
+  local test_env; test_env="rm"
+  test_env+=" .env"
+  output="$(
+    "$SECURITY_GUARD_RUNNER" \
+      "$log_dir" \
+      block \
+      "$(security_guard_payload "$test_env" "$SECURITY_SHELL_TOOL" cli-session)"
+  )"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected delete env to be blocked."
+
+  local test_git; test_git="rm"
+  test_git+=" -rf"
+  test_git+=" .git"
+  output="$(
+    "$SECURITY_GUARD_RUNNER" \
+      "$log_dir" \
+      block \
+      "$(security_guard_payload "$test_git" "$SECURITY_SHELL_TOOL" cli-session)"
+  )"
+  assert_equals "deny" "$(security_guard_decision <<<"$output")" \
+    "Expected delete git to be blocked."
+
+  local benign_payload
+  benign_payload="$SECURITY_GUARD_BENIGN_PAYLOAD"
+  output="$(
+    "$SECURITY_GUARD_RUNNER" \
+      "$log_dir" \
+      block \
+      "$benign_payload"
+  )"
+  assert_equals "allow" "$(security_guard_decision <<<"$output")" \
+    "Expected benign multiline clean function and environment lookups to be allowed."
+}
+
+init_git_repo() {
+  local repo_dir="$1"
+
+  git -C "$repo_dir" init -q
+  git -C "$repo_dir" config user.email "copilot@example.com"
+  git -C "$repo_dir" config user.name "Copilot Test"
+  git -C "$repo_dir" config commit.gpgsign false
+}
+
+
+assert_json_output() {
+  local output="$1"
+  local message="$2"
+
+  if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$output"; then
+    echo "$message" >&2
+    echo "Actual output: $output" >&2
+    exit 1
+  fi
+}
+
+
+assert_incomplete_warning() {
+  local output="$1"
+  jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' \
+    >/dev/null <<<"$output"
+}
+
+
+create_stalling_git() {
+  local fake_bin="$1"
+
+  mkdir -p "$fake_bin"
+  cat > "$fake_bin/git" <<'EOF'
+#!/usr/bin/env bash
+
+case "$1 ${2-}" in
+  "rev-parse --show-toplevel")
+    exit 1
+    ;;
+  "rev-parse --is-inside-work-tree")
+    sleep 10
+    exit 0
+    ;;
+esac
+
+exit 1
+EOF
+  cat > "$fake_bin/git.cmd" <<'EOF'
+@echo off
+if "%1 %2"=="rev-parse --is-inside-work-tree" (
+  timeout /t 10 /nobreak >nul
+  exit /b 0
+)
+exit /b 1
+EOF
+  chmod 755 "$fake_bin/git"
+}
+
+
+security_prepare_unusual_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+  local unusual_name
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/notes.txt"
+  git -C "$repo_dir" add notes.txt
+  git -C "$repo_dir" commit -qm "baseline"
+
+  unusual_name=$'odd\nname.env'
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/$unusual_name"
+  printf '++token=%s\n' "$fake_token" >> "$repo_dir/notes.txt"
+}
+
+security_prepare_literal_pathspec_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+  local pathspec_name
+
+  init_git_repo "$repo_dir"
+  pathspec_name=':(literal)notes.txt'
+  printf 'baseline\n' > "$repo_dir/$pathspec_name"
+  git -C "$repo_dir" add -A
+  git -C "$repo_dir" commit -qm "baseline"
+
+  printf 'token=%s\n' "$fake_token" >> "$repo_dir/$pathspec_name"
+}
+
+security_prepare_staged_scope_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline\n' > "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+  git -C "$repo_dir" commit -qm "baseline"
+  printf 'safe staged change\n' >> "$repo_dir/staged.txt"
+  git -C "$repo_dir" add staged.txt
+
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/untracked.txt"
+}
+
+security_prepare_zero_prefix_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+  local zero_name
+
+  init_git_repo "$repo_dir"
+  zero_name='0:notes.env'
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/$zero_name"
+  git -C "$repo_dir" add -A
+}
+
+security_prepare_cached_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+
+  init_git_repo "$repo_dir"
+  printf 'baseline=true\n' > "$repo_dir/notes.env"
+  git -C "$repo_dir" add notes.env
+  git -C "$repo_dir" commit -qm "baseline"
+
+  printf 'token=%s\n' "$fake_token" > "$repo_dir/notes.env"
+  git -C "$repo_dir" add notes.env
+  git -C "$repo_dir" show HEAD:notes.env > "$repo_dir/notes.env"
+}
+
+security_prepare_burst_scan() {
+  local repo_dir="$1"
+  local fake_token="$2"
+  local log_dir="$3"
+  local index
+
+  init_git_repo "$repo_dir"
+  : > "$repo_dir/burst.txt"
+  for ((index = 0; index < 10000; index++)); do
+    printf '%s ' "$fake_token" >> "$repo_dir/burst.txt"
+  done
+  printf '\n' >> "$repo_dir/burst.txt"
+  git -C "$repo_dir" add burst.txt
+  printf '%60000s\n' '' > "$log_dir/scan.log"
+}

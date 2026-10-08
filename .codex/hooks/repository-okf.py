@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -16,19 +14,11 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from helpers.common import convert_windows_path_to_posix, emit_json, read_json_input  # noqa: E402
 from helpers.okf_audit import record as audit_record  # noqa: E402
+from helpers.okf import diagnostic_line, is_diagnostic, response_size, rerun_command as rerun, run_linter_process, sorted_diagnostics  # noqa: E402
 
 MAX_OUTPUT = 8192
 MAX_DIAGNOSTICS = 20
 ID = re.compile(r"OKF[0-9]{3}\Z")
-
-
-def response_size(value: dict[str, str]) -> int:
-    return len(json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode())
-
-
-def rerun() -> str:
-    platform = os.environ.get("OKF_LINT_TEST_PLATFORM")
-    return "python scripts/lint-okf.py" if platform == "windows" or (platform is None and os.name == "nt") else "./scripts/lint-okf.py"
 
 
 def checkout(payload: dict[str, object]) -> Path:
@@ -51,7 +41,7 @@ def diagnostics(root: Path) -> list[dict[str, object]]:
     linter = root / "scripts/lint-okf.py"
     if not linter.is_file():
         raise ValueError("missing scripts/lint-okf.py")
-    completed = subprocess.run([sys.executable, str(linter), "--format", "json"], cwd=root, capture_output=True, text=True, timeout=8, check=False)
+    completed = run_linter_process(root)
     if completed.returncode not in (0, 1):
         raise ValueError("central linter incomplete")
     parsed = json.loads(completed.stdout)
@@ -59,11 +49,11 @@ def diagnostics(root: Path) -> list[dict[str, object]]:
         raise ValueError("invalid linter JSON")
     values = parsed["diagnostics"]
     for item in values:
-        if not isinstance(item, dict) or set(item) != {"id", "path", "line", "column", "message"} or not isinstance(item["id"], str) or not ID.fullmatch(item["id"]) or not isinstance(item["path"], str) or not item["path"] or type(item["line"]) is not int or item["line"] < 1 or type(item["column"]) is not int or item["column"] < 1 or not isinstance(item["message"], str) or not item["message"]:
+        if not is_diagnostic(item, ID, mapping_type=dict):
             raise ValueError("invalid linter diagnostic")
     if (completed.returncode == 0) != (not values):
         raise ValueError("inconsistent linter status")
-    return sorted(values, key=lambda item: (item["path"], item["line"], item["column"], item["id"]))
+    return sorted_diagnostics(values)
 
 
 def finding_reason(values: list[dict[str, object]], retry: bool) -> str:
@@ -72,7 +62,7 @@ def finding_reason(values: list[dict[str, object]], retry: bool) -> str:
     header = f"repository-okf: {'unresolved' if retry else 'blocked'}; {count} {noun}\n" + (
         "OKF unresolved after repair attempt:" if retry else "OKF validation failed:"
     )
-    lines = [f"{item['path']}:{item['line']}:{item['column']}: {item['id']} {' '.join(str(item['message']).splitlines())}" for item in values[:MAX_DIAGNOSTICS]]
+    lines = [diagnostic_line(item, normalize_message=True) for item in values[:MAX_DIAGNOSTICS]]
     envelope = (lambda text: {"systemMessage": text}) if retry else (lambda text: {"decision": "block", "reason": text})
     selected: list[str] = []
     for line in lines:

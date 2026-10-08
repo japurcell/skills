@@ -21,6 +21,7 @@ create_fixture_repo() {
     "$repo/.gemini/policies"
 
   cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
+  cp -p "$REPO_ROOT/scripts/file_io.py" "$repo/scripts/file_io.py"
   cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
   cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
   cp -p "$REPO_ROOT/scripts/configure-rtk.py" "$repo/scripts/configure-rtk.py"

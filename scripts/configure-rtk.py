@@ -13,8 +13,9 @@ import shutil
 import stat
 import subprocess
 import sys
-import tempfile
 import tomllib
+
+from file_io import atomic_write_bytes, write_synced_bytes
 
 MINIMUM_VERSION = (0, 50, 0)
 RETIRED_FILES = {
@@ -125,16 +126,7 @@ def updated_config(original: bytes) -> bytes:
 def atomic_write(path: Path, content: bytes) -> None:
     regular_destination(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-    finally:
-        temporary.unlink(missing_ok=True)
+    atomic_write_bytes(path, content)
 
 
 def file_digest(path: Path) -> str:
@@ -207,10 +199,7 @@ def main() -> int:
             if not args.check:
                 if path.exists():
                     descriptor = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-                    with os.fdopen(descriptor, "wb") as stream:
-                        stream.write(original)
-                        stream.flush()
-                        os.fsync(stream.fileno())
+                    write_synced_bytes(descriptor, original)
                 atomic_write(path, updated)
         if not args.check:
             retire_owned(home)

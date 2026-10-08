@@ -31,6 +31,11 @@ class SourceRecord:
     summary_is_scaffold: bool
 
 
+SKILLS_ENVIRONMENT = "GEMINI_SKILLS_DIR"
+
+def scan_sources(source_root: Path, summary_root: Path) -> list[SourceRecord]:
+    return _scan_sources(source_root, summary_root)
+
 
 def source_root_for_payload(payload: dict[str, object]) -> Path:
     override = os.environ.get("AGENTS_SOURCE_SCAN_DIR")
@@ -73,8 +78,9 @@ def repo_root_for_payload(payload: dict[str, object]) -> Path:
     return Path(cwd) if cwd else Path.cwd()
 
 
+
 def ingest_skill_path(repo_root: Path) -> Path:
-    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("GEMINI_SKILLS_DIR")
+    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get(SKILLS_ENVIRONMENT)
     if override:
         return Path(override) / "ingest-source" / "SKILL.md"
     return repo_root / ".agents" / "skills" / "ingest-source" / "SKILL.md"
@@ -231,21 +237,21 @@ def build_block_reason(report_entries: list[dict[str, Any]], skill_available: bo
     return f"{PENDING_INGEST_DIRECTIVE} {PENDING_INGEST_SKILL_MISSING} Pending: {pending}."
 
 
-def scan_sources(source_root: Path, summary_root: Path) -> list[SourceRecord]:
-    if not source_root.exists():
+def _scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
+    if not sources_dir.exists():
         return []
 
     records: list[SourceRecord] = []
-    for source_path in sorted(source_root.rglob("*")):
+    for source_path in sorted(sources_dir.rglob("*")):
         if not source_path.is_file() or source_path.is_symlink():
             continue
 
-        relpath = source_path.relative_to(source_root)
+        relpath = source_path.relative_to(sources_dir)
         if _is_hidden_relative(relpath):
             continue
 
         source_relpath = relpath.as_posix()
-        summary_path = summary_path_for_source(summary_root, source_relpath)
+        summary_path = summary_path_for_source(summary_dir, source_relpath)
         summary_exists, summary_hash, summary_is_scaffold = _summary_details(summary_path)
         records.append(
             SourceRecord(
@@ -669,6 +675,18 @@ class ManifestLock:
             except OSError:
                 pass
             self.lock_fd = None
+
+
+def scan_and_reconcile(
+    sources_dir: Path, summaries_dir: Path, manifest_file: Path,
+) -> tuple[list[SourceRecord], list[dict[str, Any]]]:
+    """Hold the manifest lock over the complete scan/read/reconcile/save batch."""
+    with ManifestLock(manifest_file):
+        current_sources = scan_sources(sources_dir, summaries_dir)
+        previous_manifest = load_manifest(manifest_file)
+        report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
+        save_manifest(manifest_file, next_manifest)
+    return current_sources, report_entries
 
 
 def build_context(report_entries: list[dict[str, Any]], manifest_file: Path, skill_available: bool = True) -> str:

@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
-import subprocess
-import sys
-import tempfile
 import unittest
+
+from tool_guard_test_support import invoke_guard, native_decision
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -22,24 +20,19 @@ FORCE_PUSH = text(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 1
 
 class NativeDataTests(unittest.TestCase):
     def invoke(self, provider: str, tool: str, value: object, *, mode: str = 'block', extra: dict | None = None, allowlist: bool = False) -> dict:
-        path = ROOT / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
         payload = {'toolName': tool, 'toolArgs': value} if provider == 'copilot' else {'tool_name': tool, 'tool_input': value}
         payload['hook_event_name'] = 'BeforeTool' if provider == 'gemini' else 'PreToolUse'
         payload.update(extra or {})
-        with tempfile.TemporaryDirectory() as temporary:
-            env = {**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(Path(temporary) / 'guard-log')}
-            env.pop('SKIP_TOOL_GUARD', None)
-            env.pop('TOOL_GUARD_ALLOWLIST', None)
-            if allowlist:
-                env['TOOL_GUARD_ALLOWLIST'] = json.dumps([{'tool': tool, 'input': json.dumps(value, ensure_ascii=False, separators=(',', ':'))}])
-            result = subprocess.run([sys.executable, '-I', '-S', '-B', str(path)], input=json.dumps(payload),
-                                    text=True, capture_output=True, env=env, timeout=5)
+        encoded_allowlist = (
+            json.dumps([{'tool': tool, 'input': json.dumps(value, ensure_ascii=False, separators=(',', ':'))}])
+            if allowlist else None
+        )
+        result = invoke_guard(ROOT, provider, json.dumps(payload), mode=mode, allowlist=encoded_allowlist)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
     def assert_decision(self, response: dict, expected: str) -> None:
-        decision = response.get('permissionDecision') or response.get('decision') or response.get('hookSpecificOutput', {}).get('permissionDecision') or ('allow' if response == {} else None)
-        self.assertEqual(decision, expected, response)
+        self.assertEqual(native_decision(response), expected, response)
         if expected == 'allow':
             self.assertNotIn('systemMessage', response)
 

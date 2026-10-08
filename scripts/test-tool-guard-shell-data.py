@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 import shutil
 import shlex
-import subprocess
-import sys
 import tempfile
 import unittest
 
 from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, script_path
+from tool_guard_test_support import invoke_guard, native_decision
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -51,28 +49,19 @@ class ShellDataTests(unittest.TestCase):
                                 shutil.copy2(source, helpers / filename)
                         if invalid is not None:
                             (helpers / 'tool_guard_policy.py').write_text(invalid)
-                        env = {**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(directory / 'logs'),
-                               'AUDIT_LOG': str(directory / 'audit.log')}
-                        env.pop('SKIP_TOOL_GUARD', None)
-                        env.pop('TOOL_GUARD_ALLOWLIST', None)
-                        result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script)],
-                                                input=encode(envelope(provider, fixture)), capture_output=True, env=env, timeout=5)
+                        result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode, script=script)
                         self.assertEqual(result.returncode, 0, result.stderr)
                         self.assertEqual(decision(provider, json.loads(result.stdout)), 'deny', result.stdout)
 
     def check(self, command: str, expected: str, *, mode: str = 'block') -> None:
         fixture = Fixture('shell-control', 'Bash', {'command': command}, expected, expected, 'shell', 'public control')
         for provider in PROVIDERS:
-            with self.subTest(provider=provider, command=command[:80]), tempfile.TemporaryDirectory() as directory:
-                env = {**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': directory}
-                env.pop('SKIP_TOOL_GUARD', None)
-                env.pop('TOOL_GUARD_ALLOWLIST', None)
-                result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script_path(ROOT, provider))],
-                                        input=encode(envelope(provider, fixture)), capture_output=True, env=env, timeout=5)
+            with self.subTest(provider=provider, command=command[:80]):
+                result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 response = json.loads(result.stdout)
                 if expected == 'warn':
-                    native = response.get('permissionDecision') or response.get('decision') or response.get('hookSpecificOutput', {}).get('permissionDecision')
+                    native = native_decision(response)
                     if provider == 'codex' and set(response) == {'systemMessage'}:
                         native = 'allow'
                     self.assertEqual(native, 'allow', result.stdout)

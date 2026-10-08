@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -11,20 +10,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_log_event
+from helpers.audit import best_effort_audit_event
 from helpers.auto_ingest import (
-    ManifestLock,
     build_context,
     ingest_skill_available,
-    load_manifest,
     manifest_path,
-    reconcile_manifest,
-    scan_sources,
-    save_manifest,
+    scan_and_reconcile,
     source_root,
     summary_root,
 )
-from helpers.common import emit_json, first_present, read_json_input, sanitize_log_field, stringify_value
+from helpers.common import emit_json, first_present, read_json_input, sanitize_log_field, stringify_value, repository_root_from_payload
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -45,10 +40,7 @@ def build_output(message: str, event_name: str) -> dict:
 
 
 def log_event(message: str) -> None:
-    try:
-        audit_log_event(SCRIPT_NAME, message)
-    except Exception:
-        pass
+    best_effort_audit_event(SCRIPT_NAME, message)
 
 
 def fail_safe(reason: str, event_name: str = "") -> None:
@@ -60,17 +52,7 @@ def fail_safe(reason: str, event_name: str = "") -> None:
     emit_json(build_output(f"Auto-ingest source scan failed.\n\nReason: {safe_reason}", event_name))
 
 
-def _repo_root(payload: dict[str, object]) -> Path:
-    env_override = os.environ.get("COPILOT_AUTO_INGEST_REPO_ROOT")
-    if env_override:
-        return Path(env_override)
 
-    cwd = stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        return Path(convert_windows_path_to_posix(cwd))
-
-    return Path.cwd()
 def main() -> int:
     try:
         payload = read_json_input()
@@ -85,16 +67,12 @@ def main() -> int:
             emit_json({})
             return 0
 
-        root = _repo_root(payload)
+        root = repository_root_from_payload(payload, "COPILOT_AUTO_INGEST_REPO_ROOT")
         sources_dir = source_root(root)
         summaries_dir = summary_root(root)
         manifest_file = manifest_path(summaries_dir)
 
-        with ManifestLock(manifest_file):
-            current_sources = scan_sources(sources_dir, summaries_dir)
-            previous_manifest = load_manifest(manifest_file)
-            report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
-            save_manifest(manifest_file, next_manifest)
+        current_sources, report_entries = scan_and_reconcile(sources_dir, summaries_dir, manifest_file)
 
         message = build_context(report_entries, manifest_file, ingest_skill_available(root))
         session_id = sanitize_log_field(stringify_value(first_present(payload, "sessionId", "session_id")))

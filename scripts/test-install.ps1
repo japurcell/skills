@@ -160,6 +160,7 @@ function New-FixtureRepo {
     }
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/file_io.py') -Destination (Join-Path $Repo 'scripts/file_io.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force

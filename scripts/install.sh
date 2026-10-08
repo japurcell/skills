@@ -100,11 +100,11 @@ copy_gemini() {
 }
 
 copy_gemini_global_settings() {
-  python3 "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME"
+  python3 -B "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME"
 }
 
 install_copilot_hook_config() {
-  python3 "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME"
+  python3 -B "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME"
 }
 
 copy_copilot_instructions() {
@@ -117,7 +117,7 @@ copy_copilot_lsp() {
 
 install_codex_hook() {
   local hook
-  python3 "$CODEX_HOOK_MERGER" \
+  python3 -B "$CODEX_HOOK_MERGER" \
     --template "$CODEX_HOOK_TEMPLATE_SRC" \
     --destination "$CODEX_HOOK_CONFIG_DEST" \
     --check
@@ -138,7 +138,7 @@ install_codex_hook() {
     cp -p "$CODEX_HOOK_SRC_DIR/$hook" "$CODEX_HOOKS_DEST/$hook"
     chmod 755 "$CODEX_HOOKS_DEST/$hook"
   done
-  python3 "$CODEX_HOOK_MERGER" \
+  python3 -B "$CODEX_HOOK_MERGER" \
     --template "$CODEX_HOOK_TEMPLATE_SRC" \
     --destination "$CODEX_HOOK_CONFIG_DEST"
 }
@@ -160,12 +160,12 @@ for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MER
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-python3 "$CONFIGURE_RTK" --home "$HOME" --check
+python3 -B "$CONFIGURE_RTK" --home "$HOME" --check
 for hook in "${CODEX_HOOK_FILES[@]}"; do
   [[ -f "$CODEX_HOOK_SRC_DIR/$hook" ]] || { echo "Missing source file: $CODEX_HOOK_SRC_DIR/$hook" >&2; exit 1; }
 done
 
-if PYTHONDONTWRITEBYTECODE=1 python3 "$GENERATE_HOOKS" --check; then
+if python3 -B "$GENERATE_HOOKS" --check; then
   :
 else
   status=$?
@@ -180,11 +180,11 @@ else
   exit "$status"
 fi
 
-python3 "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME" --check
-python3 "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME" --check
+python3 -B "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME" --check
+python3 -B "$PROVIDER_HOOK_MERGER" --provider gemini --template "$GEMINI_GLOBAL_SETTINGS_SRC" --destination "$GEMINI_SETTINGS_DEST" --home "$HOME" --check
 
-python3 "$CONFIGURE_RTK" --home "$HOME"
-python3 "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
+python3 -B "$CONFIGURE_RTK" --home "$HOME"
+python3 -B "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir "$CODEX_AGENTS_DEST"
 
 mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
 

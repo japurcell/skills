@@ -1285,12 +1285,12 @@ HOOK_EVENT = ""
 def resolve_work_dir(payload: dict) -> Path:
     del payload
     return Path.cwd()
+# END PROVIDER ADAPTER
+
 
 
 def findings_denial_reason(scan_log: Path) -> str:
     return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
-# END PROVIDER ADAPTER
-
 
 def main() -> int:
     global INCOMPLETE_LOG, SCAN_ACTION

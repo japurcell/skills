@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# Generated from hooks/families/okf.py by scripts/generate-hooks.py. Do not edit.
 """Bounded, content-free audit records for repository OKF stop checks."""
 
 from __future__ import annotations

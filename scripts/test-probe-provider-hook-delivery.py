@@ -224,15 +224,32 @@ class ProbeTests(unittest.TestCase):
                 process = subprocess.Popen([sys.executable, info["handler"], "PreToolUse"],
                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE, text=False)
-                assert process.stdin is not None and process.stdout is not None
-                payload = {"hook_event_name": "PreToolUse", "session_id": "test", "cwd": str(home),
-                           "tool_name": "Bash", "tool_input": {}}
-                process.stdin.write(json.dumps(payload).encode())
-                process.stdin.flush()
-                self.assertTrue(select.select([process.stdout], [], [], 2)[0], "handler waited for stdin EOF")
-                self.assertIn("systemMessage", json.loads(process.stdout.readline()))
-                process.stdin.close()
-                self.assertEqual(process.wait(timeout=2), 0)
+                try:
+                    assert process.stdin is not None and process.stdout is not None
+                    payload = {"hook_event_name": "PreToolUse", "session_id": "test", "cwd": str(home),
+                               "tool_name": "Bash", "tool_input": {}}
+                    process.stdin.write(json.dumps(payload).encode())
+                    process.stdin.flush()
+                    self.assertTrue(select.select([process.stdout], [], [], 2)[0], "handler waited for stdin EOF")
+                    self.assertIn("systemMessage", json.loads(process.stdout.readline()))
+                    process.stdin.close()
+                    self.assertEqual(process.wait(timeout=2), 0)
+                finally:
+                    if process.stdin is not None and not process.stdin.closed:
+                        try:
+                            process.stdin.close()
+                        except BrokenPipeError:
+                            pass
+                    if process.poll() is None:
+                        try:
+                            process.kill()
+                        except ProcessLookupError:
+                            pass
+                        process.wait(timeout=2)
+                    if process.stdout is not None:
+                        process.stdout.close()
+                    if process.stderr is not None:
+                        process.stderr.close()
             finally:
                 self.cli(home, "cleanup", "--provider", "codex", "--id", info["id"])
 

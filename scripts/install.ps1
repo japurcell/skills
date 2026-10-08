@@ -76,10 +76,10 @@ function Fail {
 
 function Get-PythonCommand {
     $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
-    $arguments = @()
+    $arguments = @('-B')
     if ($null -eq $python) {
         $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
-        $arguments = @('-3')
+        $arguments = @('-3', '-B')
     }
     if ($null -eq $python) {
         Fail 'Missing Python executable: expected python3 or py.'
@@ -433,16 +433,8 @@ foreach ($relative in $CodexHookFiles) {
 $pythonCommand = Get-PythonCommand
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check
 if ($LASTEXITCODE -ne 0) { Fail "RTK preflight exited with code $LASTEXITCODE." }
-$previousBytecodeSetting = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
-$preflightExitCode = 0
-try {
-    [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', '1', [System.EnvironmentVariableTarget]::Process)
-    & $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check
-    $preflightExitCode = $LASTEXITCODE
-}
-finally {
-    [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $previousBytecodeSetting, [System.EnvironmentVariableTarget]::Process)
-}
+& $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check
+$preflightExitCode = $LASTEXITCODE
 if ($preflightExitCode -ne 0) {
     if ($preflightExitCode -eq 1) {
         [Console]::Error.WriteLine('Generated hooks are stale. Run: python3 scripts/generate-hooks.py --write')

@@ -3,6 +3,18 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/security-test-support.sh"
+
+SECURITY_PROVIDER=gemini
+SECURITY_PROVIDER_LABEL=Gemini
+SECURITY_GUARD_RUNNER=run_gemini_tool_guard
+SECURITY_GUARD_SCRIPT="$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py"
+SECURITY_SHELL_TOOL=run_shell_command
+SECURITY_GUARD_TOOL_KEY=tool_name
+SECURITY_GUARD_INPUT_KEY=tool_input
+SECURITY_GUARD_SESSION_KEY=session_id
+SECURITY_GUARD_DECISION_FILTER='.decision'
+SECURITY_GUARD_BENIGN_PAYLOAD='{"session_id":"cli-session","tool_name":"write_file","tool_input":{"file_path":"test.py","content":"def clean():\n    unlink()\n\nos.environ"}}'
 
 run_gemini_tool_guard() {
   local log_dir="$1"
@@ -14,251 +26,6 @@ run_gemini_tool_guard() {
   python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" <<<"$payload"
 }
 
-test_structured_allowlist_is_tool_scoped_and_exact() {
-  local workdir
-  local log_dir
-  local risky_input
-  local allowlist
-  local output
-  local separator
-  local separated_input
-  local compatibility_index
-  local allowlisted_input
-  local compatibility_input
-  local -a ascii_shell_chars=(';' '&' '|' '$' '"' "'" '`')
-  local -a fullwidth_shell_chars=('；' '＆' '｜' '＄' '＂' '＇' '｀')
-
-  workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
-  log_dir="$workdir/logs"
-  risky_input="git push"
-  risky_input+=" --force"
-  risky_input+=" origin main"
-  allowlist="$(jq -cn --arg tool run_shell_command --arg input "$risky_input" '[{tool:$tool,input:$input}]')"
-
-  output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
-      python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-      <<<"$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')"
-  )"
-  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
-    "Expected an exact tool-scoped Gemini allowlist entry to allow its declared invocation."
-
-  output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
-      python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-      <<<"$(jq -cn --arg input "$risky_input && echo unsafe" '{tool_name:"run_shell_command",tool_input:$input}')"
-  )"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected surrounding content to invalidate a Gemini allowlist input."
-
-  output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
-      python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-      <<<"$(jq -cn --arg input "$risky_input" '{tool_name:"write_file",tool_input:$input}')"
-  )"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected a Gemini allowlist entry to remain scoped to its declared tool."
-
-  for separator in $'\n' $'\r' $'\t' '\n'; do
-    separated_input="${risky_input}${separator}echo safe"
-    allowlist="$(jq -cn --arg tool run_shell_command --arg input "$separated_input" '[{tool:$tool,input:$input}]')"
-    output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
-        python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-        <<<"$(jq -cn --arg input "$separated_input" '{tool_name:"run_shell_command",tool_input:$input}')"
-    )"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected control and escaped separators to be rejected from Gemini allowlist entries."
-  done
-
-  for compatibility_index in "${!ascii_shell_chars[@]}"; do
-    allowlisted_input="${risky_input} ${ascii_shell_chars[$compatibility_index]} echo safe"
-    compatibility_input="${risky_input} ${fullwidth_shell_chars[$compatibility_index]} echo safe"
-    allowlist="$(jq -cn --arg tool run_shell_command --arg input "$allowlisted_input" '[{tool:$tool,input:$input}]')"
-    output="$(
-      TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$allowlist" GUARD_MODE=block \
-        python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-        <<<"$(jq -cn --arg input "$compatibility_input" '{tool_name:"run_shell_command",tool_input:$input}')"
-    )"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected fullwidth shell punctuation variant $compatibility_index to remain distinct during Gemini allowlist equality."
-  done
-}
-
-test_equivalent_and_json_encoded_threats_are_denied() {
-  local workdir
-  local log_dir
-  local reordered_remove
-  local trailing_force
-  local unfiltered_delete
-  local encoded_payload
-  local risky_input
-  local output
-
-  workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
-  log_dir="$workdir/logs"
-  reordered_remove="rm"
-  reordered_remove+=" -fr"
-  reordered_remove+=" /"
-  trailing_force="git push"
-  trailing_force+=" origin main"
-  trailing_force+=" --force"
-  unfiltered_delete="DELETE"
-  unfiltered_delete+=" FROM"
-  unfiltered_delete+=" users"
-
-  for risky_input in "$reordered_remove" "$trailing_force" "$unfiltered_delete"; do
-    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected equivalent destructive syntax to remain blocked by Gemini."
-  done
-
-  encoded_payload="$(python3 - "$trailing_force" <<'PY'
-import sys
-
-encoded = "".join(f"\\u{ord(character):04x}" for character in sys.argv[1])
-print('{"tool_name":"run_shell_command","tool_input":"' + encoded + '"}')
-PY
-  )"
-  output="$(run_gemini_tool_guard "$log_dir" block "$encoded_payload")"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected JSON-escaped destructive syntax to be decoded and blocked by Gemini."
-}
-
-test_parser_limits_and_complete_command_forms_fail_closed() {
-  local workdir
-  local log_dir
-  local risky_input
-  local output
-  local long_input
-  local many_segments
-  local many_tokens
-  local index
-
-  workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
-  log_dir="$workdir/logs"
-
-  local later_operand; later_operand="rm"; later_operand+=" -rf cache"; later_operand+=" /"
-  local qualified_remove; qualified_remove="/usr/bin/rm"; qualified_remove+=" -rf"; qualified_remove+=" /"
-  local qualified_git; qualified_git="/usr/bin/git push"; qualified_git+=" origin feature:refs/heads/main"; qualified_git+=" --force"
-  local forced_refspec; forced_refspec="git push"; forced_refspec+=" origin +feature:refs/heads/master"
-  local block_comment; block_comment="DELETE"; block_comment+=" FROM users"; block_comment+=" /* where archived */"
-  local line_comment; line_comment="DELETE"; line_comment+=" FROM users"; line_comment+=" -- where archived"; line_comment+=$'\n'
-
-  for risky_input in "$later_operand" "$qualified_remove" "$qualified_git" "$forced_refspec" "$block_comment" "$line_comment"; do
-    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected Gemini to inspect complete normalized command forms."
-  done
-
-  long_input="$(printf 'x%.0s' {1..32768})"
-  many_segments="echo safe"
-  for index in {1..128}; do many_segments+=";echo safe"; done
-  many_tokens="echo"
-  for index in {1..256}; do many_tokens+=" safe"; done
-
-  for risky_input in "$long_input" "$many_segments" "$many_tokens"; do
-    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected Gemini to fail closed when a parser bound is exceeded."
-  done
-
-  output="$(run_gemini_tool_guard "$log_dir" warn "$(jq -cn --arg input "$long_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected parser-bound overflow to fail closed even when Gemini warning mode is configured."
-
-  local limit_allowlist
-  limit_allowlist="$(jq -cn --arg tool run_shell_command --arg input "$many_segments" '[{tool:$tool,input:$input}]')"
-  output="$(
-    TOOL_GUARD_LOG_DIR="$log_dir" TOOL_GUARD_ALLOWLIST="$limit_allowlist" GUARD_MODE=block \
-      python3 "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" \
-      <<<"$(jq -cn --arg input "$many_segments" '{tool_name:"run_shell_command",tool_input:$input}')"
-  )"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected parser-bound overflow to fail closed before Gemini allowlist authorization."
-}
-
-test_home_variable_removals_and_git_global_options_are_denied() {
-  local workdir
-  local log_dir
-  local home_target
-  local risky_input
-  local output
-  local -a home_targets=('$HOME' '${HOME}' '"$HOME"' '"${HOME}"' '$env:HOME' '${env:HOME}' '$env:USERPROFILE' '%USERPROFILE%' '%HOMEDRIVE%%HOMEPATH%')
-
-  workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
-  log_dir="$workdir/logs"
-
-  for home_target in "${home_targets[@]}"; do
-    risky_input="rm"; risky_input+=" -rf"; risky_input+=" $home_target"
-    output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-    assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-      "Expected Gemini to deny forced recursive removal through home-variable form $home_target."
-  done
-
-  risky_input="git"; risky_input+=" -C repo"; risky_input+=" -c advice.detachedHead=false"; risky_input+=" --no-pager"
-  risky_input+=" push origin refs/heads/main"; risky_input+=" --force"
-  output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected Gemini to parse Git global options before a protected forced push."
-
-  risky_input="/usr/bin/git"; risky_input+=" --git-dir repo/.git"; risky_input+=" --work-tree=repo"; risky_input+=" --no-optional-locks"
-  risky_input+=" push origin master"; risky_input+=" -f"
-  output="$(run_gemini_tool_guard "$log_dir" block "$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')")"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected Gemini to parse Git global option/value forms before push."
-}
-
-test_block_response_and_log_omit_sensitive_evidence() {
-  local workdir
-  local log_dir
-  local url_password
-  local query_token
-  local bearer_token
-  local api_key
-  local risky_input
-  local payload
-  local output
-  local sensitive_value
-
-  workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
-  log_dir="$workdir/logs"
-  url_password="fake-url-password"
-  query_token="fake-query-token"
-  bearer_token="fake-bearer-token"
-  api_key="fake-api-key"
-  risky_input="rm Authorization: Bearer ${bearer_token} API_KEY=${api_key} .env && git push"
-  risky_input+=" https://tester:${url_password}@example.invalid/repo?access_token=${query_token}"
-  risky_input+=" origin main"
-  risky_input+=" --force"
-  payload="$(jq -cn --arg input "$risky_input" '{tool_name:"run_shell_command",tool_input:$input}')"
-
-  output="$(run_gemini_tool_guard "$log_dir" block "$payload")"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected Gemini to deny the sensitive destructive invocation."
-  if ! jq -e 'select(.event == "threats_detected") | all(.threats[]; (keys | sort) == ["category","cause","rule_id","severity"])' \
-    "$log_dir/guard.log" >/dev/null; then
-    echo "Expected Gemini log threats to contain only safe rule metadata." >&2
-    exit 1
-  fi
-
-  for sensitive_value in "$url_password" "$query_token" "$bearer_token" "$api_key"; do
-    if [[ "$output" == *"$sensitive_value"* ]]; then
-      echo "Expected Gemini block output to omit sensitive values." >&2
-      exit 1
-    fi
-    if grep -Fq "$sensitive_value" "$log_dir/guard.log"; then
-      echo "Expected Gemini Tool Guardian log output to omit sensitive values." >&2
-      exit 1
-    fi
-  done
-}
-
 test_gemini_log_is_owner_only_locked_and_no_follow() {
   local workdir
   local log_dir
@@ -268,7 +35,7 @@ test_gemini_log_is_owner_only_locked_and_no_follow() {
   local original_outside
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
   mkdir -p "$log_dir"
   printf 'existing\n' >"$log_dir/guard.log"
@@ -316,7 +83,7 @@ test_warn_mode_returns_json_for_gemini_payload() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
 
   output="$(
@@ -343,7 +110,7 @@ test_block_mode_denies_gemini_payload() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
 
   output="$(
@@ -372,7 +139,7 @@ test_block_mode_parses_gemini_tool_input_objects() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
 
   output="$(
@@ -403,7 +170,7 @@ test_nested_structured_tool_input_scans_decoded_string_values() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
 
   query="DELETE"; query+=" FROM"; query+=" users"
@@ -425,7 +192,7 @@ test_skip_mode_returns_explicit_allow_json() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   log_dir="$workdir/logs"
 
   output="$(
@@ -492,7 +259,7 @@ test_tool_guard_denies_unexpected_input_exception() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   mkdir -p "$workdir/helpers"
   cp "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" "$workdir/tool-guard.py"
   cp "$REPO_ROOT/.gemini/hooks/scripts/helpers/tool_guard_policy.py" "$workdir/helpers/tool_guard_policy.py"
@@ -516,59 +283,12 @@ test_tool_guard_denies_unexpected_input_exception() {
     "Expected the unexpected input failure to be diagnosed on stderr."
 }
 
-test_tool_guard_rm_env_and_rm_git() {
-  local workdir
-  local log_dir
-  local output
-
-  workdir="$(setup_test_workdir)"
-  local trap_cmd; trap_cmd="rm"
-  trap_cmd+=" -rf"
-  trap_cmd+=" \"$workdir\""
-  trap "$trap_cmd" RETURN
-  log_dir="$workdir/logs"
-
-  local test_env; test_env="rm"
-  test_env+=" .env"
-  output="$(
-    run_gemini_tool_guard \
-      "$log_dir" \
-      block \
-      "{\"session_id\":\"cli-session\",\"tool_name\":\"run_shell_command\",\"tool_input\":\"${test_env}\"}"
-  )"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected delete env to be blocked."
-
-  local test_git; test_git="rm"
-  test_git+=" -rf"
-  test_git+=" .git"
-  output="$(
-    run_gemini_tool_guard \
-      "$log_dir" \
-      block \
-      "{\"session_id\":\"cli-session\",\"tool_name\":\"run_shell_command\",\"tool_input\":\"${test_git}\"}"
-  )"
-  assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
-    "Expected delete git to be blocked."
-
-  local benign_payload
-  benign_payload='{"session_id":"cli-session","tool_name":"write_file","tool_input":{"file_path":"test.py","content":"def clean():\n    unlink()\n\nos.environ"}}'
-  output="$(
-    run_gemini_tool_guard \
-      "$log_dir" \
-      block \
-      "$benign_payload"
-  )"
-  assert_equals "allow" "$(jq -r '.decision' <<<"$output")" \
-    "Expected benign multiline clean function and environment lookups to be allowed."
-}
-
 main() {
   test_structured_allowlist_is_tool_scoped_and_exact
   test_equivalent_and_json_encoded_threats_are_denied
   test_parser_limits_and_complete_command_forms_fail_closed
   test_home_variable_removals_and_git_global_options_are_denied
-  test_block_response_and_log_omit_sensitive_evidence
+  test_block_response_and_audit_omit_sensitive_evidence
   test_gemini_log_is_owner_only_locked_and_no_follow
   test_warn_mode_returns_json_for_gemini_payload
   test_block_mode_denies_gemini_payload
@@ -581,4 +301,4 @@ main() {
   test_tool_guard_rm_env_and_rm_git
 }
 
-main "$@"
+security_run_suite main "$@"

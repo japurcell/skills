@@ -1280,10 +1280,6 @@ HOOK_EVENT = ""
 def resolve_work_dir(payload: dict) -> Path:
     del payload
     return Path.cwd()
-
-
-def findings_denial_reason(scan_log: Path) -> str:
-    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 '''
 
 
@@ -1296,10 +1292,6 @@ HOOK_EVENT = ""
 def resolve_work_dir(payload: dict) -> Path:
     hook_cwd = str(payload.get("cwd") or "")
     return Path(hook_cwd or os.environ.get("GEMINI_PROJECT_DIR") or Path.cwd())
-
-
-def findings_denial_reason(scan_log: Path) -> str:
-    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 '''
 
 
@@ -1313,14 +1305,14 @@ def resolve_work_dir(payload: dict) -> Path:
     global HOOK_EVENT
     HOOK_EVENT = payload.get("hook_event_name", "")
     return Path(str(payload.get("cwd") or Path.cwd()))
-
-
-def findings_denial_reason(scan_log: Path) -> str:
-    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 '''
 
 
 _MAIN_SOURCE = r'''
+
+
+def findings_denial_reason(scan_log: Path) -> str:
+    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 
 def main() -> int:
     global INCOMPLETE_LOG, SCAN_ACTION

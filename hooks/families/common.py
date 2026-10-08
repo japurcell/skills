@@ -19,9 +19,9 @@ import codecs
 import json
 import os
 import sys
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, NoReturn, Sequence
 
 if TYPE_CHECKING:
     import subprocess
@@ -36,9 +36,9 @@ import os
 import select
 import sys
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, NoReturn, Sequence
 
 if TYPE_CHECKING:
     import subprocess
@@ -145,7 +145,7 @@ def _read_json_input_text() -> str:
 
 """
 
-COPILOT_JSON = """def read_json_input() -> dict:
+JSON_HELPERS = """def read_json_input() -> dict:
     try:
         payload = json.loads(_read_json_input_text())
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
@@ -154,65 +154,41 @@ COPILOT_JSON = """def read_json_input() -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Invalid hook input: expected a JSON object")
 
+{begin_capture}    return payload
+
+
+def emit_json(payload: dict) -> None:
     try:
+        sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+        sys.stdout.buffer.write(b"\\n")
+        sys.stdout.buffer.flush()
+    except Exception:
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        sys.stdout.write("\\n")
+        sys.stdout.flush()
+{complete_capture}
+"""
+
+BEGIN_CAPTURE = """    try:
         from .observability import begin_hook_capture
 
         begin_hook_capture(payload)
     except Exception:
         pass
 
-    return payload
+"""
 
-
-def emit_json(payload: dict) -> None:
-    try:
-        sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
-        sys.stdout.buffer.write(b"\\n")
-        sys.stdout.buffer.flush()
-    except Exception:
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-        except Exception:
-            pass
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        sys.stdout.write("\\n")
-        sys.stdout.flush()
-
+COMPLETE_CAPTURE = """
     try:
         from .observability import complete_hook_capture
 
         complete_hook_capture(payload)
     except Exception:
         pass
-
-"""
-
-PLAIN_JSON = """def read_json_input() -> dict:
-    try:
-        payload = json.loads(_read_json_input_text())
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ValueError("Invalid hook input: expected a JSON object") from exc
-
-    if not isinstance(payload, dict):
-        raise ValueError("Invalid hook input: expected a JSON object")
-
-    return payload
-
-
-def emit_json(payload: dict) -> None:
-    try:
-        sys.stdout.buffer.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
-        sys.stdout.buffer.write(b"\\n")
-        sys.stdout.buffer.flush()
-    except Exception:
-        try:
-            sys.stdout.reconfigure(encoding="utf-8")
-        except Exception:
-            pass
-        sys.stdout.write(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        sys.stdout.write("\\n")
-        sys.stdout.flush()
-
 """
 
 COMMON_HELPERS = """def sanitize_log_field(value: object) -> str:
@@ -238,7 +214,7 @@ def nested_present(payload: Mapping[str, Any], *keys: str) -> Any:
 
 """
 
-COPILOT_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
+WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
     if not path_str:
         return ""
     if os.name == "nt":
@@ -255,59 +231,6 @@ COPILOT_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> st
         if os.path.exists(f"/{drive}"):
             return f"/{drive}{rest}"
         return f"/mnt/{drive}{rest}"
-
-    if "\\\\" in path_str:
-        return path_str.replace("\\\\", "/")
-
-    return path_str
-
-"""
-
-GEMINI_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
-    import os
-    if not path_str:
-        return ""
-    if os.name == "nt":
-        return path_str.replace("/", "\\\\")
-
-    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
-        drive = path_str[0].lower()
-        rest = path_str[2:].replace("\\\\", "/")
-        if not rest.startswith("/"):
-            rest = "/" + rest
-
-        if os.path.exists(f"/mnt/{drive}"):
-            return f"/mnt/{drive}{rest}"
-        elif os.path.exists(f"/{drive}"):
-            return f"/{drive}{rest}"
-        else:
-            return f"/mnt/{drive}{rest}"
-
-    if "\\\\" in path_str:
-        return path_str.replace("\\\\", "/")
-
-    return path_str
-
-"""
-
-GITHUB_WINDOWS_PATH = """def convert_windows_path_to_posix(path_str: str) -> str:
-    if not path_str:
-        return ""
-    if os.name == "nt":
-        return path_str.replace("/", "\\\\")
-
-    if len(path_str) >= 2 and path_str[1] == ":" and path_str[0].isalpha():
-        drive = path_str[0].lower()
-        rest = path_str[2:].replace("\\\\", "/")
-        if not rest.startswith("/"):
-            rest = "/" + rest
-
-        if os.path.exists(f"/mnt/{drive}"):
-            return f"/mnt/{drive}{rest}"
-        elif os.path.exists(f"/{drive}"):
-            return f"/{drive}{rest}"
-        else:
-            return f"/mnt/{drive}{rest}"
 
     if "\\\\" in path_str:
         return path_str.replace("\\\\", "/")
@@ -399,6 +322,34 @@ def strip_yaml_frontmatter(text: str) -> str:
     return "\\n".join(body)
 
 
+def parse_skill_context(skill_file: Path) -> str:
+    return strip_yaml_frontmatter(skill_file.read_text(encoding="utf-8"))
+
+
+def load_required_skill_context(raw_skill_file: str, fail: Callable[[str], NoReturn]) -> str:
+    # Leave failure decisions and audit requirements to the provider.
+    skill_path = Path(raw_skill_file)
+    if not skill_path.exists() or not skill_path.is_file():
+        fail(f"Required skill file not found: {raw_skill_file}")
+    if not os.access(skill_path, os.R_OK):
+        fail(f"Required skill file not readable: {raw_skill_file}")
+    try:
+        skill_context = parse_skill_context(skill_path)
+    except OSError as exc:
+        fail(f"Failed to read skill file: {raw_skill_file} ({exc})")
+    return (f"<!-- BEGIN REQUIRED SKILL: {raw_skill_file} -->\\n"
+            f"{skill_context}\\n"
+            f"<!-- END REQUIRED SKILL: {raw_skill_file} -->")
+
+
+def repository_root_from_payload(payload: dict[str, object], override_environment: str) -> Path:
+    override = os.environ.get(override_environment)
+    if override:
+        return Path(override)
+    cwd = stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
+    return Path(convert_windows_path_to_posix(cwd)) if cwd else Path.cwd()
+
+
 def run_command(
     args: Sequence[str],
     *,
@@ -487,47 +438,26 @@ def run_gemini_passive_log_hook(script_name: str, build_log_message_func) -> int
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
-    """Render the complete common helper for one supported runtime."""
-    if target.provider != provider.name:
+    """Render shared mechanics and the explicit provider lifecycle adapter."""
+    if target.provider != provider.name or provider.name not in {"copilot", "codex", "gemini", "github"}:
         raise ValueError(f"Common target/provider mismatch: {target.output_path}")
+    github = provider.name == "github"
+    idle_wait = (
+        "        if not _stdin_is_ready(stdin_fd, INPUT_COMPLETION_IDLE_SECONDS):\n"
+        "            raise ValueError(\"Invalid hook input: malformed or incomplete JSON\")\n"
+        if github else ""
+    )
+    parts = [
+        GITHUB_IMPORTS if github else STANDARD_IMPORTS,
+        INPUT_READER.format(idle_wait=idle_wait),
+        JSON_HELPERS.format(begin_capture="" if github else BEGIN_CAPTURE,
+                            complete_capture="" if github else COMPLETE_CAPTURE),
+        COMMON_HELPERS,
+        WINDOWS_PATH,
+        TAIL,
+    ]
     if provider.name in {"copilot", "codex"}:
-        body = "\n".join(
-            (
-                STANDARD_IMPORTS,
-                INPUT_READER.format(idle_wait=""),
-                COPILOT_JSON,
-                COMMON_HELPERS,
-                COPILOT_WINDOWS_PATH,
-                TAIL,
-                COPILOT_PASSIVE_LOG,
-            )
-        )
+        parts.append(COPILOT_PASSIVE_LOG)
     elif provider.name == "gemini":
-        body = "\n".join(
-            (
-                STANDARD_IMPORTS,
-                INPUT_READER.format(idle_wait=""),
-                COPILOT_JSON,
-                COMMON_HELPERS,
-                GEMINI_WINDOWS_PATH,
-                TAIL,
-                GEMINI_PASSIVE_LOG,
-            )
-        )
-    elif provider.name == "github":
-        body = "\n".join(
-            (
-                GITHUB_IMPORTS,
-                INPUT_READER.format(
-                    idle_wait="        if not _stdin_is_ready(stdin_fd, INPUT_COMPLETION_IDLE_SECONDS):\n"
-                    "            raise ValueError(\"Invalid hook input: malformed or incomplete JSON\")\n"
-                ),
-                PLAIN_JSON,
-                COMMON_HELPERS,
-                GITHUB_WINDOWS_PATH,
-                TAIL,
-            )
-        )
-    else:
-        raise ValueError(f"Unsupported common provider: {provider.name}")
-    return SHEBANG + _header() + body
+        parts.append(GEMINI_PASSIVE_LOG)
+    return SHEBANG + _header() + "\n".join(parts)

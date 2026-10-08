@@ -41,6 +41,59 @@ setup_test_workdir() {
   echo "$workdir"
 }
 
+cleanup_test_workdir() {
+  local cleanup_workdir="${workdir:-}"
+
+  if [[ -n "$cleanup_workdir" ]]; then
+    rm -rf -- "$cleanup_workdir"
+  fi
+}
+
+test_home_for_workdir() {
+  local workdir="$1"
+  local home="$workdir/home"
+
+  mkdir -p "$home"
+  printf '%s\n' "$home"
+}
+
+clear_hook_test_path_overrides() {
+  unset COPILOT_OBSERVABILITY_LOG_PATH
+  unset GEMINI_OBSERVABILITY_LOG_PATH
+  unset OBSERVABILITY_LOG_PATH
+  unset AUDIT_LOG
+  unset AUDIT_LOCK
+  unset AUDIT_PASSIVE_LOG_SHADOW_LOG
+  unset GEMINI_PASSIVE_SHADOW_LOG
+}
+
+clear_observability_test_overrides() {
+  clear_hook_test_path_overrides
+
+  local name
+  while IFS= read -r name; do
+    case "$name" in
+      COPILOT_OBSERVABILITY_*|GEMINI_OBSERVABILITY_*|OBSERVABILITY_*)
+        unset "$name"
+        ;;
+    esac
+  done < <(compgen -e)
+}
+
+with_hook_test_environment() (
+  local home="$1"
+  shift
+
+  if [[ "${1:-}" == "--" ]]; then
+    shift
+  fi
+
+  mkdir -p "$home"
+  clear_hook_test_path_overrides
+  export HOME="$home"
+  "$@"
+)
+
 # Usage: mock_bin <workdir> <command_name> <script_content>
 # Example: mock_bin "$workdir" "dotnet" '#!/bin/env bash\nexit 0'
 mock_bin() {
@@ -105,7 +158,8 @@ install_into_temp_home() {
   local home="$1"
 
   mkdir -p "$home"
-  TMPDIR="$REPO_ROOT/.tmp" HOME="$home" "$REPO_ROOT/scripts/install.sh" >/dev/null
+  TMPDIR="$REPO_ROOT/.tmp" HOME="$home" CODEX_HOME="$home/.codex" \
+    "$REPO_ROOT/scripts/install.sh" >/dev/null
 }
 
 write_required_skill_fixtures() {
@@ -148,4 +202,3 @@ description: Terse style.
 Line D.
 EOF
 }
-

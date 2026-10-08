@@ -17,75 +17,19 @@ SHEBANG = "#!/usr/bin/env python3\n"
 HEADER = "# Generated from hooks/families/auto_ingest.py by scripts/generate-hooks.py. Do not edit.\n"
 _FAMILY_ROOT = Path(__file__).resolve().parent
 
-_GEMINI_ROOT_ADAPTER = '''
-def source_root_for_payload(payload: dict[str, object]) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_SCAN_DIR")
-    if override:
-        return Path(override)
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) / ".agents/sources" if cwd else Path.cwd() / ".agents/sources"
-
-
-def summary_root_for_payload(payload: dict[str, object]) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_SUMMARY_DIR")
-    if override:
-        return Path(override)
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) / ".agents/memory/sources" if cwd else Path.cwd() / ".agents/memory/sources"
-
-
-def manifest_path_for_summary_root(summary_dir: Path) -> Path:
-    return summary_dir / MANIFEST_FILE_NAME
-
-
-def manifest_path_for_payload(payload: dict[str, object], summary_root: Path) -> Path:
-    override = os.environ.get("AGENTS_SOURCE_MANIFEST_PATH")
-    if override:
-        return Path(override)
-    return manifest_path_for_summary_root(summary_root)
-
-
-def repo_root_for_payload(payload: dict[str, object]) -> Path:
-    cwd = str(payload.get("cwd") or "")
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        cwd = convert_windows_path_to_posix(cwd)
-    return Path(cwd) if cwd else Path.cwd()
-
-
-'''
-
 
 def _source(name: str) -> str:
     return (_FAMILY_ROOT / name).read_text(encoding="utf-8")
 
 
-def _render_gemini_engine() -> str:
-    """Adapt repository-root resolution to Gemini's payload-derived roots."""
+def _render_engine(provider: Provider) -> str:
+    """Compose the neutral engine with its explicit root/environment adapter."""
     engine = _source("auto_ingest_engine.py")
-    start = engine.index("def source_root(")
-    end = engine.index("def ingest_skill_path(")
-    engine = engine[:start] + _GEMINI_ROOT_ADAPTER + engine[end:]
-    engine = engine.replace(
-        'os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("COPILOT_SKILLS_DIR")',
-        'os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("GEMINI_SKILLS_DIR")',
-    )
-    engine = engine.replace("sources_dir: Path, summary_dir: Path", "source_root: Path, summary_root: Path")
-    engine = engine.replace("sources_dir.exists()", "source_root.exists()")
-    engine = engine.replace("sources_dir.rglob", "source_root.rglob")
-    engine = engine.replace("relative_to(sources_dir)", "relative_to(source_root)")
-    engine = engine.replace(
-        "summary_path_for_source(summary_dir, source_relpath)",
-        "summary_path_for_source(summary_root, source_relpath)",
-        1,
-    )
-    return engine
+    marker = "# __ROOT_ADAPTER__\n"
+    if engine.count(marker) != 1:
+        raise ValueError("Auto-ingest engine must declare exactly one root adapter slot")
+    adapter = _source(f"auto_ingest_{provider.name}_roots.py")
+    return engine.replace(marker, adapter)
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
@@ -100,7 +44,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
         ".gemini/hooks/scripts/inject-auto-ingest-context.py": "auto_ingest_gemini_inject.py",
     }
     try:
-        body = _render_gemini_engine() if provider.name == "gemini" and path.endswith("helpers/source_ingest.py") else _source(sources[path])
+        body = _render_engine(provider) if sources[path] == "auto_ingest_engine.py" else _source(sources[path])
     except KeyError as error:
         raise ValueError(f"Unsupported auto-ingest target: {path}") from error
     return SHEBANG + HEADER + body.removeprefix(SHEBANG)

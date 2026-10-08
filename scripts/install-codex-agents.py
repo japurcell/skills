@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from file_io import write_synced_bytes
+
 
 MANIFEST_NAME = ".skills-repo-agents.json"
 LOCK_NAME = ".skills-repo-agents.lock"
@@ -385,16 +387,7 @@ def set_owner_only_mode(descriptor: int) -> None:
 
 def write_file(path: Path, content: bytes) -> None:
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    try:
-        set_owner_only_mode(descriptor)
-        with os.fdopen(descriptor, "wb") as handle:
-            descriptor = -1
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-    finally:
-        if descriptor != -1:
-            os.close(descriptor)
+    write_synced_bytes(descriptor, content, mode=0o600)
 
 
 def manifest_bytes(agents: tuple[AgentDefinition, ...]) -> bytes:

@@ -115,137 +115,38 @@ ROTATE = """def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -
         return
 """
 
-COPILOT_ADAPTER = """def audit_init() -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    mode = os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
+HELPERS = """def _passive_shadow_path(log_path: str) -> str | None:
+    mode = os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+    enabled = mode == "shadow" if SHADOW_ONLY else mode != "default"
+    return os.environ.get(PASSIVE_SHADOW_ENVIRONMENT, f"{log_path}.shadow") if enabled else None
+
+
+def best_effort_audit_event(sender: str, message: str) -> None:
+    try:
+        audit_log_event(sender, message)
+    except Exception:
+        pass
+"""
+
+INIT = """def audit_init() -> bool:
+    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
     try:
         _ensure_parent(log_path)
-        if mode != "default":
-            shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
+        shadow_path = _passive_shadow_path(log_path)
+        if shadow_path is not None:
             _ensure_parent(shadow_path)
         return True
     except OSError:
         return False
-
-
-def _write_log(sender: str, message: str, passive_shadow_path: str | None = None) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
-    timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
-    max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
-    backups = _int_env(os.environ.get("AUDIT_LOG_MAX_BACKUPS"), 3)
-
-    try:
-        lock_fd = _acquire_lock(lock_path, timeout_seconds)
-    except OSError:
-        return False
-    if lock_fd is None:
-        return False
-
-    safe_sender = sanitize_log_field(sender)
-    safe_message = sanitize_log_field(message)
-
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        _rotate_audit_log(log_path, max_bytes, backups)
-        _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
-        if passive_shadow_path:
-            _rotate_audit_log(passive_shadow_path, max_bytes, backups)
-            _append_line(passive_shadow_path, safe_sender, f"[{timestamp}] {safe_message}")
-    except OSError:
-        return False
-    finally:
-        try:
-            if fcntl is not None:
-                fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        finally:
-            os.close(lock_fd)
-
-    return True
-
-
-def audit_log_event(sender: str, message: str) -> bool:
-    return _write_log(sender, message)
-
-
-def audit_log_passive_event(sender: str, message: str) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    mode = os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
-    shadow_path = None
-    if mode != "default":
-        shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
-    return _write_log(sender, message, shadow_path)
 """
 
-GEMINI_ADAPTER = """def audit_init() -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".gemini" / "hooks" / "audit.log"))
-    mode = os.environ.get("GEMINI_PASSIVE_LOG_MODE", "default")
-    try:
-        _ensure_parent(log_path)
-        if mode == "shadow":
-            shadow_path = os.environ.get("GEMINI_PASSIVE_SHADOW_LOG", f"{log_path}.shadow")
-            _ensure_parent(shadow_path)
-        return True
-    except OSError:
-        return False
-
-
-def _write_log(sender: str, message: str, passive_shadow_path: str | None = None) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".gemini" / "hooks" / "audit.log"))
-    lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
-    timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
-    max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
-    backups = _int_env(os.environ.get("AUDIT_LOG_MAX_BACKUPS"), 3)
-
-    try:
-        lock_fd = _acquire_lock(lock_path, timeout_seconds)
-    except OSError:
-        return False
-    if lock_fd is None:
-        return False
-
-    safe_sender = sanitize_log_field(sender)
-    safe_message = sanitize_log_field(message)
-
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        _rotate_audit_log(log_path, max_bytes, backups)
-        _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
-        if passive_shadow_path:
-            _rotate_audit_log(passive_shadow_path, max_bytes, backups)
-            _append_line(passive_shadow_path, safe_sender, f"[{timestamp}] {safe_message}")
-    except OSError:
-        return False
-    finally:
-        try:
-            if fcntl is not None:
-                fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        finally:
-            os.close(lock_fd)
-
-    return True
-
-
-def audit_log_event(sender: str, message: str) -> bool:
-    return _write_log(sender, message)
-
-
-def audit_log_passive_event(sender: str, message: str) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".gemini" / "hooks" / "audit.log"))
-    mode = os.environ.get("GEMINI_PASSIVE_LOG_MODE", "default")
-    shadow_path = None
-    if mode == "shadow":
-        shadow_path = os.environ.get("GEMINI_PASSIVE_SHADOW_LOG", f"{log_path}.shadow")
-    return _write_log(sender, message, shadow_path)
-"""
-
-GITHUB_ADAPTER = """def _write_log(
+WRITER = """def _write_log(
     sender: str,
     message: str,
     passive_shadow_path: str | None = None,
     passive_shadow_mode: str | None = None,
 ) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
+    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
     lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
     timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
     max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
@@ -266,9 +167,12 @@ GITHUB_ADAPTER = """def _write_log(
         _rotate_audit_log(log_path, max_bytes, backups)
         _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
         if passive_shadow_path:
-            shadow_mode = passive_shadow_mode or os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
             _rotate_audit_log(passive_shadow_path, max_bytes, backups)
-            _append_line(passive_shadow_path, safe_sender, f"[mode={shadow_mode}] [{timestamp}] {safe_message}")
+            shadow_message = f"[{timestamp}] {safe_message}"
+            if SHADOW_MODE_PREFIX:
+                shadow_mode = passive_shadow_mode or os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+                shadow_message = f"[mode={shadow_mode}] {shadow_message}"
+            _append_line(passive_shadow_path, safe_sender, shadow_message)
     except OSError:
         return False
     finally:
@@ -280,30 +184,35 @@ GITHUB_ADAPTER = """def _write_log(
 
     return True
 
+"""
 
-def audit_log_event(sender: str, message: str) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    mode = os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
-    shadow_path = None
-    if mode != "default":
-        shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
-    return _write_log(sender, message, shadow_path, mode)
+EVENTS = """def audit_log_event(sender: str, message: str) -> bool:
+    if SHADOW_MODE_PREFIX:
+        log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
+        mode = os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+        return _write_log(sender, message, _passive_shadow_path(log_path), mode)
+    return _write_log(sender, message)
+"""
+
+PASSIVE = """def audit_log_passive_event(sender: str, message: str) -> bool:
+    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
+    return _write_log(sender, message, _passive_shadow_path(log_path))
 """
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
-    """Render the complete audit helper for one supported runtime."""
-    if target.provider != provider.name:
+    """Render runtime-local audit helpers with explicit provider policy."""
+    if target.provider != provider.name or provider.name not in {"copilot", "codex", "gemini", "github"}:
         raise ValueError(f"Audit target/provider mismatch: {target.output_path}")
-    if provider.name in {"copilot", "codex"}:
-        adapter = COPILOT_ADAPTER
-        if provider.name == "codex":
-            adapter = adapter.replace(' / ".copilot" / ', ' / ".codex" / ')
-        body = "\n\n".join((PREAMBLE, adapter, ROTATE))
-    elif provider.name == "gemini":
-        body = "\n\n".join((PREAMBLE, GEMINI_ADAPTER, ROTATE))
-    elif provider.name == "github":
-        body = "\n\n".join((PREAMBLE, ROTATE, GITHUB_ADAPTER))
-    else:
-        raise ValueError(f"Unsupported audit provider: {provider.name}")
-    return SHEBANG + "# Generated from hooks/families/audit.py by scripts/generate-hooks.py. Do not edit.\n" + body
+    gemini = provider.name == "gemini"
+    adapter = (
+        f"RUNTIME_HOME = {provider.runtime_home_name!r}\n"
+        f"PASSIVE_MODE_ENVIRONMENT = {'GEMINI_PASSIVE_LOG_MODE' if gemini else 'AUDIT_PASSIVE_LOG_MODE'!r}\n"
+        f"PASSIVE_SHADOW_ENVIRONMENT = {'GEMINI_PASSIVE_SHADOW_LOG' if gemini else 'AUDIT_PASSIVE_LOG_SHADOW_LOG'!r}\n"
+        f"SHADOW_ONLY = {gemini!r}\n"
+        f"SHADOW_MODE_PREFIX = {provider.name == 'github'!r}\n"
+    )
+    parts = [PREAMBLE, adapter, HELPERS, WRITER, ROTATE, EVENTS]
+    if provider.name != "github":
+        parts.extend((INIT, PASSIVE))
+    return SHEBANG + "# Generated from hooks/families/audit.py by scripts/generate-hooks.py. Do not edit.\n" + "\n\n".join(parts)

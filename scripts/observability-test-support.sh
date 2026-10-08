@@ -1,0 +1,1504 @@
+#!/usr/bin/env bash
+
+# Provider-neutral observability scenarios. Provider-specific registration,
+# hook mutation expectations, and adversarial cases stay in the public suites.
+
+test_temp_install_uses_fixture_codex_home() {
+  local workdir
+  local home
+  local inherited_codex_home
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/fixture-home"
+  inherited_codex_home="$workdir/inherited-codex-home"
+  mkdir -p "$inherited_codex_home"
+  printf '%s\n' 'sentinel' > "$inherited_codex_home/canary-marker"
+
+  CODEX_HOME="$inherited_codex_home" install_into_temp_home "$home"
+
+  if [[ -z "$(find "$home/.codex/agents" -type f -print -quit)" ]]; then
+    echo "Expected Codex agents to be installed under the fixture HOME." >&2
+    exit 1
+  fi
+  assert_equals 'sentinel' "$(<"$inherited_codex_home/canary-marker")" \
+    "Expected the inherited CODEX_HOME canary to remain unchanged."
+  if [[ -e "$inherited_codex_home/agents" ]]; then
+    echo "Expected fixture installation to leave the inherited CODEX_HOME untouched." >&2
+    exit 1
+  fi
+}
+
+test_observability_lock_wait_and_disable_are_fail_open() {
+  local workdir
+  local home
+  local obs_log
+  local locker_pid
+  local before_count
+  local after_count
+  local start_ns
+  local end_ns
+  local elapsed_ms
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+  mkdir -p "$(dirname "$obs_log")"
+
+  before_count="$(if [[ -f "$obs_log" ]]; then jq -s 'length' "$obs_log"; else echo 0; fi)"
+
+  python3 - "$obs_log.lock" <<'PY' &
+import fcntl
+import sys
+import time
+
+lock_path = sys.argv[1]
+with open(lock_path, "a+", encoding="utf-8") as handle:
+    fcntl.flock(handle, fcntl.LOCK_EX)
+    time.sleep(2)
+PY
+  locker_pid=$!
+
+  start_ns="$(date +%s%N)"
+  output="$(
+    env HOME="$home" ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_SESSION_END_EVENT ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_LOCK_WAIT_MS=10 \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<'{"session_id":"lock-wait","timestamp":"2026-06-24T10:00:02Z","hook_event_name":"SessionEnd"}'
+  )"
+  end_ns="$(date +%s%N)"
+  elapsed_ms="$(( (end_ns - start_ns) / 1000000 ))"
+
+  wait "$locker_pid"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected lock contention to keep send-event output neutral."
+  if [[ "$elapsed_ms" -gt 1500 ]]; then
+    echo "Expected observability writes to fail open after a short lock wait." >&2
+    echo "Elapsed ms: $elapsed_ms" >&2
+    exit 1
+  fi
+
+  after_count="$(if [[ -f "$obs_log" ]]; then jq -s 'length' "$obs_log"; else echo 0; fi)"
+  assert_equals "$before_count" "$after_count" \
+    "Expected a locked observability write to drop instead of blocking control flow."
+
+  output="$(
+    env HOME="$home" ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_DISABLE=true ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_SESSION_END_EVENT \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<'{"session_id":"kill-switch","timestamp":"2026-06-24T10:00:03Z","hook_event_name":"SessionEnd"}'
+  )"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected the observability kill-switch to leave hook output unchanged."
+
+  after_count="$(if [[ -f "$obs_log" ]]; then jq -s 'length' "$obs_log"; else echo 0; fi)"
+  assert_equals "$before_count" "$after_count" \
+    "Expected the observability kill-switch to suppress structured records."
+}
+test_audit_log_secure_file_permissions() {
+  local workdir
+  local home
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  HOME="$home" OBS_TEST_HOOKS_RELATIVE="$OBS_TEST_HOOKS_RELATIVE" \
+    OBS_TEST_AUDIT_PASSIVE_MODE_ENV="$OBS_TEST_AUDIT_PASSIVE_MODE_ENV" \
+    OBS_TEST_AUDIT_PASSIVE_SHADOW_ENV="$OBS_TEST_AUDIT_PASSIVE_SHADOW_ENV" \
+    python3 - "$home" <<'PY'
+import os
+import stat
+import sys
+
+home = sys.argv[1]
+sys.path.insert(0, os.path.join(home, os.environ["OBS_TEST_HOOKS_RELATIVE"], "scripts"))
+from helpers.audit import audit_log_event, audit_log_passive_event
+
+audit_dir = os.path.join(home, "secure-audit")
+primary_log = os.path.join(audit_dir, "primary.log")
+shadow_log = os.path.join(audit_dir, "shadow.log")
+lock_path = os.path.join(audit_dir, "audit.lock")
+
+os.environ["AUDIT_LOG"] = primary_log
+os.environ["AUDIT_LOCK"] = lock_path
+os.environ[os.environ["OBS_TEST_AUDIT_PASSIVE_MODE_ENV"]] = "shadow"
+os.environ[os.environ["OBS_TEST_AUDIT_PASSIVE_SHADOW_ENV"]] = shadow_log
+
+assert audit_log_event("perm-test", "primary line") is True, "Expected primary audit write to succeed"
+assert audit_log_passive_event("perm-test", "shadow line") is True, "Expected passive audit write to succeed"
+
+primary_mode = stat.S_IMODE(os.stat(primary_log).st_mode)
+shadow_mode = stat.S_IMODE(os.stat(shadow_log).st_mode)
+assert primary_mode == 0o600, f"Expected primary audit log mode 0o600, got {oct(primary_mode)}"
+assert shadow_mode == 0o600, f"Expected shadow audit log mode 0o600, got {oct(shadow_mode)}"
+PY
+}
+test_observability_log_rotation() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "rot-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 150) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "rot-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 150) }')"
+  fi
+
+  for i in {1..5}; do
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+        OBSERVABILITY_LOG_MAX_BYTES=300 \
+        OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+        "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+    )"
+    assert_equals '{}' "$(jq -c . <<<"$output")" \
+      "Expected send-event to stay output-neutral."
+  done
+
+  # Assertions
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log file to exist: $obs_log" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log" >/dev/null || { echo "Active log contains invalid JSON" >&2; exit 1; }
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log.1" >/dev/null || { echo "Log backup .1 contains invalid JSON" >&2; exit 1; }
+
+  if [[ ! -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to exist" >&2
+    exit 1
+  fi
+  jq '.' "$obs_log.2" >/dev/null || { echo "Log backup .2 contains invalid JSON" >&2; exit 1; }
+
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_pruning_and_precedence() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "prune-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", payload_stuff: ("a" * 600) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "prune-session", timestamp: "2026-06-23T23:50:00Z", payload_stuff: ("a" * 600) }')"
+  fi
+
+  # First run: force 3 backups using precedence variable
+  for i in {1..5}; do
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+        OBSERVABILITY_LOG_MAX_BYTES=999999999 \
+        OBSERVABILITY_LOG_BACKUP_COUNT=999 \
+        ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+        ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=3 \
+        "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+    )"
+  done
+
+  if [[ ! -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to exist, precedence failed" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.4" ]]; then
+    echo "Expected log backup .4 to NOT exist, precedence failed" >&2
+    exit 1
+  fi
+
+  # Second run: lower backup count to 1, causing pruning of .2 and .3
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+  
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist after pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to NOT exist after pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist after pruning" >&2
+    exit 1
+  fi
+
+  # Third run: lower backup count to 0, which should delete active log (which gets recreated immediately) and .1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=300 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=0 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log to be recreated on next write after 0 backup count pruning" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to be pruned on 0 backup count" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_unconditional_prune() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "prune-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", payload_stuff: ("a" * 150) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "prune-session", timestamp: "2026-06-23T23:50:00Z", payload_stuff: ("a" * 150) }')"
+  fi
+
+  # Create fake backups manually to simulate a historically busy log
+  mkdir -p "$(dirname "$obs_log")"
+  echo "{}" > "$obs_log.1"
+  echo "{}" > "$obs_log.2"
+  echo "{}" > "$obs_log.3"
+
+  # Run the hook with a HUGE max_bytes so active log does not trigger rotation,
+  # but with a backup limit of 1.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=999999999 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  # Assert that .2 and .3 were pruned unconditionally, while .1 survived
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to survive unconditional prune" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected log backup .2 to NOT exist after unconditional prune" >&2
+    exit 1
+  fi
+  if [[ -f "$obs_log.3" ]]; then
+    echo "Expected log backup .3 to NOT exist after unconditional prune" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_max_bytes_zero_disables_active_rotation() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+  local line_count
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "zero-max-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "disable-rotation", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "zero-max-session", timestamp: "2026-06-23T23:50:00Z", reason: "disable-rotation", payload_stuff: ("a" * 50) }')"
+  fi
+
+  mkdir -p "$(dirname "$obs_log")"
+  printf '{"existing":"line"}\n' > "$obs_log"
+  printf '{}\n' > "$obs_log.1"
+  printf '{}\n' > "$obs_log.2"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=0 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=1 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected send-event to stay output-neutral."
+
+  if [[ -f "$obs_log.2" ]]; then
+    echo "Expected backup .2 to be pruned when backup count lowered to 1." >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected backup .1 to survive pruning." >&2
+    exit 1
+  fi
+
+  line_count="$(wc -l < "$obs_log" | xargs)"
+  if [[ "$line_count" -lt 2 ]]; then
+    echo "Expected active log rotation to be disabled when max bytes is 0." >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_sub_512() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "sub-512-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "sub-512-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  fi
+
+  # First payload creates active log. Size will be ~150 bytes.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  # Since max_bytes is 10, the next write will see st_size > 10 and rotate the first payload into .1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist, sub-512 max_bytes was silently clamped/ignored!" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_generic_fallback() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ session_id: "generic-session", timestamp: "2026-06-24T10:00:00Z", hook_event_name: "SessionEnd", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+    payload="$(jq -nc '{ sessionId: "generic-session", timestamp: "2026-06-23T23:50:00Z", reason: "test-rotate", payload_stuff: ("a" * 50) }')"
+  fi
+
+  # Write twice using ONLY generic observability variables to trigger rotation.
+  # First payload creates active log. Size will be ~150 bytes.
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      OBSERVABILITY_LOG_MAX_BYTES=10 \
+      OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  # Second write rotates .ndjson to .ndjson.1
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      OBSERVABILITY_LOG_MAX_BYTES=10 \
+      OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  if [[ ! -f "$obs_log.1" ]]; then
+    echo "Expected log backup .1 to exist, generic OBSERVABILITY_LOG_MAX_BYTES fallback was ignored!" >&2
+    exit 1
+  fi
+}
+test_sqlite_observability_persistence() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
+
+  if [[ -f "$db_path" ]]; then
+    echo "Expected database file to not exist initially." >&2
+    exit 1
+  fi
+
+  # Test permissive permissions (644) gets corrected to 600
+  mkdir -p "$(dirname "$db_path")"
+  touch "$db_path"
+  chmod 644 "$db_path"
+
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:00Z",
+    reason: "test",
+    cwd: "/home/adam/dev/personal/skills"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local perms
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms="$(stat -c "%a" "$db_path")"
+  else
+    perms="$(stat -f "%Lp" "$db_path")"
+  fi
+  if [[ "$perms" != "600" ]]; then
+    echo "Expected database file permissions to be corrected to 600, got: $perms" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
+  # Test schema version mismatch (PRAGMA user_version = 42) triggers automatic recovery (rebuilt as v1)
+  mkdir -p "$(dirname "$db_path")"
+  sqlite3 "$db_path" "PRAGMA user_version = 42;"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local uv
+  uv="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv" != "1" ]]; then
+    echo "Expected database to recover and have PRAGMA user_version = 1, got: $uv" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
+  # Test structural write corruption (database overwritten with garbage) triggers automatic recovery
+  mkdir -p "$(dirname "$db_path")"
+  echo "NOT A DATABASE AT ALL" > "$db_path"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local uv_corrupt
+  uv_corrupt="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv_corrupt" != "1" ]]; then
+    echo "Expected database to recover from structural corruption and have PRAGMA user_version = 1, got: $uv_corrupt" >&2
+    exit 1
+  fi
+
+  rm -f "$db_path"
+
+  # Proceed with normal SQLite persistence checks
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:00Z",
+    reason: "test",
+    cwd: "/home/adam/dev/personal/skills"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  if [[ ! -f "$db_path" ]]; then
+    echo "Expected database file to be created: $db_path" >&2
+    exit 1
+  fi
+
+  local perms
+  if stat --help 2>&1 | grep -q -- "-c"; then
+    perms="$(stat -c "%a" "$db_path")"
+  else
+    perms="$(stat -f "%Lp" "$db_path")"
+  fi
+  if [[ "$perms" != "600" ]]; then
+    echo "Expected database file permissions to be 600, got: $perms" >&2
+    exit 1
+  fi
+
+  local uv
+  uv="$(sqlite3 "$db_path" "PRAGMA user_version;")"
+  if [[ "$uv" != "1" ]]; then
+    echo "Expected PRAGMA user_version to be 1, got: $uv" >&2
+    exit 1
+  fi
+
+  local sess_count
+  sess_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$sess_count" != "1" ]]; then
+    echo "Expected 1 session row for 'sqlite-session-1', got: $sess_count" >&2
+    exit 1
+  fi
+
+  local ws_root
+  ws_root="$(sqlite3 "$db_path" "SELECT workspace_root FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ -z "$ws_root" ]]; then
+    echo "Expected workspace_root to be recorded, got empty string." >&2
+    exit 1
+  fi
+
+  local span_count
+  span_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$span_count" != "1" ]]; then
+    echo "Expected 1 span row for 'sqlite-session-1', got: $span_count" >&2
+    exit 1
+  fi
+
+  local seq_no
+  seq_no="$(sqlite3 "$db_path" "SELECT sequence_no FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$seq_no" != "1" ]]; then
+    echo "Expected sequence_no = 1, got: $seq_no" >&2
+    exit 1
+  fi
+
+  local ev_name
+  ev_name="$(sqlite3 "$db_path" "SELECT event_name FROM spans WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$ev_name" != "session_start" ]]; then
+    echo "Expected event_name = session_start, got: $ev_name" >&2
+    exit 1
+  fi
+
+  payload="$(jq -nc '{
+    sessionId: "sqlite-session-1",
+    timestamp: "2026-06-23T23:50:01Z",
+    toolName: "test-tool"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=BeforeTool \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  seq_no="$(sqlite3 "$db_path" "SELECT sequence_no FROM spans WHERE session_id = 'sqlite-session-1' AND event_name = 'before_tool';")"
+  if [[ "$seq_no" != "2" ]]; then
+    echo "Expected second span to have sequence_no = 2, got: $seq_no" >&2
+    exit 1
+  fi
+
+  local status
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'sqlite-session-1';")"
+  if [[ "$status" != "running" ]]; then
+    echo "Expected session status to be running, got: $status" >&2
+    exit 1
+  fi
+}
+test_sqlite_span_sequencing_and_child_linkage() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
+
+  # 1. Verify Parent-side subagentStart writes registry file and backfills parent session
+  payload="$(jq -nc '{
+    sessionId: "child-session-123",
+    timestamp: "2026-06-23T23:50:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=subagentStart ${OBS_TEST_SESSION_ID_ENV}="parent-session-abc" \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local reg_file="$home/$OBS_TEST_HOOKS_RELATIVE/logs/registries/subagents/child-session-123.json"
+  if [[ ! -f "$reg_file" ]]; then
+    echo "Expected subagent registry file to be created: $reg_file" >&2
+    exit 1
+  fi
+
+  local reg_parent
+  reg_parent="$(jq -r '.parent_session_id' "$reg_file")"
+  if [[ "$reg_parent" != "parent-session-abc" ]]; then
+    echo "Expected parent_session_id parent-session-abc in registry file, got: $reg_parent" >&2
+    exit 1
+  fi
+
+  # 2. Verify child session has parent_session_id correctly linked in DB
+  local parent_id
+  parent_id="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-session-123';")"
+  if [[ "$parent_id" != "parent-session-abc" ]]; then
+    echo "Expected parent_session_id link 'parent-session-abc' in database, got: '$parent_id'" >&2
+    exit 1
+  fi
+
+  # 3. Verify late-arrival spans allowed in finalizing sessions
+  # Move child session to 'finalizing'
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'finalizing' WHERE session_id = 'child-session-123';"
+
+  # Send a late-arrival event
+  payload="$(jq -nc '{
+    sessionId: "child-session-123",
+    timestamp: "2026-06-23T23:51:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local late_arrival
+  late_arrival="$(sqlite3 "$db_path" "SELECT late_arrival FROM spans WHERE session_id = 'child-session-123' AND event_name = 'before_tool';")"
+  if [[ "$late_arrival" != "1" ]]; then
+    echo "Expected late_arrival = 1 for finalized session span, got: '$late_arrival'" >&2
+    exit 1
+  fi
+
+  # 4. Verify rejection of spans for terminal states ('success', 'failed', 'failed-finalization')
+  for t_status in success failed failed-finalization; do
+    sqlite3 "$db_path" "UPDATE sessions SET status = '$t_status' WHERE session_id = 'child-session-123';"
+    
+    # Try sending event
+    payload="$(jq -nc '{
+      sessionId: "child-session-123",
+      timestamp: "2026-06-23T23:52:00Z"
+    }')"
+
+    output="$(
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+        "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+    )"
+
+    local span_count
+    span_count="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE session_id = 'child-session-123' AND timestamp_ms = 1782258720000;")"
+    if [[ "$span_count" != "0" ]]; then
+      echo "Expected span to be rejected and NOT saved when session is '$t_status', but it was saved!" >&2
+      exit 1
+    fi
+  done
+
+  # 5. Verify retry-based backfill when registry is delayed
+  # Trigger child event first (creates session and span, parent-link is NULL because registry doesn't exist)
+  payload="$(jq -nc '{
+    sessionId: "child-delayed-999",
+    timestamp: "2026-06-23T23:55:00Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  local linked_parent
+  linked_parent="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-delayed-999';")"
+  if [[ -n "$linked_parent" ]]; then
+    echo "Expected parent_session_id to be NULL initially, got: '$linked_parent'" >&2
+    exit 1
+  fi
+
+  # Create registry file now
+  local delayed_reg_file="$home/$OBS_TEST_HOOKS_RELATIVE/logs/registries/subagents/child-delayed-999.json"
+  mkdir -p "$(dirname "$delayed_reg_file")"
+  echo '{"parent_session_id":"parent-delayed-xyz"}' > "$delayed_reg_file"
+
+  # Trigger subsequent child event (should backfill parent_session_id)
+  payload="$(jq -nc '{
+    sessionId: "child-delayed-999",
+    timestamp: "2026-06-23T23:55:01Z"
+  }')"
+
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+      "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload"
+  )"
+
+  linked_parent="$(sqlite3 "$db_path" "SELECT parent_session_id FROM sessions WHERE session_id = 'child-delayed-999';")"
+  if [[ "$linked_parent" != "parent-delayed-xyz" ]]; then
+    echo "Expected delayed parent_session_id backfill to 'parent-delayed-xyz', got: '$linked_parent'" >&2
+    exit 1
+  fi
+
+  # 6. Verify concurrent parallel registration does not create duplicate sequence_no
+  # Trigger 10 parallel background span registers for a new session and verify all 10 have unique sequence numbers 1 to 10
+  local parallel_sess="parallel-session-xyz"
+  
+  # Run 10 parallel processes
+  for i in {1..10}; do
+    (
+      payload="$(jq -nc --arg idx "$i" '{
+        sessionId: "parallel-session-xyz",
+        timestamp: "2026-06-23T23:58:00Z",
+        reason: ("proc-" + $idx)
+      }')"
+      env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse OBSERVABILITY_BUSY_TIMEOUT_MS=5000 \
+        "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+    ) &
+  done
+  wait
+
+  local unique_seq_count
+  unique_seq_count="$(sqlite3 "$db_path" "SELECT COUNT(DISTINCT sequence_no) FROM spans WHERE session_id = 'parallel-session-xyz';")"
+  if [[ "$unique_seq_count" != "10" ]]; then
+    echo "Concurrency failure: expected 10 unique sequence numbers, got: $unique_seq_count" >&2
+    # Show sequence numbers
+    sqlite3 "$db_path" "SELECT sequence_no, metadata FROM spans WHERE session_id = 'parallel-session-xyz' ORDER BY sequence_no;"
+    exit 1
+  fi
+}
+test_sqlite_finalization_and_transcripts() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
+
+  # --- TEST 1: Saving, merging active chunks to .jsonl, sequence numbers and ISO 8601 timestamps ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:00.123Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:01.456Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-1",
+    timestamp: "2026-06-23T23:45:02.789Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local saved_jsonl="$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/final-session-1.jsonl"
+  if [[ ! -f "$saved_jsonl" ]]; then
+    echo "Expected saved transcript .jsonl to exist: $saved_jsonl" >&2
+    exit 1
+  fi
+
+  local merged_content
+  merged_content="$(cat "$saved_jsonl")"
+  if [[ ! "$merged_content" =~ "final-session-1" ]]; then
+    echo "Expected final-session-1 in merged lines, got: $merged_content" >&2
+    exit 1
+  fi
+  if [[ ! "$merged_content" =~ 2026-06-23T23:45:01\.456Z ]]; then
+    echo "Expected millisecond timestamp '2026-06-23T23:45:01.456Z' in merged transcript, got: $merged_content" >&2
+    exit 1
+  fi
+
+  # --- TEST 2: Payload content capping at 512KB with payload_capped = true recorded in SQLite ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-2",
+    timestamp: "2026-06-23T23:46:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(python3 -c 'import json; print(json.dumps({"sessionId": "final-session-2", "timestamp": "2026-06-23T23:46:01.000Z", "content": "A" * 530000}))')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local capped_meta
+  capped_meta="$(sqlite3 "$db_path" "SELECT metadata FROM spans WHERE session_id = 'final-session-2' AND event_name = 'before_tool';")"
+  if [[ ! "$capped_meta" =~ "\"payload_capped\": true" ]]; then
+    echo "Expected metadata to record payload_capped = true, got: $capped_meta" >&2
+    exit 1
+  fi
+
+  # --- TEST 3: Stale and dead-PID span abandonment checking and setting has_errors = 1 ---
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = 999999, updated_at_ms = 1000000000 WHERE session_id = 'final-session-3' AND event_name = 'before_tool';"
+
+  payload="$(jq -nc '{
+    sessionId: "final-session-3",
+    timestamp: "2026-06-23T23:47:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local final_span_status
+  final_span_status="$(sqlite3 "$db_path" "SELECT status FROM spans WHERE session_id = 'final-session-3' AND event_name = 'before_tool';")"
+  if [[ "$final_span_status" != "abandoned" ]]; then
+    echo "Expected dead-PID span status to be abandoned, got: $final_span_status" >&2
+    exit 1
+  fi
+
+  local sess_errs
+  sess_errs="$(sqlite3 "$db_path" "SELECT has_errors FROM sessions WHERE session_id = 'final-session-3';")"
+  if [[ "$sess_errs" != "1" ]]; then
+    echo "Expected dead-PID session to record has_errors = 1, got: $sess_errs" >&2
+    exit 1
+  fi
+
+  # --- TEST 4: Detached maintenance, rate-limiting, retention, scavenging, vacuum ---
+  local sentinel="$home/$OBS_TEST_HOOKS_RELATIVE/logs/.maintenance_last_run"
+  rm -f "$sentinel"
+
+  payload="$(jq -nc '{
+    sessionId: "maint-session-startup",
+    timestamp: "2026-06-23T23:50:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Wait for the sentinel file using a polling loop (up to 5s)
+  local limit=50
+  local count=0
+  while [[ ! -f "$sentinel" && $count -lt $limit ]]; do
+    sleep 0.1
+    count=$((count + 1))
+  done
+
+  if [[ ! -f "$sentinel" ]]; then
+    echo "Expected maintenance sentinel file to be created: $sentinel" >&2
+    exit 1
+  fi
+
+  local now_ms
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  local exp_err_ms=$((now_ms - 95 * 24 * 3600 * 1000))
+  local exp_succ_ms=$((now_ms - 15 * 24 * 3600 * 1000))
+  local keep_err_ms=$((now_ms - 85 * 24 * 3600 * 1000))
+  local keep_succ_ms=$((now_ms - 10 * 24 * 3600 * 1000))
+
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-err-sess', '$home', '$OBS_TEST_PROVIDER', 'success', $exp_err_ms, 1, '$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-err-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('exp-succ-sess', '$home', '$OBS_TEST_PROVIDER', 'success', $exp_succ_ms, 0, '$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-succ-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-err-sess', '$home', '$OBS_TEST_PROVIDER', 'success', $keep_err_ms, 1, '$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-err-sess.jsonl');"
+  sqlite3 "$db_path" "INSERT INTO sessions (session_id, workspace_root, runtime, status, start_time_ms, has_errors, transcript_path) VALUES ('keep-succ-sess', '$home', '$OBS_TEST_PROVIDER', 'success', $keep_succ_ms, 0, '$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-succ-sess.jsonl');"
+
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-err-span', 'exp-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('exp-succ-span', 'exp-succ-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-err-span', 'keep-err-sess', 1, 'preToolUse', 'completed');"
+  sqlite3 "$db_path" "INSERT INTO spans (span_id, session_id, sequence_no, event_name, status) VALUES ('keep-succ-span', 'keep-succ-sess', 1, 'preToolUse', 'completed');"
+
+  mkdir -p "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved"
+  echo "exp-err" > "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-err-sess.jsonl"
+  echo "exp-succ" > "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-succ-sess.jsonl"
+  echo "keep-err" > "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-err-sess.jsonl"
+  echo "keep-succ" > "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-succ-sess.jsonl"
+
+  local active_dir_stale="$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/active/stale-sess"
+  local active_dir_fresh="$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/active/fresh-sess"
+  mkdir -p "$active_dir_stale" "$active_dir_fresh"
+
+  local reg_dir="$home/$OBS_TEST_HOOKS_RELATIVE/logs/registries/subagents"
+  mkdir -p "$reg_dir"
+  local reg_file_stale="$reg_dir/stale-child.json"
+  local reg_file_fresh="$reg_dir/fresh-child.json"
+  echo '{"parent_session_id":"p"}' > "$reg_file_stale"
+  echo '{"parent_session_id":"p"}' > "$reg_file_fresh"
+
+  local stale_epoch
+  stale_epoch="$(python3 -c "import time; print(int(time.time() - 30 * 3600))")"
+  python3 -c 'import os, sys; stamp = int(sys.argv[1]); [os.utime(path, (stamp, stamp)) for path in sys.argv[2:]]' \
+    "$stale_epoch" "$active_dir_stale" "$reg_file_stale"
+
+  env HOME="$home" PYTHONPATH="$home/$OBS_TEST_HOOKS_RELATIVE/scripts" python3 -m helpers.observability --maintenance
+
+  local exp_err_exists
+  exp_err_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'exp-err-sess';")"
+  if [[ "$exp_err_exists" != "0" ]]; then
+    echo "Expected expired error session to be deleted, but it exists" >&2
+    exit 1
+  fi
+  local exp_succ_exists
+  exp_succ_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'exp-succ-sess';")"
+  if [[ "$exp_succ_exists" != "0" ]]; then
+    echo "Expected expired success session to be deleted, but it exists" >&2
+    exit 1
+  fi
+
+  local exp_err_span_exists
+  exp_err_span_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE span_id = 'exp-err-span';")"
+  if [[ "$exp_err_span_exists" != "0" ]]; then
+    echo "Expected expired error span to be cascade deleted, but it exists" >&2
+    exit 1
+  fi
+  local exp_succ_span_exists
+  exp_succ_span_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM spans WHERE span_id = 'exp-succ-span';")"
+  if [[ "$exp_succ_span_exists" != "0" ]]; then
+    echo "Expected expired success span to be cascade deleted, but it exists" >&2
+    exit 1
+  fi
+
+  local keep_err_exists
+  keep_err_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'keep-err-sess';")"
+  if [[ "$keep_err_exists" != "1" ]]; then
+    echo "Expected non-expired error session to be kept, but count is: $keep_err_exists" >&2
+    exit 1
+  fi
+  local keep_succ_exists
+  keep_succ_exists="$(sqlite3 "$db_path" "SELECT COUNT(*) FROM sessions WHERE session_id = 'keep-succ-sess';")"
+  if [[ "$keep_succ_exists" != "1" ]]; then
+    echo "Expected non-expired success session to be kept, but count is: $keep_succ_exists" >&2
+    exit 1
+  fi
+
+  if [[ -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-err-sess.jsonl" ]]; then
+    echo "Expected expired error transcript file to be deleted" >&2
+    exit 1
+  fi
+  if [[ -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/exp-succ-sess.jsonl" ]]; then
+    echo "Expected expired success transcript file to be deleted" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-err-sess.jsonl" ]]; then
+    echo "Expected non-expired error transcript file to be preserved" >&2
+    exit 1
+  fi
+  if [[ ! -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/keep-succ-sess.jsonl" ]]; then
+    echo "Expected non-expired success transcript file to be preserved" >&2
+    exit 1
+  fi
+
+  if [[ -d "$active_dir_stale" ]]; then
+    echo "Expected stale active transcript directory to be scavenged" >&2
+    exit 1
+  fi
+  if [[ ! -d "$active_dir_fresh" ]]; then
+    echo "Expected fresh active transcript directory to be preserved" >&2
+    exit 1
+  fi
+
+  if [[ -f "$reg_file_stale" ]]; then
+    echo "Expected stale registry file to be scavenged" >&2
+    exit 1
+  fi
+  if [[ ! -f "$reg_file_fresh" ]]; then
+    echo "Expected fresh registry file to be preserved" >&2
+    exit 1
+  fi
+}
+test_sqlite_additional_observability_scenarios() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
+
+  # --- Gap 1 Test: Finalization Timeout and failed-finalization State Transition ---
+  local session_gap1="gap1-session"
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Add a running span
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Mark it running in sqlite3 with our own PID to keep it running
+  local my_pid=$$
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = $my_pid, updated_at_ms = $(python3 -c "import time; print(int(time.time() * 1000))") WHERE session_id = '$session_gap1' AND event_name = 'before_tool';"
+
+  # Ensure active dir exists
+  local active_dir_gap1="$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/active/$session_gap1"
+  if [[ ! -d "$active_dir_gap1" ]]; then
+    echo "Expected active transcript directory to exist: $active_dir_gap1" >&2
+    exit 1
+  fi
+
+  # Call finalization with tiny timeout budget
+  payload="$(jq -nc --arg sess "$session_gap1" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_FINALIZATION_TIMEOUT_MS=10 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Query status
+  local sess_status
+  sess_status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = '$session_gap1';")"
+  if [[ "$sess_status" != "failed-finalization" ]]; then
+    echo "Expected session status to transition to failed-finalization, got: $sess_status" >&2
+    exit 1
+  fi
+
+  # Assert active transcript directory STILL exists on disk
+  if [[ ! -d "$active_dir_gap1" ]]; then
+    echo "Expected active transcript directory to still exist for failed-finalization session: $active_dir_gap1" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 2 Test: Envelope Structure and Delta-Payload JQ Verification ---
+  local session_gap2="gap2-session"
+  payload="$(jq -nc --arg sess "$session_gap2" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Span 1 (Identical raw and effective)
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 -c "
+import sys, os
+sys.path.append('$home/$OBS_TEST_HOOKS_RELATIVE/scripts')
+from helpers.observability import begin_hook_capture, complete_hook_capture
+os.environ['OBSERVABILITY_SOURCE_EVENT_NAME'] = 'preToolUse'
+begin_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:01.000Z', 'val': 'abc'})
+complete_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:01.000Z', 'val': 'abc'})
+"
+
+  # Span 2 (Different raw and effective / mutated)
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    python3 -c "
+import sys, os
+sys.path.append('$home/$OBS_TEST_HOOKS_RELATIVE/scripts')
+from helpers.observability import begin_hook_capture, complete_hook_capture
+os.environ['OBSERVABILITY_SOURCE_EVENT_NAME'] = 'preToolUse'
+begin_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:02.000Z', 'val': 'abc'})
+complete_hook_capture({'sessionId': '$session_gap2', 'timestamp': '2026-06-23T23:45:02.000Z', 'val': 'xyz'})
+"
+
+  # Finalize session
+  payload="$(jq -nc --arg sess "$session_gap2" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:03.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_SAMPLING_FORCE=1 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local saved_jsonl_gap2="$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/$session_gap2.jsonl"
+  if [[ ! -f "$saved_jsonl_gap2" ]]; then
+    echo "Expected saved transcript .jsonl to exist: $saved_jsonl_gap2" >&2
+    exit 1
+  fi
+
+  local count_lines
+  count_lines="$(jq -s 'length' "$saved_jsonl_gap2")"
+  if [[ "$count_lines" -ne 4 ]]; then
+    echo "Expected exactly 4 lines in merged transcript, got: $count_lines" >&2
+    exit 1
+  fi
+
+  local bad_envelope
+  bad_envelope="$(jq -c 'select(.session_id == null or .span_id == null or .event_name == null or .source_event_name == null or .timestamp == null or .outcome == null or .payload == null)' "$saved_jsonl_gap2")"
+  if [[ -n "$bad_envelope" ]]; then
+    echo "Found line with invalid/missing envelope keys: $bad_envelope" >&2
+    exit 1
+  fi
+
+  local line1_effective
+  line1_effective="$(jq -r 'select(.timestamp | endswith("01.000Z")) | .payload.effective' "$saved_jsonl_gap2")"
+  if [[ "$line1_effective" != "null" ]]; then
+    echo "Expected payload.effective to be absent for identical raw/effective payload, got: $line1_effective" >&2
+    exit 1
+  fi
+
+  local line2_effective_val
+  line2_effective_val="$(jq -r 'select(.timestamp | endswith("02.000Z")) | .payload.effective.val' "$saved_jsonl_gap2")"
+  if [[ "$line2_effective_val" != "xyz" ]]; then
+    echo "Expected payload.effective.val to be 'xyz', got: $line2_effective_val" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 3 Test: Detached Maintenance Gating (Rate Limiting) ---
+  local sentinel="$home/$OBS_TEST_HOOKS_RELATIVE/logs/.maintenance_last_run"
+  # Create sentinel if not present
+  touch "$sentinel"
+
+  # Manually set its mtime to 1 hour ago
+  python3 -c 'import os, sys, time; stamp = time.time() - 3600; os.utime(sys.argv[1], (stamp, stamp))' "$sentinel"
+  local mtime_before
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    mtime_before="$(stat -f "%m" "$sentinel")"
+  else
+    mtime_before="$(stat -c "%Y" "$sentinel")"
+  fi
+
+  # Trigger another event (e.g., preToolUse)
+  payload="$(jq -nc '{
+    sessionId: "maint-session-gating",
+    timestamp: "2026-06-23T23:55:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Retrieve the sentinel file's mtime and assert it was NOT updated
+  local mtime_after
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    mtime_after="$(stat -f "%m" "$sentinel")"
+  else
+    mtime_after="$(stat -c "%Y" "$sentinel")"
+  fi
+
+  if [[ "$mtime_before" != "$mtime_after" ]]; then
+    echo "Expected background maintenance execution to be bypassed (sentinel mtime not updated), but it changed: $mtime_before -> $mtime_after" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 4 Test: Configuration Precedence Hierarchy Verification ---
+  env HOME="$home" ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_BUSY_TIMEOUT_MS=250 OBSERVABILITY_BUSY_TIMEOUT_MS=500 \
+      ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_FINALIZATION_TIMEOUT_MS=1000 OBSERVABILITY_FINALIZATION_TIMEOUT_MS=2000 \
+      python3 -c "
+import sys, os
+sys.path.append('$home/$OBS_TEST_HOOKS_RELATIVE/scripts')
+from helpers.observability import _busy_timeout_ms, _finalization_timeout_ms
+assert _busy_timeout_ms() == 250, f'Expected 250, got {_busy_timeout_ms()}'
+assert _finalization_timeout_ms() == 1000, f'Expected 1000, got {_finalization_timeout_ms()}'
+"
+  if [[ $? -ne 0 ]]; then
+    echo "Configuration precedence verification failed" >&2
+    exit 1
+  fi
+
+  # Test ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0 (should retain)
+  local session_gap4_retain="gap4-session-retain"
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Finalize with ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0
+  payload="$(jq -nc --arg sess "$session_gap4_retain" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=1 env OBSERVABILITY_SAMPLING_FORCE=0 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  if [[ ! -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/$session_gap4_retain.jsonl" ]]; then
+    echo "Expected transcript to be retained when ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=1 and OBSERVABILITY_SAMPLING_FORCE=0" >&2
+    exit 1
+  fi
+
+  # Test ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1 (should NOT retain)
+  local session_gap4_discard="gap4-session-discard"
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Finalize with ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1
+  payload="$(jq -nc --arg sess "$session_gap4_discard" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=0 env OBSERVABILITY_SAMPLING_FORCE=1 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  if [[ -f "$home/$OBS_TEST_HOOKS_RELATIVE/logs/transcripts/saved/$session_gap4_discard.jsonl" ]]; then
+    echo "Expected transcript to be discarded when ${OBS_TEST_PROVIDER_PREFIX}_OBSERVABILITY_SAMPLING_FORCE=0 and OBSERVABILITY_SAMPLING_FORCE=1" >&2
+    exit 1
+  fi
+
+
+  # --- Gap 5 Test: Age-Based Span Abandonment and Running Span Stale MS Overrides ---
+  local session_gap5="gap5-session"
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:00.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionStart \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:01.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=preToolUse \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  # Update span to running, no pid, updated 5 seconds ago
+  local now_ms
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  local five_secs_ago=$((now_ms - 5000))
+  sqlite3 "$db_path" "UPDATE spans SET status = 'running', pid = NULL, updated_at_ms = $five_secs_ago WHERE session_id = '$session_gap5' AND event_name = 'before_tool';"
+
+  # Finalize with tiny stale MS override
+  payload="$(jq -nc --arg sess "$session_gap5" '{
+    sessionId: $sess,
+    timestamp: "2026-06-23T23:45:02.000Z"
+  }')"
+  env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=sessionEnd \
+    env OBSERVABILITY_RUNNING_SPAN_STALE_MS=1000 \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  local gap5_span_status
+  gap5_span_status="$(sqlite3 "$db_path" "SELECT status FROM spans WHERE session_id = '$session_gap5' AND event_name = 'before_tool';")"
+  if [[ "$gap5_span_status" != "abandoned" ]]; then
+    echo "Expected stale running span to be abandoned, got: $gap5_span_status" >&2
+    exit 1
+  fi
+
+  local gap5_sess_status
+  gap5_sess_status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = '$session_gap5';")"
+  if [[ "$gap5_sess_status" != "failed" ]]; then
+    echo "Expected stale session to end as failed, got: $gap5_sess_status" >&2
+    exit 1
+  fi
+
+  echo "ADDITIONAL_OBSERVABILITY_SCENARIOS_OK"
+}
+test_sqlite_finalization_maintenance_resume() {
+  local workdir
+  local home
+  local db_path
+  local payload
+  local output
+  local stale_start_ms
+  local status
+  local now_ms
+  local stale_span_ms
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+  db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
+
+  payload="$(jq -nc '{
+    session_id: "resume-finalize-session",
+    timestamp: "2026-06-24T10:00:00Z",
+    hook_event_name: "SessionStart"
+  }')"
+  env HOME="$home" ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_SESSION_START_EVENT \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    session_id: "resume-finalize-session",
+    timestamp: "2026-06-24T10:00:01Z",
+    hook_event_name: "BeforeTool"
+  }')"
+  env HOME="$home" ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_PRE_TOOL_EVENT \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  now_ms="$(python3 -c "import time; print(int(time.time() * 1000))")"
+  stale_span_ms=$((now_ms - 60000))
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'finalizing', start_time_ms = $now_ms WHERE session_id = 'resume-finalize-session';"
+  sqlite3 "$db_path" "UPDATE spans SET status = 'completed', updated_at_ms = $stale_span_ms WHERE session_id = 'resume-finalize-session';"
+
+  env HOME="$home" PYTHONPATH="$home/$OBS_TEST_HOOKS_RELATIVE/scripts" python3 -m helpers.observability --maintenance >/dev/null
+
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'resume-finalize-session';")"
+  if [[ "$status" != "success" ]]; then
+    echo "Expected stale finalizing session to be resumed and finalized successfully, got: $status" >&2
+    exit 1
+  fi
+
+  payload="$(jq -nc '{
+    session_id: "resume-sealing-session",
+    timestamp: "2026-06-24T10:00:02Z",
+    hook_event_name: "SessionStart"
+  }')"
+  env HOME="$home" ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_SESSION_START_EVENT \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  payload="$(jq -nc '{
+    session_id: "resume-sealing-session",
+    timestamp: "2026-06-24T10:00:03Z",
+    hook_event_name: "BeforeTool"
+  }')"
+  env HOME="$home" ${OBS_TEST_CAPTURE_ENV}=true ${OBS_TEST_SOURCE_EVENT_ENV}=$OBS_TEST_PRE_TOOL_EVENT \
+    "$OBS_TEST_PYTHON" "$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py" <<<"$payload" >/dev/null
+
+  stale_start_ms="$(python3 -c "import time; print(int(time.time() * 1000) - 60000)")"
+  sqlite3 "$db_path" "UPDATE sessions SET status = 'sealing', start_time_ms = $stale_start_ms WHERE session_id = 'resume-sealing-session';"
+  sqlite3 "$db_path" "UPDATE spans SET status = 'completed', updated_at_ms = $stale_start_ms WHERE session_id = 'resume-sealing-session';"
+
+  env HOME="$home" PYTHONPATH="$home/$OBS_TEST_HOOKS_RELATIVE/scripts" python3 -m helpers.observability --maintenance >/dev/null
+
+  status="$(sqlite3 "$db_path" "SELECT status FROM sessions WHERE session_id = 'resume-sealing-session';")"
+  if [[ "$status" != "success" ]]; then
+    echo "Expected stale sealing session to be resumed and finalized successfully, got: $status" >&2
+    exit 1
+  fi
+}
+test_observability_log_rotation_fail_open() {
+  local workdir
+  local home
+  local obs_log
+  local payload
+  local output
+
+  workdir="$(setup_test_workdir)"
+  trap cleanup_test_workdir RETURN
+  home="$workdir/home"
+  install_into_temp_home "$home"
+
+  if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="SessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+  else
+    obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
+    prefix="$OBS_TEST_PROVIDER_PREFIX"
+    event_name="sessionEnd"
+    runner_path="$home/$OBS_TEST_HOOKS_RELATIVE/scripts/send-event.py"
+  fi
+
+  # Create active log and fill it past max_bytes
+  mkdir -p "$(dirname "$obs_log")"
+  touch "$(dirname "$obs_log")/.maintenance_last_run"
+  echo '{"test":"active"}' > "$obs_log"
+
+  # Create a directory where the rotated log wants to go to force an OSError on rename
+  mkdir -p "$obs_log.1"
+
+  # Run the hook which should trigger rotation but fail gracefully and append to active log
+  payload='{"sessionId":"fail-open-test","timestamp":"2026-08-18T12:00:00Z"}'
+  output="$(
+    env HOME="$home" OBSERVABILITY_CAPTURE_EVENT=true OBSERVABILITY_SOURCE_EVENT_NAME=$event_name \
+      ${prefix}_OBSERVABILITY_LOG_MAX_BYTES=10 \
+      ${prefix}_OBSERVABILITY_LOG_BACKUP_COUNT=2 \
+      "$OBS_TEST_PYTHON" "$runner_path" <<<"$payload"
+  )"
+
+  assert_equals '{}' "$(jq -c . <<<"$output")" \
+    "Expected hook to execute successfully even when log rotation fails."
+
+  # Verify active log still exists and has the new entry appended
+  if [[ ! -f "$obs_log" ]]; then
+    echo "Expected active log to exist and retain logs on rotation failure." >&2
+    exit 1
+  fi
+
+  # Ensure directory is cleaned up so trap doesn't fail
+  rm -rf -- "$obs_log.1"
+}
