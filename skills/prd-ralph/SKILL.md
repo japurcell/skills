@@ -45,8 +45,8 @@ Read when triggered:
 
 ### 1. Prepare
 
-1. Read `prd_file`. If unreadable, report blocker and stop.
-2. If all `tasks[].passes` are `true`, output exactly:
+1. Read `prd_file` and `references/intake.md`. Validate the entire manifest before selection or completion detection. If unreadable or invalid, emit the blocked protocol and stop.
+2. If the validated nonempty manifest has all `tasks[].passes` equal to `true`, or authoritative source explicitly establishes a validated no-work result, output exactly:
    `<promise>COMPLETE</promise>`
    Then stop.
 3. Resolve `progress_file`:
@@ -68,15 +68,16 @@ A task is eligible only when:
 
 - `passes: false`
 - every `dependsOn` task has `passes: true`
-- missing or empty `dependsOn` means no dependencies
+- `dependsOn: []` means no dependencies
 
 Selection:
 
 - If `task_id` is provided, use it only if it exists, is unfinished, and dependencies pass. Otherwise stop and report why.
 - If `task_id` is omitted, choose the eligible unfinished task with the lowest numeric `priority`.
-- Missing or non-numeric priorities sort last.
 - Break ties by PRD order.
-- If no task is eligible, stop and list blockers.
+- If no task is eligible, emit `<promise>BLOCKED</promise>` and list actionable blockers.
+
+Read every selected task field, resolve its source/context references, and inspect prerequisite evidence/current state as required by `references/intake.md` before execution. Priority never bypasses a prerequisite.
 
 Before implementation, inspect the selected task. If requirements or acceptance criteria are missing, unsafe, or contradictory:
 
@@ -86,13 +87,14 @@ Before implementation, inspect the selected task. If requirements or acceptance 
 
 ### 3. Implement
 
-1. Activate or load the `tdd` skill, even if you already know TDD principles. This skill contains expert-level, specific knowledge.
+1. Execute the selected `taskType` outcome within user scope and owner limits. Activate the `tdd` skill before designing or editing source code; for noncode work collect real, outcome-appropriate evidence. A decision requiring owner approval stays blocked.
 2. Follow only the selected task’s:
    - `description`
    - `acceptanceCriteria`
    - `filesLikelyTouched`
    - `designGuidance`
-   - repo guidance and patterns
+   - `sourceRefs`, `requiredContext`, `taskType`, and `verification`
+   - prerequisite guarantees, repo guidance, user constraints, and patterns
 3. For testable code changes:
    - RED: add a failing test for the required behavior.
    - GREEN: make the smallest passing change.
@@ -105,7 +107,7 @@ Before implementation, inspect the selected task. If requirements or acceptance 
 ### 4. Verify
 
 1. Read `references/verification.md`.
-2. Run the smallest required verification.
+2. Execute every required manifest check plus real applicable repo/acceptance checks. Verify not-applicable reasons against actual scope. Unresolved checks block; never waive a failing check. See the reference for per-check evidence.
 3. If browser-visible behavior is mentioned or implied, read and apply `references/browser-verification.md`.
 4. Record exact commands/checks, concise output, and exit codes.
 5. If any command/tool fails or times out, read `references/failures.md`.
@@ -176,7 +178,9 @@ If all `tasks[].passes` are now `true` and commit gate rules are satisfied, outp
 <promise>COMPLETE</promise>
 ```
 
-Otherwise summarize briefly:
+If the selected task passed and unfinished work remains, emit `<promise>TASK_COMPLETE</promise>` followed by the selected-task summary. For any blocked outcome emit `<promise>BLOCKED</promise>` followed by the actionable reason, including invalid input, missing context, no eligible task, owner approval, unresolved verification, or commit gates. Never emit task completion for a blocked attempt.
+
+In either nonterminal summary include:
 
 - task completed or blocked
 - verification results

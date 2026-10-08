@@ -17,7 +17,7 @@ description: Validation and public grader tests for publishable and repo-local s
 
 Handoff [guidance scenarios](../../../skills/handoff/evals/guidance-scenarios.json) supplement the deterministic suite with read-only review, a supplied path among several feature folders, and history updates with retained lessons and existing archive content. They use `files/guidance-edges-fixture/` and are outside the public grader's five supported cases. Check fixture bytes before and after each run, then review commands, observed errors, lesson placement, owner limits, and reporting semantics; passing selected assertions does not establish every output requirement.
 
-ExecPlan [authoring scenarios](../../skills/exec-plans/evals/authoring-scenarios.md) add a qualitative prototype/migration case using the large-input brief and existing create-plan project. Review independent feasibility, prototype decisions, both-path validation, retirement, and exact command/error guidance manually; this case is outside the deterministic grader's three supported scenarios. Preserve instruction-coverage findings separately from sampled agent-performance claims.
+ExecPlan [authoring scenarios](../../skills/exec-plans/evals/authoring-scenarios.md) add qualitative prototype/migration cases and task boundaries using the large-input brief and existing create-plan project. Review feasibility, both-path validation, task prerequisites, shared invariants, integrated proof, owner boundaries, and exact commands manually; these cases are outside the deterministic grader's three supported scenarios. Preserve instruction-coverage findings separately from sampled agent-performance claims.
 
 Run the focused suites from the repository root:
 
@@ -29,6 +29,19 @@ rtk proxy python3 -m unittest discover -s .agents/skills/exec-plans/evals -p tes
 Both graders consume canonical iteration directories; their exit and output contract is in the [API Map](../API_MAP.md#document-maintenance-graders). Public cases cover valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent or contributor actions, and contradictory proof claims. Conditional wording and descriptive modifiers must not hide a separate factual claim in a comma, coordinated, or contrasting clause. These are scenario-specific heuristics, not a general natural-language verifier.
 
 Use `PYTHONPATH=scripts/vendor` for skill definition validation. In a sandbox that protects `.agents/`, compile with `PYTHONPYCACHEPREFIX` pointing to a writable temporary directory so bytecode generation does not attempt to edit the protected bundle. See [benchmark reporting limitations](../known-issues/skills.md) before interpreting absent runtime metrics.
+
+## Task workflow graders
+
+Run the public CLI suites from the repository root; both are registered in `scripts/test-all.py`:
+
+```bash
+rtk proxy python3 skills/spec-to-tasks/evals/test_grade_benchmark.py
+rtk proxy python3 skills/prd-ralph-loop/evals/test_grade_benchmark.py
+```
+
+Producer cases preserve status/member/notification/token requirements and add lifecycle and inline-document inputs. The spec grader checks complete fields, references, graph shape, applicability, readiness, and scenario-specific coverage. A valid fixture must include the original task fields as well as enriched fields; a passing grade for an incomplete fixture is a grader defect. Public controls distinguish backend database tables/rows/filters from browser UI, reject malformed references including NUL paths, and preserve unavailable metrics for non-object timing data. Synthetic command strings exercise grading logic, not real project command provenance.
+
+The loop suite covers exact completion, blind continuation, blocked stops, forwarded constraints, complete and consistent decision fields, malformed decisions and unavailable metrics. It checks the simulated run's outputs without reading the current skill to score a frozen baseline. `skills/execplan-implement/evals/evals.json` provides document-only orchestration scenarios. `skills/prd-ralph/evals/evals.json` defines disposable execution scenarios for complete task input, incomplete all-true input, unresolved verification, and commit audits; read-only protocol interpretations do not establish that those sandbox executions passed. Semantic review remains required for current authority, context sufficiency, actual dependencies, negative cases, and integrated acceptance. See [grader CLI contracts](../API_MAP.md#task-workflow-contracts).
 
 ## dotnet-upgrade document review
 

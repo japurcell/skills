@@ -58,6 +58,8 @@ SUITES = (
     ("bash", "scripts/test-okf-lint.sh"),
     ("bash", "scripts/test-repo-root.sh"),
     ("python3", "scripts/test_helpers.py"),
+    ("python3", "skills/spec-to-tasks/evals/test_grade_benchmark.py"),
+    ("python3", "skills/prd-ralph-loop/evals/test_grade_benchmark.py"),
     ("python3", "scripts/test_test_all.py"),
 )
 
@@ -204,8 +206,7 @@ broken pipes, do not prevent later suites from running.
     root = Path(__file__).resolve().parent.parent
     missing_suites = [
         part for command in SUITES for part in command
-        if (part.startswith("scripts/") and not (root / part).is_file())
-        or (part.startswith("skills/") and not (root / part).is_dir())
+        if part.startswith(("scripts/", "skills/")) and not (root / part).is_file()
     ]
     if missing_suites:
         print(

@@ -1,0 +1,79 @@
+{
+  "project": "Private install",
+  "branchName": "verify-refusal",
+  "description": "Verify current contract",
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Record refusal decision",
+      "passes": true,
+      "priority": 2,
+      "notes": "No-write refusal and metadata preservation required. Owner deployment is excluded."
+    },
+    {
+      "id": "T002",
+      "parentStoryId": "US-001",
+      "title": "Verify refusal contract",
+      "description": "Review inline current refusal contract and document reproducible evidence in progress without product edits.",
+      "acceptanceCriteria": [
+        "No-write refusal and preserved metadata guarantees are confirmed from current evidence."
+      ],
+      "filesLikelyTouched": [],
+      "designGuidance": [],
+      "priority": 1,
+      "passes": false,
+      "notes": "",
+      "dependsOn": [
+        "T001"
+      ],
+      "sourceRefs": [
+        {
+          "path": null,
+          "section": null,
+          "requirements": [
+            "REQ-REFUSAL"
+          ],
+          "content": "REQ-REFUSAL: Conflicting destination refuses before writes and preserves metadata."
+        }
+      ],
+      "requiredContext": [
+        {
+          "path": null,
+          "section": null,
+          "purpose": "Carry prerequisite guarantee into verification.",
+          "content": "Owner-controlled deployment remains out of scope. The refusal and metadata-preservation contract is known, but current inspection evidence has not been supplied."
+        }
+      ],
+      "taskType": "verification",
+      "verification": [
+        {
+          "id": "typecheck",
+          "kind": "typecheck",
+          "applicability": "not-applicable",
+          "command": null,
+          "workingDirectory": ".",
+          "expected": "Read-only evidence review contains no source changes.",
+          "reason": "The bounded task only reviews supplied evidence."
+        },
+        {
+          "id": "contract-review",
+          "kind": "manual",
+          "applicability": "required",
+          "command": null,
+          "workingDirectory": ".",
+          "expected": "Procedure: once current inspection evidence is supplied, compare it with REQ-REFUSAL and record whether both guarantees hold. Retain the comparison evidence; missing evidence cannot pass this check.",
+          "reason": "The comparison establishes the selected verification outcome."
+        },
+        {
+          "id": "current-evidence",
+          "kind": "manual",
+          "applicability": "unresolved",
+          "command": null,
+          "workingDirectory": ".",
+          "expected": "Obtain owner-approved current inspection evidence before running contract-review.",
+          "reason": "Current metadata-preservation evidence is missing; obtain owner-approved inspection."
+        }
+      ]
+    }
+  ]
+}

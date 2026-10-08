@@ -4,7 +4,7 @@ Use before deciding whether the selected task can pass.
 
 ## Goal
 
-Run the smallest check that proves the selected task’s acceptance criteria.
+Run every required check that proves the selected task’s acceptance criteria, using the narrowest applicable scope.
 
 Prefer filtered checks over full-suite checks.
 
@@ -22,13 +22,17 @@ Never invent commands or acceptance criteria.
 
 ## Rules
 
+Execute every `verification` check classified `required` from its repository-root-relative `workingDirectory`. Confirm all `not-applicable` reasons against actual scope. Any `unresolved` check blocks completion. Required automated checks need a known command before execution; required manual checks need a concrete procedure and observed evidence. A planned check is not proof. Never erase a known command or relabel a failing applicable check.
+
 - If acceptance criteria name a command, run it unless unsafe or impossible.
 - For code changes, executable verification is required.
 - If code verification is unavailable, missing, failing, or unsafe, block.
 - For doc/config-only work, deterministic inspection is allowed if no relevant command exists.
 - Do not treat an unexecuted check as passing.
 - Capture:
-  - exact command or inspection performed
+  - check ID (manifest ID or stable ID for a discovered applicable check)
+  - exact command or manual procedure performed
+  - resolved working directory
   - exit code, if applicable
   - concise relevant output/evidence
   - pass/fail result

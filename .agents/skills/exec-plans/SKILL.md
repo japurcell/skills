@@ -27,6 +27,8 @@ Use milestones when work has distinct checkpoints. Each milestone must describe 
 
 Keep the narrative precise and testable. Name the working directory for commands, show expected output where it helps, and describe behavior a person can verify rather than only internal code changes. Include idempotence, rollback, dependencies, interfaces, and evidence when they affect successful or safe execution. Define specialized terms in plain language.
 
+A milestone is a delivery and acceptance outcome, not automatically one task. A **task** is an independently assignable unit of work with explicit prerequisites, required inputs and current design context, an outcome, verification, and a stopping boundary. Before dispatch, assess its behavioral scope, unresolved decisions, coupled state, and verification burden. Keep each task bounded by splitting independently deliverable behaviors into separate tasks. Preserve necessary negative cases and indivisible correctness rules. A difficult but inseparable task needs clear reasoning risks and entry points, not reduced acceptance. Resolve a design uncertainty through a bounded decision or feasibility task before dependent implementation.
+
 Name files with full repository-relative paths, identify the exact functions or modules to edit, and say where new files belong. Explain how affected areas fit together. State environment assumptions and provide reasonable alternatives when commands or results vary by environment. Carry required knowledge from references or prior plans into the active plan in your own words, so the reader can proceed without retrieving them.
 
 Design steps to be repeatable. Explain how to detect and recover from a partial failure, including safe retries and backups or fallbacks for destructive work. Prefer additive, testable changes that can be validated before replacing existing behavior.
@@ -38,6 +40,8 @@ Validation is required. State the exact test commands for the project's toolchai
 Explain how to start or exercise the system when applicable. Demonstrate useful behavior beyond compilation through a small end-to-end scenario, direct CLI invocation, or request/response example with specific inputs and outputs. For an internal change, identify a test or observable scenario that exposes its effect; for a bug fix, record how the reproducer fails before the change and passes after it. Successful compilation alone does not establish acceptance.
 
 Run the relevant checks at each milestone and retain concise evidence of the actual result. If a check cannot run, state why and what remains unverified rather than treating planned verification as proof. Use small transcripts, file-scoped diffs, or focused excerpts that show what establishes success; keep full run logs behind evidence references.
+
+When several tasks contribute to a milestone, name their shared invariants and the integration task or milestone check that proves their combined behavior. Run that proof against the integrated result, including relevant regression and negative cases. Passing individual tasks, clean Git merges, or checked progress entries do not establish milestone acceptance while that proof remains missing.
 
 ## Required living sections
 
@@ -54,6 +58,8 @@ Also include the project context, plan of work, concrete steps, validation and a
 Each milestone has matching Progress entries tagged `[milestone-X]`; split partially completed work into completed and remaining steps. A completed milestone uses `Status: done`, `Acceptance: met`, and checked entries such as `- [x] (YYYY-MM-DD) [milestone-X] ...`. Open or in-progress work keeps its remaining entries unchecked. Update the milestone's status, acceptance, and every affected Progress entry in the same edit. Do not mark work done without evidence that its acceptance is met.
 
 Milestones describe the goal, work, result, and proof in prose; Progress tracks the granular steps. Make each milestone independently verifiable and useful toward the overall outcome. Include the context needed for that milestone even when brevity would suggest dropping it. At major milestones or completion, compare the results with the original purpose in `Outcomes & Retrospective`.
+
+Record tasks, their prerequisites, and completion evidence in the plan, mapped to milestones and Progress. A **task graph** records tasks and their explicit prerequisite relationships; named tasks with prerequisite lists are sufficient to describe it. Progress entries track a task's state, and one task may span several entries. Do not infer dependencies from checklist order or duplicate work as both a whole-milestone task and its component tasks. A ready task still requires current authorization. Shared files or state can require serialization even without a dependency edge.
 
 ## Prototypes and migration paths
 
@@ -75,6 +81,8 @@ At a stop, leave a reader able to tell what has been verified, what remains unfi
 
 The active plan is the single place to learn current requirements, decisions, status, safety limits, and next steps. Keep pending recovery instructions, security and authorization boundaries, owner actions, and external validation inline in active sections whenever they constrain the work. State who must act, what approval is required, what has or has not happened, and the condition for recovery. Never rely on an old transcript or a separate history file to establish current permission or status.
 
+Give current requirements and active decisions stable headings or identifiers when tasks reference them. Keep the required facts inline in the self-contained plan and update affected task references when a decision changes. References help a worker locate the current rule; they must not force the worker to reconstruct it from superseded history.
+
 Preserve useful current decisions, lessons, and unique evidence before moving material out of the active plan. Keep evidence needed for current status or acceptance inline. For historical material that can leave the active plan, first reuse an existing retained artifact or create a clearly labeled sibling snapshot. Add a link to it under a clearly titled historical section, verify that the target exists and still contains the unique dates, commands, results, or decisions being moved, and only then replace the inline material. A link to the active plan itself is not an archive. If the archive cannot be verified, keep the evidence inline and report the limitation.
 
 Keep the current rationale concise in `Decision Log` and useful findings in `Surprises & Discoveries` or `Validation and Acceptance`. Move superseded run transcripts, outdated status statements, and revision narratives behind the verified historical reference when their provenance matters. Historical material is background only: it never authorizes work, overrides user instructions, or controls present state. Do not append a full revision narrative after every update, and do not make a reader search history to continue.
@@ -87,7 +95,7 @@ Write a saved ExecPlan as plain Markdown. If delivering the plan in a response, 
 
 ## Outline
 
-Use this annotated outline and adapt detail to the work. Replace instructional placeholders with concrete task facts:
+Use this annotated outline and adapt detail to the work. The file-reporting example shows how a milestone, tasks, and Progress entries relate. Its paths and commands describe a hypothetical Python CLI; replace them and the instructional placeholders with verified project facts.
 
     # <Action-oriented title>
 
@@ -105,9 +113,13 @@ Use this annotated outline and adapt detail to the work. Replace instructional p
     Use milestone-tagged checkboxes for granular work. At each checkpoint,
     split partly completed work into completed and remaining entries.
     Date completed entries using actual dates; leave unstarted work unchecked.
+    Name the task when an entry tracks part of its work. Here the first
+    two entries track T1; the final entry tracks the milestone's combined proof.
 
-    - [ ] [milestone-1] First unstarted step.
-    - [ ] [milestone-1] Verification needed before acceptance.
+    - [ ] [milestone-1] T1: Implement list-backed file reporting.
+    - [ ] [milestone-1] T1: Verify valid, empty, and malformed inputs; record evidence.
+    - [ ] [milestone-1] T2: Implement stream mode and verify the same input cases.
+    - [ ] [milestone-1] Verify both modes together on the integrated CLI; record evidence.
 
     ## Surprises & Discoveries
 
@@ -145,12 +157,59 @@ Use this annotated outline and adapt detail to the work. Replace instructional p
     file, function or module, and what to insert or change. Name new files.
     Use milestones for distinct outcomes, including prototypes when needed.
 
-    ### Milestone 1: <verifiable outcome>
+    ### Milestone 1: Report file summaries through list and stream modes
     Status: open
     Acceptance: not met
 
-    Describe the scope, what will exist afterward, commands to run, and
-    human-verifiable acceptance. Explain dependencies on earlier milestones.
+    Users can summarize a UTF-8 file containing one signed decimal integer
+    per line with --input PATH and --engine list or --engine stream. Both
+    modes print count=N total=S; empty input produces count=0 total=0.
+    A blank or malformed line causes exit 2, a one-based line diagnostic
+    on stderr, and no stdout summary. This shared contract applies to both
+    tasks. The milestone requires matching outcomes from the integrated
+    CLI, including negative cases, before acceptance is met.
+
+    #### Task T1: Deliver list-backed file reporting
+
+    Prerequisites: none. Inputs and current context: the shared contract above,
+    summarize(rows) in src/reporting.py, and the CLI in src/report_cli.py.
+    Add line parsing and list-backed --input handling through the CLI, with
+    tests in tests/test_file_reporting.py. The outcome is usable file reporting
+    that satisfies the full success and error contract for --engine list.
+
+    Verification: from the project root, run
+    `python3 -m unittest discover -s tests -p test_file_reporting.py`.
+    Expect exit 0, with valid, empty, blank-line, and malformed-line cases
+    checking stdout, stderr, and exit status. Record actual results here.
+    Stop after list-backed reporting and its checks pass; stream mode is T2.
+    The two T1 Progress entries track implementation and proof of this one
+    task. Both are needed before T1 is complete.
+
+    #### Task T2: Add stream mode with the same behavior
+
+    Prerequisites: T1 is complete with recorded evidence. Inputs and current
+    context: the shared contract above and T1's parser, CLI, and tests.
+    Add single-pass aggregation in src/reporting.py and --engine stream in
+    src/report_cli.py. Extend tests/test_file_reporting.py to cover both modes
+    and a one-pass input that cannot be sized or iterated twice.
+
+    Verification: run the same focused command from the project root; expect
+    exit 0 and the same required success and error outcomes for both modes.
+    Record actual results here. Stop after stream mode and these checks pass;
+    additional input formats and performance targets are outside this task.
+
+    #### Milestone integration check
+
+    After T1 and T2, the coordinator runs the full suite from the project root:
+    `python3 -m unittest discover -s tests`. Its CLI checks run identical valid,
+    empty, blank-line, and malformed-line fixtures through both modes, compare
+    stdout, stderr, and exit status, and assert the expected contract as well
+    as parity. Expect exit 0. Record the integrated result before checking the
+    final Progress entry and setting Status: done and Acceptance: met.
+
+    For other milestones, adapt the tasks and combined proof to their
+    actual outcomes. A task may map to one or several Progress entries;
+    update those entries as its work advances without changing its scope.
     For a prototype, state promotion/discard criteria. For a migration,
     explain both-path validation and the gate for switching or retiring a path.
 

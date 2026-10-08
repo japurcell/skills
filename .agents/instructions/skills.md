@@ -9,6 +9,7 @@ description: Rules and conventions for skills under `skills/`.
 - Start `SKILL.md` with YAML frontmatter.
 - Keep `name` lowercase kebab-case.
 - Keep `description` concrete and trigger-oriented.
+- Write skill invocations as “activate the `<skill-name>` skill” or the plural “activate the `<skill-name>` and `<skill-name>` skills”, substituting the actual names. Use these forms in worker instructions too.
 - Do not remove an existing `disable-model-invocation: true` frontmatter key from a skill without explicit human approval.
 - Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
 - Validate skill changes with `.agents/memory/testing/skills.md`.
@@ -61,6 +62,15 @@ Review the authored documents and retained evidence as well as the scores. A fix
 
 - For large skill refactors, preserve any explicit exclusions or approval requirements already documented for that skill.
 - Before pruning a skill, map its existing behavioral obligations to the replacement. Keep actionable authoring and validation detail unless its removal is in scope; passing evals cover only the branches they exercise.
+
+## Planning and task execution
+
+- Keep `.agents/skills/exec-plans/` independent of `skills/execplan-implement/`. The implementation skill may consume the planning skill, but the planning skill must not reference its consumer.
+- Keep shared task, dependency, reconciliation, and acceptance rules in `exec-plans`. Reference those rules from `execplan-implement`, which owns worker dispatch and Git integration procedures.
+- Neither ExecPlan skill may reference `spec-to-tasks` or encode its schema. Their task boundaries, prerequisites, and acceptance live directly in the plan.
+- `skills/spec-to-tasks/references/task-schema.md` owns the complete manifest contract. Keep `skills/prd-ralph/references/intake.md` aligned with it and require the same fields for every task. Preserve recorded completion evidence; report invalid input without rewriting it. Keep `prd-ralph-loop` blind to task selection and manifest contents during orchestration.
+- Maintain semantic review alongside task grader tests: valid shape or fixture keywords do not establish context sufficiency, actual prerequisite meaning, command provenance, or integrated acceptance. Route the focused checks through [skills testing](../memory/testing/skills.md#task-workflow-graders).
+- Review each dependency against the outcome or artifact it consumes, or an explicit source ordering rule. Perform coverage and manifest reviews whose inputs already exist during authoring; do not defer them behind implementation merely because they read task definitions.
 
 ## dotnet-upgrade
 

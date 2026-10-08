@@ -32,9 +32,10 @@ class TestTestAll(unittest.TestCase):
         for line in listing.stdout.splitlines():
             command = shlex.split(line)
             for part in command:
-                if not part.startswith("scripts/"):
+                if not part.startswith(("scripts/", "skills/")):
                     continue
                 path = root / part
+                path.parent.mkdir(parents=True, exist_ok=True)
                 if path.suffix == ".sh":
                     path.write_text(f"printf '%s\\n' '{part}'\n", encoding="utf-8")
                 elif path.suffix == ".py":
@@ -112,8 +113,11 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-tool-guard-shell-data.py")
         expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
+        expected.add("skills/spec-to-tasks/evals/test_grade_benchmark.py")
+        expected.add("skills/prd-ralph-loop/evals/test_grade_benchmark.py")
         listed = {
-            part for command in commands for part in command if part.startswith("scripts/")
+            part for command in commands for part in command
+            if part.startswith(("scripts/", "skills/"))
         }
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))

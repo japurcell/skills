@@ -15,7 +15,7 @@ This is the loading map for the agent knowledge base under `.agents/memory/`. **
 | **[ARCHITECTURE.md](ARCHITECTURE.md)**      | Top-level repo structure, install flows, and documentation boundaries   | Load when task needs repo structure, install flows, or docs boundaries |
 | **[CONVENTIONS.md](CONVENTIONS.md)**       | Repo-wide formatting and agent-workspace boundaries                     | When writing or reviewing code                |
 | **[FILE_MAP.md](FILE_MAP.md)**          | Top-level map (one line per area) + layer pointers                      | When deciding which area/layer to work in     |
-| **[API_MAP.md](API_MAP.md)**           | Public test-runner, document-grader, validation and benchmark CLIs, provider envelopes, and Tool Guardian schema/budget contract | When changing a public CLI, hook envelope, or guardian input classification/limits |
+| **[API_MAP.md](API_MAP.md)**           | Public test-runner, document/task graders and task completion protocols, validation and benchmark CLIs, provider envelopes, and Tool Guardian schema/budget contract | When changing a public CLI, task-consumer protocol, hook envelope, or guardian input classification/limits |
 | **[LOG.md](LOG.md)**               | Append-only source-ingestion activity log                               | When reviewing ingested source history        |
 | **[KNOWN_ISSUES.md](KNOWN_ISSUES.md)**      | Repo-wide / cross-cutting quirks & workarounds                          | Code review or cross-cutting troubleshooting  |
 | **[TESTING_STRATEGY.md](TESTING_STRATEGY.md)**  | Test layout, shared authoring conventions & how to run tests            | When writing tests or debugging test failures |

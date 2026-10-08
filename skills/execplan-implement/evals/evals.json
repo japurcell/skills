@@ -1,0 +1,41 @@
+{
+  "skill_name": "execplan-implement",
+  "evals": [
+    {
+      "id": 0,
+      "eval_name": "bound-direct-plan-assignments",
+      "prompt": "Use the supplied execplan-implement skill to describe the next dispatch and acceptance actions only. Do not create branches, edit code, dispatch agents, or commit. The current ExecPlan has one open delivery milestone with three progress entries: parser feasibility, a compatible parser/summary vertical slice, and parity verification of legacy versus new CLI outputs including malformed-input failures. The milestone owns a shared default-output invariant. Feasibility is unfinished and must resolve before implementation. Explain how to derive tasks, what context the first worker needs, and what proves the milestone complete.",
+      "expected_output": "A bounded feasibility task with inputs, outcome, checks and stop condition; explicit prerequisites recorded in the plan; no duplicate whole-milestone dispatch; integrated parity proof remains required.",
+      "files": [],
+      "assertions": [
+        "Tasks and prerequisite evidence are derived from the ExecPlan itself.",
+        "The first task resolves feasibility before dependent source changes.",
+        "Task boundaries preserve negative cases and the milestone's integration acceptance."
+      ]
+    },
+    {
+      "id": 1,
+      "eval_name": "integrated-tree-after-clean-rebase",
+      "prompt": "Use the supplied execplan-implement skill for a read-only orchestration review. Do not run Git or product commands, edit files, or dispatch agents. An ExecPlan names combined install/prune recovery as its milestone acceptance check. Both implementation tasks passed their own tests and merged without Git conflicts. Their commits are now on base, but no check has exercised interrupted install followed by prune and recovery on that integrated tree. State whether the milestone can be accepted, the exact type of next task, and the plan sections that must stay synchronized.",
+      "expected_output": "Milestone remains unaccepted until the named composed recovery check runs against the integrated tree, including interrupted and refusal paths; clean Git integration does not waive it.",
+      "files": [],
+      "assertions": [
+        "Conflict-free integration does not waive the required composed-behavior check.",
+        "The next node is verification/integration, without fabricated code edits or an empty commit.",
+        "Status, acceptance, Progress, Concrete Steps and Outcomes are reconciled together."
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "plan-context-and-owner-blocker",
+      "prompt": "Use the supplied execplan-implement skill to state a dispatch decision only. Do not execute workflows or change files. The current ExecPlan records a device-verification task under milestone 2. Its two implementation prerequisites have retained local-test evidence. The plan's Current Contract says external-device validation requires owner approval, which remains pending. An old historical note says release completed. Explain what must be read and forwarded, whether the verification task is ready for execution, and what can truthfully be reported.",
+      "expected_output": "The current plan supplies the task graph, design and acceptance. Required context and prerequisite evidence reach the worker. The owner boundary prevents external verification and acceptance; old history cannot authorize work.",
+      "files": [],
+      "assertions": [
+        "The selected task's current plan context and prerequisite evidence are preserved.",
+        "Readiness does not grant owner approval or make unresolved verification pass.",
+        "Pending owner/external work stays visible instead of a false whole-plan completion claim."
+      ]
+    }
+  ]
+}

@@ -1,86 +1,101 @@
 # Improve ExecPlans and task decomposition
 
 
-Prepared 2026-10-07. Status: recommendations saved for future implementation. Saving this document does not apply the proposed skill or schema changes. Its destination, `.agents/scratchpad/exec-plan-tasks-improvements.md`, is Git-ignored in this repository.
+Prepared and reconciled 2026-10-07. Status: done for the authorized skill revisions and source/read-only acceptance described below. This living ExecPlan is saved at `docs/exec-plan-tasks-improvements.md` and follows `.agents/skills/exec-plans/SKILL.md`. Changes are uncommitted. Product execution, personal installation and runtime performance are outside the observed evidence.
 
-This guide uses the ExecPlan structure to make the recommendations implementable by a novice. Its improvement milestones are separate from the agent-asset installer's milestones. Keep Progress, decisions, findings, and outcomes current if this guide is later implemented.
+Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. The coordinator owns contract decisions, this plan, integration, and final acceptance. Delegate independent implementation and review with explicit file ownership.
 
 ## Purpose / Big Picture
 
 
-Improve the connection between two skills: `exec-plans` describes the design, constraints, and final acceptance; `spec-to-tasks` produces bounded assignments that workers can execute without reconstructing the entire plan.
+Improve two independent workflows: `exec-plans` describes design, constraints, tasks and final acceptance; `spec-to-tasks` produces structured tasks from supplied requirements. Each workflow's consumers must preserve its contract. Neither ExecPlan skill depends on the decomposition workflow.
 
-Reduce reasoning breadth without hiding necessary technical depth. A smaller assignment reduces the number of unrelated facts, decisions, and failures an agent must track. It does not make a difficult recovery algorithm easy. Preserve the full correctness contract when splitting work, including negative cases and integration proof.
+Reduce reasoning breadth without hiding necessary technical depth. A smaller task reduces the number of unrelated facts, decisions, and failures an agent must track. It does not make a difficult recovery algorithm easy. Preserve the full correctness contract when splitting work, including negative cases and integration proof.
 
 Success means a fresh agent can identify its prerequisites, required design context, first verification step, completion condition, and stopping boundary from a task and its explicitly required references. Judge fewer missing requirements, invented commands, unjustified completion claims, and unlisted context searches. Task count and document length are not success measures.
 
 ## Progress
 
 
-- [x] (2026-10-07) [preparation] Record all recommendations, current evidence, proposed edits, compatibility considerations, and verification procedures in this guide.
-- [ ] [improvement-1] Update the ExecPlan contract for assignment boundaries, extractable current decisions, and integration proof.
-- [ ] [improvement-2] Update task sizing, structured dependencies/context, task types, and applicable verification.
-- [ ] [improvement-3] Align affected consumers and evaluation contracts, preserving behavioral coverage.
-- [ ] [improvement-4] Verify structural rules and compare baseline versus revised skill behavior using controlled fixtures.
+- [x] (2026-10-07) [milestone-1] Reconcile this plan with the current ExecPlan skill and inspect dependent consumers; preserve baseline skill snapshots.
+- [x] (2026-10-07) [milestone-1] Extend the existing ExecPlan contract and then align `execplan-implement`; remove task-schema coupling following the user's correction.
+- [x] (2026-10-07) [milestone-1] Compare baseline/revised plans and integrated-acceptance responses; a fresh reader identifies A1's inputs, command and stop boundary without the owner host.
+- [x] (2026-10-07) [milestone-2] Update task sizing, structured dependencies/context, task types, and applicable verification; pass source validation and complete-example JSON checks.
+- [x] (2026-10-07) [milestone-2] Complete semantic review and affected reruns; clarify actual dependency inputs and perform authoring coverage review before implementation.
+- [x] (2026-10-07) [milestone-3] Align both Ralph consumers with the complete task contract and retain complete-input, blocked and commit-policy scenarios.
+- [x] (2026-10-07) [milestone-3] Repair graders through public-CLI reproducers. Checkpoint tests passed 29 producer/eight loop cases; final suites pass 34 producer/10 loop cases.
+- [x] (2026-10-07) [milestone-3] Complete tracked/untracked grader review and README/JSON reconciliation. A new complete documentation manifest passes 10/10 CLI assertions; lifecycle correctly fails readiness only.
+- [x] (2026-10-07) [milestone-4] Review six paired outputs and three fresh-reader exercises, including missing prerequisite evidence; retain earlier rejected/excluded outputs and selection provenance.
+- [x] (2026-10-07) [milestone-4] Complete the checkpoint canonical documentation pass; OKF lint passed and the handoff records unfinished acceptance.
+- [x] (2026-10-07) [milestone-4] Complete final source review, generate the existing review viewer, reconcile canonical docs, and pass final OKF lint.
 
 ## Context and Orientation
 
 
-Run repository commands from `/Users/adam/.codex/worktrees/2af1/skills`, or the corresponding repository root in a later checkout. Paths below are repository-relative unless stated otherwise. A skill's `SKILL.md` is its entry point; linked reference files provide detailed rules. A benchmark grader checks the artifacts produced during a skill evaluation.
+Run commands from this checkout's repository root, currently `/Users/adam/.codex/worktrees/3e77/skills`. Paths below are repository-relative unless stated otherwise. A skill's `SKILL.md` is its entry point; linked references hold detailed rules. A benchmark grader checks artifacts produced during a skill evaluation.
 
 | File | Role in this change |
 | --- | --- |
-| [ExecPlan skill](../skills/exec-plans/SKILL.md) | Repository-local authoritative skill. Change its milestone, current-design, and integration guidance. |
-| [Task-decomposition skill](../../skills/spec-to-tasks/SKILL.md) | Publishable source. Change sizing and verification requirements and route readers to its references. |
-| [Task schema](../../skills/spec-to-tasks/references/task-schema.md) | Define the proposed fields and their meanings. |
-| [Task validation checklist](../../skills/spec-to-tasks/references/validation.md) | Validate dependencies, coverage, context, sizing, and verification applicability. |
-| [PRD handling](../../skills/spec-to-tasks/references/prd-handling.md) | Inspect for conflicting task/output rules when changing the main contract. |
-| [Existing evaluations](../../skills/spec-to-tasks/evals/evals.json) | Update prompts and expectations to match the task contract; add the cases described below. |
-| [Existing grader](../../skills/spec-to-tasks/evals/grade_benchmark.py) | Align artifact discovery and semantic checks with the revised schema. |
-| [Single-task consumer](../../skills/prd-ralph/SKILL.md) | Already reads `dependsOn`; inspect and update its explicit task-reading list when adding fields. |
-| [Loop consumer](../../skills/prd-ralph-loop/SKILL.md) | Inspect forwarding, selection, and completion behavior for compatibility. Change only demonstrated incompatibilities. |
-| [Installer ExecPlan](../../docs/agent-asset-installer/ExecPlan.md) | Existing worked example, not an implementation target for this skill improvement. |
-| [Installer task file](../../docs/agent-asset-installer/tasks.json) | Existing decomposition used to explain the recommendations and construct fixtures. |
-| [Skill conventions](../instructions/skills.md) and [skill testing](../memory/testing/skills.md) | Repository requirements for authoring, snapshots, evaluation layout, and validation. |
+| [ExecPlan skill](../.agents/skills/exec-plans/SKILL.md) | Repository-local authority. Extend existing task, current-design, and integration guidance. |
+| [ExecPlan consumer](../skills/execplan-implement/SKILL.md) | Apply the revised planning contract to task selection, worker context, and milestone acceptance. |
+| [Task-decomposition skill](../skills/spec-to-tasks/SKILL.md) | Publishable source. Change sizing and verification requirements. |
+| [Task schema](../skills/spec-to-tasks/references/task-schema.md) | Define the fields and their meanings. |
+| [Task validation checklist](../skills/spec-to-tasks/references/validation.md) | Validate dependencies, coverage, context, sizing, and verification applicability. |
+| [PRD handling](../skills/spec-to-tasks/references/prd-handling.md) | Preserve PRD extraction and mandatory ordering. |
+| [Existing evaluations](../skills/spec-to-tasks/evals/evals.json) | Align prompts and expectations with the task contract. |
+| [Existing grader](../skills/spec-to-tasks/evals/grade_benchmark.py) | Repair artifact discovery and semantic checks through public-CLI tests. |
+| [Single-task consumer](../skills/prd-ralph/SKILL.md) | Consume dependencies, context, task type, and verification before changing completion state. |
+| [Loop consumer](../skills/prd-ralph-loop/SKILL.md) | Forward constraints and stop on completion or actionable blockers while preserving its blind-orchestrator boundary. |
+| [Skill conventions](../.agents/instructions/skills.md) and [skill testing](../.agents/memory/testing/skills.md) | Authoring, evaluation, and validation requirements. |
 
-The earlier discussion read the installed `spec-to-tasks` copy under `/Users/adam/.agents/skills/`. Its main skill, schema, and validation reference currently match the repository source byte for byte. Implement changes in `skills/spec-to-tasks/`, not the installed personal copy. A source edit does not refresh installed skills. The repository-local ExecPlan skill lives under `.agents/skills/`; implementation requires an instruction that actually authorizes editing that protected skill, rather than treating this saved proposal as such authorization.
+Implement publishable changes in `skills/` and the explicitly authorized repository-local change in `.agents/skills/exec-plans/`. Installed copies are not the source of truth. Preserve `execplan-implement`'s `disable-model-invocation: true` and `agents/openai.yaml` policy. Its commit-message reference is unaffected.
 
-The current task file contains 30 tasks covering the remaining portions of installer milestones 6 and 7. Checkpoint 6B becomes T003-T014, while checkpoint 6D remains essentially T019. T012/T013 still require deep interruption/recovery reasoning. T014 collects integration reasoning. These examples demonstrate why a task label or a high task count does not guarantee a small assignment.
+Historical examples in this proposal describe a 30-task installer manifest: 6B became T003-T014, 6D remained T019, T012/T013 involved recovery, and T014 supplied integration proof. Neither `docs/agent-asset-installer/ExecPlan.md` nor its `tasks.json` exists in this checkout, so these counts and contracts are not current evidence. Preserve the lessons through self-contained synthetic fixtures; do not depend on or recreate unavailable installer internals.
 
 ## Surprises & Discoveries
 
 
-The task schema currently has no `dependsOn` field, although task descriptions encode dependencies in prose. The single-task consumer already uses `dependsOn` to determine eligibility and treats a missing field as no dependencies. This mismatch can make an unfinished prerequisite invisible to selection. Structured dependencies are therefore functional data, not merely nicer documentation.
+The schema and consumer previously disagreed on whether `dependsOn` was mandatory. The producer and consumer now require the same complete contract for every task, including explicit dependencies and verification.
 
-The current evaluation suite expects `outputs/prd.json`, `userStories`, and `parallelBatch`, while the main skill and schema specify `tasks.json` and `tasks`. Several expectations also enforce an exact task count, a minimum count, or parallel batches. Inspect `evals/evals.json` and the grader's `all_story_defaults` and dependency/batch checks. Align the contract before using benchmark results to judge the improvement.
+The pre-edit evaluation suite expected `outputs/prd.json`, `userStories`, and `parallelBatch`, contradicting the producer's `tasks.json` and `tasks`. Public CLI reproduction exposed the mismatch. Subsequent review repaired omitted original fields, invalid verification values and lost domain checks. Final review also repaired false UI rejection of database vocabulary, NUL-reference crashes, non-object timing crashes, and contradictory loop decision fields. Earlier incomplete synthetic passing artifacts remain invalid acceptance evidence; retained reproducers and new complete manifests establish the final result.
 
-The main skill, schema example, validation checklist, and grader currently require the literal criterion `Typecheck passes`. That is not a meaningful completion condition for every decision, evidence, or documentation task. Replace the blanket phrase with applicability-aware verification while preserving every real applicable check.
+The first revised lifecycle output deferred a coverage audit behind implementation even though its inputs already existed. Supplemental semantic review rejected that dependency. The producer now requires a consumed outcome/artifact or mandatory source order for each edge and performs available coverage review during authoring. The affected rerun records its mapping immediately and retains four justified tasks. The first revised loop comparison read its worker skill; both loop versions were rerun with only their own loop skill. These earlier outputs remain unchanged as review history.
 
-The ExecPlan already contains substantial design and test guidance. The proposed improvement is extracting reliable execution boundaries and required context, not compensating for an absence of design.
+The baseline required the literal `Typecheck passes`. The revised contract uses explicit required, not-applicable, or unresolved classification while preserving real applicable checks. A known command can remain recorded when an unavailable host blocks its execution.
+
+The current ExecPlan skill already requires self-contained plans, milestone state synchronized with Progress, actual acceptance evidence, checkpoint reconciliation, and a current contract separate from verified historical records. Its headings are `Write a self-contained plan`, `Required living sections`, `Reconcile the plan as work changes`, and `Keep the current contract separate from history`. The old proposed insertion headings no longer exist. Extend these rules instead of duplicating or weakening them.
+
+The baseline `execplan-implement` equated checklist items with tasks and forbade tests after conflict-free rebases. The revised consumer derives tasks from the plan and requires composed-behavior proof against the integrated result. Neither ExecPlan skill depends on a task-decomposition schema.
 
 ## Decision Log
 
 
-Proposed decision: keep both formats. The ExecPlan remains the design and acceptance authority; `tasks.json` remains the assignment and prerequisite manifest. Rationale: neither milestone-level coordination nor narrow worker execution replaces the other.
+Implemented decision: retain both independent formats. An ExecPlan is self-contained design, task and acceptance authority. A task manifest supplies structured tasks and prerequisites when the separate decomposition workflow is used.
 
-Proposed decision: preserve difficult invariants when splitting tasks. Rationale: recovery, metadata preservation, and transaction consistency may require deep reasoning even in a small assignment. Do not lower their acceptance bar to make a task appear easy.
+Implemented decision: preserve difficult invariants when splitting tasks. Rationale: recovery, metadata preservation, and transaction consistency may require deep reasoning even in a small task. Do not lower their acceptance bar to make a task appear easy.
 
-Proposed decision: make dependencies, source references, required context, task type, and verification structured. Rationale: a consumer should not reconstruct these from scattered prose. Preserve existing fields unless a compatibility review establishes a reason to migrate them.
+Implemented decision: make dependencies, source references, required context, task type, and verification structured. Rationale: a consumer should not reconstruct these from scattered prose. Keep the task fields explicit and preserve recorded task IDs and completion evidence during updates.
 
-Proposed decision: validate applicable checks rather than require a universal success phrase. Rationale: an unrun or inapplicable typecheck is not a pass. An existing failing check is still required and must not be relabeled inapplicable.
+Implemented decision: validate applicable checks rather than require a universal success phrase. Rationale: an unrun or inapplicable typecheck is not a pass. An existing failing check is still required and must not be relabeled inapplicable.
 
-Proposed decision: evaluate semantic completeness and dispatch clarity, not task count or forced parallelism. Rationale: counting tasks can reward excessive fragmentation while leaving difficult reasoning hidden.
+Implemented decision: evaluate semantic completeness and dispatch clarity, not task count or forced parallelism. Rationale: counting tasks can reward excessive fragmentation while leaving difficult reasoning hidden.
 
-These are recommendations recorded on 2026-10-07, not evidence that the changes have been implemented or validated.
+Decision, 2026-10-07, user and coordinator: keep the planning and implementation skills independent of the task-decomposition skill and its schema. `exec-plans` does not reference `execplan-implement`; neither ExecPlan skill references or knows the `spec-to-tasks` format. The ExecPlan itself records tasks, prerequisites and milestone acceptance. Never dispatch a milestone and its component tasks as duplicate work. Independent work can still share files or state and require serialization. The separate decomposition workflow may consume a plan as ordinary source material; this does not create a reverse dependency.
+
+Decision, 2026-10-07, user and coordinator: use one complete task contract throughout the producer and consumers. Every task requires `dependsOn`, `sourceRefs`, `requiredContext`, `taskType`, and `verification` alongside the other schema fields. Validate completed tasks before any completion shortcut and report incomplete input without rewriting recorded state. A blocker leaves unfinished work unpassed and produces a bounded stop result, not another blind loop iteration.
+
+The decisions define implementation targets. Only observed checks establish completion.
+
+Decision, 2026-10-07, coordinator: accept source changes using public grader tests, preserved output comparisons and fresh-reader interpretation. Keep the unchanged broad rubric distinct from supplemental semantic findings. These observations do not establish live sandbox consumer execution, owner-host product acceptance, repeated-run variance or efficiency savings.
 
 ## Interfaces and Dependencies
 
 
 Preserve the existing top-level `project`, `branchName`, `description`, and `tasks` fields. Preserve each task's existing ID, story mapping, title, description, acceptance criteria, likely files, design guidance, priority, `passes`, and `notes` fields. Newly generated tasks still start with `passes: false` and `notes: ""`. Reading or migrating an in-progress manifest must not reset completed work.
 
-Add the following task fields to `references/task-schema.md`. Their definitions must also be understood by task consumers before readiness is advertised.
+The following fields are implemented in `skills/spec-to-tasks/references/task-schema.md` and consumed by `skills/prd-ralph/references/intake.md`.
 
-| Proposed field | Shape | Meaning and validation |
+| Field | Shape | Meaning and validation |
 | --- | --- | --- |
 | `dependsOn` | Array of task ID strings | Explicit prerequisites. Empty means none. Reject unknown IDs, self-dependencies, duplicates, and cycles. Keep priorities/order consistent with prerequisite order. |
 | `sourceRefs` | Array of objects with `path`, `section`, and `requirements` | Identify the originating plan and the requirements implemented or verified. Sections and requirement labels must resolve to actual source content. |
@@ -94,21 +109,18 @@ A verification object contains `id`, `kind`, `applicability`, `command`, `workin
 
 For a required automated check, a known command and an observable expected result are necessary before execution. For a required manual check, describe the procedure and expected evidence. For an inapplicable check, give a verified reason. For an unresolved check, state what must be discovered; it cannot count as satisfied. A task may explicitly discover a verification procedure as its own deliverable, but that does not certify the product behavior awaiting that procedure.
 
-The following is a complete proposed task object for a hypothetical fixture. `fixture-plan.md`, `Current contract`, and `REQ-PRIVATE-INSTALL` are fixture labels that must be created before validating this example; they are not claimed repository files or requirements. The command shown is an existing public test selector. This example adds fields to the current object rather than replacing the manifest format.
+The following is a complete illustrative task object for an inline documentation request. It demonstrates requirement/context preservation without unavailable installer paths or invented commands. The example's preceding T001 would establish the supplied current contract; a real manifest must include it. This adds fields to the current object rather than replacing the manifest format.
 
     {
       "id": "T002",
       "parentStoryId": "US-001",
-      "title": "Preserve Git state during private installation",
-      "description": "Deliver private installation after the team-install prerequisite, retaining the fixture's metadata and no-write refusal rules.",
+      "title": "Document private-install refusal and preservation",
+      "description": "Reconcile the supplied guide after the current-contract prerequisite, retaining metadata and no-write refusal rules.",
       "acceptanceCriteria": [
-        "Private installation preserves tracked files and both Git indexes.",
-        "Conflicting existing state causes refusal without destination writes."
+        "The guide accurately states that private installation preserves tracked files and both Git indexes.",
+        "The guide describes conflict refusal before destination writes."
       ],
-      "filesLikelyTouched": [
-        "scripts/agent_assets/transaction.py",
-        "scripts/test-agent-assets.py"
-      ],
+      "filesLikelyTouched": [],
       "designGuidance": [],
       "priority": 2,
       "passes": false,
@@ -116,37 +128,39 @@ The following is a complete proposed task object for a hypothetical fixture. `fi
       "dependsOn": ["T001"],
       "sourceRefs": [
         {
-          "path": "fixture-plan.md",
-          "section": "Private installation",
-          "requirements": ["REQ-PRIVATE-INSTALL"]
+          "path": null,
+          "section": null,
+          "requirements": ["REQ-PRIVATE-INSTALL"],
+          "content": "REQ-PRIVATE-INSTALL: Reconcile the supplied guide with the current private-install preservation and refusal contract."
         }
       ],
       "requiredContext": [
         {
-          "path": "fixture-plan.md",
-          "section": "Current contract",
-          "purpose": "Preserve metadata authority and no-write refusal rules."
+          "path": null,
+          "section": null,
+          "purpose": "Preserve metadata authority and no-write refusal rules.",
+          "content": "Current contract: tracked files and both Git indexes remain unchanged; conflicting destinations cause refusal before writes."
         }
       ],
-      "taskType": "implementation",
+      "taskType": "documentation",
       "verification": [
         {
           "id": "private-install",
-          "kind": "test",
+          "kind": "manual",
           "applicability": "required",
-          "command": "rtk proxy python3 scripts/test-agent-assets.py --group scopes -k test_local_install_is_private_and_preserves_git_metadata_and_indexes",
+          "command": null,
           "workingDirectory": ".",
-          "expected": "The named public case passes on the authorized target host with its file/index/privacy assertions intact.",
-          "reason": "Existing public behavior and verification entry point."
+          "expected": "Compare the guide with the inline contract; record the passages that preserve both indexes, tracked files, and refusal before writes.",
+          "reason": "Direct document review establishes the requested outcome."
         },
         {
           "id": "typecheck",
           "kind": "typecheck",
-          "applicability": "unresolved",
+          "applicability": "not-applicable",
           "command": null,
           "workingDirectory": ".",
-          "expected": "Identify an applicable existing check or establish non-applicability before claiming task completion.",
-          "reason": "No dedicated typecheck command was established by the source plan."
+          "expected": "The change remains documentation-only.",
+          "reason": "The supplied scope changes prose, not executable code or declarations."
         }
       ]
     }
@@ -159,21 +173,23 @@ Do not infer safe parallel execution merely because tasks have no dependency edg
 ### Milestone 1: Strengthen the ExecPlan contract
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
-Edit `.agents/skills/exec-plans/SKILL.md`. Preserve its existing self-contained-plan requirement, living sections, public acceptance, explicit milestone state, and synchronized progress rules. Add focused guidance to the existing sections instead of creating a second planning workflow.
+Implementation and source/read-only acceptance are complete. Comparison cases 0 and 1 pass all revised assertions; the fresh plan reader identifies the first command, full A1 acceptance, and owner-host boundary. The following specification records completed edits and must not be repeated. Existing living sections, current-contract rules and public acceptance remain intact.
 
-Under `Milestones`, insert this proposed rule:
+The outline now shows a hypothetical milestone containing two tasks, multiple Progress entries for T1, and a separate milestone integration check. Both ExecPlan skills use task terminology. The planning skill defines a task graph through explicit prerequisites. The implementation skill references its dependency's shared rules and retains worker context, file ownership, scheduling, integration, and verification procedures. Source review and exec-plans validation passed; the implementation skill retains its known frontmatter-validator limitation. Earlier full-workflow comparisons predate the outline and terminology clarifications. A subsequent consumer-only comparison passed all nine existing assertions for both the pre-deduplication and revised versions; [review notes](/private/tmp/execplan-implement-dedupe.k2Z4FY/review-notes.md) retain the coverage map and evidence limits. This sampled read-only comparison does not establish live orchestration behavior or a performance improvement.
 
-> A milestone is a delivery and acceptance outcome, not automatically one worker assignment. Before dispatching a milestone, determine whether it contains independently deliverable behaviors, unrelated failure families, or unresolved design decisions. If so, decompose it into bounded tasks. Each assignment must state its required inputs, behavioral outcome, verification, and stopping boundary. Preserve the milestone's full acceptance and define the integration proof that remains after individual tasks pass.
+In `Write a self-contained plan` and `Required living sections`, add the missing task distinction:
 
-Under `Living plans and design decisions`, insert this proposed rule:
+> A milestone is a delivery and acceptance outcome, not automatically one worker task. Before dispatching a milestone, determine whether it contains independently deliverable behaviors, unrelated failure families, or unresolved design decisions. If so, decompose it into bounded tasks. Each task must state its required inputs, behavioral outcome, verification, and stopping boundary. Preserve the milestone's full acceptance and define the integration proof that remains after individual tasks pass.
 
-> Keep the current contract and active decisions easy to identify through stable section headings or explicit identifiers. Separate active requirements, unresolved questions, and superseded historical decisions. Record what superseded a decision. A worker must be able to read the exact referenced design sections without reconstructing current rules from chronological history. Keep all necessary knowledge within the self-contained plan or its already-supported checked-in references.
+In `Keep the current contract separate from history`, add stable task references while retaining the existing self-contained contract:
 
-Add an integration requirement to `Milestones` and show it in the skeleton:
+> Give task-referenced current requirements and active decisions stable headings or identifiers. Update affected task references when the contract changes. A worker must find the current rule without reconstructing chronological history. Keep required knowledge inline in the self-contained plan; references supplement it and never replace current requirements or permission boundaries.
+
+Add the integration requirement to `Validation and observable acceptance` and illustrate it in `Outline`:
 
 > For work split across tasks, identify shared invariants and the final observable proof that the tasks compose correctly. State which integration task or milestone check supplies that proof. Individual passing tasks do not establish milestone acceptance when cross-task behavior remains unverified. Preserve relevant regression and negative cases at their public boundary.
 
@@ -183,26 +199,30 @@ Use checkpoint 6B as a sizing example: keep its meaningful lifecycle outcome, bu
 
 Verify this milestone by reading a generated plan as a fresh worker. The current contract must be identifiable, required design references must resolve, and a multi-task milestone must name its remaining integration proof. An unresolved architectural question must lead to a bounded decision/proof objective rather than silently becoming a worker's implementation responsibility.
 
+The revised `skills/execplan-implement/SKILL.md` consumes `exec-plans` for task definitions, sizing, prerequisites, reconciliation, and acceptance. Its dispatch step forwards the full task and current plan context, prerequisite evidence, and explicit file ownership. Its execution checkpoints call the planning skill's reconciliation rules without repeating them. Preserve this one-way dependency; neither skill may depend on the separate task-decomposition workflow or its fields.
+
+Preserve fresh workers per graph node, private branches, serial integration, repair ownership, commit guidelines, and safe cleanup. Apply TDD to source changes and use evidence appropriate to decision/documentation/verification work. After integrating related work, run required composed-behavior checks even if the rebase was conflict-free; avoid redundant checks only when evidence applies to the integrated tree. Update milestone status, acceptance, Progress, Concrete Steps, and Outcomes together. Pending owner actions or external checks remain open even when implementation commits are complete. Add create/modify/blocked consumer scenarios under `skills/execplan-implement/evals/` and keep existing ExecPlan grader cases intact.
+
 ### Milestone 2: Produce bounded tasks with explicit context and verification
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
-Edit `skills/spec-to-tasks/SKILL.md`, `references/task-schema.md`, and `references/validation.md` together. Keep the main entry point concise; put field definitions and detailed validation in the existing references.
+Implementation, source validation and semantic output review are complete. Final lifecycle and inline-document cases satisfy all shared assertions. The fresh task reader finds the full documentation contract; the negative reader stops on a missing prerequisite decision even when its pass flag is true. The following specification records completed edits.
 
-After decomposition and before schema validation, require a sizing pass with this proposed text:
+After decomposition and before schema validation, the implemented sizing rule is:
 
 > Evaluate each task by its behavioral scope, unresolved decisions, coupled state, environment uncertainty, and verification burden. A task should have one central outcome. Split independently deliverable behaviors and unrelated failure families. Do not split a vertical slice into code-only and test-only tasks, detach necessary negative cases, or reduce acceptance to make the task appear small. If correctness requires an indivisible complex task, state the reasoning risks and provide bounded entry points. Respect supplied execution limits; do not invent time/token budgets or assume a task fits one attempt because it has one ID.
 
 Put any remaining reasoning risks and bounded entry points in `description` or `designGuidance`; another mandatory complexity-score field is unnecessary. Avoid numeric difficulty scores that have no calibration. A state-machine repair can be narrow and still difficult.
 
-For T012/T013, retain the full recovery contract, but identify particular public interruption states as bounded starting points. Completing one starting point does not mark the entire task passed. For a task like T020, identify distinct observed failures before making a blanket assignment to fix generator portability. Keep prerequisite inventory separate from assuming every observed error is a product defect.
+For T012/T013, retain the full recovery contract, but identify particular public interruption states as bounded starting points. Completing one starting point does not mark the entire task passed. For a task like T020, identify distinct observed failures before making a blanket task to fix generator portability. Keep prerequisite inventory separate from assuming every observed error is a product defect.
 
 Add the structured fields defined above. Replace prose-only prerequisites with `dependsOn`. Preserve meaningful mandatory order; do not infer dependencies from ID order alone. Use `sourceRefs` for requirement coverage and `requiredContext` for the exact design the worker needs. These fields have different purposes even when they reference the same plan.
 
-Replace the unconditional `Typecheck passes` rule in the main skill, schema example, and validation checklist with this proposed text:
+The unconditional `Typecheck passes` rule was replaced in the main skill, schema example, and validation checklist with this contract:
 
 > Define applicable verification using existing repository commands and behavior-focused evidence. For typecheck and other relevant check categories, record a required check, a verified non-applicability reason, or an unresolved prerequisite. Never invent a command, claim an unrun check passed, or relabel a failing applicable check as inapplicable. Generated tasks describe expected results; only subsequent execution evidence establishes a pass. Documentation and decision tasks require appropriate document/evidence validation rather than fabricated product checks.
 
@@ -215,15 +235,15 @@ Verify this milestone with both ordinary and difficult tasks. A fresh worker sho
 ### Milestone 3: Align consumers and evaluation contracts
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
-Inspect consumers before publishing a schema change. `skills/prd-ralph/SKILL.md` already checks `dependsOn`, but its explicit implementation reading list names only existing fields. Update the applicable reading/verification guidance so workers consume the manifest's global constraints, selected task, `taskType`, `sourceRefs`, `requiredContext`, and `verification`, plus prerequisite completion evidence. Readiness is not execution authorization. Preserve existing user-imposed limits and permissions.
+Consumer edits and grader review are complete; 34 producer and 10 loop CLI tests pass. A new complete documentation artifact passes 10/10 assertions; the lifecycle artifact passes nine and correctly fails readiness because commands/environment are unresolved. Read-only Ralph and loop responses preserve context, commit constraints and result protocol. The following specification records completed work. Readiness is not execution authorization, and these interpretations do not establish execution of every disposable consumer scenario.
 
-Check `skills/prd-ralph-loop/SKILL.md` and related references for assumptions about field names, selection, pass flags, and forwarding. Limit changes to demonstrated compatibility needs. Do not rewrite the orchestration system or introduce a scheduler. Do not claim that the new manifest is ready for a consumer that ignores its required context or verification fields.
+The single-task consumer validates the complete task contract before selection or completion detection, consumes every field and inline content, resolves references, and applies checks by task type. Preserve existing IDs, completion evidence, one-task-per-run behavior, user limits, and commit policy. Mark only the selected task passed after its full applicable checks pass; unresolved or failed checks remain unfinished.
 
-Preserve old manifests as legacy input if the consumer currently supports them. Missing new fields in a legacy file must not be advertised as satisfying the new quality contract. For a migration, reconstruct dependencies and required context from the source plan, preserve IDs/completion evidence, and validate before use. Do not silently migrate the live installer task file as part of evaluating these skill edits.
+The loop preserves its `Stay blind` boundary: it forwards manifest paths and user constraints, then consumes the worker's completion/blocked protocol rather than reading task content itself. Its explicit blocked stop branch prevents missing context, invalid prerequisites, unresolved checks, or owner-only work from causing endless dispatch. Preserve the completion marker and domain behavior. Retain completion, blocked, forwarded-input, and commit-policy scenarios.
 
 Align `skills/spec-to-tasks/evals/evals.json` and `evals/grade_benchmark.py` with the chosen contract. Artifact paths must match `tasks.json`; the collection is `tasks`; defaults and the new fields must be checked. Adjust prompts that request incompatible output paths rather than asking a grader to guess between formats.
 
@@ -231,16 +251,18 @@ Preserve domain coverage in all current fixtures: status operations, member mana
 
 Because the grader is Python source, follow the repository's test-first rules if it is edited. Reproduce the public grading mismatch using a disposable run directory containing a valid current-format artifact. Then verify the repaired grader through the same CLI. Add invalid manifests that are parseable JSON but must fail semantic grading. A grader that writes files or exits successfully has not necessarily reported passing expectations; inspect `grading.json`.
 
-Acceptance is a consumer-compatible manifest and a grader that accepts a complete valid artifact, rejects the deliberate invalid examples, and retains the original domain requirements. Existing legacy compatibility must either remain verified or have an explicit migration path.
+Acceptance is a manifest that follows the complete producer/consumer contract and a grader that accepts a complete valid artifact, rejects the deliberate invalid examples, and retains the original domain requirements.
 
-### Milestone 4: Demonstrate clearer assignments without lost requirements
+### Milestone 4: Demonstrate clearer tasks without lost requirements
 
 
-Status: open
+Status: done
 
-Acceptance: not met
+Acceptance: met
 
-Use the existing installer closeout documents as read-only source material for controlled fixtures. Do not implement the Windows tasks, invoke native clients, or change real task completion state to evaluate these authoring skills. Capture fixture input and baseline skill versions so comparisons do not drift as the live plan changes.
+Six paired outputs and three fresh-reader interpretations are reviewed. Revised outputs satisfy 18/18 shared assertions versus 17/18 for the frozen baseline. Five cases tie under this broad rubric; the distinguishing assertion is explicit `TASK_COMPLETE` after a successful nonfinal task. Separate semantic review caught and repaired the deferred-authoring-review dependency. No timing/token or general performance claim follows from this small sample. The following procedure records how evidence was collected.
+
+Use the existing status/member/token domain fixtures and add a self-contained lifecycle fixture under `skills/spec-to-tasks/evals/files/`. State the invariants, interruption/refusal cases, decision boundary, verification commands or unresolved prerequisites, and final integration evidence in that fixture. The unavailable installer documents are historical inspiration only. Do not implement product work, invoke native clients, or change real task completion state to evaluate these authoring skills. Baseline snapshots were captured before edits under `/private/tmp/exec-plan-tasks-improvements/<skill>-workspace/skill-snapshot/`.
 
 Run baseline and revised skills against the same fixtures with the same available model, reasoning setting, tool access, and context boundary. Record actual settings. Follow the repository's canonical evaluation layout: one `iteration-N/eval-*/eval_metadata.json` with config-specific `run-*` directories underneath it. Keep generated results in a sibling `*-workspace/` directory. Never use an installed copy accidentally when testing a changed source skill.
 
@@ -251,7 +273,7 @@ The next section supplies the acceptance cases. Check semantic completeness firs
 ## Concrete Steps
 
 
-Before future implementation, read the repository's current instructions and applicable skill-authoring guidance. Confirm the intended source paths above still exist, inspect current changes, and preserve a baseline snapshot using the repository's skill benchmark convention. Do not overwrite unrelated work.
+No implementation step remains for this request. The next review action is to inspect [the comparison viewer](/private/tmp/exec-plan-tasks-improvements/comparison/review.html) and the uncommitted source diff. [Selection provenance](/private/tmp/exec-plan-tasks-improvements/comparison/selected/iteration-1/selection-provenance.json) identifies every preserved source run, hash and viewer-only adaptation. Do not rerun completed work or install personal copies merely to resume this plan. A later changed requirement should reopen only affected acceptance.
 
 From the repository root, these existing commands support inspection and static verification:
 
@@ -259,6 +281,9 @@ From the repository root, these existing commands support inspection and static 
     rtk proxy rg -n 'tasks.json|userStories|parallelBatch|dependsOn|Typecheck passes' skills/spec-to-tasks skills/prd-ralph skills/prd-ralph-loop
     rtk proxy env PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py skills/spec-to-tasks
     rtk proxy env PYTHONPATH=scripts/vendor python3 skills/skill-creator/scripts/quick_validate.py .agents/skills/exec-plans
+    rtk proxy python3 skills/spec-to-tasks/evals/test_grade_benchmark.py
+    rtk proxy python3 skills/prd-ralph-loop/evals/test_grade_benchmark.py
+    rtk proxy python3 scripts/test_test_all.py
     rtk git diff --check
 
 The validator commands use the repository's vendored YAML dependency. Do not install packages implicitly if validation cannot run. `quick_validate.py` checks skill structure/frontmatter; it does not prove task quality. Preserve any approved frontmatter keys even if a validator has a known limitation.
@@ -269,9 +294,9 @@ After changing evaluation definitions, parse `skills/spec-to-tasks/evals/evals.j
 
 Use the equivalent disposable temporary directory on another operating system. Compilation checks syntax only and cannot establish behavioral correctness.
 
-After real evaluation artifacts exist, run the existing grader with the actual new iteration directory. `iteration-N` below is a placeholder to replace, not an existing result:
+The final producer CLI run used this retained directory, with comparison cases mapped to the producer grader's lifecycle/document IDs:
 
-    rtk proxy python3 skills/spec-to-tasks/evals/grade_benchmark.py skills/spec-to-tasks-workspace/iteration-N
+    rtk proxy python3 skills/spec-to-tasks/evals/grade_benchmark.py /private/tmp/exec-plan-tasks-improvements/producer-validation/iteration-1
 
 Inspect each run's `grading.json`, including failed expectations and evidence. Do not treat the grader's process exit alone as acceptance. Validate generated `tasks.json` files for JSON syntax and the semantic rules below. No general-purpose task-schema validator has been established by this guide; extend the existing grader or add a narrowly scoped validator only if needed, and document its actual invocation after it exists.
 
@@ -280,11 +305,11 @@ At the end of implementation, run the required documentation maintenance pass on
 ## Validation and Acceptance
 
 
-Use the following fixtures and deliberate mutations. New fixture files are proposed additions under the relevant skill's `evals/` tree; no such new files are claimed to exist yet. If the repository-local ExecPlan skill needs a separate eval workspace, follow the repository-local skill boundary and existing benchmark conventions rather than moving the skill into publishable `skills/`.
+Use the following fixtures and deliberate mutations. Lifecycle, inline-document, consumer, and loop scenarios now exist under the relevant skill's `evals/` tree. The resumed check parsed all 16 JSON scenario and fixture files. Repository-local ExecPlan evaluations use the disposable external workspace with the canonical layout; the skill remains repository-local.
 
 | Case | Required result |
 | --- | --- |
-| Large lifecycle milestone, based on 6B | Produce bounded behavioral assignments, preserve the full lifecycle contract, and identify the final integration proof. Do not mandate exactly 12 tasks. |
+| Large lifecycle milestone, based on 6B | Produce bounded behavioral tasks, preserve the full lifecycle contract, and identify the final integration proof. Do not mandate exactly 12 tasks. |
 | Indivisible difficult recovery, based on T012/T013 | Retain interruption, repeated-recovery, authority, metadata, and refusal requirements. Flag high reasoning demands and bounded entry points without making each partial proof a completed task. |
 | Checkpoint copied into one task, based on 6D/T019 | Explicitly assess scope and verification burden. Keep one task only when justified; do not reward renaming alone or force a split solely for count. |
 | Missing dependency | Delete a real prerequisite from `dependsOn` while leaving it in prose. Semantic review must reject the mismatch. |
@@ -311,20 +336,26 @@ The change is accepted when valid outputs pass these checks, deliberately invali
 
 Keep baseline skill snapshots and evaluation artifacts separate from maintained source. Use a fresh iteration directory for each comparison. Repeating validation must not reset task progress, mutate the live installer plan, or update personal installed skills.
 
-If schema/consumer compatibility fails, keep the change unpublished until the producer and consumer agree. Do not discard new required fields silently or migrate active task records by overwriting completion evidence. If an evaluation result fails, preserve its artifact and diagnostic, make a focused correction, and rerun the affected case before broadening evaluation.
+If the producer and consumer disagree on the contract, keep the change unpublished until they agree. Reject incomplete task records without overwriting existing completion evidence. If an evaluation result fails, preserve its artifact and diagnostic, make a focused correction, and rerun the affected case before broadening evaluation.
 
 ## Outcomes & Retrospective
 
 
-The recommendations and verification design are captured. No skill, consumer, grader, installer source, live task record, or installed personal skill was changed by preparing this document. Future implementers should replace this paragraph with measured outcomes as improvement milestones complete.
+All five skill entry points and dependent references are revised and reviewed. The producer defines dependencies, current context, task types and applicable checks; Ralph intake applies the complete contract to every task and explicitly blocks incomplete input or evidence. The loop remains blind. Both ExecPlan skills preserve the user's independence boundary. The runner registers the two new public grader suites.
+
+Final observed checks: 34 producer grader tests, 10 loop grader tests, all 16 scenario/fixture JSON files, Python compilation, supported skill validators, whitespace review and OKF lint pass. Earlier 35 ExecPlan grader and 14 runner tests apply to unchanged source. The generic validator still rejects required `disable-model-invocation` frontmatter in two consumers; those controls and `execplan-implement/agents/openai.yaml` remain intact. This is a known validation limitation, not a passing result.
+
+The complete documentation manifest passes all ten producer CLI assertions. The valid lifecycle shape correctly fails only readiness, since its fixture has no runtime/commands. Earlier six paired outputs yield 18/18 revised versus 17/18 baseline shared assertions. All three fresh-reader exercises identify the required action/check/boundary, including the intended missing-decision stop. These comparisons predate the removal of compatibility guidance; its acceptance uses source review, the 44 existing grader tests, 16 JSON parses, and skill validation. The obsolete compatibility scenario and fixture were removed; no new regression tests were added for that deletion. The review viewer and provenance are retained. No consumer sandbox execution, product work, owner-host memory measurement, personal installation, Git commit or push was performed.
 
 Expected benefit is less repeated interpretation during worker execution. Hard technical reasoning and cross-task integration remain explicit responsibilities. Total project effort may include additional context loading, review, and integration, so efficiency claims require measured comparisons.
 
 ## Artifacts and Notes
 
 
-This guide preserves all seven original recommendation groups: three for ExecPlans (assignment boundaries, current design extraction, integration proof) and four for task decomposition (sizing, structured dependencies/context/type, applicable verification, semantic validation). It also includes the shared fresh-worker evaluation method and the newly verified consumer/evaluation compatibility issues.
+This guide preserves all seven original recommendation groups: three for ExecPlans (task boundaries, current design extraction, integration proof) and four for task decomposition (sizing, structured dependencies/context/type, applicable verification, semantic validation). It also includes the shared fresh-worker evaluation method and the newly verified consumer/evaluation compatibility issues.
 
-Current maintenance classification: this is a transient recommendation document, not a changed repository workflow or public API. Canonical documentation pass: Added: None; Changed: None; Split or moved: None; Deduplicated: None; Index updates: None; Remaining doc quality TODOs: None. Proposed skill/evaluation repairs remain tracked above rather than being represented as completed canonical changes.
+The requested plan and [feature handoff](handoff.md) remain beside each other. The final canonical pass updated skills guidance, grader contracts/testing, and the retained-effort map; existing routing/index changes remain. Only the OKF profile branch applied, and lint exited 0. No canonical file was added, split, moved or removed; no documentation quality TODO remains.
 
-Revision note, 2026-10-07: created at the user's requested scratchpad path with novice-oriented edit locations, proposed rule text, a schema example, compatibility work, commands, and observable acceptance. This records recommendations without starting their implementation.
+Evidence is local and disposable under `/private/tmp/exec-plan-tasks-improvements/`: [review notes](/private/tmp/exec-plan-tasks-improvements/comparison/review-notes.md), [benchmark](/private/tmp/exec-plan-tasks-improvements/comparison/selected/iteration-1/benchmark.json), [fresh plan reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/plan/result.md), [fresh task reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/task/result.md), and [missing-context reader](/private/tmp/exec-plan-tasks-improvements/fresh-readers/missing-context/result.md). Earlier outputs, invalid fixtures and public reproductions remain unchanged.
+
+The [earlier dispatch audit](/private/tmp/exec-plan-tasks-improvements/dispatch-audit.json) and [resumed audit](/private/tmp/exec-plan-tasks-improvements/dispatch-audit-resumed.json) distinguish selected/submitted settings from unconfirmed execution settings. They retain the corrected implicit dispatch and missed warning checkpoints, including the final grader repair's unverified threshold compliance. No delegated result is treated as runtime configuration evidence.
