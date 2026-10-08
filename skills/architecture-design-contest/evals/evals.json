@@ -54,7 +54,7 @@
       "files": [
         "/home/adam/dev/personal/skills/scripts/install.sh",
         "/home/adam/dev/personal/skills/README.md",
-        "/home/adam/dev/personal/skills/.agents/memory/TESTING_STRATEGY.md"
+        "/home/adam/dev/personal/skills/.agents/instructions/testing/scripts.md"
       ],
       "assertions": [
         "Response explores the existing installer entry points before finalizing the designs",

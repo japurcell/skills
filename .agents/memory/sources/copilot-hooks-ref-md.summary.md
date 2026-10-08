@@ -1,31 +1,13 @@
 ---
 type: Source Summary
-description: Copilot hook events, cross-surface behavior, matcher semantics, or exit-code handling.
+description: Saved-source reference for Copilot hook events, CLI/cloud differences, matchers, or exit behavior.
 sources:
   - resource: ../../sources/copilot-hooks-ref.md
 ---
 
-# Summary for `copilot-hooks-ref.md`
+# copilot-hooks-ref - Source Reference
 
-## Core Details
-- **Source File**: `.agents/sources/copilot-hooks-ref.md`
-- **Summary File**: `.agents/memory/sources/copilot-hooks-ref-md.summary.md`
-- **Stale Reason**: new file
+- The saved reference distinguishes CLI and cloud hook discovery, event payloads, matchers, decision schemas, and command/HTTP behavior.
+- It documents separate progress JSON before a final command result. Command pre-tool errors fail closed, but timeouts fail open; consult the raw event and exit-code sections before relying on enforcement.
 
-## Executive Summary
-- The GitHub Copilot hooks reference defines hook locations, cloud-vs-CLI execution differences, command/HTTP/prompt hook formats, event payloads, matcher behavior, decision schemas, and exit-code semantics for Copilot CLI and Copilot cloud agent.
-
-## Key Findings
-- Copilot CLI loads hooks from policy, repository, user, inline settings, and plugins, while cloud agent only loads `.github/hooks/*.json` from the cloned repository.
-- Cloud agent hook execution is Linux-only, non-interactive, network-restricted, and ephemeral; only `bash` or fallback `command` entries are honored there.
-- Command hooks may emit line-delimited progress JSON objects to stdout during execution, but they still need exactly one final non-progress JSON document for the actual hook result.
-- `userPromptTransformed` can rewrite only the transformed model-facing prompt, not block the turn; `notification` does not fire in cloud agent.
-- Command `preToolUse` hooks fail closed on non-timeout errors, but timeouts are explicitly fail-open; PascalCase `PreToolUse` uses Claude-style matcher and tool-name compatibility rules.
-- `disableAllHooks` behaves differently depending on whether it is set in a single hook file or repository settings, and policy hooks are never disabled by it.
-
-## Integration Checklist
-- [x] Read the raw source.
-- [x] Update the executive summary with verified facts.
-- [x] Update the key findings with verified facts.
-- [x] Weave durable facts into `.agents/memory/*` or `.agents/instructions/*`.
-- [x] Append an integrate record to `.agents/memory/LOG.md` after successful ingestion.
+Evidence: [immutable raw source](../../sources/copilot-hooks-ref.md), checked against the saved text on 2026-10-07. Recheck when the source changes or current external behavior matters. This summary routes reading; it does not create project policy.

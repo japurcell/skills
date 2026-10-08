@@ -1,44 +1,16 @@
 # Routing
 
-## Choose the Doc Type
+Apply [knowledge admission](../../../instructions/knowledge-base.md) before choosing a destination. File changes, public APIs, errors, and model-generated imperatives do not automatically require documentation.
 
-Use `.agents/instructions/` for required actions:
-
-- Required workflow
-- Coding rule
-- Testing rule
-- Tool usage rule
-
-Use `.agents/memory/` for durable repo knowledge:
-
-- Architecture fact
-- File/layout map
-- Public entry point map
-- Historical reason
-- Known gotcha
-- Cross-file relationship
-- Non-obvious behavior
-
-If a topic needs both rules and background, use separate instruction and memory docs.
-
-Example:
-
-- `.agents/instructions/hooks.md`
-- `.agents/memory/known-issues/hooks.md`
-
-## Common Routes
-
-| Change | Destination |
+| Admitted content | Destination |
 | --- | --- |
-| Required repo-wide rule | Focused `.agents/instructions/` doc |
-| Area-specific rule | Instruction doc for that area |
-| Architecture, layout, or entry point | Focused memory doc; update `FILE_MAP.md` if useful |
-| Repo-wide descriptive convention | `CONVENTIONS.md` or a focused memory doc |
-| Repo-wide known issue | `KNOWN_ISSUES.md` |
-| Area-specific known issue | `known-issues/<area>.md` |
-| Required test command or process | Test instruction doc |
-| Test layout, fixture, or behavior | `TESTING_STRATEGY.md` or `testing/<area>.md` |
-| Compiler, analyzer, or IDE behavior | Instruction for required handling; memory for explanation |
-| Memory doc added, moved, removed, or repurposed | Memory `INDEX.md` and affected links |
-| Instruction doc added, moved, removed, or repurposed | Matching instruction index, if present |
-| Ordinary project documentation only | No update unless agent-doc routing, links, or metadata changed |
+| Established repo or area rule | Narrowest `.agents/instructions/` document |
+| Required test command, fixture constraint, or evidence standard | Matching `.agents/instructions/testing/` document |
+| Verified, valuable, non-obvious project fact | Focused `.agents/memory/` document with evidence, check date, and recheck trigger |
+| External-source reference | Matching manifest-backed source summary; promotion elsewhere requires a separate admission decision |
+| Operational source state | Existing manifest/log workflow; preserve schema and provenance |
+| Unresolved consequential authority conflict | One grouped user decision list, outside canonical policy |
+
+Use [instruction routes](../../../instructions/INDEX.md) and the [memory index](../../../memory/INDEX.md) to find an existing owner. Link to source, CLI help, tests, or retained ADRs for readily discoverable facts. A costly cross-file explanation may qualify only when all admission gates pass. Separate required actions from supporting background only when both earn their own loading trigger.
+
+After additions, moves, removals, or changed purposes, update the affected index and inbound links. An ordinary code change with no admitted knowledge needs no new memory.

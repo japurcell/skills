@@ -11,15 +11,15 @@ Keep agent documentation small, current, and easy to route.
 ## Workflow
 
 1. Review the final diff and session history.
-2. Derive durable, non-obvious rules from **mistakes, failures, repeated retries, user corrections, steering updates, negative code review results, workarounds discovered, coordination failures, validation reruns, and resolved compiler/linter warnings**.
+2. Read [knowledge admission](../../instructions/knowledge-base.md) and apply its claim-level rubric to candidate findings. Corrections and failures may supply evidence; they do not automatically justify a new rule or memory.
 3. Route each rule using [routing](refs/routing.md).
 4. Search related docs before adding content.
 5. Update the smallest relevant doc. Create a focused doc only when needed.
 6. Remove nearby stale, duplicate, or contradictory guidance.
-7. When shortening or splitting a doc, preserve every durable rule in the appropriate focused doc.
+7. When shortening or splitting a doc, preserve established rules in the appropriate focused doc. Keep descriptive memory only when the admission gates pass; batch consequential authority conflicts for the user.
 8. Apply [document quality](refs/doc-quality.md).
 9. Update frontmatter, indexes, and links using [indexes and frontmatter](refs/indexes-frontmatter.md).
-10. After semantic changes to canonical documents, invoke `okf-authoring` to apply and verify the OKF representation contract.
+10. After semantic changes to canonical documents, activate the `okf-authoring` skill to apply and verify the OKF representation contract.
 11. Report the result.
 
 ## Rules

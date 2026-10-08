@@ -1,5 +1,5 @@
 ---
-type: Testing Guidance
+type: Agent Instruction
 description: Test and validation guidance for PowerShell scripts under `scripts/`
 ---
 

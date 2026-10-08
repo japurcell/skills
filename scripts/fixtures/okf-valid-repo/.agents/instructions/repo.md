@@ -5,7 +5,7 @@ description: Repository workflow for the valid fixture.
 
 # Repository workflow
 
-Read the [architecture](../memory/ARCHITECTURE.md), the [repository readme](../../README.md),
+Read the [telemetry](../memory/telemetry.md), the [repository readme](../../README.md),
 and the [upstream specification](https://github.com/GoogleCloudPlatform/open-knowledge-format).
 The [section anchor](#repository-workflow) is also valid.
 The [encoded target](../../assets/encoded%20target.txt?download=1#fixture) is valid too.

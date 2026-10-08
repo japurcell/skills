@@ -46,7 +46,7 @@ Run commands from this checkout's repository root, currently `/Users/adam/.codex
 | [Existing grader](../skills/spec-to-tasks/evals/grade_benchmark.py) | Repair artifact discovery and semantic checks through public-CLI tests. |
 | [Single-task consumer](../skills/prd-ralph/SKILL.md) | Consume dependencies, context, task type, and verification before changing completion state. |
 | [Loop consumer](../skills/prd-ralph-loop/SKILL.md) | Forward constraints and stop on completion or actionable blockers while preserving its blind-orchestrator boundary. |
-| [Skill conventions](../.agents/instructions/skills.md) and [skill testing](../.agents/memory/testing/skills.md) | Authoring, evaluation, and validation requirements. |
+| [Skill conventions](../.agents/instructions/skills.md) and [skill testing](../.agents/instructions/testing/skills.md) | Authoring, evaluation, and validation requirements. |
 
 Implement publishable changes in `skills/` and the explicitly authorized repository-local change in `.agents/skills/exec-plans/`. Installed copies are not the source of truth. Preserve `execplan-implement`'s `disable-model-invocation: true` and `agents/openai.yaml` policy. Its commit-message reference is unaffected.
 

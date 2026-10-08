@@ -1,10 +1,10 @@
-# Final documentation pass
+# Tool Guardian documentation checks
 
-This is the single formal `update-agent-docs` pass for the completed Tool Guardian code session. It reconciles durable guidance with runtime source at `1a4610ad`; root owns the retained ExecPlan, handoff, dispatch audit, and acceptance evidence. Installed hooks and user-global configuration were not changed. The user owns the installer refresh and subsequent trust/live validation.
+This record preserves the formal `update-agent-docs` checks for Tool Guardian runtime source at `1a4610ad`; root owns the retained ExecPlan, handoff, dispatch audit, and acceptance evidence. Installed hooks and user-global configuration were not changed. The user owns the installer refresh and subsequent trust/live validation.
 
 ## Source reconciliation
 
-Reviewed the canonical classifier, policy renderer, shell/Python inspection and redaction paths, generated-target manifest, both installer copy lists, public benchmark parsers/dispatch, aggregate suite registry, and repaired helper/root fixtures. The knowledge base now routes exact observed native schemas and current limits through `API_MAP.md`, required changes through hook/script instructions, installation and decoding caveats through hook known issues, and correctness/performance procedures through testing guidance. The benchmark contract distinguishes guard-only RTK handling, externally supplied fingerprints, and replay preparation against the original inline source at `84eae394`.
+Reviewed the canonical classifier, policy renderer, shell/Python inspection and redaction paths, generated-target manifest, both installer copy lists, public benchmark parsers/dispatch, aggregate suite registry, and repaired helper/root fixtures. Current rules and validation procedures are linked below. Read the canonical runtime source for exact native schemas and limits. The benchmark contract distinguishes guard-only RTK handling, externally supplied fingerprints, and replay preparation against the original inline source at `84eae394`.
 
 The durable contract separates native data from executable or unsupported input, preserves bounded sink inspection and strict fallback, and limits patch protections to deletion and move sources. It makes no general destination-protection, saved-script-inspection, raw-JSON memory, installed-behavior, or blanket optimization-benefit claim. Historical failed latency/optimization observations and partial timed-out reviews remain historical evidence rather than acceptance or security approval.
 
@@ -12,18 +12,16 @@ The accepted source evidence remains in [cold-profile-final-comparison.json](evi
 
 Native macOS correctness was established with Python 3.13.14 and 3.14.6. Native Windows remains unverified. The earlier aggregate result remains 39/41 in its historical report; the two repaired suites now pass independently, including the helper suite under the actual root sandbox with warnings as errors. The documentation pass does not replace those reports with a fabricated new aggregate result.
 
-## Routing result
+## Current guidance
 
-- Added: This formal pass record only; no new canonical concept.
-- Changed: Hook/script instructions; architecture, API, file and index maps; hook known issues; hook/script testing guidance.
-- Split or moved: Moved the current schema/limit contract into the existing API map while keeping installed-copy and raw-decoding caveats in hook known issues.
-- Deduplicated: Replaced stale source false-positive and 32,768-byte native-body descriptions with the current contract and focused links. Corrected the generated-target count from 26 to 29.
-- Index updates: API-map routing in `INDEX.md` and maintained guardian files plus retained effort status in `FILE_MAP.md`.
-- Remaining doc quality TODOs: None for this scoped pass.
+- [Shared hook rules](../../.agents/instructions/hooks.md) route provider-specific work.
+- [Tool Guardian rules](../../.agents/instructions/hooks-security.md) own security constraints, installation checks, and decoding boundaries.
+- [Security validation](../../.agents/instructions/testing/hooks-security.md) owns correctness, benchmark, and evidence requirements.
+- [Script rules](../../.agents/instructions/scripts.md) and [script validation](../../.agents/instructions/testing/scripts.md) cover helper changes.
 
 ## Representation and checks
 
-Applied `okf-authoring` after semantic changes using `references/profile.md`; the source-summary branch is not applicable. Existing canonical paths and their frontmatter types remain stable: `Agent Instruction`, `Agent Memory`, `Knowledge Index`, `Known Issue`, and `Testing Guidance`. Local links and referenced headings were inspected, including the retained latency-contract anchor.
+The recorded pass applied `okf-authoring` after semantic changes using `references/profile.md`; the source-summary branch was not applicable. Local links and referenced headings were inspected, including the retained latency-contract anchor.
 
 From the isolated documentation worktree, with `RTK_DB_PATH=/private/tmp/tool-guardian-rtk.db`:
 
@@ -31,4 +29,4 @@ From the isolated documentation worktree, with `RTK_DB_PATH=/private/tmp/tool-gu
 - `rtk proxy python3 scripts/generate-hooks.py --check`: exit 0, `Generated hooks are current (29 files).`
 - `rtk git diff --check`: exit 0, no whitespace findings.
 
-The scoped diff contains only the nine authorized canonical documents and this record. No source, generated hooks, tests, skills, immutable sources, protected AGENTS sections, or installed files changed. No full suites or heavy benchmarks were rerun for documentation alone. The retained feature folder is preserved because historical retention was explicitly requested.
+That documentation-only pass covered nine authorized canonical documents and this record. It changed no source, generated hooks, tests, skills, immutable sources, protected AGENTS sections, or installed files. It did not rerun full suites or heavy benchmarks. The retained feature folder is preserved because historical retention was explicitly requested.

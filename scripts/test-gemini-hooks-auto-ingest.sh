@@ -361,6 +361,25 @@ test_after_model_blocks_pending_ingest() {
     "Expected Gemini AfterAgent block reason to list the pending source."
   assert_file_contains <(jq -r '.reason' <<<"$output") 'block-pending-ingest: blocked; 1 pending source' \
     "Expected the denial itself to identify the hook and safe count."
+
+  write_text_file "$summary_dir/after-model-md.summary.md" \
+    $'---\ntype: Source Summary\ndescription: Attributed source reference\nsources:\n  - resource: ../../sources/after-model.md\n---\n\n# Source reference\n\nThe saved source contains after model.\n'
+  output="$(run_repo_local_after_model_auto_ingest_hook \
+    '{"hook_event_name":"AfterAgent","cwd":"'"$repo_dir"'"}' \
+    HOME="$home_dir" AUDIT_LOG="$workdir/audit.log" AGENTS_SOURCE_SCAN_DIR="$source_dir" AGENTS_SOURCE_SUMMARY_DIR="$summary_dir")"
+  assert_equals 'block-pending-ingest: pass; 0 pending sources' "$(jq -r '.systemMessage' <<<"$output")" \
+    "Expected a completed source summary to clear the gate without adding another KB fact or rule."
+
+  # Change only the source immediately after completion, before another scan.
+  write_text_file "$source_dir/after-model.md" $'changed source requires renewed review\n'
+  output="$(run_repo_local_after_model_auto_ingest_hook \
+    '{"hook_event_name":"AfterAgent","cwd":"'"$repo_dir"'"}' \
+    HOME="$home_dir" AUDIT_LOG="$workdir/audit.log" AGENTS_SOURCE_SCAN_DIR="$source_dir" AGENTS_SOURCE_SUMMARY_DIR="$summary_dir")"
+  assert_equals 'deny' "$(jq -r '.decision' <<<"$output")" \
+    "Expected a source changed after ingestion to require a fresh summary."
+  assert_equals 'stale' "$(jq -r '.entries[0].state' "$summary_dir/source-ingest-manifest.json")" \
+    "Expected the manifest to track the changed source as stale."
+
   output="$(run_repo_local_after_model_auto_ingest_hook '{"hook_event_name":"AfterAgent","stop_hook_active":true,"cwd":"'"$repo_dir"'"}' HOME="$home_dir" AUDIT_LOG="$workdir/audit.log" AGENTS_SOURCE_SCAN_DIR="$source_dir" AGENTS_SOURCE_SUMMARY_DIR="$summary_dir")"
   assert_equals 'block-pending-ingest: retry allowed; pending state not rechecked' "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected every stop attempt to report an outcome."
