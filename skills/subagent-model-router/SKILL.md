@@ -85,7 +85,7 @@ Capability floors override price, convenience, and defaults. Availability never 
 
 - Return the route as a decision, not an approval request.
 - Reuse a route only when work class, stakes, security sensitivity, ambiguity, affected behavior, review history, context, verification, constraints, and runtime capabilities are materially unchanged.
-- Use the catalog's task defaults as provisional starting points.
+- Use the catalog's task defaults as provisional starting points; compare all eligible candidates at the applicable context and cache rates before selecting a route or fallback.
 - Resolve every catalog entry to one exact model and effort accepted by the dispatch interface.
 - Prefer Fast for bounded, low-risk work unless a concrete requirement establishes a higher floor.
 - Mechanical multi-file work may remain Fast when verification is straightforward.

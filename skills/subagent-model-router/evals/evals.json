@@ -1,0 +1,38 @@
+{
+  "skill_name": "subagent-model-router",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a route for summarizing explicit test failures without diagnosing code. GitHub Copilot token billing applies. The dispatch interface accepts only claude-haiku-4.5 and claude-haiku-5.5, both with medium effort. Expect 80000 uncached input tokens and 2000 output tokens, no cache writes, no retries, equal verification cost, and no task-specific quality evidence. No model or effort constraints. Use the bundled source snapshot. Return the route and estimated token cost.",
+      "expected_output": "A provisional Fast route for claude-haiku-5.5 at medium effort with an estimated token cost of $0.009, compared with $0.09 for claude-haiku-4.5.",
+      "files": [],
+      "expectations": [
+        "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+        "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+        "Treats the configuration as provisional and preserves verification."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Update a Fast route for deterministic log summarization. It previously used claude-haiku-5.5 at medium with 80000 input tokens; now it needs 150000 uncached input tokens and 2000 output tokens. The Copilot dispatch interface accepts claude-haiku-5.5 and gpt-5.6-luna, both at medium. Both have demonstrated equal task fit. No cache writes or retries; verification costs match. No user model preference. Use bundled prices, reroute, and show both estimated token costs.",
+      "expected_output": "Reroutes to gpt-5.6-luna at medium. Haiku 5.5 crosses its 100K threshold and costs $0.080; GPT-5.6 Luna remains below 200K and costs $0.0324.",
+      "files": [],
+      "expectations": [
+        "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+        "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+        "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Compare claude-sonnet-5 at high and claude-sonnet-5.5 at high for ordinary substantive review. Both configurations are accepted by the Copilot dispatch interface and equally capable on this task. Expect 100000 confirmed cached-input tokens and 1000 output tokens; cache writes were paid previously, with no new writes or uncached input. No retries and identical verification. Select a route using bundled prices and show both costs. Also state whether that route remains dispatchable if the interface later advertises only the model names without any accepted effort values.",
+      "expected_output": "Selects Standard claude-sonnet-5.5 at high for $0.020 instead of Sonnet 5 at $0.030. If exact accepted effort values can no longer be confirmed, returns dispatchable: false.",
+      "files": [],
+      "expectations": [
+        "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+        "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+        "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support."
+      ]
+    }
+  ]
+}
