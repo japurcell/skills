@@ -4,8 +4,6 @@ Use this file as a lightweight inbox for ideas that are not ready for research o
 
 ## Inbox
 
-- [ ] **Exec plan tasks improvements**: [exec-plan-tasks-improvements.md](exec-plan-tasks-improvements.md)
-
 - [ ] **Durable learning skill**: Many skills define what a durable learning is. I want to create a skill that defines what a durable learning is so that other skills can reference it.
 
 - [ ] **SKILL audit**: Claude released updates to skill authoring best practices: [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices). Even though I don't use Claude, I still want to incorporate these best practices into all skills in this repo unless they are blatantly incompatible with codex, copilot, or gemini: [../.agents/skills/](../.agents/skills/) and [../skills/](../skills/). Our audit will include all of the best practices, but a few stood out to me:
@@ -39,8 +37,6 @@ Use this file as a lightweight inbox for ideas that are not ready for research o
   - [A Complete Guide to AGENTS.md](https://www.aihero.dev/a-complete-guide-to-agents-md)
 
   **Goal**: a self-improving context management system the doesn't rely on agents remembering when to update or refresh their knowledge, but instead manages it autonomously through structured processes and hooks.
-
-- [ ] **exec-plans tasks**: Should 'exec-plans' breakdown milestones into tasks similarly to how 'spec-to-tasks' does so that weaker models can handle them more effectively?
 
 - [ ] **agentic workflows**: I want to investigate ways to run agent workflows (e.g. plan -> implement -> checkpoints -> prototypes -> review/fix loops).
   - the transcipt from this video describes shopify's process: <https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd>

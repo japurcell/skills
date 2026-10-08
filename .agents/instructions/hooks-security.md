@@ -16,10 +16,11 @@ Apply [shared hook rules](hooks.md) and the affected provider's envelope rules.
 
 ## Inspection and capture boundaries
 
+- Proven file-write/patch bodies and literal search patterns remain data regardless of filename or extension, including source-code files. Classify the operation, and keep executable arguments and sinks on their required inspection paths.
 - Tool Guardian traversal limits apply after JSON decoding. Do not claim a universal raw-envelope memory bound. Preserve true units and the first actual failing budget; earlier bounds can make later limits unreachable independently.
 - Data classification does not inspect a saved script's future execution or provide general write-destination protection. Preserve existing patch delete/move-source checks without broadening that claim.
 - Run Git with prompts disabled, an empty askpass, and bounded waits. Preserve incomplete-scan denial in block mode and sanitized warning behavior in warn mode.
 - Windows capture cleanup must terminate the Git root and observed children before waiting on any one process, retain ancestor PIDs, and rescan for newly spawned descendants within its deadline. Keep immediate temporary-file assertions and exact provider/mode/scenario/filename failure text; investigate a recurrence with fresh process and handle evidence.
 - For maintenance fixtures, use unmistakably fake credential values. Construct dangerous pattern vocabulary dynamically when active guards would otherwise mistake the fixture for execution. If installed hooks reject source-supported data, inspect the installed version and use bounded patches; keep the guard enabled and preserve the distinction between source and deployed proof.
 
-Use [security and performance tests](testing/hooks-security.md). The current [Tool Guardian contract](../../docs/tool-guardian-tuning/ExecPlan.md) owns its accepted budgets and owner-only real installation.
+Use [security and performance tests](testing/hooks-security.md) for the accepted Tool Guardian budgets and [live-hook testing](testing/hooks-live.md) for authorized installation and provider-delivery proof. For claims about concurrent edits, read the [scanner consistency limitation](../memory/known-issues/secret-scanner.md).

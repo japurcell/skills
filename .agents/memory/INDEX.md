@@ -10,6 +10,7 @@ Load only a matching entry. Start edits from [instruction routes](../instruction
 | Memory | Read when |
 | --- | --- |
 | [Skill tooling limitations](known-issues/skills.md) | Invocation controls fail validation, or benchmark metrics may be defaults/proxies |
+| [Secret scanner consistency](known-issues/secret-scanner.md) | Changing scanner candidate reads or assessing claims about concurrent index/worktree edits |
 | [Ingestion log](LOG.md) | Inspecting source-ingestion provenance; ordinary tasks do not need it |
 | [Source manifest](sources/source-ingest-manifest.json) | Diagnosing source freshness, pending entries, renames, or orphan state |
 

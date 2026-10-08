@@ -1,7 +1,0 @@
-{
-  "purpose": "diagnostic equivalence only; public complete-hook suites and measurements establish acceptance",
-  "alphabet": "a'\"\\ ",
-  "max_length": 8,
-  "cases": 488281,
-  "differences": 0
-}

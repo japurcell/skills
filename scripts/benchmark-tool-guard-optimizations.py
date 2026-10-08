@@ -274,7 +274,9 @@ def main() -> int:
     parser.add_argument("phase", choices=("prepare", "validate", "measure", "compare", "prepare-git", "validate-git", "measure-git"))
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--variant-parent", type=Path, default=Path("/private/tmp/tool-guardian-ablation-final-m4"))
-    parser.add_argument("--evidence", type=Path, default=ROOT / "docs/tool-guardian-tuning/evidence")
+    parser.add_argument("--evidence", type=Path,
+                        default=ROOT / ".agents/scratchpad/tool-guard-optimizations/evidence",
+                        help="artifact directory (default: .agents/scratchpad/tool-guard-optimizations/evidence)")
     parser.add_argument("--group", choices=("common", "suffix"), default="common")
     args = parser.parse_args()
     args.evidence.mkdir(parents=True, exist_ok=True)

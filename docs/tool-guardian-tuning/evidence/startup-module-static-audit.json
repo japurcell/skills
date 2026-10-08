@@ -1,8 +1,0 @@
-{
-  "original_policy_bytes": 72290,
-  "neutral_policy_bytes": 65072,
-  "entrypoint_adapter_bytes": 9069,
-  "function_and_class_definitions_preserved": 48,
-  "context_leaks": [],
-  "original_policy_sha256": "74bbd1d2fe8114b61d15c33709c156c73a07851a3667a11d1c09743f6fc51da9"
-}

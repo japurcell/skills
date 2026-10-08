@@ -5,7 +5,7 @@ description: Use only for authorized installed-hook delivery, visible messages, 
 
 # Live Hook Evidence
 
-Honor the task's installation scope. [Repository workflow](../repo.md) preserves owner-only installation for Tool Guardian. Otherwise refresh installed source before a live check; source tests do not prove what a provider executes.
+Honor the task's installation scope and any user-reserved installation or enablement step. Follow [repository workflow](../repo.md) when installation is authorized, and refresh installed source before a live check; source tests do not prove what a provider executes.
 
 - Use `scripts/probe-provider-hook-delivery.py --help` for the probe lifecycle. `prepare` mutates installed settings with nonce-tagged handlers; scope and back up exact destinations, retain marker/transcript paths, and always run probe `cleanup`, including after failed verification. Preserve unrelated user settings, custom instructions, and logs.
 - Normal verification needs paired event/invocation entry and completion markers plus visible nonces. Handler runtime excludes provider startup-to-entry. A short runtime does not establish that a one-second provider deadline is met.
