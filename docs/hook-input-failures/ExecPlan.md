@@ -16,9 +16,12 @@ The requirements are `docs/tool-guard-hook-bug.txt`, `docs/scan-secrets-hook-bug
 - [x] (2026-10-08) [milestone-1] Reconciled implementation tasks with evidence; this planning checkpoint precedes all source edits.
 - [x] (2026-10-08) [milestone-2] T3: Exact Copilot raw patches and Codex object patches pass with 256 KiB bounds; focused native/limit/shell/corpus tests and negative controls passed.
 - [x] (2026-10-08) [milestone-2] T4: Typed incomplete causes, safe metadata, and recovery advice pass all provider scanner/capture suites and merge regression checks.
-- [ ] [milestone-3] T5: Integrate private task branches serially and prove composed behavior on the base branch.
+- [x] (2026-10-08) [milestone-3] T5: Integrated both branches and proved composed behavior for Copilot/Codex: large multi-file patches pass, independent fake-secret findings deny, and benign requests against oversized candidates deny with safe byte diagnostics.
 - [x] (2026-10-08) [milestone-3] T5: Rebased scanner without conflicts and fast-forwarded `f158f66471b3ef04f5105000f1ab77ccda546a89`; source/tests are byte-identical to the verified task commit.
+- [x] (2026-10-08) [milestone-3] T5: Rebased Guardian without conflicts and fast-forwarded `f0cca423acb598e2a3ee582d44e2de8cc49ee842`; its owned source/tests are byte-identical to the verified task commit, and all 35 generated files are current.
 - [ ] [milestone-3] Verify generated freshness, affected provider/security suites, resource bounds, and installation behavior.
+- [x] (2026-10-08) [milestone-3] Shared proof passed: three provider guard suites, 14 security-banner tests, 26 generator tests, installer fixtures, and two benchmark-runner tests. README now explains patch handling and actionable incomplete scans.
+- [x] (2026-10-08) [milestone-3] All 108 resource cases met the 500 ms ceiling; maximum observed sample 58.826750 ms. Retained method and results are in `validation.md`.
 - [ ] [milestone-4] T6: Run independent Standards and Spec reviews against the initial baseline; repair findings through explicit task nodes.
 - [ ] [milestone-4] Complete one coordinated `update-agent-docs` pass, final validation, and a clean committed checkpoint.
 
@@ -105,7 +108,7 @@ Add bounded repair nodes for actionable findings, dispatch each to a fresh imple
 
 ## Concrete Steps
 
-Next: rebase and fast-forward `codex/hook-patch-capacity`, then run composed/shared checks against frozen base source. Scanner integration is complete at `f158f66471b3ef04f5105000f1ab77ccda546a89`; its source/tests exactly match the verified task tree. The app refused scanner worktree archival because it is protected by a pinned task or workspace. Preserve that clean integrated worktree and its branch; do not bypass protection with filesystem deletion. After Guardian integration, attempt supported cleanup, complete remaining validation, and review the entire diff. Live Copilot pre-tool delivery remains separately unverified.
+Next: commit this integrated validation checkpoint and run independent Standards/Spec reviews, then complete the final documentation pass and installed refresh/probes. Source, composed, generator, installer-fixture, and bounded resource checks passed; see `validation.md`. Scanner integration is `f158f66471b3ef04f5105000f1ab77ccda546a89`; Guardian integration is `f0cca423acb598e2a3ee582d44e2de8cc49ee842`. Both clean integrated task worktrees and their branches remain protected by the app; do not bypass protection. Live Copilot pre-tool delivery remains separately unverified.
 
 ## Validation and Acceptance
 

@@ -40,6 +40,14 @@ Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH`
 
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
 
+Tool Guardian recognizes native Copilot and Codex patches as file data with a
+256 KiB input budget. Shell-command limits and protected delete/move checks
+remain active. Secret scanning independently checks pending repository changes,
+including when the requested tool only reads files or documentation. In block
+mode, an incomplete scan denies the tool and reports a stable cause, safe counts
+where available, and recovery advice. For example, `file_bytes_limit/candidate_read`
+identifies an oversized pending file without exposing its name or contents.
+
 The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers do not delete old installed scripts or clean old Codex registrations.
 
 ### Old Markdown Health installations
