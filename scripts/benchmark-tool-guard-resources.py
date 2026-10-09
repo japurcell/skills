@@ -18,6 +18,7 @@ import tempfile
 import time
 
 from tool_guard_corpus import PROVIDERS, decision, script_path
+from fixtures.tool_guard_vectors import sized_native_patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_TOOLS = {'copilot': 'bash', 'gemini': 'run_shell_command', 'codex': 'Bash'}
@@ -65,15 +66,26 @@ def fixtures(provider: str) -> list[tuple[str, str, object, str]]:
         body = '界' * (available // 3) + 'x' * (available % 3)
         cases.extend((('native-max', tool, {path_key: 'example.txt', body_key: body}, 'allow'),
                       ('native-overflow', tool, {path_key: 'example.txt', body_key: body + 'x'}, 'deny')))
-    if provider == 'codex':
+    if provider in {'codex', 'copilot'}:
+        def patch_value(source: str) -> object:
+            return source if provider == 'copilot' else {'command': source}
+        key_bytes = 7 if provider == 'codex' else 0
+        case_prefix = 'native' if provider == 'codex' else 'patch'
         prefix, suffix = '*** Begin Patch\n*** Add File: example.txt\n+', '\n*** End Patch'
-        patch = prefix + 'x' * (65536 - len('command' + prefix + suffix)) + suffix
+        patch = prefix + 'x' * (262144 - key_bytes - len(prefix + suffix)) + suffix
+        high_line_suffix = '\n' + '+\n' * 130000 + '*** End Patch'
+        high_line_patch = prefix + 'x' * (262144 - key_bytes - len(prefix + high_line_suffix)) + high_line_suffix
         path = '\ufdfa' * 496 + 'x' * 16
         operations = '*** Begin Patch\n*** Delete File: ' + path + '\n*** Delete File: ' + path + '\n*** End Patch'
-        cases.extend((('native-max', 'apply_patch', {'command': patch}, 'allow'),
-                      ('native-overflow', 'apply_patch', {'command': patch.replace('+x', '+xx', 1)}, 'deny'),
-                      ('operation-normalized-max', 'apply_patch', {'command': operations}, 'allow'),
-                      ('operation-normalized-overflow', 'apply_patch', {'command': operations.replace(path + '\n*** End', path + 'x\n*** End')}, 'deny')))
+        cases.extend(((case_prefix + '-max', 'apply_patch', patch_value(patch), 'allow'),
+                      (case_prefix + '-overflow', 'apply_patch', patch_value(patch.replace('+x', '+xx', 1)), 'deny'),
+                      (case_prefix + '-high-line-max', 'apply_patch', patch_value(high_line_patch), 'allow'),
+                      (case_prefix + '-malformed-full-size', 'apply_patch', patch_value(patch[:-1] + '!'), 'deny'),
+                      (case_prefix + '-malformed-high-line-full-size', 'apply_patch', patch_value(high_line_patch[:-1] + '!'), 'deny'),
+                      ('operation-normalized-max', 'apply_patch', patch_value(operations), 'allow'),
+                      ('operation-normalized-overflow', 'apply_patch', patch_value(operations.replace(path + '\n*** End', path + 'x\n*** End')), 'deny')))
+        for size in (77089, 80666, 90127, 99186):
+            cases.append((case_prefix + '-recent-' + str(size), 'apply_patch', patch_value(sized_native_patch(size, files=3)), 'allow'))
     if provider == 'copilot':
         cases.append(('native-wide-paths-overflow', 'grep', {'pattern': 'safe', 'paths': ['docs'] * 30000}, 'deny'))
     return cases

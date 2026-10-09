@@ -176,3 +176,26 @@ FAKE_SENSITIVE_VALUES = (
     FAKE_BEARER_TOKEN,
     FAKE_API_KEY,
 )
+
+
+def sized_native_patch(body_bytes: int, *, line_count: int = 523, files: int = 1) -> str:
+    """Sanitized literal patch with prose, YAML and shell examples at known dimensions."""
+    examples = (
+        '+Documentation example; ordinary prose',
+        '+command: ' + parts('git push', ' --force', ' origin main'),
+        '+echo example; echo safe && echo done',
+    )
+    body_lines = line_count - files - 2
+    if body_lines < files:
+        raise ValueError('each file needs a body line')
+    lines = ['*** Begin Patch']
+    for index in range(files):
+        lines.append('*** Add File: fixture-' + str(index) + '.txt')
+        count = body_lines // files + (index < body_lines % files)
+        lines.extend(examples[item % len(examples)] for item in range(count))
+    lines.append('*** End Patch')
+    padding = body_bytes - len('\n'.join(lines).encode('utf-8'))
+    if padding < 0:
+        raise ValueError('requested size cannot hold fixture lines')
+    lines[2] += 'x' * padding
+    return '\n'.join(lines)

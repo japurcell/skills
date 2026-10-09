@@ -55,6 +55,7 @@ try:
     from helpers.tool_guard_policy import (
         MAX_SCAN_TEXT,
         MAX_NATIVE_DATA_BYTES,
+        MAX_NATIVE_PATCH_BYTES,
         MAX_COMMAND_SEGMENTS,
         MAX_COMMAND_TOKENS,
         MAX_STRUCTURED_DEPTH,
@@ -199,12 +200,21 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
 
 def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     value = _read_tool_input_value(payload)
-    if isinstance(value, str):
-        return (value,)
-
     tool_name = read_tool_name(payload)
-    native = _native_tool_shape(tool_name, value)
-    byte_limit = MAX_NATIVE_DATA_BYTES if native and native.kind != "shell" else MAX_SCAN_TEXT
+    if isinstance(value, str):
+        # Copilot's native patch transport is raw text in the primary fields.
+        # Alternate input/name fields and serialized objects remain strict.
+        if TOOL_PROVIDER == "copilot" and payload.get("toolName") == "apply_patch" and type(payload.get("toolArgs")) is str:
+            native = NativeToolInput("patch", (), (value,))
+        else:
+            return (value,)
+    else:
+        native = _native_tool_shape(tool_name, value)
+    byte_limit = MAX_SCAN_TEXT
+    if native and native.kind == "patch":
+        byte_limit = MAX_NATIVE_PATCH_BYTES
+    elif native and native.kind != "shell":
+        byte_limit = MAX_NATIVE_DATA_BYTES
     known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
     stack = [iter(((value, 0, "tool input"),))]
     strings: list[str] = []
@@ -256,6 +266,8 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
             native = _parse_native_patch(native.data[0])
         if native is not None:
             return native
+        if isinstance(value, str):
+            return (value,)
         if total_string_bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
     elif key_bytes > MAX_SCAN_TEXT:

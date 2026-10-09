@@ -77,27 +77,30 @@ class ResourceLimitTests(unittest.TestCase):
             self.assert_boundary(provider, tool, maximum, overflow, 'structured_bytes', '65537 bytes')
 
 
+    def assert_patch_boundary(self, maximum: str, overflow: str, rule: str, count: str) -> None:
+        for provider in ('codex', 'copilot'):
+            valid = maximum if provider == 'copilot' else {'command': maximum}
+            invalid = overflow if provider == 'copilot' else {'command': overflow}
+            self.assert_boundary(provider, 'apply_patch', valid, invalid, rule, count)
+
     def test_native_patch_operation_normalization_ascii_maximum(self) -> None:
         prefix, suffix = '*** Begin Patch\n*** Delete File: ', '\n*** End Patch'
-        self.assert_boundary('codex', 'apply_patch', {'command': prefix + 'x' * 32768 + suffix},
-                             {'command': prefix + 'x' * 32769 + suffix},
-                             'normalized_operation_bytes', '32769 bytes')
+        self.assert_patch_boundary(prefix + 'x' * 32768 + suffix, prefix + 'x' * 32769 + suffix,
+                                   'normalized_operation_bytes', '32769 bytes')
 
     def test_native_patch_operation_nfkc_expansion_and_casefold_maxima(self) -> None:
         prefix, suffix = '*** Begin Patch\n*** Delete File: ', '\n*** End Patch'
         # U+FDFA expands 3 UTF-8 bytes to 33; U+0390 casefold expands 2 to 6.
         for path in ('\ufdfa' * 992 + 'x' * 32, '\u0390' * 5461 + 'xx'):
-            self.assert_boundary('codex', 'apply_patch', {'command': prefix + path + suffix},
-                                 {'command': prefix + path + 'x' + suffix},
-                                 'normalized_operation_bytes', '32769 bytes')
+            self.assert_patch_boundary(prefix + path + suffix, prefix + path + 'x' + suffix,
+                                       'normalized_operation_bytes', '32769 bytes')
 
     def test_native_patch_normalized_work_is_aggregate_across_operations(self) -> None:
         prefix, suffix = '*** Begin Patch\n', '\n*** End Patch'
         path = '\ufdfa' * 496 + 'x' * 16
         maximum = prefix + '*** Delete File: ' + path + '\n*** Delete File: ' + path + suffix
         overflow = maximum.replace(path + suffix, path + 'x' + suffix)
-        self.assert_boundary('codex', 'apply_patch', {'command': maximum}, {'command': overflow},
-                             'normalized_operation_bytes', '32769 bytes')
+        self.assert_patch_boundary(maximum, overflow, 'normalized_operation_bytes', '32769 bytes')
 
     def test_recognized_search_paths_first_rejected_string(self) -> None:
         self.assert_boundary('copilot', 'grep', {'pattern': 'safe', 'paths': ['docs'] * 127},
@@ -138,6 +141,17 @@ class ResourceLimitTests(unittest.TestCase):
                 (' '.join(['x'] * 256), ' '.join(['x'] * 257), 'command_tokens', '257 tokens'),
                 (';'.join(['x x'] * 128), ';'.join(['x x'] * 127 + ['x x x']), 'command_tokens', '257 tokens')):
                 self.assert_boundary(provider, tool, {'command': maximum}, {'command': overflow}, rule, count, valid_allowlist=True)
+
+    def test_capped_segment_measurement_is_reported_as_a_lower_bound(self) -> None:
+        for provider in PROVIDERS:
+            for segments in (129, 1000):
+                command = ';'.join(['x'] * segments)
+                for tool, value in (('unknown_tool', command), (SHELL_TOOLS[provider], {'command': command})):
+                    for mode in ('block', 'warn'):
+                        with self.subTest(provider=provider, tool=tool, segments=segments, mode=mode):
+                            response = self.invoke(provider, tool, value, mode=mode)
+                            self.assert_decision(response, 'deny')
+                            self.assertIn('at least 129 segments exceeds limit 128 segments', json.dumps(response))
 
     def test_unproved_quoted_argument_first_rejected_matcher_token(self) -> None:
         for provider in PROVIDERS:

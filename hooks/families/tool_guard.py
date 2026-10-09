@@ -164,6 +164,7 @@ import unicodedata
 
 MAX_SCAN_TEXT = 32768
 MAX_NATIVE_DATA_BYTES = 65536
+MAX_NATIVE_PATCH_BYTES = 262144
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -181,16 +182,19 @@ KNOWN_TOOL_FIELDS = {
 
 
 class ScanLimitExceeded(ValueError):
-    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input") -> None:
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input",
+                 *, measured_is_lower_bound: bool = False) -> None:
         self.rule_id = rule_id
         self.limit = limit
         self.measured = measured
+        self.measured_is_lower_bound = measured_is_lower_bound
         self.unit = unit
         self.field = field
         super().__init__(rule_id)
 
     def threat(self) -> dict[str, str]:
-        cause = f"{self.field}: {self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
+        qualifier = "at least " if self.measured_is_lower_bound else ""
+        cause = f"{self.field}: {qualifier}{self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
         return {
             "category": "input_limits",
             "severity": "critical",
@@ -256,7 +260,8 @@ def _command_segments(text: str) -> list[list[str]]:
         maxsplit=MAX_COMMAND_SEGMENTS,
     )
     if len(raw_segments) > MAX_COMMAND_SEGMENTS:
-        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments")
+        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments",
+                                measured_is_lower_bound=True)
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
         token_source = re.sub(r'[",]', " ", raw_segment)
@@ -806,7 +811,8 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             budget.commands += 1
             budget.tokens += len(command.words) + len(command.redirects)
             if budget.commands > MAX_COMMAND_SEGMENTS:
-                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments")
+                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments",
+                                        measured_is_lower_bound=True)
             if budget.tokens > MAX_COMMAND_TOKENS:
                 raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, budget.tokens, "tokens")
             command.pipe = pipe
@@ -1607,6 +1613,7 @@ try:
     from helpers.tool_guard_policy import (
         MAX_SCAN_TEXT,
         MAX_NATIVE_DATA_BYTES,
+        MAX_NATIVE_PATCH_BYTES,
         MAX_COMMAND_SEGMENTS,
         MAX_COMMAND_TOKENS,
         MAX_STRUCTURED_DEPTH,
@@ -1751,12 +1758,21 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
 
 def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     value = _read_tool_input_value(payload)
-    if isinstance(value, str):
-        return (value,)
-
     tool_name = read_tool_name(payload)
-    native = _native_tool_shape(tool_name, value)
-    byte_limit = MAX_NATIVE_DATA_BYTES if native and native.kind != "shell" else MAX_SCAN_TEXT
+    if isinstance(value, str):
+        # Copilot's native patch transport is raw text in the primary fields.
+        # Alternate input/name fields and serialized objects remain strict.
+        if TOOL_PROVIDER == "copilot" and payload.get("toolName") == "apply_patch" and type(payload.get("toolArgs")) is str:
+            native = NativeToolInput("patch", (), (value,))
+        else:
+            return (value,)
+    else:
+        native = _native_tool_shape(tool_name, value)
+    byte_limit = MAX_SCAN_TEXT
+    if native and native.kind == "patch":
+        byte_limit = MAX_NATIVE_PATCH_BYTES
+    elif native and native.kind != "shell":
+        byte_limit = MAX_NATIVE_DATA_BYTES
     known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
     stack = [iter(((value, 0, "tool input"),))]
     strings: list[str] = []
@@ -1808,6 +1824,8 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
             native = _parse_native_patch(native.data[0])
         if native is not None:
             return native
+        if isinstance(value, str):
+            return (value,)
         if total_string_bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
     elif key_bytes > MAX_SCAN_TEXT:

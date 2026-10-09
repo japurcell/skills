@@ -13,6 +13,7 @@ import unicodedata
 
 MAX_SCAN_TEXT = 32768
 MAX_NATIVE_DATA_BYTES = 65536
+MAX_NATIVE_PATCH_BYTES = 262144
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -30,16 +31,19 @@ KNOWN_TOOL_FIELDS = {
 
 
 class ScanLimitExceeded(ValueError):
-    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input") -> None:
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input",
+                 *, measured_is_lower_bound: bool = False) -> None:
         self.rule_id = rule_id
         self.limit = limit
         self.measured = measured
+        self.measured_is_lower_bound = measured_is_lower_bound
         self.unit = unit
         self.field = field
         super().__init__(rule_id)
 
     def threat(self) -> dict[str, str]:
-        cause = f"{self.field}: {self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
+        qualifier = "at least " if self.measured_is_lower_bound else ""
+        cause = f"{self.field}: {qualifier}{self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
         return {
             "category": "input_limits",
             "severity": "critical",
@@ -105,7 +109,8 @@ def _command_segments(text: str) -> list[list[str]]:
         maxsplit=MAX_COMMAND_SEGMENTS,
     )
     if len(raw_segments) > MAX_COMMAND_SEGMENTS:
-        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments")
+        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments",
+                                measured_is_lower_bound=True)
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
         token_source = re.sub(r'[",]', " ", raw_segment)
@@ -703,7 +708,8 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             budget.commands += 1
             budget.tokens += len(command.words) + len(command.redirects)
             if budget.commands > MAX_COMMAND_SEGMENTS:
-                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments")
+                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments",
+                                        measured_is_lower_bound=True)
             if budget.tokens > MAX_COMMAND_TOKENS:
                 raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, budget.tokens, "tokens")
             command.pipe = pipe
