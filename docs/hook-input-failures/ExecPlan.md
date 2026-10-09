@@ -17,6 +17,7 @@ The requirements are `docs/tool-guard-hook-bug.txt`, `docs/scan-secrets-hook-bug
 - [x] (2026-10-08) [milestone-2] T3: Exact Copilot raw patches and Codex object patches pass with 256 KiB bounds; focused native/limit/shell/corpus tests and negative controls passed.
 - [x] (2026-10-08) [milestone-2] T4: Typed incomplete causes, safe metadata, and recovery advice pass all provider scanner/capture suites and merge regression checks.
 - [ ] [milestone-3] T5: Integrate private task branches serially and prove composed behavior on the base branch.
+- [x] (2026-10-08) [milestone-3] T5: Rebased scanner without conflicts and fast-forwarded `f158f66471b3ef04f5105000f1ab77ccda546a89`; source/tests are byte-identical to the verified task commit.
 - [ ] [milestone-3] Verify generated freshness, affected provider/security suites, resource bounds, and installation behavior.
 - [ ] [milestone-4] T6: Run independent Standards and Spec reviews against the initial baseline; repair findings through explicit task nodes.
 - [ ] [milestone-4] Complete one coordinated `update-agent-docs` pass, final validation, and a clean committed checkpoint.
@@ -104,7 +105,7 @@ Add bounded repair nodes for actionable findings, dispatch each to a fresh imple
 
 ## Concrete Steps
 
-Next: commit this verified task checkpoint, rebase and fast-forward the scanner branch, then rebase and fast-forward the Guardian branch. Each branch is clean and its focused proof is retained in `scanner-result.md` or `guardian-result.md` within that worktree. The branches are `codex/hook-scan-diagnostics` and `codex/hook-patch-capacity`; both began after planning commit `be01b9a`. After integration, remove only clean integrated task worktrees/branches, run composed and shared checks against frozen base source, and review the complete task diff. Live Copilot pre-tool delivery remains separately unverified.
+Next: rebase and fast-forward `codex/hook-patch-capacity`, then run composed/shared checks against frozen base source. Scanner integration is complete at `f158f66471b3ef04f5105000f1ab77ccda546a89`; its source/tests exactly match the verified task tree. The app refused scanner worktree archival because it is protected by a pinned task or workspace. Preserve that clean integrated worktree and its branch; do not bypass protection with filesystem deletion. After Guardian integration, attempt supported cleanup, complete remaining validation, and review the entire diff. Live Copilot pre-tool delivery remains separately unverified.
 
 ## Validation and Acceptance
 
