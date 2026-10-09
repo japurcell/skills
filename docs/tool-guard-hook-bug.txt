@@ -1,0 +1,65 @@
+The larger  apply_patch  requests were rejected with:
+
+Denied by preToolUse hook: Tool Guardian blocked apply_patch. input_limits/critical [command_segments]: tool input: 129 segments exceeds limit 128 segments. Action: command omitted.
+
+This is different from the  scan-secrets  failure. It reports an input-limit violation, not a secret detection or an invalid patch.
+
+Where it occurred
+
+┌──────────────────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────┐
+│ Request                                                                              │ Result                                │
+├──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────┤
+│ Large patch reconciling the ExecPlan’s status, outcomes, and evidence                │ Rejected with the segment-limit error │
+├──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────┤
+│ Combined patch adding the delegation-audit YAML and commit-message file              │ Rejected with the same error          │
+├──────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────┤
+│ Initial patch creating security-scan-hook-bug.md with the detailed diagnostic report │ Rejected with the same error          │
+└──────────────────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────┘
+
+The first two operations subsequently succeeded as smaller, separate patches. The rejected requests themselves did not apply changes.
+
+For the security-hook report, the sequence was:
+
+1. The larger file-creation patch hit the Tool Guardian segment limit.
+2. A shorter version no longer returned that error, but instead hit the incomplete secret-scan error.
+3. The requested report file was therefore not created.
+
+That shows two distinct blocking conditions. It does not establish the validators’ internal ordering.
+
+What is known about the limit
+
+• The diagnostic reports a limit of 128 segments.
+• It reports 129 segments for each rejected request.
+• The affected tool accepts the structured patch format:
+*** Begin Patch
+*** Add File: ...
++file content
+*** End Patch
+• Requests contained ordinary Markdown documentation, YAML audit records, or commit-message text.
+• At least one rejected request added only a single file. This is not simply a multiple-file restriction.
+
+The meaning of “command segment” is unknown. The response does not explain whether the validator counts lines, statements, parsed shell constructs, or another representation.
+
+Also, the repeated count of 129 might mean counting stops immediately after exceeding 128. It does not prove each complete request contained exactly 129 segments.
+
+What the other agent should investigate
+
+Find the implementation producing these literal strings:
+
+Tool Guardian blocked apply_patch
+input_limits/critical
+command_segments
+tool input:
+
+Then establish:
+
+1. Which input is counted. Is it the raw patch, an extracted argument, a serialized request, or a normalized representation?
+2. How segments are defined. Is the same segmentation logic used for Bash commands and patch data?
+3. Whether tool-specific handling exists. Markdown examples containing shell commands are document content, not commands executed by  apply_patch .
+4. Whether 129 is an early-stop sentinel. Better diagnostics should distinguish an exact count from “more than 128.”
+5. Whether rejection is atomic. The observed response says “command omitted”; tests should verify rejected multi-file patches leave every file unchanged.
+6. Whether the limit is intentional or misapplied. A generic shell-complexity limit applied to patch content could be inappropriate, but that remains a hypothesis.
+
+Useful fixtures would include plain prose, YAML, Markdown with shell examples, and equivalent single-file/multi-file patches near the reported boundary. Test the limit without disabling the independent secret scanner.
+
+I have not located the guardian implementation or its configuration, so I cannot identify a responsible file or recommend a verified code change.
