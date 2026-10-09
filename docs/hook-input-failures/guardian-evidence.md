@@ -6,9 +6,10 @@ Provider correction: the user subsequently confirmed that both original bug repo
 
 ## Conclusions
 
-- The reported segment failures are real historical denials. The current Codex native patch schema and parser already accept the reconstructed historical patches.
+- Both supplied reports came from Copilot, as the user confirmed. Actual Copilot native arguments and 47 post/failure hook captures establish raw scalar patch input. Its current public hook reproduces the reported segment failure and misses protected delete/move handling on that scalar path; see the Copilot evidence below.
+- The sampled Codex segment failures are real historical denials. The current Codex native patch schema and parser already accept the reconstructed historical patches.
 - Current installed Codex adapter and policy helper match repository source byte for byte. Recent retained audit logs show four different, genuine patch byte-budget denials at the current 65,536-byte native aggregate ceiling.
-- Tune the validated Codex patch budget separately. Keep exact schema validation, strict fallback, independent secret scanning, existing executable budgets, and other providers' native-data budgets.
+- Add the evidenced Copilot raw shape to native patch inspection and tune both supported patch forms to 256 KiB. Keep exact schema validation, strict fallback, independent secret scanning, existing executable budgets, and non-patch native-data budgets.
 - A reported strict-path count of 129 segments is a lower bound, not a full-input total. The splitter stops after 128 separators.
 
 ## Sampling and actual-versus-quoted classification
@@ -64,7 +65,7 @@ At the pre-edit snapshot, repository and installed SHA-256 fingerprints were equ
 `scripts/tool_guard_test_support.py:15` invokes the actual provider scripts in isolated subprocesses and redirects home, guard, audit, and observability state to disposable directories. All reproductions returned exit 0 and valid provider JSON.
 
 - An inert 4,115-byte, 143-line patch with semicolon examples is allowed by Codex when the input is exactly `{command: patch}`. A scalar patch, `{input: patch}`, `{patch: patch}`, or `{command: patch, extra: true}` reproduces the exact segment error. These are strict-fallback negative controls, not evidence for admitting undocumented schemas.
-- The same complete native patch passed to Copilot or Gemini as `apply_patch` is strict input and reproduces the segment error. Their documented write/edit/search tools have separate native schemas; do not generalize Codex's patch exemption across providers.
+- The same complete patch passed to Copilot or Gemini as `apply_patch` with Codex's `{command: patch}` object is strict input and reproduces the segment error. These objects remain unsupported controls; Copilot's subsequently verified raw scalar form is a separate exact shape.
 - A synthetic one-file patch with 24,727 UTF-8 bytes, 523 lines, and 536 raw separators is allowed by the current public Codex entrypoint. It reproduces the dimensions of the largest reconstructed segment-denied literal without retaining its contents.
 - Synthetic valid Codex patches sized exactly 77,089, 80,666, 90,127, and 99,186 bytes reproduce the four recent byte-denial diagnostics. Each reports the `apply_patch.command` field and the actual body bytes against 65,536 bytes.
 - A 65,529-byte complete patch plus the seven-byte `command` schema key reaches 65,536 aggregate bytes and passes. A 65,530-byte body reaches 65,537 aggregate bytes and denies with `tool input: 65537 bytes exceeds limit 65536 bytes`.
@@ -82,7 +83,7 @@ The strict `_command_segments` path at line 248 first applies NFKC normalization
 
 ## Bounded implementation and validation recommendation
 
-Keep source edits owned by the parent in the canonical renderer and focused tests. Add a patch-specific 262,144-byte aggregate ceiling, leaving the existing 65,536-byte write/edit/search budget and all executable limits intact. This accommodates the largest recent observed patch with bounded headroom; it is not evidence for an unlimited or universally safe raw-envelope size. Reject unsupported shapes, trailing executable text, malformed patch syntax, and protected delete/move operations as before. Preserve independent scanner decisions.
+Keep source edits in the canonical renderer and focused tests under T3 ownership in the ExecPlan. Add Copilot's exact raw scalar shape and a patch-specific 262,144-byte ceiling, counting raw Copilot UTF-8 bytes and Codex aggregate string/key bytes. Leave the existing 65,536-byte write/edit/search budget and all executable limits intact. This accommodates the largest recent observed patch with bounded headroom; it is not evidence for an unlimited or universally safe raw-envelope size. Reject unsupported shapes, trailing executable text, malformed patch syntax, and protected delete/move operations. Preserve independent scanner decisions.
 
 Make the legacy capped split diagnostic truthful by reporting a lower bound such as `at least 129 segments`; do not raise executable command limits merely to fit documentation. Pair synthetic historical single/multi-file fixtures and a full 256 KiB patch boundary with the existing executable, malformed-schema, normalized-operation, helper-failure, warn-mode, and allowlist controls.
 
@@ -102,7 +103,7 @@ Use the resource benchmark's maintained cases and accepted 500 ms finite-case ce
 
 ## Scoped Copilot follow-up
 
-Copilot provider scope remains unresolved for the original report. The current [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference#pretooluse--pretooluse), checked on 2026-10-09 UTC, recognizes runtime `apply_patch` in the Claude-name mapping to `Edit`, but gives `toolArgs` and `tool_input` the type `unknown`; it does not establish patch argument fields or types. The retained raw reference independently contains that envelope at `.agents/sources/copilot-hooks-ref.md:336` and mapping at line 377. Installed `copilot --version` reports CLI 1.0.92; `copilot --help`, `copilot help commands`, and `copilot help permissions` expose no exact `apply_patch` argument schema or schema-dump command. Naming the tool in a matcher table or emitting a lowerCamelCase denial prefix is insufficient to admit `{command: patch}`, scalar patches, or other guessed Copilot shapes. The evidenced Codex fix therefore does not prove resolution of a distinct Copilot incident. Supporting Copilot patch data requires an attributable exact tool schema or a safely captured native hook envelope from that provider, followed by provider-specific controls.
+The [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference#pretooluse--pretooluse), checked on 2026-10-09 UTC, recognizes runtime `apply_patch` in the Claude-name mapping to `Edit`, but types `toolArgs` and `tool_input` as `unknown`. The retained raw reference contains that envelope at `.agents/sources/copilot-hooks-ref.md:336` and mapping at line 377. Installed CLI 1.0.92 help exposes no exact patch schema. Documentation alone therefore left Copilot's shape unresolved; the subsequent native/post-hook captures below establish the supported raw scalar shape. They do not justify guessed object schemas or aliases, and they do not prove current-version pre-tool delivery.
 
 ## Copilot runtime evidence after provider confirmation
 

@@ -14,8 +14,8 @@ The requirements are `docs/tool-guard-hook-bug.txt`, `docs/scan-secrets-hook-bug
 - [x] (2026-10-08) [milestone-1] T1: Confirmed Copilot raw scalar arguments in 47 actual post/failure hook captures and reproduced the reported failure through its installed public hook. Live pre-tool delivery remains unverified because authentication is unavailable.
 - [x] (2026-10-08) [milestone-1] T2: Reproduced scanner failures and retained bounded diagnostic remedy in `scanner-evidence.md`.
 - [x] (2026-10-08) [milestone-1] Reconciled implementation tasks with evidence; this planning checkpoint precedes all source edits.
-- [ ] [milestone-2] T3: In progress in `guardian-patch-capacity/skills`; tune validated patch capacity and truthful limit diagnostics with red-green public tests.
-- [ ] [milestone-2] T4: In progress in `scanner-failure-diagnostics/skills`; repair incomplete-scan diagnostics with red-green public tests.
+- [x] (2026-10-08) [milestone-2] T3: Exact Copilot raw patches and Codex object patches pass with 256 KiB bounds; focused native/limit/shell/corpus tests and negative controls passed.
+- [x] (2026-10-08) [milestone-2] T4: Typed incomplete causes, safe metadata, and recovery advice pass all provider scanner/capture suites and merge regression checks.
 - [ ] [milestone-3] T5: Integrate private task branches serially and prove composed behavior on the base branch.
 - [ ] [milestone-3] Verify generated freshness, affected provider/security suites, resource bounds, and installation behavior.
 - [ ] [milestone-4] T6: Run independent Standards and Spec reviews against the initial baseline; repair findings through explicit task nodes.
@@ -42,7 +42,7 @@ The requirements are `docs/tool-guard-hook-bug.txt`, `docs/scan-secrets-hook-bug
 
 ## Outcomes & Retrospective
 
-Diagnosis is complete after the Copilot provider correction. Both source fixes are running in separate managed worktrees. T3 now includes exact Copilot raw patch parsing, protection for its delete/move sources, and the independently evidenced Codex capacity increase. Source evidence, installed copies, actual provider delivery, and native Windows behavior are separate claims. The isolated Copilot live probe could not authenticate; public hook subprocess proof remains available. Native macOS RSS collection first failed with `sysctl kern.clockrate: Operation not permitted`; the approved collector then succeeded and is available for resource proof.
+Both implementation tasks are complete on clean private branches with retained result evidence. T3 passed 22 native-data tests, 18 limit tests, 17 shell-data tests, 144 corpus fixtures, and 26 resource fixture decisions. T4 passed all three provider scanner/capture suites, the 32-test merge suite, and additional diagnostic controls. Integration, composed proof, resource measurements, installation, and independent review remain unfinished. The isolated Copilot live probe could not authenticate; public hook subprocess evidence does not establish provider delivery or Windows behavior. Native RSS collection required an approved collector after the sandbox denied `sysctl kern.clockrate`; that collector is available.
 
 ## Context and Orientation
 
@@ -69,8 +69,8 @@ Acceptance evidence is retained in [guardian evidence](guardian-evidence.md) and
 
 ### Milestone 2: Repair each hook with independent regression proof
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 T3 prerequisites: T1 evidence and committed initial plan, both met. Own `hooks/families/tool_guard.py`, its generated adapters/helpers, `scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/fixtures/tool_guard_vectors.py` if needed, `scripts/benchmark-tool-guard-resources.py`, and `guardian-result.md` beside this plan. Add exact Copilot raw `toolName: apply_patch` / `toolArgs: string` classification and a 262,144-byte patch budget shared with the existing exact Codex object schema. Bound raw patch bytes before parsing. Retain strict fallback after unsuccessful parsing, without changing scalar strict accounting, and make both early-stopped segment counters truthful. Keep other scalar/unknown-tool fallback, patch grammar, and all other budgets unchanged. Exercise prose, YAML, shell examples, single/multi-file patches near the historical segment boundary and recent byte sizes, late protected delete/move sources, malformed inputs, aliases and guessed object controls, normalized limits, exact UTF-8 byte boundaries, and executable controls. A denied hook must leave fixture files unchanged; this does not prove the patch executor's transaction semantics. Update both providers' patch resource boundary fixtures, including high-line-count and malformed inputs; preserve Copilot's separate 64 KiB writer bounds. Stop after focused tests pass and one implementation commit is ready.
 
@@ -80,7 +80,7 @@ The shared generator has separate outputs for T3/T4, but generation and shared t
 
 ### Milestone 3: Integrate and verify composed behavior
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 T5 prerequisites: T3 and T4 commits with clean task worktrees and focused evidence. The coordinator owns integration. Rebase each task onto current base, repair conflicts in that task worktree, rerun affected checks when resulting interactions differ, and fast-forward base. Verify equal branch tips before removing clean integrated task worktrees and local branches. Keep unresolved branches intact.
@@ -104,7 +104,7 @@ Add bounded repair nodes for actionable findings, dispatch each to a fresh imple
 
 ## Concrete Steps
 
-Next: finish T3/T4 and verify clean branch state and scoped commits. Both implementation tasks began after planning commit `be01b9a` in managed worktrees under `/Users/adam/.codex/worktrees/`; their branches are `codex/hook-patch-capacity` and `codex/hook-scan-diagnostics`. Copilot input evidence is now sufficient for the exact source repair, while live provider delivery remains unverified. Integrate completed commits serially, run composed checks, and review the complete diff from the pinned initial commit.
+Next: commit this verified task checkpoint, rebase and fast-forward the scanner branch, then rebase and fast-forward the Guardian branch. Each branch is clean and its focused proof is retained in `scanner-result.md` or `guardian-result.md` within that worktree. The branches are `codex/hook-scan-diagnostics` and `codex/hook-patch-capacity`; both began after planning commit `be01b9a`. After integration, remove only clean integrated task worktrees/branches, run composed and shared checks against frozen base source, and review the complete task diff. Live Copilot pre-tool delivery remains separately unverified.
 
 ## Validation and Acceptance
 
