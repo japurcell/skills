@@ -87,11 +87,78 @@ INCOMPLETE_LOG: dict[str, object] | None = None
 SCAN_ACTION = "scan"
 
 
-class GitCommandError(RuntimeError):
+SCAN_PHASE = "initialization"
+INCOMPLETE_CAUSES = {
+    "git_unavailable": ("Git is unavailable", "Check Git availability in the hook environment.", ""),
+    "audit_unavailable": ("audit storage is unavailable", "Check hook audit storage.", ""),
+    "input_invalid": ("hook input is invalid", "Check the provider hook envelope.", ""),
+    "git_failed": ("Git command failed", "Check repository accessibility and Git health.", ""),
+    "git_capture_failed": ("Git capture failed", "Check temporary storage and Git execution.", ""),
+    "git_descendant_running": ("Git left a running descendant", "Check Git process completion and retry.", ""),
+    "git_head_invalid": ("Git HEAD verification failed", "Check repository HEAD and integrity.", ""),
+    "git_output_invalid": ("Git output is invalid", "Check Git compatibility and repository integrity.", ""),
+    "repository_unavailable": ("repository inspection failed", "Check repository accessibility.", ""),
+    "scan_timeout": ("scan time limit reached", "Check repository size and Git responsiveness, then retry.", "seconds"),
+    "git_timeout": ("Git time limit reached", "Check Git responsiveness and retry.", "seconds"),
+    "snapshot_count_limit": ("candidate snapshot limit exceeded", "Check pending snapshots and unintended generated artifacts.", "snapshots"),
+    "file_bytes_limit": ("candidate byte limit exceeded", "Check pending file sizes and unintended generated artifacts.", "bytes"),
+    "total_bytes_limit": ("total candidate byte limit exceeded", "Check pending scan size and unintended generated artifacts.", "bytes"),
+    "git_output_limit": ("Git capture byte limit exceeded", "Check pending scan size and Git output volume.", "bytes"),
+    "git_input_limit": ("Git request byte limit exceeded", "Check pending scan size.", "bytes"),
+    "candidate_unsafe": ("candidate cannot be read safely", "Check pending file types and repository boundaries.", ""),
+    "candidate_read_failed": ("candidate read failed", "Check pending file accessibility.", ""),
+    "log_unavailable": ("scan log is unavailable", "Check secure hook log storage.", ""),
+    "log_unsafe": ("scan log cannot be accessed safely", "Check secure hook log storage and file types.", ""),
+    "log_lock_timeout": ("scan log lock time limit reached", "Check concurrent hook log writers and retry.", "seconds"),
+    "log_configuration_invalid": ("scan log rotation configuration is invalid", "Check hook log rotation settings.", ""),
+    "log_record_limit": ("scan log record byte limit exceeded", "Check hook log rotation settings and scan volume.", "bytes"),
+    "internal_error": ("internal scanner failure", "Check the hook installation and retry.", ""),
+}
+INCOMPLETE_OPERATIONS = {
+    "initialization", "input", "repository", "git_repository", "git_head",
+    "git_candidates", "git_index", "git_diff", "git_command",
+    "candidate_read", "candidate_scan", "scan_log",
+}
+
+
+class ScanFailure(RuntimeError):
+    """Carry only scanner-owned vocabulary and bounded numeric measurements."""
+
+    def __init__(self, cause: str, operation: str | None = None, **numbers: int) -> None:
+        self.cause = cause if cause in INCOMPLETE_CAUSES else "internal_error"
+        phase = SCAN_PHASE if operation is None else operation
+        self.operation = phase if phase in INCOMPLETE_OPERATIONS else "initialization"
+        self.numbers = {
+            key: value for key, value in numbers.items()
+            if key in {"exit_status", "measured", "limit", "seconds"}
+            and type(value) is int
+            and (-2147483648 if key == "exit_status" else 0) <= value <= 9223372036854775807
+        }
+        super().__init__(self.cause)
+
+    def diagnostic(self) -> dict[str, object]:
+        return {"cause": self.cause, "operation": self.operation, **self.numbers}
+
+    def detail(self) -> str:
+        description, recovery, unit = INCOMPLETE_CAUSES[self.cause]
+        measures = []
+        if "exit_status" in self.numbers:
+            measures.append(f"exit status {self.numbers['exit_status']}")
+        if "measured" in self.numbers:
+            measures.append(f"measured {self.numbers['measured']} {unit}".rstrip())
+        if "limit" in self.numbers:
+            measures.append(f"limit {self.numbers['limit']} {unit}".rstrip())
+        if "seconds" in self.numbers:
+            measures.append(f"limit {self.numbers['seconds']} seconds")
+        suffix = f" ({', '.join(measures)})" if measures else ""
+        return f"{self.cause}/{self.operation}: {description}{suffix}. {recovery}"
+
+
+class GitCommandError(ScanFailure):
     pass
 
 
-class ScanSecurityError(RuntimeError):
+class ScanSecurityError(ScanFailure):
     pass
 
 
@@ -101,17 +168,11 @@ class ScanLimitExceeded(ScanSecurityError):
 
 def enforce_deadline(deadline: float | None) -> None:
     if deadline is not None and time.monotonic() >= deadline:
-        raise ScanLimitExceeded("secret scan exceeds the time limit")
+        raise ScanLimitExceeded("scan_timeout", seconds=int(MAX_SCAN_SECONDS))
 
 
 def noop() -> None:
     emit_json({})
-    raise SystemExit(0)
-
-
-def warn_and_noop(message: str) -> None:
-    print(message, file=sys.stderr)
-    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."})
     raise SystemExit(0)
 # BEGIN PROVIDER ADAPTER
 def emit_block_denial(reason: str) -> None:
@@ -119,26 +180,13 @@ def emit_block_denial(reason: str) -> None:
 # END PROVIDER ADAPTER
 
 
-def read_payload(mode: str) -> dict | None:
-    payload: dict | None = None
+def read_payload() -> dict:
     try:
         payload = read_json_input()
-    except Exception:
-        if mode == "block":
-            reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
-            print(reason, file=sys.stderr)
-            emit_block_denial(reason)
-            return None
-        warn_and_noop("scan-secrets: invalid hook input")
-
+    except ValueError as exc:
+        raise ScanSecurityError("input_invalid", "input") from exc
     if not isinstance(payload, dict):
-        if mode == "block":
-            reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
-            print(reason, file=sys.stderr)
-            emit_block_denial(reason)
-            return None
-        warn_and_noop("scan-secrets: invalid hook input")
-
+        raise ScanSecurityError("input_invalid", "input")
     return payload
 
 
@@ -157,16 +205,27 @@ def run_git(
 ) -> str | bytes | None:
     import subprocess
 
+    global SCAN_PHASE
+    options = args[:args.index("--")] if "--" in args else args
+    command = args[1] if args and args[0] == "--literal-pathspecs" else args[0] if args else ""
+    operation = {
+        "rev-parse": "git_head" if args[1:3] == ["--verify", "HEAD"] else "git_repository",
+        "symbolic-ref": "git_head", "show-ref": "git_head",
+        "ls-files": "git_index" if "--stage" in options else "git_candidates",
+        "diff": "git_candidates" if "--name-only" in options else "git_diff",
+        "cat-file": "git_index", "show": "git_index",
+    }.get(command, "git_command")
+    SCAN_PHASE = operation
     git_executable = shutil.which("git")
     if git_executable is None:
-        raise GitCommandError("Git is unavailable")
+        raise GitCommandError("git_unavailable")
 
     now = time.monotonic()
     command_deadline = now + 5.0
     if deadline is not None:
         command_deadline = min(command_deadline, deadline)
     if command_deadline <= now:
-        raise ScanLimitExceeded("secret scan exceeds the time limit")
+        raise ScanLimitExceeded("scan_timeout", seconds=int(MAX_SCAN_SECONDS))
 
     env = os.environ.copy()
     env["GIT_TERMINAL_PROMPT"] = "0"
@@ -188,7 +247,7 @@ def run_git(
             capture = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
             if input_bytes is not None:
                 if len(input_bytes) > MAX_GIT_OUTPUT_BYTES:
-                    raise ScanLimitExceeded("Git input exceeds the scanner limit")
+                    raise ScanLimitExceeded("git_input_limit", operation, measured=len(input_bytes), limit=MAX_GIT_OUTPUT_BYTES)
                 request = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
                 request.write(input_bytes)
                 request.seek(0)
@@ -197,10 +256,12 @@ def run_git(
             observed_descendants: list[int] = []
             try:
                 while True:
-                    if os.fstat(capture.fileno()).st_size > MAX_GIT_OUTPUT_BYTES:
-                        raise ScanLimitExceeded("Git output exceeds the scanner limit")
+                    size = os.fstat(capture.fileno()).st_size
+                    if size > MAX_GIT_OUTPUT_BYTES:
+                        raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=MAX_GIT_OUTPUT_BYTES)
                     if time.monotonic() >= command_deadline:
-                        raise ScanLimitExceeded("Git command exceeds the scanner time limit")
+                        enforce_deadline(deadline)
+                        raise ScanLimitExceeded("git_timeout", operation, seconds=5)
                     return_code = process.poll()
                     if return_code is not None:
                         break
@@ -215,14 +276,14 @@ def run_git(
                     except ProcessLookupError:
                         pass
                     else:
-                        raise GitCommandError("Git left a running descendant")
+                        raise GitCommandError("git_descendant_running")
                 elif os.name == "nt":
                     observed_descendants = _windows_git_descendants(process.pid)
                     if observed_descendants:
-                        raise GitCommandError("Git left a running descendant")
+                        raise GitCommandError("git_descendant_running")
                 size = os.fstat(capture.fileno()).st_size
                 if size > MAX_GIT_OUTPUT_BYTES:
-                    raise ScanLimitExceeded("Git output exceeds the scanner limit")
+                    raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=MAX_GIT_OUTPUT_BYTES)
                 if return_code != 0:
                     if allow_nonzero and size == 0:
                         if args == ["rev-parse", "--verify", "HEAD"] and return_code == 128:
@@ -230,17 +291,17 @@ def run_git(
                         if (len(args) == 4 and args[:3] == ["show-ref", "--verify", "--quiet"]
                                 and return_code == 1):
                             return None
-                    raise GitCommandError("Git command failed")
+                    raise GitCommandError("git_failed", operation, exit_status=return_code)
                 capture.seek(0)
                 raw_output = capture.read(size)
                 if len(raw_output) != size:
-                    raise GitCommandError("Git output changed during capture")
+                    raise GitCommandError("git_output_invalid")
                 return os.fsdecode(raw_output) if text else raw_output
             except BaseException:
                 _stop_git_process(process, subprocess, observed_descendants)
                 raise
     except OSError as exc:
-        raise GitCommandError("unable to capture Git output") from exc
+        raise GitCommandError("git_capture_failed") from exc
 
 
 def _windows_git_descendants(
@@ -398,7 +459,7 @@ def repository_marker_exists(work_dir: Path) -> bool:
     try:
         current = work_dir.resolve(strict=False)
     except OSError as exc:
-        raise ScanSecurityError("unable to inspect repository boundary") from exc
+        raise ScanSecurityError("repository_unavailable", "repository") from exc
 
     for directory in (current, *current.parents):
         try:
@@ -406,7 +467,7 @@ def repository_marker_exists(work_dir: Path) -> bool:
         except FileNotFoundError:
             continue
         except OSError as exc:
-            raise ScanSecurityError("unable to inspect repository marker") from exc
+            raise ScanSecurityError("repository_unavailable", "repository") from exc
         return True
     return False
 
@@ -436,7 +497,7 @@ def has_head(root: Path, *, deadline: float | None = None) -> bool:
         return True
     branch = run_git(["symbolic-ref", "--quiet", "HEAD"], cwd=root, deadline=deadline)
     if not isinstance(branch, str) or not branch.startswith("refs/heads/") or branch.count("\n") != 1:
-        raise GitCommandError("Git HEAD is not an unborn branch")
+        raise GitCommandError("git_head_invalid", "git_head")
     branch_exists = run_git(
         ["show-ref", "--verify", "--quiet", branch.rstrip("\n")],
         cwd=root,
@@ -444,7 +505,7 @@ def has_head(root: Path, *, deadline: float | None = None) -> bool:
         deadline=deadline,
     )
     if branch_exists is not None:
-        raise GitCommandError("Git HEAD verification failed")
+        raise GitCommandError("git_head_invalid", "git_head")
     return False
 
 
@@ -452,7 +513,7 @@ def decode_nul_paths(output: bytes) -> list[str]:
     if not output:
         return []
     if not output.endswith(b"\0"):
-        raise GitCommandError("Git returned malformed NUL-delimited paths")
+        raise GitCommandError("git_output_invalid", "git_candidates")
     return [os.fsdecode(path) for path in output[:-1].split(b"\0") if path]
 
 
@@ -464,24 +525,24 @@ def collect_unmerged_files(
         cwd=root, text=False, deadline=deadline,
     )
     if not isinstance(output, bytes) or (output and not output.endswith(b"\0")):
-        raise GitCommandError("Git returned malformed unmerged entries")
+        raise GitCommandError("git_output_invalid", "git_candidates")
     candidates: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
     for record in output[:-1].split(b"\0") if output else []:
         header, separator, raw_path = record.partition(b"\t")
         match = re.fullmatch(rb"[0-7]{6} (?:[0-9a-f]{40}|[0-9a-f]{64}) ([123])", header)
         if not separator or not raw_path or match is None:
-            raise GitCommandError("Git returned malformed unmerged entries")
+            raise GitCommandError("git_output_invalid", "git_candidates")
         path = os.fsdecode(raw_path)
         _validate_candidate_parts(path)
         source = CANDIDATE_UNMERGED_STAGES[int(match.group(1)) - 1]
         candidate = (source, path)
         if candidate in seen:
-            raise GitCommandError("Git returned duplicate unmerged entries")
+            raise GitCommandError("git_output_invalid", "git_candidates")
         seen.add(candidate)
         candidates.append(candidate)
         if len(candidates) > MAX_FILES:
-            raise ScanLimitExceeded("modified file count exceeds the scanner limit")
+            raise ScanLimitExceeded("snapshot_count_limit", "git_candidates", measured=len(candidates), limit=MAX_FILES)
     return candidates
 
 
@@ -545,7 +606,7 @@ def collect_files(
         key=lambda candidate: (candidate[1], candidate[0]),
     )
     if len(unique_candidates) > MAX_FILES:
-        raise ScanLimitExceeded("modified file count exceeds the scanner limit")
+        raise ScanLimitExceeded("snapshot_count_limit", "git_candidates", measured=len(unique_candidates), limit=MAX_FILES)
     return unique_candidates
 
 
@@ -558,16 +619,16 @@ def _is_reparse_point(details: os.stat_result) -> bool:
 def _validate_candidate_parts(path: str) -> tuple[str, ...]:
     parsed = PurePosixPath(path)
     if parsed.is_absolute() or not parsed.parts or any(part in {"", ".", ".."} for part in parsed.parts):
-        raise ScanSecurityError("candidate path escapes the repository")
+        raise ScanSecurityError("candidate_unsafe", "candidate_read")
     return parsed.parts
 
 
 def _read_bounded_descriptor(descriptor: int) -> bytes:
     details = os.fstat(descriptor)
     if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
-        raise ScanSecurityError("candidate must be a regular file")
+        raise ScanSecurityError("candidate_unsafe", "candidate_read")
     if details.st_size > MAX_FILE_BYTES:
-        raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+        raise ScanLimitExceeded("file_bytes_limit", "candidate_read", measured=details.st_size, limit=MAX_FILE_BYTES)
 
     chunks: list[bytes] = []
     total = 0
@@ -578,12 +639,15 @@ def _read_bounded_descriptor(descriptor: int) -> bytes:
         chunks.append(chunk)
         total += len(chunk)
         if total > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+            raise ScanLimitExceeded("file_bytes_limit", "candidate_read", measured=total, limit=MAX_FILE_BYTES)
 
 
 def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = False) -> bytes | None:
     parts = _validate_candidate_parts(path)
-    root_path = root.resolve(strict=True)
+    try:
+        root_path = root.resolve(strict=True)
+    except OSError as exc:
+        raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     no_follow = getattr(os, "O_NOFOLLOW", 0)
     directory_flag = getattr(os, "O_DIRECTORY", 0)
 
@@ -595,7 +659,7 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
             for component in parts[:-1]:
                 details = os.stat(component, dir_fd=current, follow_symlinks=False)
                 if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
-                    raise ScanSecurityError("candidate path contains a link")
+                    raise ScanSecurityError("candidate_unsafe", "candidate_read")
                 current = os.open(
                     component,
                     os.O_RDONLY | directory_flag | no_follow,
@@ -604,7 +668,7 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
                 descriptors.append(current)
             details = os.stat(parts[-1], dir_fd=current, follow_symlinks=False)
             if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
-                raise ScanSecurityError("candidate path contains a link")
+                raise ScanSecurityError("candidate_unsafe", "candidate_read")
             descriptor = os.open(parts[-1], os.O_RDONLY | no_follow, dir_fd=current)
             descriptors.append(descriptor)
             return _read_bounded_descriptor(descriptor)
@@ -613,7 +677,7 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
                 return None
             if isinstance(exc, ScanSecurityError):
                 raise
-            raise ScanSecurityError("unable to open candidate safely") from exc
+            raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
         finally:
             for descriptor in reversed(descriptors):
                 try:
@@ -628,7 +692,7 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
             current = current / component
             details = current.lstat()
             if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
-                raise ScanSecurityError("candidate path contains a link")
+                raise ScanSecurityError("candidate_unsafe", "candidate_read")
         resolved = candidate.resolve(strict=True)
         resolved.relative_to(root_path)
         descriptor = os.open(candidate, os.O_RDONLY | no_follow)
@@ -637,9 +701,11 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
             return None
         if isinstance(exc, ScanSecurityError):
             raise
-        raise ScanSecurityError("unable to open candidate safely") from exc
+        raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     try:
         return _read_bounded_descriptor(descriptor)
+    except OSError as exc:
+        raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     finally:
         os.close(descriptor)
 
@@ -665,13 +731,15 @@ def read_candidate_bytes(
             deadline=deadline,
         )
         if not isinstance(size_output, bytes):
-            raise GitCommandError("Git returned an invalid staged size")
+            raise GitCommandError("git_output_invalid", "git_index")
         try:
             size = int(size_output.strip())
         except ValueError as exc:
-            raise GitCommandError("Git returned an invalid staged size") from exc
-        if size < 0 or size > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+            raise GitCommandError("git_output_invalid", "git_index") from exc
+        if size < 0:
+            raise GitCommandError("git_output_invalid", "git_index")
+        if size > MAX_FILE_BYTES:
+            raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
         output = run_git(
             ["show", "--no-textconv", index_object],
             cwd=root,
@@ -679,7 +747,7 @@ def read_candidate_bytes(
             deadline=deadline,
         )
         if not isinstance(output, bytes) or len(output) != size:
-            raise GitCommandError("Git returned invalid staged content")
+            raise GitCommandError("git_output_invalid", "git_index")
         return output
 
     return _read_worktree_candidate(root, path, allow_missing=source == CANDIDATE_UNMERGED_WORKTREE)
@@ -697,7 +765,7 @@ def read_index_candidates(
         source, path = index_candidates[0]
         content = read_candidate_bytes(root, path, source, deadline=deadline)
         if content is None:
-            raise GitCommandError("Git returned invalid staged content")
+            raise GitCommandError("git_output_invalid", "git_index")
         return {(source, path): content}
 
     paths: list[str] = []
@@ -725,31 +793,31 @@ def read_index_candidates(
             cwd=root, text=False, deadline=deadline,
         )
         if not isinstance(index_output, bytes) or not index_output.endswith(b"\0"):
-            raise GitCommandError("Git returned malformed index entries")
+            raise GitCommandError("git_output_invalid", "git_index")
         for record in index_output[:-1].split(b"\0"):
             enforce_deadline(deadline)
             header, separator, raw_path = record.partition(b"\t")
             match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
             if not separator or not raw_path or match is None:
-                raise GitCommandError("Git returned malformed index entries")
+                raise GitCommandError("git_output_invalid", "git_index")
             path = os.fsdecode(raw_path)
             if "/".join(_validate_candidate_parts(path)) != path:
-                raise GitCommandError("Git returned malformed index paths")
+                raise GitCommandError("git_output_invalid", "git_index")
             if path not in batch_paths:
                 # Literal pathspecs still expand directory prefixes. Resolve a
                 # descendant only when its own exact path is selected, so it
                 # cannot be counted twice when it belongs to a later batch.
                 if any(path.startswith(parent + "/") for parent in batch_paths):
                     continue
-                raise GitCommandError("Git returned unexpected index entries")
+                raise GitCommandError("git_output_invalid", "git_index")
             stage = int(match.group(2))
             source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
             candidate = (source, path)
             if candidate not in expected_candidates or candidate in resolved:
-                raise GitCommandError("Git returned unexpected index entries")
+                raise GitCommandError("git_output_invalid", "git_index")
             resolved[candidate] = match.group(1)
     if len(resolved) != len(index_candidates):
-        raise GitCommandError("Git returned incomplete index entries")
+        raise GitCommandError("git_output_invalid", "git_index")
 
     # Only object IDs enter the line-delimited batch protocol, so filenames with
     # delimiters stay safe without the NUL batch-input option added in Git 2.38.
@@ -759,10 +827,10 @@ def read_index_candidates(
         deadline=deadline,
     )
     if not isinstance(metadata, bytes) or not metadata.endswith(b"\n"):
-        raise GitCommandError("Git returned malformed index metadata")
+        raise GitCommandError("git_output_invalid", "git_index")
     headers = metadata[:-1].split(b"\n")
     if len(headers) != len(index_candidates):
-        raise GitCommandError("Git returned incomplete index metadata")
+        raise GitCommandError("git_output_invalid", "git_index")
 
     # Resolve and bound every snapshot before requesting content. Use immutable
     # object IDs for the second call, so index edits cannot change these reads.
@@ -772,13 +840,16 @@ def read_index_candidates(
         enforce_deadline(deadline)
         match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) blob ([0-9]+)", header)
         if match is None or match.group(1) != resolved[candidate]:
-            raise GitCommandError("Git returned malformed index metadata")
-        size = int(match.group(2))
+            raise GitCommandError("git_output_invalid", "git_index")
+        try:
+            size = int(match.group(2))
+        except ValueError as exc:
+            raise GitCommandError("git_output_invalid", "git_index") from exc
         if size > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("candidate file exceeds the scanner limit")
+            raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
         total_bytes += size
         if total_bytes > MAX_TOTAL_BYTES:
-            raise ScanLimitExceeded("secret scan exceeds the total-byte limit")
+            raise ScanLimitExceeded("total_bytes_limit", measured=total_bytes, limit=MAX_TOTAL_BYTES)
         objects.append((candidate, match.group(1), size, header + b"\n"))
 
     contents: dict[tuple[str, str], bytes] = {}
@@ -799,15 +870,15 @@ def read_index_candidates(
             input_bytes=b"".join(oid + b"\n" for _, oid, _, _ in batch), deadline=deadline,
         )
         if not isinstance(output, bytes) or len(output) != capture_bytes:
-            raise GitCommandError("Git returned invalid staged content")
+            raise GitCommandError("git_output_invalid", "git_index")
         offset = 0
         for candidate, _, size, header in batch:
             if output[offset:offset + len(header)] != header:
-                raise GitCommandError("Git returned mismatched staged content")
+                raise GitCommandError("git_output_invalid", "git_index")
             offset += len(header)
             end = offset + size
             if output[end:end + 1] != b"\n":
-                raise GitCommandError("Git returned malformed staged content")
+                raise GitCommandError("git_output_invalid", "git_index")
             contents[candidate] = output[offset:end]
             offset = end + 1
     return contents
@@ -867,7 +938,7 @@ def emit_diff_added_lines(
     deadline: float | None = None,
 ) -> list[tuple[int, str]]:
     if source not in {CANDIDATE_STAGED, CANDIDATE_WORKTREE}:
-        raise ScanSecurityError("unsupported diff candidate source")
+        raise ScanSecurityError("candidate_unsafe", "git_diff")
     cached_options = ["--cached"] if source == CANDIDATE_STAGED else []
     cached_revision = ["HEAD"] if source == CANDIDATE_STAGED and root_has_head else []
     output = run_git(
@@ -894,7 +965,7 @@ def emit_diff_added_lines(
     if not isinstance(output, bytes):
         return []
     if output and (not output.startswith(b"diff --git ") or not output.endswith(b"\n")):
-        raise GitCommandError("Git returned malformed unified diff output")
+        raise GitCommandError("git_output_invalid", "git_diff")
 
     lines: list[tuple[int, str]] = []
     current_line: int | None = None
@@ -919,7 +990,7 @@ def emit_diff_added_lines(
         elif raw_line.startswith(b" "):
             current_line += 1
         else:
-            raise GitCommandError("Git returned malformed unified diff output")
+            raise GitCommandError("git_output_invalid", "git_diff")
     return lines
 
 
@@ -984,11 +1055,11 @@ def _assert_safe_log_path(path: Path, *, allow_missing: bool = True) -> os.stat_
     except FileNotFoundError:
         if allow_missing:
             return None
-        raise ScanSecurityError("required log path is missing") from None
+        raise ScanSecurityError("log_unavailable", "scan_log") from None
     except OSError as exc:
-        raise ScanSecurityError("unable to inspect log path") from exc
+        raise ScanSecurityError("log_unavailable", "scan_log") from exc
     if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
-        raise ScanSecurityError("log paths must not be links or reparse points")
+        raise ScanSecurityError("log_unsafe", "scan_log")
     return details
 
 
@@ -997,12 +1068,12 @@ def _ensure_secure_log_directory(directory: Path) -> None:
         directory.mkdir(parents=True, mode=0o700, exist_ok=True)
         details = _assert_safe_log_path(directory, allow_missing=False)
         if details is None or not stat.S_ISDIR(details.st_mode):
-            raise ScanSecurityError("log parent must be a directory")
+            raise ScanSecurityError("log_unsafe", "scan_log")
         os.chmod(directory, 0o700)
     except ScanSecurityError:
         raise
     except OSError as exc:
-        raise ScanSecurityError("unable to secure log directory") from exc
+        raise ScanSecurityError("log_unavailable", "scan_log") from exc
 
 
 def _open_secure_regular(path: Path, flags: int) -> int:
@@ -1012,11 +1083,11 @@ def _open_secure_regular(path: Path, flags: int) -> int:
     try:
         descriptor = os.open(path, flags | no_follow | binary, 0o600)
     except OSError as exc:
-        raise ScanSecurityError("unable to open log path safely") from exc
+        raise ScanSecurityError("log_unavailable", "scan_log") from exc
     try:
         details = os.fstat(descriptor)
         if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
-            raise ScanSecurityError("log path must be a regular file")
+            raise ScanSecurityError("log_unsafe", "scan_log")
         try:
             os.fchmod(descriptor, 0o600)
         except (AttributeError, OSError):
@@ -1034,16 +1105,16 @@ def rotate_scan_log(
     backups: int = 3,
 ) -> None:
     if max_bytes < 1 or backups < 1 or backups > 100:
-        raise ScanSecurityError("invalid log rotation limits")
+        raise ScanSecurityError("log_configuration_invalid", "scan_log")
     if incoming_bytes < 1 or incoming_bytes > MAX_LOG_RECORD_BYTES:
-        raise ScanLimitExceeded("scan-log record exceeds the size limit")
+        raise ScanLimitExceeded("log_record_limit", "scan_log", measured=incoming_bytes, limit=MAX_LOG_RECORD_BYTES)
     if incoming_bytes > max_bytes:
-        raise ScanLimitExceeded("scan-log record exceeds the configured rotation size")
+        raise ScanLimitExceeded("log_record_limit", "scan_log", measured=incoming_bytes, limit=max_bytes)
     details = _assert_safe_log_path(log_path)
     if details is None:
         return
     if not stat.S_ISREG(details.st_mode):
-        raise ScanSecurityError("scan log must be a regular file")
+        raise ScanSecurityError("log_unsafe", "scan_log")
     if details.st_size + incoming_bytes <= max_bytes:
         return
 
@@ -1051,7 +1122,7 @@ def rotate_scan_log(
     for path in paths:
         details = _assert_safe_log_path(path)
         if details is not None and not stat.S_ISREG(details.st_mode):
-            raise ScanSecurityError("rotated scan log must be a regular file")
+            raise ScanSecurityError("log_unsafe", "scan_log")
 
     try:
         for index in range(backups, 0, -1):
@@ -1068,7 +1139,13 @@ def rotate_scan_log(
         os.replace(log_path, first_backup)
         os.chmod(first_backup, 0o600)
     except OSError as exc:
-        raise ScanSecurityError("unable to rotate scan log safely") from exc
+        raise ScanSecurityError("log_unavailable", "scan_log") from exc
+
+
+def enforce_log_lock_deadline(lock_deadline: float, deadline: float | None) -> None:
+    enforce_deadline(deadline)
+    if time.monotonic() >= lock_deadline:
+        raise ScanLimitExceeded("log_lock_timeout", "scan_log", seconds=int(LOG_LOCK_TIMEOUT_SECONDS))
 
 
 def _acquire_log_lock(
@@ -1081,31 +1158,31 @@ def _acquire_log_lock(
     lock_deadline = time.monotonic() + LOG_LOCK_TIMEOUT_SECONDS
     if deadline is not None:
         lock_deadline = min(lock_deadline, deadline)
-    enforce_deadline(lock_deadline)
+    enforce_log_lock_deadline(lock_deadline, deadline)
     if fcntl_module is not None:
         while True:
-            enforce_deadline(lock_deadline)
+            enforce_log_lock_deadline(lock_deadline, deadline)
             try:
                 fcntl_module.flock(lock_fd, fcntl_module.LOCK_EX | fcntl_module.LOCK_NB)
                 return "posix"
             except (BlockingIOError, OSError) as exc:
                 if time.monotonic() >= lock_deadline:
-                    raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
+                    raise ScanLimitExceeded("log_lock_timeout", "scan_log", seconds=int(LOG_LOCK_TIMEOUT_SECONDS)) from exc
                 time.sleep(LOG_LOCK_POLL_SECONDS)
     if msvcrt_module is not None:
         if os.fstat(lock_fd).st_size == 0:
             os.write(lock_fd, b"\0")
         while True:
-            enforce_deadline(lock_deadline)
+            enforce_log_lock_deadline(lock_deadline, deadline)
             try:
                 os.lseek(lock_fd, 0, os.SEEK_SET)
                 msvcrt_module.locking(lock_fd, msvcrt_module.LK_NBLCK, 1)
                 return "windows"
             except OSError as exc:
                 if time.monotonic() >= lock_deadline:
-                    raise ScanLimitExceeded("timed out waiting for scan-log lock") from exc
+                    raise ScanLimitExceeded("log_lock_timeout", "scan_log", seconds=int(LOG_LOCK_TIMEOUT_SECONDS)) from exc
                 time.sleep(LOG_LOCK_POLL_SECONDS)
-    raise ScanSecurityError("no supported scan-log lock is available")
+    raise ScanSecurityError("log_unavailable", "scan_log")
 
 
 def _release_log_lock(
@@ -1121,7 +1198,18 @@ def _release_log_lock(
         msvcrt_module.locking(lock_fd, msvcrt_module.LK_UNLCK, 1)
 
 
-def append_scan_log(
+def append_scan_log(**kwargs: object) -> None:
+    global SCAN_PHASE
+    SCAN_PHASE = "scan_log"
+    try:
+        _append_scan_log(**kwargs)
+    except ScanFailure:
+        raise
+    except OSError as exc:
+        raise ScanSecurityError("log_unavailable", "scan_log") from exc
+
+
+def _append_scan_log(
     *,
     log_path: Path,
     status: str,
@@ -1136,6 +1224,7 @@ def append_scan_log(
     findings_truncated: bool = False,
     note: str = "",
     deadline: float | None = None,
+    diagnostic: dict[str, object] | None = None,
 ) -> None:
     enforce_deadline(deadline)
     _ensure_secure_log_directory(log_path.parent)
@@ -1147,6 +1236,12 @@ def append_scan_log(
         "scope": scope,
         "status": status,
     }
+    if status == "incomplete":
+        # Incomplete records cannot carry payload-derived identifiers or paths.
+        payload = {"timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                   "mode": mode, "scope": scope, "status": status, "action": SCAN_ACTION}
+        if diagnostic is not None:
+            payload["diagnostic"] = diagnostic
     if note:
         payload["note"] = note
     if env_files:
@@ -1162,7 +1257,7 @@ def append_scan_log(
         "utf-8"
     )
     if len(record) > MAX_LOG_RECORD_BYTES:
-        raise ScanLimitExceeded("scan-log record exceeds the size limit")
+        raise ScanLimitExceeded("log_record_limit", "scan_log", measured=len(record), limit=MAX_LOG_RECORD_BYTES)
 
     try:
         import fcntl
@@ -1180,12 +1275,12 @@ def append_scan_log(
     try:
         lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt, deadline=deadline)
         enforce_deadline(deadline)
-        rotate_scan_log(
-            log_path,
-            len(record),
-            int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576")),
-            int(os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")),
-        )
+        try:
+            max_bytes = int(os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576"))
+            backups = int(os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3"))
+        except ValueError as exc:
+            raise ScanSecurityError("log_configuration_invalid", "scan_log") from exc
+        rotate_scan_log(log_path, len(record), max_bytes, backups)
         enforce_deadline(deadline)
         log_fd = _open_secure_regular(log_path, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
         with os.fdopen(log_fd, "ab") as handle:
@@ -1248,25 +1343,30 @@ def normalized_mode_from_env() -> str:
 def enforce_scan_budget(scan_started: float, total_bytes: int, *, now: float | None = None) -> None:
     current_time = time.monotonic() if now is None else now
     if current_time - scan_started > MAX_SCAN_SECONDS:
-        raise ScanLimitExceeded("secret scan exceeds the time limit")
+        raise ScanLimitExceeded("scan_timeout", seconds=int(MAX_SCAN_SECONDS))
     if total_bytes > MAX_TOTAL_BYTES:
-        raise ScanLimitExceeded("secret scan exceeds the total-byte limit")
+        raise ScanLimitExceeded("total_bytes_limit", measured=total_bytes, limit=MAX_TOTAL_BYTES)
 
 
-def handle_unexpected_exception(_exc: Exception) -> int:
+def handle_unexpected_exception(exc: Exception) -> int:
     mode = normalized_mode_from_env()
-    reason = f"scan-secrets blocked: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."
+    failure = exc if isinstance(exc, ScanFailure) else ScanFailure("internal_error")
+    detail = failure.detail()
+    outcome = "blocked" if mode == "block" else "warning"
+    reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; scan incomplete; "
+              f"potential secrets could not be checked. {detail}")
     print(reason, file=sys.stderr)
     if INCOMPLETE_LOG is not None:
         try:
             append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[], findings=[],
-                            note="scan incomplete; unable to verify modified files")
+                            note=detail, diagnostic=failure.diagnostic())
         except Exception:
+            # Reporting must preserve the first failure even if logging also fails.
             pass
     if mode == "block":
         emit_block_denial(reason)
-        return 0
-    emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; scan incomplete; potential secrets could not be checked."})
+    else:
+        emit_json({"systemMessage": reason})
     return 0
 # BEGIN PROVIDER ADAPTER
 SESSION_ID_KEYS = ("session_id",)
@@ -1284,29 +1384,40 @@ def resolve_work_dir(payload: dict) -> Path:
 def findings_denial_reason(scan_log: Path) -> str:
     return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
 
+def resolve_scan_log() -> Path:
+    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
+    log_path = Path(log_dir_str)
+    if log_path.is_dir() or not log_path.suffix:
+        scan_log = log_path / "scan.log"
+    elif log_path.suffix.lower() == ".log":
+        if log_path.parent.exists() and log_path.parent.is_file():
+            scan_log = log_path.parent.parent / "secrets" / log_path.name
+        else:
+            scan_log = log_path
+    else:
+        scan_log = log_path / "scan.log"
+    return scan_log
+
+
 def main() -> int:
-    global INCOMPLETE_LOG, SCAN_ACTION
+    global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE
     scan_started = time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
 
+    # Prepare disposable-safe failure logging before initialization or input fails.
+    scan_log = resolve_scan_log()
+    INCOMPLETE_LOG = {
+        "log_path": scan_log, "session_id": "", "timestamp": "", "mode": mode,
+        "scope": "diff", "repo_root_path": Path.cwd(),
+    }
     if not git_available():
-        reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
-        if mode == "block":
-            emit_block_denial(reason)
-            return 0
-        warn_and_noop(reason)
-
+        raise GitCommandError("git_unavailable", "initialization")
     if not audit_init():
-        reason = "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked."
-        if mode == "block":
-            emit_block_denial(reason)
-            return 0
-        warn_and_noop(f"{reason[:-1]}; skipping hook.")
+        raise ScanSecurityError("audit_unavailable", "initialization")
 
-    payload = read_payload(mode)
-    if payload is None:
-        return 0
+    SCAN_PHASE = "input"
+    payload = read_payload()
     event = payload.get("hook_event_name")
     SCAN_ACTION = (
         "session-end scan"
@@ -1326,17 +1437,7 @@ def main() -> int:
     if scope not in {"diff", "staged"}:
         scope = "diff"
 
-    log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
-    log_path = Path(log_dir_str)
-    if log_path.is_dir() or not log_path.suffix:
-        scan_log = log_path / "scan.log"
-    elif log_path.suffix.lower() == ".log":
-        if log_path.parent.exists() and log_path.parent.is_file():
-            scan_log = log_path.parent.parent / "secrets" / log_path.name
-        else:
-            scan_log = log_path
-    else:
-        scan_log = log_path / "scan.log"
+    SCAN_PHASE = "repository"
     work_dir = resolve_work_dir(payload)
 
     if not timestamp:
@@ -1388,6 +1489,7 @@ def main() -> int:
     root = repo_root(work_dir, deadline=scan_deadline)
     root_has_head = has_head(root, deadline=scan_deadline)
     candidates = collect_files(root, scope, root_has_head, deadline=scan_deadline)
+    SCAN_PHASE = "candidate_scan"
 
     if not candidates:
         append_scan_log(
@@ -1415,6 +1517,7 @@ def main() -> int:
     index_contents = read_index_candidates(root, candidates, deadline=scan_deadline)
 
     for source, path in candidates:
+        SCAN_PHASE = "candidate_read"
         enforce_scan_budget(scan_started, total_bytes)
         if (source, path) in index_contents:
             raw_bytes = index_contents.pop((source, path))
@@ -1422,6 +1525,7 @@ def main() -> int:
             raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
         if raw_bytes is None:
             continue
+        SCAN_PHASE = "candidate_scan"
         total_bytes += len(raw_bytes)
         enforce_scan_budget(scan_started, total_bytes)
 
@@ -1454,6 +1558,7 @@ def main() -> int:
                 deadline=scan_deadline,
             )
 
+        SCAN_PHASE = "candidate_scan"
         for line_number, line_text in candidate_lines:
             enforce_scan_budget(scan_started, total_bytes)
             for pattern_name, severity, regex in PATTERNS:

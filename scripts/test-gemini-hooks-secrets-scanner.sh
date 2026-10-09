@@ -169,7 +169,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini missing-Git block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini missing-Git denial reason to remain stable."
 }
@@ -208,7 +208,7 @@ test_audit_init_failure_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini audit-init block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini audit-init denial reason to remain stable."
 }

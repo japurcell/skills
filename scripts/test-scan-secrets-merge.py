@@ -86,7 +86,8 @@ class MergeScannerTests(unittest.TestCase):
         log_dir.mkdir(exist_ok=True)
         env = {**self.env, "SCAN_MODE": mode, "SCAN_SCOPE": scope,
                "SECRETS_LOG_DIR": str(log_dir), "AUDIT_LOG": str(log_dir / "audit.log"),
-               "OBSERVABILITY_LOG_PATH": str(log_dir / "observability.jsonl"), "TMPDIR": str(self.root)}
+               "OBSERVABILITY_LOG_PATH": str(log_dir / "observability.jsonl"),
+               "OBSERVABILITY_TESTING": "1", "TMPDIR": str(self.root)}
         if provider == "copilot":
             payload = {"sessionId": "merge-test", "hook_event_name": "preToolUse",
                        "toolName": "bash", "toolArgs": {"command": "git status"}}
@@ -116,7 +117,7 @@ class MergeScannerTests(unittest.TestCase):
         return response, rows[-1]
 
     def assert_outcome(self, provider: str, mode: str, scope: str, status: str,
-                       finding_path: str | None = None) -> None:
+                       finding_path: str | None = None, cause: str | None = None) -> None:
         response, record = self.scan(provider, mode, scope)
         self.assertEqual(record["status"], status)
         if status == "clean":
@@ -124,6 +125,15 @@ class MergeScannerTests(unittest.TestCase):
         else:
             detail = ("potential secrets detected." if status == "findings" else
                       "scan incomplete; potential secrets could not be checked.")
+            if status == "incomplete":
+                diagnostic = record["diagnostic"]
+                self.assertEqual(record["action"], "tool scan")
+                if cause is not None:
+                    self.assertEqual(diagnostic["cause"], cause)
+                self.assertIn(diagnostic["cause"], record["note"])
+                self.assertIn(diagnostic["operation"], record["note"])
+                self.assertNotIn(str(self.repo), json.dumps(response) + json.dumps(record))
+                detail += " " + record["note"]
             reason = f"scan-secrets blocked: tool scan; {detail}"
             if mode == "warn":
                 expected = {"systemMessage": f"scan-secrets warning: tool scan; {detail}"}
@@ -144,12 +154,12 @@ class MergeScannerTests(unittest.TestCase):
                                 and finding["path"] == finding_path
                                 for finding in record["findings"]), record)
 
-    def assert_all_scans(self, status: str, finding_path: str | None = None) -> None:
+    def assert_all_scans(self, status: str, finding_path: str | None = None, cause: str | None = None) -> None:
         for provider in PROVIDERS:
             for mode in ("block", "warn"):
                 for scope in ("diff", "staged"):
                     with self.subTest(provider=provider, mode=mode, scope=scope):
-                        self.assert_outcome(provider, mode, scope, status, finding_path)
+                        self.assert_outcome(provider, mode, scope, status, finding_path, cause)
 
     def large_resolved_merge(self) -> None:
         self.write_files({f"file-{index:03}.txt": "baseline\n" for index in range(250)})
@@ -403,6 +413,9 @@ class MergeScannerTests(unittest.TestCase):
             "    output = output.replace(b' blob ', b' tree ', 1)\n"
             "elif fault == 'invalid-size' and metadata:\n"
             "    output = output.split(b'\\n', 1)[0].rsplit(b' ', 1)[0] + b' -1\\n'\n"
+            "elif fault == 'oversized-integer' and metadata:\n"
+            "    first, rest = output.split(b'\\n', 1)\n"
+            "    output = first.rsplit(b' ', 1)[0] + b' ' + b'9' * 5000 + b'\\n' + rest\n"
             "elif fault == 'extra-metadata' and metadata:\n"
             "    output += output.split(b'\\n', 1)[0] + b'\\n'\n"
             "elif fault == 'wrong-metadata-object' and metadata:\n"
@@ -426,7 +439,7 @@ class MergeScannerTests(unittest.TestCase):
         )
         wrapper.chmod(0o755)
         self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"], REAL_GIT=str(self.git_path))
-        for fault in ("missing-object", "wrong-type", "invalid-size", "extra-metadata",
+        for fault in ("missing-object", "wrong-type", "invalid-size", "oversized-integer", "extra-metadata",
                       "wrong-metadata-object",
                       "oversized-blob", "truncated", "extra-content", "wrong-object",
                       "bad-separator", "nonzero"):
@@ -434,7 +447,10 @@ class MergeScannerTests(unittest.TestCase):
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
-                        self.assert_outcome(provider, mode, "diff", "incomplete")
+                        self.assert_outcome(provider, mode, "diff", "incomplete",
+                                            cause="git_failed" if fault == "nonzero" else
+                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private missing object", all_logs)
         self.assertNotIn(b"private unexpected content", all_logs)
@@ -490,7 +506,10 @@ class MergeScannerTests(unittest.TestCase):
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
-                        self.assert_outcome(provider, mode, "diff", "incomplete")
+                        self.assert_outcome(provider, mode, "diff", "incomplete",
+                                            cause="git_failed" if fault == "nonzero" else
+                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private unrequested path", all_logs)
 
@@ -568,7 +587,7 @@ class MergeScannerTests(unittest.TestCase):
         for provider in PROVIDERS:
             for mode in ("block", "warn"):
                 with self.subTest(provider=provider, mode=mode, scope="diff"):
-                    self.assert_outcome(provider, mode, "diff", "incomplete")
+                    self.assert_outcome(provider, mode, "diff", "incomplete", cause="candidate_unsafe")
                 with self.subTest(provider=provider, mode=mode, scope="staged"):
                     self.assert_outcome(provider, mode, "staged", "clean")
 
@@ -594,7 +613,7 @@ class MergeScannerTests(unittest.TestCase):
         self.merge({"conflict.txt": "base\n"}, {"conflict.txt": "x" * (size - 1) + "\n"},
                    {"conflict.txt": "theirs\n"})
         self.write_files({"conflict.txt": "safe replacement awaiting git add\n"})
-        self.assert_all_scans(status)
+        self.assert_all_scans(status, cause="file_bytes_limit" if status == "incomplete" else None)
 
     def test_conflict_stage_at_file_byte_limit_remains_scannable(self) -> None:
         self.assert_conflict_stage_size(1048576, "clean")
@@ -611,7 +630,7 @@ class MergeScannerTests(unittest.TestCase):
         theirs = {name: "t" * 899999 + "\n" for name in base}
         self.merge(base, ours, theirs)
         self.write_files({name: "safe replacement awaiting git add\n" for name in base})
-        self.assert_all_scans(status)
+        self.assert_all_scans(status, cause="total_bytes_limit" if status == "incomplete" else None)
 
     def test_conflict_snapshots_below_total_byte_limit_remain_scannable(self) -> None:
         self.assert_snapshot_budget(3, "clean")
