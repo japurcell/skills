@@ -1,0 +1,100 @@
+# Routes were printed before dispatch. No user model or effort constraint applied.
+# Runtime metadata did not report executed model or reasoning effort.
+# Limits were non-interrupting status checkpoints, never cancellation deadlines.
+dispatches:
+  - subtask_id: T1_guardian_evidence
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 8 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T2_scanner_evidence
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 8 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T3_guardian_fix
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 15 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T4_scanner_fix
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 15 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T6_standards_review
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 10 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T6_spec_review
+    selected:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    submitted:
+      model: gpt-6.1-sol
+      reasoning_effort: high
+    executed:
+      model: unconfirmed
+      reasoning_effort: unconfirmed
+    runtime_limit:
+      value: 10 minutes
+      mechanism: Coordinator clock and status checks; non-interrupting progress requests on overrun
+    status: completed
+    output_verified: true
+    routing_compliant: true

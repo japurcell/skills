@@ -38,8 +38,36 @@ The sandbox initially denied the native collector's `sysctl kern.clockrate`. App
 
 All 108 cases returned the expected decision and met the 500 ms finite-case ceiling. The maximum observed sample was 58.826750 ms; maximum p95 was 58.743916 ms. Maximum measured RSS was 23,494,656 bytes. The slowest case was Copilot's 256 KiB high-line-count patch, with median 57.312584 ms. This establishes the tested finite input bounds, not a universal raw-JSON memory bound, a latency improvement over baseline, or provider delivery timing.
 
-## Remaining checks and limits
+## Installed verification
 
-Independent Standards and Spec reviews, the final documentation pass, and installed refresh/probes remain pending at this checkpoint. Authenticated Copilot pre-tool delivery could not be tested because existing authentication was unavailable. Native Windows was not exercised. The original external Linux scanner cause remains unknown; typed diagnostics expose future incomplete causes while preserving the existing denial contract.
+Read-only installed configuration preflights passed for RTK and all three provider mergers. After disposable-home installer fixtures passed, approved `rtk proxy bash scripts/install.sh` completed successfully. Byte comparisons confirm all nine changed installed hook/helper files match source: Guardian entrypoint, Guardian policy helper, and scanner for Copilot, Gemini, and Codex.
+
+Direct installed-script probes used isolated unborn repositories, disposable homes/logs, and `OBSERVABILITY_TESTING=1`:
+
+- Copilot's raw-string and Codex's existing object native patch shapes both allow a multi-file patch with 4,000 prose/semicolon lines above the former 64 KiB bound.
+- Both Guardian providers deny a late protected-file deletion in a large patch, leaving the sentinel file unchanged.
+- All three scanners explicitly deny a 1,048,577-byte safe candidate and expose `file_bytes_limit/candidate_read`, with actual/limit byte counts and no repository path.
+- All three scanners explicitly deny a definite fake-secret fixture as findings, without the fixture value or a generic incomplete result.
+
+These are installed subprocess results, not authenticated provider-dispatch evidence.
+
+## Review and remaining limits
+
+Independent [Standards and Spec reports](review.md) are complete. Standards found one active-plan documentation issue and verified its repair. Spec found zero issues. No finding remains open. The final generated freshness check passed for all 35 files; local artifact links resolved and diff checks passed.
+
+Authenticated Copilot pre-tool delivery could not be tested because existing authentication was unavailable. Native Windows was not exercised. The original external Linux scanner cause remains unknown; typed diagnostics expose future incomplete causes while preserving the existing denial contract.
 
 Both clean integrated task worktrees remain attached because the app rejected archival as protected by a pinned task or workspace. Their integrated branches are retained. No filesystem cleanup bypass or push was performed.
+
+## Knowledge-maintenance pass
+
+One coordinated `update-agent-docs` pass followed all delegated work. Current hook/security/testing routes and scanner consistency memory were cross-checked against the final diff and retained results. Exact provider shapes, budgets, and diagnostic vocabulary are readily discoverable in canonical source and tests; current guidance already routes those owners. No new durable rule, non-obvious memory, stale obligation, or policy conflict warranted KB edits. Canonical KB files and indexes remain unchanged; OKF lint was not required.
+
+```text
+Added: None
+Changed: None
+Split or moved: None
+Deduplicated: None
+Index updates: None
+Remaining doc quality TODOs: None
+```
