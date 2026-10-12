@@ -39,7 +39,9 @@ The user approved grilling plus codebase-design as the substitute for wayfinder'
 
 ### Proposals requiring a later decision
 
-Restate was selected for an earlier prototype, not a production stack. It remains the leading recommendation pending the broader design. TypeScript recipes, configuration profiles, nested task workflows, serialized integration, revision-bound evidence, streamed persisted events, and explicit improvement promotion were assistant proposals. Record their tradeoffs in the relevant open tickets before treating them as settled.
+Restate was selected for an earlier prototype, not a production stack. It remains the leading recommendation pending the broader design. Configuration profiles, runtime-specific child workflows, serialized integration, revision-bound evidence, streamed persisted events, and explicit improvement promotion remain proposals. Record their tradeoffs in the relevant open tickets before treating them as settled.
+
+TypeScript authoring was subsequently chosen by the user. The closed [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns that decision, the accepted task contract, and the other answers from its live exchange. Its code-level nesting decision does not select a runtime-specific child-workflow mechanism.
 
 The earlier three-repair example, mandatory plan/candidate approvals, one-adapter prototype scope, exact storage layout, and server transport are not fixed requirements.
 
