@@ -26,12 +26,13 @@ An implementation-ready specification for a fully customizable, code-controlled 
 - [Embedded workflow runtime fit](tickets/embedded-workflow-runtime-fit.md): Effect offers an explicitly embedded SQL-backed composition with unstable APIs; TanStack needs a local durable store. Workflow DevKit Local World is development/testing infrastructure, and Resonate's default SDK is not persistent.
 - [Restate and DBOS operating fit](tickets/service-engine-operating-fit.md): Restate retains a server and native Windows gap; DBOS TypeScript retains Postgres and packaging constraints. DBOS Python supports SQLite but changes the workflow-language contract. The [combined comparison](research/embedded-runtime-comparison.md) retains the research that preceded the user's executor decision.
 - [Operating and installation model](tickets/operating-and-installation-model.md): per-repository SQLite executor, foreground invocations, human-triggered Continue, skill-managed runtime, retained versions for unfinished runs, resumable Stop, and explicit cleanup with data-preserving uninstall.
+- [Agent execution profiles](tickets/agent-execution-profiles.md): explicit configuration and fallback, visible sessions and recovery, replacement with explicit instruction composition, and schemas for agent outputs that control execution.
 
 ## Not yet specified
 
 <!-- FOG START -->
 - The accepted contract covers repository changes and read-only audits. Other concrete workflow patterns may expose extension pressures beyond these examples; no separate question is sharp enough to ticket yet.
-- Known native-platform, upgrade, shutdown, retention, and recovery mechanisms have owners in the existing tickets. Additional deployment/harness interactions may still expose narrower process or permission questions that cannot yet be stated precisely.
+- Known native-platform, upgrade, shutdown, retention, recovery, profile-versioning, and result-validation mechanisms have owners in existing tickets. Additional deployment/harness interactions may still expose narrower process or permission questions that cannot yet be stated precisely; the resolved profile contract does not currently require a new ticket.
 - Observed improvement proposals may expose evaluation domains or ownership conflicts that need their own decisions after the core learning contract is set.
 <!-- FOG END -->
 

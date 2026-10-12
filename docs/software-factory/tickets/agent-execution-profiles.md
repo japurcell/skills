@@ -1,7 +1,7 @@
 # Agent execution profiles
 
 **Type:** grilling
-**Status:** claimed by subagent-0gnr9j
+**Status:** closed
 **Blocked By:** workflow-authoring-and-task-contract.md, operating-and-installation-model.md
 **Research Dir:** not applicable
 
@@ -19,7 +19,7 @@ Resolution should include profile examples, adapter obligations, conformance cri
 
 ---
 
-## Session progress
+## Decision record
 
 Claimed on 2026-10-12 after [Operating and installation model](operating-and-installation-model.md) closed. Both exact prerequisites were verified closed.
 
@@ -73,7 +73,7 @@ Keep harness-specific behavior behind one execution interface. Workflow code sup
 | Validate the resolved request | Exercise supported and unsupported harness/model/reasoning/required-skill selections. Reject an unmet requirement before starting work where detectable; surface failures discovered later. Never silently substitute. |
 | Deliver instructions | Record the requested prompt/skills, selected delivery mode, and delivery evidence. Distinguish delivered instructions from observed skill loading or compliance. Exercise missing resources and unavailable required tools. |
 | Expose sessions live | Attach output and lifecycle status to the correct run, step, attempt, and session. Exercise parallel sessions without mixing output. Mark absent optional telemetry unknown or unsupported. |
-| Return an outcome | Preserve final output, available artifact references, and process outcome. A clean process exit does not prove workflow acceptance. Typed-result behavior is proposed in the next round. |
+| Return an outcome | Preserve final output, available artifact references, and process outcome. A clean process exit does not prove workflow acceptance. Exercise valid, missing, and malformed required results; preserve raw output and expose validation failure. Correction attempts must be visible and respect the workflow's explicit budget. |
 | Request interruption | Exercise Stop during active work and expose whether the process has actually exited. The executor retains resumable state. Stop request acceptance alone is not proof that child processes ended. |
 | Support recovery honestly | Advertise native resume availability without assuming it. Exercise reconnect and explicitly configured fresh-session recovery after reconciliation, preserving lineage and budgets. Uncertain earlier effects block. |
 | Preserve native permission controls | Keep native tool approvals distinct from factory workflow checkpoints; never silently approve or bypass them. The interaction details belong to [Human control and publication](human-control-and-publication.md). |
@@ -81,14 +81,22 @@ Keep harness-specific behavior behind one execution interface. Workflow code sup
 
 No adapter is currently qualified. Codex CLI, Copilot CLI, and Gemini CLI remain primary; OpenCode and Pi remain additional desired harnesses. This is priority information already supplied by the human, not a decision to drop any harness or an unverified release-support promise. Detailed compatibility evidence and release acceptance belong to [Specification readiness and acceptance](specification-readiness-and-acceptance.md).
 
-### Remaining contract questions
+### Confirmed answers, round three
 
-Only the following profile-contract choices are still proposed:
+On 2026-10-12, after reviewing visual examples and the tradeoffs, the human explicitly accepted both remaining choices and asked to record them and stop:
 
-1. **Prompt and skill composition:** resolve ordinary fields using the accepted precedence. Treat a supplied prompt as replacing the inherited prompt, and a supplied ordered skill list as replacing the inherited list. An omitted field inherits; an explicit empty skill list clears inherited skills. Allow explicit composition to extend a prompt or append skills, but never silently concatenate instructions. Show the resulting prompt and ordered skill list before dispatch. Any separately declared required capability must still validate.
-2. **Typed agent results:** allow each step to require a validated result schema or accept text/artifact output. When a schema is required, malformed or missing data makes the attempt unsuccessful even if the CLI exited successfully. Preserve the raw output for inspection. Another agent attempt requires the workflow's explicitly bounded repair/retry policy and counts against its applicable budget; the adapter must not start a hidden correction conversation.
+1. **Replacement by default, explicit composition:** resolve fields independently using the accepted precedence. A supplied prompt replaces the inherited prompt; a supplied ordered skill list replaces the inherited list. Omitted fields inherit, and an explicit empty skill list clears inherited skills. Authors may explicitly compose or extend instructions, but nothing is silently concatenated. Changing the skill list does not replace unrelated harness, model, or reasoning settings. Show the effective instructions and their sources so discarded inherited guidance is visible. Separately declared required capabilities still validate. Skill selection does not schedule separate steps; workflow code owns execution order.
+2. **Optional schemas per step, required for execution decisions:** require schemas for review verdicts, generated task graphs, and other agent-produced outputs that control execution. Allow text and artifacts for explanations and reports. Missing or malformed required data makes the attempt unsuccessful even when the CLI exits successfully; preserve raw output for inspection. Another agent attempt requires the workflow's explicit bounded correction/repair/retry policy and counts against its applicable budget. Adapters must not launch hidden correction conversations. A structurally valid result does not prove correctness or replace verification evidence. An invalid result does not prove that no effects occurred; reconcile existing effects before repeating work. A format-only correction should reuse saved output where possible.
 
-Exact configuration field names are illustrative until the specification is assembled. Profile/prompt/skill version identities and changes to unfinished runs belong to [Workflow versioning and run changes](workflow-versioning-and-run-changes.md); exact repair limits belong to [Verification and review policy](verification-and-review-policy.md). The remaining questions do not reopen either ticket's scope. No adapter or runtime implementation is authorized.
+The tradeoff is explicit: replacement can discard useful inherited guidance, while automatic merging can silently introduce conflicts and extra instructions. Per-step schemas add validation and possible correction work where deterministic branching needs a contract, without imposing structured output on every report. Neither automatic instruction merging nor universally required structured results was selected.
 
-<!-- Append Resolution only after the live exchange reaches a confirmed decision. -->
+These answers are settled. Do not repeat prompt/skill composition or structured-result policy questions.
+
+## Resolution
+
+Closed on 2026-10-12 after three rounds of explicit human decisions. Both exact prerequisites, `workflow-authoring-and-task-contract.md` and `operating-and-installation-model.md`, were verified closed. The confirmed answers above own the configuration, session, skill-delivery, telemetry, recovery, composition, and result contracts. Profile examples illustrate them; adapter obligations define the required conformance evidence without claiming an implementation exists.
+
+Exact configuration field names remain illustrative until the specification is assembled. Profile/prompt/skill version identities and changes to unfinished runs belong to [Workflow versioning and run changes](workflow-versioning-and-run-changes.md); exact repair limits and evidence policy belong to [Verification and review policy](verification-and-review-policy.md). Native approval interaction belongs to [Human control and publication](human-control-and-publication.md), and event delivery belongs to [Session events and live progress](session-events-and-live-progress.md). These downstream mechanisms do not reopen the accepted profile policies.
+
+No new ticket is needed: the remaining mechanisms and compatibility proof already have owners. No adapter, runtime, recovery behavior, or platform combination was implemented or tested. No next ticket was claimed; the user explicitly requested stopping after this documentation update.
 
