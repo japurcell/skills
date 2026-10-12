@@ -4,6 +4,8 @@ The [wayfinder map](map.md) records confirmed requirements and routes the remain
 
 The [progress handoff](handoff.md) records current status, the next planning session, and verification limits.
 
+The [local durable runtime comparison](research/embedded-runtime-comparison.md) compares embedded TypeScript candidates, Restate, DBOS, Python alternatives, a factory-owned executor, SSSF's recovery boundary, and human-triggered Continue.
+
 Open [the interactive comparison](prototypes/index.html), then explore:
 
 - [Repo runner](prototypes/repo-runner.html): ordinary code recipes and one local execution owner.

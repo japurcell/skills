@@ -11,7 +11,7 @@ Where can a workflow request human input, and what must be true before it create
 
 Decide optional checkpoint semantics, approve/revise/stop actions, timeouts, authorization, binding decisions to evidence and revisions, and rejection of stale or duplicate decisions. Clarify workflow review versus a harness's native tool approval.
 
-Define whether users can pause, cancel, or steer active work, what happens to children and running CLI processes, and which changes require a new run or checkpoint.
+Apply the accepted resumable Stop/Ctrl+C policy in [Operating and installation model](operating-and-installation-model.md#resolution); do not re-ask whether Stop interrupts or drains active steps. Define any distinct pause/cancel/steering actions, signal escalation, child-process and orphan handling, treatment of active runs during uninstall, and which changes require a new run or checkpoint.
 
 Set publication identity and reconciliation rules for a crash after the remote action but before recording its result. PR creation, pushing, merging, and deployment are separate actions; do not infer authorization from one to another.
 

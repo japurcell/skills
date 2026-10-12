@@ -25,7 +25,7 @@ Accepted on 2026-10-12 through the live exchange: the user selected three author
 
 [Confirmed factory requirements](confirmed-factory-requirements.md) owns the prior human answers. Its requirements for code-controlled orchestration, fully customizable workflow structure, both planning entry points, task dependencies, step-specific agent choices, configurable verification/review/checkpoints, and real-time visibility apply here without renewed questions. The six-stage use case remains an example recipe.
 
-The decisions below do not adopt earlier runtime code sketches wholesale. Runtime selection remains in [Recovery guarantees and runtime selection](recovery-and-runtime-selection.md).
+The decisions below do not adopt earlier runtime code sketches wholesale. The subsequently selected executor is recorded in [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation); [Recovery guarantees and runtime selection](recovery-and-runtime-selection.md) owns its remaining mechanisms and proofs.
 
 ### Confirmed answers, round one
 
@@ -71,7 +71,7 @@ The final acceptance covers task data versus code, graph validation, the managed
 
 ### Downstream decisions and limits
 
-- Code-level scopes and reusable routines are accepted. Their mapping to child workflows or another runtime mechanism remains part of runtime selection.
+- Code-level scopes and reusable routines are accepted. Their mapping to persisted executor scopes or other internal execution mechanisms remains part of recovery design.
 - Agent configuration precedence belongs to [Agent execution profiles](agent-execution-profiles.md). Scheduling, workspace ownership, and integration belong to [Task scheduling and integration](task-scheduling-and-integration.md).
 - Review policies, evidence requirements, and exact repair limits belong to [Verification and review policy](verification-and-review-policy.md). Human control and publication policy remain in their own ticket.
 - Event schemas and delivery behavior belong to [Session events and live progress](session-events-and-live-progress.md); visual interaction belongs to [Swimlane interaction design](swimlane-interaction-design.md). The accepted outline does not choose a transport or UI layout.

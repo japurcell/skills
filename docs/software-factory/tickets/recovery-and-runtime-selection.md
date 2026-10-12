@@ -7,13 +7,13 @@
 
 ## Question
 
-Which recovery guarantees does the factory require, and which runtime best satisfies them within the chosen operating model?
+Which recovery guarantees and mechanisms must the selected factory-owned SQLite executor provide within the chosen operating model?
 
-Compare Restate, DBOS, and a custom runner using the agreed workflow, installation, session, and versioning contracts. Restate is the current candidate; earlier discussion did not settle the production choice.
+The user selected the executor and human-triggered Continue on 2026-10-12; [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) owns those decisions. Do not reopen runtime selection or the recovery trigger as an unanswered question. Retained engine research supplies comparisons and failure scenarios for the custom executor.
 
 Specify ownership after a controller or worker crash, reconciliation of already-running CLI work, attempt identity and fencing, replay of completed work, durable human waits, shutdown, and external publication ambiguity. Separate engine-provided guarantees from factory responsibilities.
 
-Resolution should select the runtime or identify a precisely scoped unresolved proof, with acceptance scenarios for crash recovery, stale approvals, and duplicate publication. Any new external fact-finding must become a delegated research ticket; a behavioral proof needing execution requires a separately authorized prototype ticket. Do not claim simulations or code sketches prove durability.
+Resolution should specify the executor's guarantees and identify precisely scoped unresolved proofs, with acceptance scenarios for crash recovery, stale approvals, and duplicate publication. The SQLite binding, ownership/fencing protocol, database layout, control-flow replay mechanism, and external-effect rules remain to be decided. Any new external fact-finding must become a delegated research ticket; a behavioral proof needing execution requires a separately authorized prototype ticket. Do not claim simulations or code sketches prove durability.
 
 ---
 

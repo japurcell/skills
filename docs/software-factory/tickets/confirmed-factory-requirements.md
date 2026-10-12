@@ -33,13 +33,13 @@ Imported from the existing conversation on 2026-10-12. This records prior human 
 
 ### Planning scope
 
-The user explicitly selected an implementation-ready specification as the destination. Current work captures decisions and plans the remaining sessions. Building the earlier Restate prototype is deferred.
+The user explicitly selected an implementation-ready specification as the destination. Current work captures decisions and plans the remaining sessions. The later executor decision supersedes the earlier Restate prototype direction; implementation awaits the specification.
 
 The user approved grilling plus codebase-design as the substitute for wayfinder's unavailable domain-modeling dependency.
 
 ### Proposals requiring a later decision
 
-Restate was selected for an earlier prototype, not a production stack. It remains the leading recommendation pending the broader design. Configuration profiles, runtime-specific child workflows, serialized integration, revision-bound evidence, streamed persisted events, and explicit improvement promotion remain proposals. Record their tradeoffs in the relevant open tickets before treating them as settled.
+Restate was selected for an earlier prototype, not a production stack. The user's later executor and continuation decisions are owned by [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) and supersede that prototype direction. Configuration profiles, runtime-specific child workflows, serialized integration, revision-bound evidence, streamed persisted events, and explicit improvement promotion remain proposals. Record their tradeoffs in the relevant open tickets before treating them as settled.
 
 TypeScript authoring was subsequently chosen by the user. The closed [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns that decision, the accepted task contract, and the other answers from its live exchange. Its code-level nesting decision does not select a runtime-specific child-workflow mechanism.
 

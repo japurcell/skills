@@ -6,7 +6,7 @@ An implementation-ready specification for a fully customizable, code-controlled 
 
 ## Notes
 
-- This is a planning map. The user chose this destination on 2026-10-12. Building the earlier Restate prototype is deferred.
+- This is a planning map. The user chose this destination on 2026-10-12. The earlier Restate prototype is superseded by the current executor direction; implementation remains outside this planning session.
 - Consult wayfinder and the narrow skills needed for the selected ticket. Use grilling plus codebase-design for design conversations. The user explicitly approved this substitute for the unavailable domain-modeling skill on 2026-10-12.
 - Consult prototype for a prototype ticket and research for a research ticket. Research tickets require an assigned research directory and a delegated researcher. No new research was launched merely to repeat the retained studies.
 - Work one decision ticket per session, except delegated research. Claim its file before work. Check the exact filenames in Blocked By; only closed prerequisites unblock it. Human decisions require a live exchange.
@@ -21,12 +21,17 @@ An implementation-ready specification for a fully customizable, code-controlled 
 
 - [Confirmed factory requirements](tickets/confirmed-factory-requirements.md): code-owned deterministic flows, fully customizable workflows, per-step agent choices, skill installation, and real-time session visibility.
 - [Workflow authoring and task contract](tickets/workflow-authoring-and-task-contract.md): TypeScript routines use managed steps; prose and structured plans become validated task graphs; declared outlines expand with discovered work.
+- [Local runtime prerequisites](tickets/local-runtime-prerequisites.md): Restate requires its server; DBOS TypeScript requires Postgres. Neither establishes an embedded-only TypeScript setup or proven native Windows packaging.
+- [Embedded graph runtime fit](tickets/embedded-graph-runtime-fit.md): LangGraph Functional API best matches the accepted authoring interface; Mastra is a graph-builder alternative. Local storage, crash recovery, and native Windows still require proof.
+- [Embedded workflow runtime fit](tickets/embedded-workflow-runtime-fit.md): Effect offers an explicitly embedded SQL-backed composition with unstable APIs; TanStack needs a local durable store. Workflow DevKit Local World is development/testing infrastructure, and Resonate's default SDK is not persistent.
+- [Restate and DBOS operating fit](tickets/service-engine-operating-fit.md): Restate retains a server and native Windows gap; DBOS TypeScript retains Postgres and packaging constraints. DBOS Python supports SQLite but changes the workflow-language contract. The [combined comparison](research/embedded-runtime-comparison.md) retains the research that preceded the user's executor decision.
+- [Operating and installation model](tickets/operating-and-installation-model.md): per-repository SQLite executor, foreground invocations, human-triggered Continue, skill-managed runtime, retained versions for unfinished runs, resumable Stop, and explicit cleanup with data-preserving uninstall.
 
 ## Not yet specified
 
 <!-- FOG START -->
 - The accepted contract covers repository changes and read-only audits. Other concrete workflow patterns may expose extension pressures beyond these examples; no separate question is sharp enough to ticket yet.
-- The chosen deployment and harness combination may reveal platform-specific process, permission, or recovery constraints not yet sharp enough to turn into a separate investigation.
+- Known native-platform, upgrade, shutdown, retention, and recovery mechanisms have owners in the existing tickets. Additional deployment/harness interactions may still expose narrower process or permission questions that cannot yet be stated precisely.
 - Observed improvement proposals may expose evaluation domains or ownership conflicts that need their own decisions after the core learning contract is set.
 <!-- FOG END -->
 
