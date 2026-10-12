@@ -1,5 +1,9 @@
 # Software factory design review
 
+The [wayfinder map](map.md) records confirmed requirements and routes the remaining planning sessions toward an implementation-ready specification. Open decision tickets live in [tickets/](tickets/).
+
+The [progress handoff](handoff.md) records current status, the next planning session, and verification limits.
+
 Open [the interactive comparison](prototypes/index.html), then explore:
 
 - [Repo runner](prototypes/repo-runner.html): ordinary code recipes and one local execution owner.

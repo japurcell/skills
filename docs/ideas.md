@@ -42,4 +42,4 @@ Use this file as a lightweight inbox for ideas that are not ready for research o
 
 ## Active research
 
-- **Agentic workflows/software factory**: [research and requirements](software-factory/research.md), [interactive prototype comparison](software-factory/prototypes/index.html), and [review instructions](software-factory/README.md). Architecture selection remains open for annotation and review.
+- **Agentic workflows/software factory**: [wayfinder planning map](software-factory/map.md), [research and requirements](software-factory/research.md), [interactive prototype comparison](software-factory/prototypes/index.html), and [review instructions](software-factory/README.md). Current planning targets an implementation-ready specification; unresolved architecture choices are captured in decision tickets.
