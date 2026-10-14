@@ -655,8 +655,12 @@
   "limitations": [
     "No fresh all-51 passing aggregate is claimed.",
     "Native Windows/ACL/junction and authenticated provider delivery remain unverified.",
-    "No release timing or resource gate has run in V1.",
-    "Phase 2 requires the clean coordinated rebase/fingerprint check before measurements; no V1 performance result is claimed here."
+    "Complete resources passed; complete timing failed 89 comparisons across 78 cases under unchanged budgets.",
+    "D2 owns diagnosis/repair; V1 remains incomplete. See V1-release-evidence.md."
   ],
-  "accepted_source_target": "3288cf4e8fe8899b9f179c49e6290e99f490051f"
+  "accepted_source_target": "3288cf4e8fe8899b9f179c49e6290e99f490051f",
+  "measured_candidate": "6c1623ff06d58566cf659658c9a92196b71bff7d",
+  "runtime_inventory_verified_after_rebase": true,
+  "finite_resource_gate": "passed",
+  "latency_acceptance": "rejected"
 }

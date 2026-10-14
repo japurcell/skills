@@ -1,0 +1,134 @@
+{
+  "gates_met": false,
+  "errors": [],
+  "sources_unchanged": true,
+  "violating_comparisons": 89,
+  "distinct_violating_cases": 78,
+  "by_phase": {
+    "warm-pair-1": 19,
+    "warm-pair-2": 59,
+    "cold": 11
+  },
+  "by_provider": {
+    "gemini": 48,
+    "copilot": 18,
+    "codex": 23
+  },
+  "warm_repeated_in_both_pairs": {
+    "copilot.guard.writer.chars-8787-segments-183": [
+      "warm-pair-1",
+      "warm-pair-2"
+    ],
+    "gemini.guard.write.utf8-growth": [
+      "warm-pair-1",
+      "warm-pair-2"
+    ],
+    "codex.guard.write.examples.md": [
+      "warm-pair-1",
+      "warm-pair-2"
+    ],
+    "codex.guard.write.examples.test.py": [
+      "warm-pair-1",
+      "warm-pair-2"
+    ],
+    "codex.guard.search.literal": [
+      "warm-pair-1",
+      "warm-pair-2"
+    ]
+  },
+  "median_failures": 78,
+  "p95_failures": 19,
+  "worst_median": {
+    "case": "copilot.guard.danger.unicode-normalization",
+    "phase": "warm-pair-2",
+    "delta_ms": {
+      "median_ms": 5.105,
+      "p95_ms": 8.988999999999997
+    },
+    "allowance_ms": {
+      "median_ms": 2,
+      "p95_ms": 5
+    }
+  },
+  "worst_p95": {
+    "case": "gemini.guard.danger.download_execute_sh",
+    "phase": "cold",
+    "delta_ms": {
+      "median_ms": 1.448999999999998,
+      "p95_ms": 16.334000000000003
+    },
+    "allowance_ms": {
+      "median_ms": 5,
+      "p95_ms": 10
+    }
+  },
+  "logging": {
+    "warm_statuses": {
+      "completed": 612,
+      "legacy transport exception": 12
+    },
+    "cold_statuses": {
+      "completed": 7650,
+      "legacy transport exception": 150
+    },
+    "completed_warm_records": 17748,
+    "completed_cold_records": 7650,
+    "completed_concurrency_records": 12
+  },
+  "concurrency": [
+    {
+      "case": "copilot.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 85.727792,
+      "samples_ms": [
+        24.247208,
+        78.952041
+      ]
+    },
+    {
+      "case": "gemini.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 37.708459,
+      "samples_ms": [
+        37.398458,
+        25.52625
+      ]
+    },
+    {
+      "case": "codex.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 75.221916,
+      "samples_ms": [
+        74.933084,
+        20.313458
+      ]
+    },
+    {
+      "case": "copilot.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 85.351083,
+      "samples_ms": [
+        85.019541,
+        28.893834
+      ]
+    },
+    {
+      "case": "gemini.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 42.196875,
+      "samples_ms": [
+        41.890916,
+        29.162708
+      ]
+    },
+    {
+      "case": "codex.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 23.340375,
+      "samples_ms": [
+        22.706791,
+        21.860709
+      ]
+    }
+  ]
+}

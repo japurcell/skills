@@ -1,0 +1,32 @@
+{
+  "candidate": "6c1623ff06d58566cf659658c9a92196b71bff7d",
+  "approved_base": "3288cf4e8fe8899b9f179c49e6290e99f490051f",
+  "baseline": "bc52d7d69aaa046ea97e323879402241a01fead7",
+  "baseline_archive_sha256": "9d9626b766a1c2f252b83554bc6876c7c3f0b8ee4278e6fa1b13c221fa263ff6",
+  "baseline_root": "<verification-temp>/hook-resilience-v1-phase2/baseline",
+  "candidate_root": "<verification-worktree>",
+  "evidence_dir": "<verification-temp>/hook-resilience-v1-phase2/evidence",
+  "runtime_inventory_sha256": "76e5086f4a3bc110e3d29547df04fabf5c64f6c3a469962dffd60e26267087b3",
+  "runtime_inventory_unchanged_after_rebase": true,
+  "expected_changes_since_install_probe": [
+    "docs/hook-resilience/I3-evidence.md",
+    "docs/hook-resilience/R1-spec-repair-review.md",
+    "docs/hook-resilience/R1-standards-repair-review.md",
+    "docs/hook-resilience/T9-evidence.md",
+    "docs/hook-resilience/V1-functional-artifacts.json",
+    "docs/hook-resilience/V1-functional-evidence.md",
+    "docs/hook-resilience/V1-functional-map.json",
+    "docs/hook-resilience/V1-installed-assets.json",
+    "docs/hook-resilience/V1-installer-first.log.gz",
+    "docs/hook-resilience/V1-installer-second.log.gz",
+    "docs/hook-resilience/V1-runtime-fingerprints.json",
+    "docs/hook-resilience/V1-source-reuse.json",
+    "docs/hook-resilience/implementation-ExecPlan.md",
+    "docs/hook-resilience/implementation-delegation.yml",
+    "scripts/observability-test-support.sh"
+  ],
+  "candidate_clean": true,
+  "coordinator_quiet_system_authorized": true,
+  "provider_observability_repeats_after_T9": "Both full public suites exit0 with all3 completion markers; primary proof at approved base",
+  "freshness": "38 outputs current after clean rebase; no new generator or suite run during measurements"
+}
