@@ -19,8 +19,8 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [x] (2026-10-14) [milestone-2] T3: Integrated verified acquisition as `b8f2b573`; merge33, all provider scanner/capture suites, rebased diagnostics8 and singleton pinning pass. [Evidence](T3-evidence.md).
 - [x] (2026-10-14) [milestone-2] T4a: Integrated bounded stream component as `1b44f4db`; component12, diagnostics8 and freshness38 pass on combined T3 tree. [Evidence](T4a-evidence.md).
-- [ ] [milestone-2] T4b: Integrate streaming detection, adopt bounded large-file policy, and verify public behavior.
-- [ ] [milestone-2] I2: Prove scanner sizes, detection, merge/capture, and bounded resource behavior on integrated source.
+- [x] (2026-10-14) [milestone-2] T4b: Integrated streaming/capacity as `e0e8418e`; public streaming13, component12, merge33 and all provider scanner suites pass. [Evidence](T4b-evidence.md).
+- [x] (2026-10-14) [milestone-2] I2: Integrated public streaming13 and 24 full-process resource cases pass; maximum sampled 2.293s, peak RSS 32.8-34.4 MB, successful concurrent logging. [Evidence](I2-evidence.md).
 - [x] (2026-10-14) [milestone-3] T5a: Integrated collector/CLI as `33b5bee2`; diagnostics8, generator26, Bash installers and macOS PowerShell installer checks pass. [Evidence](T5a-evidence.md).
 - [x] (2026-10-14) [milestone-3] T5b: Integrated deny-only recovery as `bec69068`; recovery10, diagnostics8, generator26, transport9, banners14 and provider scanner checks pass. [Evidence](T5b-evidence.md).
 - [ ] [milestone-3] T6: Bound diagnostic/audit records and preserve findings and audit outcomes under truncation/failure.
@@ -45,11 +45,11 @@ Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but 
 
 ## Outcomes & Retrospective
 
-Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown. Standalone diagnostics and in-hook recovery are integrated; scanner capacity and bounded reports remain unfinished.
+Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown. Standalone diagnostics and in-hook recovery are integrated; scanner capacity is accepted and bounded reports remain unfinished.
 
 Scheduling refinement: T4a is a separate canonical streaming component after D1, so it can proceed while T3 validates acquisition. T5b follows verified T3/T1/T2/T5a; it does not require larger-file acceptance. T4b follows T3/T4a/T5b, serializing scanner edits. T6 follows T4b/T5b. This replaces the earlier T4-before-T5b edge without changing final acceptance.
 
-Milestone1 is accepted on integrated `23f7f38b`: transport and full Guardian profiles pass composed positive/negative suites. T5a standalone diagnostics is integrated as `33b5bee2`, T3 acquisition as `b8f2b573`, and T4a component as `1b44f4db`. Their clean worktrees were archived and private branches removed. T3 repaired the reproduced long-path timeout without raising the eight-second budget; final serial merge33 and all provider suites pass. T4a component12 and diagnostics8 pass on the combined tree. T5b recovery is integrated as `bec69068`, including generator fixture repairs and explicit provider adapter parity. Post-rebase recovery10, diagnostics8 and generator26 pass. T4b is the next ready task. Scanner capacity and bounded reports remain unfinished, as do final review/resource/installation checks. No live installation has occurred.
+Milestone1 is accepted on integrated `23f7f38b`: transport and full Guardian profiles pass composed positive/negative suites. T5a standalone diagnostics is integrated as `33b5bee2`, T3 acquisition as `b8f2b573`, and T4a component as `1b44f4db`. Their clean worktrees were archived and private branches removed. T3 repaired the reproduced long-path timeout without raising the eight-second budget; final serial merge33 and all provider suites pass. T4a component12 and diagnostics8 pass on the combined tree. T5b recovery is integrated as `bec69068`, including generator fixture repairs and explicit provider adapter parity. Post-rebase recovery10, diagnostics8 and generator26 pass. T4b streaming is integrated as `e0e8418e`; its capacity, dense-line and shared-deadline public checks pass. I2 resource acceptance is met on the integrated source. Bounded reports remain unfinished, as do final review/resource/installation checks. No live installation has occurred.
 
 ## Context and Orientation
 
@@ -74,8 +74,8 @@ Acceptance: met
 
 ### Milestone 2: Stream larger candidates without losing detections
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 **D1, concrete design decision.** Prerequisites: P0. Read-only except `docs/hook-resilience/streaming-design.md`. Resolve a minimal snapshot/capture interface, classification replay, per-pattern nonoverlap, line/diff state, exact allowlists, bounds, and ownership for T3/T4. Also define T5's executable identity and fixed invocation so repository-controlled Python imports, script substitution, configuration, environment, and arbitrary operands cannot inherit trust. If a strict capability cannot be proved with the existing provider surface, choose a separate installed fixed command with explicit narrow parser and state its limits. Include proposed public tests and exact interfaces. Stop with an implementable decision and evidence, not source edits.
 
@@ -117,7 +117,7 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: T4b is connecting accepted acquisition, stream matching and recovery in `/Users/adam/.codex/worktrees/hook-stream-integration/skills`, then will verify public capacity and resource behavior. T5b is integrated and its clean worktree archived. All generated identities were refreshed and combined recovery/diagnostics/generator checks passed. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: dispatch T6 bounded reporting to a fresh implementer. I2 public streaming and complete-process resource checks pass on integrated `e0e8418e`; see `I2-evidence.md`. T4b's conflict-free rebase changed only coordinator plan/audit documents; frozen runtime evidence remains applicable. Its clean worktree was archived and private branch removed. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 
