@@ -123,7 +123,7 @@ fallback:
   reasoning_effort: <exact dispatch value>
 ```
 
-Use `fallback: none` when no exact same-tier fallback exists.
+Use `fallback: none` only if no other exact same-tier configuration meets runtime capabilities and user constraints. Explain what excludes the alternatives. Cheaper below-floor configurations remain ineligible.
 
 For an availability-driven higher-tier selection, report the selected tier and explain the lower capability floor and availability-driven increase in `reason`.
 

@@ -1,0 +1,29 @@
+{
+  "skill_name": "addy-code-review-and-quality",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Review this change from the supplied facts only. A custom element previously queried its current button in connectedCallback on every connection. The refactor stores the first result for the element's lifetime. Consumers may disconnect the element, replace its template and button, then reconnect. Tests cover only the first connection. Give the verdict and smallest verification needed. Do not run tools or change files.",
+      "expected_output": "Request changes: reconnect uses a stale button after template replacement. Preserve per-connection lookup or correct invalidation, and test disconnect, replacement, reconnect, and interaction with the new button in a browser.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Review this change from the supplied facts only. A timer component's only expiry test previously started the timer, advanced its clock to the deadline, and asserted completion. The replacement dispatches a completion event manually and asserts the listener ran. Production timing logic is unchanged. Give the verdict and smallest verification needed. Do not run tools or change files.",
+      "expected_output": "Request changes: the replacement proves listener handling but cannot catch broken expiry. Restore a test that starts the real timer logic and advances a controlled clock or waits for expiry without manually dispatching completion.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Review this change from the supplied facts only. A custom element now caches its queried button for one connection, clears the cache on disconnect, and queries again on reconnect. A browser test disconnects it, replaces the template, reconnects, and verifies interaction with the replacement button. No other behavior changes. Assess caching correctness only; do not invent missing evidence, run tools, or change files.",
+      "expected_output": "Accept the caching change on the supplied evidence: its lifetime and invalidation preserve per-connection behavior. Do not ban caching generally.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Review this change from the supplied facts only. A timer component retains its test that starts real timer logic, advances a controlled clock to the deadline, and asserts completion. A new separate listener test manually dispatches completion to isolate listener behavior. Assess test coverage only; do not invent missing evidence, run tools, or change files.",
+      "expected_output": "Accept the additional listener test because actual expiry remains covered. Do not ban manual events generally.",
+      "files": []
+    }
+  ]
+}
