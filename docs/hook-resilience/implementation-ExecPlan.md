@@ -1,0 +1,118 @@
+# Harden security hooks without losing enforcement
+
+This living ExecPlan is `docs/hook-resilience/implementation-ExecPlan.md`. Follow `.agents/skills/exec-plans/SKILL.md` and the user-invoked `execplan-implement` workflow. It supersedes the completed investigation plan for implementation status. The user authorized all fixes and recommended hardening on 2026-10-14. Work remains private on `codex/fix-hook-bug-reports-2`; do not push.
+
+## Purpose / Big Picture
+
+A benign 2,030,848-byte pending file must stop locking every tool out. Valid optional tool metadata must stop turning literal search data into shell commands. Malformed or stalled input must produce a bounded native denial before the host timeout. A trusted diagnostic capability must remain usable during candidate or audit failures without granting arbitrary commands an exemption. Build identity and bounded reports must make failures attributable without exposing credentials.
+
+Implement the complete hardening proposal, including streaming acquisition and matching, exact provider field profiles, trusted recovery, resource bounds, and realistic regression/release checks. Keep fail-closed security behavior and all existing detection semantics. Do not introduce broad read-only exemptions, caches of clean results, or an always-running service. Source tests, isolated installation, real installed deployment, and native-platform evidence are separate acceptance dimensions. Do not claim unavailable authenticated host or Windows execution.
+
+## Progress
+
+- [x] (2026-10-14) [milestone-1] P0: Read investigation, source boundaries, requirements, and validation routes; write this plan before implementation.
+- [ ] [milestone-1] T1: Bound shared transport; reproduce stalls, implement limits, and verify public providers.
+- [ ] [milestone-1] T2: Repair exact Guardian field profiles and full-envelope regressions.
+- [ ] [milestone-1] I1: Integrate T1/T2 and prove complete valid requests, strict negatives, and bounded malformed requests together.
+- [ ] [milestone-2] D1: Resolve streaming acquisition/matching interfaces and recovery trust boundary in retained design evidence.
+- [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
+- [ ] [milestone-2] T4: Stream detection, adopt bounded large-file policy, and verify equivalence.
+- [ ] [milestone-2] I2: Prove scanner sizes, detection, merge/capture, and bounded resource behavior on integrated source.
+- [ ] [milestone-3] T5: Add trusted diagnostic recovery, build fingerprints, and installed registration checks.
+- [ ] [milestone-3] T6: Bound diagnostic/audit records and preserve findings and audit outcomes under truncation/failure.
+- [ ] [milestone-3] I3: Prove large-file recovery, missing/audit failures, hostile metadata, and independent Guardian enforcement together.
+- [ ] [milestone-4] R1: Review all changes against standards and requested behavior, including security invariants; repair findings.
+- [ ] [milestone-4] V1: Complete generated freshness, affected suites, resource/performance gates, and isolated installed-delivery checks.
+- [ ] [milestone-4] K1: Complete one coordinated knowledge-maintenance pass, reconcile documentation, commit final evidence, and clean integrated worktrees.
+
+## Surprises & Discoveries
+
+The investigation reproduced the exact scanner error: one 2,030,848-byte file exceeds 1,048,576; nine smaller files totaling the same bytes pass. The scanner ignores requested tool arguments when selecting pending snapshots. A tracked large file with a tiny edit fails before diff inspection. All three providers distinguish fake-secret findings from incomplete scans.
+
+Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but denies the same request with `max_output_tokens: 1000`. Unknown optional fields force fallback rather than field-by-field validation. Current supported raw Copilot and Codex command-object patches pass. An incomplete JSON prefix kept Copilot Guardian alive for 10,507 ms beyond its configured ten-second host timeout. Git status can execute configured fsmonitor code, so command names alone cannot define recovery safety.
+
+## Decision Log
+
+- 2026-10-14: Keep the existing topic branch and baseline `bc52d7d69aaa046ea97e323879402241a01fead7`. Preserve investigation evidence while the active implementation depends on it.
+- 2026-10-14: Independent T1 and T2 may start together because canonical common and Guardian sources differ. Generated overlaps must be regenerated from combined canonical source during serialized integration, never resolved by choosing stale generated text.
+- 2026-10-14: Run D1 before scanner/recovery implementation because exact unbounded-token matching, classification replay, and executable identity are inseparable correctness decisions. D1 must produce concrete interfaces and a trustworthy diagnostic invocation, not defer those decisions to implementation.
+- 2026-10-14: Retain 256 snapshots, 8 MiB total logical candidate bytes, and eight-second scanner work budget initially. Replace the 1 MiB materialization limit only after streaming and equivalence tests pass. Raw transport must accommodate escaped maximum supported patch inputs plus metadata; choose and document concrete measured bounds in T1.
+- 2026-10-14: Worktree/branch commits and serial rebases are authorized by the invoked implementation skill. Do not install into live homes merely to obtain test evidence; use disposable homes first. Record any external delivery limitation explicitly.
+
+## Outcomes & Retrospective
+
+Implementation has not started. P0 is complete. Ready frontier: T1, T2, D1. No runtime fix or milestone acceptance is claimed. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
+
+## Context and Orientation
+
+Canonical Python renderers are `hooks/families/common.py`, `hooks/families/tool_guard.py`, and `hooks/families/scan_secrets.py`; `hooks/families/allowlist.py` supplies exact suppression. `hooks/manifest.py` lists generated outputs. `scripts/generate-hooks.py --write` renders provider-local entrypoints/helpers under `.github/hooks/`, `.copilot/hooks/`, `.gemini/hooks/`, and `.codex/hooks/`. Never hand-edit generated files. `scripts/test-all.py` explicitly registers maintained suites. Installers are `scripts/install.sh`, `scripts/install.ps1`, and the provider-specific Python installers.
+
+Scanner selects staged, working-tree, untracked, and unresolved merge snapshots. A path may contribute multiple snapshots. Ordinary tracked text in diff scope checks added lines; staged scope, untracked/unborn/merge snapshots check full content. Binary candidates check their ASCII projection, even after NUL. Credential paths are separate findings; `.env` alone is not a finding. Exact suppression uses `path:line:pattern:full_match`. GitHub fine-grained, Stripe, and Slack tokens have unbounded suffixes: fixed overlaps or truncated lines are incorrect. Allowlist input is bounded at 8,192 characters, permitting bounded state for matches that can no longer be suppressed. Late NUL/invalid UTF-8 can change classification. Pin index object IDs and replay one protected snapshot; do not reopen a mutable worktree path. Current repository enumeration and later diffs are not atomic, and this plan does not claim otherwise.
+
+Git captures use owner-only regular temporary files, bounded process waits, and descendant completion checks. Keep these guarantees while consuming captures incrementally. Audit success is required for clean enforcement; a failed log write is not a clean scan. Reports have a 64 KiB serialization bound and currently may lose positive findings when oversized details cause an exception. Raw input currently blocks before decoded policy limits; all providers need transport bounds.
+
+## Plan of Work
+
+### Milestone 1: Bound input and recognize real tool envelopes
+
+Status: open
+Acceptance: not met
+
+**T1, transport implementation.** Prerequisites: P0. Own `hooks/families/common.py`, transport-specific tests (add `scripts/test-hook-input-bounds.py` if needed), associated generated common outputs, and its evidence `docs/hook-resilience/T1-evidence.md`. Reproduce missing/incomplete stdin through public hooks first. Implement first-byte/incomplete idle and nonextendable total deadlines, raw byte/nesting limits, bounded trailing drain, and safe native failure propagation. Preserve complete JSON with open stdin, UTF-8, and Windows readiness support. Avoid quadratic repeated parsing. Choose explicit limits with escape-expansion headroom and denial-time reserve. Test slow trickle, malformed/deep/trailing input, maximum escaped valid input, and all providers. Stop after transport and focused compatibility proof; do not alter Guardian classification or scanner content policy.
+
+**T2, Guardian profiles.** Prerequisites: P0; independent of T1 implementation. Own canonical `hooks/families/tool_guard.py`, existing native/shell/corpus fixture tests, generated Guardian entrypoints/helpers, and `docs/hook-resilience/T2-evidence.md`. Reproduce valid output metadata causing `command_segments`, then validate supported known fields independently. Preserve executable `cmd`, workdir/shell/login/environment/permission option semantics, unknown-field strictness, whole-input budgets, patch delete/move protection, and exact body proof. Inert field addition must preserve decisions. Include current full Codex, Copilot, Gemini envelopes and paired executable/malformed/unknown negatives. Stop after profiles and focused Guardian tests.
+
+**I1, integration proof.** Prerequisites: integrated T1/T2. Coordinator verifies the resulting tree through transport, native-data, shell-data, limits, and false-positive suites. Validate valid full envelopes under transport limits, incomplete and malformed requests, and executable negatives. Regenerate all outputs and run freshness. This proof, not separate branch test success, establishes milestone acceptance.
+
+### Milestone 2: Stream larger candidates without losing detections
+
+Status: open
+Acceptance: not met
+
+**D1, concrete design decision.** Prerequisites: P0. Read-only except `docs/hook-resilience/streaming-design.md`. Resolve a minimal snapshot/capture interface, classification replay, per-pattern nonoverlap, line/diff state, exact allowlists, bounds, and ownership for T3/T4. Also define T5's executable identity and fixed invocation so repository-controlled Python imports, script substitution, configuration, environment, and arbitrary operands cannot inherit trust. If a strict capability cannot be proved with the existing provider surface, choose a separate installed fixed command with explicit narrow parser and state its limits. Include proposed public tests and exact interfaces. Stop with an implementable decision and evidence, not source edits.
+
+**T3, streaming acquisition.** Prerequisites: D1. Own candidate/Git/index acquisition portions of `hooks/families/scan_secrets.py`, capture/merge tests, generated scanner outputs, and `docs/hook-resilience/T3-evidence.md`. Implement incremental consumption of verified captures, pinned index IDs and bounded private snapshot spools. Release each snapshot rather than retaining all blobs. Preserve descriptor-relative/no-follow/regular-file checks, descendant validation, aggregate charging, cleanup and deadlines. Keep old size policy until T4 proves matching. Test unsafe files, growth/replacement, malformed captures, hidden staged and conflict-stage content. Stop at verified acquisition interface.
+
+**T4, streaming detection and capacity.** Prerequisites: integrated T3. Own scanner matching/diff/line processing and scanner streaming tests, generated scanner outputs, and `docs/hook-resilience/T4-evidence.md`. Implement bounded stateful matching with exact existing pattern/line/allowlist semantics and binary replay. Avoid unbounded line buffers, match strings, and line arrays. Consume diff capture incrementally. Adopt per-snapshot reads limited by remaining 8 MiB aggregate budget; allow the reported benign 2 MiB file and tiny tracked edits. Test tokens split at every boundary, greedy long suffix after allowlisted prefix, EOF, CRLF/split UTF-8, late binary markers, dense lines, full/diff/staged/merge parity, and first overflow. Stop after semantic and capacity proof.
+
+**I2, scanner integration proof.** Prerequisites: T3/T4 integrated. Run all three scanner suites, capture and merge suites, banners, and streaming matrix on base. Measure full-process elapsed time and memory for single-long-line, newline-dense, binary, and many-snapshot cases within existing work budget. Retain actual resource evidence and failures. No claim of RSS improvement without measurements. Reopen a bounded repair node for any mismatch.
+
+### Milestone 3: Recover safely and make incidents attributable
+
+Status: open
+Acceptance: not met
+
+**T5, recovery and identity.** Prerequisites: D1, integrated T1/T2/T4. Own a canonical diagnostics helper/CLI selected by D1, required manifest/installer updates, hook request integration, diagnostic tests, README usage, generated outputs, and `docs/hook-resilience/T5-evidence.md`. A fixed trusted capability returns bounded sanitized candidate identifiers/sizes, build/helper fingerprints, provider/profile, policy limits, and health. It must work before candidate scanning/audit dependencies and preserve independent Guardian validation. No arbitrary shell, path, script, or environment operands. Disable repository-controlled fsmonitor, external diff/textconv, pager, submodule execution, and imports; use metadata-only index/lstat where zero-body guarantees are needed. Omit/redact token-shaped names and control characters. Doctor checks loaded file identity and merged duplicate/unowned registrations without deleting them. Provide an out-of-band human invocation for broken transport/helpers. Test recovery from oversized/inaccessible candidate, audit/Git failure, hostile paths/config, missing/corrupt helpers, spoofed invocations, and diagnostic command injection. Stop after isolated installation and public workflow proof.
+
+**T6, bounded reports.** Prerequisites: integrated T5; serializes shared scanner/helper edits. Own scanner and Guardian report/audit serialization, shared safe diagnostic helpers as needed, security-banner tests, generated outputs, and `docs/hook-resilience/T6-evidence.md`. Bound retained bytes before serialization, sanitize labels and identifiers, include stable build/profile/route/cause fields, and preserve findings even when details are omitted. Track security outcome, audit outcome, omitted counts, and final enforcement distinctly. Audit failure must never turn incomplete into clean. Test maximum paths/fields, hundreds of findings, token-shaped paths, hostile control characters, audit contention/failure, and record-byte ceilings. Stop after explicit finding/incomplete/warn parity.
+
+**I3, recovery integration proof.** Prerequisites: integrated T5/T6. Public workflow: large safe file allows; an actual fake secret denies; candidate/audit failure denies ordinary calls but trusted diagnostics remains bounded and usable; repair and retry succeeds. Unknown tool shapes and attempted recovery abuse still deny. Verify all provider envelopes and isolated installed fingerprints.
+
+### Milestone 4: Review, validate release, and document accurately
+
+Status: open
+Acceptance: not met
+
+**R1, independent review.** Prerequisites: I1/I2/I3. Use `code-review-biaxis` for standards and originating-spec review of all changes since baseline, plus security attention to new trusted boundaries. Retain review findings. Delegate repairs as bounded nodes with explicit prerequisites and rerun affected checks. Do not treat a timed-out review as approval.
+
+**V1, release verification.** Prerequisites: R1 repairs integrated. Own test registry reconciliation and evidence; no broad source redesign. Run generated freshness, applicable Python/shell suites and isolated installer tests. Run the maintained Guardian 500 ms finite-input resource gate and matched warm/cold timing procedure without concurrent benchmarks/tests/generation. Native Windows and authenticated provider dispatch require those environments; record unavailable checks separately and do not fabricate delivery. Verify complete installed assets and preserved user registrations with disposable homes. No live-home mutation is required by this plan.
+
+**K1, final maintenance.** Prerequisites: all agents and accepted implementation/verification tasks finish. Run one `update-agent-docs` pass with knowledge admission; update README and affected canonical rules only for durable changed behavior. Apply OKF lint for canonical edits. Reconcile this plan and all milestone evidence. Commit authorized files and remove only clean, integrated task worktrees/branches. Keep unresolved external checks explicit.
+
+## Concrete Steps
+
+Next: commit this plan and retained investigation artifacts, create isolated task worktrees from that commit, then dispatch T1/T2/D1. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+
+Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
+
+For integration, require a clean task worktree, rebase its private branch onto current base, resolve generated overlaps by regeneration, verify affected interactions, commit SHA-reference repairs when necessary, then require a clean base and fast-forward only. Confirm matching branch tips. Coordinator owns active plan updates; workers own separate evidence files, avoiding plan conflicts. Check each worker at ten minutes and warn on overrun without interrupting solely for elapsed time.
+
+## Validation and Acceptance
+
+Every behavior change starts with a real generated-entrypoint fixture and fails before repair. Use temporary homes/repositories/logs, `OBSERVABILITY_TESTING=1`, fake credentials, and no inherited skip/allowlist overrides unless testing suppression. Exit zero alone is insufficient: assert provider JSON allow/deny, findings versus incomplete, sanitized reason, and audit result. Never weaken, skip, or delete a failing regression to obtain green results.
+
+Expected final outcomes: ordinary 2 MiB safe candidates pass within aggregate/time bounds; current complete valid tool envelopes preserve decisions; malformed input denies before host timeout; secrets still deny across staged/untracked/merge/binary/diff controls; trusted recovery survives content/audit failure without opening a general bypass; serialized reports remain bounded and attributable. Planned acceptance is not evidence. Record actual checks per task and composed proof per milestone.
+
+## Idempotence and Recovery
+
+Keep all task branches private and unpushed because integration rebases them. Preserve dirty worktrees and failed evidence; never remove unintegrated work. Regeneration is repeatable from canonical source. A failed integration reopens a repair task and leaves milestone acceptance unmet; independent nodes can proceed. Use Git revert for already-integrated changes if necessary, rather than rewriting base history. Do not change real credentials, disable hooks, remove user registrations, or treat diagnostic health as successful content inspection.
