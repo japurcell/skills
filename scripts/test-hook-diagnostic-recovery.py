@@ -26,6 +26,140 @@ def reason(response):
     return response.get("permissionDecisionReason", response.get("reason", response.get("hookSpecificOutput", {}).get("permissionDecisionReason", "")))
 
 class RecoveryTests(unittest.TestCase):
+    def installed_launch(self, installer):
+        with tempfile.TemporaryDirectory(prefix="trusted launch '") as directory:
+            base = Path(directory).resolve()
+            home, cwd = base / "home", base / "repository"
+            home.mkdir()
+            cwd.mkdir()
+            env = {key: value for key, value in os.environ.items() if key not in {"PYTHONPATH", "PYTHONHOME", "SKIP_SECRETS_SCAN", "SECRETS_ALLOWLIST"}}
+            env.update(HOME=str(home), USERPROFILE=str(home), CODEX_HOME=str(home / "custom-codex"), OBSERVABILITY_TESTING="1", OBSERVABILITY_LOG_PATH=str(base / "audit/log.jsonl"), AUDIT_LOG=str(base / "audit/audit.log"), AUDIT_LOCK=str(base / "audit/audit.lock"), SECRETS_LOG_DIR=str(base / "secrets"))
+            (base / "guardian").mkdir()
+            interpreter = base / "trusted python & '" / "python3"
+            interpreter.parent.mkdir()
+            interpreter.symlink_to(sys.executable)
+            env["PATH"] = str(interpreter.parent) + os.pathsep + env["PATH"]
+            subprocess.run(["git", "init", "-q", str(cwd)], check=True, capture_output=True)
+            command = ["bash", str(ROOT / "scripts/install.sh")] if installer == "bash" else ["pwsh", "-NoProfile", "-File", str(ROOT / "scripts/install.ps1")]
+            installed = subprocess.run(command, env=env, capture_output=True, timeout=90)
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            paths = {"codex": ".codex/hooks.json", "copilot": ".copilot/hooks/hooks.json", "gemini": ".gemini/settings.json"}
+            configs = {provider: json.loads((home / path).read_bytes()) for provider, path in paths.items()}
+            sentinel = base / "executed"
+            hostile = base / "hostile"
+            hostile.mkdir()
+            (hostile / "sitecustomize.py").write_text("from pathlib import Path\nPath(" + repr(str(sentinel)) + ").write_text('startup')\n")
+            for executable in ("python", "python3", "py"):
+                target = hostile / executable
+                target.write_text("#!/bin/sh\nprintf replaced > \"" + str(sentinel) + "\"\nexit 97\n")
+                target.chmod(0o755)
+            for attack in ("startup", "path"):
+                attack_env = {**env, "PYTHONPATH": str(hostile)}
+                if attack == "path":
+                    attack_env["PATH"] = str(hostile)
+                for provider, config in configs.items():
+                    env["TOOL_GUARD_LOG_DIR"] = str(base / "guardian" / (provider if provider == "gemini" else provider + ".log"))
+                    event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
+                    handlers = config["hooks"][event]
+                    if provider != "copilot":
+                        handlers = [handler for group in handlers for handler in group["hooks"]]
+                    for filename in ("scan-secrets.py", "tool-guard.py"):
+                        with self.subTest(installer=installer, attack=attack, provider=provider, hook=filename):
+                            sentinel.unlink(missing_ok=True)
+                            handler = next(item for item in handlers if filename in item.get("command", item.get("bash", "")))
+                            registered = handler["bash" if provider == "copilot" else "command"]
+                            result = subprocess.run(["/bin/sh", "-c", registered], cwd=cwd, env={**attack_env, **handler.get("env", {})}, input=json.dumps(envelope(provider)).encode(), capture_output=True, timeout=12)
+                            self.assertFalse(sentinel.exists(), (registered, attack))
+                            self.assertEqual(result.returncode, 0, result.stderr)
+                            response = json.loads(result.stdout)
+                            if filename == "scan-secrets.py":
+                                self.diagnostics(response, result, provider)
+                            else:
+                                self.assertNotIn(PREFIX, reason(response))
+                            if provider == "copilot" and shutil.which("pwsh"):
+                                powershell = subprocess.run([shutil.which("pwsh"), "-NoProfile", "-NonInteractive", "-Command", handler["powershell"]], cwd=cwd, env={**attack_env, **handler.get("env", {})}, input=json.dumps(envelope(provider)).encode(), capture_output=True, timeout=12)
+                                self.assertEqual(powershell.returncode, 0, powershell.stderr)
+                                self.assertFalse(sentinel.exists())
+                                if filename == "scan-secrets.py":
+                                    self.diagnostics(json.loads(powershell.stdout), powershell, provider)
+                            ordinary = envelope(provider, "echo safe")
+                            if filename == "tool-guard.py":
+                                ordinary = envelope(provider, "git " + "push --force origin main")
+                            checked = subprocess.run(["/bin/sh", "-c", registered], cwd=cwd, env={**env, **handler.get("env", {})}, input=json.dumps(ordinary).encode(), capture_output=True, timeout=12)
+                            self.assertEqual(checked.returncode, 0, checked.stderr)
+                            checked_response = json.loads(checked.stdout)
+                            if filename == "tool-guard.py":
+                                self.assertIn("Tool Guardian blocked", reason(checked_response))
+                            else:
+                                self.assertEqual(checked_response, {})
+            self.assertTrue(any((base / "guardian").iterdir()))
+            for provider in PROVIDERS:
+                guard_log = base / "guardian" / ("gemini/guard.log" if provider == "gemini" else provider + ".log")
+                self.assertIn('"rule_id":"force_push_protected_branch"', guard_log.read_text())
+                self.assertIn('"audit_outcome":"written"', guard_log.read_text())
+            self.assertTrue((base / "secrets/scan.log").is_file())
+            self.assertTrue(all(json.loads(line)["status"] == "clean" for line in (base / "secrets/scan.log").read_text().splitlines()))
+            candidate = cwd / "credential.txt"
+            candidate.write_text("ghp_" + "A" * 36)
+            for provider, config in configs.items():
+                event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
+                handlers = config["hooks"][event]
+                if provider != "copilot":
+                    handlers = [handler for group in handlers for handler in group["hooks"]]
+                handler = next(item for item in handlers if "scan-secrets.py" in item.get("command", item.get("bash", "")))
+                result = subprocess.run(["/bin/sh", "-c", handler["bash" if provider == "copilot" else "command"]], cwd=cwd, env={**env, **handler.get("env", {})}, input=json.dumps(envelope(provider, "echo safe")).encode(), capture_output=True, timeout=12)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("potential secrets detected", reason(json.loads(result.stdout)))
+            candidate.unlink()
+            for provider in PROVIDERS:
+                cli = home / entry(provider).with_name("hooks-diagnostics.py")
+                doctor = subprocess.run([sys.executable, "-I", "-S", "-B", str(cli), "--doctor"], cwd=cwd, env=env, capture_output=True, timeout=5)
+                self.assertEqual(doctor.returncode, 0, doctor.stderr)
+                registrations = json.loads(doctor.stdout)["registrations"]
+                self.assertEqual(registrations["health"], "observed", registrations)
+                config = configs[provider]
+                event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
+                handlers = config["hooks"][event]
+                if provider != "copilot":
+                    handlers = [item for group in handlers for item in group["hooks"]]
+                handler = next(item for item in handlers if "scan-secrets.py" in item.get("command", item.get("bash", "")))
+                key = "bash" if provider == "copilot" else "command"
+                original = handler[key]
+                handler[key] += " --doctor"
+                (home / paths[provider]).write_text(json.dumps(config))
+                rejected = subprocess.run([str(interpreter), "-I", "-S", "-B", str(cli), "--doctor"], cwd=cwd, env=env, capture_output=True, timeout=5)
+                registrations = json.loads(rejected.stdout)["registrations"]
+                self.assertGreater(registrations["missing"], 0)
+                self.assertGreater(registrations["unowned"], 0)
+                handler[key] = original
+                (home / paths[provider]).write_text(json.dumps(config))
+            repeated = subprocess.run(command, env=env, capture_output=True, timeout=90)
+            self.assertEqual(repeated.returncode, 0, repeated.stderr)
+            for provider, config in configs.items():
+                self.assertEqual(json.loads((home / paths[provider]).read_bytes()), config)
+            refused_home = base / "unsupported%home"
+            refused_home.mkdir()
+            (refused_home / "preserved").write_text("unchanged")
+            refused_env = {**env, "HOME": str(refused_home), "USERPROFILE": str(refused_home), "CODEX_HOME": str(refused_home / "custom-codex")}
+            refused_env.update(XDG_CACHE_HOME=str(base / "shell-cache"), XDG_DATA_HOME=str(base / "shell-data"), XDG_CONFIG_HOME=str(base / "shell-config"), PSModuleAnalysisCachePath=str(base / "shell-module-cache"))
+            if installer != "bash":
+                # PowerShell initializes its own cache before executing a script.
+                subprocess.run(["pwsh", "-NoProfile", "-Command", "exit 0"], env=refused_env, check=True, capture_output=True, timeout=10)
+            def fingerprint():
+                return {str(path.relative_to(refused_home)): (path.stat().st_mode, path.read_bytes() if path.is_file() else None) for path in refused_home.rglob("*")}
+            before = fingerprint()
+            refused = subprocess.run(command, env=refused_env, capture_output=True, timeout=90)
+            self.assertNotEqual(refused.returncode, 0)
+            self.assertIn(b"unsupported Windows shell characters", refused.stderr)
+            self.assertEqual(fingerprint(), before)
+
+    def test_bash_installed_commands_resist_startup_and_path_injection(self):
+        self.installed_launch("bash")
+
+    @unittest.skipUnless(shutil.which("pwsh"), "PowerShell unavailable")
+    def test_powershell_installed_commands_resist_startup_and_path_injection(self):
+        self.installed_launch("powershell")
+
     def test_import_does_not_consume_open_stdin(self):
         for provider in PROVIDERS:
             with self.subTest(provider=provider), tempfile.TemporaryDirectory() as directory:

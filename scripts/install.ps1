@@ -84,9 +84,13 @@ function Get-PythonCommand {
     if ($null -eq $python) {
         Fail 'Missing Python executable: expected python3 or py.'
     }
+    $resolved = & $python.Source @arguments -I -S -c 'import sys; print(sys.executable)'
+    if ($LASTEXITCODE -ne 0 -or @($resolved).Count -ne 1 -or -not [System.IO.Path]::IsPathFullyQualified([string]$resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+        Fail 'Unable to resolve an absolute trusted Python executable.'
+    }
     return [pscustomobject]@{
-        Path = $python.Source
-        Arguments = $arguments
+        Path = [string]$resolved
+        Arguments = @('-B')
     }
 }
 
@@ -454,6 +458,9 @@ foreach ($config in @(
     & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --home $HOME --check
     if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
 }
+
+& $pythonCommand.Path @($pythonCommand.Arguments) $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }

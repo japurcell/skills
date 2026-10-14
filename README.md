@@ -88,6 +88,13 @@ its own failure may hide scanner diagnostics in a provider. A broken common
 transport helper or interpreter requires the standalone human CLI below.
 
 Each provider also installs a standalone `hooks-diagnostics.py` beside its scanner.
+Both installers pin scanner and Tool Guardian registrations to the absolute Python
+executable selected during installation, with `-I -S -B` and absolute installed
+script paths. These commands ignore Python startup configuration and later PATH
+changes. Reinstall after moving or removing that interpreter. The installing user
+must trust the selected interpreter and installed files; replacing them remains
+outside this protection. Windows paths containing shell expansion characters
+`%` or `!` are refused instead of registering an ambiguous command.
 From an ordinary human terminal, choose a trusted absolute Python executable and
 use isolated startup with the absolute installed script path, for example:
 

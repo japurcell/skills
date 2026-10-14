@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
+from trusted_hook_launch import SECURITY_HOOK_FILES, is_trusted_pair, trusted_command
 
 
 MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py")
@@ -99,11 +100,17 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
     return result
 
 
-def is_owned_handler(handler: dict[str, Any]) -> bool:
+def is_owned_handler(handler: dict[str, Any], hook_directory: Path | None = None) -> bool:
     posix = handler.get("command")
     windows = handler.get("commandWindows")
     if not isinstance(posix, str) or not isinstance(windows, str):
         return False
+    if hook_directory is not None:
+        # Exact trusted pairs remain owned when a reinstall selects a new Python.
+        for filename in SECURITY_HOOK_FILES:
+            script = hook_directory / filename
+            if is_trusted_pair(handler, script):
+                return True
     if posix not in OWNED_POSIX_COMMANDS:
         return False
     filename = posix.removeprefix("python3 ~/.codex/hooks/")
@@ -111,7 +118,7 @@ def is_owned_handler(handler: dict[str, Any]) -> bool:
     return windows.casefold() == expected_windows.casefold()
 
 
-def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str, Any]]], hook_directory: Path | None = None) -> dict[str, Any]:
     merged = json.loads(json.dumps(existing))
     hooks = merged.get("hooks")
     if hooks is None:
@@ -124,7 +131,7 @@ def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str,
         groups = validate_groups(hooks.get(event, []), f"Existing hooks.{event}")
         preserved_groups: list[dict[str, Any]] = []
         for group in groups:
-            remaining_handlers = [handler for handler in group["hooks"] if not is_owned_handler(handler)]
+            remaining_handlers = [handler for handler in group["hooks"] if not is_owned_handler(handler, hook_directory)]
             if remaining_handlers:
                 group["hooks"] = remaining_handlers
                 preserved_groups.append(group)
@@ -152,6 +159,14 @@ def main() -> int:
     try:
         template, _ = load_json_object(arguments.template, "template")
         maintained = template_groups(template)
+        hook_directory = arguments.destination.absolute().parent / "hooks"
+        for groups in maintained.values():
+            for group in groups:
+                for handler in group["hooks"]:
+                    for filename in SECURITY_HOOK_FILES:
+                        if handler["command"] == f"python3 ~/.codex/hooks/{filename}":
+                            handler["command"] = trusted_command(hook_directory / filename, "posix")
+                            handler["commandWindows"] = trusted_command(hook_directory / filename, "windows")
         if arguments.destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {arguments.destination}")
         destination_exists = arguments.destination.exists()
@@ -159,7 +174,7 @@ def main() -> int:
             existing, existing_bytes = load_json_object(arguments.destination, "destination")
         else:
             existing, existing_bytes = {}, b""
-        merged = merged_config(existing, maintained)
+        merged = merged_config(existing, maintained, hook_directory)
         if destination_exists and merged == existing:
             if not arguments.check:
                 os.chmod(arguments.destination, 0o600)

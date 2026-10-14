@@ -161,6 +161,7 @@ function New-FixtureRepo {
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/file_io.py') -Destination (Join-Path $Repo 'scripts/file_io.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/trusted_hook_launch.py') -Destination (Join-Path $Repo 'scripts/trusted_hook_launch.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
@@ -1053,12 +1054,12 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
         $preCommands = @($config['hooks']['PreToolUse'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected PreToolUse to retain the maintained scanner.'
-        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/tool-guard.py') -Message 'Expected Codex Tool Guardian registration.'
+        Assert-True -Condition (@($preCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition (@($preCommands -match ' -I -S -B .*tool-guard.py').Count -eq 1) -Message 'Expected Codex Tool Guardian registration.'
         $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition ($stopCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected Stop to retain the maintained scanner.'
-        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
-        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
+        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected Stop to retain the maintained scanner.'
+        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
+        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {

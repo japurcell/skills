@@ -60,6 +60,7 @@ import json as _diag_json
 import os as _diag_os
 from pathlib import Path as _DiagPath
 import re as _diag_re
+import shlex as _diag_shlex
 import stat as _diag_stat
 import sys as _diag_sys
 import time as _diag_time
@@ -305,6 +306,49 @@ def _diag_fingerprint(event, matcher, handler):
     return _diag_json.dumps([event, matcher, handler], sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
+def _diag_installed_expected(script, registrations=None, executable=None):
+    registrations = DIAG_REGISTRATIONS if registrations is None else registrations
+    expected = set(registrations)
+    for serialized in registrations:
+        event, matcher, handler = _diag_json.loads(serialized)
+        keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
+        for filename in ("scan-secrets.py", "tool-guard.py"):
+            if not any(filename in handler.get(key, "") for key in keys):
+                continue
+            arguments = [executable or _diag_sys.executable, "-I", "-S", "-B", str(_DiagPath(script).absolute().parent / filename)]
+            for key in keys:
+                if key == "powershell":
+                    command = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
+                elif key == "commandWindows" or (key == "command" and _diag_os.name == "nt"):
+                    command = '"' + arguments[0] + '" -I -S -B "' + arguments[-1] + '"'
+                else:
+                    command = _diag_shlex.join(arguments)
+                handler[key] = command
+            expected.discard(serialized)
+            expected.add(_diag_fingerprint(event, matcher, handler))
+    return expected
+
+
+def _diag_registered_python(handler):
+    command = handler.get("bash" if DIAG_PROVIDER == "copilot" else "command")
+    if not isinstance(command, str):
+        return None
+    try:
+        if DIAG_PROVIDER == "gemini" and _diag_os.name == "nt":
+            prefix, separator, remainder = command.partition(" -I -S -B ")
+            executable = prefix[1:-1] if prefix.startswith('"') and prefix.endswith('"') else prefix
+            if not separator:
+                return None
+        else:
+            arguments = _diag_shlex.split(command)
+            if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
+                return None
+            executable = arguments[0]
+        return executable if _DiagPath(executable).is_absolute() else None
+    except ValueError:
+        return None
+
+
 def _diag_registrations(script, deadline):
     root = _DiagPath(script).parent
     root = root.parent if DIAG_PROVIDER == "codex" else root.parent.parent
@@ -319,7 +363,10 @@ def _diag_registrations(script, deadline):
             raise _DiagnosticsUnavailable("malformed")
         if any(key in config for key in ("include", "includes", "extends")):
             raise _DiagnosticsUnavailable("config_includes")
-        expected = set(DIAG_REGISTRATIONS)
+        expected = _diag_installed_expected(script)
+        # Source/copy fixtures retain canonical registrations; installed commands
+        # must match an exact launch, including every interpreter operand.
+        source_expected = set(DIAG_REGISTRATIONS)
         seen = set()
         matched = set()
         events = set()
@@ -339,14 +386,23 @@ def _diag_registrations(script, deadline):
                     if not isinstance(handler, dict):
                         raise _DiagnosticsUnavailable("malformed")
                     key = _diag_fingerprint(event, None if DIAG_PROVIDER == "copilot" else group.get("matcher"), handler)
+                    executable = _diag_registered_python(handler)
+                    selected_expected = _diag_installed_expected(script, executable=executable) if executable else expected
                     commands = {field: handler[field] for field in ("bash", "powershell", "command", "commandWindows") if field in handler}
                     duplicate_key = _diag_fingerprint(event, None, commands or handler)
                     if duplicate_key in seen:
                         result["duplicates"] += 1
                     seen.add(duplicate_key)
-                    if key in expected:
+                    if key in selected_expected or key in source_expected:
                         result["owned"] += 1
-                        matched.add(key)
+                        if key in source_expected:
+                            matched.update(_diag_installed_expected(script, [key]))
+                        else:
+                            # Retain one stable identity when doctor uses another
+                            # trusted interpreter than the one selected at install.
+                            for canonical in DIAG_REGISTRATIONS:
+                                if key in _diag_installed_expected(script, [canonical], executable):
+                                    matched.update(_diag_installed_expected(script, [canonical]))
                     else:
                         result["unowned"] += 1
         result["missing"] = len(expected - matched)
