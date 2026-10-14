@@ -87,8 +87,10 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 17:37 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    output_verified: true
+    integrated_commit: bec690683c689d3a46ac02eb603cccafba30c751
+    checkpoint: continued beyond ten minutes for generator compatibility and rebased proof
     routing_compliant: true
   - subtask_id: R0b
     agent: /root/stream_boundary_review
