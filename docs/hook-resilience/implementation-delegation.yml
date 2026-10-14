@@ -16,8 +16,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 16:43 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    output_verified: true
+    integrated_commit: 462603219da7127fea68e2ad282402d75bf1c1c4
     routing_compliant: true
   - subtask_id: D1
     agent: /root/stream_design

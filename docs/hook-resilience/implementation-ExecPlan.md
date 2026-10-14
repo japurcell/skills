@@ -12,7 +12,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 
 - [x] (2026-10-14) [milestone-1] P0: Read investigation, source boundaries, requirements, and validation routes; write this plan before implementation.
 - [ ] [milestone-1] T1: Bound shared transport; reproduce stalls, implement limits, and verify public providers.
-- [ ] [milestone-1] T2: Repair exact Guardian field profiles and full-envelope regressions.
+- [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [ ] [milestone-1] I1: Integrate T1/T2 and prove complete valid requests, strict negatives, and bounded malformed requests together.
 - [ ] [milestone-2] D1: Resolve streaming acquisition/matching interfaces and recovery trust boundary in retained design evidence.
 - [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
@@ -41,7 +41,7 @@ Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but 
 
 ## Outcomes & Retrospective
 
-P0 is committed as `3976fccc`. T1, T2, and D1 are running in isolated managed worktrees. No runtime fix or milestone acceptance is claimed. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
+P0 is committed as `3976fccc`. T2 is integrated as `46260321`; its clean worktree was archived and private branch removed. T1 and D1 remain active. Guardian source behavior is repaired and focused checks pass; composed milestone acceptance remains unmet until T1 integration. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
 
 ## Context and Orientation
 
@@ -101,7 +101,7 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: verify T1/T2/D1 evidence as results arrive, integrate their clean committed branches serially, then dispatch T3 after the design decision is verified. Their worktrees are `/Users/adam/.codex/worktrees/hook-transport-bounds/skills`, `/Users/adam/.codex/worktrees/hook-provider-profiles/skills`, and `/Users/adam/.codex/worktrees/hook-streaming-design/skills`. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: verify T1/D1 evidence as results arrive, integrate their clean committed branches serially, then dispatch T3 after the design decision is verified. Active worktrees are `/Users/adam/.codex/worktrees/hook-transport-bounds/skills` and `/Users/adam/.codex/worktrees/hook-streaming-design/skills`. T2's conflict-free rebase changed only its documentation ancestry; existing source verification remains applicable. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 
