@@ -186,7 +186,7 @@ test_missing_git_block_mode_uses_copilot_denial_envelope() {
     "Expected missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected missing-Git block mode to deny through the Copilot envelope."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=$(jq -r .build "$log_dir/scan.log"); profile=pending_snapshots_v1; route=pending_scan; cause=git_unavailable." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected missing-Git denial reason to remain stable."
 }
@@ -225,7 +225,7 @@ test_audit_init_failure_block_mode_uses_copilot_denial_envelope() {
     "Expected audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected audit-init block mode to deny through the Copilot envelope."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=$(jq -r .build "$log_dir/scan.log"); profile=pending_snapshots_v1; route=pending_scan; cause=audit_unavailable." \
     "$(jq -r '.permissionDecisionReason' <<<"$output")" \
     "Expected audit-init denial reason to remain stable."
 }
@@ -380,7 +380,7 @@ import time
 descriptor = os.open(sys.argv[1], os.O_CREAT | os.O_RDWR, 0o600)
 fcntl.flock(descriptor, fcntl.LOCK_EX)
 Path(sys.argv[2]).write_text("ready", encoding="utf-8")
-time.sleep(5)
+time.sleep(30)  # Test cleanup releases the lock after both bounded hook calls.
 PY
   locker_pid=$!
   trap 'kill "'"$locker_pid"'" 2>/dev/null || true; wait "'"$locker_pid"'" 2>/dev/null || true; rm -rf "'"$workdir"'"' RETURN
@@ -878,8 +878,8 @@ test_unusual_filename_and_double_plus_added_line_are_scanned() {
   )"
 
   assert_json_output "$output" "Expected unusual-path scan to emit JSON."
-  assert_file_contains "$log_dir/scan.log" '"path":"odd\nname.env"' \
-    "Expected NUL-delimited Git paths to preserve embedded newlines."
+  assert_file_contains "$log_dir/scan.log" '"path":"odd name.env","line":1' \
+    "Expected the newline-bearing Git path to be scanned and safely displayed."
   assert_file_contains "$log_dir/scan.log" '"path":"notes.txt","line":2' \
     "Expected added content beginning with two plus signs to be scanned inside a hunk."
 }

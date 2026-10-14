@@ -169,7 +169,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini missing-Git block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=$(jq -r .build "$log_dir/scan.log"); profile=pending_snapshots_v1; route=pending_scan; cause=git_unavailable." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini missing-Git denial reason to remain stable."
 }
@@ -208,7 +208,7 @@ test_audit_init_failure_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini audit-init block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=$(jq -r .build "$log_dir/scan.log"); profile=pending_snapshots_v1; route=pending_scan; cause=audit_unavailable." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini audit-init denial reason to remain stable."
 }
@@ -248,7 +248,7 @@ test_warn_mode_reports_findings_with_json_output() {
     "Expected warn mode log to record detected pattern."
   assert_file_contains "$log_dir/scan.log" '"redactedMatch":"ghp_...3456"' \
     "Expected warn mode log to redact stored match values."
-  assert_equals "scan-secrets warning: session-end scan; potential secrets detected." "$(jq -r '.systemMessage' <<<"$output")" \
+  assert_equals "scan-secrets warning: session-end scan; potential secrets detected. security_outcome=findings; audit_outcome=written; enforcement=allow; build=$(jq -r .build "$log_dir/scan.log"); profile=pending_snapshots_v1; route=pending_scan; cause=findings." "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected findings to surface via Gemini systemMessage."
 }
 
@@ -533,8 +533,8 @@ test_unusual_filename_and_double_plus_added_line_are_scanned() {
   )"
 
   assert_json_output "$output" "Expected Gemini unusual-path scan to emit JSON."
-  assert_file_contains "$log_dir/scan.log" '"path":"odd\nname.env"' \
-    "Expected Gemini NUL-delimited Git paths to preserve embedded newlines."
+  assert_file_contains "$log_dir/scan.log" '"path":"odd name.env","line":1' \
+    "Expected the Gemini newline-bearing Git path to be scanned and safely displayed."
   assert_file_contains "$log_dir/scan.log" '"path":"notes.txt","line":2' \
     "Expected Gemini added content beginning with two plus signs to be scanned inside a hunk."
 }

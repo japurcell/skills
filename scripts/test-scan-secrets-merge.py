@@ -133,7 +133,13 @@ class MergeScannerTests(unittest.TestCase):
                 self.assertIn(diagnostic["cause"], record["note"])
                 self.assertIn(diagnostic["operation"], record["note"])
                 self.assertNotIn(str(self.repo), json.dumps(response) + json.dumps(record))
+                if record["security_outcome"] == "findings":
+                    detail = "potential secrets detected; scan incomplete."
                 detail += " " + record["note"]
+            self.assertRegex(record["build"], r"^[0-9a-f]{16}$")
+            detail += (f" security_outcome={record['security_outcome']}; audit_outcome=written; "
+                       f"enforcement={'allow' if mode == 'warn' else 'deny'}; build={record['build']}; "
+                       f"profile=pending_snapshots_v1; route=pending_scan; cause={record['cause']}.")
             reason = f"scan-secrets blocked: tool scan; {detail}"
             if mode == "warn":
                 expected = {"systemMessage": f"scan-secrets warning: tool scan; {detail}"}

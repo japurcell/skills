@@ -53,6 +53,21 @@ again. Git captures retain their separate 8 MiB bound. For example,
 allowance without exposing its name or contents. Large or unusually dense inputs
 can still reach the work or Git-capture limits.
 
+Scanner audit records retain at most 100 findings from 1,000 processed findings
+and stay within 64 KiB including JSON escaping and the newline. Guardian audit
+records stay within 16 KiB. Reports bound and sanitize displayed labels before
+serialization, replace token-shaped identifiers, remove control characters, and
+use hook-generated timestamps. Omitted finding and path counts are explicit;
+reports never include arbitrary file bodies. Build, provider, profile, route and
+cause fields identify the compiled policy and classification path, including
+strict fallback for unsupported or malformed native input.
+
+Security findings, inspection completeness, audit writes and final enforcement
+are separate outcomes. A known finding survives later incomplete inspection or
+audit failure. Block mode denies these calls; scanner warn mode keeps its warning
+behavior. Guardian preserves warnings for detected operations, while incomplete
+inspection and clean calls whose audit fails remain denied.
+
 For hook-owned recovery metadata, request the exact literal command
 `hooks-diagnostics-v1` through the provider's native shell tool. Codex uses
 `exec_command` (or `functions.exec_command`) with

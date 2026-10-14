@@ -971,8 +971,14 @@ class GenerateHooksTests(unittest.TestCase):
                     "session_id": "x" * module.MAX_LOG_RECORD_BYTES,
                 }
                 with self.subTest(provider=module.__name__, case="oversized-record"):
-                    with self.assertRaises(module.ScanLimitExceeded):
-                        module.append_scan_log(**oversized_arguments)
+                    module.append_scan_log(**oversized_arguments)
+                    record_bytes = log_path.read_bytes().splitlines(keepends=True)[-1]
+                    self.assertLessEqual(len(record_bytes), module.MAX_LOG_RECORD_BYTES)
+                    record = json.loads(record_bytes)
+                    self.assertEqual(record["sessionId"], "x" * 157 + "...")
+                    self.assertEqual(record["status"], "clean")
+                    self.assertEqual(record["security_outcome"], "clean")
+                    self.assertEqual(record["audit_outcome"], "written")
 
                 if hasattr(os, "symlink"):
                     log_path.unlink()

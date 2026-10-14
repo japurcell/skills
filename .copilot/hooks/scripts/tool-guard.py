@@ -59,6 +59,12 @@ def emit_deny_response(reason: str) -> None:
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
+REPORT_BUILD = "0d4a070002324c17"
+TOOL_PROFILE = "unsupported"
+TOOL_ROUTE = "strict_fallback"
+PROFILE_CAUSE = "unsupported_tool_profile"
+MAX_GUARD_LOG_BYTES = 16384
+
 try:
     from helpers.tool_guard_policy import (
         MAX_SCAN_TEXT,
@@ -123,9 +129,13 @@ try:
         _has_forbidden_allowlist_separator,
         parse_allowlist,
         allowlist_contains,
+        report_text,
+        report_json_bytes,
     )
 except Exception:
-    emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+    emit_deny_response("Tool Guardian blocked execution due to an internal error. "
+                       f"security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
+                       "profile=unavailable; route=bootstrap; cause=policy_unavailable.")
 
 
 def read_tool_name(payload: dict) -> str:
@@ -268,6 +278,7 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
 
 
 def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
+    global TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE
     value = _read_tool_input_value(payload)
     tool_name = read_tool_name(payload)
     if isinstance(value, str):
@@ -279,6 +290,11 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
             return (value,)
     else:
         native = _native_tool_shape(tool_name, value)
+    if native:
+        TOOL_PROFILE = native.kind + "_v1"
+        PROFILE_CAUSE = "recognized_profile"
+    elif tool_name.casefold() in KNOWN_TOOL_FIELDS:
+        PROFILE_CAUSE = "native_profile_rejected"
     byte_limit = MAX_SCAN_TEXT
     if native and native.kind == "patch":
         byte_limit = MAX_NATIVE_PATCH_BYTES
@@ -334,7 +350,9 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
         if native.kind == "patch":
             native = _parse_native_patch(native.data[0])
         if native is not None:
+            TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE = native.kind + "_v1", "native", "recognized_profile"
             return native
+        TOOL_PROFILE, PROFILE_CAUSE = "unsupported", "native_profile_rejected"
         if isinstance(value, str):
             return (value,)
         if total_string_bytes > MAX_SCAN_TEXT:
@@ -343,6 +361,61 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
         raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
     serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
     return tuple(strings) + tuple(keys) + (serialized,)
+
+
+def guard_report(payload):
+    """Retain bounded owned metadata, then serialize in the provider adapter."""
+    security = "findings" if payload.get("threat_count") else "clean"
+    threats = payload.get("threats", [])
+    incomplete = any(item["category"] in {"input_limits", "inspection_failure"} for item in threats)
+    if incomplete:
+        security = "incomplete"
+    payload.update(build=REPORT_BUILD, provider=TOOL_PROVIDER, profile=TOOL_PROFILE,
+                   route=TOOL_ROUTE, profile_cause=PROFILE_CAUSE,
+                   cause=threats[0]["rule_id"] if threats else payload["event"],
+                   security_outcome=security, audit_outcome="written",
+                   inspection_outcome="incomplete" if incomplete else "complete",
+                   enforcement="deny" if incomplete or (security == "findings" and payload["mode"] == "block") else "allow",
+                   omittedThreats=0)
+    payload["tool"] = report_text(payload["tool"])
+    if "excerpt" in payload:
+        payload["excerpt"] = report_text(payload["excerpt"])
+    while report_json_bytes(payload) > MAX_GUARD_LOG_BYTES - 256 and threats:
+        threats.pop()
+        payload["omittedThreats"] += 1
+    return payload
+
+
+def record_guard(event, mode, tool_name, threats=None, excerpt="command omitted"):
+    threats = threats or []
+    try:
+        log_payload(event, mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+    except Exception:
+        # A failed audit cannot erase a security finding or allow a clean call.
+        incomplete = any(t["category"] in {"input_limits", "inspection_failure"} for t in threats)
+        warning = mode == "warn" and threats and not incomplete
+        outcome = "warning" if warning else "blocked"
+        reason = build_block_reason(tool_name, threats, excerpt, outcome) if threats else "Tool Guardian blocked: audit unavailable."
+        reason += (f" security_outcome={'incomplete' if incomplete else 'findings' if threats else 'clean'}; audit_outcome=failed; "
+                   f"enforcement={'allow' if warning else 'deny'}; build={REPORT_BUILD}; "
+                   f"profile={TOOL_PROFILE}; route={TOOL_ROUTE}; cause=audit_unavailable.")
+        if warning:
+            emit_allow_response(reason)
+        emit_deny_response(reason)
+
+
+def attributed_reason(tool_name, threats, excerpt, outcome):
+    incomplete = any(t["category"] in {"input_limits", "inspection_failure"} for t in threats)
+    cause = threats[0]["rule_id"] if threats else PROFILE_CAUSE
+    return (build_block_reason(tool_name, threats, excerpt, outcome)
+            + f" security_outcome={'incomplete' if incomplete else 'findings'}; audit_outcome=written; "
+            + f"enforcement={'allow' if outcome == 'warning' else 'deny'}; build={REPORT_BUILD}; "
+            + f"profile={TOOL_PROFILE}; route={TOOL_ROUTE}; cause={cause}.")
+
+
+def input_failure_reason(reason, cause):
+    return (reason + f" security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
+            + f"profile=unsupported; route=input_validation; cause={cause}.")
 
 
 # BEGIN PROVIDER ADAPTER
@@ -373,12 +446,15 @@ def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, th
         payload["threats"] = threats or []
         payload["excerpt"] = excerpt or "command omitted"
 
+    payload = guard_report(payload)
+
     old_audit_log = os.environ.get("AUDIT_LOG")
     old_audit_lock = os.environ.get("AUDIT_LOCK")
     try:
         os.environ["AUDIT_LOG"] = LOG_FILE
         os.environ["AUDIT_LOCK"] = LOCK_FILE
-        audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        if not audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=True, separators=(",", ":"))):
+            raise OSError("audit_unavailable")
     finally:
         if old_audit_log is None:
             os.environ.pop("AUDIT_LOG", None)
@@ -403,13 +479,13 @@ def main() -> int:
     try:
         payload = read_json_input()
     except ValueError:
-        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
     except Exception as exc:  # noqa: BLE001 - intentional top-level fallback
         print(f"Tool Guardian failed to read input: {format_error(exc)}", file=sys.stderr)
-        emit_deny_response("Tool Guardian skipped: unexpected exception.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: unexpected exception.", "input_read_failed"))
 
     if not isinstance(payload, dict):
-        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
 
     tool_name = read_tool_name(payload)
     try:
@@ -421,26 +497,26 @@ def main() -> int:
         threats = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
     if any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
         excerpt = "command omitted"
-        log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
-        emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
+        record_guard("threats_detected", mode, tool_name, threats, excerpt)
+        emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
 
     tool_input = read_tool_input(payload)
     allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
 
     if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
-        log_payload("guard_skipped", mode, tool_name)
+        record_guard("guard_skipped", mode, tool_name)
         emit_allow_response()
 
     if not threats:
-        log_payload("guard_passed", mode, tool_name)
+        record_guard("guard_passed", mode, tool_name)
         emit_allow_response()
 
     excerpt = build_action_excerpt(tool_input, threats)
-    log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+    record_guard("threats_detected", mode, tool_name, threats, excerpt)
     if mode == "warn":
-        emit_allow_response(build_block_reason(tool_name, threats, excerpt, "warning"))
+        emit_allow_response(attributed_reason(tool_name, threats, excerpt, "warning"))
 
-    emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
+    emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
 
 
 if __name__ == "__main__":
@@ -450,4 +526,4 @@ if __name__ == "__main__":
         raise
     except Exception as exc:  # noqa: BLE001 - intentional fail-closed safety net
         print(f"Tool Guardian failed unexpectedly: {format_error(exc)}", file=sys.stderr)
-        emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+        emit_deny_response(input_failure_reason("Tool Guardian blocked execution due to an internal error.", "internal_error"))

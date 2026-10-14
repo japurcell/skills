@@ -381,8 +381,8 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'copilot'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '4e17b5a249325eaba76eac8d7f73aa36d6910bb12ab2d4c9079638a58412cdd9'
-DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', '87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
+DIAG_BUILD = 'ccf1487cdf45492a10caf0e610399d5045735f3e5f5d5055406a49750e7b0235'
+DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'ae9e918541a62874a329074d9cff4721ae9c37f42333a1360c1dcda23e63cab6'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['agentStop', 'errorOccurred', 'notification', 'permissionRequest', 'postToolUse', 'postToolUseFailure', 'preCompact', 'preToolUse', 'sessionEnd', 'sessionStart', 'subagentStart', 'subagentStop', 'userPromptSubmitted', 'userPromptTransformed']
 DIAG_REGISTRATIONS = ['["agentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"agentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["errorOccurred",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"errorOccurred"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["notification",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"notification"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["permissionRequest",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"permissionRequest"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/tool-guard.py","env":{"GUARD_MODE":"block"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/tool-guard.py\\"","timeoutSec":10,"type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"block","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["preCompact",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preCompact"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUseFailure",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUseFailure"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionEnd"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","timeoutSec":30,"type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/bell.py","powershell":"python \\"$HOME/.copilot/hooks/scripts/bell.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"warn","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/load-required-skills.py","env":{"AGENTS_REQUIRED_SKILL_FILES":"caveman/SKILL.md"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/load-required-skills.py\\"","type":"command"}]', '["userPromptSubmitted",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptSubmitted"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["userPromptTransformed",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptTransformed"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]']
@@ -533,6 +533,11 @@ CANDIDATE_UNMERGED_STAGES = ("unmerged-base", "unmerged-ours", "unmerged-theirs"
 CANDIDATE_UNMERGED_WORKTREE = "unmerged-worktree"
 INCOMPLETE_LOG: dict[str, object] | None = None
 SCAN_ACTION = "scan"
+SCAN_REPORT = None
+SCAN_FINDINGS = []
+SCAN_SECURITY_OUTCOME = "incomplete"
+REPORT_BUILD = "d9249a2bd53c0685"
+REPORT_PROVIDER = DIAG_PROVIDER
 
 
 SCAN_PHASE = "initialization"
@@ -1000,6 +1005,42 @@ def scan_line_events(path, events, report, is_allowlisted, redact,
             raise ValueError("invalid stream event")
     if line is not None and not report.stopped:
         raise ValueError("unterminated stream line")
+
+# Bounds apply to retained report fields before JSON serialization. Labels are
+# ASCII, so each retained character costs at most two JSON bytes after escaping.
+REPORT_LABEL_CHARS = 160
+
+
+def report_text(value, limit=REPORT_LABEL_CHARS):
+    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    text = "".join(char if 32 <= ord(char) <= 126 else " " for char in text)
+    return text if len(text) <= limit else text[:limit - 3] + "..."
+
+
+def report_label(value):
+    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    # Labels have no need to reproduce a credential-bearing identifier. Omit the
+    # whole label, including credentials crossing the display clipping boundary.
+    if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):
+        return "[REDACTED]"
+    return report_text(text)
+
+
+def report_json_bytes(value):
+    """Exact ensure_ascii JSON byte cost without serializing retained data."""
+    if isinstance(value, str):
+        return 2 + sum(2 if char in '\\"' or char in '\b\f\n\r\t' else
+                       6 if ord(char) < 32 or 127 <= ord(char) <= 65535 else
+                       12 if ord(char) > 65535 else 1 for char in value)
+    if isinstance(value, dict):
+        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(key) + 1 + report_json_bytes(child) for key, child in value.items())
+    if isinstance(value, (list, tuple)):
+        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(child) for child in value)
+    if value is None:
+        return 4
+    if isinstance(value, bool):
+        return 4 if value else 5
+    return len(str(value))
 
 
 def read_payload() -> dict:
@@ -2075,7 +2116,9 @@ def _release_log_lock(
 
 
 def append_scan_log(**kwargs: object) -> None:
-    global SCAN_PHASE
+    global SCAN_PHASE, SCAN_SECURITY_OUTCOME
+    if kwargs.get("status") != "incomplete":
+        SCAN_SECURITY_OUTCOME = kwargs.get("status", "incomplete")
     SCAN_PHASE = "scan_log"
     try:
         _append_scan_log(**kwargs)
@@ -2101,13 +2144,15 @@ def _append_scan_log(
     note: str = "",
     deadline: float | None = None,
     diagnostic: dict[str, object] | None = None,
+    security_outcome: str | None = None,
+    audit_outcome: str = "written",
 ) -> None:
     enforce_deadline(deadline)
     _ensure_secure_log_directory(log_path.parent)
     payload: dict[str, object] = {
-        "timestamp": timestamp,
-        "sessionId": session_id,
-        "repoRoot": str(repo_root_path),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sessionId": report_label(session_id),
+        "repoRoot": report_label(str(repo_root_path)),
         "mode": mode,
         "scope": scope,
         "status": status,
@@ -2119,14 +2164,32 @@ def _append_scan_log(
         if diagnostic is not None:
             payload["diagnostic"] = diagnostic
     if note:
-        payload["note"] = note
-    if env_files:
-        payload["envFiles"] = env_files
+        payload["note"] = report_text(note, 512)
+    payload.update(build=REPORT_BUILD, provider=REPORT_PROVIDER,
+                   profile="pending_snapshots_v1", route="pending_scan", action=SCAN_ACTION,
+                   cause=diagnostic["cause"] if diagnostic else status,
+                   security_outcome=security_outcome or status, audit_outcome=audit_outcome,
+                   inspection_outcome="incomplete" if status == "incomplete" else "complete",
+                   enforcement="deny" if mode == "block" and status in {"findings", "incomplete"} else "allow")
     if findings:
-        payload["findings"] = findings
-    if omitted_findings:
-        payload["omittedFindings"] = omitted_findings
-    if findings_truncated:
+        payload["findings"] = findings[:MAX_RETAINED_FINDINGS]
+    # Reserve structural/count metadata before retaining optional path labels.
+    payload["omittedFindings"] = omitted_findings + max(0, len(findings) - MAX_RETAINED_FINDINGS)
+    payload["findingsTruncated"] = findings_truncated
+    payload["envFiles"] = []
+    payload["omittedEnvFiles"] = len(env_files)
+    retained_bytes = report_json_bytes(payload)
+    for path in env_files[:MAX_FILES]:
+        label = report_label(path)
+        label_bytes = report_json_bytes(label) + 1
+        if retained_bytes + label_bytes >= MAX_LOG_RECORD_BYTES - 128:
+            break
+        payload["envFiles"].append(label)
+        payload["omittedEnvFiles"] -= 1
+        retained_bytes += label_bytes
+    while report_json_bytes(payload) >= MAX_LOG_RECORD_BYTES and payload.get("findings"):
+        payload["findings"].pop()
+        payload["omittedFindings"] += 1
         payload["findingsTruncated"] = True
 
     record = (json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n").encode(
@@ -2177,12 +2240,21 @@ def build_findings_json(findings: list[tuple[str, str, str, int, str]]) -> list[
         {
             "pattern": pattern_name,
             "severity": severity,
-            "path": path,
+            "path": report_label(path),
             "line": line_number,
             "redactedMatch": redacted,
         }
         for pattern_name, severity, path, line_number, redacted in findings
     ]
+
+
+class RetainedFindings(list):
+    """Only display-safe, bounded fields enter the retained report model."""
+
+    def append(self, finding):
+        pattern, severity, path, line, redacted = finding
+        if len(self) < MAX_RETAINED_FINDINGS:
+            super().append((pattern, severity, report_label(path), line, redacted))
 
 
 def record_finding(
@@ -2198,7 +2270,9 @@ def record_finding(
 
 def emit_output(findings_count: int, log_path: Path, checked_files: int = 0, skipped: bool = False) -> None:
     if findings_count > 0:
-        emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected."})
+        emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected. "
+                   f"security_outcome=findings; audit_outcome=written; enforcement=allow; build={REPORT_BUILD}; "
+                   "profile=pending_snapshots_v1; route=pending_scan; cause=findings."})
         return
     if HOOK_EVENT == "Stop":
         if skipped:
@@ -2229,16 +2303,25 @@ def handle_unexpected_exception(exc: Exception) -> int:
     failure = exc if isinstance(exc, ScanFailure) else ScanFailure("internal_error")
     detail = failure.detail()
     outcome = "blocked" if mode == "block" else "warning"
-    reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; scan incomplete; "
-              f"potential secrets could not be checked. {detail}")
-    print(reason, file=sys.stderr)
+    processed = SCAN_REPORT.processed if SCAN_REPORT is not None else 0
+    security = "findings" if processed else SCAN_SECURITY_OUTCOME
+    audit = "failed"
     if INCOMPLETE_LOG is not None:
         try:
-            append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[], findings=[],
-                            note=detail, diagnostic=failure.diagnostic())
+            append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[],
+                            findings=build_findings_json(SCAN_FINDINGS),
+                            omitted_findings=max(0, processed - len(SCAN_FINDINGS)),
+                            findings_truncated=bool(SCAN_REPORT and SCAN_REPORT.stopped),
+                            note=detail, diagnostic=failure.diagnostic(), security_outcome=security)
+            audit = "written"
         except Exception:
             # Reporting must preserve the first failure even if logging also fails.
             pass
+    finding_message = "potential secrets detected; scan incomplete." if processed else "scan incomplete; potential secrets could not be checked."
+    reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; {finding_message} {detail} "
+              f"security_outcome={security}; audit_outcome={audit}; enforcement={'deny' if mode == 'block' else 'allow'}; "
+              f"build={REPORT_BUILD}; profile=pending_snapshots_v1; route=pending_scan; cause={failure.cause}.")
+    print(reason, file=sys.stderr)
     if mode == "block":
         emit_block_denial(reason)
     else:
@@ -2258,7 +2341,9 @@ def resolve_work_dir(payload: dict) -> Path:
 
 
 def findings_denial_reason(scan_log: Path) -> str:
-    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
+    return (f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected. "
+            f"security_outcome=findings; audit_outcome=written; enforcement=deny; build={REPORT_BUILD}; "
+            "profile=pending_snapshots_v1; route=pending_scan; cause=findings.")
 
 def resolve_scan_log() -> Path:
     log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
@@ -2276,7 +2361,7 @@ def resolve_scan_log() -> Path:
 
 
 def main() -> int:
-    global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE
+    global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE, SCAN_REPORT, SCAN_FINDINGS
     scan_started = _SCAN_STARTED if _SCAN_STARTED is not None else time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
@@ -2297,7 +2382,9 @@ def main() -> int:
     try:
         from helpers.audit import audit_init
     except Exception:
-        emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI.")
+        emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI. "
+                          f"security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
+                          "profile=pending_snapshots_v1; route=initialization; cause=audit_unavailable.")
         return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
@@ -2395,8 +2482,9 @@ def main() -> int:
 
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
-    findings: list[tuple[str, str, str, int, str]] = []
+    findings = RetainedFindings()
     report = StreamReport(findings)
+    SCAN_REPORT, SCAN_FINDINGS = report, findings
     budget = ScanBudget(scan_deadline)
     total_bytes = 0
     with snapshot_source(root, candidates, budget) as snapshots:
