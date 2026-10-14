@@ -1,6 +1,6 @@
 # T4a bounded stream component evidence
 
-Implemented 2026-10-14 on private branch `codex/hook-resilience-t4a`, based on `d2356309`, in `/Users/adam/.codex/worktrees/hook-stream-matcher/skills`. This is the inactive component specified by [the streaming design](streaming-design.md). The coordinator owns the active ExecPlan and final coordinated knowledge-maintenance pass.
+Implemented 2026-10-14 on private branch `codex/hook-resilience-t4a`, rebased onto `79913f48e116478f9f4de0008858833a1a5bf259` (the documentation-only successor of accepted T3 base `b8f2b573`), in `/Users/adam/.codex/worktrees/hook-stream-matcher/skills`. Original implementation started from `d2356309`. This is the inactive component specified by [the streaming design](streaming-design.md). The coordinator owns the active ExecPlan and final coordinated knowledge-maintenance pass.
 
 ## Outcome and scope
 
@@ -46,5 +46,7 @@ From the managed worktree root:
 - TDD red observations: missing line-event source, missing report/matcher interface, missing diff interface, and late malformed diff tail hidden after the finding cap. The late-tail test failed with `StreamDiffError not raised` before draining was added and passes afterward.
 - `rtk proxy python3 scripts/generate-hooks.py --write`: only the three generated diagnostics CLI `DIAG_BUILD` lines changed, because their canonical-source digest includes the new component. No generated scanner source changed.
 - `rtk proxy python3 scripts/generate-hooks.py --check`: passed, all 38 generated files current.
+
+Combined T3/T4a verification after rebase: component suite passed all 12 tests; `rtk proxy python3 scripts/test-hook-diagnostics.py` passed all eight tests; freshness passed for all 38 files. The only rebase conflicts were the three generated diagnostics CLI build identities. They were resolved by canonical regeneration on the combined tree, preserving both source changes without selecting either stale identity. T4a source/tests required no conflict edits. The subsequent rebase onto documentation-only `79913f48` was conflict-free and did not repeat unchanged product checks. The base branch was not changed.
 
 The new suite is intentionally not registered in `scripts/test-all.py` in this task, as assigned. T4b/coordinator owns maintained registry integration, public scanner suites, acquisition integration, and larger-file policy adoption. No live installation, authenticated provider run, or native Windows claim is made here.
