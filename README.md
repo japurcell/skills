@@ -48,6 +48,33 @@ mode, an incomplete scan denies the tool and reports a stable cause, safe counts
 where available, and recovery advice. For example, `file_bytes_limit/candidate_read`
 identifies an oversized pending file without exposing its name or contents.
 
+Each provider also installs a standalone `hooks-diagnostics.py` beside its scanner.
+From an ordinary human terminal, choose a trusted absolute Python executable and
+use isolated startup with the absolute installed script path, for example:
+
+```sh
+/usr/bin/python3 -I -S -B /Users/your-name/.codex/hooks/hooks-diagnostics.py
+/usr/bin/python3 -I -S -B /Users/your-name/.codex/hooks/hooks-diagnostics.py --doctor
+```
+
+Replace both absolute paths with your reviewed installation paths. Copilot's CLI
+is `~/.copilot/hooks/scripts/hooks-diagnostics.py`; Gemini's is
+`~/.gemini/hooks/scripts/hooks-diagnostics.py`. Only no arguments, `--doctor`, and
+`--help` are accepted. No arguments collect current-directory file metadata and
+fixed installation checks; `--doctor` checks only fixed assets and registrations.
+The collector runs no Git or subprocesses and reads no candidate contents.
+Its bounded largest-file inventory leaves pending/index status unknown. Inspect
+the index separately if worktree sizes do not explain an incomplete scan.
+
+Reports separate the loaded canonical build from observed disk hashes, helper
+drift, registration counts, repository metadata, audit status, and content
+security. Entrypoint disk hashes remain unverified observations. Diagnostics do
+not establish a clean scan, authenticate installed execution, or grant an agent
+command an exemption. Ordinary hooked agent calls may still be denied. The human
+owns interpreter and installation trust; reinstall from trusted source if the
+CLI itself is damaged. Platforms without descriptor-relative no-follow access
+report limited checks instead of claiming equivalent filesystem guarantees.
+
 The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers do not delete old installed scripts or clean old Codex registrations.
 
 ### Old Markdown Health installations

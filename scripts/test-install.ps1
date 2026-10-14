@@ -269,6 +269,8 @@ for target in targets():
         if ($LASTEXITCODE -ne 0) {
             Fail 'Could not populate generated-hook fixture targets from hooks.manifest.targets().'
         }
+        & $python.Path @($python.Arguments) (Join-Path $Repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh generated fixture metadata.' }
     }
     finally {
         [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $oldBytecode, [System.EnvironmentVariableTarget]::Process)
@@ -362,6 +364,10 @@ function Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode {
         Assert-NoBytecodeCache $repo
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.copilot/hooks/scripts/rtk-hook-copilot.py') -PathType Leaf) -Message 'Expected fresh generated Copilot RTK output to be installed.'
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.gemini/hooks/scripts/rtk-hook-gemini.py') -PathType Leaf) -Message 'Expected fresh generated Gemini RTK output to be installed.'
+        foreach ($relative in @('.codex/hooks/hooks-diagnostics.py', '.copilot/hooks/scripts/hooks-diagnostics.py', '.gemini/hooks/scripts/hooks-diagnostics.py')) {
+            Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir $relative) -PathType Leaf) -Message "Expected diagnostics asset: $relative"
+            Assert-True -Condition ((Get-FileHash -LiteralPath (Join-Path $repo $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $homeDir $relative)).Hash) -Message "Expected exact diagnostics asset bytes: $relative"
+        }
     }
     finally {
         Remove-Workdir $workdir
@@ -691,6 +697,9 @@ function Test-FixedNameHardLinkHandling {
         }
 
         Assert-Equals -Expected 'HardLink' -Actual (Get-Item -Force -LiteralPath $hardLinkSource).LinkType -Message "Fixture setup error: expected the source file to be a hard link."
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) -B (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh changed hard-link template metadata.' }
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
 
@@ -807,6 +816,9 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         New-FixtureRepo $repo
         Set-PostRetirementFixture $repo
         Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}')
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) -B (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh changed provider template metadata.' }
         $copilotPath = Join-Path $homeDir '.copilot/hooks/hooks.json'
         $geminiPath = Join-Path $homeDir '.gemini/settings.json'
         Write-FixtureFile $copilotPath @('{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}')
