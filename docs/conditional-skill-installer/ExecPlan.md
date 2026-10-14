@@ -35,7 +35,8 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 
 - Adversarial review of `4f2b2f4e..a5f50664` reproduced five omissions after the earlier suites passed: NFC/NFD destination aliases overwrite one leaf on macOS; preserved `0444` Markdown raises `PermissionError` during rebasing; valid leading `./` reference paths remain broken; eight live Addy source pointers still have the old depth; create-skill's live benchmark instruction still uses a nonexistent flat source path. Public Bash/macOS PowerShell reproductions and read-only source resolution establish these findings. Earlier evidence remains historical proof of its tested cases, not acceptance of these repairs.
 
-- Both installers currently enumerate immediate `skills/` entries. Category wrappers would otherwise be installed as skills named `default` and `forest-service`. Evidence: `copy_skills` in `scripts/install.sh` and `Copy-Skills` in `scripts/install.ps1`.
+- The original installers at `4f2b2f4e` enumerated immediate `skills/` entries. Category wrappers would otherwise have been installed as skills named `default` and `forest-service`; current installers enumerate category leaves.
+- R3 public fixtures exposed coupled read-only behavior: repeat copying and pruning require writable installed directories, and temporary permission elevation on stale excluded hardlinks changed an outside inode from `0444` to `0644`. Keep permission changes scoped and restore them on failure; never chmod a shared regular-file inode. Focused hardlink pruning repairs passed locally, while final copy-boundary proof is still pending.
 - The current installers preserve destination skills that are no longer selected or present in source. This feature must preserve that behavior. Installation without Forest Service selection is not an uninstall operation.
 - Destination mutation starts before skill copying: the installers apply RTK configuration and install Codex agents first. Argument, environment, and category validation must run before these operations, not merely before `copy_skills` or `Copy-Skills`.
 - Read-only exploration found 57 root directories with a direct `SKILL.md` and no existing Forest Service skill. The count is a source snapshot, not a hard-coded acceptance value. `docs/ideas/2-agency-priorities-skill.md` names a future Forest Service skill.
@@ -47,7 +48,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 
 ## Decision Log
 
-All decisions below were selected or confirmed by the user on 2026-10-14. They are the current implementation contract, not observed implementation behavior.
+The user selected or confirmed the public contract on 2026-10-14 and authorized all five review repairs. The dated repair details below resolve implementation choices within that scope. These decisions define the current contract; acceptance evidence is recorded separately.
 
 ### D1: Repository and installed layout
 
@@ -81,6 +82,8 @@ Before any destination mutation, require both category directories even if Fores
 Reject duplicate destination basenames case-insensitively across both categories, including disabled Forest Service entries. Compare basenames, not frontmatter names. Frontmatter remains subject to authoring validation. Diagnose the conflicting source paths before writing to the home or configured Codex agent destination. Case-insensitive collision checks must not change the case-sensitive workspace/archive exclusion rules.
 
 Repair decision (2026-10-14): normalize destination identity to NFC before Unicode casefold, so canonically equivalent spellings cannot collapse onto one flat target. Keep original path spellings in diagnostics and case-sensitive exclusions. Rebase equivalent leading `./` reference spellings and preserve copied file modes, including read-only Markdown, without rewriting through links. Actual source pointers must resolve from categorized bundles; the installer converts them to flat installed paths.
+
+Read-only repair details: preserve first and repeat installs, directory modes, and existing exclusions. Bash retains `cp -Rp`; the shared helper scopes temporary destination permissions around copying, pruning, and rebasing. PowerShell restores source modes after successful copying and original modes after failure. Pruning remains unconditional when optional shared references are absent; rebasing then does nothing. Do not change outside hardlink inode bytes or permissions. Detach an installed hardlink safely where supported, or fail closed rather than clear shared read-only attributes. Native Windows read-only attribute fixtures remain required; POSIX mode assertions do not establish NTFS ACL behavior.
 
 Preserve existing copying, link handling, executable modes, and installed pruning of `evals/`, `README.md`, `LICENSE.txt`, and `LICENSE.md`. Preserve previously installed Forest Service and unrelated skills. Do not add stale-skill deletion or a legacy root-level installation fallback.
 
