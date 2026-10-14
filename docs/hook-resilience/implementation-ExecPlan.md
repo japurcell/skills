@@ -15,7 +15,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [x] (2026-10-14) [milestone-1] I1: On combined `23f7f38b`, transport9, native26, shell17, limits18 and corpus153 pass; generated freshness35 passes.
 - [x] (2026-10-14) [milestone-4] R0: [Early security review](R0-review.md) found no reproduced defect; 25 classification, 12 descriptor and five simulated Windows probes passed. Final full review remains required.
-- [ ] [milestone-4] R0b: Independently review accepted acquisition and streaming component before larger-file integration; reproduce suspected boundary failures.
+- [x] (2026-10-14) [milestone-4] R0b: [Scanner boundary review](R0b-review.md) found no actionable issue; component12, 15,000 additional oracle cases, Codex capture and five all-provider merge cases pass. Final review remains required.
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [x] (2026-10-14) [milestone-2] T3: Integrated verified acquisition as `b8f2b573`; merge33, all provider scanner/capture suites, rebased diagnostics8 and singleton pinning pass. [Evidence](T3-evidence.md).
 - [x] (2026-10-14) [milestone-2] T4a: Integrated bounded stream component as `1b44f4db`; component12, diagnostics8 and freshness38 pass on combined T3 tree. [Evidence](T4a-evidence.md).
