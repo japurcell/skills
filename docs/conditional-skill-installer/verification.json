@@ -1,0 +1,43 @@
+{
+  "verified_revision": "6f406a1fee1f640106d459c682561af8fedb7c1b",
+  "verified_at": "2026-10-14",
+  "platform": {
+    "os": "macOS",
+    "kernel": "Darwin 25.6.0",
+    "architecture": "arm64",
+    "powershell": "7.6.6"
+  },
+  "checks": [
+    { "command": "rtk proxy bash -n scripts/install.sh", "exit_code": 0 },
+    { "command": "rtk proxy bash scripts/test-install.sh", "exit_code": 0, "result": "Full Bash installer fixture suite passed." },
+    { "command": "rtk proxy pwsh -NoProfile -File scripts/test-install.ps1", "exit_code": 0, "result": "Full PowerShell installer fixture suite passed on macOS; junction creation was unsupported and its test skipped." },
+    { "command": "rtk proxy bash -n scripts/addy-install.sh", "exit_code": 0 },
+    { "command": "rtk proxy bash scripts/test-addy-install.sh", "exit_code": 0 },
+    { "command": "rtk proxy bash -n scripts/import-skill-repos.sh", "exit_code": 0, "result": "Syntax check only; human-only importer was not executed." },
+    { "command": "rtk proxy python3 scripts/test_test_all.py", "exit_code": 0, "tests_passed": 14 },
+    { "command": "rtk proxy python3 scripts/test-rtk-stable.py", "exit_code": 0, "tests_passed": 12 },
+    { "command": "rtk proxy python3 scripts/test-codex-agents.py", "exit_code": 0, "tests_passed": 14 },
+    { "command": "rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py", "exit_code": 0, "tests_passed": 38 },
+    { "command": "rtk proxy python3 skills/default/prd-ralph-loop/evals/test_grade_benchmark.py", "exit_code": 0, "tests_passed": 13 },
+    { "command": "rtk proxy python3 -m unittest discover -s skills/default/handoff/evals -p test_grade_benchmark.py", "exit_code": 0, "tests_passed": 20 },
+    { "command": "rtk proxy python3 -m unittest discover -s .agents/skills/exec-plans/evals -p test_grade_benchmark.py", "exit_code": 0, "tests_passed": 35 },
+    { "command": "rtk proxy python3 scripts/test-all.py --list", "exit_code": 0, "result": "Maintained test registry listed successfully." },
+    { "command": "rtk proxy env PYTHONPATH=scripts/vendor python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/create-skill", "exit_code": 0, "result": "Skill is valid!" },
+    { "command": "rtk proxy python3 scripts/lint-okf.py", "exit_code": 0 },
+    { "command": "rtk git diff --check", "exit_code": 0 },
+    { "command": "PowerShell parser: ParseFile scripts/install.ps1", "exit_code": 0, "result": "PowerShell parse passed." },
+    { "command": "Read-only published skill inventory", "exit_code": 0, "result": "0 direct root skill bundles; 57 default bundles; 0 Forest Service bundles; forest-service contains only .gitkeep; no category directories lack SKILL.md." }
+  ],
+  "native_windows": {
+    "status": "not_run",
+    "acceptance_met": false,
+    "reason": "No native Windows host was available. macOS PowerShell execution and its junction skip do not establish Windows behavior.",
+    "required_command": "pwsh -NoProfile -File scripts/test-install.ps1",
+    "existing_workflow": ".github/workflows/ready-ideas-windows.yml",
+    "workflow_coverage": "The existing windows-latest job runs the required command in its Test native PowerShell installer step."
+  },
+  "limits": [
+    "No live/model evaluations, real-home installs, account-wide installs, or human-only import orchestration were run.",
+    "PowerShell and junction behavior remain unverified on native Windows."
+  ]
+}
