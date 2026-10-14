@@ -1,6 +1,6 @@
 # T3: verified candidate acquisition
 
-Implemented on private branch `codex/hook-resilience-t3`, based on `5dd8af43`, on 2026-10-14. This task implements the approved acquisition contract in [streaming-design.md](streaming-design.md). The coordinator owns the active ExecPlan and the single coordinated knowledge-maintenance pass.
+Current integration base is `f7b1c4ce` on private branch `codex/hook-resilience-t3`. The canonical acquisition commit is `8a298ede2e6e764b78351c950949b323b4d6b272`, rebased without conflicts from private `d17e4b5ceee738d21a8685ee35cf074e61ccd0ad`. Original implementation/reproduction base was `5dd8af43`, on 2026-10-14. This task implements the approved acquisition contract in [streaming-design.md](streaming-design.md). The coordinator owns the active ExecPlan and the single coordinated knowledge-maintenance pass.
 
 ## Public reproduction and result
 
@@ -25,7 +25,7 @@ Worktree acquisition uses descriptor-relative/no-follow traversal where availabl
 
 The legacy 1 MiB snapshot ceiling remains. The existing matcher receives a temporary one-snapshot materialization, cleared before the next acquisition. Diff output remains on its old materialized compatibility path for T4. Aggregate worktree overflow now reports `total_bytes_limit/candidate_read`, with the original measured/limit values, because it fails before scanning the excess candidate; the maintained capture assertion was updated accordingly without removing its denial/audit checks.
 
-## Validation
+## Original node validation
 
 - `rtk proxy python3 scripts/test-scan-secrets-capture.py codex`, `copilot`, and `gemini`: all passed, including block/warn negatives, no-HEAD success, race cases and classification cases.
 - `rtk proxy bash scripts/test-codex-hooks-secrets-scanner.sh` and `scripts/test-gemini-hooks-secrets-scanner.sh`: final serial reruns passed (exit 0), including their expanded capture suites.
@@ -44,6 +44,17 @@ T3 changes only the bounded completion wait slice to five milliseconds, reducing
 The extended capture suite checks FIFO replacement between stat/open, growth after descriptor opening, pathname replacement after opening, same-inode rewrite after acquisition, split UTF-8, late NUL/invalid UTF-8, and original findings/order/redaction. The merge suite adds descendant-held blob-capture output and retains malformed framing, hidden staged secrets, all conflict stages, permitted missing conflict worktrees, unsafe symlinks/directories, exact byte limits, old-Git compatibility, long/delimited paths, directory descendants, and both 250-file merge scenarios. Acquisition errors require `incomplete`; credential controls require `findings` in block/warn.
 
 No performance benchmark ran in this task. Passing the maintained 250-file cases establishes functional compatibility within the scanner/watchdog checks, not a measured latency/RSS improvement. The coordinator owns serialized V1 resource and matched-throughput evidence. Native Windows, live installation, and authenticated provider delivery were not run here.
+
+## Post-rebase interaction checks
+
+After the conflict-free rebase onto `f7b1c4ce`, the initial freshness check correctly found three stale generated diagnostics CLIs. Regeneration changed only their `DIAG_BUILD` identities so they reflect canonical T3 together with T5a; no canonical scanner or helper behavior changed in this follow-up.
+
+- `rtk proxy python3 scripts/test-hook-diagnostics.py -v`: all eight tests passed in 2.322 seconds, including build identity, canonical policy limits, parser, metadata and doctor cases.
+- `rtk proxy python3 scripts/test-scan-secrets-merge.py MergeScannerTests.test_singleton_index_edit_keeps_pinned_secret -v`: passed across all three providers and both modes (`Ran 1 test in 1.927s; OK`).
+- `rtk proxy python3 scripts/test-scan-secrets-capture.py codex`: passed the complete representative capture suite against T1's bounded common reader, including malformed input, acquisition negatives, race cases and no-HEAD success.
+- `rtk proxy python3 scripts/generate-hooks.py --check`: passed, 38 generated files current. `rtk git diff --check` passed.
+
+The coordinator requested these interaction checks rather than another full merge matrix after a conflict-free rebase; the original complete serial 33-test proof and all-provider shell/capture proof above remain retained. This follow-up establishes source interaction and generated diagnostics freshness. V1 resource/timing, native Windows and authenticated installed delivery remain separate acceptance work.
 
 ## Exact T4 interface and remaining work
 
