@@ -109,11 +109,30 @@ canonical expressions fail generation rather than silently inventing values.
 
 The coordinator owns the active ExecPlan, test-all registry and one final knowledge
 maintenance pass. This task did not change `scan_secrets.py`, `tool_guard.py`, or
-`common.py`. Integration must regenerate all outputs from merged canonical source,
-including the integrated T1 common changes and later T4 scanner changes, then rerun
-diagnostics, generation and disposable installer proofs. The task branch predates
-those scanner/transport changes; its embedded identities are not final integrated
-release identities.
+`common.py`. The task was rebased onto `8a0da347`; its implementation commit is
+now `57f7cfe8e225a2f88b5dd6f1d61835766a845a96` (formerly `355750d1583c86e5b1cf14c42363b045ed147696`).
+Integrated T1 common changes are included in the refreshed generated identities.
+Later T4 scanner changes still require regeneration and diagnostics, generation,
+and disposable installer proofs; these are not final integrated release identities.
+
+### Integrated T1 refresh, 2026-10-14
+
+Freshness after the conflict-free rebase correctly reported only the three
+standalone diagnostics CLIs stale. `rtk proxy python3 scripts/generate-hooks.py --write`
+changed only their embedded build digests and expected common-helper hashes;
+canonical implementation, registration metadata, and policy limits were unchanged.
+The checkout was frozen during generator testing. Observed checks on the rebased
+source after refresh:
+
+- `rtk proxy python3 -W error scripts/test-hook-diagnostics.py -v`: 8 passed,
+  1.941 seconds.
+- `rtk proxy python3 scripts/test-generate-hooks.py`: 26 passed, 19.364 seconds.
+- `rtk proxy bash scripts/test-install.sh`: passed, including exact installed CLI
+  bytes/modes, isolated absolute-Python doctor launches, preserved settings and
+  user registrations, stale-output refusal and idempotence.
+- `rtk proxy python3 scripts/generate-hooks.py --check`: current, 38 files.
+
+This refresh adds no source behavior or native-platform/provider-delivery claim.
 
 No live-home installation, push, authenticated provider dispatch, native Windows
 proof, scanner-recovery route, clean scan, executable exemption, or same-user
