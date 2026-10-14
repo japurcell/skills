@@ -1,0 +1,105 @@
+{
+  "gates_met": true,
+  "errors": [],
+  "sources_unchanged": true,
+  "violating_comparisons": 0,
+  "distinct_violating_cases": 0,
+  "by_phase": {},
+  "by_provider": {},
+  "warm_repeated_in_both_pairs": {},
+  "median_failures": 0,
+  "p95_failures": 0,
+  "worst_median": {
+    "case": "gemini.guard.search.full-provider-envelope",
+    "phase": "cold",
+    "delta_ms": {
+      "median_ms": 4.454000000000001,
+      "p95_ms": 3.4989999999999952
+    },
+    "allowance_ms": {
+      "median_ms": 5,
+      "p95_ms": 10
+    }
+  },
+  "worst_p95": {
+    "case": "gemini.guard.writer.lines-120-segments-139",
+    "phase": "cold",
+    "delta_ms": {
+      "median_ms": 1.4299999999999997,
+      "p95_ms": 6.0
+    },
+    "allowance_ms": {
+      "median_ms": 5,
+      "p95_ms": 10
+    }
+  },
+  "logging": {
+    "warm_statuses": {
+      "completed": 612,
+      "legacy transport exception": 12
+    },
+    "cold_statuses": {
+      "completed": 7650,
+      "legacy transport exception": 150
+    },
+    "completed_warm_records": 17748,
+    "completed_cold_records": 7650,
+    "completed_concurrency_records": 12
+  },
+  "concurrency": [
+    {
+      "case": "copilot.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 87.407375,
+      "samples_ms": [
+        81.817959,
+        24.450084
+      ]
+    },
+    {
+      "case": "gemini.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 42.232375,
+      "samples_ms": [
+        26.552083,
+        41.692833
+      ]
+    },
+    {
+      "case": "codex.guard.clean",
+      "condition": "baseline",
+      "batch_ms": 73.2365,
+      "samples_ms": [
+        21.810208,
+        72.782125
+      ]
+    },
+    {
+      "case": "copilot.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 89.277916,
+      "samples_ms": [
+        88.935583,
+        27.698
+      ]
+    },
+    {
+      "case": "gemini.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 43.750958,
+      "samples_ms": [
+        28.785333,
+        43.28525
+      ]
+    },
+    {
+      "case": "codex.guard.clean",
+      "condition": "candidate",
+      "batch_ms": 83.077542,
+      "samples_ms": [
+        23.06525,
+        82.61575
+      ]
+    }
+  ]
+}
