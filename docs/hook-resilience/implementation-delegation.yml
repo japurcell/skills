@@ -125,11 +125,11 @@ dispatches:
     dispatched_at: '2026-10-14 18:54 UTC'
     resumed_at: '2026-10-14 20:35 UTC'
     accepted_candidate: 1817d569b42008019ec66d3ac3469f7fd704308c
-    status: reconciling_final_functional_and_installed_evidence_before_timing
+    status: final_functional_verified_ready_for_quiet_full_resources_and_timing
     output_verified: true
     checkpoint_commit: 0ecd490d07c34519e86f10719ef778cebff73fae
     evidence: docs/hook-resilience/V1-phase1-evidence.md
-    timing_gate: R1 accepted T10; wait for final functional completion and coordinator quiet-system confirmation
+    timing_gate: R1 accepted T10; all functional checks and review probes finished; coordinator quiet confirmation follows
     routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
