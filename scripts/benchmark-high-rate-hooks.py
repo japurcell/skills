@@ -172,7 +172,8 @@ def verify_outcome(case: Case, exit_code: int, output: dict) -> None:
         raise RuntimeError(f"{case.name} did not report an incomplete scan")
 
 
-def invoke(case: Case, repo: Path, home: Path, timeout: float = 15.0) -> tuple[float, int, dict]:
+def invocation_environment(case: Case, home: Path) -> dict[str, str]:
+    """Build the disposable launch environment for latency and RSS collectors."""
     env = os.environ.copy()
     for key in ("SKIP_TOOL_GUARD", "TOOL_GUARD_ALLOWLIST"):
         env.pop(key,None)
@@ -189,6 +190,11 @@ def invoke(case: Case, repo: Path, home: Path, timeout: float = 15.0) -> tuple[f
         "GEMINI_OBSERVABILITY_LOG_PATH": str(home / "gemini-observability.ndjson"),
     })
     env.update(case.environment)
+    return env
+
+
+def invoke(case: Case, repo: Path, home: Path, timeout: float = 15.0) -> tuple[float, int, dict]:
+    env = invocation_environment(case, home)
     command = [sys.executable, str(case.script)] if case.script else [sys.executable, "-c", "import json,sys; json.load(sys.stdin); print('{}')"]
     start = time.perf_counter_ns()
     completed = subprocess.run(command, input=case.payload, cwd=repo, env=env, capture_output=True, timeout=timeout)

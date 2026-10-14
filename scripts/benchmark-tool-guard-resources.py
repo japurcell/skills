@@ -97,10 +97,10 @@ def payload(provider: str, tool: str, value: object) -> bytes:
     return json.dumps(event, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
 
 
-def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str) -> subprocess.CompletedProcess:
-    result = subprocess.run(command, input=data, capture_output=True, env=env, timeout=5)
+def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str, *, cwd: Path | None = None) -> subprocess.CompletedProcess:
+    result = subprocess.run(command, input=data, capture_output=True, env=env, cwd=cwd, timeout=5)
     if result.returncode or decision(provider, json.loads(result.stdout)) != expected:
-        raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}')
+        raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
     return result
 
 

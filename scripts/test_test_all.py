@@ -114,6 +114,15 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-tool-guard-shell-data.py")
         expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
+        expected.add("scripts/test-verify-hook-release.py")
+        expected.update({
+            "scripts/test-hook-input-bounds.py",
+            "scripts/test-hook-diagnostics.py",
+            "scripts/test-hook-diagnostic-recovery.py",
+            "scripts/test-scan-secrets-stream-component.py",
+            "scripts/test-scan-secrets-streaming.py",
+            "scripts/test-security-reporting.py",
+        })
         expected.add("skills/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/prd-ralph-loop/evals/test_grade_benchmark.py")
         listed = {
