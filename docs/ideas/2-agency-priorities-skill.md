@@ -7,4 +7,4 @@ Create a skill that gives agents knowledge of USDA and Forest Service priorities
 - [Forest Service Priorities](https://www.fs.usda.gov/about-agency/priorities)
 - [Focus Fundamentals FY26 Agency Priorities](https://www.fs.usda.gov/inside-fs/leadership/focus-fundamentals-fy26-agency-priorities)
 
-Name the skill `agency-priorities` and create it in `skills/forest-service/`.
+Name the skill `agency-priorities` and create it in `skills/forest-service/agency-priorities`.
