@@ -1,0 +1,28 @@
+{
+  "candidate": "ec73604420201c20734a83aa39e32df5a05e0687",
+  "runs": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "python3",
+        "scripts/test_helpers.py"
+      ],
+      "exit_code": 0,
+      "duration_seconds": 0.751405,
+      "environment": "disposable HOME/CODEX_HOME/XDG homes; OBSERVABILITY_TESTING=1; disposable generic observability path; AUDIT_LOG and provider observability overrides unset"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "bash",
+        "-x",
+        "scripts/test-gemini-hooks-observability.sh"
+      ],
+      "exit_code": 1,
+      "duration_seconds": 0.009151,
+      "environment": "disposable HOME/CODEX_HOME/XDG homes; OBSERVABILITY_TESTING=1; disposable generic observability path; AUDIT_LOG and provider observability overrides unset"
+    }
+  ]
+}
