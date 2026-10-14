@@ -28,3 +28,9 @@ No further documented-standard violations were identified. The worktree remained
 unchanged. Full release/performance, native Windows and authenticated provider
 delivery acceptance remain pending. This is the original report; repair verification
 will be retained separately.
+# T6 repair verification
+
+Independent re-review accepted `f146184be7458da85efe60af0d30a1326fe3cb5d` on 2026-10-14. The historical P1 remains valid and is resolved. Normalized ASCII identifiers now use shared `report_label` before clipping, also resolving the optional duplicate-detector concern for this path.
+
+The original prefixed fine-grained fake-token exploit was repeated through all three public provider entrypoints. Each denied, logged `[REDACTED]`, retained `strict_fallback`, and exposed no complete fake token in native output or audit. Two focused tests passed in 4.406 seconds, covering 81 hostile-label combinations plus safe-name and native-profile controls. Freshness passed for 38 files, all generated policy helpers were byte-identical, and the review worktree stayed clean. No additional required finding arose in this repair. T7 and release acceptance remain separate.
+
