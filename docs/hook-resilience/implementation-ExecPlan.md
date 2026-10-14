@@ -41,7 +41,9 @@ The investigation reproduced the exact scanner error: one 2,030,848-byte file ex
 
 Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but denies the same request with `max_output_tokens: 1000`. Unknown optional fields force fallback rather than field-by-field validation. Current supported raw Copilot and Codex command-object patches pass. An incomplete JSON prefix kept Copilot Guardian alive for 10,507 ms beyond its configured ten-second host timeout. Git status can execute configured fsmonitor code, so command names alone cannot define recovery safety.
 
-T6 public probes reproduced a 140,305-byte scan record replacing known findings with incomplete status and credential-shaped labels leaking through reports. T6 also found Guardian ignored `audit_log_event(False)`. Reporting repairs preserve the security result separately from audit failure; final integrated acceptance remains pending until I3.
+T6 public probes reproduced a 140,305-byte scan record replacing known findings with incomplete status and credential-shaped labels leaking through reports. T6 also found Guardian ignored `audit_log_event(False)`. Reporting repairs preserve the security result separately from audit failure; combined I3 acceptance is met on `881d400c`.
+
+Full V1 latency acceptance failed 89 of 468 comparisons despite valid decisions, completed logging and frozen source. D2 isolated transport and label-processing overhead. T10's pre-change exact six-case repeat retained three failures out of 18 comparisons: Copilot clean warm pair 1 +2.552 ms median, Copilot writer warm pair 2 +2.845 ms, and Gemini UTF-8 warm pair 2 +2.934 ms. The report at `/private/tmp/hook-resilience-t10-before.json` has no validation errors and unchanged source. Semantic repair is in progress; these failures and the full V1 run remain evidence until the repaired source meets the unchanged gates.
 
 ## Decision Log
 
@@ -53,7 +55,7 @@ T6 public probes reproduced a 140,305-byte scan record replacing known findings 
 
 ## Outcomes & Retrospective
 
-Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown. Standalone diagnostics, in-hook recovery, scanner capacity and initial bounded reporting are integrated. R1 reopened T6 for embedded credential labels and added T7 for trusted installed launches. Both repairs and combined proof now pass; I3 acceptance is restored. Functional failures have verified repairs or corrected-environment repeats. Final V1 mapping, serialized resource/timing gates and knowledge maintenance remain.
+Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown. Standalone diagnostics, in-hook recovery, scanner capacity and bounded reporting are integrated. R1 reopened T6 for embedded credential labels and added T7 for trusted installed launches. Both repairs and combined proof now pass; I3 acceptance is restored. Functional failures have verified repairs or corrected-environment repeats, and V1 retained their complete mapping. Resources passed, but full timing failed. T10 now owns the accepted D2 repair; independent review, final release gates and knowledge maintenance remain.
 
 Scheduling refinement: T4a is a separate canonical streaming component after D1, so it can proceed while T3 validates acquisition. T5b follows verified T3/T1/T2/T5a; it does not require larger-file acceptance. T4b follows T3/T4a/T5b, serializing scanner edits. T6 follows T4b/T5b. This replaces the earlier T4-before-T5b edge without changing final acceptance.
 
