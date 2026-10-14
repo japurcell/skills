@@ -26,6 +26,44 @@ pwsh scripts/install.ps1
 
 It produces the same installed layout as `install.sh`.
 
+Both commands install default skills by default. Add `--forest-service` (or
+its alias `--fs`) to include Forest Service skills. To force a default-only
+install even when the environment opts in, use `--no-forest-service`:
+
+```bash
+./scripts/install.sh --forest-service
+./scripts/install.sh --no-forest-service
+INSTALL_FOREST_SERVICE_SKILLS=true ./scripts/install.sh
+```
+
+```powershell
+pwsh -NoProfile -File scripts/install.ps1 --forest-service
+pwsh -NoProfile -File scripts/install.ps1 --no-forest-service
+$env:INSTALL_FOREST_SERVICE_SKILLS = 'true'; pwsh -NoProfile -File scripts/install.ps1
+```
+
+Without a selection flag, set `INSTALL_FOREST_SERVICE_SKILLS` to `1` or
+`true` to include Forest Service skills, or `0` or `false` to install only
+default skills. Values must match these strings exactly, ignoring case; unset
+or empty means default only. An explicit selection flag takes precedence over
+this variable. The Forest Service category currently has no skills, so
+opting in makes no additional skill copies today. Both `skills/default/` and
+`skills/forest-service/` source directories must exist; each skill directory
+must contain `SKILL.md`. The installer places selected skills directly in
+`~/.agents/skills/<name>/`. A later default-only install leaves previously
+installed Forest Service skills in place.
+
+Use `-h` or `--help` to print usage to stdout and exit 0 without installing.
+Successful installation exits 0. Invalid or conflicting
+arguments, or an invalid nonempty environment value when no selection flag is
+given, print a diagnostic to stderr and exit 2. Missing category directories,
+skill directories without `SKILL.md`, and duplicate skill directory names
+across categories print a diagnostic to stderr and exit 1. Restore the missing
+category, add the reported `SKILL.md`, or rename one of the conflicting
+directories, then rerun the installer. Other installation failures also exit
+1 with a diagnostic. Successful install status goes to stderr; help goes to
+stdout.
+
 The installer copies:
 
 - `skills/default/` entries into `~/.agents/skills`
