@@ -39,11 +39,11 @@ The user approved grilling plus codebase-design as the substitute for wayfinder'
 
 ### Proposals requiring a later decision
 
-Restate was selected for an earlier prototype, not a production stack. The user's later executor and continuation decisions are owned by [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) and supersede that prototype direction. Configuration profiles, runtime-specific child workflows, serialized integration, revision-bound evidence, streamed persisted events, and explicit improvement promotion remain proposals. Record their tradeoffs in the relevant open tickets before treating them as settled.
+Restate was selected for an earlier prototype, not a production stack. The user's later executor and continuation decisions are owned by [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) and supersede that prototype direction. Runtime-specific child workflows and explicit improvement promotion remain unresolved. Record their tradeoffs in the relevant open tickets before treating them as settled. Incremental serialized integration, ready-result ordering, and stale-work tracking and refresh are now accepted in [Task scheduling and integration](task-scheduling-and-integration.md). Configuration profiles are now settled in [Agent execution profiles](agent-execution-profiles.md); saved event delivery, SSE transport, and retained evidence are now settled in [Session events and live progress](session-events-and-live-progress.md). [Verification and review policy](verification-and-review-policy.md#resolution) now owns check selection, review/repair defaults, budgets, rerun/reuse policy, and acceptance evidence.
 
 TypeScript authoring was subsequently chosen by the user. The closed [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns that decision, the accepted task contract, and the other answers from its live exchange. Its code-level nesting decision does not select a runtime-specific child-workflow mechanism.
 
-The earlier three-repair example, mandatory plan/candidate approvals, one-adapter prototype scope, exact storage layout, and server transport are not fixed requirements.
+The earlier three-repair example, mandatory plan/candidate approvals, one-adapter prototype scope, and exact storage layout are not fixed requirements.
 
 ### Evidence and limits
 

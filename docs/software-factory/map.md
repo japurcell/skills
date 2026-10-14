@@ -25,14 +25,18 @@ An implementation-ready specification for a fully customizable, code-controlled 
 - [Embedded graph runtime fit](tickets/embedded-graph-runtime-fit.md): LangGraph Functional API best matches the accepted authoring interface; Mastra is a graph-builder alternative. Local storage, crash recovery, and native Windows still require proof.
 - [Embedded workflow runtime fit](tickets/embedded-workflow-runtime-fit.md): Effect offers an explicitly embedded SQL-backed composition with unstable APIs; TanStack needs a local durable store. Workflow DevKit Local World is development/testing infrastructure, and Resonate's default SDK is not persistent.
 - [Restate and DBOS operating fit](tickets/service-engine-operating-fit.md): Restate retains a server and native Windows gap; DBOS TypeScript retains Postgres and packaging constraints. DBOS Python supports SQLite but changes the workflow-language contract. The [combined comparison](research/embedded-runtime-comparison.md) retains the research that preceded the user's executor decision.
-- [Operating and installation model](tickets/operating-and-installation-model.md): per-repository SQLite executor, foreground invocations, human-triggered Continue, skill-managed runtime, retained versions for unfinished runs, resumable Stop, and explicit cleanup with data-preserving uninstall.
+- [Operating and installation model](tickets/operating-and-installation-model.md): per-repository SQLite executor, foreground invocations, human-triggered Continue, skill-managed runtime, retained versions for unfinished runs, resumable Pause, and explicit cleanup with data-preserving uninstall.
 - [Agent execution profiles](tickets/agent-execution-profiles.md): explicit configuration and fallback, visible sessions and recovery, replacement with explicit instruction composition, and schemas for agent outputs that control execution.
+- [Live progress transport fit](tickets/live-progress-transport-fit.md): protocol research supporting SSE with separate controls; durable replay, applied cursors, and deduplication remain application responsibilities. The live-progress ticket owns adoption.
+- [Session events and live progress](tickets/session-events-and-live-progress.md): saved-before-display SSE updates, an independent repository dashboard, retained registered evidence, custom progress events, and interruption on recording failure; one-second display target remains to be tested.
+- [Task scheduling and integration](tickets/task-scheduling-and-integration.md): isolated task worktrees, shared capacity and resource reservations, ready-result serialized integration, separate review and repair, and preserved work during stale-result refresh.
+- [Verification and review policy](tickets/verification-and-review-policy.md): declared check gates, final-diff review by default, opt-in UI exploration, criterion-level evidence, and bounded repairs, retries, clarification, correction, and execution time.
 
 ## Not yet specified
 
 <!-- FOG START -->
 - The accepted contract covers repository changes and read-only audits. Other concrete workflow patterns may expose extension pressures beyond these examples; no separate question is sharp enough to ticket yet.
-- Known native-platform, upgrade, shutdown, retention, recovery, profile-versioning, and result-validation mechanisms have owners in existing tickets. Additional deployment/harness interactions may still expose narrower process or permission questions that cannot yet be stated precisely; the resolved profile contract does not currently require a new ticket.
+- Known native-platform, upgrade, shutdown, retention, recovery, profile-versioning, result-validation, live-progress, scheduling, and verification mechanisms have owners in existing tickets. The verification resolution adds no unticketed decision; additional deployment/harness interactions may still expose narrower process or permission questions that cannot yet be stated precisely.
 - Observed improvement proposals may expose evaluation domains or ownership conflicts that need their own decisions after the core learning contract is set.
 <!-- FOG END -->
 

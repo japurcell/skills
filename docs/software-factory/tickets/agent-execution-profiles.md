@@ -29,7 +29,7 @@ Claimed on 2026-10-12 after [Operating and installation model](operating-and-ins
 - Codex CLI, Copilot CLI, and Gemini CLI are the primary harnesses; OpenCode and Pi are also desired. Do not ask the human to name the same harnesses again. Exact supported version/capability combinations require evidence, not assumptions.
 - Workflows use TypeScript managed operations. External effects and agent sessions must remain visible to the executor and live UI.
 - Repository-owned editable settings and isolated, pinned installation dependencies are accepted. The skill provisions the factory runtime; existing harness authentication and permission controls remain in use.
-- The factory-owned SQLite executor, manual Continue, resumable Stop, and retention policies are settled. Concrete adapter obligations must support those policies.
+- The factory-owned SQLite executor, manual Continue, resumable Pause, and retention policies are settled. Concrete adapter obligations must support those policies.
 - Workflow/runtime version retention is accepted. Whether and how prompt, skill, profile, or plan changes affect an unfinished run belongs to [Workflow versioning and run changes](workflow-versioning-and-run-changes.md).
 
 ### Confirmed answers, round one
@@ -74,7 +74,7 @@ Keep harness-specific behavior behind one execution interface. Workflow code sup
 | Deliver instructions | Record the requested prompt/skills, selected delivery mode, and delivery evidence. Distinguish delivered instructions from observed skill loading or compliance. Exercise missing resources and unavailable required tools. |
 | Expose sessions live | Attach output and lifecycle status to the correct run, step, attempt, and session. Exercise parallel sessions without mixing output. Mark absent optional telemetry unknown or unsupported. |
 | Return an outcome | Preserve final output, available artifact references, and process outcome. A clean process exit does not prove workflow acceptance. Exercise valid, missing, and malformed required results; preserve raw output and expose validation failure. Correction attempts must be visible and respect the workflow's explicit budget. |
-| Request interruption | Exercise Stop during active work and expose whether the process has actually exited. The executor retains resumable state. Stop request acceptance alone is not proof that child processes ended. |
+| Request interruption | Exercise Pause during active work and expose whether the process has actually exited. The executor retains resumable state. Pause request acceptance alone is not proof that child processes ended. |
 | Support recovery honestly | Advertise native resume availability without assuming it. Exercise reconnect and explicitly configured fresh-session recovery after reconciliation, preserving lineage and budgets. Uncertain earlier effects block. |
 | Preserve native permission controls | Keep native tool approvals distinct from factory workflow checkpoints; never silently approve or bypass them. The interaction details belong to [Human control and publication](human-control-and-publication.md). |
 | Qualify compatibility claims | Record tested adapter, CLI, runtime, and OS versions plus relevant capabilities. Native macOS, Linux, and Windows remain targets; no combination is verified by this planning document. |

@@ -35,7 +35,7 @@ In the next answer round, the user accepted three additional choices:
 
 The user selected **foreground execution**. The earlier automatic-recovery-on-next-invocation policy was subsequently superseded by the explicit Continue decision below.
 
-The final answer round below settles runtime provisioning, upgrade ownership, resumable Stop, history retention, and uninstall defaults. Detailed cancellation/recovery mechanisms remain downstream. Native platform support and real-time session visibility remain required. A shared per-user installation is not selected.
+The final answer round below settles runtime provisioning, upgrade ownership, resumable Pause, history retention, and uninstall defaults. Detailed cancellation/recovery mechanisms remain downstream. Native platform support and real-time session visibility remain required. A shared per-user installation is not selected.
 
 ### Selected executor and continuation
 
@@ -80,7 +80,7 @@ The explanation distinguishes recovery triggers and remaining mechanisms:
 - If the entire invocation is gone, no code remains there to initiate recovery. Immediate unattended restart then requires an external supervisor or an OS startup mechanism.
 - A subsequent invocation drives the specific unfinished run selected through Continue. New work must not silently attach to or restart an old run.
 
-A lightweight foreground supervisor could handle worker failures while an invocation remains alive, but it is not selected. Recovery must reconcile existing agent processes and uncertain external effects and preserve unresolved human checkpoints. Resumable Stop is accepted below. Exact run-selection, compatibility, signal escalation, and orphan reconciliation remain downstream mechanisms.
+A lightweight foreground supervisor could handle worker failures while an invocation remains alive, but it is not selected. Recovery must reconcile existing agent processes and uncertain external effects and preserve unresolved human checkpoints. Resumable Pause is accepted below. Exact run-selection, compatibility, signal escalation, and orphan reconciliation remain downstream mechanisms.
 
 **Runtime prerequisites.** The user requested the show-me skill to explain these alternatives before choosing the first shape with a factory-owned executor. This table is retained comparison context:
 
@@ -102,11 +102,13 @@ The user requested a comparison of embedded TypeScript runtimes against Restate 
 
 Closed on 2026-10-12 after the human explicitly accepted all five recommendations in the final answer round. The exact prerequisite, [Confirmed factory requirements](confirmed-factory-requirements.md), was verified closed. The confirmed answers and selected executor/continuation sections above, together with this resolution, own the accepted operating contract.
 
+Terminology update on 2026-10-14: the human renamed the resumable Stop control to Pause and accepted a separate terminal Cancel in [Human control and publication](human-control-and-publication.md#accepted-pause-and-cancel-controls). The interruption, preservation, and Ctrl+C behavior chosen here is unchanged; current contract wording uses Pause.
+
 | Decision | Accepted policy |
 | --- | --- |
 | Runtime provisioning | The installation skill manages a pinned JavaScript runtime inside the isolated factory installation. A compatible global runtime is not required. Application dependencies remain unchanged. Exact distribution, version, and SQLite binding remain to be specified. |
 | Upgrades with unfinished runs | New runs use the upgraded runtime. Retain the runtime and workflow version needed by unfinished runs, and preserve user-owned files. An upgrade must wait if storage compatibility cannot be maintained. Version identities, migrations, and rollback mechanics belong to the versioning/recovery tickets. |
-| Stop or Ctrl+C | Stop new dispatch, request graceful interruption of active agent work, preserve recorded progress, and leave the run resumable through Continue. This does not guarantee an external effect was rolled back or every child process stopped; escalation and reconciliation require detailed design. |
+| Pause or Ctrl+C | Stop new dispatch, request graceful interruption of active agent work, preserve recorded progress, and leave the run resumable through Continue. This does not guarantee an external effect was rolled back or every child process stopped; escalation and reconciliation require detailed design. |
 | History retention | Retain completed-run history, transcripts, and artifacts until explicit cleanup, with storage usage visible. Protect unfinished-run recovery data from routine cleanup. |
 | Uninstall | Remove managed runtime/install files while preserving execution history, unfinished-run data, and user-owned workflows, prompts, and settings. Full purge is a separate explicit action. Retained data alone does not make a run executable after uninstall; a compatible installation must be restored before Continue. |
 
