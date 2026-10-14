@@ -14,7 +14,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [ ] [milestone-1] T1: Bound shared transport; reproduce stalls, implement limits, and verify public providers.
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [ ] [milestone-1] I1: Integrate T1/T2 and prove complete valid requests, strict negatives, and bounded malformed requests together.
-- [ ] [milestone-2] D1: Resolve streaming acquisition/matching interfaces and recovery trust boundary in retained design evidence.
+- [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
 - [ ] [milestone-2] T4: Stream detection, adopt bounded large-file policy, and verify equivalence.
 - [ ] [milestone-2] I2: Prove scanner sizes, detection, merge/capture, and bounded resource behavior on integrated source.
@@ -44,7 +44,7 @@ Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but 
 
 Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. Split recovery into independent T5a collector/CLI work after D1 and T5b bootstrap integration after T1/T2/T4/T5a. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown.
 
-P0 is committed as `3976fccc`. T2 is integrated as `46260321`; its clean worktree was archived and private branch removed. T1 and D1 remain active. Guardian source behavior is repaired and focused checks pass; composed milestone acceptance remains unmet until T1 integration. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
+P0 is committed as `3976fccc`. T2 is integrated as `46260321` and D1 as `5dd8af43`; their clean worktrees were archived and private branches removed. T1 is finishing verification; T3 and T5a are implementing independently. Guardian focused checks pass; composed milestone acceptance remains unmet until T1 integration. No scanner capacity or recovery behavior is shipped yet. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
 
 ## Context and Orientation
 
@@ -69,7 +69,7 @@ Acceptance: not met
 
 ### Milestone 2: Stream larger candidates without losing detections
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 **D1, concrete design decision.** Prerequisites: P0. Read-only except `docs/hook-resilience/streaming-design.md`. Resolve a minimal snapshot/capture interface, classification replay, per-pattern nonoverlap, line/diff state, exact allowlists, bounds, and ownership for T3/T4. Also define T5's executable identity and fixed invocation so repository-controlled Python imports, script substitution, configuration, environment, and arbitrary operands cannot inherit trust. If a strict capability cannot be proved with the existing provider surface, choose a separate installed fixed command with explicit narrow parser and state its limits. Include proposed public tests and exact interfaces. Stop with an implementable decision and evidence, not source edits.
@@ -82,7 +82,7 @@ Acceptance: not met
 
 ### Milestone 3: Recover safely and make incidents attributable
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 **T5a, standalone diagnostics.** Prerequisites: verified D1. Own new canonical `hooks/families/diagnostics.py`, required manifest/installer updates, standalone generated CLI outputs, collector/CLI cases in `scripts/test-hook-diagnostics.py`, README human usage, and `docs/hook-resilience/T5a-evidence.md`. Do not edit scanner/Guardian canonical sources. Implement reusable stdlib-only source for later bootstrap embedding. No Git/subprocess or candidate body reads; pending/index status remains unknown. Bound directory visits to 1,024, entries 4,096, retained records 256, depth 32, encoded labels 160 bytes, collection work one second, response 16 KiB, owned assets 64 and total hash input 1 MiB. Prioritize larger records within bounded storage. Separate build/asset/registration/repository/audit/security health. Fixed bounded no-follow settings reads count owned/unowned/duplicate registrations without mutation. Human CLI accepts only no operands, `--doctor`, or `--help`, with trusted absolute Python `-I -S -B`. Test hostile names/config/imports, bounds, missing assets, malformed/duplicate settings and isolated installers. Stop at collector and CLI; T5b owns scanner integration.
@@ -106,7 +106,7 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: verify T1/D1 evidence as results arrive, integrate their clean committed branches serially, then dispatch T3 after the design decision is verified. Active worktrees are `/Users/adam/.codex/worktrees/hook-transport-bounds/skills` and `/Users/adam/.codex/worktrees/hook-streaming-design/skills`. T2's conflict-free rebase changed only its documentation ancestry; existing source verification remains applicable. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: integrate T1 and run I1 on base. Verify T3/T5a as results arrive; integrate serially, then dispatch T4 after T3 proof. Active worktrees end in `hook-transport-bounds/skills`, `hook-snapshot-streams/skills`, and `hook-diagnostics-cli/skills` under `/Users/adam/.codex/worktrees/`. T2's conflict-free rebase changed only its documentation ancestry; existing source verification remains applicable. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 

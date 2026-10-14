@@ -27,6 +27,27 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 16:43 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 5dd8af434e0ab6318ea64cc64ad032208f272ee7
+    routing_compliant: true
+  - subtask_id: T3
+    agent: /root/snapshot_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:59 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: T5a
+    agent: /root/diagnostics_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:59 UTC'
     status: running
     output_verified: false
     routing_compliant: true
