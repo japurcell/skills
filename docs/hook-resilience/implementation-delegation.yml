@@ -162,11 +162,13 @@ dispatches:
     dispatched_at: '2026-10-14 18:54 UTC'
     resumed_at: '2026-10-14 21:19 UTC'
     accepted_candidate: 81fe28bb
-    status: T11_final_provenance_verified_ready_for_full_timing
+    status: completed
     output_verified: true
-    checkpoint_commit: 25ec70bc1ee4595102f46d847748ab20ab8e40ea
-    evidence: docs/hook-resilience/V1-T10-release-evidence.md
-    timing_gate: reviewed T11 and final provenance ready; all other probes finished; explicit quiet confirmation follows
+    integrated_commit: 29b09fcf40b3173b02962b592eccee67c90aa3dc
+    evidence: docs/hook-resilience/V1-T11-release-evidence.md
+    timing_gate: all 468 comparisons passed with unchanged gates; 9048 matched adjacent launch pairs verified; no repeat or waiver
+    checkpoint: '21:30 UTC overrun checkpoint; continued unchanged full run under exclusive quiet conditions'
+    integration: evidence-only rebase from 34863ba1; 18 added files unchanged and 15 stored/decoded artifact hashes verified; matching tips; clean worktree archived and private branch deleted
     routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
