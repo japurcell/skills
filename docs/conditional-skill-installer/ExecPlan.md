@@ -20,6 +20,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-1] Verify the integrated layout and default-install result on base `d141e63d`: Bash, macOS PowerShell, Addy, registry (14), spec-to-tasks (38), prd-ralph-loop (13), handoff (20), skill validator, 29 maintained links, OKF, and whitespace checks passed.
 - [ ] [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through successive public-CLI test cycles.
 - [ ] [milestone-2] Verify the complete behavior matrix in Bash and PowerShell.
+- [ ] [milestone-2] R1: Make the reference-rebasing CLI directly executable and prove its public help entry point.
 - [ ] [milestone-3] T4: Obtain integrated source and native Windows evidence; preserve existing installer protections.
 - [ ] [milestone-4] T5: Finish user documentation and the single coordinated agent-documentation pass; check links and the final diff.
 
@@ -144,6 +145,10 @@ Completed on base `d141e63d`: both default installer suites and Addy passed; reg
 
 Status: in progress
 Acceptance: not met
+
+#### Task R1: Repair helper executable mode
+
+Prerequisites: integrated T2. Source inspection found `scripts/rebase-skill-references.py` recorded as mode `100644`, while script conventions require directly executable helpers. Own only this file's executable bit, with no content change. Reproduce failure of `./scripts/rebase-skill-references.py --help`, set mode `100755`, and verify direct help exits 0. This task is independent of T3's parser and fixture ownership. Integrate its local commit before Milestone 2 acceptance.
 
 #### Task T3: Implement selection, help, and preflight parity
 
