@@ -6,8 +6,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 19:56 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    output_verified: true
+    integrated_commit: 32c9853f31d9f260af9301cd5368222f560ebd34
     routing_compliant: true
   - subtask_id: R1-repair-review
     agents: [/root/standards_review, /root/spec_review]
