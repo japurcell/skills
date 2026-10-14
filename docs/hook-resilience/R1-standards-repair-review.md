@@ -8,4 +8,6 @@ T8's Copilot delimiter-path test passed, including staged-only credentials, safe
 
 **Optional, possible Duplicated Code smell:** `scripts/trusted_hook_launch.py:13` and `hooks/families/diagnostics.py:309` independently render the same launch forms. Sharing pure formatting source embedded during generation could reduce drift while preserving standalone diagnostics. This is a judgment call, not a documented-standard violation or required defect repair.
 
-T9, final release/performance acceptance, native Windows and authenticated provider delivery remain outside this verdict.
+Final T9 supplement on `4061420e`: no new required findings. Seven fixture-local sentinel calls follow the existing observability testing rule. Rotation, persistence schema recovery, cleanup, locking and intentional maintenance assertions remain intact. Rate limiting, retention/scavenging and fail-open coverage are unchanged. Evidence distinguishes the controlled race from V1's unknown original statement. This supplement launched no tests/probes; none remain running. Worktree stayed clean.
+
+Final Standards result: the original required finding is closed; zero required findings remain, with one optional duplication suggestion. Release/performance acceptance, native Windows and authenticated provider delivery remain separate.
