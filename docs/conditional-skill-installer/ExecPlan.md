@@ -27,7 +27,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-4] Complete the single coordinated agent-doc pass after all delegated work finished; repair PowerShell ordinal-matching/profile guidance, review category-path repairs, verify OKF/links/whitespace, and preserve protected AGENTS sections.
 - [ ] [milestone-4] T5: Close the effort after native Windows acceptance; retain current owner actions and this active plan until then.
 - [x] (2026-10-14) [milestone-1] R4: Repaired eight source-reference pointers and the live benchmark path in `e63d4951`. All eight targets resolve; four vendored-YAML definition validations and whitespace checks passed.
-- [ ] [milestone-2] R2: Reject canonically equivalent Unicode destination names before writes in both installer processes.
+- [x] (2026-10-14) [milestone-2] R2: NFC-normalized casefold validation rejects canonical aliases before writes. Both full suites and focused enabled/disabled immutability cases passed; integrated as `a18e778a`.
 - [ ] [milestone-2] R3: Rebase read-only Markdown safely and handle leading `./`; prove both public installers and actual migrated Addy bundles.
 - [ ] [milestone-2] R5: Verify the integrated five-finding repairs, refresh current evidence, and complete this session's coordinated KB pass without pushing.
 
@@ -92,7 +92,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The original implementation and local verification are committed through `a5f50664`, but adversarial review reopened Milestones 1 and 2 for the five authorized repairs. R4 is integrated at `e63d4951`: all eight source targets and the benchmark sample resolve, and four definition validations passed. R2 is running; R3 follows its integration because it shares installer fixtures with R2 and consumes repaired source pointers from R4. R5 provides composed proof. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the earlier macOS junction skip is not native acceptance.
+The original implementation and local verification are committed through `a5f50664`, but adversarial review reopened Milestones 1 and 2 for the five authorized repairs. R4 is integrated at `e63d4951`: all eight source targets and the benchmark sample resolve, and four definition validations passed. R2 is integrated at `a18e778a`: both full installer suites and focused enabled/disabled immutability cases passed. The current frontier is R3, consuming those verified prerequisites. R5 provides composed proof. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the earlier macOS junction skip is not native acceptance.
 
 ## Context and Orientation
 
@@ -217,7 +217,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-Finish and integrate R2, then execute R3 and R5. R4 is verified and integrated; its clean worktree and branch were removed. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
+Execute R3, then R5. R2 and R4 are verified and integrated; their clean worktrees and branches were removed. R2's conflict-free rebase changed only prerequisite source documentation, which its fixtures do not consume; R5 will rerun composed checks on the final tree. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
 
 ### Repair task graph and ownership
 
