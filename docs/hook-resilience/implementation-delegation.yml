@@ -1,4 +1,14 @@
 dispatches:
+  - subtask_id: D3
+    agent: /root/residual_diagnosis
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 21:02 UTC'
+    status: analyzing_residual_warm_failures_no_timing_authorized_yet
+    output_verified: false
+    routing_compliant: true
   - subtask_id: R1-T10-repair-review
     agents: [/root/standards_review, /root/spec_review]
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
@@ -125,11 +135,11 @@ dispatches:
     dispatched_at: '2026-10-14 18:54 UTC'
     resumed_at: '2026-10-14 20:35 UTC'
     accepted_candidate: 1817d569b42008019ec66d3ac3469f7fd704308c
-    status: final_functional_verified_ready_for_quiet_full_resources_and_timing
+    status: final_functional_resources_and_cold_passed_warm_latency_failed_retaining_evidence
     output_verified: true
     checkpoint_commit: 0ecd490d07c34519e86f10719ef778cebff73fae
     evidence: docs/hook-resilience/V1-phase1-evidence.md
-    timing_gate: R1 accepted T10; all functional checks and review probes finished; coordinator quiet confirmation follows
+    timing_gate: complete full run failed 25 warm comparisons; no repeat authorized before D3 diagnosis
     routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
