@@ -41,7 +41,7 @@ Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but 
 
 ## Outcomes & Retrospective
 
-Implementation has not started. P0 is complete. Ready frontier: T1, T2, D1. No runtime fix or milestone acceptance is claimed. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
+P0 is committed as `3976fccc`. T1, T2, and D1 are running in isolated managed worktrees. No runtime fix or milestone acceptance is claimed. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
 
 ## Context and Orientation
 
@@ -55,7 +55,7 @@ Git captures use owner-only regular temporary files, bounded process waits, and 
 
 ### Milestone 1: Bound input and recognize real tool envelopes
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 **T1, transport implementation.** Prerequisites: P0. Own `hooks/families/common.py`, transport-specific tests (add `scripts/test-hook-input-bounds.py` if needed), associated generated common outputs, and its evidence `docs/hook-resilience/T1-evidence.md`. Reproduce missing/incomplete stdin through public hooks first. Implement first-byte/incomplete idle and nonextendable total deadlines, raw byte/nesting limits, bounded trailing drain, and safe native failure propagation. Preserve complete JSON with open stdin, UTF-8, and Windows readiness support. Avoid quadratic repeated parsing. Choose explicit limits with escape-expansion headroom and denial-time reserve. Test slow trickle, malformed/deep/trailing input, maximum escaped valid input, and all providers. Stop after transport and focused compatibility proof; do not alter Guardian classification or scanner content policy.
@@ -101,7 +101,7 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: commit this plan and retained investigation artifacts, create isolated task worktrees from that commit, then dispatch T1/T2/D1. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: verify T1/T2/D1 evidence as results arrive, integrate their clean committed branches serially, then dispatch T3 after the design decision is verified. Their worktrees are `/Users/adam/.codex/worktrees/hook-transport-bounds/skills`, `/Users/adam/.codex/worktrees/hook-provider-profiles/skills`, and `/Users/adam/.codex/worktrees/hook-streaming-design/skills`. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 

@@ -1,0 +1,31 @@
+dispatches:
+  - subtask_id: T1
+    agent: /root/transport_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: T2
+    agent: /root/profiles_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: D1
+    agent: /root/stream_design
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
