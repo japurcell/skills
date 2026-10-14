@@ -22,7 +22,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [ ] [milestone-2] Verify the complete behavior matrix in Bash and PowerShell.
 - [x] (2026-10-14) [milestone-2] R1: Make the reference-rebasing CLI directly executable; integrated `d07be4368ecc9b190867979ebc82c2bd050cc71a`. Direct help passed on base, with identical content blob and mode `100755`.
 - [ ] [milestone-3] T4: Obtain integrated source and native Windows evidence; preserve existing installer protections.
-- [ ] [milestone-4] T5D: Finish user-facing installation documentation independently of external Windows execution.
+- [x] (2026-10-14) [milestone-4] T5D: Finish user-facing installation documentation; integrated `3110cea24bd20221b235b3d941f345bb02c3fc72`, with both public help outputs and source diagnostics checked.
 - [ ] [milestone-4] T5: Finish user documentation and the single coordinated agent-documentation pass; check links and the final diff.
 
 ## Surprises & Discoveries
@@ -82,7 +82,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The layout, consumers, reference handling, and complete CLI are implemented and integrated on base `af3e4806`. T3's complete Bash and macOS PowerShell suites, RTK 12 tests, and Codex 14 tests passed before rebase; all five tested T3 blobs/modes remained identical after rebase. T4 owns the composed integrated proof and pending native Windows evidence. T5D independently owns user documentation. Milestone 2 acceptance awaits composed proof; native Windows and final closure remain open.
+The layout, consumers, reference handling, complete CLI, and user documentation are integrated on base `3110cea2`. T3's complete Bash and macOS PowerShell suites, RTK 12 tests, and Codex 14 tests passed before rebase; all five tested T3 blobs/modes remained identical after rebase. T5D's public help/source/whitespace review passed. T4 owns the remaining composed proof and pending native Windows evidence. Milestone 2 acceptance awaits composed proof; native Windows and final closure remain open.
 
 ## Context and Orientation
 
@@ -185,6 +185,8 @@ Acceptance: not met
 
 Prerequisites: integrated T3 with local CLI task proof. Own only `README.md` installation guidance. Document both invocation forms, flags and exact alias, environment values/precedence, explicit disabling, preserved installed Forest Service skills, empty initial Forest Service content, required categories, and actionable error recovery with exits/streams. Verify against both public `--help` outputs and actual source; do not run a real-home installation. Stop after a scoped documentation commit and whitespace/link checks. This bounded task separates independently deliverable documentation from T5's Windows-dependent closure. The coordinator retains exclusive ownership of the final canonical KB pass.
 
+Completed evidence: `3110cea24bd20221b235b3d941f345bb02c3fc72` changes only `README.md`. Both public help screens were invoked and checked against the documentation, and source diagnostics/exits were cross-checked. Whitespace passed; no new links or em dashes were added. The clean task branch integrated without rebase changes, matching base tip before cleanup. No product tests were invented for the documentation-only change.
+
 #### Task T5: Synchronize documentation and close the effort
 
 Prerequisites: integrated implementation work and tests have finished; native Windows acceptance must be recorded before full completion. Inputs: final diff, current README, CLI help, changed authoring guidance, and admission rules. Own final documentation reconciliation and the single end-of-session KB pass.
@@ -195,7 +197,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-The ready frontier is T4 integrated verification and T5D user documentation in separate fresh worktrees. Both consume integrated T3 and have disjoint ownership. T4's composed local proof can establish Milestone 2 acceptance; native Windows remains required for Milestone 3. If Windows execution is unavailable, finish independent T5D and the mandatory end-of-session KB pass, retain the plan, and leave final T5 closure unmet. Pushing and CI dispatch still require user authorization.
+T5D is complete. The ready frontier is T4 integrated verification in its private worktree. Its composed local proof can establish Milestone 2 acceptance; native Windows remains required for Milestone 3. If Windows execution is unavailable, finish the mandatory end-of-session KB pass, retain this plan, and leave final T5 closure unmet. Pushing and CI dispatch still require user authorization.
 
 The reconciled graph is T1 before T2; their integrated proof before T3; integrated T3 and independent R1 before T4; T3 before T5D; verified T4 native execution and T5D before final T5 closure. Shared installer and fixture files require serialized ownership. Fresh implementer subagents own distinct tasks. The coordinator owns the ExecPlan and final canonical-document admission pass; T2 owned only its named layout guidance repairs.
 
