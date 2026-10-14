@@ -119,7 +119,7 @@ class MergeScannerTests(unittest.TestCase):
     def assert_outcome(self, provider: str, mode: str, scope: str, status: str,
                        finding_path: str | None = None, cause: str | None = None) -> None:
         response, record = self.scan(provider, mode, scope)
-        self.assertEqual(record["status"], status)
+        self.assertEqual(record["status"], status, record)
         if status == "clean":
             expected = {}
         else:
@@ -363,6 +363,35 @@ class MergeScannerTests(unittest.TestCase):
         self.assertNotIn(b"not-an-object", all_logs)
         self.assertNotIn(b"private-outside", all_logs)
 
+    def test_singleton_index_edit_keeps_pinned_secret(self) -> None:
+        self.stage_pair({"hidden.txt": f"fake_token={FAKE_TOKEN}\n"})
+        secret_oid = self.git("rev-parse", ":hidden.txt").stdout.strip()
+        self.write_files({"hidden.txt": "safe" + "x" * (len(FAKE_TOKEN) + 7) + "\n"})
+        safe_oid = self.git("hash-object", "-w", "hidden.txt").stdout.strip()
+        fake_bin = self.root / "pin-bin"
+        fake_bin.mkdir()
+        wrapper = fake_bin / "git"
+        wrapper.write_text(
+            f"#!{sys.executable}\n"
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args[:2] not in (['cat-file', '-s'], ['cat-file', '--batch-check']):\n"
+            "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args], input=sys.stdin.buffer.read(),\n"
+            "                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)\n"
+            "subprocess.run([os.environ['REAL_GIT'], 'update-index', '--cacheinfo',\n"
+            "                '100644,' + os.environ['SAFE_OID'] + ',hidden.txt'], check=True)\n"
+            "sys.stdout.buffer.write(result.stdout)\n"
+            "sys.exit(result.returncode)\n", encoding="utf-8")
+        wrapper.chmod(0o755)
+        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
+                        REAL_GIT=str(self.git_path), SAFE_OID=safe_oid)
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                self.git("update-index", "--cacheinfo", f"100644,{secret_oid},hidden.txt")
+                with self.subTest(provider=provider, mode=mode):
+                    self.assert_outcome(provider, mode, "staged", "findings", "hidden.txt")
+
     def test_batch_keeps_staged_secret_when_worktree_matches_head(self) -> None:
         self.stage_pair({"hidden.txt": f"fake_token={FAKE_TOKEN}\n", "safe.txt": "safe\n"})
         self.write_files({"hidden.txt": "baseline\n"})
@@ -398,7 +427,7 @@ class MergeScannerTests(unittest.TestCase):
         wrapper = fake_bin / "git"
         wrapper.write_text(
             f"#!{sys.executable}\n"
-            "import os, subprocess, sys\n"
+            "import os, subprocess, sys, time\n"
             "args = sys.argv[1:]\n"
             "if args not in (['cat-file', '--batch-check'], ['cat-file', '--batch']):\n"
             "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
@@ -431,6 +460,10 @@ class MergeScannerTests(unittest.TestCase):
             "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
             "elif fault == 'bad-separator' and not metadata:\n"
             "    output = output[:-1] + b'x'\n"
+            "elif fault == 'descendant' and not metadata:\n"
+            "    if os.fork() == 0:\n"
+            "        time.sleep(10)\n"
+            "        os._exit(0)\n"
             "elif fault == 'nonzero' and not metadata:\n"
             "    sys.exit(9)\n"
             "sys.stdout.buffer.write(output)\n"
@@ -442,13 +475,14 @@ class MergeScannerTests(unittest.TestCase):
         for fault in ("missing-object", "wrong-type", "invalid-size", "oversized-integer", "extra-metadata",
                       "wrong-metadata-object",
                       "oversized-blob", "truncated", "extra-content", "wrong-object",
-                      "bad-separator", "nonzero"):
+                      "bad-separator", "nonzero", "descendant"):
             self.env["BATCH_FAULT"] = fault
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
                         self.assert_outcome(provider, mode, "diff", "incomplete",
                                             cause="git_failed" if fault == "nonzero" else
+                                            "git_descendant_running" if fault == "descendant" else
                                             "file_bytes_limit" if fault == "oversized-blob" else
                                             "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())

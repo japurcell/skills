@@ -256,7 +256,7 @@ test_git_failures_after_repo_detection_respect_fail_closed_mode() {
   git -C "$repo_dir" add notes.txt
   create_selectively_failing_git "$fake_bin"
 
-  for command_name in diff ls-files show; do
+  for command_name in diff ls-files cat-file; do
     scope=staged
     if [[ "$command_name" == "ls-files" ]]; then
       scope=diff

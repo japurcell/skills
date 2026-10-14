@@ -37,7 +37,7 @@ def run_case(
     capture_failure: bool = False, committed: bool = False,
     unexpected_failure: bool = False, unexpected_input: bool = False, files: dict[str, bytes] | None = None,
     input_text: str | None = None, missing_git: bool = False,
-    storage_fault: str = "", hostile_payload: bool = False,
+    storage_fault: str = "", hostile_payload: bool = False, descriptor_fault: str = "",
 ) -> tuple[dict, str]:
     with tempfile.TemporaryDirectory(prefix="scan-capture-test-") as directory:
         root = Path(directory)
@@ -104,6 +104,45 @@ def run_case(
                 "def fail(*args, **kwargs):\n"
                 f"    raise {error_type}('/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
                 f"{failure_target} = fail\n"
+                f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
+            )
+            command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
+        if descriptor_fault:
+            wrapper = (
+                "import os, runpy\n"
+                "from pathlib import Path\n"
+                "original_open, original_read = os.open, os.read\n"
+                "candidate = Path('race.txt')\n"
+                "descriptors = set()\n"
+                "changed = False\n"
+                f"fault = {descriptor_fault!r}\n"
+                "def open_candidate(path, flags, *args, **kwargs):\n"
+                "    global changed\n"
+                "    selected = os.fspath(path) == 'race.txt'\n"
+                "    if selected and fault == 'fifo' and not changed:\n"
+                "        candidate.unlink()\n"
+                "        os.mkfifo(candidate)\n"
+                "        changed = True\n"
+                "    descriptor = original_open(path, flags, *args, **kwargs)\n"
+                "    if selected:\n"
+                "        descriptors.add(descriptor)\n"
+                "    return descriptor\n"
+                "def read_candidate(descriptor, size):\n"
+                "    global changed\n"
+                "    if descriptor in descriptors and not changed:\n"
+                "        changed = True\n"
+                "        if fault == 'growth':\n"
+                "            with candidate.open('ab') as handle:\n"
+                "                handle.write(b'x' * 1048577)\n"
+                "        elif fault == 'replacement':\n"
+                "            candidate.rename('original.txt')\n"
+                "            candidate.write_bytes(b'safe replacement\\n')\n"
+                "    chunk = original_read(descriptor, size)\n"
+                "    if descriptor in descriptors and not chunk and fault == 'replay':\n"
+                "        candidate.write_bytes(b'safe rewritten after acquisition\\n')\n"
+                "    return chunk\n"
+                "os.open, os.read = open_candidate, read_candidate\n"
+                "os.supports_dir_fd.add(open_candidate)\n"
                 f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
             )
             command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
@@ -250,6 +289,35 @@ import os, sys, time
 time.sleep(3)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 """
+    # Race at the public generated entrypoint: opening a swapped FIFO must
+    # never wait for a writer, and growth must stop at the first extra byte.
+    for mode in ("block", "warn"):
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, files={"race.txt": b"safe\n"}, descriptor_fault="fifo",
+        ), "candidate_unsafe", "candidate_read")
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, files={"race.txt": b"safe\n"}, descriptor_fault="growth",
+        ), "file_bytes_limit", "candidate_read", measured=1048577, limit=1048576)
+        token = ("gh" + "p_" + "FAKE" * 9).encode()
+        # Classification reads the complete protected snapshot before matching,
+        # including split UTF-8 and late binary markers beyond the first chunk.
+        response, log = run_case(provider, mode, real_git, files={
+            "split.txt": b"x" * 65535 + "é".encode() + b" " + token,
+            "late.bin": token + b" " + b"x" * 65536 + b"\0",
+            "invalid.bin": b"x" * 65536 + b"\xff " + token,
+        })
+        record = json.loads(log.splitlines()[-1])
+        assert record["status"] == "findings", record
+        assert [finding["path"] for finding in record["findings"]] == [
+            "invalid.bin", "late.bin", "split.txt"], record
+        for fault in ("replacement", "replay"):
+            response, log = run_case(provider, mode, real_git,
+                                     files={"race.txt": token + b"\n"}, descriptor_fault=fault)
+            assert "potential secrets detected" in json.dumps(response), (fault, response)
+            record = json.loads(log.splitlines()[-1])
+            assert record["status"] == "findings", (fault, record)
+            assert record["findings"][0]["path"] == "race.txt", record
+            assert token.decode() not in json.dumps(response) + log
     for mode in ("block", "warn"):
         for fake_git, maximum, cause, numbers in (
             (descendant_git, 3.0, "git_descendant_running", {}),
@@ -304,7 +372,7 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, maximum=7.0,
             files={f"file-{i}.bin": b"x" * 1048576 for i in range(9)},
-        ), "total_bytes_limit", "candidate_scan", measured=9437184, limit=8388608)
+        ), "total_bytes_limit", "candidate_read", measured=9437184, limit=8388608)
         for fault, cause, numbers in (("unsafe", "log_unsafe", {}),
                                       ("unavailable", "log_unavailable", {}),
                                       ("configuration", "log_configuration_invalid", {}),
