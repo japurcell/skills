@@ -14,7 +14,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-1] T1: Integrated transport bounds as `23f7f38b`; [T1 evidence](T1-evidence.md) records red/green public input and compatibility checks.
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [x] (2026-10-14) [milestone-1] I1: On combined `23f7f38b`, transport9, native26, shell17, limits18 and corpus153 pass; generated freshness35 passes.
-- [ ] [milestone-4] R0: Early independent security review of integrated T1/T2; retain findings and delegate any repairs before final review.
+- [x] (2026-10-14) [milestone-4] R0: [Early security review](R0-review.md) found no reproduced defect; 25 classification, 12 descriptor and five simulated Windows probes passed. Final full review remains required.
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
 - [ ] [milestone-2] T4: Stream detection, adopt bounded large-file policy, and verify equivalence.
