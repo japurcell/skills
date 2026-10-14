@@ -6,7 +6,7 @@ This living ExecPlan is saved at `docs/conditional-skill-installer/ExecPlan.md` 
 
 Users should receive general-purpose skills by default and Forest Service skills only when they select them. Both installers will expose the same flags and environment-variable behavior, while continuing to install individual skills into `~/.agents/skills/<name>/`.
 
-The originating requirement is [Conditional Skill Installer](../ideas/1-conditional-skill-installer.md). The user confirmed the design on 2026-10-14, saved the plan, and subsequently invoked `execplan-implement` to authorize implementation, disposable-fixture verification, private task branches, and local commits. Work runs on base branch `codex/plan-conditional-skill-installer`. Pushing and CI dispatch remain unauthorized; native Windows evidence may require an owner action.
+The originating requirement is [Conditional Skill Installer](../ideas/1-conditional-skill-installer.md). The user confirmed the design on 2026-10-14, saved the plan, and invoked `execplan-implement` to authorize implementation, disposable verification, private task branches, and local commits. After adversarial review, the user authorized fixing all five findings, verifying them, and updating this plan, explicitly saying not to push. Work remains on `codex/plan-conditional-skill-installer`. Native Windows evidence remains external; no push or CI dispatch is authorized.
 
 The feature changes skill selection only. Agents, references, RTK configuration, and provider hooks retain their existing installation rules and safety checks. Creating the future `agency-priorities` skill is outside this effort.
 
@@ -26,8 +26,14 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-4] T5D: Finish user-facing installation documentation; integrated `3110cea24bd20221b235b3d941f345bb02c3fc72`, with both public help outputs and source diagnostics checked.
 - [x] (2026-10-14) [milestone-4] Complete the single coordinated agent-doc pass after all delegated work finished; repair PowerShell ordinal-matching/profile guidance, review category-path repairs, verify OKF/links/whitespace, and preserve protected AGENTS sections.
 - [ ] [milestone-4] T5: Close the effort after native Windows acceptance; retain current owner actions and this active plan until then.
+- [ ] [milestone-1] R4: Repair eight source-reference pointers in three Addy bundles and the live benchmark source path in create-skill; verify source resolution and definitions.
+- [ ] [milestone-2] R2: Reject canonically equivalent Unicode destination names before writes in both installer processes.
+- [ ] [milestone-2] R3: Rebase read-only Markdown safely and handle leading `./`; prove both public installers and actual migrated Addy bundles.
+- [ ] [milestone-2] R5: Verify the integrated five-finding repairs, refresh current evidence, and complete this session's coordinated KB pass without pushing.
 
 ## Surprises & Discoveries
+
+- Adversarial review of `4f2b2f4e..a5f50664` reproduced five omissions after the earlier suites passed: NFC/NFD destination aliases overwrite one leaf on macOS; preserved `0444` Markdown raises `PermissionError` during rebasing; valid leading `./` reference paths remain broken; eight live Addy source pointers still have the old depth; create-skill's live benchmark instruction still uses a nonexistent flat source path. Public Bash/macOS PowerShell reproductions and read-only source resolution establish these findings. Earlier evidence remains historical proof of its tested cases, not acceptance of these repairs.
 
 - Both installers currently enumerate immediate `skills/` entries. Category wrappers would otherwise be installed as skills named `default` and `forest-service`. Evidence: `copy_skills` in `scripts/install.sh` and `Copy-Skills` in `scripts/install.ps1`.
 - The current installers preserve destination skills that are no longer selected or present in source. This feature must preserve that behavior. Installation without Forest Service selection is not an uninstall operation.
@@ -74,6 +80,8 @@ Before any destination mutation, require both category directories even if Fores
 
 Reject duplicate destination basenames case-insensitively across both categories, including disabled Forest Service entries. Compare basenames, not frontmatter names. Frontmatter remains subject to authoring validation. Diagnose the conflicting source paths before writing to the home or configured Codex agent destination. Case-insensitive collision checks must not change the case-sensitive workspace/archive exclusion rules.
 
+Repair decision (2026-10-14): normalize destination identity to NFC before Unicode casefold, so canonically equivalent spellings cannot collapse onto one flat target. Keep original path spellings in diagnostics and case-sensitive exclusions. Rebase equivalent leading `./` reference spellings and preserve copied file modes, including read-only Markdown, without rewriting through links. Actual source pointers must resolve from categorized bundles; the installer converts them to flat installed paths.
+
 Preserve existing copying, link handling, executable modes, and installed pruning of `evals/`, `README.md`, `LICENSE.txt`, and `LICENSE.md`. Preserve previously installed Forest Service and unrelated skills. Do not add stale-skill deletion or a legacy root-level installation fallback.
 
 ### D4: CLI output and failure behavior
@@ -84,7 +92,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The layout, consumers, reference handling, complete CLI, user documentation, and targeted local verification are finished on base branch `codex/plan-conditional-skill-installer`. Milestones 1 and 2 are accepted. The implementation has not been pushed, and no CI was dispatched. Native Windows execution and final closure remain open; macOS PowerShell explicitly skipped native junction coverage. All private task branches/worktrees were integrated serially and removed after clean-state/tip checks. The final coordinated KB pass corrected ordinal matching and disposable Windows profile routing, with no new memory or protected AGENTS changes. The next action belongs to the user: authorize pushing this reviewable branch and running the existing Windows workflow, or provide a Windows-capable host for the required command.
+The original implementation and local verification are committed through `a5f50664`, but adversarial review reopened Milestones 1 and 2 for the five authorized repairs. The current ready frontier is independent R2 and R4; R3 follows their integration because it shares installer fixtures with R2 and consumes repaired source pointers from R4. R5 provides composed proof. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the earlier macOS junction skip is not native acceptance.
 
 ## Context and Orientation
 
@@ -115,8 +123,10 @@ This document was saved and reviewed against Q1-Q18. A read-only check verified 
 
 ### Milestone 1: Deliver the category layout and repair consumers
 
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
+
+Reopened for R4 after actual moved bundle pointers and benchmark guidance failed source-path resolution. Original T1/T2 evidence below is retained; acceptance requires current source resolution plus R5's composed proof.
 
 #### Task T1: Migrate published skills and default traversal
 
@@ -146,14 +156,16 @@ Completed on base `d141e63d`: both default installer suites and Addy passed; reg
 
 ### Milestone 2: Deliver the agreed CLI contract
 
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
+
+Reopened for R2/R3 after public probes found destination alias overwrite, read-only rebasing failure, and successful installs with broken dotted references. Original verification below predates these fixes. Current acceptance requires R5's integrated proof.
 
 Composed proof: T4 ran the full Bash and macOS PowerShell suites on integrated revision `6f406a1f`, including every agreed CLI/source case, Unicode literal parity, profile isolation, and existing installer protections. All targeted checks exited 0. Evidence is retained in [verification.json](verification.json). Its evidence-only rebase changed no product source or tests; differences from the tested revision were README and plan updates only. Native Windows belongs to Milestone 3 and remains unverified.
 
 #### Task R1: Repair helper executable mode
 
-Completed prerequisite: integrated T2. Source inspection found `scripts/rebase-skill-references.py` recorded as mode `100644`, while script conventions require directly executable helpers. Direct public help failed with permission denied, then passed with exit 0 after mode `100755` was committed as `d07be4368ecc9b190867979ebc82c2bd050cc71a`. The content blob remained `bc20dfbc7895a4ee2412873039c5a201e349f820`. Coordinator verified direct help again on base after matching task/base tips, then removed the clean task worktree and local branch. T3 remains unfinished.
+Completed prerequisite: integrated T2. Source inspection found `scripts/rebase-skill-references.py` recorded as mode `100644`, while script conventions require directly executable helpers. Direct public help failed with permission denied, then passed with exit 0 after mode `100755` was committed as `d07be4368ecc9b190867979ebc82c2bd050cc71a`. The content blob remained `bc20dfbc7895a4ee2412873039c5a201e349f820`. Coordinator verified direct help again on base after matching task/base tips, then removed the clean task worktree and local branch. T3 was subsequently integrated; new R2/R3 repairs are unfinished.
 
 #### Task T3: Implement selection, help, and preflight parity
 
@@ -205,7 +217,17 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-No authorized local implementation task remains ready. The next action is user authorization for push/CI or access to a Windows-capable host. Then the coordinator runs the existing native Windows workflow (or `pwsh -NoProfile -File scripts/test-install.ps1` on that host), records actual revision/result/run URL and junction capability, and reassesses T4/T5 acceptance. Do not claim native success from the macOS pass, an unrun command, or a skipped platform case. Keep this plan active while acceptance is pending.
+Execute R2 and R4 in disjoint private worktrees, integrate serially, then execute R3 and R5. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
+
+### Repair task graph and ownership
+
+R2 has prerequisite `a5f50664` and owns `scripts/validate-skill-sources.py` plus canonical-collision cases in `scripts/test-install.sh` and `scripts/test-install.ps1`. First reproduce the public overwrite/accepted collision, then reject NFC-normalized casefold aliases before any writes; assert whole-home/external-Codex fingerprints and stage markers. Stop at a tested scoped commit.
+
+R4 independently consumes `a5f50664` and owns the three `skills/default/addy-{code-review-and-quality,performance-optimization,security-and-hardening}/SKILL.md` files and `skills/default/create-skill/SKILL.md`. Verify current missing source targets before repairing only live relative pointers and the benchmark path; preserve installed/runtime and root workspace examples. Validate definitions with vendored YAML and resolve all repaired source targets. No real-home install or live benchmark is required.
+
+R3 requires integrated R2/R4 and owns `scripts/rebase-skill-references.py`, minimal installer copy-boundary changes if needed, and both shared installer fixture suites. Reproduce read-only and dotted-reference failures through both public processes before fixing them. Preserve file/directory modes, source bytes, unrelated installed assets, and root/nested link safety. Handle leading `./` equivalently; verify actual migrated Addy pointers resolve in source and installed copies. Avoid broad text replacements unrelated to reference paths.
+
+R5 requires integrated R2/R4/R3 and owns composed verification and retained repair evidence. Run both full installer suites sequentially, Addy and affected consumers/validators, and all five repros against the integrated tree. The coordinator updates this plan, evidence, and final canonical KB admission pass only after delegated work finishes. Milestones 1/2 remain unmet until composed proof passes; Milestones 3/4 retain native Windows closure limits.
 
 The reconciled graph is T1 before T2; their integrated proof before T3; integrated T3 and independent R1 before T4; T3 before T5D; verified T4 native execution and T5D before final T5 closure. Shared installer and fixture files require serialized ownership. Fresh implementer subagents own distinct tasks. The coordinator owns the ExecPlan and final canonical-document admission pass; T2 owned only its named layout guidance repairs.
 
