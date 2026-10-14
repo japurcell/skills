@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -20,6 +21,25 @@ from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+@contextmanager
+def verified_fixture(module, content):
+    """A complete protected capture for parser fixtures, never partial stdout."""
+    with tempfile.TemporaryFile(mode="w+b") as stream:
+        stream.write(content)
+        stream.flush()
+        yield module.VerifiedCapture(stream, len(content), time.monotonic() + 8, "git_index")
+
+
+def acquire_fixture(module, root, path):
+    """Exercise current worktree acquisition, classification and protected replay."""
+    candidate = (module.CANDIDATE_UNTRACKED, path)
+    with module.snapshot_source(root, [candidate], module.ScanBudget(time.monotonic() + 8)) as source:
+        with source.acquire(candidate) as snapshot:
+            return b"".join(snapshot.chunks()), snapshot.classification
+
+
 SCRIPT = ROOT / "scripts" / "generate-hooks.py"
 OWNERSHIP = "# Generated from hooks/families/send_event.py by scripts/generate-hooks.py. Do not edit.\n"
 PILOT_RUNTIME_BODY = '''
@@ -576,7 +596,7 @@ class GenerateHooksTests(unittest.TestCase):
                 source,
                 flags=re.DOTALL,
             )
-            self.assertEqual(len(sections), 3, f"Expected two explicit provider adapters in {target}.")
+            self.assertEqual(len(sections), 5, f"Expected four explicit provider adapters in {target}.")
             self.assertNotIn('"permissionDecision": "deny"', "".join(sections))
             self.assertNotIn('"decision": "deny"', "".join(sections))
             self.assertEqual(source.count(ALLOWLIST_SOURCE), 1)
@@ -621,8 +641,12 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertEqual(module.is_credential_path(path), expected)
             for path, expected in vectors.ENV_PATH_VECTORS:
                 self.assertEqual(module.is_env_path(path), expected)
-            self.assertTrue(module.is_text_candidate("notes.txt", b"safe text\n"))
-            self.assertFalse(module.is_text_candidate("image.bin", b"safe\x00binary"))
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                (root / "notes.txt").write_bytes(b"safe text\n")
+                (root / "image.bin").write_bytes(b"safe\x00binary")
+                self.assertEqual(acquire_fixture(module, root, "notes.txt"), (b"safe text\n", "text"))
+                self.assertEqual(acquire_fixture(module, root, "image.bin"), (b"safe\x00binary", "binary"))
             self.assertEqual(module.enumerate_file_lines("one\ntwo\n"), [(1, "one"), (2, "two")])
             process = mock.Mock()
             process.pid = os.getpid()
@@ -778,8 +802,8 @@ class GenerateHooksTests(unittest.TestCase):
                 )
                 with mock.patch.object(
                     module,
-                    "run_git",
-                    side_effect=(b"", cached_output, worktree_output, untracked_output),
+                    "capture_git",
+                    side_effect=[verified_fixture(module, data) for data in (b"", cached_output, worktree_output, untracked_output)],
                 ) as run:
                     self.assertEqual(
                         module.collect_files(ROOT, "diff", True),
@@ -820,17 +844,19 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertNotIn("HEAD", args)
 
             with self.subTest(provider=module.__name__, behavior="staged-index"):
-                with mock.patch.object(module, "run_git", side_effect=(b"5\n", b"token")) as run:
-                    self.assertEqual(
-                        module.read_candidate_bytes(
-                            ROOT,
-                            "0:notes.env",
-                            module.CANDIDATE_STAGED,
-                        ),
-                        b"token",
-                    )
-                self.assertEqual(run.call_args_list[0].args[0][-1], ":./0:notes.env")
-                self.assertEqual(run.call_args_list[1].args[0][-1], ":./0:notes.env")
+                oid = b"a" * 40
+                candidate = (module.CANDIDATE_STAGED, "0:notes.env")
+                header = oid + b" blob 5\n"
+                outputs = (b"100644 " + oid + b" 0\t0:notes.env\0", header, header + b"token\n")
+                with mock.patch.object(module, "capture_git", side_effect=[verified_fixture(module, data) for data in outputs]) as run:
+                    with module.snapshot_source(ROOT, [candidate], module.ScanBudget(time.monotonic() + 8)) as source:
+                        with source.acquire(candidate) as snapshot:
+                            self.assertEqual(b"".join(snapshot.chunks()), b"token")
+                self.assertEqual(run.call_args_list[0].args[0], ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", "0:notes.env"])
+                for invocation in run.call_args_list[1:]:
+                    self.assertEqual(invocation.kwargs["input_bytes"], oid + b"\n")
+                self.assertEqual(run.call_args_list[1].args[0], ["cat-file", "--batch-check"])
+                self.assertEqual(run.call_args_list[2].args[0], ["cat-file", "--batch"])
 
     def test_secret_scanner_rejects_unsafe_or_oversized_candidate_files(self) -> None:
         modules = (
@@ -848,24 +874,24 @@ class GenerateHooksTests(unittest.TestCase):
             for module in modules:
                 with self.subTest(provider=module.__name__, case="regular"):
                     self.assertEqual(
-                        module.read_candidate_bytes(repo, "regular.txt", "diff"),
-                        b"inside",
+                        acquire_fixture(module, repo, "regular.txt"),
+                        (b"inside", "text"),
                     )
                 with self.subTest(provider=module.__name__, case="escape"):
                     with self.assertRaises(module.ScanSecurityError):
-                        module.read_candidate_bytes(repo, "../outside.txt", "diff")
+                        acquire_fixture(module, repo, "../outside.txt")
                 oversized = repo / "oversized.bin"
                 oversized.write_bytes(b"x" * (module.MAX_FILE_BYTES + 1))
                 with self.subTest(provider=module.__name__, case="oversized"):
                     with self.assertRaises(module.ScanLimitExceeded):
-                        module.read_candidate_bytes(repo, "oversized.bin", "diff")
+                        acquire_fixture(module, repo, "oversized.bin")
                 oversized.unlink()
                 if hasattr(os, "symlink"):
                     linked = repo / "linked.txt"
                     linked.symlink_to(parent / "outside.txt")
                     with self.subTest(provider=module.__name__, case="symlink"):
                         with self.assertRaises(module.ScanSecurityError):
-                            module.read_candidate_bytes(repo, "linked.txt", "diff")
+                            acquire_fixture(module, repo, "linked.txt")
                     linked.unlink()
 
     def test_secret_scanner_enforces_file_count_total_bytes_and_time_limits(self) -> None:
@@ -881,8 +907,8 @@ class GenerateHooksTests(unittest.TestCase):
             with self.subTest(provider=module.__name__, case="file-count"):
                 with mock.patch.object(
                     module,
-                    "run_git",
-                    side_effect=(b"", too_many_paths, b"", b""),
+                    "capture_git",
+                    side_effect=[verified_fixture(module, data) for data in (b"", too_many_paths, b"", b"")],
                 ):
                     with self.assertRaises(module.ScanLimitExceeded):
                         module.collect_files(ROOT, "diff", True)

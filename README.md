@@ -48,6 +48,25 @@ mode, an incomplete scan denies the tool and reports a stable cause, safe counts
 where available, and recovery advice. For example, `file_bytes_limit/candidate_read`
 identifies an oversized pending file without exposing its name or contents.
 
+For hook-owned recovery metadata, request the exact literal command
+`hooks-diagnostics-v1` through the provider's native shell tool. Codex uses
+`exec_command` (or `functions.exec_command`) with
+`{"cmd":"hooks-diagnostics-v1","login":false}`; only integer
+`max_output_tokens` and `yield_time_ms` from 0 through 2,147,483,647 may be added.
+Copilot uses native `bash` and Gemini uses `run_shell_command`, each with exactly
+`{"command":"hooks-diagnostics-v1"}`. Do not add a path, arguments, shell,
+working directory, environment, or permission options.
+
+The scanner always denies this request in both block and warn modes and returns
+`scan-secrets diagnostics (request not executed):` followed by bounded JSON.
+The marker is never executed and does not need an executable on PATH. The report
+inventories the hook process directory, marks a differing payload directory
+unverified, and reports security as `not_scanned` and audit as `not_attempted`.
+Missing audit/policy helpers, Git failures, unsafe candidates, and oversized files
+do not prevent this route. Guardian still inspects the request independently;
+its own failure may hide scanner diagnostics in a provider. A broken common
+transport helper or interpreter requires the standalone human CLI below.
+
 Each provider also installs a standalone `hooks-diagnostics.py` beside its scanner.
 From an ordinary human terminal, choose a trusted absolute Python executable and
 use isolated startup with the absolute installed script path, for example:

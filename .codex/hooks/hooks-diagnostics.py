@@ -328,12 +328,14 @@ def diagnostics_collect(script_path, *, doctor=False):
     return report
 
 
-def diagnostics_encode(report):
+def diagnostics_encode(report, *, wrap=None):
     """Preserve counts/health/largest sizes while bounding the entire response."""
     repository = report["repository"]
 
     def encode():
-        return (_diag_json.dumps(report, ensure_ascii=True, separators=(",", ":")) + "\n").encode("utf-8")
+        text = _diag_json.dumps(report, ensure_ascii=True, separators=(",", ":"))
+        output = text if wrap is None else _diag_json.dumps(wrap(text), ensure_ascii=True, separators=(",", ":"))
+        return (output + "\n").encode("utf-8")
 
     raw = encode()
     if len(raw) > DIAG_LIMITS["response_bytes"]:
@@ -351,13 +353,15 @@ def diagnostics_encode(report):
         raw = encode()
     return raw
 
+# BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'codex'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '7d111840595377c534bb0b0acfa6b6f0cb4fdfd1a31e5ad92ac78b81fdeb3ef1'
+DIAG_BUILD = '75d3b6d9f1bef0786076b744069ef1bf29aae569cb0db23017c607f9957269f8'
 DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', 'ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', '87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 1048576, 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['PreToolUse', 'SessionStart', 'Stop']
 DIAG_REGISTRATIONS = ['["SessionStart","startup|resume|clear|compact",{"additionalContextLimit":8000,"command":"python3 ~/.codex/hooks/load-required-skills.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\load-required-skills.py\\"","statusMessage":"Loading required skill context","timeout":5,"type":"command"}]', '["PreToolUse","Bash|apply_patch|Edit|Write",{"command":"python3 ~/.codex/hooks/scan-secrets.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\scan-secrets.py\\"","statusMessage":"Scanning modified files for secrets","timeout":10,"type":"command"}]', '["PreToolUse","Bash|apply_patch|Edit|Write",{"command":"python3 ~/.codex/hooks/tool-guard.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\tool-guard.py\\"","statusMessage":"Checking dangerous tool actions","timeout":10,"type":"command"}]', '["Stop",null,{"command":"python3 ~/.codex/hooks/scan-secrets.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\scan-secrets.py\\"","statusMessage":"Checking modified files for secrets","timeout":10,"type":"command"}]']
+# END PROVIDER ADAPTER
 
 def diagnostics_main(argv=None):
     arguments = list(_diag_sys.argv[1:] if argv is None else argv)

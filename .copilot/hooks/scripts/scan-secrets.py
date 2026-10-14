@@ -23,8 +23,456 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_init  # noqa: E402
 from helpers.common import emit_json, read_json_input  # noqa: E402
+
+import hashlib as _diag_hashlib
+import heapq as _diag_heapq
+import json as _diag_json
+import os as _diag_os
+from pathlib import Path as _DiagPath
+import re as _diag_re
+import stat as _diag_stat
+import sys as _diag_sys
+import time as _diag_time
+import unicodedata as _diag_unicode
+
+
+class _DiagnosticsUnavailable(Exception):
+    """Fixed cause, never a filesystem exception or input string."""
+
+
+def _diag_unsafe(info):
+    return (_diag_stat.S_ISLNK(info.st_mode) or bool(
+        getattr(info, "st_file_attributes", 0) & 0x400))
+
+
+def _diag_directory_flags():
+    if not (hasattr(_diag_os, "O_NOFOLLOW") and hasattr(_diag_os, "O_DIRECTORY")
+            and _diag_os.open in _diag_os.supports_dir_fd
+            and _diag_os.stat in _diag_os.supports_dir_fd
+            and _diag_os.scandir in _diag_os.supports_fd):
+        raise _DiagnosticsUnavailable("limited_platform")
+    return _diag_os.O_RDONLY | _diag_os.O_DIRECTORY | _diag_os.O_NOFOLLOW
+
+
+def _diag_open_directory(path):
+    """Retain no-follow descriptors for every absolute path component."""
+    flags = _diag_directory_flags()
+    path = _DiagPath(_diag_os.path.abspath(path))
+    fd = _diag_os.open(path.anchor, flags)
+    try:
+        for part in path.parts[1:]:
+            new_fd = _diag_os.open(part, flags, dir_fd=fd)
+            _diag_os.close(fd)
+            fd = new_fd
+        return fd
+    except BaseException:
+        _diag_os.close(fd)
+        raise
+
+
+def _diag_label(value):
+    # Inspect the entire bounded filesystem label before clipping.
+    if _diag_re.search(r"(?i)(gh[pousr]_|github_pat_|sk_(?:live|test)_|rk_live_|xox[baprs]-|AKIA|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", value):
+        return "[REDACTED]"
+    value = "".join(char for char in value if not _diag_unicode.category(char).startswith("C") and char not in "\u2028\u2029")
+    try:
+        return value.encode("utf-8")[:DIAG_LIMITS["label_bytes"]].decode("utf-8", "ignore")
+    except UnicodeError:
+        return "[REDACTED]"
+
+
+def _diag_inventory(deadline):
+    report = {"health": "unknown", "kind": "worktree_metadata", "pending_status": "unknown",
+              "index_snapshots": "unknown", "index_bytes": None, "repository_layout": "unknown",
+              "inventory_complete": False, "directories_observed": 0, "entries_observed": 0,
+              "regular_observed": 0, "unsafe_observed": 0, "records_omitted": 0,
+              "records": [], "causes": [], "ranking": "largest_observed"}
+    heap = []
+    unsafe = []
+    flags = None
+
+    def note(cause):
+        if cause not in report["causes"]:
+            report["causes"].append(cause)
+
+    def walk(fd, prefix, depth):
+        if _diag_time.monotonic() >= deadline:
+            note("time_limit")
+            return
+        report["directories_observed"] += 1
+        with _diag_os.scandir(fd) as entries:
+            for entry in entries:
+                if _diag_time.monotonic() >= deadline:
+                    note("time_limit")
+                    return
+                if report["entries_observed"] >= DIAG_LIMITS["entries"]:
+                    note("entries_limit")
+                    return
+                report["entries_observed"] += 1
+                try:
+                    info = _diag_os.stat(entry.name, dir_fd=fd, follow_symlinks=False)
+                except OSError:
+                    note("metadata_unavailable")
+                    continue
+                if entry.name == ".git":
+                    if depth == 0:
+                        report["repository_layout"] = "directory" if _diag_stat.S_ISDIR(info.st_mode) and not _diag_unsafe(info) else "linked_or_unknown"
+                        if report["repository_layout"] == "directory":
+                            git_fd = None
+                            try:
+                                git_fd = _diag_os.open(entry.name, flags, dir_fd=fd)
+                                index_info = _diag_os.stat("index", dir_fd=git_fd, follow_symlinks=False)
+                                if _diag_stat.S_ISREG(index_info.st_mode) and not _diag_unsafe(index_info):
+                                    report["index_bytes"] = index_info.st_size
+                            except OSError:
+                                pass
+                            finally:
+                                if git_fd is not None:
+                                    _diag_os.close(git_fd)
+                    continue
+                label = _diag_label(prefix + entry.name)
+                if _diag_unsafe(info) or not (_diag_stat.S_ISDIR(info.st_mode) or _diag_stat.S_ISREG(info.st_mode)):
+                    report["unsafe_observed"] += 1
+                    if len(unsafe) < DIAG_LIMITS["unsafe_records"]:
+                        unsafe.append({"label": label, "kind": "unsafe_type", "size": None, "pending_status": "unknown"})
+                    continue
+                if _diag_stat.S_ISDIR(info.st_mode):
+                    if depth >= DIAG_LIMITS["depth"]:
+                        note("depth_limit")
+                        continue
+                    if report["directories_observed"] >= DIAG_LIMITS["directories"]:
+                        note("directories_limit")
+                        continue
+                    child = None
+                    try:
+                        child = _diag_os.open(entry.name, flags, dir_fd=fd)
+                        opened = _diag_os.fstat(child)
+                        if (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino):
+                            note("metadata_changed")
+                            continue
+                        walk(child, prefix + entry.name + "/", depth + 1)
+                    except OSError:
+                        note("metadata_unavailable")
+                    finally:
+                        if child is not None:
+                            _diag_os.close(child)
+                    if "time_limit" in report["causes"] or "entries_limit" in report["causes"]:
+                        return
+                else:
+                    report["regular_observed"] += 1
+                    record = (info.st_size, report["entries_observed"], label)
+                    capacity = DIAG_LIMITS["records"] - DIAG_LIMITS["unsafe_records"]
+                    if len(heap) < capacity:
+                        _diag_heapq.heappush(heap, record)
+                    elif record[:2] > heap[0][:2]:
+                        _diag_heapq.heapreplace(heap, record)
+    root = None
+    try:
+        if _diag_time.monotonic() >= deadline:
+            raise _DiagnosticsUnavailable("time_limit")
+        flags = _diag_directory_flags()
+        root = _diag_os.open(".", flags)
+        walk(root, "", 0)
+        report["inventory_complete"] = not report["causes"]
+        report["health"] = "observed" if report["inventory_complete"] else "incomplete"
+    except _DiagnosticsUnavailable as error:
+        note(str(error))
+        report["health"] = "limited" if str(error) == "limited_platform" else "incomplete"
+    except OSError:
+        note("metadata_unavailable")
+        report["health"] = "incomplete"
+    finally:
+        if root is not None:
+            _diag_os.close(root)
+    records = [{"size": size, "label": label, "kind": "regular", "pending_status": "unknown"}
+               for size, _, label in sorted(heap, reverse=True)] + unsafe
+    for index, record in enumerate(records, 1):
+        record["id"] = "candidate-%04d" % index
+    report["records"] = records
+    report["records_omitted"] = report["regular_observed"] + report["unsafe_observed"] - len(records)
+    return report
+
+
+def _diag_read_fixed(root, relative, limit, deadline):
+    """Read only fixed owned relative assets/settings, never config-selected paths."""
+    if _diag_time.monotonic() >= deadline:
+        raise _DiagnosticsUnavailable("time_limit")
+    parts = _DiagPath(relative).parts
+    if not parts or _DiagPath(relative).is_absolute() or any(part in (".", "..") for part in parts):
+        raise _DiagnosticsUnavailable("invalid_installation_metadata")
+    try:
+        parent = _diag_open_directory(root)
+    except OSError:
+        raise _DiagnosticsUnavailable("unavailable") from None
+    fd = None
+    try:
+        for part in parts[:-1]:
+            new = _diag_os.open(part, _diag_directory_flags(), dir_fd=parent)
+            _diag_os.close(parent)
+            parent = new
+        before = _diag_os.stat(parts[-1], dir_fd=parent, follow_symlinks=False)
+        if _diag_unsafe(before) or not _diag_stat.S_ISREG(before.st_mode):
+            raise _DiagnosticsUnavailable("unsafe_type")
+        if before.st_size > limit:
+            raise _DiagnosticsUnavailable("bytes_limit")
+        fd = _diag_os.open(parts[-1], _diag_os.O_RDONLY | _diag_os.O_NOFOLLOW | _diag_os.O_NONBLOCK, dir_fd=parent)
+        opened = _diag_os.fstat(fd)
+        if not _diag_stat.S_ISREG(opened.st_mode) or (before.st_dev, before.st_ino) != (opened.st_dev, opened.st_ino):
+            raise _DiagnosticsUnavailable("metadata_changed")
+        raw = bytearray()
+        while len(raw) <= limit:
+            if _diag_time.monotonic() >= deadline:
+                raise _DiagnosticsUnavailable("time_limit")
+            chunk = _diag_os.read(fd, min(65536, limit + 1 - len(raw)))
+            if not chunk:
+                break
+            raw.extend(chunk)
+        after = _diag_os.fstat(fd)
+        if len(raw) > limit:
+            raise _DiagnosticsUnavailable("bytes_limit")
+        if (opened.st_size, opened.st_mtime_ns, opened.st_ctime_ns) != (after.st_size, after.st_mtime_ns, after.st_ctime_ns):
+            raise _DiagnosticsUnavailable("metadata_changed")
+        return bytes(raw), opened
+    except FileNotFoundError:
+        raise _DiagnosticsUnavailable("missing") from None
+    except OSError:
+        raise _DiagnosticsUnavailable("unavailable") from None
+    finally:
+        _diag_os.close(parent)
+        if fd is not None:
+            _diag_os.close(fd)
+
+
+def _diag_assets(script, deadline):
+    records = []
+    total = 0
+    for name, expected in DIAG_ASSETS[:DIAG_LIMITS["assets"]]:
+        try:
+            raw, info = _diag_read_fixed(_DiagPath(script).parent, name, DIAG_LIMITS["hash_bytes"] - total, deadline)
+            total += len(raw)
+            observed = _diag_hashlib.sha256(raw).hexdigest()
+            state = "unverified" if expected is None else ("matches" if observed == expected else "drift")
+            if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+                state = "unsafe_owner_or_mode"
+            records.append({"asset": name, "state": state, "observed_sha256": observed})
+        except _DiagnosticsUnavailable as error:
+            records.append({"asset": name, "state": str(error)})
+    complete = len(DIAG_ASSETS) <= DIAG_LIMITS["assets"] and all(item["state"] in ("matches", "unverified") for item in records)
+    return {"health": "unverified" if complete else "degraded", "complete": complete,
+            "hash_bytes": total, "records": records, "meaning": "on_disk_observation"}
+
+
+def _diag_unique(pairs):
+    obj = {}
+    for key, value in pairs:
+        if key in obj:
+            raise _DiagnosticsUnavailable("duplicate_keys")
+        obj[key] = value
+    return obj
+
+
+def _diag_fingerprint(event, matcher, handler):
+    return _diag_json.dumps([event, matcher, handler], sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+
+
+def _diag_registrations(script, deadline):
+    root = _DiagPath(script).parent
+    root = root.parent if DIAG_PROVIDER == "codex" else root.parent.parent
+    relative = "hooks/hooks.json" if DIAG_PROVIDER == "copilot" else ("hooks.json" if DIAG_PROVIDER == "codex" else "settings.json")
+    result = {"health": "uncertain", "owned": 0, "unowned": 0, "duplicates": 0,
+              "missing": len(DIAG_REGISTRATIONS), "events": [], "cause": "unknown"}
+    try:
+        raw, info = _diag_read_fixed(root, relative, DIAG_LIMITS["settings_bytes"], deadline)
+        config = _diag_json.loads(raw.decode("utf-8"), object_pairs_hook=_diag_unique,
+                                  parse_constant=lambda _: (_ for _ in ()).throw(_DiagnosticsUnavailable("malformed")))
+        if not isinstance(config, dict) or not isinstance(config.get("hooks"), dict):
+            raise _DiagnosticsUnavailable("malformed")
+        if any(key in config for key in ("include", "includes", "extends")):
+            raise _DiagnosticsUnavailable("config_includes")
+        expected = set(DIAG_REGISTRATIONS)
+        seen = set()
+        matched = set()
+        events = set()
+        for event, groups in config["hooks"].items():
+            if _diag_time.monotonic() >= deadline:
+                raise _DiagnosticsUnavailable("time_limit")
+            if not isinstance(groups, list):
+                raise _DiagnosticsUnavailable("malformed")
+            events.add(event if event in DIAG_EVENTS else "unknown")
+            for group in groups:
+                if not isinstance(group, dict):
+                    raise _DiagnosticsUnavailable("malformed")
+                handlers = [group] if DIAG_PROVIDER == "copilot" else group.get("hooks")
+                if not isinstance(handlers, list):
+                    raise _DiagnosticsUnavailable("malformed")
+                for handler in handlers:
+                    if not isinstance(handler, dict):
+                        raise _DiagnosticsUnavailable("malformed")
+                    key = _diag_fingerprint(event, None if DIAG_PROVIDER == "copilot" else group.get("matcher"), handler)
+                    commands = {field: handler[field] for field in ("bash", "powershell", "command", "commandWindows") if field in handler}
+                    duplicate_key = _diag_fingerprint(event, None, commands or handler)
+                    if duplicate_key in seen:
+                        result["duplicates"] += 1
+                    seen.add(duplicate_key)
+                    if key in expected:
+                        result["owned"] += 1
+                        matched.add(key)
+                    else:
+                        result["unowned"] += 1
+        result["missing"] = len(expected - matched)
+        result["events"] = sorted(events)
+        result["cause"] = "observed"
+        if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+            result["cause"] = "unsafe_owner_or_mode"
+        elif not (result["missing"] or result["duplicates"] or result["unowned"]):
+            result["health"] = "observed"
+    except (_DiagnosticsUnavailable, UnicodeError, ValueError, RecursionError) as error:
+        result["cause"] = str(error) if isinstance(error, _DiagnosticsUnavailable) else "malformed"
+    return result
+
+
+def diagnostics_collect(script_path, *, doctor=False):
+    """Collect fixed installation observations and optional process-cwd metadata.
+
+    script_path must be the loaded hook's own __file__, never a payload path.
+    No required scanner/helper imports or audit initialization are needed.
+    """
+    deadline = _diag_time.monotonic() + DIAG_LIMITS["seconds"]
+    report = {"schema": "hooks-diagnostics-v1", "provider": DIAG_PROVIDER,
+              "policy_limits": DIAG_POLICY_LIMITS,
+              "bootstrap": {"health": "loaded", "embedded_build": DIAG_BUILD,
+                            "origin": "source_or_installed_unverified", "profile": "metadata-v1"},
+              "security": {"health": "unknown", "outcome": "not_scanned"},
+              "audit": {"health": "unknown", "outcome": "not_attempted"},
+              "repository": {"health": "not_collected", "pending_status": "unknown", "index_snapshots": "unknown"}}
+    report["assets"] = _diag_assets(script_path, deadline)
+    report["registrations"] = _diag_registrations(script_path, deadline)
+    if not doctor:
+        report["repository"] = _diag_inventory(deadline)
+    return report
+
+
+def diagnostics_encode(report, *, wrap=None):
+    """Preserve counts/health/largest sizes while bounding the entire response."""
+    repository = report["repository"]
+
+    def encode():
+        text = _diag_json.dumps(report, ensure_ascii=True, separators=(",", ":"))
+        output = text if wrap is None else _diag_json.dumps(wrap(text), ensure_ascii=True, separators=(",", ":"))
+        return (output + "\n").encode("utf-8")
+
+    raw = encode()
+    if len(raw) > DIAG_LIMITS["response_bytes"]:
+        report["response_truncated"] = True
+        for record in repository.get("records", []):
+            record.pop("label", None)
+        raw = encode()
+    while len(raw) > DIAG_LIMITS["response_bytes"] and repository.get("records"):
+        repository["records"].pop()
+        repository["records_omitted"] += 1
+        raw = encode()
+    while len(raw) > DIAG_LIMITS["response_bytes"] and report["assets"]["records"]:
+        report["assets"]["records"].pop()
+        report["assets"]["details_omitted"] = report["assets"].get("details_omitted", 0) + 1
+        raw = encode()
+    return raw
+
+# BEGIN PROVIDER ADAPTER
+DIAG_PROVIDER = 'copilot'
+DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
+DIAG_BUILD = 'a51b2bfbd7d4d470f5b5e122f2fcf3b565cb772da76da8ffddedb5b30ba0f9df'
+DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', '87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
+DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 1048576, 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
+DIAG_EVENTS = ['agentStop', 'errorOccurred', 'notification', 'permissionRequest', 'postToolUse', 'postToolUseFailure', 'preCompact', 'preToolUse', 'sessionEnd', 'sessionStart', 'subagentStart', 'subagentStop', 'userPromptSubmitted', 'userPromptTransformed']
+DIAG_REGISTRATIONS = ['["agentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"agentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["errorOccurred",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"errorOccurred"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["notification",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"notification"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["permissionRequest",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"permissionRequest"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/tool-guard.py","env":{"GUARD_MODE":"block"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/tool-guard.py\\"","timeoutSec":10,"type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"block","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["preCompact",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preCompact"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUseFailure",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUseFailure"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionEnd"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","timeoutSec":30,"type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/bell.py","powershell":"python \\"$HOME/.copilot/hooks/scripts/bell.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"warn","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/load-required-skills.py","env":{"AGENTS_REQUIRED_SKILL_FILES":"caveman/SKILL.md"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/load-required-skills.py\\"","type":"command"}]', '["userPromptSubmitted",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptSubmitted"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["userPromptTransformed",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptTransformed"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]']
+# END PROVIDER ADAPTER
+
+
+def _diagnostic_request(payload):
+    if not isinstance(payload, dict):
+        return False
+    if DIAG_PROVIDER == "copilot":
+        event, tool_key, args_key = "preToolUse", "toolName", "toolArgs"
+        # Native Copilot CLI envelopes omit the event name.
+        if payload.get("hook_event_name", event) != event or payload.get(tool_key) != "bash":
+            return False
+        metadata = {"sessionId": 256, "cwd": 8192}
+    else:
+        event = "PreToolUse" if DIAG_PROVIDER == "codex" else "BeforeTool"
+        tool_key, args_key = "tool_name", "tool_input"
+        tools = {"exec_command", "functions.exec_command"} if DIAG_PROVIDER == "codex" else {"run_shell_command"}
+        if payload.get("hook_event_name") != event or type(payload.get(tool_key)) is not str or payload[tool_key] not in tools:
+            return False
+        metadata = {"session_id": 256, "cwd": 8192, "transcript_path": 8192, "tool_use_id": 256}
+    if not set(payload) <= {"hook_event_name", tool_key, args_key, "timestamp", *metadata}:
+        return False
+    if any(type(payload[key]) is not str or len(payload[key]) > limit for key, limit in metadata.items() if key in payload):
+        return False
+    if "timestamp" in payload:
+        stamp = payload["timestamp"]
+        if DIAG_PROVIDER == "copilot":
+            if type(stamp) is not int or not 0 <= stamp <= 9223372036854775807:
+                return False
+        elif type(stamp) is not str or len(stamp) > 128:
+            return False
+    args = payload.get(args_key)
+    if not isinstance(args, dict):
+        return False
+    if DIAG_PROVIDER == "codex":
+        if not {"cmd", "login"} <= set(args) or not set(args) <= {"cmd", "login", "max_output_tokens", "yield_time_ms"}:
+            return False
+        if args["cmd"] != "hooks-diagnostics-v1" or args["login"] is not False:
+            return False
+        return all(type(args[key]) is int and 0 <= args[key] <= 2147483647 for key in ("max_output_tokens", "yield_time_ms") if key in args)
+    return args == {"command": "hooks-diagnostics-v1"}
+
+
+# BEGIN PROVIDER ADAPTER
+def _diagnostic_denial(text):
+    reason = "scan-secrets diagnostics (request not executed):" + text
+    if DIAG_PROVIDER == "gemini":
+        return {"decision": "deny", "reason": reason}
+    if DIAG_PROVIDER == "codex":
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
+    return {"continue": True, "permissionDecision": "deny", "permissionDecisionReason": reason,
+            "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+# END PROVIDER ADAPTER
+
+
+_SCAN_PAYLOAD = None
+_SCAN_INPUT_ERROR = ""
+_SCAN_INPUT_LOADED = False
+
+
+def _load_scan_payload():
+    global _SCAN_PAYLOAD, _SCAN_INPUT_ERROR, _SCAN_INPUT_LOADED
+    if _SCAN_INPUT_LOADED:
+        return
+    _SCAN_INPUT_LOADED = True
+    try:
+        _SCAN_PAYLOAD = read_json_input()
+    except ValueError:
+        _SCAN_INPUT_ERROR = "input_invalid"
+    except Exception:
+        _SCAN_INPUT_ERROR = "internal_error"
+
+
+if __name__ == "__main__":
+    _load_scan_payload()
+    if _diagnostic_request(_SCAN_PAYLOAD):
+        _report = diagnostics_collect(__file__)
+        _report.update(action="diagnostics", security_outcome="not_scanned", enforcement="deny", audit_outcome="not_attempted")
+        _payload_cwd = _SCAN_PAYLOAD.get("cwd")
+        # Inventory is process cwd only. Never resolve/stat/open the payload path.
+        try:
+            _location_verified = _payload_cwd is None or _payload_cwd == os.getcwd()
+        except OSError:
+            _location_verified = False
+        _report["repository"]["repository_location"] = "process_cwd" if _location_verified else "unverified"
+        sys.stdout.buffer.write(diagnostics_encode(_report, wrap=_diagnostic_denial))
+        raise SystemExit(0)
+
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -193,10 +641,10 @@ def emit_block_denial(reason: str) -> None:
 
 
 def read_payload() -> dict:
-    try:
-        payload = read_json_input()
-    except ValueError as exc:
-        raise ScanSecurityError("input_invalid", "input") from exc
+    _load_scan_payload()
+    if _SCAN_INPUT_ERROR:
+        raise ScanSecurityError(_SCAN_INPUT_ERROR, "input")
+    payload = _SCAN_PAYLOAD
     if not isinstance(payload, dict):
         raise ScanSecurityError("input_invalid", "input")
     return payload
@@ -1519,13 +1967,22 @@ def main() -> int:
         "log_path": scan_log, "session_id": "", "timestamp": "", "mode": mode,
         "scope": "diff", "repo_root_path": Path.cwd(),
     }
+    SCAN_PHASE = "input"
+    payload = read_payload()
+    # Read once in bootstrap, but ordinary scans retain the normal input failure path.
+    global HOOK_EVENT
+    HOOK_EVENT = payload.get("hook_event_name", "")
     if not git_available():
         raise GitCommandError("git_unavailable", "initialization")
+    try:
+        from helpers.audit import audit_init
+    except Exception:
+        emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI.")
+        return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
 
     SCAN_PHASE = "input"
-    payload = read_payload()
     event = payload.get("hook_event_name")
     SCAN_ACTION = (
         "session-end scan"

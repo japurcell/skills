@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from hooks.families.allowlist import ALLOWLIST_SOURCE
+from hooks.families.diagnostics import collector_source
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
@@ -37,8 +38,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_init  # noqa: E402
 from helpers.common import emit_json, read_json_input  # noqa: E402
+
+# __DIAGNOSTIC_BOOTSTRAP__
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -233,10 +235,10 @@ def emit_block_denial(reason: str) -> None:
 _POLICY_SOURCE = r'''
 
 def read_payload() -> dict:
-    try:
-        payload = read_json_input()
-    except ValueError as exc:
-        raise ScanSecurityError("input_invalid", "input") from exc
+    _load_scan_payload()
+    if _SCAN_INPUT_ERROR:
+        raise ScanSecurityError(_SCAN_INPUT_ERROR, "input")
+    payload = _SCAN_PAYLOAD
     if not isinstance(payload, dict):
         raise ScanSecurityError("input_invalid", "input")
     return payload
@@ -1508,6 +1510,94 @@ def resolve_work_dir(payload: dict) -> Path:
 '''
 
 
+_RECOVERY_SOURCE = r'''
+
+def _diagnostic_request(payload):
+    if not isinstance(payload, dict):
+        return False
+    if DIAG_PROVIDER == "copilot":
+        event, tool_key, args_key = "preToolUse", "toolName", "toolArgs"
+        # Native Copilot CLI envelopes omit the event name.
+        if payload.get("hook_event_name", event) != event or payload.get(tool_key) != "bash":
+            return False
+        metadata = {"sessionId": 256, "cwd": 8192}
+    else:
+        event = "PreToolUse" if DIAG_PROVIDER == "codex" else "BeforeTool"
+        tool_key, args_key = "tool_name", "tool_input"
+        tools = {"exec_command", "functions.exec_command"} if DIAG_PROVIDER == "codex" else {"run_shell_command"}
+        if payload.get("hook_event_name") != event or type(payload.get(tool_key)) is not str or payload[tool_key] not in tools:
+            return False
+        metadata = {"session_id": 256, "cwd": 8192, "transcript_path": 8192, "tool_use_id": 256}
+    if not set(payload) <= {"hook_event_name", tool_key, args_key, "timestamp", *metadata}:
+        return False
+    if any(type(payload[key]) is not str or len(payload[key]) > limit for key, limit in metadata.items() if key in payload):
+        return False
+    if "timestamp" in payload:
+        stamp = payload["timestamp"]
+        if DIAG_PROVIDER == "copilot":
+            if type(stamp) is not int or not 0 <= stamp <= 9223372036854775807:
+                return False
+        elif type(stamp) is not str or len(stamp) > 128:
+            return False
+    args = payload.get(args_key)
+    if not isinstance(args, dict):
+        return False
+    if DIAG_PROVIDER == "codex":
+        if not {"cmd", "login"} <= set(args) or not set(args) <= {"cmd", "login", "max_output_tokens", "yield_time_ms"}:
+            return False
+        if args["cmd"] != "hooks-diagnostics-v1" or args["login"] is not False:
+            return False
+        return all(type(args[key]) is int and 0 <= args[key] <= 2147483647 for key in ("max_output_tokens", "yield_time_ms") if key in args)
+    return args == {"command": "hooks-diagnostics-v1"}
+
+
+# BEGIN PROVIDER ADAPTER
+def _diagnostic_denial(text):
+    reason = "scan-secrets diagnostics (request not executed):" + text
+    if DIAG_PROVIDER == "gemini":
+        return {"decision": "deny", "reason": reason}
+    if DIAG_PROVIDER == "codex":
+        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
+    return {"continue": True, "permissionDecision": "deny", "permissionDecisionReason": reason,
+            "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+# END PROVIDER ADAPTER
+
+
+_SCAN_PAYLOAD = None
+_SCAN_INPUT_ERROR = ""
+_SCAN_INPUT_LOADED = False
+
+
+def _load_scan_payload():
+    global _SCAN_PAYLOAD, _SCAN_INPUT_ERROR, _SCAN_INPUT_LOADED
+    if _SCAN_INPUT_LOADED:
+        return
+    _SCAN_INPUT_LOADED = True
+    try:
+        _SCAN_PAYLOAD = read_json_input()
+    except ValueError:
+        _SCAN_INPUT_ERROR = "input_invalid"
+    except Exception:
+        _SCAN_INPUT_ERROR = "internal_error"
+
+
+if __name__ == "__main__":
+    _load_scan_payload()
+    if _diagnostic_request(_SCAN_PAYLOAD):
+        _report = diagnostics_collect(__file__)
+        _report.update(action="diagnostics", security_outcome="not_scanned", enforcement="deny", audit_outcome="not_attempted")
+        _payload_cwd = _SCAN_PAYLOAD.get("cwd")
+        # Inventory is process cwd only. Never resolve/stat/open the payload path.
+        try:
+            _location_verified = _payload_cwd is None or _payload_cwd == os.getcwd()
+        except OSError:
+            _location_verified = False
+        _report["repository"]["repository_location"] = "process_cwd" if _location_verified else "unverified"
+        sys.stdout.buffer.write(diagnostics_encode(_report, wrap=_diagnostic_denial))
+        raise SystemExit(0)
+'''
+
+
 _MAIN_SOURCE = r'''
 
 
@@ -1541,13 +1631,22 @@ def main() -> int:
         "log_path": scan_log, "session_id": "", "timestamp": "", "mode": mode,
         "scope": "diff", "repo_root_path": Path.cwd(),
     }
+    SCAN_PHASE = "input"
+    payload = read_payload()
+    # Read once in bootstrap, but ordinary scans retain the normal input failure path.
+    global HOOK_EVENT
+    HOOK_EVENT = payload.get("hook_event_name", "")
     if not git_available():
         raise GitCommandError("git_unavailable", "initialization")
+    try:
+        from helpers.audit import audit_init
+    except Exception:
+        emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI.")
+        return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
 
     SCAN_PHASE = "input"
-    payload = read_payload()
     event = payload.get("hook_event_name")
     SCAN_ACTION = (
         "session-end scan"
@@ -1791,7 +1890,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     return (
         SHEBANG
         + HEADER
-        + _PRELUDE_SOURCE.lstrip("\n")
+        + _PRELUDE_SOURCE.lstrip("\n").replace("# __DIAGNOSTIC_BOOTSTRAP__", collector_source(provider) + _RECOVERY_SOURCE)
         + ADAPTER_START
         + response_adapter.lstrip("\n")
         + ADAPTER_END

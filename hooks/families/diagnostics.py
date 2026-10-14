@@ -382,12 +382,14 @@ def diagnostics_collect(script_path, *, doctor=False):
     return report
 
 
-def diagnostics_encode(report):
+def diagnostics_encode(report, *, wrap=None):
     """Preserve counts/health/largest sizes while bounding the entire response."""
     repository = report["repository"]
 
     def encode():
-        return (_diag_json.dumps(report, ensure_ascii=True, separators=(",", ":")) + "\n").encode("utf-8")
+        text = _diag_json.dumps(report, ensure_ascii=True, separators=(",", ":"))
+        output = text if wrap is None else _diag_json.dumps(wrap(text), ensure_ascii=True, separators=(",", ":"))
+        return (output + "\n").encode("utf-8")
 
     raw = encode()
     if len(raw) > DIAG_LIMITS["response_bytes"]:
@@ -453,7 +455,7 @@ def collector_source(provider: Provider) -> str:
                  f"DIAG_BUILD = {identity.hexdigest()!r}\nDIAG_ASSETS = {assets!r}\n"
                  f"DIAG_POLICY_LIMITS = {_policy_limits(repo)!r}\n"
                  f"DIAG_EVENTS = {sorted(config.get('hooks', {}))!r}\nDIAG_REGISTRATIONS = {registrations!r}\n")
-    return RUNTIME + "\n" + constants
+    return RUNTIME + "\n# BEGIN PROVIDER ADAPTER\n" + constants + "# END PROVIDER ADAPTER\n"
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
