@@ -28,7 +28,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [ ] [milestone-4] T5: Close the effort after native Windows acceptance; retain current owner actions and this active plan until then.
 - [x] (2026-10-14) [milestone-1] R4: Repaired eight source-reference pointers and the live benchmark path in `e63d4951`. All eight targets resolve; four vendored-YAML definition validations and whitespace checks passed.
 - [x] (2026-10-14) [milestone-2] R2: NFC-normalized casefold validation rejects canonical aliases before writes. Both full suites and focused enabled/disabled immutability cases passed; integrated as `a18e778a`.
-- [ ] [milestone-2] R3: Rebase read-only Markdown safely and handle leading `./`; prove both public installers and actual migrated Addy bundles.
+- [x] (2026-10-14) [milestone-2] R3: Safe read-only rebasing, repeat copying/pruning, dotted references, actual Addy targets, and hardlink refusal/pruning passed both full suites at `671f1e78`; integrated as `362dad54` with only this plan differing after rebase.
 - [ ] [milestone-2] R5: Verify the integrated five-finding repairs, refresh current evidence, and complete this session's coordinated KB pass without pushing.
 
 ## Surprises & Discoveries
@@ -36,7 +36,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - Adversarial review of `4f2b2f4e..a5f50664` reproduced five omissions after the earlier suites passed: NFC/NFD destination aliases overwrite one leaf on macOS; preserved `0444` Markdown raises `PermissionError` during rebasing; valid leading `./` reference paths remain broken; eight live Addy source pointers still have the old depth; create-skill's live benchmark instruction still uses a nonexistent flat source path. Public Bash/macOS PowerShell reproductions and read-only source resolution establish these findings. Earlier evidence remains historical proof of its tested cases, not acceptance of these repairs.
 
 - The original installers at `4f2b2f4e` enumerated immediate `skills/` entries. Category wrappers would otherwise have been installed as skills named `default` and `forest-service`; current installers enumerate category leaves.
-- R3 public fixtures exposed coupled read-only behavior: repeat copying and pruning require writable installed directories, and temporary permission elevation on stale excluded hardlinks changed an outside inode from `0444` to `0644`. Keep permission changes scoped and restore them on failure; never chmod a shared regular-file inode. Focused hardlink pruning repairs passed locally, while final copy-boundary proof is still pending.
+- R3 public fixtures exposed coupled read-only behavior: repeat copying and pruning require writable installed directories, and temporary permission elevation on stale excluded hardlinks changed an outside inode from `0444` to `0644`. Final public and helper tests now preserve outside inode bytes/modes and fail closed before changing read-only shared files. Both full suites passed; native Windows branches remain unexecuted.
 - The current installers preserve destination skills that are no longer selected or present in source. This feature must preserve that behavior. Installation without Forest Service selection is not an uninstall operation.
 - Destination mutation starts before skill copying: the installers apply RTK configuration and install Codex agents first. Argument, environment, and category validation must run before these operations, not merely before `copy_skills` or `Copy-Skills`.
 - Read-only exploration found 57 root directories with a direct `SKILL.md` and no existing Forest Service skill. The count is a source snapshot, not a hard-coded acceptance value. `docs/ideas/2-agency-priorities-skill.md` names a future Forest Service skill.
@@ -95,7 +95,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The original implementation and local verification are committed through `a5f50664`, but adversarial review reopened Milestones 1 and 2 for the five authorized repairs. R4 is integrated at `e63d4951`: all eight source targets and the benchmark sample resolve, and four definition validations passed. R2 is integrated at `a18e778a`: both full installer suites and focused enabled/disabled immutability cases passed. The current frontier is R3, consuming those verified prerequisites. R5 provides composed proof. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the earlier macOS junction skip is not native acceptance.
+All five repairs are integrated: source paths at `e63d4951`, Unicode validation at `a18e778a`, and reference/mode safety at `362dad54`. R3's final full Bash and macOS PowerShell suites passed at `671f1e78`; integration changed only this plan, preserving all implementation/test inputs. The current frontier is R5's independent composed proof and repair review. Milestones 1/2 remain unmet until that proof passes. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the macOS junction skip is not native acceptance.
 
 ## Context and Orientation
 
@@ -220,7 +220,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-Execute R3, then R5. R2 and R4 are verified and integrated; their clean worktrees and branches were removed. R2's conflict-free rebase changed only prerequisite source documentation, which its fixtures do not consume; R5 will rerun composed checks on the final tree. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
+Execute R5's independent repair review and composed proof on the integrated implementation. R2/R4/R3 are verified and integrated; their clean worktrees and branches were removed. R3's final full-suite proof remains valid because `git diff --name-only 671f1e78 362dad54` lists only this plan. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
 
 ### Repair task graph and ownership
 
