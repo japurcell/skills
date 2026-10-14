@@ -1,4 +1,25 @@
 dispatches:
+  - subtask_id: T8
+    agent: /root/merge_contract_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:08 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: R1-standards-T6-recheck
+    agent: /root/standards_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:03 UTC'
+    status: completed
+    output_verified: true
+    evidence: docs/hook-resilience/R1-standards-review.md
+    routing_compliant: true
   - subtask_id: T7
     agent: /root/trusted_launch_impl
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
