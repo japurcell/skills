@@ -1,4 +1,24 @@
 dispatches:
+  - subtask_id: T7
+    agent: /root/trusted_launch_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:01 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: T6-repair
+    agent: /root/bounded_reports_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:57 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
   - subtask_id: V1
     agent: /root/release_verification
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
@@ -17,8 +37,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 18:52 UTC'
-    status: running
-    output_verified: false
+    status: completed_with_findings
+    output_verified: true
+    evidence: docs/hook-resilience/R1-standards-review.md
     routing_compliant: true
   - subtask_id: R1-spec
     agent: /root/spec_review
@@ -27,8 +48,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 18:52 UTC'
-    status: running
-    output_verified: false
+    status: completed_with_findings
+    output_verified: true
+    evidence: docs/hook-resilience/R1-spec-review.md
     routing_compliant: true
   - subtask_id: V0
     agent: /root/release_preparation
