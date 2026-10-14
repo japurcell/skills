@@ -1,0 +1,41 @@
+{
+  "source_target": "3288cf4e8fe8899b9f179c49e6290e99f490051f",
+  "artifacts": [
+    {
+      "path": "V1-installed-assets.json",
+      "original_sha256": "4b45c3d356b48a6ac5bee7437cae1834fd22b6e47bf06bb78fb9f9e19e8a3998",
+      "redacted_uncompressed_sha256": "4b45c3d356b48a6ac5bee7437cae1834fd22b6e47bf06bb78fb9f9e19e8a3998",
+      "retained_sha256": "4b45c3d356b48a6ac5bee7437cae1834fd22b6e47bf06bb78fb9f9e19e8a3998",
+      "compression": null
+    },
+    {
+      "path": "V1-source-reuse.json",
+      "original_sha256": "cbb2df39a20b91a92425669c25f77060173b97b6e39c1f4a36d736c897eb8bcc",
+      "redacted_uncompressed_sha256": "cbb2df39a20b91a92425669c25f77060173b97b6e39c1f4a36d736c897eb8bcc",
+      "retained_sha256": "cbb2df39a20b91a92425669c25f77060173b97b6e39c1f4a36d736c897eb8bcc",
+      "compression": null
+    },
+    {
+      "path": "V1-runtime-fingerprints.json",
+      "original_sha256": "2f2f30bb8923cc4372f26095fb6138d19eb9127f30cbdcd7a66840033772b971",
+      "redacted_uncompressed_sha256": "2f2f30bb8923cc4372f26095fb6138d19eb9127f30cbdcd7a66840033772b971",
+      "retained_sha256": "2f2f30bb8923cc4372f26095fb6138d19eb9127f30cbdcd7a66840033772b971",
+      "compression": null
+    },
+    {
+      "path": "V1-installer-first.log.gz",
+      "original_sha256": "c225ee3a5aee627e2acb1a73a89a55e378864474438ef17fe29edd17e9ca247d",
+      "redacted_uncompressed_sha256": "0db3f38e504e4b8dcba3e1bfcd5b72e141088cc5e63e031b96b0bca3db31e6cc",
+      "retained_sha256": "84c012f655c478a31747164a42864dfe42b40391217599b792582868bd997f35",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-installer-second.log.gz",
+      "original_sha256": "366e039fea97a8dda5f4542178c5ce25614b2ec17b63794e9ea4917a9e20aed0",
+      "redacted_uncompressed_sha256": "80628e272affff6fe9ba48f5517b41be336788a53459cc7930882713d17398ca",
+      "retained_sha256": "586f880534db30e9f2667caad8593eaeae0f2bcd41601ed3c0af8839093cdf41",
+      "compression": "gzip"
+    }
+  ],
+  "path_redaction": "Known user/worktree and temporary-user path prefixes only"
+}
