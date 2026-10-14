@@ -1575,7 +1575,9 @@ function Test-InvalidSelectionIsImmutable {
 function Test-SourcePreflightIsImmutable {
     $workdir = New-TestWorkdir
     try {
-        foreach ($scenario in @('missing-default', 'missing-forest-disabled', 'missing-forest-enabled', 'malformed-default', 'malformed-forest', 'equal-name', 'case-name')) {
+        $nfcName = "caf$([char]0x00e9)"
+        $nfdName = "cafe$([char]0x0301)"
+        foreach ($scenario in @('missing-default', 'missing-forest-disabled', 'missing-forest-enabled', 'malformed-default', 'malformed-forest', 'equal-name', 'case-name', 'nfc-nfd-disabled', 'nfc-nfd-enabled')) {
             $repo = Join-Path $workdir "$scenario/repo"
             $homeDir = Join-Path $workdir "$scenario/home"
             $codex = Join-Path $workdir "$scenario/codex"
@@ -1587,6 +1589,7 @@ function Test-SourcePreflightIsImmutable {
             Write-FixtureFile (Join-Path $repo 'scripts/configure-rtk.py') @('from pathlib import Path', "Path($literalMarker).write_text('reached')", 'raise SystemExit(98)')
             Copy-Item -LiteralPath (Join-Path $repo 'scripts/configure-rtk.py') -Destination (Join-Path $repo 'scripts/install-codex-agents.py')
             $arguments = @()
+            $defaultDiagnostic = 'skills/default/alpha'
             switch ($scenario) {
                 'missing-default' { Remove-Item -LiteralPath (Join-Path $repo 'skills/default') -Recurse -Force; $diagnostic = 'skills/default' }
                 'missing-forest-disabled' { Remove-Item -LiteralPath (Join-Path $repo 'skills/forest-service') -Recurse -Force; $diagnostic = 'skills/forest-service' }
@@ -1595,6 +1598,15 @@ function Test-SourcePreflightIsImmutable {
                 'malformed-forest' { $diagnostic = 'skills/forest-service/incomplete'; New-Item -ItemType Directory -Path (Join-Path $repo $diagnostic) | Out-Null }
                 'equal-name' { $diagnostic = 'skills/forest-service/alpha'; Write-FixtureFile (Join-Path $repo "$diagnostic/SKILL.md") @('A different frontmatter name.') }
                 'case-name' { $diagnostic = 'skills/forest-service/ALPHA'; Write-FixtureFile (Join-Path $repo "$diagnostic/SKILL.md") @('A different frontmatter name.') }
+                { $_ -in @('nfc-nfd-disabled', 'nfc-nfd-enabled') } {
+                    # Separate category parents support both names on filesystems
+                    # that collapse canonically equivalent destination spellings.
+                    $defaultDiagnostic = "skills/default/$nfcName"
+                    $diagnostic = "skills/forest-service/$nfdName"
+                    Write-FixtureFile (Join-Path $repo "$defaultDiagnostic/SKILL.md") @('---', 'name: default-unicode', '---', 'Default Unicode skill.')
+                    Write-FixtureFile (Join-Path $repo "$diagnostic/SKILL.md") @('---', 'name: forest-unicode', '---', 'Forest Unicode skill.')
+                    if ($scenario -eq 'nfc-nfd-enabled') { $arguments = @('--fs') }
+                }
             }
             Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
             $before = Get-TreeFingerprint $homeDir
@@ -1603,8 +1615,8 @@ function Test-SourcePreflightIsImmutable {
             Assert-Equals 1 $result.ExitCode "Expected source error exit 1: $scenario."
             $stderr = ($result.Stderr -join "`n").Replace('\', '/')
             Assert-True ($stderr.Contains($diagnostic)) "Expected bad source path: $scenario."
-            if ($scenario -in @('equal-name', 'case-name')) {
-                Assert-True ($stderr.Contains('skills/default/alpha')) 'Expected both collision paths.'
+            if ($scenario -in @('equal-name', 'case-name', 'nfc-nfd-disabled', 'nfc-nfd-enabled')) {
+                Assert-True ($stderr.Contains($defaultDiagnostic)) 'Expected both original collision paths.'
             }
             Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for source errors.'
             Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected source error not to mutate home.'

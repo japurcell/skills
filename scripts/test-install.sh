@@ -1238,10 +1238,12 @@ PY
 }
 
 test_source_preflight_is_immutable() {
-  local workdir repo home codex before before_codex scenario diagnostic status
+  local workdir repo home codex before before_codex scenario diagnostic default_diagnostic status nfc_name nfd_name
   workdir="$(setup_test_workdir)"
   trap 'cleanup_cli_fixture; trap - RETURN' RETURN
-  for scenario in missing-default missing-forest-disabled missing-forest-enabled malformed-default malformed-forest equal-name case-name; do
+  nfc_name="$(python3 -B -c 'print("caf\u00e9")')"
+  nfd_name="$(python3 -B -c 'print("cafe\u0301")')"
+  for scenario in missing-default missing-forest-disabled missing-forest-enabled malformed-default malformed-forest equal-name case-name nfc-nfd-disabled nfc-nfd-enabled; do
     repo="$workdir/$scenario/repo"; home="$workdir/$scenario/home"; codex="$workdir/$scenario/codex"
     create_fixture_repo "$repo"
     mkdir -p "$home" "$codex"
@@ -1251,6 +1253,7 @@ test_source_preflight_is_immutable() {
     printf '%s\n' 'from pathlib import Path' "Path('$workdir/stage-reached').write_text('reached')" 'raise SystemExit(98)' > "$repo/scripts/configure-rtk.py"
     cp "$repo/scripts/configure-rtk.py" "$repo/scripts/install-codex-agents.py"
     set --
+    default_diagnostic='skills/default/alpha'
     case "$scenario" in
       missing-default) rm -rf -- "$repo/skills/default"; diagnostic='skills/default' ;;
       missing-forest-disabled|missing-forest-enabled)
@@ -1262,14 +1265,22 @@ test_source_preflight_is_immutable() {
         diagnostic='skills/forest-service/alpha'
         if [[ "$scenario" == case-name ]]; then diagnostic='skills/forest-service/ALPHA'; fi
         mkdir -p "$repo/$diagnostic"; printf '%s\n' 'A different frontmatter name.' > "$repo/$diagnostic/SKILL.md" ;;
+      nfc-nfd-disabled|nfc-nfd-enabled)
+        # Different category parents keep both spellings representable even on
+        # filesystems that collapse canonically equivalent destination names.
+        default_diagnostic="skills/default/$nfc_name"; diagnostic="skills/forest-service/$nfd_name"
+        mkdir -p "$repo/$default_diagnostic" "$repo/$diagnostic"
+        printf '%s\n' '---' 'name: default-unicode' '---' 'Default Unicode skill.' > "$repo/$default_diagnostic/SKILL.md"
+        printf '%s\n' '---' 'name: forest-unicode' '---' 'Forest Unicode skill.' > "$repo/$diagnostic/SKILL.md"
+        if [[ "$scenario" == nfc-nfd-enabled ]]; then set -- --fs; fi ;;
     esac
     before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
     status=0
     HOME="$home" CODEX_HOME="$codex" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" "$@" >"$workdir/out" 2>"$workdir/err" || status=$?
     assert_equals 1 "$status" "Expected source error exit 1: $scenario."
     assert_file_contains "$workdir/err" "$diagnostic" "Expected bad source path: $scenario."
-    if [[ "$scenario" == equal-name || "$scenario" == case-name ]]; then
-      assert_file_contains "$workdir/err" 'skills/default/alpha' 'Expected both collision paths.'
+    if [[ "$scenario" == equal-name || "$scenario" == case-name || "$scenario" == nfc-nfd-* ]]; then
+      assert_file_contains "$workdir/err" "$default_diagnostic" 'Expected both original collision paths.'
     fi
     assert_equals '' "$(cat "$workdir/out")" 'Expected no stdout for source errors.'
     assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected source error not to mutate home.'

@@ -3,6 +3,7 @@
 
 import argparse
 import sys
+import unicodedata
 from pathlib import Path
 
 
@@ -21,7 +22,7 @@ def main() -> int:
                     continue
                 if not (entry / "SKILL.md").is_file():
                     raise ValueError(f"Missing skill source file: {entry / 'SKILL.md'}. Add SKILL.md or remove the unexpected directory.")
-                key = entry.name.casefold()
+                key = unicodedata.normalize("NFC", entry.name).casefold()
                 if key in names:
                     raise ValueError(f"Conflicting skill destination names: {names[key]} and {entry}. Rename one skill directory before installing.")
                 names[key] = entry
