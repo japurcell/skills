@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from hooks.families.allowlist import ALLOWLIST_SOURCE
 from hooks.families.diagnostics import collector_source
+from hooks.families.scanner_stream import SOURCE as STREAM_SOURCE
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
@@ -80,15 +81,7 @@ TEXT_EXTENSIONS = {
     ".yaml",
     ".yml",
 }
-PATTERNS = [
-    ("github_classic_pat", "high", re.compile(r"gh[pousr]_[A-Za-z0-9]{36}")),
-    ("github_fine_grained_pat", "high", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
-    ("aws_access_key", "high", re.compile(r"AKIA[0-9A-Z]{16}")),
-    ("stripe_live_key", "high", re.compile(r"sk_live_[0-9A-Za-z]{16,}")),
-    ("slack_token", "medium", re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}")),
-]
 MAX_FILES = 256
-MAX_FILE_BYTES = 1048576
 MAX_TOTAL_BYTES = 8388608
 MAX_GIT_OUTPUT_BYTES = 8388608
 MAX_SCAN_SECONDS = 8.0
@@ -121,7 +114,6 @@ INCOMPLETE_CAUSES = {
     "scan_timeout": ("scan time limit reached", "Check repository size and Git responsiveness, then retry.", "seconds"),
     "git_timeout": ("Git time limit reached", "Check Git responsiveness and retry.", "seconds"),
     "snapshot_count_limit": ("candidate snapshot limit exceeded", "Check pending snapshots and unintended generated artifacts.", "snapshots"),
-    "file_bytes_limit": ("candidate byte limit exceeded", "Check pending file sizes and unintended generated artifacts.", "bytes"),
     "total_bytes_limit": ("total candidate byte limit exceeded", "Check pending scan size and unintended generated artifacts.", "bytes"),
     "git_output_limit": ("Git capture byte limit exceeded", "Check pending scan size and Git output volume.", "bytes"),
     "git_input_limit": ("Git request byte limit exceeded", "Check pending scan size.", "bytes"),
@@ -921,8 +913,6 @@ class SnapshotSource:
                 if match is None or match.group(1) != resolved[candidate]:
                     raise GitCommandError("git_output_invalid", "git_index")
                 size = int(match.group(2))
-                if size > MAX_FILE_BYTES:
-                    raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
                 budget.reserve_index(candidate, size)
                 self.objects.append((candidate, match.group(1), size, header + b"\n"))
             if next(records, None) is not None:
@@ -991,9 +981,6 @@ class SnapshotSource:
                     details = os.fstat(descriptor)
                     if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
                         raise ScanSecurityError("candidate_unsafe", "candidate_read")
-                    if details.st_size > MAX_FILE_BYTES:
-                        raise ScanLimitExceeded("file_bytes_limit", "candidate_read",
-                                                measured=details.st_size, limit=MAX_FILE_BYTES)
                     remaining = self.budget.remaining()
                     if details.st_size > remaining:
                         raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
@@ -1002,7 +989,7 @@ class SnapshotSource:
                     with tempfile.TemporaryFile(mode="w+b") as spool:
                         _verify_private_capture(spool)
                         size = 0
-                        ceiling = min(MAX_FILE_BYTES, remaining)
+                        ceiling = remaining
                         while True:
                             enforce_deadline(self.budget.deadline)
                             chunk = os.read(descriptor, min(65536, ceiling + 1 - size))
@@ -1010,12 +997,9 @@ class SnapshotSource:
                                 break
                             size += len(chunk)
                             if size > ceiling:
-                                if remaining < MAX_FILE_BYTES:
-                                    raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
-                                                            measured=self.budget.used_bytes + size,
-                                                            limit=MAX_TOTAL_BYTES)
-                                raise ScanLimitExceeded("file_bytes_limit", "candidate_read",
-                                                        measured=size, limit=MAX_FILE_BYTES)
+                                raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
+                                                        measured=self.budget.used_bytes + len(chunk),
+                                                        limit=MAX_TOTAL_BYTES)
                             self.budget.charge(len(chunk))
                             spool.write(chunk)
                         spool.flush()
@@ -1068,30 +1052,21 @@ def is_credential_path(path: str) -> bool:
     )
 
 
-def enumerate_file_lines(text: str) -> list[tuple[int, str]]:
-    return [(index + 1, line) for index, line in enumerate(text.splitlines())]
-
-
-def decode_ascii_scan_text(raw_bytes: bytes) -> str:
-    return "".join(
-        chr(value) if value in {9, 10, 13} or 32 <= value <= 126 else " "
-        for value in raw_bytes
-    )
-
-
-def emit_diff_added_lines(
+def scan_diff_added_lines(
     root: Path,
     path: str,
     source: str,
+    report: StreamReport,
+    is_allowlisted,
     *,
     root_has_head: bool,
     deadline: float | None = None,
-) -> list[tuple[int, str]]:
+) -> None:
     if source not in {CANDIDATE_STAGED, CANDIDATE_WORKTREE}:
         raise ScanSecurityError("candidate_unsafe", "git_diff")
     cached_options = ["--cached"] if source == CANDIDATE_STAGED else []
     cached_revision = ["HEAD"] if source == CANDIDATE_STAGED and root_has_head else []
-    output = run_git(
+    with capture_git(
         [
             "diff",
             *cached_options,
@@ -1109,39 +1084,14 @@ def emit_diff_added_lines(
             path,
         ],
         cwd=root,
-        text=False,
         deadline=deadline,
-    )
-    if not isinstance(output, bytes):
-        return []
-    if output and (not output.startswith(b"diff --git ") or not output.endswith(b"\n")):
-        raise GitCommandError("git_output_invalid", "git_diff")
-
-    lines: list[tuple[int, str]] = []
-    current_line: int | None = None
-    in_hunk = False
-    for raw_line in output.splitlines():
-        if raw_line.startswith(b"diff --git "):
-            in_hunk = False
-            current_line = None
-            continue
-        if raw_line.startswith(b"@@"):
-            match = re.search(rb"\+(\d+)", raw_line)
-            current_line = int(match.group(1)) if match else None
-            in_hunk = current_line is not None
-            continue
-        if not in_hunk or current_line is None:
-            continue
-        if raw_line.startswith(b"+"):
-            lines.append((current_line, os.fsdecode(raw_line[1:])))
-            current_line += 1
-        elif raw_line.startswith(b"-") or raw_line.startswith(b"\\"):
-            continue
-        elif raw_line.startswith(b" "):
-            current_line += 1
-        else:
-            raise GitCommandError("git_output_invalid", "git_diff")
-    return lines
+    ) as capture:
+        check_budget = lambda: enforce_deadline(deadline)
+        try:
+            scan_line_events(path, diff_added_line_events(capture.chunks(), check_budget),
+                             report, is_allowlisted, redact_match, check_budget)
+        except StreamDiffError as exc:
+            raise GitCommandError("git_output_invalid", "git_diff") from exc
 
 
 def redact_match(match: str) -> str:
@@ -1566,6 +1516,7 @@ def _diagnostic_denial(text):
 _SCAN_PAYLOAD = None
 _SCAN_INPUT_ERROR = ""
 _SCAN_INPUT_LOADED = False
+_SCAN_STARTED = None
 
 
 def _load_scan_payload():
@@ -1582,6 +1533,9 @@ def _load_scan_payload():
 
 
 if __name__ == "__main__":
+    # Recovery routing reads stdin before main. Ordinary scans inherit this
+    # same start so transport cannot extend the overall security work budget.
+    _SCAN_STARTED = time.monotonic()
     _load_scan_payload()
     if _diagnostic_request(_SCAN_PAYLOAD):
         _report = diagnostics_collect(__file__)
@@ -1621,7 +1575,7 @@ def resolve_scan_log() -> Path:
 
 def main() -> int:
     global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE
-    scan_started = time.monotonic()
+    scan_started = _SCAN_STARTED if _SCAN_STARTED is not None else time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
 
@@ -1740,8 +1694,7 @@ def main() -> int:
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
-    processed_findings = 0
-    stop_scanning = False
+    report = StreamReport(findings)
     budget = ScanBudget(scan_deadline)
     total_bytes = 0
     with snapshot_source(root, candidates, budget) as snapshots:
@@ -1750,8 +1703,6 @@ def main() -> int:
             with snapshots.acquire((source, path)) as snapshot:
                 if snapshot is None:
                     continue
-                # Temporary T3 bridge: only this at-most-1-MiB snapshot is materialized.
-                raw_bytes = b"".join(snapshot.chunks())
                 SCAN_PHASE = "candidate_scan"
                 total_bytes = budget.used_bytes
                 enforce_scan_budget(scan_started, total_bytes)
@@ -1762,60 +1713,29 @@ def main() -> int:
                 if is_credential_path(path):
                     allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
                     if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                        processed_findings, stop_scanning = record_finding(
+                        report.processed, report.stopped = record_finding(
                             findings,
                             ("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),
-                            processed_findings,
+                            report.processed,
                         )
 
-                if stop_scanning:
+                if report.stopped:
                     break
 
-                if snapshot.classification == "binary":
-                    candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
-                elif (scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED
+                is_allowlisted = lambda key: allowlist_contains("scan_secrets", key, allowlist)
+                check_budget = lambda: enforce_deadline(scan_deadline)
+                if (snapshot.classification == "binary" or scope == "staged"
+                      or not root_has_head or source == CANDIDATE_UNTRACKED
                       or source in CANDIDATE_UNMERGED_STAGES or source == CANDIDATE_UNMERGED_WORKTREE):
-                    candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
+                    scan_line_events(path,
+                        full_line_events(snapshot.chunks(), snapshot.classification, check_budget),
+                        report, is_allowlisted, redact_match, check_budget)
                 else:
-                    candidate_lines = emit_diff_added_lines(
-                        root,
-                        path,
-                        source,
-                        root_has_head=root_has_head,
-                        deadline=scan_deadline,
-                    )
-
+                    scan_diff_added_lines(root, path, source, report, is_allowlisted,
+                        root_has_head=root_has_head, deadline=scan_deadline)
                 SCAN_PHASE = "candidate_scan"
-                for line_number, line_text in candidate_lines:
-                    enforce_scan_budget(scan_started, total_bytes)
-                    for pattern_name, severity, regex in PATTERNS:
-                        enforce_scan_budget(scan_started, total_bytes)
-                        for match in regex.finditer(line_text):
-                            enforce_scan_budget(scan_started, total_bytes)
-                            match_value = match.group(0)
-                            allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
-                            if allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                                continue
-                            processed_findings, stop_scanning = record_finding(
-                                findings,
-                                (pattern_name, severity, path, line_number, redact_match(match_value)),
-                                processed_findings,
-                            )
-                            if stop_scanning:
-                                break
-                        if stop_scanning:
-                            break
-                    if stop_scanning:
-                        break
-                if stop_scanning:
+                if report.stopped:
                     break
-                # Release bridge buffers before acquiring the next snapshot.
-                raw_bytes = b""
-                candidate_lines = []
-                line_text = ""
-                match = None
-                match_value = ""
-                allowlist_text = ""
 
     enforce_scan_budget(scan_started, total_bytes)
 
@@ -1836,7 +1756,7 @@ def main() -> int:
         return 0
 
     findings_json = build_findings_json(findings)
-    omitted_findings = processed_findings - len(findings)
+    omitted_findings = report.processed - len(findings)
     enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
         log_path=scan_log,
@@ -1849,14 +1769,14 @@ def main() -> int:
         env_files=env_files,
         findings=findings_json,
         omitted_findings=omitted_findings,
-        findings_truncated=stop_scanning or omitted_findings > 0,
+        findings_truncated=report.stopped or omitted_findings > 0,
         deadline=scan_deadline,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))
         return 0
 
-    emit_output(processed_findings, scan_log)
+    emit_output(report.processed, scan_log)
     return 0
 
 
@@ -1894,6 +1814,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
         + ADAPTER_START
         + response_adapter.lstrip("\n")
         + ADAPTER_END
+        + STREAM_SOURCE
         + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
         + ADAPTER_START
         + runtime_adapter.lstrip("\n")

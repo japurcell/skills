@@ -11,6 +11,7 @@ import unicodedata
 _STREAM_SEPARATORS = re.compile(r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]+")
 _STREAM_BINARY_TABLE = bytes(value if value in (9, 10, 13) or 32 <= value <= 126
                              else 32 for value in range(256))
+_STREAM_POSSIBLE_PREFIX = re.compile(r"gh|github_pat_|AKIA|sk_live_|xox")
 
 
 def _stream_check():
@@ -323,25 +324,37 @@ def scan_line_events(path, events, report, is_allowlisted, redact,
     """
     machines = None
     line = None
+    prefix_carry = ""
     for kind, value in events:
         check_budget()
         if report.stopped:
             continue
         if kind == "start":
-            if machines is not None:
+            if line is not None:
                 raise ValueError("nested stream line")
             line = value
-            machines = [_StreamPattern(definition, path, line, is_allowlisted, redact, check_budget)
-                        for definition in _STREAM_COMPILED]
+            prefix_carry = ""
         elif kind == "data":
-            if machines is None or not isinstance(value, str) or len(value) > 65536:
+            if line is None or not isinstance(value, str) or len(value) > 65536:
                 raise ValueError("invalid stream data")
+            if machines is None:
+                # Most short lines contain no token prefix. Search in C before
+                # allocating five per-pattern states; retain only enough suffix
+                # to recognize a prefix split across adjacent data fragments.
+                candidate = prefix_carry + value
+                if _STREAM_POSSIBLE_PREFIX.search(candidate) is None:
+                    prefix_carry = candidate[-10:]
+                    continue
+                machines = [_StreamPattern(definition, path, line, is_allowlisted, redact, check_budget)
+                            for definition in _STREAM_COMPILED]
+                value = candidate
+                prefix_carry = ""
             for machine in machines:
                 machine.feed(value)
         elif kind == "end":
-            if machines is None:
+            if line is None:
                 raise ValueError("unopened stream line")
-            for machine in machines:
+            for machine in machines or ():
                 machine.finish_match()
                 accepted = min(machine.count, 1000 - report.processed)
                 for redacted in machine.matches[:min(accepted, max(0, 100 - len(report.findings)))]:
@@ -351,8 +364,10 @@ def scan_line_events(path, events, report, is_allowlisted, redact,
                     report.stopped = True
                     break
             machines = None
+            line = None
+            prefix_carry = ""
         else:
             raise ValueError("invalid stream event")
-    if machines is not None and not report.stopped:
+    if line is not None and not report.stopped:
         raise ValueError("unterminated stream line")
 '''

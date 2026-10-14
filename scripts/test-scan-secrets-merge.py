@@ -451,7 +451,7 @@ class MergeScannerTests(unittest.TestCase):
             "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
             "elif fault == 'oversized-blob' and metadata:\n"
             "    first, rest = output.split(b'\\n', 1)\n"
-            "    output = first.rsplit(b' ', 1)[0] + b' 1048577\\n' + rest\n"
+            "    output = first.rsplit(b' ', 1)[0] + b' 8388609\\n' + rest\n"
             "elif fault == 'truncated' and not metadata:\n"
             "    output = output[:-1]\n"
             "elif fault == 'extra-content' and not metadata:\n"
@@ -483,7 +483,7 @@ class MergeScannerTests(unittest.TestCase):
                         self.assert_outcome(provider, mode, "diff", "incomplete",
                                             cause="git_failed" if fault == "nonzero" else
                                             "git_descendant_running" if fault == "descendant" else
-                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "total_bytes_limit" if fault == "oversized-blob" else
                                             "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private missing object", all_logs)
@@ -542,7 +542,7 @@ class MergeScannerTests(unittest.TestCase):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
                         self.assert_outcome(provider, mode, "diff", "incomplete",
                                             cause="git_failed" if fault == "nonzero" else
-                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "total_bytes_limit" if fault == "oversized-blob" else
                                             "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private unrequested path", all_logs)
@@ -647,16 +647,17 @@ class MergeScannerTests(unittest.TestCase):
         self.merge({"conflict.txt": "base\n"}, {"conflict.txt": "x" * (size - 1) + "\n"},
                    {"conflict.txt": "theirs\n"})
         self.write_files({"conflict.txt": "safe replacement awaiting git add\n"})
-        self.assert_all_scans(status, cause="file_bytes_limit" if status == "incomplete" else None)
+        self.assert_all_scans(status, cause="total_bytes_limit" if status == "incomplete" else None)
 
-    def test_conflict_stage_at_file_byte_limit_remains_scannable(self) -> None:
-        self.assert_conflict_stage_size(1048576, "clean")
+    def test_conflict_stage_near_aggregate_limit_remains_scannable(self) -> None:
+        other_snapshots = len("base\n") + len("theirs\n") + len("safe replacement awaiting git add\n")
+        self.assert_conflict_stage_size(8388608 - other_snapshots, "clean")
 
     def test_oversized_conflict_stage_stays_incomplete(self) -> None:
-        self.assert_conflict_stage_size(1048577, "incomplete")
+        self.assert_conflict_stage_size(8388609, "incomplete")
 
     def assert_snapshot_budget(self, count: int, status: str) -> None:
-        # Each snapshot is below the file bound. Three conflicts have 8.1 MB
+        # Three conflicts have 8.1 MB
         # across their nine index snapshots; four conflicts exceed the 8 MiB
         # aggregate bound even after the working copies are made small.
         base = {f"conflict-{index}.txt": "b" * 899999 + "\n" for index in range(count)}

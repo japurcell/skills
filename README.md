@@ -45,8 +45,13 @@ Tool Guardian recognizes native Copilot and Codex patches as file data with a
 remain active. Secret scanning independently checks pending repository changes,
 including when the requested tool only reads files or documentation. In block
 mode, an incomplete scan denies the tool and reports a stable cause, safe counts
-where available, and recovery advice. For example, `file_bytes_limit/candidate_read`
-identifies an oversized pending file without exposing its name or contents.
+where available, and recovery advice. The scanner accepts up to 8 MiB of aggregate candidate snapshot bytes, 256
+snapshots and eight seconds of total input/scan work. A single file may use the
+remaining aggregate allowance; index framing and snapshot replay do not count
+again. Git captures retain their separate 8 MiB bound. For example,
+`total_bytes_limit/candidate_read` identifies pending content beyond the remaining
+allowance without exposing its name or contents. Large or unusually dense inputs
+can still reach the work or Git-capture limits.
 
 For hook-owned recovery metadata, request the exact literal command
 `hooks-diagnostics-v1` through the provider's native shell tool. Codex uses

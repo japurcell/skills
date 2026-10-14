@@ -623,7 +623,7 @@ class GenerateHooksTests(unittest.TestCase):
 
         provider_outcomes = []
         for module in modules:
-            patterns = {name: (severity, regex) for name, severity, regex in module.PATTERNS}
+            patterns = {name: (severity, regex) for name, severity, regex in [entry[:3] for entry in module._STREAM_COMPILED]}
             outcomes = []
             for name, text, expected_severity, expected_redaction in vectors.PATTERN_VECTORS:
                 with self.subTest(provider=module.__name__, vector=name):
@@ -647,7 +647,9 @@ class GenerateHooksTests(unittest.TestCase):
                 (root / "image.bin").write_bytes(b"safe\x00binary")
                 self.assertEqual(acquire_fixture(module, root, "notes.txt"), (b"safe text\n", "text"))
                 self.assertEqual(acquire_fixture(module, root, "image.bin"), (b"safe\x00binary", "binary"))
-            self.assertEqual(module.enumerate_file_lines("one\ntwo\n"), [(1, "one"), (2, "two")])
+            self.assertEqual(list(module.full_line_events([b"one\ntwo\n"], "text")),
+                             [("start", 1), ("data", "one"), ("end", None),
+                              ("start", 2), ("data", "two"), ("end", None)])
             process = mock.Mock()
             process.pid = os.getpid()
             process.poll.return_value = 0
@@ -826,16 +828,18 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertIn("--no-textconv", worktree_args)
 
             with self.subTest(provider=module.__name__, behavior="diff"):
-                with mock.patch.object(module, "run_git", return_value=diff_output) as run:
+                with mock.patch.object(module, "capture_git",
+                                       return_value=verified_fixture(module, diff_output)) as run:
+                    events = list(module.diff_added_line_events([diff_output]))
                     self.assertEqual(
-                        module.emit_diff_added_lines(
-                            ROOT,
-                            "notes.txt",
-                            module.CANDIDATE_WORKTREE,
-                            root_has_head=True,
-                        ),
-                        [(1, "first"), (2, "++starts-with-two-plus")],
+                        events,
+                        [("start", 1), ("data", "first"), ("end", None),
+                         ("start", 2), ("data", "++starts-with-two-plus"), ("end", None)],
                     )
+                    report = module.StreamReport()
+                    module.scan_diff_added_lines(ROOT, "notes.txt", module.CANDIDATE_WORKTREE,
+                                                 report, lambda key: False, root_has_head=True)
+                    self.assertEqual(report.findings, [])
                 args = run.call_args.args[0]
                 self.assertIn("--no-color", args)
                 self.assertIn("--no-textconv", args)
@@ -881,7 +885,7 @@ class GenerateHooksTests(unittest.TestCase):
                     with self.assertRaises(module.ScanSecurityError):
                         acquire_fixture(module, repo, "../outside.txt")
                 oversized = repo / "oversized.bin"
-                oversized.write_bytes(b"x" * (module.MAX_FILE_BYTES + 1))
+                oversized.write_bytes(b"x" * (module.MAX_TOTAL_BYTES + 1))
                 with self.subTest(provider=module.__name__, case="oversized"):
                     with self.assertRaises(module.ScanLimitExceeded):
                         acquire_fixture(module, repo, "oversized.bin")

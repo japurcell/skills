@@ -381,9 +381,9 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'copilot'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = 'a51b2bfbd7d4d470f5b5e122f2fcf3b565cb772da76da8ffddedb5b30ba0f9df'
+DIAG_BUILD = '4e17b5a249325eaba76eac8d7f73aa36d6910bb12ab2d4c9079638a58412cdd9'
 DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', '87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
-DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 1048576, 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
+DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['agentStop', 'errorOccurred', 'notification', 'permissionRequest', 'postToolUse', 'postToolUseFailure', 'preCompact', 'preToolUse', 'sessionEnd', 'sessionStart', 'subagentStart', 'subagentStop', 'userPromptSubmitted', 'userPromptTransformed']
 DIAG_REGISTRATIONS = ['["agentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"agentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["errorOccurred",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"errorOccurred"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["notification",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"notification"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["permissionRequest",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"permissionRequest"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/tool-guard.py","env":{"GUARD_MODE":"block"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/tool-guard.py\\"","timeoutSec":10,"type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"block","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["preCompact",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preCompact"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUseFailure",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUseFailure"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionEnd"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","timeoutSec":30,"type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/bell.py","powershell":"python \\"$HOME/.copilot/hooks/scripts/bell.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"warn","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/load-required-skills.py","env":{"AGENTS_REQUIRED_SKILL_FILES":"caveman/SKILL.md"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/load-required-skills.py\\"","type":"command"}]', '["userPromptSubmitted",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptSubmitted"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["userPromptTransformed",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptTransformed"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]']
 # END PROVIDER ADAPTER
@@ -443,6 +443,7 @@ def _diagnostic_denial(text):
 _SCAN_PAYLOAD = None
 _SCAN_INPUT_ERROR = ""
 _SCAN_INPUT_LOADED = False
+_SCAN_STARTED = None
 
 
 def _load_scan_payload():
@@ -459,6 +460,9 @@ def _load_scan_payload():
 
 
 if __name__ == "__main__":
+    # Recovery routing reads stdin before main. Ordinary scans inherit this
+    # same start so transport cannot extend the overall security work budget.
+    _SCAN_STARTED = time.monotonic()
     _load_scan_payload()
     if _diagnostic_request(_SCAN_PAYLOAD):
         _report = diagnostics_collect(__file__)
@@ -512,15 +516,7 @@ TEXT_EXTENSIONS = {
     ".yaml",
     ".yml",
 }
-PATTERNS = [
-    ("github_classic_pat", "high", re.compile(r"gh[pousr]_[A-Za-z0-9]{36}")),
-    ("github_fine_grained_pat", "high", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
-    ("aws_access_key", "high", re.compile(r"AKIA[0-9A-Z]{16}")),
-    ("stripe_live_key", "high", re.compile(r"sk_live_[0-9A-Za-z]{16,}")),
-    ("slack_token", "medium", re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}")),
-]
 MAX_FILES = 256
-MAX_FILE_BYTES = 1048576
 MAX_TOTAL_BYTES = 8388608
 MAX_GIT_OUTPUT_BYTES = 8388608
 MAX_SCAN_SECONDS = 8.0
@@ -553,7 +549,6 @@ INCOMPLETE_CAUSES = {
     "scan_timeout": ("scan time limit reached", "Check repository size and Git responsiveness, then retry.", "seconds"),
     "git_timeout": ("Git time limit reached", "Check Git responsiveness and retry.", "seconds"),
     "snapshot_count_limit": ("candidate snapshot limit exceeded", "Check pending snapshots and unintended generated artifacts.", "snapshots"),
-    "file_bytes_limit": ("candidate byte limit exceeded", "Check pending file sizes and unintended generated artifacts.", "bytes"),
     "total_bytes_limit": ("total candidate byte limit exceeded", "Check pending scan size and unintended generated artifacts.", "bytes"),
     "git_output_limit": ("Git capture byte limit exceeded", "Check pending scan size and Git output volume.", "bytes"),
     "git_input_limit": ("Git request byte limit exceeded", "Check pending scan size.", "bytes"),
@@ -638,6 +633,373 @@ def emit_block_denial(reason: str) -> None:
         "permissionDecisionReason": reason,
     })
 # END PROVIDER ADAPTER
+import codecs
+import re
+import sys
+import unicodedata
+
+_STREAM_SEPARATORS = re.compile(r"[\n\r\v\f\x1c-\x1e\x85\u2028\u2029]+")
+_STREAM_BINARY_TABLE = bytes(value if value in (9, 10, 13) or 32 <= value <= 126
+                             else 32 for value in range(256))
+_STREAM_POSSIBLE_PREFIX = re.compile(r"gh|github_pat_|AKIA|sk_live_|xox")
+
+
+def _stream_check():
+    pass
+
+
+def full_line_events(chunks, classification, check_budget=_stream_check):
+    """Yield start/data/end tuples, omitting token-free empty full lines.
+
+    Input is verified replay of at most 65536 bytes per chunk. Classification
+    must already cover the entire snapshot. Empty lines advance numbering.
+    """
+    if classification not in ("text", "binary"):
+        raise ValueError("invalid stream classification")
+    decoder = codecs.getincrementaldecoder("utf-8")("replace")
+    line_number = 1
+    active = False
+    pending_cr = False
+
+    def decoded():
+        for chunk in chunks:
+            check_budget()
+            if not isinstance(chunk, bytes) or len(chunk) > 65536:
+                raise ValueError("invalid stream chunk")
+            if classification == "binary":
+                text = chunk.translate(_STREAM_BINARY_TABLE).decode("ascii")
+            else:
+                text = decoder.decode(chunk)
+            for offset in range(0, len(text), 65536):
+                yield text[offset:offset + 65536]
+        if classification == "text":
+            yield decoder.decode(b"", final=True)
+
+    for text in decoded():
+        check_budget()
+        if not text:
+            continue
+        if pending_cr and text.startswith("\n"):
+            text = text[1:]
+        pending_cr = text.endswith("\r") if text else False
+        position = 0
+        for separator in _STREAM_SEPARATORS.finditer(text):
+            if separator.start() > position:
+                if not active:
+                    yield ("start", line_number)
+                    active = True
+                yield ("data", text[position:separator.start()])
+            if active:
+                yield ("end", None)
+                active = False
+            run = separator.group()
+            line_number += len(run) - run.count("\r\n")
+            position = separator.end()
+        if position < len(text):
+            if not active:
+                yield ("start", line_number)
+                active = True
+            yield ("data", text[position:])
+    if active:
+        yield ("end", None)
+
+
+class StreamDiffError(ValueError):
+    """Malformed verified diff; caller maps to git_output_invalid/git_diff."""
+
+
+_STREAM_BYTE_SEPARATOR = re.compile(rb"\r\n|[\r\n]")
+_STREAM_HUNK_START = re.compile(rb"\+[0-9]")
+_STREAM_DIGITS = re.compile(rb"[0-9]*")
+
+
+def _diff_byte_parts(chunks, check_budget):
+    pending_cr = False
+    first = bytearray()
+    last = None
+    for chunk in chunks:
+        check_budget()
+        if not isinstance(chunk, bytes) or len(chunk) > 65536:
+            raise ValueError("invalid stream chunk")
+        if not chunk:
+            continue
+        if len(first) < 11:
+            first.extend(chunk[:11 - len(first)])
+        last = chunk[-1]
+        if pending_cr and chunk.startswith(b"\n"):
+            chunk = chunk[1:]
+        pending_cr = chunk.endswith(b"\r") if chunk else False
+        position = 0
+        for separator in _STREAM_BYTE_SEPARATOR.finditer(chunk):
+            if separator.start() > position:
+                yield ("data", chunk[position:separator.start()])
+            yield ("end", None)
+            position = separator.end()
+        if position < len(chunk):
+            yield ("data", chunk[position:])
+    if last is not None and (bytes(first) != b"diff --git " or last != 10):
+        raise StreamDiffError("invalid diff framing")
+
+
+class _DiffLine:
+    def __init__(self):
+        self.prefix = b""
+        self.kind = None
+        self.decoder = None
+        self.digits = b""
+        self.hunk_state = "seek"
+        self.plus = b""
+
+    def hunk_data(self, data):
+        if self.hunk_state == "done":
+            return
+        if self.hunk_state == "seek":
+            data = self.plus + data
+            match = _STREAM_HUNK_START.search(data)
+            if match is None:
+                self.plus = b"+" if data.endswith(b"+") else b""
+                return
+            data = data[match.start() + 1:]
+            self.hunk_state = "digits"
+        count = _STREAM_DIGITS.match(data).end()
+        if len(self.digits) + count > 20:
+            raise StreamDiffError("invalid diff hunk number")
+        self.digits += data[:count]
+        if count < len(data):
+            self.hunk_state = "done"
+
+
+def diff_added_line_events(chunks, check_budget=_stream_check):
+    """Parse verified Git capture chunks, yielding only numbered added lines.
+
+    CR/LF splitting precedes filesystem decoding with surrogateescape. Headers
+    are discarded after an 11-byte discriminator; hunk numbers retain <=20
+    decimal digits. This function never acquires or executes Git itself.
+    """
+    current_line = None
+    line = _DiffLine()
+    first_line = True
+    for part, data in _diff_byte_parts(chunks, check_budget):
+        check_budget()
+        if part == "data" and line.kind is None:
+            needed = 11 - len(line.prefix)
+            line.prefix += data[:needed]
+            data = data[needed:]
+            if len(line.prefix) < 11:
+                continue
+        if line.kind is None:
+            prefix = line.prefix
+            line.prefix = b""
+            if first_line and not prefix.startswith(b"diff --git "):
+                raise StreamDiffError("invalid diff framing")
+            first_line = False
+            if prefix.startswith(b"diff --git "):
+                current_line = None
+                line.kind = "ignore"
+            elif prefix.startswith(b"@@"):
+                line.kind = "hunk"
+            elif current_line is None:
+                line.kind = "ignore"
+            elif prefix.startswith(b"+"):
+                line.kind = "added"
+                line.decoder = codecs.getincrementaldecoder(sys.getfilesystemencoding())("surrogateescape")
+                yield ("start", current_line)
+                prefix = prefix[1:]
+            elif prefix.startswith((b"-", b"\\")):
+                line.kind = "ignore"
+            elif prefix.startswith(b" "):
+                line.kind = "context"
+            else:
+                raise StreamDiffError("invalid diff hunk content")
+            if part == "data":
+                data = prefix + data
+            else:
+                data = prefix
+        if data:
+            if line.kind == "hunk":
+                line.hunk_data(data)
+            elif line.kind == "added":
+                # Prefix replay can add at most 11 bytes to a full fragment.
+                # Keep every exported text event within the chunk contract.
+                for offset in range(0, len(data), 65536):
+                    text = line.decoder.decode(data[offset:offset + 65536])
+                    for start in range(0, len(text), 65536):
+                        yield ("data", text[start:start + 65536])
+        if part == "end":
+            if line.kind == "hunk":
+                if not line.digits:
+                    raise StreamDiffError("invalid diff hunk number")
+                current_line = int(line.digits)
+            elif line.kind == "added":
+                text = line.decoder.decode(b"", final=True)
+                if text:
+                    yield ("data", text)
+                yield ("end", None)
+                current_line += 1
+            elif line.kind == "context":
+                current_line += 1
+            line = _DiffLine()
+
+
+# Every supported regex has an independent search cursor. The bounded regex
+# search proves a minimum candidate in C; only a greedy span persists between
+# fragments. Future patterns require an explicit entry and oracle fixtures.
+_STREAM_PATTERNS = (
+    ("github_classic_pat", "high", r"gh[pousr]_[A-Za-z0-9]{36}", 40, None),
+    ("github_fine_grained_pat", "high", r"github_pat_[A-Za-z0-9_]{20,}", 31, r"[A-Za-z0-9_]*"),
+    ("aws_access_key", "high", r"AKIA[0-9A-Z]{16}", 20, None),
+    ("stripe_live_key", "high", r"sk_live_[0-9A-Za-z]{16,}", 24, r"[0-9A-Za-z]*"),
+    ("slack_token", "medium", r"xox[baprs]-[0-9A-Za-z-]{10,}", 15, r"[0-9A-Za-z-]*"),
+)
+_STREAM_COMPILED = tuple((name, severity, re.compile(pattern), minimum,
+                          re.compile(tail) if tail else None)
+                         for name, severity, pattern, minimum, tail in _STREAM_PATTERNS)
+_STREAM_FORBIDDEN_ESCAPE = re.compile(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", re.IGNORECASE)
+_STREAM_NONSPACE = re.compile(r"[^ ]")
+
+
+class StreamReport:
+    """Caller-owned report shared across candidates, including path findings."""
+
+    def __init__(self, findings=None, processed=0):
+        self.findings = findings if findings is not None else []
+        self.processed = processed
+        self.stopped = processed >= 1000
+
+
+class _StreamPattern:
+    def __init__(self, definition, path, line, is_allowlisted, redact, check_budget):
+        self.name, self.severity, self.regex, self.minimum, self.tail = definition
+        suffix = f":{line}:{self.name}:"
+        first = _STREAM_NONSPACE.search(path)
+        offset = first.start() if first else len(path)
+        self.capacity = max(0, 8192 - (len(path) - offset + len(suffix)))
+        self.key = path[offset:] + suffix if self.capacity else ""
+        if (_STREAM_FORBIDDEN_ESCAPE.search(self.key)
+                or any(unicodedata.category(char) == "Cc" for char in self.key)):
+            self.capacity = 0
+            self.key = ""
+        self.is_allowlisted = is_allowlisted
+        self.redact = redact
+        self.check_budget = check_budget
+        self.carry = ""
+        self.length = 0
+        self.first = ""
+        self.last = ""
+        self.value = ""
+        self.count = 0
+        self.matches = []
+
+    def extend(self, text):
+        if not text:
+            return
+        if not self.length:
+            self.first = text[:4]
+        self.length += len(text)
+        self.last = (self.last + text[-4:])[-4:]
+        if self.value is not None:
+            if self.length <= self.capacity:
+                self.value += text
+            else:
+                self.value = None
+
+    def finish_match(self):
+        if self.length:
+            self.check_budget()
+            if self.value is None or not self.is_allowlisted(self.key + self.value):
+                self.count = min(1000, self.count + 1)
+                if len(self.matches) < 100:
+                    # Existing redaction keeps the first/last four for every
+                    # supported token. The spacer preserves its length > 8 rule.
+                    self.matches.append(self.redact(self.first + ":" + self.last))
+            self.length = 0
+            self.first = self.last = self.value = ""
+
+    def feed(self, fragment):
+        if self.count >= 1000:
+            return
+        text = self.carry + fragment
+        self.carry = ""
+        position = 0
+        if self.length:
+            end = self.tail.match(text).end()
+            self.extend(text[:end])
+            if end == len(text):
+                return
+            self.finish_match()
+            position = end
+        while position < len(text) and self.count < 1000:
+            match = self.regex.search(text, position)
+            if match is None:
+                # Failed minimum candidates can contain later starts. Replaying
+                # this bounded suffix preserves regex.search/finditer restart.
+                self.carry = text[max(position, len(text) - self.minimum + 1):]
+                return
+            self.extend(match.group())
+            position = match.end()
+            if self.tail is not None and position == len(text):
+                return
+            self.finish_match()
+
+
+def scan_line_events(path, events, report, is_allowlisted, redact,
+                     check_budget=_stream_check):
+    """Consume bounded events and update report in legacy line/pattern order.
+
+    is_allowlisted(key) delegates to allowlist_contains('scan_secrets', key,
+    entries); redact(value) is the existing redact_match helper. Credential-path
+    findings must be inserted into the same report before this call. Events are
+    drained after the cap to preserve late diff validation and deadline checks.
+    The caller owns source/Git error mapping; failures are never hidden.
+    """
+    machines = None
+    line = None
+    prefix_carry = ""
+    for kind, value in events:
+        check_budget()
+        if report.stopped:
+            continue
+        if kind == "start":
+            if line is not None:
+                raise ValueError("nested stream line")
+            line = value
+            prefix_carry = ""
+        elif kind == "data":
+            if line is None or not isinstance(value, str) or len(value) > 65536:
+                raise ValueError("invalid stream data")
+            if machines is None:
+                # Most short lines contain no token prefix. Search in C before
+                # allocating five per-pattern states; retain only enough suffix
+                # to recognize a prefix split across adjacent data fragments.
+                candidate = prefix_carry + value
+                if _STREAM_POSSIBLE_PREFIX.search(candidate) is None:
+                    prefix_carry = candidate[-10:]
+                    continue
+                machines = [_StreamPattern(definition, path, line, is_allowlisted, redact, check_budget)
+                            for definition in _STREAM_COMPILED]
+                value = candidate
+                prefix_carry = ""
+            for machine in machines:
+                machine.feed(value)
+        elif kind == "end":
+            if line is None:
+                raise ValueError("unopened stream line")
+            for machine in machines or ():
+                machine.finish_match()
+                accepted = min(machine.count, 1000 - report.processed)
+                for redacted in machine.matches[:min(accepted, max(0, 100 - len(report.findings)))]:
+                    report.findings.append((machine.name, machine.severity, path, line, redacted))
+                report.processed += accepted
+                if report.processed == 1000:
+                    report.stopped = True
+                    break
+            machines = None
+            line = None
+            prefix_carry = ""
+        else:
+            raise ValueError("invalid stream event")
+    if line is not None and not report.stopped:
+        raise ValueError("unterminated stream line")
 
 
 def read_payload() -> dict:
@@ -1327,8 +1689,6 @@ class SnapshotSource:
                 if match is None or match.group(1) != resolved[candidate]:
                     raise GitCommandError("git_output_invalid", "git_index")
                 size = int(match.group(2))
-                if size > MAX_FILE_BYTES:
-                    raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
                 budget.reserve_index(candidate, size)
                 self.objects.append((candidate, match.group(1), size, header + b"\n"))
             if next(records, None) is not None:
@@ -1397,9 +1757,6 @@ class SnapshotSource:
                     details = os.fstat(descriptor)
                     if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
                         raise ScanSecurityError("candidate_unsafe", "candidate_read")
-                    if details.st_size > MAX_FILE_BYTES:
-                        raise ScanLimitExceeded("file_bytes_limit", "candidate_read",
-                                                measured=details.st_size, limit=MAX_FILE_BYTES)
                     remaining = self.budget.remaining()
                     if details.st_size > remaining:
                         raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
@@ -1408,7 +1765,7 @@ class SnapshotSource:
                     with tempfile.TemporaryFile(mode="w+b") as spool:
                         _verify_private_capture(spool)
                         size = 0
-                        ceiling = min(MAX_FILE_BYTES, remaining)
+                        ceiling = remaining
                         while True:
                             enforce_deadline(self.budget.deadline)
                             chunk = os.read(descriptor, min(65536, ceiling + 1 - size))
@@ -1416,12 +1773,9 @@ class SnapshotSource:
                                 break
                             size += len(chunk)
                             if size > ceiling:
-                                if remaining < MAX_FILE_BYTES:
-                                    raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
-                                                            measured=self.budget.used_bytes + size,
-                                                            limit=MAX_TOTAL_BYTES)
-                                raise ScanLimitExceeded("file_bytes_limit", "candidate_read",
-                                                        measured=size, limit=MAX_FILE_BYTES)
+                                raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
+                                                        measured=self.budget.used_bytes + len(chunk),
+                                                        limit=MAX_TOTAL_BYTES)
                             self.budget.charge(len(chunk))
                             spool.write(chunk)
                         spool.flush()
@@ -1474,30 +1828,21 @@ def is_credential_path(path: str) -> bool:
     )
 
 
-def enumerate_file_lines(text: str) -> list[tuple[int, str]]:
-    return [(index + 1, line) for index, line in enumerate(text.splitlines())]
-
-
-def decode_ascii_scan_text(raw_bytes: bytes) -> str:
-    return "".join(
-        chr(value) if value in {9, 10, 13} or 32 <= value <= 126 else " "
-        for value in raw_bytes
-    )
-
-
-def emit_diff_added_lines(
+def scan_diff_added_lines(
     root: Path,
     path: str,
     source: str,
+    report: StreamReport,
+    is_allowlisted,
     *,
     root_has_head: bool,
     deadline: float | None = None,
-) -> list[tuple[int, str]]:
+) -> None:
     if source not in {CANDIDATE_STAGED, CANDIDATE_WORKTREE}:
         raise ScanSecurityError("candidate_unsafe", "git_diff")
     cached_options = ["--cached"] if source == CANDIDATE_STAGED else []
     cached_revision = ["HEAD"] if source == CANDIDATE_STAGED and root_has_head else []
-    output = run_git(
+    with capture_git(
         [
             "diff",
             *cached_options,
@@ -1515,39 +1860,14 @@ def emit_diff_added_lines(
             path,
         ],
         cwd=root,
-        text=False,
         deadline=deadline,
-    )
-    if not isinstance(output, bytes):
-        return []
-    if output and (not output.startswith(b"diff --git ") or not output.endswith(b"\n")):
-        raise GitCommandError("git_output_invalid", "git_diff")
-
-    lines: list[tuple[int, str]] = []
-    current_line: int | None = None
-    in_hunk = False
-    for raw_line in output.splitlines():
-        if raw_line.startswith(b"diff --git "):
-            in_hunk = False
-            current_line = None
-            continue
-        if raw_line.startswith(b"@@"):
-            match = re.search(rb"\+(\d+)", raw_line)
-            current_line = int(match.group(1)) if match else None
-            in_hunk = current_line is not None
-            continue
-        if not in_hunk or current_line is None:
-            continue
-        if raw_line.startswith(b"+"):
-            lines.append((current_line, os.fsdecode(raw_line[1:])))
-            current_line += 1
-        elif raw_line.startswith(b"-") or raw_line.startswith(b"\\"):
-            continue
-        elif raw_line.startswith(b" "):
-            current_line += 1
-        else:
-            raise GitCommandError("git_output_invalid", "git_diff")
-    return lines
+    ) as capture:
+        check_budget = lambda: enforce_deadline(deadline)
+        try:
+            scan_line_events(path, diff_added_line_events(capture.chunks(), check_budget),
+                             report, is_allowlisted, redact_match, check_budget)
+        except StreamDiffError as exc:
+            raise GitCommandError("git_output_invalid", "git_diff") from exc
 
 
 def redact_match(match: str) -> str:
@@ -1957,7 +2277,7 @@ def resolve_scan_log() -> Path:
 
 def main() -> int:
     global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE
-    scan_started = time.monotonic()
+    scan_started = _SCAN_STARTED if _SCAN_STARTED is not None else time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
 
@@ -2076,8 +2396,7 @@ def main() -> int:
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
     findings: list[tuple[str, str, str, int, str]] = []
-    processed_findings = 0
-    stop_scanning = False
+    report = StreamReport(findings)
     budget = ScanBudget(scan_deadline)
     total_bytes = 0
     with snapshot_source(root, candidates, budget) as snapshots:
@@ -2086,8 +2405,6 @@ def main() -> int:
             with snapshots.acquire((source, path)) as snapshot:
                 if snapshot is None:
                     continue
-                # Temporary T3 bridge: only this at-most-1-MiB snapshot is materialized.
-                raw_bytes = b"".join(snapshot.chunks())
                 SCAN_PHASE = "candidate_scan"
                 total_bytes = budget.used_bytes
                 enforce_scan_budget(scan_started, total_bytes)
@@ -2098,60 +2415,29 @@ def main() -> int:
                 if is_credential_path(path):
                     allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
                     if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                        processed_findings, stop_scanning = record_finding(
+                        report.processed, report.stopped = record_finding(
                             findings,
                             ("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),
-                            processed_findings,
+                            report.processed,
                         )
 
-                if stop_scanning:
+                if report.stopped:
                     break
 
-                if snapshot.classification == "binary":
-                    candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
-                elif (scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED
+                is_allowlisted = lambda key: allowlist_contains("scan_secrets", key, allowlist)
+                check_budget = lambda: enforce_deadline(scan_deadline)
+                if (snapshot.classification == "binary" or scope == "staged"
+                      or not root_has_head or source == CANDIDATE_UNTRACKED
                       or source in CANDIDATE_UNMERGED_STAGES or source == CANDIDATE_UNMERGED_WORKTREE):
-                    candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
+                    scan_line_events(path,
+                        full_line_events(snapshot.chunks(), snapshot.classification, check_budget),
+                        report, is_allowlisted, redact_match, check_budget)
                 else:
-                    candidate_lines = emit_diff_added_lines(
-                        root,
-                        path,
-                        source,
-                        root_has_head=root_has_head,
-                        deadline=scan_deadline,
-                    )
-
+                    scan_diff_added_lines(root, path, source, report, is_allowlisted,
+                        root_has_head=root_has_head, deadline=scan_deadline)
                 SCAN_PHASE = "candidate_scan"
-                for line_number, line_text in candidate_lines:
-                    enforce_scan_budget(scan_started, total_bytes)
-                    for pattern_name, severity, regex in PATTERNS:
-                        enforce_scan_budget(scan_started, total_bytes)
-                        for match in regex.finditer(line_text):
-                            enforce_scan_budget(scan_started, total_bytes)
-                            match_value = match.group(0)
-                            allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
-                            if allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                                continue
-                            processed_findings, stop_scanning = record_finding(
-                                findings,
-                                (pattern_name, severity, path, line_number, redact_match(match_value)),
-                                processed_findings,
-                            )
-                            if stop_scanning:
-                                break
-                        if stop_scanning:
-                            break
-                    if stop_scanning:
-                        break
-                if stop_scanning:
+                if report.stopped:
                     break
-                # Release bridge buffers before acquiring the next snapshot.
-                raw_bytes = b""
-                candidate_lines = []
-                line_text = ""
-                match = None
-                match_value = ""
-                allowlist_text = ""
 
     enforce_scan_budget(scan_started, total_bytes)
 
@@ -2172,7 +2458,7 @@ def main() -> int:
         return 0
 
     findings_json = build_findings_json(findings)
-    omitted_findings = processed_findings - len(findings)
+    omitted_findings = report.processed - len(findings)
     enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
         log_path=scan_log,
@@ -2185,14 +2471,14 @@ def main() -> int:
         env_files=env_files,
         findings=findings_json,
         omitted_findings=omitted_findings,
-        findings_truncated=stop_scanning or omitted_findings > 0,
+        findings_truncated=report.stopped or omitted_findings > 0,
         deadline=scan_deadline,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))
         return 0
 
-    emit_output(processed_findings, scan_log)
+    emit_output(report.processed, scan_log)
     return 0
 
 

@@ -133,7 +133,7 @@ def run_case(
                 "        changed = True\n"
                 "        if fault == 'growth':\n"
                 "            with candidate.open('ab') as handle:\n"
-                "                handle.write(b'x' * 1048577)\n"
+                "                handle.write(b'x' * 8388609)\n"
                 "        elif fault == 'replacement':\n"
                 "            candidate.rename('original.txt')\n"
                 "            candidate.write_bytes(b'safe replacement\\n')\n"
@@ -297,7 +297,7 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         ), "candidate_unsafe", "candidate_read")
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, files={"race.txt": b"safe\n"}, descriptor_fault="growth",
-        ), "file_bytes_limit", "candidate_read", measured=1048577, limit=1048576)
+        ), "total_bytes_limit", "candidate_read", measured=8388609, limit=8388608)
         token = ("gh" + "p_" + "FAKE" * 9).encode()
         # Classification reads the complete protected snapshot before matching,
         # including split UTF-8 and late binary markers beyond the first chunk.
@@ -364,8 +364,8 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
                 provider, mode, real_git, input_text=invalid_input,
             ), "input_invalid", "input")
         assert_incomplete(provider, mode, run_case(
-            provider, mode, real_git, files={"large.bin": b"x" * 1048577}, hostile_payload=True,
-        ), "file_bytes_limit", "candidate_read", measured=1048577, limit=1048576)
+            provider, mode, real_git, files={"large.bin": b"x" * 8388609}, hostile_payload=True,
+        ), "total_bytes_limit", "candidate_read", measured=8388609, limit=8388608)
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, files={f"file-{i}.txt": b"safe\n" for i in range(257)},
         ), "snapshot_count_limit", "git_candidates", measured=257, limit=256)

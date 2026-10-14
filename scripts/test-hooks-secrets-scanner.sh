@@ -318,7 +318,7 @@ test_unsafe_and_oversized_candidates_respect_fail_closed_mode() {
     if [[ "$candidate_case" == "symlink" ]]; then
       ln -s "$outside" "$repo_dir/candidate.txt"
     else
-      head -c 1048577 /dev/zero > "$repo_dir/candidate.txt"
+      head -c 8388609 /dev/zero > "$repo_dir/candidate.txt"
     fi
 
     if output="$(
