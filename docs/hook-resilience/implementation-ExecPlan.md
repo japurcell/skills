@@ -25,6 +25,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-3] T5b: Integrated deny-only recovery as `bec69068`; recovery10, diagnostics8, generator26, transport9, banners14 and provider scanner checks pass. [Evidence](T5b-evidence.md).
 - [ ] [milestone-3] T6: Bound diagnostic/audit records and preserve findings and audit outcomes under truncation/failure.
 - [ ] [milestone-3] I3: Prove large-file recovery, missing/audit failures, hostile metadata, and independent Guardian enforcement together.
+- [ ] [milestone-4] V0: Prepare reproducible matched warm/cold resource verification and register new maintained suites before final review.
 - [ ] [milestone-4] R1: Review all changes against standards and requested behavior, including security invariants; repair findings.
 - [ ] [milestone-4] V1: Complete generated freshness, affected suites, resource/performance gates, and isolated installed-delivery checks.
 - [ ] [milestone-4] K1: Complete one coordinated knowledge-maintenance pass, reconcile documentation, commit final evidence, and clean integrated worktrees.
@@ -105,7 +106,9 @@ Acceptance: not met
 Status: in progress
 Acceptance: not met
 
-**R1, independent review.** Prerequisites: I1/I2/I3. Use `code-review-biaxis` for standards and originating-spec review of all changes since baseline, plus security attention to new trusted boundaries. Retain review findings. Delegate repairs as bounded nodes with explicit prerequisites and rerun affected checks. Do not treat a timed-out review as approval.
+**V0, release verification preparation.** Prerequisites: I2. Independent of T6 source edits. Own test registry additions for accepted suites, a reproducible verification adapter for the maintained performance runners, and `V0-evidence.md`. Read the hook-security testing contract. Prepare two alternating matched warm pairs (25 measured, three warmups) and 25 independent fresh-copy cold launches per case/condition with zero provider bytecode, baseline `bc52d7d6` versus final candidate. Preserve decisions, logging proof, fingerprints, raw samples, first calls, median/p95/MAD, pair variation and separate concurrency. Map the baseline's actual profile expectations explicitly; the maintained runner's historical baseline flag does not describe this revision. Keep measurement serialized and source frozen. Do not run release benchmarks while implementation/tests are active; V1 executes the prepared procedure after review. Test the adapter's mechanics with bounded disposable checks, without claiming performance acceptance. Coordinate any T6 suite registration after its filename is known. This separates preparation from release execution so final review includes verification code.
+
+**R1, independent review.** Prerequisites: I1/I2/I3/V0. Use `code-review-biaxis` for standards and originating-spec review of all changes since baseline, plus security attention to new trusted boundaries. Retain review findings. Delegate repairs as bounded nodes with explicit prerequisites and rerun affected checks. Do not treat a timed-out review as approval.
 
 **R0, early security review.** Prerequisites: I1. Read-only source review of `bc52d7d6..23f7f38b` for transport deadlines, Windows readiness, JSON boundary parsing, strict fallback, and option classification. Own only retained `docs/hook-resilience/R0-review.md`. Run targeted disposable public probes for suspected defects; no source edits. Record issues with reproduction and impact, or an explicit bounded no-findings conclusion. R0 supplements R1 rather than replacing review of later changes. This independent work can run while T3/T5a implement.
 

@@ -1,4 +1,14 @@
 dispatches:
+  - subtask_id: T6
+    agent: /root/bounded_reports_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:27 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
   - subtask_id: T4b
     agent: /root/stream_integration_impl
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
