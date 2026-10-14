@@ -19,11 +19,13 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-1] T2: Repair maintained consumers, import destinations, authoring paths, and fixtures; integrated commit `d141e63d6531973f7de98759610d216635b212a0` with reference and linked-target proof.
 - [x] (2026-10-14) [milestone-1] Verify the integrated layout and default-install result on base `d141e63d`: Bash, macOS PowerShell, Addy, registry (14), spec-to-tasks (38), prd-ralph-loop (13), handoff (20), skill validator, 29 maintained links, OKF, and whitespace checks passed.
 - [x] (2026-10-14) [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through public red/green cycles; integrated `af3e4806f32a3d89cafa962bd579819af496019a`.
-- [ ] [milestone-2] Verify the complete behavior matrix in Bash and PowerShell.
+- [x] (2026-10-14) [milestone-2] Verify the complete behavior matrix in Bash and macOS PowerShell against integrated implementation `6f406a1f`; all targeted local checks passed, retained in `verification.json`.
 - [x] (2026-10-14) [milestone-2] R1: Make the reference-rebasing CLI directly executable; integrated `d07be4368ecc9b190867979ebc82c2bd050cc71a`. Direct help passed on base, with identical content blob and mode `100755`.
-- [ ] [milestone-3] T4: Obtain integrated source and native Windows evidence; preserve existing installer protections.
+- [x] (2026-10-14) [milestone-3] T4 local: Obtain integrated source evidence and preserve existing protections; evidence commit rebased to integrated `7fe20edaef6485d1263c9c8f9cad8bd3e3e9c40c`.
+- [ ] [milestone-3] T4 Windows: User authorizes push/CI, then run the existing native Windows installer job on this implementation and record its revision/result/run URL and junction capability.
 - [x] (2026-10-14) [milestone-4] T5D: Finish user-facing installation documentation; integrated `3110cea24bd20221b235b3d941f345bb02c3fc72`, with both public help outputs and source diagnostics checked.
-- [ ] [milestone-4] T5: Finish user documentation and the single coordinated agent-documentation pass; check links and the final diff.
+- [x] (2026-10-14) [milestone-4] Complete the single coordinated agent-doc pass after all delegated work finished; repair PowerShell ordinal-matching/profile guidance, review category-path repairs, verify OKF/links/whitespace, and preserve protected AGENTS sections.
+- [ ] [milestone-4] T5: Close the effort after native Windows acceptance; retain current owner actions and this active plan until then.
 
 ## Surprises & Discoveries
 
@@ -82,7 +84,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The layout, consumers, reference handling, complete CLI, and user documentation are integrated on base `3110cea2`. T3's complete Bash and macOS PowerShell suites, RTK 12 tests, and Codex 14 tests passed before rebase; all five tested T3 blobs/modes remained identical after rebase. T5D's public help/source/whitespace review passed. T4 owns the remaining composed proof and pending native Windows evidence. Milestone 2 acceptance awaits composed proof; native Windows and final closure remain open.
+The layout, consumers, reference handling, complete CLI, user documentation, and targeted local verification are finished on base branch `codex/plan-conditional-skill-installer`. Milestones 1 and 2 are accepted. The implementation has not been pushed, and no CI was dispatched. Native Windows execution and final closure remain open; macOS PowerShell explicitly skipped native junction coverage. All private task branches/worktrees were integrated serially and removed after clean-state/tip checks. The final coordinated KB pass corrected ordinal matching and disposable Windows profile routing, with no new memory or protected AGENTS changes. The next action belongs to the user: authorize pushing this reviewable branch and running the existing Windows workflow, or provide a Windows-capable host for the required command.
 
 ## Context and Orientation
 
@@ -144,8 +146,10 @@ Completed on base `d141e63d`: both default installer suites and Addy passed; reg
 
 ### Milestone 2: Deliver the agreed CLI contract
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
+
+Composed proof: T4 ran the full Bash and macOS PowerShell suites on integrated revision `6f406a1f`, including every agreed CLI/source case, Unicode literal parity, profile isolation, and existing installer protections. All targeted checks exited 0. Evidence is retained in [verification.json](verification.json). Its evidence-only rebase changed no product source or tests; differences from the tested revision were README and plan updates only. Native Windows belongs to Milestone 3 and remains unverified.
 
 #### Task R1: Repair helper executable mode
 
@@ -172,6 +176,8 @@ Acceptance: not met
 
 Prerequisites: accepted Milestone 1 and integrated T3/R1 with their recorded local task proof. Inputs: changed tree, CLI matrix, existing regression suites, and `.github/workflows/ready-ideas-windows.yml`. Own integration verification and minimal workflow adjustments only if the existing native Windows job does not exercise the changed suites. Its local composed proof establishes Milestone 2 acceptance; its native Windows proof establishes Milestone 3 acceptance. Retain command/revision/platform/exit evidence in `docs/conditional-skill-installer/verification.json`; the coordinator owns this ExecPlan.
 
+Local work is complete: [verification.json](verification.json) records all targeted commands at `6f406a1fee1f640106d459c682561af8fedb7c1b`, macOS arm64/PowerShell 7.6.6, exit 0 results, registry/grader counts, inventory, and platform limits. The evidence commit rebased from `a15aef68` to `7fe20edaef6485d1263c9c8f9cad8bd3e3e9c40c`; only README/plan differed from its tested tree before integration, with no source/test changes. Coordinator confirmed task/base tips and cleaned the worktree/branch. The existing `windows-latest` workflow already runs `pwsh -NoProfile -File scripts/test-install.ps1`, so no workflow modification was needed. Native execution is `not_run`: no Windows host was available, and push/CI authorization is absent. Keep this milestone acceptance unmet.
+
 Run the targeted commands below sequentially where fixture mutation could interfere. Obtain native Windows execution of `scripts/test-install.ps1` through the existing workflow or a Windows-capable host. Record the run URL or host, revision, command, result, and any junction-capability limit. A macOS `pwsh` pass or a platform skip cannot satisfy Windows acceptance. Do not dispatch CI or push changes without session authorization for that action.
 
 Stop with acceptance not met if Windows evidence is unavailable. Preserve completed local evidence and state the exact remaining external action. Do not weaken failing tests, synthesize a pass, or treat planned commands as results.
@@ -191,13 +197,15 @@ Completed evidence: `3110cea24bd20221b235b3d941f345bb02c3fc72` changes only `REA
 
 Prerequisites: integrated implementation work and tests have finished; native Windows acceptance must be recorded before full completion. Inputs: final diff, current README, CLI help, changed authoring guidance, and admission rules. Own final documentation reconciliation and the single end-of-session KB pass.
 
+Local documentation/quality work is complete. T5D delivered README guidance. The coordinator's single admission pass reviewed the final diff, repaired `.agents/instructions/powershell.md` for ordinal external-string matching and `APPDATA`/`LOCALAPPDATA` child isolation, and reviewed T2's path repairs. No new memory, splits, index changes, or skill edits were warranted. OKF representation used the shared profile only; lint, scoped links, whitespace, and protected-section checks passed. Final T5 closure remains blocked on T4's native Windows evidence, not on unfinished local documentation.
+
 Document both invocation forms, environment values and precedence, explicit disabling, preservation of previously installed skills, empty initial Forest Service content, and error recovery. After all work and any delegated tasks finish, activate `update-agent-docs` once. Apply knowledge admission, update the smallest relevant canonical documents, and activate `okf-authoring` for canonical semantic edits. Do not create memory solely to record this task. Repair affected indexes and inbound links without editing protected `AGENTS.md` sections.
 
 Review the final diff for lost behavior, incorrect installed paths, ignored fixtures, and unauthorized scope. Record actual outcomes here. Follow repository retention policy when this implementation effort is complete; the current plan remains active while implementation or acceptance is pending.
 
 ## Concrete Steps
 
-T5D is complete. The ready frontier is T4 integrated verification in its private worktree. Its composed local proof can establish Milestone 2 acceptance; native Windows remains required for Milestone 3. If Windows execution is unavailable, finish the mandatory end-of-session KB pass, retain this plan, and leave final T5 closure unmet. Pushing and CI dispatch still require user authorization.
+No authorized local implementation task remains ready. The next action is user authorization for push/CI or access to a Windows-capable host. Then the coordinator runs the existing native Windows workflow (or `pwsh -NoProfile -File scripts/test-install.ps1` on that host), records actual revision/result/run URL and junction capability, and reassesses T4/T5 acceptance. Do not claim native success from the macOS pass, an unrun command, or a skipped platform case. Keep this plan active while acceptance is pending.
 
 The reconciled graph is T1 before T2; their integrated proof before T3; integrated T3 and independent R1 before T4; T3 before T5D; verified T4 native execution and T5D before final T5 closure. Shared installer and fixture files require serialized ownership. Fresh implementer subagents own distinct tasks. The coordinator owns the ExecPlan and final canonical-document admission pass; T2 owned only its named layout guidance repairs.
 
@@ -205,7 +213,7 @@ Use the repository root as the working directory for every command. Prefix shell
 
 ## Validation and Acceptance
 
-Implementation checks below are expected future evidence. None was executed during planning.
+The targeted local checks below were executed successfully by T4 on the integrated implementation; actual results are retained in [verification.json](verification.json). None was executed during the earlier planning-only session. Native Windows remains the unfinished proof.
 
 ### Public behavior matrix
 
@@ -234,7 +242,7 @@ On case-insensitive hosts, create case-only collision fixtures in different cate
 
 ### Targeted commands
 
-Run these after implementation, adapting only the documented source path when a skill was relocated:
+Completed local verification commands (rerun only after relevant changes or a new failure):
 
     rtk proxy bash -n scripts/install.sh
     rtk proxy bash scripts/test-install.sh
@@ -281,4 +289,4 @@ Keep Bash portability consistent with the current supported host shell; do not r
 
 ## Artifacts and Notes
 
-Planning evidence is the current source inspection and the confirmed interview contract recorded above. Actual implementation test transcripts, CI references, and milestone acceptance evidence will be added when obtained. Do not mark an implementation milestone done from planning evidence.
+Current implementation proof is [verification.json](verification.json), with actual commands/exits/revision/platform limits. [dispatch-audit.json](dispatch-audit.json) reports all six selected/submitted configurations, verified outputs, warning mechanisms, and unconfirmed executed settings without inference. Every implementation branch was private and integrated serially. Native Windows CI references will be added only when obtained. The active plan is retained because that acceptance and the associated owner authorization remain pending.

@@ -26,7 +26,7 @@
     { "command": "rtk proxy python3 scripts/lint-okf.py", "exit_code": 0 },
     { "command": "rtk git diff --check", "exit_code": 0 },
     { "command": "PowerShell parser: ParseFile scripts/install.ps1", "exit_code": 0, "result": "PowerShell parse passed." },
-    { "command": "Read-only published skill inventory", "exit_code": 0, "result": "0 direct root skill bundles; 57 default bundles; 0 Forest Service bundles; forest-service contains only .gitkeep; no category directories lack SKILL.md." }
+    { "command": "Read-only published skill inventory", "exit_code": 0, "result": "0 direct root skill bundles; 57 default bundles; 0 Forest Service bundles; forest-service contains only .gitkeep; no non-excluded skill leaf directory lacks SKILL.md." }
   ],
   "native_windows": {
     "status": "not_run",
