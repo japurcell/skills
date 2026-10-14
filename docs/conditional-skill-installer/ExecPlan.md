@@ -15,7 +15,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-0] Inspect installer behavior, consumers, CLI sources, and test routes; complete the design interview.
 - [x] (2026-10-14) [milestone-0] Obtain confirmation of the shared design and permission to save this plan without implementation.
 - [x] (2026-10-14) [milestone-0] Save and review this plan; verify links, whitespace, and the implementation stopping boundary.
-- [ ] [milestone-1] T1: Migrate published skills and deliver default-category traversal in both installers with disposable-home proof.
+- [x] (2026-10-14) [milestone-1] T1: Migrate published skills and deliver default-category traversal in both installers with disposable-home proof; integrated commit `1dadc9993b2885f5448d91a97177872509c706fc`.
 - [ ] [milestone-1] T2: Repair maintained consumers, import destinations, authoring paths, and fixtures; verify their public behavior.
 - [ ] [milestone-1] Verify the integrated layout and default-install result.
 - [ ] [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through successive public-CLI test cycles.
@@ -80,7 +80,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The design interview and saved-plan verification are complete. Implementation is now authorized; T1 is the ready frontier. No implementation changes have been made yet. The coordinator owns delegation, serial integration, and plan updates. Implementation acceptance and native Windows acceptance remain open.
+T1 is implemented, reviewed, and fast-forwarded onto base. All 57 published bundles moved to `skills/default`; 361 tracked files are byte-identical moves. Default-category installer fixtures passed in Bash and PowerShell on macOS after observed failures with the old traversal. T2 is the ready frontier. Milestone 1 acceptance remains unmet until consumer repairs and its composed proof pass. Native Windows acceptance remains open.
 
 ## Context and Orientation
 
@@ -117,6 +117,8 @@ Acceptance: not met
 #### Task T1: Migrate published skills and default traversal
 
 Prerequisites: explicit user authorization to implement. Inputs: D1 and D3, the current root `SKILL.md` inventory, both installers, and both installer fixture suites. Own the published directory moves, new category directories, `copy_skills`, `Copy-Skills`, and matching default-copy fixture changes.
+
+Completed evidence: commit `1dadc9993b2885f5448d91a97177872509c706fc`, integrated without rebase changes. Both public fixture suites first failed on missing flat `alpha` installation, then exited 0 after traversal and fixture changes. PowerShell's junction case was skipped on macOS, so this is not Windows evidence. Coordinator review verified 361 `R100` moves and unchanged root workspaces. The task worktree was clean before integration and base tip matched its verified tip.
 
 Start with a public installer fixture that places `alpha` under `skills/default/` and confirms `~/.agents/skills/alpha/SKILL.md` exists without a wrapper. Observe the current failure, then implement the smallest layout/traversal change and repeat for PowerShell. Move the complete published bundles, including evaluation fixtures, without changing unrelated content. Keep root workspaces and archives in place. Preserve installed pruning and copy semantics.
 
@@ -179,7 +181,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-The next unfinished implementation action is T1: migrate published skills and default traversal in an isolated implementer worktree. The user's `execplan-implement` invocation authorizes this work and local commits.
+The next unfinished implementation action is T2: repair maintained consumers and imports in a fresh isolated implementer worktree based on the integrated T1 tree. The user's `execplan-implement` invocation authorizes this work and local commits.
 
 The reconciled task graph is T1 before T2; their integrated proof before T3; T3 before T4; T4 before T5. Shared installer and fixture files require serialized ownership. The invoked implementation skill requires fresh implementer subagents for distinct tasks. The coordinator owns the ExecPlan and final shared canonical-document admission pass; T2 owns only its specifically named layout guidance repairs.
 
@@ -243,9 +245,9 @@ Validate other changed skill definitions similarly. Do not run live model evalua
 
 Native Windows must run `pwsh -NoProfile -File scripts/test-install.ps1` on the implementation revision. Syntax checks and non-Windows PowerShell results are additional evidence, not substitutes.
 
-### Saved-plan acceptance
+### Historical saved-plan acceptance
 
-For this planning-only session, verify this file's local links and the Q1-Q18 obligations, run `rtk git diff --check`, and inspect `rtk git status --short`. The only intended change is this ExecPlan. Do not run implementation acceptance commands while merely saving the plan.
+The earlier planning-only session verified local links and Q1-Q18 obligations, `rtk git diff --check`, and `rtk git status --short`, with only this ExecPlan changed. This historical evidence does not establish implementation acceptance.
 
 ## Idempotence and Recovery
 
