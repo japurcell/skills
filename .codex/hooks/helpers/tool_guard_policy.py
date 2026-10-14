@@ -1360,7 +1360,10 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     if isinstance(tool_inputs, NativeToolInput):
         if tool_inputs.kind == "shell":
             try:
-                return _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                threats = _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                for context in tool_inputs.metadata:
+                    threats.extend(_strict_threats(context))
+                return threats
             except InspectionFailure:
                 return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
         return _native_operation_threats(tool_inputs)

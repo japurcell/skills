@@ -9,6 +9,7 @@ import unittest
 
 from fixtures.tool_guard_vectors import sized_native_patch
 from tool_guard_test_support import invoke_guard, native_decision
+from tool_guard_corpus import full_shell_envelope
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -37,6 +38,74 @@ class NativeDataTests(unittest.TestCase):
         self.assertEqual(native_decision(response), expected, response)
         if expected == 'allow':
             self.assertNotIn('systemMessage', response)
+
+    def test_codex_output_metadata_preserves_literal_search_decision(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        for tool in ('exec_command', 'functions.exec_command'):
+            for metadata in ({}, {'max_output_tokens': 1000}, {'yield_time_ms': 1000},
+                             {'max_output_tokens': 1000, 'yield_time_ms': 1000}):
+                with self.subTest(tool=tool, metadata=metadata):
+                    self.assert_decision(self.invoke('codex', tool, {'cmd': command, **metadata}), 'allow')
+                    self.assert_decision(self.invoke('codex', tool, {'cmd': FORCE_PUSH, **metadata}), 'deny')
+
+    def test_complete_shell_profiles_preserve_inert_metadata_and_execution_checks(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        profiles = (
+            ('codex', 'exec_command', 'cmd', {'workdir': '.', 'shell': '/bin/zsh', 'login': False,
+             'tty': False, 'max_output_tokens': 1000, 'yield_time_ms': 1000,
+             'sandbox_permissions': 'require_escalated', 'justification': FORCE_PUSH, 'prefix_rule': ['rg']}),
+            ('copilot', 'bash', 'command', {'description': FORCE_PUSH, 'initial_wait': 30,
+             'mode': 'sync', 'detach': False}),
+            ('gemini', 'run_shell_command', 'command', {'description': FORCE_PUSH, 'dir_path': '.',
+             'is_background': False, 'delay_ms': 1000, 'additional_permissions': {
+                 'network': True, 'fileSystem': {'read': ['/tmp'], 'write': ['/tmp']}}}),
+        )
+        for provider, tool, key, options in profiles:
+            for metadata in ({field: value} for field, value in options.items()):
+                with self.subTest(provider=provider, metadata=metadata):
+                    self.assert_decision(self.invoke(provider, tool, {key: command, **metadata}), 'allow')
+                    self.assert_decision(self.invoke(provider, tool, {key: FORCE_PUSH, **metadata}), 'deny')
+            self.assert_decision(self.invoke(provider, tool, {key: command, **options}), 'allow')
+            self.assert_decision(self.invoke(provider, tool, {key: FORCE_PUSH, **options}), 'deny')
+
+    def test_shell_profiles_leave_unknown_and_malformed_options_strict(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        profiles = (
+            ('codex', 'exec_command', 'cmd', ({'max_output_tokens': True}, {'max_output_tokens': -1},
+             {'yield_time_ms': 1.5}, {'yield_time_ms': 2147483648}, {'login': 'false'}, {'tty': 1},
+             {'sandbox_permissions': 'override'}, {'prefix_rule': ['rg', 1]}, {'workdir': []},
+             {'shell': '/tmp/custom-shell'}, {'shell': '/bin/bash -c'}, {'env': {'BASH_ENV': FORCE_PUSH}})),
+            ('copilot', 'bash', 'command', ({'description': []}, {'initial_wait': True},
+             {'initial_wait': -1}, {'mode': 'invalid'}, {'detach': 'false'})),
+            ('gemini', 'run_shell_command', 'command', ({'description': 1}, {'dir_path': []},
+             {'is_background': 1}, {'delay_ms': -1}, {'additional_permissions': {'network': 'true'}},
+             {'additional_permissions': {'fileSystem': {'write': [1]}}},
+             {'additional_permissions': {'unknown': True}})),
+        )
+        for provider, tool, key, options in profiles:
+            for metadata in (*options, {'unknown_option': 'safe'}):
+                with self.subTest(provider=provider, metadata=metadata):
+                    self.assert_decision(self.invoke(provider, tool, {key: command, **metadata}), 'deny')
+            context = 'workdir' if provider == 'codex' else 'dir_path' if provider == 'gemini' else 'unknown'
+            self.assert_decision(self.invoke(provider, tool, {key: 'echo safe', context: FORCE_PUSH}), 'deny')
+        self.assert_decision(self.invoke('codex', 'exec_command', {'cmd': 'echo safe', 'prefix_rule': [FORCE_PUSH]}), 'deny')
+
+
+    def test_full_provider_envelopes_and_metadata_budgets(self) -> None:
+        for provider in ('codex', 'copilot', 'gemini'):
+            for command, extra, expected in (("rg '" + 'example;' * 130 + "' docs", {}, 'allow'),
+                                             (FORCE_PUSH, {}, 'deny'),
+                                             ("rg '" + 'example;' * 130 + "' docs", {'unknown': True}, 'deny')):
+                payload = full_shell_envelope(provider, command, extra)
+                result = invoke_guard(ROOT, provider, json.dumps(payload))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_decision(json.loads(result.stdout), expected)
+            field = 'justification' if provider == 'codex' else 'description'
+            payload = full_shell_envelope(provider, 'echo safe', {field: 'x' * 32768})
+            result = invoke_guard(ROOT, provider, json.dumps(payload), mode='warn')
+            response = json.loads(result.stdout)
+            self.assert_decision(response, 'deny')
+            self.assertIn('structured_bytes', json.dumps(response))
 
     def test_codex_patch_body_is_data_and_shell_counterpart_is_denied(self) -> None:
         patch = '*** Begin Patch\n*** Add File: example.sh\n+Example: ' + FORCE_PUSH + '\n*** End Patch'

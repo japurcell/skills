@@ -149,14 +149,75 @@ def read_tool_input(payload: dict) -> str:
 
 
 
+def _native_shell_shape(tool_name: str, value: dict) -> NativeToolInput | None:
+    """Only proven inert fields leave inspection; execution context stays strict."""
+    metadata: list[str] = []
+    numeric: tuple[str, ...] = ()
+    if TOOL_PROVIDER == "codex" and tool_name in {"exec_command", "functions.exec_command"}:
+        key = "cmd"
+        optional = {"max_output_tokens": int, "yield_time_ms": int, "workdir": str,
+                    "shell": str, "login": bool, "tty": bool, "justification": str,
+                    "sandbox_permissions": str, "prefix_rule": list}
+        numeric = ("max_output_tokens", "yield_time_ms")
+    elif TOOL_PROVIDER == "codex" and tool_name == "Bash":
+        key, optional = "command", {}
+    elif TOOL_PROVIDER == "copilot" and tool_name == "bash":
+        key = "command"
+        optional = {"description": str, "initial_wait": int, "mode": str, "detach": bool}
+        numeric = ("initial_wait",)
+    elif TOOL_PROVIDER == "gemini" and tool_name == "run_shell_command":
+        key = "command"
+        optional = {"description": str, "dir_path": str, "is_background": bool,
+                    "delay_ms": int, "additional_permissions": dict}
+        numeric = ("delay_ms",)
+    else:
+        return None
+    if not _matches_native_schema(value, {key: str}, optional):
+        return None
+    # Booleans are not integers here. Finite bounded counters cannot carry code.
+    if any(not 0 <= value[field] <= 2147483647 for field in numeric if field in value):
+        return None
+    if "shell" in value and value["shell"] not in {
+        "bash", "sh", "zsh", "/bin/bash", "/bin/sh", "/bin/zsh",
+        "/usr/bin/bash", "/usr/bin/sh", "/usr/bin/zsh",
+    }:
+        return None
+    if "sandbox_permissions" in value and value["sandbox_permissions"] not in {
+        "use_default", "require_escalated",
+    }:
+        return None
+    if "mode" in value and value["mode"] not in {"sync", "async"}:
+        return None
+    for field in ("workdir", "dir_path"):
+        if field in value:
+            metadata.append(value[field])
+    if "prefix_rule" in value:
+        prefix = value["prefix_rule"]
+        if len(prefix) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in prefix):
+            return None
+        metadata.extend(prefix)
+    if "additional_permissions" in value:
+        permissions = value["additional_permissions"]
+        if not _matches_native_schema(permissions, {}, {"network": bool, "fileSystem": dict}):
+            return None
+        if "fileSystem" in permissions:
+            filesystem = permissions["fileSystem"]
+            if not _matches_native_schema(filesystem, {}, {"read": list, "write": list}):
+                return None
+            for paths in filesystem.values():
+                if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
+                    return None
+                metadata.extend(paths)
+    return NativeToolInput("shell", tuple(metadata), (value[key],))
+
+
+
 def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
     if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
         return None
-    shell_tools = {"codex": {"Bash", "exec_command", "functions.exec_command"}, "copilot": {"bash"}, "gemini": {"run_shell_command"}}
-    if tool_name in shell_tools.get(TOOL_PROVIDER, set()):
-        key = "cmd" if tool_name in {"exec_command", "functions.exec_command"} else "command"
-        if _matches_native_schema(value, {key: str}):
-            return NativeToolInput("shell", (), (value[key],))
+    shell = _native_shell_shape(tool_name, value)
+    if shell is not None:
+        return shell
     if TOOL_PROVIDER == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
         return NativeToolInput("patch", (), (value["command"],))
     if TOOL_PROVIDER == "gemini":

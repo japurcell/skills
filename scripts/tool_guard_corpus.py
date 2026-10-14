@@ -60,8 +60,34 @@ def script_path(root: Path, provider: str) -> Path:
     return root / (".codex/hooks/tool-guard.py" if provider == "codex" else f".{provider}/hooks/scripts/tool-guard.py")
 
 
+def full_shell_envelope(provider: str, command: str, extra: dict | None = None) -> dict:
+    """Complete supported option sets, with native provider event metadata."""
+    common = {"cwd": "/tmp/guardian-fixture", "session_id": "guardian-fixture",
+              "transcript_path": "/tmp/guardian-fixture/transcript.jsonl"}
+    if provider == "codex":
+        options = {"cmd": command, "workdir": ".", "shell": "/bin/bash", "login": False,
+                   "tty": False, "yield_time_ms": 1000, "max_output_tokens": 1000,
+                   "sandbox_permissions": "require_escalated", "justification": "Search literal examples",
+                   "prefix_rule": ["rg"]}
+        return {**common, "hook_event_name": "PreToolUse", "tool_name": "exec_command",
+                "tool_input": {**options, **(extra or {})}, "tool_use_id": "fixture-call"}
+    if provider == "copilot":
+        options = {"command": command, "description": "Search literal examples",
+                   "initial_wait": 30, "mode": "sync", "detach": False}
+        return {"hook_event_name": "preToolUse", "sessionId": "guardian-fixture",
+                "timestamp": 1791936000000, "cwd": common["cwd"], "toolName": "bash",
+                "toolArgs": {**options, **(extra or {})}}
+    options = {"command": command, "description": "Search literal examples", "dir_path": ".",
+               "is_background": False, "delay_ms": 1000, "additional_permissions": {
+                   "network": False, "fileSystem": {"read": ["/tmp"], "write": []}}}
+    return {**common, "hook_event_name": "BeforeTool", "tool_name": "run_shell_command",
+            "tool_input": {**options, **(extra or {})}}
+
+
 def envelope(provider: str, fixture: Fixture) -> dict:
     tool, value = fixture.tool, fixture.value
+    if tool == "provider_shell":
+        return full_shell_envelope(provider, value["command"], {key: child for key, child in value.items() if key != "command"})
     if isinstance(value, dict):
         if provider == "copilot" and tool == "write_file":
             tool = "create"
@@ -151,6 +177,9 @@ def fixtures() -> list[Fixture]:
     harmless("survey.analysis-source", "write_file", {"file_path":"guardian-analysis.py","content":analysis}, "survey-analysis", "sanitized survey analysis source body")
     past = numeric(116,114,117,110,99,97,116,101)+"d"
     harmless("write.english-inflection", "write_file", {"file_path":"guardian-notes.md","content":"The inspection must not be "+past+"."}, "native-write", "separate plan-authoring reproduction, excluded from original incident count", pair=past[:-1]+"_table")
+    harmless("search.full-provider-envelope", "provider_shell", {"command": "rg '" + "example;" * 130 + "' docs"}, "provider-profile", "full supported provider options", pair="full-envelope")
+    cases.append(Fixture("danger.full-envelope", "provider_shell", {"command": force}, "deny", "deny", "protection-control", "full supported provider options"))
+    cases.append(Fixture("danger.full-envelope-unknown", "provider_shell", {"command": "rg '" + "example;" * 130 + "' docs", "unknown_option": True}, "deny", "deny", "unrecognized-schema", "unknown full-provider option"))
     harmless("clean", "Bash", {"command":"echo safe"}, "existing-workload", "existing benchmark guard.clean", "allow")
     harmless("large", "Bash", {"command":"echo "+"a"*24000}, "existing-workload", "existing benchmark guard.large", "allow")
     for rule, operation in OPERATIONS.items():
