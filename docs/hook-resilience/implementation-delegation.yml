@@ -1,4 +1,15 @@
 dispatches:
+  - subtask_id: V1
+    agent: /root/release_verification
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:54 UTC'
+    status: running
+    output_verified: false
+    timing_gate: waiting for R1 completion and coordinator quiet-system confirmation
+    routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
