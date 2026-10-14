@@ -16,8 +16,8 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-0] Obtain confirmation of the shared design and permission to save this plan without implementation.
 - [x] (2026-10-14) [milestone-0] Save and review this plan; verify links, whitespace, and the implementation stopping boundary.
 - [x] (2026-10-14) [milestone-1] T1: Migrate published skills and deliver default-category traversal in both installers with disposable-home proof; integrated commit `1dadc9993b2885f5448d91a97177872509c706fc`.
-- [ ] [milestone-1] T2: Repair maintained consumers, import destinations, authoring paths, and fixtures; verify their public behavior.
-- [ ] [milestone-1] Verify the integrated layout and default-install result.
+- [x] (2026-10-14) [milestone-1] T2: Repair maintained consumers, import destinations, authoring paths, and fixtures; integrated commit `d141e63d6531973f7de98759610d216635b212a0` with reference and linked-target proof.
+- [x] (2026-10-14) [milestone-1] Verify the integrated layout and default-install result on base `d141e63d`: Bash, macOS PowerShell, Addy, registry (14), spec-to-tasks (38), prd-ralph-loop (13), handoff (20), skill validator, 29 maintained links, OKF, and whitespace checks passed.
 - [ ] [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through successive public-CLI test cycles.
 - [ ] [milestone-2] Verify the complete behavior matrix in Bash and PowerShell.
 - [ ] [milestone-3] T4: Obtain integrated source and native Windows evidence; preserve existing installer protections.
@@ -80,15 +80,15 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-T1 is implemented, reviewed, and fast-forwarded onto base. All 57 published bundles moved to `skills/default`; 361 tracked files are byte-identical moves. Default-category installer fixtures passed in Bash and PowerShell on macOS after observed failures with the old traversal. T2 is the ready frontier. Milestone 1 acceptance remains unmet until consumer repairs and its composed proof pass. Native Windows acceptance remains open.
+Milestone 1 is implemented and accepted on base `d141e63d`. All 57 published bundles moved to `skills/default`; consumer paths, imports, and shared-reference resolution are repaired. Composed base proof passed both default installers and consumer checks. T3 is the ready frontier. Selection, source preflight, and native Windows acceptance remain open.
 
 ## Context and Orientation
 
 Work from `/Users/adam/.codex/worktrees/d238/skills`. `scripts/install.sh` owns Bash copying through `copy_skills`; `scripts/install.ps1` owns PowerShell copying through `Copy-Skills` and the link-safe `Copy-Entry` helpers. Both have source checks, RTK preflight, generated-hook freshness validation, and provider configuration preflight before their write phase. Neither currently implements the agreed argument interface.
 
-`scripts/test-install.sh` and `scripts/test-install.ps1` build disposable repositories and homes. Their skill fixtures currently use flat paths such as `skills/alpha`. The PowerShell `Invoke-InstallProcess` helper is the existing child-process boundary for home/environment isolation and needs argument forwarding plus reliable environment restoration. These suites also cover provider settings, Codex agent conversion, modes, links, and malformed-input immutability; retain that coverage.
+`scripts/test-install.sh` and `scripts/test-install.ps1` build disposable repositories and homes. Their skill fixtures now use `skills/default/alpha`, with an empty Forest Service category. The PowerShell `Invoke-InstallProcess` helper is the existing child-process boundary for home/environment isolation and needs argument forwarding plus reliable environment restoration for T3. These suites also cover provider settings, Codex agent conversion, modes, links, and malformed-input immutability; retain that coverage.
 
-`scripts/addy-install.sh` imports external flat-source skills, prefixes names, and rewrites reference paths. Its default local destination is currently repository `skills/`. `scripts/test-addy-install.sh` covers explicit and default destinations. `scripts/import-skill-repos.sh` maps other imports into root skills; it is human-only and must not be executed by an agent.
+`scripts/addy-install.sh` imports external flat-source skills, prefixes names, and rewrites reference paths. Its default local destination is now repository `skills/default/`. `scripts/test-addy-install.sh` covers explicit and default destinations. `scripts/import-skill-repos.sh` destination mappings now use the default category; it is human-only and was syntax-checked, never executed. Both installers invoke `scripts/rebase-skill-references.py` after regular skill copies to adapt shared-reference paths to flat installed leaves. The helper and copy stages preserve linked roots and skip linked descendants.
 
 `scripts/test-all.py` explicitly registers the `spec-to-tasks` and `prd-ralph-loop` grader paths; `scripts/test_test_all.py` asserts them. Moving skills requires updating those registrations and any maintained file-based test consumers. Preserve external-source fixtures and runtime-installed paths that intentionally remain flat.
 
@@ -111,8 +111,8 @@ This document was saved and reviewed against Q1-Q18. A read-only check verified 
 
 ### Milestone 1: Deliver the category layout and repair consumers
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T1: Migrate published skills and default traversal
 
@@ -120,13 +120,15 @@ Prerequisites: explicit user authorization to implement. Inputs: D1 and D3, the 
 
 Completed evidence: commit `1dadc9993b2885f5448d91a97177872509c706fc`, integrated without rebase changes. Both public fixture suites first failed on missing flat `alpha` installation, then exited 0 after traversal and fixture changes. PowerShell's junction case was skipped on macOS, so this is not Windows evidence. Coordinator review verified 361 `R100` moves and unchanged root workspaces. The task worktree was clean before integration and base tip matched its verified tip.
 
-Start with a public installer fixture that places `alpha` under `skills/default/` and confirms `~/.agents/skills/alpha/SKILL.md` exists without a wrapper. Observe the current failure, then implement the smallest layout/traversal change and repeat for PowerShell. Move the complete published bundles, including evaluation fixtures, without changing unrelated content. Keep root workspaces and archives in place. Preserve installed pruning and copy semantics.
+Completed task scope: public installer fixtures placed `alpha` under `skills/default/` and proved `~/.agents/skills/alpha/SKILL.md` exists without a wrapper. Both old traversals failed that assertion before repair. Complete published bundles, including evaluation fixtures, moved while root workspaces and archives remained in place.
 
-Verify both installer suites with category fixtures, including an empty Forest Service category, generated artifact exclusions, and preservation of unrelated installed files. Stop at working default traversal; conditional selection and the complete new validation contract are T3.
+Both suites verified category fixtures, empty Forest Service content, artifact exclusions, and preservation of unrelated installed files. Conditional selection and the complete new validation contract remain T3.
 
 #### Task T2: Repair maintained source consumers and imports
 
 Prerequisites: T1's moved layout. Inputs: D1, the old-to-new path inventory, current import scripts and consumer tests. Own `scripts/test-all.py`, `scripts/test_test_all.py`, `scripts/addy-install.sh`, `scripts/test-addy-install.sh`, `scripts/import-skill-repos.sh`, `.gitignore` path exceptions, maintained links, and layout-critical skill/agent guidance.
+
+Completed evidence: commit `d141e63d6531973f7de98759610d216635b212a0`, integrated without rebase changes. T2 also owned the observed reference-copy boundary repair in both installers and its shared Python helper. Addy's default-category public case failed before its destination change. Installed source-relative reference links failed before rebasing. Review reproduced external target mutation through a linked skill root, then verified preserved link identity, unchanged external bytes, and safe nested-link handling after repair. The spec-to-tasks suite exposed two repository-root failures and passed all 38 tests after the depth correction. All targeted T2 checks passed; these outcomes do not establish Windows execution.
 
 Search maintained files for literal old skill paths and one-level discovery assumptions. Update the test registry, `skills/default/create-skill/SKILL.md`, relevant README paths, `.agents/instructions/skills.md`, `.agents/instructions/testing/skills.md`, and affected admitted guidance in `.agents/memory/known-issues/skills.md`. Adjust `.gitignore` exceptions for moved checked-in fixtures without exposing generated outputs. Leave `.agents/skills/` and its tests at their existing local-workflow paths.
 
@@ -136,11 +138,11 @@ Verify Addy's public fixture suite, runner registry tests, relocated grader suit
 
 #### Integrated milestone proof
 
-Run both default installer suites and consumer checks against the same migrated tree. Confirm every maintained published skill is in one category, default skill leaves install flat, no wrappers/artifacts install, and consumer fixtures still run. T1 and T2 individual results do not establish this integrated acceptance.
+Completed on base `d141e63d`: both default installer suites and Addy passed; registry 14, spec-to-tasks 38, prd-ralph-loop 13, and handoff 20 tests passed. Validator, OKF lint, whitespace, and 29 maintained link checks passed. Inventory matched all 57 original published bundles, with no direct root skill leaves and only `.gitkeep` in Forest Service. Flat install, pruning, exclusions, references, and linked-target preservation were exercised against this same integrated tree. PowerShell's native junction case remains unverified on macOS.
 
 ### Milestone 2: Deliver the agreed CLI contract
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T3: Implement selection, help, and preflight parity
@@ -181,7 +183,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-The next unfinished implementation action is T2: repair maintained consumers and imports in a fresh isolated implementer worktree based on the integrated T1 tree. The user's `execplan-implement` invocation authorizes this work and local commits.
+The next unfinished implementation action is T3: selection flags, help, diagnostics, and preflight parity in a fresh isolated worktree based on accepted Milestone 1. The user's `execplan-implement` invocation authorizes this work and local commits.
 
 The reconciled task graph is T1 before T2; their integrated proof before T3; T3 before T4; T4 before T5. Shared installer and fixture files require serialized ownership. The invoked implementation skill requires fresh implementer subagents for distinct tasks. The coordinator owns the ExecPlan and final shared canonical-document admission pass; T2 owns only its specifically named layout guidance repairs.
 
