@@ -623,17 +623,309 @@ function Test-RebasesSharedReferenceLinksForFlatInstalledSkills {
             '---',
             'name: alpha',
             '---',
-            'See `[shared reference](../../../references/notes.md)`.'
+            'See [single](./../../../references/notes.md) and `[repeated](././../../../references/notes.md)`.',
+            'Keep ~/.agents/skills/alpha and example/../../../references/notes.md unchanged.'
         )
+        Write-FixtureFile (Join-Path $repo 'skills/default/alpha/nested/note.markdown') @('[nested](./../../../../references/notes.md)')
+        $sourceBefore = Get-TreeFingerprint (Join-Path $repo 'skills/default/alpha')
 
-        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
 
         $installedSkillPath = Join-Path $homeDir '.agents/skills/alpha/SKILL.md'
         $installedSkill = Read-FileContent $installedSkillPath
-        Assert-Equals -Expected "---`nname: alpha`n---`nSee ``[shared reference](../../references/notes.md)``." -Actual $installedSkill -Message 'Expected a shared-reference Markdown link to be rebased for the flat installed skill path.'
+        Assert-Equals -Expected "---`nname: alpha`n---`nSee [single](../../references/notes.md) and ``[repeated](../../references/notes.md)``.`nKeep ~/.agents/skills/alpha and example/../../../references/notes.md unchanged." -Actual $installedSkill -Message 'Expected a shared-reference Markdown link to be rebased for the flat installed skill path.'
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path (Split-Path $installedSkillPath) '../../references/notes.md')) -Message 'Expected the installed shared-reference link to resolve inside ~/.agents/references.'
+        Assert-Equals '[nested](../../../references/notes.md)' (Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/nested/note.markdown')) 'Expected leading ./ in nested Markdown to rebase.'
+        Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/nested/../../../references/notes.md')) 'Expected the nested installed link to resolve.'
+        Assert-Equals $sourceBefore (Get-TreeFingerprint (Join-Path $repo 'skills/default/alpha')) 'Expected rebasing not to mutate source bytes or modes.'
     }
     finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-RebasesReadOnlyMarkdownAndPreservesModesOnRepeat {
+    $workdir = New-TestWorkdir
+    $python = Get-PythonForFixture
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        $prepare = @'
+from pathlib import Path
+import os
+import sys
+repo, home = map(Path, sys.argv[1:])
+source = repo / 'skills/default/locked'
+(source / 'nested').mkdir(parents=True)
+(source / 'evals/nested').mkdir(parents=True)
+(source / 'SKILL.md').write_bytes('See [shared](../../../references/notes.md).\r\nKeep unicode: café.\r\n'.encode())
+(source / 'nested/note.md').write_bytes(b'[nested](../../../../references/notes.md)\n')
+(source / 'evals/nested/evals.json').write_bytes(b'excluded eval fixture\n')
+for name in ('README.md', 'LICENSE.txt', 'LICENSE.md'):
+    (source / name).write_bytes(b'excluded fixture\n')
+installed = home / '.agents/skills/locked'
+installed.mkdir(parents=True)
+(installed / 'SKILL.md').write_bytes(b'stale writable copy\n')
+os.chmod(installed / 'SKILL.md', 0o640)
+os.chmod(installed, 0o770)
+for path in (source, *source.rglob('*')):
+    if path.is_file():
+        os.chmod(path, 0o444)
+    elif os.name != 'nt':
+        os.chmod(path, 0o555)
+'@
+        & $python.Path @($python.Arguments) -c $prepare $repo $homeDir
+        Assert-Equals 0 $LASTEXITCODE 'Expected read-only fixture creation to succeed.'
+        $before = Get-TreeFingerprint (Join-Path $repo 'skills/default/locked')
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
+        $verify = @'
+from pathlib import Path
+import os
+import stat
+import sys
+source = Path(sys.argv[1]) / 'skills/default/locked'
+installed = Path(sys.argv[2]) / '.agents/skills/locked'
+for relative, prefix in [('SKILL.md', '../../'), ('nested/note.md', '../../../')]:
+    target = installed / relative
+    expected = (source / relative).read_bytes().replace(b'../../../references/', b'../../references/', 1)
+    assert target.read_bytes() == expected, relative
+    if os.name == 'nt':
+        assert target.stat().st_file_attributes & stat.FILE_ATTRIBUTE_READONLY, relative
+    else:
+        assert stat.S_IMODE(target.stat().st_mode) == 0o444, relative
+    assert (target.parent / f'{prefix}references/notes.md').resolve() == (installed.parent.parent / 'references/notes.md').resolve()
+    assert (target.parent / f'{prefix}references/notes.md').is_file()
+if os.name != 'nt':
+    for path in (installed, installed / 'nested'):
+        assert stat.S_IMODE(path.stat().st_mode) == 0o555, path
+assert sorted(p.relative_to(installed).as_posix() for p in installed.rglob('*')) == ['SKILL.md', 'nested', 'nested/note.md']
+'@
+        & $python.Path @($python.Arguments) -c $verify $repo $homeDir
+        Assert-Equals 0 $LASTEXITCODE 'Expected exact installed bytes, directory/file modes, references, and no temporary artifacts.'
+        $installedBefore = Get-TreeFingerprint (Join-Path $homeDir '.agents/skills/locked')
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
+        Assert-Equals $before (Get-TreeFingerprint (Join-Path $repo 'skills/default/locked')) 'Expected read-only source bytes and directory/file modes unchanged.'
+        Assert-Equals $installedBefore (Get-TreeFingerprint (Join-Path $homeDir '.agents/skills/locked')) 'Expected repeat installs to preserve rebased bytes and modes without temporary artifacts.'
+
+        if ($IsWindows) {
+            Write-Host 'Skipping: POSIX directory/file modes and unreadable000 copy-failure assertions do not prove NTFS ACL behavior.'
+            return
+        }
+
+        $failCopy = @'
+from pathlib import Path
+import os
+import sys
+source = Path(sys.argv[1]) / 'skills/default/locked'
+os.chmod(source, 0o755)
+(source / 'unreadable.txt').write_bytes(b'unreadable source\n')
+os.chmod(source / 'unreadable.txt', 0o000)
+os.chmod(source, 0o555)
+'@
+        & $python.Path @($python.Arguments) -c $failCopy $repo
+        Assert-Equals 0 $LASTEXITCODE 'Expected public copy-failure fixture creation to succeed.'
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 1 $result.ExitCode 'Expected an unreadable source to stop installation.'
+        $verifyModes = @'
+from pathlib import Path
+import stat
+import sys
+root = Path(sys.argv[1])
+for relative, mode in [('.', 0o555), ('nested', 0o555), ('SKILL.md', 0o444), ('nested/note.md', 0o444)]:
+    assert stat.S_IMODE((root / relative).stat().st_mode) == mode, relative
+assert not any(p.name.startswith('.rebase-') for p in root.rglob('*'))
+'@
+        & $python.Path @($python.Arguments) -c $verifyModes (Join-Path $homeDir '.agents/skills/locked')
+        Assert-Equals 0 $LASTEXITCODE 'Expected temporary destination permission changes to be restored after public copy failure.'
+    }
+    finally {
+        # Only regular fixture paths need permission repair for cleanup.
+        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-ActualAddySharedReferencesResolveAfterInstall {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        foreach ($name in @('addy-code-review-and-quality', 'addy-performance-optimization', 'addy-security-and-hardening')) {
+            $destination = Join-Path $repo "skills/default/$name"
+            New-Item -ItemType Directory -Path $destination -Force | Out-Null
+            Copy-Item -LiteralPath (Join-Path $RepoRoot "skills/default/$name/SKILL.md") -Destination (Join-Path $destination 'SKILL.md') -Force
+        }
+        foreach ($name in @('security-checklist.md', 'performance-checklist.md')) {
+            Copy-Item -LiteralPath (Join-Path $RepoRoot "references/$name") -Destination (Join-Path $repo "references/$name") -Force
+        }
+        $before = Get-TreeFingerprint (Join-Path $repo 'skills')
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
+        $python = Get-PythonForFixture
+        $verify = @'
+from pathlib import Path
+import re
+import sys
+repo, home = map(Path, sys.argv[1:])
+count = 0
+for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'addy-security-and-hardening'):
+    source = repo / 'skills/default' / name / 'SKILL.md'
+    installed = home / '.agents/skills' / name / 'SKILL.md'
+    links = re.findall(r'`(\.\./\.\./\.\./references/[^`]+)`', source.read_text())
+    assert links, name
+    assert installed.read_bytes() == source.read_bytes().replace(b'../../../references/', b'../../references/'), name
+    for link in links:
+        source_target = (source.parent / link).resolve()
+        installed_target = (installed.parent / link.removeprefix('../')).resolve()
+        assert source_target.parent == (repo / 'references').resolve()
+        assert installed_target.parent == (home / '.agents/references').resolve()
+        assert source_target.read_bytes() == installed_target.read_bytes()
+        count += 1
+assert count == 8, count
+'@
+        & $python.Path @($python.Arguments) -c $verify $repo $homeDir
+        Assert-Equals 0 $LASTEXITCODE 'Expected all eight actual Addy pointers to resolve in source and flat installed copies.'
+        Assert-Equals $before (Get-TreeFingerprint (Join-Path $repo 'skills')) 'Expected actual Addy skill definitions unchanged in source.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-PrunesWithoutOptionalSharedReferences {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        Remove-Item -LiteralPath (Join-Path $repo 'references') -Recurse -Force
+        Write-FixtureFile (Join-Path $repo 'skills/default/alpha/SKILL.md') @('---', 'name: alpha', '---', 'See ../../../references/unavailable.md.')
+        foreach ($name in @('README.md', 'LICENSE.txt', 'LICENSE.md')) {
+            Write-FixtureFile (Join-Path $repo "skills/default/alpha/$name") @('excluded fixture')
+        }
+        foreach ($pass in @('first', 'repeat')) {
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+            Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
+            Assert-Equals (Read-FileContent (Join-Path $repo 'skills/default/alpha/SKILL.md')) (Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) 'Expected absent shared references to skip rebasing.'
+            foreach ($name in @('evals', 'README.md', 'LICENSE.txt', 'LICENSE.md')) {
+                Assert-True (-not (Test-Path -LiteralPath (Join-Path $homeDir ".agents/skills/alpha/$name"))) 'Expected pruning even without optional shared references.'
+            }
+        }
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-PruningReadOnlyHardLinkPreservesExternalInode {
+    $workdir = New-TestWorkdir
+    $python = Get-PythonForFixture
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $outside = Join-Path $workdir 'external.md'
+        New-FixtureRepo $repo
+        $prepare = @'
+from pathlib import Path
+import os
+import sys
+outside, home = map(Path, sys.argv[1:])
+outside.write_bytes(b'external bytes must remain untouched\n')
+os.chmod(outside, 0o444)
+installed = home / '.agents/skills/alpha/evals/stale.md'
+installed.parent.mkdir(parents=True)
+os.link(outside, installed)
+print(outside.stat().st_ino)
+'@
+        $beforeInode = & $python.Path @($python.Arguments) -c $prepare $outside $homeDir
+        Assert-Equals 0 $LASTEXITCODE 'Expected external hard-link fixture creation to succeed.'
+        $before = Get-TreeFingerprint $outside
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        if ($IsWindows) {
+            Assert-Equals 1 $result.ExitCode 'Expected pruning to refuse a shared Windows ReadOnly attribute.'
+            Assert-True (($result.Stderr -join "`n").Contains('Refusing to change read-only hard-linked file')) 'Expected an actionable hard-link refusal.'
+            Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/evals/stale.md')) 'Expected the shared readonly installed name to remain intact on refusal.'
+        }
+        else {
+            Assert-Equals 0 $result.ExitCode ($result.Stderr -join "`n")
+            Assert-True (-not (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/evals'))) 'Expected the stale installed evals name to be pruned.'
+        }
+        Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected external hard-linked bytes and mode unchanged.'
+        $verify = @'
+from pathlib import Path
+import os
+import stat
+import sys
+outside = Path(sys.argv[1])
+assert outside.read_bytes() == b'external bytes must remain untouched\n'
+assert outside.stat().st_ino == int(sys.argv[2])
+if os.name == 'nt':
+    assert outside.stat().st_file_attributes & stat.FILE_ATTRIBUTE_READONLY
+    assert outside.stat().st_nlink == 2
+else:
+    assert stat.S_IMODE(outside.stat().st_mode) == 0o444
+    assert outside.stat().st_nlink == 1
+'@
+        & $python.Path @($python.Arguments) -c $verify $outside $beforeInode
+        Assert-Equals 0 $LASTEXITCODE 'Expected external inode identity, original bytes, mode, and link count after pruning/refusal.'
+    }
+    finally {
+        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-ReadOnlyHardLinkCopyRefusesExternalMutation {
+    $workdir = New-TestWorkdir
+    $python = Get-PythonForFixture
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $outside = Join-Path $workdir 'external.md'
+        New-FixtureRepo $repo
+        $prepare = @'
+from pathlib import Path
+import os
+import sys
+outside, home = map(Path, sys.argv[1:])
+outside.write_bytes(b'external bytes must remain untouched; see ../../../references/notes.md.\n')
+os.chmod(outside, 0o444)
+installed = home / '.agents/skills/alpha/SKILL.md'
+installed.parent.mkdir(parents=True)
+os.link(outside, installed)
+'@
+        & $python.Path @($python.Arguments) -c $prepare $outside $homeDir
+        Assert-Equals 0 $LASTEXITCODE 'Expected external hard-link fixture creation to succeed.'
+        $before = Get-TreeFingerprint $outside
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
+        Assert-Equals 1 $result.ExitCode 'Expected a read-only hard-linked destination to stop copying before external mutation.'
+        Assert-True (($result.Stderr -join "`n").Contains('Refusing to change read-only hard-linked file')) 'Expected an actionable hard-link refusal.'
+        Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected external hard-linked bytes and mode unchanged after copy refusal.'
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/rebase-skill-references.py') `
+            --source-dir (Join-Path $repo 'skills/default/alpha') `
+            --destination-dir (Join-Path $homeDir '.agents/skills/alpha') `
+            --references-source (Join-Path $repo 'references') `
+            --references-destination (Join-Path $homeDir '.agents/references') 1>(Join-Path $workdir 'rebase.out') 2>(Join-Path $workdir 'rebase.err')
+        Assert-Equals 1 $LASTEXITCODE 'Expected direct rebasing to refuse a read-only shared inode before permission changes.'
+        Assert-True ((Read-FileContent (Join-Path $workdir 'rebase.err')).Contains('Refusing to change read-only hard-linked file')) 'Expected the direct rebasing refusal to name the unsafe inode.'
+        Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected direct rebasing refusal to leave external bytes and mode unchanged.'
+        $verify = @'
+from pathlib import Path
+import sys
+outside, installed = map(Path, sys.argv[1:])
+assert outside.stat().st_ino == installed.stat().st_ino
+assert outside.stat().st_nlink == 2
+'@
+        & $python.Path @($python.Arguments) -c $verify $outside (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')
+        Assert-Equals 0 $LASTEXITCODE 'Expected both names of the external inode to remain intact after refusal.'
+    }
+    finally {
+        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
         Remove-Workdir $workdir
     }
 }
@@ -1751,6 +2043,11 @@ Test-ProviderMalformedJsonStopsBeforeMutation
 Test-StaleGeneratedHooksStopBeforeDestinationMutation
 Test-GeneratorFailureStopsBeforeDestinationMutation
 Test-RebasesSharedReferenceLinksForFlatInstalledSkills
+Test-RebasesReadOnlyMarkdownAndPreservesModesOnRepeat
+Test-ActualAddySharedReferencesResolveAfterInstall
+Test-PrunesWithoutOptionalSharedReferences
+Test-PruningReadOnlyHardLinkPreservesExternalInode
+Test-ReadOnlyHardLinkCopyRefusesExternalMutation
 Test-RootLinkedSkillIsPreservedWithoutExternalMutation
 Test-ExcludesAndPrunesSkillEvals
 Test-SymlinkHandling

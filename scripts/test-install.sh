@@ -969,23 +969,34 @@ test_excludes_and_prunes_skill_evals() {
   fi
 }
 
-test_rebases_shared_reference_links_for_flat_installed_skills() {
+cleanup_reference_fixture() {
+  if [[ -n "${workdir:-}" ]]; then
+    chmod -R u+rwX "$workdir"
+    rm -rf -- "$workdir"
+  fi
+}
+
+test_rebases_shared_reference_links_for_flat_installed_skills() (
   local workdir repo home installed_skill
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_reference_fixture EXIT
   repo="$workdir/repo"
   home="$workdir/home"
 
   create_fixture_repo "$repo"
-  printf '%s\n' '---' 'name: alpha' '---' 'See `../../../references/shared.md` and [the shared reference](../../../references/shared.md).' > "$repo/skills/default/alpha/SKILL.md"
+  printf '%s\n' '---' 'name: alpha' '---' 'See `../../../references/shared.md`, [single](./../../../references/shared.md), and [repeated](././../../../references/shared.md).' 'Keep ~/.agents/skills/alpha and example/../../../references/shared.md unchanged.' > "$repo/skills/default/alpha/SKILL.md"
+  mkdir -p "$repo/skills/default/alpha/nested"
+  printf '%s\n' '[nested](./../../../../references/shared.md)' > "$repo/skills/default/alpha/nested/note.markdown"
   printf '%s\n' 'Shared reference.' > "$repo/references/shared.md"
+  local source_before
+  source_before="$(tree_fingerprint "$repo/skills/default/alpha")"
 
-  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
 
   installed_skill="$(<"$home/.agents/skills/alpha/SKILL.md")"
   assert_equals \
-    $'---\nname: alpha\n---\nSee `../../references/shared.md` and [the shared reference](../../references/shared.md).' \
+    $'---\nname: alpha\n---\nSee `../../references/shared.md`, [single](../../references/shared.md), and [repeated](../../references/shared.md).\nKeep ~/.agents/skills/alpha and example/../../../references/shared.md unchanged.' \
     "$installed_skill" \
     "Expected source links to shared references to be rebased for the flat installed skill path."
 
@@ -993,7 +1004,198 @@ test_rebases_shared_reference_links_for_flat_installed_skills() {
     echo "Expected the installed shared reference link to resolve inside ~/.agents/references." >&2
     exit 1
   fi
-}
+  assert_equals '[nested](../../../references/shared.md)' "$(<"$home/.agents/skills/alpha/nested/note.markdown")" 'Expected leading ./ in nested Markdown to rebase.'
+  test -f "$home/.agents/skills/alpha/nested/../../../references/shared.md"
+  assert_equals "$source_before" "$(tree_fingerprint "$repo/skills/default/alpha")" 'Expected rebasing not to mutate source bytes or modes.'
+)
+
+test_rebases_read_only_markdown_and_preserves_modes_on_repeat() (
+  local workdir repo home before installed_before
+  workdir="$(setup_test_workdir)"
+  trap cleanup_reference_fixture EXIT
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  mkdir -p "$repo/skills/default/locked/nested" "$repo/skills/default/locked/evals/nested" "$home/.agents/skills/locked"
+  printf '%s\n' 'Reference notes.' > "$repo/references/notes.md"
+  printf 'See [shared](../../../references/notes.md).\r\nKeep unicode: café.\r\n' > "$repo/skills/default/locked/SKILL.md"
+  printf '%s\n' '[nested](../../../../references/notes.md)' > "$repo/skills/default/locked/nested/note.md"
+  printf '%s\n' 'excluded eval fixture' > "$repo/skills/default/locked/evals/nested/evals.json"
+  printf '%s\n' 'excluded readme' > "$repo/skills/default/locked/README.md"
+  printf '%s\n' 'excluded license' > "$repo/skills/default/locked/LICENSE.txt"
+  printf '%s\n' 'excluded license' > "$repo/skills/default/locked/LICENSE.md"
+  printf '%s\n' 'stale writable copy' > "$home/.agents/skills/locked/SKILL.md"
+  chmod 640 "$home/.agents/skills/locked/SKILL.md"
+  chmod 770 "$home/.agents/skills/locked"
+  chmod -R a-w "$repo/skills/default/locked"
+  before="$(tree_fingerprint "$repo/skills/default/locked")"
+  export HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex"
+  bash "$repo/scripts/install.sh" >/dev/null
+  python3 - "$repo" "$home" <<'PY'
+from pathlib import Path
+import stat
+import sys
+source = Path(sys.argv[1]) / 'skills/default/locked'
+installed = Path(sys.argv[2]) / '.agents/skills/locked'
+for relative, prefix in [('SKILL.md', '../../'), ('nested/note.md', '../../../')]:
+    target = installed / relative
+    expected = (source / relative).read_bytes().replace(b'../../../references/', b'../../references/', 1)
+    assert target.read_bytes() == expected, relative
+    assert stat.S_IMODE(target.stat().st_mode) == 0o444, relative
+    assert (target.parent / f'{prefix}references/notes.md').resolve() == (installed.parent.parent / 'references/notes.md').resolve()
+    assert (target.parent / f'{prefix}references/notes.md').is_file()
+for path in (installed, installed / 'nested'):
+    assert stat.S_IMODE(path.stat().st_mode) == 0o555, path
+assert sorted(p.relative_to(installed).as_posix() for p in installed.rglob('*')) == ['SKILL.md', 'nested', 'nested/note.md']
+PY
+  installed_before="$(tree_fingerprint "$home/.agents/skills/locked")"
+  bash "$repo/scripts/install.sh" >/dev/null
+  assert_equals "$before" "$(tree_fingerprint "$repo/skills/default/locked")" 'Expected read-only source bytes and directory/file modes to remain unchanged.'
+  assert_equals "$installed_before" "$(tree_fingerprint "$home/.agents/skills/locked")" 'Expected repeat installs to preserve rebased bytes and modes without temporary artifacts.'
+
+  # A public copy failure must undo temporary permission elevation.
+  chmod u+w "$repo/skills/default/locked"
+  printf '%s\n' 'unreadable source' > "$repo/skills/default/locked/unreadable.txt"
+  chmod 000 "$repo/skills/default/locked/unreadable.txt"
+  chmod 555 "$repo/skills/default/locked"
+  if bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"; then
+    echo 'Expected the unreadable source to stop installation.' >&2
+    exit 1
+  fi
+  python3 - "$home/.agents/skills/locked" <<'PY'
+from pathlib import Path
+import stat
+import sys
+root = Path(sys.argv[1])
+for relative, mode in [('.', 0o555), ('nested', 0o555), ('SKILL.md', 0o444), ('nested/note.md', 0o444)]:
+    assert stat.S_IMODE((root / relative).stat().st_mode) == mode, relative
+assert not any(p.name.startswith('.rebase-') for p in root.rglob('*'))
+PY
+)
+
+test_actual_addy_shared_references_resolve_after_install() (
+  local workdir repo home before name
+  workdir="$(setup_test_workdir)"
+  trap cleanup_reference_fixture EXIT
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  for name in addy-code-review-and-quality addy-performance-optimization addy-security-and-hardening; do
+    mkdir -p "$repo/skills/default/$name"
+    cp -p "$REPO_ROOT/skills/default/$name/SKILL.md" "$repo/skills/default/$name/SKILL.md"
+  done
+  cp -p "$REPO_ROOT/references/security-checklist.md" "$REPO_ROOT/references/performance-checklist.md" "$repo/references/"
+  before="$(tree_fingerprint "$repo/skills")"
+  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
+  python3 - "$repo" "$home" <<'PY'
+from pathlib import Path
+import re
+import sys
+repo, home = map(Path, sys.argv[1:])
+count = 0
+for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'addy-security-and-hardening'):
+    source = repo / 'skills/default' / name / 'SKILL.md'
+    installed = home / '.agents/skills' / name / 'SKILL.md'
+    links = re.findall(r'`(\.\./\.\./\.\./references/[^`]+)`', source.read_text())
+    assert links, name
+    assert installed.read_bytes() == source.read_bytes().replace(b'../../../references/', b'../../references/'), name
+    for link in links:
+        source_target = (source.parent / link).resolve()
+        installed_target = (installed.parent / link.removeprefix('../')).resolve()
+        assert source_target.parent == (repo / 'references').resolve()
+        assert installed_target.parent == (home / '.agents/references').resolve()
+        assert source_target.read_bytes() == installed_target.read_bytes()
+        count += 1
+assert count == 8, count
+PY
+  assert_equals "$before" "$(tree_fingerprint "$repo/skills")" 'Expected actual Addy skill definitions to remain unchanged in source.'
+)
+
+test_prunes_without_optional_shared_references() (
+  local workdir repo home pass name
+  workdir="$(setup_test_workdir)"
+  trap cleanup_reference_fixture EXIT
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+  rm -rf -- "$repo/references"
+  printf '%s\n' '---' 'name: alpha' '---' 'See ../../../references/unavailable.md.' > "$repo/skills/default/alpha/SKILL.md"
+  printf '%s\n' 'excluded readme' > "$repo/skills/default/alpha/README.md"
+  printf '%s\n' 'excluded license' > "$repo/skills/default/alpha/LICENSE.txt"
+  printf '%s\n' 'excluded license' > "$repo/skills/default/alpha/LICENSE.md"
+  export HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex"
+  for pass in first repeat; do
+    bash "$repo/scripts/install.sh" >/dev/null
+    assert_equals "$(<"$repo/skills/default/alpha/SKILL.md")" "$(<"$home/.agents/skills/alpha/SKILL.md")" 'Expected absent shared references to skip rebasing.'
+    for name in evals README.md LICENSE.txt LICENSE.md; do
+      test ! -e "$home/.agents/skills/alpha/$name"
+    done
+  done
+)
+
+test_pruning_read_only_hard_link_preserves_external_inode() (
+  local workdir repo home outside
+  workdir="$(setup_test_workdir)"
+  trap cleanup_reference_fixture EXIT
+  repo="$workdir/repo"
+  home="$workdir/home"
+  outside="$workdir/external.md"
+  create_fixture_repo "$repo"
+  mkdir -p "$home/.agents/skills/alpha/evals"
+  printf '%s\n' 'external bytes must remain untouched' > "$outside"
+  chmod 444 "$outside"
+  ln "$outside" "$home/.agents/skills/alpha/evals/stale.md"
+  local before_inode
+  before_inode="$(python3 -c 'import os,sys; print(os.stat(sys.argv[1]).st_ino)' "$outside")"
+  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
+  python3 - "$outside" "$before_inode" "$home" <<'PY'
+from pathlib import Path
+import stat
+import sys
+outside = Path(sys.argv[1])
+assert outside.read_bytes() == b'external bytes must remain untouched\n'
+assert outside.stat().st_ino == int(sys.argv[2])
+assert stat.S_IMODE(outside.stat().st_mode) == 0o444
+assert outside.stat().st_nlink == 1
+assert not (Path(sys.argv[3]) / '.agents/skills/alpha/evals').exists()
+PY
+)
+
+test_read_only_hard_link_copy_refuses_external_mutation() (
+  local workdir repo home outside before status
+  workdir="$(setup_test_workdir)"
+  trap cleanup_reference_fixture EXIT
+  repo="$workdir/repo"
+  home="$workdir/home"
+  outside="$workdir/external.md"
+  create_fixture_repo "$repo"
+  mkdir -p "$home/.agents/skills/alpha"
+  printf '%s\n' 'external bytes must remain untouched; see ../../../references/notes.md.' > "$outside"
+  chmod 444 "$outside"
+  ln "$outside" "$home/.agents/skills/alpha/SKILL.md"
+  before="$(tree_fingerprint "$outside")"
+  status=0
+  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err" || status=$?
+  assert_equals 1 "$status" 'Expected a read-only hard-linked destination to stop copying before external mutation.'
+  assert_file_contains "$workdir/err" 'Refusing to change read-only hard-linked file' 'Expected an actionable hard-link refusal.'
+  assert_equals "$before" "$(tree_fingerprint "$outside")" 'Expected external hard-linked bytes and mode unchanged after copy refusal.'
+  status=0
+  python3 -B "$repo/scripts/rebase-skill-references.py" \
+    --source-dir "$repo/skills/default/alpha" \
+    --destination-dir "$home/.agents/skills/alpha" \
+    --references-source "$repo/references" \
+    --references-destination "$home/.agents/references" >"$workdir/out" 2>"$workdir/err" || status=$?
+  assert_equals 1 "$status" 'Expected direct rebasing to refuse a read-only shared inode before permission changes.'
+  assert_file_contains "$workdir/err" 'Refusing to change read-only hard-linked file' 'Expected the direct rebasing refusal to name the unsafe inode.'
+  assert_equals "$before" "$(tree_fingerprint "$outside")" 'Expected direct rebasing refusal to leave external bytes and mode unchanged.'
+  python3 - "$outside" "$home/.agents/skills/alpha/SKILL.md" <<'PY'
+from pathlib import Path
+import sys
+outside, installed = map(Path, sys.argv[1:])
+assert installed.stat().st_ino == outside.stat().st_ino
+assert outside.stat().st_nlink == 2
+PY
+)
 
 test_root_linked_skill_is_preserved_without_external_mutation() {
   local workdir repo home external_skill nested_target before after nested_before installed_skill
@@ -1381,6 +1583,11 @@ main() {
   test_refuses_symlinked_codex_hook_destination
   test_merger_refuses_symlinked_codex_config_destinations
   test_rebases_shared_reference_links_for_flat_installed_skills
+  test_rebases_read_only_markdown_and_preserves_modes_on_repeat
+  test_actual_addy_shared_references_resolve_after_install
+  test_prunes_without_optional_shared_references
+  test_pruning_read_only_hard_link_preserves_external_inode
+  test_read_only_hard_link_copy_refuses_external_mutation
   test_root_linked_skill_is_preserved_without_external_mutation
   test_excludes_and_prunes_skill_evals
   test_copies_full_gemini_tree

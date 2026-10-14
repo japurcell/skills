@@ -100,21 +100,13 @@ copy_skills() {
     if [[ "$name" == *-workspace || "$name" == "archive" ]]; then
       continue
     fi
-    cp -Rp "$entry" "$SKILLS_DEST/"
-    if [[ -L "${SKILLS_DEST}/${name}" ]]; then
-      continue
-    fi
-    rm -rf "${SKILLS_DEST}/${name}/evals"
-    rm -rf "${SKILLS_DEST}/${name}/README.md"
-    rm -rf "${SKILLS_DEST}/${name}/LICENSE.txt"
-    rm -rf "${SKILLS_DEST}/${name}/LICENSE.md"
-    if [[ -d "$REFERENCES_SRC" && -d "$entry" ]]; then
-      python3 -B "$REBASE_SKILL_REFERENCES" \
-        --source-dir "$entry" \
-        --destination-dir "${SKILLS_DEST}/${name}" \
-        --references-source "$REFERENCES_SRC" \
-        --references-destination "$REFERENCES_DEST"
-    fi
+    python3 -B "$REBASE_SKILL_REFERENCES" \
+      --source-dir "$entry" \
+      --destination-dir "${SKILLS_DEST}/${name}" \
+      --references-source "$REFERENCES_SRC" \
+      --references-destination "$REFERENCES_DEST" \
+      --prune \
+      --copy-command cp -Rp "$entry" "$SKILLS_DEST/"
   done < <(find "$SKILLS_SRC/$category" -mindepth 1 -maxdepth 1 -print0)
 }
 

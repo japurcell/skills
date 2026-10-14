@@ -185,8 +185,31 @@ function Copy-FileWithMode {
         [string]$Destination
     )
 
-    Copy-Item -LiteralPath $Source -Destination $Destination -Force
-    Set-FileModeFrom -Source $Source -Destination $Destination
+    $originalMode = $null
+    $copied = $false
+    try {
+        $destinationEntry = $null
+        if (Test-Path -LiteralPath $Destination) {
+            $destinationEntry = Get-Item -Force -LiteralPath $Destination
+            if ([string]$destinationEntry.LinkType -ceq 'HardLink' -and $destinationEntry.IsReadOnly) {
+                Fail "Refusing to change read-only hard-linked file: $Destination"
+            }
+        }
+        if (-not $IsWindows -and $null -ne $destinationEntry -and -not $destinationEntry.LinkType) {
+            $originalMode = [System.IO.File]::GetUnixFileMode($Destination)
+            [System.IO.File]::SetUnixFileMode($Destination, ($originalMode -bor [System.IO.UnixFileMode]::UserWrite))
+        }
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+        $copied = $true
+    }
+    finally {
+        if ($copied) {
+            Set-FileModeFrom -Source $Source -Destination $Destination
+        }
+        elseif ($null -ne $originalMode) {
+            [System.IO.File]::SetUnixFileMode($Destination, $originalMode)
+        }
+    }
 }
 
 # Copies one source entry into $DestinationDir, mirroring `cp -Rp`: symlinks and junctions
@@ -218,12 +241,28 @@ function Copy-Entry {
     }
     if ($Entry.PSIsContainer) {
         $destPath = Join-Path $DestinationDir $Entry.Name
-        New-Item -ItemType Directory -Path $destPath -Force | Out-Null
-        Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath
+        $originalMode = $null
+        $copied = $false
+        try {
+            New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+            if (-not $IsWindows -and -not (Get-Item -Force -LiteralPath $destPath).LinkType) {
+                $originalMode = [System.IO.File]::GetUnixFileMode($destPath)
+                [System.IO.File]::SetUnixFileMode($destPath, ($originalMode -bor [System.IO.UnixFileMode]::UserWrite))
+            }
+            Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath
+            $copied = $true
+        }
+        finally {
+            if ($copied) {
+                Set-FileModeFrom -Source $Entry.FullName -Destination $destPath
+            }
+            elseif ($null -ne $originalMode) {
+                [System.IO.File]::SetUnixFileMode($destPath, $originalMode)
+            }
+        }
         return
     }
-    Copy-Item -LiteralPath $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -Force
-    Set-FileModeFrom -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
+    Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
 }
 
 function Copy-DirectoryContents {
@@ -235,14 +274,6 @@ function Copy-DirectoryContents {
     # -Force so hidden entries (e.g. .gemini/.hidden-note) are copied, mirroring `cp -Rp src/. dest/`.
     Get-ChildItem -Force -Path $Source | ForEach-Object {
         Copy-Entry -Entry $_ -DestinationDir $Destination
-    }
-}
-
-function Remove-IfExists {
-    param([string]$Path)
-
-    if (Test-Path -LiteralPath $Path) {
-        Remove-Item -LiteralPath $Path -Recurse -Force
     }
 }
 
@@ -329,26 +360,20 @@ function Copy-Skills {
 
         Copy-Entry -Entry $entry -DestinationDir $SkillsDest
 
-        # Pruning and mode sync must not resolve a path through a preserved link:
-        # Remove-IfExists would otherwise delete files inside the link target.
+        # Pruning and mode sync must not resolve a preserved link's target.
         if ([string]$entry.LinkType) {
             continue
         }
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/evals")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/README.md")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.txt")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.md")
         $installedSkill = Join-Path $SkillsDest $entry.Name
         Set-CopiedFileModes -Source $entry.FullName -Destination $installedSkill
-        if (Test-Path -LiteralPath $ReferencesSrc -PathType Container) {
-            & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc `
-                --source-dir $entry.FullName `
-                --destination-dir $installedSkill `
-                --references-source $ReferencesSrc `
-                --references-destination $ReferencesDest | Write-InstallStatus
-            if ($LASTEXITCODE -ne 0) {
-                Fail "Shared reference rebasing exited with code $LASTEXITCODE for skill $($entry.Name)."
-            }
+        & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc `
+            --source-dir $entry.FullName `
+            --destination-dir $installedSkill `
+            --references-source $ReferencesSrc `
+            --references-destination $ReferencesDest `
+            --prune | Write-InstallStatus
+        if ($LASTEXITCODE -ne 0) {
+            Fail "Shared reference rebasing exited with code $LASTEXITCODE for skill $($entry.Name)."
         }
     }
 }

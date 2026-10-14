@@ -4,14 +4,18 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
+import subprocess
 
 
 MARKDOWN_SUFFIXES = {".md", ".markdown"}
 REFERENCE_PREFIX_BOUNDARY = r"(?<![A-Za-z0-9._/-])"
+SKILL_EXCLUSIONS = ("evals", "README.md", "LICENSE.txt", "LICENSE.md")
 
 
 def portable_relative_path(target: Path, start: Path) -> str:
@@ -61,6 +65,116 @@ def regular_markdown_files(root: Path):
                 continue
 
 
+def copy_with_preserved_modes(source_dir: Path, destination_dir: Path, command: list[str]) -> int:
+    """Allow cp -p to refresh only corresponding read-only destination entries."""
+    changed_modes: list[tuple[Path, Path, int]] = []
+    succeeded = False
+    try:
+        if not is_link_or_junction(source_dir) and not is_link_or_junction(destination_dir):
+            for current_dir, child_dirs, filenames in os.walk(source_dir, followlinks=False):
+                source_parent = Path(current_dir)
+                child_dirs[:] = [
+                    name for name in child_dirs if not is_link_or_junction(source_parent / name)
+                ]
+                for source in (source_parent, *(source_parent / name for name in filenames)):
+                    relative = source.relative_to(source_dir)
+                    destination = destination_dir / relative
+                    if is_link_or_junction(source) or has_link_component(destination_dir, relative):
+                        continue
+                    if is_link_or_junction(destination):
+                        continue
+                    try:
+                        source_stat = source.lstat()
+                        destination_stat = destination.lstat()
+                    except FileNotFoundError:
+                        continue
+                    if stat.S_IFMT(source_stat.st_mode) != stat.S_IFMT(destination_stat.st_mode):
+                        continue
+                    if not (
+                        stat.S_ISREG(destination_stat.st_mode)
+                        or stat.S_ISDIR(destination_stat.st_mode)
+                    ):
+                        continue
+                    mode = stat.S_IMODE(destination_stat.st_mode)
+                    if not mode & stat.S_IWUSR:
+                        if stat.S_ISREG(destination_stat.st_mode) and destination_stat.st_nlink > 1:
+                            raise PermissionError(f"Refusing to change read-only hard-linked file: {destination}")
+                        destination.chmod(mode | stat.S_IWUSR)
+                        changed_modes.append((source, destination, mode))
+        result = subprocess.run(command, check=False)
+        succeeded = result.returncode == 0
+        return result.returncode
+    finally:
+        for source, destination, original_mode in reversed(changed_modes):
+            # On success cp -p owns the new source mode. On failure undo every
+            # temporary elevation, including when the subprocess cannot start.
+            if not is_link_or_junction(destination):
+                mode = stat.S_IMODE(source.stat().st_mode) if succeeded else original_mode
+                destination.chmod(mode)
+
+
+@contextmanager
+def temporary_write_access(root: Path, *, include_files: bool = False):
+    """Restore modes on surviving installed entries without following links."""
+    changed_modes: list[tuple[Path, int]] = []
+
+    def make_writable(path: Path) -> None:
+        if is_link_or_junction(path):
+            return
+        details = path.lstat()
+        if not (
+            stat.S_ISDIR(details.st_mode)
+            or (include_files and stat.S_ISREG(details.st_mode))
+        ):
+            return
+        mode = stat.S_IMODE(details.st_mode)
+        if not mode & stat.S_IWUSR:
+            if stat.S_ISREG(details.st_mode) and details.st_nlink > 1:
+                raise PermissionError(f"Refusing to change read-only hard-linked file: {path}")
+            path.chmod(mode | stat.S_IWUSR)
+            changed_modes.append((path, mode))
+
+    try:
+        if root.exists() and not is_link_or_junction(root):
+            make_writable(root)
+            for current_dir, child_dirs, filenames in os.walk(root, followlinks=False):
+                directory = Path(current_dir)
+                child_dirs[:] = [
+                    name for name in child_dirs if not is_link_or_junction(directory / name)
+                ]
+                for name in child_dirs:
+                    make_writable(directory / name)
+                if include_files:
+                    for name in filenames:
+                        make_writable(directory / name)
+        yield
+    finally:
+        for path, mode in reversed(changed_modes):
+            if path.exists() and not is_link_or_junction(path):
+                path.chmod(mode)
+
+
+def prune_skill_exclusions(destination_dir: Path) -> None:
+    for name in SKILL_EXCLUSIONS:
+        path = destination_dir / name
+        if is_link_or_junction(path):
+            # lstat retains the directory type for Windows junctions, including
+            # Python versions that have no os.path.isjunction().
+            if stat.S_ISDIR(path.lstat().st_mode):
+                path.rmdir()
+            else:
+                path.unlink()
+        elif path.exists():
+            # POSIX unlink needs writable parents, not writable files. Windows
+            # also needs a clear ReadOnly attribute; refuse to change a shared
+            # inode's attribute rather than mutating an external hard link.
+            with temporary_write_access(path, include_files=os.name == "nt"):
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+
+
 def rebase_skill_references(
     source_dir: Path,
     destination_dir: Path,
@@ -70,6 +184,8 @@ def rebase_skill_references(
     # A category entry may itself be a symlink or Windows junction. Check it
     # before normalizing paths so we never rewrite through its external target.
     if is_link_or_junction(source_dir) or is_link_or_junction(destination_dir):
+        return
+    if not references_source.is_dir():
         return
 
     source_dir = Path(os.path.abspath(source_dir))
@@ -102,11 +218,23 @@ def rebase_skill_references(
             continue
 
         prefix_pattern = re.compile(
-            REFERENCE_PREFIX_BOUNDARY + re.escape(source_prefix) + r"/"
+            REFERENCE_PREFIX_BOUNDARY + r"(?:\./)*" + re.escape(source_prefix) + r"/"
         )
         rebased = prefix_pattern.sub(lambda match: f"{destination_prefix}/", text)
         if rebased != text:
-            destination_file.write_bytes(rebased.encode("utf-8"))
+            # cp -p preserves read-only files and directories. In-place writes
+            # need no writable parent or temporary file; restore the file mode
+            # even if writing fails, and never change the source's permissions.
+            details = destination_file.stat()
+            original_mode = stat.S_IMODE(details.st_mode)
+            if not original_mode & stat.S_IWUSR and details.st_nlink > 1:
+                raise PermissionError(f"Refusing to change read-only hard-linked file: {destination_file}")
+            try:
+                if not original_mode & stat.S_IWUSR:
+                    destination_file.chmod(original_mode | stat.S_IWUSR)
+                destination_file.write_bytes(rebased.encode("utf-8"))
+            finally:
+                destination_file.chmod(original_mode)
 
 
 def main() -> int:
@@ -115,14 +243,38 @@ def main() -> int:
     parser.add_argument("--destination-dir", required=True, type=Path)
     parser.add_argument("--references-source", required=True, type=Path)
     parser.add_argument("--references-destination", required=True, type=Path)
+    parser.add_argument(
+        "--prune", action="store_true",
+        help="Remove installed skill exclusions before rebasing.",
+    )
+    parser.add_argument(
+        "--copy-command", nargs=argparse.REMAINDER,
+        help="Run the installer copy command with scoped, temporary destination write access.",
+    )
     args = parser.parse_args()
 
-    rebase_skill_references(
-        args.source_dir,
-        args.destination_dir,
-        args.references_source,
-        args.references_destination,
-    )
+    if args.copy_command:
+        status = copy_with_preserved_modes(args.source_dir, args.destination_dir, args.copy_command)
+        if status:
+            return status
+    if (
+        args.prune
+        and not is_link_or_junction(args.source_dir)
+        and not is_link_or_junction(args.destination_dir)
+    ):
+        # Source modes may make the copied root and evals directories read-only.
+        # Keep pruning inside this scope, then restore every surviving directory.
+        with temporary_write_access(args.destination_dir):
+            prune_skill_exclusions(args.destination_dir)
+            rebase_skill_references(
+                args.source_dir, args.destination_dir,
+                args.references_source, args.references_destination,
+            )
+    else:
+        rebase_skill_references(
+            args.source_dir, args.destination_dir,
+            args.references_source, args.references_destination,
+        )
     return 0
 
 
