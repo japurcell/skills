@@ -25,7 +25,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-3] T5b: Integrated deny-only recovery as `bec69068`; recovery10, diagnostics8, generator26, transport9, banners14 and provider scanner checks pass. [Evidence](T5b-evidence.md).
 - [ ] [milestone-3] T6: Bound diagnostic/audit records and preserve findings and audit outcomes under truncation/failure.
 - [ ] [milestone-3] I3: Prove large-file recovery, missing/audit failures, hostile metadata, and independent Guardian enforcement together.
-- [ ] [milestone-4] V0: Prepare reproducible matched warm/cold resource verification and register new maintained suites before final review.
+- [x] (2026-10-14) [milestone-4] V0: Integrated verification adapter and registry as `119fd7d1`; registry14, runner2, adapter8, and explicit baseline decision/logging probes pass. [Evidence](V0-evidence.md).
 - [ ] [milestone-4] R1: Review all changes against standards and requested behavior, including security invariants; repair findings.
 - [ ] [milestone-4] V1: Complete generated freshness, affected suites, resource/performance gates, and isolated installed-delivery checks.
 - [ ] [milestone-4] K1: Complete one coordinated knowledge-maintenance pass, reconcile documentation, commit final evidence, and clean integrated worktrees.
@@ -35,6 +35,8 @@ Implement the complete hardening proposal, including streaming acquisition and m
 The investigation reproduced the exact scanner error: one 2,030,848-byte file exceeds 1,048,576; nine smaller files totaling the same bytes pass. The scanner ignores requested tool arguments when selecting pending snapshots. A tracked large file with a tiny edit fails before diff inspection. All three providers distinguish fake-secret findings from incomplete scans.
 
 Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but denies the same request with `max_output_tokens: 1000`. Unknown optional fields force fallback rather than field-by-field validation. Current supported raw Copilot and Codex command-object patches pass. An incomplete JSON prefix kept Copilot Guardian alive for 10,507 ms beyond its configured ten-second host timeout. Git status can execute configured fsmonitor code, so command names alone cannot define recovery safety.
+
+T6 public probes reproduced a 140,305-byte scan record replacing known findings with incomplete status and credential-shaped labels leaking through reports. T6 also found Guardian ignored `audit_log_event(False)`. Reporting repairs preserve the security result separately from audit failure; final integrated acceptance remains pending until I3.
 
 ## Decision Log
 
@@ -120,7 +122,7 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: T6 bounded reporting runs in the hook-bounded-reports worktree; V0 independently prepares release verification in hook-release-preparation. Integrate each clean result serially, then run I3 and final biaxis review. I2 public streaming and complete-process resource checks pass on integrated `e0e8418e`; see `I2-evidence.md`. T4b's conflict-free rebase changed only coordinator plan/audit documents; frozen runtime evidence remains applicable. Its clean worktree was archived and private branch removed. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: T6 bounded reporting runs in the hook-bounded-reports worktree; V0 verification preparation is integrated as `119fd7d1` and its clean worktree archived. Integrate T6 after its final checks, then run I3 and final biaxis review. I2 public streaming and complete-process resource checks pass on integrated `e0e8418e`; see `I2-evidence.md`. T4b's conflict-free rebase changed only coordinator plan/audit documents; frozen runtime evidence remains applicable. Its clean worktree was archived and private branch removed. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 
