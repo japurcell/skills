@@ -162,11 +162,11 @@ dispatches:
     dispatched_at: '2026-10-14 18:54 UTC'
     resumed_at: '2026-10-14 21:19 UTC'
     accepted_candidate: 81fe28bb
-    status: preparing_final_T11_provenance_and_scoped_evidence_reuse
+    status: T11_final_provenance_verified_ready_for_full_timing
     output_verified: true
     checkpoint_commit: 25ec70bc1ee4595102f46d847748ab20ab8e40ea
     evidence: docs/hook-resilience/V1-T10-release-evidence.md
-    timing_gate: D3 and reviewed T11 complete; wait for final verifier readiness and explicit quiet confirmation
+    timing_gate: reviewed T11 and final provenance ready; all other probes finished; explicit quiet confirmation follows
     routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
