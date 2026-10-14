@@ -1,4 +1,36 @@
 dispatches:
+  - subtask_id: R1-repair-review
+    agents: [/root/standards_review, /root/spec_review]
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:22 UTC'
+    snapshot: 0ecd490d07c34519e86f10719ef778cebff73fae
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: T9
+    agent: /root/observability_fixtures_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:17 UTC'
+    status: running
+    output_verified: false
+    routing_compliant: true
+  - subtask_id: T7-integration
+    agent: /root/trusted_launch_merger
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:15 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 881d400c01e97bc7c16096a09a094266dc04233d
+    routing_compliant: true
   - subtask_id: T8
     agent: /root/merge_contract_impl
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
@@ -6,8 +38,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 19:08 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    output_verified: true
+    integrated_commit: 742c3250a1809be28ee0cd5574945482387f2e06
     routing_compliant: true
   - subtask_id: R1-standards-T6-recheck
     agent: /root/standards_review
@@ -27,8 +60,9 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 19:01 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    output_verified: true
+    integrated_commit: 3b444894a833a8977d02d927f39fa6cbb0e10b8a
     routing_compliant: true
   - subtask_id: T6-repair
     agent: /root/bounded_reports_impl
@@ -49,8 +83,10 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 18:54 UTC'
-    status: running
-    output_verified: false
+    status: phase1_checkpoint_waiting_for_repairs
+    output_verified: true
+    checkpoint_commit: 0ecd490d07c34519e86f10719ef778cebff73fae
+    evidence: docs/hook-resilience/V1-phase1-evidence.md
     timing_gate: waiting for R1 completion and coordinator quiet-system confirmation
     routing_compliant: true
   - subtask_id: R1-standards

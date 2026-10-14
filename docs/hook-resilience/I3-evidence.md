@@ -35,3 +35,31 @@ generator26 evidence applies unchanged after its conflict-free rebase. I3's
 results establish the composed recovery/reporting outcome. Final independent
 review, full release validation and Guardian timing acceptance remain unfinished.
 No live home, provider authentication or native Windows execution was used.
+
+## R1 repairs and final composed proof
+
+The initial proof above did not exercise actual installed command isolation. R1
+reopened acceptance after reproducing environment startup code and an embedded
+credential-label leak. Those failures remain retained in the two R1 reports.
+
+T6 repair `f146184b` now checks whole normalized identifier labels before clipping;
+the independent Standards reviewer accepted its original exploit and 81-case
+public regression. T7 implementation `3b444894` pins actual installed scanner and
+Guardian commands to absolute Python/script paths with `-I -S -B`.
+
+The named T7 integration merger verified the combined source at `881d400c`:
+reporting11, recovery12, diagnostics8, Codex registration merge, isolated
+generator26 and freshness38 all passed. Recovery12 launches real Bash and macOS
+PowerShell installations and verifies hostile startup/PATH refusal, ordinary
+security decisions and completed audit, exact doctor recognition, and appended
+operand rejection. See [T7 integration evidence](T7-integration-evidence.md).
+Primary fast-forwarded that exact verified tree with matching branch tips.
+
+T8 subsequently repaired stale path/warning assertions. Its full merge33 passed;
+after rebasing onto combined hooks, the coordinator reran the delimiter-path
+public test (all providers/modes/scopes, 5.008s) and portable PowerShell envelopes,
+both passing. Canonical acquisition, matching and those test files were unchanged
+by T7, so full merge and prior scanner resource evidence remain applicable.
+
+I3 composed acceptance is restored. Final independent repair review, T9 fixture
+flakiness repair and release performance remain separate unfinished gates.
