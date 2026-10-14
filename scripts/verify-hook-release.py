@@ -134,14 +134,22 @@ def verify_logging(home: Path, case, calls: int) -> dict:
             "verified_after_elapsed": True}
 
 
-def checked_invocation(case, repo: Path, home: Path):
-    elapsed, code, output = high_rate.invoke(case, repo, home)
+def checked_invocation(case, repo: Path, home: Path, *, observation: dict | None = None):
+    if observation is None:
+        elapsed, code, output = high_rate.invoke(case, repo, home)
+    else:
+        observation["start_monotonic_ns"] = time.monotonic_ns()
+        try:
+            elapsed, code, output = high_rate.invoke(case, repo, home)
+        finally:
+            observation["end_monotonic_ns"] = time.monotonic_ns()
     try:
         high_rate.verify_outcome(case, code, output)
     except (RuntimeError, ValueError) as exc:
         error = ValueError(str(exc))
         error.invocation = {"case": case.name, "elapsed_ms": elapsed, "exit_code": code,
-                            "expected_decision": case.expected_decision, "output": output}
+                            "expected_decision": case.expected_decision, "output": output,
+                            **(observation or {})}
         raise error from exc
     return elapsed, {"exit_code": code, "decision": decision(case.name.split(".", 1)[0], output),
                      "output": output}
@@ -168,6 +176,48 @@ def warm_run(case, root: Path, repo: Path, home: Path, samples: int, warmups: in
     row["provider_bytecode_after"] = len(list(case.script.parent.rglob("*.pyc")))
     row["logging"] = verify_logging(home, case, 1 + warmups + samples)
     logging_error(row["logging"])
+
+
+def warm_pair_run(cases: dict, roots: dict, repo: Path, homes: dict,
+                  samples: int, warmups: int, pair: int, rows: dict) -> None:
+    """Keep each matched launch adjacent while retaining independent samples."""
+    baseline, candidate = cases["baseline"], cases["candidate"]
+    if baseline.name != candidate.name:
+        raise ValueError("warm pair requires equal exact case IDs")
+    if baseline.payload != candidate.payload:
+        raise ValueError("warm pair requires identical payload bytes")
+    prepared = {label: prepared_case(case, roots[label]) for label, case in cases.items()}
+    for label in ORDER[pair]:
+        homes[label].mkdir(parents=True)
+        rows[label].update({"samples_ms": [], "outputs": [], "invocations": []})
+    last = {}
+    for index in range(1 + warmups + samples):
+        kind = "first" if index == 0 else "warmup" if index <= warmups else "measured"
+        for label in ORDER[pair]:
+            row = rows[label]
+            observation = {"call_index": index, "kind": kind}
+            row["invocations"].append(observation)
+            elapsed, output = checked_invocation(prepared[label], repo, homes[label], observation=observation)
+            last[label] = {"case": cases[label].name, "condition": label,
+                           "elapsed_ms": elapsed, "expected_decision": cases[label].expected_decision,
+                           **output, **observation}
+            if index == 0:
+                row["first_process_ms"] = elapsed
+                row["first_output"] = output
+            elif index > warmups:
+                row["samples_ms"].append(elapsed)
+                row["outputs"].append(output)
+    for label in ORDER[pair]:
+        row = rows[label]
+        row["summary"] = high_rate.summary(row["samples_ms"])
+        row["provider_bytecode_after"] = len(list(prepared[label].script.parent.rglob("*.pyc")))
+        row["logging"] = verify_logging(homes[label], prepared[label], 1 + warmups + samples)
+    for label in ORDER[pair]:
+        try:
+            logging_error(rows[label]["logging"])
+        except ValueError as exc:
+            exc.invocation = last[label]
+            raise
 
 
 def comparisons(report: dict) -> list[dict]:
@@ -213,15 +263,25 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
         frozen[condition] = temporary / "warm-source" / condition
         for provider in PROVIDERS:
             copy_provider(root, frozen[condition], provider)
+    indexed = {label: {case.name: case for case in cases} for label, cases in selected.items()}
+    if (set(indexed["baseline"]) != set(indexed["candidate"])
+            or any(len(indexed[label]) != len(selected[label]) for label in indexed)):
+        raise ValueError("warm pair requires equal unique exact case IDs")
     for pair, order in enumerate(ORDER):
-        for condition in order:
-            for case in selected[condition]:
+        for name in indexed["baseline"]:
+            cases = {label: indexed[label][name] for label in order}
+            rows = {}
+            homes = {}
+            for condition in order:
+                case = cases[condition]
                 print(f"warm pair {pair + 1}: {condition} {case.name}", file=sys.stderr, flush=True)
                 row = {"pair": pair, "condition": condition, "case": case.name,
                        "expected_decision": case.expected_decision,
                        "input_sha256": hashlib.sha256(case.payload).hexdigest()}
                 report["warm"].append(row)
-                warm_run(case, frozen[condition], repo, temporary / f"pair-{pair}" / condition / case.name, samples, warmups, row)
+                rows[condition] = row
+                homes[condition] = temporary / f"pair-{pair}" / condition / case.name
+            warm_pair_run(cases, frozen, repo, homes, samples, warmups, pair, rows)
     for index in range(cold_samples):
         for condition in ORDER[index % 2]:
             for case in selected[condition]:
@@ -337,6 +397,7 @@ def main() -> int:
                               "git": subprocess.check_output(["git", "--version"], text=True).strip()},
               "method": {"samples": counts[0], "warmups": counts[1], "cold_launches_per_case_condition": counts[2],
                          "warm_order": ORDER, "exact_case_filter": args.case,
+                         "warm_schedule": "pair, exact case, call index, source: adjacent baseline/candidate launches in pair 1; candidate/baseline in pair 2",
                          "clock": "maintained high-rate invoke: whole Python subprocess only",
                          "logging": "OBSERVABILITY_TESTING=1; disposable homes retained until completed-log verification; validation outside elapsed",
                          "cold": "independent fresh provider copy/home per launch; zero provider bytecode; OS and stdlib caches uncleared",
