@@ -149,6 +149,76 @@ class SecurityReportingTests(unittest.TestCase):
             self.assertEqual(rows[-1]["route"], "native")
             self.assertEqual(rows[-1]["enforcement"], "allow")
 
+    def test_every_label_prefilter_trigger_keeps_regex_redaction_and_native_outcomes(self):
+        # These fixtures come from the documented credential families, rather
+        # than deriving expectations from the production prefilter or regex.
+        credentials = [prefix + "FAKE" for prefix in
+                       ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "AKIA", "sk-", "sk_live_",
+                        "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-")]
+        credentials += ["bearer FAKE", "token=FAKE", "secret:FAKE", "password=FAKE", "passwd:FAKE",
+                        "api-key=FAKE", "authorization:FAKE", "http://FAKE@example.invalid"]
+        for provider in fixture.PROVIDERS:
+            for credential in credentials:
+                label = "custom_prefix_" + credential.swapcase() + "_suffix"
+                for mode, findings, expected in (("block", True, "deny"), ("warn", True, "allow"),
+                                                  ("block", False, "allow")):
+                    with self.subTest(provider=provider, credential=credential, mode=mode, findings=findings):
+                        secret = self.repo / "secret.txt"
+                        if findings:
+                            secret.write_text(fixture.FAKE_TOKEN)
+                        else:
+                            secret.unlink(missing_ok=True)
+                        response, rows, raw, stderr = self.invoke(provider, mode=mode,
+                            metadata={"sessionId": label, "session_id": label})
+                        self.assertEqual(rows[-1]["sessionId"], "[REDACTED]")
+                        self.assertEqual(rows[-1]["enforcement"], expected)
+                        self.assertEqual(rows[-1]["audit_outcome"], "written")
+                        self.assertEqual(rows[-1]["route"], "pending_scan")
+                        denied = (response.get("continue") is False or response.get("decision") in {"block", "deny"}
+                                  or response.get("permissionDecision") == "deny"
+                                  or response.get("hookSpecificOutput", {}).get("permissionDecision") == "deny")
+                        self.assertEqual("deny" if denied else "allow", expected)
+                        self.assertNotIn(label, raw.decode() + json.dumps(response) + stderr)
+                        self.assertLessEqual(len(raw.splitlines(keepends=True)[-1]), 65536)
+                        if findings:
+                            self.assertIn("potential secrets detected", json.dumps(response))
+                            self.assertEqual(rows[-1]["findings"][0]["path"], "secret.txt")
+
+    def test_unicode_and_prefilter_false_positives_keep_label_authority(self):
+        labels = [("custom_gıthub_pat_FAKE", "[REDACTED]"),
+                  ("custom_AKİAFAKE", "[REDACTED]"),
+                  ("custom_ｓｋ－ＦＡＫＥ", "[REDACTED]"),
+                  ("custom_ＡＰＩ＿ＫＥＹ＝ＦＡＫＥ", "[REDACTED]"),
+                  ("custom_界_operation", "custom_ _operation")]
+        labels += [(label, label) for label in
+                   ("custom_TOKENizer", "custom_apiary", "custom_HTTPserver", "custom_bearer_label",
+                    "custom_password_policy", "custom_authorization_test")]
+        labels += [("x" * offset + "gıthub_pat_FAKE", "[REDACTED]") for offset in (150, 157, 160, 200)]
+        labels += [("x" * offset + "ｇｈｐ＿ＦＡＫＥ", "[REDACTED]") for offset in (150, 157, 160, 200)]
+        for provider in fixture.PROVIDERS:
+            for label, expected in labels:
+                with self.subTest(provider=provider, label=label):
+                    response, rows, raw, _ = self.invoke(provider,
+                        metadata={"sessionId": label, "session_id": label})
+                    self.assertEqual(rows[-1]["sessionId"], expected)
+                    self.assertEqual(rows[-1]["enforcement"], "allow")
+                    self.assertEqual(response, {})
+                    self.assertLessEqual(len(raw.splitlines(keepends=True)[-1]), 65536)
+
+    def test_trigger_label_audit_failure_still_enforces_without_leaking(self):
+        for provider in fixture.PROVIDERS:
+            for mode in ("block", "warn"):
+                for command, security in (("echo safe", "clean"),
+                                          ("git push" + " --force origin main", "findings")):
+                    response, rows, raw, stderr = self.invoke(provider, guardian=True, mode=mode,
+                        tool="prefix_AKİAFAKE_suffix", value={"command": command}, log_failure=True)
+                    text = json.dumps(response) + raw.decode() + stderr
+                    self.assertIn("security_outcome=" + security, text)
+                    self.assertIn("audit_outcome=failed", text)
+                    self.assertIn("enforcement=" + ("allow" if mode == "warn" and security == "findings" else "deny"), text)
+                    self.assertNotIn("AKİAFAKE", text)
+                    self.assertEqual(rows, [])
+
     def test_audit_failure_preserves_findings_and_clean_calls_fail_closed(self):
         secret = self.repo / "secret.txt"
         command = "git push" + " --force origin main"

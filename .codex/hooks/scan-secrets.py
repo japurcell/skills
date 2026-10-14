@@ -437,8 +437,8 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'codex'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '84e93c87d8e720b2f75d45fa74857ac76ca544b972fc77449af0e3deaecb62d7'
-DIAG_ASSETS = [('helpers/common.py', '239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045'), ('helpers/audit.py', 'ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
+DIAG_BUILD = '2747af9aa1cdefbb18ca29cc16c8eeec303bcb6bf6539c250acb1a5d8d902166'
+DIAG_ASSETS = [('helpers/common.py', '55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b'), ('helpers/audit.py', 'ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'ff0b4319501eb3e60a2f033af919b5e4e12146241b26f36a207823844b901f9b'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['PreToolUse', 'SessionStart', 'Stop']
 DIAG_REGISTRATIONS = ['["SessionStart","startup|resume|clear|compact",{"additionalContextLimit":8000,"command":"python3 ~/.codex/hooks/load-required-skills.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\load-required-skills.py\\"","statusMessage":"Loading required skill context","timeout":5,"type":"command"}]', '["PreToolUse","Bash|apply_patch|Edit|Write",{"command":"python3 ~/.codex/hooks/scan-secrets.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\scan-secrets.py\\"","statusMessage":"Scanning modified files for secrets","timeout":10,"type":"command"}]', '["PreToolUse","Bash|apply_patch|Edit|Write",{"command":"python3 ~/.codex/hooks/tool-guard.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\tool-guard.py\\"","statusMessage":"Checking dangerous tool actions","timeout":10,"type":"command"}]', '["Stop",null,{"command":"python3 ~/.codex/hooks/scan-secrets.py","commandWindows":"py -3 \\"%USERPROFILE%\\\\.codex\\\\hooks\\\\scan-secrets.py\\"","statusMessage":"Checking modified files for secrets","timeout":10,"type":"command"}]']
@@ -592,7 +592,7 @@ SCAN_ACTION = "scan"
 SCAN_REPORT = None
 SCAN_FINDINGS = []
 SCAN_SECURITY_OUTCOME = "incomplete"
-REPORT_BUILD = "4b74bc64c9f01498"
+REPORT_BUILD = "ca755936706a9bb6"
 REPORT_PROVIDER = DIAG_PROVIDER
 
 
@@ -1076,6 +1076,15 @@ def report_text(value, limit=REPORT_LABEL_CHARS):
 
 def report_label(value):
     text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    if text.isascii():
+        lowered = text.lower()
+        # This conservative filter only avoids regex work for impossible matches.
+        # Unicode case folding and all potential credentials stay with the regex.
+        triggers = ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk-", "sk_live_",
+                    "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-", "bearer", "token", "secret",
+                    "password", "passwd", "api", "authorization", "http")
+        if not any(trigger in lowered for trigger in triggers):
+            return report_text(text)
     # Labels have no need to reproduce a credential-bearing identifier. Omit the
     # whole label, including credentials crossing the display clipping boundary.
     if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):

@@ -33,6 +33,15 @@ def report_text(value, limit=REPORT_LABEL_CHARS):
 
 def report_label(value):
     text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    if text.isascii():
+        lowered = text.lower()
+        # This conservative filter only avoids regex work for impossible matches.
+        # Unicode case folding and all potential credentials stay with the regex.
+        triggers = ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk-", "sk_live_",
+                    "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-", "bearer", "token", "secret",
+                    "password", "passwd", "api", "authorization", "http")
+        if not any(trigger in lowered for trigger in triggers):
+            return report_text(text)
     # Labels have no need to reproduce a credential-bearing identifier. Omit the
     # whole label, including credentials crossing the display clipping boundary.
     if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):

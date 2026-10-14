@@ -2,6 +2,7 @@
 """Exercise bounded stdin transport through generated public security hooks."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 from tool_guard_corpus import decision as guardian_decision, script_path
 
@@ -243,6 +245,176 @@ class HookInputBoundsTests(unittest.TestCase):
                 stopped.set()
                 writer.join(timeout=1)
                 self.assertFalse(writer.is_alive(), "producer remained blocked after hook exit")
+
+    def test_structural_escape_splits_preserve_complete_native_decisions(self) -> None:
+        # Put structure-looking data before the operation. A premature boundary
+        # must never hide the later executable control from either public hook.
+        for provider in PROVIDERS:
+            tool = {"copilot": "bash", "gemini": "run_shell_command", "codex": "Bash"}[provider]
+            for content in ('backslash\\ordinary {} []', 'backslash\\"quote {} []',
+                            'double\\\\end []', '界' + 'ordinary' * 10000):
+                payload = {"padding": content, **self.payload(provider, tool, {"command": "echo safe"})}
+                raw = json.dumps(payload, ensure_ascii=False).encode()
+                self.assertEqual(json.loads(raw), payload)
+                marker = raw.index(b"\\") if b"\\" in raw else raw.index("界".encode())
+                for split in (marker + 1, marker + 2):
+                    for hook in ("tool-guard", "scan-secrets"):
+                        with self.subTest(provider=provider, hook=hook, content=content[:25], split=split):
+                            process = self.start(provider, hook)
+                            process.stdin.write(raw[:split])
+                            process.stdin.flush()
+                            time.sleep(0.08)
+                            self.assertIsNone(process.poll(), "valid object prefix was rejected or completed")
+                            process.stdin.write(raw[split:])
+                            process.stdin.flush()
+                            self.assertEqual(decision(provider, self.response(process)), "allow")
+
+            # A valid string containing a literal escaped quote cannot hide the
+            # dangerous field that follows it in the same object.
+            payload = {"padding": '\\"{}', **self.payload(provider, tool,
+                       {"command": "git push" + " --force origin main"})}
+            raw = json.dumps(payload).encode()
+            split = raw.index(b"\\") + 1
+            process = self.start(provider)
+            process.stdin.write(raw[:split])
+            process.stdin.flush()
+            time.sleep(0.08)
+            self.assertIsNone(process.poll())
+            process.stdin.write(raw[split:])
+            process.stdin.flush()
+            response = self.response(process)
+            self.assertEqual(decision(provider, response), "deny")
+            self.assertIn("force_push_protected_branch", json.dumps(response))
+
+
+class JsonCollectionParityTests(unittest.TestCase):
+    def test_json_authority_and_explicit_depth_policy_across_chunk_widths(self) -> None:
+        spec = importlib.util.spec_from_file_location("parity_common", ROOT / ".codex/hooks/helpers/common.py")
+        common = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(common)
+        strings = ("", "ordinary" * 10000, "界é", "{}[]", 'quote"end',
+                   "\\", "\\a", '\\"', "\\\\", "\\\\a", '\\\\"', "\\u1234", "\n\t")
+        inputs = [json.dumps({"value": text, "after": [{"x": 1}]}, ensure_ascii=ascii_only).encode()
+                  for text in strings for ascii_only in (True, False)]
+        inputs += [b" \t\r\n" + raw + b" \t\r\n" for raw in inputs]
+        for depth in (63, 64, 65):
+            inputs.append(b'{"value":' + b"[" * (depth - 1) + b"0" + b"]" * (depth - 1) + b"}")
+        valid = list(inputs)
+        inputs += [raw[:-1] for raw in valid]
+        inputs += [raw + suffix for raw in valid[:26] for suffix in (b"x", b"{}", b"\x0b")]
+        inputs += [b"[]", b'"{}"', b'x{}', b'{"x":]}', b'{"x":1e}',
+                   b'{"x":"\\uZZZZ"}', b'{"x":"\xff"}', b'{"x":"unescaped\n"}']
+
+        def max_depth(value):
+            if isinstance(value, dict):
+                return 1 + max((max_depth(child) for child in value.values()), default=0)
+            if isinstance(value, list):
+                return 1 + max((max_depth(child) for child in value), default=0)
+            return 0
+
+        for raw in inputs:
+            try:
+                expected = json.loads(raw)
+                accepted = isinstance(expected, dict) and max_depth(expected) <= 64
+            except (ValueError, UnicodeError):
+                accepted = False
+            for width in (1, 2, 3, 7, 64, 65536):
+                chunks = [raw[offset:offset + width] for offset in range(0, len(raw), width)] + [b""]
+                with self.subTest(size=len(raw), prefix=raw[:30], width=width), mock.patch.object(
+                    common, "_read_stdin_chunk", side_effect=chunks
+                ):
+                    if accepted:
+                        self.assertEqual(common.read_json_input(), expected)
+                    else:
+                        with self.assertRaises(ValueError):
+                            common.read_json_input()
+
+@unittest.skipIf(os.name == "nt", "POSIX flags; Windows uses PeekNamedPipe")
+class StdinChunkTests(unittest.TestCase):
+    """The approved descriptor adapter seam complements public pipe tests."""
+
+    def setUp(self) -> None:
+        spec = importlib.util.spec_from_file_location("bounded_common", ROOT / ".codex/hooks/helpers/common.py")
+        self.common = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.common)
+        self.reader, self.writer = os.pipe()
+        self.addCleanup(os.close, self.reader)
+        self.addCleanup(os.close, self.writer)
+
+    def test_immediate_data_restores_original_flags_without_waiting(self) -> None:
+        for blocking in (True, False):
+            with self.subTest(blocking=blocking):
+                os.set_blocking(self.reader, blocking)
+                os.write(self.writer, b"chunk")
+                with mock.patch.object(self.common, "_stdin_is_ready", side_effect=AssertionError("unnecessary wait")):
+                    self.assertEqual(self.common._read_stdin_chunk(self.reader, 5, 0.5), b"chunk")
+                self.assertEqual(os.get_blocking(self.reader), blocking)
+
+    def test_eagain_timeout_is_distinct_from_eof_and_restores_flags(self) -> None:
+        for blocking in (True, False):
+            with self.subTest(blocking=blocking):
+                os.set_blocking(self.reader, blocking)
+                with mock.patch.object(self.common, "_stdin_is_ready", return_value=False) as ready:
+                    self.assertIsNone(self.common._read_stdin_chunk(self.reader, 5, 0.125))
+                ready.assert_called_once_with(self.reader, 0.125)
+                self.assertEqual(os.get_blocking(self.reader), blocking)
+        reader, writer = os.pipe()
+        os.close(writer)
+        try:
+            self.assertEqual(self.common._read_stdin_chunk(reader, 5, 0), b"")
+            self.assertTrue(os.get_blocking(reader))
+        finally:
+            os.close(reader)
+
+    def test_eagain_wait_then_read_restores_flags(self) -> None:
+        def ready(fd, timeout):
+            self.assertFalse(os.get_blocking(fd), "fallback read must remain nonblocking")
+            self.assertEqual(timeout, 0.25)
+            os.write(self.writer, b"ready")
+            return True
+        with mock.patch.object(self.common, "_stdin_is_ready", side_effect=ready) as wait:
+            self.assertEqual(self.common._read_stdin_chunk(self.reader, 5, 0.25), b"ready")
+        wait.assert_called_once()
+        self.assertTrue(os.get_blocking(self.reader))
+
+    def test_read_and_readiness_errors_restore_both_original_flags(self) -> None:
+        for blocking in (True, False):
+            for failure in ("read", "readiness", "read_after_ready"):
+                with self.subTest(blocking=blocking, failure=failure):
+                    os.set_blocking(self.reader, blocking)
+                    reads = ([OSError("read failed")] if failure == "read" else
+                             [BlockingIOError(), OSError("ready read failed")])
+                    wait = OSError("readiness failed") if failure == "readiness" else None
+                    with mock.patch.object(self.common.os, "read", side_effect=reads), mock.patch.object(
+                        self.common, "_stdin_is_ready", return_value=True, side_effect=wait
+                    ), self.assertRaises(OSError):
+                        self.common._read_stdin_chunk(self.reader, 5, 0.125)
+                    self.assertEqual(os.get_blocking(self.reader), blocking)
+
+    def test_expired_trailing_drain_never_attempts_another_read(self) -> None:
+        with mock.patch.object(self.common, "_read_stdin_chunk", side_effect=AssertionError("deadline expired")):
+            with self.assertRaisesRegex(ValueError, "input deadline exceeded"):
+                self.common._read_available_stdin_bytes(self.reader, deadline=time.monotonic() - 1)
+
+
+class WindowsReadinessContractTests(unittest.TestCase):
+    def test_windows_adapter_keeps_readiness_authority_without_posix_flags(self) -> None:
+        spec = importlib.util.spec_from_file_location("windows_common", ROOT / ".codex/hooks/helpers/common.py")
+        common = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(common)
+        for ready in (False, True):
+            with self.subTest(ready=ready), mock.patch.object(common.os, "name", "nt"), mock.patch.object(
+                common, "_stdin_is_ready", return_value=ready
+            ) as wait, mock.patch.object(common.os, "read", return_value=b"") as read, mock.patch.object(
+                common.os, "get_blocking", side_effect=AssertionError("POSIX flag API used")
+            ):
+                self.assertEqual(common._read_stdin_chunk(42, 17, 0.125), b"" if ready else None)
+                wait.assert_called_once_with(42, 0.125)
+                if ready:
+                    read.assert_called_once_with(42, 17)
+                else:
+                    read.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
