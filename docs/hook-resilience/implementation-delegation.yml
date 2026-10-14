@@ -8,8 +8,9 @@ dispatches:
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 21:18 UTC'
     snapshot: 8f250431
-    status: running
-    output_verified: false
+    status: completed
+    evidence: [docs/hook-resilience/R1-T11-standards-review.md, docs/hook-resilience/R1-T11-spec-review.md]
+    output_verified: true
     routing_compliant: true
   - subtask_id: T11
     agent: /root/timing_pairing_impl
@@ -159,13 +160,13 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 18:54 UTC'
-    resumed_at: '2026-10-14 20:35 UTC'
-    accepted_candidate: 1817d569b42008019ec66d3ac3469f7fd704308c
-    status: final_functional_resources_and_cold_passed_warm_latency_failed_retaining_evidence
+    resumed_at: '2026-10-14 21:19 UTC'
+    accepted_candidate: 81fe28bb
+    status: preparing_final_T11_provenance_and_scoped_evidence_reuse
     output_verified: true
     checkpoint_commit: 25ec70bc1ee4595102f46d847748ab20ab8e40ea
     evidence: docs/hook-resilience/V1-T10-release-evidence.md
-    timing_gate: complete full run failed 25 warm comparisons; no repeat authorized before D3 diagnosis
+    timing_gate: D3 and reviewed T11 complete; wait for final verifier readiness and explicit quiet confirmation
     routing_compliant: true
   - subtask_id: R1-standards
     agent: /root/standards_review
