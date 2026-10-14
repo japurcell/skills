@@ -31,6 +31,8 @@ class MergeScannerTests(unittest.TestCase):
         self.root = Path(self.temporary.name).resolve()
         self.repo = self.root / "repo"
         self.repo.mkdir()
+        home = self.root / "home"
+        home.mkdir()
         self.git_path = shutil.which("git")
         self.assertIsNotNone(self.git_path, "Git is required")
         self.env = {
@@ -38,7 +40,10 @@ class MergeScannerTests(unittest.TestCase):
             if not key.startswith("GIT_")
             and key not in {"SKIP_SECRETS_SCAN", "SECRETS_ALLOWLIST"}
         }
-        self.env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
+        self.env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull,
+                         "HOME": str(home), "USERPROFILE": str(home),
+                         "CODEX_HOME": str(home / ".codex"),
+                         "XDG_CONFIG_HOME": str(home / ".config")})
         self.git("init", "-q", "-b", "main")
 
     def git(self, *args: str, expected: int = 0) -> subprocess.CompletedProcess[str]:
@@ -120,6 +125,8 @@ class MergeScannerTests(unittest.TestCase):
                        finding_path: str | None = None, cause: str | None = None) -> None:
         response, record = self.scan(provider, mode, scope)
         self.assertEqual(record["status"], status, record)
+        self.assertEqual((record["provider"], record["mode"], record["scope"]),
+                         (provider, mode, scope))
         if status == "clean":
             expected = {}
         else:
@@ -157,7 +164,10 @@ class MergeScannerTests(unittest.TestCase):
         self.assertEqual(response, expected)
         if finding_path is not None:
             self.assertTrue(any(finding["pattern"] == "github_classic_pat"
+                                and finding["severity"] == "high"
                                 and finding["path"] == finding_path
+                                and finding["line"] == 1
+                                and finding["redactedMatch"] == "ghp_...FAKE"
                                 for finding in record["findings"]), record)
 
     def assert_all_scans(self, status: str, finding_path: str | None = None, cause: str | None = None) -> None:
@@ -232,18 +242,37 @@ class MergeScannerTests(unittest.TestCase):
         self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
                         REAL_GIT=str(self.git_path))
         path = "line\nbreak\tname.txt"
-        self.stage_pair({path: "safe changed content\n", ":0:notes.txt": "safe\n"})
+        self.stage_pair({path: "safe changed content\n", ":0:notes.txt": "safe\n",
+                         "line break name.txt": "safe label-colliding file\n",
+                         "line": "safe newline fragment\n", "break": "safe tab fragment\n",
+                         "name.txt": "safe filename fragment\n"})
         self.assert_all_scans("clean")
         self.write_files({path: f"fake_token={FAKE_TOKEN}\n"})
         self.git("add", "--all")
-        self.assert_all_scans("findings", path)
+        # Only the original path's stage-zero blob contains the credential.
+        # Neither a sanitized-label lookup nor a worktree fallback can find it.
+        self.write_files({path: "safe changed content\n"})
+        self.assert_all_scans("findings", "line break name.txt")
 
     def test_batch_paths_preserve_newlines_tabs_and_colons(self) -> None:
         # Constructing the index references must never treat path delimiters as
         # separate requests. The leading colon is an ordinary filename byte.
         path = "line\nbreak\tname.txt"
-        self.stage_pair({path: f"fake_token={FAKE_TOKEN}\n", ":0:notes.txt": "safe\n"})
-        self.assert_all_scans("findings", path)
+        self.stage_pair({path: f"fake_token={FAKE_TOKEN}\n", ":0:notes.txt": "safe\n",
+                         "line break name.txt": "safe label-colliding file\n",
+                         "line": "safe newline fragment\n", "break": "safe tab fragment\n",
+                         "name.txt": "safe filename fragment\n"})
+        self.write_files({path: "safe replacement awaiting git add\n"})
+        # This literal is the display contract, not a reconstructed sanitizer.
+        # All working files and all other index blobs are credential-free.
+        self.assert_all_scans("findings", "line break name.txt")
+
+        # Give the leading-colon path its own staged-only credential control.
+        # Clean up the earlier index secret so only this path can explain it.
+        self.write_files({":0:notes.txt": f"fake_token={FAKE_TOKEN}\n"})
+        self.git("add", "--all")
+        self.write_files({":0:notes.txt": "safe replacement awaiting git add\n"})
+        self.assert_all_scans("findings", ":0:notes.txt")
 
     def test_batch_long_paths_fit_bounded_git_command_lines(self) -> None:
         contents = {f"entry-{index:03}-" + "x" * 190 + ".txt": "safe changed content\n"
@@ -270,7 +299,11 @@ class MergeScannerTests(unittest.TestCase):
         last_path = sorted(contents)[-1]
         self.write_files({last_path: f"fake_token={FAKE_TOKEN}\n"})
         self.git("add", "--all")
-        self.assert_all_scans("findings", last_path)
+        # The unique entry prefix identifies the final path despite clipping.
+        # Staged-scope findings prove its index blob was inspected, while keeping
+        # the worktree identical avoids adding a 257th candidate in diff scope.
+        # Accepted 160-character ASCII label: 157 visible characters and "...".
+        self.assert_all_scans("findings", "entry-255-" + "x" * 147 + "...")
 
     def directory_file_batch_merge(self, secret_source: str | None = None) -> None:
         # These 16 names put the unresolved parent at the end of the first
