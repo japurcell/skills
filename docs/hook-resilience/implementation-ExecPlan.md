@@ -15,6 +15,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [x] (2026-10-14) [milestone-1] I1: On combined `23f7f38b`, transport9, native26, shell17, limits18 and corpus153 pass; generated freshness35 passes.
 - [x] (2026-10-14) [milestone-4] R0: [Early security review](R0-review.md) found no reproduced defect; 25 classification, 12 descriptor and five simulated Windows probes passed. Final full review remains required.
+- [ ] [milestone-4] R0b: Independently review accepted acquisition and streaming component before larger-file integration; reproduce suspected boundary failures.
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [x] (2026-10-14) [milestone-2] T3: Integrated verified acquisition as `b8f2b573`; merge33, all provider scanner/capture suites, rebased diagnostics8 and singleton pinning pass. [Evidence](T3-evidence.md).
 - [x] (2026-10-14) [milestone-2] T4a: Integrated bounded stream component as `1b44f4db`; component12, diagnostics8 and freshness38 pass on combined T3 tree. [Evidence](T4a-evidence.md).
@@ -111,6 +112,8 @@ Acceptance: not met
 **V1, release verification.** Prerequisites: R1 repairs integrated. Own test registry reconciliation and evidence; no broad source redesign. Run generated freshness, applicable Python/shell suites and isolated installer tests. Run the maintained Guardian 500 ms finite-input resource gate and matched warm/cold timing procedure without concurrent benchmarks/tests/generation. Native Windows and authenticated provider dispatch require those environments; record unavailable checks separately and do not fabricate delivery. Verify complete installed assets and preserved user registrations with disposable homes. No live-home mutation is required by this plan.
 
 **K1, final maintenance.** Prerequisites: all agents and accepted implementation/verification tasks finish. Run one `update-agent-docs` pass with knowledge admission; update README and affected canonical rules only for durable changed behavior. Apply OKF lint for canonical edits. Reconcile this plan and all milestone evidence. Commit authorized files and remove only clean, integrated task worktrees/branches. Keep unresolved external checks explicit.
+
+**R0b, scanner boundary review.** Prerequisites: integrated T3/T4a. Independently review `33b5bee2..1b44f4db` acquisition and stream component against the design, with attention to snapshot races, byte charging, late classification, regex parity, suppression and bounded state. Read-only task; run disposable focused probes for suspected defects and return retained evidence for `docs/hook-resilience/R0b-review.md`. No source edits or empty commit. This review runs alongside T5b and supplements final R1. Any reproduced defect reopens its owning task before T4b integration.
 
 ## Concrete Steps
 
