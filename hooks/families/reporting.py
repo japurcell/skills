@@ -16,10 +16,23 @@ def build_identity(family: str) -> str:
         digest.update(name.encode("ascii") + b"\0" + (root / name).read_bytes())
     for name in ("providers.py", "manifest.py"):
         digest.update(name.encode("ascii") + b"\0" + (root.parent / name).read_bytes())
+    if family == "scan_secrets":
+        name = "scripts/trusted_hook_launch.py"
+        digest.update(name.encode("ascii") + b"\0" + (root.parents[1] / name).read_bytes())
     return digest.hexdigest()[:16]
 
 
-SOURCE = r'''
+CREDENTIAL_LABEL_SOURCE = r'''
+import re as _label_re
+
+
+def credential_label(text):
+    """Recognize credentials in caller-normalized labels before display clipping."""
+    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+'''
+
+
+BODY_SOURCE = r'''
 # Bounds apply to retained report fields before JSON serialization. Labels are
 # ASCII, so each retained character costs at most two JSON bytes after escaping.
 REPORT_LABEL_CHARS = 160
@@ -44,7 +57,7 @@ def report_label(value):
             return report_text(text)
     # Labels have no need to reproduce a credential-bearing identifier. Omit the
     # whole label, including credentials crossing the display clipping boundary.
-    if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):
+    if credential_label(text):
         return "[REDACTED]"
     return report_text(text)
 
@@ -65,3 +78,5 @@ def report_json_bytes(value):
         return 4 if value else 5
     return len(str(value))
 '''
+
+SOURCE = CREDENTIAL_LABEL_SOURCE + BODY_SOURCE

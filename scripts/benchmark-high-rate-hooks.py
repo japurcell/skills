@@ -12,7 +12,6 @@ import argparse
 import concurrent.futures
 import json
 import math
-import os
 import platform
 import shutil
 import statistics
@@ -24,6 +23,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from tool_guard_corpus import PROVIDERS, decision, dimensions, encode, envelope, fixtures, script_path
+from hook_benchmark_support import disposable_environment
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -174,17 +174,9 @@ def verify_outcome(case: Case, exit_code: int, output: dict) -> None:
 
 def invocation_environment(case: Case, home: Path) -> dict[str, str]:
     """Build the disposable launch environment for latency and RSS collectors."""
-    env = os.environ.copy()
-    for key in ("SKIP_TOOL_GUARD", "TOOL_GUARD_ALLOWLIST"):
-        env.pop(key,None)
+    # startswith preserves this runner's existing case-name provider treatment.
+    env = disposable_environment(home, "gemini" if case.name.startswith("gemini") else "other")
     env.update({
-        "HOME": str(home),
-        "XDG_CONFIG_HOME": str(home / ".config"),
-        "XDG_CACHE_HOME": str(home / ".cache"),
-        "XDG_DATA_HOME": str(home / ".local/share"),
-        "AUDIT_LOG": str(home / "audit.log"),
-        "AUDIT_LOCK": str(home / "audit.lock"),
-        "TOOL_GUARD_LOG_DIR": str(home / "guard" if case.name.startswith("gemini") else home / "guard.log"),
         "SECRETS_LOG_DIR": str(home / "secrets"),
         "COPILOT_OBSERVABILITY_LOG_PATH": str(home / "copilot-observability.ndjson"),
         "GEMINI_OBSERVABILITY_LOG_PATH": str(home / "gemini-observability.ndjson"),

@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 import re
 
+from hook_test_support import hook_entrypoint, raw_tool_envelope
+
 PROVIDERS = ("copilot", "gemini", "codex")
 
 
@@ -57,7 +59,7 @@ class Fixture:
 
 
 def script_path(root: Path, provider: str) -> Path:
-    return root / (".codex/hooks/tool-guard.py" if provider == "codex" else f".{provider}/hooks/scripts/tool-guard.py")
+    return hook_entrypoint(root, provider, "tool-guard.py")
 
 
 def full_shell_envelope(provider: str, command: str, extra: dict | None = None) -> dict:
@@ -116,9 +118,7 @@ def envelope(provider: str, fixture: Fixture) -> dict:
             value = {**value,"instruction":"Replace the exact old text with the supplied new text."}
         elif tool == "Bash" and provider != "codex":
             tool = "bash" if provider == "copilot" else "run_shell_command"
-    if provider == "copilot":
-        return {"hook_event_name": "preToolUse", "toolName": tool, "toolArgs": value}
-    return {"hook_event_name": "PreToolUse" if provider == "codex" else "BeforeTool", "tool_name": tool, "tool_input": value}
+    return raw_tool_envelope(provider, tool, value)
 
 
 def encode(payload: object) -> bytes:

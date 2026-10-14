@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from fixtures.tool_guard_vectors import sized_native_patch
+from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
 from tool_guard_test_support import invoke_guard, native_decision
 from tool_guard_corpus import full_shell_envelope
 
@@ -117,16 +117,12 @@ class NativeDataTests(unittest.TestCase):
         self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
 
     def test_copilot_raw_patch_aggregate_maximum_and_first_overflow(self) -> None:
-        prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
-        suffix = '\n*** End Patch'
-        available = 262144 - len((prefix + suffix).encode('utf-8'))
         for utf8 in (False, True):
-            body = 'x' * available if not utf8 else '界' * (available // 3) + 'x' * (available % 3)
-            patch = prefix + body + suffix
+            patch = full_capacity_native_patch(utf8=utf8)
             self.assertEqual(len(patch.encode('utf-8')), 262144)
             self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
             for mode in ('block', 'warn'):
-                response = self.invoke('copilot', 'apply_patch', prefix + body + 'x' + suffix, mode=mode)
+                response = self.invoke('copilot', 'apply_patch', patch.replace('\n*** End Patch', 'x\n*** End Patch'), mode=mode)
                 self.assert_decision(response, 'deny')
                 self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
                 self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
@@ -228,17 +224,13 @@ class NativeDataTests(unittest.TestCase):
         self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'deny')
 
     def test_patch_native_aggregate_maximum_and_first_overflow(self) -> None:
-        prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
-        suffix = '\n*** End Patch'
-        available = 262144 - len(('command' + prefix + suffix).encode('utf-8'))
         for utf8 in (False, True):
-            body = 'x' * available if not utf8 else '界' * (available // 3) + 'x' * (available % 3)
-            patch = prefix + body + suffix
+            patch = full_capacity_native_patch(key_bytes=7, utf8=utf8)
             self.assertEqual(len(patch.encode('utf-8')) + 7, 262144)
             self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'allow')
             for mode in ('block', 'warn'):
                 with self.subTest(utf8=utf8, mode=mode):
-                    response = self.invoke('codex', 'apply_patch', {'command': prefix + body + 'x' + suffix}, mode=mode)
+                    response = self.invoke('codex', 'apply_patch', {'command': patch.replace('\n*** End Patch', 'x\n*** End Patch')}, mode=mode)
                     self.assert_decision(response, 'deny')
                     self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
                     self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
@@ -269,7 +261,7 @@ class NativeDataTests(unittest.TestCase):
                 for provider in ('codex', 'copilot'):
                     value = patch if provider == 'copilot' else {'command': patch}
                     self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')
-        for size in (77089, 80666, 90127, 99186):
+        for size in RECENT_NATIVE_PATCH_SIZES:
             for files in (1, 3):
                 with self.subTest(size=size, files=files):
                     patch = sized_native_patch(size, files=files)
@@ -349,10 +341,8 @@ class NativeDataTests(unittest.TestCase):
                                 self.assertEqual({path: path.read_bytes() for path in original}, original)
 
     def test_full_capacity_high_line_count_patch_requires_complete_grammar(self) -> None:
-        prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
-        suffix = '\n' + '+\n' * 130000 + '*** End Patch'
         for provider, key_bytes in (('codex', 7), ('copilot', 0)):
-            patch = prefix + 'x' * (262144 - key_bytes - len(prefix + suffix)) + suffix
+            patch = full_capacity_native_patch(key_bytes=key_bytes, high_lines=130000)
             self.assertEqual(len(patch.encode('utf-8')) + key_bytes, 262144)
             value = patch if provider == 'copilot' else {'command': patch}
             self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')

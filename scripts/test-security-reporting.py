@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
 """Bounded safe reports through public generated security entrypoints."""
 from __future__ import annotations
-import importlib.util
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
 import unittest
 
-ROOT = Path(__file__).resolve().parent.parent
-spec = importlib.util.spec_from_file_location("merge_fixture", ROOT / "scripts/test-scan-secrets-merge.py")
-fixture = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(fixture)
+from hook_test_support import hook_entrypoint, raw_tool_envelope
 
-class SecurityReportingTests(unittest.TestCase):
-    git = fixture.MergeScannerTests.git
+import scanner_test_support as fixture
+from scanner_test_support import ROOT, ScannerFixtureMixin
 
+class SecurityReportingTests(ScannerFixtureMixin, unittest.TestCase):
     def setUp(self):
-        fixture.MergeScannerTests.setUp(self)
+        super().setUp()
         for key in ("SKIP_TOOL_GUARD", "TOOL_GUARD_ALLOWLIST", "SKIP_SECRETS_SCAN", "SECRETS_ALLOWLIST"):
             self.env.pop(key, None)
         self.env.update(AUDIT_PASSIVE_LOG_MODE="default", GEMINI_PASSIVE_LOG_MODE="default",
@@ -32,17 +28,16 @@ class SecurityReportingTests(unittest.TestCase):
                "SCAN_MODE": mode, "GUARD_MODE": mode, "SECRETS_LOG_DIR": str(log_dir),
                "AUDIT_LOG": str(log_dir / "audit.log"), "OBSERVABILITY_LOG_PATH": str(log_dir / "obs.jsonl"),
                "TOOL_GUARD_LOG_DIR": str(log_dir if provider == "gemini" else log_dir / "guard.log")}
-        payload = ({"toolName": tool or "bash", "toolArgs": value or {"command": "echo safe"}, "sessionId": "test"}
-                   if provider == "copilot" else {"tool_name": tool or ("run_shell_command" if provider == "gemini" else "exec_command"),
-                       "tool_input": value or {"cmd": "echo safe"}, "session_id": "test"})
-        payload["hook_event_name"] = {"copilot": "preToolUse", "gemini": "BeforeTool", "codex": "PreToolUse"}[provider]
+        payload = raw_tool_envelope(provider, tool or {"copilot": "bash", "gemini": "run_shell_command", "codex": "exec_command"}[provider],
+                                    value or ({"command": "echo safe"} if provider == "copilot" else {"cmd": "echo safe"}))
+        payload["sessionId" if provider == "copilot" else "session_id"] = "test"
         payload.update(metadata or {})
         path = log_dir / ("guard.log" if guardian else "scan.log")
         if log_failure:
             if not path.is_dir():
                 path.unlink(missing_ok=True)
             path.mkdir(exist_ok=True)
-        hook = (ROOT / (".codex/hooks/tool-guard.py" if provider == "codex" else f".{provider}/hooks/scripts/tool-guard.py")) if guardian else fixture.HOOKS[provider]
+        hook = hook_entrypoint(ROOT, provider, "tool-guard.py") if guardian else fixture.HOOKS[provider]
         lock_handle = None
         try:
             if lock:
@@ -189,7 +184,8 @@ class SecurityReportingTests(unittest.TestCase):
                   ("custom_AKİAFAKE", "[REDACTED]"),
                   ("custom_ｓｋ－ＦＡＫＥ", "[REDACTED]"),
                   ("custom_ＡＰＩ＿ＫＥＹ＝ＦＡＫＥ", "[REDACTED]"),
-                  ("custom_界_operation", "custom_ _operation")]
+                  ("custom_界_operation", "custom_ _operation"),
+                  ("x" * 4096 + "sk-FAKE", "x" * 157 + "...")]
         labels += [(label, label) for label in
                    ("custom_TOKENizer", "custom_apiary", "custom_HTTPserver", "custom_bearer_label",
                     "custom_password_policy", "custom_authorization_test")]

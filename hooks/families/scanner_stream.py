@@ -4,6 +4,7 @@ from __future__ import annotations
 
 
 SOURCE = r'''import codecs
+from itertools import islice
 import re
 import sys
 import unicodedata
@@ -236,6 +237,14 @@ class StreamReport:
         self.processed = processed
         self.stopped = processed >= 1000
 
+    def record_findings(self, count, findings):
+        accepted = min(count, 1000 - self.processed)
+        retained = min(accepted, max(0, 100 - len(self.findings)))
+        for finding in islice(findings, retained):
+            self.findings.append(finding)
+        self.processed += accepted
+        self.stopped = self.processed >= 1000
+
 
 class _StreamPattern:
     def __init__(self, definition, path, line, is_allowlisted, redact, check_budget):
@@ -356,12 +365,10 @@ def scan_line_events(path, events, report, is_allowlisted, redact,
                 raise ValueError("unopened stream line")
             for machine in machines or ():
                 machine.finish_match()
-                accepted = min(machine.count, 1000 - report.processed)
-                for redacted in machine.matches[:min(accepted, max(0, 100 - len(report.findings)))]:
-                    report.findings.append((machine.name, machine.severity, path, line, redacted))
-                report.processed += accepted
-                if report.processed == 1000:
-                    report.stopped = True
+                report.record_findings(machine.count,
+                    ((machine.name, machine.severity, path, line, redacted)
+                     for redacted in machine.matches))
+                if report.stopped:
                     break
             machines = None
             line = None

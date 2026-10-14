@@ -1,12 +1,46 @@
 #!/usr/bin/env python3
 # Generated from hooks/families/diagnostics.py by scripts/generate-hooks.py. Do not edit.
+from __future__ import annotations
+
+
+import re as _label_re
+
+
+def credential_label(text):
+    """Recognize credentials in caller-normalized labels before display clipping."""
+    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+SECURITY_HOOK_FILES = ('scan-secrets.py', 'tool-guard.py')
+def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False) -> str:
+    """Quote an already validated five-operand security-hook launch."""
+    import shlex
+
+    arguments = [python, "-I", "-S", "-B", script]
+    if shell == "powershell":
+        return "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
+    if shell == "windows" or (shell == "native" and windows):
+        return f'"{arguments[0]}" -I -S -B "{arguments[-1]}"'
+    return shlex.join(arguments)
+
+def trusted_posix_arguments(command: str) -> list[str] | None:
+    """Recognize only the shared POSIX isolated-interpreter argument shape."""
+    from pathlib import Path
+    import shlex
+
+    try:
+        arguments = shlex.split(command)
+    except ValueError:
+        return None
+    if (len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]
+            or not Path(arguments[0]).is_absolute()):
+        return None
+    return arguments
+
 import hashlib as _diag_hashlib
 import heapq as _diag_heapq
 import json as _diag_json
 import os as _diag_os
 from pathlib import Path as _DiagPath
 import re as _diag_re
-import shlex as _diag_shlex
 import stat as _diag_stat
 import sys as _diag_sys
 import time as _diag_time
@@ -20,6 +54,10 @@ class _DiagnosticsUnavailable(Exception):
 def _diag_unsafe(info):
     return (_diag_stat.S_ISLNK(info.st_mode) or bool(
         getattr(info, "st_file_attributes", 0) & 0x400))
+
+
+def _diag_owner_or_mode_unsafe(info):
+    return _diag_os.name != "nt" and bool(info.st_mode & 0o022 or info.st_uid != _diag_os.getuid())
 
 
 def _diag_directory_flags():
@@ -49,7 +87,8 @@ def _diag_open_directory(path):
 
 def _diag_label(value):
     # Inspect the entire bounded filesystem label before clipping.
-    if _diag_re.search(r"(?i)(gh[pousr]_|github_pat_|sk_(?:live|test)_|rk_live_|xox[baprs]-|AKIA|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", value):
+    normalized = _diag_unicode.normalize("NFKC", value)
+    if credential_label(normalized) or _diag_re.search(r"(?i)(sk_test_|rk_live_|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", normalized):
         return "[REDACTED]"
     value = "".join(char for char in value if not _diag_unicode.category(char).startswith("C") and char not in "\u2028\u2029")
     try:
@@ -229,7 +268,7 @@ def _diag_assets(script, deadline):
             total += len(raw)
             observed = _diag_hashlib.sha256(raw).hexdigest()
             state = "unverified" if expected is None else ("matches" if observed == expected else "drift")
-            if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+            if _diag_owner_or_mode_unsafe(info):
                 state = "unsafe_owner_or_mode"
             records.append({"asset": name, "state": state, "observed_sha256": observed})
         except _DiagnosticsUnavailable as error:
@@ -258,18 +297,14 @@ def _diag_installed_expected(script, registrations=None, executable=None):
     for serialized in registrations:
         event, matcher, handler = _diag_json.loads(serialized)
         keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
-        for filename in ("scan-secrets.py", "tool-guard.py"):
+        for filename in SECURITY_HOOK_FILES:
             if not any(filename in handler.get(key, "") for key in keys):
                 continue
-            arguments = [executable or _diag_sys.executable, "-I", "-S", "-B", str(_DiagPath(script).absolute().parent / filename)]
+            python = executable or _diag_sys.executable
+            path = str(_DiagPath(script).absolute().parent / filename)
             for key in keys:
-                if key == "powershell":
-                    command = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
-                elif key == "commandWindows" or (key == "command" and _diag_os.name == "nt"):
-                    command = '"' + arguments[0] + '" -I -S -B "' + arguments[-1] + '"'
-                else:
-                    command = _diag_shlex.join(arguments)
-                handler[key] = command
+                shell = "powershell" if key == "powershell" else "windows" if key == "commandWindows" else "native" if key == "command" else "posix"
+                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt")
             expected.discard(serialized)
             expected.add(_diag_fingerprint(event, matcher, handler))
     return expected
@@ -286,8 +321,8 @@ def _diag_registered_python(handler):
             if not separator:
                 return None
         else:
-            arguments = _diag_shlex.split(command)
-            if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
+            arguments = trusted_posix_arguments(command)
+            if arguments is None:
                 return None
             executable = arguments[0]
         return executable if _DiagPath(executable).is_absolute() else None
@@ -354,7 +389,7 @@ def _diag_registrations(script, deadline):
         result["missing"] = len(expected - matched)
         result["events"] = sorted(events)
         result["cause"] = "observed"
-        if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+        if _diag_owner_or_mode_unsafe(info):
             result["cause"] = "unsafe_owner_or_mode"
         elif not (result["missing"] or result["duplicates"] or result["unowned"]):
             result["health"] = "observed"
@@ -412,8 +447,8 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'gemini'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '5e3d299afafcc8dde5717f40762af14af17d44a13fe2c2d27451898ba5c3775b'
-DIAG_ASSETS = [('helpers/common.py', 'f8f2bf01352288c56a763f178359c0a57f958c2f047a2e2b9a81c7f6853bd169'), ('helpers/audit.py', '0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'ff0b4319501eb3e60a2f033af919b5e4e12146241b26f36a207823844b901f9b'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
+DIAG_BUILD = 'af77e6a88e438c53ab7bcd7586b67dbc6d436ed4668a67fee2110712e4c6fe7c'
+DIAG_ASSETS = [('helpers/common.py', 'f8f2bf01352288c56a763f178359c0a57f958c2f047a2e2b9a81c7f6853bd169'), ('helpers/audit.py', '0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c3ee195c5bd9eb51c35c799f3d41cf39440d1ec7771917df5411aeecb07a60fe'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['AfterAgent', 'AfterModel', 'AfterTool', 'BeforeAgent', 'BeforeModel', 'BeforeTool', 'BeforeToolSelection', 'Notification', 'PreCompress', 'SessionEnd', 'SessionStart']
 DIAG_REGISTRATIONS = ['["SessionStart",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"SessionStart"},"type":"command"}]', '["SessionStart",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/skill-context-injector.py\\"","description":"Loads required skill files and injects them as context before each agent turn.","env":{"AGENTS_REQUIRED_SKILL_FILES":"caveman/SKILL.md"},"name":"skill-context-injector","type":"command"}]', '["AfterAgent",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"AfterAgent"},"type":"command"}]', '["BeforeAgent",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"BeforeAgent"},"type":"command"}]', '["BeforeModel",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"BeforeModel"},"type":"command"}]', '["AfterModel",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"AfterModel"},"type":"command"}]', '["BeforeToolSelection",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"BeforeToolSelection"},"type":"command"}]', '["BeforeTool","*",{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"BeforeTool"},"type":"command"}]', '["BeforeTool","*",{"command":"python \\"$HOME/.gemini/hooks/scripts/tool-guard.py\\"","description":"Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard.","name":"tool-guard","type":"command"}]', '["BeforeTool","*",{"command":"python \\"$HOME/.gemini/hooks/scripts/scan-secrets.py\\"","description":"Scans workspace diffs for secrets before running any tool.","env":{"SCAN_MODE":"block","SCAN_SCOPE":"diff"},"name":"scan-secrets","type":"command"}]', '["BeforeTool","run_shell_command",{"command":"python \\"$HOME/.gemini/hooks/scripts/rtk-hook-gemini.py\\"","timeout":5000,"type":"command"}]', '["AfterTool",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"AfterTool"},"type":"command"}]', '["PreCompress",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"PreCompress"},"type":"command"}]', '["Notification",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"Notification"},"type":"command"}]', '["SessionEnd",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/send-event.py\\"","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"SessionEnd"},"type":"command"}]', '["SessionEnd",null,{"command":"python \\"$HOME/.gemini/hooks/scripts/scan-secrets.py\\"","description":"Scans modified files for potential secrets and logs env-file access during Gemini session shutdown.","env":{"SCAN_MODE":"warn"},"name":"scan-secrets","type":"command"}]']

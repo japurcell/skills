@@ -25,13 +25,61 @@ if str(SCRIPT_DIR) not in sys.path:
 
 from helpers.common import emit_json, read_json_input  # noqa: E402
 
+# BEGIN PROVIDER ADAPTER
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    return {
+        "continue": True,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "permissionDecisionReason": reason,
+    }
+
+
+def emit_block_denial(reason: str) -> None:
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
+# END PROVIDER ADAPTER
+
+import re as _label_re
+
+
+def credential_label(text):
+    """Recognize credentials in caller-normalized labels before display clipping."""
+    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+SECURITY_HOOK_FILES = ('scan-secrets.py', 'tool-guard.py')
+def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False) -> str:
+    """Quote an already validated five-operand security-hook launch."""
+    import shlex
+
+    arguments = [python, "-I", "-S", "-B", script]
+    if shell == "powershell":
+        return "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
+    if shell == "windows" or (shell == "native" and windows):
+        return f'"{arguments[0]}" -I -S -B "{arguments[-1]}"'
+    return shlex.join(arguments)
+
+def trusted_posix_arguments(command: str) -> list[str] | None:
+    """Recognize only the shared POSIX isolated-interpreter argument shape."""
+    from pathlib import Path
+    import shlex
+
+    try:
+        arguments = shlex.split(command)
+    except ValueError:
+        return None
+    if (len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]
+            or not Path(arguments[0]).is_absolute()):
+        return None
+    return arguments
+
 import hashlib as _diag_hashlib
 import heapq as _diag_heapq
 import json as _diag_json
 import os as _diag_os
 from pathlib import Path as _DiagPath
 import re as _diag_re
-import shlex as _diag_shlex
 import stat as _diag_stat
 import sys as _diag_sys
 import time as _diag_time
@@ -45,6 +93,10 @@ class _DiagnosticsUnavailable(Exception):
 def _diag_unsafe(info):
     return (_diag_stat.S_ISLNK(info.st_mode) or bool(
         getattr(info, "st_file_attributes", 0) & 0x400))
+
+
+def _diag_owner_or_mode_unsafe(info):
+    return _diag_os.name != "nt" and bool(info.st_mode & 0o022 or info.st_uid != _diag_os.getuid())
 
 
 def _diag_directory_flags():
@@ -74,7 +126,8 @@ def _diag_open_directory(path):
 
 def _diag_label(value):
     # Inspect the entire bounded filesystem label before clipping.
-    if _diag_re.search(r"(?i)(gh[pousr]_|github_pat_|sk_(?:live|test)_|rk_live_|xox[baprs]-|AKIA|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", value):
+    normalized = _diag_unicode.normalize("NFKC", value)
+    if credential_label(normalized) or _diag_re.search(r"(?i)(sk_test_|rk_live_|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", normalized):
         return "[REDACTED]"
     value = "".join(char for char in value if not _diag_unicode.category(char).startswith("C") and char not in "\u2028\u2029")
     try:
@@ -254,7 +307,7 @@ def _diag_assets(script, deadline):
             total += len(raw)
             observed = _diag_hashlib.sha256(raw).hexdigest()
             state = "unverified" if expected is None else ("matches" if observed == expected else "drift")
-            if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+            if _diag_owner_or_mode_unsafe(info):
                 state = "unsafe_owner_or_mode"
             records.append({"asset": name, "state": state, "observed_sha256": observed})
         except _DiagnosticsUnavailable as error:
@@ -283,18 +336,14 @@ def _diag_installed_expected(script, registrations=None, executable=None):
     for serialized in registrations:
         event, matcher, handler = _diag_json.loads(serialized)
         keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
-        for filename in ("scan-secrets.py", "tool-guard.py"):
+        for filename in SECURITY_HOOK_FILES:
             if not any(filename in handler.get(key, "") for key in keys):
                 continue
-            arguments = [executable or _diag_sys.executable, "-I", "-S", "-B", str(_DiagPath(script).absolute().parent / filename)]
+            python = executable or _diag_sys.executable
+            path = str(_DiagPath(script).absolute().parent / filename)
             for key in keys:
-                if key == "powershell":
-                    command = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
-                elif key == "commandWindows" or (key == "command" and _diag_os.name == "nt"):
-                    command = '"' + arguments[0] + '" -I -S -B "' + arguments[-1] + '"'
-                else:
-                    command = _diag_shlex.join(arguments)
-                handler[key] = command
+                shell = "powershell" if key == "powershell" else "windows" if key == "commandWindows" else "native" if key == "command" else "posix"
+                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt")
             expected.discard(serialized)
             expected.add(_diag_fingerprint(event, matcher, handler))
     return expected
@@ -311,8 +360,8 @@ def _diag_registered_python(handler):
             if not separator:
                 return None
         else:
-            arguments = _diag_shlex.split(command)
-            if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
+            arguments = trusted_posix_arguments(command)
+            if arguments is None:
                 return None
             executable = arguments[0]
         return executable if _DiagPath(executable).is_absolute() else None
@@ -379,7 +428,7 @@ def _diag_registrations(script, deadline):
         result["missing"] = len(expected - matched)
         result["events"] = sorted(events)
         result["cause"] = "observed"
-        if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+        if _diag_owner_or_mode_unsafe(info):
             result["cause"] = "unsafe_owner_or_mode"
         elif not (result["missing"] or result["duplicates"] or result["unowned"]):
             result["health"] = "observed"
@@ -437,8 +486,8 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'copilot'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '59448a0ae2fb8548376077fbc282235964a65dcd9740a8838a9f7db039d44741'
-DIAG_ASSETS = [('helpers/common.py', '55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'ff0b4319501eb3e60a2f033af919b5e4e12146241b26f36a207823844b901f9b'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
+DIAG_BUILD = '7a96670683b287f165f188500403d4e717e9b6acf02081bf4541efa3a0aac28f'
+DIAG_ASSETS = [('helpers/common.py', '55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c3ee195c5bd9eb51c35c799f3d41cf39440d1ec7771917df5411aeecb07a60fe'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['agentStop', 'errorOccurred', 'notification', 'permissionRequest', 'postToolUse', 'postToolUseFailure', 'preCompact', 'preToolUse', 'sessionEnd', 'sessionStart', 'subagentStart', 'subagentStop', 'userPromptSubmitted', 'userPromptTransformed']
 DIAG_REGISTRATIONS = ['["agentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"agentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["errorOccurred",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"errorOccurred"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["notification",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"notification"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["permissionRequest",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"permissionRequest"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preToolUse"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/tool-guard.py","env":{"GUARD_MODE":"block"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/tool-guard.py\\"","timeoutSec":10,"type":"command"}]', '["preToolUse",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"block","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["preCompact",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"preCompact"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["postToolUseFailure",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"postToolUseFailure"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["subagentStop",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"subagentStop"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionEnd"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","timeoutSec":30,"type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/bell.py","powershell":"python \\"$HOME/.copilot/hooks/scripts/bell.py\\"","type":"command"}]', '["sessionEnd",null,{"bash":"$HOME/.copilot/hooks/scripts/scan-secrets.py","env":{"SCAN_MODE":"warn","SCAN_SCOPE":"diff"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/scan-secrets.py\\"","timeoutSec":30,"type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"sessionStart"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["sessionStart",null,{"bash":"$HOME/.copilot/hooks/scripts/load-required-skills.py","env":{"AGENTS_REQUIRED_SKILL_FILES":"caveman/SKILL.md"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/load-required-skills.py\\"","type":"command"}]', '["userPromptSubmitted",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptSubmitted"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]', '["userPromptTransformed",null,{"bash":"$HOME/.copilot/hooks/scripts/send-event.py","env":{"OBSERVABILITY_CAPTURE_EVENT":"true","OBSERVABILITY_SOURCE_EVENT_NAME":"userPromptTransformed"},"powershell":"python \\"$HOME/.copilot/hooks/scripts/send-event.py\\"","type":"command"}]']
@@ -487,12 +536,7 @@ def _diagnostic_request(payload):
 # BEGIN PROVIDER ADAPTER
 def _diagnostic_denial(text):
     reason = "scan-secrets diagnostics (request not executed):" + text
-    if DIAG_PROVIDER == "gemini":
-        return {"decision": "deny", "reason": reason}
-    if DIAG_PROVIDER == "codex":
-        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
-    return {"continue": True, "permissionDecision": "deny", "permissionDecisionReason": reason,
-            "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+    return block_denial_payload(reason, "PreToolUse")
 # END PROVIDER ADAPTER
 
 
@@ -592,7 +636,7 @@ SCAN_ACTION = "scan"
 SCAN_REPORT = None
 SCAN_FINDINGS = []
 SCAN_SECURITY_OUTCOME = "incomplete"
-REPORT_BUILD = "ca755936706a9bb6"
+REPORT_BUILD = "ecfdd6304c36883b"
 REPORT_PROVIDER = DIAG_PROVIDER
 
 
@@ -682,19 +726,8 @@ def enforce_deadline(deadline: float | None) -> None:
 def noop() -> None:
     emit_json({})
     raise SystemExit(0)
-# BEGIN PROVIDER ADAPTER
-def emit_block_denial(reason: str) -> None:
-    emit_json({
-        "continue": True,
-        "permissionDecision": "deny",
-        "hookSpecificOutput": {
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        },
-        "permissionDecisionReason": reason,
-    })
-# END PROVIDER ADAPTER
 import codecs
+from itertools import islice
 import re
 import sys
 import unicodedata
@@ -927,6 +960,14 @@ class StreamReport:
         self.processed = processed
         self.stopped = processed >= 1000
 
+    def record_findings(self, count, findings):
+        accepted = min(count, 1000 - self.processed)
+        retained = min(accepted, max(0, 100 - len(self.findings)))
+        for finding in islice(findings, retained):
+            self.findings.append(finding)
+        self.processed += accepted
+        self.stopped = self.processed >= 1000
+
 
 class _StreamPattern:
     def __init__(self, definition, path, line, is_allowlisted, redact, check_budget):
@@ -1047,12 +1088,10 @@ def scan_line_events(path, events, report, is_allowlisted, redact,
                 raise ValueError("unopened stream line")
             for machine in machines or ():
                 machine.finish_match()
-                accepted = min(machine.count, 1000 - report.processed)
-                for redacted in machine.matches[:min(accepted, max(0, 100 - len(report.findings)))]:
-                    report.findings.append((machine.name, machine.severity, path, line, redacted))
-                report.processed += accepted
-                if report.processed == 1000:
-                    report.stopped = True
+                report.record_findings(machine.count,
+                    ((machine.name, machine.severity, path, line, redacted)
+                     for redacted in machine.matches))
+                if report.stopped:
                     break
             machines = None
             line = None
@@ -1086,7 +1125,7 @@ def report_label(value):
             return report_text(text)
     # Labels have no need to reproduce a credential-bearing identifier. Omit the
     # whole label, including credentials crossing the display clipping boundary.
-    if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):
+    if credential_label(text):
         return "[REDACTED]"
     return report_text(text)
 
@@ -1521,13 +1560,8 @@ def collect_unmerged_files(
     with capture_git(["ls-files", "--unmerged", "-z", "--"], cwd=root,
                      deadline=deadline) as capture:
         for record in capture.records(b"\0"):
-            header, separator, raw_path = record.partition(b"\t")
-            match = re.fullmatch(rb"[0-7]{6} (?:[0-9a-f]{40}|[0-9a-f]{64}) ([123])", header)
-            if not separator or not raw_path or match is None:
-                raise GitCommandError("git_output_invalid", "git_candidates")
-            path = os.fsdecode(raw_path)
-            _validate_candidate_parts(path)
-            source = CANDIDATE_UNMERGED_STAGES[int(match.group(1)) - 1]
+            source, path, _ = parse_index_record(
+                record, allowed_stages={1, 2, 3}, operation="git_candidates")
             candidate = (source, path)
             if candidate in seen:
                 raise GitCommandError("git_output_invalid", "git_candidates")
@@ -1583,6 +1617,25 @@ def _validate_candidate_parts(path: str) -> tuple[str, ...]:
     if parsed.is_absolute() or not parsed.parts or any(part in {"", ".", ".."} for part in parsed.parts):
         raise ScanSecurityError("candidate_unsafe", "candidate_read")
     return parsed.parts
+
+
+def parse_index_record(record: bytes, *, allowed_stages: set[int], operation: str,
+                       canonical_path: bool = False) -> tuple[str, str, bytes]:
+    header, separator, raw_path = record.partition(b"\t")
+    match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
+    if not separator or not raw_path or match is None or int(match.group(2)) not in allowed_stages:
+        raise GitCommandError("git_output_invalid", operation)
+    path = os.fsdecode(raw_path)
+    parts = _validate_candidate_parts(path)
+    if canonical_path and "/".join(parts) != path:
+        raise GitCommandError("git_output_invalid", operation)
+    stage = int(match.group(2))
+    source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
+    return source, path, match.group(1)
+
+
+def is_index_source(source: str) -> bool:
+    return source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES
 
 
 @contextlib.contextmanager
@@ -1745,24 +1798,17 @@ def resolve_index_candidates(root: Path, index_candidates: list[tuple[str, str]]
             if capture is None or not capture.size:
                 raise GitCommandError("git_output_invalid", "git_index")
             for record in capture.records(b"\0"):
-                header, separator, raw_path = record.partition(b"\t")
-                match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
-                if not separator or not raw_path or match is None:
-                    raise GitCommandError("git_output_invalid", "git_index")
-                path = os.fsdecode(raw_path)
-                if "/".join(_validate_candidate_parts(path)) != path:
-                    raise GitCommandError("git_output_invalid", "git_index")
+                source, path, oid = parse_index_record(
+                    record, allowed_stages={0, 1, 2, 3}, operation="git_index", canonical_path=True)
                 if path not in batch_paths:
                     # Literal pathspecs still expand directory descendants.
                     if any(path.startswith(parent + "/") for parent in batch_paths):
                         continue
                     raise GitCommandError("git_output_invalid", "git_index")
-                stage = int(match.group(2))
-                source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
                 candidate = (source, path)
                 if candidate not in expected_candidates or candidate in resolved:
                     raise GitCommandError("git_output_invalid", "git_index")
-                resolved[candidate] = match.group(1)
+                resolved[candidate] = oid
     if len(resolved) != len(index_candidates):
         raise GitCommandError("git_output_invalid", "git_index")
     return resolved
@@ -1778,9 +1824,7 @@ class SnapshotSource:
         self.cursor = 0
         self.batch_owner = contextlib.ExitStack()
         self.ranges: dict[tuple[str, str], tuple[VerifiedCapture, int, int]] = {}
-        index_candidates = [candidate for candidate in candidates
-                            if candidate[0] == CANDIDATE_STAGED
-                            or candidate[0] in CANDIDATE_UNMERGED_STAGES]
+        index_candidates = [candidate for candidate in candidates if is_index_source(candidate[0])]
         if not index_candidates:
             return
         resolved = resolve_index_candidates(root, index_candidates, deadline=budget.deadline)
@@ -1848,7 +1892,7 @@ class SnapshotSource:
         source, path = candidate
         snapshot = None
         try:
-            if source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES:
+            if is_index_source(source):
                 if candidate not in self.ranges:
                     self._next_batch()
                 snapshot = Snapshot(candidate, *self.ranges[candidate])
@@ -2327,17 +2371,20 @@ def record_finding(
     finding: tuple[str, str, str, int, str],
     processed_findings: int,
 ) -> tuple[int, bool]:
-    processed_findings += 1
-    if len(findings) < MAX_RETAINED_FINDINGS:
-        findings.append(finding)
-    return processed_findings, processed_findings >= MAX_PROCESSED_FINDINGS
+    report = StreamReport(findings, processed_findings)
+    report.record_findings(1, (finding,))
+    return report.processed, report.stopped
+
+
+def scanner_attribution(security: str, audit: str, enforcement: str, route: str, cause: str) -> str:
+    return (f"security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
+            f"profile=pending_snapshots_v1; route={route}; cause={cause}.")
 
 
 def emit_output(findings_count: int, log_path: Path, checked_files: int = 0, skipped: bool = False) -> None:
     if findings_count > 0:
         emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected. "
-                   f"security_outcome=findings; audit_outcome=written; enforcement=allow; build={REPORT_BUILD}; "
-                   "profile=pending_snapshots_v1; route=pending_scan; cause=findings."})
+                   + scanner_attribution("findings", "written", "allow", "pending_scan", "findings")})
         return
     if HOOK_EVENT == "Stop":
         if skipped:
@@ -2384,8 +2431,7 @@ def handle_unexpected_exception(exc: Exception) -> int:
             pass
     finding_message = "potential secrets detected; scan incomplete." if processed else "scan incomplete; potential secrets could not be checked."
     reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; {finding_message} {detail} "
-              f"security_outcome={security}; audit_outcome={audit}; enforcement={'deny' if mode == 'block' else 'allow'}; "
-              f"build={REPORT_BUILD}; profile=pending_snapshots_v1; route=pending_scan; cause={failure.cause}.")
+              + scanner_attribution(security, audit, "deny" if mode == "block" else "allow", "pending_scan", failure.cause))
     print(reason, file=sys.stderr)
     if mode == "block":
         emit_block_denial(reason)
@@ -2407,8 +2453,7 @@ def resolve_work_dir(payload: dict) -> Path:
 
 def findings_denial_reason(scan_log: Path) -> str:
     return (f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected. "
-            f"security_outcome=findings; audit_outcome=written; enforcement=deny; build={REPORT_BUILD}; "
-            "profile=pending_snapshots_v1; route=pending_scan; cause=findings.")
+            + scanner_attribution("findings", "written", "deny", "pending_scan", "findings"))
 
 def resolve_scan_log() -> Path:
     log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
@@ -2448,8 +2493,7 @@ def main() -> int:
         from helpers.audit import audit_init
     except Exception:
         emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI. "
-                          f"security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
-                          "profile=pending_snapshots_v1; route=initialization; cause=audit_unavailable.")
+                          + scanner_attribution("incomplete", "not_attempted", "deny", "initialization", "audit_unavailable"))
         return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
@@ -2488,37 +2532,26 @@ def main() -> int:
         "scope": scope,
         "repo_root_path": work_dir,
     }
+    log_context = {**INCOMPLETE_LOG, "deadline": scan_deadline}
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
 
     if not is_inside_git_repo(work_dir, deadline=scan_deadline):
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="not inside git repository",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
@@ -2527,20 +2560,15 @@ def main() -> int:
     root_has_head = has_head(root, deadline=scan_deadline)
     candidates = collect_files(root, scope, root_has_head, deadline=scan_deadline)
     SCAN_PHASE = "candidate_scan"
+    log_context["repo_root_path"] = root
 
     if not candidates:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=[],
             findings=[],
             note="no modified files to scan",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
@@ -2596,16 +2624,10 @@ def main() -> int:
 
     if not findings:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=env_files,
             findings=[],
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, checked_files=len(candidates))
         return 0
@@ -2614,18 +2636,12 @@ def main() -> int:
     omitted_findings = report.processed - len(findings)
     enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
-        log_path=scan_log,
+        **log_context,
         status="findings",
-        session_id=session_id,
-        timestamp=timestamp,
-        mode=mode,
-        scope=scope,
-        repo_root_path=root,
         env_files=env_files,
         findings=findings_json,
         omitted_findings=omitted_findings,
         findings_truncated=report.stopped or omitted_findings > 0,
-        deadline=scan_deadline,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))

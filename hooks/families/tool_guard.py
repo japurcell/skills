@@ -1613,6 +1613,17 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
 
 _PROVIDER_POLICY_SOURCE = r'''
 REPORT_BUILD = "__REPORT_BUILD__"
+
+
+def inspection_incomplete(threats):
+    return any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats)
+
+
+def guard_attribution(*, security, audit, enforcement, profile, route, cause):
+    # This helper is available before optional policy imports and takes explicit
+    # route/profile values so bootstrap and input failures retain attribution.
+    return (f" security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
+            f"profile={profile}; route={route}; cause={cause}.")
 TOOL_PROFILE = "unsupported"
 TOOL_ROUTE = "strict_fallback"
 PROFILE_CAUSE = "unsupported_tool_profile"
@@ -1686,9 +1697,9 @@ try:
         report_json_bytes,
     )
 except Exception:
-    emit_deny_response("Tool Guardian blocked execution due to an internal error. "
-                       f"security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
-                       "profile=unavailable; route=bootstrap; cause=policy_unavailable.")
+    emit_deny_response("Tool Guardian blocked execution due to an internal error."
+                       + guard_attribution(security="incomplete", audit="not_attempted", enforcement="deny",
+                                           profile="unavailable", route="bootstrap", cause="policy_unavailable"))
 
 
 def read_tool_name(payload: dict) -> str:
@@ -1920,7 +1931,7 @@ def guard_report(payload):
     """Retain bounded owned metadata, then serialize in the provider adapter."""
     security = "findings" if payload.get("threat_count") else "clean"
     threats = payload.get("threats", [])
-    incomplete = any(item["category"] in {"input_limits", "inspection_failure"} for item in threats)
+    incomplete = inspection_incomplete(threats)
     if incomplete:
         security = "incomplete"
     payload.update(build=REPORT_BUILD, provider=TOOL_PROVIDER, profile=TOOL_PROFILE,
@@ -1945,30 +1956,40 @@ def record_guard(event, mode, tool_name, threats=None, excerpt="command omitted"
         log_payload(event, mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
     except Exception:
         # A failed audit cannot erase a security finding or allow a clean call.
-        incomplete = any(t["category"] in {"input_limits", "inspection_failure"} for t in threats)
+        incomplete = inspection_incomplete(threats)
         warning = mode == "warn" and threats and not incomplete
         outcome = "warning" if warning else "blocked"
         reason = build_block_reason(tool_name, threats, excerpt, outcome) if threats else "Tool Guardian blocked: audit unavailable."
-        reason += (f" security_outcome={'incomplete' if incomplete else 'findings' if threats else 'clean'}; audit_outcome=failed; "
-                   f"enforcement={'allow' if warning else 'deny'}; build={REPORT_BUILD}; "
-                   f"profile={TOOL_PROFILE}; route={TOOL_ROUTE}; cause=audit_unavailable.")
+        reason += guard_attribution(security="incomplete" if incomplete else "findings" if threats else "clean",
+                                    audit="failed", enforcement="allow" if warning else "deny",
+                                    profile=TOOL_PROFILE, route=TOOL_ROUTE, cause="audit_unavailable")
         if warning:
             emit_allow_response(reason)
         emit_deny_response(reason)
 
 
 def attributed_reason(tool_name, threats, excerpt, outcome):
-    incomplete = any(t["category"] in {"input_limits", "inspection_failure"} for t in threats)
+    incomplete = inspection_incomplete(threats)
     cause = threats[0]["rule_id"] if threats else PROFILE_CAUSE
     return (build_block_reason(tool_name, threats, excerpt, outcome)
-            + f" security_outcome={'incomplete' if incomplete else 'findings'}; audit_outcome=written; "
-            + f"enforcement={'allow' if outcome == 'warning' else 'deny'}; build={REPORT_BUILD}; "
-            + f"profile={TOOL_PROFILE}; route={TOOL_ROUTE}; cause={cause}.")
+            + guard_attribution(security="incomplete" if incomplete else "findings", audit="written",
+                                enforcement="allow" if outcome == "warning" else "deny",
+                                profile=TOOL_PROFILE, route=TOOL_ROUTE, cause=cause))
 
 
 def input_failure_reason(reason, cause):
-    return (reason + f" security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
-            + f"profile=unsupported; route=input_validation; cause={cause}.")
+    return reason + guard_attribution(security="incomplete", audit="not_attempted", enforcement="deny",
+                                     profile="unsupported", route="input_validation", cause=cause)
+
+
+def guard_log_payload(event, mode, tool_name, timestamp, threat_count=0, threats=None, excerpt=None):
+    payload = {"timestamp": timestamp, "event": event, "mode": mode,
+               "tool": sanitize_tool_name(tool_name)}
+    if event == "threats_detected":
+        payload["threat_count"] = threat_count
+        payload["threats"] = threats or []
+        payload["excerpt"] = excerpt or "command omitted"
+    return guard_report(payload)
 
 '''
 
@@ -1989,18 +2010,7 @@ def configure_log() -> None:
 
 
 def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
-    payload: dict[str, object] = {
-        "timestamp": TIMESTAMP,
-        "event": event,
-        "mode": mode,
-        "tool": sanitize_tool_name(tool_name),
-    }
-    if event == "threats_detected":
-        payload["threat_count"] = threat_count
-        payload["threats"] = threats or []
-        payload["excerpt"] = excerpt or "command omitted"
-
-    payload = guard_report(payload)
+    payload = guard_log_payload(event, mode, tool_name, TIMESTAMP, threat_count, threats, excerpt)
 
     old_audit_log = os.environ.get("AUDIT_LOG")
     old_audit_lock = os.environ.get("AUDIT_LOCK")
@@ -2121,18 +2131,7 @@ def append_log(
     if parent:
         os.makedirs(parent, mode=0o700, exist_ok=True)
 
-    payload: dict[str, object] = {
-        "timestamp": timestamp,
-        "event": event,
-        "mode": mode,
-        "tool": sanitize_tool_name(tool_name),
-    }
-    if event == "threats_detected":
-        payload["threat_count"] = threat_count
-        payload["threats"] = threats or []
-        payload["excerpt"] = excerpt or "command omitted"
-
-    payload = guard_report(payload)
+    payload = guard_log_payload(event, mode, tool_name, timestamp, threat_count, threats, excerpt)
 
     lock_descriptor = _acquire_log_lock(f"{log_file}.lock")
     try:
@@ -2186,7 +2185,7 @@ def main() -> int:
         threats = [limit.threat()]
     except UnicodeError:
         threats = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
-    if any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
+    if inspection_incomplete(threats):
         excerpt = "command omitted"
         record_guard("threats_detected", mode, tool_name, threats, excerpt)
         emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))

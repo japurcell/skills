@@ -2,7 +2,6 @@
 """Exercise bounded stdin transport through generated public security hooks."""
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 from pathlib import Path
@@ -14,6 +13,7 @@ import unittest
 from unittest import mock
 
 from tool_guard_corpus import decision as guardian_decision, script_path
+from hook_test_support import fresh_common, raw_tool_envelope
 
 
 def decision(provider: str, response: dict) -> str:
@@ -117,10 +117,7 @@ class HookInputBoundsTests(unittest.TestCase):
                         self.assert_input_denial(provider, process)
 
     def payload(self, provider: str, tool: str, value: object) -> dict:
-        if provider == "copilot":
-            return {"hook_event_name": "preToolUse", "toolName": tool, "toolArgs": value}
-        return {"hook_event_name": "PreToolUse" if provider == "codex" else "BeforeTool",
-                "tool_name": tool, "tool_input": value}
+        return raw_tool_envelope(provider, tool, value)
 
     def test_complete_open_stdin_and_split_utf8_stay_usable(self) -> None:
         for provider in PROVIDERS:
@@ -289,9 +286,7 @@ class HookInputBoundsTests(unittest.TestCase):
 
 class JsonCollectionParityTests(unittest.TestCase):
     def test_json_authority_and_explicit_depth_policy_across_chunk_widths(self) -> None:
-        spec = importlib.util.spec_from_file_location("parity_common", ROOT / ".codex/hooks/helpers/common.py")
-        common = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(common)
+        common = fresh_common(ROOT, "parity_common")
         strings = ("", "ordinary" * 10000, "界é", "{}[]", 'quote"end',
                    "\\", "\\a", '\\"', "\\\\", "\\\\a", '\\\\"', "\\u1234", "\n\t")
         inputs = [json.dumps({"value": text, "after": [{"x": 1}]}, ensure_ascii=ascii_only).encode()
@@ -334,9 +329,7 @@ class StdinChunkTests(unittest.TestCase):
     """The approved descriptor adapter seam complements public pipe tests."""
 
     def setUp(self) -> None:
-        spec = importlib.util.spec_from_file_location("bounded_common", ROOT / ".codex/hooks/helpers/common.py")
-        self.common = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.common)
+        self.common = fresh_common(ROOT, "bounded_common")
         self.reader, self.writer = os.pipe()
         self.addCleanup(os.close, self.reader)
         self.addCleanup(os.close, self.writer)
@@ -399,9 +392,7 @@ class StdinChunkTests(unittest.TestCase):
 
 class WindowsReadinessContractTests(unittest.TestCase):
     def test_windows_adapter_keeps_readiness_authority_without_posix_flags(self) -> None:
-        spec = importlib.util.spec_from_file_location("windows_common", ROOT / ".codex/hooks/helpers/common.py")
-        common = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(common)
+        common = fresh_common(ROOT, "windows_common")
         for ready in (False, True):
             with self.subTest(ready=ready), mock.patch.object(common.os, "name", "nt"), mock.patch.object(
                 common, "_stdin_is_ready", return_value=ready

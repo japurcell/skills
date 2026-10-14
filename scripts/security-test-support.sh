@@ -44,7 +44,7 @@ security_guard_log_rows() {
 
 security_guard_report_suffix() {
   # Compare native attribution with the actual successfully written audit row.
-  sed 's/^[^{]*//' "$1/guard.log" | tail -n 1 | jq -r \
+  security_guard_log_rows "$1/guard.log" | tail -n 1 | jq -r \
     '" security_outcome=\(.security_outcome); audit_outcome=\(.audit_outcome); enforcement=\(.enforcement); build=\(.build); profile=\(.profile); route=\(.route); cause=\(.cause)."'
 }
 

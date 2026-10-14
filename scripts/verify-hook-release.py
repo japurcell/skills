@@ -15,7 +15,6 @@ import importlib.util
 import json
 from pathlib import Path
 import platform
-import re
 import shutil
 import subprocess
 import sys
@@ -23,6 +22,7 @@ import tempfile
 import time
 
 from tool_guard_corpus import PROVIDERS, decision, script_path
+from hook_benchmark_support import collect_macos_rss, guardian_runtime_footprint
 
 
 def load_runner(name: str, filename: str):
@@ -43,9 +43,8 @@ def baseline_fingerprints() -> dict[str, str]:
     """Validate the supplied archive against the fixed Git source, not a label."""
     root = Path(__file__).resolve().parents[1]
     names = subprocess.check_output(["git", "-C", str(root), "ls-tree", "-r", "--name-only", BASELINE_REF], text=True).splitlines()
-    scripts = [script_path(Path("."), provider).as_posix() for provider in PROVIDERS]
-    helpers = [str(Path(path).parent / "helpers") + "/" for path in scripts]
-    selected = [name for name in names if name in scripts or name == "hooks/families/tool_guard.py"
+    scripts, helpers, canonical = guardian_runtime_footprint()
+    selected = [name for name in names if name in scripts or name == canonical
                 or (name.endswith(".py") and any(name.startswith(prefix) for prefix in helpers))]
     return {name: hashlib.sha256(subprocess.check_output(["git", "-C", str(root), "show", f"{BASELINE_REF}:{name}"])).hexdigest()
             for name in selected}
@@ -160,21 +159,29 @@ def logging_error(proof: dict) -> None:
         raise ValueError(f"expected {proof['calls']} completed guard records, found {proof['records']}")
 
 
+def retain_warm_sample(row: dict, index: int, warmups: int, elapsed: float, output: dict) -> None:
+    if index == 0:
+        row["first_process_ms"] = elapsed
+        row["first_output"] = output
+    elif index > warmups:
+        row["samples_ms"].append(elapsed)
+        row["outputs"].append(output)
+
+
+def finalize_warm_run(row: dict, case, home: Path, calls: int) -> None:
+    row["summary"] = high_rate.summary(row["samples_ms"])
+    row["provider_bytecode_after"] = len(list(case.script.parent.rglob("*.pyc")))
+    row["logging"] = verify_logging(home, case, calls)
+
+
 def warm_run(case, root: Path, repo: Path, home: Path, samples: int, warmups: int, row: dict) -> None:
     home.mkdir(parents=True)
     case = prepared_case(case, root)
     row.update({"samples_ms": [], "outputs": []})
     for index in range(1 + warmups + samples):
         elapsed, output = checked_invocation(case, repo, home)
-        if index == 0:
-            row["first_process_ms"] = elapsed
-            row["first_output"] = output
-        elif index > warmups:
-            row["samples_ms"].append(elapsed)
-            row["outputs"].append(output)
-    row["summary"] = high_rate.summary(row["samples_ms"])
-    row["provider_bytecode_after"] = len(list(case.script.parent.rglob("*.pyc")))
-    row["logging"] = verify_logging(home, case, 1 + warmups + samples)
+        retain_warm_sample(row, index, warmups, elapsed, output)
+    finalize_warm_run(row, case, home, 1 + warmups + samples)
     logging_error(row["logging"])
 
 
@@ -201,17 +208,10 @@ def warm_pair_run(cases: dict, roots: dict, repo: Path, homes: dict,
             last[label] = {"case": cases[label].name, "condition": label,
                            "elapsed_ms": elapsed, "expected_decision": cases[label].expected_decision,
                            **output, **observation}
-            if index == 0:
-                row["first_process_ms"] = elapsed
-                row["first_output"] = output
-            elif index > warmups:
-                row["samples_ms"].append(elapsed)
-                row["outputs"].append(output)
+            retain_warm_sample(row, index, warmups, elapsed, output)
     for label in ORDER[pair]:
         row = rows[label]
-        row["summary"] = high_rate.summary(row["samples_ms"])
-        row["provider_bytecode_after"] = len(list(prepared[label].script.parent.rglob("*.pyc")))
-        row["logging"] = verify_logging(homes[label], prepared[label], 1 + warmups + samples)
+        finalize_warm_run(row, prepared[label], homes[label], 1 + warmups + samples)
     for label in ORDER[pair]:
         try:
             logging_error(rows[label]["logging"])
@@ -252,7 +252,8 @@ def compare(name: str, phase: str, conditions: dict, median_limit: float, p95_li
 def harness_fingerprints() -> dict[str, str]:
     return {name: hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
             for name in (Path(__file__).name, "benchmark-high-rate-hooks.py", "benchmark-tool-guard-resources.py",
-                         "tool_guard_corpus.py", "fixtures/tool_guard_vectors.py")}
+                         "tool_guard_corpus.py", "fixtures/tool_guard_vectors.py", "hook_benchmark_support.py",
+                         "hook_test_support.py")}
 
 
 def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, samples: int, warmups: int, cold_samples: int) -> None:
@@ -345,12 +346,13 @@ def measure_resources(report: dict, roots: dict, selected: dict, temporary: Path
             warm_run(case, frozen, repo, home, samples, warmups, row)
             current = prepared_case(case, frozen)
             env = high_rate.invocation_environment(current, home)
-            memory = resources.checked_run(["/usr/bin/time", "-l", sys.executable, str(current.script)],
-                                           current.payload, env, case.name.split(".", 1)[0], case.expected_decision, cwd=repo)
-            match = re.search(rb"([0-9]+)\s+maximum resident set size", memory.stderr)
-            if match is None:
+            memory, rss = collect_macos_rss([sys.executable, str(current.script)],
+                                          lambda argv: resources.checked_run(argv, current.payload, env,
+                                                                             case.name.split(".", 1)[0],
+                                                                             case.expected_decision, cwd=repo))
+            if rss is None:
                 raise ValueError("native macOS time did not report peak RSS: " + memory.stderr.decode("utf-8", errors="replace")[:512])
-            row["peak_rss_bytes"] = int(match.group(1))
+            row["peak_rss_bytes"] = rss
             row["logging"] = verify_logging(home, current, 2 + warmups + samples)
             logging_error(row["logging"])
             row["ceiling_met"] = max(row["first_process_ms"], *row["samples_ms"]) <= 500

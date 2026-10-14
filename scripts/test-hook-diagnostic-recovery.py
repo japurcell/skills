@@ -10,17 +10,30 @@ import sys
 import tempfile
 import unittest
 
+from hook_test_support import hook_entrypoint, raw_tool_envelope
+
 ROOT = Path(__file__).resolve().parent.parent
 PROVIDERS = ("codex", "copilot", "gemini")
 PREFIX = "scan-secrets diagnostics (request not executed):"
 
 def entry(provider):
-    return Path(".codex/hooks/scan-secrets.py" if provider == "codex" else f".{provider}/hooks/scripts/scan-secrets.py")
+    return hook_entrypoint(Path(), provider, "scan-secrets.py")
 
 def envelope(provider, command="hooks-diagnostics-v1", **extra):
-    if provider == "copilot":
-        return {"hook_event_name": "preToolUse", "toolName": "bash", "toolArgs": {"command": command, **extra}}
-    return {"hook_event_name": "PreToolUse" if provider == "codex" else "BeforeTool", "tool_name": "exec_command" if provider == "codex" else "run_shell_command", "tool_input": {**({"cmd": command, "login": False} if provider == "codex" else {"command": command}), **extra}}
+    tool = {"copilot": "bash", "codex": "exec_command", "gemini": "run_shell_command"}[provider]
+    value = {"cmd": command, "login": False} if provider == "codex" else {"command": command}
+    return raw_tool_envelope(provider, tool, {**value, **extra})
+
+
+def registered_handlers(config, provider):
+    event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
+    groups = config["hooks"][event]
+    return groups if provider == "copilot" else [handler for group in groups for handler in group["hooks"]]
+
+
+def registered_handler(config, provider, filename):
+    return next(item for item in registered_handlers(config, provider)
+                if filename in item.get("command", item.get("bash", "")))
 
 def reason(response):
     return response.get("permissionDecisionReason", response.get("reason", response.get("hookSpecificOutput", {}).get("permissionDecisionReason", "")))
@@ -59,14 +72,10 @@ class RecoveryTests(unittest.TestCase):
                     attack_env["PATH"] = str(hostile)
                 for provider, config in configs.items():
                     env["TOOL_GUARD_LOG_DIR"] = str(base / "guardian" / (provider if provider == "gemini" else provider + ".log"))
-                    event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
-                    handlers = config["hooks"][event]
-                    if provider != "copilot":
-                        handlers = [handler for group in handlers for handler in group["hooks"]]
                     for filename in ("scan-secrets.py", "tool-guard.py"):
                         with self.subTest(installer=installer, attack=attack, provider=provider, hook=filename):
                             sentinel.unlink(missing_ok=True)
-                            handler = next(item for item in handlers if filename in item.get("command", item.get("bash", "")))
+                            handler = registered_handler(config, provider, filename)
                             registered = handler["bash" if provider == "copilot" else "command"]
                             result = subprocess.run(["/bin/sh", "-c", registered], cwd=cwd, env={**attack_env, **handler.get("env", {})}, input=json.dumps(envelope(provider)).encode(), capture_output=True, timeout=12)
                             self.assertFalse(sentinel.exists(), (registered, attack))
@@ -102,11 +111,7 @@ class RecoveryTests(unittest.TestCase):
             candidate = cwd / "credential.txt"
             candidate.write_text("ghp_" + "A" * 36)
             for provider, config in configs.items():
-                event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
-                handlers = config["hooks"][event]
-                if provider != "copilot":
-                    handlers = [handler for group in handlers for handler in group["hooks"]]
-                handler = next(item for item in handlers if "scan-secrets.py" in item.get("command", item.get("bash", "")))
+                handler = registered_handler(config, provider, "scan-secrets.py")
                 result = subprocess.run(["/bin/sh", "-c", handler["bash" if provider == "copilot" else "command"]], cwd=cwd, env={**env, **handler.get("env", {})}, input=json.dumps(envelope(provider, "echo safe")).encode(), capture_output=True, timeout=12)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn("potential secrets detected", reason(json.loads(result.stdout)))
@@ -118,11 +123,7 @@ class RecoveryTests(unittest.TestCase):
                 registrations = json.loads(doctor.stdout)["registrations"]
                 self.assertEqual(registrations["health"], "observed", registrations)
                 config = configs[provider]
-                event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
-                handlers = config["hooks"][event]
-                if provider != "copilot":
-                    handlers = [item for group in handlers for item in group["hooks"]]
-                handler = next(item for item in handlers if "scan-secrets.py" in item.get("command", item.get("bash", "")))
+                handler = registered_handler(config, provider, "scan-secrets.py")
                 key = "bash" if provider == "copilot" else "command"
                 original = handler[key]
                 handler[key] += " --doctor"
@@ -211,6 +212,18 @@ class RecoveryTests(unittest.TestCase):
                     response, result = self.launch(script, cwd, env, envelope(provider), mode)
                     report = self.diagnostics(response, result, provider)
                     self.assertEqual(report["repository"]["records"][0]["size"], 8388609)
+
+    @unittest.skipUnless(hasattr(os, "O_NOFOLLOW") and os.scandir in os.supports_fd, "descriptor-relative no-follow proof requires supported OS")
+    def test_recovery_redacts_fake_credential_filenames(self):
+        for provider in PROVIDERS:
+            with self.subTest(provider=provider), tempfile.TemporaryDirectory() as directory:
+                script, cwd, env = self.setup_fixture(directory, provider)
+                for size, label in enumerate(("sk-FAKE-not-a-real-key", "api-key=FAKE", "ｓｋ－ＦＡＫＥ", "ａｐｉ＿ｋｅｙ＝ＦＡＫＥ"), 1):
+                    (cwd / label).write_bytes(b"x" * size)
+                response, result = self.launch(script, cwd, env, envelope(provider))
+                report = self.diagnostics(response, result, provider)
+                self.assertEqual({record["size"]: record["label"] for record in report["repository"]["records"]},
+                                 {1: "[REDACTED]", 2: "[REDACTED]", 3: "[REDACTED]", 4: "[REDACTED]"})
 
     def test_helper_failures_preserve_report_and_common_needs_human_cli(self):
         for provider in PROVIDERS:

@@ -187,6 +187,11 @@ class ReleaseVerificationTests(unittest.TestCase):
             self.assertTrue(report["sources_unchanged"])
             self.assertEqual(report["errors"], [])
             self.assertIn("script_sha256", report)
+            self.assertEqual(set(report["harness_sha256"]), {
+                "verify-hook-release.py", "benchmark-high-rate-hooks.py", "benchmark-tool-guard-resources.py",
+                "tool_guard_corpus.py", "fixtures/tool_guard_vectors.py", "hook_benchmark_support.py",
+                "hook_test_support.py",
+            })
 
     @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
     def test_valid_case_without_logging_is_failure_with_retained_evidence(self) -> None:
@@ -226,9 +231,7 @@ class ReleaseVerificationTests(unittest.TestCase):
                 self.assertEqual(row["ceiling_ms"], 500)
 
     def test_budget_keeps_isolated_pair_violation(self) -> None:
-        spec = importlib.util.spec_from_file_location("release_verification", CLI)
-        adapter = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(adapter)
+        adapter = load_adapter()
         report = {"warm": [
             {"pair": 0, "case": "codex.guard.clean", "condition": "baseline", "summary": {"median_ms": 10, "p95_ms": 20}},
             {"pair": 0, "case": "codex.guard.clean", "condition": "candidate", "summary": {"median_ms": 13, "p95_ms": 20}},

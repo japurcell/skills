@@ -11,12 +11,37 @@ import sys
 import tempfile
 import unittest
 
+from hook_test_support import hook_entrypoint
+
 NOFOLLOW_SUPPORTED = hasattr(os, "O_NOFOLLOW") and os.scandir in os.supports_fd
 
 ROOT = Path(__file__).resolve().parent.parent
-CLIS = {"codex": ROOT / ".codex/hooks/hooks-diagnostics.py", "copilot": ROOT / ".copilot/hooks/scripts/hooks-diagnostics.py", "gemini": ROOT / ".gemini/hooks/scripts/hooks-diagnostics.py"}
+CLIS = {provider: hook_entrypoint(ROOT, provider, "hooks-diagnostics.py") for provider in ("codex", "copilot", "gemini")}
 
 class DiagnosticsTests(unittest.TestCase):
+    @unittest.skipUnless(NOFOLLOW_SUPPORTED, "descriptor-relative no-follow proof requires supported OS")
+    def test_credential_filename_labels_are_redacted_before_display_clipping(self):
+        labels = (("sk-FAKE-not-a-real-key", "[REDACTED]"),
+                  ("api-key=FAKE", "[REDACTED]"),
+                  ("ｓｋ－ＦＡＫＥ", "[REDACTED]"),
+                  ("ａｐｉ＿ｋｅｙ＝ＦＡＫＥ", "[REDACTED]"),
+                  ("x" * 170 + "sk-FAKE", "[REDACTED]"),
+                  ("ASIA-fictional", "[REDACTED]"),
+                  ("sk_test_FAKE", "[REDACTED]"),
+                  ("rk_live_FAKE", "[REDACTED]"),
+                  ("authentication-example", "[REDACTED]"),
+                  ("界" * 54, "界" * 53),
+                  ("plain\nlabel\u202e.txt", "plainlabel.txt"))
+        with tempfile.TemporaryDirectory() as directory:
+            cwd = Path(directory).resolve()
+            for size, (label, _) in enumerate(labels, 1):
+                (cwd / label).write_bytes(b"x" * size)
+            for provider, cli in CLIS.items():
+                with self.subTest(provider=provider):
+                    report, _ = self.launch(cli, cwd)
+                    observed = {record["size"]: record["label"] for record in report["repository"]["records"]}
+                    self.assertEqual(observed, {size: expected for size, (_, expected) in enumerate(labels, 1)})
+
     def test_cli_fixed_parser_isolated_imports(self):
         with tempfile.TemporaryDirectory() as directory:
             cwd = Path(directory)
@@ -34,7 +59,12 @@ class DiagnosticsTests(unittest.TestCase):
                     self.assertLessEqual(len(result.stdout), 16384)
                     self.assertFalse(sentinel.exists())
                     for args in (["--help"], ["--doctor"]):
-                        self.assertEqual(subprocess.run([sys.executable, "-I", "-S", "-B", str(cli), *args], cwd=cwd, capture_output=True, timeout=5).returncode, 0)
+                        response = subprocess.run([sys.executable, "-I", "-S", "-B", str(cli), *args], cwd=cwd, capture_output=True, timeout=5)
+                        self.assertEqual(response.returncode, 0, response.stderr)
+                        self.assertEqual(response.stderr, b"")
+                        if args == ["--help"]:
+                            self.assertIn(b"usage: hooks-diagnostics.py", response.stdout)
+                            self.assertIn(b"No operands: current-directory metadata", response.stdout)
                     for args in (["."], ["--doctor", "."], ["--help", "--doctor"], ["--config", "evil"], ["--do"]):
                         rejected = subprocess.run([sys.executable, "-I", "-S", "-B", str(cli), *args], cwd=cwd, capture_output=True, timeout=5)
                         self.assertEqual(rejected.returncode, 2)
@@ -161,6 +191,19 @@ class DiagnosticsTests(unittest.TestCase):
                     self.assertEqual(settings.read_bytes(), data)
 
     @unittest.skipUnless(NOFOLLOW_SUPPORTED, "descriptor-relative no-follow proof requires supported OS")
+    def test_doctor_rejects_writable_assets_and_settings(self):
+        for provider in CLIS:
+            with self.subTest(provider=provider), tempfile.TemporaryDirectory() as directory:
+                cli, settings, cwd = self.copied_installation(directory, provider)
+                helper = cli.parent / "helpers/common.py"
+                helper.chmod(0o777)
+                settings.chmod(0o666)
+                report, _ = self.launch(cli, cwd, "--doctor")
+                states = {item["asset"]: item["state"] for item in report["assets"]["records"]}
+                self.assertEqual(states["helpers/common.py"], "unsafe_owner_or_mode")
+                self.assertEqual(report["registrations"]["cause"], "unsafe_owner_or_mode")
+
+    @unittest.skipUnless(NOFOLLOW_SUPPORTED, "descriptor-relative no-follow proof requires supported OS")
     def test_linked_settings_assets_and_repository_are_not_followed(self):
         with tempfile.TemporaryDirectory() as directory:
             cli, settings, cwd = self.copied_installation(directory, "codex")
@@ -232,6 +275,8 @@ sys.stdout.buffer.write(module["diagnostics_encode"](report))
         with tempfile.TemporaryDirectory() as directory:
             fixture = Path(directory).resolve()
             shutil.copytree(ROOT / "hooks", fixture / "hooks", ignore=shutil.ignore_patterns("__pycache__"))
+            (fixture / "scripts").mkdir()
+            shutil.copy2(ROOT / "scripts/trusted_hook_launch.py", fixture / "scripts/trusted_hook_launch.py")
             (fixture / ".codex/hooks").mkdir(parents=True)
             shutil.copy2(ROOT / ".codex/global-hooks.json", fixture / ".codex/global-hooks.json")
             scanner = fixture / "hooks/families/scan_secrets.py"

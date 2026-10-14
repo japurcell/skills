@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 """Streaming scanner capacity and semantics through generated JSON entrypoints."""
 from __future__ import annotations
-import importlib.util
 import json
-import os
 import subprocess
 import sys
 import time
 import unittest
-from pathlib import Path
 
-spec = importlib.util.spec_from_file_location("merge_fixture", Path(__file__).with_name("test-scan-secrets-merge.py"))
-fixture = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(fixture)
+import scanner_test_support as fixture
+from scanner_test_support import ScannerFixtureMixin, scanner_tool_payload
 
-class StreamingScannerTests(unittest.TestCase):
+class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
     def setUp(self):
-        fixture.MergeScannerTests.setUp(self)
+        super().setUp()
         self.env["HOME"] = str(self.root)
-    git = fixture.MergeScannerTests.git
-    scan = fixture.MergeScannerTests.scan
-    assert_outcome = fixture.MergeScannerTests.assert_outcome
 
     def findings(self, provider, expected, scope="diff"):
         response, record = self.scan(provider, "block", scope)
@@ -166,10 +159,7 @@ class StreamingScannerTests(unittest.TestCase):
         self.git("add", "--all")
         self.git("commit", "-qm", "baseline")
         (self.repo / "changed.txt").write_text("changed\n")
-        fake_bin = self.root / "bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, sys\n"
             "args = sys.argv[1:]\n"
             "if args[0] == 'diff' and '--name-only' not in args:\n"
@@ -178,40 +168,28 @@ class StreamingScannerTests(unittest.TestCase):
             " + (token + b' ') * 1001 + b'\\nunexpected tail\\n')\n"
             "else:\n"
             "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n")
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"], REAL_GIT=str(self.git_path))
         for provider in fixture.PROVIDERS:
             self.assert_outcome(provider, "block", "diff", "incomplete", cause="git_output_invalid")
 
     def test_input_time_and_git_work_share_nonextendable_deadline(self):
         (self.repo / "pending.txt").write_text("safe\n")
-        fake_bin = self.root / "slow-bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, sys, time\nfrom pathlib import Path\n"
             "count = Path(os.environ['COUNT_FILE'])\n"
             "n = int(count.read_text()) if count.exists() else 0\n"
             "count.write_text(str(n + 1))\n"
             "if n < 4: time.sleep(1.9)\n"
-            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])\n")
-        wrapper.chmod(0o755)
+            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])\n",
+            directory="slow-bin")
         for provider in fixture.PROVIDERS:
             log = self.root / ("deadline-" + provider)
             log.mkdir()
             env = {**self.env, "HOME": str(self.root), "OBSERVABILITY_TESTING": "1",
                    "SCAN_MODE": "block", "SCAN_SCOPE": "diff",
-                   "PATH": str(fake_bin) + os.pathsep + self.env["PATH"],
-                   "REAL_GIT": str(self.git_path), "COUNT_FILE": str(log / "count"),
+                   "COUNT_FILE": str(log / "count"),
                    "SECRETS_LOG_DIR": str(log), "AUDIT_LOG": str(log / "audit.log"),
                    "OBSERVABILITY_LOG_PATH": str(log / "obs.jsonl")}
-            if provider == "copilot":
-                payload = {"hook_event_name": "preToolUse", "toolName": "bash",
-                           "toolArgs": {"command": "git status"}}
-            else:
-                payload = {"hook_event_name": "BeforeTool" if provider == "gemini" else "PreToolUse",
-                           "tool_name": "run_shell_command" if provider == "gemini" else "exec_command",
-                           "tool_input": {"command": "git status"}, "cwd": str(self.repo)}
+            payload = scanner_tool_payload(provider, self.repo)
             process = subprocess.Popen([sys.executable, "-I", "-S", "-B", str(fixture.HOOKS[provider])],
                 cwd=self.repo, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             try:

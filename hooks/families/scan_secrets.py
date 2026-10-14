@@ -5,7 +5,7 @@ from __future__ import annotations
 from hooks.families.allowlist import ALLOWLIST_SOURCE
 from hooks.families.diagnostics import collector_source
 from hooks.families.scanner_stream import SOURCE as STREAM_SOURCE
-from hooks.families.reporting import SOURCE as REPORT_SOURCE, build_identity
+from hooks.families.reporting import BODY_SOURCE as REPORT_SOURCE, build_identity
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
@@ -196,8 +196,8 @@ def noop() -> None:
 
 
 _COPILOT_RESPONSE_ADAPTER = r'''
-def emit_block_denial(reason: str) -> None:
-    emit_json({
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    return {
         "continue": True,
         "permissionDecision": "deny",
         "hookSpecificOutput": {
@@ -205,28 +205,39 @@ def emit_block_denial(reason: str) -> None:
             "permissionDecisionReason": reason,
         },
         "permissionDecisionReason": reason,
-    })
+    }
+
+
+def emit_block_denial(reason: str) -> None:
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
 _GEMINI_RESPONSE_ADAPTER = r'''
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    return {"decision": "deny", "reason": reason}
+
+
 def emit_block_denial(reason: str) -> None:
-    emit_json({"decision": "deny", "reason": reason})
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
 _CODEX_RESPONSE_ADAPTER = r'''
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    if hook_event != "PreToolUse":
+        return {"decision": "block", "reason": reason}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
+
+
 def emit_block_denial(reason: str) -> None:
-    if HOOK_EVENT != "PreToolUse":
-        emit_json({"decision": "block", "reason": reason})
-    else:
-        emit_json({
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            },
-        })
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
@@ -645,13 +656,8 @@ def collect_unmerged_files(
     with capture_git(["ls-files", "--unmerged", "-z", "--"], cwd=root,
                      deadline=deadline) as capture:
         for record in capture.records(b"\0"):
-            header, separator, raw_path = record.partition(b"\t")
-            match = re.fullmatch(rb"[0-7]{6} (?:[0-9a-f]{40}|[0-9a-f]{64}) ([123])", header)
-            if not separator or not raw_path or match is None:
-                raise GitCommandError("git_output_invalid", "git_candidates")
-            path = os.fsdecode(raw_path)
-            _validate_candidate_parts(path)
-            source = CANDIDATE_UNMERGED_STAGES[int(match.group(1)) - 1]
+            source, path, _ = parse_index_record(
+                record, allowed_stages={1, 2, 3}, operation="git_candidates")
             candidate = (source, path)
             if candidate in seen:
                 raise GitCommandError("git_output_invalid", "git_candidates")
@@ -707,6 +713,25 @@ def _validate_candidate_parts(path: str) -> tuple[str, ...]:
     if parsed.is_absolute() or not parsed.parts or any(part in {"", ".", ".."} for part in parsed.parts):
         raise ScanSecurityError("candidate_unsafe", "candidate_read")
     return parsed.parts
+
+
+def parse_index_record(record: bytes, *, allowed_stages: set[int], operation: str,
+                       canonical_path: bool = False) -> tuple[str, str, bytes]:
+    header, separator, raw_path = record.partition(b"\t")
+    match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
+    if not separator or not raw_path or match is None or int(match.group(2)) not in allowed_stages:
+        raise GitCommandError("git_output_invalid", operation)
+    path = os.fsdecode(raw_path)
+    parts = _validate_candidate_parts(path)
+    if canonical_path and "/".join(parts) != path:
+        raise GitCommandError("git_output_invalid", operation)
+    stage = int(match.group(2))
+    source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
+    return source, path, match.group(1)
+
+
+def is_index_source(source: str) -> bool:
+    return source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES
 
 
 @contextlib.contextmanager
@@ -869,24 +894,17 @@ def resolve_index_candidates(root: Path, index_candidates: list[tuple[str, str]]
             if capture is None or not capture.size:
                 raise GitCommandError("git_output_invalid", "git_index")
             for record in capture.records(b"\0"):
-                header, separator, raw_path = record.partition(b"\t")
-                match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
-                if not separator or not raw_path or match is None:
-                    raise GitCommandError("git_output_invalid", "git_index")
-                path = os.fsdecode(raw_path)
-                if "/".join(_validate_candidate_parts(path)) != path:
-                    raise GitCommandError("git_output_invalid", "git_index")
+                source, path, oid = parse_index_record(
+                    record, allowed_stages={0, 1, 2, 3}, operation="git_index", canonical_path=True)
                 if path not in batch_paths:
                     # Literal pathspecs still expand directory descendants.
                     if any(path.startswith(parent + "/") for parent in batch_paths):
                         continue
                     raise GitCommandError("git_output_invalid", "git_index")
-                stage = int(match.group(2))
-                source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
                 candidate = (source, path)
                 if candidate not in expected_candidates or candidate in resolved:
                     raise GitCommandError("git_output_invalid", "git_index")
-                resolved[candidate] = match.group(1)
+                resolved[candidate] = oid
     if len(resolved) != len(index_candidates):
         raise GitCommandError("git_output_invalid", "git_index")
     return resolved
@@ -902,9 +920,7 @@ class SnapshotSource:
         self.cursor = 0
         self.batch_owner = contextlib.ExitStack()
         self.ranges: dict[tuple[str, str], tuple[VerifiedCapture, int, int]] = {}
-        index_candidates = [candidate for candidate in candidates
-                            if candidate[0] == CANDIDATE_STAGED
-                            or candidate[0] in CANDIDATE_UNMERGED_STAGES]
+        index_candidates = [candidate for candidate in candidates if is_index_source(candidate[0])]
         if not index_candidates:
             return
         resolved = resolve_index_candidates(root, index_candidates, deadline=budget.deadline)
@@ -972,7 +988,7 @@ class SnapshotSource:
         source, path = candidate
         snapshot = None
         try:
-            if source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES:
+            if is_index_source(source):
                 if candidate not in self.ranges:
                     self._next_batch()
                 snapshot = Snapshot(candidate, *self.ranges[candidate])
@@ -1403,17 +1419,20 @@ def record_finding(
     finding: tuple[str, str, str, int, str],
     processed_findings: int,
 ) -> tuple[int, bool]:
-    processed_findings += 1
-    if len(findings) < MAX_RETAINED_FINDINGS:
-        findings.append(finding)
-    return processed_findings, processed_findings >= MAX_PROCESSED_FINDINGS
+    report = StreamReport(findings, processed_findings)
+    report.record_findings(1, (finding,))
+    return report.processed, report.stopped
+
+
+def scanner_attribution(security: str, audit: str, enforcement: str, route: str, cause: str) -> str:
+    return (f"security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
+            f"profile=pending_snapshots_v1; route={route}; cause={cause}.")
 
 
 def emit_output(findings_count: int, log_path: Path, checked_files: int = 0, skipped: bool = False) -> None:
     if findings_count > 0:
         emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected. "
-                   f"security_outcome=findings; audit_outcome=written; enforcement=allow; build={REPORT_BUILD}; "
-                   "profile=pending_snapshots_v1; route=pending_scan; cause=findings."})
+                   + scanner_attribution("findings", "written", "allow", "pending_scan", "findings")})
         return
     if HOOK_EVENT == "Stop":
         if skipped:
@@ -1460,8 +1479,7 @@ def handle_unexpected_exception(exc: Exception) -> int:
             pass
     finding_message = "potential secrets detected; scan incomplete." if processed else "scan incomplete; potential secrets could not be checked."
     reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; {finding_message} {detail} "
-              f"security_outcome={security}; audit_outcome={audit}; enforcement={'deny' if mode == 'block' else 'allow'}; "
-              f"build={REPORT_BUILD}; profile=pending_snapshots_v1; route=pending_scan; cause={failure.cause}.")
+              + scanner_attribution(security, audit, "deny" if mode == "block" else "allow", "pending_scan", failure.cause))
     print(reason, file=sys.stderr)
     if mode == "block":
         emit_block_denial(reason)
@@ -1552,12 +1570,7 @@ def _diagnostic_request(payload):
 # BEGIN PROVIDER ADAPTER
 def _diagnostic_denial(text):
     reason = "scan-secrets diagnostics (request not executed):" + text
-    if DIAG_PROVIDER == "gemini":
-        return {"decision": "deny", "reason": reason}
-    if DIAG_PROVIDER == "codex":
-        return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": reason}}
-    return {"continue": True, "permissionDecision": "deny", "permissionDecisionReason": reason,
-            "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+    return block_denial_payload(reason, "PreToolUse")
 # END PROVIDER ADAPTER
 
 
@@ -1605,8 +1618,7 @@ _MAIN_SOURCE = r'''
 
 def findings_denial_reason(scan_log: Path) -> str:
     return (f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected. "
-            f"security_outcome=findings; audit_outcome=written; enforcement=deny; build={REPORT_BUILD}; "
-            "profile=pending_snapshots_v1; route=pending_scan; cause=findings.")
+            + scanner_attribution("findings", "written", "deny", "pending_scan", "findings"))
 
 def resolve_scan_log() -> Path:
     log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
@@ -1646,8 +1658,7 @@ def main() -> int:
         from helpers.audit import audit_init
     except Exception:
         emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI. "
-                          f"security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build={REPORT_BUILD}; "
-                          "profile=pending_snapshots_v1; route=initialization; cause=audit_unavailable.")
+                          + scanner_attribution("incomplete", "not_attempted", "deny", "initialization", "audit_unavailable"))
         return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
@@ -1686,37 +1697,26 @@ def main() -> int:
         "scope": scope,
         "repo_root_path": work_dir,
     }
+    log_context = {**INCOMPLETE_LOG, "deadline": scan_deadline}
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
 
     if not is_inside_git_repo(work_dir, deadline=scan_deadline):
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="not inside git repository",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
@@ -1725,20 +1725,15 @@ def main() -> int:
     root_has_head = has_head(root, deadline=scan_deadline)
     candidates = collect_files(root, scope, root_has_head, deadline=scan_deadline)
     SCAN_PHASE = "candidate_scan"
+    log_context["repo_root_path"] = root
 
     if not candidates:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=[],
             findings=[],
             note="no modified files to scan",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
@@ -1794,16 +1789,10 @@ def main() -> int:
 
     if not findings:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=env_files,
             findings=[],
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, checked_files=len(candidates))
         return 0
@@ -1812,18 +1801,12 @@ def main() -> int:
     omitted_findings = report.processed - len(findings)
     enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
-        log_path=scan_log,
+        **log_context,
         status="findings",
-        session_id=session_id,
-        timestamp=timestamp,
-        mode=mode,
-        scope=scope,
-        repo_root_path=root,
         env_files=env_files,
         findings=findings_json,
         omitted_findings=omitted_findings,
         findings_truncated=report.stopped or omitted_findings > 0,
-        deadline=scan_deadline,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))
@@ -1863,10 +1846,9 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     return (
         SHEBANG
         + HEADER
-        + _PRELUDE_SOURCE.lstrip("\n").replace("__REPORT_BUILD__", build_identity("scan_secrets")).replace("# __DIAGNOSTIC_BOOTSTRAP__", collector_source(provider) + _RECOVERY_SOURCE)
-        + ADAPTER_START
-        + response_adapter.lstrip("\n")
-        + ADAPTER_END
+        + _PRELUDE_SOURCE.lstrip("\n").replace("__REPORT_BUILD__", build_identity("scan_secrets")).replace(
+            "# __DIAGNOSTIC_BOOTSTRAP__",
+            ADAPTER_START + response_adapter.lstrip("\n") + ADAPTER_END + collector_source(provider) + _RECOVERY_SOURCE)
         + STREAM_SOURCE
         + REPORT_SOURCE
         + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)

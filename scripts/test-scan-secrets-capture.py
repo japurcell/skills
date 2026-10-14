@@ -13,13 +13,7 @@ import sys
 import tempfile
 import time
 
-
-ROOT = Path(__file__).resolve().parent.parent
-HOOKS = {
-    "copilot": ROOT / ".copilot/hooks/scripts/scan-secrets.py",
-    "gemini": ROOT / ".gemini/hooks/scripts/scan-secrets.py",
-    "codex": ROOT / ".codex/hooks/scan-secrets.py",
-}
+from scanner_test_support import HOOKS, install_fake_git
 
 
 def payload(provider: str, repo: Path, mode: str) -> dict[str, object]:
@@ -44,11 +38,6 @@ def run_case(
         repo = root / "repo"
         repo.mkdir()
         (repo / ".git").mkdir()
-        fake_bin = root / "bin"
-        fake_bin.mkdir()
-        git_path = fake_bin / "git"
-        git_path.write_text(fake_git, encoding="utf-8")
-        git_path.chmod(0o755)
         real_git = shutil.which("git")
         assert real_git is not None
         subprocess.run([real_git, "-C", str(repo), "init", "-q"], check=True)
@@ -67,9 +56,10 @@ def run_case(
         env = {key: value for key, value in os.environ.items()
                if not key.startswith(("AUDIT_", "OBSERVABILITY_", "COPILOT_OBSERVABILITY_",
                                       "GEMINI_OBSERVABILITY_"))}
-        env.update({"PATH": f"{fake_bin}{os.pathsep}{env['PATH']}", "SCAN_MODE": mode,
+        install_fake_git(root, env, fake_git, real_git=real_git)
+        env.update({"SCAN_MODE": mode,
                     "SECRETS_LOG_DIR": str(root / "logs"), "TMPDIR": str(root),
-                    "REAL_GIT": real_git, "AUDIT_LOG": str(root / "audit.log"),
+                    "AUDIT_LOG": str(root / "audit.log"),
                     "OBSERVABILITY_LOG_PATH": str(root / "observability.jsonl"),
                     "OBSERVABILITY_TESTING": "1", "GIT_CONFIG_NOSYSTEM": "1",
                     "GIT_CONFIG_GLOBAL": os.devnull})
@@ -215,8 +205,7 @@ def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
 
 def main() -> None:
     provider = sys.argv[1]
-    descendant_git = """#!/usr/bin/env python3
-import os, sys, time
+    descendant_git = """import os, sys, time
 if sys.argv[1:3] == ['rev-parse', '--is-inside-work-tree']:
     if os.fork() == 0:
         time.sleep(10)
@@ -226,25 +215,21 @@ if sys.argv[1:3] == ['rev-parse', '--is-inside-work-tree']:
     os._exit(0)
 sys.exit(9)
 """
-    partial_git = """#!/usr/bin/env python3
-import sys, time
+    partial_git = """import sys, time
 sys.stdout.write('true\\n')
 sys.stdout.flush()
 time.sleep(10)
 """
-    oversized_git = """#!/usr/bin/env python3
-import os, time
+    oversized_git = """import os, time
 os.write(1, b'x' * (8388608 + 1))
 time.sleep(10)
 """
-    failed_git = """#!/usr/bin/env python3
-import sys
+    failed_git = """import sys
 sys.stderr.write('/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')
 sys.stdout.write('true\\n')
 sys.exit(9)
 """
-    malformed_git = """#!/usr/bin/env python3
-import os, sys
+    malformed_git = """import os, sys
 args = sys.argv[1:]
 if args[:2] == ['rev-parse', '--is-inside-work-tree']:
     print('true')
@@ -255,15 +240,13 @@ elif args[0] == 'diff':
 else:
     os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])
 """
-    real_git = "#!/usr/bin/env python3\nimport os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
-    failed_head_git = """#!/usr/bin/env python3
-import os, sys
+    real_git = "import os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
+    failed_head_git = """import os, sys
 if sys.argv[1:] == ['rev-parse', '--verify', 'HEAD']:
     sys.exit(128)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 """
-    failed_diff_git = """#!/usr/bin/env python3
-import os, sys
+    failed_diff_git = """import os, sys
 args = sys.argv[1:]
 if args[0] == 'diff':
     flags = args[:args.index('--')]
@@ -275,8 +258,7 @@ if args[0] == 'diff':
 else:
     os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])
 """
-    unsafe_candidate_git = """#!/usr/bin/env python3
-import os, sys
+    unsafe_candidate_git = """import os, sys
 if sys.argv[1:] == ['ls-files', '-z', '--others', '--exclude-standard']:
     sys.stdout.buffer.write(b'../private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN\\0')
 else:
@@ -284,8 +266,7 @@ else:
 """
     missing_candidate_git = unsafe_candidate_git.replace(
         '../private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN', 'missing-file.txt')
-    slow_git = """#!/usr/bin/env python3
-import os, sys, time
+    slow_git = """import os, sys, time
 time.sleep(3)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 """

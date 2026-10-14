@@ -4,11 +4,14 @@ from __future__ import annotations
 import ast
 import hashlib
 import importlib
+import inspect
 import json
 from pathlib import Path
 
 from hooks.manifest import GeneratedTarget, targets
 from hooks.providers import Provider
+from hooks.families.reporting import CREDENTIAL_LABEL_SOURCE
+from scripts.trusted_hook_launch import SECURITY_HOOK_FILES, serialize_trusted_launch, trusted_posix_arguments
 
 LIMITS = {"directories": 1024, "entries": 4096, "records": 256,
           "unsafe_records": 16, "depth": 32, "label_bytes": 160,
@@ -60,7 +63,6 @@ import json as _diag_json
 import os as _diag_os
 from pathlib import Path as _DiagPath
 import re as _diag_re
-import shlex as _diag_shlex
 import stat as _diag_stat
 import sys as _diag_sys
 import time as _diag_time
@@ -74,6 +76,10 @@ class _DiagnosticsUnavailable(Exception):
 def _diag_unsafe(info):
     return (_diag_stat.S_ISLNK(info.st_mode) or bool(
         getattr(info, "st_file_attributes", 0) & 0x400))
+
+
+def _diag_owner_or_mode_unsafe(info):
+    return _diag_os.name != "nt" and bool(info.st_mode & 0o022 or info.st_uid != _diag_os.getuid())
 
 
 def _diag_directory_flags():
@@ -103,7 +109,8 @@ def _diag_open_directory(path):
 
 def _diag_label(value):
     # Inspect the entire bounded filesystem label before clipping.
-    if _diag_re.search(r"(?i)(gh[pousr]_|github_pat_|sk_(?:live|test)_|rk_live_|xox[baprs]-|AKIA|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", value):
+    normalized = _diag_unicode.normalize("NFKC", value)
+    if credential_label(normalized) or _diag_re.search(r"(?i)(sk_test_|rk_live_|ASIA|https?[:/]|auth|password|passwd|secret|token|bearer)", normalized):
         return "[REDACTED]"
     value = "".join(char for char in value if not _diag_unicode.category(char).startswith("C") and char not in "\u2028\u2029")
     try:
@@ -283,7 +290,7 @@ def _diag_assets(script, deadline):
             total += len(raw)
             observed = _diag_hashlib.sha256(raw).hexdigest()
             state = "unverified" if expected is None else ("matches" if observed == expected else "drift")
-            if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+            if _diag_owner_or_mode_unsafe(info):
                 state = "unsafe_owner_or_mode"
             records.append({"asset": name, "state": state, "observed_sha256": observed})
         except _DiagnosticsUnavailable as error:
@@ -312,18 +319,14 @@ def _diag_installed_expected(script, registrations=None, executable=None):
     for serialized in registrations:
         event, matcher, handler = _diag_json.loads(serialized)
         keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
-        for filename in ("scan-secrets.py", "tool-guard.py"):
+        for filename in SECURITY_HOOK_FILES:
             if not any(filename in handler.get(key, "") for key in keys):
                 continue
-            arguments = [executable or _diag_sys.executable, "-I", "-S", "-B", str(_DiagPath(script).absolute().parent / filename)]
+            python = executable or _diag_sys.executable
+            path = str(_DiagPath(script).absolute().parent / filename)
             for key in keys:
-                if key == "powershell":
-                    command = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
-                elif key == "commandWindows" or (key == "command" and _diag_os.name == "nt"):
-                    command = '"' + arguments[0] + '" -I -S -B "' + arguments[-1] + '"'
-                else:
-                    command = _diag_shlex.join(arguments)
-                handler[key] = command
+                shell = "powershell" if key == "powershell" else "windows" if key == "commandWindows" else "native" if key == "command" else "posix"
+                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt")
             expected.discard(serialized)
             expected.add(_diag_fingerprint(event, matcher, handler))
     return expected
@@ -340,8 +343,8 @@ def _diag_registered_python(handler):
             if not separator:
                 return None
         else:
-            arguments = _diag_shlex.split(command)
-            if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
+            arguments = trusted_posix_arguments(command)
+            if arguments is None:
                 return None
             executable = arguments[0]
         return executable if _DiagPath(executable).is_absolute() else None
@@ -408,7 +411,7 @@ def _diag_registrations(script, deadline):
         result["missing"] = len(expected - matched)
         result["events"] = sorted(events)
         result["cause"] = "observed"
-        if _diag_os.name != "nt" and (info.st_mode & 0o022 or info.st_uid != _diag_os.getuid()):
+        if _diag_owner_or_mode_unsafe(info):
             result["cause"] = "unsafe_owner_or_mode"
         elif not (result["missing"] or result["duplicates"] or result["unowned"]):
             result["health"] = "observed"
@@ -505,16 +508,20 @@ def collector_source(provider: Provider) -> str:
     identity = hashlib.sha256()
     for path in sorted((repo / "hooks").rglob("*.py")):
         identity.update(path.relative_to(repo).as_posix().encode() + b"\0" + path.read_bytes() + b"\0")
+    launch_source = (f"SECURITY_HOOK_FILES = {SECURITY_HOOK_FILES!r}\n"
+                     + inspect.getsource(serialize_trusted_launch) + "\n"
+                     + inspect.getsource(trusted_posix_arguments) + "\n")
+    identity.update(launch_source.encode())
     identity.update((repo / template).read_bytes())
     identity.update(json.dumps([provider.name, LIMITS], sort_keys=True).encode())
     constants = (f"DIAG_PROVIDER = {provider.name!r}\nDIAG_LIMITS = {LIMITS!r}\n"
                  f"DIAG_BUILD = {identity.hexdigest()!r}\nDIAG_ASSETS = {assets!r}\n"
                  f"DIAG_POLICY_LIMITS = {_policy_limits(repo)!r}\n"
                  f"DIAG_EVENTS = {sorted(config.get('hooks', {}))!r}\nDIAG_REGISTRATIONS = {registrations!r}\n")
-    return RUNTIME + "\n# BEGIN PROVIDER ADAPTER\n" + constants + "# END PROVIDER ADAPTER\n"
+    return CREDENTIAL_LABEL_SOURCE + launch_source + RUNTIME + "\n# BEGIN PROVIDER ADAPTER\n" + constants + "# END PROVIDER ADAPTER\n"
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:
     if target.provider != provider.name or target.output_path.name != "hooks-diagnostics.py":
         raise ValueError("Diagnostics target/provider mismatch")
-    return "#!/usr/bin/env python3\n# Generated from hooks/families/diagnostics.py by scripts/generate-hooks.py. Do not edit.\n" + collector_source(provider) + "\n" + CLI
+    return "#!/usr/bin/env python3\n# Generated from hooks/families/diagnostics.py by scripts/generate-hooks.py. Do not edit.\nfrom __future__ import annotations\n\n" + collector_source(provider) + "\n" + CLI

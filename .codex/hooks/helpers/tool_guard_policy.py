@@ -1505,6 +1505,13 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
         message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     return message
 
+import re as _label_re
+
+
+def credential_label(text):
+    """Recognize credentials in caller-normalized labels before display clipping."""
+    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+
 # Bounds apply to retained report fields before JSON serialization. Labels are
 # ASCII, so each retained character costs at most two JSON bytes after escaping.
 REPORT_LABEL_CHARS = 160
@@ -1529,7 +1536,7 @@ def report_label(value):
             return report_text(text)
     # Labels have no need to reproduce a credential-bearing identifier. Omit the
     # whole label, including credentials crossing the display clipping boundary.
-    if re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text):
+    if credential_label(text):
         return "[REDACTED]"
     return report_text(text)
 
