@@ -65,7 +65,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 
 ### Benchmarking guidance
 
-- For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
+- For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/default/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
 - Save response and transcript artifacts before grading so `evals/grade_benchmark.py` and `aggregate_benchmark.py` have stable inputs.
 - For a brand-new skill, compare against `without_skill`. For a modified skill, compare against an explicit `old_skill` or snapshot baseline.
 - When you document workspace layout, show the abstract pattern `skills/<skill>-workspace/iteration-N/` and, when helpful, a concrete example for the skill you are editing.
