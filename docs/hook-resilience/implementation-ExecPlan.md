@@ -14,6 +14,7 @@ Implement the complete hardening proposal, including streaming acquisition and m
 - [x] (2026-10-14) [milestone-1] T1: Integrated transport bounds as `23f7f38b`; [T1 evidence](T1-evidence.md) records red/green public input and compatibility checks.
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
 - [x] (2026-10-14) [milestone-1] I1: On combined `23f7f38b`, transport9, native26, shell17, limits18 and corpus153 pass; generated freshness35 passes.
+- [ ] [milestone-4] R0: Early independent security review of integrated T1/T2; retain findings and delegate any repairs before final review.
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
 - [ ] [milestone-2] T4: Stream detection, adopt bounded large-file policy, and verify equivalence.
@@ -99,6 +100,8 @@ Status: open
 Acceptance: not met
 
 **R1, independent review.** Prerequisites: I1/I2/I3. Use `code-review-biaxis` for standards and originating-spec review of all changes since baseline, plus security attention to new trusted boundaries. Retain review findings. Delegate repairs as bounded nodes with explicit prerequisites and rerun affected checks. Do not treat a timed-out review as approval.
+
+**R0, early security review.** Prerequisites: I1. Read-only source review of `bc52d7d6..23f7f38b` for transport deadlines, Windows readiness, JSON boundary parsing, strict fallback, and option classification. Own only retained `docs/hook-resilience/R0-review.md`. Run targeted disposable public probes for suspected defects; no source edits. Record issues with reproduction and impact, or an explicit bounded no-findings conclusion. R0 supplements R1 rather than replacing review of later changes. This independent work can run while T3/T5a implement.
 
 **V1, release verification.** Prerequisites: R1 repairs integrated. Own test registry reconciliation and evidence; no broad source redesign. Run generated freshness, applicable Python/shell suites and isolated installer tests. Run the maintained Guardian 500 ms finite-input resource gate and matched warm/cold timing procedure without concurrent benchmarks/tests/generation. Native Windows and authenticated provider dispatch require those environments; record unavailable checks separately and do not fabricate delivery. Verify complete installed assets and preserved user registrations with disposable homes. No live-home mutation is required by this plan.
 
