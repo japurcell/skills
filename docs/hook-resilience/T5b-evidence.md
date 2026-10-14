@@ -1,8 +1,9 @@
 # T5b deny-only recovery evidence
 
-Date: 2026-10-14. Task base: `79913f48`. Private branch:
+Date: 2026-10-14. Original task base: `79913f48`. Private branch:
 `codex/hook-resilience-t5b`. This task implements scanner recovery; the coordinator
 owns active plan, test registry, final knowledge maintenance, and integration.
+The task is now rebased onto the T4a-containing integration base `e9f26c40`.
 
 ## Delivered behavior
 
@@ -120,8 +121,26 @@ truncation work remain separate acceptance. No performance improvement is
 claimed for this larger self-contained scanner bootstrap.
 
 The standalone diagnostics outputs and embedded scanner metadata include build
-digests over canonical hook source. Rebase onto the coordinator's T4a-containing
-base requires serial regeneration of all three diagnostics and scanner outputs,
-then affected checks. The manifest, Guardian policy, registry, and active plan
-were not edited by this task. The coordinated final KB pass belongs to the
-coordinator. No additional durable skill change was identified.
+digests over canonical hook source. The completed rebase onto `e9f26c40` paused
+only on the three generated CLI build identities. Canonical regeneration resolved
+those conflicts and synchronized the three embedded scanner identities before
+noninteractive rebase continuation. The rebased implementation is `f20c489d`;
+compared with original implementation `cc5a3894`, canonical scanner/collector and
+test sources are unchanged, and exactly six generated `DIAG_BUILD` lines differ.
+
+Post-rebase verification on frozen source:
+
+- `rtk proxy python3 scripts/test-generate-hooks.py`: 26 tests passed,
+  17.420 seconds. This ran serially before the other focused suites.
+- `rtk proxy python3 -W error scripts/test-hook-diagnostic-recovery.py -v`:
+  10 tests passed, 10.614 seconds.
+- `rtk proxy python3 -W error scripts/test-hook-diagnostics.py`: 8 tests passed,
+  2.233 seconds.
+- `rtk proxy python3 scripts/generate-hooks.py --check`: 38 current files before
+  and after the suites. No new behavioral source change required broad scanner
+  or merge-suite repetition.
+
+The manifest, Guardian policy, registry, and active plan were not edited by this
+task. The coordinated final KB pass belongs to the coordinator. The private
+branch is ready for coordinator integration. No additional durable skill change
+was identified.
