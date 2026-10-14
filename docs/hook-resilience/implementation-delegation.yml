@@ -19,10 +19,12 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 20:12 UTC'
-    status: running
+    status: completed
     checkpoint: '20:22 UTC; focused source repair complete, broader verification continues after overrun warning'
     source_checkpoint: 864bbda0
-    output_verified: false
+    integrated_source_commit: f0b147de
+    evidence: docs/hook-resilience/T10-evidence.md
+    output_verified: true
     routing_compliant: true
   - subtask_id: D2
     agent: /root/performance_diagnosis

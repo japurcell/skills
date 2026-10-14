@@ -74,3 +74,7 @@ After the coordinator confirmed all semantic checks and independent review probe
 ## Retained artifacts
 
 [Compact T10 evidence archive](T10-evidence.tar.gz): 37 members, 53,304 bytes, SHA-256 `29295dd723de8dae6352214e1feb7b4c2f9c05593d1adea0a5bf171a095b25ea`. `SHA256.json` hashes every other member and was verified after archive creation. It retains exact before/after timing JSON including failed observations and raw samples, all 28 additional suite logs and results, final reporting/generator logs, static invariants, the sequential test driver and explicit provenance. Terminal-only descriptor/deadline red controls and final transport results are summarized as such in `README.json`; no reconstructed full transcript is presented as raw output. Working files remain under `/private/tmp/hook-resilience-t10-*` until integration/release verification finishes.
+
+## Integration verification
+
+The coordinator rebased the clean two-commit branch onto `fef814c1` without conflicts. Source commit `864bbda0` became `f0b147de`, and evidence commit `59322ac7` became `69fbbbe1`. The base delta contained only four documentation files. `git diff --exit-code 864bbda0 HEAD -- hooks scripts .codex .copilot .gemini .github` passed, establishing identical source, generated outputs, harness and tests. The archive SHA-256 and 37-member count match the retained declaration. Existing semantic and targeted timing evidence therefore covers the resulting source and interactions; full V1 acceptance remains pending.
