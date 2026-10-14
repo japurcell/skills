@@ -19,6 +19,7 @@ readonly CODEX_INSTRUCTIONS_SRC="${REPO_ROOT}/.codex/AGENTS.md"
 readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
+readonly REBASE_SKILL_REFERENCES="${REPO_ROOT}/scripts/rebase-skill-references.py"
 readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
 readonly CONFIGURE_RTK="${REPO_ROOT}/scripts/configure-rtk.py"
 readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
@@ -48,10 +49,20 @@ copy_skills() {
       continue
     fi
     cp -Rp "$entry" "$SKILLS_DEST/"
+    if [[ -L "${SKILLS_DEST}/${name}" ]]; then
+      continue
+    fi
     rm -rf "${SKILLS_DEST}/${name}/evals"
     rm -rf "${SKILLS_DEST}/${name}/README.md"
     rm -rf "${SKILLS_DEST}/${name}/LICENSE.txt"
     rm -rf "${SKILLS_DEST}/${name}/LICENSE.md"
+    if [[ -d "$REFERENCES_SRC" && -d "$entry" ]]; then
+      python3 -B "$REBASE_SKILL_REFERENCES" \
+        --source-dir "$entry" \
+        --destination-dir "${SKILLS_DEST}/${name}" \
+        --references-source "$REFERENCES_SRC" \
+        --references-destination "$REFERENCES_DEST"
+    fi
   done < <(find "$SKILLS_SRC/default" -mindepth 1 -maxdepth 1 -print0)
 }
 
@@ -156,7 +167,7 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
+for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$REBASE_SKILL_REFERENCES" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 

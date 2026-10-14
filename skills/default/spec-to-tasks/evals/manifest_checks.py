@@ -4,7 +4,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import re
 
 BUNDLE = Path(__file__).parent
-REPOSITORY = BUNDLE.parents[2]
+REPOSITORY = BUNDLE.parents[3]
 UI_TERMS = r'\b(?:badges?|lists?|filters?|dropdowns?|controls?|modals?|forms?|pages?|cards?|rows?|buttons?|tables?|browser)\b'
 BACKEND_UI_TERMS = (
     r'\b(?:ui|user interface|frontend|front[- ]end|screens?|badges?|dropdowns?|modals?|buttons?|browser|playwright(?:-cli)?)\b'

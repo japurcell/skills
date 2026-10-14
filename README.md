@@ -2,7 +2,7 @@
 
 This repository publishes reusable agent assets for Codex, GitHub Copilot, and Gemini:
 
-- **Skills** in `skills/` for reusable task workflows such as `tdd`, `frontend-design`, `create-skill`, `prd`, `code-review`, and `commit`
+- **Skills** in category folders under `skills/`, with the default bundles in `skills/default/`, for reusable task workflows such as `tdd`, `frontend-design`, `create-skill`, `prd`, `code-review`, and `commit`
 - **Custom agents** in `agents/` such as `code-architect`, `code-explorer`, `code-reviewer`, and `grader`
 - **Copilot global configs** in `.copilot`
 - **Gemini global configs** in `.gemini`
@@ -28,7 +28,7 @@ It produces the same installed layout as `install.sh`.
 
 The installer copies:
 
-- `skills/` entries into `~/.agents/skills`
+- `skills/default/` entries into `~/.agents/skills`
 - top-level `references/` entries into `~/.agents/references` when that directory exists
 - top-level `agents/*.md` files are the canonical custom-agent source for all three providers: Markdown copies go to `~/.gemini/agents` and `~/.copilot/agents`, while generated personal TOML goes to `~/.codex/agents` (or `$CODEX_HOME/agents` when `CODEX_HOME` is set)
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
@@ -74,7 +74,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 ## Working in this repo
 
-1. Edit source files in `skills/`, `agents/`, `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
+1. Edit published skill sources in `skills/<category>/`, custom agents in `agents/`, and hook/config sources in `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
 3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](.agents/instructions/testing.md).
 

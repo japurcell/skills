@@ -254,6 +254,50 @@ test_rewrites_root_reference_links_for_copied_skills() {
     "Expected copied skill reference links to point to the repository references directory."
 }
 
+test_default_destination_uses_default_skill_category() {
+  local workdir="$1"
+  local skill_path="$workdir/repo-root/skills/default/addy-alpha/SKILL.md"
+  local old_skill_path="$workdir/repo-root/skills/addy-alpha/SKILL.md"
+  local copied_skill
+
+  mkdir -p \
+    "$workdir/src/agents" \
+    "$workdir/src/skills/alpha" \
+    "$workdir/src/references" \
+    "$workdir/repo-root"
+
+  printf '%s\n' '---' 'name: alpha' '---' 'See `references/shared.md`.' > "$workdir/src/skills/alpha/SKILL.md"
+  printf '%s\n' 'Shared reference.' > "$workdir/src/references/shared.md"
+
+  ADDY_REPO_ROOT="$workdir/repo-root" \
+    ADDY_AGENTS_SRC="$workdir/src/agents" \
+    ADDY_SKILLS_SRC="$workdir/src/skills" \
+    ADDY_REFERENCES_SRC="$workdir/src/references" \
+    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+
+  assert_equals \
+    "yes" \
+    "$([[ -f "$skill_path" ]] && echo yes || echo no)" \
+    "Expected Addy imports to default to skills/default."
+
+  assert_equals \
+    "no" \
+    "$([[ -e "$old_skill_path" ]] && echo yes || echo no)" \
+    "Expected Addy imports not to write to the old flat skill root."
+
+  copied_skill="$(<"$skill_path")"
+  assert_equals \
+    $'---\nname: addy-alpha\n---\nSee `../../../references/shared.md`.' \
+    "$copied_skill" \
+    "Expected Addy imports to retain source-relative shared-reference paths under the default category."
+
+  if [[ ! -f "$workdir/repo-root/skills/default/addy-alpha/../../../references/shared.md" ]]; then
+    echo "Expected the imported shared reference link to resolve to the repository references directory." >&2
+    exit 1
+  fi
+}
+
 test_clones_addy_repo_before_copying() {
   local workdir="$1"
   local cloned_skill
@@ -266,7 +310,7 @@ test_clones_addy_repo_before_copying() {
     ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
-  cloned_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
+  cloned_skill="$(<"$workdir/repo-root/skills/default/addy-alpha/SKILL.md")"
 
   assert_equals \
     $'---\nname: addy-alpha\n---\nFresh from clone.' \
@@ -290,7 +334,7 @@ test_pulls_latest_addy_repo_before_copying() {
     ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
     bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
 
-  copied_skill="$(<"$workdir/repo-root/skills/addy-alpha/SKILL.md")"
+  copied_skill="$(<"$workdir/repo-root/skills/default/addy-alpha/SKILL.md")"
 
   assert_equals \
     $'---\nname: addy-alpha\n---\nLatest version.' \
@@ -415,6 +459,7 @@ main() {
   test_writes_skills_state_file_for_current_install "$workdir/skills-state-file"
   test_copies_root_references_directory "$workdir/references"
   test_rewrites_root_reference_links_for_copied_skills "$workdir/skill-reference-links"
+  test_default_destination_uses_default_skill_category "$workdir/default-destination"
   test_clones_addy_repo_before_copying "$workdir/clone"
   test_pulls_latest_addy_repo_before_copying "$workdir/pull"
   #test_copies_hooks_directory "$workdir/hooks"

@@ -6,9 +6,9 @@
       "prompt": "Design it twice before we build anything. I want to add a new `/benchmark-triage` skill to this repo that reads a skill benchmark iteration directory and tells me what to change next. It needs to fit the patterns already used by `skill-creator`, `prd`, and `prd-ralph`. Don't implement it yet — I want competing architectures first, and I care about reusability vs keeping the workflow lightweight.",
       "expected_output": "A design contest that frames the problem, explores the referenced skill patterns, produces multiple materially different architectures, compares the trade-offs in prose, and recommends one direction without implementing code.",
       "files": [
-        "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/prd/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/prd-ralph/SKILL.md"
+        "/home/adam/dev/personal/skills/skills/default/skill-creator/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/default/prd/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/default/prd-ralph/SKILL.md"
       ],
       "assertions": [
         "Response starts with focused framing or a small set of high-leverage questions instead of a long interview",
@@ -23,9 +23,9 @@
       "prompt": "Before we touch code, I want a few serious architecture options for a feature that can execute a saved plan, keep progress state, and coordinate code-review agents at the right checkpoints. It needs to work in this skills repo and build on the existing plan/task workflow without becoming a monolith. Please compare alternatives and tell me which direction you'd bet on.",
       "expected_output": "A design review that triggers even without the phrase 'design it twice', explores the current plan/task workflow, presents structurally different orchestration designs, and gives an opinionated recommendation.",
       "files": [
-        "/home/adam/dev/personal/skills/skills/prd/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/spec-to-tasks/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/prd-ralph-loop/SKILL.md"
+        "/home/adam/dev/personal/skills/skills/default/prd/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/default/spec-to-tasks/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/default/prd-ralph-loop/SKILL.md"
       ],
       "assertions": [
         "Response treats the request as an architecture comparison task even without an explicit skill name",
@@ -69,10 +69,10 @@
       "prompt": "I already have two rough ideas for adding description-optimization support to a skill: one is a standalone `scripts/optimize_description.py`, the other is to fold it into `skill-creator` as another workflow step. I want you to run an architecture contest over those ideas and anything better you see, then recommend whether we should keep them separate, merge them, or use a hybrid.",
       "expected_output": "A design comparison that treats the two supplied ideas as candidate directions, considers at least one additional architecture or hybrid, compares separation-of-concerns and UX trade-offs, and recommends a concrete split of responsibilities.",
       "files": [
-        "/home/adam/dev/personal/skills/skills/skill-creator/SKILL.md",
-        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/run_loop.py",
-        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/run_eval.py",
-        "/home/adam/dev/personal/skills/skills/skill-creator/scripts/improve_description.py"
+        "/home/adam/dev/personal/skills/skills/default/skill-creator/SKILL.md",
+        "/home/adam/dev/personal/skills/skills/default/skill-creator/scripts/run_loop.py",
+        "/home/adam/dev/personal/skills/skills/default/skill-creator/scripts/run_eval.py",
+        "/home/adam/dev/personal/skills/skills/default/skill-creator/scripts/improve_description.py"
       ],
       "assertions": [
         "Response treats the two user-supplied ideas as inputs rather than the only possible answers",

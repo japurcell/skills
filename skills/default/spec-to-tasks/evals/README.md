@@ -3,8 +3,8 @@
 Run the public CLI from the repository root:
 
 ```sh
-rtk proxy python3 skills/spec-to-tasks/evals/grade_benchmark.py <iteration-dir>
-rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/task-grader-pycache python3 -m unittest discover -s skills/spec-to-tasks/evals -p test_grade_benchmark.py
+rtk proxy python3 skills/default/spec-to-tasks/evals/grade_benchmark.py <iteration-dir>
+rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/task-grader-pycache python3 -m unittest discover -s skills/default/spec-to-tasks/evals -p test_grade_benchmark.py
 ```
 
 Use one `iteration-N/eval-*/eval_metadata.json` beside configuration directories,

@@ -139,7 +139,7 @@ def grade_scoped_refactor(run_dir: Path) -> list[dict]:
     web_text = read_text(repo_dir / "web" / "AGENTS.md")
     api_text = read_text(repo_dir / "api" / "AGENTS.md")
     report_text = read_text(run_dir / "outputs" / "report.md")
-    source_root = Path("skills/self-improve/evals/files/scoped-refactor-fixture/AGENTS.md")
+    source_root = Path("skills/default/self-improve/evals/files/scoped-refactor-fixture/AGENTS.md")
     return [
         expectation(
             "outputs/repo/web/AGENTS.md includes the serial web test command.",
@@ -192,7 +192,7 @@ def grade_linked_doc(run_dir: Path) -> list[dict]:
 
 def grade_noop(run_dir: Path) -> list[dict]:
     repo_dir = run_dir / "outputs" / "repo"
-    source_path = Path("skills/self-improve/evals/files/noop-fixture/AGENTS.md")
+    source_path = Path("skills/default/self-improve/evals/files/noop-fixture/AGENTS.md")
     output_path = repo_dir / "AGENTS.md"
     source_text = read_text(source_path)
     output_text = read_text(output_path)

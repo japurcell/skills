@@ -48,6 +48,7 @@ $CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
+$RebaseSkillReferencesSrc = Join-Path $RepoRoot 'scripts/rebase-skill-references.py'
 $GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
 $ConfigureRtkSrc = Join-Path $RepoRoot 'scripts/configure-rtk.py'
 $CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
@@ -268,7 +269,18 @@ function Copy-Skills {
         Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.txt")
         Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.md")
         if ($entry.PSIsContainer) {
-            Set-CopiedFileModes -Source $entry.FullName -Destination (Join-Path $SkillsDest $entry.Name)
+            $installedSkill = Join-Path $SkillsDest $entry.Name
+            Set-CopiedFileModes -Source $entry.FullName -Destination $installedSkill
+            if (Test-Path -LiteralPath $ReferencesSrc -PathType Container) {
+                & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc `
+                    --source-dir $entry.FullName `
+                    --destination-dir $installedSkill `
+                    --references-source $ReferencesSrc `
+                    --references-destination $ReferencesDest
+                if ($LASTEXITCODE -ne 0) {
+                    Fail "Shared reference rebasing exited with code $LASTEXITCODE for skill $($entry.Name)."
+                }
+            }
         } else {
             Set-FileModeFrom -Source $entry.FullName -Destination (Join-Path $SkillsDest $entry.Name)
         }
@@ -418,7 +430,7 @@ foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSetting
     }
 }
 
-foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc, $ConfigureRtkSrc)) {
+foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $GenerateHooksSrc, $ConfigureRtkSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }

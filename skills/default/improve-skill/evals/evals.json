@@ -3,11 +3,11 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use the skill under test to improve the `commit` skill based on the current session notes where git status was missed, causing subsequent commit failures. The session notes are located in `evals/files/commit-session/session_notes.md`. Apply a minimal improvement to `skills/commit/SKILL.md` and save the output to `outputs/commit/SKILL.md`.",
+      "prompt": "Use the skill under test to improve the `commit` skill based on the current session notes where git status was missed, causing subsequent commit failures. The session notes are located in `evals/files/commit-session/session_notes.md`. Apply a minimal improvement to `skills/default/commit/SKILL.md` and save the output to `outputs/commit/SKILL.md`.",
       "expected_output": "Surgically updates the commit SKILL.md to ensure git status is run first, while keeping the rest of the file intact.",
       "files": [
         "evals/files/commit-session/session_notes.md",
-        "skills/commit/SKILL.md"
+        "skills/default/commit/SKILL.md"
       ],
       "expectations": [
         "outputs/commit/SKILL.md is created.",
@@ -24,11 +24,11 @@
     },
     {
       "id": 1,
-      "prompt": "Use the skill under test to improve the `code-review` skill based on the linter warning learnings in `evals/files/review-session/session_notes.md`. Apply a minimal improvement to `skills/code-review/SKILL.md` and save the output to `outputs/code-review/SKILL.md`.",
+      "prompt": "Use the skill under test to improve the `code-review` skill based on the linter warning learnings in `evals/files/review-session/session_notes.md`. Apply a minimal improvement to `skills/default/code-review/SKILL.md` and save the output to `outputs/code-review/SKILL.md`.",
       "expected_output": "Surgically updates the code-review SKILL.md to require running linter check (npm run lint) before completing a review.",
       "files": [
         "evals/files/review-session/session_notes.md",
-        "skills/code-review/SKILL.md"
+        "skills/default/code-review/SKILL.md"
       ],
       "expectations": [
         "outputs/code-review/SKILL.md is created.",
@@ -45,11 +45,11 @@
     },
     {
       "id": 2,
-      "prompt": "Use the skill under test to improve the `explore` skill based on session notes in `evals/files/noop-session/session_notes.md` which contain only a one-time network timeout and files merely opened. Apply the skill to `skills/explore/SKILL.md` and save the output to `outputs/explore/SKILL.md`.",
+      "prompt": "Use the skill under test to improve the `explore` skill based on session notes in `evals/files/noop-session/session_notes.md` which contain only a one-time network timeout and files merely opened. Apply the skill to `skills/default/explore/SKILL.md` and save the output to `outputs/explore/SKILL.md`.",
       "expected_output": "Recognizes that the session notes contain no durable learnings and leaves the explore skill unchanged, explaining that no updates were needed.",
       "files": [
         "evals/files/noop-session/session_notes.md",
-        "skills/explore/SKILL.md"
+        "skills/default/explore/SKILL.md"
       ],
       "expectations": [
         "No changes are written to outputs/explore/SKILL.md.",

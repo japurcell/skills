@@ -133,7 +133,7 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
         
         # If it doesn't exist, that is actually correct since noop means no changes!
         # If it exists, it should be identical to the original explore skill.
-        orig_explore_path = Path("skills/explore/SKILL.md")
+        orig_explore_path = Path("skills/default/explore/SKILL.md")
         orig_content = read_text(orig_explore_path)
         is_identical = content == orig_content if exists else True
         
@@ -152,7 +152,7 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/improve-skill/evals/grade_benchmark.py skills/improve-skill-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/improve-skill/evals/grade_benchmark.py skills/improve-skill-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1]).resolve()

@@ -4,7 +4,7 @@ Documentation retrieved October 1, 2026. Installed client versions and live beha
 
 ## Shared discovery and required metadata
 
-All three cited client documents describe user skills under `~/.agents/skills/`. They also describe project/workspace `.agents/skills/`, with different search and precedence rules. The authoring source `skills/dotnet-upgrade/` is not automatically an installed user skill. Avoid duplicate names and inspect the discovered location rather than assuming the preferred copy won.
+All three cited client documents describe user skills under `~/.agents/skills/`. They also describe project/workspace `.agents/skills/`, with different search and precedence rules. The authoring source `skills/default/dotnet-upgrade/` is not automatically an installed user skill. Avoid duplicate names and inspect the discovered location rather than assuming the preferred copy won.
 
 Preserve the entry point's exact requested frontmatter:
 
@@ -63,7 +63,7 @@ Confirm the requested skill and directory in the consent prompt if that flow is 
 
 These are future installation instructions, not actions performed by this authoring effort. Install only a complete, reviewed bundle with its internal references present. Do not run `scripts/install.sh`, `install.ps1`, a validator/packager or a general skill installer: account-wide flows can change other skills, agents, hooks, instructions and client settings.
 
-1. Choose the reviewed authoritative source directory `skills/dotnet-upgrade/` in the user's skills source repository. Resolve its actual location; no particular home directory or original application checkout is required. Inspect `SKILL.md`, `agents/openai.yaml`, all referenced documents and five templates. Do not install an incomplete milestone branch. Record source revision and copied-file list outside the installation directory.
+1. Choose the reviewed authoritative source directory `skills/default/dotnet-upgrade/` in the user's skills source repository. Resolve its actual location; no particular home directory or original application checkout is required. Inspect `SKILL.md`, `agents/openai.yaml`, all referenced documents and five templates. Do not install an incomplete milestone branch. Record source revision and copied-file list outside the installation directory.
 2. Inspect the prospective destination `~/.agents/skills/dotnet-upgrade` and provider/workspace copies with the same name. If the destination exists, including as a symlink, stop without merging, overwriting or deleting it. An update requires a separate reviewed backup/diff and explicit update scope; this new-install procedure does not authorize it.
 3. After permission to create this new destination, create only that skill directory under the selected discovery root. Copy `SKILL.md`, `agents/`, `references/` and `assets/` from the reviewed bundle, preserving their relative layout and both controls. Do not copy root `evals/` or benchmark workspaces; runtime instructions do not depend on them. Record the exact newly created files and their contents/digests for bounded recovery. If copying fails partway, report it and treat the partial install as incomplete.
 4. Compare the copy with source and inspect internal references before use. Refresh discovery using the client-specific documented mechanism above or a new session. Inspect the discovered location and report unverified controls honestly. This inspection is not a live model evaluation and need not change any settings.

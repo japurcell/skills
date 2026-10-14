@@ -579,7 +579,7 @@ def grade(eval_id: int, run_dir: Path) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/handoff/evals/grade_benchmark.py skills/handoff-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/handoff/evals/grade_benchmark.py skills/handoff-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1]).resolve()

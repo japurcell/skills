@@ -62,9 +62,9 @@ class GraderCliTests(unittest.TestCase):
     def test_repository_relative_source_and_context_resolve(self):
         data = manifest()
         for task in data['tasks']:
-            task['sourceRefs'] = [dict(path='skills/spec-to-tasks/evals/files/lifecycle-prd.md',
+            task['sourceRefs'] = [dict(path='skills/default/spec-to-tasks/evals/files/lifecycle-prd.md',
                                       section='Current Contract', requirements=['Recovery authority'])]
-            task['requiredContext'] = [dict(path='skills/spec-to-tasks/references/task-schema.md',
+            task['requiredContext'] = [dict(path='skills/default/spec-to-tasks/references/task-schema.md',
                                            section='Task types', purpose='Choose the task outcome')]
             task['filesLikelyTouched'] = ['src/tokens.py', 'tests/test_tokens.py']
             task['designGuidance'] = [dict(source='Current Contract', description='Preserve authority',
@@ -394,7 +394,7 @@ class GraderCliTests(unittest.TestCase):
         task = data['tasks'][0]
         criterion = 'Interruption and repeated recovery preserve metadata authority; conflict refusal and owner approval have final integration proof.'
         task.update(title='Lifecycle integration', description=criterion, acceptanceCriteria=[criterion], taskType='integration')
-        task['sourceRefs'] = [dict(path='skills/spec-to-tasks/evals/files/lifecycle-prd.md', section='Current Contract', requirements=[criterion])]
+        task['sourceRefs'] = [dict(path='skills/default/spec-to-tasks/evals/files/lifecycle-prd.md', section='Current Contract', requirements=[criterion])]
         self.assertEqual(self.grade(data, 4)['summary']['failed'], 0)
         task['sourceRefs'][0]['section'] = 'Requirements'
         self.assert_failed(data, 'Source and context references', 4)

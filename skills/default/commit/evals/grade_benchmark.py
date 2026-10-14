@@ -42,7 +42,7 @@ def normalize(text: str) -> str:
 
 
 def has_required_skill_shape() -> tuple[bool, str]:
-    text = read_text(Path("skills/commit/SKILL.md"))
+    text = read_text(Path("skills/default/commit/SKILL.md"))
     ok = all(heading in text for heading in REQUIRED_HEADINGS)
     return ok, "all anatomy headings present" if ok else "missing one or more anatomy headings"
 
@@ -264,7 +264,7 @@ def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/commit/evals/grade_benchmark.py skills/commit-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/commit/evals/grade_benchmark.py skills/commit-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1])

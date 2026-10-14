@@ -114,8 +114,8 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-tool-guard-shell-data.py")
         expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
-        expected.add("skills/spec-to-tasks/evals/test_grade_benchmark.py")
-        expected.add("skills/prd-ralph-loop/evals/test_grade_benchmark.py")
+        expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
+        expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
         listed = {
             part for command in commands for part in command
             if part.startswith(("scripts/", "skills/"))

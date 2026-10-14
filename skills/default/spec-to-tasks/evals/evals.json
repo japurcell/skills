@@ -3,10 +3,10 @@
   "evals": [
     {
       "id": 0,
-      "prompt": "Use the skill under test to convert `skills/spec-to-tasks/evals/files/task-statuses-prd.md` into `outputs/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "prompt": "Use the skill under test to convert `skills/default/spec-to-tasks/evals/files/task-statuses-prd.md` into `outputs/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
       "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
       "files": [
-        "skills/spec-to-tasks/evals/files/task-statuses-prd.md"
+        "skills/default/spec-to-tasks/evals/files/task-statuses-prd.md"
       ],
       "assertions": [
         "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
@@ -19,10 +19,10 @@
     },
     {
       "id": 1,
-      "prompt": "Use the skill under test to convert `skills/spec-to-tasks/evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
+      "prompt": "Use the skill under test to convert `skills/default/spec-to-tasks/evals/files/workspace-member-management-prd.md` and save the result to `outputs/generated/tasks.json`. Also write `outputs/summary.md` with the task count and output path. Produce the enriched task contract with sourceRefs, requiredContext, taskType, dependsOn and verification. Preserve every requirement; explain assignment boundaries in summary.md. Do not execute product work or invent unavailable tooling.",
       "expected_output": "A dependency-ordered enriched tasks.json preserving all supplied requirements, references, justified boundaries and applicable verification.",
       "files": [
-        "skills/spec-to-tasks/evals/files/workspace-member-management-prd.md"
+        "skills/default/spec-to-tasks/evals/files/workspace-member-management-prd.md"
       ],
       "assertions": [
         "The requested outputs/tasks.json (outputs/generated/tasks.json for member management) contains a nonempty tasks array and fresh defaults.",
@@ -63,10 +63,10 @@
     },
     {
       "id": 4,
-      "prompt": "Convert skills/spec-to-tasks/evals/files/lifecycle-prd.md into outputs/tasks.json and outputs/summary.md. Preserve the active authority, interruption and repeated recovery, refusal and missing-authority cases, design decision, dependencies and final integration proof. Use the enriched contract; retain unresolved runtime checks. Plan only; do not execute product work.",
+      "prompt": "Convert skills/default/spec-to-tasks/evals/files/lifecycle-prd.md into outputs/tasks.json and outputs/summary.md. Preserve the active authority, interruption and repeated recovery, refusal and missing-authority cases, design decision, dependencies and final integration proof. Use the enriched contract; retain unresolved runtime checks. Plan only; do not execute product work.",
       "expected_output": "Bounded lifecycle assignments, complete negative behavior and current contract references; unavailable checks stay unresolved.",
       "files": [
-        "skills/spec-to-tasks/evals/files/lifecycle-prd.md"
+        "skills/default/spec-to-tasks/evals/files/lifecycle-prd.md"
       ],
       "assertions": [
         "Full lifecycle requirements including negative cases are assigned.",

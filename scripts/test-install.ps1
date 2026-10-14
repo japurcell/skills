@@ -167,6 +167,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/rebase-skill-references.py') -Destination (Join-Path $Repo 'scripts/rebase-skill-references.py') -Force
     $bin = Join-Path $Repo 'bin'
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
     if ($IsWindows) {
@@ -584,6 +585,85 @@ function Test-PreservesFileModes {
     }
 }
 
+function Test-RebasesSharedReferenceLinksForFlatInstalledSkills {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $repo 'skills/default/alpha/SKILL.md') @(
+            '---',
+            'name: alpha',
+            '---',
+            'See `[shared reference](../../../references/notes.md)`.'
+        )
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        $installedSkillPath = Join-Path $homeDir '.agents/skills/alpha/SKILL.md'
+        $installedSkill = Read-FileContent $installedSkillPath
+        Assert-Equals -Expected "---`nname: alpha`n---`nSee ``[shared reference](../../references/notes.md)``." -Actual $installedSkill -Message 'Expected a shared-reference Markdown link to be rebased for the flat installed skill path.'
+        Assert-True -Condition (Test-Path -LiteralPath (Join-Path (Split-Path $installedSkillPath) '../../references/notes.md')) -Message 'Expected the installed shared-reference link to resolve inside ~/.agents/references.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
+function Test-RootLinkedSkillIsPreservedWithoutExternalMutation {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $externalSkill = Join-Path $workdir 'external-skill'
+        $nestedTarget = Join-Path $workdir 'nested-link-target'
+
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $externalSkill 'SKILL.md') @(
+            '---',
+            'name: linked-skill',
+            '---',
+            'See [the shared reference](../repo/references/shared.md).'
+        )
+        Write-FixtureFile (Join-Path $externalSkill 'evals/keep.txt') @('external evals must remain untouched')
+        Write-FixtureFile (Join-Path $nestedTarget 'note.md') @('See [the shared reference](../../../../references/shared.md).')
+        $externalBefore = Get-TreeFingerprint $externalSkill
+        $nestedBefore = Get-TreeFingerprint $nestedTarget
+
+        try {
+            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/default/linked-skill') -Target $externalSkill -Force | Out-Null
+            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/default/alpha/linked-dir') -Target $nestedTarget -Force | Out-Null
+        }
+        catch {
+            Write-Host "Skipping: symlink creation is not supported on this host ($($_.Exception.Message))."
+            return
+        }
+
+        Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        $installedSkillPath = Join-Path $homeDir '.agents/skills/linked-skill'
+        $installedSkill = Get-Item -Force -LiteralPath $installedSkillPath
+        Assert-Equals -Expected 'SymbolicLink' -Actual $installedSkill.LinkType -Message 'Expected a root-linked skill to remain a symlink after installation.'
+        Assert-Equals -Expected $externalSkill -Actual $installedSkill.Target -Message 'Expected a root-linked skill to retain its raw target.'
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/rebase-skill-references.py') `
+            --source-dir (Join-Path $repo 'skills/default/linked-skill') `
+            --destination-dir $installedSkillPath `
+            --references-source (Join-Path $repo 'references') `
+            --references-destination (Join-Path $homeDir '.agents/references')
+        if ($LASTEXITCODE -ne 0) {
+            Fail 'Reference rebasing should skip a root-linked skill.'
+        }
+        Assert-Equals -Expected $externalBefore -Actual (Get-TreeFingerprint $externalSkill) -Message 'Expected installation to leave a root-linked skill target byte-for-byte unchanged.'
+        Assert-Equals -Expected $nestedBefore -Actual (Get-TreeFingerprint $nestedTarget) -Message 'Expected reference rebasing to leave a nested linked directory target byte-for-byte unchanged.'
+        Assert-Equals -Expected 'See [the shared reference](../../../../references/shared.md).' -Actual (Read-FileContent (Join-Path $nestedTarget 'note.md')) -Message 'Expected reference rebasing to skip Markdown reached through a nested directory link.'
+    }
+    finally {
+        Remove-Workdir $workdir
+    }
+}
+
 function Test-ExcludesAndPrunesSkillEvals {
     $workdir = New-TestWorkdir
     try {
@@ -637,6 +717,8 @@ function Test-SymlinkHandling {
         $dirSentinelPath = Join-Path $dirTargetPath 'keep.txt'
         Write-FixtureFile $dirSentinelPath @('directory sentinel must not change')
         $dirSentinelBefore = Read-FileContent $dirSentinelPath
+        Write-FixtureFile (Join-Path $dirTargetPath 'note.md') @('See [the shared reference](../../../../references/shared.md).')
+        $dirTargetBefore = Get-TreeFingerprint $dirTargetPath
 
         # Deliberate skip: hosts that cannot create symlinks (e.g. Windows without the
         # link-creation privileges) report a skip instead of a false pass.
@@ -665,6 +747,7 @@ function Test-SymlinkHandling {
         Assert-Equals -Expected $dirTargetPath -Actual $installedDirLink.Target -Message "Expected the installed linked-dir to keep its raw target path."
         Assert-True -Condition (([int]$installedDirLink.Attributes -band [int][System.IO.FileAttributes]::ReparsePoint) -ne 0) -Message "Expected the installed linked-dir to carry the ReparsePoint attribute."
         Assert-Equals -Expected $dirSentinelBefore -Actual (Read-FileContent $dirSentinelPath) -Message "Expected the external directory target to remain unchanged after install."
+        Assert-Equals -Expected $dirTargetBefore -Actual (Get-TreeFingerprint $dirTargetPath) -Message 'Expected reference rebasing to leave a nested linked directory target byte-for-byte unchanged.'
 
         # Sanity: the normal install still works alongside links (content copied, evals pruned).
         Assert-Equals -Expected "---`nname: alpha`n---`nStandalone." -Actual (Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) -Message "Expected non-evals skill content to remain installed alongside symlink entries."
@@ -727,12 +810,16 @@ function Test-JunctionHandling {
 
         $junctionTargetPath = Join-Path $workdir 'junction-target'
         Write-FixtureFile (Join-Path $junctionTargetPath 'inner.txt') @('junction inner content')
+        Write-FixtureFile (Join-Path $junctionTargetPath 'SKILL.md') @('See [the shared reference](../repo/references/shared.md).')
+        Write-FixtureFile (Join-Path $junctionTargetPath 'evals/keep.txt') @('junction evals must remain untouched')
         $junctionSentinelPath = Join-Path $junctionTargetPath 'keep.txt'
         Write-FixtureFile $junctionSentinelPath @('junction sentinel must not change')
         $junctionSentinelBefore = Read-FileContent $junctionSentinelPath
+        $junctionTargetBefore = Get-TreeFingerprint $junctionTargetPath
 
         try {
             New-Item -ItemType Junction -Path (Join-Path $repo '.gemini/junction-dir') -Target $junctionTargetPath -Force | Out-Null
+            New-Item -ItemType Junction -Path (Join-Path $repo 'skills/default/junction-skill') -Target $junctionTargetPath -Force | Out-Null
         }
         catch {
             Write-Host "Skipping: junction creation is not supported on this host ($($_.Exception.Message))."
@@ -753,6 +840,20 @@ function Test-JunctionHandling {
         Assert-Equals -Expected $junctionTargetPath -Actual $installed.Target -Message "Expected the installed junction to keep its raw target path."
         Assert-True -Condition (([int]$installed.Attributes -band [int][System.IO.FileAttributes]::ReparsePoint) -ne 0) -Message "Expected the installed junction to carry the ReparsePoint attribute."
         Assert-Equals -Expected $junctionSentinelBefore -Actual (Read-FileContent $junctionSentinelPath) -Message "Expected the external junction target to remain unchanged after install."
+        $installedSkillPath = Join-Path $homeDir '.agents/skills/junction-skill'
+        $installedSkill = Get-Item -Force -LiteralPath $installedSkillPath
+        Assert-Equals -Expected 'Junction' -Actual $installedSkill.LinkType -Message 'Expected a root-linked skill to retain its junction type after installation.'
+        Assert-Equals -Expected $junctionTargetPath -Actual $installedSkill.Target -Message 'Expected a root-linked skill junction to retain its raw target.'
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/rebase-skill-references.py') `
+            --source-dir (Join-Path $repo 'skills/default/junction-skill') `
+            --destination-dir $installedSkillPath `
+            --references-source (Join-Path $repo 'references') `
+            --references-destination (Join-Path $homeDir '.agents/references')
+        if ($LASTEXITCODE -ne 0) {
+            Fail 'Reference rebasing should skip a root-linked junction skill.'
+        }
+        Assert-Equals -Expected $junctionTargetBefore -Actual (Get-TreeFingerprint $junctionTargetPath) -Message 'Expected installation to leave a root-linked skill junction target byte-for-byte unchanged.'
     }
     finally {
         Remove-Workdir $workdir
@@ -1321,6 +1422,8 @@ Test-ProviderRefreshPreservesRetiredAndUserEntries
 Test-ProviderMalformedJsonStopsBeforeMutation
 Test-StaleGeneratedHooksStopBeforeDestinationMutation
 Test-GeneratorFailureStopsBeforeDestinationMutation
+Test-RebasesSharedReferenceLinksForFlatInstalledSkills
+Test-RootLinkedSkillIsPreservedWithoutExternalMutation
 Test-ExcludesAndPrunesSkillEvals
 Test-SymlinkHandling
 Test-FixedNameHardLinkHandling

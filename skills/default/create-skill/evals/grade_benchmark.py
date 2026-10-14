@@ -58,7 +58,7 @@ def run_quick_validate(skill_dir: Path) -> tuple[bool, str]:
         return False, f"missing skill directory: {skill_dir}"
     command = [
         "python3",
-        "skills/skill-creator/scripts/quick_validate.py",
+        "skills/default/skill-creator/scripts/quick_validate.py",
         str(skill_dir),
     ]
     completed = subprocess.run(command, capture_output=True, text=True)
@@ -188,7 +188,7 @@ def grade_eval_one(run_dir: Path) -> list[dict]:
     skill_text = read_text(skill_md)
     frontmatter = parse_frontmatter(skill_text)
     validate_ok, validate_evidence = run_quick_validate(skill_dir)
-    src_lines = line_count(Path("skills/create-skill/evals/files/review-handoff-draft/SKILL.md"))
+    src_lines = line_count(Path("skills/default/create-skill/evals/files/review-handoff-draft/SKILL.md"))
     dst_lines = line_count(skill_md)
     has_assets = (skill_dir / "evals" / "evals.json").exists() and (skill_dir / "evals" / "grade_benchmark.py").exists()
     return [
@@ -257,7 +257,7 @@ def grade_eval_three(run_dir: Path) -> list[dict]:
     output_md = read_text(run_dir / "outputs" / "output.md")
     eval_count = evals_count(skill_dir / "evals" / "evals.json")
     repo_specific = (
-        "python3 skills/skill-creator/scripts/quick_validate.py" in skill_text
+        "python3 skills/default/skill-creator/scripts/quick_validate.py" in skill_text
         and "./scripts/install.sh" in skill_text
         and not has_positive_generic_npm_instruction(skill_text)
     )
@@ -356,7 +356,7 @@ def build_grading(run_dir: Path, expectations: list[dict], timing: dict) -> dict
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/create-skill/evals/grade_benchmark.py skills/create-skill-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/create-skill/evals/grade_benchmark.py skills/create-skill-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1])

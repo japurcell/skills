@@ -32,6 +32,7 @@ create_fixture_repo() {
   PATH="$repo/bin:$PATH"
   export PATH
   cp -p "$REPO_ROOT/scripts/install-provider-hooks.py" "$repo/scripts/install-provider-hooks.py"
+  cp -p "$REPO_ROOT/scripts/rebase-skill-references.py" "$repo/scripts/rebase-skill-references.py"
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -938,6 +939,72 @@ test_excludes_and_prunes_skill_evals() {
   fi
 }
 
+test_rebases_shared_reference_links_for_flat_installed_skills() {
+  local workdir repo home installed_skill
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+
+  create_fixture_repo "$repo"
+  printf '%s\n' '---' 'name: alpha' '---' 'See `../../../references/shared.md` and [the shared reference](../../../references/shared.md).' > "$repo/skills/default/alpha/SKILL.md"
+  printf '%s\n' 'Shared reference.' > "$repo/references/shared.md"
+
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  installed_skill="$(<"$home/.agents/skills/alpha/SKILL.md")"
+  assert_equals \
+    $'---\nname: alpha\n---\nSee `../../references/shared.md` and [the shared reference](../../references/shared.md).' \
+    "$installed_skill" \
+    "Expected source links to shared references to be rebased for the flat installed skill path."
+
+  if [[ ! -f "$home/.agents/skills/alpha/../../references/shared.md" ]]; then
+    echo "Expected the installed shared reference link to resolve inside ~/.agents/references." >&2
+    exit 1
+  fi
+}
+
+test_root_linked_skill_is_preserved_without_external_mutation() {
+  local workdir repo home external_skill nested_target before after nested_before installed_skill
+
+  workdir="$(setup_test_workdir)"
+  trap 'rm -rf "'"$workdir"'"' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  external_skill="$workdir/external-skill"
+  nested_target="$workdir/nested-link-target"
+
+  create_fixture_repo "$repo"
+  mkdir -p "$external_skill/evals"
+  printf '%s\n' '---' 'name: linked-skill' '---' 'See [the shared reference](../repo/references/shared.md).' > "$external_skill/SKILL.md"
+  printf '%s\n' 'external evals must remain untouched' > "$external_skill/evals/keep.txt"
+  mkdir -p "$nested_target"
+  printf '%s\n' 'See [the shared reference](../../../../references/shared.md).' > "$nested_target/note.md"
+  ln -s "$external_skill" "$repo/skills/default/linked-skill"
+  ln -s "$nested_target" "$repo/skills/default/alpha/linked-dir"
+  before="$(tree_fingerprint "$external_skill")"
+  nested_before="$(tree_fingerprint "$nested_target")"
+
+  HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  installed_skill="$home/.agents/skills/linked-skill"
+  if [[ ! -L "$installed_skill" ]]; then
+    echo "Expected a root-linked skill to remain a symlink after installation." >&2
+    exit 1
+  fi
+  assert_equals "$external_skill" "$(readlink "$installed_skill")" "Expected a root-linked skill to retain its raw target."
+  python3 -B "$repo/scripts/rebase-skill-references.py" \
+    --source-dir "$repo/skills/default/linked-skill" \
+    --destination-dir "$installed_skill" \
+    --references-source "$repo/references" \
+    --references-destination "$home/.agents/references"
+  after="$(tree_fingerprint "$external_skill")"
+  assert_equals "$before" "$after" "Expected installation to leave a root-linked skill target byte-for-byte unchanged."
+  assert_equals "$nested_before" "$(tree_fingerprint "$nested_target")" "Expected reference rebasing to leave a nested linked directory target byte-for-byte unchanged."
+  assert_equals 'See [the shared reference](../../../../references/shared.md).' "$(<"$nested_target/note.md")" "Expected reference rebasing to skip Markdown reached through a nested directory link."
+}
+
 test_copies_full_gemini_tree() {
   local workdir
   local repo
@@ -1011,6 +1078,8 @@ main() {
   test_rejects_invalid_codex_configuration_without_mutation_and_can_retry
   test_refuses_symlinked_codex_hook_destination
   test_merger_refuses_symlinked_codex_config_destinations
+  test_rebases_shared_reference_links_for_flat_installed_skills
+  test_root_linked_skill_is_preserved_without_external_mutation
   test_excludes_and_prunes_skill_evals
   test_copies_full_gemini_tree
   test_installed_hooks_are_executable
