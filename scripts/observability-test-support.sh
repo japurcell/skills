@@ -3,6 +3,16 @@
 # Provider-neutral observability scenarios. Provider-specific registration,
 # hook mutation expectations, and adversarial cases stay in the public suites.
 
+# Keep lifecycle events in unrelated fixtures from starting detached writers.
+# Intentional maintenance scenarios manage their own sentinel lifecycle.
+seed_recent_observability_maintenance() {
+  local home="$1"
+  local log_dir="$home/$OBS_TEST_HOOKS_RELATIVE/logs"
+
+  mkdir -p "$log_dir"
+  touch "$log_dir/.maintenance_last_run"
+}
+
 test_temp_install_uses_fixture_codex_home() {
   local workdir
   local home
@@ -147,6 +157,7 @@ test_observability_log_rotation() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -208,6 +219,7 @@ test_observability_log_rotation_pruning_and_precedence() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -293,6 +305,7 @@ test_observability_log_rotation_unconditional_prune() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -349,6 +362,7 @@ test_observability_log_rotation_max_bytes_zero_disables_active_rotation() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
 
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -406,6 +420,7 @@ test_observability_log_rotation_sub_512() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -453,6 +468,7 @@ test_observability_log_rotation_generic_fallback() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   
   if [[ "$OBS_TEST_PROVIDER" == "gemini" ]]; then
     obs_log="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability.ndjson"
@@ -499,6 +515,7 @@ test_sqlite_observability_persistence() {
   trap cleanup_test_workdir RETURN
   home="$workdir/home"
   install_into_temp_home "$home"
+  seed_recent_observability_maintenance "$home"
   db_path="$home/$OBS_TEST_HOOKS_RELATIVE/logs/observability_v1.db"
 
   if [[ -f "$db_path" ]]; then
