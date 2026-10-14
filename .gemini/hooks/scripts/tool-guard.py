@@ -51,7 +51,7 @@ def emit_deny_response(reason: str) -> None:
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
-REPORT_BUILD = "0d4a070002324c17"
+REPORT_BUILD = "53fbf0da00585973"
 TOOL_PROFILE = "unsupported"
 TOOL_ROUTE = "strict_fallback"
 PROFILE_CAUSE = "unsupported_tool_profile"

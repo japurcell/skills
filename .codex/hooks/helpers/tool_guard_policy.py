@@ -1303,11 +1303,10 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
 
 def sanitize_tool_name(value: str) -> str:
     sanitized = unicodedata.normalize("NFKC", value[:4096])
-    # ASCII identifiers have no credential separators; token matches can only
-    # start at their first character because every character is a word character.
-    if (sanitized.isascii() and sanitized.replace("_", "").isalnum()
-            and not sanitized.lower().startswith(("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk_live_"))):
-        return sanitized if len(sanitized) <= MAX_TOOL_NAME_LENGTH else sanitized[:MAX_TOOL_NAME_LENGTH - 3] + "..."
+    # Identifier components can contain credential prefixes after other words.
+    # Reuse the conservative whole-label check before any display clipping.
+    if sanitized.isascii() and sanitized.replace("_", "").isalnum():
+        return report_label(sanitized)
     sanitized = re.sub(
         r"(?i)\b(https?://)([^/\s@]+)@",
         lambda match: f"{match.group(1)}{REDACTED}@",

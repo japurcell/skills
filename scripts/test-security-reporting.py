@@ -106,6 +106,49 @@ class SecurityReportingTests(unittest.TestCase):
             self.assertEqual(rows[-1]["profile"], "unsupported")
             self.assertRegex(rows[-1]["build"], r"^[0-9a-f]{16}$")
 
+    def test_guardian_embedded_token_labels_are_safe_for_denials_warnings_and_clean_logs(self):
+        tokens = ["github_pat_" + "FAKE" * 8, "ghp_" + "FAKE" * 9,
+                  "sk_live_" + "FAKE" * 8, "AKIA" + "FAKE" * 4]
+        labels = [("custom_" + token, token) for token in tokens]
+        labels += [("x" * offset + tokens[0], tokens[0]) for offset in (150, 157, 160, 200)]
+        labels.append(("custom_" + "ｇｈｐ＿" + "ＦＡＫＥ" * 9, tokens[1]))
+        for provider in fixture.PROVIDERS:
+            for label, token in labels:
+                for mode, command, decision in (("block", "git push" + " --force origin main", "deny"),
+                                                 ("warn", "git push" + " --force origin main", "allow"),
+                                                 ("block", "echo safe", "allow")):
+                    with self.subTest(provider=provider, label=label, mode=mode, decision=decision):
+                        response, rows, raw, stderr = self.invoke(provider, mode=mode, guardian=True,
+                            tool=label, value={"command": command})
+                        text = json.dumps(response) + raw.decode() + stderr
+                        self.assertNotIn(token, text)
+                        self.assertNotIn("github_pat_", text)
+                        self.assertNotIn("ghp_FAKE", text)
+                        self.assertEqual(rows[-1]["route"], "strict_fallback")
+                        self.assertEqual(rows[-1]["enforcement"], decision)
+                        native_decision = response.get("decision", response.get("permissionDecision",
+                            response.get("hookSpecificOutput", {}).get("permissionDecision", "allow")))
+                        self.assertEqual(native_decision, decision)
+                        self.assertLessEqual(len(rows[-1]["tool"]), 160)
+                        self.assertLessEqual(len(raw.splitlines(keepends=True)[-1]), 16384)
+                        if command != "echo safe":
+                            self.assertIn("force_push_protected_branch", json.dumps(response))
+                            self.assertIn("[REDACTED]", rows[-1]["tool"])
+
+    def test_guardian_safe_identifiers_and_known_native_fields_keep_presentation(self):
+        for provider in fixture.PROVIDERS:
+            for label in ("custom_operation", "exec_command123", "x" * 170):
+                response, rows, _, _ = self.invoke(provider, guardian=True, tool=label, value={"command": "echo safe"})
+                self.assertEqual(rows[-1]["tool"], label if len(label) <= 160 else "x" * 157 + "...")
+                self.assertEqual(rows[-1]["enforcement"], "allow")
+            label = {"copilot": "bash", "gemini": "run_shell_command", "codex": "exec_command"}[provider]
+            value = {"cmd" if provider == "codex" else "command": "echo safe"}
+            response, rows, _, _ = self.invoke(provider, guardian=True, tool=label, value=value)
+            self.assertEqual(rows[-1]["tool"], label)
+            self.assertEqual(rows[-1]["profile"], "shell_v1")
+            self.assertEqual(rows[-1]["route"], "native")
+            self.assertEqual(rows[-1]["enforcement"], "allow")
+
     def test_audit_failure_preserves_findings_and_clean_calls_fail_closed(self):
         secret = self.repo / "secret.txt"
         command = "git push" + " --force origin main"
