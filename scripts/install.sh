@@ -52,7 +52,7 @@ copy_skills() {
     rm -rf "${SKILLS_DEST}/${name}/README.md"
     rm -rf "${SKILLS_DEST}/${name}/LICENSE.txt"
     rm -rf "${SKILLS_DEST}/${name}/LICENSE.md"
-  done < <(find "$SKILLS_SRC" -mindepth 1 -maxdepth 1 -print0)
+  done < <(find "$SKILLS_SRC/default" -mindepth 1 -maxdepth 1 -print0)
 }
 
 copy_agents() {

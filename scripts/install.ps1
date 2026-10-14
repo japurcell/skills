@@ -249,7 +249,7 @@ function Set-CopiedFileModes {
 }
 
 function Copy-Skills {
-    foreach ($entry in (Get-ChildItem -Force -Path $SkillsSrc)) {
+    foreach ($entry in (Get-ChildItem -Force -Path (Join-Path $SkillsSrc 'default'))) {
         # Mirrors bash `[[ $name == "archive" || $name == *-workspace ]]` case-sensitively:
         # `[ ] * ?` in the name are literal, and `My-Workspace` is not a workspace entry.
         if ($entry.Name -ceq 'archive' -or $entry.Name.EndsWith('-workspace')) {

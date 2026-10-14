@@ -35,7 +35,7 @@
          is case-sensitive like `find -name` (an uppercase .PY hook keeps its
          input mode; non-Windows only, skipped on Windows).
      7. Source Unix file modes are preserved on install: a fixture skill file
-         with a non-default executable mode (skills/alpha/tool.sh at 755) keeps
+         with a non-default executable mode (skills/default/alpha/tool.sh at 755) keeps
          its exact mode, and the installed skills/alpha/SKILL.md exactly equals
          its source mode (non-Windows only; skipped on Windows).
      8. Copilot config and references: .copilot/copilot-instructions.md and
@@ -145,9 +145,12 @@ function New-FixtureRepo {
 
     $dirs = @(
         (Join-Path $Repo 'scripts'),
-        (Join-Path $Repo 'skills/alpha/evals'),
-        (Join-Path $Repo 'skills/beta-workspace'),
-        (Join-Path $Repo 'skills/archive'),
+        (Join-Path $Repo 'skills/default/alpha/evals'),
+        (Join-Path $Repo 'skills/forest-service'),
+        (Join-Path $Repo 'skills/default/beta-workspace'),
+        (Join-Path $Repo 'skills/default/archive'),
+        (Join-Path $Repo 'skills/default/weird[1]-workspace'),
+        (Join-Path $Repo 'skills/default/My-Workspace'),
         (Join-Path $Repo 'agents/nested'),
         (Join-Path $Repo 'references'),
         (Join-Path $Repo '.copilot/hooks/scripts'),
@@ -177,9 +180,10 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/AGENTS.md') -Destination (Join-Path $Repo '.codex/AGENTS.md') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot '.codex/hooks/load-required-skills.py') -Destination (Join-Path $Repo '.codex/hooks/load-required-skills.py') -Force
 
-    Write-FixtureFile (Join-Path $Repo 'skills/alpha/SKILL.md') @('---', 'name: alpha', '---', 'Standalone.')
-    Write-FixtureFile (Join-Path $Repo 'skills/alpha/evals/evals.json') @('fixture eval content')
-    Write-FixtureFile (Join-Path $Repo 'skills/alpha/tool.sh') @('#!/bin/sh', 'echo tool')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/SKILL.md') @('---', 'name: alpha', '---', 'Standalone.')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/evals/evals.json') @('fixture eval content')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/alpha/tool.sh') @('#!/bin/sh', 'echo tool')
+    Write-FixtureFile (Join-Path $Repo 'skills/forest-service/.gitkeep') @('')
     # Non-default source mode: Test-PreservesFileModes asserts it survives install (non-Windows only).
     if (-not $IsWindows) {
         $executable = [System.IO.UnixFileMode]::UserRead -bor
@@ -189,14 +193,14 @@ function New-FixtureRepo {
             [System.IO.UnixFileMode]::GroupExecute -bor
             [System.IO.UnixFileMode]::OtherRead -bor
             [System.IO.UnixFileMode]::OtherExecute
-        [System.IO.File]::SetUnixFileMode((Join-Path $Repo 'skills/alpha/tool.sh'), $executable)
+        [System.IO.File]::SetUnixFileMode((Join-Path $Repo 'skills/default/alpha/tool.sh'), $executable)
     }
-    Write-FixtureFile (Join-Path $Repo 'skills/beta-workspace/SKILL.md') @('workspace skill should not copy')
-    Write-FixtureFile (Join-Path $Repo 'skills/archive/README.md') @('archive entry should not copy')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/beta-workspace/SKILL.md') @('workspace skill should not copy')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/archive/README.md') @('archive entry should not copy')
     # Edge-case names: `[ ]` must stay literal (excluded), and the -workspace suffix
     # match must be case-sensitive (My-Workspace is NOT excluded, matching bash).
-    Write-FixtureFile (Join-Path $Repo 'skills/weird[1]-workspace/SKILL.md') @('bracket workspace skill should not copy')
-    Write-FixtureFile (Join-Path $Repo 'skills/My-Workspace/SKILL.md') @('case-variant workspace name should copy')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/weird[1]-workspace/SKILL.md') @('bracket workspace skill should not copy')
+    Write-FixtureFile (Join-Path $Repo 'skills/default/My-Workspace/SKILL.md') @('case-variant workspace name should copy')
     Write-FixtureFile (Join-Path $Repo 'agents/helper.md') @('---', 'name: helper', 'description: Fixture helper agent.', '---', 'Use alpha.')
     Write-FixtureFile (Join-Path $Repo 'agents/nested/helper.md') @('---', 'name: nested-helper', 'description: Nested fixture helper agent.', '---', 'Use alpha deeply.')
     Write-FixtureFile (Join-Path $Repo 'references/notes.md') @('Reference notes.')
@@ -550,11 +554,11 @@ function Test-PreservesFileModes {
 
         New-FixtureRepo $repo
 
-        $toolSrc = Join-Path $repo 'skills/alpha/tool.sh'
+        $toolSrc = Join-Path $repo 'skills/default/alpha/tool.sh'
         $toolSrcMode = [System.IO.File]::GetUnixFileMode($toolSrc)
         Assert-True -Condition (([int]$toolSrcMode -band [int][System.IO.UnixFileMode]::UserExecute) -ne 0) -Message "Fixture setup error: $toolSrc should be executable."
 
-        $skillSrc = Join-Path $repo 'skills/alpha/SKILL.md'
+        $skillSrc = Join-Path $repo 'skills/default/alpha/SKILL.md'
         $skillSrcMode = [System.IO.File]::GetUnixFileMode($skillSrc)
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
@@ -592,6 +596,10 @@ function Test-ExcludesAndPrunesSkillEvals {
         Write-FixtureFile (Join-Path $homeDir '.agents/skills/alpha/existing-note.txt') @('keep this installed note')
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
+
+        Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) -Message "Expected skills/default/alpha to install at ~/.agents/skills/alpha without a category wrapper."
+        Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/default'))) -Message "Expected category directories not to install as skills."
+        Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/forest-service'))) -Message "Expected the empty Forest Service marker not to install as a skill."
 
         $copiedSkill = Read-FileContent (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')
         Assert-Equals -Expected "---`nname: alpha`n---`nStandalone." -Actual $copiedSkill -Message "Expected non-evals skill content to remain installed."
@@ -633,8 +641,8 @@ function Test-SymlinkHandling {
         # Deliberate skip: hosts that cannot create symlinks (e.g. Windows without the
         # link-creation privileges) report a skip instead of a false pass.
         try {
-            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/alpha/linked-secret.txt') -Target $secretTargetPath -Force | Out-Null
-            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/alpha/linked-dir') -Target $dirTargetPath -Force | Out-Null
+            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/default/alpha/linked-secret.txt') -Target $secretTargetPath -Force | Out-Null
+            New-Item -ItemType SymbolicLink -Path (Join-Path $repo 'skills/default/alpha/linked-dir') -Target $dirTargetPath -Force | Out-Null
         }
         catch {
             Write-Host "Skipping: symlink creation is not supported on this host ($($_.Exception.Message))."

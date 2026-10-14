@@ -9,10 +9,11 @@ create_fixture_repo() {
 
   mkdir -p \
     "$repo/scripts" \
-    "$repo/skills/alpha" \
-    "$repo/skills/alpha/evals" \
-    "$repo/skills/beta-workspace" \
-    "$repo/skills/archive" \
+    "$repo/skills/default/alpha" \
+    "$repo/skills/default/alpha/evals" \
+    "$repo/skills/forest-service" \
+    "$repo/skills/default/beta-workspace" \
+    "$repo/skills/default/archive" \
     "$repo/agents" \
     "$repo/agents/nested" \
     "$repo/references" \
@@ -34,10 +35,11 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
-  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$repo/skills/alpha/SKILL.md"
-  printf '%s\n' 'fixture eval content' > "$repo/skills/alpha/evals/evals.json"
-  printf '%s\n' 'workspace skill should not copy' > "$repo/skills/beta-workspace/SKILL.md"
-  printf '%s\n' 'archive entry should not copy' > "$repo/skills/archive/README.md"
+  printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$repo/skills/default/alpha/SKILL.md"
+  printf '%s\n' 'fixture eval content' > "$repo/skills/default/alpha/evals/evals.json"
+  : > "$repo/skills/forest-service/.gitkeep"
+  printf '%s\n' 'workspace skill should not copy' > "$repo/skills/default/beta-workspace/SKILL.md"
+  printf '%s\n' 'archive entry should not copy' > "$repo/skills/default/archive/README.md"
   printf '%s\n' '---' 'name: helper' 'description: Fixture helper agent.' '---' 'Use alpha.' > "$repo/agents/helper.md"
   printf '%s\n' '---' 'name: nested-helper' 'description: Nested fixture helper agent.' '---' 'Use alpha deeply.' > "$repo/agents/nested/helper.md"
   cp -p "$REPO_ROOT/.gemini/GEMINI.md" "$repo/.gemini/GEMINI.md"
@@ -904,6 +906,16 @@ test_excludes_and_prunes_skill_evals() {
   printf '%s\n' 'keep this installed note' > "$home/.agents/skills/alpha/existing-note.txt"
 
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
+
+  if [[ ! -f "$home/.agents/skills/alpha/SKILL.md" ]]; then
+    echo "Expected skills/default/alpha to install at ~/.agents/skills/alpha without a category wrapper." >&2
+    exit 1
+  fi
+
+  if [[ -e "$home/.agents/skills/default" || -e "$home/.agents/skills/forest-service" ]]; then
+    echo "Expected category directories and the empty Forest Service marker not to install as skills." >&2
+    exit 1
+  fi
 
   copied_skill="$(<"$home/.agents/skills/alpha/SKILL.md")"
   copied_existing_note="$(<"$home/.agents/skills/alpha/existing-note.txt")"
