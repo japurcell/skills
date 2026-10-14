@@ -11,9 +11,9 @@ Implement the complete hardening proposal, including streaming acquisition and m
 ## Progress
 
 - [x] (2026-10-14) [milestone-1] P0: Read investigation, source boundaries, requirements, and validation routes; write this plan before implementation.
-- [ ] [milestone-1] T1: Bound shared transport; reproduce stalls, implement limits, and verify public providers.
+- [x] (2026-10-14) [milestone-1] T1: Integrated transport bounds as `23f7f38b`; [T1 evidence](T1-evidence.md) records red/green public input and compatibility checks.
 - [x] (2026-10-14) [milestone-1] T2: Integrated exact Guardian profiles as `46260321`; native26, shell17, limits18, corpus153 and provider/banner/generator checks pass. Evidence: [T2](T2-evidence.md).
-- [ ] [milestone-1] I1: Integrate T1/T2 and prove complete valid requests, strict negatives, and bounded malformed requests together.
+- [x] (2026-10-14) [milestone-1] I1: On combined `23f7f38b`, transport9, native26, shell17, limits18 and corpus153 pass; generated freshness35 passes.
 - [x] (2026-10-14) [milestone-2] D1: Integrated [streaming/recovery design](streaming-design.md) as `5dd8af43`; four public parity cases pass and large-file red reproduced across providers.
 - [ ] [milestone-2] T3: Stream verified candidate acquisition and preserve snapshot semantics.
 - [ ] [milestone-2] T4: Stream detection, adopt bounded large-file policy, and verify equivalence.
@@ -44,7 +44,7 @@ Guardian accepts `{"cmd": command}` for a safe quoted semicolon-rich search but 
 
 Current design decision (2026-10-14): use exact reserved `hooks-diagnostics-v1` requests that ALWAYS deny execution and return hook-owned metadata. Split recovery into independent T5a collector/CLI work after D1 and T5b bootstrap integration after T1/T2/T4/T5a. No executable receives an exemption. Conservative inventory uses no Git/subprocess/body reads and keeps pending/index status unknown.
 
-P0 is committed as `3976fccc`. T2 is integrated as `46260321` and D1 as `5dd8af43`; their clean worktrees were archived and private branches removed. T1 is finishing verification; T3 and T5a are implementing independently. Guardian focused checks pass; composed milestone acceptance remains unmet until T1 integration. No scanner capacity or recovery behavior is shipped yet. All production changes require public reproductions, negative controls, clean committed task branches, integration evidence, and final review.
+Milestone1 is accepted on integrated `23f7f38b`: transport and full Guardian profiles pass their composed positive/negative suites. T1/T2/D1 clean worktrees were archived and private branches removed. T3 and T5a are implementing independently. Scanner capacity and recovery changes remain unfinished, as do final review/resource/installation checks. No live installation has occurred.
 
 ## Context and Orientation
 
@@ -58,8 +58,8 @@ Git captures use owner-only regular temporary files, bounded process waits, and 
 
 ### Milestone 1: Bound input and recognize real tool envelopes
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 **T1, transport implementation.** Prerequisites: P0. Own `hooks/families/common.py`, transport-specific tests (add `scripts/test-hook-input-bounds.py` if needed), associated generated common outputs, and its evidence `docs/hook-resilience/T1-evidence.md`. Reproduce missing/incomplete stdin through public hooks first. Implement first-byte/incomplete idle and nonextendable total deadlines, raw byte/nesting limits, bounded trailing drain, and safe native failure propagation. Preserve complete JSON with open stdin, UTF-8, and Windows readiness support. Avoid quadratic repeated parsing. Choose explicit limits with escape-expansion headroom and denial-time reserve. Test slow trickle, malformed/deep/trailing input, maximum escaped valid input, and all providers. Stop after transport and focused compatibility proof; do not alter Guardian classification or scanner content policy.
 
@@ -106,13 +106,15 @@ Acceptance: not met
 
 ## Concrete Steps
 
-Next: integrate T1 and run I1 on base. Verify T3/T5a as results arrive; integrate serially, then dispatch T4 after T3 proof. Active worktrees end in `hook-transport-bounds/skills`, `hook-snapshot-streams/skills`, and `hook-diagnostics-cli/skills` under `/Users/adam/.codex/worktrees/`. T2's conflict-free rebase changed only its documentation ancestry; existing source verification remains applicable. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
+Next: verify T3/T5a as results arrive; integrate serially, then dispatch T4 after T3 proof. Active worktrees end in `hook-snapshot-streams/skills` and `hook-diagnostics-cli/skills` under `/Users/adam/.codex/worktrees/`. T1/T2 integration was conflict-free; composed I1 checks passed on base. Each implementer must activate TDD before source changes, reproduce public failures first, and commit its private branch using `/Users/adam/.agents/skills/execplan-implement/references/message.md`. Each node has one fresh implementer; repairs may return to its original implementer. No nested delegation. Workers are not alone and must not revert other changes.
 
 Use repository root as command cwd and `rtk` prefixes. Generate with `rtk proxy python3 scripts/generate-hooks.py --write`; check with `rtk proxy python3 scripts/generate-hooks.py --check`. Run focused suites with `rtk proxy python3 scripts/test-tool-guard-native-data.py`, `scripts/test-tool-guard-shell-data.py`, `scripts/test-tool-guard-limits.py`, `scripts/test-tool-guard-false-positives.py`, `scripts/test-scan-secrets-capture.py`, `scripts/test-scan-secrets-merge.py`, and `scripts/test-security-banners.py`. Run shell suites with `rtk proxy bash scripts/test-<provider>-hooks-secrets-scanner.sh` (Copilot filename is `scripts/test-hooks-secrets-scanner.sh`). Use each benchmark/installer's `--help` before choosing its exact isolated invocation. Record concrete commands and outcomes in task evidence.
 
 For integration, require a clean task worktree, rebase its private branch onto current base, resolve generated overlaps by regeneration, verify affected interactions, commit SHA-reference repairs when necessary, then require a clean base and fast-forward only. Confirm matching branch tips. Coordinator owns active plan updates; workers own separate evidence files, avoiding plan conflicts. Check each worker at ten minutes and warn on overrun without interrupting solely for elapsed time.
 
 ## Validation and Acceptance
+
+I1 observed on `23f7f38b` (2026-10-14): `rtk proxy python3 scripts/test-hook-input-bounds.py` passed 9 tests/111 public launches in 31.828s; `test-tool-guard-native-data.py` passed26, `test-tool-guard-shell-data.py` passed17, `test-tool-guard-limits.py` passed18, and `test-tool-guard-false-positives.py` passed153 fixtures. `scripts/generate-hooks.py --check` passed all35 targets before and after. Independent functional suites ran concurrently; these elapsed times are not isolated performance acceptance. V1 owns sequential timing.
 
 Every behavior change starts with a real generated-entrypoint fixture and fails before repair. Use temporary homes/repositories/logs, `OBSERVABILITY_TESTING=1`, fake credentials, and no inherited skip/allowlist overrides unless testing suppression. Exit zero alone is insufficient: assert provider JSON allow/deny, findings versus incomplete, sanitized reason, and audit result. Never weaken, skip, or delete a failing regression to obtain green results.
 
