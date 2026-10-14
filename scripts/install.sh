@@ -1,6 +1,55 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -Eeuo pipefail
+
+# Helper and I/O failures are installer failures; argument errors exit explicitly.
+trap 'exit 1' ERR
+
+help_requested=false
+forest_service=false
+selection=''
+for argument in "$@"; do
+  case "$argument" in
+    -h|--help) help_requested=true ;;
+    --forest-service|--fs)
+      [[ "$selection" != disable ]] || { echo 'Conflicting selection flags: choose --forest-service or --no-forest-service.' >&2; exit 2; }
+      selection=enable; forest_service=true ;;
+    --no-forest-service)
+      [[ "$selection" != enable ]] || { echo 'Conflicting selection flags: choose --forest-service or --no-forest-service.' >&2; exit 2; }
+      selection=disable; forest_service=false ;;
+    *) echo "Unknown argument: $argument. Use --help for usage." >&2; exit 2 ;;
+  esac
+done
+if $help_requested; then
+  cat <<'EOF'
+Usage: bash scripts/install.sh [--forest-service | --fs | --no-forest-service] [-h | --help]
+
+Install default skills, agents, references, and provider configuration.
+Use --forest-service or --fs to include Forest Service skills.
+Use --no-forest-service to install default skills only.
+Without a selection flag, INSTALL_FOREST_SERVICE_SKILLS accepts 1/true or
+0/false (case-insensitive); unset or empty disables Forest Service skills.
+Explicit selection flags override the environment. Existing skills remain.
+
+Examples:
+  bash scripts/install.sh
+  bash scripts/install.sh --fs
+  INSTALL_FOREST_SERVICE_SKILLS=true bash scripts/install.sh
+  bash scripts/install.sh --no-forest-service
+EOF
+  exit 0
+fi
+
+# Installation and helper progress share stderr; only help owns stdout.
+exec 1>&2
+
+if [[ -z "$selection" ]]; then
+  case "${INSTALL_FOREST_SERVICE_SKILLS:-}" in
+    1|[tT][rR][uU][eE]) forest_service=true ;;
+    ''|0|[fF][aA][lL][sS][eE]) forest_service=false ;;
+    *) echo 'Invalid INSTALL_FOREST_SERVICE_SKILLS: use 1, true, 0, false, or empty; alternatively choose --forest-service or --no-forest-service.' >&2; exit 2 ;;
+  esac
+fi
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly SKILLS_SRC="${REPO_ROOT}/skills"
@@ -20,6 +69,7 @@ readonly CODEX_HOOK_TEMPLATE_SRC="${REPO_ROOT}/.codex/global-hooks.json"
 readonly CODEX_HOOK_MERGER="${REPO_ROOT}/scripts/install-codex-hooks.py"
 readonly CODEX_AGENT_INSTALLER="${REPO_ROOT}/scripts/install-codex-agents.py"
 readonly REBASE_SKILL_REFERENCES="${REPO_ROOT}/scripts/rebase-skill-references.py"
+readonly VALIDATE_SKILL_SOURCES="${REPO_ROOT}/scripts/validate-skill-sources.py"
 readonly GENERATE_HOOKS="${REPO_ROOT}/scripts/generate-hooks.py"
 readonly CONFIGURE_RTK="${REPO_ROOT}/scripts/configure-rtk.py"
 readonly CANONICAL_HOOKS_SRC="${REPO_ROOT}/hooks"
@@ -39,10 +89,12 @@ readonly CODEX_INSTRUCTIONS_DEST="${HOME}/.codex/AGENTS.md"
 readonly CODEX_AGENTS_DEST="${CODEX_HOME:-${HOME}/.codex}/agents"
 
 copy_skills() {
+  local category="$1"
   local entry
   local name
 
   while IFS= read -r -d '' entry; do
+    [[ -d "$entry" ]] || continue
     name="$(basename "$entry")"
 
     if [[ "$name" == *-workspace || "$name" == "archive" ]]; then
@@ -63,7 +115,7 @@ copy_skills() {
         --references-source "$REFERENCES_SRC" \
         --references-destination "$REFERENCES_DEST"
     fi
-  done < <(find "$SKILLS_SRC/default" -mindepth 1 -maxdepth 1 -print0)
+  done < <(find "$SKILLS_SRC/$category" -mindepth 1 -maxdepth 1 -print0)
 }
 
 copy_agents() {
@@ -159,7 +211,7 @@ install_codex_instructions() {
   cp -p "$CODEX_INSTRUCTIONS_SRC" "$CODEX_INSTRUCTIONS_DEST"
 }
 
-for src in "$SKILLS_SRC" "$AGENTS_SRC" "$GEMINI_SRC" "$CANONICAL_HOOKS_SRC"; do
+for src in "$SKILLS_SRC/default" "$SKILLS_SRC/forest-service" "$AGENTS_SRC" "$GEMINI_SRC" "$CANONICAL_HOOKS_SRC"; do
   [[ -d "$src" ]] || { echo "Missing source directory: $src" >&2; exit 1; }
 done
 
@@ -167,10 +219,11 @@ for src in "$COPILOT_INSTRUCTIONS_SRC" "$COPILOT_LSP_SRC" "$GEMINI_GLOBAL_SETTIN
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
-for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$REBASE_SKILL_REFERENCES" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
+for src in "$CODEX_INSTRUCTIONS_SRC" "$CODEX_HOOK_TEMPLATE_SRC" "$CODEX_HOOK_MERGER" "$CODEX_AGENT_INSTALLER" "$REBASE_SKILL_REFERENCES" "$VALIDATE_SKILL_SOURCES" "$GENERATE_HOOKS" "$CONFIGURE_RTK"; do
   [[ -f "$src" ]] || { echo "Missing source file: $src" >&2; exit 1; }
 done
 
+python3 -B "$VALIDATE_SKILL_SOURCES" "$SKILLS_SRC"
 python3 -B "$CONFIGURE_RTK" --home "$HOME" --check
 for hook in "${CODEX_HOOK_FILES[@]}"; do
   [[ -f "$CODEX_HOOK_SRC_DIR/$hook" ]] || { echo "Missing source file: $CODEX_HOOK_SRC_DIR/$hook" >&2; exit 1; }
@@ -185,10 +238,7 @@ else
     exit 1
   fi
   echo "Generated hook freshness preflight failed." >&2
-  if [[ "$status" -eq 2 ]]; then
-    exit 2
-  fi
-  exit "$status"
+  exit 1
 fi
 
 python3 -B "$PROVIDER_HOOK_MERGER" --provider copilot --template "$COPILOT_HOOK_TEMPLATE_SRC" --destination "$COPILOT_HOOK_CONFIG_DEST" --home "$HOME" --check
@@ -199,7 +249,10 @@ python3 -B "$CODEX_AGENT_INSTALLER" --source-dir "$AGENTS_SRC" --destination-dir
 
 mkdir -p "$SKILLS_DEST" "$COPILOT_DEST" "$GEMINI_DEST" "$AGENTS_DEST" "$COPILOT_AGENTS_DEST"
 
-copy_skills
+copy_skills default
+if $forest_service; then
+  copy_skills forest-service
+fi
 copy_agents
 if [[ -d "$REFERENCES_SRC" ]]; then
   mkdir -p "$REFERENCES_DEST"

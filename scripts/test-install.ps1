@@ -168,6 +168,7 @@ function New-FixtureRepo {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/rebase-skill-references.py') -Destination (Join-Path $Repo 'scripts/rebase-skill-references.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/validate-skill-sources.py') -Destination (Join-Path $Repo 'scripts/validate-skill-sources.py') -Force
     $bin = Join-Path $Repo 'bin'
     New-Item -ItemType Directory -Path $bin -Force | Out-Null
     if ($IsWindows) {
@@ -378,6 +379,7 @@ function Test-StaleGeneratedHooksStopBeforeDestinationMutation {
     try {
         $repo = Join-Path $workdir 'repo'
         $homeDir = Join-Path $workdir 'home'
+        $codex = Join-Path $workdir 'codex'
 
         New-FixtureRepo $repo
         $outputPath = Get-GeneratedRtkOutputPath $repo
@@ -385,12 +387,16 @@ function Test-StaleGeneratedHooksStopBeforeDestinationMutation {
         Write-FixtureFile (Join-Path $homeDir 'preserved/sentinel.txt') @('do not change')
         Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
         $before = Get-TreeFingerprint $homeDir
+        Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+        $beforeCodex = Get-TreeFingerprint $codex
 
-        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex
         Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected stale generated hooks to exit install.ps1 with code 1.'
-        Assert-True -Condition (($result.Stdout -join "`n") -match [regex]::Escape($outputPath)) -Message 'Expected stale repository-relative output path on stdout.'
+        Assert-True -Condition (($result.Stderr -join "`n") -match [regex]::Escape($outputPath)) -Message 'Expected stale repository-relative output path on stderr.'
+        Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for stale generated hooks.'
         Assert-True -Condition (($result.Stderr -join "`n") -match [regex]::Escape('python3 scripts/generate-hooks.py --write')) -Message 'Expected stale-output recovery command on stderr.'
         Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories.'
+        Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected stale preflight not to mutate external CODEX_HOME.'
     }
     finally {
         Remove-Workdir $workdir
@@ -402,6 +408,7 @@ function Test-GeneratorFailureStopsBeforeDestinationMutation {
     try {
         $repo = Join-Path $workdir 'repo'
         $homeDir = Join-Path $workdir 'home'
+        $codex = Join-Path $workdir 'codex'
 
         New-FixtureRepo $repo
         $manifestPath = Join-Path $repo 'hooks/manifest.py'
@@ -410,12 +417,15 @@ function Test-GeneratorFailureStopsBeforeDestinationMutation {
         Write-FixtureFile (Join-Path $homeDir 'preserved/sentinel.txt') @('do not change')
         Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
         $before = Get-TreeFingerprint $homeDir
+        Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+        $beforeCodex = Get-TreeFingerprint $codex
 
-        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
-        Assert-Equals -Expected 2 -Actual $result.ExitCode -Message 'Expected a generator failure to exit install.ps1 with code 2.'
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex
+        Assert-Equals -Expected 1 -Actual $result.ExitCode -Message 'Expected a generator failure to become installer exit 1.'
         Assert-True -Condition (($result.Stderr -join "`n") -match "Unknown provider 'unknown'") -Message 'Expected the generator diagnostic on stderr.'
         Assert-True -Condition (($result.Stderr -join "`n") -notmatch [regex]::Escape('python3 scripts/generate-hooks.py --write')) -Message 'Expected generator failures to omit stale-output recovery advice.'
         Assert-Equals -Expected $before -Actual (Get-TreeFingerprint $homeDir) -Message 'Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories.'
+        Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected generator failure not to mutate external CODEX_HOME.'
     }
     finally {
         Remove-Workdir $workdir
@@ -438,9 +448,14 @@ function Invoke-InstallProcess {
         [string]$Repo,
         [string]$HomeDir,
         [string]$Workdir,
-        [string]$CodexHome = $null
+        [string]$CodexHome = $null,
+        [string[]]$InstallArguments = @(),
+        [string]$ForestServiceValue = $null
     )
 
+    $oldForestService = [System.Environment]::GetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', [System.EnvironmentVariableTarget]::Process)
+    $oldAppData = [System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)
+    $oldLocalAppData = [System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)
     $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
     $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
     $oldCodexHome = [System.Environment]::GetEnvironmentVariable('CODEX_HOME', [System.EnvironmentVariableTarget]::Process)
@@ -451,6 +466,9 @@ function Invoke-InstallProcess {
     $childStdoutPath = Join-Path $Workdir 'child-stdout.txt'
     $childStderrPath = Join-Path $Workdir 'child-stderr.txt'
     try {
+        [System.Environment]::SetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', $ForestServiceValue, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('APPDATA', (Join-Path $HomeDir 'AppData/Roaming'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', (Join-Path $HomeDir 'AppData/Local'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $CodexHome, [System.EnvironmentVariableTarget]::Process)
@@ -458,7 +476,7 @@ function Invoke-InstallProcess {
         [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
-        & pwsh -NoProfile -File (Join-Path $Repo 'scripts/install.ps1') 1> $childStdoutPath 2> $childStderrPath
+        & pwsh -NoProfile -File (Join-Path $Repo 'scripts/install.ps1') @InstallArguments 1> $childStdoutPath 2> $childStderrPath
         $exitCode = $LASTEXITCODE
         $stdout = @()
         if (Test-Path -LiteralPath $childStdoutPath) {
@@ -470,6 +488,9 @@ function Invoke-InstallProcess {
         }
     }
     finally {
+        [System.Environment]::SetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', $oldForestService, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('APPDATA', $oldAppData, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $oldLocalAppData, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $oldCodexHome, [System.EnvironmentVariableTarget]::Process)
@@ -496,12 +517,16 @@ function Initialize-ChildPowerShellHome {
         [string]$Workdir
     )
 
+    $oldAppData = [System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)
+    $oldLocalAppData = [System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)
     $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
     $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
     $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
     $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
     $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
     try {
+        [System.Environment]::SetEnvironmentVariable('APPDATA', (Join-Path $HomeDir 'AppData/Roaming'), [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', (Join-Path $HomeDir 'AppData/Local'), [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
@@ -513,6 +538,8 @@ function Initialize-ChildPowerShellHome {
         }
     }
     finally {
+        [System.Environment]::SetEnvironmentVariable('APPDATA', $oldAppData, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $oldLocalAppData, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
         [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
@@ -1079,6 +1106,10 @@ function Test-InstalledHooksAreExecutable {
 
         # Uppercase .PY hook: forced non-executable too, then asserted to KEEP that mode.
         $upperPyRel = '.copilot/hooks/scripts/test-upper.PY'
+        $literalNonHooks = @(".copilot/hooks/scripts/not-hook.p$([char]0x00ad)y", ".gemini/hooks/scripts/not-hook.s$([char]0x00ad)h")
+        foreach ($rel in $literalNonHooks) {
+            Write-FixtureFile (Join-Path $repo $rel) @('Keep original mode.')
+        }
 
         # Force the fixture inputs non-executable (mirrors `chmod 644` in the Bash test).
         $nonExecutable = [System.IO.UnixFileMode]::UserRead -bor
@@ -1092,7 +1123,7 @@ function Test-InstalledHooksAreExecutable {
             [System.IO.UnixFileMode]::GroupExecute -bor
             [System.IO.UnixFileMode]::OtherRead -bor
             [System.IO.UnixFileMode]::OtherExecute
-        foreach ($rel in $hookRelPaths + @($upperPyRel)) {
+        foreach ($rel in $hookRelPaths + @($upperPyRel) + $literalNonHooks) {
             [System.IO.File]::SetUnixFileMode((Join-Path $repo $rel), $nonExecutable)
         }
 
@@ -1109,6 +1140,9 @@ function Test-InstalledHooksAreExecutable {
         $upperPyInstalled = Join-Path $homeDir $upperPyRel
         $upperPyMode = [System.IO.File]::GetUnixFileMode($upperPyInstalled)
         Assert-Equals -Expected $nonExecutable -Actual $upperPyMode -Message "Expected $upperPyInstalled to keep its input mode (extension match is case-sensitive; mode: $upperPyMode)."
+        foreach ($rel in $literalNonHooks) {
+            Assert-Equals $nonExecutable ([System.IO.File]::GetUnixFileMode((Join-Path $homeDir $rel))) "Expected literal non-hook extension to retain original mode: $rel."
+        }
     }
     finally {
         Remove-Workdir $workdir
@@ -1415,6 +1449,288 @@ function Test-MissingSourceFails {
     }
 }
 
+function Test-HelpWithoutSourcesOrDependencies {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $codex = Join-Path $workdir 'codex'
+        Write-FixtureFile (Join-Path $repo 'scripts/install.ps1') @(Get-Content -LiteralPath $InstallScriptSrc)
+        Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
+        Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $before = Get-TreeFingerprint $homeDir
+        $beforeCodex = Get-TreeFingerprint $codex
+        foreach ($arguments in @(@('-h'), @('--help'), @('--fs', '--help', '--forest-service'), @('--help', '--no-forest-service', '--no-forest-service'))) {
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue 'banana' -InstallArguments $arguments
+            Assert-Equals 0 $result.ExitCode 'Expected help to bypass missing sources/dependencies and invalid environment.'
+            Assert-True (($result.Stdout -join "`n").Contains('Usage:')) 'Expected usage on stdout.'
+            Assert-True (($result.Stdout -join "`n").Contains('--forest-service')) 'Expected options in help.'
+            Assert-True (($result.Stdout -join "`n").Contains('Examples:')) 'Expected examples in help.'
+            Assert-Equals '' ($result.Stderr -join "`n") 'Expected help stderr to be empty.'
+            Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected help not to mutate home.'
+            Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected help not to mutate CODEX_HOME.'
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-ExplicitForestServiceSelection {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $repo 'skills/forest-service/agency-priorities/SKILL.md') @('---', 'name: unrelated-frontmatter-identity', '---', 'Agency priorities.')
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue 'banana' -InstallArguments @('--fs')
+        Assert-Equals 0 $result.ExitCode 'Expected explicit selection to override invalid environment.'
+        Assert-Equals '' ($result.Stdout -join "`n") 'Expected successful installation status only on stderr.'
+        Assert-True (($result.Stderr -join "`n").Contains('Installed skills to')) 'Expected installation progress on stderr.'
+        Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/agency-priorities/SKILL.md')) 'Expected flat Forest Service skill installation.'
+        Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) 'Expected default skills with Forest Service selection.'
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-SelectionEnvironmentAndRepeats {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        New-FixtureRepo $repo
+        Write-FixtureFile (Join-Path $repo 'skills/forest-service/agency-priorities/SKILL.md') @('Forest Service.')
+        $cases = @(
+            @{ Both = $true; Value = 'TrUe'; Arguments = @() },
+            @{ Both = $true; Value = '1'; Arguments = @() },
+            @{ Both = $false; Value = $null; Arguments = @() },
+            @{ Both = $false; Value = ''; Arguments = @() },
+            @{ Both = $false; Value = '0'; Arguments = @() },
+            @{ Both = $false; Value = 'FaLsE'; Arguments = @() },
+            @{ Both = $true; Value = '0'; Arguments = @('--forest-service') },
+            @{ Both = $true; Value = 'false'; Arguments = @('--fs') },
+            @{ Both = $true; Value = 'banana'; Arguments = @('--forest-service') },
+            @{ Both = $true; Value = 'banana'; Arguments = @('--fs', '--forest-service', '--fs') },
+            @{ Both = $false; Value = 'true'; Arguments = @('--no-forest-service') },
+            @{ Both = $false; Value = 'banana'; Arguments = @('--no-forest-service') },
+            @{ Both = $false; Value = 'banana'; Arguments = @('--no-forest-service', '--no-forest-service') }
+        )
+        $index = 0
+        foreach ($case in $cases) {
+            $homeDir = Join-Path $workdir "home-$index"
+            $index++
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue $case.Value -InstallArguments $case.Arguments
+            Assert-Equals 0 $result.ExitCode "Expected successful selection: $($case.Value) $($case.Arguments)."
+            Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) 'Expected default skill.'
+            Assert-Equals $case.Both (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/agency-priorities/SKILL.md')) "Expected selected Forest Service outcome: $($case.Value) $($case.Arguments)."
+        }
+        $homeDir = Join-Path $workdir 'repeat-home'
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue 'banana' -InstallArguments @('--fs')
+        Assert-Equals 0 $result.ExitCode 'Expected opted-in install.'
+        $first = Read-FileContent (Join-Path $homeDir '.agents/skills/agency-priorities/SKILL.md')
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue '0'
+        Assert-Equals 0 $result.ExitCode 'Expected default repeat.'
+        Assert-Equals $first (Read-FileContent (Join-Path $homeDir '.agents/skills/agency-priorities/SKILL.md')) 'Expected default repeat to preserve installed Forest Service skills.'
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-InvalidSelectionIsImmutable {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $codex = Join-Path $workdir 'codex'
+        Write-FixtureFile (Join-Path $repo 'scripts/install.ps1') @(Get-Content -LiteralPath $InstallScriptSrc)
+        Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
+        Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $before = Get-TreeFingerprint $homeDir
+        $beforeCodex = Get-TreeFingerprint $codex
+        foreach ($arguments in @(
+            @('--fs', '--no-forest-service'), @('--no-forest-service', '--forest-service'),
+            @('--help', '--fs', '--no-forest-service'), @('-h', '--no-forest-service', '--fs'),
+            @('--wat'), @('operand'), @('--fs=true'), @('--forest-service=1'), @('--no-forest-service=false'),
+            @('--help', '--wat'), @('--wat', '--help'), @('--help', 'operand'), @('--help', '--fs=true'),
+            @('-fs'), @('-ForestService'), @('-help'), @('-?'), @('--FS'), @('--'),
+            @("--f$([char]0x00ad)s"), @("--hel$([char]0x200b)p")
+        )) {
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -InstallArguments $arguments
+            Assert-Equals 2 $result.ExitCode "Expected invalid arguments to exit 2: $arguments."
+            Assert-True (($result.Stderr -join "`n") -match 'Conflicting|Unknown argument') 'Expected actionable argument stderr.'
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for invalid arguments.'
+            Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected invalid arguments not to mutate home.'
+            Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected invalid arguments not to mutate CODEX_HOME.'
+        }
+        foreach ($value in @('banana', ' true', 'false ', 'yes', 'on', '2', "tr$([char]0x00ad)ue", "tru$([char]0x200b)e", "1$([char]0x00ad)")) {
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue $value
+            Assert-Equals 2 $result.ExitCode "Expected invalid environment to exit 2: $value."
+            Assert-True (($result.Stderr -join "`n").Contains('INSTALL_FOREST_SERVICE_SKILLS')) 'Expected actionable variable stderr.'
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for invalid environment.'
+            Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected invalid environment not to mutate home.'
+            Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected invalid environment not to mutate CODEX_HOME.'
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-SourcePreflightIsImmutable {
+    $workdir = New-TestWorkdir
+    try {
+        foreach ($scenario in @('missing-default', 'missing-forest-disabled', 'missing-forest-enabled', 'malformed-default', 'malformed-forest', 'equal-name', 'case-name')) {
+            $repo = Join-Path $workdir "$scenario/repo"
+            $homeDir = Join-Path $workdir "$scenario/home"
+            $codex = Join-Path $workdir "$scenario/codex"
+            New-FixtureRepo $repo
+            Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
+            Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+            $marker = Join-Path $workdir 'stage-reached'
+            $literalMarker = $marker | ConvertTo-Json -Compress
+            Write-FixtureFile (Join-Path $repo 'scripts/configure-rtk.py') @('from pathlib import Path', "Path($literalMarker).write_text('reached')", 'raise SystemExit(98)')
+            Copy-Item -LiteralPath (Join-Path $repo 'scripts/configure-rtk.py') -Destination (Join-Path $repo 'scripts/install-codex-agents.py')
+            $arguments = @()
+            switch ($scenario) {
+                'missing-default' { Remove-Item -LiteralPath (Join-Path $repo 'skills/default') -Recurse -Force; $diagnostic = 'skills/default' }
+                'missing-forest-disabled' { Remove-Item -LiteralPath (Join-Path $repo 'skills/forest-service') -Recurse -Force; $diagnostic = 'skills/forest-service' }
+                'missing-forest-enabled' { Remove-Item -LiteralPath (Join-Path $repo 'skills/forest-service') -Recurse -Force; $diagnostic = 'skills/forest-service'; $arguments = @('--fs') }
+                'malformed-default' { $diagnostic = 'skills/default/incomplete'; New-Item -ItemType Directory -Path (Join-Path $repo $diagnostic) | Out-Null }
+                'malformed-forest' { $diagnostic = 'skills/forest-service/incomplete'; New-Item -ItemType Directory -Path (Join-Path $repo $diagnostic) | Out-Null }
+                'equal-name' { $diagnostic = 'skills/forest-service/alpha'; Write-FixtureFile (Join-Path $repo "$diagnostic/SKILL.md") @('A different frontmatter name.') }
+                'case-name' { $diagnostic = 'skills/forest-service/ALPHA'; Write-FixtureFile (Join-Path $repo "$diagnostic/SKILL.md") @('A different frontmatter name.') }
+            }
+            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+            $before = Get-TreeFingerprint $homeDir
+            $beforeCodex = Get-TreeFingerprint $codex
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue '0' -InstallArguments $arguments
+            Assert-Equals 1 $result.ExitCode "Expected source error exit 1: $scenario."
+            $stderr = ($result.Stderr -join "`n").Replace('\', '/')
+            Assert-True ($stderr.Contains($diagnostic)) "Expected bad source path: $scenario."
+            if ($scenario -in @('equal-name', 'case-name')) {
+                Assert-True ($stderr.Contains('skills/default/alpha')) 'Expected both collision paths.'
+            }
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for source errors.'
+            Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected source error not to mutate home.'
+            Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected source error not to mutate CODEX_HOME.'
+            Assert-True (-not (Test-Path -LiteralPath $marker)) 'Expected validation before dependency, RTK, or converter stages.'
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-HelperFailuresAreInstallerErrors {
+    $workdir = New-TestWorkdir
+    try {
+        foreach ($helper in @('validate-skill-sources.py', 'configure-rtk.py', 'generate-hooks.py', 'install-provider-hooks.py', 'install-codex-agents.py', 'rebase-skill-references.py')) {
+            $repo = Join-Path $workdir "$helper/repo"
+            $homeDir = Join-Path $workdir "$helper/home"
+            $codex = Join-Path $workdir "$helper/codex"
+            New-FixtureRepo $repo
+            Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
+            Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
+            Write-FixtureFile (Join-Path $repo "scripts/$helper") @('import sys', 'print("Fixture helper status")', 'print("Fixture helper failed; repair its input.", file=sys.stderr)', 'raise SystemExit(2)')
+            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+            $before = Get-TreeFingerprint $homeDir
+            $beforeCodex = Get-TreeFingerprint $codex
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue '0'
+            Assert-Equals 1 $result.ExitCode "Expected helper exit 2 to become installer exit 1: $helper."
+            Assert-True (($result.Stderr -join "`n").Contains('Fixture helper failed; repair its input.')) 'Expected helper diagnostic and recovery preserved.'
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected helper status not to leak stdout.'
+            if ($helper -notin @('install-codex-agents.py', 'rebase-skill-references.py')) {
+                Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected preflight helper failure not to mutate home.'
+                Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected preflight helper failure not to mutate CODEX_HOME.'
+            }
+        }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-EmptyCategoriesMarkersAndExclusions {
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        New-FixtureRepo $repo
+        foreach ($category in @('default', 'forest-service')) {
+            foreach ($name in @('archive', 'agency-workspace', 'weird[1]-workspace')) {
+                New-Item -ItemType Directory -Path (Join-Path $repo "skills/$category/$name") -Force | Out-Null
+            }
+            Write-FixtureFile (Join-Path $repo "skills/$category/notes.txt") @('Non-directory marker.')
+        }
+        foreach ($selection in @('--fs', '--no-forest-service')) {
+            $homeDir = Join-Path $workdir "home-$selection"
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -ForestServiceValue 'banana' -InstallArguments @($selection)
+            Assert-Equals 0 $result.ExitCode 'Expected empty Forest Service category valid when enabled or disabled.'
+            Assert-True (Test-Path -LiteralPath (Join-Path $homeDir '.agents/skills/alpha/SKILL.md')) 'Expected flat default alpha.'
+            foreach ($name in @('default', 'forest-service', '.gitkeep', 'notes.txt', 'archive', 'agency-workspace', 'weird[1]-workspace')) {
+                Assert-True (-not (Test-Path -LiteralPath (Join-Path $homeDir ".agents/skills/$name"))) "Expected marker/category/exclusion omitted: $name."
+            }
+        }
+        Remove-Item -LiteralPath (Join-Path $repo 'skills/default/archive') -Recurse -Force
+        Write-FixtureFile (Join-Path $repo 'skills/default/Archive/SKILL.md') @('Not excluded.')
+        Write-FixtureFile (Join-Path $repo 'skills/default/My-Workspace/SKILL.md') @('Not excluded.')
+        Write-FixtureFile (Join-Path $repo 'skills/forest-service/second-name/SKILL.md') @(Get-Content -LiteralPath (Join-Path $repo 'skills/default/alpha/SKILL.md'))
+        $unicodeArchive = "archiv$([char]0x00ad)e"
+        $unicodeWorkspace = "x-work$([char]0x00ad)space"
+        Write-FixtureFile (Join-Path $repo "skills/default/$unicodeArchive/SKILL.md") @('Not excluded.')
+        Write-FixtureFile (Join-Path $repo "skills/default/$unicodeWorkspace/SKILL.md") @('Not excluded.')
+        $homeDir = Join-Path $workdir 'case-home'
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -InstallArguments @('--fs')
+        Assert-Equals 0 $result.ExitCode 'Expected case-sensitive exclusions and basename identities.'
+        foreach ($name in @('Archive', 'My-Workspace', 'second-name', $unicodeArchive, $unicodeWorkspace)) {
+            Assert-True (Test-Path -LiteralPath (Join-Path $homeDir ".agents/skills/$name/SKILL.md")) "Expected case/frontmatter candidate: $name."
+        }
+        Remove-Item -LiteralPath (Join-Path $repo 'skills/default') -Recurse -Force
+        Remove-Item -LiteralPath (Join-Path $repo 'skills/forest-service') -Recurse -Force
+        foreach ($category in @('default', 'forest-service')) {
+            New-Item -ItemType Directory -Path (Join-Path $repo "skills/$category") | Out-Null
+        }
+        $homeDir = Join-Path $workdir 'empty-home'
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -InstallArguments @('--fs')
+        Assert-Equals 0 $result.ExitCode 'Expected both empty categories valid.'
+        Assert-Equals 0 @(Get-ChildItem -Force -LiteralPath (Join-Path $homeDir '.agents/skills')).Count 'Expected no leaf copies from empty categories.'
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-ChildProfileEnvironmentIsIsolated {
+    $workdir = New-TestWorkdir
+    $oldAppData = [System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)
+    $oldLocalAppData = [System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)
+    try {
+        $repo = Join-Path $workdir 'repo'
+        $homeDir = Join-Path $workdir 'home'
+        $outside = Join-Path $workdir 'external-profile'
+        $outsideLocal = Join-Path $workdir 'external-local-profile'
+        Write-FixtureFile (Join-Path $outside 'sentinel') @('Keep external profile.')
+        Write-FixtureFile (Join-Path $outsideLocal 'sentinel') @('Keep external local profile.')
+        [System.Environment]::SetEnvironmentVariable('APPDATA', $outside, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $outsideLocal, [System.EnvironmentVariableTarget]::Process)
+        $before = Get-TreeFingerprint $outside
+        $beforeLocal = Get-TreeFingerprint $outsideLocal
+        # Observe routing through the same child process boundary used by real installer fixtures.
+        Write-FixtureFile (Join-Path $repo 'scripts/install.ps1') @('[Console]::Out.WriteLine($env:APPDATA)', '[Console]::Out.WriteLine($env:LOCALAPPDATA)')
+        Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+        $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+        Assert-Equals 0 $result.ExitCode 'Expected the child environment probe to succeed.'
+        Assert-Equals (Join-Path $homeDir 'AppData/Roaming') $result.Stdout[0] 'Expected child APPDATA routed inside disposable home.'
+        Assert-Equals (Join-Path $homeDir 'AppData/Local') $result.Stdout[1] 'Expected child LOCALAPPDATA routed inside disposable home.'
+        Assert-Equals $outside ([System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)) 'Expected parent APPDATA restored.'
+        Assert-Equals $outsideLocal ([System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)) 'Expected parent LOCALAPPDATA restored.'
+        Assert-Equals $before (Get-TreeFingerprint $outside) 'Expected external profile bytes and modes unchanged.'
+        Assert-Equals $beforeLocal (Get-TreeFingerprint $outsideLocal) 'Expected external local profile bytes and modes unchanged.'
+    }
+    finally {
+        [System.Environment]::SetEnvironmentVariable('APPDATA', $oldAppData, [System.EnvironmentVariableTarget]::Process)
+        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $oldLocalAppData, [System.EnvironmentVariableTarget]::Process)
+        Remove-Workdir $workdir
+    }
+}
+
+Test-ChildProfileEnvironmentIsIsolated
+Test-HelperFailuresAreInstallerErrors
+Test-EmptyCategoriesMarkersAndExclusions
+Test-SourcePreflightIsImmutable
+Test-InvalidSelectionIsImmutable
+Test-SelectionEnvironmentAndRepeats
+Test-ExplicitForestServiceSelection
+Test-HelpWithoutSourcesOrDependencies
 Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode
 Test-ProviderConfigHardLinksDoNotChangeOtherFiles
 Test-ProviderConfigLinkedParentStopsBeforeMutation

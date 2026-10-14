@@ -4,6 +4,9 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+# Child fixtures must never inherit an account's custom install destination/selection.
+unset CODEX_HOME INSTALL_FOREST_SERVICE_SKILLS
+
 create_fixture_repo() {
   local repo="$1"
 
@@ -33,6 +36,7 @@ create_fixture_repo() {
   export PATH
   cp -p "$REPO_ROOT/scripts/install-provider-hooks.py" "$repo/scripts/install-provider-hooks.py"
   cp -p "$REPO_ROOT/scripts/rebase-skill-references.py" "$repo/scripts/rebase-skill-references.py"
+  cp -p "$REPO_ROOT/scripts/validate-skill-sources.py" "$repo/scripts/validate-skill-sources.py"
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -331,6 +335,7 @@ test_fresh_generated_hooks_preflight_installs_without_bytecode() {
 }
 
 test_stale_generated_hooks_stop_before_destination_mutation() {
+  local codex before_codex
   local workdir
   local repo
   local home
@@ -340,26 +345,33 @@ test_stale_generated_hooks_stop_before_destination_mutation() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
   repo="$workdir/repo"
   home="$workdir/home"
+  codex="$workdir/codex"
   create_fixture_repo "$repo"
   output_path="$(generated_rtk_output_path "$repo")"
   printf '%s\n' '# stale fixture output' >> "$repo/$output_path"
   mkdir -p "$home/preserved"
   printf '%s\n' 'do not change' > "$home/preserved/sentinel.txt"
   before="$(tree_fingerprint "$home")"
+  mkdir -p "$codex"
+  printf '%s\n' sentinel > "$codex/sentinel"
+  before_codex="$(tree_fingerprint "$codex")"
 
   status=0
-  HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
+  HOME="$home" CODEX_HOME="$codex" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
   assert_equals "1" "$status" "Expected stale generated hooks to exit 1."
-  assert_file_contains "$workdir/stdout" "$output_path" "Expected stale output path on stdout."
+  assert_file_contains "$workdir/stderr" "$output_path" "Expected stale output path on stderr."
+  assert_equals '' "$(cat "$workdir/stdout")" 'Expected no stdout for stale generated hooks.'
   assert_file_contains "$workdir/stderr" "python3 scripts/generate-hooks.py --write" "Expected stale-output recovery command on stderr."
   after="$(tree_fingerprint "$home")"
   assert_equals "$before" "$after" "Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories."
+  assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected stale preflight not to mutate external CODEX_HOME.'
 }
 
 test_generator_failure_stops_before_destination_mutation() {
+  local codex before_codex
   local workdir
   local repo
   local home
@@ -368,9 +380,10 @@ test_generator_failure_stops_before_destination_mutation() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
   repo="$workdir/repo"
   home="$workdir/home"
+  codex="$workdir/codex"
   create_fixture_repo "$repo"
   python3 - "$repo/hooks/manifest.py" <<'PY'
 from pathlib import Path
@@ -383,10 +396,13 @@ PY
   mkdir -p "$home/preserved"
   printf '%s\n' 'do not change' > "$home/preserved/sentinel.txt"
   before="$(tree_fingerprint "$home")"
+  mkdir -p "$codex"
+  printf '%s\n' sentinel > "$codex/sentinel"
+  before_codex="$(tree_fingerprint "$codex")"
 
   status=0
-  HOME="$home" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
-  assert_equals "2" "$status" "Expected a generator failure to exit 2."
+  HOME="$home" CODEX_HOME="$codex" bash "$repo/scripts/install.sh" >"$workdir/stdout" 2>"$workdir/stderr" || status=$?
+  assert_equals "1" "$status" "Expected a generator failure to become installer exit 1."
   assert_file_contains "$workdir/stderr" "Unknown provider 'unknown'" "Expected the generator diagnostic on stderr."
   if grep -Fq "python3 scripts/generate-hooks.py --write" "$workdir/stderr"; then
     echo "Expected generator failures to omit stale-output recovery advice." >&2
@@ -394,6 +410,7 @@ PY
   fi
   after="$(tree_fingerprint "$home")"
   assert_equals "$before" "$after" "Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories."
+  assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected generator failure not to mutate external CODEX_HOME.'
 }
 
 test_installs_codex_agents_before_other_assets() {
@@ -850,6 +867,7 @@ PY
 }
 
 test_installed_hooks_are_executable() {
+  local unicode_py unicode_sh
   local workdir
   local repo
   local home
@@ -865,6 +883,11 @@ test_installed_hooks_are_executable() {
   chmod 644 "$repo/.copilot/hooks/scripts/test-hook.py"
   chmod 644 "$repo/.gemini/hooks/scripts/test-hook.sh"
   chmod 644 "$repo/.copilot/hooks/scripts/test-hook.sh"
+  unicode_py="$(python3 -c 'print("not-hook.p\u00ady")')"
+  unicode_sh="$(python3 -c 'print("not-hook.s\u00adh")')"
+  printf '%s\n' 'Keep original mode.' > "$repo/.copilot/hooks/scripts/$unicode_py"
+  printf '%s\n' 'Keep original mode.' > "$repo/.gemini/hooks/scripts/$unicode_sh"
+  chmod 604 "$repo/.copilot/hooks/scripts/$unicode_py" "$repo/.gemini/hooks/scripts/$unicode_sh"
 
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
 
@@ -887,6 +910,13 @@ test_installed_hooks_are_executable() {
     echo "Expected ~/.copilot/hooks/scripts/test-hook.sh to be executable." >&2
     exit 1
   fi
+  python3 - "$home/.copilot/hooks/scripts/$unicode_py" "$home/.gemini/hooks/scripts/$unicode_sh" <<'PY'
+import stat
+import sys
+from pathlib import Path
+for filename in sys.argv[1:]:
+    assert stat.S_IMODE(Path(filename).stat().st_mode) == 0o604, filename
+PY
 }
 
 test_excludes_and_prunes_skill_evals() {
@@ -1061,7 +1091,268 @@ PY
 
 }
 
+cleanup_cli_fixture() {
+  rm -rf -- "$workdir"
+}
+
+test_help_without_sources_or_dependencies() {
+  local workdir repo home codex before before_codex arguments status
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"; home="$workdir/home"; codex="$workdir/codex"
+  mkdir -p "$repo/scripts" "$home" "$codex"
+  cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
+  printf '%s\n' sentinel > "$home/sentinel"
+  printf '%s\n' sentinel > "$codex/sentinel"
+  before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
+  for arguments in '-h' '--help' '--fs --help --forest-service' '--help --no-forest-service --no-forest-service'; do
+    set -- $arguments
+    status=0
+    HOME="$home" CODEX_HOME="$codex" INSTALL_FOREST_SERVICE_SKILLS=banana bash "$repo/scripts/install.sh" "$@" >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 0 "$status" "Expected help to bypass missing sources/dependencies and invalid environment."
+    assert_file_contains "$workdir/out" 'Usage:' 'Expected usage on stdout.'
+    assert_file_contains "$workdir/out" 'Use --forest-service' 'Expected selection options in help.'
+    assert_file_contains "$workdir/out" 'Examples:' 'Expected examples in help.'
+    assert_equals '' "$(cat "$workdir/err")" 'Expected help stderr to be empty.'
+    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected help not to mutate home.'
+    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected help not to mutate CODEX_HOME.'
+  done
+}
+
+test_explicit_forest_service_selection() {
+  local workdir repo home status
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"; home="$workdir/home"
+  create_fixture_repo "$repo"
+  mkdir -p "$repo/skills/forest-service/agency-priorities"
+  printf '%s\n' '---' 'name: unrelated-frontmatter-identity' '---' 'Agency priorities.' > "$repo/skills/forest-service/agency-priorities/SKILL.md"
+  status=0
+  HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=banana bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err" || status=$?
+  assert_equals 0 "$status" 'Expected explicit selection to override invalid environment.'
+  assert_equals '' "$(cat "$workdir/out")" 'Expected successful installation status only on stderr.'
+  assert_file_contains "$workdir/err" 'Installed skills to' 'Expected installation progress on stderr.'
+  [[ -f "$home/.agents/skills/agency-priorities/SKILL.md" ]] || { echo 'Expected flat Forest Service skill installation.' >&2; exit 1; }
+  [[ -f "$home/.agents/skills/alpha/SKILL.md" ]] || { echo 'Expected default skills with Forest Service selection.' >&2; exit 1; }
+}
+
+test_selection_environment_and_repeats() {
+  local workdir repo home value expected arguments status first
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"
+  create_fixture_repo "$repo"
+  mkdir -p "$repo/skills/forest-service/agency-priorities"
+  printf '%s\n' 'Forest Service.' > "$repo/skills/forest-service/agency-priorities/SKILL.md"
+  while IFS='|' read -r expected value arguments; do
+    home="$workdir/home-$expected-$value-${arguments// /_}"
+    # The fixture arguments are fixed literals, intentionally split into argv.
+    set -- $arguments
+    status=0
+    (
+      if [[ "$value" == unset ]]; then unset INSTALL_FOREST_SERVICE_SKILLS; else export INSTALL_FOREST_SERVICE_SKILLS="$value"; fi
+      HOME="$home" bash "$repo/scripts/install.sh" "$@"
+    ) >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 0 "$status" "Expected successful selection: $value $arguments."
+    [[ -f "$home/.agents/skills/alpha/SKILL.md" ]] || { echo 'Expected default skill.' >&2; exit 1; }
+    if [[ "$expected" == both ]]; then
+      [[ -f "$home/.agents/skills/agency-priorities/SKILL.md" ]] || { echo "Expected Forest Service skill: $value $arguments." >&2; exit 1; }
+    else
+      [[ ! -e "$home/.agents/skills/agency-priorities" ]] || { echo "Expected default only: $value $arguments." >&2; exit 1; }
+    fi
+  done <<'CASES'
+both|TrUe|
+both|1|
+default|unset|
+default||
+default|0|
+default|FaLsE|
+both|0|--forest-service
+both|false|--fs
+both|banana|--forest-service
+both|banana|--fs --forest-service --fs
+default|true|--no-forest-service
+default|banana|--no-forest-service
+default|banana|--no-forest-service --no-forest-service
+CASES
+  home="$workdir/repeat-home"
+  HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=banana bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
+  first="$(cat "$home/.agents/skills/agency-priorities/SKILL.md")"
+  HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err"
+  assert_equals "$first" "$(cat "$home/.agents/skills/agency-priorities/SKILL.md")" 'Expected default repeat to preserve previously installed Forest Service skills.'
+}
+
+test_invalid_selection_is_immutable() {
+  local workdir repo home codex before before_codex arguments value status diagnostic
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"; home="$workdir/home"; codex="$workdir/codex"
+  mkdir -p "$repo/scripts" "$home" "$codex"
+  cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
+  printf '%s\n' sentinel > "$home/sentinel"
+  printf '%s\n' sentinel > "$codex/sentinel"
+  before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
+  while IFS='|' read -r value diagnostic arguments; do
+    set -- $arguments
+    status=0
+    HOME="$home" CODEX_HOME="$codex" INSTALL_FOREST_SERVICE_SKILLS="$value" bash "$repo/scripts/install.sh" "$@" >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 2 "$status" "Expected invalid selection to exit 2: $value $arguments."
+    assert_file_contains "$workdir/err" "$diagnostic" 'Expected actionable argument/environment stderr.'
+    assert_equals '' "$(cat "$workdir/out")" 'Expected no stdout for invalid selection.'
+    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected invalid selection not to mutate home.'
+    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected invalid selection not to mutate CODEX_HOME.'
+  done < <(cat <<'CASES'
+|Conflicting|--fs --no-forest-service
+|Conflicting|--no-forest-service --forest-service
+|Conflicting|--help --fs --no-forest-service
+|Conflicting|-h --no-forest-service --fs
+|Unknown argument|--wat
+|Unknown argument|operand
+|Unknown argument|--fs=true
+|Unknown argument|--forest-service=1
+|Unknown argument|--no-forest-service=false
+|Unknown argument|--help --wat
+|Unknown argument|--wat --help
+|Unknown argument|--help operand
+|Unknown argument|--help --fs=true
+|Unknown argument|-fs
+|Unknown argument|-ForestService
+|Unknown argument|-help
+|Unknown argument|-?
+|Unknown argument|--FS
+|Unknown argument|--
+banana|INSTALL_FOREST_SERVICE_SKILLS|
+ true|INSTALL_FOREST_SERVICE_SKILLS|
+false |INSTALL_FOREST_SERVICE_SKILLS|
+yes|INSTALL_FOREST_SERVICE_SKILLS|
+on|INSTALL_FOREST_SERVICE_SKILLS|
+2|INSTALL_FOREST_SERVICE_SKILLS|
+CASES
+    python3 - <<'PY'
+print('|Unknown argument|--f\u00ads')
+print('|Unknown argument|--hel\u200bp')
+for value in ('tr\u00adue', 'tru\u200be', '1\u00ad'):
+    print(f'{value}|INSTALL_FOREST_SERVICE_SKILLS|')
+PY
+  )
+}
+
+test_source_preflight_is_immutable() {
+  local workdir repo home codex before before_codex scenario diagnostic status
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  for scenario in missing-default missing-forest-disabled missing-forest-enabled malformed-default malformed-forest equal-name case-name; do
+    repo="$workdir/$scenario/repo"; home="$workdir/$scenario/home"; codex="$workdir/$scenario/codex"
+    create_fixture_repo "$repo"
+    mkdir -p "$home" "$codex"
+    printf '%s\n' sentinel > "$home/sentinel"
+    printf '%s\n' sentinel > "$codex/sentinel"
+    # Any dependency/configuration or converter stage reached before validation is a failure.
+    printf '%s\n' 'from pathlib import Path' "Path('$workdir/stage-reached').write_text('reached')" 'raise SystemExit(98)' > "$repo/scripts/configure-rtk.py"
+    cp "$repo/scripts/configure-rtk.py" "$repo/scripts/install-codex-agents.py"
+    set --
+    case "$scenario" in
+      missing-default) rm -rf -- "$repo/skills/default"; diagnostic='skills/default' ;;
+      missing-forest-disabled|missing-forest-enabled)
+        rm -rf -- "$repo/skills/forest-service"; diagnostic='skills/forest-service'
+        if [[ "$scenario" == missing-forest-enabled ]]; then set -- --fs; fi ;;
+      malformed-default) mkdir -p "$repo/skills/default/incomplete"; diagnostic='skills/default/incomplete' ;;
+      malformed-forest) mkdir -p "$repo/skills/forest-service/incomplete"; diagnostic='skills/forest-service/incomplete' ;;
+      equal-name|case-name)
+        diagnostic='skills/forest-service/alpha'
+        if [[ "$scenario" == case-name ]]; then diagnostic='skills/forest-service/ALPHA'; fi
+        mkdir -p "$repo/$diagnostic"; printf '%s\n' 'A different frontmatter name.' > "$repo/$diagnostic/SKILL.md" ;;
+    esac
+    before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
+    status=0
+    HOME="$home" CODEX_HOME="$codex" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" "$@" >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 1 "$status" "Expected source error exit 1: $scenario."
+    assert_file_contains "$workdir/err" "$diagnostic" "Expected bad source path: $scenario."
+    if [[ "$scenario" == equal-name || "$scenario" == case-name ]]; then
+      assert_file_contains "$workdir/err" 'skills/default/alpha' 'Expected both collision paths.'
+    fi
+    assert_equals '' "$(cat "$workdir/out")" 'Expected no stdout for source errors.'
+    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected source error not to mutate home.'
+    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected source error not to mutate CODEX_HOME.'
+    [[ ! -e "$workdir/stage-reached" ]] || { echo 'Expected source validation before dependency, RTK, or converter stages.' >&2; exit 1; }
+  done
+}
+
+test_helper_failures_are_installer_errors() {
+  local workdir repo home codex helper before before_codex status
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  for helper in validate-skill-sources.py configure-rtk.py generate-hooks.py install-provider-hooks.py install-codex-agents.py rebase-skill-references.py; do
+    repo="$workdir/$helper/repo"; home="$workdir/$helper/home"; codex="$workdir/$helper/codex"
+    create_fixture_repo "$repo"
+    mkdir -p "$home" "$codex"
+    printf '%s\n' sentinel > "$home/sentinel"
+    printf '%s\n' sentinel > "$codex/sentinel"
+    printf '%s\n' 'import sys' 'print("Fixture helper status")' 'print("Fixture helper failed; repair its input.", file=sys.stderr)' 'raise SystemExit(2)' > "$repo/scripts/$helper"
+    before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
+    status=0
+    HOME="$home" CODEX_HOME="$codex" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 1 "$status" "Expected helper exit 2 to become installer exit 1: $helper."
+    assert_file_contains "$workdir/err" 'Fixture helper failed; repair its input.' 'Expected helper diagnostic and recovery preserved.'
+    assert_equals '' "$(cat "$workdir/out")" 'Expected helper status not to leak stdout.'
+    case "$helper" in
+      install-codex-agents.py|rebase-skill-references.py) ;;
+      *)
+        assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected preflight helper failure not to mutate home.'
+        assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected preflight helper failure not to mutate CODEX_HOME.' ;;
+    esac
+  done
+}
+
+test_empty_categories_markers_and_exclusions() {
+  local workdir repo home category selection status unicode_archive unicode_workspace
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"
+  create_fixture_repo "$repo"
+  for category in default forest-service; do
+    mkdir -p "$repo/skills/$category/archive" "$repo/skills/$category/agency-workspace" "$repo/skills/$category/weird[1]-workspace"
+    printf '%s\n' 'Non-directory marker.' > "$repo/skills/$category/notes.txt"
+  done
+  for selection in --fs --no-forest-service; do
+    home="$workdir/home-$selection"
+    status=0
+    HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=banana bash "$repo/scripts/install.sh" "$selection" >"$workdir/out" 2>"$workdir/err" || status=$?
+    assert_equals 0 "$status" 'Expected empty Forest Service category to be valid when enabled or disabled.'
+    [[ -f "$home/.agents/skills/alpha/SKILL.md" ]] || { echo 'Expected flat default alpha.' >&2; exit 1; }
+    for category in default forest-service .gitkeep notes.txt archive agency-workspace 'weird[1]-workspace'; do
+      [[ ! -e "$home/.agents/skills/$category" ]] || { echo "Expected marker/category/exclusion omitted: $category." >&2; exit 1; }
+    done
+  done
+  rm -rf -- "$repo/skills/default/archive"
+  unicode_archive="$(python3 -c 'print("archiv\u00ade")')"
+  unicode_workspace="$(python3 -c 'print("x-work\u00adspace")')"
+  mkdir -p "$repo/skills/default/Archive" "$repo/skills/default/My-Workspace" "$repo/skills/forest-service/second-name" "$repo/skills/default/$unicode_archive" "$repo/skills/default/$unicode_workspace"
+  printf '%s\n' 'Not excluded.' > "$repo/skills/default/$unicode_archive/SKILL.md"
+  printf '%s\n' 'Not excluded.' > "$repo/skills/default/$unicode_workspace/SKILL.md"
+  printf '%s\n' 'Not excluded.' > "$repo/skills/default/Archive/SKILL.md"
+  printf '%s\n' 'Not excluded.' > "$repo/skills/default/My-Workspace/SKILL.md"
+  cp "$repo/skills/default/alpha/SKILL.md" "$repo/skills/forest-service/second-name/SKILL.md"
+  home="$workdir/case-home"
+  HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
+  for category in Archive My-Workspace second-name "$unicode_archive" "$unicode_workspace"; do
+    [[ -f "$home/.agents/skills/$category/SKILL.md" ]] || { echo "Expected basename candidate despite case/frontmatter: $category." >&2; exit 1; }
+  done
+  rm -rf -- "$repo/skills/default" "$repo/skills/forest-service"
+  mkdir -p "$repo/skills/default" "$repo/skills/forest-service"
+  home="$workdir/empty-home"
+  HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
+  assert_equals '' "$(find "$home/.agents/skills" -mindepth 1 -maxdepth 1 -print)" 'Expected both empty categories valid without leaf copies.'
+}
+
 main() {
+  test_helper_failures_are_installer_errors
+  test_empty_categories_markers_and_exclusions
+  test_source_preflight_is_immutable
+  test_invalid_selection_is_immutable
+  test_selection_environment_and_repeats
+  test_explicit_forest_service_selection
+  test_help_without_sources_or_dependencies
   test_provider_config_hard_links_do_not_change_other_files
   test_provider_config_linked_parent_stops_before_mutation
   test_provider_refresh_preserves_retired_and_user_entries
