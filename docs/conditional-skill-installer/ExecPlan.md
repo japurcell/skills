@@ -18,10 +18,11 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-1] T1: Migrate published skills and deliver default-category traversal in both installers with disposable-home proof; integrated commit `1dadc9993b2885f5448d91a97177872509c706fc`.
 - [x] (2026-10-14) [milestone-1] T2: Repair maintained consumers, import destinations, authoring paths, and fixtures; integrated commit `d141e63d6531973f7de98759610d216635b212a0` with reference and linked-target proof.
 - [x] (2026-10-14) [milestone-1] Verify the integrated layout and default-install result on base `d141e63d`: Bash, macOS PowerShell, Addy, registry (14), spec-to-tasks (38), prd-ralph-loop (13), handoff (20), skill validator, 29 maintained links, OKF, and whitespace checks passed.
-- [ ] [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through successive public-CLI test cycles.
+- [x] (2026-10-14) [milestone-2] T3: Deliver selection flags, environment precedence, help, diagnostics, and validation through public red/green cycles; integrated `af3e4806f32a3d89cafa962bd579819af496019a`.
 - [ ] [milestone-2] Verify the complete behavior matrix in Bash and PowerShell.
 - [x] (2026-10-14) [milestone-2] R1: Make the reference-rebasing CLI directly executable; integrated `d07be4368ecc9b190867979ebc82c2bd050cc71a`. Direct help passed on base, with identical content blob and mode `100755`.
 - [ ] [milestone-3] T4: Obtain integrated source and native Windows evidence; preserve existing installer protections.
+- [ ] [milestone-4] T5D: Finish user-facing installation documentation independently of external Windows execution.
 - [ ] [milestone-4] T5: Finish user documentation and the single coordinated agent-documentation pass; check links and the final diff.
 
 ## Surprises & Discoveries
@@ -81,11 +82,11 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-Milestone 1 is implemented and accepted on base `d141e63d`. All 57 published bundles moved to `skills/default`; consumer paths, imports, and shared-reference resolution are repaired. Composed base proof passed both default installers and consumer checks. T3 is the ready frontier. Selection, source preflight, and native Windows acceptance remain open.
+The layout, consumers, reference handling, and complete CLI are implemented and integrated on base `af3e4806`. T3's complete Bash and macOS PowerShell suites, RTK 12 tests, and Codex 14 tests passed before rebase; all five tested T3 blobs/modes remained identical after rebase. T4 owns the composed integrated proof and pending native Windows evidence. T5D independently owns user documentation. Milestone 2 acceptance awaits composed proof; native Windows and final closure remain open.
 
 ## Context and Orientation
 
-Work from `/Users/adam/.codex/worktrees/d238/skills`. `scripts/install.sh` owns Bash copying through `copy_skills`; `scripts/install.ps1` owns PowerShell copying through `Copy-Skills` and the link-safe `Copy-Entry` helpers. Both have source checks, RTK preflight, generated-hook freshness validation, and provider configuration preflight before their write phase. Neither currently implements the agreed argument interface.
+Work from `/Users/adam/.codex/worktrees/d238/skills`. `scripts/install.sh` owns Bash copying through `copy_skills`; `scripts/install.ps1` owns PowerShell copying through `Copy-Skills` and the link-safe `Copy-Entry` helpers. Both now implement the agreed raw argument interface, environment resolution, and shared `scripts/validate-skill-sources.py` inventory check before destination mutation. Existing RTK, generated-hook, and provider configuration preflights remain before writes. PowerShell uses ordinal comparisons for literal external strings and isolates Windows profile variables in disposable test children.
 
 `scripts/test-install.sh` and `scripts/test-install.ps1` build disposable repositories and homes. Their skill fixtures now use `skills/default/alpha`, with an empty Forest Service category. The PowerShell `Invoke-InstallProcess` helper is the existing child-process boundary for home/environment isolation and needs argument forwarding plus reliable environment restoration for T3. These suites also cover provider settings, Codex agent conversion, modes, links, and malformed-input immutability; retain that coverage.
 
@@ -154,6 +155,8 @@ Completed prerequisite: integrated T2. Source inspection found `scripts/rebase-s
 
 Prerequisites: integrated Milestone 1. Inputs: D2-D4 and both disposable-home fixture suites. Own argument handling, selection state, source inventory validation, user-facing output, and matching cases in `scripts/install.sh`, `scripts/install.ps1`, `scripts/test-install.sh`, and `scripts/test-install.ps1`.
 
+Completed evidence: original task commit `fd5de97af199bcccd4f595af85c3a50890f4c265` rebased to integrated `af3e4806f32a3d89cafa962bd579819af496019a`; all five tested source/test blobs and modes were identical across rebase. Complete installer suites passed on macOS, with native junction proof explicitly skipped. RTK 12 and Codex 14 tests passed. Public cycles reproduced help, selection, environment, preflight ordering, streams, helper exit mapping, invisible-character spellings, exclusion matching, and hook-extension mode failures, then proved their fixes. Failure cases fingerprint home and external `CODEX_HOME`; source failures assert stage markers remain absent. APPDATA/LOCALAPPDATA child isolation and parent restoration passed against disposable external sentinels. Only the four named files and executable `scripts/validate-skill-sources.py` changed. T4 will prove their composed behavior on the integrated result.
+
 Use successive vertical test cycles at the installer process boundary: one failing behavior, its minimal implementation, then the next case. Implement native shell argument scanning with identical exact spellings; PowerShell must handle literal double-hyphen arguments explicitly. Reuse existing standard-library/runtime facilities for category validation instead of introducing packages. Keep selection and validated source enumeration separate from copying so both categories can be validated while only selected skills are copied.
 
 Order execution as full argument validation, help exit if requested, selection/environment resolution, category and collision validation, existing dependency/configuration preflights, then existing writes. Preserve existing safety checks and diagnostics. Ensure usage and errors do not accidentally enter PowerShell's success pipeline and that native child output is routed appropriately. Verify exit codes at the process boundary, not through private parser calls.
@@ -162,12 +165,12 @@ Stop after the complete matrix in Validation and Acceptance passes in both local
 
 ### Milestone 3: Prove integrated and native Windows behavior
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T4: Verify the integrated implementation
 
-Prerequisites: Milestones 1 and 2. Inputs: changed tree, CLI matrix, existing regression suites, and `.github/workflows/ready-ideas-windows.yml`. Own integration verification and minimal workflow adjustments only if the existing native Windows job does not exercise the changed suites.
+Prerequisites: accepted Milestone 1 and integrated T3/R1 with their recorded local task proof. Inputs: changed tree, CLI matrix, existing regression suites, and `.github/workflows/ready-ideas-windows.yml`. Own integration verification and minimal workflow adjustments only if the existing native Windows job does not exercise the changed suites. Its local composed proof establishes Milestone 2 acceptance; its native Windows proof establishes Milestone 3 acceptance. Retain command/revision/platform/exit evidence in `docs/conditional-skill-installer/verification.json`; the coordinator owns this ExecPlan.
 
 Run the targeted commands below sequentially where fixture mutation could interfere. Obtain native Windows execution of `scripts/test-install.ps1` through the existing workflow or a Windows-capable host. Record the run URL or host, revision, command, result, and any junction-capability limit. A macOS `pwsh` pass or a platform skip cannot satisfy Windows acceptance. Do not dispatch CI or push changes without session authorization for that action.
 
@@ -175,8 +178,12 @@ Stop with acceptance not met if Windows evidence is unavailable. Preserve comple
 
 ### Milestone 4: Finish documentation and quality checks
 
-Status: open
+Status: in progress
 Acceptance: not met
+
+#### Task T5D: Deliver user documentation before external acceptance
+
+Prerequisites: integrated T3 with local CLI task proof. Own only `README.md` installation guidance. Document both invocation forms, flags and exact alias, environment values/precedence, explicit disabling, preserved installed Forest Service skills, empty initial Forest Service content, required categories, and actionable error recovery with exits/streams. Verify against both public `--help` outputs and actual source; do not run a real-home installation. Stop after a scoped documentation commit and whitespace/link checks. This bounded task separates independently deliverable documentation from T5's Windows-dependent closure. The coordinator retains exclusive ownership of the final canonical KB pass.
 
 #### Task T5: Synchronize documentation and close the effort
 
@@ -188,9 +195,9 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-The next unfinished implementation action is T3: selection flags, help, diagnostics, and preflight parity in a fresh isolated worktree based on accepted Milestone 1. The user's `execplan-implement` invocation authorizes this work and local commits.
+The ready frontier is T4 integrated verification and T5D user documentation in separate fresh worktrees. Both consume integrated T3 and have disjoint ownership. T4's composed local proof can establish Milestone 2 acceptance; native Windows remains required for Milestone 3. If Windows execution is unavailable, finish independent T5D and the mandatory end-of-session KB pass, retain the plan, and leave final T5 closure unmet. Pushing and CI dispatch still require user authorization.
 
-The reconciled task graph is T1 before T2; their integrated proof before T3; T3 before T4; T4 before T5. Shared installer and fixture files require serialized ownership. The invoked implementation skill requires fresh implementer subagents for distinct tasks. The coordinator owns the ExecPlan and final shared canonical-document admission pass; T2 owns only its specifically named layout guidance repairs.
+The reconciled graph is T1 before T2; their integrated proof before T3; integrated T3 and independent R1 before T4; T3 before T5D; verified T4 native execution and T5D before final T5 closure. Shared installer and fixture files require serialized ownership. Fresh implementer subagents own distinct tasks. The coordinator owns the ExecPlan and final canonical-document admission pass; T2 owned only its named layout guidance repairs.
 
 Use the repository root as the working directory for every command. Prefix shell commands with RTK; use `rtk proxy` when exact subprocess behavior matters. Keep disposable profile roots in task-specific variables rather than repurposing `$HOME` in the orchestrating shell. Tests establish the child process home themselves.
 
