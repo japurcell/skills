@@ -2,10 +2,11 @@
 # Generated from hooks/families/common.py by scripts/generate-hooks.py. Do not edit.
 from __future__ import annotations
 
-import codecs
 import json
 import os
+import select
 import sys
+import time
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn, Sequence
@@ -14,47 +15,61 @@ if TYPE_CHECKING:
     import subprocess
 
 
-def _read_available_stdin_bytes(stdin_fd: int) -> bytes:
-    if os.name == "nt":
-        import ctypes
-        import msvcrt
+INPUT_COMPLETION_IDLE_SECONDS = 0.5
+INPUT_COMPLETION_TOTAL_SECONDS = 2.0
+# Six-byte JSON escapes for 256 KiB of native data, plus 512 KiB of metadata.
+INPUT_MAX_BYTES = 2 * 1024 * 1024
+INPUT_MAX_DEPTH = 64
 
-        chunks: list[bytes] = []
-        pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
-        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-        while True:
-            available = ctypes.c_ulong()
-            if not kernel32.PeekNamedPipe(
-                pipe_handle,
-                None,
-                0,
-                None,
-                ctypes.byref(available),
-                None,
-            ):
-                return b""
-            if available.value == 0:
-                return b"".join(chunks)
-            chunks.append(os.read(stdin_fd, min(available.value, 65536)))
+def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
+    if os.name != "nt":
+        return bool(select.select([stdin_fd], [], [], timeout)[0])
 
-    try:
-        was_blocking = os.get_blocking(stdin_fd)
-        os.set_blocking(stdin_fd, False)
-    except OSError:
-        return b""
+    import ctypes
+    import msvcrt
 
-    chunks = []
-    try:
-        while True:
-            chunk = os.read(stdin_fd, 65536)
-            if not chunk:
-                break
-            chunks.append(chunk)
-    except BlockingIOError:
-        pass
-    finally:
-        os.set_blocking(stdin_fd, was_blocking)
+    deadline = time.monotonic() + timeout
+    pipe_handle = ctypes.c_void_p(msvcrt.get_osfhandle(stdin_fd))
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    while True:
+        available = ctypes.c_ulong()
+        if kernel32.PeekNamedPipe(
+            pipe_handle, None, 0, None, ctypes.byref(available), None,
+        ):
+            if available.value:
+                return True
+        else:
+            error = ctypes.get_last_error()
+            # A broken pipe is readable EOF; regular-file stdin needs no wait.
+            if error == 109 or kernel32.GetFileType(pipe_handle) == 1:
+                return True
+            raise OSError(error, "Hook stdin readiness failed")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(0.01, remaining))
+
+
+def _read_available_stdin_bytes(
+    stdin_fd: int,
+    max_bytes: int = INPUT_MAX_BYTES,
+    deadline: float | None = None,
+) -> bytes:
+    if deadline is None:
+        deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
+    chunks: list[bytes] = []
+    total = 0
+    while _stdin_is_ready(stdin_fd):
+        if time.monotonic() >= deadline:
+            raise ValueError("Invalid hook input: input deadline exceeded")
+        chunk = os.read(stdin_fd, min(65536, max_bytes - total + 1))
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise ValueError("Invalid hook input: raw byte limit exceeded")
+        chunks.append(chunk)
     return b"".join(chunks)
 
 
@@ -62,32 +77,76 @@ def _read_json_input_text() -> str:
     try:
         stdin_fd = sys.stdin.fileno()
     except (AttributeError, OSError):
-        return sys.stdin.read()
+        # Runtime hooks require descriptor readiness to bound blocking reads.
+        raise ValueError("Invalid hook input: stdin readiness unavailable") from None
 
-    decoder = codecs.getincrementaldecoder("utf-8")()
-    json_decoder = json.JSONDecoder()
-    raw_input = ""
+    deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
+    chunks: list[bytes] = []
+    total = 0
+    stack: list[int] = []
+    started = False
+    in_string = False
+    escaped = False
+    complete = False
 
     while True:
-        chunk = os.read(stdin_fd, 65536)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ValueError("Invalid hook input: input deadline exceeded")
+        if not _stdin_is_ready(stdin_fd, min(INPUT_COMPLETION_IDLE_SECONDS, remaining)):
+            raise ValueError("Invalid hook input: malformed or incomplete JSON")
+        chunk = os.read(stdin_fd, min(65536, INPUT_MAX_BYTES - total + 1))
         if not chunk:
-            return raw_input + decoder.decode(b"", final=True)
+            return b"".join(chunks).decode("utf-8")
+        total += len(chunk)
+        if total > INPUT_MAX_BYTES:
+            raise ValueError("Invalid hook input: raw byte limit exceeded")
+        chunks.append(chunk)
 
-        raw_input += decoder.decode(chunk)
-        try:
-            start_index = len(raw_input) - len(raw_input.lstrip())
-            json_decoder.raw_decode(raw_input, start_index)
-        except json.JSONDecodeError:
-            continue
+        # Find the object boundary once, without repeatedly parsing a growing prefix.
+        # UTF-8 continuation bytes cannot collide with ASCII quotes or delimiters.
+        for byte in chunk:
+            if complete:
+                if byte not in (32, 9, 10, 13):
+                    raise ValueError("Invalid hook input: trailing data")
+            elif in_string:
+                if escaped:
+                    escaped = False
+                elif byte == 92:
+                    escaped = True
+                elif byte == 34:
+                    in_string = False
+            elif byte == 34:
+                in_string = True
+            elif byte in (123, 91):
+                if not started:
+                    if byte != 123:
+                        raise ValueError("Invalid hook input: expected a JSON object")
+                    started = True
+                stack.append(byte)
+                if len(stack) > INPUT_MAX_DEPTH:
+                    raise ValueError("Invalid hook input: nesting limit exceeded")
+            elif byte in (125, 93):
+                if not stack or stack.pop() != (123 if byte == 125 else 91):
+                    raise ValueError("Invalid hook input: malformed JSON")
+                complete = not stack
+            elif not started and byte not in (32, 9, 10, 13):
+                raise ValueError("Invalid hook input: expected a JSON object")
 
-        raw_input += decoder.decode(_read_available_stdin_bytes(stdin_fd))
-        return raw_input + decoder.decode(b"", final=True)
+        if time.monotonic() >= deadline:
+            raise ValueError("Invalid hook input: input deadline exceeded")
+        if complete:
+            trailing = _read_available_stdin_bytes(stdin_fd, INPUT_MAX_BYTES - total, deadline)
+            if trailing.strip(b" \t\r\n"):
+                raise ValueError("Invalid hook input: trailing data")
+            chunks.append(trailing)
+            return b"".join(chunks).decode("utf-8")
 
 
 def read_json_input() -> dict:
     try:
         payload = json.loads(_read_json_input_text())
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+    except (ValueError, OSError) as exc:
         raise ValueError("Invalid hook input: expected a JSON object") from exc
 
     if not isinstance(payload, dict):
