@@ -1,0 +1,35 @@
+{
+  "results": [
+    {
+      "check": "installed-bash",
+      "command": [
+        "python3",
+        "<verification-temp>/hook-v1-t10-installed-probe.py",
+        "bash"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.477401
+    },
+    {
+      "check": "installed-powershell",
+      "command": [
+        "python3",
+        "<verification-temp>/hook-v1-t10-installed-probe.py",
+        "powershell"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 6.771281
+    },
+    {
+      "check": "portable-powershell",
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-File",
+        "scripts/test-codex-hooks-windows.ps1"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.362077
+    }
+  ]
+}

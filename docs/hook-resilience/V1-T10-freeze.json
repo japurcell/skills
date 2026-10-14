@@ -1,0 +1,23 @@
+{
+  "candidate": "1817d569b42008019ec66d3ac3469f7fd704308c",
+  "reviewed_source": "864bbda0cc59cc7ae44ee814d343765525562700",
+  "baseline": "bc52d7d69aaa046ea97e323879402241a01fead7",
+  "baseline_archive_sha256": "9d9626b766a1c2f252b83554bc6876c7c3f0b8ee4278e6fa1b13c221fa263ff6",
+  "baseline_root": "<verification-temp>/hook-resilience-v1-t10/baseline",
+  "candidate_root": "<verification-worktree>",
+  "evidence_dir": "<verification-temp>/hook-resilience-v1-t10/evidence",
+  "runtime_inventory_sha256": "5adb02a8a6bb6bb356cffa023efc43b84f5e41e503b82bf869e33a4492212b3d",
+  "harness_sha256": {
+    "verify-hook-release.py": "8056223310c62a4209de2a6062b736f0173eba4f4fb65af63da180338a79b2e8",
+    "benchmark-high-rate-hooks.py": "136482dee54277ebb1ad94049d7cd22bece8d4bbd3fdc37304294727fb331411",
+    "benchmark-tool-guard-resources.py": "cb0476c18282f7f865f1435221b9dc9b8ef7a3af48c3cc30c6324381aea5b065",
+    "tool_guard_corpus.py": "b02cb3514f6868c9b70993df2156794454d5a9ae52d57ccfb565960424b21d95",
+    "fixtures/tool_guard_vectors.py": "94e71054729786b67d3941a0c6dd6c8ec510bac96bb3db1cc94bafa8e2ca042d"
+  },
+  "runtime_assets": 74,
+  "candidate_clean": true,
+  "functional_checks_finished": true,
+  "freshness": "38 generated outputs current before and after functional gaps",
+  "coordinator_quiet_system_authorized": true,
+  "quiet_window_go": "2026-10-14 20:41 UTC, explicit coordinator confirmation"
+}

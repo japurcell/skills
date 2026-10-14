@@ -1,0 +1,243 @@
+{
+  "candidate": "1817d569b42008019ec66d3ac3469f7fd704308c",
+  "baseline": "bc52d7d69aaa046ea97e323879402241a01fead7",
+  "release_acceptance": "rejected",
+  "V1_complete": false,
+  "path_redaction": "Known user/worktree and temporary-user prefixes only; quantitative evidence unchanged",
+  "artifacts": [
+    {
+      "path": "V1-T10-functional-map.json",
+      "original_bytes": 37885,
+      "retained_bytes": 38081,
+      "original_sha256": "6bfa0af782f8ef84b9eb2e3c2504f6bec93a92a9b31a67b3559db798f02261d0",
+      "redacted_uncompressed_sha256": "29a55b555b97903e002b8f53cac6030d40691d53b419407dbc70a4cde543a802",
+      "retained_sha256": "29a55b555b97903e002b8f53cac6030d40691d53b419407dbc70a4cde543a802",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-functional-gaps.json",
+      "original_bytes": 709,
+      "retained_bytes": 723,
+      "original_sha256": "f0d1b619d37dacc4236d7f9c9653531f5c485903092d67ac503b28b4307dac3f",
+      "redacted_uncompressed_sha256": "7576bc1525439bd97fe7b17186e26de5ae88a6160bce1dc110874ec8e2a0bf79",
+      "retained_sha256": "7576bc1525439bd97fe7b17186e26de5ae88a6160bce1dc110874ec8e2a0bf79",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-prior-evidence-verification.json",
+      "original_bytes": 8745,
+      "retained_bytes": 8941,
+      "original_sha256": "201cd84af573b01f786d1273df34720c02cbbdc99043bdf328db5f8fdc2071ef",
+      "redacted_uncompressed_sha256": "71b692e35edf337010d825ca51366952bdd041f46961b26cd658d2b67d4cc1b7",
+      "retained_sha256": "71b692e35edf337010d825ca51366952bdd041f46961b26cd658d2b67d4cc1b7",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-original-artifacts-preserved.json",
+      "original_bytes": 3507,
+      "retained_bytes": 3507,
+      "original_sha256": "c468a6f47a7522ecfa8abdb5f9173ff8f3cc2c77218be2b1da2c6c9b3c4e8061",
+      "redacted_uncompressed_sha256": "c468a6f47a7522ecfa8abdb5f9173ff8f3cc2c77218be2b1da2c6c9b3c4e8061",
+      "retained_sha256": "c468a6f47a7522ecfa8abdb5f9173ff8f3cc2c77218be2b1da2c6c9b3c4e8061",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-runtime-fingerprints.json",
+      "original_bytes": 11792,
+      "retained_bytes": 11792,
+      "original_sha256": "307040d6412e19e88dfa3afae60a7563104ff99d4fbb75b9563e8b33b66ca5ce",
+      "redacted_uncompressed_sha256": "307040d6412e19e88dfa3afae60a7563104ff99d4fbb75b9563e8b33b66ca5ce",
+      "retained_sha256": "307040d6412e19e88dfa3afae60a7563104ff99d4fbb75b9563e8b33b66ca5ce",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-freeze.json",
+      "original_bytes": 1433,
+      "retained_bytes": 1409,
+      "original_sha256": "c27e1dc6ef7df19f71c272afdcab6bdf5cd12d94092d316abc75b18488326efa",
+      "redacted_uncompressed_sha256": "f512e18846f7c4b1e954f1a034d315c9c12542dc7daad02dd772c8a11cdeb108",
+      "retained_sha256": "f512e18846f7c4b1e954f1a034d315c9c12542dc7daad02dd772c8a11cdeb108",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-installed-probe.py.gz",
+      "original_bytes": 7964,
+      "retained_bytes": 2694,
+      "original_sha256": "bc8d9510010a7d85696330086bb42e7959df98e9d48c469bb6807d569f5a11f8",
+      "redacted_uncompressed_sha256": "135dd7e0e1929c6d059226aaa538f6acdd64cab006fe36998e3566692a5ccb50",
+      "retained_sha256": "135f2767061889f7e0f0c46b603e483a3735c3b222ff51d5dbc15841bc530916",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-capture-wrapper.py.gz",
+      "original_bytes": 2185,
+      "retained_bytes": 1105,
+      "original_sha256": "6972db07d430a9d9a1120830a3b728bff79c489f633580432e7ed97abbf4d4ad",
+      "redacted_uncompressed_sha256": "44e395594fafde644310e0837c82f627e7d04cbe5bb66adfd58fafec6ff08947",
+      "retained_sha256": "7c610153c3063f1f246f79f4dc4080db193937a8cc199dd12e1acd8be36e1143",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-portable-powershell.log.gz",
+      "original_bytes": 38,
+      "retained_bytes": 58,
+      "original_sha256": "b74975e79fed65d83d9a92c9b0a9bb2581f19b659b861a2ef032651549ca1280",
+      "redacted_uncompressed_sha256": "b74975e79fed65d83d9a92c9b0a9bb2581f19b659b861a2ef032651549ca1280",
+      "retained_sha256": "02ce96b7f5d3a3e718c8c96f082748e72e3f2c3542e6048582fee76b19a94d0b",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-resources.json.gz",
+      "original_bytes": 2346187,
+      "retained_bytes": 69185,
+      "original_sha256": "dda6ae3601784e4a6910125b6b3865f0e6ea625d1a608aefce997b90021b9790",
+      "redacted_uncompressed_sha256": "8e2236dd1b8538c4c9091130fd82462661b96854ef464e6432e94a7a932c56f0",
+      "retained_sha256": "e8a6ce7ae929cafa86d20ec248e41f4099bcf702db3e1f5aa9a8fd815f4e20d2",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-resources-summary.json",
+      "original_bytes": 711,
+      "retained_bytes": 711,
+      "original_sha256": "fec61ed6cddff6a77c2fbb933a97139f23564bcca3c6785be347a635917c1e9f",
+      "redacted_uncompressed_sha256": "fec61ed6cddff6a77c2fbb933a97139f23564bcca3c6785be347a635917c1e9f",
+      "retained_sha256": "fec61ed6cddff6a77c2fbb933a97139f23564bcca3c6785be347a635917c1e9f",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-resources-execution.json",
+      "original_bytes": 714,
+      "retained_bytes": 704,
+      "original_sha256": "4dfa3dd6f17164b486a1303a2d05610acd2752cb596c82183aab3d77d73a8377",
+      "redacted_uncompressed_sha256": "eed6c164a1f6cc39792f403892b3e9e0ec459c853182c91494f2c2b033509062",
+      "retained_sha256": "eed6c164a1f6cc39792f403892b3e9e0ec459c853182c91494f2c2b033509062",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-resources-runner.log.gz",
+      "original_bytes": 12460,
+      "retained_bytes": 934,
+      "original_sha256": "f4c4995f9b6ba2db5cb7b48a47245f81605fee0077349bfc910deb79785bbdfb",
+      "redacted_uncompressed_sha256": "f4c4995f9b6ba2db5cb7b48a47245f81605fee0077349bfc910deb79785bbdfb",
+      "retained_sha256": "8abe92f93cc010d27f3f180f89631382eb2af708911be59210eb992c781381ea",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-timing-failed.json.gz",
+      "original_bytes": 19524816,
+      "retained_bytes": 1202985,
+      "original_sha256": "a406752a05407fa2abb1f59a223a1c9edce48f80730b3d825698acc812206a57",
+      "redacted_uncompressed_sha256": "dba73a45dd7c30b3208d8fb093e3538d022f53e56722f3b93e018b9c727b0824",
+      "retained_sha256": "5d97139e109e7ba615a6ad814c77cf3bc1412d1c6bfd1105b4dcc3d27c79182d",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-timing-summary.json",
+      "original_bytes": 2528,
+      "retained_bytes": 2528,
+      "original_sha256": "8f5e813891ec17e51188be99e18f19c5f81e47d4ce4deb8d2e86f3144e3e1959",
+      "redacted_uncompressed_sha256": "8f5e813891ec17e51188be99e18f19c5f81e47d4ce4deb8d2e86f3144e3e1959",
+      "retained_sha256": "8f5e813891ec17e51188be99e18f19c5f81e47d4ce4deb8d2e86f3144e3e1959",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-timing-ranges.json",
+      "original_bytes": 4551,
+      "retained_bytes": 4551,
+      "original_sha256": "aaa63d389592163696087400a69ad7557ec1b06acac993f247fad1a26f711c7c",
+      "redacted_uncompressed_sha256": "aaa63d389592163696087400a69ad7557ec1b06acac993f247fad1a26f711c7c",
+      "retained_sha256": "aaa63d389592163696087400a69ad7557ec1b06acac993f247fad1a26f711c7c",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-timing-residual-analysis.json",
+      "original_bytes": 31770,
+      "retained_bytes": 31770,
+      "original_sha256": "1495e0351654d3219c69ef98d1f985c226ed78b9ff9a34d39e741ba78451de86",
+      "redacted_uncompressed_sha256": "1495e0351654d3219c69ef98d1f985c226ed78b9ff9a34d39e741ba78451de86",
+      "retained_sha256": "1495e0351654d3219c69ef98d1f985c226ed78b9ff9a34d39e741ba78451de86",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-timing-execution.json",
+      "original_bytes": 699,
+      "retained_bytes": 689,
+      "original_sha256": "f80324f5427421399c2d2dc29139825ec60bc83dc115da26a9df0f88c68967aa",
+      "redacted_uncompressed_sha256": "82d72c09b726803b0f2e8886c1efcbfdf1f0a220ac29b99acd116e28aa5aee40",
+      "retained_sha256": "82d72c09b726803b0f2e8886c1efcbfdf1f0a220ac29b99acd116e28aa5aee40",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-timing-runner.log.gz",
+      "original_bytes": 36264,
+      "retained_bytes": 2689,
+      "original_sha256": "40cf0b89230dc010b21fc65ab98c1d2645e018d4a56f5b64185140bb7a051f88",
+      "redacted_uncompressed_sha256": "40cf0b89230dc010b21fc65ab98c1d2645e018d4a56f5b64185140bb7a051f88",
+      "retained_sha256": "a3deb36b641d6eb6d28cc61ca9c220a5a261929ca7984147669bc1af83269762",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-performance-declared-cases.json.gz",
+      "original_bytes": 130858,
+      "retained_bytes": 20065,
+      "original_sha256": "24547b0c91d503008d6023a1f795a446283faecdd9529e9cf68c9e15d07a0012",
+      "redacted_uncompressed_sha256": "24547b0c91d503008d6023a1f795a446283faecdd9529e9cf68c9e15d07a0012",
+      "retained_sha256": "ebcdb545147bfda88c11139727fb1e89c8cb84c8333cb629561134352845929f",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-installed-bash.json",
+      "original_bytes": 23023,
+      "retained_bytes": 23023,
+      "original_sha256": "c4bd29ee6d10e952f8231857ec4cea1d90e2688f35f7b4c83b73fb68d7d41400",
+      "redacted_uncompressed_sha256": "c4bd29ee6d10e952f8231857ec4cea1d90e2688f35f7b4c83b73fb68d7d41400",
+      "retained_sha256": "c4bd29ee6d10e952f8231857ec4cea1d90e2688f35f7b4c83b73fb68d7d41400",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-installed-bash-first.log.gz",
+      "original_bytes": 1706,
+      "retained_bytes": 361,
+      "original_sha256": "645cf0b0765dc60689f2c56d8b92b1b1e9fb1a645c0359ce1afbac8e7a774cdc",
+      "redacted_uncompressed_sha256": "ed01807e74ec87b411ed6290ba8073e18f8f664bd4d661c93722b5fa91df1f49",
+      "retained_sha256": "94dc1a1e40d560669f634f028c558f6d5ae0d52d6c354c54ba9d3d6085999bc5",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-installed-bash-second.log.gz",
+      "original_bytes": 1706,
+      "retained_bytes": 363,
+      "original_sha256": "8031341d16fa458cec94dd526b7307f83d935323f67d926d270f0e849b3a8dac",
+      "redacted_uncompressed_sha256": "b48f65266601b2e91b9c392a634bf3220be7d64ce5fe9fce3ac0948a5d825328",
+      "retained_sha256": "0b55f196b2ab245c131dba06a1cabf9fa710a3b05a78bd0ea0469370d13f6ae3",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-installed-powershell.json",
+      "original_bytes": 23077,
+      "retained_bytes": 23077,
+      "original_sha256": "81b4121e3cdcd7208cbce6f5618854ae194832d97760c58474bc98daaba67e29",
+      "redacted_uncompressed_sha256": "81b4121e3cdcd7208cbce6f5618854ae194832d97760c58474bc98daaba67e29",
+      "retained_sha256": "81b4121e3cdcd7208cbce6f5618854ae194832d97760c58474bc98daaba67e29",
+      "compression": null
+    },
+    {
+      "path": "V1-T10-installed-powershell-first.log.gz",
+      "original_bytes": 1784,
+      "retained_bytes": 365,
+      "original_sha256": "114933eb9f6f98a654d430683604be1f02468ad91f7495502f5af3fd72cd944e",
+      "redacted_uncompressed_sha256": "fa19f2e76bfbf3db6531162fd523a42bae6a3bbd180a1099b3d1467857eae923",
+      "retained_sha256": "65bb9aadf530846caf3f518c1c1137122da9c1052e0b558ea213eb8c102218f4",
+      "compression": "gzip"
+    },
+    {
+      "path": "V1-T10-installed-powershell-second.log.gz",
+      "original_bytes": 1784,
+      "retained_bytes": 367,
+      "original_sha256": "3ce5b34aa7a1f2eaa9b7727f4d95bd601c6423b1506968b62db926c4f9c64d12",
+      "redacted_uncompressed_sha256": "48270ad41982acd3ed041de2a03544293db6e70644fa84f547b9c8292a81d2c3",
+      "retained_sha256": "198530ee1a46752dac246855460a05e77ba89e57285da7ce8e83a1aaa35ddbdf",
+      "compression": "gzip"
+    }
+  ]
+}
