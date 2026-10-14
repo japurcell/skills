@@ -1,4 +1,16 @@
 dispatches:
+  - subtask_id: R1-T11-repair-review
+    agents: [/root/standards_review, /root/spec_review]
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    continuation: original explicitly configured R1 agents, unchanged configuration
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 21:18 UTC'
+    snapshot: 8f250431
+    status: running
+    output_verified: false
+    routing_compliant: true
   - subtask_id: T11
     agent: /root/timing_pairing_impl
     selected: {model: gpt-6.1-sol, reasoning_effort: high}
@@ -6,8 +18,10 @@ dispatches:
     executed: {model: unconfirmed, reasoning_effort: unconfirmed}
     runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
     dispatched_at: '2026-10-14 21:12 UTC'
-    status: running
-    output_verified: false
+    status: completed
+    integrated_commit: 8f25043183158443eaac6bcc0cb22299b548d937
+    evidence: docs/hook-resilience/T11-evidence.md
+    output_verified: true
     routing_compliant: true
   - subtask_id: D3
     agent: /root/residual_diagnosis
