@@ -264,7 +264,7 @@ def grade_expectations(eval_id: int, run_dir: Path) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/default/commit/evals/grade_benchmark.py skills/commit-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/commit/evals/grade_benchmark.py skills/default/commit-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1])

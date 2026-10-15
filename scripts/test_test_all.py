@@ -80,7 +80,7 @@ class TestTestAll(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--list", result.stdout)
-        self.assertIn("143", result.stdout)
+        self.assertIn("143 SIGTERM", result.stdout)
         self.assertEqual(result.stderr, "")
 
     def test_list_covers_maintained_suites_without_running_them(self):
@@ -123,6 +123,7 @@ class TestTestAll(unittest.TestCase):
             "scripts/test-scan-secrets-streaming.py",
             "scripts/test-security-reporting.py",
         })
+        expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
         listed = {

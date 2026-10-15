@@ -17,7 +17,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 - Revise an existing `SKILL.md`, skill description, eval set, or benchmark grader.
 - Tighten a skill that has grown repetitive, vague, or too long.
 - Add weaker-model guardrails so a skill stays explicit and reliable on smaller or older models.
-- Add or repair `evals/evals.json`, `evals/grade_benchmark.py`, or `skills/<skill>-workspace/` benchmark artifacts.
+- Add or repair `evals/evals.json`, `evals/grade_benchmark.py`, or benchmark artifacts in a sibling `-workspace/` directory.
 
 ## Workflow
 
@@ -38,13 +38,15 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 4. **Add eval and benchmark support**
    - Add or update `evals/evals.json` with at least 3 realistic evals. Cover create, modify, and a negative or dedupe edge case. Add a weaker-model or benchmark-focused case when that behavior matters.
    - When assertions can be checked objectively, add `evals/grade_benchmark.py` and prefer deterministic file/content checks over subjective grading.
-   - Put generated run artifacts in `skills/<skill>-workspace/iteration-N/eval-*/...`, never inside the skill directory itself.
+   - Put generated run artifacts beside the owning skill, never inside its bundle:
+     - Published owner `skills/<category>/<name>/`: `skills/<category>/<name>-workspace/iteration-N/eval-*/...`. For example, `skills/default/create-skill/` uses `skills/default/create-skill-workspace/iteration-N/eval-*/...`.
+     - Repo-local owner `.agents/skills/<name>/`: `.agents/skills/<name>-workspace/iteration-N/eval-*/...`; from the owner directory, use `../<name>-workspace/iteration-N/eval-*/...`.
    - Benchmark the skill against a baseline. For a new skill use `without_skill`; for an edited skill use `old_skill` or another explicit snapshot.
 
 5. **Validate and refresh**
    - Run `python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/<skill-name>`.
    - Run `python3 -m py_compile skills/default/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
-   - Run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
+   - Run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
    - If the user wants a packaged archive, run `PYTHONPATH=skills/default/skill-creator python3 skills/default/skill-creator/scripts/package_skill.py skills/default/<skill-name> /tmp/skill-dist`.
    - Run `./scripts/install.sh` after source edits so installed skills, references, hooks, and instructions stay in sync.
 
@@ -68,7 +70,8 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 - For live `copilot -p` benchmark runs, point the prompt at the exact local `skills/default/<skill>/SKILL.md` or snapshot path and tell the model to ignore other installed copies of the same skill name.
 - Save response and transcript artifacts before grading so `evals/grade_benchmark.py` and `aggregate_benchmark.py` have stable inputs.
 - For a brand-new skill, compare against `without_skill`. For a modified skill, compare against an explicit `old_skill` or snapshot baseline.
-- When you document workspace layout, show the abstract pattern `skills/<skill>-workspace/iteration-N/` and, when helpful, a concrete example for the skill you are editing.
+- For a published owner `skills/<category>/<name>/`, show its sibling `skills/<category>/<name>-workspace/iteration-N/`; for example, `skills/default/create-skill-workspace/iteration-N/` beside `skills/default/create-skill/`.
+- For a repo-local owner `.agents/skills/<name>/`, use sibling `.agents/skills/<name>-workspace/iteration-N/`; from the owner directory, show the relative sibling as `../<name>-workspace/iteration-N/`.
 - Prefer assertions that catch flattering but shallow drafts: missing negative cases, copied reference prose, absent baseline, or missing refresh/validation commands.
 
 ## Common Rationalizations
@@ -85,7 +88,7 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 - `SKILL.md` duplicates long passages from nearby skills.
 - The skill says "run the usual tests" or invents generic frontend commands.
 - Evals cover only happy paths and never test duplicate avoidance or weaker-model behavior.
-- Benchmark artifacts are written inside `skills/<skill>/` instead of the sibling workspace.
+- Benchmark artifacts are written inside a skill bundle instead of its sibling `-workspace/` directory.
 
 ## Verification
 

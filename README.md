@@ -170,7 +170,7 @@ The repository-state guard is retired from maintained source and fresh installs.
 
 The former user-global Markdown Health checker is no longer maintained or included in fresh installs. An older installation may still run it. If you want to retire an installed copy, inspect your user hook configuration and remove only the `markdown-health.py` handlers from `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` where present. Then remove the old script at `~/.copilot/hooks/scripts/markdown-health.py`, `~/.gemini/hooks/scripts/markdown-health.py`, or `~/.codex/hooks/markdown-health.py` after confirming no registration still needs it. Keep shared `audit.log` history and the dedicated `markdown-health-state` directories unless you separately decide to archive or remove that data.
 
-Workspace directories whose names end with `-workspace` are skipped during installation.
+Published benchmark workspaces sit beside their owners under `skills/<category>/`; their `-workspace` suffix keeps them out of installations.
 
 Codex TOML files and `.skills-repo-agents.json` in the selected Codex agents directory are installer-managed. Do not edit them manually: update the canonical top-level Markdown source and rerun an installer. Each source file must be a regular UTF-8 Markdown file with YAML frontmatter containing non-empty `name` and `description`; its body becomes the exact `developer_instructions` value. The Codex converter removes only stale TOML files recorded in its manifest and leaves every unrecorded personal agent untouched.
 
@@ -222,7 +222,7 @@ stop and print the `--write` recovery command. Installers copy the checked-in
 generated files; they never generate repository sources. The manifest lists all
 maintained executable outputs.
 
-Ignore `skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
+Ignore `skills/*/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` during normal edits and reviews. Those files are benchmark fixtures, not maintained source.
 
 ## Authoring notes
 

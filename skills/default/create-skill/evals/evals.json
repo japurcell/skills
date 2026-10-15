@@ -43,14 +43,14 @@
     },
     {
       "id": 3,
-      "prompt": "Improve the weak-model-unfriendly `task-wave` skill draft in `evals/files/task-wave-draft/` so it is repo-ready and benchmarkable. Keep the existing name and save the revised skill to `outputs/task-wave/`. Also write `outputs/output.md` describing the benchmark workspace layout you would use for this revised skill.",
+      "prompt": "Improve the weak-model-unfriendly `task-wave` skill draft in `evals/files/task-wave-draft/` so it is repo-ready and benchmarkable. Keep the existing name and save the revised skill to `outputs/task-wave/`. Also write `outputs/output.md` describing the published category-level sibling workspace for this skill with a concrete default-category example, plus the repo-local sibling form.",
       "expected_output": "A revised skill that preserves the name, adds concrete repo validation commands, uses an explicit workflow, and includes eval coverage.",
       "files": ["evals/files/task-wave-draft/SKILL.md"],
       "assertions": [
         "Generated skill preserves the name task-wave.",
         "Generated skill passes quick_validate.",
         "Generated skill uses exact repo validation commands instead of positive generic npm test or npm run build instructions.",
-        "Generated output describes sibling workspace layout skills/<skill>-workspace/iteration-N.",
+        "Generated output describes a category-level published sibling (skills/<category>/<skill>-workspace/iteration-N) or a repo-local sibling (.agents/skills/<name>-workspace/iteration-N or ../<name>-workspace/iteration-N from its owner).",
         "Generated evals.json includes at least 3 evals."
       ]
     }

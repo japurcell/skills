@@ -66,6 +66,7 @@ SUITES = (
     ("bash", "scripts/test-okf-lint.sh"),
     ("bash", "scripts/test-repo-root.sh"),
     ("python3", "scripts/test_helpers.py"),
+    ("python3", "skills/default/create-skill/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"),
     ("python3", "scripts/test_test_all.py"),

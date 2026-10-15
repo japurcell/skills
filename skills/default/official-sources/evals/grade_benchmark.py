@@ -321,7 +321,7 @@ def grade(eval_id: int, output_text: str) -> list[dict]:
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/default/official-sources/evals/grade_benchmark.py skills/official-sources-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/official-sources/evals/grade_benchmark.py skills/default/official-sources-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1]).resolve()

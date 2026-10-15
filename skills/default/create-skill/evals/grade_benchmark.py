@@ -129,9 +129,15 @@ def has_positive_generic_npm_instruction(text: str) -> bool:
 
 def has_workspace_layout_reference(text: str) -> bool:
     lowered = text.lower()
-    if "skills/<skill>-workspace/iteration-n" in lowered:
-        return True
-    return re.search(r"skills/[a-z0-9-]+-workspace/iteration-\d+", lowered) is not None
+    published_workspace = re.search(
+        r"skills/(?:<category>|[a-z0-9-]+)/(?:<name>|<skill>|[a-z0-9-]+)-workspace/iteration-(?:n|\d+)",
+        lowered,
+    )
+    local_workspace = re.search(
+        r"(?:\.agents/skills/|\.\./)(?:<name>|<skill>|[a-z0-9-]+)-workspace/iteration-(?:n|\d+)",
+        lowered,
+    )
+    return published_workspace is not None or local_workspace is not None
 
 
 def relative_skill_dir(run_dir: Path, name: str) -> Path:
@@ -275,7 +281,10 @@ def grade_eval_three(run_dir: Path) -> list[dict]:
             "repo-specific commands present and generic npm commands absent" if repo_specific else skill_text,
         ),
         expectation(
-            "Generated output describes sibling workspace layout skills/<skill>-workspace/iteration-N.",
+            "Generated output describes a category-level published sibling "
+            "(skills/<category>/<skill>-workspace/iteration-N) or a repo-local "
+            "sibling (.agents/skills/<name>-workspace/iteration-N or "
+            "../<name>-workspace/iteration-N from its owner).",
             workspace_layout,
             output_md or "missing output.md",
         ),
@@ -356,7 +365,7 @@ def build_grading(run_dir: Path, expectations: list[dict], timing: dict) -> dict
 
 def main() -> int:
     if len(sys.argv) != 2:
-        print("Usage: python3 skills/default/create-skill/evals/grade_benchmark.py skills/create-skill-workspace/<iteration-dir>")
+        print("Usage: python3 skills/default/create-skill/evals/grade_benchmark.py skills/default/create-skill-workspace/<iteration-dir>")
         return 1
 
     iteration_dir = Path(sys.argv[1])
