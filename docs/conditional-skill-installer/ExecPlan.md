@@ -8,12 +8,16 @@ Users receive general-purpose skills by default and Forest Service skills only w
 
 The originating requirement is [Conditional Skill Installer](../ideas/archive/1-conditional-skill-installer.md). The user authorized implementation, review repairs, publication to public [japurcell/skills](https://github.com/japurcell/skills), native Windows verification, and result documentation. Branch `codex/plan-conditional-skill-installer` is published. Its first native run exposed a Unicode diagnostic encoding defect; W1 repaired that boundary. [Windows run 38660179633](https://github.com/japurcell/skills/actions/runs/38660179633) passed the complete workflow at `44a47e5b`, including the native installer suite. Follow-up review found three import destinations missed by the migration. R6 repaired that Milestone 1 gap and passed local verification. R6 was published with the explicitly approved cleanup on 2026-10-15. This requested plan retains the requirements and evidence.
 
-The feature changes skill selection only. Agents, references, RTK configuration, and provider hooks retain their existing installation rules and safety checks. Creating the future `agency-priorities` skill is outside this effort.
+The original feature changes skill selection only. On 2026-10-15 the user additionally requested moving benchmark workspaces beside their owning skills and updating every affected document and script. Milestone 8 supersedes the earlier root-workspace decision. Agents, references, RTK configuration, and provider hooks retain their existing installation rules and safety checks. Creating the future `agency-priorities` skill is outside this effort.
 
 Milestone 5 completed the user's subsequent duplication cleanup over fixed `main...HEAD`: all 23 safe candidates are refactored and independently validated locally. The [complete ledger](techdebt-findings.md) records every selected and retained group, commands, input hashes and limits. Cleanup is committed and published as `b1e3704a`. The user explicitly approved its public publication on 2026-10-15; [Windows run 38737045419](https://github.com/japurcell/skills/actions/runs/38737045419) passed the complete workflow at that exact revision. Milestone 6 acceptance is met; result documentation was committed as `e5c2be20`. Milestone 7 integrates requested main `5f3948c92e5037fb066321e9c9e5b03419410671` locally with passing installer and trusted-launch checks. Publication and fresh native verification of the merge are outside this request.
 
 ## Progress
 
+- [x] (2026-10-15) [milestone-8] D0: Verified all ten owners and affected maintained consumers in [workspace discovery](workspace-discovery.md). Commit `f505830e` explicitly renamed prd-to-tasks to spec-to-tasks; preserve the retained legacy workspace basename beside that successor. Corrected the initial discovery draft's mistaken nested destinations before implementation.
+- [ ] [milestone-8] WS1: Move complete workspace trees beside their owners without changing historical payloads; update bounded cleanup traversal and public-CLI fixtures.
+- [ ] [milestone-8] WS2: Repair live authoring documentation, workspace examples, graders and evaluation expectations; retain historical transcripts and frozen snapshots.
+- [ ] [milestone-8] WS3: Verify the composed layout, cleanup, graders and both installers; reconcile canonical guidance, retain evidence, and finish private local integration.
 - [x] (2026-10-15) [milestone-7] M1: Resolved four content conflicts, retaining trusted hook-launch preflight and the selection/stream contract. Both incoming evals now live under the default category with exact main bytes. Archived the completed idea and repaired its index and links under main's retention policy.
 - [x] (2026-10-15) [milestone-7] M1: Both full installer suites, 26 generator tests, 14 registry tests, 14 agent-converter tests, Codex hook merging and 13 trusted-launch recovery tests passed. Final freshness, OKF, links and whitespace checks passed. The coordinated KB pass warranted no further canonical edits. This merge commit retains the reconciled result locally without publication; native proof remains scoped to `b1e3704a`.
 - [x] (2026-10-15) [milestone-6] W3: Pre-publication checks confirmed committed cleanup `b1e3704a`, unchanged six-file local-proof hashes, public `japurcell/skills` destination, ADMIN access and previous remote `ae19dc32`. Automatic review initially rejected the push before execution; the subsequent explicit approval resolved that gate. [Native evidence](techdebt-native-windows-verification.json) retains both events.
@@ -62,12 +66,14 @@ Milestone 5 completed the user's subsequent duplication cleanup over fixed `main
 - Destination mutation starts before skill copying: the installers apply RTK configuration and install Codex agents first. Argument, environment, and category validation must run before these operations, not merely before `copy_skills` or `Copy-Skills`.
 - Read-only exploration found 57 root directories with a direct `SKILL.md` and no existing Forest Service skill. The count is a source snapshot, not a hard-coded acceptance value. `docs/ideas/2-agency-priorities-skill.md` names a future Forest Service skill.
 - Native PowerShell parameter binding accepts single-hyphen forms but rejects the requested literal `--forest-service` and `--fs` spellings. Explicit argument parsing is required for the agreed interface.
-- Workspace cleanup scans root-level `skills/*-workspace`, while archives are historical. Moving these into categories would break a separate artifact lifecycle.
+- Historical planning observation: workspace cleanup scanned root-level `skills/*-workspace`. The user's 2026-10-15 change supersedes retaining that layout; Milestone 8 updates the lifecycle consumer together with the moves.
 - Source and installed paths have different depths. Runtime examples such as `~/.agents/skills/<name>` and installed reference paths must not receive a category prefix. Addy's `rewrite_references` computes paths relative to its destination, so its deeper default destination requires reference-link verification, not only updated test expectations.
 - CLI sources contain advice to display help without arguments. The user explicitly chose the existing no-argument installation behavior. Repository stream rules take precedence over differing warning-stream advice in a source article.
 - PowerShell is available on the planning host, but this is macOS. Local PowerShell execution cannot prove native Windows behavior. No installer test suite or native Windows CI was run during planning.
 
 ## Decision Log
+
+Sibling workspace decision (2026-10-15): the user explicitly reversed the earlier root-only workspace choice. A published skill at `skills/<category>/<name>/` owns `skills/<category>/<name>-workspace/`; a repo-local skill at `.agents/skills/<name>/` owns `.agents/skills/<name>-workspace/`. Preserve retained iterations, run outputs, snapshots and transcripts byte-for-byte during relocation. Resolve historical skill aliases using source/history before moving them; do not invent a second skill or leave an unexplained root orphan. Keep installed skill destinations flat and workspace entries excluded from installation. The coordinator owns this plan, shared canonical guidance and the single final KB pass; workers own only their assigned implementation/evidence files. No publication or real-home install is authorized by this extension.
 
 Main integration (2026-10-15): preserve main's trusted installed security launches and early Codex configuration check alongside category selection, immutable source preflights, stderr status and cleanup refactors. Incoming skill artifacts follow D1. Finish locally without pushing. The earlier native result remains scoped to `b1e3704a`.
 
@@ -79,7 +85,7 @@ The user selected or confirmed the public contract on 2026-10-14 and authorized 
 
 ### D1: Repository and installed layout
 
-Published skills now live under `skills/default/<name>/`. `skills/forest-service/` contains `.gitkeep` while it has no published skills. Keep `skills/archive/` and generated `skills/*-workspace/` at the root. New generated workspaces also remain at the root, even when the associated skill lives in a category. Install selected leaf directories into `~/.agents/skills/<name>/`, never into a category wrapper.
+Published skills now live under `skills/default/<name>/`. `skills/forest-service/` contains `.gitkeep` while it has no published skills. Keep any repository-level `skills/archive/` separate from published categories. Under the user's revised contract, each generated `<name>-workspace/` is a sibling of its owning skill, including category-specific published skills and repo-local `.agents/skills/` owners. Milestone 8 migrates the existing root workspaces and their consumers; the earlier root-only decision is historical. Install selected leaf directories into `~/.agents/skills/<name>/`, never into a category wrapper, and never install workspace artifacts.
 
 Default both import workflows to `skills/default/`. Preserve Addy's flat external `SOURCE_ROOT/skills` layout and its explicit destination overrides. Repair maintained source paths and links. Preserve immutable `.agents/sources/`, archived content, and historical transcripts rather than bulk-rewriting them.
 
@@ -123,6 +129,8 @@ Help and examples go to stdout. Installer status, progress, warnings, and errors
 Help must work without valid sources or installer dependencies. Diagnostics identify the bad option, variable, missing source, or conflicting paths and explain the correction. Existing generated-hook stale-output advice must still name the exact recovery command. Do not add dry-run, version, JSON, completion, decorative output, or new interactive flows.
 
 ## Outcomes & Retrospective
+
+Milestone 8 is in progress following the user's workspace-layout change. All ten owners and exact destinations are verified; implementation and composed proof remain pending. Earlier feature and merge acceptance remain scoped to their recorded revisions. Current work requires fresh composed layout, cleanup and installer proof, not a rerun of live model benchmarks or previously accepted native Windows checks.
 
 Main integration combines feature `e5c2be20` and main `5f3948c9`. Four content conflicts and two incoming eval locations are reconciled. Full Bash and macOS PowerShell installer suites, generator, registry, Codex merge, agent-converter and trusted-launch recovery checks pass. The completed idea is archived under main's retention policy, and an incoming trailing blank line was removed to satisfy whitespace checks. Existing native acceptance establishes the premerge cleanup only. The merged branch is local and has not been pushed.
 
@@ -298,9 +306,39 @@ M1 depends on committed feature `e5c2be20` and fetched main `5f3948c92e5037fb066
 
 Completed verification: Bash and PowerShell syntax, generated freshness and generator tests, both complete installer fixture suites, aggregate-runner registry tests, and trusted registration/converter/recovery suites pass. Installer and generator fixture mutations ran serially. No unresolved Git entries remain. The local merge commit includes this outcome record; no push was performed. Native Windows is not available locally; no fresh native or provider-delivery claim is made. The known skill-validator incompatibility below remains distinct from passing integration checks.
 
+### Milestone 8: Keep workspaces beside their owning skills
+
+Status: in progress
+Acceptance: not met
+
+The starting base is `c8d36350`, including the locally completed main merge and retained hook incident report. Existing published skills are under `skills/default/`, while ten benchmark workspace trees remain at root `skills/`. D0 established the following exact mapping in [workspace discovery](workspace-discovery.md). No untracked or ignored files were found under the ten source workspace trees before migration.
+
+| Source directory | Destination directory |
+| --- | --- |
+| `skills/architecture-design-contest-workspace/` | `skills/default/architecture-design-contest-workspace/` |
+| `skills/code-review-workspace/` | `skills/default/code-review-workspace/` |
+| `skills/commit-workspace/` | `skills/default/commit-workspace/` |
+| `skills/create-skill-workspace/` | `skills/default/create-skill-workspace/` |
+| `skills/handoff-workspace/` | `skills/default/handoff-workspace/` |
+| `skills/official-sources-workspace/` | `skills/default/official-sources-workspace/` |
+| `skills/okf-authoring-workspace/` | `.agents/skills/okf-authoring-workspace/` |
+| `skills/prd-to-tasks-workspace/` | `skills/default/prd-to-tasks-workspace/` |
+| `skills/self-improve-workspace/` | `skills/default/self-improve-workspace/` |
+| `skills/techdebt-workspace/` | `skills/default/techdebt-workspace/` |
+
+The legacy `prd-to-tasks-workspace` is retained history owned by successor `skills/default/spec-to-tasks/`, as established by rename commit `f505830e`. Its basename remains unchanged; future runs use the canonical sibling `skills/default/spec-to-tasks-workspace/`. All destinations are siblings of owners, never children inside skill bundles.
+
+WS1 depends on D0 and owns all mapped physical workspace moves, `scripts/cleanup-skill-workspaces.sh`, `scripts/test-cleanup-skill-workspaces.sh`, and its move-preservation evidence. Move directories without rewriting their historical contents. Update cleanup to find immediate category workspace siblings and repo-local workspace siblings without descending into benchmark fixtures, snapshots, skill contents or archives. Preserve newest-iteration selection, snapshot retention, literal names, finite traversal and no-follow behavior. `CLEANUP_SKILLS_ROOT` must continue isolating tests from real repository workspaces: when supplied, traversal must remain confined to that explicit root, supporting its immediate and category-level workspace children. With no override, include the published skills root and repo-local skills root. Reproduce the old discovery failure through the existing cleanup CLI before the minimal fix. Do not run cleanup against real benchmark artifacts. Stop at a verified private commit.
+
+WS2 also depends on D0 and owns maintained `skills/default/` authoring guidance, grader usage/help and actual workspace-layout recognition, evaluation expectations/fixtures, plus README workspace examples. When a new public grader test suite is needed, it also owns its registration in `scripts/test-all.py` and `scripts/test_test_all.py`. Scope excludes all `*-workspace/` payloads, immutable sources and historical research/evidence. Examples must show `skills/<category>/<name>-workspace/` and concrete default-category paths; local workflow examples use owner-relative siblings. Repair any maintained relative references whose target moved. Existing CLI seams are cleanup, public graders and installers; preserve their output/error and safety contracts. Use public-process red/green evidence for changed grader behavior, and do not introduce tests tied to private helpers. Do not rewrite historical grading scores merely because a retained output uses the former layout. Stop at a verified private commit.
+
+WS3 depends on integrated WS1 and WS2 plus the coordinator's reconciled canonical guidance. It is an independent verification task with exclusive ownership of its result evidence. On the composed tree, verify the complete move mapping, identical file bytes/Git modes/symlink targets, no remaining root workspaces, meaningful category/local cleanup fixtures, current grader examples, registry completeness and workspace exclusion through both public installers. Run `rtk proxy bash scripts/test-cleanup-skill-workspaces.sh`, affected public grader tests, `rtk proxy python3 scripts/test_test_all.py`, `rtk proxy bash scripts/test-install.sh`, and `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1`. Run installer suites serially; do not invoke human-only import orchestration or real-home installers. Finish with OKF, affected links and whitespace checks. A macOS junction skip is not native Windows proof; no push or CI dispatch is requested. Acceptance requires retained composed evidence and all required local checks passing, followed by local integration.
+
+Every implementation task uses a fresh private worktree and branch under `codex/`. Rebase and fast-forward them into the base branch one at a time, rechecking evidence after conflicts or changed interactions. The coordinator retains plan/canonical-doc ownership and performs one final knowledge-admission pass after all tasks finish. Retain evidence-backed corrections and update recursive workspace ignore guidance, preserving protected AGENTS sections and operational source-ingestion state.
+
 ## Concrete Steps
 
-The requested local merge and Milestone 7 verification are complete. No implementation or verification action remains within this merge request. Result documents were already committed as `e5c2be20`; the approved published code remains `b1e3704a`. The user owns any subsequent publication or fresh native-verification request.
+The next authorized work is to dispatch independent WS1 and WS2 implementations from the saved Milestone 8 mapping. Integrate private commits serially, reconcile canonical workspace guidance, and obtain WS3 composed proof before acceptance. The requested main merge remains complete; the approved published code remains `b1e3704a`. Do not publish this extension or run real-home installation.
 
 Retain this requested plan and native JSON as outcome records. Main changes installer and hook inputs; fresh local integration checks passed under Milestone 7. Historical W2 proof stays scoped to `44a47e5b`; cleanup native acceptance uses `b1e3704a` and does not establish merged native behavior.
 
@@ -329,6 +367,8 @@ The original graph was T1 before T2, their integrated proof before T3, integrate
 Use the repository root as the working directory for every command. Prefix shell commands with RTK; use `rtk proxy` when exact subprocess behavior matters. Keep disposable profile roots in task-specific variables rather than repurposing `$HOME` in the orchestrating shell. Tests establish the child process home themselves.
 
 ## Validation and Acceptance
+
+Milestone 8 acceptance is not yet met. Discovery verified all ten owners, category/local destinations and the historical rename. No workspace moves or implementation edits have started. Required proof and exact public seams are specified in Milestone 8; all earlier test results below remain historical evidence for their own inputs.
 
 Milestone 7 local verification passed on the integrated tree. Before resolution, `bash -n scripts/install.sh` failed at the conflict marker and `python3 scripts/test_test_all.py` failed with `SyntaxError`. After resolution, Bash and PowerShell syntax, all 26 generator tests, generated freshness (38 files), both full installer suites, all 14 registry tests, the Codex hook merge suite and all 14 agent-converter tests passed. `rtk proxy python3 scripts/test-hook-diagnostic-recovery.py` passed all 13 tests in 54.662 seconds, including actual installed commands, startup/PATH injection and enforcement/recovery controls. Full local PowerShell reported `test-install.ps1: all tests passed.` with only the host's unsupported-junction skip. Native Windows junction behavior is not established for this merge.
 
@@ -405,7 +445,7 @@ The earlier planning-only session verified local links and Q1-Q18 obligations, `
 
 ## Idempotence and Recovery
 
-The layout migration is a tracked move, not a new import. Inventory current published directories before editing and verify old/new identities to avoid nesting an already-moved bundle. Do not move root workspaces, archives, or other contributors' unrelated changes. If implementation is abandoned, restore only the effort's known moves and edits after reviewing the diff; do not reset the whole worktree.
+The layout migration is a tracked move, not a new import. Inventory source/destination identities before editing to avoid nesting an already-moved bundle. Milestone 8 explicitly authorizes the mapped root workspace moves beside their owners. Preserve archived skill bundles and unrelated changes. Record source tree identities before each move; refuse an existing destination rather than merging or overwriting it. Recover a failed move from its verified source/destination state and retained manifest, restoring only this effort's known moves and edits after reviewing the diff; do not reset the whole worktree.
 
 CLI and source-validation failures must leave installed destinations unchanged. Runtime failures after the write phase begins retain the existing installer's partial-update behavior; this feature does not claim transactionality for the entire multi-provider install. Correct the reported prerequisite or I/O problem and retry with the same selection. Preserve existing backup/configuration safeguards and unrelated files. Do not remove installed Forest Service skills as recovery.
 
