@@ -1,5 +1,7 @@
 # Repair the secret-scanner size-limit deadlock during a merge
 
+Archived on 2026-10-15 when the [Design B ExecPlan](../../hook-resilience-design-b/ExecPlan.md) was created. This report retains historical incident evidence; its repair proposals are superseded by that plan.
+
 ## Incident and current status
 
 On 2026-10-15, the Codex secret-scanner hook prevented the agent from finishing a legitimate merge because the pending Git snapshots exceeded its 8 MiB scan budget. The scanner correctly refused to call an incomplete inspection clean. The operational failure was that ordinary investigation commands and session completion were blocked too, leaving the agent unable to resolve the merge through those commands.
@@ -55,7 +57,7 @@ Do not infer that a particular archive was unnecessary or caused the entire exce
 
 These facts were checked against the merged repository at `c137b511`:
 
-- [Canonical scanner](../../hooks/families/scan_secrets.py): `MAX_TOTAL_BYTES = 8388608`, `MAX_GIT_OUTPUT_BYTES = 8388608`, `MAX_FILES = 256`, and `MAX_SCAN_SECONDS = 8.0` are compiled constants. There is no existing environment setting for increasing the aggregate byte budget.
+- [Canonical scanner](../../../hooks/families/scan_secrets.py): `MAX_TOTAL_BYTES = 8388608`, `MAX_GIT_OUTPUT_BYTES = 8388608`, `MAX_FILES = 256`, and `MAX_SCAN_SECONDS = 8.0` are compiled constants. There is no existing environment setting for increasing the aggregate byte budget.
 - `ScanBudget.charge()` rejects a reservation when `used_bytes + size` exceeds `MAX_TOTAL_BYTES`. `reserve_index()` labels this failure `git_index` and charges each candidate once within its index reservations.
 - `SnapshotSource.__init__()` resolves index object IDs, obtains blob sizes with `git cat-file --batch-check`, and reserves those bytes before classification and matching. Binary content can consume acquisition budget even when it will not be scanned as ordinary UTF-8 text.
 - An unresolved path can contribute base, ours, theirs and working-copy versions. Making the visible working file small does not remove the unresolved index versions. Resolving and staging a path changes that state, but the agent needs a working control path to do so.
@@ -87,11 +89,11 @@ There is also an existing agent diagnostics route. For a native Codex `exec_comm
 {"cmd":"hooks-diagnostics-v1","login":false}
 ```
 
-Do not prefix that marker with RTK or Python, append arguments, add a working directory, or place it inside a shell script. The scanner matches the native tool envelope, rather than interpreting a command found inside arbitrary wrapper code. A client that exposes only a differently shaped wrapper may not reach this route. See [the exact matcher](../../hooks/families/scan_secrets.py) in `_diagnostic_request()`.
+Do not prefix that marker with RTK or Python, append arguments, add a working directory, or place it inside a shell script. The scanner matches the native tool envelope, rather than interpreting a command found inside arbitrary wrapper code. A client that exposes only a differently shaped wrapper may not reach this route. See [the exact matcher](../../../hooks/families/scan_secrets.py) in `_diagnostic_request()`.
 
 Expected response: denial containing `scan-secrets diagnostics (request not executed):` and bounded JSON. It intentionally reports security as `not_scanned`; the marker is never executed. Tool Guardian still inspects the request independently. A denial is the expected diagnostics result, not another failed attempt to execute a helper.
 
-The incident attempted the ordinary Python `--help` command, not this exact native marker request. Consequently, it does not establish that the special route was broken. That distinction matters when choosing the repair. [Recovery tests](../../scripts/test-hook-diagnostic-recovery.py) already cover diagnostics after an overflow and strict rejection of extended marker requests. Source tests do not establish actual desktop dispatch.
+The incident attempted the ordinary Python `--help` command, not this exact native marker request. Consequently, it does not establish that the special route was broken. That distinction matters when choosing the repair. [Recovery tests](../../../scripts/test-hook-diagnostic-recovery.py) already cover diagnostics after an overflow and strict rejection of extended marker requests. Source tests do not establish actual desktop dispatch.
 
 ## Reproduce before changing code
 
@@ -106,7 +108,7 @@ The first command creates disposable unresolved merges. Three conflicts with thr
 
 The second command verifies that the exact diagnostics profile remains available after an overflow through source scanner entrypoints. It should pass even though ordinary scanning rejects the oversized state.
 
-For an incident-specific regression, reconstruct the original merge in a separate disposable worktree starting at `e5c2be20`, merging `5f3948c9` with `--no-commit --no-ff`. Keep its conflicting index intact. Run the generated scanner with a native Codex tool envelope and then a Stop envelope, using a disposable home and explicit disposable audit/log paths. Reuse [scanner fixture support](../../scripts/scanner_test_support.py) and [recovery fixture support](../../scripts/test-hook-diagnostic-recovery.py), which isolate those paths and remove inherited skip/allowlist settings. Do not run the experiment in the user's active worktree or write fixture audits into the real home.
+For an incident-specific regression, reconstruct the original merge in a separate disposable worktree starting at `e5c2be20`, merging `5f3948c9` with `--no-commit --no-ff`. Keep its conflicting index intact. Run the generated scanner with a native Codex tool envelope and then a Stop envelope, using a disposable home and explicit disposable audit/log paths. Reuse [scanner fixture support](../../../scripts/scanner_test_support.py) and [recovery fixture support](../../../scripts/test-hook-diagnostic-recovery.py), which isolate those paths and remove inherited skip/allowlist settings. Do not run the experiment in the user's active worktree or write fixture audits into the real home.
 
 Record the actual candidate snapshot count, cumulative content sizes, first rejected reservation, decision, audit result and elapsed time. The precise measured count can depend on the reconstructed state; do not manufacture a match to 8,403,665. No frozen incident replay was run while authoring this report.
 
@@ -126,7 +128,7 @@ Do not use warn mode, a skip variable, an allowlist, or automatic exclusion of r
 
 ## Files to change and verification
 
-Edit [hooks/families/scan_secrets.py](../../hooks/families/scan_secrets.py) for scanner policy and denial/recovery wording. Edit [hooks/families/diagnostics.py](../../hooks/families/diagnostics.py) only if diagnostic collection needs a change. Generated outputs live in `.codex/hooks/`, `.copilot/hooks/scripts/` and `.gemini/hooks/scripts/`; regenerate them rather than editing them by hand.
+Edit [hooks/families/scan_secrets.py](../../../hooks/families/scan_secrets.py) for scanner policy and denial/recovery wording. Edit [hooks/families/diagnostics.py](../../../hooks/families/diagnostics.py) only if diagnostic collection needs a change. Generated outputs live in `.codex/hooks/`, `.copilot/hooks/scripts/` and `.gemini/hooks/scripts/`; regenerate them rather than editing them by hand.
 
 Add the incident regression through the generated scanner's public JSON entrypoint. Keep the existing near-limit, over-limit and conflict-version controls. If policy changes a boundary, update the independent expected byte values and preserve an over-new-limit denial case. Pair any accepted larger workload with a fake credential near its end, including a conflict-only version, to prove that acceptance did not truncate inspection.
 
@@ -146,13 +148,13 @@ rtk proxy pwsh -NoProfile -File scripts/test-install.ps1
 rtk proxy python3 scripts/generate-hooks.py --check
 ```
 
-Run generator and installer suites serially. Pause all checkout edits during `test-generate-hooks.py`, which compares whole-checkout snapshots. Follow [security validation guidance](../../.agents/instructions/testing/hooks-security.md) for resource measurements and native Windows capture coverage; a macOS PowerShell pass is not Windows evidence. If a budget increase exceeds existing resource or deadline acceptance, revise the design rather than weakening the failing checks.
+Run generator and installer suites serially. Pause all checkout edits during `test-generate-hooks.py`, which compares whole-checkout snapshots. Follow [security validation guidance](../../../.agents/instructions/testing/hooks-security.md) for resource measurements and native Windows capture coverage; a macOS PowerShell pass is not Windows evidence. If a budget increase exceeds existing resource or deadline acceptance, revise the design rather than weakening the failing checks.
 
 Acceptance requires the incident-equivalent legitimate merge to complete inspection, a late fake secret to remain detected, over-budget and capture failures to remain incomplete/denied, and diagnostics to remain bounded and deny-only. Exercise both PreToolUse and Stop. Read native denial JSON and audit status; a hook process exit code of zero alone is not an allow decision.
 
 ## Install, restore enforcement and close the incident
 
-After source checks pass, the human owner should review and install the repaired source. The repository's `scripts/install.sh` or `scripts/install.ps1` refreshes skills, agents, provider hooks and configuration, so review that full scope before applying it to a real account. Installer fixtures are the first deployment check. Both installers pin security registrations to an absolute interpreter with `-I -S -B`; preserve that property and unrelated user handlers. Follow the repository's [Codex trust and deployment rules](../../.agents/instructions/hooks-codex.md).
+After source checks pass, the human owner should review and install the repaired source. The repository's `scripts/install.sh` or `scripts/install.ps1` refreshes skills, agents, provider hooks and configuration, so review that full scope before applying it to a real account. Installer fixtures are the first deployment check. Both installers pin security registrations to an absolute interpreter with `-I -S -B`; preserve that property and unrelated user handlers. Follow the repository's [Codex trust and deployment rules](../../../.agents/instructions/hooks-codex.md).
 
 Restore the hook using the same owner-controlled configuration or application control that disabled it. The session did not capture which control was used, so this report cannot prescribe an exact toggle or JSON edit. Do not assume reinstalling alone reverses every possible disabling mechanism.
 
