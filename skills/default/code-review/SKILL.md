@@ -56,14 +56,14 @@ Review only the requested change. Report only high-confidence, change-linked fin
    - `addy-code-reviewer`: correctness, regressions, edge cases, architecture boundaries. The subagent prompt should require activating the `addy-code-review-and-quality` skill.
    - `addy-security-auditor`: vuln, unsafe data handling, auth/authz, injection, secrets, attack surface. The subagent prompt should require activating the `addy-security-and-hardening` skill.
    - `addy-test-engineer`: inadequate, misleading, or broken tests for changed behavior
-   - `generalist`: quality review covering maintainability, standards, code smells, spec compliance if available, and PR-only checks if reviewing a PR. The subagent prompt should require:
+   - `generalist or default`: quality review covering maintainability, standards, code smells, spec compliance if available, and PR-only checks if reviewing a PR. The subagent prompt should require:
      - `references/maintainability-criteria.md`
      - `references/code-smells.md`
      - explicit repo standards only
      - spec, if available
      - `references/pr-protocol.md`, if reviewing a PR
 
-   For all reviews, you MUST run all four required subagents in parallel (concurrently) within the same response turn to prevent context bloat and speed up execution, unless the user explicitly asks for a lightweight review. For large changes, chunk input per `references/large-change-triage.md`.
+   For all reviews, you MUST run all four required subagents in parallel (concurrently) within the same response turn to prevent context bloat and speed up execution, unless the user explicitly asks for a lightweight review. If the runtime doesn't allow it, run as many as possible concurrently. For large changes, chunk input per `references/large-change-triage.md`.
 
 8. **Each subagent result must include**
    - role
