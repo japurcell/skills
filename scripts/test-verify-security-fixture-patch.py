@@ -3,6 +3,9 @@
 from __future__ import annotations
 import difflib
 import json
+import hashlib
+import stat
+import zipfile
 import os
 import shutil
 import signal
@@ -117,13 +120,76 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(set(report["builds"]), {"active", "candidate"})
         self.assertEqual(report["result"], "verified")
 
+    def test_display_truncation_is_findings_but_inspection_stop_is_incomplete(self):
+        before = self.fingerprint()
+        for count, code in ((101, 1), (1001, 2)):
+            with self.subTest(count=count):
+                patch = self.patch(("value = '" + TOKEN + "'\n") * count)
+                result = self.run_cli(patch, "--check")
+                self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertTrue(report["findings_present"])
+                self.assertEqual(self.fingerprint(), before)
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+
+    def legacy_active(self):
+        fixture = ROOT / "scripts/fixtures/hook-resilience"
+        manifest = json.loads((fixture / "legacy-active-scanners.json").read_text())
+        self.assertEqual(manifest["source_revision"], "6c3c2d8c8033525792fb1c5effd04e3e32cd7682")
+        names = {folder + "/" + name for folder in
+                 (".codex/hooks", ".copilot/hooks/scripts", ".gemini/hooks/scripts")
+                 for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py")}
+        self.assertEqual(set(manifest["files"]), names)
+        archive_path = fixture / "legacy-active-scanners.zip"
+        self.assertLess(archive_path.stat().st_size, 1024 * 1024)
+        active = self.base / "legacy-active"
+        with zipfile.ZipFile(archive_path) as archive:
+            self.assertEqual(set(archive.namelist()), names)
+            self.assertEqual(len(archive.infolist()), 9)
+            for name in sorted(names):
+                info = archive.getinfo(name)
+                self.assertEqual(stat.S_IFMT(info.external_attr >> 16), stat.S_IFREG)
+                self.assertLessEqual(info.file_size, 1024 * 1024)
+                data = archive.read(name)
+                self.assertEqual(len(data), manifest["files"][name]["bytes"])
+                self.assertEqual(hashlib.sha256(data).hexdigest(), manifest["files"][name]["sha256"])
+                target = active / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+        return active
+
+    def test_reviewed_legacy_active_and_new_candidate_remain_independent(self):
+        before = self.fingerprint()
+        active = self.legacy_active()
+        repaired = "value = 'gh' + 'p_' + 'FAKE' * 9\n"
+        result = self.run_cli(self.patch(repaired), "--check", active=active)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["controls_detected"], 6)
+        for provider in ("codex", "copilot", "gemini"):
+            old, new = (report["builds"][label][provider] for label in ("active", "candidate"))
+            self.assertNotEqual(old["bundle"], new["bundle"])
+            self.assertEqual(old["coverage_schema"], 0)
+            self.assertEqual(new["coverage_schema"], 1)
+        self.assertEqual(self.fingerprint(), before)
+        # Historical bundles cannot prove complete inspection from truncation.
+        patch = self.patch(("value = '" + TOKEN + "'\n") * 101)
+        result = self.run_cli(patch, "--check", active=active)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "incomplete_scan")
+        self.assertTrue(json.loads(result.stdout)["findings_present"])
+        self.assertEqual(self.fingerprint(), before)
+
     def active_copy(self, fault):
         active = self.base / ("active-" + fault)
         for directory in (".codex/hooks", ".copilot/hooks/scripts", ".gemini/hooks/scripts"):
             origin = ROOT / directory
             target = active / directory
             target.mkdir(parents=True)
-            for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py"):
+            names = ("scan-secrets.py", "helpers/common.py", "helpers/audit.py", *(
+                "helpers/" + name + ".py" for name in ("scan_types", "scan_reporting",
+                "scan_allowlist", "scan_stream", "scan_git", "scan_audit", "scan_engine")))
+            for name in names:
                 (target / name).parent.mkdir(exist_ok=True)
                 shutil.copy2(origin / name, target / name)
         scanner = active / ".codex/hooks/scan-secrets.py"
@@ -144,6 +210,36 @@ class PreflightTests(unittest.TestCase):
             source = source.replace("raise SystemExit(main())", "code = main()\n        resolve_scan_log().chmod(0o644)\n        raise SystemExit(code)")
         scanner.write_text(source)
         return active
+
+    def test_modern_coverage_metadata_must_be_present_and_consistent(self):
+        before = self.fingerprint()
+        for fault, change in (
+            ("missing", "record.pop('scanResult')"),
+            ("coverage", "record['scanResult']['coverage_complete'] = False"),
+            ("schema", "record['scanResult']['schema_version'] = True"),
+            ("build", "record['scanResult']['build'] = '0' * 16"),
+            ("policy", "record['scanResult']['policy_version'] = 'unknown'"),
+            ("scope", "record['scanResult']['scope'] = 'staged'"),
+            ("identity", "record['scanResult']['scope_identity'] = 'bad'"),
+            ("outcome", "record['scanResult']['outcome'] = 'complete_clean'"),
+            ("counts", "record['scanResult']['counts']['processed_findings'] = 0"),
+            ("audit", "record['scanResult']['audit_outcome'] = 'unavailable'"),
+        ):
+            with self.subTest(fault=fault):
+                active = self.active_copy("coverage-" + fault)
+                scanner = active / ".codex/hooks/scan-secrets.py"
+                source = scanner.read_text().replace("raise SystemExit(main())",
+                    "code = main()\n        log = resolve_scan_log()\n        record = json.loads(log.read_text())\n        " + change +
+                    "\n        log.write_text(json.dumps(record) + '\\n')\n        raise SystemExit(code)")
+                scanner.write_text(source)
+                patch = self.patch("value = '" + TOKEN + "'\n")
+                result = self.run_cli(patch, "--check", active=active)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertIn(report["reason"], ("invalid_scan_result_schema", "inconsistent_scanner_result"))
+                self.assertTrue(report["findings_present"])
+                self.assertEqual(self.fingerprint(), before)
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
 
     def test_active_scanner_faults_fail_closed(self):
         patch = self.patch("value = 'repaired'\n")
@@ -386,6 +482,12 @@ class PreflightTests(unittest.TestCase):
         result = self.run_cli(patch, "--check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(marker.exists(), "verification executed source Git filter configuration")
+        self.assertEqual(self.target.read_bytes(), original)
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+        result = self.run_cli(self.patch("value = '" + TOKEN + "'\n"), "--check")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "findings")
+        self.assertFalse(marker.exists(), "credential inspection executed a source Git filter")
         self.assertEqual(self.target.read_bytes(), original)
         self.assertEqual((self.repo / ".git/index").read_bytes(), index)
 

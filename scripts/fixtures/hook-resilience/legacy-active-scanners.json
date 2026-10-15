@@ -1,0 +1,42 @@
+{
+  "files": {
+    ".codex/hooks/helpers/audit.py": {
+      "bytes": 5977,
+      "sha256": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87"
+    },
+    ".codex/hooks/helpers/common.py": {
+      "bytes": 13774,
+      "sha256": "55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b"
+    },
+    ".codex/hooks/scan-secrets.py": {
+      "bytes": 115806,
+      "sha256": "8f74d85673eb4e9597c398832f04052408ff3b347f311cf72a9e196b77ebe315"
+    },
+    ".copilot/hooks/scripts/helpers/audit.py": {
+      "bytes": 5979,
+      "sha256": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022"
+    },
+    ".copilot/hooks/scripts/helpers/common.py": {
+      "bytes": 13774,
+      "sha256": "55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b"
+    },
+    ".copilot/hooks/scripts/scan-secrets.py": {
+      "bytes": 119615,
+      "sha256": "659940c8892d342b23f178296f5eb2a746720d9d21466d80d945b36ad08098b9"
+    },
+    ".gemini/hooks/scripts/helpers/audit.py": {
+      "bytes": 5975,
+      "sha256": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661"
+    },
+    ".gemini/hooks/scripts/helpers/common.py": {
+      "bytes": 13647,
+      "sha256": "f8f2bf01352288c56a763f178359c0a57f958c2f047a2e2b9a81c7f6853bd169"
+    },
+    ".gemini/hooks/scripts/scan-secrets.py": {
+      "bytes": 118081,
+      "sha256": "e64c6c68a41bac72bb5aa65737768448ecd3d0d46d0504c1c907afb769106954"
+    }
+  },
+  "purpose": "Immutable reviewed pre-extraction active scanner input for compatibility tests. Not a maintained policy implementation.",
+  "source_revision": "6c3c2d8c8033525792fb1c5effd04e3e32cd7682"
+}

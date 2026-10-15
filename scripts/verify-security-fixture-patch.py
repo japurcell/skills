@@ -7,6 +7,7 @@ import ast
 import contextlib
 import hashlib
 import json
+import math
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -484,6 +485,10 @@ def acquire_objects(git, live, state):
 def reproduce(git, live, state, destination):
     destination.mkdir(mode=0o700)
     git(destination, "init", "-q")
+    # Verification intentionally inspects captured raw bytes with no copied
+    # conversion helpers. Keep tracked attributes as data, but override executable
+    # or encoding transformations at the highest-priority private attribute layer.
+    put(destination, ".git/info/attributes", b"* -filter -working-tree-encoding -ident\n", 0o600)
     objects = acquire_objects(git, live, state)
     # Fast-import stores raw blobs and constructs the HEAD tree without clean
     # filters, tracked attributes, copied config, or one process per file.
@@ -521,6 +526,7 @@ def complete_views(git, pending, base, state, targets):
     for view in (work_view, index_view):
         view.mkdir(mode=0o700)
         git(view, "init", "-q")
+        put(view, ".git/info/attributes", b"* -filter -working-tree-encoding -ident\n", 0o600)
     for name in sorted(tracked_changes | staged_changes | untracked | set(targets)):
         path = regular(pending, name, missing=True)
         if path:
@@ -535,6 +541,12 @@ def complete_views(git, pending, base, state, targets):
     return (work_view, index_view)
 
 
+SCANNER_HELPERS = ("helpers/common.py", "helpers/audit.py")
+RESULT_HELPERS = tuple("helpers/" + name + ".py" for name in (
+    "scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
+    "scan_git", "scan_audit", "scan_engine"))
+
+
 def bundle(root, destination):
     identities = {}
     for provider, folder in PROVIDERS.items():
@@ -542,25 +554,33 @@ def bundle(root, destination):
         directory_no_links(origin)
         target = destination / provider
         target.mkdir(parents=True, mode=0o700)
-        for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py"):
-            path = regular(origin, name)
-            data, mode, _ = read_file(path, PATCH_LIMIT)
-            put(target, name, data, mode)
-        source = (target / "scan-secrets.py").read_text()
+        path = regular(origin, "scan-secrets.py")
+        data, mode, _ = read_file(path, PATCH_LIMIT)
+        put(target, "scan-secrets.py", data, mode)
         values = {}
-        for node in ast.parse(source).body:
+        for node in ast.parse(data.decode("utf-8")).body:
             if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
                 if node.targets[0].id in {"REPORT_BUILD", "DIAG_BUILD", "DIAG_ASSETS"}:
                     values[node.targets[0].id] = ast.literal_eval(node.value)
         if not re.fullmatch("[0-9a-f]{16}", values.get("REPORT_BUILD", "")):
             raise Failure("unsupported_scanner_build", 3, "build")
         expected = dict(values.get("DIAG_ASSETS", []))
-        for name in ("helpers/common.py", "helpers/audit.py"):
-            if digest((target / name).read_bytes()) != expected.get(name):
+        declared = set(RESULT_HELPERS).intersection(expected)
+        if declared and declared != set(RESULT_HELPERS):
+            raise Failure("unsupported_scanner_closure", 2, "build")
+        # Inventory entries for Guardian/diagnostics never authorize copying or
+        # executing additional code. Only these two reviewed scanner closures do.
+        helpers = SCANNER_HELPERS + (RESULT_HELPERS if declared else ())
+        for name in helpers:
+            path = regular(origin, name)
+            data, mode, _ = read_file(path, PATCH_LIMIT)
+            if digest(data) != expected.get(name):
                 raise Failure("scanner_asset_drift", 2, "build")
+            put(target, name, data, mode)
         identities[provider] = {"build": values["REPORT_BUILD"], "diagnostics_build": values.get("DIAG_BUILD"),
+                                "coverage_schema": 1 if declared else 0,
                                 "bundle": digest(b"".join((target / n).read_bytes() for n in
-                                                          ("scan-secrets.py", "helpers/common.py", "helpers/audit.py")))}
+                                                          ("scan-secrets.py", *helpers)))}
     return identities
 
 
@@ -573,6 +593,43 @@ def strict_json(raw):
             result[key] = value
         return result
     return json.loads(raw, object_pairs_hook=object_pairs)
+
+
+def validate_coverage(record, identity, status, findings, truncated, omitted):
+    """Keep explicit inspection truth separate from bounded display retention."""
+    present = bool(findings)
+    if identity["coverage_schema"] == 0:
+        if truncated is not False or omitted != 0:
+            raise Failure("incomplete_scan", 2, "scan", findings_present=present)
+        return
+    result = record.get("scanResult")
+    if not isinstance(result, dict):
+        raise Failure("invalid_scan_result_schema", 2, "scan", findings_present=present)
+    checks = {"schema_version": 1, "build": identity["build"],
+              "policy_version": "pending_snapshots_v1", "scope": "diff",
+              "outcome": "complete_clean" if status == "clean" else "complete_findings",
+              "coverage_complete": True, "reason": "clean" if status == "clean" else "findings",
+              "audit_outcome": "written", "status_outcome": "not_attempted"}
+    count_names = {"candidates", "inspected_snapshots", "candidate_bytes", "capture_bytes",
+                   "temp_peak_bytes", "processed_findings", "retained_findings", "omitted_findings"}
+    counts = result.get("counts")
+    elapsed = result.get("elapsed_seconds")
+    if (set(result) != set(checks) | {"scope_identity", "counts", "elapsed_seconds"}
+            or any(type(result.get(k)) is not type(v) or result[k] != v for k, v in checks.items())
+            or not isinstance(result.get("scope_identity"), str)
+            or re.fullmatch("[0-9a-f]{64}", result["scope_identity"]) is None
+            or type(elapsed) not in (int, float) or not math.isfinite(elapsed) or elapsed < 0
+            or not isinstance(counts, dict) or set(counts) != count_names
+            or any(type(value) is not int or not 0 <= value <= 9223372036854775807 for value in counts.values())):
+        raise Failure("invalid_scan_result_schema", 2, "scan", findings_present=present)
+    processed, retained, dropped = (counts[name] for name in
+        ("processed_findings", "retained_findings", "omitted_findings"))
+    if (processed != retained + dropped or len(findings) > retained or retained > 100
+            or counts["inspected_snapshots"] > counts["candidates"]
+            or omitted != processed - len(findings) or truncated != bool(omitted)
+            or (status == "clean" and (processed or findings or omitted or truncated))
+            or (status == "findings" and not processed)):
+        raise Failure("inconsistent_scanner_result", 2, "scan", findings_present=present)
 
 
 def scan(git, bundle_root, identities, repo, logs, expected="clean"):
@@ -618,8 +675,9 @@ def scan(git, bundle_root, identities, repo, logs, expected="clean"):
                   "inspection_outcome": "complete", "audit_outcome": "written"}
         if (any(record.get(k) != v for k, v in checks.items())
                 or status not in {"clean", "findings"} or not isinstance(findings, list)
-                or truncated is not False or type(omitted) is not int or omitted != 0):
+                or type(truncated) is not bool or type(omitted) is not int or omitted < 0):
             raise Failure("incomplete_scan", 2, "scan", findings_present=bool(findings))
+        validate_coverage(record, identities[provider], status, findings, truncated, omitted)
         if status == "clean":
             if findings or record.get("security_outcome") != "clean" or record.get("enforcement") != "allow":
                 raise Failure("inconsistent_scanner_result", 2, "scan", findings_present=bool(findings))
