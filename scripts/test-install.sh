@@ -1558,7 +1558,61 @@ test_empty_categories_markers_and_exclusions() {
   assert_equals '' "$(find "$home/.agents/skills" -mindepth 1 -maxdepth 1 -print)" 'Expected both empty categories valid without leaf copies.'
 }
 
+test_refreshed_imports_install_from_default_category() {
+  local workdir repo home origin name source_path destination
+  workdir="$(setup_test_workdir)"
+  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  repo="$workdir/repo"
+  home="$workdir/home"
+  origin="$workdir/upstream"
+  create_fixture_repo "$repo"
+  cp -p "$REPO_ROOT/scripts/copy-from-git.sh" "$repo/scripts/copy-from-git.sh"
+
+  # Read import declarations as data, without running human-only orchestration.
+  python3 - "$REPO_ROOT/scripts/import-skill-repos.sh" "$origin" "$repo" > "$workdir/mappings" <<'PY'
+from pathlib import Path
+import shlex
+import sys
+
+script, origin, repo = map(Path, sys.argv[1:])
+expected = {"caveman", "show-me", "lavish"}
+found = set()
+for line in script.read_text().replace("\\\n", "").splitlines():
+    args = shlex.split(line)
+    if not args or args[0] != "$SCRIPT_DIR/copy-from-git.sh":
+        continue
+    for source, destination in zip(args[2::2], args[3::2]):
+        name = Path(source.rstrip("/")).name
+        if name not in expected:
+            continue
+        assert name not in found, name
+        found.add(name)
+        upstream = origin / source / "SKILL.md"
+        upstream.parent.mkdir(parents=True, exist_ok=True)
+        upstream.write_text(f"---\nname: {name}\n---\nRefreshed {name}.\n")
+        stale = repo / "skills/default" / name / "SKILL.md"
+        stale.parent.mkdir(parents=True, exist_ok=True)
+        stale.write_text(f"Stale {name}.\n")
+        print(name, source, destination, sep="\t")
+assert found == expected, found
+PY
+  git -C "$origin" init -q -b main
+  git -C "$origin" add .
+  git -C "$origin" -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit -qm 'Fixture imported skills'
+  while IFS=$'\t' read -r name source_path destination; do
+    bash "$repo/scripts/copy-from-git.sh" "$origin" "$source_path" "$destination" > "$workdir/import-out" 2> "$workdir/import-err"
+  done < "$workdir/mappings"
+
+  HOME="$home" bash "$repo/scripts/install.sh" > "$workdir/out" 2> "$workdir/err"
+  for name in caveman show-me lavish; do
+    assert_file_contains "$home/.agents/skills/$name/SKILL.md" "Refreshed $name." \
+      "Expected refreshed $name import to reach the flat installed skill."
+    [[ ! -e "$repo/skills/$name" ]] || { echo "Expected no uncategorized $name import." >&2; exit 1; }
+  done
+}
+
 main() {
+  test_refreshed_imports_install_from_default_category
   test_helper_failures_are_installer_errors
   test_empty_categories_markers_and_exclusions
   test_source_preflight_is_immutable

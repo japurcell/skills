@@ -14,7 +14,7 @@ fi
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/JuliusBrussee/caveman.git" \
-  "skills/caveman" "skills"
+  "skills/caveman" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/anthropics/claude-plugins-official.git" \
@@ -44,11 +44,11 @@ fi
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/humanlayer/skills.git" \
-  "plugins/show-me/skills/show-me" "skills"
+  "plugins/show-me/skills/show-me" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/kunchenguid/lavish-axi.git" \
-  "skills/lavish" "skills"
+  "skills/lavish" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/JoelQ/skills.git" \

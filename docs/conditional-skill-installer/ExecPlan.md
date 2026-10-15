@@ -6,12 +6,13 @@ This living ExecPlan is saved at `docs/conditional-skill-installer/ExecPlan.md` 
 
 Users receive general-purpose skills by default and Forest Service skills only when they select them. Both installers expose the same flags and environment-variable behavior, while continuing to install individual skills into `~/.agents/skills/<name>/`.
 
-The originating requirement is [Conditional Skill Installer](../ideas/1-conditional-skill-installer.md). The user authorized implementation, review repairs, publication to public [japurcell/skills](https://github.com/japurcell/skills), native Windows verification, and result documentation. Branch `codex/plan-conditional-skill-installer` is published. Its first native run exposed a Unicode diagnostic encoding defect; W1 repaired that boundary. [Windows run 38660179633](https://github.com/japurcell/skills/actions/runs/38660179633) passed the complete workflow at `44a47e5b`, including the native installer suite. All milestones are accepted; this user-requested plan retains the completed result and evidence.
+The originating requirement is [Conditional Skill Installer](../ideas/1-conditional-skill-installer.md). The user authorized implementation, review repairs, publication to public [japurcell/skills](https://github.com/japurcell/skills), native Windows verification, and result documentation. Branch `codex/plan-conditional-skill-installer` is published. Its first native run exposed a Unicode diagnostic encoding defect; W1 repaired that boundary. [Windows run 38660179633](https://github.com/japurcell/skills/actions/runs/38660179633) passed the complete workflow at `44a47e5b`, including the native installer suite. Follow-up review found three import destinations missed by the migration. R6 repaired that Milestone 1 gap and passed local verification. The R6 changes have not been pushed. This requested plan retains the requirements and evidence.
 
 The feature changes skill selection only. Agents, references, RTK configuration, and provider hooks retain their existing installation rules and safety checks. Creating the future `agency-priorities` skill is outside this effort.
 
 ## Progress
 
+- [x] (2026-10-14) [milestone-1] R6: Corrected the caveman, show-me, and lavish import destinations. The local Git import-to-install regression failed with stale installed content before repair; the complete Bash installer suite passed after repair. Syntax, OKF, and whitespace checks passed. Final agent-doc admission found no warranted canonical changes. Changes remain unpushed.
 - [x] (2026-10-14) [milestone-0] Inspect installer behavior, consumers, CLI sources, and test routes; complete the design interview.
 - [x] (2026-10-14) [milestone-0] Obtain confirmation of the shared design and permission to save this plan without implementation.
 - [x] (2026-10-14) [milestone-0] Save and review this plan; verify links, whitespace, and the implementation stopping boundary.
@@ -37,6 +38,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 
 ## Surprises & Discoveries
 
+- Follow-up review of `4f2b2f4e..ae19dc32` found three import mappings still targeting root `skills/`. A local Git fixture replayed the declared mappings through the real copy helper and installer: installation succeeded but `caveman/SKILL.md` contained `Stale caveman.` instead of `Refreshed caveman.`. Human-only import orchestration was not executed.
 - Adversarial review of `4f2b2f4e..a5f50664` reproduced five omissions after the earlier suites passed: NFC/NFD destination aliases overwrite one leaf on macOS; preserved `0444` Markdown raises `PermissionError` during rebasing; valid leading `./` reference paths remain broken; eight live Addy source pointers still have the old depth; create-skill's live benchmark instruction still uses a nonexistent flat source path. Public Bash/macOS PowerShell reproductions and read-only source resolution establish these findings. Earlier evidence remains historical proof of its tested cases, not acceptance of these repairs.
 
 - The original installers at `4f2b2f4e` enumerated immediate `skills/` entries. Category wrappers would otherwise have been installed as skills named `default` and `forest-service`; current installers enumerate category leaves.
@@ -103,7 +105,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The implementation and all five review repairs are complete and accepted across local and native Windows verification. The first Windows run exposed a redirected-encoding defect; W1 paired UTF-8 producer/consumer settings and restored prior state. W2's complete Windows workflow passed at `44a47e5b`, including original Unicode diagnostics, ReadOnly attributes, and junction cases. [Local repair proof](repair-verification.json) and [native proof](native-windows-verification.json) retain actual revisions, both native attempts, checks, and limits. All milestones are accepted; worker worktrees/branches are cleaned up, and the approved base branch is published. Final coordinated KB admission found no warranted changes; OKF lint passed. No implementation or verification work remains. General NTFS ACL behavior is outside the fixture proof; POSIX-only assertions remain intentionally inapplicable on Windows.
+The implementation, five earlier review repairs, native encoding repair, and follow-up importer repair are complete. W2's Windows workflow passed at `44a47e5b`, including Unicode diagnostics, ReadOnly attributes, and junction cases. [Local repair proof](repair-verification.json) and [native proof](native-windows-verification.json) retain those revisions and limits. R6 subsequently corrected three import destinations and added a regression through the real copy helper and Bash installer; the complete local suite passed. R6 changes only the Bash importer, its Bash regression, and this plan, so no new native Windows run was performed. Earlier native evidence remains scoped to its recorded revision. All milestones are accepted; R6 remains unpushed. The final coordinated agent-doc pass found no warranted canonical changes; OKF lint passed. No local repair or verification work remains. General NTFS ACL behavior is outside the fixture proof.
 
 ## Context and Orientation
 
@@ -136,6 +138,14 @@ This document was saved and reviewed against Q1-Q18. A read-only check verified 
 
 Status: done
 Acceptance: met
+
+R6 closed the three missed import destinations: `caveman`, `show-me`, and `lavish` now target `skills/default`. The new local Git import-to-install regression and complete Bash installer suite passed on the repaired tree. Syntax, OKF, and whitespace checks also passed.
+
+#### Task R6: Complete third-party import destinations
+
+Prerequisite: follow-up review of `4f2b2f4e..ae19dc32` and the user's instruction to fix all findings. Inputs: D1, the three destination mappings in `scripts/import-skill-repos.sh`, and the existing public Bash installer fixture seam. Correct only those destination arguments and add `test_refreshed_imports_install_from_default_category` to `scripts/test-install.sh`.
+
+Completed evidence (2026-10-14): the test reads declarations as data, substitutes a local Git origin, runs the real `copy-from-git.sh`, and invokes the real fixture installer against a disposable home. Before repair, the suite exited 1 because installed caveman content was `Stale caveman.`. After repair, `rtk proxy bash scripts/test-install.sh` exited 0, checking refreshed content for all three skills and absence of uncategorized copies. `rtk proxy bash -n scripts/import-skill-repos.sh scripts/test-install.sh`, `rtk proxy python3 scripts/lint-okf.py`, and `rtk proxy git diff --check` exited 0. No human-only import orchestration, external fetch, or real-home installation ran. Stop at this locally verified repair; no push was performed.
 
 R4 repaired the eight actual source pointers and benchmark guidance. R5 independently verified all eight source/installed targets through both public installers, the benchmark sample, four definitions, Addy, and registry consumers at `698d5410`. Current acceptance evidence is [repair-verification.json](repair-verification.json); original T1/T2 proof below is retained as historical context.
 
@@ -230,7 +240,7 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-No implementation or verification action remains. W1 is integrated and published; W2's complete native Windows workflow passed at `44a47e5b`. This requested plan and [native-windows-verification.json](native-windows-verification.json) retain the completed outcomes, failed attempt, source identity, and capability limits. Final documentation changes do not alter the tested implementation.
+No local implementation or verification action remains. R6's importer, Bash regression, and plan changes remain unpushed. W1 is integrated and published; W2's Windows workflow passed at `44a47e5b`. R6's complete Bash suite and targeted quality checks passed locally. Native results retain their recorded revision; no new Windows run was needed for these Bash-only changes. The user owns any next publication request.
 
 ### Completed native repair tasks
 
@@ -258,7 +268,7 @@ Use the repository root as the working directory for every command. Prefix shell
 
 ## Validation and Acceptance
 
-Current cross-platform acceptance combines initial local repair proof in [repair-verification.json](repair-verification.json) with W1's local encoding checks and W2's complete native pass in [native-windows-verification.json](native-windows-verification.json). Original T4 targeted checks below are historical results in [verification.json](verification.json); unchanged relocated graders need no duplicate run. The native test revision is `44a47e5b`; subsequent result documentation changes no implementation/test inputs.
+Cross-platform installer acceptance combines initial local repair proof in [repair-verification.json](repair-verification.json) with W1's local encoding checks and W2's native pass in [native-windows-verification.json](native-windows-verification.json). The native test revision is `44a47e5b`. R6 later changes only import destinations and a Bash regression; its red/green and complete local suite proof are recorded under Task R6. No PowerShell or installer implementation changed in R6, and no new native run was performed. Original T4 checks in [verification.json](verification.json) remain historical; unchanged relocated graders need no duplicate run.
 
 ### Public behavior matrix
 
