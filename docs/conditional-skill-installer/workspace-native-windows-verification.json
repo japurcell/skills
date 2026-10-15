@@ -1,0 +1,194 @@
+{
+  "date": "2026-10-15",
+  "status": "in_progress",
+  "repository": "japurcell/skills",
+  "visibility": "PUBLIC",
+  "branch": "codex/plan-conditional-skill-installer",
+  "target_sha": "e8742b79ad8e0e55ac0543f315a4222640dfc19c",
+  "native_result": "failure",
+  "workflow": ".github/workflows/ready-ideas-windows.yml",
+  "native_command": "pwsh -NoProfile -File scripts/test-install.ps1",
+  "publication": {
+    "previous_remote_sha": "b1e3704a972a2e8840057af43e62cdededd976b4",
+    "pushed_sha": "e8742b79ad8e0e55ac0543f315a4222640dfc19c",
+    "normal_push": true,
+    "remote_head_confirmed": true
+  },
+  "attempts": [
+    {
+      "run": {
+        "conclusion": "failure",
+        "createdAt": "2026-10-15T15:49:10Z",
+        "event": "push",
+        "headSha": "e8742b79ad8e0e55ac0543f315a4222640dfc19c",
+        "jobs": [
+          {
+            "completedAt": "2026-10-15T15:53:46Z",
+            "conclusion": "failure",
+            "databaseId": 116521184763,
+            "name": "hooks",
+            "startedAt": "2026-10-15T15:49:14Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-15T15:49:17Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-15T15:49:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:50:07Z",
+                "conclusion": "success",
+                "name": "Run actions/checkout@v7",
+                "number": 2,
+                "startedAt": "2026-10-15T15:49:17Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:50:07Z",
+                "conclusion": "success",
+                "name": "Run actions/setup-python@v7",
+                "number": 3,
+                "startedAt": "2026-10-15T15:50:07Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:50:27Z",
+                "conclusion": "success",
+                "name": "Install stable Rust Token Killer",
+                "number": 4,
+                "startedAt": "2026-10-15T15:50:07Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:50:27Z",
+                "conclusion": "success",
+                "name": "Check native prerequisites",
+                "number": 5,
+                "startedAt": "2026-10-15T15:50:27Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:50:37Z",
+                "conclusion": "success",
+                "name": "Check generated hooks",
+                "number": 6,
+                "startedAt": "2026-10-15T15:50:27Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:51:02Z",
+                "conclusion": "success",
+                "name": "Test security banner envelopes",
+                "number": 7,
+                "startedAt": "2026-10-15T15:50:37Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "failure",
+                "name": "Test native PowerShell installer",
+                "number": 8,
+                "startedAt": "2026-10-15T15:51:02Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Test Codex scanner Windows envelopes",
+                "number": 9,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Test generated scanner capture on native Windows",
+                "number": 10,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Test stable RTK configuration on native Windows",
+                "number": 11,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Test repository OKF hooks on native Windows",
+                "number": 12,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Test lifecycle messages on native Windows",
+                "number": 13,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:41Z",
+                "conclusion": "skipped",
+                "name": "Post Run actions/setup-python@v7",
+                "number": 25,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:45Z",
+                "conclusion": "success",
+                "name": "Post Run actions/checkout@v7",
+                "number": 26,
+                "startedAt": "2026-10-15T15:53:41Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T15:53:45Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 27,
+                "startedAt": "2026-10-15T15:53:45Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/japurcell/skills/actions/runs/38763664559/job/116521184763"
+          }
+        ],
+        "status": "completed",
+        "updatedAt": "2026-10-15T15:53:47Z",
+        "url": "https://github.com/japurcell/skills/actions/runs/38763664559"
+      },
+      "host": {
+        "os": "Microsoft Windows Server 2025",
+        "os_version": "10.0.26100",
+        "image": "windows-2025-vs2026",
+        "image_version": "20261007.264.1",
+        "python": "3.13.16",
+        "rtk": "0.50.0",
+        "powershell": "7; patch not printed"
+      },
+      "diagnostic": [
+        "Expected one maintained Copilot handler.",
+        "Expected: 1",
+        "Actual:   0"
+      ],
+      "installer_duration_seconds": 159,
+      "installer_success_message_observed": false,
+      "native_skips_observed": [],
+      "limits": [
+        "Installer stopped at provider refresh; later installer fixtures are unverified.",
+        "Five downstream Windows test steps skipped after installer failure.",
+        "No successful native acceptance at this revision."
+      ]
+    }
+  ],
+  "next_action": "W5 repairs the quoted hook-path assertion without weakening behavior; W6 repeats the full native workflow."
+}
