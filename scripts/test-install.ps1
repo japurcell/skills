@@ -164,6 +164,7 @@ function New-FixtureRepo {
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/file_io.py') -Destination (Join-Path $Repo 'scripts/file_io.py') -Force
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/trusted_hook_launch.py') -Destination (Join-Path $Repo 'scripts/trusted_hook_launch.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-hooks.py') -Destination (Join-Path $Repo 'scripts/install-codex-hooks.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/configure-rtk.py') -Destination (Join-Path $Repo 'scripts/configure-rtk.py') -Force
@@ -311,6 +312,8 @@ for target in targets():
         if ($LASTEXITCODE -ne 0) {
             Fail 'Could not populate generated-hook fixture targets from hooks.manifest.targets().'
         }
+        & $python.Path @($python.Arguments) (Join-Path $Repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh generated fixture metadata.' }
     }
     finally {
         [System.Environment]::SetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', $oldBytecode, [System.EnvironmentVariableTarget]::Process)
@@ -404,6 +407,10 @@ function Test-FreshGeneratedHooksPreflightInstallsWithoutBytecode {
         Assert-NoBytecodeCache $repo
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.copilot/hooks/scripts/rtk-hook-copilot.py') -PathType Leaf) -Message 'Expected fresh generated Copilot RTK output to be installed.'
         Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir '.gemini/hooks/scripts/rtk-hook-gemini.py') -PathType Leaf) -Message 'Expected fresh generated Gemini RTK output to be installed.'
+        foreach ($relative in @('.codex/hooks/hooks-diagnostics.py', '.copilot/hooks/scripts/hooks-diagnostics.py', '.gemini/hooks/scripts/hooks-diagnostics.py')) {
+            Assert-True -Condition (Test-Path -LiteralPath (Join-Path $homeDir $relative) -PathType Leaf) -Message "Expected diagnostics asset: $relative"
+            Assert-True -Condition ((Get-FileHash -LiteralPath (Join-Path $repo $relative)).Hash -eq (Get-FileHash -LiteralPath (Join-Path $homeDir $relative)).Hash) -Message "Expected exact diagnostics asset bytes: $relative"
+        }
     }
     finally {
         Remove-Workdir $workdir
@@ -1109,6 +1116,9 @@ function Test-FixedNameHardLinkHandling {
         }
 
         Assert-Equals -Expected 'HardLink' -Actual (Get-Item -Force -LiteralPath $hardLinkSource).LinkType -Message "Fixture setup error: expected the source file to be a hard link."
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) -B (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh changed hard-link template metadata.' }
 
         Invoke-Install -Repo $repo -HomeDir $homeDir -Workdir $workdir
 
@@ -1243,6 +1253,9 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         New-FixtureRepo $repo
         Set-PostRetirementFixture $repo
         Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}')
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) -B (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        if ($LASTEXITCODE -ne 0) { Fail 'Could not refresh changed provider template metadata.' }
         $copilotPath = Join-Path $homeDir '.copilot/hooks/hooks.json'
         $geminiPath = Join-Path $homeDir '.gemini/settings.json'
         Write-FixtureFile $copilotPath @('{"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}')
@@ -1484,12 +1497,12 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
         $preCommands = @($config['hooks']['PreToolUse'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected PreToolUse to retain the maintained scanner.'
-        Assert-True -Condition ($preCommands -contains 'python3 ~/.codex/hooks/tool-guard.py') -Message 'Expected Codex Tool Guardian registration.'
+        Assert-True -Condition (@($preCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition (@($preCommands -match ' -I -S -B .*tool-guard.py').Count -eq 1) -Message 'Expected Codex Tool Guardian registration.'
         $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition ($stopCommands -contains 'python3 ~/.codex/hooks/scan-secrets.py') -Message 'Expected Stop to retain the maintained scanner.'
-        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
-        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
+        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected Stop to retain the maintained scanner.'
+        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
+        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {

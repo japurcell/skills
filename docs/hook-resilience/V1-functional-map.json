@@ -1,0 +1,666 @@
+{
+  "candidate": "0ecd490d07c34519e86f10719ef778cebff73fae",
+  "original_candidate": "ec73604420201c20734a83aa39e32df5a05e0687",
+  "original_aggregate": {
+    "successful_processes": 46,
+    "failed_processes": 5,
+    "explicit_platform_skips": 3,
+    "runner_seconds": 879.5
+  },
+  "phase2_authorized": true,
+  "V1_complete": false,
+  "original_failure_resolution": {
+    "environment_corrected": [
+      8,
+      48
+    ],
+    "T8_test_contract_repaired": [
+      31,
+      41
+    ],
+    "T9_fixture_repaired": [
+      7
+    ]
+  },
+  "suite_count": 51,
+  "rows": [
+    {
+      "index": 1,
+      "command": "bash scripts/test-addy-install.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.280557,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 2,
+      "command": "bash scripts/test-cleanup-skill-workspaces.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.077179,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 3,
+      "command": "bash scripts/test-codex-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 6.213869,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 4,
+      "command": "bash scripts/test-codex-repository-okf.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.846281,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 5,
+      "command": "bash scripts/test-codex-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 52.778416,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 6,
+      "command": "bash scripts/test-gemini-hooks-auto-ingest.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 12.70728,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 7,
+      "command": "bash scripts/test-gemini-hooks-observability.sh",
+      "original_process_status": "FAIL",
+      "original_duration_seconds": 22.032705,
+      "current_status": "pass_T9_integrated",
+      "current_evidence": [
+        "T9-evidence.md",
+        "implementation-ExecPlan.md"
+      ],
+      "basis": "T9 fixture isolation repair integrated as4061420e. Both full unchanged provider suite inventories passed at T9; coordinator repeated BOTH full suites after rebase, exit0 with CYCLIC_TEST_OK, MOCK_FCNTL_OK and ADDITIONAL_OBSERVABILITY_SCENARIOS_OK. Runtime remains unchanged. Original failures retained."
+    },
+    {
+      "index": 8,
+      "command": "bash scripts/test-gemini-hooks-okf-lint.sh",
+      "original_process_status": "FAIL",
+      "original_duration_seconds": 1.003891,
+      "current_status": "pass_environment_corrected",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-phase1-repeats-summary.json"
+      ],
+      "basis": "Exact unchanged public suite passed in 11.155 seconds with AUDIT_LOG unset and disposable HOME; global verifier audit override caused the original failure."
+    },
+    {
+      "index": 9,
+      "command": "bash scripts/test-gemini-hooks-rtk.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 4.881162,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 10,
+      "command": "bash scripts/test-gemini-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 67.897555,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 11,
+      "command": "bash scripts/test-gemini-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.324838,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 12,
+      "command": "bash scripts/test-gemini-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 2.025271,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 13,
+      "command": "bash scripts/test-hooks-auto-ingest.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.29,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 14,
+      "command": "bash scripts/test-hooks-observability.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 31.835845,
+      "current_status": "pass_T9_integrated",
+      "current_evidence": [
+        "T9-evidence.md",
+        "implementation-ExecPlan.md"
+      ],
+      "basis": "T9 fixture isolation repair integrated as4061420e. Both full unchanged provider suite inventories passed at T9; coordinator repeated BOTH full suites after rebase, exit0 with CYCLIC_TEST_OK, MOCK_FCNTL_OK and ADDITIONAL_OBSERVABILITY_SCENARIOS_OK. Runtime remains unchanged. Original failures retained."
+    },
+    {
+      "index": 15,
+      "command": "bash scripts/test-hooks-okf-lint.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 14.487376,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 16,
+      "command": "bash scripts/test-hooks-rtk.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 5.367041,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 17,
+      "command": "bash scripts/test-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 73.62041,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 18,
+      "command": "bash scripts/test-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.622455,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 19,
+      "command": "bash scripts/test-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.833702,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 20,
+      "command": "bash scripts/test-codex-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 7.335142,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 21,
+      "command": "python3 scripts/test-codex-agents.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.35843,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 22,
+      "command": "python3 scripts/test-install-codex-hooks.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.180014,
+      "current_status": "pass_T7_combined",
+      "current_evidence": [
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Codex merge or isolated generator26 passed on the integrated T6/T7 source; source remains identical. Current V1 freshness38 also passed before/after its installed proof."
+    },
+    {
+      "index": 23,
+      "command": "python3 scripts/test-probe-provider-hook-delivery.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 4.569001,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 24,
+      "command": "python3 scripts/test-generate-hooks.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 18.943801,
+      "current_status": "pass_T7_combined",
+      "current_evidence": [
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Codex merge or isolated generator26 passed on the integrated T6/T7 source; source remains identical. Current V1 freshness38 also passed before/after its installed proof."
+    },
+    {
+      "index": 25,
+      "command": "python3 scripts/test-rtk-stable.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 9.187014,
+      "current_status": "pass_T7_reused",
+      "current_evidence": [
+        "T7-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "All12 RTK tests passed with T7 trusted installer changes; integration source comparison retained identical installer logic."
+    },
+    {
+      "index": 26,
+      "command": "python3 scripts/test-security-banners.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 7.514725,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 27,
+      "command": "python3 scripts/test-security-reporting.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 27.20447,
+      "current_status": "pass_T7_combined",
+      "current_evidence": [
+        "T7-integration-evidence.md",
+        "T6-repair-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Current combined reporting suite passed all 11 tests, including the 81 embedded-token cases; the original aggregate had 9 tests."
+    },
+    {
+      "index": 28,
+      "command": "python3 scripts/test-hook-input-bounds.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 32.431235,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 29,
+      "command": "python3 scripts/test-hook-diagnostics.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 1.95799,
+      "current_status": "pass_T7_combined",
+      "current_evidence": [
+        "T7-integration-evidence.md",
+        "V1-installed-assets.json",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Current combined diagnostics8 passed; installed V1 doctor proof additionally reports complete assets and no missing or duplicate owned registrations."
+    },
+    {
+      "index": 30,
+      "command": "python3 scripts/test-hook-diagnostic-recovery.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 10.383582,
+      "current_status": "pass_T7_combined",
+      "current_evidence": [
+        "T7-integration-evidence.md",
+        "T7-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Current combined recovery12 passed, including actual Bash/macOS PowerShell registered commands with hostile startup/PATH and completed audit proof; original aggregate had10 tests."
+    },
+    {
+      "index": 31,
+      "command": "python3 scripts/test-scan-secrets-merge.py",
+      "original_process_status": "FAIL",
+      "original_duration_seconds": 201.178353,
+      "current_status": "pass_T8_repair",
+      "current_evidence": [
+        "T8-evidence.md",
+        "I3-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Full repaired 33-test inventory passed in 202.541 seconds. T8 source/tests remain unchanged after T7 integration; coordinator reran all-provider delimiter cases in 5.008 seconds on combined hooks."
+    },
+    {
+      "index": 32,
+      "command": "python3 scripts/test-scan-secrets-stream-component.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.197819,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 33,
+      "command": "python3 scripts/test-scan-secrets-streaming.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 39.191187,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 34,
+      "command": "python3 scripts/test-tool-guard-false-positives.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 3.866339,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 35,
+      "command": "python3 scripts/test-tool-guard-native-data.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 12.229187,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 36,
+      "command": "python3 scripts/test-tool-guard-shell-data.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 27.418127,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 37,
+      "command": "python3 scripts/test-tool-guard-limits.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 10.674699,
+      "current_status": "pass_T6_repair_reused",
+      "current_evidence": [
+        "T6-repair-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Affected Guardian/banner checks passed after whole-label repair. Canonical Guardian, generated policy helpers and public test source remain identical; combined reporting11/recovery12 prove updated build/diagnostic interactions."
+    },
+    {
+      "index": 38,
+      "command": "python3 scripts/test-benchmark-high-rate-hooks.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 15.772495,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 39,
+      "command": "python3 scripts/test-verify-hook-release.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 2.05301,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 40,
+      "command": "pwsh -NoProfile -File scripts/test-install.ps1",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 80.995324,
+      "current_status": "pass_T7_reused",
+      "current_evidence": [
+        "T7-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-installed-assets.json",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Broad actual Bash/macOS PowerShell installer fixture suite passed at T7; integration source comparison retained identical installer logic. V1 additionally verifies actual installed runtime hashes/modes and user registration preservation. macOS junction subcheck remains unavailable."
+    },
+    {
+      "index": 41,
+      "command": "pwsh -NoProfile -File scripts/test-codex-hooks-windows.ps1",
+      "original_process_status": "FAIL",
+      "original_duration_seconds": 0.978907,
+      "current_status": "pass_T8_repair_portable_only",
+      "current_evidence": [
+        "T8-evidence.md",
+        "I3-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Repaired portable PowerShell envelope suite passed at T8 and in coordinator combined-tree replay. This script ran on macOS; native Windows remains unverified."
+    },
+    {
+      "index": 42,
+      "command": "pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.250557,
+      "current_status": "platform_unverified",
+      "current_evidence": [
+        "V1-phase1-evidence.md"
+      ],
+      "basis": "Process exited zero only because the suite explicitly skipped native Windows on macOS; no Windows acceptance."
+    },
+    {
+      "index": 43,
+      "command": "pwsh -NoProfile -File scripts/test-repository-okf-windows.ps1",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.232618,
+      "current_status": "platform_unverified",
+      "current_evidence": [
+        "V1-phase1-evidence.md"
+      ],
+      "basis": "Process exited zero only because the suite explicitly skipped native Windows on macOS; no Windows acceptance."
+    },
+    {
+      "index": 44,
+      "command": "pwsh -NoProfile -File scripts/test-lifecycle-messages-windows.ps1",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.218495,
+      "current_status": "platform_unverified",
+      "current_evidence": [
+        "V1-phase1-evidence.md"
+      ],
+      "basis": "Process exited zero only because the suite explicitly skipped native Windows on macOS; no Windows acceptance."
+    },
+    {
+      "index": 45,
+      "command": "bash scripts/test-install.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 32.077871,
+      "current_status": "pass_T7_reused",
+      "current_evidence": [
+        "T7-evidence.md",
+        "T7-integration-evidence.md",
+        "V1-installed-assets.json",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Broad actual Bash/macOS PowerShell installer fixture suite passed at T7; integration source comparison retained identical installer logic. V1 additionally verifies actual installed runtime hashes/modes and user registration preservation. macOS junction subcheck remains unavailable."
+    },
+    {
+      "index": 46,
+      "command": "bash scripts/test-okf-lint.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 11.899479,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 47,
+      "command": "bash scripts/test-repo-root.sh",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.073035,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 48,
+      "command": "python3 scripts/test_helpers.py",
+      "original_process_status": "FAIL",
+      "original_duration_seconds": 0.559715,
+      "current_status": "pass_environment_corrected",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-phase1-diagnosis-summary.json"
+      ],
+      "basis": "All 16 unchanged tests passed in 0.751 seconds after removing provider-specific log overrides; the original two-provider shared DB was verifier environment interference."
+    },
+    {
+      "index": 49,
+      "command": "python3 skills/spec-to-tasks/evals/test_grade_benchmark.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 4.909653,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 50,
+      "command": "python3 skills/prd-ralph-loop/evals/test_grade_benchmark.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 0.753821,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    },
+    {
+      "index": 51,
+      "command": "python3 scripts/test_test_all.py",
+      "original_process_status": "PASS",
+      "original_duration_seconds": 10.736871,
+      "current_status": "pass_reused",
+      "current_evidence": [
+        "V1-phase1-evidence.md",
+        "V1-source-reuse.json"
+      ],
+      "basis": "Original passing functional result retained; affected current installation and diagnostic interactions are covered by T7 combined proof and V1 installed-asset proof."
+    }
+  ],
+  "limitations": [
+    "No fresh all-51 passing aggregate is claimed.",
+    "Native Windows/ACL/junction and authenticated provider delivery remain unverified.",
+    "Complete resources passed; complete timing failed 89 comparisons across 78 cases under unchanged budgets.",
+    "D2 owns diagnosis/repair; V1 remains incomplete. See V1-release-evidence.md."
+  ],
+  "accepted_source_target": "3288cf4e8fe8899b9f179c49e6290e99f490051f",
+  "measured_candidate": "6c1623ff06d58566cf659658c9a92196b71bff7d",
+  "runtime_inventory_verified_after_rebase": true,
+  "finite_resource_gate": "passed",
+  "latency_acceptance": "rejected"
+}

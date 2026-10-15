@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
+from trusted_hook_launch import pin_provider_commands
 
 
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -154,7 +155,9 @@ def main() -> int:
     arguments = parser.parse_args()
     try:
         template, _ = load_object(arguments.template, "template")
+        validate_hooks(template, arguments.provider, "Template")
         home = Path(os.path.abspath(arguments.home))
+        pin_provider_commands(template, arguments.provider, home)
         destination = Path(os.path.abspath(arguments.destination))
         check_parent_directories(home, destination)
         if destination.is_symlink():

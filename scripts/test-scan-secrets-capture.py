@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 from pathlib import Path
@@ -13,13 +14,7 @@ import sys
 import tempfile
 import time
 
-
-ROOT = Path(__file__).resolve().parent.parent
-HOOKS = {
-    "copilot": ROOT / ".copilot/hooks/scripts/scan-secrets.py",
-    "gemini": ROOT / ".gemini/hooks/scripts/scan-secrets.py",
-    "codex": ROOT / ".codex/hooks/scan-secrets.py",
-}
+from scanner_test_support import HOOKS, install_fake_git
 
 
 def payload(provider: str, repo: Path, mode: str) -> dict[str, object]:
@@ -37,18 +32,14 @@ def run_case(
     capture_failure: bool = False, committed: bool = False,
     unexpected_failure: bool = False, unexpected_input: bool = False, files: dict[str, bytes] | None = None,
     input_text: str | None = None, missing_git: bool = False,
-    storage_fault: str = "", hostile_payload: bool = False,
+    storage_fault: str = "", hostile_payload: bool = False, descriptor_fault: str = "",
+    launch_fault: str = "",
 ) -> tuple[dict, str]:
     with tempfile.TemporaryDirectory(prefix="scan-capture-test-") as directory:
         root = Path(directory)
         repo = root / "repo"
         repo.mkdir()
         (repo / ".git").mkdir()
-        fake_bin = root / "bin"
-        fake_bin.mkdir()
-        git_path = fake_bin / "git"
-        git_path.write_text(fake_git, encoding="utf-8")
-        git_path.chmod(0o755)
         real_git = shutil.which("git")
         assert real_git is not None
         subprocess.run([real_git, "-C", str(repo), "init", "-q"], check=True)
@@ -67,9 +58,10 @@ def run_case(
         env = {key: value for key, value in os.environ.items()
                if not key.startswith(("AUDIT_", "OBSERVABILITY_", "COPILOT_OBSERVABILITY_",
                                       "GEMINI_OBSERVABILITY_"))}
-        env.update({"PATH": f"{fake_bin}{os.pathsep}{env['PATH']}", "SCAN_MODE": mode,
+        install_fake_git(root, env, fake_git, real_git=real_git)
+        env.update({"SCAN_MODE": mode,
                     "SECRETS_LOG_DIR": str(root / "logs"), "TMPDIR": str(root),
-                    "REAL_GIT": real_git, "AUDIT_LOG": str(root / "audit.log"),
+                    "AUDIT_LOG": str(root / "audit.log"),
                     "OBSERVABILITY_LOG_PATH": str(root / "observability.jsonl"),
                     "OBSERVABILITY_TESTING": "1", "GIT_CONFIG_NOSYSTEM": "1",
                     "GIT_CONFIG_GLOBAL": os.devnull})
@@ -104,6 +96,80 @@ def run_case(
                 "def fail(*args, **kwargs):\n"
                 f"    raise {error_type}('/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
                 f"{failure_target} = fail\n"
+                f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
+            )
+            command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
+        if descriptor_fault:
+            wrapper = (
+                "import os, runpy\n"
+                "from pathlib import Path\n"
+                "original_open, original_read = os.open, os.read\n"
+                "candidate = Path('race.txt')\n"
+                "descriptors = set()\n"
+                "changed = False\n"
+                f"fault = {descriptor_fault!r}\n"
+                "def open_candidate(path, flags, *args, **kwargs):\n"
+                "    global changed\n"
+                "    selected = os.fspath(path) == 'race.txt'\n"
+                "    if selected and fault == 'fifo' and not changed:\n"
+                "        candidate.unlink()\n"
+                "        os.mkfifo(candidate)\n"
+                "        changed = True\n"
+                "    descriptor = original_open(path, flags, *args, **kwargs)\n"
+                "    if selected:\n"
+                "        descriptors.add(descriptor)\n"
+                "    return descriptor\n"
+                "def read_candidate(descriptor, size):\n"
+                "    global changed\n"
+                "    if descriptor in descriptors and not changed:\n"
+                "        changed = True\n"
+                "        if fault == 'growth':\n"
+                "            with candidate.open('ab') as handle:\n"
+                "                handle.write(b'x' * 8388609)\n"
+                "        elif fault == 'replacement':\n"
+                "            candidate.rename('original.txt')\n"
+                "            candidate.write_bytes(b'safe replacement\\n')\n"
+                "    chunk = original_read(descriptor, size)\n"
+                "    if descriptor in descriptors and not chunk and fault == 'replay':\n"
+                "        candidate.write_bytes(b'safe rewritten after acquisition\\n')\n"
+                "    return chunk\n"
+                "os.open, os.read = open_candidate, read_candidate\n"
+                "os.supports_dir_fd.add(open_candidate)\n"
+                f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
+            )
+            command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
+        if launch_fault:
+            wrapper = (
+                "import errno, runpy, subprocess\n"
+                f"fault = {launch_fault!r}\n"
+                "original_popen = subprocess.Popen\n"
+                "failures = 0\n"
+                "def launch(args, *positional, **keyword):\n"
+                "    global failures\n"
+                "    if list(args[1:]) == ['rev-parse', '--verify', 'HEAD']:\n"
+                "        failures += 1\n"
+                "        if fault == 'native_once' and failures == 1:\n"
+                "            import resource\n"
+                "            before = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "            resource.setrlimit(resource.RLIMIT_NPROC, (0, before[1]))\n"
+                "            try:\n"
+                "                child = original_popen(args, *positional, **keyword)\n"
+                "                child.wait(timeout=1)\n"
+                "                raise RuntimeError('native process limit did not prevent launch')\n"
+                "            finally:\n"
+                "                current = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "                resource.setrlimit(resource.RLIMIT_NPROC, (before[0], current[1]))\n"
+                "        if fault == 'eagain_deadline':\n"
+                "            import time\n"
+                "            time.sleep(5.05)\n"
+                "            raise BlockingIOError(errno.EAGAIN, 'temporary launch failure')\n"
+                "        if (fault == 'eagain_always' or (fault == 'eagain_once' and failures == 1)\n"
+                "                or (fault == 'eagain_twice' and failures <= 2)):\n"
+                "            raise BlockingIOError(errno.EAGAIN, '/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
+                "        if fault == 'permission':\n"
+                "            raise PermissionError(errno.EACCES, '/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
+                "    return original_popen(args, *positional, **keyword)\n"
+                "subprocess.Popen = launch\n"
                 f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
             )
             command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
@@ -146,7 +212,8 @@ def run_case(
 
 
 def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
-                      cause: str, operation: str, logging: bool = True, **numbers: int | float) -> None:
+                      cause: str, operation: str, logging: bool = True,
+                      **details: int | float | str) -> None:
     response, log = result
     rendered = json.dumps(response).lower()
     assert "incomplete" in rendered, (provider, mode, response)
@@ -155,7 +222,7 @@ def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
     assert "check" in rendered or "retry" in rendered, response
     if logging:
         record = json.loads(log.splitlines()[-1])
-        assert record["diagnostic"] == {"cause": cause, "operation": operation, **numbers}, record
+        assert record["diagnostic"] == {"cause": cause, "operation": operation, **details}, record
         assert record["note"].lower() in rendered, (response, record)
         assert record["action"] in rendered, (response, record)
         assert '"status":"clean"' not in log, (provider, mode, log)
@@ -176,8 +243,7 @@ def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
 
 def main() -> None:
     provider = sys.argv[1]
-    descendant_git = """#!/usr/bin/env python3
-import os, sys, time
+    descendant_git = """import os, sys, time
 if sys.argv[1:3] == ['rev-parse', '--is-inside-work-tree']:
     if os.fork() == 0:
         time.sleep(10)
@@ -187,25 +253,21 @@ if sys.argv[1:3] == ['rev-parse', '--is-inside-work-tree']:
     os._exit(0)
 sys.exit(9)
 """
-    partial_git = """#!/usr/bin/env python3
-import sys, time
+    partial_git = """import sys, time
 sys.stdout.write('true\\n')
 sys.stdout.flush()
 time.sleep(10)
 """
-    oversized_git = """#!/usr/bin/env python3
-import os, time
+    oversized_git = """import os, time
 os.write(1, b'x' * (8388608 + 1))
 time.sleep(10)
 """
-    failed_git = """#!/usr/bin/env python3
-import sys
+    failed_git = """import sys
 sys.stderr.write('/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')
 sys.stdout.write('true\\n')
 sys.exit(9)
 """
-    malformed_git = """#!/usr/bin/env python3
-import os, sys
+    malformed_git = """import os, sys
 args = sys.argv[1:]
 if args[:2] == ['rev-parse', '--is-inside-work-tree']:
     print('true')
@@ -216,15 +278,34 @@ elif args[0] == 'diff':
 else:
     os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])
 """
-    real_git = "#!/usr/bin/env python3\nimport os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
-    failed_head_git = """#!/usr/bin/env python3
-import os, sys
+    real_git = "import os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
+    recovery_faults = ["eagain_once", "eagain_twice"]
+    if sys.platform == "darwin":
+        recovery_faults.append("native_once")
+    for mode in ("block", "warn"):
+        for fault in recovery_faults:
+            response, log = run_case(provider, mode, real_git, launch_fault=fault,
+                                     files={"fake.txt": ("gh" + "p_" + "A" * 36).encode()})
+            assert "potential secrets detected" in json.dumps(response), (fault, response)
+            assert json.loads(log.splitlines()[-1])["status"] == "findings", (fault, log)
+            response, log = run_case(provider, mode, real_git, launch_fault=fault)
+            expected = {"systemMessage": "scan-secrets: pass; 0 modified files"} if provider == "codex" and mode == "warn" else {}
+            assert response == expected, (fault, response)
+            assert json.loads(log.splitlines()[-1])["status"] == "clean", (fault, log)
+        for fault, number, attempts in (("permission", errno.EACCES, 1),
+                                        ("eagain_always", errno.EAGAIN, 3)):
+            assert_incomplete(provider, mode, run_case(
+                provider, mode, real_git, launch_fault=fault,
+            ), "git_capture_failed", "git_head", capture_step="spawn", os_errno=number, attempts=attempts)
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, launch_fault="eagain_deadline", maximum=7.0,
+        ), "git_timeout", "git_head", seconds=5)
+    failed_head_git = """import os, sys
 if sys.argv[1:] == ['rev-parse', '--verify', 'HEAD']:
     sys.exit(128)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 """
-    failed_diff_git = """#!/usr/bin/env python3
-import os, sys
+    failed_diff_git = """import os, sys
 args = sys.argv[1:]
 if args[0] == 'diff':
     flags = args[:args.index('--')]
@@ -236,8 +317,7 @@ if args[0] == 'diff':
 else:
     os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])
 """
-    unsafe_candidate_git = """#!/usr/bin/env python3
-import os, sys
+    unsafe_candidate_git = """import os, sys
 if sys.argv[1:] == ['ls-files', '-z', '--others', '--exclude-standard']:
     sys.stdout.buffer.write(b'../private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN\\0')
 else:
@@ -245,11 +325,39 @@ else:
 """
     missing_candidate_git = unsafe_candidate_git.replace(
         '../private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN', 'missing-file.txt')
-    slow_git = """#!/usr/bin/env python3
-import os, sys, time
+    slow_git = """import os, sys, time
 time.sleep(3)
 os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
 """
+    # Race at the public generated entrypoint: opening a swapped FIFO must
+    # never wait for a writer, and growth must stop at the first extra byte.
+    for mode in ("block", "warn"):
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, files={"race.txt": b"safe\n"}, descriptor_fault="fifo",
+        ), "candidate_unsafe", "candidate_read")
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, files={"race.txt": b"safe\n"}, descriptor_fault="growth",
+        ), "total_bytes_limit", "candidate_read", measured=8388609, limit=8388608)
+        token = ("gh" + "p_" + "FAKE" * 9).encode()
+        # Classification reads the complete protected snapshot before matching,
+        # including split UTF-8 and late binary markers beyond the first chunk.
+        response, log = run_case(provider, mode, real_git, files={
+            "split.txt": b"x" * 65535 + "é".encode() + b" " + token,
+            "late.bin": token + b" " + b"x" * 65536 + b"\0",
+            "invalid.bin": b"x" * 65536 + b"\xff " + token,
+        })
+        record = json.loads(log.splitlines()[-1])
+        assert record["status"] == "findings", record
+        assert [finding["path"] for finding in record["findings"]] == [
+            "invalid.bin", "late.bin", "split.txt"], record
+        for fault in ("replacement", "replay"):
+            response, log = run_case(provider, mode, real_git,
+                                     files={"race.txt": token + b"\n"}, descriptor_fault=fault)
+            assert "potential secrets detected" in json.dumps(response), (fault, response)
+            record = json.loads(log.splitlines()[-1])
+            assert record["status"] == "findings", (fault, record)
+            assert record["findings"][0]["path"] == "race.txt", record
+            assert token.decode() not in json.dumps(response) + log
     for mode in ("block", "warn"):
         for fake_git, maximum, cause, numbers in (
             (descendant_git, 3.0, "git_descendant_running", {}),
@@ -275,7 +383,7 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         ), "scan_timeout", "git_head", seconds=8)
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, capture_failure=True,
-        ), "git_capture_failed", "git_repository")
+        ), "git_capture_failed", "git_repository", capture_step="temporary_file")
         assert_incomplete(provider, mode, run_case(
             provider, mode, failed_head_git, committed=True,
         ), "git_head_invalid", "git_head")
@@ -296,15 +404,15 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
                 provider, mode, real_git, input_text=invalid_input,
             ), "input_invalid", "input")
         assert_incomplete(provider, mode, run_case(
-            provider, mode, real_git, files={"large.bin": b"x" * 1048577}, hostile_payload=True,
-        ), "file_bytes_limit", "candidate_read", measured=1048577, limit=1048576)
+            provider, mode, real_git, files={"large.bin": b"x" * 8388609}, hostile_payload=True,
+        ), "total_bytes_limit", "candidate_read", measured=8388609, limit=8388608)
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, files={f"file-{i}.txt": b"safe\n" for i in range(257)},
         ), "snapshot_count_limit", "git_candidates", measured=257, limit=256)
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, maximum=7.0,
             files={f"file-{i}.bin": b"x" * 1048576 for i in range(9)},
-        ), "total_bytes_limit", "candidate_scan", measured=9437184, limit=8388608)
+        ), "total_bytes_limit", "candidate_read", measured=9437184, limit=8388608)
         for fault, cause, numbers in (("unsafe", "log_unsafe", {}),
                                       ("unavailable", "log_unavailable", {}),
                                       ("configuration", "log_configuration_invalid", {}),

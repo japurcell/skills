@@ -99,7 +99,7 @@ $ProviderHookMergerSrc = Join-Path $RepoRoot 'scripts/install-provider-hooks.py'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrcDir = Join-Path $RepoRoot '.codex/hooks'
-$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'tool-guard.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py')
+$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'tool-guard.py', 'hooks-diagnostics.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py')
 $CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
@@ -151,9 +151,13 @@ function Get-PythonCommand {
     if ($null -eq $python) {
         Fail 'Missing Python executable: expected python3 or py.'
     }
+    $resolved = & $python.Source @arguments -I -S -c 'import sys; print(sys.executable)'
+    if ($LASTEXITCODE -ne 0 -or @($resolved).Count -ne 1 -or -not [System.IO.Path]::IsPathFullyQualified([string]$resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+        Fail 'Unable to resolve an absolute trusted Python executable.'
+    }
     return [pscustomobject]@{
-        Path = $python.Source
-        Arguments = $arguments
+        Path = [string]$resolved
+        Arguments = @('-B')
     }
 }
 
@@ -568,6 +572,9 @@ foreach ($config in @(
     & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --home $HOME --check | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
 }
+
+& $pythonCommand.Path @($pythonCommand.Arguments) $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Codex hook configuration preflight exited with code $LASTEXITCODE." }
 
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }

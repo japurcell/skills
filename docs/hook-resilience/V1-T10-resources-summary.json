@@ -1,0 +1,28 @@
+{
+  "mode": "resources",
+  "candidate": "1817d569b42008019ec66d3ac3469f7fd704308c",
+  "rows": 216,
+  "gates_met": true,
+  "sources_unchanged": true,
+  "errors": [],
+  "conditions": {
+    "baseline": {
+      "cases": 108,
+      "maximum_ms": 60.070584,
+      "maximum_case": "copilot.resources.patch-high-line-max",
+      "rss_min_bytes": 19660800,
+      "rss_max_bytes": 23429120,
+      "completed_records": 3240,
+      "violations": []
+    },
+    "candidate": {
+      "cases": 108,
+      "maximum_ms": 60.345167,
+      "maximum_case": "copilot.resources.patch-high-line-max",
+      "rss_min_bytes": 20250624,
+      "rss_max_bytes": 24002560,
+      "completed_records": 3240,
+      "violations": []
+    }
+  }
+}

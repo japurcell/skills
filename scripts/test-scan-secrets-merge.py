@@ -5,54 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-from pathlib import Path
-import shutil
-import subprocess
 import sys
-import tempfile
 import unittest
 
-
-ROOT = Path(__file__).resolve().parent.parent
-HOOKS = {
-    "copilot": ROOT / ".copilot/hooks/scripts/scan-secrets.py",
-    "gemini": ROOT / ".gemini/hooks/scripts/scan-secrets.py",
-    "codex": ROOT / ".codex/hooks/scan-secrets.py",
-}
-PROVIDERS = tuple(HOOKS)
-FAKE_TOKEN = "gh" + "p_" + "FAKE" * 9
+from scanner_test_support import FAKE_TOKEN, HOOKS, PROVIDERS, ROOT, ScannerFixtureMixin
 
 
-class MergeScannerTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory(prefix="scan-merge-test-")
-        self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name).resolve()
-        self.repo = self.root / "repo"
-        self.repo.mkdir()
-        self.git_path = shutil.which("git")
-        self.assertIsNotNone(self.git_path, "Git is required")
-        self.env = {
-            key: value for key, value in os.environ.items()
-            if not key.startswith("GIT_")
-            and key not in {"SKIP_SECRETS_SCAN", "SECRETS_ALLOWLIST"}
-        }
-        self.env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull})
-        self.git("init", "-q", "-b", "main")
-
-    def git(self, *args: str, expected: int = 0) -> subprocess.CompletedProcess[str]:
-        result = subprocess.run(
-            [str(self.git_path), "-C", str(self.repo),
-             "-c", "user.name=Scanner Merge Test",
-             "-c", "user.email=scanner-merge@example.invalid",
-             "-c", "commit.gpgsign=false", "-c", "core.hooksPath=" + str(self.root / "no-hooks"),
-             *args],
-            env=self.env, text=True, capture_output=True, timeout=10,
-        )
-        self.assertEqual(result.returncode, expected, f"Git fixture failed: {args!r}: {result.stderr}")
-        return result
-
+class MergeScannerTests(ScannerFixtureMixin, unittest.TestCase):
     def write_files(self, files: dict[str, str | None]) -> None:
         for name, content in files.items():
             path = self.repo / name
@@ -79,80 +38,6 @@ class MergeScannerTests(unittest.TestCase):
         self.git("merge", "--no-edit", "other", expected=1)
         self.assertTrue((self.repo / ".git/MERGE_HEAD").exists(), "fixture must have an active merge")
         self.assertTrue(self.git("ls-files", "--unmerged").stdout, "fixture must have unresolved paths")
-
-    def scan(self, provider: str, mode: str = "block", scope: str = "diff",
-             *, stop: bool = False) -> tuple[dict, dict]:
-        log_dir = self.root / f"logs-{provider}-{mode}-{scope}"
-        log_dir.mkdir(exist_ok=True)
-        env = {**self.env, "SCAN_MODE": mode, "SCAN_SCOPE": scope,
-               "SECRETS_LOG_DIR": str(log_dir), "AUDIT_LOG": str(log_dir / "audit.log"),
-               "OBSERVABILITY_LOG_PATH": str(log_dir / "observability.jsonl"),
-               "OBSERVABILITY_TESTING": "1", "TMPDIR": str(self.root)}
-        if provider == "copilot":
-            payload = {"sessionId": "merge-test", "hook_event_name": "preToolUse",
-                       "toolName": "bash", "toolArgs": {"command": "git status"}}
-        else:
-            payload = {"session_id": "merge-test", "cwd": str(self.repo),
-                       "hook_event_name": "BeforeTool" if provider == "gemini" else "PreToolUse",
-                       "tool_name": "run_shell_command" if provider == "gemini" else "exec_command",
-                       "tool_input": {"command": "git status"}}
-        if stop:
-            payload["hook_event_name"] = {
-                "copilot": "agentStop", "gemini": "SessionEnd", "codex": "Stop",
-            }[provider]
-        result = subprocess.run(
-            [sys.executable, "-I", "-S", "-B", str(HOOKS[provider])],
-            cwd=self.repo, env=env, input=json.dumps(payload), text=True, capture_output=True, timeout=12,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        response = json.loads(result.stdout)
-        log_text = (log_dir / "scan.log").read_text(encoding="utf-8")
-        all_output = (result.stdout + result.stderr).encode("utf-8") + b"".join(
-            path.read_bytes() for path in log_dir.rglob("*") if path.is_file()
-        )
-        self.assertNotIn(FAKE_TOKEN.encode("ascii"), all_output,
-                         "fake credential leaked through hook output or logs")
-        rows = [json.loads(line) for line in log_text.splitlines()]
-        self.assertTrue(rows, "scanner must record an outcome")
-        return response, rows[-1]
-
-    def assert_outcome(self, provider: str, mode: str, scope: str, status: str,
-                       finding_path: str | None = None, cause: str | None = None) -> None:
-        response, record = self.scan(provider, mode, scope)
-        self.assertEqual(record["status"], status)
-        if status == "clean":
-            expected = {}
-        else:
-            detail = ("potential secrets detected." if status == "findings" else
-                      "scan incomplete; potential secrets could not be checked.")
-            if status == "incomplete":
-                diagnostic = record["diagnostic"]
-                self.assertEqual(record["action"], "tool scan")
-                if cause is not None:
-                    self.assertEqual(diagnostic["cause"], cause)
-                self.assertIn(diagnostic["cause"], record["note"])
-                self.assertIn(diagnostic["operation"], record["note"])
-                self.assertNotIn(str(self.repo), json.dumps(response) + json.dumps(record))
-                detail += " " + record["note"]
-            reason = f"scan-secrets blocked: tool scan; {detail}"
-            if mode == "warn":
-                expected = {"systemMessage": f"scan-secrets warning: tool scan; {detail}"}
-            elif provider == "copilot":
-                expected = {"continue": True, "permissionDecision": "deny",
-                            "permissionDecisionReason": reason,
-                            "hookSpecificOutput": {"permissionDecision": "deny",
-                                                   "permissionDecisionReason": reason}}
-            elif provider == "gemini":
-                expected = {"decision": "deny", "reason": reason}
-            else:
-                expected = {"hookSpecificOutput": {"hookEventName": "PreToolUse",
-                                                   "permissionDecision": "deny",
-                                                   "permissionDecisionReason": reason}}
-        self.assertEqual(response, expected)
-        if finding_path is not None:
-            self.assertTrue(any(finding["pattern"] == "github_classic_pat"
-                                and finding["path"] == finding_path
-                                for finding in record["findings"]), record)
 
     def assert_all_scans(self, status: str, finding_path: str | None = None, cause: str | None = None) -> None:
         for provider in PROVIDERS:
@@ -209,45 +94,52 @@ class MergeScannerTests(unittest.TestCase):
         self.git("add", "--all")
 
     def test_pre_238_git_allows_clean_index_and_detects_staged_secret(self) -> None:
-        fake_bin = self.root / "old-git-bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(
-            f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, sys\n"
             "args = sys.argv[1:]\n"
             "if args == ['cat-file', '--batch-check', '-z']:\n"
             "    sys.stderr.write('error: unknown switch z\\n')\n"
             "    sys.exit(129)\n"
             "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
-            encoding="utf-8",
-        )
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
-                        REAL_GIT=str(self.git_path))
+            directory="old-git-bin")
         path = "line\nbreak\tname.txt"
-        self.stage_pair({path: "safe changed content\n", ":0:notes.txt": "safe\n"})
+        self.stage_pair({path: "safe changed content\n", ":0:notes.txt": "safe\n",
+                         "line break name.txt": "safe label-colliding file\n",
+                         "line": "safe newline fragment\n", "break": "safe tab fragment\n",
+                         "name.txt": "safe filename fragment\n"})
         self.assert_all_scans("clean")
         self.write_files({path: f"fake_token={FAKE_TOKEN}\n"})
         self.git("add", "--all")
-        self.assert_all_scans("findings", path)
+        # Only the original path's stage-zero blob contains the credential.
+        # Neither a sanitized-label lookup nor a worktree fallback can find it.
+        self.write_files({path: "safe changed content\n"})
+        self.assert_all_scans("findings", "line break name.txt")
 
     def test_batch_paths_preserve_newlines_tabs_and_colons(self) -> None:
         # Constructing the index references must never treat path delimiters as
         # separate requests. The leading colon is an ordinary filename byte.
         path = "line\nbreak\tname.txt"
-        self.stage_pair({path: f"fake_token={FAKE_TOKEN}\n", ":0:notes.txt": "safe\n"})
-        self.assert_all_scans("findings", path)
+        self.stage_pair({path: f"fake_token={FAKE_TOKEN}\n", ":0:notes.txt": "safe\n",
+                         "line break name.txt": "safe label-colliding file\n",
+                         "line": "safe newline fragment\n", "break": "safe tab fragment\n",
+                         "name.txt": "safe filename fragment\n"})
+        self.write_files({path: "safe replacement awaiting git add\n"})
+        # This literal is the display contract, not a reconstructed sanitizer.
+        # All working files and all other index blobs are credential-free.
+        self.assert_all_scans("findings", "line break name.txt")
+
+        # Give the leading-colon path its own staged-only credential control.
+        # Clean up the earlier index secret so only this path can explain it.
+        self.write_files({":0:notes.txt": f"fake_token={FAKE_TOKEN}\n"})
+        self.git("add", "--all")
+        self.write_files({":0:notes.txt": "safe replacement awaiting git add\n"})
+        self.assert_all_scans("findings", ":0:notes.txt")
 
     def test_batch_long_paths_fit_bounded_git_command_lines(self) -> None:
         contents = {f"entry-{index:03}-" + "x" * 190 + ".txt": "safe changed content\n"
                     for index in range(256)}
         self.stage_pair(contents)
-        fake_bin = self.root / "argv-bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(
-            f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, sys\n"
             "args = sys.argv[1:]\n"
             "if args[:5] == ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']:\n"
@@ -255,16 +147,16 @@ class MergeScannerTests(unittest.TestCase):
             "        sys.stderr.write('command line exceeds fixture limit\\n')\n"
             "        sys.exit(129)\n"
             "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
-            encoding="utf-8",
-        )
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
-                        REAL_GIT=str(self.git_path))
+            directory="argv-bin")
         self.assert_all_scans("clean")
         last_path = sorted(contents)[-1]
         self.write_files({last_path: f"fake_token={FAKE_TOKEN}\n"})
         self.git("add", "--all")
-        self.assert_all_scans("findings", last_path)
+        # The unique entry prefix identifies the final path despite clipping.
+        # Staged-scope findings prove its index blob was inspected, while keeping
+        # the worktree identical avoids adding a 257th candidate in diff scope.
+        # Accepted 160-character ASCII label: 157 visible characters and "...".
+        self.assert_all_scans("findings", "entry-255-" + "x" * 147 + "...")
 
     def directory_file_batch_merge(self, secret_source: str | None = None) -> None:
         # These 16 names put the unresolved parent at the end of the first
@@ -316,11 +208,7 @@ class MergeScannerTests(unittest.TestCase):
 
     def test_directory_file_batch_validates_unselected_descendant_records(self) -> None:
         self.directory_file_batch_merge()
-        fake_bin = self.root / "prefix-bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(
-            f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, subprocess, sys\n"
             "args = sys.argv[1:]\n"
             "if (args[:5] != ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']\n"
@@ -346,11 +234,7 @@ class MergeScannerTests(unittest.TestCase):
             "    path = b'zconflict-sibling/private-outside'\n"
             "sys.stdout.buffer.write(output + header + b'\\t' + path + b'\\0')\n"
             "sys.exit(result.returncode)\n",
-            encoding="utf-8",
-        )
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
-                        REAL_GIT=str(self.git_path))
+            directory="prefix-bin")
         for fault in ("valid-descendant", "malformed-object", "invalid-stage",
                       "escaping-descendant", "dot-component", "empty-component", "sibling-prefix"):
             self.env["PREFIX_FAULT"] = fault
@@ -362,6 +246,29 @@ class MergeScannerTests(unittest.TestCase):
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"not-an-object", all_logs)
         self.assertNotIn(b"private-outside", all_logs)
+
+    def test_singleton_index_edit_keeps_pinned_secret(self) -> None:
+        self.stage_pair({"hidden.txt": f"fake_token={FAKE_TOKEN}\n"})
+        secret_oid = self.git("rev-parse", ":hidden.txt").stdout.strip()
+        self.write_files({"hidden.txt": "safe" + "x" * (len(FAKE_TOKEN) + 7) + "\n"})
+        safe_oid = self.git("hash-object", "-w", "hidden.txt").stdout.strip()
+        self.install_fake_git(
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args[:2] not in (['cat-file', '-s'], ['cat-file', '--batch-check']):\n"
+            "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
+            "result = subprocess.run([os.environ['REAL_GIT'], *args], input=sys.stdin.buffer.read(),\n"
+            "                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)\n"
+            "subprocess.run([os.environ['REAL_GIT'], 'update-index', '--cacheinfo',\n"
+            "                '100644,' + os.environ['SAFE_OID'] + ',hidden.txt'], check=True)\n"
+            "sys.stdout.buffer.write(result.stdout)\n"
+            "sys.exit(result.returncode)\n", directory="pin-bin")
+        self.env["SAFE_OID"] = safe_oid
+        for provider in PROVIDERS:
+            for mode in ("block", "warn"):
+                self.git("update-index", "--cacheinfo", f"100644,{secret_oid},hidden.txt")
+                with self.subTest(provider=provider, mode=mode):
+                    self.assert_outcome(provider, mode, "staged", "findings", "hidden.txt")
 
     def test_batch_keeps_staged_secret_when_worktree_matches_head(self) -> None:
         self.stage_pair({"hidden.txt": f"fake_token={FAKE_TOKEN}\n", "safe.txt": "safe\n"})
@@ -393,12 +300,8 @@ class MergeScannerTests(unittest.TestCase):
 
     def test_batch_corrupt_git_responses_remain_incomplete(self) -> None:
         self.stage_pair({"first.txt": "first changed\n", "second.txt": "second changed\n"})
-        fake_bin = self.root / "bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(
-            f"#!{sys.executable}\n"
-            "import os, subprocess, sys\n"
+        self.install_fake_git(
+            "import os, subprocess, sys, time\n"
             "args = sys.argv[1:]\n"
             "if args not in (['cat-file', '--batch-check'], ['cat-file', '--batch']):\n"
             "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n"
@@ -422,7 +325,7 @@ class MergeScannerTests(unittest.TestCase):
             "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
             "elif fault == 'oversized-blob' and metadata:\n"
             "    first, rest = output.split(b'\\n', 1)\n"
-            "    output = first.rsplit(b' ', 1)[0] + b' 1048577\\n' + rest\n"
+            "    output = first.rsplit(b' ', 1)[0] + b' 8388609\\n' + rest\n"
             "elif fault == 'truncated' and not metadata:\n"
             "    output = output[:-1]\n"
             "elif fault == 'extra-content' and not metadata:\n"
@@ -431,25 +334,27 @@ class MergeScannerTests(unittest.TestCase):
             "    output = (b'0' if output[:1] != b'0' else b'1') + output[1:]\n"
             "elif fault == 'bad-separator' and not metadata:\n"
             "    output = output[:-1] + b'x'\n"
+            "elif fault == 'descendant' and not metadata:\n"
+            "    if os.fork() == 0:\n"
+            "        time.sleep(10)\n"
+            "        os._exit(0)\n"
             "elif fault == 'nonzero' and not metadata:\n"
             "    sys.exit(9)\n"
             "sys.stdout.buffer.write(output)\n"
             "sys.exit(result.returncode)\n",
-            encoding="utf-8",
-        )
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"], REAL_GIT=str(self.git_path))
+            directory="bin")
         for fault in ("missing-object", "wrong-type", "invalid-size", "oversized-integer", "extra-metadata",
                       "wrong-metadata-object",
                       "oversized-blob", "truncated", "extra-content", "wrong-object",
-                      "bad-separator", "nonzero"):
+                      "bad-separator", "nonzero", "descendant"):
             self.env["BATCH_FAULT"] = fault
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
                         self.assert_outcome(provider, mode, "diff", "incomplete",
                                             cause="git_failed" if fault == "nonzero" else
-                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "git_descendant_running" if fault == "descendant" else
+                                            "total_bytes_limit" if fault == "oversized-blob" else
                                             "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private missing object", all_logs)
@@ -457,11 +362,7 @@ class MergeScannerTests(unittest.TestCase):
 
     def test_batch_corrupt_index_resolution_remains_incomplete(self) -> None:
         self.stage_pair({"first.txt": "first changed\n", "second.txt": "second changed\n"})
-        fake_bin = self.root / "index-bin"
-        fake_bin.mkdir()
-        wrapper = fake_bin / "git"
-        wrapper.write_text(
-            f"#!{sys.executable}\n"
+        self.install_fake_git(
             "import os, subprocess, sys\n"
             "args = sys.argv[1:]\n"
             "if args[:5] != ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']:\n"
@@ -495,11 +396,7 @@ class MergeScannerTests(unittest.TestCase):
             "    sys.exit(9)\n"
             "sys.stdout.buffer.write(output)\n"
             "sys.exit(result.returncode)\n",
-            encoding="utf-8",
-        )
-        wrapper.chmod(0o755)
-        self.env.update(PATH=str(fake_bin) + os.pathsep + self.env["PATH"],
-                        REAL_GIT=str(self.git_path))
+            directory="index-bin")
         for fault in ("truncated", "missing", "duplicate", "empty-record", "invalid-object",
                       "invalid-stage", "unexpected-stage", "unexpected-path", "nonzero"):
             self.env["INDEX_FAULT"] = fault
@@ -508,7 +405,7 @@ class MergeScannerTests(unittest.TestCase):
                     with self.subTest(fault=fault, provider=provider, mode=mode):
                         self.assert_outcome(provider, mode, "diff", "incomplete",
                                             cause="git_failed" if fault == "nonzero" else
-                                            "file_bytes_limit" if fault == "oversized-blob" else
+                                            "total_bytes_limit" if fault == "oversized-blob" else
                                             "git_output_invalid")
         all_logs = b"".join(path.read_bytes() for path in self.root.glob("logs-*/*") if path.is_file())
         self.assertNotIn(b"private unrequested path", all_logs)
@@ -613,16 +510,17 @@ class MergeScannerTests(unittest.TestCase):
         self.merge({"conflict.txt": "base\n"}, {"conflict.txt": "x" * (size - 1) + "\n"},
                    {"conflict.txt": "theirs\n"})
         self.write_files({"conflict.txt": "safe replacement awaiting git add\n"})
-        self.assert_all_scans(status, cause="file_bytes_limit" if status == "incomplete" else None)
+        self.assert_all_scans(status, cause="total_bytes_limit" if status == "incomplete" else None)
 
-    def test_conflict_stage_at_file_byte_limit_remains_scannable(self) -> None:
-        self.assert_conflict_stage_size(1048576, "clean")
+    def test_conflict_stage_near_aggregate_limit_remains_scannable(self) -> None:
+        other_snapshots = len("base\n") + len("theirs\n") + len("safe replacement awaiting git add\n")
+        self.assert_conflict_stage_size(8388608 - other_snapshots, "clean")
 
     def test_oversized_conflict_stage_stays_incomplete(self) -> None:
-        self.assert_conflict_stage_size(1048577, "incomplete")
+        self.assert_conflict_stage_size(8388609, "incomplete")
 
     def assert_snapshot_budget(self, count: int, status: str) -> None:
-        # Each snapshot is below the file bound. Three conflicts have 8.1 MB
+        # Three conflicts have 8.1 MB
         # across their nine index snapshots; four conflicts exceed the 8 MiB
         # aggregate bound even after the working copies are made small.
         base = {f"conflict-{index}.txt": "b" * 899999 + "\n" for index in range(count)}

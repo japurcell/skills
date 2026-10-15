@@ -2,6 +2,18 @@
   "skill_name": "subagent-model-router",
   "evals": [
     {
+      "id": 4,
+      "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The runtime also accepts model-b at high, classified Standard and equally capable, plus model-c at medium, classified Fast. No user constraints apply. The recorded fallback is none. Is that record consistent? Treat these synthetic IDs and tiers as fixture data, not a model catalog update.",
+      "expected_output": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The only other runtime candidate is model-b at high, also Standard, but the user explicitly permits only model-a's family and model-b belongs to another family. No other configuration in that family is available. Is fallback none valid? Treat the synthetic IDs as fixture data.",
+      "expected_output": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+      "files": []
+    },
+    {
       "id": 1,
       "prompt": "Create a route for summarizing explicit test failures without diagnosing code. GitHub Copilot token billing applies. The dispatch interface accepts only claude-haiku-4.5 and claude-haiku-5.5, both with medium effort. Expect 80000 uncached input tokens and 2000 output tokens, no cache writes, no retries, equal verification cost, and no task-specific quality evidence. No model or effort constraints. Use the bundled source snapshot. Return the route and estimated token cost.",
       "expected_output": "A provisional Fast route for claude-haiku-5.5 at medium effort with an estimated token cost of $0.009, compared with $0.09 for claude-haiku-4.5.",

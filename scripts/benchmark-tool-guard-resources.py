@@ -6,10 +6,8 @@ import argparse
 import hashlib
 import json
 import math
-import os
 from pathlib import Path
 import platform
-import re
 import shlex
 import statistics
 import subprocess
@@ -18,6 +16,8 @@ import tempfile
 import time
 
 from tool_guard_corpus import PROVIDERS, decision, script_path
+from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
+from hook_benchmark_support import collect_macos_rss, disposable_environment, guardian_runtime_footprint
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL_TOOLS = {'copilot': 'bash', 'gemini': 'run_shell_command', 'codex': 'Bash'}
@@ -65,15 +65,24 @@ def fixtures(provider: str) -> list[tuple[str, str, object, str]]:
         body = '界' * (available // 3) + 'x' * (available % 3)
         cases.extend((('native-max', tool, {path_key: 'example.txt', body_key: body}, 'allow'),
                       ('native-overflow', tool, {path_key: 'example.txt', body_key: body + 'x'}, 'deny')))
-    if provider == 'codex':
-        prefix, suffix = '*** Begin Patch\n*** Add File: example.txt\n+', '\n*** End Patch'
-        patch = prefix + 'x' * (65536 - len('command' + prefix + suffix)) + suffix
+    if provider in {'codex', 'copilot'}:
+        def patch_value(source: str) -> object:
+            return source if provider == 'copilot' else {'command': source}
+        key_bytes = 7 if provider == 'codex' else 0
+        case_prefix = 'native' if provider == 'codex' else 'patch'
+        patch = full_capacity_native_patch(key_bytes=key_bytes)
+        high_line_patch = full_capacity_native_patch(key_bytes=key_bytes, high_lines=130000)
         path = '\ufdfa' * 496 + 'x' * 16
         operations = '*** Begin Patch\n*** Delete File: ' + path + '\n*** Delete File: ' + path + '\n*** End Patch'
-        cases.extend((('native-max', 'apply_patch', {'command': patch}, 'allow'),
-                      ('native-overflow', 'apply_patch', {'command': patch.replace('+x', '+xx', 1)}, 'deny'),
-                      ('operation-normalized-max', 'apply_patch', {'command': operations}, 'allow'),
-                      ('operation-normalized-overflow', 'apply_patch', {'command': operations.replace(path + '\n*** End', path + 'x\n*** End')}, 'deny')))
+        cases.extend(((case_prefix + '-max', 'apply_patch', patch_value(patch), 'allow'),
+                      (case_prefix + '-overflow', 'apply_patch', patch_value(patch.replace('+x', '+xx', 1)), 'deny'),
+                      (case_prefix + '-high-line-max', 'apply_patch', patch_value(high_line_patch), 'allow'),
+                      (case_prefix + '-malformed-full-size', 'apply_patch', patch_value(patch[:-1] + '!'), 'deny'),
+                      (case_prefix + '-malformed-high-line-full-size', 'apply_patch', patch_value(high_line_patch[:-1] + '!'), 'deny'),
+                      ('operation-normalized-max', 'apply_patch', patch_value(operations), 'allow'),
+                      ('operation-normalized-overflow', 'apply_patch', patch_value(operations.replace(path + '\n*** End', path + 'x\n*** End')), 'deny')))
+        for size in RECENT_NATIVE_PATCH_SIZES:
+            cases.append((case_prefix + '-recent-' + str(size), 'apply_patch', patch_value(sized_native_patch(size, files=3)), 'allow'))
     if provider == 'copilot':
         cases.append(('native-wide-paths-overflow', 'grep', {'pattern': 'safe', 'paths': ['docs'] * 30000}, 'deny'))
     return cases
@@ -85,18 +94,19 @@ def payload(provider: str, tool: str, value: object) -> bytes:
     return json.dumps(event, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
 
 
-def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str) -> subprocess.CompletedProcess:
-    result = subprocess.run(command, input=data, capture_output=True, env=env, timeout=5)
+def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str, *, cwd: Path | None = None) -> subprocess.CompletedProcess:
+    result = subprocess.run(command, input=data, capture_output=True, env=env, cwd=cwd, timeout=5)
     if result.returncode or decision(provider, json.loads(result.stdout)) != expected:
-        raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}')
+        raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
     return result
 
 
 def fingerprints(root: Path) -> dict[str, str]:
-    paths = {script_path(root, provider) for provider in PROVIDERS}
-    for script in tuple(paths):
-        paths.update((script.parent / 'helpers').rglob('*.py'))
-    source = root / 'hooks/families/tool_guard.py'
+    scripts, helpers, canonical = guardian_runtime_footprint()
+    paths = {root / path for path in scripts}
+    for helper in helpers:
+        paths.update((root / helper).rglob('*.py'))
+    source = root / canonical
     if source.is_file():
         paths.add(source)
     return {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(paths)}
@@ -125,12 +135,8 @@ def main() -> int:
             for name, tool, value, expected in fixtures(provider):
                 home = Path(temporary) / provider / name
                 home.mkdir(parents=True)
-                env = {**os.environ, 'HOME': str(home), 'XDG_CONFIG_HOME': str(home / '.config'),
-                       'XDG_CACHE_HOME': str(home / '.cache'), 'XDG_DATA_HOME': str(home / '.local/share'),
-                       'AUDIT_LOG': str(home / 'audit.log'), 'AUDIT_LOCK': str(home / 'audit.lock'),
-                       'GUARD_MODE': 'block', 'TOOL_GUARD_LOG_DIR': str(home / 'guard' if provider == 'gemini' else home / 'guard.log')}
-                env.pop('SKIP_TOOL_GUARD', None)
-                env.pop('TOOL_GUARD_ALLOWLIST', None)
+                env = disposable_environment(home, provider)
+                env['GUARD_MODE'] = 'block'
                 command = [sys.executable, str(script_path(root, provider))]
                 data, timings, first = payload(provider, tool, value), [], None
                 for index in range(1 + args.warmups + args.samples):
@@ -141,9 +147,8 @@ def main() -> int:
                         first = elapsed
                     elif index > args.warmups:
                         timings.append(elapsed)
-                memory = checked_run(['/usr/bin/time', '-l', *command], data, env, provider, expected)
-                match = re.search(rb'([0-9]+)\s+maximum resident set size', memory.stderr)
-                if match is None:
+                memory, rss = collect_macos_rss(command, lambda argv: checked_run(argv, data, env, provider, expected))
+                if rss is None:
                     raise RuntimeError('macOS time did not report peak resident set size')
                 median = statistics.median(timings)
                 results.append({'case': f'{provider}.resources.{name}', 'input_bytes': len(data),
@@ -151,7 +156,7 @@ def main() -> int:
                                 'first_run_ms': first, 'samples_ms': timings, 'median_ms': median,
                                 'p95_ms': sorted(timings)[max(0, math.ceil(len(timings) * .95) - 1)],
                                 'mad_ms': statistics.median(abs(sample - median) for sample in timings),
-                                'peak_rss_bytes': int(match.group(1)), 'ceiling_ms': args.ceiling_ms,
+                                'peak_rss_bytes': rss, 'ceiling_ms': args.ceiling_ms,
                                 'ceiling_met': max([first, *timings]) <= args.ceiling_ms})
     after = fingerprints(root)
     if before != after:

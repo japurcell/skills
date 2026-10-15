@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -103,15 +104,47 @@ def main() -> None:
             for group in maintained["hooks"][event]:
                 for handler in group["hooks"]:
                     command = handler["command"]
+                    expected = dict(handler)
+                    if command.endswith("/scan-secrets.py"):
+                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks/scan-secrets.py")])
+                        expected["command"] = command
+                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks/scan-secrets.py"}"'
                     matches = [candidate for existing_group in merged["hooks"][event]
                                for candidate in existing_group["hooks"]
                                if candidate.get("command") == command
-                               and candidate.get("commandWindows") == handler["commandWindows"]]
-                    assert matches == [handler], (event, command, matches)
+                               ]
+                    assert matches == [expected], (event, command, matches)
         first_bytes = destination.read_bytes()
         second = run(template, destination)
         assert second.returncode == 0, second.stderr
         assert destination.read_bytes() == first_bytes
+
+        # An upgrade can select a new interpreter after the previous one moved.
+        old = json.loads(first_bytes)
+        old_python = str(Path(temporary) / "old python & tools" / "python.exe")
+        for event in ("PreToolUse", "Stop"):
+            owned = old["hooks"][event][-1]["hooks"][0]
+            script = str(destination.parent / "hooks/scan-secrets.py")
+            owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
+            owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
+        destination.write_text(json.dumps(old))
+        upgraded = run(template, destination)
+        assert upgraded.returncode == 0, upgraded.stderr
+        assert destination.read_bytes() == first_bytes
+
+        unowned = json.loads(first_bytes)
+        script = str(destination.parent / "hooks/scan-secrets.py")
+        custom = {
+            "type": "command",
+            "command": shlex.join([str(Path(temporary) / "custom%python"), "-I", "-S", "-B", script]),
+            "commandWindows": "echo user supplied Windows handler",
+        }
+        unowned["hooks"]["PreToolUse"][0]["hooks"].append(custom)
+        destination.write_text(json.dumps(unowned))
+        preserved = run(template, destination)
+        assert preserved.returncode == 0, preserved.stderr
+        assert custom in json.loads(destination.read_bytes())["hooks"]["PreToolUse"][0]["hooks"]
+        destination.write_bytes(first_bytes)
 
         malformed = json.loads(template.read_text(encoding="utf-8"))
         malformed["hooks"]["PreToolUse"][0]["hooks"][0]["commandWindows"] = (

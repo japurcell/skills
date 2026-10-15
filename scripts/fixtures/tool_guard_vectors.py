@@ -176,3 +176,40 @@ FAKE_SENSITIVE_VALUES = (
     FAKE_BEARER_TOKEN,
     FAKE_API_KEY,
 )
+
+
+RECENT_NATIVE_PATCH_SIZES = (77089, 80666, 90127, 99186)
+
+
+def full_capacity_native_patch(*, key_bytes: int = 0, utf8: bool = False, high_lines: int = 0) -> str:
+    """Fill the native aggregate capacity, including optional envelope key bytes."""
+    prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
+    suffix = '\n' + '+\n' * high_lines + '*** End Patch'
+    available = 262144 - key_bytes - len((prefix + suffix).encode('utf-8'))
+    if available < 0:
+        raise ValueError('requested line count exceeds native capacity')
+    body = '界' * (available // 3) + 'x' * (available % 3) if utf8 else 'x' * available
+    return prefix + body + suffix
+
+
+def sized_native_patch(body_bytes: int, *, line_count: int = 523, files: int = 1) -> str:
+    """Sanitized literal patch with prose, YAML and shell examples at known dimensions."""
+    examples = (
+        '+Documentation example; ordinary prose',
+        '+command: ' + parts('git push', ' --force', ' origin main'),
+        '+echo example; echo safe && echo done',
+    )
+    body_lines = line_count - files - 2
+    if body_lines < files:
+        raise ValueError('each file needs a body line')
+    lines = ['*** Begin Patch']
+    for index in range(files):
+        lines.append('*** Add File: fixture-' + str(index) + '.txt')
+        count = body_lines // files + (index < body_lines % files)
+        lines.extend(examples[item % len(examples)] for item in range(count))
+    lines.append('*** End Patch')
+    padding = body_bytes - len('\n'.join(lines).encode('utf-8'))
+    if padding < 0:
+        raise ValueError('requested size cannot hold fixture lines')
+    lines[2] += 'x' * padding
+    return '\n'.join(lines)

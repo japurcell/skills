@@ -1,0 +1,335 @@
+dispatches:
+  - subtask_id: R1-T11-repair-review
+    agents: [/root/standards_review, /root/spec_review]
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    continuation: original explicitly configured R1 agents, unchanged configuration
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 21:18 UTC'
+    snapshot: 8f250431
+    status: completed
+    evidence: [docs/hook-resilience/R1-T11-standards-review.md, docs/hook-resilience/R1-T11-spec-review.md]
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: T11
+    agent: /root/timing_pairing_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 21:12 UTC'
+    status: completed
+    integrated_commit: 8f25043183158443eaac6bcc0cb22299b548d937
+    evidence: docs/hook-resilience/T11-evidence.md
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: D3
+    agent: /root/residual_diagnosis
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 21:02 UTC'
+    status: completed
+    integrated_commit: 4b4ac3807853480deea61b8f8059fb24d90ba53f
+    evidence: docs/hook-resilience/D3-performance-design.md
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: R1-T10-repair-review
+    agents: [/root/standards_review, /root/spec_review]
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    continuation: original explicitly configured R1 agents, unchanged configuration
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 20:25 UTC'
+    snapshot: 864bbda0
+    status: completed
+    output_verified: true
+    evidence: [docs/hook-resilience/R1-T10-standards-review.md, docs/hook-resilience/R1-T10-spec-review.md]
+    routing_compliant: true
+  - subtask_id: T10
+    agent: /root/performance_repair
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 20:12 UTC'
+    status: completed
+    checkpoint: '20:22 UTC; focused source repair complete, broader verification continues after overrun warning'
+    source_checkpoint: 864bbda0
+    integrated_source_commit: f0b147de
+    evidence: docs/hook-resilience/T10-evidence.md
+    output_verified: true
+    routing_compliant: true
+  - subtask_id: D2
+    agent: /root/performance_diagnosis
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:56 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 32c9853f31d9f260af9301cd5368222f560ebd34
+    routing_compliant: true
+  - subtask_id: R1-repair-review
+    agents: [/root/standards_review, /root/spec_review]
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:22 UTC'
+    snapshot: 0ecd490d07c34519e86f10719ef778cebff73fae
+    status: completed
+    output_verified: true
+    final_supplement_snapshot: 4061420e081f4bbc6c9f0120cb63566910c077c1
+    routing_compliant: true
+  - subtask_id: T9
+    agent: /root/observability_fixtures_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:17 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 4061420e081f4bbc6c9f0120cb63566910c077c1
+    routing_compliant: true
+  - subtask_id: T7-integration
+    agent: /root/trusted_launch_merger
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:15 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 881d400c01e97bc7c16096a09a094266dc04233d
+    routing_compliant: true
+  - subtask_id: T8
+    agent: /root/merge_contract_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:08 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 742c3250a1809be28ee0cd5574945482387f2e06
+    routing_compliant: true
+  - subtask_id: R1-standards-T6-recheck
+    agent: /root/standards_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:03 UTC'
+    status: completed
+    output_verified: true
+    evidence: docs/hook-resilience/R1-standards-review.md
+    routing_compliant: true
+  - subtask_id: T7
+    agent: /root/trusted_launch_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 19:01 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 3b444894a833a8977d02d927f39fa6cbb0e10b8a
+    routing_compliant: true
+  - subtask_id: T6-repair
+    agent: /root/bounded_reports_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:57 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: f146184be7458da85efe60af0d30a1326fe3cb5d
+    evidence: docs/hook-resilience/T6-repair-evidence.md
+    routing_compliant: true
+  - subtask_id: V1
+    agent: /root/release_verification
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:54 UTC'
+    resumed_at: '2026-10-14 21:19 UTC'
+    accepted_candidate: 81fe28bb
+    status: completed
+    output_verified: true
+    integrated_commit: 29b09fcf40b3173b02962b592eccee67c90aa3dc
+    evidence: docs/hook-resilience/V1-T11-release-evidence.md
+    timing_gate: all 468 comparisons passed with unchanged gates; 9048 matched adjacent launch pairs verified; no repeat or waiver
+    checkpoint: '21:30 UTC overrun checkpoint; continued unchanged full run under exclusive quiet conditions'
+    integration: evidence-only rebase from 34863ba1; 18 added files unchanged and 15 stored/decoded artifact hashes verified; matching tips; clean worktree archived and private branch deleted
+    routing_compliant: true
+  - subtask_id: R1-standards
+    agent: /root/standards_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:52 UTC'
+    status: completed_with_findings
+    output_verified: true
+    evidence: docs/hook-resilience/R1-standards-review.md
+    routing_compliant: true
+  - subtask_id: R1-spec
+    agent: /root/spec_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:52 UTC'
+    status: completed_with_findings
+    output_verified: true
+    evidence: docs/hook-resilience/R1-spec-review.md
+    routing_compliant: true
+  - subtask_id: V0
+    agent: /root/release_preparation
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:28 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 119fd7d11a7f91312a0f140c6a8efa64976ecd13
+    checkpoint: continued beyond ten minutes for native collector mechanics; documentation-only rebase
+    routing_compliant: true
+  - subtask_id: T6
+    agent: /root/bounded_reports_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 18:27 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 8572142515dddfe412824799737f65b379e3fd31
+    checkpoint: continued beyond ten minutes for audit-failure and provider compatibility verification
+    routing_compliant: true
+  - subtask_id: T4b
+    agent: /root/stream_integration_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 17:55 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: e0e8418ec02b600f90ecd977a6478e4ebdd716eb
+    checkpoint: continued beyond ten minutes for public deadline and full merge proof; clean documentation-only rebase
+    routing_compliant: true
+  - subtask_id: T1
+    agent: /root/transport_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 23f7f38b605eaef797865e8d2eb78f4a371a9c62
+    checkpoint: continued beyond ten minutes with explicit status; functional verification completed
+    routing_compliant: true
+  - subtask_id: T2
+    agent: /root/profiles_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 462603219da7127fea68e2ad282402d75bf1c1c4
+    routing_compliant: true
+  - subtask_id: D1
+    agent: /root/stream_design
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:43 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 5dd8af434e0ab6318ea64cc64ad032208f272ee7
+    routing_compliant: true
+  - subtask_id: T3
+    agent: /root/snapshot_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:59 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: b8f2b5738a64202d42632a7e19437b6e5779793e
+    checkpoint: continued beyond ten minutes; retained timeout failures and final serial green evidence
+    routing_compliant: true
+  - subtask_id: T5a
+    agent: /root/diagnostics_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 16:59 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 33b5bee29749274e89cb42265d72b86273ed2f3b
+    routing_compliant: true
+  - subtask_id: R0
+    agent: /root/early_security_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 17:03 UTC'
+    status: completed
+    output_verified: true
+    evidence: R0-review.md
+    note: read-only reviewer returned evidence; coordinator retained report without an empty task commit
+    routing_compliant: true
+  - subtask_id: T4a
+    agent: /root/stream_matcher_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 17:25 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: 1b44f4dba666364ef2aa6c6f6bc701c638822167
+    checkpoint: ten-minute status checked; component and combined diagnostics checks passed
+    routing_compliant: true
+  - subtask_id: T5b
+    agent: /root/recovery_impl
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 17:37 UTC'
+    status: completed
+    output_verified: true
+    integrated_commit: bec690683c689d3a46ac02eb603cccafba30c751
+    checkpoint: continued beyond ten minutes for generator compatibility and rebased proof
+    routing_compliant: true
+  - subtask_id: R0b
+    agent: /root/stream_boundary_review
+    selected: {model: gpt-6.1-sol, reasoning_effort: high}
+    submitted: {model: gpt-6.1-sol, reasoning_effort: high}
+    executed: {model: unconfirmed, reasoning_effort: unconfirmed}
+    runtime_limit: {value: 10-minute status checkpoint, mechanism: coordinator UTC clock; warn and continue on overrun per repository policy}
+    dispatched_at: '2026-10-14 17:40 UTC'
+    status: completed
+    output_verified: true
+    evidence: R0b-review.md
+    note: read-only reviewer returned evidence; coordinator retained report without an empty task commit
+    routing_compliant: true

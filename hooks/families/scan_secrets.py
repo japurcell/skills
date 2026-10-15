@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 from hooks.families.allowlist import ALLOWLIST_SOURCE
+from hooks.families.diagnostics import collector_source
+from hooks.families.scanner_stream import SOURCE as STREAM_SOURCE
+from hooks.families.reporting import BODY_SOURCE as REPORT_SOURCE, build_identity
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
@@ -16,6 +19,7 @@ ADAPTER_END = "# END PROVIDER ADAPTER\n"
 _PRELUDE_SOURCE = r'''
 from __future__ import annotations
 
+import codecs
 import contextlib
 import json
 import os
@@ -27,15 +31,18 @@ import sys
 import tempfile
 import time
 import unicodedata
+from collections.abc import Iterator
 from datetime import datetime, timezone
+from typing import BinaryIO
 from pathlib import Path, PurePosixPath
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_init  # noqa: E402
 from helpers.common import emit_json, read_json_input  # noqa: E402
+
+# __DIAGNOSTIC_BOOTSTRAP__
 
 
 SCRIPT_NAME = Path(__file__).name
@@ -75,18 +82,11 @@ TEXT_EXTENSIONS = {
     ".yaml",
     ".yml",
 }
-PATTERNS = [
-    ("github_classic_pat", "high", re.compile(r"gh[pousr]_[A-Za-z0-9]{36}")),
-    ("github_fine_grained_pat", "high", re.compile(r"github_pat_[A-Za-z0-9_]{20,}")),
-    ("aws_access_key", "high", re.compile(r"AKIA[0-9A-Z]{16}")),
-    ("stripe_live_key", "high", re.compile(r"sk_live_[0-9A-Za-z]{16,}")),
-    ("slack_token", "medium", re.compile(r"xox[baprs]-[0-9A-Za-z-]{10,}")),
-]
 MAX_FILES = 256
-MAX_FILE_BYTES = 1048576
 MAX_TOTAL_BYTES = 8388608
 MAX_GIT_OUTPUT_BYTES = 8388608
 MAX_SCAN_SECONDS = 8.0
+GIT_COMPLETION_WAIT_SECONDS = 0.005
 MAX_RETAINED_FINDINGS = 100
 MAX_PROCESSED_FINDINGS = 1000
 MAX_LOG_RECORD_BYTES = 65536
@@ -99,6 +99,11 @@ CANDIDATE_UNMERGED_STAGES = ("unmerged-base", "unmerged-ours", "unmerged-theirs"
 CANDIDATE_UNMERGED_WORKTREE = "unmerged-worktree"
 INCOMPLETE_LOG: dict[str, object] | None = None
 SCAN_ACTION = "scan"
+SCAN_REPORT = None
+SCAN_FINDINGS = []
+SCAN_SECURITY_OUTCOME = "incomplete"
+REPORT_BUILD = "__REPORT_BUILD__"
+REPORT_PROVIDER = DIAG_PROVIDER
 
 
 SCAN_PHASE = "initialization"
@@ -115,7 +120,6 @@ INCOMPLETE_CAUSES = {
     "scan_timeout": ("scan time limit reached", "Check repository size and Git responsiveness, then retry.", "seconds"),
     "git_timeout": ("Git time limit reached", "Check Git responsiveness and retry.", "seconds"),
     "snapshot_count_limit": ("candidate snapshot limit exceeded", "Check pending snapshots and unintended generated artifacts.", "snapshots"),
-    "file_bytes_limit": ("candidate byte limit exceeded", "Check pending file sizes and unintended generated artifacts.", "bytes"),
     "total_bytes_limit": ("total candidate byte limit exceeded", "Check pending scan size and unintended generated artifacts.", "bytes"),
     "git_output_limit": ("Git capture byte limit exceeded", "Check pending scan size and Git output volume.", "bytes"),
     "git_input_limit": ("Git request byte limit exceeded", "Check pending scan size.", "bytes"),
@@ -138,24 +142,38 @@ INCOMPLETE_OPERATIONS = {
 class ScanFailure(RuntimeError):
     """Carry only scanner-owned vocabulary and bounded numeric measurements."""
 
-    def __init__(self, cause: str, operation: str | None = None, **numbers: int) -> None:
+    def __init__(self, cause: str, operation: str | None = None, *,
+                 capture_step: str | None = None, **numbers: int) -> None:
         self.cause = cause if cause in INCOMPLETE_CAUSES else "internal_error"
         phase = SCAN_PHASE if operation is None else operation
         self.operation = phase if phase in INCOMPLETE_OPERATIONS else "initialization"
+        self.capture_step = capture_step if capture_step in {
+            "temporary_file", "verify_capture", "request_write", "spawn",
+            "wait", "descendants", "consume", "cleanup",
+        } else None
         self.numbers = {
             key: value for key, value in numbers.items()
-            if key in {"exit_status", "measured", "limit", "seconds"}
+            if key in {"exit_status", "measured", "limit", "seconds", "os_errno", "attempts"}
             and type(value) is int
             and (-2147483648 if key == "exit_status" else 0) <= value <= 9223372036854775807
         }
         super().__init__(self.cause)
 
     def diagnostic(self) -> dict[str, object]:
-        return {"cause": self.cause, "operation": self.operation, **self.numbers}
+        result: dict[str, object] = {"cause": self.cause, "operation": self.operation, **self.numbers}
+        if self.capture_step is not None:
+            result["capture_step"] = self.capture_step
+        return result
 
     def detail(self) -> str:
         description, recovery, unit = INCOMPLETE_CAUSES[self.cause]
         measures = []
+        if self.capture_step is not None:
+            measures.append(f"capture step {self.capture_step}")
+        if "os_errno" in self.numbers:
+            measures.append(f"OS error {self.numbers['os_errno']}")
+        if "attempts" in self.numbers:
+            measures.append(f"launch attempts {self.numbers['attempts']}")
         if "exit_status" in self.numbers:
             measures.append(f"exit status {self.numbers['exit_status']}")
         if "measured" in self.numbers:
@@ -192,8 +210,8 @@ def noop() -> None:
 
 
 _COPILOT_RESPONSE_ADAPTER = r'''
-def emit_block_denial(reason: str) -> None:
-    emit_json({
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    return {
         "continue": True,
         "permissionDecision": "deny",
         "hookSpecificOutput": {
@@ -201,38 +219,49 @@ def emit_block_denial(reason: str) -> None:
             "permissionDecisionReason": reason,
         },
         "permissionDecisionReason": reason,
-    })
+    }
+
+
+def emit_block_denial(reason: str) -> None:
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
 _GEMINI_RESPONSE_ADAPTER = r'''
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    return {"decision": "deny", "reason": reason}
+
+
 def emit_block_denial(reason: str) -> None:
-    emit_json({"decision": "deny", "reason": reason})
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
 _CODEX_RESPONSE_ADAPTER = r'''
+def block_denial_payload(reason: str, hook_event: str) -> dict:
+    if hook_event != "PreToolUse":
+        return {"decision": "block", "reason": reason}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+    }
+
+
 def emit_block_denial(reason: str) -> None:
-    if HOOK_EVENT != "PreToolUse":
-        emit_json({"decision": "block", "reason": reason})
-    else:
-        emit_json({
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            },
-        })
+    emit_json(block_denial_payload(reason, HOOK_EVENT))
 '''
 
 
 _POLICY_SOURCE = r'''
 
 def read_payload() -> dict:
-    try:
-        payload = read_json_input()
-    except ValueError as exc:
-        raise ScanSecurityError("input_invalid", "input") from exc
+    _load_scan_payload()
+    if _SCAN_INPUT_ERROR:
+        raise ScanSecurityError(_SCAN_INPUT_ERROR, "input")
+    payload = _SCAN_PAYLOAD
     if not isinstance(payload, dict):
         raise ScanSecurityError("input_invalid", "input")
     return payload
@@ -242,15 +271,16 @@ def git_available() -> bool:
     return shutil.which("git") is not None
 
 
-def run_git(
+@contextlib.contextmanager
+def capture_git(
     args: list[str],
     *,
     cwd: Path,
-    text: bool = True,
     allow_nonzero: bool = False,
     deadline: float | None = None,
     input_bytes: bytes | None = None,
-) -> str | bytes | None:
+) -> Iterator[VerifiedCapture | None]:
+    import errno
     import subprocess
 
     global SCAN_PHASE
@@ -290,19 +320,44 @@ def run_git(
     if os.name == "nt":
         popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
+    capture_step = "temporary_file"
+    attempts = 0
     try:
         with contextlib.ExitStack() as resources:
             capture = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+            capture_step = "verify_capture"
+            _verify_private_capture(capture)
             if input_bytes is not None:
                 if len(input_bytes) > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("git_input_limit", operation, measured=len(input_bytes), limit=MAX_GIT_OUTPUT_BYTES)
+                capture_step = "temporary_file"
                 request = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+                capture_step = "verify_capture"
+                _verify_private_capture(request)
+                capture_step = "request_write"
                 request.write(input_bytes)
                 request.seek(0)
                 popen_options["stdin"] = request
-            process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+            capture_step = "spawn"
+            for attempt in range(3):
+                if time.monotonic() >= command_deadline:
+                    enforce_deadline(deadline)
+                    raise ScanLimitExceeded("git_timeout", operation, seconds=5)
+                try:
+                    attempts = attempt + 1
+                    process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+                    break
+                except OSError as exc:
+                    # Popen has no live child when launch raises. Retry only
+                    # temporary process-resource exhaustion, within the original
+                    # command deadline; never replay a command that ran.
+                    if exc.errno != errno.EAGAIN or attempt == 2:
+                        raise
+                    time.sleep(min(0.01 * (2 ** attempt),
+                                   max(0.0, command_deadline - time.monotonic())))
             observed_descendants: list[int] = []
             try:
+                capture_step = "wait"
                 while True:
                     size = os.fstat(capture.fileno()).st_size
                     if size > MAX_GIT_OUTPUT_BYTES:
@@ -314,10 +369,16 @@ def run_git(
                     if return_code is not None:
                         break
                     try:
-                        process.wait(timeout=min(0.02, max(0.0, command_deadline - time.monotonic())))
+                        # Short slices avoid cumulative exponential-wait overshoot
+                        # across hundreds of bounded, short-lived Git calls.
+                        process.wait(timeout=min(
+                            GIT_COMPLETION_WAIT_SECONDS,
+                            max(0.0, command_deadline - time.monotonic()),
+                        ))
                     except subprocess.TimeoutExpired:
                         pass
 
+                capture_step = "descendants"
                 if os.name == "posix":
                     try:
                         os.killpg(process.pid, 0)
@@ -329,27 +390,110 @@ def run_git(
                     observed_descendants = _windows_git_descendants(process.pid)
                     if observed_descendants:
                         raise GitCommandError("git_descendant_running")
+                capture_step = "verify_capture"
                 size = os.fstat(capture.fileno()).st_size
                 if size > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=MAX_GIT_OUTPUT_BYTES)
                 if return_code != 0:
                     if allow_nonzero and size == 0:
                         if args == ["rev-parse", "--verify", "HEAD"] and return_code == 128:
-                            return None
+                            capture_step = "consume"
+                            yield None
+                            capture_step = "cleanup"
+                            return
                         if (len(args) == 4 and args[:3] == ["show-ref", "--verify", "--quiet"]
                                 and return_code == 1):
-                            return None
+                            capture_step = "consume"
+                            yield None
+                            capture_step = "cleanup"
+                            return
                     raise GitCommandError("git_failed", operation, exit_status=return_code)
-                capture.seek(0)
-                raw_output = capture.read(size)
-                if len(raw_output) != size:
-                    raise GitCommandError("git_output_invalid")
-                return os.fsdecode(raw_output) if text else raw_output
+                capture_step = "verify_capture"
+                _verify_private_capture(capture)
+                capture_step = "consume"
+                yield VerifiedCapture(capture, size, deadline, operation)
+                capture_step = "cleanup"
             except BaseException:
                 _stop_git_process(process, subprocess, observed_descendants)
                 raise
     except OSError as exc:
-        raise GitCommandError("git_capture_failed") from exc
+        details: dict[str, int] = {}
+        if type(exc.errno) is int:
+            details["os_errno"] = exc.errno
+        if capture_step == "spawn":
+            details["attempts"] = attempts
+        raise GitCommandError("git_capture_failed", operation,
+                              capture_step=capture_step, **details) from exc
+
+
+def _verify_private_capture(handle: BinaryIO) -> None:
+    details = os.fstat(handle.fileno())
+    if (not stat.S_ISREG(details.st_mode) or _is_reparse_point(details)
+            or (os.name == "posix" and
+                (details.st_mode & 0o077 or details.st_uid != os.geteuid()))):
+        raise GitCommandError("git_capture_failed", capture_step="verify_capture")
+
+
+class VerifiedCapture:
+    """A completed private capture, lent only while its owner is open."""
+
+    def __init__(self, handle: BinaryIO, size: int, deadline: float | None, operation: str):
+        self.handle = handle
+        self.size = size
+        self.deadline = deadline
+        self.operation = operation
+
+    def chunks(self, offset: int = 0, length: int | None = None, chunk_bytes: int = 65536) -> Iterator[bytes]:
+        length = self.size - offset if length is None else length
+        if offset < 0 or length < 0 or offset + length > self.size or chunk_bytes <= 0:
+            raise GitCommandError("git_output_invalid", self.operation)
+        enforce_deadline(self.deadline)
+        if os.fstat(self.handle.fileno()).st_size != self.size:
+            raise GitCommandError("git_output_invalid", self.operation)
+        self.handle.seek(offset)
+        remaining = length
+        while remaining:
+            enforce_deadline(self.deadline)
+            chunk = self.handle.read(min(remaining, chunk_bytes, 65536))
+            if not chunk:
+                raise GitCommandError("git_output_invalid", self.operation)
+            remaining -= len(chunk)
+            yield chunk
+        enforce_deadline(self.deadline)
+        if os.fstat(self.handle.fileno()).st_size != self.size:
+            raise GitCommandError("git_output_invalid", self.operation)
+
+    def records(self, separator: bytes, *, maximum: int = MAX_GIT_OUTPUT_BYTES) -> Iterator[bytes]:
+        pending = bytearray()
+        for chunk in self.chunks():
+            start = 0
+            while True:
+                end = chunk.find(separator, start)
+                if end < 0:
+                    pending.extend(chunk[start:])
+                    if len(pending) > maximum:
+                        raise GitCommandError("git_output_invalid", self.operation)
+                    break
+                pending.extend(chunk[start:end])
+                if len(pending) > maximum:
+                    raise GitCommandError("git_output_invalid", self.operation)
+                yield bytes(pending)
+                pending.clear()
+                start = end + 1
+        if pending:
+            raise GitCommandError("git_output_invalid", self.operation)
+
+
+def run_git(args: list[str], *, cwd: Path, text: bool = True,
+            allow_nonzero: bool = False, deadline: float | None = None,
+            input_bytes: bytes | None = None) -> str | bytes | None:
+    # Small control output compatibility. Bodies use capture ranges directly.
+    with capture_git(args, cwd=cwd, allow_nonzero=allow_nonzero,
+                     deadline=deadline, input_bytes=input_bytes) as capture:
+        if capture is None:
+            return None
+        output = b"".join(capture.chunks())
+        return os.fsdecode(output) if text else output
 
 
 def _windows_git_descendants(
@@ -557,105 +701,58 @@ def has_head(root: Path, *, deadline: float | None = None) -> bool:
     return False
 
 
-def decode_nul_paths(output: bytes) -> list[str]:
-    if not output:
-        return []
-    if not output.endswith(b"\0"):
-        raise GitCommandError("git_output_invalid", "git_candidates")
-    return [os.fsdecode(path) for path in output[:-1].split(b"\0") if path]
-
-
 def collect_unmerged_files(
     root: Path, *, deadline: float | None = None,
 ) -> list[tuple[str, str]]:
-    output = run_git(
-        ["ls-files", "--unmerged", "-z", "--"],
-        cwd=root, text=False, deadline=deadline,
-    )
-    if not isinstance(output, bytes) or (output and not output.endswith(b"\0")):
-        raise GitCommandError("git_output_invalid", "git_candidates")
     candidates: list[tuple[str, str]] = []
     seen: set[tuple[str, str]] = set()
-    for record in output[:-1].split(b"\0") if output else []:
-        header, separator, raw_path = record.partition(b"\t")
-        match = re.fullmatch(rb"[0-7]{6} (?:[0-9a-f]{40}|[0-9a-f]{64}) ([123])", header)
-        if not separator or not raw_path or match is None:
-            raise GitCommandError("git_output_invalid", "git_candidates")
-        path = os.fsdecode(raw_path)
-        _validate_candidate_parts(path)
-        source = CANDIDATE_UNMERGED_STAGES[int(match.group(1)) - 1]
-        candidate = (source, path)
-        if candidate in seen:
-            raise GitCommandError("git_output_invalid", "git_candidates")
-        seen.add(candidate)
-        candidates.append(candidate)
-        if len(candidates) > MAX_FILES:
-            raise ScanLimitExceeded("snapshot_count_limit", "git_candidates", measured=len(candidates), limit=MAX_FILES)
+    with capture_git(["ls-files", "--unmerged", "-z", "--"], cwd=root,
+                     deadline=deadline) as capture:
+        for record in capture.records(b"\0"):
+            source, path, _ = parse_index_record(
+                record, allowed_stages={1, 2, 3}, operation="git_candidates")
+            candidate = (source, path)
+            if candidate in seen:
+                raise GitCommandError("git_output_invalid", "git_candidates")
+            seen.add(candidate)
+            candidates.append(candidate)
+            if len(candidates) > MAX_FILES:
+                raise ScanLimitExceeded("snapshot_count_limit", "git_candidates",
+                                        measured=len(candidates), limit=MAX_FILES)
     return candidates
 
 
 def collect_files(
-    root: Path,
-    scope: str,
-    root_has_head: bool,
-    *,
-    deadline: float | None = None,
+    root: Path, scope: str, root_has_head: bool, *, deadline: float | None = None,
 ) -> list[tuple[str, str]]:
-    candidates = collect_unmerged_files(root, deadline=deadline)
+    candidates = set(collect_unmerged_files(root, deadline=deadline))
     unmerged_paths = {path for _, path in candidates}
-    diff_options = [
-        "--name-only",
-        "-z",
-        "--no-ext-diff",
-        "--no-color",
-        "--no-textconv",
-        "--diff-filter=ACMRTUXB",
-    ]
+    diff_options = ["--name-only", "-z", "--no-ext-diff", "--no-color",
+                    "--no-textconv", "--diff-filter=ACMRTUXB"]
 
-    cached_revision = ["HEAD"] if root_has_head else []
+    def add_paths(args: list[str], source: str) -> None:
+        with capture_git(args, cwd=root, deadline=deadline) as capture:
+            for raw_path in capture.records(b"\0"):
+                if not raw_path:
+                    continue
+                path = os.fsdecode(raw_path)
+                if source == CANDIDATE_STAGED and path in unmerged_paths:
+                    continue
+                actual_source = (CANDIDATE_UNMERGED_WORKTREE
+                                 if source == CANDIDATE_WORKTREE and path in unmerged_paths
+                                 else source)
+                candidates.add((actual_source, path))
+                if len(candidates) > MAX_FILES:
+                    raise ScanLimitExceeded("snapshot_count_limit", "git_candidates",
+                                            measured=len(candidates), limit=MAX_FILES)
+
     if scope in {"staged", "diff"}:
-        output = run_git(
-            ["diff", "--cached", *diff_options, *cached_revision, "--"],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if isinstance(output, bytes):
-            candidates.extend(
-                (CANDIDATE_STAGED, path) for path in decode_nul_paths(output)
-                if path not in unmerged_paths
-            )
-
+        add_paths(["diff", "--cached", *diff_options,
+                   *(["HEAD"] if root_has_head else []), "--"], CANDIDATE_STAGED)
     if scope == "diff":
-        output = run_git(
-            ["diff", *diff_options, "--"],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if isinstance(output, bytes):
-            candidates.extend(
-                (CANDIDATE_UNMERGED_WORKTREE if path in unmerged_paths else CANDIDATE_WORKTREE, path)
-                for path in decode_nul_paths(output)
-            )
-        output = run_git(
-            ["ls-files", "-z", "--others", "--exclude-standard"],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if isinstance(output, bytes):
-            candidates.extend(
-                (CANDIDATE_UNTRACKED, path) for path in decode_nul_paths(output)
-            )
-
-    unique_candidates = sorted(
-        {(source, path) for source, path in candidates if path},
-        key=lambda candidate: (candidate[1], candidate[0]),
-    )
-    if len(unique_candidates) > MAX_FILES:
-        raise ScanLimitExceeded("snapshot_count_limit", "git_candidates", measured=len(unique_candidates), limit=MAX_FILES)
-    return unique_candidates
+        add_paths(["diff", *diff_options, "--"], CANDIDATE_WORKTREE)
+        add_paths(["ls-files", "-z", "--others", "--exclude-standard"], CANDIDATE_UNTRACKED)
+    return sorted(candidates, key=lambda candidate: (candidate[1], candidate[0]))
 
 
 def _is_reparse_point(details: os.stat_result) -> bool:
@@ -671,36 +768,39 @@ def _validate_candidate_parts(path: str) -> tuple[str, ...]:
     return parsed.parts
 
 
-def _read_bounded_descriptor(descriptor: int) -> bytes:
-    details = os.fstat(descriptor)
-    if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
-        raise ScanSecurityError("candidate_unsafe", "candidate_read")
-    if details.st_size > MAX_FILE_BYTES:
-        raise ScanLimitExceeded("file_bytes_limit", "candidate_read", measured=details.st_size, limit=MAX_FILE_BYTES)
-
-    chunks: list[bytes] = []
-    total = 0
-    while True:
-        chunk = os.read(descriptor, min(65536, MAX_FILE_BYTES + 1 - total))
-        if not chunk:
-            return b"".join(chunks)
-        chunks.append(chunk)
-        total += len(chunk)
-        if total > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("file_bytes_limit", "candidate_read", measured=total, limit=MAX_FILE_BYTES)
+def parse_index_record(record: bytes, *, allowed_stages: set[int], operation: str,
+                       canonical_path: bool = False) -> tuple[str, str, bytes]:
+    header, separator, raw_path = record.partition(b"\t")
+    match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
+    if not separator or not raw_path or match is None or int(match.group(2)) not in allowed_stages:
+        raise GitCommandError("git_output_invalid", operation)
+    path = os.fsdecode(raw_path)
+    parts = _validate_candidate_parts(path)
+    if canonical_path and "/".join(parts) != path:
+        raise GitCommandError("git_output_invalid", operation)
+    stage = int(match.group(2))
+    source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
+    return source, path, match.group(1)
 
 
-def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = False) -> bytes | None:
+def is_index_source(source: str) -> bool:
+    return source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES
+
+
+@contextlib.contextmanager
+def _worktree_descriptor(root: Path, path: str, *, allow_missing: bool = False) -> Iterator[int | None]:
     parts = _validate_candidate_parts(path)
     try:
         root_path = root.resolve(strict=True)
     except OSError as exc:
         raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     no_follow = getattr(os, "O_NOFOLLOW", 0)
+    nonblocking = getattr(os, "O_NONBLOCK", 0)
     directory_flag = getattr(os, "O_DIRECTORY", 0)
 
     if os.open in os.supports_dir_fd and directory_flag:
         descriptors: list[int] = []
+        opened = False
         try:
             current = os.open(root_path, os.O_RDONLY | directory_flag)
             descriptors.append(current)
@@ -717,14 +817,15 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
             details = os.stat(parts[-1], dir_fd=current, follow_symlinks=False)
             if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
                 raise ScanSecurityError("candidate_unsafe", "candidate_read")
-            descriptor = os.open(parts[-1], os.O_RDONLY | no_follow, dir_fd=current)
+            descriptor = os.open(parts[-1], os.O_RDONLY | no_follow | nonblocking, dir_fd=current)
             descriptors.append(descriptor)
-            return _read_bounded_descriptor(descriptor)
+            opened = True
+            yield descriptor
+            return
         except (OSError, ValueError) as exc:
-            if allow_missing and isinstance(exc, FileNotFoundError):
-                return None
-            if isinstance(exc, ScanSecurityError):
-                raise
+            if allow_missing and not opened and isinstance(exc, FileNotFoundError):
+                yield None
+                return
             raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
         finally:
             for descriptor in reversed(descriptors):
@@ -743,81 +844,86 @@ def _read_worktree_candidate(root: Path, path: str, *, allow_missing: bool = Fal
                 raise ScanSecurityError("candidate_unsafe", "candidate_read")
         resolved = candidate.resolve(strict=True)
         resolved.relative_to(root_path)
-        descriptor = os.open(candidate, os.O_RDONLY | no_follow)
+        descriptor = os.open(candidate, os.O_RDONLY | no_follow | nonblocking)
     except (OSError, ValueError) as exc:
         if allow_missing and isinstance(exc, FileNotFoundError):
-            return None
-        if isinstance(exc, ScanSecurityError):
-            raise
+            yield None
+            return
         raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     try:
-        return _read_bounded_descriptor(descriptor)
+        yield descriptor
     except OSError as exc:
         raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
     finally:
         os.close(descriptor)
 
 
-def read_candidate_bytes(
-    root: Path,
-    path: str,
-    source: str,
-    *,
-    deadline: float | None = None,
-) -> bytes | None:
-    if source == CANDIDATE_STAGED or source in CANDIDATE_UNMERGED_STAGES:
-        _validate_candidate_parts(path)
-        if source == CANDIDATE_STAGED:
-            index_object = f":./{path}"
-        else:
-            stage = CANDIDATE_UNMERGED_STAGES.index(source) + 1
-            index_object = f":{stage}:./{path}"
-        size_output = run_git(
-            ["cat-file", "-s", index_object],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if not isinstance(size_output, bytes):
-            raise GitCommandError("git_output_invalid", "git_index")
-        try:
-            size = int(size_output.strip())
-        except ValueError as exc:
-            raise GitCommandError("git_output_invalid", "git_index") from exc
-        if size < 0:
-            raise GitCommandError("git_output_invalid", "git_index")
-        if size > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
-        output = run_git(
-            ["show", "--no-textconv", index_object],
-            cwd=root,
-            text=False,
-            deadline=deadline,
-        )
-        if not isinstance(output, bytes) or len(output) != size:
-            raise GitCommandError("git_output_invalid", "git_index")
-        return output
+class ScanBudget:
+    def __init__(self, deadline: float):
+        self.deadline = deadline
+        self.used_bytes = 0
+        self.index_reserved: set[tuple[str, str]] = set()
 
-    return _read_worktree_candidate(root, path, allow_missing=source == CANDIDATE_UNMERGED_WORKTREE)
+    def remaining(self) -> int:
+        enforce_deadline(self.deadline)
+        return MAX_TOTAL_BYTES - self.used_bytes
+
+    def charge(self, size: int, operation: str = "candidate_read") -> None:
+        enforce_deadline(self.deadline)
+        if size > self.remaining():
+            raise ScanLimitExceeded("total_bytes_limit", operation,
+                                    measured=self.used_bytes + size, limit=MAX_TOTAL_BYTES)
+        self.used_bytes += size
+
+    def reserve_index(self, candidate: tuple[str, str], size: int) -> None:
+        if candidate not in self.index_reserved:
+            self.charge(size, "git_index")
+            self.index_reserved.add(candidate)
 
 
-def read_index_candidates(
-    root: Path, candidates: list[tuple[str, str]], *, deadline: float | None = None,
-) -> dict[tuple[str, str], bytes]:
-    index_candidates = [candidate for candidate in candidates
-                        if candidate[0] == CANDIDATE_STAGED
-                        or candidate[0] in CANDIDATE_UNMERGED_STAGES]
-    if not index_candidates:
-        return {}
-    if len(index_candidates) == 1:
-        source, path = index_candidates[0]
-        content = read_candidate_bytes(root, path, source, deadline=deadline)
-        if content is None:
-            raise GitCommandError("git_output_invalid", "git_index")
-        return {(source, path): content}
+class Snapshot:
+    def __init__(self, candidate: tuple[str, str], capture: VerifiedCapture,
+                 offset: int, byte_count: int):
+        self.candidate = candidate
+        self.capture = capture
+        self.offset = offset
+        self.byte_count = byte_count
+        self.active = True
+        self.classification = "binary"
 
+    def chunks(self, chunk_bytes: int = 65536) -> Iterator[bytes]:
+        if not self.active:
+            raise ScanSecurityError("candidate_read_failed", "candidate_read")
+        for chunk in self.capture.chunks(self.offset, self.byte_count, chunk_bytes):
+            if not self.active:
+                raise ScanSecurityError("candidate_read_failed", "candidate_read")
+            yield chunk
+
+    def classify(self) -> None:
+        decoder = codecs.getincrementaldecoder("utf-8")("strict")
+        valid = True
+        nul = False
+        for chunk in self.chunks():
+            nul = nul or b"\0" in chunk
+            if valid:
+                try:
+                    decoder.decode(chunk, final=False)
+                except UnicodeDecodeError:
+                    valid = False
+        if valid:
+            try:
+                decoder.decode(b"", final=True)
+            except UnicodeDecodeError:
+                valid = False
+        self.classification = ("text" if not nul and
+                               (valid or Path(self.candidate[1]).suffix.lower() in TEXT_EXTENSIONS)
+                               else "binary")
+
+
+def resolve_index_candidates(root: Path, index_candidates: list[tuple[str, str]],
+                             *, deadline: float | None = None) -> dict[tuple[str, str], bytes]:
     paths: list[str] = []
-    for source, path in index_candidates:
+    for _, path in index_candidates:
         _validate_candidate_parts(path)
         if path not in paths:
             paths.append(path)
@@ -828,108 +934,173 @@ def read_index_candidates(
         start = cursor
         argument_bytes = 0
         while cursor < len(paths):
-            # Allow for Windows quoting/escaping and separators as well as
-            # POSIX encoded arguments. Keep long path lists below argv limits.
             path_bytes = len(os.fsencode(paths[cursor])) * 2 + 3
             if cursor > start and argument_bytes + path_bytes > 8192:
                 break
             argument_bytes += path_bytes
             cursor += 1
         batch_paths = paths[start:cursor]
-        index_output = run_git(
+        with capture_git(
             ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", *batch_paths],
-            cwd=root, text=False, deadline=deadline,
-        )
-        if not isinstance(index_output, bytes) or not index_output.endswith(b"\0"):
-            raise GitCommandError("git_output_invalid", "git_index")
-        for record in index_output[:-1].split(b"\0"):
-            enforce_deadline(deadline)
-            header, separator, raw_path = record.partition(b"\t")
-            match = re.fullmatch(rb"[0-7]{6} ([0-9a-f]{40}|[0-9a-f]{64}) ([0-3])", header)
-            if not separator or not raw_path or match is None:
+            cwd=root, deadline=deadline,
+        ) as capture:
+            if capture is None or not capture.size:
                 raise GitCommandError("git_output_invalid", "git_index")
-            path = os.fsdecode(raw_path)
-            if "/".join(_validate_candidate_parts(path)) != path:
-                raise GitCommandError("git_output_invalid", "git_index")
-            if path not in batch_paths:
-                # Literal pathspecs still expand directory prefixes. Resolve a
-                # descendant only when its own exact path is selected, so it
-                # cannot be counted twice when it belongs to a later batch.
-                if any(path.startswith(parent + "/") for parent in batch_paths):
-                    continue
-                raise GitCommandError("git_output_invalid", "git_index")
-            stage = int(match.group(2))
-            source = CANDIDATE_STAGED if stage == 0 else CANDIDATE_UNMERGED_STAGES[stage - 1]
-            candidate = (source, path)
-            if candidate not in expected_candidates or candidate in resolved:
-                raise GitCommandError("git_output_invalid", "git_index")
-            resolved[candidate] = match.group(1)
+            for record in capture.records(b"\0"):
+                source, path, oid = parse_index_record(
+                    record, allowed_stages={0, 1, 2, 3}, operation="git_index", canonical_path=True)
+                if path not in batch_paths:
+                    # Literal pathspecs still expand directory descendants.
+                    if any(path.startswith(parent + "/") for parent in batch_paths):
+                        continue
+                    raise GitCommandError("git_output_invalid", "git_index")
+                candidate = (source, path)
+                if candidate not in expected_candidates or candidate in resolved:
+                    raise GitCommandError("git_output_invalid", "git_index")
+                resolved[candidate] = oid
     if len(resolved) != len(index_candidates):
         raise GitCommandError("git_output_invalid", "git_index")
+    return resolved
 
-    # Only object IDs enter the line-delimited batch protocol, so filenames with
-    # delimiters stay safe without the NUL batch-input option added in Git 2.38.
-    metadata = run_git(
-        ["cat-file", "--batch-check"], cwd=root, text=False,
-        input_bytes=b"".join(resolved[candidate] + b"\n" for candidate in index_candidates),
-        deadline=deadline,
-    )
-    if not isinstance(metadata, bytes) or not metadata.endswith(b"\n"):
-        raise GitCommandError("git_output_invalid", "git_index")
-    headers = metadata[:-1].split(b"\n")
-    if len(headers) != len(index_candidates):
-        raise GitCommandError("git_output_invalid", "git_index")
 
-    # Resolve and bound every snapshot before requesting content. Use immutable
-    # object IDs for the second call, so index edits cannot change these reads.
-    objects: list[tuple[tuple[str, str], bytes, int, bytes]] = []
-    total_bytes = 0
-    for candidate, header in zip(index_candidates, headers):
-        enforce_deadline(deadline)
-        match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) blob ([0-9]+)", header)
-        if match is None or match.group(1) != resolved[candidate]:
-            raise GitCommandError("git_output_invalid", "git_index")
-        try:
-            size = int(match.group(2))
-        except ValueError as exc:
-            raise GitCommandError("git_output_invalid", "git_index") from exc
-        if size > MAX_FILE_BYTES:
-            raise ScanLimitExceeded("file_bytes_limit", "git_index", measured=size, limit=MAX_FILE_BYTES)
-        total_bytes += size
-        if total_bytes > MAX_TOTAL_BYTES:
-            raise ScanLimitExceeded("total_bytes_limit", measured=total_bytes, limit=MAX_TOTAL_BYTES)
-        objects.append((candidate, match.group(1), size, header + b"\n"))
+class SnapshotSource:
+    """Own one index capture and one worktree spool in candidate order."""
 
-    contents: dict[tuple[str, str], bytes] = {}
-    cursor = 0
-    while cursor < len(objects):
-        start = cursor
+    def __init__(self, root: Path, candidates: list[tuple[str, str]], budget: ScanBudget):
+        self.root = root
+        self.budget = budget
+        self.objects: list[tuple[tuple[str, str], bytes, int, bytes]] = []
+        self.cursor = 0
+        self.batch_owner = contextlib.ExitStack()
+        self.ranges: dict[tuple[str, str], tuple[VerifiedCapture, int, int]] = {}
+        index_candidates = [candidate for candidate in candidates if is_index_source(candidate[0])]
+        if not index_candidates:
+            return
+        resolved = resolve_index_candidates(root, index_candidates, deadline=budget.deadline)
+        with capture_git(["cat-file", "--batch-check"], cwd=root,
+                         input_bytes=b"".join(resolved[c] + b"\n" for c in index_candidates),
+                         deadline=budget.deadline) as capture:
+            records = iter(capture.records(b"\n", maximum=96))
+            for candidate in index_candidates:
+                header = next(records, None)
+                match = (re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) blob ([0-9]{1,20})", header)
+                         if header is not None else None)
+                if match is None or match.group(1) != resolved[candidate]:
+                    raise GitCommandError("git_output_invalid", "git_index")
+                size = int(match.group(2))
+                budget.reserve_index(candidate, size)
+                self.objects.append((candidate, match.group(1), size, header + b"\n"))
+            if next(records, None) is not None:
+                raise GitCommandError("git_output_invalid", "git_index")
+
+    def close(self) -> None:
+        self.batch_owner.close()
+        self.ranges.clear()
+
+    def _next_batch(self) -> None:
+        self.close()
+        start = self.cursor
         capture_bytes = 0
-        while cursor < len(objects):
-            _, _, size, header = objects[cursor]
+        while self.cursor < len(self.objects):
+            _, _, size, header = self.objects[self.cursor]
             framed_size = len(header) + size + 1
             if capture_bytes + framed_size > MAX_GIT_OUTPUT_BYTES:
                 break
             capture_bytes += framed_size
-            cursor += 1
-        batch = objects[start:cursor]
-        output = run_git(
-            ["cat-file", "--batch"], cwd=root, text=False,
-            input_bytes=b"".join(oid + b"\n" for _, oid, _, _ in batch), deadline=deadline,
-        )
-        if not isinstance(output, bytes) or len(output) != capture_bytes:
+            self.cursor += 1
+        batch = self.objects[start:self.cursor]
+        if not batch:
+            candidate, oid, size, _ = self.objects[self.cursor]
+            self.cursor += 1
+            capture = self.batch_owner.enter_context(capture_git(
+                ["cat-file", "blob", oid.decode("ascii")], cwd=self.root, deadline=self.budget.deadline))
+            if capture.size != size:
+                raise GitCommandError("git_output_invalid", "git_index")
+            self.ranges[candidate] = (capture, 0, size)
+            return
+        capture = self.batch_owner.enter_context(capture_git(
+            ["cat-file", "--batch"], cwd=self.root,
+            input_bytes=b"".join(oid + b"\n" for _, oid, _, _ in batch),
+            deadline=self.budget.deadline))
+        if capture.size != capture_bytes:
             raise GitCommandError("git_output_invalid", "git_index")
         offset = 0
         for candidate, _, size, header in batch:
-            if output[offset:offset + len(header)] != header:
+            if b"".join(capture.chunks(offset, len(header))) != header:
                 raise GitCommandError("git_output_invalid", "git_index")
             offset += len(header)
-            end = offset + size
-            if output[end:end + 1] != b"\n":
+            if b"".join(capture.chunks(offset + size, 1)) != b"\n":
                 raise GitCommandError("git_output_invalid", "git_index")
-            contents[candidate] = output[offset:end]
-            offset = end + 1
-    return contents
+            self.ranges[candidate] = (capture, offset, size)
+            offset += size + 1
+        if offset != capture.size:
+            raise GitCommandError("git_output_invalid", "git_index")
+
+    @contextlib.contextmanager
+    def acquire(self, candidate: tuple[str, str]) -> Iterator[Snapshot | None]:
+        source, path = candidate
+        snapshot = None
+        try:
+            if is_index_source(source):
+                if candidate not in self.ranges:
+                    self._next_batch()
+                snapshot = Snapshot(candidate, *self.ranges[candidate])
+                snapshot.classify()
+                yield snapshot
+            else:
+                with _worktree_descriptor(self.root, path,
+                        allow_missing=source == CANDIDATE_UNMERGED_WORKTREE) as descriptor:
+                    if descriptor is None:
+                        yield None
+                        return
+                    details = os.fstat(descriptor)
+                    if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
+                        raise ScanSecurityError("candidate_unsafe", "candidate_read")
+                    remaining = self.budget.remaining()
+                    if details.st_size > remaining:
+                        raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
+                                                measured=self.budget.used_bytes + details.st_size,
+                                                limit=MAX_TOTAL_BYTES)
+                    with tempfile.TemporaryFile(mode="w+b") as spool:
+                        _verify_private_capture(spool)
+                        size = 0
+                        ceiling = remaining
+                        while True:
+                            enforce_deadline(self.budget.deadline)
+                            chunk = os.read(descriptor, min(65536, ceiling + 1 - size))
+                            if not chunk:
+                                break
+                            size += len(chunk)
+                            if size > ceiling:
+                                raise ScanLimitExceeded("total_bytes_limit", "candidate_read",
+                                                        measured=self.budget.used_bytes + len(chunk),
+                                                        limit=MAX_TOTAL_BYTES)
+                            self.budget.charge(len(chunk))
+                            spool.write(chunk)
+                        spool.flush()
+                        capture = VerifiedCapture(spool, size, self.budget.deadline, "candidate_read")
+                        snapshot = Snapshot(candidate, capture, 0, size)
+                        snapshot.classify()
+                        yield snapshot
+        except OSError as exc:
+            raise ScanSecurityError("candidate_read_failed", "candidate_read") from exc
+        finally:
+            if snapshot is not None:
+                snapshot.active = False
+            if candidate in self.ranges:
+                del self.ranges[candidate]
+                if not self.ranges:
+                    self.close()
+
+
+@contextlib.contextmanager
+def snapshot_source(root: Path, candidates: list[tuple[str, str]],
+                    budget: ScanBudget) -> Iterator[SnapshotSource]:
+    source = SnapshotSource(root, candidates, budget)
+    try:
+        yield source
+    finally:
+        source.close()
 
 
 def is_env_path(path: str) -> bool:
@@ -956,40 +1127,21 @@ def is_credential_path(path: str) -> bool:
     )
 
 
-def is_text_candidate(path: str, raw_bytes: bytes) -> bool:
-    if b"\0" in raw_bytes:
-        return False
-    try:
-        raw_bytes.decode("utf-8")
-        return True
-    except UnicodeDecodeError:
-        return Path(path).suffix.lower() in TEXT_EXTENSIONS
-
-
-def enumerate_file_lines(text: str) -> list[tuple[int, str]]:
-    return [(index + 1, line) for index, line in enumerate(text.splitlines())]
-
-
-def decode_ascii_scan_text(raw_bytes: bytes) -> str:
-    return "".join(
-        chr(value) if value in {9, 10, 13} or 32 <= value <= 126 else " "
-        for value in raw_bytes
-    )
-
-
-def emit_diff_added_lines(
+def scan_diff_added_lines(
     root: Path,
     path: str,
     source: str,
+    report: StreamReport,
+    is_allowlisted,
     *,
     root_has_head: bool,
     deadline: float | None = None,
-) -> list[tuple[int, str]]:
+) -> None:
     if source not in {CANDIDATE_STAGED, CANDIDATE_WORKTREE}:
         raise ScanSecurityError("candidate_unsafe", "git_diff")
     cached_options = ["--cached"] if source == CANDIDATE_STAGED else []
     cached_revision = ["HEAD"] if source == CANDIDATE_STAGED and root_has_head else []
-    output = run_git(
+    with capture_git(
         [
             "diff",
             *cached_options,
@@ -1007,39 +1159,14 @@ def emit_diff_added_lines(
             path,
         ],
         cwd=root,
-        text=False,
         deadline=deadline,
-    )
-    if not isinstance(output, bytes):
-        return []
-    if output and (not output.startswith(b"diff --git ") or not output.endswith(b"\n")):
-        raise GitCommandError("git_output_invalid", "git_diff")
-
-    lines: list[tuple[int, str]] = []
-    current_line: int | None = None
-    in_hunk = False
-    for raw_line in output.splitlines():
-        if raw_line.startswith(b"diff --git "):
-            in_hunk = False
-            current_line = None
-            continue
-        if raw_line.startswith(b"@@"):
-            match = re.search(rb"\+(\d+)", raw_line)
-            current_line = int(match.group(1)) if match else None
-            in_hunk = current_line is not None
-            continue
-        if not in_hunk or current_line is None:
-            continue
-        if raw_line.startswith(b"+"):
-            lines.append((current_line, os.fsdecode(raw_line[1:])))
-            current_line += 1
-        elif raw_line.startswith(b"-") or raw_line.startswith(b"\\"):
-            continue
-        elif raw_line.startswith(b" "):
-            current_line += 1
-        else:
-            raise GitCommandError("git_output_invalid", "git_diff")
-    return lines
+    ) as capture:
+        check_budget = lambda: enforce_deadline(deadline)
+        try:
+            scan_line_events(path, diff_added_line_events(capture.chunks(), check_budget),
+                             report, is_allowlisted, redact_match, check_budget)
+        except StreamDiffError as exc:
+            raise GitCommandError("git_output_invalid", "git_diff") from exc
 
 
 def redact_match(match: str) -> str:
@@ -1199,7 +1326,9 @@ def _release_log_lock(
 
 
 def append_scan_log(**kwargs: object) -> None:
-    global SCAN_PHASE
+    global SCAN_PHASE, SCAN_SECURITY_OUTCOME
+    if kwargs.get("status") != "incomplete":
+        SCAN_SECURITY_OUTCOME = kwargs.get("status", "incomplete")
     SCAN_PHASE = "scan_log"
     try:
         _append_scan_log(**kwargs)
@@ -1225,13 +1354,15 @@ def _append_scan_log(
     note: str = "",
     deadline: float | None = None,
     diagnostic: dict[str, object] | None = None,
+    security_outcome: str | None = None,
+    audit_outcome: str = "written",
 ) -> None:
     enforce_deadline(deadline)
     _ensure_secure_log_directory(log_path.parent)
     payload: dict[str, object] = {
-        "timestamp": timestamp,
-        "sessionId": session_id,
-        "repoRoot": str(repo_root_path),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "sessionId": report_label(session_id),
+        "repoRoot": report_label(str(repo_root_path)),
         "mode": mode,
         "scope": scope,
         "status": status,
@@ -1243,14 +1374,32 @@ def _append_scan_log(
         if diagnostic is not None:
             payload["diagnostic"] = diagnostic
     if note:
-        payload["note"] = note
-    if env_files:
-        payload["envFiles"] = env_files
+        payload["note"] = report_text(note, 512)
+    payload.update(build=REPORT_BUILD, provider=REPORT_PROVIDER,
+                   profile="pending_snapshots_v1", route="pending_scan", action=SCAN_ACTION,
+                   cause=diagnostic["cause"] if diagnostic else status,
+                   security_outcome=security_outcome or status, audit_outcome=audit_outcome,
+                   inspection_outcome="incomplete" if status == "incomplete" else "complete",
+                   enforcement="deny" if mode == "block" and status in {"findings", "incomplete"} else "allow")
     if findings:
-        payload["findings"] = findings
-    if omitted_findings:
-        payload["omittedFindings"] = omitted_findings
-    if findings_truncated:
+        payload["findings"] = findings[:MAX_RETAINED_FINDINGS]
+    # Reserve structural/count metadata before retaining optional path labels.
+    payload["omittedFindings"] = omitted_findings + max(0, len(findings) - MAX_RETAINED_FINDINGS)
+    payload["findingsTruncated"] = findings_truncated
+    payload["envFiles"] = []
+    payload["omittedEnvFiles"] = len(env_files)
+    retained_bytes = report_json_bytes(payload)
+    for path in env_files[:MAX_FILES]:
+        label = report_label(path)
+        label_bytes = report_json_bytes(label) + 1
+        if retained_bytes + label_bytes >= MAX_LOG_RECORD_BYTES - 128:
+            break
+        payload["envFiles"].append(label)
+        payload["omittedEnvFiles"] -= 1
+        retained_bytes += label_bytes
+    while report_json_bytes(payload) >= MAX_LOG_RECORD_BYTES and payload.get("findings"):
+        payload["findings"].pop()
+        payload["omittedFindings"] += 1
         payload["findingsTruncated"] = True
 
     record = (json.dumps(payload, ensure_ascii=True, separators=(",", ":")) + "\n").encode(
@@ -1301,7 +1450,7 @@ def build_findings_json(findings: list[tuple[str, str, str, int, str]]) -> list[
         {
             "pattern": pattern_name,
             "severity": severity,
-            "path": path,
+            "path": report_label(path),
             "line": line_number,
             "redactedMatch": redacted,
         }
@@ -1309,20 +1458,34 @@ def build_findings_json(findings: list[tuple[str, str, str, int, str]]) -> list[
     ]
 
 
+class RetainedFindings(list):
+    """Only display-safe, bounded fields enter the retained report model."""
+
+    def append(self, finding):
+        pattern, severity, path, line, redacted = finding
+        if len(self) < MAX_RETAINED_FINDINGS:
+            super().append((pattern, severity, report_label(path), line, redacted))
+
+
 def record_finding(
     findings: list[tuple[str, str, str, int, str]],
     finding: tuple[str, str, str, int, str],
     processed_findings: int,
 ) -> tuple[int, bool]:
-    processed_findings += 1
-    if len(findings) < MAX_RETAINED_FINDINGS:
-        findings.append(finding)
-    return processed_findings, processed_findings >= MAX_PROCESSED_FINDINGS
+    report = StreamReport(findings, processed_findings)
+    report.record_findings(1, (finding,))
+    return report.processed, report.stopped
+
+
+def scanner_attribution(security: str, audit: str, enforcement: str, route: str, cause: str) -> str:
+    return (f"security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
+            f"profile=pending_snapshots_v1; route={route}; cause={cause}.")
 
 
 def emit_output(findings_count: int, log_path: Path, checked_files: int = 0, skipped: bool = False) -> None:
     if findings_count > 0:
-        emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected."})
+        emit_json({"systemMessage": f"scan-secrets warning: {SCAN_ACTION}; potential secrets detected. "
+                   + scanner_attribution("findings", "written", "allow", "pending_scan", "findings")})
         return
     if HOOK_EVENT == "Stop":
         if skipped:
@@ -1353,16 +1516,24 @@ def handle_unexpected_exception(exc: Exception) -> int:
     failure = exc if isinstance(exc, ScanFailure) else ScanFailure("internal_error")
     detail = failure.detail()
     outcome = "blocked" if mode == "block" else "warning"
-    reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; scan incomplete; "
-              f"potential secrets could not be checked. {detail}")
-    print(reason, file=sys.stderr)
+    processed = SCAN_REPORT.processed if SCAN_REPORT is not None else 0
+    security = "findings" if processed else SCAN_SECURITY_OUTCOME
+    audit = "failed"
     if INCOMPLETE_LOG is not None:
         try:
-            append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[], findings=[],
-                            note=detail, diagnostic=failure.diagnostic())
+            append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=[],
+                            findings=build_findings_json(SCAN_FINDINGS),
+                            omitted_findings=max(0, processed - len(SCAN_FINDINGS)),
+                            findings_truncated=bool(SCAN_REPORT and SCAN_REPORT.stopped),
+                            note=detail, diagnostic=failure.diagnostic(), security_outcome=security)
+            audit = "written"
         except Exception:
             # Reporting must preserve the first failure even if logging also fails.
             pass
+    finding_message = "potential secrets detected; scan incomplete." if processed else "scan incomplete; potential secrets could not be checked."
+    reason = (f"scan-secrets {outcome}: {SCAN_ACTION}; {finding_message} {detail} "
+              + scanner_attribution(security, audit, "deny" if mode == "block" else "allow", "pending_scan", failure.cause))
+    print(reason, file=sys.stderr)
     if mode == "block":
         emit_block_denial(reason)
     else:
@@ -1408,11 +1579,99 @@ def resolve_work_dir(payload: dict) -> Path:
 '''
 
 
+_RECOVERY_SOURCE = r'''
+
+def _diagnostic_request(payload):
+    if not isinstance(payload, dict):
+        return False
+    if DIAG_PROVIDER == "copilot":
+        event, tool_key, args_key = "preToolUse", "toolName", "toolArgs"
+        # Native Copilot CLI envelopes omit the event name.
+        if payload.get("hook_event_name", event) != event or payload.get(tool_key) != "bash":
+            return False
+        metadata = {"sessionId": 256, "cwd": 8192}
+    else:
+        event = "PreToolUse" if DIAG_PROVIDER == "codex" else "BeforeTool"
+        tool_key, args_key = "tool_name", "tool_input"
+        tools = {"exec_command", "functions.exec_command"} if DIAG_PROVIDER == "codex" else {"run_shell_command"}
+        if payload.get("hook_event_name") != event or type(payload.get(tool_key)) is not str or payload[tool_key] not in tools:
+            return False
+        metadata = {"session_id": 256, "cwd": 8192, "transcript_path": 8192, "tool_use_id": 256}
+    if not set(payload) <= {"hook_event_name", tool_key, args_key, "timestamp", *metadata}:
+        return False
+    if any(type(payload[key]) is not str or len(payload[key]) > limit for key, limit in metadata.items() if key in payload):
+        return False
+    if "timestamp" in payload:
+        stamp = payload["timestamp"]
+        if DIAG_PROVIDER == "copilot":
+            if type(stamp) is not int or not 0 <= stamp <= 9223372036854775807:
+                return False
+        elif type(stamp) is not str or len(stamp) > 128:
+            return False
+    args = payload.get(args_key)
+    if not isinstance(args, dict):
+        return False
+    if DIAG_PROVIDER == "codex":
+        if not {"cmd", "login"} <= set(args) or not set(args) <= {"cmd", "login", "max_output_tokens", "yield_time_ms"}:
+            return False
+        if args["cmd"] != "hooks-diagnostics-v1" or args["login"] is not False:
+            return False
+        return all(type(args[key]) is int and 0 <= args[key] <= 2147483647 for key in ("max_output_tokens", "yield_time_ms") if key in args)
+    return args == {"command": "hooks-diagnostics-v1"}
+
+
+# BEGIN PROVIDER ADAPTER
+def _diagnostic_denial(text):
+    reason = "scan-secrets diagnostics (request not executed):" + text
+    return block_denial_payload(reason, "PreToolUse")
+# END PROVIDER ADAPTER
+
+
+_SCAN_PAYLOAD = None
+_SCAN_INPUT_ERROR = ""
+_SCAN_INPUT_LOADED = False
+_SCAN_STARTED = None
+
+
+def _load_scan_payload():
+    global _SCAN_PAYLOAD, _SCAN_INPUT_ERROR, _SCAN_INPUT_LOADED
+    if _SCAN_INPUT_LOADED:
+        return
+    _SCAN_INPUT_LOADED = True
+    try:
+        _SCAN_PAYLOAD = read_json_input()
+    except ValueError:
+        _SCAN_INPUT_ERROR = "input_invalid"
+    except Exception:
+        _SCAN_INPUT_ERROR = "internal_error"
+
+
+if __name__ == "__main__":
+    # Recovery routing reads stdin before main. Ordinary scans inherit this
+    # same start so transport cannot extend the overall security work budget.
+    _SCAN_STARTED = time.monotonic()
+    _load_scan_payload()
+    if _diagnostic_request(_SCAN_PAYLOAD):
+        _report = diagnostics_collect(__file__)
+        _report.update(action="diagnostics", security_outcome="not_scanned", enforcement="deny", audit_outcome="not_attempted")
+        _payload_cwd = _SCAN_PAYLOAD.get("cwd")
+        # Inventory is process cwd only. Never resolve/stat/open the payload path.
+        try:
+            _location_verified = _payload_cwd is None or _payload_cwd == os.getcwd()
+        except OSError:
+            _location_verified = False
+        _report["repository"]["repository_location"] = "process_cwd" if _location_verified else "unverified"
+        sys.stdout.buffer.write(diagnostics_encode(_report, wrap=_diagnostic_denial))
+        raise SystemExit(0)
+'''
+
+
 _MAIN_SOURCE = r'''
 
 
 def findings_denial_reason(scan_log: Path) -> str:
-    return f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected."
+    return (f"scan-secrets blocked: {SCAN_ACTION}; potential secrets detected. "
+            + scanner_attribution("findings", "written", "deny", "pending_scan", "findings"))
 
 def resolve_scan_log() -> Path:
     log_dir_str = os.environ.get("SECRETS_LOG_DIR", str(DEFAULT_SECRETS_LOG_PATH))
@@ -1430,8 +1689,8 @@ def resolve_scan_log() -> Path:
 
 
 def main() -> int:
-    global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE
-    scan_started = time.monotonic()
+    global INCOMPLETE_LOG, SCAN_ACTION, SCAN_PHASE, SCAN_REPORT, SCAN_FINDINGS
+    scan_started = _SCAN_STARTED if _SCAN_STARTED is not None else time.monotonic()
     scan_deadline = scan_started + MAX_SCAN_SECONDS
     mode = normalized_mode_from_env()
 
@@ -1441,13 +1700,23 @@ def main() -> int:
         "log_path": scan_log, "session_id": "", "timestamp": "", "mode": mode,
         "scope": "diff", "repo_root_path": Path.cwd(),
     }
+    SCAN_PHASE = "input"
+    payload = read_payload()
+    # Read once in bootstrap, but ordinary scans retain the normal input failure path.
+    global HOOK_EVENT
+    HOOK_EVENT = payload.get("hook_event_name", "")
     if not git_available():
         raise GitCommandError("git_unavailable", "initialization")
+    try:
+        from helpers.audit import audit_init
+    except Exception:
+        emit_block_denial("scan-secrets blocked: tool scan; scan incomplete; audit helper unavailable. Use the standalone diagnostics CLI. "
+                          + scanner_attribution("incomplete", "not_attempted", "deny", "initialization", "audit_unavailable"))
+        return 0
     if not audit_init():
         raise ScanSecurityError("audit_unavailable", "initialization")
 
     SCAN_PHASE = "input"
-    payload = read_payload()
     event = payload.get("hook_event_name")
     SCAN_ACTION = (
         "session-end scan"
@@ -1481,37 +1750,26 @@ def main() -> int:
         "scope": scope,
         "repo_root_path": work_dir,
     }
+    log_context = {**INCOMPLETE_LOG, "deadline": scan_deadline}
 
     if os.environ.get("SKIP_SECRETS_SCAN") == "true":
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="scan disabled by SKIP_SECRETS_SCAN",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
 
     if not is_inside_git_repo(work_dir, deadline=scan_deadline):
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="skipped",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=work_dir,
             env_files=[],
             findings=[],
             note="not inside git repository",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, skipped=True)
         return 0
@@ -1520,139 +1778,94 @@ def main() -> int:
     root_has_head = has_head(root, deadline=scan_deadline)
     candidates = collect_files(root, scope, root_has_head, deadline=scan_deadline)
     SCAN_PHASE = "candidate_scan"
+    log_context["repo_root_path"] = root
 
     if not candidates:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=[],
             findings=[],
             note="no modified files to scan",
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log)
         return 0
 
     allowlist = parse_allowlist(os.environ.get("SECRETS_ALLOWLIST"))
     env_files: list[str] = []
-    findings: list[tuple[str, str, str, int, str]] = []
-    processed_findings = 0
-    stop_scanning = False
+    findings = RetainedFindings()
+    report = StreamReport(findings)
+    SCAN_REPORT, SCAN_FINDINGS = report, findings
+    budget = ScanBudget(scan_deadline)
     total_bytes = 0
-    index_contents = read_index_candidates(root, candidates, deadline=scan_deadline)
-
-    for source, path in candidates:
-        SCAN_PHASE = "candidate_read"
-        enforce_scan_budget(scan_started, total_bytes)
-        if (source, path) in index_contents:
-            raw_bytes = index_contents.pop((source, path))
-        else:
-            raw_bytes = read_candidate_bytes(root, path, source, deadline=scan_deadline)
-        if raw_bytes is None:
-            continue
-        SCAN_PHASE = "candidate_scan"
-        total_bytes += len(raw_bytes)
-        enforce_scan_budget(scan_started, total_bytes)
-
-        if is_env_path(path) and path not in env_files:
-            env_files.append(path)
-
-        if is_credential_path(path):
-            allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
-            if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                processed_findings, stop_scanning = record_finding(
-                    findings,
-                    ("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),
-                    processed_findings,
-                )
-
-        if stop_scanning:
-            break
-
-        if not is_text_candidate(path, raw_bytes):
-            candidate_lines = enumerate_file_lines(decode_ascii_scan_text(raw_bytes))
-        elif (scope == "staged" or not root_has_head or source == CANDIDATE_UNTRACKED
-              or source in CANDIDATE_UNMERGED_STAGES or source == CANDIDATE_UNMERGED_WORKTREE):
-            candidate_lines = enumerate_file_lines(raw_bytes.decode("utf-8", errors="replace"))
-        else:
-            candidate_lines = emit_diff_added_lines(
-                root,
-                path,
-                source,
-                root_has_head=root_has_head,
-                deadline=scan_deadline,
-            )
-
-        SCAN_PHASE = "candidate_scan"
-        for line_number, line_text in candidate_lines:
-            enforce_scan_budget(scan_started, total_bytes)
-            for pattern_name, severity, regex in PATTERNS:
+    with snapshot_source(root, candidates, budget) as snapshots:
+        for source, path in candidates:
+            SCAN_PHASE = "candidate_read"
+            with snapshots.acquire((source, path)) as snapshot:
+                if snapshot is None:
+                    continue
+                SCAN_PHASE = "candidate_scan"
+                total_bytes = budget.used_bytes
                 enforce_scan_budget(scan_started, total_bytes)
-                for match in regex.finditer(line_text):
-                    enforce_scan_budget(scan_started, total_bytes)
-                    match_value = match.group(0)
-                    allowlist_text = f"{path}:{line_number}:{pattern_name}:{match_value}"
-                    if allowlist_contains("scan_secrets", allowlist_text, allowlist):
-                        continue
-                    processed_findings, stop_scanning = record_finding(
-                        findings,
-                        (pattern_name, severity, path, line_number, redact_match(match_value)),
-                        processed_findings,
-                    )
-                    if stop_scanning:
-                        break
-                if stop_scanning:
+
+                if is_env_path(path) and path not in env_files:
+                    env_files.append(path)
+
+                if is_credential_path(path):
+                    allowlist_text = f"{path}:1:credential_path:[SENSITIVE PATH]"
+                    if not allowlist_contains("scan_secrets", allowlist_text, allowlist):
+                        report.processed, report.stopped = record_finding(
+                            findings,
+                            ("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),
+                            report.processed,
+                        )
+
+                if report.stopped:
                     break
-            if stop_scanning:
-                break
-        if stop_scanning:
-            break
+
+                is_allowlisted = lambda key: allowlist_contains("scan_secrets", key, allowlist)
+                check_budget = lambda: enforce_deadline(scan_deadline)
+                if (snapshot.classification == "binary" or scope == "staged"
+                      or not root_has_head or source == CANDIDATE_UNTRACKED
+                      or source in CANDIDATE_UNMERGED_STAGES or source == CANDIDATE_UNMERGED_WORKTREE):
+                    scan_line_events(path,
+                        full_line_events(snapshot.chunks(), snapshot.classification, check_budget),
+                        report, is_allowlisted, redact_match, check_budget)
+                else:
+                    scan_diff_added_lines(root, path, source, report, is_allowlisted,
+                        root_has_head=root_has_head, deadline=scan_deadline)
+                SCAN_PHASE = "candidate_scan"
+                if report.stopped:
+                    break
 
     enforce_scan_budget(scan_started, total_bytes)
 
     if not findings:
         append_scan_log(
-            log_path=scan_log,
+            **log_context,
             status="clean",
-            session_id=session_id,
-            timestamp=timestamp,
-            mode=mode,
-            scope=scope,
-            repo_root_path=root,
             env_files=env_files,
             findings=[],
-            deadline=scan_deadline,
         )
         emit_output(0, scan_log, checked_files=len(candidates))
         return 0
 
     findings_json = build_findings_json(findings)
-    omitted_findings = processed_findings - len(findings)
+    omitted_findings = report.processed - len(findings)
     enforce_scan_budget(scan_started, total_bytes)
     append_scan_log(
-        log_path=scan_log,
+        **log_context,
         status="findings",
-        session_id=session_id,
-        timestamp=timestamp,
-        mode=mode,
-        scope=scope,
-        repo_root_path=root,
         env_files=env_files,
         findings=findings_json,
         omitted_findings=omitted_findings,
-        findings_truncated=stop_scanning or omitted_findings > 0,
-        deadline=scan_deadline,
+        findings_truncated=report.stopped or omitted_findings > 0,
     )
     if mode == "block":
         emit_block_denial(findings_denial_reason(scan_log))
         return 0
 
-    emit_output(processed_findings, scan_log)
+    emit_output(report.processed, scan_log)
     return 0
 
 
@@ -1686,10 +1899,11 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     return (
         SHEBANG
         + HEADER
-        + _PRELUDE_SOURCE.lstrip("\n")
-        + ADAPTER_START
-        + response_adapter.lstrip("\n")
-        + ADAPTER_END
+        + _PRELUDE_SOURCE.lstrip("\n").replace("__REPORT_BUILD__", build_identity("scan_secrets")).replace(
+            "# __DIAGNOSTIC_BOOTSTRAP__",
+            ADAPTER_START + response_adapter.lstrip("\n") + ADAPTER_END + collector_source(provider) + _RECOVERY_SOURCE)
+        + STREAM_SOURCE
+        + REPORT_SOURCE
         + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
         + ADAPTER_START
         + runtime_adapter.lstrip("\n")

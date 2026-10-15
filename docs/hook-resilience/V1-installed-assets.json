@@ -1,0 +1,605 @@
+{
+  "candidate": "0ecd490d07c34519e86f10719ef778cebff73fae",
+  "installer": "bash scripts/install.sh (child of rtk proxy verification harness)",
+  "passes": [
+    {
+      "check": "preserved user registrations and settings",
+      "config": ".codex/hooks.json",
+      "pass": true
+    },
+    {
+      "check": "preserved user registrations and settings",
+      "config": ".copilot/hooks/hooks.json",
+      "pass": true
+    },
+    {
+      "check": "preserved user registrations and settings",
+      "config": ".gemini/settings.json",
+      "pass": true
+    }
+  ],
+  "assets": [
+    {
+      "path": ".codex/hooks/helpers/audit.py",
+      "source_sha256": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87",
+      "installed_sha256": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/helpers/common.py",
+      "source_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+      "installed_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/helpers/tool_guard_policy.py",
+      "source_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/hooks-diagnostics.py",
+      "source_sha256": "10643edc0c0d7d6913d88cad03e24589cce6caa9b1c029446640bff3fcd93d40",
+      "installed_sha256": "10643edc0c0d7d6913d88cad03e24589cce6caa9b1c029446640bff3fcd93d40",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/load-required-skills.py",
+      "source_sha256": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+      "installed_sha256": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/scan-secrets.py",
+      "source_sha256": "e0c4bfb82b017a6e71795c1d4734ef6ab8e23de1f66a05d8298a7c43b9068966",
+      "installed_sha256": "e0c4bfb82b017a6e71795c1d4734ef6ab8e23de1f66a05d8298a7c43b9068966",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".codex/hooks/tool-guard.py",
+      "source_sha256": "2263bc50e4fbf81965f5ffc21675e6617d8298903e11494a46ba00209be665d5",
+      "installed_sha256": "2263bc50e4fbf81965f5ffc21675e6617d8298903e11494a46ba00209be665d5",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/bell.py",
+      "source_sha256": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+      "installed_sha256": "70386f56ddb636719da8e22a778a266c51b54f658a4e59ab0687ba9c8c641ea2",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/helpers/__init__.py",
+      "source_sha256": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+      "installed_sha256": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/helpers/audit.py",
+      "source_sha256": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022",
+      "installed_sha256": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/helpers/common.py",
+      "source_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+      "installed_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/helpers/observability.py",
+      "source_sha256": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+      "installed_sha256": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/helpers/tool_guard_policy.py",
+      "source_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/hooks-diagnostics.py",
+      "source_sha256": "923725b5ee6c435236667da92edc8c86cedc622e583fb55eefb3139bacc5298d",
+      "installed_sha256": "923725b5ee6c435236667da92edc8c86cedc622e583fb55eefb3139bacc5298d",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/load-required-skills.py",
+      "source_sha256": "b01181e49d1c660f224ba0ded55de93140c81a1fe26dda6beac87cb718ae3767",
+      "installed_sha256": "b01181e49d1c660f224ba0ded55de93140c81a1fe26dda6beac87cb718ae3767",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/rtk-hook-copilot.py",
+      "source_sha256": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+      "installed_sha256": "d94df018a70b59ba06187b29a34c530ea79898f982b72f2cb74b2f1bcdafd405",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/scan-secrets.py",
+      "source_sha256": "4645d977e2dc0fdd170ae57635a5e09c968e66c77b2c866cac0dfa8417ccbb2e",
+      "installed_sha256": "4645d977e2dc0fdd170ae57635a5e09c968e66c77b2c866cac0dfa8417ccbb2e",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/send-event.py",
+      "source_sha256": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      "installed_sha256": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".copilot/hooks/scripts/tool-guard.py",
+      "source_sha256": "9d6e7d0d2439e84d1a8a0964b5d70efd5858fde88be8b9d54562ad49769feeae",
+      "installed_sha256": "9d6e7d0d2439e84d1a8a0964b5d70efd5858fde88be8b9d54562ad49769feeae",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/auto-ingest.py",
+      "source_sha256": "d46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b",
+      "installed_sha256": "d46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/__init__.py",
+      "source_sha256": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+      "installed_sha256": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/audit.py",
+      "source_sha256": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661",
+      "installed_sha256": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/common.py",
+      "source_sha256": "475673132bfcc0081345e4142e8efdfddd5c47ceb6991793f1ac3df1752f26ac",
+      "installed_sha256": "475673132bfcc0081345e4142e8efdfddd5c47ceb6991793f1ac3df1752f26ac",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/observability.py",
+      "source_sha256": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+      "installed_sha256": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/okf.py",
+      "source_sha256": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+      "installed_sha256": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/okf_audit.py",
+      "source_sha256": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+      "installed_sha256": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/source_ingest.py",
+      "source_sha256": "ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82",
+      "installed_sha256": "ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/helpers/tool_guard_policy.py",
+      "source_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/hooks-diagnostics.py",
+      "source_sha256": "a4d74b1bc23e6b4b305127699f2acb9001afa8a5b6af8a38dca2f1fe857838d4",
+      "installed_sha256": "a4d74b1bc23e6b4b305127699f2acb9001afa8a5b6af8a38dca2f1fe857838d4",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/inject-auto-ingest-context.py",
+      "source_sha256": "8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed",
+      "installed_sha256": "8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/lint-okf.py",
+      "source_sha256": "2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6",
+      "installed_sha256": "2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/rtk-hook-gemini.py",
+      "source_sha256": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+      "installed_sha256": "31e6f9c269b66c82cbac689b586002a1a6fbcbbd46ecaad0d398c4cdfc7dc965",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/scan-secrets.py",
+      "source_sha256": "b0b12adf68816bcce92c545da826d161cf31c11f099619bbe45f2d97007a155e",
+      "installed_sha256": "b0b12adf68816bcce92c545da826d161cf31c11f099619bbe45f2d97007a155e",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/send-event.py",
+      "source_sha256": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      "installed_sha256": "22837f6bec97d3f3aad055213de292b5386a4473ccab17653d84643bfab40351",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/skill-context-injector.py",
+      "source_sha256": "1e51c492be94e56a85cdd53dddd97deb7a4cabdcf03df0e3631ac89c7f9f512f",
+      "installed_sha256": "1e51c492be94e56a85cdd53dddd97deb7a4cabdcf03df0e3631ac89c7f9f512f",
+      "installed_mode": "0o755",
+      "pass": true
+    },
+    {
+      "path": ".gemini/hooks/scripts/tool-guard.py",
+      "source_sha256": "cf6c8902b06badf8eb91ea6ac1c19afe22efb8100c47b8db8b50b70090c07cd8",
+      "installed_sha256": "cf6c8902b06badf8eb91ea6ac1c19afe22efb8100c47b8db8b50b70090c07cd8",
+      "installed_mode": "0o755",
+      "pass": true
+    }
+  ],
+  "diagnostics": {
+    "codex": {
+      "exit_code": 0,
+      "stdout_bytes": 1958,
+      "report": {
+        "schema": "hooks-diagnostics-v1",
+        "provider": "codex",
+        "policy_limits": {
+          "scope": "canonical scanner constants and Guardian input-bound subset",
+          "scanner": {
+            "MAX_FILES": 256,
+            "MAX_FILE_BYTES": "not_defined",
+            "MAX_TOTAL_BYTES": 8388608,
+            "MAX_SCAN_SECONDS": 8.0
+          },
+          "guardian": {
+            "MAX_SCAN_TEXT": 32768,
+            "MAX_NATIVE_DATA_BYTES": 65536,
+            "MAX_NATIVE_PATCH_BYTES": 262144,
+            "MAX_COMMAND_SEGMENTS": 128,
+            "MAX_COMMAND_TOKENS": 256,
+            "MAX_STRUCTURED_DEPTH": 32,
+            "MAX_STRUCTURED_NODES": 256,
+            "MAX_STRUCTURED_STRINGS": 128
+          }
+        },
+        "bootstrap": {
+          "health": "loaded",
+          "embedded_build": "84e93c87d8e720b2f75d45fa74857ac76ca544b972fc77449af0e3deaecb62d7",
+          "origin": "source_or_installed_unverified",
+          "profile": "metadata-v1"
+        },
+        "security": {
+          "health": "unknown",
+          "outcome": "not_scanned"
+        },
+        "audit": {
+          "health": "unknown",
+          "outcome": "not_attempted"
+        },
+        "repository": {
+          "health": "not_collected",
+          "pending_status": "unknown",
+          "index_snapshots": "unknown"
+        },
+        "assets": {
+          "health": "unverified",
+          "complete": true,
+          "hash_bytes": 247707,
+          "records": [
+            {
+              "asset": "helpers/common.py",
+              "state": "matches",
+              "observed_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045"
+            },
+            {
+              "asset": "helpers/audit.py",
+              "state": "matches",
+              "observed_sha256": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87"
+            },
+            {
+              "asset": "tool-guard.py",
+              "state": "unverified",
+              "observed_sha256": "2263bc50e4fbf81965f5ffc21675e6617d8298903e11494a46ba00209be665d5"
+            },
+            {
+              "asset": "helpers/tool_guard_policy.py",
+              "state": "matches",
+              "observed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3"
+            },
+            {
+              "asset": "scan-secrets.py",
+              "state": "unverified",
+              "observed_sha256": "e0c4bfb82b017a6e71795c1d4734ef6ab8e23de1f66a05d8298a7c43b9068966"
+            },
+            {
+              "asset": "hooks-diagnostics.py",
+              "state": "unverified",
+              "observed_sha256": "10643edc0c0d7d6913d88cad03e24589cce6caa9b1c029446640bff3fcd93d40"
+            }
+          ],
+          "meaning": "on_disk_observation"
+        },
+        "registrations": {
+          "health": "uncertain",
+          "owned": 4,
+          "unowned": 2,
+          "duplicates": 0,
+          "missing": 0,
+          "events": [
+            "PreToolUse",
+            "SessionStart",
+            "Stop",
+            "unknown"
+          ],
+          "cause": "observed"
+        }
+      },
+      "nonmutating_not_scanned_pass": true
+    },
+    "copilot": {
+      "exit_code": 0,
+      "stdout_bytes": 2145,
+      "report": {
+        "schema": "hooks-diagnostics-v1",
+        "provider": "copilot",
+        "policy_limits": {
+          "scope": "canonical scanner constants and Guardian input-bound subset",
+          "scanner": {
+            "MAX_FILES": 256,
+            "MAX_FILE_BYTES": "not_defined",
+            "MAX_TOTAL_BYTES": 8388608,
+            "MAX_SCAN_SECONDS": 8.0
+          },
+          "guardian": {
+            "MAX_SCAN_TEXT": 32768,
+            "MAX_NATIVE_DATA_BYTES": 65536,
+            "MAX_NATIVE_PATCH_BYTES": 262144,
+            "MAX_COMMAND_SEGMENTS": 128,
+            "MAX_COMMAND_TOKENS": 256,
+            "MAX_STRUCTURED_DEPTH": 32,
+            "MAX_STRUCTURED_NODES": 256,
+            "MAX_STRUCTURED_STRINGS": 128
+          }
+        },
+        "bootstrap": {
+          "health": "loaded",
+          "embedded_build": "435ea1df87362397b4e4b6ca9d1cdfdf457f699195f923421a87590fe55f3058",
+          "origin": "source_or_installed_unverified",
+          "profile": "metadata-v1"
+        },
+        "security": {
+          "health": "unknown",
+          "outcome": "not_scanned"
+        },
+        "audit": {
+          "health": "unknown",
+          "outcome": "not_attempted"
+        },
+        "repository": {
+          "health": "not_collected",
+          "pending_status": "unknown",
+          "index_snapshots": "unknown"
+        },
+        "assets": {
+          "health": "unverified",
+          "complete": true,
+          "hash_bytes": 255821,
+          "records": [
+            {
+              "asset": "helpers/common.py",
+              "state": "matches",
+              "observed_sha256": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045"
+            },
+            {
+              "asset": "helpers/audit.py",
+              "state": "matches",
+              "observed_sha256": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022"
+            },
+            {
+              "asset": "tool-guard.py",
+              "state": "unverified",
+              "observed_sha256": "9d6e7d0d2439e84d1a8a0964b5d70efd5858fde88be8b9d54562ad49769feeae"
+            },
+            {
+              "asset": "helpers/tool_guard_policy.py",
+              "state": "matches",
+              "observed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3"
+            },
+            {
+              "asset": "scan-secrets.py",
+              "state": "unverified",
+              "observed_sha256": "4645d977e2dc0fdd170ae57635a5e09c968e66c77b2c866cac0dfa8417ccbb2e"
+            },
+            {
+              "asset": "hooks-diagnostics.py",
+              "state": "unverified",
+              "observed_sha256": "923725b5ee6c435236667da92edc8c86cedc622e583fb55eefb3139bacc5298d"
+            }
+          ],
+          "meaning": "on_disk_observation"
+        },
+        "registrations": {
+          "health": "uncertain",
+          "owned": 19,
+          "unowned": 1,
+          "duplicates": 0,
+          "missing": 0,
+          "events": [
+            "agentStop",
+            "errorOccurred",
+            "notification",
+            "permissionRequest",
+            "postToolUse",
+            "postToolUseFailure",
+            "preCompact",
+            "preToolUse",
+            "sessionEnd",
+            "sessionStart",
+            "subagentStart",
+            "subagentStop",
+            "userPromptSubmitted",
+            "userPromptTransformed"
+          ],
+          "cause": "observed"
+        }
+      },
+      "nonmutating_not_scanned_pass": true
+    },
+    "gemini": {
+      "exit_code": 0,
+      "stdout_bytes": 2073,
+      "report": {
+        "schema": "hooks-diagnostics-v1",
+        "provider": "gemini",
+        "policy_limits": {
+          "scope": "canonical scanner constants and Guardian input-bound subset",
+          "scanner": {
+            "MAX_FILES": 256,
+            "MAX_FILE_BYTES": "not_defined",
+            "MAX_TOTAL_BYTES": 8388608,
+            "MAX_SCAN_SECONDS": 8.0
+          },
+          "guardian": {
+            "MAX_SCAN_TEXT": 32768,
+            "MAX_NATIVE_DATA_BYTES": 65536,
+            "MAX_NATIVE_PATCH_BYTES": 262144,
+            "MAX_COMMAND_SEGMENTS": 128,
+            "MAX_COMMAND_TOKENS": 256,
+            "MAX_STRUCTURED_DEPTH": 32,
+            "MAX_STRUCTURED_NODES": 256,
+            "MAX_STRUCTURED_STRINGS": 128
+          }
+        },
+        "bootstrap": {
+          "health": "loaded",
+          "embedded_build": "edffd147aebd04a3d6b4993bdc97e420690f604bc327135dddde0c126988c7c5",
+          "origin": "source_or_installed_unverified",
+          "profile": "metadata-v1"
+        },
+        "security": {
+          "health": "unknown",
+          "outcome": "not_scanned"
+        },
+        "audit": {
+          "health": "unknown",
+          "outcome": "not_attempted"
+        },
+        "repository": {
+          "health": "not_collected",
+          "pending_status": "unknown",
+          "index_snapshots": "unknown"
+        },
+        "assets": {
+          "health": "unverified",
+          "complete": true,
+          "hash_bytes": 255227,
+          "records": [
+            {
+              "asset": "helpers/common.py",
+              "state": "matches",
+              "observed_sha256": "475673132bfcc0081345e4142e8efdfddd5c47ceb6991793f1ac3df1752f26ac"
+            },
+            {
+              "asset": "helpers/audit.py",
+              "state": "matches",
+              "observed_sha256": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661"
+            },
+            {
+              "asset": "tool-guard.py",
+              "state": "unverified",
+              "observed_sha256": "cf6c8902b06badf8eb91ea6ac1c19afe22efb8100c47b8db8b50b70090c07cd8"
+            },
+            {
+              "asset": "helpers/tool_guard_policy.py",
+              "state": "matches",
+              "observed_sha256": "c93ba65bdbae261dabdfbc11691fdd1285530b60dcace557c2ba252dd4c092a3"
+            },
+            {
+              "asset": "scan-secrets.py",
+              "state": "unverified",
+              "observed_sha256": "b0b12adf68816bcce92c545da826d161cf31c11f099619bbe45f2d97007a155e"
+            },
+            {
+              "asset": "hooks-diagnostics.py",
+              "state": "unverified",
+              "observed_sha256": "a4d74b1bc23e6b4b305127699f2acb9001afa8a5b6af8a38dca2f1fe857838d4"
+            }
+          ],
+          "meaning": "on_disk_observation"
+        },
+        "registrations": {
+          "health": "uncertain",
+          "owned": 16,
+          "unowned": 1,
+          "duplicates": 0,
+          "missing": 0,
+          "events": [
+            "AfterAgent",
+            "AfterModel",
+            "AfterTool",
+            "BeforeAgent",
+            "BeforeModel",
+            "BeforeTool",
+            "BeforeToolSelection",
+            "Notification",
+            "PreCompress",
+            "SessionEnd",
+            "SessionStart"
+          ],
+          "cause": "observed"
+        }
+      },
+      "nonmutating_not_scanned_pass": true
+    }
+  },
+  "failures": [],
+  "installer_exit_code": 0,
+  "installer_seconds": 2.361815624986775,
+  "installed_config_sha256": {
+    ".codex/hooks.json": "692266c4ede29d8d2610f04961630205cb2c09ffe47e0f931daa0552b16a66f2",
+    ".copilot/hooks/hooks.json": "0a55d398af75364894c533dbd0e6a4b4a4a68cc5aa8f7b4e60b330f229cccb3c",
+    ".gemini/settings.json": "a4258f02d3d49fa5876d33c4cb4e9d323adfa9c4bbacbbfc178eefff3c102922"
+  },
+  "second_installer_exit_code": 0,
+  "full_home_files_idempotent": true,
+  "full_home_changed_files": [],
+  "full_home_file_fingerprint_before": "4169ed6cc3112da2195cdbd2b05af8dee56ba0ae8cdef84b829f33190388b06c",
+  "full_home_file_fingerprint_after": "4169ed6cc3112da2195cdbd2b05af8dee56ba0ae8cdef84b829f33190388b06c",
+  "pass": true
+}

@@ -28,6 +28,8 @@ Run independent **implementer subagents** concurrently when useful. Serialize sh
 
    Assign each distinct task to a fresh implementer subagent. Do not reuse an implementer for a different node, even with a new worktree. Reuse is allowed only for repairs or follow-up work on that implementer's original node. This preserves context isolation, ownership clarity, and independent task results.
 
+   Before dispatch, apply `delegate-to-subagents` ownership rules to shared canonical docs, even across private worktrees.
+
    Pass each implementer its full task and current plan context as required by `exec-plans`, plus prerequisite evidence and explicit file ownership. Instruct it to:
    1. Activate the `tdd` skill for source changes. Use task-appropriate evidence for decision, verification, integration, or documentation work; do not invent product tests or code changes for a read-only outcome.
    2. Make repository changes in its own worktree and branch (see [Working with Worktrees](#working-with-worktrees)). A read-only task needs a retained evidence result, not an empty commit.

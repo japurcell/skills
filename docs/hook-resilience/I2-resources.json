@@ -1,0 +1,441 @@
+{
+  "environment": {
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6 (main, Jul 30 2026, 16:35:50) [Clang 21.0.0 (clang-2100.1.1.101)]",
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3"
+  },
+  "commit": "e0e8418ec02b600f90ecd977a6478e4ebdd716eb",
+  "source_fingerprints": {
+    ".codex/hooks/helpers/audit.py": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87",
+    ".codex/hooks/helpers/common.py": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+    ".codex/hooks/helpers/okf.py": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+    ".codex/hooks/helpers/okf_audit.py": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+    ".codex/hooks/helpers/tool_guard_policy.py": "87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c",
+    ".codex/hooks/scan-secrets.py": "5b5489e77921ec9cc262edaba08efc05e174aa3d739d82aac86d6b21175da7b5",
+    ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+    ".copilot/hooks/scripts/helpers/audit.py": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022",
+    ".copilot/hooks/scripts/helpers/common.py": "239c5cb45028d72b467b1c6b73100c9748a540e53031dafc8a8aa20a54cd3045",
+    ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+    ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c",
+    ".copilot/hooks/scripts/scan-secrets.py": "658d24e595021c318989f77831cee64b40deec04b9efa95b6843552cd3c4d3e5",
+    ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+    ".gemini/hooks/scripts/helpers/audit.py": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661",
+    ".gemini/hooks/scripts/helpers/common.py": "475673132bfcc0081345e4142e8efdfddd5c47ceb6991793f1ac3df1752f26ac",
+    ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+    ".gemini/hooks/scripts/helpers/okf.py": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+    ".gemini/hooks/scripts/helpers/okf_audit.py": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+    ".gemini/hooks/scripts/helpers/source_ingest.py": "ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82",
+    ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "87bf6eb363a83a4e4be79d10aceba2e55b9194b04858291b33faf2006c6d890c",
+    ".gemini/hooks/scripts/scan-secrets.py": "2d4571f2110c791d82df46efa4231783a364d71c07c08d30a186e81c31c31e50",
+    "hooks/__init__.py": "3ba1a8f9db5b31df2088af62e67ae67ae25ea9e10ffceb023640cc4f8aabef5a",
+    "hooks/families/__init__.py": "2aae72963a8d44f8c93e2ff81772963b2729044f86401feab6b063c58111e486",
+    "hooks/families/allowlist.py": "ae18b20b9b7a2823ad931cc299f7cd6c2c11573867789b232ad1790856793dbe",
+    "hooks/families/audit.py": "6852ab0e845b3f11d3c81bc44ba007c087a248946359dcc0ce5572d52bfa4608",
+    "hooks/families/auto_ingest.py": "4311ea3fbfbfdfb6d408a41d9c6928eedfc48e09bfbd69c3c20f679c314b01fa",
+    "hooks/families/auto_ingest_engine.py": "26c3ce4fba37002cc69e29503194375c0e2c6060157aea8675562035922dd0ff",
+    "hooks/families/auto_ingest_gemini_inject.py": "3cd34451c34f7eb958691c54fca9b7316e483ae3488526d53a07ee7b56565371",
+    "hooks/families/auto_ingest_gemini_roots.py": "23f60898bd3777669e22f84a712cfb09d87ea1538ba6f07f8653ed948981c097",
+    "hooks/families/auto_ingest_gemini_startup.py": "55a300978491f6bb4ca38d4e42ae8cfcb8062020c4b4d1d33d412a49c7b4a524",
+    "hooks/families/auto_ingest_github_inject.py": "4e40ea83ef86c42a927df12ef336afa56fd88bf4c5b729973489c8c8f001156b",
+    "hooks/families/auto_ingest_github_roots.py": "fcdaad4ddee49ae201908718f26f46da58b6d1b8e9ea622001f78ab512084b17",
+    "hooks/families/auto_ingest_github_startup.py": "7e7159ca4cfef09f6f806ea7f89ff1daa9032bb2c4e1c5121cf858869bcad018",
+    "hooks/families/common.py": "f51598dbac53635d2d40bae635b12097f91529a8f409da4c82bebacfdb6134b7",
+    "hooks/families/diagnostics.py": "a4c9db9f6cda35af67c34d4feca85fb266557e60961aa3ae2b12957e10e93a4f",
+    "hooks/families/observability.py": "f9ebf43773f121986228a013ba6ad8dfd5caf67d8012dcf61b20d0a4b15c7249",
+    "hooks/families/okf.py": "a6168a788889d906dfe6d6916aadf219547098606cf0ceafeb9dd17a0ddc0ae1",
+    "hooks/families/okf_audit_runtime.py": "764048cf4cb1d13779bef1600be986224e49e0277f825fadf0bbecbfc629c37a",
+    "hooks/families/okf_runtime.py": "019f4b5ed9c1626a5baa59b33ca21135ea49712b8ea156d041f1556ffeea7665",
+    "hooks/families/rtk.py": "e625a4c738fca8d2d706e27c61991c407aa98c996e079e6f9aadf5ac45cd6a55",
+    "hooks/families/scan_secrets.py": "3ecc60740a84b19b0c7f534410ee2b9b442655e3974c1d38f007a8feac62996a",
+    "hooks/families/scanner_stream.py": "83ce0911f35c01e2015e0a799270a1b4adab44dc5f616b553adcb9b12b9e2ac3",
+    "hooks/families/send_event.py": "b3890aa539bbac90d2490eceffa7ac3a1eb21976894dcd5594b5d2548c4c25a8",
+    "hooks/families/tool_guard.py": "e9e912694618083a098e38b176a8fd7e13497c0d9a10e2de8a50657803c23d81",
+    "hooks/manifest.py": "73bc7af98d087113818d78a2f107453663a36ce46c14338e7bcc2305c4dd48ea",
+    "hooks/providers.py": "bdd7aefb454c081ae8a1dd299cc62b3af4cecca11ea6266ca11a91e303c0c222"
+  },
+  "method": {
+    "samples_per_case": 3,
+    "command_flags": [
+      "-I",
+      "-S",
+      "-B"
+    ],
+    "elapsed": "complete scanner subprocess only; fixture setup and log verification excluded",
+    "memory": "separate native /usr/bin/time -l invocation; RSS bytes; wrapper latency excluded",
+    "cache": "OS and standard-library caches uncleared; provider bytecode disabled",
+    "logging": "disposable provider log, checked after every call",
+    "limits": "8 MiB logical candidate bytes, 256 snapshots, 8 second shared work/input budget"
+  },
+  "cases": [
+    {
+      "case": "long-line-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        367.0945,
+        441.057334,
+        318.144458
+      ],
+      "first_ms": 367.0945,
+      "median_ms": 367.0945,
+      "maximum_ms": 441.057334,
+      "peak_rss_bytes": 34308096,
+      "security_status": "clean"
+    },
+    {
+      "case": "long-line-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        301.481208,
+        315.427875,
+        332.038917
+      ],
+      "first_ms": 301.481208,
+      "median_ms": 315.427875,
+      "maximum_ms": 332.038917,
+      "peak_rss_bytes": 34357248,
+      "security_status": "clean"
+    },
+    {
+      "case": "long-line-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        286.781,
+        230.585042,
+        241.375042
+      ],
+      "first_ms": 286.781,
+      "median_ms": 241.375042,
+      "maximum_ms": 286.781,
+      "peak_rss_bytes": 33226752,
+      "security_status": "clean"
+    },
+    {
+      "case": "empty-lines-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        219.60525,
+        228.8415,
+        183.329083
+      ],
+      "first_ms": 219.60525,
+      "median_ms": 219.60525,
+      "maximum_ms": 228.8415,
+      "peak_rss_bytes": 33292288,
+      "security_status": "clean"
+    },
+    {
+      "case": "empty-lines-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        178.478375,
+        190.395917,
+        174.474875
+      ],
+      "first_ms": 178.478375,
+      "median_ms": 178.478375,
+      "maximum_ms": 190.395917,
+      "peak_rss_bytes": 33980416,
+      "security_status": "clean"
+    },
+    {
+      "case": "empty-lines-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        161.305333,
+        159.959458,
+        160.147834
+      ],
+      "first_ms": 161.305333,
+      "median_ms": 160.147834,
+      "maximum_ms": 161.305333,
+      "peak_rss_bytes": 32784384,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        2241.261334,
+        2293.104459,
+        2262.83275
+      ],
+      "first_ms": 2241.261334,
+      "median_ms": 2262.83275,
+      "maximum_ms": 2293.104459,
+      "peak_rss_bytes": 33062912,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        2289.016083,
+        2242.861625,
+        2254.415791
+      ],
+      "first_ms": 2289.016083,
+      "median_ms": 2254.415791,
+      "maximum_ms": 2289.016083,
+      "peak_rss_bytes": 33914880,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        2228.941375,
+        2290.51775,
+        2225.346708
+      ],
+      "first_ms": 2228.941375,
+      "median_ms": 2228.941375,
+      "maximum_ms": 2290.51775,
+      "peak_rss_bytes": 32931840,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-2030848",
+      "provider": "copilot",
+      "samples_ms": [
+        672.721583,
+        663.148125,
+        664.809458
+      ],
+      "first_ms": 672.721583,
+      "median_ms": 664.809458,
+      "maximum_ms": 672.721583,
+      "peak_rss_bytes": 33062912,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-2030848",
+      "provider": "gemini",
+      "samples_ms": [
+        663.636041,
+        659.958042,
+        666.171041
+      ],
+      "first_ms": 663.636041,
+      "median_ms": 663.636041,
+      "maximum_ms": 666.171041,
+      "peak_rss_bytes": 33816576,
+      "security_status": "clean"
+    },
+    {
+      "case": "short-lines-2030848",
+      "provider": "codex",
+      "samples_ms": [
+        674.789792,
+        658.89325,
+        651.283084
+      ],
+      "first_ms": 674.789792,
+      "median_ms": 658.89325,
+      "maximum_ms": 674.789792,
+      "peak_rss_bytes": 32931840,
+      "security_status": "clean"
+    },
+    {
+      "case": "binary-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        221.977708,
+        215.994792,
+        213.37
+      ],
+      "first_ms": 221.977708,
+      "median_ms": 215.994792,
+      "maximum_ms": 221.977708,
+      "peak_rss_bytes": 33062912,
+      "security_status": "clean"
+    },
+    {
+      "case": "binary-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        215.205542,
+        218.20375,
+        217.098083
+      ],
+      "first_ms": 215.205542,
+      "median_ms": 217.098083,
+      "maximum_ms": 218.20375,
+      "peak_rss_bytes": 33832960,
+      "security_status": "clean"
+    },
+    {
+      "case": "binary-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        206.256209,
+        201.275959,
+        204.220708
+      ],
+      "first_ms": 206.256209,
+      "median_ms": 204.220708,
+      "maximum_ms": 206.256209,
+      "peak_rss_bytes": 32833536,
+      "security_status": "clean"
+    },
+    {
+      "case": "greedy-token-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        228.190125,
+        227.559209,
+        228.277
+      ],
+      "first_ms": 228.190125,
+      "median_ms": 228.190125,
+      "maximum_ms": 228.277,
+      "peak_rss_bytes": 33079296,
+      "security_status": "findings"
+    },
+    {
+      "case": "greedy-token-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        231.582958,
+        230.638459,
+        228.301834
+      ],
+      "first_ms": 231.582958,
+      "median_ms": 230.638459,
+      "maximum_ms": 231.582958,
+      "peak_rss_bytes": 33947648,
+      "security_status": "findings"
+    },
+    {
+      "case": "greedy-token-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        215.047792,
+        211.2285,
+        210.167625
+      ],
+      "first_ms": 215.047792,
+      "median_ms": 211.2285,
+      "maximum_ms": 215.047792,
+      "peak_rss_bytes": 32948224,
+      "security_status": "findings"
+    },
+    {
+      "case": "snapshots-256-8MiB",
+      "provider": "copilot",
+      "samples_ms": [
+        257.278208,
+        255.629083,
+        256.062459
+      ],
+      "first_ms": 257.278208,
+      "median_ms": 256.062459,
+      "maximum_ms": 257.278208,
+      "peak_rss_bytes": 33193984,
+      "security_status": "clean"
+    },
+    {
+      "case": "snapshots-256-8MiB",
+      "provider": "gemini",
+      "samples_ms": [
+        260.682291,
+        258.51225,
+        262.634667
+      ],
+      "first_ms": 260.682291,
+      "median_ms": 260.682291,
+      "maximum_ms": 262.634667,
+      "peak_rss_bytes": 33865728,
+      "security_status": "clean"
+    },
+    {
+      "case": "snapshots-256-8MiB",
+      "provider": "codex",
+      "samples_ms": [
+        251.656292,
+        251.973792,
+        249.55725
+      ],
+      "first_ms": 251.656292,
+      "median_ms": 251.656292,
+      "maximum_ms": 251.973792,
+      "peak_rss_bytes": 32980992,
+      "security_status": "clean"
+    },
+    {
+      "case": "tracked-tiny-edit-2030848",
+      "provider": "copilot",
+      "samples_ms": [
+        155.995375,
+        144.483542,
+        144.449917
+      ],
+      "first_ms": 155.995375,
+      "median_ms": 144.483542,
+      "maximum_ms": 155.995375,
+      "peak_rss_bytes": 33210368,
+      "security_status": "clean"
+    },
+    {
+      "case": "tracked-tiny-edit-2030848",
+      "provider": "gemini",
+      "samples_ms": [
+        147.804542,
+        146.216083,
+        145.287875
+      ],
+      "first_ms": 147.804542,
+      "median_ms": 146.216083,
+      "maximum_ms": 147.804542,
+      "peak_rss_bytes": 33734656,
+      "security_status": "clean"
+    },
+    {
+      "case": "tracked-tiny-edit-2030848",
+      "provider": "codex",
+      "samples_ms": [
+        135.531834,
+        136.496292,
+        134.831625
+      ],
+      "first_ms": 135.531834,
+      "median_ms": 135.531834,
+      "maximum_ms": 136.496292,
+      "peak_rss_bytes": 32866304,
+      "security_status": "clean"
+    }
+  ],
+  "failures": [],
+  "concurrency": [
+    {
+      "provider": "copilot",
+      "case": "short-lines-2030848",
+      "calls": 2,
+      "samples_ms": [
+        722.68875,
+        664.959334
+      ],
+      "logged_clean": 2
+    },
+    {
+      "provider": "gemini",
+      "case": "short-lines-2030848",
+      "calls": 2,
+      "samples_ms": [
+        726.141541,
+        668.918167
+      ],
+      "logged_clean": 2
+    },
+    {
+      "provider": "codex",
+      "case": "short-lines-2030848",
+      "calls": 2,
+      "samples_ms": [
+        655.268916,
+        655.275167
+      ],
+      "logged_clean": 2
+    }
+  ],
+  "fingerprints_unchanged": true
+}

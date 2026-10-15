@@ -52,7 +52,7 @@ test_warn_mode_returns_json_for_cli_payload() {
     "Expected warn mode to allow the tool after logging threats."
   assert_equals "allow" "$(jq -r '.hookSpecificOutput.permissionDecision' <<<"$output")" \
     "Expected warn mode to include a VS Code-compatible allow decision."
-  assert_equals "$expected_warning" \
+  assert_equals "$expected_warning$(security_guard_report_suffix "$log_dir")" \
     "$(jq -r '.systemMessage' <<<"$output")" \
     "Expected warn mode to include terminal warning text."
   assert_file_contains "$log_dir/guard.log" '"event":"threats_detected"' \
@@ -208,8 +208,10 @@ test_tool_guard_denies_unexpected_input_exception() {
   assert_equals "deny" "$(jq -r '.permissionDecision' <<<"$output")" \
     "Expected Tool Guardian to deny unexpected input failures."
   assert_equals "Tool Guardian skipped: unexpected exception." \
-    "$(jq -r '.permissionDecisionReason' <<<"$output")" \
+    "$(jq -r '.permissionDecisionReason | split(" security_outcome=")[0]' <<<"$output")" \
     "Expected the fail-closed Copilot envelope for unexpected input failures."
+  jq -e '.permissionDecisionReason | contains("security_outcome=incomplete; audit_outcome=not_attempted; enforcement=deny; build=") and endswith("profile=unsupported; route=input_validation; cause=input_read_failed.")' \
+    >/dev/null <<<"$output"
   assert_file_contains "$workdir/stderr" 'RuntimeError' \
     "Expected the unexpected input failure to be diagnosed on stderr."
 }

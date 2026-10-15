@@ -1,0 +1,1228 @@
+{
+  "basis": "Read-only analysis of the original complete frozen report and maintained case builders; no new timing probes. Category and payload size describe fixtures, not causal attribution.",
+  "failures": [
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.writer.lines-120-segments-139",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.168,
+          "max_ms": 24.139,
+          "median_ms": 22.472,
+          "min_ms": 22.018,
+          "p95_ms": 24.03
+        },
+        "candidate": {
+          "mad_ms": 0.688,
+          "max_ms": 31.724,
+          "median_ms": 25.047,
+          "min_ms": 23.054,
+          "p95_ms": 31.301
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.5749999999999993,
+        "p95_ms": 7.270999999999997
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 2500,
+      "fixture_metadata": {
+        "category": "python-writer",
+        "source": "codex guardian log line 3482: fixed pathlib writer, 120 lines, 18 semicolons, one escaped newline",
+        "pair": "danger.force_push_protected_branch",
+        "input_string_bytes": 2297,
+        "input_characters": 2297,
+        "physical_lines": 120,
+        "naive_segments": 139
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.remove_env_file",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.105,
+          "max_ms": 23.138,
+          "median_ms": 22.653,
+          "min_ms": 22.288,
+          "p95_ms": 23.136
+        },
+        "candidate": {
+          "mad_ms": 0.722,
+          "max_ms": 27.649,
+          "median_ms": 25.361,
+          "min_ms": 23.515,
+          "p95_ms": 26.727
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.708000000000002,
+        "p95_ms": 3.591000000000001
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 84,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: remove_env_file",
+        "pair": null,
+        "input_string_bytes": 7,
+        "input_characters": 7,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.remove_git_metadata",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.358,
+          "max_ms": 24.37,
+          "median_ms": 22.896,
+          "min_ms": 22.426,
+          "p95_ms": 24.128
+        },
+        "candidate": {
+          "mad_ms": 0.755,
+          "max_ms": 43.095,
+          "median_ms": 25.713,
+          "min_ms": 24.802,
+          "p95_ms": 38.161
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.817,
+        "p95_ms": 14.033000000000001
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 88,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: remove_git_metadata",
+        "pair": null,
+        "input_string_bytes": 11,
+        "input_characters": 11,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.force_push_protected_branch",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.18,
+          "max_ms": 24.3,
+          "median_ms": 22.928,
+          "min_ms": 22.505,
+          "p95_ms": 24.29
+        },
+        "candidate": {
+          "mad_ms": 0.793,
+          "max_ms": 27.061,
+          "median_ms": 25.255,
+          "min_ms": 23.951,
+          "p95_ms": 26.309
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.326999999999998,
+        "p95_ms": 2.019000000000002
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 105,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: force_push_protected_branch",
+        "pair": null,
+        "input_string_bytes": 28,
+        "input_characters": 28,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.forced_git_clean",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.216,
+          "max_ms": 24.313,
+          "median_ms": 22.804,
+          "min_ms": 22.409,
+          "p95_ms": 23.957
+        },
+        "candidate": {
+          "mad_ms": 0.749,
+          "max_ms": 27.766,
+          "median_ms": 25.942,
+          "min_ms": 23.799,
+          "p95_ms": 27.133
+        }
+      },
+      "delta_ms": {
+        "median_ms": 3.1380000000000017,
+        "p95_ms": 3.1759999999999984
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 90,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: forced_git_clean",
+        "pair": null,
+        "input_string_bytes": 13,
+        "input_characters": 13,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.recursive_world_writable",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.081,
+          "max_ms": 25.013,
+          "median_ms": 22.91,
+          "min_ms": 22.383,
+          "p95_ms": 23.316
+        },
+        "candidate": {
+          "mad_ms": 0.629,
+          "max_ms": 28.526,
+          "median_ms": 24.914,
+          "min_ms": 23.853,
+          "p95_ms": 27.332
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.0040000000000013,
+        "p95_ms": 4.016000000000002
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 94,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: recursive_world_writable",
+        "pair": null,
+        "input_string_bytes": 17,
+        "input_characters": 17,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "gemini.guard.danger.drop_table",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.158,
+          "max_ms": 24.762,
+          "median_ms": 23.231,
+          "min_ms": 22.901,
+          "p95_ms": 24.683
+        },
+        "candidate": {
+          "mad_ms": 0.399,
+          "max_ms": 35.073,
+          "median_ms": 24.805,
+          "min_ms": 24.032,
+          "p95_ms": 30.338
+        }
+      },
+      "delta_ms": {
+        "median_ms": 1.573999999999998,
+        "p95_ms": 5.655000000000001
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 108,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: drop_table",
+        "pair": null,
+        "input_string_bytes": 15,
+        "input_characters": 15,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "gemini.guard.danger.drop_database",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.163,
+          "max_ms": 24.635,
+          "median_ms": 23.422,
+          "min_ms": 22.95,
+          "p95_ms": 24.076
+        },
+        "candidate": {
+          "mad_ms": 0.545,
+          "max_ms": 33.447,
+          "median_ms": 25.108,
+          "min_ms": 24.078,
+          "p95_ms": 32.742
+        }
+      },
+      "delta_ms": {
+        "median_ms": 1.686,
+        "p95_ms": 8.665999999999997
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 111,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: drop_database",
+        "pair": null,
+        "input_string_bytes": 18,
+        "input_characters": 18,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "gemini.guard.danger.publish_package",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.175,
+          "max_ms": 24.301,
+          "median_ms": 23.123,
+          "min_ms": 22.8,
+          "p95_ms": 24.218
+        },
+        "candidate": {
+          "mad_ms": 0.132,
+          "max_ms": 39.926,
+          "median_ms": 24.054,
+          "min_ms": 23.758,
+          "p95_ms": 34.524
+        }
+      },
+      "delta_ms": {
+        "median_ms": 0.9309999999999974,
+        "p95_ms": 10.306000000000001
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 104,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: publish_package",
+        "pair": null,
+        "input_string_bytes": 11,
+        "input_characters": 11,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "gemini.guard.danger.writer-before",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.16,
+          "max_ms": 25.419,
+          "median_ms": 25.082,
+          "min_ms": 24.812,
+          "p95_ms": 25.412
+        },
+        "candidate": {
+          "mad_ms": 1.43,
+          "max_ms": 45.045,
+          "median_ms": 29.043,
+          "min_ms": 27.613,
+          "p95_ms": 41.285
+        }
+      },
+      "delta_ms": {
+        "median_ms": 3.9609999999999985,
+        "p95_ms": 15.872999999999998
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 2546,
+      "fixture_metadata": {
+        "category": "execution-adjacent-data",
+        "source": "synthetic adversarial control",
+        "pair": null,
+        "input_string_bytes": 2326,
+        "input_characters": 2326,
+        "physical_lines": 121,
+        "naive_segments": 140
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.patch.lines-330",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.383,
+          "max_ms": 21.7,
+          "median_ms": 19.017,
+          "min_ms": 18.442,
+          "p95_ms": 21.468
+        },
+        "candidate": {
+          "mad_ms": 4.564,
+          "max_ms": 50.706,
+          "median_ms": 24.111,
+          "min_ms": 19.411,
+          "p95_ms": 47.625
+        }
+      },
+      "delta_ms": {
+        "median_ms": 5.094000000000001,
+        "p95_ms": 26.157
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 6363,
+      "fixture_metadata": {
+        "category": "native-patch",
+        "source": "incident survey: sanitized 330 physical lines",
+        "pair": "danger.force_push_protected_branch",
+        "input_string_bytes": 5947,
+        "input_characters": 5947,
+        "physical_lines": 330,
+        "naive_segments": 330
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.patch.lines-124-segments-142",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.29,
+          "max_ms": 20.471,
+          "median_ms": 19.153,
+          "min_ms": 18.391,
+          "p95_ms": 20.057
+        },
+        "candidate": {
+          "mad_ms": 2.085,
+          "max_ms": 28.203,
+          "median_ms": 23.407,
+          "min_ms": 19.756,
+          "p95_ms": 27.419
+        }
+      },
+      "delta_ms": {
+        "median_ms": 4.254000000000001,
+        "p95_ms": 7.362000000000002
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 2611,
+      "fixture_metadata": {
+        "category": "native-patch",
+        "source": "codex guardian log line 3272: 124 lines plus 18 literal separators",
+        "pair": "danger.force_push_protected_branch",
+        "input_string_bytes": 2401,
+        "input_characters": 2401,
+        "physical_lines": 124,
+        "naive_segments": 142
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.survey.python-subprocess",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.161,
+          "max_ms": 21.241,
+          "median_ms": 20.024,
+          "min_ms": 19.523,
+          "p95_ms": 20.868
+        },
+        "candidate": {
+          "mad_ms": 2.525,
+          "max_ms": 31.372,
+          "median_ms": 23.358,
+          "min_ms": 20.646,
+          "p95_ms": 30.636
+        }
+      },
+      "delta_ms": {
+        "median_ms": 3.3339999999999996,
+        "p95_ms": 9.768
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 390,
+      "fixture_metadata": {
+        "category": "hook-survey",
+        "source": "sanitized Python guardian survey operation; exact original source schema unavailable",
+        "pair": "danger.force_push_protected_branch",
+        "input_string_bytes": 303,
+        "input_characters": 303,
+        "physical_lines": 8,
+        "naive_segments": 8
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.survey.analysis-source",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.081,
+          "max_ms": 19.28,
+          "median_ms": 18.501,
+          "min_ms": 18.164,
+          "p95_ms": 19.066
+        },
+        "candidate": {
+          "mad_ms": 3.379,
+          "max_ms": 36.013,
+          "median_ms": 24.004,
+          "min_ms": 19.629,
+          "p95_ms": 32.775
+        }
+      },
+      "delta_ms": {
+        "median_ms": 5.503,
+        "p95_ms": 13.709
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 247,
+      "fixture_metadata": {
+        "category": "survey-analysis",
+        "source": "sanitized survey analysis source body",
+        "pair": "danger.force_push_protected_branch",
+        "input_string_bytes": 86,
+        "input_characters": 86,
+        "physical_lines": 4,
+        "naive_segments": 5
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.danger.hard_reset",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.125,
+          "max_ms": 21.998,
+          "median_ms": 20.298,
+          "min_ms": 19.823,
+          "p95_ms": 20.998
+        },
+        "candidate": {
+          "mad_ms": 0.299,
+          "max_ms": 35.169,
+          "median_ms": 21.404,
+          "min_ms": 21.002,
+          "p95_ms": 34.52
+        }
+      },
+      "delta_ms": {
+        "median_ms": 1.1060000000000016,
+        "p95_ms": 13.522000000000002
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 96,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: hard_reset",
+        "pair": null,
+        "input_string_bytes": 16,
+        "input_characters": 16,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.danger.forced_git_clean",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.227,
+          "max_ms": 21.516,
+          "median_ms": 20.349,
+          "min_ms": 19.935,
+          "p95_ms": 21.343
+        },
+        "candidate": {
+          "mad_ms": 1.905,
+          "max_ms": 29.845,
+          "median_ms": 24.461,
+          "min_ms": 22.089,
+          "p95_ms": 28.092
+        }
+      },
+      "delta_ms": {
+        "median_ms": 4.111999999999998,
+        "p95_ms": 6.748999999999999
+      },
+      "met": false,
+      "phase": "warm-pair-1",
+      "payload_bytes": 93,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: forced_git_clean",
+        "pair": null,
+        "input_string_bytes": 13,
+        "input_characters": 13,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.failure",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.135,
+          "max_ms": 18.765,
+          "median_ms": 18.418,
+          "min_ms": 18.004,
+          "p95_ms": 18.735
+        },
+        "candidate": {
+          "mad_ms": 1.24,
+          "max_ms": 29.751,
+          "median_ms": 20.64,
+          "min_ms": 19.011,
+          "p95_ms": 24.616
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.2220000000000013,
+        "p95_ms": 5.881
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 15,
+      "fixture_metadata": {
+        "category": "existing-workload"
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.write.english-inflection",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.143,
+          "max_ms": 22.516,
+          "median_ms": 21.593,
+          "min_ms": 21.114,
+          "p95_ms": 22.263
+        },
+        "candidate": {
+          "mad_ms": 0.713,
+          "max_ms": 35.347,
+          "median_ms": 24.799,
+          "min_ms": 22.266,
+          "p95_ms": 28.096
+        }
+      },
+      "delta_ms": {
+        "median_ms": 3.2059999999999995,
+        "p95_ms": 5.832999999999998
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 145,
+      "fixture_metadata": {
+        "category": "native-write",
+        "source": "separate plan-authoring reproduction, excluded from original incident count",
+        "pair": "danger.truncate_table",
+        "input_string_bytes": 37,
+        "input_characters": 37,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "allow"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.remove_env_file",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.191,
+          "max_ms": 25.012,
+          "median_ms": 23.076,
+          "min_ms": 22.766,
+          "p95_ms": 24.237
+        },
+        "candidate": {
+          "mad_ms": 0.298,
+          "max_ms": 33.744,
+          "median_ms": 24.019,
+          "min_ms": 23.512,
+          "p95_ms": 32.002
+        }
+      },
+      "delta_ms": {
+        "median_ms": 0.9429999999999978,
+        "p95_ms": 7.765000000000004
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 84,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: remove_env_file",
+        "pair": null,
+        "input_string_bytes": 7,
+        "input_characters": 7,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.download_execute_sh",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.229,
+          "max_ms": 24.284,
+          "median_ms": 22.782,
+          "min_ms": 22.094,
+          "p95_ms": 23.589
+        },
+        "candidate": {
+          "mad_ms": 0.636,
+          "max_ms": 53.112,
+          "median_ms": 23.97,
+          "min_ms": 23.314,
+          "p95_ms": 38.964
+        }
+      },
+      "delta_ms": {
+        "median_ms": 1.1879999999999988,
+        "p95_ms": 15.375
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 123,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: download_execute_sh",
+        "pair": null,
+        "input_string_bytes": 46,
+        "input_characters": 46,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.upload_local_data",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.234,
+          "max_ms": 24.729,
+          "median_ms": 23.055,
+          "min_ms": 22.622,
+          "p95_ms": 24.437
+        },
+        "candidate": {
+          "mad_ms": 0.381,
+          "max_ms": 30.357,
+          "median_ms": 24.041,
+          "min_ms": 23.418,
+          "p95_ms": 30.091
+        }
+      },
+      "delta_ms": {
+        "median_ms": 0.9860000000000007,
+        "p95_ms": 5.654
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 122,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: upload_local_data",
+        "pair": null,
+        "input_string_bytes": 45,
+        "input_characters": 45,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.privileged_command",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.168,
+          "max_ms": 24.274,
+          "median_ms": 23.236,
+          "min_ms": 22.653,
+          "p95_ms": 23.901
+        },
+        "candidate": {
+          "mad_ms": 1.709,
+          "max_ms": 35.934,
+          "median_ms": 25.879,
+          "min_ms": 23.841,
+          "p95_ms": 35.708
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.6430000000000007,
+        "p95_ms": 11.806999999999999
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 84,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: privileged_command",
+        "pair": null,
+        "input_string_bytes": 7,
+        "input_characters": 7,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "copilot.guard.danger.unicode-normalization",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.127,
+          "max_ms": 23.813,
+          "median_ms": 23.121,
+          "min_ms": 22.866,
+          "p95_ms": 23.545
+        },
+        "candidate": {
+          "mad_ms": 1.575,
+          "max_ms": 30.237,
+          "median_ms": 26.107,
+          "min_ms": 24.229,
+          "p95_ms": 29.591
+        }
+      },
+      "delta_ms": {
+        "median_ms": 2.9860000000000007,
+        "p95_ms": 6.045999999999999
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 153,
+      "fixture_metadata": {
+        "category": "execution-control",
+        "source": "synthetic adversarial control; baseline gap retained explicitly",
+        "pair": null,
+        "input_string_bytes": 76,
+        "input_characters": 28,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "gemini.guard.danger.drop_database",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.13,
+          "max_ms": 25.781,
+          "median_ms": 24.936,
+          "min_ms": 24.529,
+          "p95_ms": 25.434
+        },
+        "candidate": {
+          "mad_ms": 0.537,
+          "max_ms": 35.981,
+          "median_ms": 24.761,
+          "min_ms": 24.216,
+          "p95_ms": 32.941
+        }
+      },
+      "delta_ms": {
+        "median_ms": -0.1750000000000007,
+        "p95_ms": 7.5070000000000014
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 111,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: drop_database",
+        "pair": null,
+        "input_string_bytes": 18,
+        "input_characters": 18,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    },
+    {
+      "allowance_ms": {
+        "median_ms": 2,
+        "p95_ms": 5
+      },
+      "case": "codex.guard.danger.forced_git_clean",
+      "conditions": {
+        "baseline": {
+          "mad_ms": 0.348,
+          "max_ms": 23.728,
+          "median_ms": 21.503,
+          "min_ms": 20.335,
+          "p95_ms": 22.369
+        },
+        "candidate": {
+          "mad_ms": 0.627,
+          "max_ms": 34.015,
+          "median_ms": 23.029,
+          "min_ms": 22.316,
+          "p95_ms": 31.244
+        }
+      },
+      "delta_ms": {
+        "median_ms": 1.5259999999999998,
+        "p95_ms": 8.875
+      },
+      "met": false,
+      "phase": "warm-pair-2",
+      "payload_bytes": 93,
+      "fixture_metadata": {
+        "category": "protection-control",
+        "source": "existing numeric policy rule: forced_git_clean",
+        "pair": null,
+        "input_string_bytes": 13,
+        "input_characters": 13,
+        "physical_lines": 1,
+        "naive_segments": 1
+      },
+      "repo": "clean",
+      "expected_decision": "deny"
+    }
+  ],
+  "pair_wide_shifts": [
+    {
+      "provider": "copilot",
+      "condition": "baseline",
+      "pair2_minus_pair1_median_range_ms": [
+        -2.021000000000001,
+        3.928000000000001
+      ],
+      "median_of_case_median_shifts_ms": 0.3520000000000003,
+      "pair2_minus_pair1_p95_range_ms": [
+        -5.116999999999997,
+        9.875
+      ]
+    },
+    {
+      "provider": "copilot",
+      "condition": "candidate",
+      "pair2_minus_pair1_median_range_ms": [
+        -1.3420000000000023,
+        2.253999999999998
+      ],
+      "median_of_case_median_shifts_ms": 0.0840000000000014,
+      "pair2_minus_pair1_p95_range_ms": [
+        -9.513000000000002,
+        10.867999999999999
+      ]
+    },
+    {
+      "provider": "gemini",
+      "condition": "baseline",
+      "pair2_minus_pair1_median_range_ms": [
+        -2.474,
+        2.3150000000000013
+      ],
+      "median_of_case_median_shifts_ms": 1.4979999999999993,
+      "pair2_minus_pair1_p95_range_ms": [
+        -8.386000000000003,
+        3.928999999999995
+      ]
+    },
+    {
+      "provider": "gemini",
+      "condition": "candidate",
+      "pair2_minus_pair1_median_range_ms": [
+        -2.3099999999999987,
+        0.49299999999999855
+      ],
+      "median_of_case_median_shifts_ms": 0.048500000000000654,
+      "pair2_minus_pair1_p95_range_ms": [
+        -12.918999999999997,
+        3.9289999999999985
+      ]
+    },
+    {
+      "provider": "codex",
+      "condition": "baseline",
+      "pair2_minus_pair1_median_range_ms": [
+        -1.0009999999999977,
+        1.6759999999999984
+      ],
+      "median_of_case_median_shifts_ms": 1.1315000000000008,
+      "pair2_minus_pair1_p95_range_ms": [
+        -3.442,
+        10.492
+      ]
+    },
+    {
+      "provider": "codex",
+      "condition": "candidate",
+      "pair2_minus_pair1_median_range_ms": [
+        -4.494,
+        1.596
+      ],
+      "median_of_case_median_shifts_ms": 0.04649999999999821,
+      "pair2_minus_pair1_p95_range_ms": [
+        -26.75,
+        4.309000000000001
+      ]
+    }
+  ],
+  "failed_fixture_families": [
+    {
+      "category": "python-writer",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        2500,
+        2500
+      ],
+      "cases": [
+        "copilot.guard.writer.lines-120-segments-139"
+      ]
+    },
+    {
+      "category": "protection-control",
+      "failed_comparisons": 16,
+      "distinct_cases": 13,
+      "payload_bytes_range": [
+        84,
+        123
+      ],
+      "cases": [
+        "codex.guard.danger.forced_git_clean",
+        "codex.guard.danger.hard_reset",
+        "copilot.guard.danger.download_execute_sh",
+        "copilot.guard.danger.force_push_protected_branch",
+        "copilot.guard.danger.forced_git_clean",
+        "copilot.guard.danger.privileged_command",
+        "copilot.guard.danger.recursive_world_writable",
+        "copilot.guard.danger.remove_env_file",
+        "copilot.guard.danger.remove_git_metadata",
+        "copilot.guard.danger.upload_local_data",
+        "gemini.guard.danger.drop_database",
+        "gemini.guard.danger.drop_table",
+        "gemini.guard.danger.publish_package"
+      ]
+    },
+    {
+      "category": "execution-adjacent-data",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        2546,
+        2546
+      ],
+      "cases": [
+        "gemini.guard.danger.writer-before"
+      ]
+    },
+    {
+      "category": "native-patch",
+      "failed_comparisons": 2,
+      "distinct_cases": 2,
+      "payload_bytes_range": [
+        2611,
+        6363
+      ],
+      "cases": [
+        "codex.guard.patch.lines-124-segments-142",
+        "codex.guard.patch.lines-330"
+      ]
+    },
+    {
+      "category": "hook-survey",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        390,
+        390
+      ],
+      "cases": [
+        "codex.guard.survey.python-subprocess"
+      ]
+    },
+    {
+      "category": "survey-analysis",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        247,
+        247
+      ],
+      "cases": [
+        "codex.guard.survey.analysis-source"
+      ]
+    },
+    {
+      "category": "existing-workload",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        15,
+        15
+      ],
+      "cases": [
+        "codex.guard.failure"
+      ]
+    },
+    {
+      "category": "native-write",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        145,
+        145
+      ],
+      "cases": [
+        "copilot.guard.write.english-inflection"
+      ]
+    },
+    {
+      "category": "execution-control",
+      "failed_comparisons": 1,
+      "distinct_cases": 1,
+      "payload_bytes_range": [
+        153,
+        153
+      ],
+      "cases": [
+        "copilot.guard.danger.unicode-normalization"
+      ]
+    }
+  ],
+  "interpretation": "Multiple warm failures and three cases failing both pairs reject acceptance. Most comparisons pass and all cold comparisons pass. Pair-wide and case MAD changes show variation; no environmental cause or specific runtime cause is established. No repeat or waiver."
+}

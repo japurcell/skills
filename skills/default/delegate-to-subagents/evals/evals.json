@@ -1,0 +1,23 @@
+{
+  "skill_name": "delegate-to-subagents",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Describe assignments only; do not dispatch agents. Two independent component tasks own disjoint source files but both will update docs/file-map.md and docs/known-issues.md. Define documentation ownership before dispatch and explain how both workers' verified findings reach the final documents.",
+      "expected_output": "Each shared document has one named integration owner or an explicit serialized dependency. Both workers retain evidence and the coordinator reconciles both sets of admitted findings before the final documentation pass.",
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Describe coordination only; do not dispatch agents. Two independent workers own separate source directories and separate area documentation. Neither touches a shared canonical document. Decide whether documentation work must be serialized or transferred to the coordinator.",
+      "expected_output": "Disjoint documentation remains worker-owned and parallel; the coordinator still performs the final session documentation pass.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Describe the immediate action only. A worker has verified a critical durable guidance error in a canonical document owned by another task. Several unrelated tasks are still running. Explain when and where the finding is recorded and how the owner learns about it.",
+      "expected_output": "The worker retains scoped evidence and promptly notifies the document owner rather than waiting for the final session pass or rewriting another owner's document.",
+      "files": []
+    }
+  ]
+}

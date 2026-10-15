@@ -25,7 +25,7 @@ create_fixture_repo() {
     "$repo/.copilot/hooks" \
     "$repo/.gemini/policies"
 
-  for script in install.sh file_io.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
+  for script in install.sh file_io.py trusted_hook_launch.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
     cp -p "$REPO_ROOT/scripts/$script" "$repo/scripts/$script"
   done
   mkdir -p "$repo/bin"
@@ -91,6 +91,7 @@ for target in targets():
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
 PY
+  PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
 }
 
 test_provider_refresh_preserves_retired_and_user_entries() {
@@ -113,6 +114,7 @@ for provider in ('copilot', 'gemini'):
         (root / f'.{provider}/hooks/scripts/{name}').unlink(missing_ok=True)
 PY
   printf '%s\n' '{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}' > "$repo/.gemini/global-settings.json"
+  PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
   mkdir -p "$home/.copilot/hooks" "$home/.gemini"
   cat > "$home/.copilot/hooks/hooks.json" <<'EOF'
 {"version":1,"userSetting":{"keep":true},"hooks":{"preToolUse":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/repository-state.py\"","powershell":"python \"$HOME/.copilot/hooks/scripts/repository-state.py\"","timeoutSec":17},{"type":"command","bash":"$HOME/.copilot/hooks/scripts/tool-guard.py"},{"type":"command","bash":"echo custom"}],"agentStop":[{"type":"command","bash":"python3 \"$HOME/.copilot/hooks/scripts/markdown-health.py\"","env":{"MARKDOWN_HEALTH_EVENT":"final"}},{"type":"command","bash":"echo unrelated"}]}}
@@ -337,6 +339,31 @@ test_fresh_generated_hooks_preflight_installs_without_bytecode() {
     echo "Expected fresh generated RTK outputs to be installed." >&2
     exit 1
   fi
+  python3 -I -S -B - "$repo" "$home" <<'PY'
+import json
+from pathlib import Path
+import subprocess
+import sys
+repo, home = (Path(value).resolve() for value in sys.argv[1:])
+for provider, path, config in (
+    ('codex', '.codex/hooks/hooks-diagnostics.py', '.codex/hooks.json'),
+    ('copilot', '.copilot/hooks/scripts/hooks-diagnostics.py', '.copilot/hooks/hooks.json'),
+    ('gemini', '.gemini/hooks/scripts/hooks-diagnostics.py', '.gemini/settings.json'),
+):
+    script = home / path
+    assert script.read_bytes() == (repo / path).read_bytes(), provider
+    assert script.stat().st_mode & 0o777 == 0o755, provider
+    before = (home / config).read_bytes()
+    result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script), '--doctor'], cwd=home, capture_output=True, timeout=5)
+    assert result.returncode == 0, (provider, result.stderr)
+    report = json.loads(result.stdout)
+    assert len(result.stdout) <= 16384, provider
+    assert report['provider'] == provider, provider
+    assert report['security']['outcome'] == 'not_scanned', provider
+    assert report['audit']['outcome'] == 'not_attempted', provider
+    assert report['repository']['health'] == 'not_collected', provider
+    assert (home / config).read_bytes() == before, provider
+PY
 }
 
 test_stale_generated_hooks_stop_before_destination_mutation() {
@@ -595,12 +622,12 @@ assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
 pre_tool = config["hooks"]["PreToolUse"]
 pre_commands = [hook["command"] for hook in pre_tool[0]["hooks"]]
-assert "python3 ~/.codex/hooks/scan-secrets.py" in pre_commands
-assert "python3 ~/.codex/hooks/tool-guard.py" in pre_commands
+assert any(command.endswith("/scan-secrets.py") and " -I -S -B " in command for command in pre_commands)
+assert any(command.endswith("/tool-guard.py") and " -I -S -B " in command for command in pre_commands)
 stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
-assert "python3 ~/.codex/hooks/scan-secrets.py" in stop_commands
-assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in pre_tool for hook in group["hooks"]) == 1
-assert sum(hook["command"] == "python3 ~/.codex/hooks/scan-secrets.py" for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
+assert any(command.endswith("/scan-secrets.py") and " -I -S -B " in command for command in stop_commands)
+assert sum(hook["command"].endswith("/scan-secrets.py") and " -I -S -B " in hook["command"] for group in pre_tool for hook in group["hooks"]) == 1
+assert sum(hook["command"].endswith("/scan-secrets.py") and " -I -S -B " in hook["command"] for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY
 }
 

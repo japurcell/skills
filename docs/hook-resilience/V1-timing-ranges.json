@@ -1,0 +1,248 @@
+{
+  "ranges": [
+    {
+      "phase": "warm-pair-1",
+      "provider": "copilot",
+      "cases": 52,
+      "failed": 11,
+      "median_delta_range_ms": [
+        1.3599999999999994,
+        4.041999999999998
+      ],
+      "p95_delta_range_ms": [
+        -2.003999999999998,
+        4.940999999999999
+      ]
+    },
+    {
+      "phase": "warm-pair-1",
+      "provider": "gemini",
+      "cases": 52,
+      "failed": 2,
+      "median_delta_range_ms": [
+        1.152000000000001,
+        2.1990000000000016
+      ],
+      "p95_delta_range_ms": [
+        -3.1769999999999996,
+        4.161000000000001
+      ]
+    },
+    {
+      "phase": "warm-pair-1",
+      "provider": "codex",
+      "cases": 52,
+      "failed": 6,
+      "median_delta_range_ms": [
+        -0.12099999999999866,
+        3.442
+      ],
+      "p95_delta_range_ms": [
+        -0.7619999999999969,
+        4.219000000000001
+      ]
+    },
+    {
+      "phase": "warm-pair-2",
+      "provider": "copilot",
+      "cases": 52,
+      "failed": 7,
+      "median_delta_range_ms": [
+        0.37700000000000244,
+        5.105
+      ],
+      "p95_delta_range_ms": [
+        -0.8350000000000009,
+        13.715000000000003
+      ]
+    },
+    {
+      "phase": "warm-pair-2",
+      "provider": "gemini",
+      "cases": 52,
+      "failed": 37,
+      "median_delta_range_ms": [
+        0.897000000000002,
+        3.8739999999999988
+      ],
+      "p95_delta_range_ms": [
+        1.1289999999999978,
+        12.967999999999996
+      ]
+    },
+    {
+      "phase": "warm-pair-2",
+      "provider": "codex",
+      "cases": 52,
+      "failed": 15,
+      "median_delta_range_ms": [
+        0.9100000000000001,
+        2.814
+      ],
+      "p95_delta_range_ms": [
+        0.6350000000000016,
+        5.866
+      ]
+    },
+    {
+      "phase": "cold",
+      "provider": "copilot",
+      "cases": 52,
+      "failed": 0,
+      "median_delta_range_ms": [
+        0.41900000000000404,
+        2.6939999999999955
+      ],
+      "p95_delta_range_ms": [
+        -15.117999999999995,
+        3.610999999999997
+      ]
+    },
+    {
+      "phase": "cold",
+      "provider": "gemini",
+      "cases": 52,
+      "failed": 9,
+      "median_delta_range_ms": [
+        0.7839999999999989,
+        2.8560000000000016
+      ],
+      "p95_delta_range_ms": [
+        -2.658999999999999,
+        16.334000000000003
+      ]
+    },
+    {
+      "phase": "cold",
+      "provider": "codex",
+      "cases": 52,
+      "failed": 2,
+      "median_delta_range_ms": [
+        0.4579999999999984,
+        2.3900000000000006
+      ],
+      "p95_delta_range_ms": [
+        -6.405999999999999,
+        13.007999999999996
+      ]
+    }
+  ],
+  "warm_repeated_in_both_pairs": [
+    {
+      "case": "copilot.guard.writer.chars-8787-segments-183",
+      "pairs": [
+        {
+          "phase": "warm-pair-1",
+          "delta_ms": {
+            "median_ms": 2.271000000000001,
+            "p95_ms": 2.3260000000000005
+          },
+          "baseline_mad_ms": 0.133,
+          "candidate_mad_ms": 0.186
+        },
+        {
+          "phase": "warm-pair-2",
+          "delta_ms": {
+            "median_ms": 2.0219999999999985,
+            "p95_ms": 13.715000000000003
+          },
+          "baseline_mad_ms": 0.144,
+          "candidate_mad_ms": 0.7
+        }
+      ]
+    },
+    {
+      "case": "gemini.guard.write.utf8-growth",
+      "pairs": [
+        {
+          "phase": "warm-pair-1",
+          "delta_ms": {
+            "median_ms": 2.1990000000000016,
+            "p95_ms": 2.065999999999999
+          },
+          "baseline_mad_ms": 0.114,
+          "candidate_mad_ms": 0.123
+        },
+        {
+          "phase": "warm-pair-2",
+          "delta_ms": {
+            "median_ms": 2.9250000000000007,
+            "p95_ms": 7.327000000000002
+          },
+          "baseline_mad_ms": 0.11,
+          "candidate_mad_ms": 0.985
+        }
+      ]
+    },
+    {
+      "case": "codex.guard.write.examples.md",
+      "pairs": [
+        {
+          "phase": "warm-pair-1",
+          "delta_ms": {
+            "median_ms": 3.2399999999999984,
+            "p95_ms": 3.7089999999999996
+          },
+          "baseline_mad_ms": 0.1,
+          "candidate_mad_ms": 0.712
+        },
+        {
+          "phase": "warm-pair-2",
+          "delta_ms": {
+            "median_ms": 2.0680000000000014,
+            "p95_ms": 2.7989999999999995
+          },
+          "baseline_mad_ms": 0.104,
+          "candidate_mad_ms": 0.694
+        }
+      ]
+    },
+    {
+      "case": "codex.guard.write.examples.test.py",
+      "pairs": [
+        {
+          "phase": "warm-pair-1",
+          "delta_ms": {
+            "median_ms": 2.7169999999999987,
+            "p95_ms": 3.8290000000000006
+          },
+          "baseline_mad_ms": 0.111,
+          "candidate_mad_ms": 0.988
+        },
+        {
+          "phase": "warm-pair-2",
+          "delta_ms": {
+            "median_ms": 2.1140000000000008,
+            "p95_ms": 2.9130000000000003
+          },
+          "baseline_mad_ms": 0.083,
+          "candidate_mad_ms": 0.627
+        }
+      ]
+    },
+    {
+      "case": "codex.guard.search.literal",
+      "pairs": [
+        {
+          "phase": "warm-pair-1",
+          "delta_ms": {
+            "median_ms": 3.0410000000000004,
+            "p95_ms": 3.495000000000001
+          },
+          "baseline_mad_ms": 0.104,
+          "candidate_mad_ms": 0.791
+        },
+        {
+          "phase": "warm-pair-2",
+          "delta_ms": {
+            "median_ms": 2.0340000000000025,
+            "p95_ms": 2.833000000000002
+          },
+          "baseline_mad_ms": 0.133,
+          "candidate_mad_ms": 0.662
+        }
+      ]
+    }
+  ],
+  "attribution": "No environmental cause established. Widespread warm failures plus five cases failing both pairs reject timing acceptance; no blanket or narrow repeat has run."
+}

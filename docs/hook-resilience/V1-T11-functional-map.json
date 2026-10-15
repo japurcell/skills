@@ -1,0 +1,1018 @@
+{
+  "candidate": "81fe28bbbbc9682ff6a417d3f5b563c948f8c943",
+  "counts": {
+    "passed_reused": 13,
+    "passed_T10_fresh": 31,
+    "passed_T11_fresh": 3,
+    "passed_current_portable_PowerShell": 1,
+    "native_Windows_unverified": 3
+  },
+  "original_failure_artifacts_preserved": true,
+  "source_identity_verified": true,
+  "unchanged_owning_paths": [
+    "scripts/install.sh",
+    "scripts/install.ps1",
+    "scripts/install-codex-hooks.py",
+    "scripts/install-provider-hooks.py",
+    "scripts/trusted_hook_launch.py",
+    "scripts/verify-hook-release.py",
+    "scripts/benchmark-high-rate-hooks.py",
+    "scripts/benchmark-tool-guard-resources.py",
+    "scripts/test-all.py",
+    "hooks/families/scan_secrets.py",
+    "hooks/families/tool_guard.py",
+    "scripts/test-scan-secrets-merge.py",
+    "scripts/test-codex-hooks-windows.ps1"
+  ],
+  "rows": [
+    {
+      "index": 1,
+      "command": "bash scripts/test-addy-install.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 1.280557,
+      "suite_path": "scripts/test-addy-install.sh",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 2,
+      "command": "bash scripts/test-cleanup-skill-workspaces.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 1.077179,
+      "suite_path": "scripts/test-cleanup-skill-workspaces.sh",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 3,
+      "command": "bash scripts/test-codex-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 6.213869,
+      "suite_path": "scripts/test-codex-hooks-startup.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-codex-hooks-startup.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 6.225,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-codex-hooks-startup.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 4,
+      "command": "bash scripts/test-codex-repository-okf.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 0.846281,
+      "suite_path": "scripts/test-codex-repository-okf.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-codex-repository-okf.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 0.79,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-codex-repository-okf.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 5,
+      "command": "bash scripts/test-codex-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 52.778416,
+      "suite_path": "scripts/test-codex-hooks-secrets-scanner.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-codex-hooks-secrets-scanner.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 52.133,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-codex-hooks-secrets-scanner.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 6,
+      "command": "bash scripts/test-gemini-hooks-auto-ingest.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 12.70728,
+      "suite_path": "scripts/test-gemini-hooks-auto-ingest.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-auto-ingest.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 12.942,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-auto-ingest.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 7,
+      "command": "bash scripts/test-gemini-hooks-observability.sh",
+      "original_process_status": "FAIL",
+      "original_seconds": 22.032705,
+      "suite_path": "scripts/test-gemini-hooks-observability.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-observability.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 32.034,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-observability.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 8,
+      "command": "bash scripts/test-gemini-hooks-okf-lint.sh",
+      "original_process_status": "FAIL",
+      "original_seconds": 1.003891,
+      "suite_path": "scripts/test-gemini-hooks-okf-lint.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-okf-lint.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 10.474,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-okf-lint.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 9,
+      "command": "bash scripts/test-gemini-hooks-rtk.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 4.881162,
+      "suite_path": "scripts/test-gemini-hooks-rtk.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-rtk.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 4.112,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-rtk.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 10,
+      "command": "bash scripts/test-gemini-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 67.897555,
+      "suite_path": "scripts/test-gemini-hooks-secrets-scanner.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-secrets-scanner.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 67.447,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-secrets-scanner.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 11,
+      "command": "bash scripts/test-gemini-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 0.324838,
+      "suite_path": "scripts/test-gemini-hooks-startup.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-startup.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 0.306,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-startup.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 12,
+      "command": "bash scripts/test-gemini-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 2.025271,
+      "suite_path": "scripts/test-gemini-hooks-tool-guard.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-gemini-hooks-tool-guard.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 1.897,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-gemini-hooks-tool-guard.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 13,
+      "command": "bash scripts/test-hooks-auto-ingest.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 1.29,
+      "suite_path": "scripts/test-hooks-auto-ingest.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-auto-ingest.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 1.26,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-auto-ingest.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 14,
+      "command": "bash scripts/test-hooks-observability.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 31.835845,
+      "suite_path": "scripts/test-hooks-observability.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-observability.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 32.612,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-observability.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 15,
+      "command": "bash scripts/test-hooks-okf-lint.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 14.487376,
+      "suite_path": "scripts/test-hooks-okf-lint.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-okf-lint.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 14.336,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-okf-lint.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 16,
+      "command": "bash scripts/test-hooks-rtk.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 5.367041,
+      "suite_path": "scripts/test-hooks-rtk.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-rtk.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 5.253,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-rtk.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 17,
+      "command": "bash scripts/test-hooks-secrets-scanner.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 73.62041,
+      "suite_path": "scripts/test-hooks-secrets-scanner.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-secrets-scanner.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 72.937,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-secrets-scanner.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 18,
+      "command": "bash scripts/test-hooks-startup.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 0.622455,
+      "suite_path": "scripts/test-hooks-startup.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-startup.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 0.649,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-startup.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 19,
+      "command": "bash scripts/test-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 1.833702,
+      "suite_path": "scripts/test-hooks-tool-guard.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-hooks-tool-guard.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 1.752,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hooks-tool-guard.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 20,
+      "command": "bash scripts/test-codex-hooks-tool-guard.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 7.335142,
+      "suite_path": "scripts/test-codex-hooks-tool-guard.sh",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "bash",
+          "scripts/test-codex-hooks-tool-guard.sh"
+        ],
+        "exit_code": 0,
+        "seconds": 4.122,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-codex-hooks-tool-guard.sh.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 21,
+      "command": "python3 scripts/test-codex-agents.py",
+      "original_process_status": "PASS",
+      "original_seconds": 1.35843,
+      "suite_path": "scripts/test-codex-agents.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 22,
+      "command": "python3 scripts/test-install-codex-hooks.py",
+      "original_process_status": "PASS",
+      "original_seconds": 0.180014,
+      "suite_path": "scripts/test-install-codex-hooks.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 23,
+      "command": "python3 scripts/test-probe-provider-hook-delivery.py",
+      "original_process_status": "PASS",
+      "original_seconds": 4.569001,
+      "suite_path": "scripts/test-probe-provider-hook-delivery.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 24,
+      "command": "python3 scripts/test-generate-hooks.py",
+      "original_process_status": "PASS",
+      "original_seconds": 18.943801,
+      "suite_path": "scripts/test-generate-hooks.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "exit_code": 0,
+        "seconds": 18.241,
+        "tests": 26,
+        "basis": "T10 retained generator.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 25,
+      "command": "python3 scripts/test-rtk-stable.py",
+      "original_process_status": "PASS",
+      "original_seconds": 9.187014,
+      "suite_path": "scripts/test-rtk-stable.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 26,
+      "command": "python3 scripts/test-security-banners.py",
+      "original_process_status": "PASS",
+      "original_seconds": 7.514725,
+      "suite_path": "scripts/test-security-banners.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-security-banners.py"
+        ],
+        "exit_code": 0,
+        "seconds": 6.335,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-security-banners.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 27,
+      "command": "python3 scripts/test-security-reporting.py",
+      "original_process_status": "PASS",
+      "original_seconds": 27.20447,
+      "suite_path": "scripts/test-security-reporting.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "exit_code": 0,
+        "seconds": 70.855,
+        "tests": 14,
+        "basis": "T10 retained reporting.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 28,
+      "command": "python3 scripts/test-hook-input-bounds.py",
+      "original_process_status": "PASS",
+      "original_seconds": 32.431235,
+      "suite_path": "scripts/test-hook-input-bounds.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "exit_code": 0,
+        "seconds": 49.964,
+        "tests": 17,
+        "basis": "T10 README terminal-only focused summary"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 29,
+      "command": "python3 scripts/test-hook-diagnostics.py",
+      "original_process_status": "PASS",
+      "original_seconds": 1.95799,
+      "suite_path": "scripts/test-hook-diagnostics.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-hook-diagnostics.py"
+        ],
+        "exit_code": 0,
+        "seconds": 1.872,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hook-diagnostics.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 30,
+      "command": "python3 scripts/test-hook-diagnostic-recovery.py",
+      "original_process_status": "PASS",
+      "original_seconds": 10.383582,
+      "suite_path": "scripts/test-hook-diagnostic-recovery.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-hook-diagnostic-recovery.py"
+        ],
+        "exit_code": 0,
+        "seconds": 29.271,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-hook-diagnostic-recovery.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 31,
+      "command": "python3 scripts/test-scan-secrets-merge.py",
+      "original_process_status": "FAIL",
+      "original_seconds": 201.178353,
+      "suite_path": "scripts/test-scan-secrets-merge.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 32,
+      "command": "python3 scripts/test-scan-secrets-stream-component.py",
+      "original_process_status": "PASS",
+      "original_seconds": 0.197819,
+      "suite_path": "scripts/test-scan-secrets-stream-component.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-scan-secrets-stream-component.py"
+        ],
+        "exit_code": 0,
+        "seconds": 0.171,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-scan-secrets-stream-component.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 33,
+      "command": "python3 scripts/test-scan-secrets-streaming.py",
+      "original_process_status": "PASS",
+      "original_seconds": 39.191187,
+      "suite_path": "scripts/test-scan-secrets-streaming.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-scan-secrets-streaming.py"
+        ],
+        "exit_code": 0,
+        "seconds": 38.391,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-scan-secrets-streaming.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 34,
+      "command": "python3 scripts/test-tool-guard-false-positives.py",
+      "original_process_status": "PASS",
+      "original_seconds": 3.866339,
+      "suite_path": "scripts/test-tool-guard-false-positives.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-tool-guard-false-positives.py"
+        ],
+        "exit_code": 0,
+        "seconds": 3.571,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-tool-guard-false-positives.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 35,
+      "command": "python3 scripts/test-tool-guard-native-data.py",
+      "original_process_status": "PASS",
+      "original_seconds": 12.229187,
+      "suite_path": "scripts/test-tool-guard-native-data.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-tool-guard-native-data.py"
+        ],
+        "exit_code": 0,
+        "seconds": 11.246,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-tool-guard-native-data.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 36,
+      "command": "python3 scripts/test-tool-guard-shell-data.py",
+      "original_process_status": "PASS",
+      "original_seconds": 27.418127,
+      "suite_path": "scripts/test-tool-guard-shell-data.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-tool-guard-shell-data.py"
+        ],
+        "exit_code": 0,
+        "seconds": 22.055,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-tool-guard-shell-data.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 37,
+      "command": "python3 scripts/test-tool-guard-limits.py",
+      "original_process_status": "PASS",
+      "original_seconds": 10.674699,
+      "suite_path": "scripts/test-tool-guard-limits.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "scripts/test-tool-guard-limits.py"
+        ],
+        "exit_code": 0,
+        "seconds": 8.69,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test-tool-guard-limits.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 38,
+      "command": "python3 scripts/test-benchmark-high-rate-hooks.py",
+      "original_process_status": "PASS",
+      "original_seconds": 15.772495,
+      "suite_path": "scripts/test-benchmark-high-rate-hooks.py",
+      "current_status": "passed_T11_fresh",
+      "evidence": [
+        "T11-evidence.md"
+      ],
+      "basis": "Fresh T11 maintained high-rate test result on identical integrated source.",
+      "current_result": {
+        "tests": 2,
+        "seconds": 15.468,
+        "exit_code": 0
+      }
+    },
+    {
+      "index": 39,
+      "command": "python3 scripts/test-verify-hook-release.py",
+      "original_process_status": "PASS",
+      "original_seconds": 2.05301,
+      "suite_path": "scripts/test-verify-hook-release.py",
+      "current_status": "passed_T11_fresh",
+      "evidence": [
+        "T11-evidence.md"
+      ],
+      "basis": "Integrated adapter/tests byte-identical to tested19518f2; deterministic/public CLI adjacency, failure retention, counts, statistics and native resource mechanics pass.",
+      "current_result": {
+        "tests": 15,
+        "seconds": 2.818,
+        "exit_code": 0
+      }
+    },
+    {
+      "index": 40,
+      "command": "pwsh -NoProfile -File scripts/test-install.ps1",
+      "original_process_status": "PASS",
+      "original_seconds": 80.995324,
+      "suite_path": "scripts/test-install.ps1",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 41,
+      "command": "pwsh -NoProfile -File scripts/test-codex-hooks-windows.ps1",
+      "original_process_status": "FAIL",
+      "original_seconds": 0.978907,
+      "suite_path": "scripts/test-codex-hooks-windows.ps1",
+      "current_status": "passed_current_portable_PowerShell",
+      "current_result": {
+        "check": "portable-powershell",
+        "command": [
+          "pwsh",
+          "-NoProfile",
+          "-File",
+          "scripts/test-codex-hooks-windows.ps1"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.362077
+      },
+      "basis": "Fresh portable macOS PowerShell native-envelope check closes T10 input/report boundary gap; native Windows remains unverified."
+    },
+    {
+      "index": 42,
+      "command": "pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1",
+      "original_process_status": "PASS",
+      "original_seconds": 0.250557,
+      "suite_path": "scripts/test-scan-secrets-windows.ps1",
+      "current_status": "native_Windows_unverified",
+      "basis": "Original suite explicitly skipped on macOS. Not rerun to manufacture platform acceptance."
+    },
+    {
+      "index": 43,
+      "command": "pwsh -NoProfile -File scripts/test-repository-okf-windows.ps1",
+      "original_process_status": "PASS",
+      "original_seconds": 0.232618,
+      "suite_path": "scripts/test-repository-okf-windows.ps1",
+      "current_status": "native_Windows_unverified",
+      "basis": "Original suite explicitly skipped on macOS. Not rerun to manufacture platform acceptance."
+    },
+    {
+      "index": 44,
+      "command": "pwsh -NoProfile -File scripts/test-lifecycle-messages-windows.ps1",
+      "original_process_status": "PASS",
+      "original_seconds": 0.218495,
+      "suite_path": "scripts/test-lifecycle-messages-windows.ps1",
+      "current_status": "native_Windows_unverified",
+      "basis": "Original suite explicitly skipped on macOS. Not rerun to manufacture platform acceptance."
+    },
+    {
+      "index": 45,
+      "command": "bash scripts/test-install.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 32.077871,
+      "suite_path": "scripts/test-install.sh",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 46,
+      "command": "bash scripts/test-okf-lint.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 11.899479,
+      "suite_path": "scripts/test-okf-lint.sh",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 47,
+      "command": "bash scripts/test-repo-root.sh",
+      "original_process_status": "PASS",
+      "original_seconds": 0.073035,
+      "suite_path": "scripts/test-repo-root.sh",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 48,
+      "command": "python3 scripts/test_helpers.py",
+      "original_process_status": "FAIL",
+      "original_seconds": 0.559715,
+      "suite_path": "scripts/test_helpers.py",
+      "current_status": "passed_T10_fresh",
+      "current_result": {
+        "command": [
+          "python3",
+          "-W",
+          "error",
+          "scripts/test_helpers.py"
+        ],
+        "exit_code": 0,
+        "seconds": 0.494,
+        "log": "<verification-temp>/hook-resilience-t10-tests/test_helpers.py.log"
+      },
+      "evidence": [
+        "T10-evidence.md",
+        "T10-evidence.tar.gz"
+      ],
+      "basis": "Runtime, owning suite and generated source remain byte-identical to T10 reviewed864bbda0 evidence. T11 changes only release warm scheduling and adapter tests; adapter/high-rate/registry rows carry fresh T11 results. No changed runtime-consumer interaction requires rerun."
+    },
+    {
+      "index": 49,
+      "command": "python3 skills/spec-to-tasks/evals/test_grade_benchmark.py",
+      "original_process_status": "PASS",
+      "original_seconds": 4.909653,
+      "suite_path": "skills/spec-to-tasks/evals/test_grade_benchmark.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 50,
+      "command": "python3 skills/prd-ralph-loop/evals/test_grade_benchmark.py",
+      "original_process_status": "PASS",
+      "original_seconds": 0.753821,
+      "suite_path": "skills/prd-ralph-loop/evals/test_grade_benchmark.py",
+      "current_status": "passed_reused",
+      "evidence": [
+        "V1-functional-map.json",
+        "T7-evidence.md",
+        "T8-evidence.md"
+      ],
+      "basis": "Suite and owning source are unchanged. New common transport/report boundaries are covered by31fresh T10 consumer suites; unchanged merge acquisition/policy and installer/merger logic retain their separate prior proof. Both actual current installers additionally verify assets,builds,user settings and idempotence."
+    },
+    {
+      "index": 51,
+      "command": "python3 scripts/test_test_all.py",
+      "original_process_status": "PASS",
+      "original_seconds": 10.736871,
+      "suite_path": "scripts/test_test_all.py",
+      "current_status": "passed_T11_fresh",
+      "evidence": [
+        "T11-evidence.md"
+      ],
+      "basis": "Fresh T11 registry14 checks on identical registry/source; this is maintained suite51, included in freshT11count.",
+      "current_result": {
+        "tests": 14,
+        "seconds": 11.068,
+        "exit_code": 0
+      }
+    }
+  ],
+  "not_a_fresh_all51_passing_aggregate": true,
+  "finite_resource_gate": "passed_reused_T10_unchanged_sources_and_interactions",
+  "latency_acceptance": "passed_T11_full_468_comparisons",
+  "V1_complete": true,
+  "original_failure_resolution": {
+    "environment_corrected": [
+      8,
+      48
+    ],
+    "T8_test_contract_repaired": [
+      31,
+      41
+    ],
+    "T9_fixture_repaired": [
+      7
+    ]
+  },
+  "prior_candidate": "1817d569b42008019ec66d3ac3469f7fd704308c",
+  "registry_focused_T11": {
+    "command": "rtk proxy python3 scripts/test_test_all.py",
+    "tests": 14,
+    "seconds": 11.068,
+    "exit_code": 0,
+    "within_51_suite_index": 51
+  },
+  "verification_complete_for_available_environment": true,
+  "limitations": [
+    "Native Windows suites remain three original explicit skips; no native Windows/ACL/junction acceptance.",
+    "Authenticated provider delivery remains unverified; no live-home installation.",
+    "Composed functional evidence; no new all-51 passing aggregate is claimed.",
+    "Historical full timing failures remain rejected and unchanged; the scheduling change does not explain their causal origin."
+  ],
+  "reviewed_runtime_source": "864bbda0cc59cc7ae44ee814d343765525562700",
+  "reviewed_adapter_source": "8f250431"
+}

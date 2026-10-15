@@ -1,0 +1,24 @@
+{
+  "command": [
+    "rtk",
+    "proxy",
+    "python3",
+    "scripts/verify-hook-release.py",
+    "--baseline-root",
+    "<verification-temp>/hook-resilience-v1-t10/baseline",
+    "--candidate-root",
+    "<verification-worktree>",
+    "--mode",
+    "resources",
+    "--output",
+    "<verification-temp>/hook-resilience-v1-t10/evidence/resources.json"
+  ],
+  "candidate": "1817d569b42008019ec66d3ac3469f7fd704308c",
+  "mode": "resources",
+  "case_filter": [],
+  "exit_code": 0,
+  "elapsed_seconds": 162.143778,
+  "progress_lines": 216,
+  "output": "<verification-temp>/hook-resilience-v1-t10/evidence/resources.json",
+  "raw_log": "<verification-temp>/hook-resilience-v1-t10/evidence/resources.raw.log"
+}
