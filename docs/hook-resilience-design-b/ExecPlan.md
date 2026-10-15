@@ -288,7 +288,7 @@ Real-home deployment is an owner-authorized action after source and isolated ins
 
 X0 is an optional independent source-exploration task authorized by the implementation workflow. It owns only `extraction-notes.md`, has no implementation prerequisites, and supplies source-linked guidance for T3 without changing its prerequisites or contract. D0 precedes T3 and all publication implementation. T1 and T2 can be independently completed before extraction; I1 integrates them. T3 precedes T4; I2 integrates both. T5 depends on D0/I2; T6 depends on T5; T7 depends on T5/T6; I3 integrates T5-T7. T8 depends on I3; I4 integrates the migrated runtime. T9 can begin after I1 and must include all later suites before V1. V1 depends on I4/T9; K1 follows all completed work. These prerequisites are not authorization to dispatch agents or execute the plan.
 
-One integrator owns `hooks/manifest.py`, `scripts/generate-hooks.py`, both platform installers, provider templates, `scripts/test-all.py`, and this plan. Serialize edits to those shared files and regenerate from combined canonical source. Generator tests compare whole-checkout state, so pause concurrent edits during them. Installer suites and performance measurements must not overlap tests that mutate shared fixtures. If future delegation is authorized, assign bounded tasks and exclusive evidence files; the integrator alone reconciles shared status and the final KB pass.
+One integrator owns `hooks/manifest.py`, `scripts/generate-hooks.py`, both platform installers, provider templates, `scripts/test-all.py`, and this plan. Serialize edits to those shared files and regenerate from combined canonical source. Generator tests compare whole-checkout state, so pause concurrent edits during them. Installer suites and performance measurements must not overlap tests that mutate shared fixtures. For the authorized delegation, assign bounded tasks and exclusive evidence files; the integrator alone reconciles shared status and the final KB pass.
 
 ## Concrete Steps
 
@@ -344,7 +344,7 @@ On native Windows also run `rtk proxy pwsh -NoProfile -File scripts/test-scan-se
 
 ## Validation and Acceptance
 
-Public seams are the standalone CLI process, generated provider JSON entrypoints, actual Git commit/push through installed dispatchers, fixture-preflight CLI, and real installer interfaces in disposable homes. Native host delivery is an additional external seam. Confirm these seams before writing tests; do not mistake this plan's proposed test list for user confirmation of tests not yet discussed.
+The user explicitly confirmed these seams on 2026-10-15. Public seams are the standalone CLI process, generated provider JSON entrypoints, actual Git commit/push through installed dispatchers, fixture-preflight CLI, and real installer interfaces in disposable homes. Native host delivery is an additional external seam. Confirm these seams before writing tests; do not mistake this plan's proposed test list for user confirmation of tests not yet discussed.
 
 Acceptance requires all of the following outcomes, with evidence tied to the integrated revision:
 
