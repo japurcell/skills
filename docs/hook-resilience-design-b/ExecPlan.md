@@ -249,7 +249,7 @@ T1 observed result: public cancellation controls reproduced a surviving separate
 
 ### Milestone 2: Deliver synchronous checkpoints and historical status
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 **T3a - One result engine with compatibility adapters.** Prerequisites: D0, T2 and X0. Extract the normal B2 engine/acquisition/shared matching-reporting code without forking the maintained policy. Preserve provider bootstrap, native JSON and legacy process-exit contracts through thin adapters. Make coverage completeness explicit and retain findings on incomplete inspection. Include every runtime source in deterministic build identity/diagnostics and generate provider-local helper copies. Update both platform installers' provider asset closure so existing installed recovery tests remain valid. Own shared manifest/generator/provider closure edits exclusively; the primary retains plan/KB/registry ownership. T1 utility source remains with its original implementer until explicit handoff, then adapt its copied candidate closure to the new provider assets. No standalone CLI or lifecycle activation belongs to this node.
