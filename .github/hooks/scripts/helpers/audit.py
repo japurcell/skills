@@ -74,6 +74,72 @@ def _append_line(path: str, sender: str, message: str) -> None:
         os.fsync(handle.fileno())
 
 
+RUNTIME_HOME = '.copilot'
+PASSIVE_MODE_ENVIRONMENT = 'AUDIT_PASSIVE_LOG_MODE'
+PASSIVE_SHADOW_ENVIRONMENT = 'AUDIT_PASSIVE_LOG_SHADOW_LOG'
+SHADOW_ONLY = False
+SHADOW_MODE_PREFIX = True
+
+
+def _passive_shadow_path(log_path: str) -> str | None:
+    mode = os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+    enabled = mode == "shadow" if SHADOW_ONLY else mode != "default"
+    return os.environ.get(PASSIVE_SHADOW_ENVIRONMENT, f"{log_path}.shadow") if enabled else None
+
+
+def best_effort_audit_event(sender: str, message: str) -> None:
+    try:
+        audit_log_event(sender, message)
+    except Exception:
+        pass
+
+
+def _write_log(
+    sender: str,
+    message: str,
+    passive_shadow_path: str | None = None,
+    passive_shadow_mode: str | None = None,
+) -> bool:
+    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
+    lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
+    timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
+    max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
+    backups = _int_env(os.environ.get("AUDIT_LOG_MAX_BACKUPS"), 3)
+
+    try:
+        lock_fd = _acquire_lock(lock_path, timeout_seconds)
+    except OSError:
+        return False
+    if lock_fd is None:
+        return False
+
+    safe_sender = sanitize_log_field(sender)
+    safe_message = sanitize_log_field(message)
+
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        _rotate_audit_log(log_path, max_bytes, backups)
+        _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
+        if passive_shadow_path:
+            _rotate_audit_log(passive_shadow_path, max_bytes, backups)
+            shadow_message = f"[{timestamp}] {safe_message}"
+            if SHADOW_MODE_PREFIX:
+                shadow_mode = passive_shadow_mode or os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+                shadow_message = f"[mode={shadow_mode}] {shadow_message}"
+            _append_line(passive_shadow_path, safe_sender, shadow_message)
+    except OSError:
+        return False
+    finally:
+        try:
+            if fcntl is not None:
+                fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        finally:
+            os.close(lock_fd)
+
+    return True
+
+
+
 def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -> None:
     try:
         if not Path(log_path).exists() or Path(log_path).stat().st_size < max_bytes:
@@ -106,52 +172,9 @@ def _rotate_audit_log(log_path: str, max_bytes: int, backups: int) -> None:
         return
 
 
-def _write_log(
-    sender: str,
-    message: str,
-    passive_shadow_path: str | None = None,
-    passive_shadow_mode: str | None = None,
-) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    lock_path = os.environ.get("AUDIT_LOCK", f"{log_path}.lock")
-    timeout_seconds = _lock_timeout_seconds(os.environ.get("AUDIT_LOCK_WAIT_MS"))
-    max_bytes = _int_env(os.environ.get("AUDIT_LOG_MAX_BYTES"), 1048576)
-    backups = _int_env(os.environ.get("AUDIT_LOG_MAX_BACKUPS"), 3)
-
-    try:
-        lock_fd = _acquire_lock(lock_path, timeout_seconds)
-    except OSError:
-        return False
-    if lock_fd is None:
-        return False
-
-    safe_sender = sanitize_log_field(sender)
-    safe_message = sanitize_log_field(message)
-
-    try:
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        _rotate_audit_log(log_path, max_bytes, backups)
-        _append_line(log_path, safe_sender, f"[{timestamp}] {safe_message}")
-        if passive_shadow_path:
-            shadow_mode = passive_shadow_mode or os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
-            _rotate_audit_log(passive_shadow_path, max_bytes, backups)
-            _append_line(passive_shadow_path, safe_sender, f"[mode={shadow_mode}] [{timestamp}] {safe_message}")
-    except OSError:
-        return False
-    finally:
-        try:
-            if fcntl is not None:
-                fcntl.flock(lock_fd, fcntl.LOCK_UN)
-        finally:
-            os.close(lock_fd)
-
-    return True
-
-
 def audit_log_event(sender: str, message: str) -> bool:
-    log_path = os.environ.get("AUDIT_LOG", str(Path.home() / ".copilot" / "hooks" / "audit.log"))
-    mode = os.environ.get("AUDIT_PASSIVE_LOG_MODE", "default")
-    shadow_path = None
-    if mode != "default":
-        shadow_path = os.environ.get("AUDIT_PASSIVE_LOG_SHADOW_LOG", f"{log_path}.shadow")
-    return _write_log(sender, message, shadow_path, mode)
+    if SHADOW_MODE_PREFIX:
+        log_path = os.environ.get("AUDIT_LOG", str(Path.home() / RUNTIME_HOME / "hooks" / "audit.log"))
+        mode = os.environ.get(PASSIVE_MODE_ENVIRONMENT, "default")
+        return _write_log(sender, message, _passive_shadow_path(log_path), mode)
+    return _write_log(sender, message)

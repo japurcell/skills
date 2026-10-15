@@ -8,9 +8,10 @@ import argparse
 import json
 import os
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
+
+from file_io import atomic_write_bytes
 
 
 MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py")
@@ -135,34 +136,15 @@ def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str,
 
 def atomic_write(path: Path, content: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
-    )
-    temporary_path = Path(temporary_name)
+    atomic_write_bytes(path, content, suffix=".tmp", mode=0o600)
     try:
-        if hasattr(os, "fchmod"):
-            os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "wb") as handle:
-            descriptor = -1
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
-        try:
-            directory_descriptor = os.open(path.parent, os.O_RDONLY)
-        except OSError:
-            return
-        try:
-            os.fsync(directory_descriptor)
-        finally:
-            os.close(directory_descriptor)
+        directory_descriptor = os.open(path.parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(directory_descriptor)
     finally:
-        if descriptor != -1:
-            os.close(descriptor)
-        try:
-            temporary_path.unlink()
-        except FileNotFoundError:
-            pass
+        os.close(directory_descriptor)
 
 
 def main() -> int:

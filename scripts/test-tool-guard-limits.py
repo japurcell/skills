@@ -3,44 +3,34 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 import shlex
-import subprocess
-import sys
-import tempfile
 import unittest
 
+from tool_guard_corpus import PROVIDERS
+from tool_guard_test_support import invoke_guard, native_decision
+
 ROOT = Path(__file__).resolve().parent.parent
-PROVIDERS = ('copilot', 'gemini', 'codex')
 SHELL_TOOLS = {'copilot': 'bash', 'gemini': 'run_shell_command', 'codex': 'Bash'}
 
 
 class ResourceLimitTests(unittest.TestCase):
     def invoke(self, provider: str, tool: str, value: object, *, mode: str = 'block', allowlist: bool = False) -> dict:
-        script = ROOT / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
         payload = {'toolName': tool, 'toolArgs': value} if provider == 'copilot' else {'tool_name': tool, 'tool_input': value}
         payload['hook_event_name'] = 'BeforeTool' if provider == 'gemini' else 'PreToolUse'
-        with tempfile.TemporaryDirectory() as temporary:
-            env = {**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(Path(temporary) / 'log')}
-            env.pop('SKIP_TOOL_GUARD', None)
-            env.pop('TOOL_GUARD_ALLOWLIST', None)
-            if allowlist:
-                exact = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, separators=(',', ':'))
-                # A rejected >8192 entry would not prove allowlist precedence.
-                self.assertLessEqual(len(exact), 8192)
-                self.assertFalse(any(ord(char) < 32 for char in exact))
-                env['TOOL_GUARD_ALLOWLIST'] = json.dumps([{'tool': tool, 'input': exact}])
-            result = subprocess.run([sys.executable, '-I', '-S', '-B', str(script)], input=json.dumps(payload),
-                                    text=True, capture_output=True, env=env, timeout=5)
+        encoded_allowlist = None
+        if allowlist:
+            exact = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+            # A rejected >8192 entry would not prove allowlist precedence.
+            self.assertLessEqual(len(exact), 8192)
+            self.assertFalse(any(ord(char) < 32 for char in exact))
+            encoded_allowlist = json.dumps([{'tool': tool, 'input': exact}])
+        result = invoke_guard(ROOT, provider, json.dumps(payload), mode=mode, allowlist=encoded_allowlist)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
 
     def assert_decision(self, response: dict, expected: str) -> None:
-        decision = (response.get('permissionDecision') or response.get('decision')
-                    or response.get('hookSpecificOutput', {}).get('permissionDecision')
-                    or ('allow' if response == {} else None))
-        self.assertEqual(decision, expected, response)
+        self.assertEqual(native_decision(response), expected, response)
         if expected == 'allow':
             self.assertNotIn('systemMessage', response)
 

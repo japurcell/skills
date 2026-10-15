@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import sys
@@ -16,8 +15,9 @@ CHECKOUT_ROOT = SCRIPT_DIR.parents[2]
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.common import convert_windows_path_to_posix, emit_json, first_present, read_json_input, run_command, stringify_value
+from helpers.common import convert_windows_path_to_posix, emit_json, first_present, read_json_input, stringify_value
 from helpers.okf_audit import record as audit_record
+from helpers.okf import diagnostic_line, is_diagnostic, response_size, rerun_command, run_linter_process, sorted_diagnostics
 
 
 MAX_DISPLAY_DIAGNOSTICS = 20
@@ -75,20 +75,7 @@ def _clean_response(event_name: str) -> dict[str, str]:
 
 
 def _is_diagnostic(value: object) -> bool:
-    if not isinstance(value, Mapping) or set(value) != {"id", "path", "line", "column", "message"}:
-        return False
-    return (
-        isinstance(value["id"], str)
-        and DIAGNOSTIC_ID_RE.fullmatch(value["id"]) is not None
-        and isinstance(value["path"], str)
-        and bool(value["path"])
-        and type(value["line"]) is int
-        and value["line"] >= 1
-        and type(value["column"]) is int
-        and value["column"] >= 1
-        and isinstance(value["message"], str)
-        and bool(value["message"])
-    )
+    return is_diagnostic(value, DIAGNOSTIC_ID_RE)
 
 
 def _diagnostics_from_report(report: object) -> list[dict[str, Any]]:
@@ -99,21 +86,15 @@ def _diagnostics_from_report(report: object) -> list[dict[str, Any]]:
     diagnostics = report["diagnostics"]
     if not all(_is_diagnostic(item) for item in diagnostics):
         raise ValueError("invalid linter diagnostic")
-    return sorted(
-        (dict(item) for item in diagnostics),
-        key=lambda item: (item["path"], item["line"], item["column"], item["id"]),
-    )
+    return sorted_diagnostics([dict(item) for item in diagnostics])
 
 
 def _rerun_command() -> str:
-    platform = os.environ.get("OKF_LINT_TEST_PLATFORM")
-    if platform == "windows" or (platform is None and os.name == "nt"):
-        return "python scripts/lint-okf.py"
-    return "./scripts/lint-okf.py"
+    return rerun_command()
 
 
 def _response_size(event_name: str, reason: str) -> int:
-    return len(json.dumps(_response(event_name, reason), ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    return response_size(_response(event_name, reason))
 
 
 def _omitted_diagnostics_line(omitted: int) -> str:
@@ -122,7 +103,7 @@ def _omitted_diagnostics_line(omitted: int) -> str:
 
 def _format_diagnostics(event_name: str, diagnostics: list[dict[str, Any]]) -> str:
     rendered = [
-        f"{item['path']}:{item['line']}:{item['column']}: {item['id']} {item['message']}"
+        diagnostic_line(item)
         for item in diagnostics[:MAX_DISPLAY_DIAGNOSTICS]
     ]
     for displayed in range(len(rendered), -1, -1):
@@ -151,12 +132,7 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
     linter = repo_root / "scripts" / "lint-okf.py"
     if not linter.is_file():
         raise ValueError("missing scripts/lint-okf.py")
-    result = run_command(
-        [sys.executable, str(linter), "--format", "json"],
-        cwd=str(repo_root),
-        capture_output=True,
-        timeout=8,
-    )
+    result = run_linter_process(repo_root)
     diagnostics = _diagnostics_from_report(json.loads(result.stdout))
     if result.returncode == 0:
         if diagnostics:
@@ -172,8 +148,7 @@ def _run_linter(repo_root: Path) -> list[dict[str, Any]]:
 
 
 def _emit_response(event_name: str, response: dict[str, str], omitted_diagnostics: int = 0) -> None:
-    encoded = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    if len(encoded) >= MAX_HOOK_OUTPUT_BYTES:
+    if response_size(response) >= MAX_HOOK_OUTPUT_BYTES:
         reason = "\n".join(
             (
                 "OKF validation failed. Diagnostics were truncated.",

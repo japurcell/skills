@@ -14,7 +14,7 @@ This workflow authorizes and requires the orchestrator to select and explicitly 
 For each routing attempt:
 
 1. Collect explicit model or effort constraints already stated by the user.
-2. Pass those constraints to `subagent-model-router`; use `none` when absent.
+2. Activate the `subagent-model-router` skill with those constraints; use `none` when absent.
 3. Let the router select and validate the exact model-and-effort configuration.
 4. Do not use configured, inherited, or runtime defaults unless the user explicitly requested them.
 
@@ -78,13 +78,15 @@ Use `none` or `not applicable` where appropriate. Do not dispatch with an unreso
 
 Run independent subtasks in parallel when beneficial. Run dependent subtasks in dependency-aware waves. Serialize changes to shared files.
 
+Before dispatch, give each shared canonical document (maps, indexes, known issues) one integration owner or an explicit serial dependency, even with disjoint source ownership. Workers retain scoped evidence, promptly notify that owner of durable findings, including critical guidance, and keep ownership of their exclusive area docs. The coordinator reconciles admitted claims and runs the final documentation pass after all tasks finish.
+
 If essential task information is missing, ask only for that information. Do not ask for model preferences as a substitute for routing.
 
 ### 2. Route
 
 Route before any model-selection confirmation.
 
-Run `subagent-model-router` for each materially different subtask using:
+Activate the `subagent-model-router` skill for each materially different subtask using:
 
 - objective
 - stakes and security sensitivity

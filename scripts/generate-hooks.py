@@ -18,9 +18,10 @@ import os
 from pathlib import Path, PurePosixPath
 import stat
 import sys
-import tempfile
 import time
 from typing import Sequence
+
+from file_io import stage_bytes
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -232,13 +233,8 @@ def _create_lock(repo_root: Path) -> Path:
 
 
 def _stage(path: Path, content: bytes, mode: int) -> Path:
-    descriptor, temporary_name = tempfile.mkstemp(prefix=".generate-hooks-stage-", dir=path.parent)
-    temporary = Path(temporary_name)
+    temporary = stage_bytes(path, content, prefix=".generate-hooks-stage-")
     try:
-        with os.fdopen(descriptor, "wb") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
         os.chmod(temporary, mode)
         return temporary
     except BaseException:

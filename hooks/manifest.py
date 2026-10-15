@@ -17,7 +17,7 @@ class GeneratedTarget:
 
 
 def targets() -> tuple[GeneratedTarget, ...]:
-    """Return the Phase 1 targets implemented by the current milestone."""
+    """Return the explicit provider-local generated ownership inventory."""
     return (
         GeneratedTarget("send_event", "copilot", PurePosixPath(".copilot/hooks/scripts/send-event.py")),
         GeneratedTarget("send_event", "gemini", PurePosixPath(".gemini/hooks/scripts/send-event.py")),
@@ -29,6 +29,12 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("audit", "codex", PurePosixPath(".codex/hooks/helpers/audit.py")),
         GeneratedTarget("audit", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/audit.py")),
         GeneratedTarget("audit", "github", PurePosixPath(".github/hooks/scripts/helpers/audit.py")),
+        GeneratedTarget("okf", "github", PurePosixPath(".github/hooks/scripts/helpers/okf_audit.py")),
+        GeneratedTarget("okf", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/okf_audit.py")),
+        GeneratedTarget("okf", "codex", PurePosixPath(".codex/hooks/helpers/okf_audit.py")),
+        GeneratedTarget("okf", "github", PurePosixPath(".github/hooks/scripts/helpers/okf.py")),
+        GeneratedTarget("okf", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/okf.py")),
+        GeneratedTarget("okf", "codex", PurePosixPath(".codex/hooks/helpers/okf.py")),
         GeneratedTarget("observability", "copilot", PurePosixPath(".copilot/hooks/scripts/helpers/observability.py")),
         GeneratedTarget("observability", "gemini", PurePosixPath(".gemini/hooks/scripts/helpers/observability.py")),
         GeneratedTarget("tool_guard", "copilot", PurePosixPath(".copilot/hooks/scripts/tool-guard.py")),

@@ -3,6 +3,7 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+clear_observability_test_overrides
 
 setup_hook_observability_test_state
 
@@ -73,7 +74,7 @@ test_before_agent_default_mode_returns_caveman_only_context() {
   local expected_context
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
 
@@ -102,7 +103,7 @@ test_before_agent_default_mode_returns_caveman_only_context() {
 test_session_start_shows_short_success() {
   local workdir skills_dir output
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
   output="$(AUDIT_LOG="$workdir/audit.log" AGENTS_REQUIRED_SKILL_FILES="caveman/SKILL.md" run_skill_context_injector "$skills_dir" '{"session_id":"startup","hook_event_name":"SessionStart","cwd":"/repo"}')"
@@ -118,7 +119,7 @@ test_compact_mode_override_still_returns_caveman_only_context() {
   local context
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
 
@@ -149,7 +150,7 @@ test_missing_required_skill_file_fails_explicitly() {
   local missing_path
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
   missing_path="$skills_dir/caveman/SKILL.md"
@@ -177,7 +178,7 @@ test_multiple_skills_loading_works_correctly() {
   local expected_context
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
 
@@ -211,7 +212,7 @@ test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output() {
   local skills_dir
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   skills_dir="$workdir/skills"
   write_required_skill_fixtures "$skills_dir"
 
@@ -243,4 +244,14 @@ main() {
   test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output
 }
 
-main "$@"
+STARTUP_SUITE_WORKDIR="$(setup_test_workdir)"
+STARTUP_SUITE_HOME="$(test_home_for_workdir "$STARTUP_SUITE_WORKDIR")"
+
+cleanup_startup_suite_home() {
+  local workdir="${STARTUP_SUITE_WORKDIR:-}"
+  cleanup_test_workdir
+}
+
+trap cleanup_startup_suite_home EXIT
+export USERPROFILE="$STARTUP_SUITE_HOME"
+with_hook_test_environment "$STARTUP_SUITE_HOME" -- main "$@"

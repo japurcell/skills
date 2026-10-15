@@ -18,8 +18,9 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.common import convert_windows_path_to_posix, emit_json, read_json_input, run_command  # noqa: E402
+from helpers.common import convert_windows_path_to_posix, emit_json, read_json_input  # noqa: E402
 from helpers.okf_audit import record as audit_record
+from helpers.okf import diagnostic_line, is_diagnostic, one_line as _one_line, response_size, rerun_command, run_linter_process, sorted_diagnostics
 
 
 MAX_PROVIDER_JSON_BYTES = 8_192
@@ -61,28 +62,10 @@ def _validated_diagnostics(value: object) -> list[dict[str, object]]:
     for item in diagnostics:
         if not isinstance(item, dict) or set(item) != {"id", "path", "line", "column", "message"}:
             raise LintFailure("linter JSON diagnostic must be an object")
-        identifier = item.get("id")
-        path = item.get("path")
-        line = item.get("line")
-        column = item.get("column")
-        message = item.get("message")
-        if (
-            not isinstance(identifier, str)
-            or DIAGNOSTIC_ID.fullmatch(identifier) is None
-            or not isinstance(path, str)
-            or not path
-            or isinstance(line, bool)
-            or not isinstance(line, int)
-            or line < 1
-            or isinstance(column, bool)
-            or not isinstance(column, int)
-            or column < 1
-            or not isinstance(message, str)
-            or not message
-        ):
+        if not is_diagnostic(item, DIAGNOSTIC_ID, mapping_type=dict, exact_integer_type=False):
             raise LintFailure("linter JSON contains an invalid diagnostic")
-        normalized.append({"id": identifier, "path": path, "line": line, "column": column, "message": message})
-    return sorted(normalized, key=lambda item: (str(item["path"]), int(item["line"]), int(item["column"]), str(item["id"])))
+        normalized.append(dict(item))
+    return sorted_diagnostics(normalized)
 
 
 def _run_linter(repository: Path) -> list[dict[str, object]]:
@@ -90,12 +73,7 @@ def _run_linter(repository: Path) -> list[dict[str, object]]:
     if not linter.is_file():
         raise LintFailure("scripts/lint-okf.py is unavailable")
     try:
-        result = run_command(
-            [sys.executable, str(linter), "--format", "json"],
-            cwd=str(repository),
-            capture_output=True,
-            timeout=8,
-        )
+        result = run_linter_process(repository)
     except subprocess.TimeoutExpired as error:
         raise LintFailure("scripts/lint-okf.py timed out after 8 seconds") from error
     except OSError as error:
@@ -118,12 +96,7 @@ def _run_linter(repository: Path) -> list[dict[str, object]]:
 
 
 def _rerun_command() -> str:
-    platform = os.environ.get("OKF_LINT_TEST_PLATFORM")
-    return "python scripts/lint-okf.py" if platform == "windows" or (platform is None and os.name == "nt") else "./scripts/lint-okf.py"
-
-
-def _one_line(value: str) -> str:
-    return " ".join(value.splitlines())
+    return rerun_command()
 
 
 def _bounded_text(value: str, limit: int) -> str:
@@ -135,17 +108,14 @@ def _bounded_text(value: str, limit: int) -> str:
 
 def _serialized_response_size(payload: Mapping[str, Any] | None, reason: str) -> int:
     response = _response_for_failure(payload, reason)
-    return len(json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+    return response_size(response)
 
 
 def _format_reason(payload: Mapping[str, Any], diagnostics: list[dict[str, object]]) -> str:
     header = f"OKF lint found {len(diagnostics)} diagnostic(s):"
     lines: list[str] = []
     for diagnostic in diagnostics[:MAX_DIAGNOSTICS]:
-        lines.append(
-            f"{_one_line(str(diagnostic['path']))}:{diagnostic['line']}:{diagnostic['column']}: "
-            f"{diagnostic['id']} {_one_line(str(diagnostic['message']))}"
-        )
+        lines.append(diagnostic_line(diagnostic, normalize_path=True, normalize_message=True))
 
     selected: list[str] = []
     for line in lines:
@@ -191,8 +161,7 @@ def _response_for_failure(payload: Mapping[str, Any] | None, reason: str) -> dic
 
 
 def _emit_response(payload: Mapping[str, Any] | None, response: dict[str, object]) -> None:
-    serialized = json.dumps(response, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    if len(serialized) >= MAX_PROVIDER_JSON_BYTES:
+    if response_size(response) >= MAX_PROVIDER_JSON_BYTES:
         reason = f"OKF900: response exceeded provider limit.\nRun: {_rerun_command()}"
         response = {"continue": True, "systemMessage": reason} if response.get("continue") is True else _response_for_failure(payload, reason)
     emit_json(response)

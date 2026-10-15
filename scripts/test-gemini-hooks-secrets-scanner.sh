@@ -3,89 +3,15 @@
 set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/security-test-support.sh"
+
+SECURITY_SCANNER_LOG_SUFFIX=""
+SECURITY_SCANNER_COMMAND=(python3 -I -S -B "$REPO_ROOT/.gemini/hooks/scripts/scan-secrets.py")
 
 setup_hook_observability_test_state
 
 run_gemini_scan_hook() {
-  local repo_dir="$1"
-  local log_dir="$2"
-  local mode="$3"
-  local scope="$4"
-  local payload="$5"
-  shift 5
-
-  local env_cmd=(
-    "SECRETS_LOG_DIR=$log_dir"
-    "SCAN_MODE=$mode"
-    "SCAN_SCOPE=$scope"
-  )
-
-  while [[ $# -gt 0 ]]; do
-    env_cmd+=("$1")
-    shift
-  done
-
-  (
-    cd "$repo_dir"
-    env "${env_cmd[@]}" \
-      python3 -I -S -B "$REPO_ROOT/.gemini/hooks/scripts/scan-secrets.py" <<<"$payload"
-  )
-}
-
-init_git_repo() {
-  local repo_dir="$1"
-
-  git -C "$repo_dir" init -q
-  git -C "$repo_dir" config user.email "copilot@example.com"
-  git -C "$repo_dir" config user.name "Copilot Test"
-  git -C "$repo_dir" config commit.gpgsign false
-}
-
-assert_json_output() {
-  local output="$1"
-  local message="$2"
-
-  if ! jq -e 'type == "object"' >/dev/null 2>&1 <<<"$output"; then
-    echo "$message" >&2
-    echo "Actual output: $output" >&2
-    exit 1
-  fi
-}
-
-assert_incomplete_warning() {
-  local output="$1"
-  jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' \
-    >/dev/null <<<"$output"
-}
-
-create_stalling_git() {
-  local fake_bin="$1"
-
-  mkdir -p "$fake_bin"
-  cat > "$fake_bin/git" <<'EOF'
-#!/usr/bin/env bash
-
-case "$1 ${2-}" in
-  "rev-parse --show-toplevel")
-    exit 1
-    ;;
-  "rev-parse --is-inside-work-tree")
-    sleep 10
-    exit 0
-    ;;
-esac
-
-exit 1
-EOF
-  cat > "$fake_bin/git.cmd" <<'EOF'
-@echo off
-if "%1 %2"=="rev-parse --is-inside-work-tree" (
-  timeout /t 10 /nobreak >nul
-  exit /b 0
-)
-exit /b 1
-EOF
-  chmod 755 "$fake_bin/git"
+  security_run_scan "$@"
 }
 
 test_stalled_git_is_bounded_by_timeout() {
@@ -99,7 +25,7 @@ test_stalled_git_is_bounded_by_timeout() {
   local end_ns
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   fake_bin="$workdir/bin"
@@ -138,7 +64,7 @@ test_stalled_git_denies_in_block_mode() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   fake_bin="$workdir/bin"
@@ -176,7 +102,7 @@ test_failed_initial_git_probe_with_repo_marker_respects_fail_closed_mode() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -220,7 +146,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   fake_bin="$workdir/bin"
@@ -245,7 +171,7 @@ test_missing_git_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini missing-Git block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini missing-Git block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. git_unavailable/initialization: Git is unavailable. Check Git availability in the hook environment." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini missing-Git denial reason to remain stable."
 }
@@ -259,7 +185,7 @@ test_audit_init_failure_block_mode_uses_gemini_denial_envelope() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   occupied_parent="$workdir/not-a-directory"
@@ -284,7 +210,7 @@ test_audit_init_failure_block_mode_uses_gemini_denial_envelope() {
     "Expected Gemini audit-init block mode to return exit code 0."
   assert_equals "deny" "$(jq -r '.decision' <<<"$output")" \
     "Expected Gemini audit-init block mode to deny."
-  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked." \
+  assert_equals "scan-secrets blocked: scan; scan incomplete; potential secrets could not be checked. audit_unavailable/initialization: audit storage is unavailable. Check hook audit storage." \
     "$(jq -r '.reason' <<<"$output")" \
     "Expected Gemini audit-init denial reason to remain stable."
 }
@@ -296,7 +222,7 @@ test_warn_mode_reports_findings_with_json_output() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -338,23 +264,15 @@ test_high_match_input_has_bounded_denial_and_log() {
   local start_ns
   local end_ns
   local log_bytes
-  local index
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir" "$log_dir"
 
-  init_git_repo "$repo_dir"
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  : > "$repo_dir/burst.txt"
-  for ((index = 0; index < 10000; index++)); do
-    printf '%s ' "$fake_token" >> "$repo_dir/burst.txt"
-  done
-  printf '\n' >> "$repo_dir/burst.txt"
-  git -C "$repo_dir" add burst.txt
-  printf '%60000s\n' '' > "$log_dir/scan.log"
+  security_prepare_burst_scan "$repo_dir" "$fake_token" "$log_dir"
 
   start_ns="$(date +%s%N)"
   output="$(
@@ -408,7 +326,7 @@ test_unexpected_exception_block_mode_denies_with_json_and_exit_zero() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   errfile="$workdir/block.err"
@@ -455,7 +373,7 @@ test_unexpected_exception_warn_mode_warns_with_json_and_exit_zero() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   errfile="$workdir/warn.err"
@@ -498,7 +416,7 @@ test_env_variants_are_logged_but_not_flagged_by_path_alone() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -531,7 +449,7 @@ test_warn_mode_flags_sensitive_credential_paths_without_token_match() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -563,7 +481,7 @@ test_binary_credential_path_still_scans_ascii_tokens() {
   local fake_token
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir/.ssh"
@@ -598,24 +516,15 @@ test_unusual_filename_and_double_plus_added_line_are_scanned() {
   local log_dir
   local output
   local fake_token
-  local unusual_name
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
 
-  init_git_repo "$repo_dir"
-  printf 'baseline\n' > "$repo_dir/notes.txt"
-  git -C "$repo_dir" add notes.txt
-  git -C "$repo_dir" commit -qm "baseline"
-
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  unusual_name=$'odd\nname.env'
-  printf 'token=%s\n' "$fake_token" > "$repo_dir/$unusual_name"
-  printf '++token=%s\n' "$fake_token" >> "$repo_dir/notes.txt"
-
+  security_prepare_unusual_scan "$repo_dir" "$fake_token"
   output="$(
     run_gemini_scan_hook \
       "$repo_dir" \
@@ -638,23 +547,15 @@ test_committed_literal_pathspec_filename_is_scanned() {
   local log_dir
   local output
   local fake_token
-  local pathspec_name
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
 
-  init_git_repo "$repo_dir"
-  pathspec_name=':(literal)notes.txt'
-  printf 'baseline\n' > "$repo_dir/$pathspec_name"
-  git -C "$repo_dir" add -A
-  git -C "$repo_dir" commit -qm "baseline"
-
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  printf 'token=%s\n' "$fake_token" >> "$repo_dir/$pathspec_name"
-
+  security_prepare_literal_pathspec_scan "$repo_dir" "$fake_token"
   output="$(
     run_gemini_scan_hook \
       "$repo_dir" \
@@ -679,21 +580,13 @@ test_staged_scope_excludes_unrelated_untracked_files() {
   local fake_token
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
 
-  init_git_repo "$repo_dir"
-  printf 'baseline\n' > "$repo_dir/staged.txt"
-  git -C "$repo_dir" add staged.txt
-  git -C "$repo_dir" commit -qm "baseline"
-  printf 'safe staged change\n' >> "$repo_dir/staged.txt"
-  git -C "$repo_dir" add staged.txt
-
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  printf 'token=%s\n' "$fake_token" > "$repo_dir/untracked.txt"
-
+  security_prepare_staged_scope_scan "$repo_dir" "$fake_token"
   output="$(
     run_gemini_scan_hook \
       "$repo_dir" \
@@ -720,20 +613,15 @@ test_staged_zero_prefix_filename_is_scanned() {
   local log_dir
   local output
   local fake_token
-  local zero_name
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
 
-  init_git_repo "$repo_dir"
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  zero_name='0:notes.env'
-  printf 'token=%s\n' "$fake_token" > "$repo_dir/$zero_name"
-  git -C "$repo_dir" add -A
-
+  security_prepare_zero_prefix_scan "$repo_dir" "$fake_token"
   output="$(
     run_gemini_scan_hook \
       "$repo_dir" \
@@ -758,21 +646,13 @@ test_diff_scope_scans_cached_secret_when_worktree_matches_head() {
   local fake_token
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
 
-  init_git_repo "$repo_dir"
-  printf 'baseline=true\n' > "$repo_dir/notes.env"
-  git -C "$repo_dir" add notes.env
-  git -C "$repo_dir" commit -qm "baseline"
-
   fake_token="gh""p_$(printf '0%.0s' {1..36})"
-  printf 'token=%s\n' "$fake_token" > "$repo_dir/notes.env"
-  git -C "$repo_dir" add notes.env
-  git -C "$repo_dir" show HEAD:notes.env > "$repo_dir/notes.env"
-
+  security_prepare_cached_scan "$repo_dir" "$fake_token"
   output="$(
     run_gemini_scan_hook \
       "$repo_dir" \
@@ -796,7 +676,7 @@ test_generic_secrets_filename_stays_clean() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -830,7 +710,7 @@ test_diff_mode_ignores_unmodified_secret_lines() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -868,7 +748,7 @@ test_diff_mode_ignores_unified_diff_headers() {
   local secret_name
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -903,7 +783,7 @@ test_allowlist_suppresses_credential_path_finding() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -938,7 +818,7 @@ test_invalid_json_degrades_to_noop_json() {
   local output
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -964,7 +844,7 @@ test_invalid_json_block_mode_denies_with_json_and_exit_zero() {
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'rm -rf "'"$workdir"'"' RETURN
+  trap cleanup_test_workdir RETURN
   repo_dir="$workdir/repo"
   log_dir="$workdir/logs"
   mkdir -p "$repo_dir"
@@ -1033,4 +913,4 @@ main() {
   test_gemini_settings_register_before_tool_scanner
 }
 
-main "$@"
+security_run_suite main "$@"

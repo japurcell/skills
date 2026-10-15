@@ -265,7 +265,7 @@ from helpers.common import (
     merge_env_skill_files,
     read_json_input,
     sanitize_log_field,
-    strip_yaml_frontmatter,
+    load_required_skill_context,
 )
 
 
@@ -319,10 +319,6 @@ def fail_with_context(reason: str, session_id: str = "", event_name: str = "") -
     raise SystemExit(0)
 
 
-def parse_skill_context(skill_file: Path) -> str:
-    return strip_yaml_frontmatter(skill_file.read_text(encoding="utf-8"))
-
-
 def main() -> int:
     session_id = ""
     try:
@@ -368,20 +364,7 @@ def main() -> int:
         context_parts: list[str] = []
 
         for raw_skill_file in required_skill_files:
-            skill_path = Path(raw_skill_file)
-            if not skill_path.exists():
-                fail_with_context(f"Required skill file not found: {raw_skill_file}", session_id, event_name)
-            if not skill_path.is_file():
-                fail_with_context(f"Required skill file not found: {raw_skill_file}", session_id, event_name)
-            if not os.access(skill_path, os.R_OK):
-                fail_with_context(f"Required skill file not readable: {raw_skill_file}", session_id, event_name)
-
-            try:
-                skill_context = parse_skill_context(skill_path)
-            except OSError as exc:
-                fail_with_context(f"Failed to read skill file: {raw_skill_file} ({exc})", session_id, event_name)
-
-            context_parts.append(f"<!-- BEGIN REQUIRED SKILL: {raw_skill_file} -->\n{skill_context}\n<!-- END REQUIRED SKILL: {raw_skill_file} -->")
+            context_parts.append(load_required_skill_context(raw_skill_file, lambda reason: fail_with_context(reason, session_id, event_name)))
 
             audit_log_event(
                 SCRIPT_NAME,
@@ -421,7 +404,7 @@ from helpers.common import (  # noqa: E402
     merge_env_skill_files,
     read_json_input,
     sanitize_log_field,
-    strip_yaml_frontmatter,
+    load_required_skill_context,
 )
 
 
@@ -447,10 +430,6 @@ def build_output(context_payload: str, event_name: str, count: int) -> dict:
     else:
         response["suppressOutput"] = True
     return response
-
-
-def parse_skill_context(skill_file: Path) -> str:
-    return strip_yaml_frontmatter(skill_file.read_text(encoding="utf-8"))
 
 
 def main() -> int:
@@ -512,24 +491,7 @@ def main() -> int:
         context_parts: list[str] = []
 
         for raw_skill_file in required_skill_files:
-            skill_path = Path(raw_skill_file)
-            if not skill_path.exists():
-                hard_stop(f"Required skill file not found: {raw_skill_file}")
-            if not skill_path.is_file():
-                hard_stop(f"Required skill file not found: {raw_skill_file}")
-            if not os.access(skill_path, os.R_OK):
-                hard_stop(f"Required skill file not readable: {raw_skill_file}")
-
-            try:
-                skill_context = parse_skill_context(skill_path)
-            except OSError as exc:
-                hard_stop(f"Failed to read skill file: {raw_skill_file} ({exc})")
-
-            context_parts.append(
-                f"<!-- BEGIN REQUIRED SKILL: {raw_skill_file} -->\n"
-                f"{skill_context}\n"
-                f"<!-- END REQUIRED SKILL: {raw_skill_file} -->"
-            )
+            context_parts.append(load_required_skill_context(raw_skill_file, hard_stop))
 
             if not audit_log_event(
                 SCRIPT_NAME,

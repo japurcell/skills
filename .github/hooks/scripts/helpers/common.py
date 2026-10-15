@@ -8,9 +8,9 @@ import os
 import select
 import sys
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from typing import TYPE_CHECKING, Any, NoReturn, Sequence
 
 if TYPE_CHECKING:
     import subprocess
@@ -180,10 +180,9 @@ def convert_windows_path_to_posix(path_str: str) -> str:
 
         if os.path.exists(f"/mnt/{drive}"):
             return f"/mnt/{drive}{rest}"
-        elif os.path.exists(f"/{drive}"):
+        if os.path.exists(f"/{drive}"):
             return f"/{drive}{rest}"
-        else:
-            return f"/mnt/{drive}{rest}"
+        return f"/mnt/{drive}{rest}"
 
     if "\\" in path_str:
         return path_str.replace("\\", "/")
@@ -272,6 +271,34 @@ def strip_yaml_frontmatter(text: str) -> str:
         body.append(line)
 
     return "\n".join(body)
+
+
+def parse_skill_context(skill_file: Path) -> str:
+    return strip_yaml_frontmatter(skill_file.read_text(encoding="utf-8"))
+
+
+def load_required_skill_context(raw_skill_file: str, fail: Callable[[str], NoReturn]) -> str:
+    # Leave failure decisions and audit requirements to the provider.
+    skill_path = Path(raw_skill_file)
+    if not skill_path.exists() or not skill_path.is_file():
+        fail(f"Required skill file not found: {raw_skill_file}")
+    if not os.access(skill_path, os.R_OK):
+        fail(f"Required skill file not readable: {raw_skill_file}")
+    try:
+        skill_context = parse_skill_context(skill_path)
+    except OSError as exc:
+        fail(f"Failed to read skill file: {raw_skill_file} ({exc})")
+    return (f"<!-- BEGIN REQUIRED SKILL: {raw_skill_file} -->\n"
+            f"{skill_context}\n"
+            f"<!-- END REQUIRED SKILL: {raw_skill_file} -->")
+
+
+def repository_root_from_payload(payload: dict[str, object], override_environment: str) -> Path:
+    override = os.environ.get(override_environment)
+    if override:
+        return Path(override)
+    cwd = stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
+    return Path(convert_windows_path_to_posix(cwd)) if cwd else Path.cwd()
 
 
 def run_command(

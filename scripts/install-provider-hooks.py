@@ -9,9 +9,10 @@ import os
 import re
 import stat
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
+
+from file_io import atomic_write_bytes
 
 
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -140,21 +141,7 @@ def atomic_write(path: Path, content: bytes, home: Path) -> None:
     check_parent_directories(home, path)
     path.parent.mkdir(parents=True, exist_ok=True)
     check_parent_directories(home, path)
-    descriptor, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
-    temporary = Path(name)
-    try:
-        if hasattr(os, "fchmod"):
-            os.fchmod(descriptor, 0o600)
-        with os.fdopen(descriptor, "wb") as output:
-            descriptor = -1
-            output.write(content)
-            output.flush()
-            os.fsync(output.fileno())
-        os.replace(temporary, path)
-    finally:
-        if descriptor != -1:
-            os.close(descriptor)
-        temporary.unlink(missing_ok=True)
+    atomic_write_bytes(path, content, suffix=".tmp", mode=0o600)
 
 
 def main() -> int:

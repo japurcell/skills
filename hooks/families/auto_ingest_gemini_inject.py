@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 
@@ -10,20 +9,16 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from helpers.audit import audit_log_event  # noqa: E402
+from helpers.audit import best_effort_audit_event  # noqa: E402
 from helpers.common import emit_json, read_json_input, sanitize_log_field  # noqa: E402
 from helpers.source_ingest import (  # noqa: E402
-    ManifestLock,
     blocking_entries,
     build_block_reason,
     build_context,
     ingest_skill_available,
-    load_manifest,
     manifest_path_for_payload,
-    reconcile_manifest,
     repo_root_for_payload,
-    save_manifest,
-    scan_sources,
+    scan_and_reconcile,
     source_root_for_payload,
     summary_root_for_payload,
 )
@@ -33,10 +28,7 @@ SCRIPT_NAME = Path(__file__).name
 
 
 def log_event(message: str) -> None:
-    try:
-        audit_log_event(SCRIPT_NAME, message)
-    except Exception:
-        pass
+    best_effort_audit_event(SCRIPT_NAME, message)
 
 
 def main() -> int:
@@ -63,11 +55,7 @@ def main() -> int:
         manifest_path = manifest_path_for_payload(payload, summary_root)
         repo_root = repo_root_for_payload(payload)
 
-        with ManifestLock(manifest_path):
-            current_records = scan_sources(source_root, summary_root)
-            manifest = load_manifest(manifest_path)
-            report_entries, next_manifest = reconcile_manifest(manifest, current_records, summary_root)
-            save_manifest(manifest_path, next_manifest)
+        current_records, report_entries = scan_and_reconcile(source_root, summary_root, manifest_path)
         skill_available = ingest_skill_available(repo_root)
 
         if event_name == "AfterAgent":

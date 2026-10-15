@@ -29,29 +29,11 @@ class SourceRecord:
     summary_is_scaffold: bool
 
 
-def source_root(repo_root: Path) -> Path:
-    override = os.environ.get("COPILOT_AUTO_INGEST_SOURCE_DIR")
-    if override:
-        return Path(override)
-    return repo_root / ".agents" / "sources"
-
-
-def summary_root(repo_root: Path) -> Path:
-    override = os.environ.get("COPILOT_AUTO_INGEST_SUMMARY_DIR")
-    if override:
-        return Path(override)
-    return repo_root / ".agents" / "memory" / "sources"
-
-
-def manifest_path(summary_dir: Path) -> Path:
-    override = os.environ.get("COPILOT_AUTO_INGEST_MANIFEST_PATH")
-    if override:
-        return Path(override)
-    return summary_dir / MANIFEST_FILE_NAME
+# __ROOT_ADAPTER__
 
 
 def ingest_skill_path(repo_root: Path) -> Path:
-    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get("COPILOT_SKILLS_DIR")
+    override = os.environ.get("AGENTS_SKILLS_DIR") or os.environ.get(SKILLS_ENVIRONMENT)
     if override:
         return Path(override) / "ingest-source" / "SKILL.md"
     return repo_root / ".agents" / "skills" / "ingest-source" / "SKILL.md"
@@ -208,7 +190,7 @@ def build_block_reason(report_entries: list[dict[str, Any]], skill_available: bo
     return f"{PENDING_INGEST_DIRECTIVE} {PENDING_INGEST_SKILL_MISSING} Pending: {pending}."
 
 
-def scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
+def _scan_sources(sources_dir: Path, summary_dir: Path) -> list[SourceRecord]:
     if not sources_dir.exists():
         return []
 
@@ -646,6 +628,18 @@ class ManifestLock:
             except OSError:
                 pass
             self.lock_fd = None
+
+
+def scan_and_reconcile(
+    sources_dir: Path, summaries_dir: Path, manifest_file: Path,
+) -> tuple[list[SourceRecord], list[dict[str, Any]]]:
+    """Hold the manifest lock over the complete scan/read/reconcile/save batch."""
+    with ManifestLock(manifest_file):
+        current_sources = scan_sources(sources_dir, summaries_dir)
+        previous_manifest = load_manifest(manifest_file)
+        report_entries, next_manifest = reconcile_manifest(previous_manifest, current_sources, summaries_dir)
+        save_manifest(manifest_file, next_manifest)
+    return current_sources, report_entries
 
 
 def build_context(report_entries: list[dict[str, Any]], manifest_file: Path, skill_available: bool = True) -> str:

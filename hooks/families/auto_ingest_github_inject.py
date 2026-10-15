@@ -8,31 +8,16 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-from helpers.audit import audit_log_event
-from helpers.common import emit_json, first_present, read_json_input, sanitize_log_field, stringify_value
+from helpers.audit import best_effort_audit_event
+from helpers.common import emit_json, first_present, read_json_input, sanitize_log_field, stringify_value, repository_root_from_payload
 
 
 SCRIPT_NAME = Path(__file__).name
 
 
 def log_event(message: str) -> None:
-    try:
-        audit_log_event(SCRIPT_NAME, message)
-    except Exception:
-        pass
+    best_effort_audit_event(SCRIPT_NAME, message)
 
-
-def _repo_root(payload: dict[str, object]) -> Path:
-    env_override = os.environ.get("COPILOT_AUTO_INGEST_REPO_ROOT")
-    if env_override:
-        return Path(env_override)
-
-    cwd = stringify_value(first_present(payload, "cwd", "workingDirectory", "working_directory"))
-    if cwd:
-        from helpers.common import convert_windows_path_to_posix
-        return Path(convert_windows_path_to_posix(cwd))
-
-    return Path.cwd()
 
 
 def _helper_path(repo_root: Path) -> Path:
@@ -76,7 +61,7 @@ def main() -> int:
             emit_json({})
             return 0
 
-        repo_root = _repo_root(payload)
+        repo_root = repository_root_from_payload(payload, "COPILOT_AUTO_INGEST_REPO_ROOT")
         helper = _load_helper(_helper_path(repo_root))
         if helper is None:
             if event_name in {"agentStop", "subagentStop"}:
@@ -94,11 +79,7 @@ def main() -> int:
         summaries_dir = helper.summary_root(repo_root)
         manifest_file = helper.manifest_path(summaries_dir)
 
-        with helper.ManifestLock(manifest_file):
-            current_sources = helper.scan_sources(sources_dir, summaries_dir)
-            previous_manifest = helper.load_manifest(manifest_file)
-            report_entries, next_manifest = helper.reconcile_manifest(previous_manifest, current_sources, summaries_dir)
-            helper.save_manifest(manifest_file, next_manifest)
+        current_sources, report_entries = helper.scan_and_reconcile(sources_dir, summaries_dir, manifest_file)
         skill_available = helper.ingest_skill_available(repo_root)
 
         if event_name in {"agentStop", "subagentStop"}:
