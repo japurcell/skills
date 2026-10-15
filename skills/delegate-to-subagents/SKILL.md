@@ -78,6 +78,8 @@ Use `none` or `not applicable` where appropriate. Do not dispatch with an unreso
 
 Run independent subtasks in parallel when beneficial. Run dependent subtasks in dependency-aware waves. Serialize changes to shared files.
 
+Before dispatch, give each shared canonical document (maps, indexes, known issues) one integration owner or an explicit serial dependency, even with disjoint source ownership. Workers retain scoped evidence, promptly notify that owner of durable findings, including critical guidance, and keep ownership of their exclusive area docs. The coordinator reconciles admitted claims and runs the final documentation pass after all tasks finish.
+
 If essential task information is missing, ask only for that information. Do not ask for model preferences as a substitute for routing.
 
 ### 2. Route

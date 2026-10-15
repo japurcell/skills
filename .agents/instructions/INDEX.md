@@ -9,7 +9,7 @@ Read only matching rows. Follow a linked document's narrower branches when the t
 
 | Task | Read |
 | --- | --- |
-| Root documentation, installation workflow, or artifact retention | [Repository workflow](repo.md) |
+| Root documentation, installation workflow, artifact retention, or implementing or planning an idea from `docs/ideas/` | [Repository workflow](repo.md) |
 | Selecting, pruning, or writing KB content; end-of-session doc pass | [Knowledge admission](knowledge-base.md) |
 | Authoring or reviewing published or repo-local skills | [Skill conventions](skills.md) |
 | Canonical custom agents or generated personal Codex agents | [Agent conventions](agents.md) |

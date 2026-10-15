@@ -1,0 +1,25 @@
+# Just-in-time context
+
+The agents kb/memory management system is currently spread across AGENTS.md, .agents/skills/clean-agent-docs, .agents/skills/update-agent-docs. It tries to guide agents through a workflow:
+
+1. Session Start -> AGENTS.md##Agent Orientation: load the knowledge base map to find relevant context for a task
+2. Session End -> activate 'update-agents-docs' skill to repair and refresh the knowledge base with new information from the session for continual improvement
+3. Periodically -> activate 'clean-agent-docs' skill to maintain the knowledge base by removing outdated or irrelevant information
+
+I have a few ideas on how to improve the current system, but these are just ideas; they need to be validated, possibly challenged or thrown away if a better approach is found:
+
+1. Create a single skill that handles all aspects of the agents kb/memory management system using progressive disclosure by the use of subcommands for the different lifecycle stages (e.g., '/agent-brain recall', '/agent-brain learn', '/agent-brain dream'). Each subcommand is a navigation pointer to the guidance for that particular stage. Hooks can be used to trigger these subcommands at the corresponding hook event.
+   - Session start -> '/agent-brain recall'
+   - Session end -> '/agent-brain learn'
+   - Periodically -> '/agent-brain dream'
+2. Study the use of nested AGENTS.md files as another just-in-time context mechanism [harness-engineering repo](https://github.com/lopopolo/harness-engineering), [use AGENTS.md as a map](https://github.com/lopopolo/harness-engineering/tree/trunk/docs/just-in-time-context#use-agentsmd-as-a-map).
+
+I think that a lot of ideas and insights can be drawn from these references:
+
+- [Just-in-time context reference](https://github.com/lopopolo/harness-engineering/tree/trunk/docs/just-in-time-context)
+- [Feedback reference](https://github.com/lopopolo/harness-engineering/tree/trunk/docs/feedback)
+- [Domain modeling reference](https://github.com/lopopolo/harness-engineering/tree/trunk/docs/domain-modeling)
+- [Self-improving LLMs](https://arxiv.org/html/2510.04618v3)
+- [A Complete Guide to AGENTS.md](https://www.aihero.dev/a-complete-guide-to-agents-md)
+
+**Goal**: a self-improving context management system the doesn't rely on agents remembering when to update or refresh their knowledge, but instead manages it autonomously through structured processes and hooks.

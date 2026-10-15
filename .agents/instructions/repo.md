@@ -20,4 +20,6 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 
 ## Documentation retention
 
+When an idea in `docs/ideas/` is implemented or an implementation plan is created from it, move the idea file to `docs/ideas/archive/`. Update `docs/ideas/index.md` and any inbound links to the new path.
+
 After an effort finishes, retain unique agent knowledge only when it passes [knowledge admission](knowledge-base.md). Remove completed research and working plans unless historical retention was requested; retain ADRs by default. Current owner actions and unresolved acceptance remain in the active effort's documents. Keep retained decisions under `docs/adr/` instead of copying them into memory.

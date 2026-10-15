@@ -2,6 +2,12 @@
   "skill_name": "execplan-implement",
   "evals": [
     {
+      "id": 3,
+      "prompt": "Describe assignments only; do not edit files, run Git, or dispatch agents. Two ready ExecPlan tasks will use private worktrees with disjoint source ownership. Both will update the canonical file map and known-issues document. Explain what ownership must be resolved before dispatch and how findings and branches are integrated.",
+      "expected_output": "Apply delegate-to-subagents shared-document ownership before dispatch. Preserve fresh task owners, private worktrees, prompt evidence reporting, serialized branch integration, and the final documentation pass.",
+      "files": []
+    },
+    {
       "id": 0,
       "eval_name": "bound-direct-plan-assignments",
       "prompt": "Use the supplied execplan-implement skill to describe the next dispatch and acceptance actions only. Do not create branches, edit code, dispatch agents, or commit. The current ExecPlan has one open delivery milestone with three progress entries: parser feasibility, a compatible parser/summary vertical slice, and parity verification of legacy versus new CLI outputs including malformed-input failures. The milestone owns a shared default-output invariant. Feasibility is unfinished and must resolve before implementation. Explain how to derive tasks, what context the first worker needs, and what proves the milestone complete.",
