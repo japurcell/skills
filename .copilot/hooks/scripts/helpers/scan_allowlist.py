@@ -52,5 +52,3 @@ def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, 
         entry["tool"] == normalized_tool and entry["input"] == normalized_input
         for entry in entries
     )
-
-

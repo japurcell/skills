@@ -289,5 +289,3 @@ def _append_scan_log(
             except OSError:
                 pass
         os.close(lock_fd)
-
-

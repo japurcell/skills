@@ -27,6 +27,10 @@ def capture_git(context: ScanContext,
     allow_nonzero: bool = False,
     deadline: float | None = None,
     input_bytes: bytes | None = None,
+    literal_diff_inputs: bool = False,
+    auto_crlf: bool = False,
+    private_operation: bool = False,
+    private_git_dir: Path | None = None,
 ) -> Iterator[VerifiedCapture | None]:
     import errno
     import subprocess
@@ -56,6 +60,22 @@ def capture_git(context: ScanContext,
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_ASKPASS"] = ""
     env["GIT_LITERAL_PATHSPECS"] = "1"
+    if private_operation or literal_diff_inputs:
+        env = {key: value for key, value in env.items() if not key.startswith("GIT_")}
+        env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull,
+                   GIT_CONFIG_SYSTEM=os.devnull, GIT_ATTR_NOSYSTEM="1",
+                   GIT_TERMINAL_PROMPT="0", GIT_ASKPASS="", GIT_LITERAL_PATHSPECS="1")
+        settings = {"core.autocrlf": "true" if auto_crlf else "false",
+                    "core.attributesFile": os.devnull, "core.hooksPath": os.devnull,
+                    "core.fsmonitor": "false", "core.untrackedCache": "false"}
+        env["GIT_CONFIG_COUNT"] = str(len(settings))
+        for index, (key, value) in enumerate(settings.items()):
+            env[f"GIT_CONFIG_KEY_{index}"] = key
+            env[f"GIT_CONFIG_VALUE_{index}"] = value
+        if private_git_dir is not None:
+            env.update(GIT_DIR=str(private_git_dir), GIT_COMMON_DIR=str(private_git_dir),
+                       GIT_WORK_TREE=str(private_git_dir.parent),
+                       GIT_INDEX_FILE=str(private_git_dir / "index"))
     popen_options: dict[str, object] = {
         "cwd": str(cwd),
         "env": env,
@@ -170,6 +190,11 @@ def capture_git(context: ScanContext,
                             capture_step = "consume"
                             yield None
                             capture_step = "cleanup"
+                            return
+                        if (len(args) == 3 and args[:2] == ["config", "--get"]
+                                and args[2] in {"core.autocrlf", "diff.algorithm", "diff.indentheuristic"}
+                                and return_code == 1):
+                            yield None
                             return
                         if (len(args) == 4 and args[:3] == ["show-ref", "--verify", "--quiet"]
                                 and return_code == 1):
@@ -669,6 +694,11 @@ class Snapshot:
         self.baseline_oid = None
         self.baseline_revision = None
         self.baseline_capture = None
+        self.baseline_has_crlf = False
+        self.conversion = "none"
+        self.private_git_dir = None
+        self.diff_algorithm = "myers"
+        self.indent_heuristic = True
 
     def chunks(self, chunk_bytes: int = 65536) -> Iterator[bytes]:
         if not self.active:
@@ -758,6 +788,11 @@ class SnapshotSource:
         self.baseline_owner = contextlib.ExitStack()
         self.baseline_ranges = {}
         self.head_baselines = {}
+        self.conversions = {}
+        self.private_git_dir = None
+        self.private_metadata_bytes = 0
+        self.diff_algorithm = "myers"
+        self.indent_heuristic = True
         self.ranges: dict[tuple[str, str], tuple[VerifiedCapture, int, int]] = {}
         self.baselines = {}
         self.head_revision = None
@@ -768,6 +803,8 @@ class SnapshotSource:
             if not isinstance(revision, str) or re.fullmatch(r"[0-9a-f]{40}\n|[0-9a-f]{64}\n", revision) is None:
                 raise GitCommandError("git_output_invalid", "git_diff")
             self.head_revision = revision.strip()
+            self.conversions = worktree_conversions(context, root,
+                [path for source, path in candidates if source == CANDIDATE_WORKTREE])
             self.head_baselines = head_baseline_oids(context, root, self.head_revision,
                 [path for source, path in candidates if source == CANDIDATE_STAGED])
             baseline_candidates = [(CANDIDATE_STAGED, path) for source, path in candidates
@@ -776,6 +813,37 @@ class SnapshotSource:
         resolved = resolve_index_candidates(context, root, required, deadline=budget.deadline) if required else {}
         self.baselines = {path: resolved[(CANDIDATE_STAGED, path)] for _, path in baseline_candidates}
         self._capture_baselines(context)
+        if diff_baselines and any(source in {CANDIDATE_STAGED, CANDIDATE_WORKTREE} for source, _ in candidates):
+            self.diff_algorithm, self.indent_heuristic = diff_alignment(context, root)
+            directory = self.baseline_owner.enter_context(tempfile.TemporaryDirectory(prefix="scan-compare-"))
+            self.private_git_dir = Path(directory) / "repository.git"
+            with capture_git(context, ["init", "--bare", "--quiet", "--template=", str(self.private_git_dir)],
+                             cwd=root, deadline=budget.deadline, private_operation=True):
+                pass
+            pending = [(self.private_git_dir, 0)]
+            entry_count = 0
+            while pending:
+                parent, depth = pending.pop()
+                with os.scandir(parent) as entries:
+                    for entry in entries:
+                        context.check_deadline()
+                        entry_count += 1
+                        if entry_count > 64 or depth > 4:
+                            raise GitCommandError("git_output_invalid", "git_diff")
+                        details = entry.stat(follow_symlinks=False)
+                        if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
+                            raise GitCommandError("git_capture_failed", "git_diff")
+                        if stat.S_ISDIR(details.st_mode):
+                            pending.append((Path(entry.path), depth + 1))
+                        elif stat.S_ISREG(details.st_mode):
+                            self.private_metadata_bytes += details.st_size
+                            context.charge_temp(details.st_size)
+                            if self.private_metadata_bytes > context.limits.max_capture_bytes:
+                                raise ScanLimitExceeded("git_output_limit", "git_diff",
+                                    measured=self.private_metadata_bytes,
+                                    limit=context.limits.max_capture_bytes)
+                        else:
+                            raise GitCommandError("git_capture_failed", "git_diff")
         if not index_candidates:
             return
         with capture_git(context, ["cat-file", "--batch-check"], cwd=root,
@@ -834,6 +902,8 @@ class SnapshotSource:
     def finish(self):
         self.close()
         self.baseline_owner.close()
+        self.budget.context.release_temp(self.private_metadata_bytes)
+        self.private_metadata_bytes = 0
         self.baseline_ranges.clear()
 
     def close(self) -> None:
@@ -891,6 +961,9 @@ class SnapshotSource:
                 if candidate not in self.ranges:
                     self._next_batch()
                 snapshot = Snapshot(candidate, *self.ranges[candidate])
+                snapshot.private_git_dir = self.private_git_dir
+                snapshot.diff_algorithm = self.diff_algorithm
+                snapshot.indent_heuristic = self.indent_heuristic
                 snapshot.baseline_revision = self.head_revision
                 snapshot.baseline_oid = self.head_baselines.get(path)
                 snapshot.baseline_capture = self.baseline_ranges.get(snapshot.baseline_oid)
@@ -935,7 +1008,11 @@ class SnapshotSource:
                         spool.flush()
                         capture = VerifiedCapture(context, spool, size, self.budget.deadline, "candidate_read")
                         snapshot = Snapshot(candidate, capture, 0, size)
+                        snapshot.private_git_dir = self.private_git_dir
+                        snapshot.diff_algorithm = self.diff_algorithm
+                        snapshot.indent_heuristic = self.indent_heuristic
                         snapshot.baseline_oid = self.baselines.get(path)
+                        snapshot.conversion = self.conversions.get(path, "none")
                         snapshot.baseline_capture = self.baseline_ranges.get(snapshot.baseline_oid)
                         snapshot.classify()
                         yield snapshot
@@ -989,13 +1066,17 @@ def snapshot_diff_inputs(context: ScanContext, root: Path, path: str, source: st
                     baseline_chunks = baseline.chunks()
                 else:
                     baseline_chunks = ()
+                previous = b""
                 for destination, chunks in ((before, baseline_chunks),
-                                            (after, snapshot.chunks())):
+                                            (after, converted_snapshot_chunks(snapshot))):
                     with destination.open("xb") as output:
                         os.chmod(destination, 0o600)
                         _verify_private_capture(output)
                         for chunk in chunks:
                             context.check_deadline()
+                            if destination == before:
+                                snapshot.baseline_has_crlf = snapshot.baseline_has_crlf or b"\r\n" in previous + chunk
+                                previous = chunk[-1:]
                             charged += len(chunk)
                             context.charge_temp(len(chunk))
                             output.write(chunk)
@@ -1032,3 +1113,81 @@ def head_baseline_oids(context, root, revision, paths):
                 seen.add(path)
                 result[path] = match.group(1)
     return result
+
+
+def worktree_conversions(context, root, paths):
+    if not paths:
+        return {}
+    configured = run_git(context, ["config", "--get", "core.autocrlf"], cwd=root,
+                         allow_nonzero=True, deadline=context.deadline)
+    value = configured.strip().lower() if isinstance(configured, str) else "false"
+    if value not in {"false", "no", "off", "0", "true", "yes", "on", "1", "input"}:
+        raise GitCommandError("git_output_invalid", "git_diff")
+    default = "auto" if value in {"true", "yes", "on", "1", "input"} else "none"
+    names = ("text", "eol", "crlf", "filter", "working-tree-encoding", "ident")
+    values = {path: {} for path in paths}
+    with capture_git(context, ["check-attr", "-z", "--stdin", *names], cwd=root,
+                     input_bytes=b"".join(os.fsencode(path) + b"\0" for path in paths),
+                     deadline=context.deadline) as capture:
+        rows = iter(capture.records(b"\0"))
+        for path in paths:
+            for name in names:
+                row_path, row_name, row_value = next(rows, None), next(rows, None), next(rows, None)
+                if row_path != os.fsencode(path) or row_name != name.encode() or row_value is None:
+                    raise GitCommandError("git_output_invalid", "git_diff")
+                values[path][name] = os.fsdecode(row_value)
+        if next(rows, None) is not None:
+            raise GitCommandError("git_output_invalid", "git_diff")
+    result = {}
+    for path, attributes in values.items():
+        if any(attributes[name] not in {"unset", "unspecified"} for name in ("filter", "working-tree-encoding", "ident")):
+            result[path] = "unsupported"
+            continue
+        text, eol = attributes["text"], attributes["eol"]
+        if text == "unspecified":
+            legacy = attributes["crlf"]
+            if legacy in {"set", "input"}:
+                text = "set"
+            elif legacy == "unset":
+                text = "unset"
+        if text == "unset":
+            result[path] = "none"
+        elif text == "set" or (text == "unspecified" and eol in {"lf", "crlf"}):
+            result[path] = "crlf"
+        elif text == "auto":
+            result[path] = "auto"
+        else:
+            result[path] = default
+    return result
+
+
+def converted_snapshot_chunks(snapshot):
+    mode = snapshot.conversion
+    if mode == "unsupported":
+        raise ScanSecurityError("conversion_unsupported", "git_diff")
+    pending = b""
+    for chunk in snapshot.chunks():
+        combined = pending + chunk
+        pending = b""
+        if mode == "crlf":
+            if combined.endswith(b"\r"):
+                combined, pending = combined[:-1], b"\r"
+            combined = combined.replace(b"\r\n", b"\n")
+        if combined:
+            yield combined
+    if pending:
+        yield pending
+
+
+def diff_alignment(context, root):
+    algorithm = run_git(context, ["config", "--get", "diff.algorithm"], cwd=root,
+                        allow_nonzero=True, deadline=context.deadline)
+    algorithm = algorithm.strip().lower() if algorithm is not None else "myers"
+    if algorithm not in {"default", "myers", "minimal", "patience", "histogram"}:
+        raise GitCommandError("git_output_invalid", "git_diff")
+    indent = run_git(context, ["config", "--get", "diff.indentheuristic"], cwd=root,
+                     allow_nonzero=True, deadline=context.deadline)
+    indent = indent.strip().lower() if indent is not None else "true"
+    if indent not in {"true", "yes", "on", "1", "false", "no", "off", "0"}:
+        raise GitCommandError("git_output_invalid", "git_diff")
+    return algorithm, indent in {"true", "yes", "on", "1"}

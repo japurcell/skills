@@ -31,14 +31,14 @@ All commands run from the private worktree root with `rtk proxy` unless they are
 | `python3 scripts/test-scan-secrets-streaming.py` |17 passed,45.135s |
 | `python3 scripts/test-security-reporting.py` |14 passed,72.786s |
 | `python3 scripts/test-hook-diagnostics.py` |10 passed,2.448s |
-| `python3 scripts/test-hook-diagnostic-recovery.py` |16 passed before batching; final rerun in progress |
-| `python3 scripts/test-scan-secrets-merge.py` |33 passed before stable-diff change; full final rerun in progress |
+| `python3 scripts/test-hook-diagnostic-recovery.py` |16 passed,88.905s after batching |
+| `python3 scripts/test-scan-secrets-merge.py` |33 passed,238.941s after batching |
 | `bash scripts/test-codex-hooks-secrets-scanner.sh` |passed including capture faults before final batching |
 | `bash scripts/test-hooks-secrets-scanner.sh` |passed including capture faults before final batching |
 | `bash scripts/test-gemini-hooks-secrets-scanner.sh` |passed including capture faults before final batching |
 | `python3 scripts/test-install-codex-hooks.py` |passed maintained-hook merge |
 | `bash scripts/test-install.sh` |passed disposable installer suite; helper closure unchanged by later matching work |
-| `pwsh -NoProfile -File scripts/test-install.ps1` |in progress |
+| `pwsh -NoProfile -File scripts/test-install.ps1` |passed; junction creation unavailable on macOS |
 | `python3 scripts/generate-hooks.py --check` |59 current assets |
 | `git diff --check` |passed |
 
@@ -46,6 +46,22 @@ The first full generator invocation encountered sandbox-denied fixture mutations
 
 ## Remaining work and limits
 
-Finish final affected suites, commit the extraction snapshot, stop tests before rebasing onto integrated T1, then adapt the verification-only fixture utility's candidate dependency closure. Preserve support for its reviewed older active bundles and strict audit behavior. The primary owns plan, registry and the coordinated knowledge-maintenance pass.
+Extraction snapshot `ec40a77` is committed (identical tree to reviewed `802bfdb`; commit-message spacing corrected). All listed final batching suites completed. Reviewer R1 confirmed path-specific CRLF suppression differs from old source; conversion correction and final relevant checks precede rebasing onto integrated T1. Then adapt the verification-only fixture utility's candidate dependency closure. Preserve support for its reviewed older active bundles and strict audit behavior. The primary owns plan, registry and the coordinated knowledge-maintenance pass.
 
 No production publication/LFS capacity, remote service, Linux, native Windows, real provider trust or host event-delivery claim is made. Worktree collection remains non-atomic across the repository; decisions bind the protected captured inputs. Ambient Git hardening and new worktree/index CLI semantics remain dependent-node work. No experimental D0 implementation was reused.
+
+
+## R1 declared text-conversion correction
+
+The global `core.autocrlf=true` paired control passed both old and extracted entrypoints. The path-specific `converted.txt text eol=crlf` control with `core.autocrlf=false` passed the old entrypoint and failed the extracted entrypoint by reporting an unchanged historical token. Both paired controls now pass for all providers, including detection of a newly added token on line2. Worktree attributes/configuration are captured before content acquisition. Explicit text normalization converts only captured CRLF sequences to LF; staged blobs remain literal. Auto conversion delegates binary heuristics to Git on the private inputs and respects whether the pinned index baseline already contains CRLF. Scope identity includes the selected conversion. Raw candidate identity remains unchanged.
+
+This follows the [official text/eol and auto-normalization contract](https://git-scm.com/docs/gitattributes). No whitespace-ignore option is used. Named filters, working-tree encodings and ident conversion are explicit unsupported incomplete cases in this stable-diff path; no new external clean helper is invoked. The legacy candidate enumeration still uses its existing ambient Git behavior. Protecting new standalone CLI acquisition against ambient helpers remains dependent-node work, not a deployment claim here.
+
+
+R1 focused observed results after correction: global/path-specific CRLF controls2 passed2.770s; CRLF-indexed baseline control passed2.066s; unsupported conversion with known findings passed1.865s; existing unchanged-secret suppression passed2.810s;250-candidate controls2 passed19.938s; scanner generator subset9 passed4.827s. Full streaming before the final two focused controls passed19 tests48.944s. The normal-source EOF formatting correction now passes `git diff --check`; Guardian policy output remains byte-identical.
+
+
+The private-name global filter sentinel first executed its helper despite the original-path `-filter` override. The repaired comparison uses one private bare repository per invocation, an explicit empty template, isolated Git configuration/attributes, disabled hooks/fsmonitor, and no inherited `GIT_*` redirection. Only captured original-path conversion and alignment settings enter comparison. Init capture shares the deadline/capture budget; private metadata traversal is capped at 64 entries/depth 4 and charged to temporary accounting. The paired clean/new-secret sentinel now proves no unrelated helper execution while preserving detection. Full streaming after this repair passed 22 tests in 56.509 seconds; Codex capture fault controls passed.
+
+
+Final R1 engine checks after private comparison isolation: full merge 33 tests passed in 226.066 seconds; full generator 26 tests passed in 18.146 seconds; Codex, Copilot and Gemini protected-capture fault suites passed. Generator fixtures ran serially with all other suites stopped. Guardian policy files still match the pre-extraction source exactly; Guardian entrypoints change only their build fingerprints. The next source changes are confined to the handed-off T1 candidate closure and explicit-result validation.

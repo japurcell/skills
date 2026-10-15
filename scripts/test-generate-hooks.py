@@ -632,7 +632,7 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertNotIn('"decision": "deny"', "".join(sections))
             self.assertNotIn(ALLOWLIST_SOURCE, source)
             helper = str(Path(target).parent / "helpers/scan_allowlist.py")
-            self.assertEqual(rendered[helper].count(ALLOWLIST_SOURCE), 1)
+            self.assertEqual(rendered[helper].count(ALLOWLIST_SOURCE.rstrip()), 1)
             shared_sections.append(sections)
 
         for target in TOOL_GUARD_POLICY_TARGETS:
@@ -873,7 +873,8 @@ class GenerateHooksTests(unittest.TestCase):
                     )
                     report = module.StreamReport()
                     module.scan_diff_added_lines(module.ScanContext(module.ScanLimits()), ROOT, "notes.txt", module.CANDIDATE_WORKTREE,
-                                                 report, lambda key: False, root_has_head=True, snapshot=None)
+                                                 report, lambda key: False, root_has_head=True,
+                                                 snapshot=__import__("types").SimpleNamespace(conversion="none", baseline_has_crlf=False, diff_algorithm="myers", indent_heuristic=True, private_git_dir=None))
                     self.assertEqual(report.findings, [])
                 args = run.call_args.args[1]
                 self.assertIn("--no-color", args)

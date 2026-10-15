@@ -112,10 +112,13 @@ def scan_diff_added_lines(context, root, path, source, report, is_allowlisted, *
     from .scan_types import GitCommandError
     with snapshot_diff_inputs(context, root, path, source, snapshot) as (before, after):
         with capture_git(context, [
-            "diff", "--no-index", "--text", "--no-ext-diff", "--no-color", "--no-textconv",
+            "diff", "--no-index", "--text", "--diff-algorithm=" + snapshot.diff_algorithm,
+            "--indent-heuristic" if snapshot.indent_heuristic else "--no-indent-heuristic", "--no-ext-diff", "--no-color", "--no-textconv",
             "--unified=0", "--src-prefix=a/", "--dst-prefix=b/", "--output-indicator-new=+",
             "--output-indicator-old=-", "--output-indicator-context= ", "--", str(before), str(after),
-        ], cwd=root, deadline=context.deadline, allow_nonzero=True) as capture:
+        ], cwd=root, deadline=context.deadline, allow_nonzero=True, literal_diff_inputs=True,
+           auto_crlf=snapshot.conversion == "auto" and not snapshot.baseline_has_crlf,
+           private_git_dir=snapshot.private_git_dir) as capture:
             try:
                 scan_line_events(path, diff_added_line_events(capture.chunks(), context.check_deadline),
                                  report, is_allowlisted, redact_match, context.check_deadline)
@@ -180,6 +183,8 @@ def scan(work_dir: Path, policy: ScanPolicy, limits: ScanLimits, *, started: flo
                             else:
                                 scan_diff_added_lines(context, root, path, source, report,
                                                       is_allowlisted, root_has_head=root_has_head, snapshot=snapshot)
+                        identity.update(b"conversion\0" + snapshot.conversion.encode("ascii") + b"\0")
+                        identity.update(snapshot.diff_algorithm.encode("ascii") + bytes([snapshot.indent_heuristic]))
                         identity.update(b"baseline\0" + (snapshot.baseline_oid or b"empty") + b"\0")
                         context.phase = "candidate_scan"
                         if report.stopped:

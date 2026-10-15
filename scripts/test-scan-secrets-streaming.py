@@ -263,6 +263,90 @@ class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
             self.git("update-ref", "HEAD", base)
             self.assert_outcome(provider, "block", "diff", "findings", "captured.txt")
 
+    def assert_declared_crlf_conversion(self, attributes=False):
+        path = self.repo / "converted.txt"
+        self.git("config", "core.autocrlf", "false" if attributes else "true")
+        if attributes:
+            (self.repo / ".gitattributes").write_text("converted.txt text eol=crlf\n")
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\nold safe\n").encode())
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\r\nnew safe\r\n").encode())
+        for provider in fixture.PROVIDERS:
+            self.assert_outcome(provider, "block", "diff", "clean")
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\r\nnew=" + fixture.FAKE_TOKEN + "\r\n").encode())
+        for provider in fixture.PROVIDERS:
+            self.findings(provider, [("github_classic_pat", 2, "ghp_...FAKE")])
+
+    def test_declared_crlf_conversion_preserves_diff_suppression_and_new_findings(self):
+        self.assert_declared_crlf_conversion()
+
+    def test_path_declared_crlf_conversion_preserves_suppression_and_new_findings(self):
+        self.assert_declared_crlf_conversion(attributes=True)
+
+    def test_auto_conversion_keeps_crlf_indexed_baseline_literal(self):
+        path = self.repo / "converted.txt"
+        self.git("config", "core.autocrlf", "false")
+        baseline = ("retained=" + fixture.FAKE_TOKEN + "\r\nold safe\r\n").encode()
+        path.write_bytes(baseline)
+        self.git("add", "--all")
+        self.git("commit", "-qm", "literal CRLF baseline")
+        self.assertEqual(subprocess.check_output([str(self.git_path), "-C", str(self.repo), "cat-file", "blob", "HEAD:converted.txt"], env=self.env), baseline)
+        self.git("config", "core.autocrlf", "true")
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\r\nnew safe\r\n").encode())
+        for provider in fixture.PROVIDERS:
+            self.assert_outcome(provider, "block", "diff", "clean")
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\r\nnew=" + fixture.FAKE_TOKEN + "\r\n").encode())
+        for provider in fixture.PROVIDERS:
+            self.findings(provider, [("github_classic_pat", 2, "ghp_...FAKE")])
+        path.write_bytes(("retained=" + fixture.FAKE_TOKEN + "\nnew safe\n").encode())
+        for provider in fixture.PROVIDERS:
+            self.findings(provider, [("github_classic_pat", 1, "ghp_...FAKE")])
+
+    def test_unsupported_conversion_retains_known_findings_as_incomplete(self):
+        path = self.repo / "converted.txt"
+        path.write_text("baseline\n")
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        path.write_text("changed safe\n")
+        (self.repo / "a-secret.txt").write_text(fixture.FAKE_TOKEN + "\n")
+        for declaration in ("filter=fixture", "working-tree-encoding=UTF-8", "ident"):
+            (self.repo / ".gitattributes").write_text("converted.txt " + declaration + "\n")
+            for provider in fixture.PROVIDERS:
+                with self.subTest(provider=provider, declaration=declaration):
+                    response, record = self.scan(provider)
+                    self.assertEqual(record["status"], "incomplete")
+                    self.assertEqual(record["diagnostic"]["cause"], "conversion_unsupported")
+                    self.assertEqual(record["security_outcome"], "findings")
+                    self.assertFalse(record["scanResult"]["coverage_complete"])
+                    self.assertEqual(record["findings"][0]["path"], "a-secret.txt")
+                    self.assertIn("scan incomplete", json.dumps(response))
+
+    def test_private_diff_names_do_not_execute_global_clean_filter(self):
+        import shlex
+        path = self.repo / "converted.txt"
+        path.write_text("baseline\n")
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        attributes = self.root / "global-attributes"
+        attributes.write_text("* filter=fixture\n")
+        (self.repo / ".gitattributes").write_text("converted.txt -filter\n")
+        marker_path = self.root / "filter-executed"
+        command = shlex.join([sys.executable, "-c",
+            "import sys;from pathlib import Path;Path(" + repr(str(marker_path)) + ").touch();sys.stdout.buffer.write(sys.stdin.buffer.read())"])
+        self.git("config", "core.attributesFile", str(attributes))
+        self.git("config", "filter.fixture.clean", command)
+        path.write_text("changed safe\n")
+        for provider in fixture.PROVIDERS:
+            marker_path.unlink(missing_ok=True)
+            self.assert_outcome(provider, "block", "diff", "clean")
+            self.assertFalse(marker_path.exists(), "private comparison names executed an unrelated clean filter")
+        path.write_text(fixture.FAKE_TOKEN + "\n")
+        for provider in fixture.PROVIDERS:
+            marker_path.unlink(missing_ok=True)
+            self.findings(provider, [("github_classic_pat", 1, "ghp_...FAKE")])
+            self.assertFalse(marker_path.exists(), "secret comparison executed an unrelated clean filter")
+
     def test_input_time_and_git_work_share_nonextendable_deadline(self):
         (self.repo / "pending.txt").write_text("safe\n")
         self.install_fake_git(

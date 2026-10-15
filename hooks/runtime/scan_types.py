@@ -81,6 +81,7 @@ INCOMPLETE_CAUSES = {
     "log_record_limit": ("scan log record byte limit exceeded", "Check hook log rotation settings and scan volume.", "bytes"),
     "capture_bytes_limit": ("aggregate Git capture byte limit exceeded", "Increase the explicit capture budget within its supported range or reduce the scan scope.", "bytes"),
     "temporary_bytes_limit": ("private temporary byte limit exceeded", "Increase the explicit temporary budget within its supported range or repair temporary storage.", "bytes"),
+    "conversion_unsupported": ("declared Git conversion requires unsupported inspection", "Review the declared conversion and use a supported full-content check.", ""),
     "candidate_changed": ("candidate changed during capture", "Retry against a stable candidate.", ""),
     "findings_limit": ("finding inspection limit reached", "Reduce pending findings and rerun the scan.", "findings"),
     "internal_error": ("internal scanner failure", "Check the hook installation and retry.", ""),
