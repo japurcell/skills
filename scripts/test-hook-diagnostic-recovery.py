@@ -183,7 +183,7 @@ class RecoveryTests(unittest.TestCase):
         return script, cwd, env
 
     def launch(self, script, cwd, env, payload, mode="block"):
-        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(script)], input=json.dumps(payload).encode(), cwd=cwd, env={**env, "SCAN_MODE": mode}, capture_output=True, timeout=12)
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(script)], input=json.dumps(payload).encode(), cwd=cwd, env={**env, "SCAN_MODE": mode, "GUARD_MODE": mode}, capture_output=True, timeout=12)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout), result
 
