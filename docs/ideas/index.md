@@ -2,6 +2,7 @@
 
 ## Active ideas
 
+- [Hook Failure Repair](./hook-failure-repair.md)
 - [Hook Failures](./hook-failures.md)
 - [Source Inject Manifest Issue](source-inject-manifest-issue.md)
 - [Agency Priorities Skill](2-agency-priorities-skill.md)
