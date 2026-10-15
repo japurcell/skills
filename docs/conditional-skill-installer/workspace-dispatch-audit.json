@@ -1,0 +1,146 @@
+{
+  "scope": "Milestone 8 sibling workspace migration",
+  "constraints": "No user model/effort constraints; private local work only",
+  "dispatches": [
+    {
+      "subtask_id": "D0-workspace-inventory",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "300 seconds",
+        "mechanism": "coordinator polls with elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": false,
+      "routing_compliant": true,
+      "finding": "Incorrect sibling depth and unresolved rename evidence; retained original discovery result superseded by repaired artifact."
+    },
+    {
+      "subtask_id": "D0-workspace-inventory-repair",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "300 seconds",
+        "mechanism": "coordinator elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "WS1-location-and-cleanup",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "1200 seconds",
+        "mechanism": "coordinator elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": false,
+      "routing_compliant": true,
+      "finding": "Ten tree identities match, but public nested-workspace/skill-bundle deletion reproducer failed; integration paused for WS1R."
+    },
+    {
+      "subtask_id": "WS2-maintained-consumers",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "1200 seconds",
+        "mechanism": "coordinator elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "WS1R-cleanup-boundaries",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "900 seconds",
+        "mechanism": "coordinator elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true
+    },
+    {
+      "subtask_id": "WS3-composed-proof",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "1200 seconds",
+        "mechanism": "coordinator elapsed-time checks; warn without interruption"
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "evidence_commit": "b02d55230b353baf3d998c6df3429c4e210af27d"
+    }
+  ],
+  "limits": [
+    "Runtime did not report executed model or effort; both remain unconfirmed.",
+    "Original discovery and initial cleanup outputs required repairs before acceptance.",
+    "Runtime limits were coordinator warning thresholds; no agent was interrupted solely for elapsed time."
+  ]
+}

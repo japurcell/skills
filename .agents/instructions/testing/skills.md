@@ -9,7 +9,8 @@ description: Validation and public grader tests for publishable and repo-local s
 - If packaging behavior changed, run `PYTHONPATH=skills/default/skill-creator python3 skills/default/skill-creator/scripts/package_skill.py skills/default/<skill-name> /tmp/skill-dist`.
 - If a default-category skill ships `evals/grade_benchmark.py` and you edited it, run `python3 -m py_compile skills/default/<skill-name>/evals/grade_benchmark.py`.
 - If benchmark grading behavior changed, run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>`.
-- Treat `skills/<category>/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
+- Treat `skills/*/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
+- For create-skill workspace-layout grading changes, run `rtk proxy python3 skills/default/create-skill/evals/test_grade_benchmark.py`. It exercises category and repo-local sibling examples through the public grader CLI using disposable iterations.
 
 ## Document-maintenance graders
 

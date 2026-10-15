@@ -1,10 +1,12 @@
 # Workspace relocation discovery
 
-Read-only inventory for relocating generated skill benchmark workspaces beside their owners. The ten existing tracked workspaces are currently root-level children of `skills/`; preserve their contents byte-for-byte during moves, including historical runs. A published owner at `skills/<category>/<name>/` gets a sibling at `skills/<category>/<name>-workspace/`. A repo-local owner at `.agents/skills/<name>/` gets a sibling at `.agents/skills/<name>-workspace/`. This mapping accounts for all ten current root workspaces, with no root-only exception. Workspace `outputs/` and sandbox `AGENTS.md` files are generated or fixture data, not maintained consumers.
+Historical discovery snapshot from 2026-10-15, before Milestone 8 implementation. Its source baseline was `c8d36350`, retained with the plan in `b98f8214`. Inventory and consumer observations below describe that baseline, not the current layout or remaining work. Consult [the ExecPlan](ExecPlan.md) for current completion and validation.
 
-## Recommended mapping
+The baseline contained ten tracked workspaces at the `skills/` root. The approved mapping preserves their contents byte-for-byte, including historical runs. A published owner at `skills/<category>/<name>/` gets a sibling at `skills/<category>/<name>-workspace/`. A repo-local owner at `.agents/skills/<name>/` gets a sibling at `.agents/skills/<name>-workspace/`. The mapping accounts for all ten baseline root workspaces, with no root-only exception. Workspace `outputs/` and sandbox `AGENTS.md` files are generated or fixture data, not maintained consumers.
 
-| Current workspace | Destination | Evidence / confidence |
+## Approved mapping from the baseline
+
+| Original workspace | Destination | Evidence / confidence |
 | --- | --- | --- |
 | `skills/create-skill-workspace/` | `skills/default/create-skill-workspace/` | Strong. The published owner is `skills/default/create-skill/`; its authoring guide, benchmark grader, and evals all refer to this workspace. |
 | `skills/handoff-workspace/` | `skills/default/handoff-workspace/` | Strong. The published owner is `skills/default/handoff/`; its grader and benchmark instructions match. |
@@ -21,7 +23,7 @@ The legacy task-workflow mapping is grounded in history, not name similarity alo
 
 There is no `skills/default/spec-to-tasks-workspace/` today. Keep the spec-to-tasks grader help pointed at the canonical category sibling path, `skills/default/spec-to-tasks-workspace/<iteration-dir>`, even while that workspace is absent. The retained legacy workspace maps to `skills/default/prd-to-tasks-workspace/`. No `prd-ralph-workspace/` exists, and `prd-ralph` or `prd-ralph-loop` do not own this benchmark history.
 
-## Maintained consumers to update
+## Consumers identified before implementation
 
 - `scripts/cleanup-skill-workspaces.sh` currently scans only immediate children of its skills root. Update workspace discovery for `skills/<category>/<name>-workspace/` and the local `.agents/skills/okf-authoring-workspace/`. Update `scripts/test-cleanup-skill-workspaces.sh` to cover category-level and local workspaces while preserving snapshots and generated outputs. The suite is registered in `scripts/test-all.py`.
 - `scripts/install.sh` and `scripts/install.ps1` enumerate immediate skill directories inside each category and already skip case-sensitive names ending in `-workspace`; the new published workspace siblings remain excluded. Keep `scripts/test-install.sh` and `scripts/test-install.ps1` exercising a category-level workspace fixture such as their existing `skills/default/beta-workspace/`, along with suffix edge cases.

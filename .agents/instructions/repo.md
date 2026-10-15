@@ -13,7 +13,7 @@ description: Repo-wide workflow for top-level docs, install refresh, and documen
 - When a user explicitly promotes a feature handoff into `docs/<effort>/`, keep it at `docs/<effort>/handoff.md` and limit it to current status, remaining work, and exact resume instructions.
 - Keep the generated-provider-hooks architectural decision at `docs/adr/0004-generated-provider-hooks.md`.
 - After changing repo source that is installed into home-directory targets, run `./scripts/install.sh` before checking live Copilot or Gemini behavior.
-- Ignore `skills/<category>/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` during normal edits and reviews.
+- Ignore `skills/*/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` during normal edits and reviews.
 - Ignore `skills/**/evals/files/**/AGENTS.md` and `**/*-workspace/**/sandbox/AGENTS.md` unless task explicitly targets them.
 - When using simplification or refactor help, state intentional path boundaries explicitly, such as `.gemini/` versus `.copilot/`.
 - Treat a subagent runtime target as a required status-check point. If work exceeds the target, inspect its status and give an overrun warning; let the work continue. Do not interrupt ongoing work solely because the target elapsed.
