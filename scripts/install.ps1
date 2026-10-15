@@ -178,6 +178,22 @@ function Install-PreservedLink {
     }
 }
 
+function Complete-CopyMode {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [bool]$Copied,
+        $OriginalMode
+    )
+
+    if ($Copied) {
+        Set-FileModeFrom -Source $Source -Destination $Destination
+    }
+    elseif ($null -ne $OriginalMode) {
+        [System.IO.File]::SetUnixFileMode($Destination, $OriginalMode)
+    }
+}
+
 # Copies a regular file while preserving its Unix file mode.
 function Copy-FileWithMode {
     param(
@@ -203,12 +219,7 @@ function Copy-FileWithMode {
         $copied = $true
     }
     finally {
-        if ($copied) {
-            Set-FileModeFrom -Source $Source -Destination $Destination
-        }
-        elseif ($null -ne $originalMode) {
-            [System.IO.File]::SetUnixFileMode($Destination, $originalMode)
-        }
+        Complete-CopyMode -Source $Source -Destination $Destination -Copied $copied -OriginalMode $originalMode
     }
 }
 
@@ -223,11 +234,7 @@ function Copy-Entry {
 
     # LinkType must be checked before PSIsContainer: a symlink to a directory reports PSIsContainer = $true.
     $linkType = [string]$Entry.LinkType
-    if ($linkType -ceq 'SymbolicLink') {
-        Install-PreservedLink -SourceDescription $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -LinkType $linkType -Target $Entry.Target
-        return
-    }
-    if ($linkType -ceq 'Junction') {
+    if ($linkType -ceq 'SymbolicLink' -or $linkType -ceq 'Junction') {
         Install-PreservedLink -SourceDescription $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -LinkType $linkType -Target $Entry.Target
         return
     }
@@ -253,12 +260,7 @@ function Copy-Entry {
             $copied = $true
         }
         finally {
-            if ($copied) {
-                Set-FileModeFrom -Source $Entry.FullName -Destination $destPath
-            }
-            elseif ($null -ne $originalMode) {
-                [System.IO.File]::SetUnixFileMode($destPath, $originalMode)
-            }
+            Complete-CopyMode -Source $Entry.FullName -Destination $destPath -Copied $copied -OriginalMode $originalMode
         }
         return
     }
@@ -515,13 +517,10 @@ foreach ($src in @((Join-Path $SkillsSrc 'default'), (Join-Path $SkillsSrc 'fore
     }
 }
 
-foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc)) {
-    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
-        Fail "Missing source file: $src"
-    }
-}
-
-foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $ValidateSkillSourcesSrc, $GenerateHooksSrc, $ConfigureRtkSrc)) {
+foreach ($src in @(
+    $CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc,
+    $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $ValidateSkillSourcesSrc, $GenerateHooksSrc, $ConfigureRtkSrc
+)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }

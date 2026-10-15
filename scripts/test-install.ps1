@@ -225,6 +225,10 @@ function New-FixtureRepo {
 }
 
 function Get-PythonForFixture {
+    param(
+        [string]$MissingExecutableMessage = 'Missing Python executable: expected python3 or py for generated-hook fixtures.'
+    )
+
     $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
     $arguments = @()
     if ($null -eq $python) {
@@ -232,12 +236,44 @@ function Get-PythonForFixture {
         $arguments = @('-3')
     }
     if ($null -eq $python) {
-        Fail 'Missing Python executable: expected python3 or py for generated-hook fixtures.'
+        Fail $MissingExecutableMessage
     }
     return [pscustomobject]@{
         Path = $python.Source
         Arguments = $arguments
     }
+}
+
+function Repair-FixturePermissions {
+    param(
+        [pscustomobject]$Python,
+        [string]$Workdir
+    )
+
+    # Only regular fixture paths need permission repair for cleanup.
+    & $Python.Path @($Python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $Workdir
+}
+
+function New-ReadOnlyHardLinkFixture {
+    param(
+        [pscustomobject]$Python,
+        [string]$ExternalPath,
+        [string]$InstalledPath,
+        [string]$Content
+    )
+
+    $prepare = @'
+from pathlib import Path
+import os
+import sys
+outside, installed = map(Path, sys.argv[1:3])
+outside.write_bytes(sys.argv[3].encode('utf-8'))
+os.chmod(outside, 0o444)
+installed.parent.mkdir(parents=True)
+os.link(outside, installed)
+print(outside.stat().st_ino)
+'@
+    & $Python.Path @($Python.Arguments) -c $prepare $ExternalPath $InstalledPath $Content
 }
 
 function Add-GeneratedHookFixture {
@@ -432,6 +468,41 @@ function Test-GeneratorFailureStopsBeforeDestinationMutation {
     }
 }
 
+function Get-ChildProfileEnvironment {
+    param(
+        [string]$HomeDir,
+        [string]$Workdir
+    )
+
+    return [ordered]@{
+        APPDATA = Join-Path $HomeDir 'AppData/Roaming'
+        LOCALAPPDATA = Join-Path $HomeDir 'AppData/Local'
+        HOME = $HomeDir
+        USERPROFILE = $HomeDir
+        XDG_CACHE_HOME = Join-Path $Workdir 'xdg-cache'
+        XDG_CONFIG_HOME = Join-Path $Workdir 'xdg-config'
+        XDG_DATA_HOME = Join-Path $Workdir 'xdg-data'
+    }
+}
+
+function Save-ProcessEnvironment {
+    param([System.Collections.IDictionary]$Environment)
+
+    $saved = [ordered]@{}
+    foreach ($name in $Environment.Keys) {
+        $saved[$name] = [System.Environment]::GetEnvironmentVariable($name, [System.EnvironmentVariableTarget]::Process)
+    }
+    return $saved
+}
+
+function Set-ProcessEnvironment {
+    param([System.Collections.IDictionary]$Environment)
+
+    foreach ($name in $Environment.Keys) {
+        [System.Environment]::SetEnvironmentVariable($name, $Environment[$name], [System.EnvironmentVariableTarget]::Process)
+    }
+}
+
 # Runs the fixture's install.ps1 in a child pwsh with HOME/USERPROFILE redirected to $HomeDir.
 # The PS7 automatic $HOME is fixed at process start, so the process environment must be
 # changed before the child launches. $env:HOME is read-only in pwsh 7.4+, so the .NET
@@ -453,29 +524,16 @@ function Invoke-InstallProcess {
         [string]$ForestServiceValue = $null
     )
 
-    $oldForestService = [System.Environment]::GetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', [System.EnvironmentVariableTarget]::Process)
-    $oldAppData = [System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)
-    $oldLocalAppData = [System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)
-    $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
-    $oldCodexHome = [System.Environment]::GetEnvironmentVariable('CODEX_HOME', [System.EnvironmentVariableTarget]::Process)
     $oldPath = [System.Environment]::GetEnvironmentVariable('PATH', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
+    $environment = Get-ChildProfileEnvironment -HomeDir $HomeDir -Workdir $Workdir
+    $environment['INSTALL_FOREST_SERVICE_SKILLS'] = $ForestServiceValue
+    $environment['CODEX_HOME'] = $CodexHome
+    $environment['PATH'] = "$(Join-Path $Repo 'bin')$([System.IO.Path]::PathSeparator)$oldPath"
+    $savedEnvironment = Save-ProcessEnvironment $environment
     $childStdoutPath = Join-Path $Workdir 'child-stdout.txt'
     $childStderrPath = Join-Path $Workdir 'child-stderr.txt'
     try {
-        [System.Environment]::SetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', $ForestServiceValue, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('APPDATA', (Join-Path $HomeDir 'AppData/Roaming'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', (Join-Path $HomeDir 'AppData/Local'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $CodexHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('PATH', "$(Join-Path $Repo 'bin')$([System.IO.Path]::PathSeparator)$oldPath", [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
+        Set-ProcessEnvironment $environment
         & pwsh -NoProfile -File (Join-Path $Repo 'scripts/install.ps1') @InstallArguments 1> $childStdoutPath 2> $childStderrPath
         $exitCode = $LASTEXITCODE
         $stdout = @()
@@ -488,16 +546,7 @@ function Invoke-InstallProcess {
         }
     }
     finally {
-        [System.Environment]::SetEnvironmentVariable('INSTALL_FOREST_SERVICE_SKILLS', $oldForestService, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('APPDATA', $oldAppData, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $oldLocalAppData, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('CODEX_HOME', $oldCodexHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('PATH', $oldPath, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $oldXdgConfigHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', $oldXdgDataHome, [System.EnvironmentVariableTarget]::Process)
+        Set-ProcessEnvironment $savedEnvironment
         Remove-Item -LiteralPath $childStdoutPath -Force -ErrorAction SilentlyContinue
         Remove-Item -LiteralPath $childStderrPath -Force -ErrorAction SilentlyContinue
     }
@@ -517,34 +566,17 @@ function Initialize-ChildPowerShellHome {
         [string]$Workdir
     )
 
-    $oldAppData = [System.Environment]::GetEnvironmentVariable('APPDATA', [System.EnvironmentVariableTarget]::Process)
-    $oldLocalAppData = [System.Environment]::GetEnvironmentVariable('LOCALAPPDATA', [System.EnvironmentVariableTarget]::Process)
-    $oldHome = [System.Environment]::GetEnvironmentVariable('HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldUserProfile = [System.Environment]::GetEnvironmentVariable('USERPROFILE', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgCacheHome = [System.Environment]::GetEnvironmentVariable('XDG_CACHE_HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgConfigHome = [System.Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', [System.EnvironmentVariableTarget]::Process)
-    $oldXdgDataHome = [System.Environment]::GetEnvironmentVariable('XDG_DATA_HOME', [System.EnvironmentVariableTarget]::Process)
+    $environment = Get-ChildProfileEnvironment -HomeDir $HomeDir -Workdir $Workdir
+    $savedEnvironment = Save-ProcessEnvironment $environment
     try {
-        [System.Environment]::SetEnvironmentVariable('APPDATA', (Join-Path $HomeDir 'AppData/Roaming'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', (Join-Path $HomeDir 'AppData/Local'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('HOME', $HomeDir, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $HomeDir, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', (Join-Path $Workdir 'xdg-cache'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', (Join-Path $Workdir 'xdg-config'), [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', (Join-Path $Workdir 'xdg-data'), [System.EnvironmentVariableTarget]::Process)
+        Set-ProcessEnvironment $environment
         & pwsh -NoProfile -Command ''
         if ($LASTEXITCODE -ne 0) {
             Fail 'Could not initialize the child PowerShell home for the fixture snapshot.'
         }
     }
     finally {
-        [System.Environment]::SetEnvironmentVariable('APPDATA', $oldAppData, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('LOCALAPPDATA', $oldLocalAppData, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('HOME', $oldHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('USERPROFILE', $oldUserProfile, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CACHE_HOME', $oldXdgCacheHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $oldXdgConfigHome, [System.EnvironmentVariableTarget]::Process)
-        [System.Environment]::SetEnvironmentVariable('XDG_DATA_HOME', $oldXdgDataHome, [System.EnvironmentVariableTarget]::Process)
+        Set-ProcessEnvironment $savedEnvironment
     }
 }
 
@@ -743,8 +775,7 @@ assert not any(p.name.startswith('.rebase-') for p in root.rglob('*'))
         Assert-Equals 0 $LASTEXITCODE 'Expected temporary destination permission changes to be restored after public copy failure.'
     }
     finally {
-        # Only regular fixture paths need permission repair for cleanup.
-        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
+        Repair-FixturePermissions -Python $python -Workdir $workdir
         Remove-Workdir $workdir
     }
 }
@@ -830,19 +861,7 @@ function Test-PruningReadOnlyHardLinkPreservesExternalInode {
         $homeDir = Join-Path $workdir 'home'
         $outside = Join-Path $workdir 'external.md'
         New-FixtureRepo $repo
-        $prepare = @'
-from pathlib import Path
-import os
-import sys
-outside, home = map(Path, sys.argv[1:])
-outside.write_bytes(b'external bytes must remain untouched\n')
-os.chmod(outside, 0o444)
-installed = home / '.agents/skills/alpha/evals/stale.md'
-installed.parent.mkdir(parents=True)
-os.link(outside, installed)
-print(outside.stat().st_ino)
-'@
-        $beforeInode = & $python.Path @($python.Arguments) -c $prepare $outside $homeDir
+        $beforeInode = New-ReadOnlyHardLinkFixture -Python $python -ExternalPath $outside -InstalledPath (Join-Path $homeDir '.agents/skills/alpha/evals/stale.md') -Content "external bytes must remain untouched`n"
         Assert-Equals 0 $LASTEXITCODE 'Expected external hard-link fixture creation to succeed.'
         $before = Get-TreeFingerprint $outside
         $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
@@ -875,7 +894,7 @@ else:
         Assert-Equals 0 $LASTEXITCODE 'Expected external inode identity, original bytes, mode, and link count after pruning/refusal.'
     }
     finally {
-        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
+        Repair-FixturePermissions -Python $python -Workdir $workdir
         Remove-Workdir $workdir
     }
 }
@@ -888,18 +907,7 @@ function Test-ReadOnlyHardLinkCopyRefusesExternalMutation {
         $homeDir = Join-Path $workdir 'home'
         $outside = Join-Path $workdir 'external.md'
         New-FixtureRepo $repo
-        $prepare = @'
-from pathlib import Path
-import os
-import sys
-outside, home = map(Path, sys.argv[1:])
-outside.write_bytes(b'external bytes must remain untouched; see ../../../references/notes.md.\n')
-os.chmod(outside, 0o444)
-installed = home / '.agents/skills/alpha/SKILL.md'
-installed.parent.mkdir(parents=True)
-os.link(outside, installed)
-'@
-        & $python.Path @($python.Arguments) -c $prepare $outside $homeDir
+        $null = New-ReadOnlyHardLinkFixture -Python $python -ExternalPath $outside -InstalledPath (Join-Path $homeDir '.agents/skills/alpha/SKILL.md') -Content "external bytes must remain untouched; see ../../../references/notes.md.`n"
         Assert-Equals 0 $LASTEXITCODE 'Expected external hard-link fixture creation to succeed.'
         $before = Get-TreeFingerprint $outside
         $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome (Join-Path $workdir 'codex')
@@ -925,7 +933,7 @@ assert outside.stat().st_nlink == 2
         Assert-Equals 0 $LASTEXITCODE 'Expected both names of the external inode to remain intact after refusal.'
     }
     finally {
-        & $python.Path @($python.Arguments) -c 'import os,sys; from pathlib import Path; root=Path(sys.argv[1]); [os.chmod(p,0o755 if p.is_dir() else 0o644) for p in root.rglob("*") if not p.is_symlink()]' $workdir
+        Repair-FixturePermissions -Python $python -Workdir $workdir
         Remove-Workdir $workdir
     }
 }
@@ -1507,15 +1515,7 @@ function Assert-CodexAgentInstallation {
         [string]$ManifestPath
     )
 
-    $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
-    $pythonArguments = @()
-    if ($null -eq $python) {
-        $python = @(Get-Command py -CommandType Application -ErrorAction SilentlyContinue)[0]
-        $pythonArguments = @('-3')
-    }
-    if ($null -eq $python) {
-        Fail 'Missing Python executable: expected python3 or py for Codex agent assertions.'
-    }
+    $python = Get-PythonForFixture -MissingExecutableMessage 'Missing Python executable: expected python3 or py for Codex agent assertions.'
 
     $assertion = @'
 import json
@@ -1542,7 +1542,7 @@ if os.name != "nt":
     assert stat.S_IMODE(agent_path.stat().st_mode) == 0o600
     assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o600
 '@
-    & $python.Source @pythonArguments -c $assertion $AgentPath $ManifestPath
+    & $python.Path @($python.Arguments) -c $assertion $AgentPath $ManifestPath
     if ($LASTEXITCODE -ne 0) {
         Fail 'Expected generated Codex TOML and manifest to parse with the fixture agent identity and exact instructions.'
     }

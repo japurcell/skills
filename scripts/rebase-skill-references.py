@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 import os
 from pathlib import Path
 import re
@@ -48,12 +48,25 @@ def has_link_component(root: Path, relative_path: Path) -> bool:
     return False
 
 
-def regular_markdown_files(root: Path):
+def _checked_write_access_mode(path: Path, details: os.stat_result) -> int:
+    """Return the original mode, rejecting unsafe temporary owner-write access."""
+    mode = stat.S_IMODE(details.st_mode)
+    if not mode & stat.S_IWUSR and stat.S_ISREG(details.st_mode) and details.st_nlink > 1:
+        raise PermissionError(f"Refusing to change read-only hard-linked file: {path}")
+    return mode
+
+
+def _walk_without_links(root: Path):
     for current_dir, child_dirs, filenames in os.walk(root, followlinks=False):
         directory = Path(current_dir)
         child_dirs[:] = [
             name for name in child_dirs if not is_link_or_junction(directory / name)
         ]
+        yield directory, child_dirs, filenames
+
+
+def regular_markdown_files(root: Path):
+    for directory, _, filenames in _walk_without_links(root):
         for filename in filenames:
             path = directory / filename
             if is_link_or_junction(path) or path.suffix.lower() not in MARKDOWN_SUFFIXES:
@@ -71,11 +84,7 @@ def copy_with_preserved_modes(source_dir: Path, destination_dir: Path, command: 
     succeeded = False
     try:
         if not is_link_or_junction(source_dir) and not is_link_or_junction(destination_dir):
-            for current_dir, child_dirs, filenames in os.walk(source_dir, followlinks=False):
-                source_parent = Path(current_dir)
-                child_dirs[:] = [
-                    name for name in child_dirs if not is_link_or_junction(source_parent / name)
-                ]
+            for source_parent, _, filenames in _walk_without_links(source_dir):
                 for source in (source_parent, *(source_parent / name for name in filenames)):
                     relative = source.relative_to(source_dir)
                     destination = destination_dir / relative
@@ -95,10 +104,8 @@ def copy_with_preserved_modes(source_dir: Path, destination_dir: Path, command: 
                         or stat.S_ISDIR(destination_stat.st_mode)
                     ):
                         continue
-                    mode = stat.S_IMODE(destination_stat.st_mode)
+                    mode = _checked_write_access_mode(destination, destination_stat)
                     if not mode & stat.S_IWUSR:
-                        if stat.S_ISREG(destination_stat.st_mode) and destination_stat.st_nlink > 1:
-                            raise PermissionError(f"Refusing to change read-only hard-linked file: {destination}")
                         destination.chmod(mode | stat.S_IWUSR)
                         changed_modes.append((source, destination, mode))
         result = subprocess.run(command, check=False)
@@ -127,21 +134,15 @@ def temporary_write_access(root: Path, *, include_files: bool = False):
             or (include_files and stat.S_ISREG(details.st_mode))
         ):
             return
-        mode = stat.S_IMODE(details.st_mode)
+        mode = _checked_write_access_mode(path, details)
         if not mode & stat.S_IWUSR:
-            if stat.S_ISREG(details.st_mode) and details.st_nlink > 1:
-                raise PermissionError(f"Refusing to change read-only hard-linked file: {path}")
             path.chmod(mode | stat.S_IWUSR)
             changed_modes.append((path, mode))
 
     try:
         if root.exists() and not is_link_or_junction(root):
             make_writable(root)
-            for current_dir, child_dirs, filenames in os.walk(root, followlinks=False):
-                directory = Path(current_dir)
-                child_dirs[:] = [
-                    name for name in child_dirs if not is_link_or_junction(directory / name)
-                ]
+            for directory, child_dirs, filenames in _walk_without_links(root):
                 for name in child_dirs:
                     make_writable(directory / name)
                 if include_files:
@@ -226,9 +227,7 @@ def rebase_skill_references(
             # need no writable parent or temporary file; restore the file mode
             # even if writing fails, and never change the source's permissions.
             details = destination_file.stat()
-            original_mode = stat.S_IMODE(details.st_mode)
-            if not original_mode & stat.S_IWUSR and details.st_nlink > 1:
-                raise PermissionError(f"Refusing to change read-only hard-linked file: {destination_file}")
+            original_mode = _checked_write_access_mode(destination_file, details)
             try:
                 if not original_mode & stat.S_IWUSR:
                     destination_file.chmod(original_mode | stat.S_IWUSR)
@@ -257,20 +256,16 @@ def main() -> int:
         status = copy_with_preserved_modes(args.source_dir, args.destination_dir, args.copy_command)
         if status:
             return status
-    if (
+    should_prune = (
         args.prune
         and not is_link_or_junction(args.source_dir)
         and not is_link_or_junction(args.destination_dir)
-    ):
-        # Source modes may make the copied root and evals directories read-only.
-        # Keep pruning inside this scope, then restore every surviving directory.
-        with temporary_write_access(args.destination_dir):
+    )
+    # Source modes may make the copied root and evals directories read-only.
+    # Keep pruning inside this scope, then restore every surviving directory.
+    with temporary_write_access(args.destination_dir) if should_prune else nullcontext():
+        if should_prune:
             prune_skill_exclusions(args.destination_dir)
-            rebase_skill_references(
-                args.source_dir, args.destination_dir,
-                args.references_source, args.references_destination,
-            )
-    else:
         rebase_skill_references(
             args.source_dir, args.destination_dir,
             args.references_source, args.references_destination,

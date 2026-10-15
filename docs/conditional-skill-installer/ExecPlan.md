@@ -10,8 +10,14 @@ The originating requirement is [Conditional Skill Installer](../ideas/1-conditio
 
 The feature changes skill selection only. Agents, references, RTK configuration, and provider hooks retain their existing installation rules and safety checks. Creating the future `agency-priorities` skill is outside this effort.
 
+Milestone 5 completed the user's subsequent duplication cleanup over fixed `main...HEAD`: all 23 safe candidates are refactored and independently validated locally. The [complete ledger](techdebt-findings.md) records every selected and retained group, commands, input hashes and limits. Cleanup changes are uncommitted and unpushed; fresh native Windows verification remains outstanding.
+
 ## Progress
 
+- [x] (2026-10-14) [milestone-5] TD1: Three discovery lanes inspected fixed `main...HEAD` scope `4f2b2f4e..6ff95ef6`. The complete [candidate ledger](techdebt-findings.md) records 23 safe candidates plus intentional, incompatible, ambiguous, and unrelated repetitions, without a result cap.
+- [x] (2026-10-14) [milestone-5] TD2: Three scoped workers implemented all 23 safe candidates. Source/test files are frozen; syntax and author preservation audits passed.
+- [x] (2026-10-14) [milestone-5] TD2: Independent validators accepted all 23 candidates locally with no weakened assertions or changed case data. All six frozen source/test hashes remained unchanged. Current native Windows junction/reparse/ReadOnly/profile proof remains outstanding.
+- [x] (2026-10-14) [milestone-5] TD3: Serial Bash installer, local PowerShell installer, 15 baseline/current helper cases, and Addy checks passed. Retained the complete ledger and exact input hashes. Syntax, whitespace and OKF checks passed; the final coordinated agent-doc admission warranted no canonical changes. No cleanup commit or push.
 - [x] (2026-10-14) [milestone-1] R6: Corrected the caveman, show-me, and lavish import destinations. The local Git import-to-install regression failed with stale installed content before repair; the complete Bash installer suite passed after repair. Syntax, OKF, and whitespace checks passed. Final agent-doc admission found no warranted canonical changes. Changes remain unpushed.
 - [x] (2026-10-14) [milestone-0] Inspect installer behavior, consumers, CLI sources, and test routes; complete the design interview.
 - [x] (2026-10-14) [milestone-0] Obtain confirmation of the shared design and permission to save this plan without implementation.
@@ -38,6 +44,7 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 
 ## Surprises & Discoveries
 
+- Duplication cleanup found that reference rewriting rejects unsafe hard links before its try block but performs chmod inside it. Sharing chmod with other callers would change exception cleanup. The refactor therefore shares mode calculation/refusal while keeping every caller's chmod and restoration boundary local.
 - Follow-up review of `4f2b2f4e..ae19dc32` found three import mappings still targeting root `skills/`. A local Git fixture replayed the declared mappings through the real copy helper and installer: installation succeeded but `caveman/SKILL.md` contained `Stale caveman.` instead of `Refreshed caveman.`. Human-only import orchestration was not executed.
 - Adversarial review of `4f2b2f4e..a5f50664` reproduced five omissions after the earlier suites passed: NFC/NFD destination aliases overwrite one leaf on macOS; preserved `0444` Markdown raises `PermissionError` during rebasing; valid leading `./` reference paths remain broken; eight live Addy source pointers still have the old depth; create-skill's live benchmark instruction still uses a nonexistent flat source path. Public Bash/macOS PowerShell reproductions and read-only source resolution establish these findings. Earlier evidence remains historical proof of its tested cases, not acceptance of these repairs.
 
@@ -55,6 +62,8 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - PowerShell is available on the planning host, but this is macOS. Local PowerShell execution cannot prove native Windows behavior. No installer test suite or native Windows CI was run during planning.
 
 ## Decision Log
+
+Cleanup decision (2026-10-14): process all 23 safe candidates in substantively changed units, including inherited repetition within those units. Keep incompatible cross-script algorithms, independent test oracles, literal case matrices, and pure-move bodies separate. Use private same-module helpers and existing cleanup/interpreter helpers; preserve public interfaces and caller-specific failure boundaries. The [complete ledger](techdebt-findings.md) records every selected and retained group.
 
 The user selected or confirmed the public contract on 2026-10-14 and authorized all five review repairs. The dated repair details below resolve implementation choices within that scope. These decisions define the current contract; acceptance evidence is recorded separately.
 
@@ -105,7 +114,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-The implementation, five earlier review repairs, native encoding repair, and follow-up importer repair are complete. W2's Windows workflow passed at `44a47e5b`, including Unicode diagnostics, ReadOnly attributes, and junction cases. [Local repair proof](repair-verification.json) and [native proof](native-windows-verification.json) retain those revisions and limits. R6 subsequently corrected three import destinations and added a regression through the real copy helper and Bash installer; the complete local suite passed. R6 changes only the Bash importer, its Bash regression, and this plan, so no new native Windows run was performed. Earlier native evidence remains scoped to its recorded revision. All milestones are accepted; R6 remains unpushed. The final coordinated agent-doc pass found no warranted canonical changes; OKF lint passed. No local repair or verification work remains. General NTFS ACL behavior is outside the fixture proof.
+The implementation, five earlier review repairs, native encoding repair, and follow-up importer repair are complete. W2's Windows workflow passed at `44a47e5b`, including Unicode diagnostics, ReadOnly attributes, and junction cases. [Local repair proof](repair-verification.json) and [native proof](native-windows-verification.json) retain those revisions and limits. R6 subsequently corrected three import destinations and added a regression through the real copy helper and Bash installer; the complete local suite passed. R6 changes only the Bash importer, its Bash regression, and this plan, so no new native Windows run was performed. Earlier native evidence remains scoped to its recorded revision. Milestones 0-4 are accepted; R6 remains unpushed. The final coordinated agent-doc pass found no warranted canonical changes; OKF lint passed. Milestone 5's duplication cleanup is complete locally: all 23 selected candidates and affected suites passed independent validation. Its uncommitted changes and fresh native Windows proof remain distinct from earlier feature acceptance; see the complete candidate ledger. General NTFS ACL behavior is outside the fixture proof.
 
 ## Context and Orientation
 
@@ -238,9 +247,26 @@ Completed local T5 scope: document both invocation forms, environment values and
 
 Review the final diff for lost behavior, incorrect installed paths, ignored fixtures, and unauthorized scope. Record actual outcomes here. Follow repository retention policy when this implementation effort is complete; retain this user-requested plan as a completed result record.
 
+### Milestone 5: Remove safe duplication from the feature changes
+
+Status: done
+Acceptance: met
+
+The user requested `techdebt` over `main...HEAD`, without a finding cap, and authorized fixing all findings. The fixed review range is merge base `4f2b2f4efb8823683ceb046b51248f0dc0f27f37` through `6ff95ef643506332e6ff9f68ae30cf0c11cd089b`; local `main` resolves to `7182b156`. Preserve the D1-D4 contract and every test assertion. Pure file moves do not justify unrelated refactors of unchanged bodies. Classify intentional or unsafe repetition explicitly rather than forcing new abstractions.
+
+TD1 has no prerequisites and uses the exact range plus nearby helpers relevant to changed units. Three independent discovery lanes cover production helpers, Bash tests, and PowerShell tests plus maintained consumers. The coordinator owns this plan and the complete candidate ledger. Discovery is read-only.
+
+TD2 requires the candidate ledger. PROD-01 through PROD-06 belong to the production worker (`scripts/rebase-skill-references.py`, `scripts/install.sh`, `scripts/install.ps1`); BT-01 through BT-13 belong to the Bash-test worker (`scripts/test-install.sh`, `scripts/test-addy-install.sh`); PSC-001 through PSC-004 belong to the PowerShell-test worker (`scripts/test-install.ps1`). An independent validator checks every candidate in each ownership group. Shared-file edits and tests that mutate fixtures must be serialized. Require the applicable TDD and area instructions; preserve approved process/CLI seams. Public interface changes, architectural choices, broad naming changes, and unrelated refactors require a user decision rather than automatic implementation.
+
+TD3 requires all candidate work and validation to finish. Verify the composed tree with the affected suites, syntax/whitespace checks, and knowledge admission. Record exact commands, actual outcomes, retained candidates, and platform limits in `docs/conditional-skill-installer/techdebt-findings.md`. Existing native Windows proof remains scoped to `44a47e5b`; a local PowerShell pass cannot establish fresh native acceptance.
+
+Completed local evidence: all 23 candidates passed independent source/test preservation audits. `rtk proxy bash scripts/test-install.sh`, `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1`, the 15-case baseline/current public-helper harness, and the full Addy suite all exited 0 in serial execution. Both Bash test files parse under macOS Bash 3.2.57; production Python/PowerShell and embedded fixture scripts parse. Every original assertion/case/dispatch remains; the six source/test hashes were unchanged throughout verification. Whitespace and OKF checks passed, and the final KB admission pass made no canonical changes. The complete ledger retains details and all rejected/retained candidates.
+
+Acceptance here is the bounded local cleanup outcome. Native Windows junction, reparse, ReadOnly and profile behavior on the final cleanup revision remains unverified; the macOS suite explicitly skipped unsupported junction creation. Publication followed by the existing Windows workflow is the remaining external proof before claiming new cross-platform acceptance. No cleanup commit or push was performed.
+
 ## Concrete Steps
 
-No local implementation or verification action remains. R6's importer, Bash regression, and plan changes remain unpushed. W1 is integrated and published; W2's Windows workflow passed at `44a47e5b`. R6's complete Bash suite and targeted quality checks passed locally. Native results retain their recorded revision; no new Windows run was needed for these Bash-only changes. The user owns any next publication request.
+Local cleanup is complete with all 23 selected candidates fixed and independently verified. Milestone 5 changes remain uncommitted and unpushed; R6 is committed locally as `6ff95ef6`. The next external proof is native Windows execution on the published final cleanup revision using the existing workflow and `pwsh -NoProfile -File scripts/test-install.ps1`. The user owns the next publication request. W2's prior Windows proof stays scoped to `44a47e5b`; it does not establish acceptance of these later refactors. No further safe in-scope candidate remains from discovery.
 
 ### Completed native repair tasks
 
@@ -349,4 +375,4 @@ Keep Bash portability consistent with the current supported host shell; do not r
 
 ## Artifacts and Notes
 
-Current native proof is [native-windows-verification.json](native-windows-verification.json): both attempts, W1's encoding repair/local proof, actual native revision/host/times/step results, capability limits, and its dispatch audit. Initial local repair proof remains in [repair-verification.json](repair-verification.json) and [repair-dispatch-audit.json](repair-dispatch-audit.json); historical initial implementation proof remains in [verification.json](verification.json) and [dispatch-audit.json](dispatch-audit.json). Worker branches stayed private until serial integration and cleanup; the explicitly approved base branch is published. This user-requested plan is retained as the completed outcome record; all milestones are accepted.
+Current native proof is [native-windows-verification.json](native-windows-verification.json): both attempts, W1's encoding repair/local proof, actual native revision/host/times/step results, capability limits, and its dispatch audit. Initial local repair proof remains in [repair-verification.json](repair-verification.json) and [repair-dispatch-audit.json](repair-dispatch-audit.json); historical initial implementation proof remains in [verification.json](verification.json) and [dispatch-audit.json](dispatch-audit.json). Worker branches stayed private until serial integration and cleanup; the explicitly approved base branch is published. This user-requested plan is retained as the feature outcome record; Milestones 0-4 retain their recorded acceptance, and Milestone 5 has local cleanup acceptance. The complete [duplication ledger](techdebt-findings.md) records new source/test hashes, commands, retained groups, and the outstanding current-revision native Windows proof.

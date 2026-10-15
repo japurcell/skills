@@ -9,6 +9,7 @@ unset CODEX_HOME INSTALL_FOREST_SERVICE_SKILLS
 
 create_fixture_repo() {
   local repo="$1"
+  local script provider
 
   mkdir -p \
     "$repo/scripts" \
@@ -24,19 +25,17 @@ create_fixture_repo() {
     "$repo/.copilot/hooks" \
     "$repo/.gemini/policies"
 
-  cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
-  cp -p "$REPO_ROOT/scripts/file_io.py" "$repo/scripts/file_io.py"
-  cp -p "$REPO_ROOT/scripts/install-codex-agents.py" "$repo/scripts/install-codex-agents.py"
-  cp -p "$REPO_ROOT/scripts/install-codex-hooks.py" "$repo/scripts/install-codex-hooks.py"
-  cp -p "$REPO_ROOT/scripts/configure-rtk.py" "$repo/scripts/configure-rtk.py"
+  for script in install.sh file_io.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
+    cp -p "$REPO_ROOT/scripts/$script" "$repo/scripts/$script"
+  done
   mkdir -p "$repo/bin"
   printf '%s\n' '#!/bin/sh' 'printf "rtk 0.50.0\\n"' > "$repo/bin/rtk"
   chmod 755 "$repo/bin/rtk"
   PATH="$repo/bin:$PATH"
   export PATH
-  cp -p "$REPO_ROOT/scripts/install-provider-hooks.py" "$repo/scripts/install-provider-hooks.py"
-  cp -p "$REPO_ROOT/scripts/rebase-skill-references.py" "$repo/scripts/rebase-skill-references.py"
-  cp -p "$REPO_ROOT/scripts/validate-skill-sources.py" "$repo/scripts/validate-skill-sources.py"
+  for script in install-provider-hooks.py rebase-skill-references.py validate-skill-sources.py; do
+    cp -p "$REPO_ROOT/scripts/$script" "$repo/scripts/$script"
+  done
   cp -p "$REPO_ROOT/.codex/global-hooks.json" "$repo/.codex/global-hooks.json"
   cp -p "$REPO_ROOT/.codex/AGENTS.md" "$repo/.codex/AGENTS.md"
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
@@ -58,10 +57,12 @@ create_fixture_repo() {
   printf '%s\n' '{"local":"settings"}' > "$repo/.gemini/settings.json"
 
   mkdir -p "$repo/.gemini/hooks/scripts" "$repo/.copilot/hooks/scripts"
-  printf '%s\n' 'print("hook")' > "$repo/.gemini/hooks/scripts/test-hook.py"
-  printf '%s\n' 'print("hook")' > "$repo/.copilot/hooks/scripts/test-hook.py"
-  printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.gemini/hooks/scripts/test-hook.sh"
-  printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/.copilot/hooks/scripts/test-hook.sh"
+  for provider in .gemini .copilot; do
+    printf '%s\n' 'print("hook")' > "$repo/$provider/hooks/scripts/test-hook.py"
+  done
+  for provider in .gemini .copilot; do
+    printf '%s\n' '#!/bin/bash' 'echo hook' > "$repo/$provider/hooks/scripts/test-hook.sh"
+  done
   add_generated_hook_fixture "$repo"
 }
 
@@ -306,6 +307,10 @@ print(digest.hexdigest())
 PY
 }
 
+assert_tree_unchanged() {
+  assert_equals "$1" "$(tree_fingerprint "$2")" "$3"
+}
+
 assert_no_bytecode_cache() {
   local repo="$1"
 
@@ -341,11 +346,10 @@ test_stale_generated_hooks_stop_before_destination_mutation() {
   local home
   local output_path
   local before
-  local after
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"
   home="$workdir/home"
   codex="$workdir/codex"
@@ -365,9 +369,8 @@ test_stale_generated_hooks_stop_before_destination_mutation() {
   assert_file_contains "$workdir/stderr" "$output_path" "Expected stale output path on stderr."
   assert_equals '' "$(cat "$workdir/stdout")" 'Expected no stdout for stale generated hooks.'
   assert_file_contains "$workdir/stderr" "python3 scripts/generate-hooks.py --write" "Expected stale-output recovery command on stderr."
-  after="$(tree_fingerprint "$home")"
-  assert_equals "$before" "$after" "Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories."
-  assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected stale preflight not to mutate external CODEX_HOME.'
+  assert_tree_unchanged "$before" "$home" "Expected stale preflight to leave the destination tree byte-for-byte unchanged with no new directories."
+  assert_tree_unchanged "$before_codex" "$codex" 'Expected stale preflight not to mutate external CODEX_HOME.'
 }
 
 test_generator_failure_stops_before_destination_mutation() {
@@ -376,11 +379,10 @@ test_generator_failure_stops_before_destination_mutation() {
   local repo
   local home
   local before
-  local after
   local status
 
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"
   home="$workdir/home"
   codex="$workdir/codex"
@@ -408,9 +410,8 @@ PY
     echo "Expected generator failures to omit stale-output recovery advice." >&2
     exit 1
   fi
-  after="$(tree_fingerprint "$home")"
-  assert_equals "$before" "$after" "Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories."
-  assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected generator failure not to mutate external CODEX_HOME.'
+  assert_tree_unchanged "$before" "$home" "Expected generator failure preflight to leave the destination tree byte-for-byte unchanged with no new directories."
+  assert_tree_unchanged "$before_codex" "$codex" 'Expected generator failure not to mutate external CODEX_HOME.'
 }
 
 test_installs_codex_agents_before_other_assets() {
@@ -868,6 +869,13 @@ PY
 
 test_installed_hooks_are_executable() {
   local unicode_py unicode_sh
+  local hook_path
+  local hook_paths=(
+    .gemini/hooks/scripts/test-hook.py
+    .copilot/hooks/scripts/test-hook.py
+    .gemini/hooks/scripts/test-hook.sh
+    .copilot/hooks/scripts/test-hook.sh
+  )
   local workdir
   local repo
   local home
@@ -879,10 +887,9 @@ test_installed_hooks_are_executable() {
 
   create_fixture_repo "$repo"
 
-  chmod 644 "$repo/.gemini/hooks/scripts/test-hook.py"
-  chmod 644 "$repo/.copilot/hooks/scripts/test-hook.py"
-  chmod 644 "$repo/.gemini/hooks/scripts/test-hook.sh"
-  chmod 644 "$repo/.copilot/hooks/scripts/test-hook.sh"
+  for hook_path in "${hook_paths[@]}"; do
+    chmod 644 "$repo/$hook_path"
+  done
   unicode_py="$(python3 -c 'print("not-hook.p\u00ady")')"
   unicode_sh="$(python3 -c 'print("not-hook.s\u00adh")')"
   printf '%s\n' 'Keep original mode.' > "$repo/.copilot/hooks/scripts/$unicode_py"
@@ -891,25 +898,12 @@ test_installed_hooks_are_executable() {
 
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
 
-  if [[ ! -x "$home/.gemini/hooks/scripts/test-hook.py" ]]; then
-    echo "Expected ~/.gemini/hooks/scripts/test-hook.py to be executable." >&2
-    exit 1
-  fi
-
-  if [[ ! -x "$home/.copilot/hooks/scripts/test-hook.py" ]]; then
-    echo "Expected ~/.copilot/hooks/scripts/test-hook.py to be executable." >&2
-    exit 1
-  fi
-
-  if [[ ! -x "$home/.gemini/hooks/scripts/test-hook.sh" ]]; then
-    echo "Expected ~/.gemini/hooks/scripts/test-hook.sh to be executable." >&2
-    exit 1
-  fi
-
-  if [[ ! -x "$home/.copilot/hooks/scripts/test-hook.sh" ]]; then
-    echo "Expected ~/.copilot/hooks/scripts/test-hook.sh to be executable." >&2
-    exit 1
-  fi
+  for hook_path in "${hook_paths[@]}"; do
+    if [[ ! -x "$home/$hook_path" ]]; then
+      echo "Expected ~/$hook_path to be executable." >&2
+      exit 1
+    fi
+  done
   python3 - "$home/.copilot/hooks/scripts/$unicode_py" "$home/.gemini/hooks/scripts/$unicode_sh" <<'PY'
 import stat
 import sys
@@ -976,15 +970,40 @@ cleanup_reference_fixture() {
   fi
 }
 
+setup_reference_fixture() {
+  # These are caller-declared locals in each reference-test subshell.
+  workdir="$(setup_test_workdir)"
+  repo="$workdir/repo"
+  home="$workdir/home"
+  create_fixture_repo "$repo"
+}
+
+set_reference_test_environment() {
+  local reference_home="$1"
+  local reference_codex="$2"
+  export HOME="$reference_home" USERPROFILE="$reference_home" APPDATA="$reference_home/AppData/Roaming" LOCALAPPDATA="$reference_home/AppData/Local" XDG_CONFIG_HOME="$reference_home/xdg-config" XDG_CACHE_HOME="$reference_home/xdg-cache" XDG_DATA_HOME="$reference_home/xdg-data" CODEX_HOME="$reference_codex"
+}
+
+write_excluded_skill_documents() {
+  local skill_directory="$1"
+  local license
+  printf '%s\n' 'excluded readme' > "$skill_directory/README.md"
+  for license in LICENSE.txt LICENSE.md; do
+    printf '%s\n' 'excluded license' > "$skill_directory/$license"
+  done
+}
+
+assert_read_only_hard_link_refusal() {
+  assert_equals 1 "$1" "$5"
+  assert_file_contains "$2" 'Refusing to change read-only hard-linked file' "$6"
+  assert_tree_unchanged "$3" "$4" "$7"
+}
+
 test_rebases_shared_reference_links_for_flat_installed_skills() (
   local workdir repo home installed_skill
 
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
-
-  create_fixture_repo "$repo"
+  setup_reference_fixture
   printf '%s\n' '---' 'name: alpha' '---' 'See `../../../references/shared.md`, [single](./../../../references/shared.md), and [repeated](././../../../references/shared.md).' 'Keep ~/.agents/skills/alpha and example/../../../references/shared.md unchanged.' > "$repo/skills/default/alpha/SKILL.md"
   mkdir -p "$repo/skills/default/alpha/nested"
   printf '%s\n' '[nested](./../../../../references/shared.md)' > "$repo/skills/default/alpha/nested/note.markdown"
@@ -992,7 +1011,8 @@ test_rebases_shared_reference_links_for_flat_installed_skills() (
   local source_before
   source_before="$(tree_fingerprint "$repo/skills/default/alpha")"
 
-  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
+  set_reference_test_environment "$home" "$workdir/codex"
+  bash "$repo/scripts/install.sh" >/dev/null
 
   installed_skill="$(<"$home/.agents/skills/alpha/SKILL.md")"
   assert_equals \
@@ -1006,30 +1026,25 @@ test_rebases_shared_reference_links_for_flat_installed_skills() (
   fi
   assert_equals '[nested](../../../references/shared.md)' "$(<"$home/.agents/skills/alpha/nested/note.markdown")" 'Expected leading ./ in nested Markdown to rebase.'
   test -f "$home/.agents/skills/alpha/nested/../../../references/shared.md"
-  assert_equals "$source_before" "$(tree_fingerprint "$repo/skills/default/alpha")" 'Expected rebasing not to mutate source bytes or modes.'
+  assert_tree_unchanged "$source_before" "$repo/skills/default/alpha" 'Expected rebasing not to mutate source bytes or modes.'
 )
 
 test_rebases_read_only_markdown_and_preserves_modes_on_repeat() (
   local workdir repo home before installed_before
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
-  create_fixture_repo "$repo"
+  setup_reference_fixture
   mkdir -p "$repo/skills/default/locked/nested" "$repo/skills/default/locked/evals/nested" "$home/.agents/skills/locked"
   printf '%s\n' 'Reference notes.' > "$repo/references/notes.md"
   printf 'See [shared](../../../references/notes.md).\r\nKeep unicode: café.\r\n' > "$repo/skills/default/locked/SKILL.md"
   printf '%s\n' '[nested](../../../../references/notes.md)' > "$repo/skills/default/locked/nested/note.md"
   printf '%s\n' 'excluded eval fixture' > "$repo/skills/default/locked/evals/nested/evals.json"
-  printf '%s\n' 'excluded readme' > "$repo/skills/default/locked/README.md"
-  printf '%s\n' 'excluded license' > "$repo/skills/default/locked/LICENSE.txt"
-  printf '%s\n' 'excluded license' > "$repo/skills/default/locked/LICENSE.md"
+  write_excluded_skill_documents "$repo/skills/default/locked"
   printf '%s\n' 'stale writable copy' > "$home/.agents/skills/locked/SKILL.md"
   chmod 640 "$home/.agents/skills/locked/SKILL.md"
   chmod 770 "$home/.agents/skills/locked"
   chmod -R a-w "$repo/skills/default/locked"
   before="$(tree_fingerprint "$repo/skills/default/locked")"
-  export HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex"
+  set_reference_test_environment "$home" "$workdir/codex"
   bash "$repo/scripts/install.sh" >/dev/null
   python3 - "$repo" "$home" <<'PY'
 from pathlib import Path
@@ -1050,8 +1065,8 @@ assert sorted(p.relative_to(installed).as_posix() for p in installed.rglob('*'))
 PY
   installed_before="$(tree_fingerprint "$home/.agents/skills/locked")"
   bash "$repo/scripts/install.sh" >/dev/null
-  assert_equals "$before" "$(tree_fingerprint "$repo/skills/default/locked")" 'Expected read-only source bytes and directory/file modes to remain unchanged.'
-  assert_equals "$installed_before" "$(tree_fingerprint "$home/.agents/skills/locked")" 'Expected repeat installs to preserve rebased bytes and modes without temporary artifacts.'
+  assert_tree_unchanged "$before" "$repo/skills/default/locked" 'Expected read-only source bytes and directory/file modes to remain unchanged.'
+  assert_tree_unchanged "$installed_before" "$home/.agents/skills/locked" 'Expected repeat installs to preserve rebased bytes and modes without temporary artifacts.'
 
   # A public copy failure must undo temporary permission elevation.
   chmod u+w "$repo/skills/default/locked"
@@ -1075,18 +1090,16 @@ PY
 
 test_actual_addy_shared_references_resolve_after_install() (
   local workdir repo home before name
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
-  create_fixture_repo "$repo"
+  setup_reference_fixture
   for name in addy-code-review-and-quality addy-performance-optimization addy-security-and-hardening; do
     mkdir -p "$repo/skills/default/$name"
     cp -p "$REPO_ROOT/skills/default/$name/SKILL.md" "$repo/skills/default/$name/SKILL.md"
   done
   cp -p "$REPO_ROOT/references/security-checklist.md" "$REPO_ROOT/references/performance-checklist.md" "$repo/references/"
   before="$(tree_fingerprint "$repo/skills")"
-  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
+  set_reference_test_environment "$home" "$workdir/codex"
+  bash "$repo/scripts/install.sh" >/dev/null
   python3 - "$repo" "$home" <<'PY'
 from pathlib import Path
 import re
@@ -1108,22 +1121,17 @@ for name in ('addy-code-review-and-quality', 'addy-performance-optimization', 'a
         count += 1
 assert count == 8, count
 PY
-  assert_equals "$before" "$(tree_fingerprint "$repo/skills")" 'Expected actual Addy skill definitions to remain unchanged in source.'
+  assert_tree_unchanged "$before" "$repo/skills" 'Expected actual Addy skill definitions to remain unchanged in source.'
 )
 
 test_prunes_without_optional_shared_references() (
   local workdir repo home pass name
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
-  create_fixture_repo "$repo"
+  setup_reference_fixture
   rm -rf -- "$repo/references"
   printf '%s\n' '---' 'name: alpha' '---' 'See ../../../references/unavailable.md.' > "$repo/skills/default/alpha/SKILL.md"
-  printf '%s\n' 'excluded readme' > "$repo/skills/default/alpha/README.md"
-  printf '%s\n' 'excluded license' > "$repo/skills/default/alpha/LICENSE.txt"
-  printf '%s\n' 'excluded license' > "$repo/skills/default/alpha/LICENSE.md"
-  export HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex"
+  write_excluded_skill_documents "$repo/skills/default/alpha"
+  set_reference_test_environment "$home" "$workdir/codex"
   for pass in first repeat; do
     bash "$repo/scripts/install.sh" >/dev/null
     assert_equals "$(<"$repo/skills/default/alpha/SKILL.md")" "$(<"$home/.agents/skills/alpha/SKILL.md")" 'Expected absent shared references to skip rebasing.'
@@ -1135,19 +1143,17 @@ test_prunes_without_optional_shared_references() (
 
 test_pruning_read_only_hard_link_preserves_external_inode() (
   local workdir repo home outside
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
+  setup_reference_fixture
   outside="$workdir/external.md"
-  create_fixture_repo "$repo"
   mkdir -p "$home/.agents/skills/alpha/evals"
   printf '%s\n' 'external bytes must remain untouched' > "$outside"
   chmod 444 "$outside"
   ln "$outside" "$home/.agents/skills/alpha/evals/stale.md"
   local before_inode
   before_inode="$(python3 -c 'import os,sys; print(os.stat(sys.argv[1]).st_ino)' "$outside")"
-  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >/dev/null
+  set_reference_test_environment "$home" "$workdir/codex"
+  bash "$repo/scripts/install.sh" >/dev/null
   python3 - "$outside" "$before_inode" "$home" <<'PY'
 from pathlib import Path
 import stat
@@ -1163,31 +1169,31 @@ PY
 
 test_read_only_hard_link_copy_refuses_external_mutation() (
   local workdir repo home outside before status
-  workdir="$(setup_test_workdir)"
   trap cleanup_reference_fixture EXIT
-  repo="$workdir/repo"
-  home="$workdir/home"
+  setup_reference_fixture
   outside="$workdir/external.md"
-  create_fixture_repo "$repo"
   mkdir -p "$home/.agents/skills/alpha"
   printf '%s\n' 'external bytes must remain untouched; see ../../../references/notes.md.' > "$outside"
   chmod 444 "$outside"
   ln "$outside" "$home/.agents/skills/alpha/SKILL.md"
   before="$(tree_fingerprint "$outside")"
   status=0
-  HOME="$home" USERPROFILE="$home" APPDATA="$home/AppData/Roaming" LOCALAPPDATA="$home/AppData/Local" XDG_CONFIG_HOME="$home/xdg-config" XDG_CACHE_HOME="$home/xdg-cache" XDG_DATA_HOME="$home/xdg-data" CODEX_HOME="$workdir/codex" bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err" || status=$?
-  assert_equals 1 "$status" 'Expected a read-only hard-linked destination to stop copying before external mutation.'
-  assert_file_contains "$workdir/err" 'Refusing to change read-only hard-linked file' 'Expected an actionable hard-link refusal.'
-  assert_equals "$before" "$(tree_fingerprint "$outside")" 'Expected external hard-linked bytes and mode unchanged after copy refusal.'
+  set_reference_test_environment "$home" "$workdir/codex"
+  bash "$repo/scripts/install.sh" >"$workdir/out" 2>"$workdir/err" || status=$?
+  assert_read_only_hard_link_refusal "$status" "$workdir/err" "$before" "$outside" \
+    'Expected a read-only hard-linked destination to stop copying before external mutation.' \
+    'Expected an actionable hard-link refusal.' \
+    'Expected external hard-linked bytes and mode unchanged after copy refusal.'
   status=0
   python3 -B "$repo/scripts/rebase-skill-references.py" \
     --source-dir "$repo/skills/default/alpha" \
     --destination-dir "$home/.agents/skills/alpha" \
     --references-source "$repo/references" \
     --references-destination "$home/.agents/references" >"$workdir/out" 2>"$workdir/err" || status=$?
-  assert_equals 1 "$status" 'Expected direct rebasing to refuse a read-only shared inode before permission changes.'
-  assert_file_contains "$workdir/err" 'Refusing to change read-only hard-linked file' 'Expected the direct rebasing refusal to name the unsafe inode.'
-  assert_equals "$before" "$(tree_fingerprint "$outside")" 'Expected direct rebasing refusal to leave external bytes and mode unchanged.'
+  assert_read_only_hard_link_refusal "$status" "$workdir/err" "$before" "$outside" \
+    'Expected direct rebasing to refuse a read-only shared inode before permission changes.' \
+    'Expected the direct rebasing refusal to name the unsafe inode.' \
+    'Expected direct rebasing refusal to leave external bytes and mode unchanged.'
   python3 - "$outside" "$home/.agents/skills/alpha/SKILL.md" <<'PY'
 from pathlib import Path
 import sys
@@ -1198,7 +1204,7 @@ PY
 )
 
 test_root_linked_skill_is_preserved_without_external_mutation() {
-  local workdir repo home external_skill nested_target before after nested_before installed_skill
+  local workdir repo home external_skill nested_target before nested_before installed_skill
 
   workdir="$(setup_test_workdir)"
   trap 'rm -rf "'"$workdir"'"' RETURN
@@ -1231,9 +1237,8 @@ test_root_linked_skill_is_preserved_without_external_mutation() {
     --destination-dir "$installed_skill" \
     --references-source "$repo/references" \
     --references-destination "$home/.agents/references"
-  after="$(tree_fingerprint "$external_skill")"
-  assert_equals "$before" "$after" "Expected installation to leave a root-linked skill target byte-for-byte unchanged."
-  assert_equals "$nested_before" "$(tree_fingerprint "$nested_target")" "Expected reference rebasing to leave a nested linked directory target byte-for-byte unchanged."
+  assert_tree_unchanged "$before" "$external_skill" "Expected installation to leave a root-linked skill target byte-for-byte unchanged."
+  assert_tree_unchanged "$nested_before" "$nested_target" "Expected reference rebasing to leave a nested linked directory target byte-for-byte unchanged."
   assert_equals 'See [the shared reference](../../../../references/shared.md).' "$(<"$nested_target/note.md")" "Expected reference rebasing to skip Markdown reached through a nested directory link."
 }
 
@@ -1293,19 +1298,35 @@ PY
 
 }
 
-cleanup_cli_fixture() {
-  rm -rf -- "$workdir"
+seed_cli_destinations() {
+  local fixture_home="$1"
+  local fixture_codex="$2"
+  printf '%s\n' sentinel > "$fixture_home/sentinel"
+  printf '%s\n' sentinel > "$fixture_codex/sentinel"
+}
+
+create_script_only_cli_fixture() {
+  local fixture_repo="$1"
+  local fixture_home="$2"
+  local fixture_codex="$3"
+  mkdir -p "$fixture_repo/scripts" "$fixture_home" "$fixture_codex"
+  cp -p "$REPO_ROOT/scripts/install.sh" "$fixture_repo/scripts/install.sh"
+  seed_cli_destinations "$fixture_home" "$fixture_codex"
+}
+
+write_regular_skill_fixture() {
+  local skill_directory="$1"
+  shift
+  mkdir -p "$skill_directory"
+  printf '%s\n' "$@" > "$skill_directory/SKILL.md"
 }
 
 test_help_without_sources_or_dependencies() {
   local workdir repo home codex before before_codex arguments status
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"; home="$workdir/home"; codex="$workdir/codex"
-  mkdir -p "$repo/scripts" "$home" "$codex"
-  cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
-  printf '%s\n' sentinel > "$home/sentinel"
-  printf '%s\n' sentinel > "$codex/sentinel"
+  create_script_only_cli_fixture "$repo" "$home" "$codex"
   before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
   for arguments in '-h' '--help' '--fs --help --forest-service' '--help --no-forest-service --no-forest-service'; do
     set -- $arguments
@@ -1316,19 +1337,18 @@ test_help_without_sources_or_dependencies() {
     assert_file_contains "$workdir/out" 'Use --forest-service' 'Expected selection options in help.'
     assert_file_contains "$workdir/out" 'Examples:' 'Expected examples in help.'
     assert_equals '' "$(cat "$workdir/err")" 'Expected help stderr to be empty.'
-    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected help not to mutate home.'
-    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected help not to mutate CODEX_HOME.'
+    assert_tree_unchanged "$before" "$home" 'Expected help not to mutate home.'
+    assert_tree_unchanged "$before_codex" "$codex" 'Expected help not to mutate CODEX_HOME.'
   done
 }
 
 test_explicit_forest_service_selection() {
   local workdir repo home status
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"; home="$workdir/home"
   create_fixture_repo "$repo"
-  mkdir -p "$repo/skills/forest-service/agency-priorities"
-  printf '%s\n' '---' 'name: unrelated-frontmatter-identity' '---' 'Agency priorities.' > "$repo/skills/forest-service/agency-priorities/SKILL.md"
+  write_regular_skill_fixture "$repo/skills/forest-service/agency-priorities" '---' 'name: unrelated-frontmatter-identity' '---' 'Agency priorities.'
   status=0
   HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=banana bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err" || status=$?
   assert_equals 0 "$status" 'Expected explicit selection to override invalid environment.'
@@ -1341,11 +1361,10 @@ test_explicit_forest_service_selection() {
 test_selection_environment_and_repeats() {
   local workdir repo home value expected arguments status first
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
-  mkdir -p "$repo/skills/forest-service/agency-priorities"
-  printf '%s\n' 'Forest Service.' > "$repo/skills/forest-service/agency-priorities/SKILL.md"
+  write_regular_skill_fixture "$repo/skills/forest-service/agency-priorities" 'Forest Service.'
   while IFS='|' read -r expected value arguments; do
     home="$workdir/home-$expected-$value-${arguments// /_}"
     # The fixture arguments are fixed literals, intentionally split into argv.
@@ -1387,12 +1406,9 @@ CASES
 test_invalid_selection_is_immutable() {
   local workdir repo home codex before before_codex arguments value status diagnostic
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"; home="$workdir/home"; codex="$workdir/codex"
-  mkdir -p "$repo/scripts" "$home" "$codex"
-  cp -p "$REPO_ROOT/scripts/install.sh" "$repo/scripts/install.sh"
-  printf '%s\n' sentinel > "$home/sentinel"
-  printf '%s\n' sentinel > "$codex/sentinel"
+  create_script_only_cli_fixture "$repo" "$home" "$codex"
   before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
   while IFS='|' read -r value diagnostic arguments; do
     set -- $arguments
@@ -1401,8 +1417,8 @@ test_invalid_selection_is_immutable() {
     assert_equals 2 "$status" "Expected invalid selection to exit 2: $value $arguments."
     assert_file_contains "$workdir/err" "$diagnostic" 'Expected actionable argument/environment stderr.'
     assert_equals '' "$(cat "$workdir/out")" 'Expected no stdout for invalid selection.'
-    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected invalid selection not to mutate home.'
-    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected invalid selection not to mutate CODEX_HOME.'
+    assert_tree_unchanged "$before" "$home" 'Expected invalid selection not to mutate home.'
+    assert_tree_unchanged "$before_codex" "$codex" 'Expected invalid selection not to mutate CODEX_HOME.'
   done < <(cat <<'CASES'
 |Conflicting|--fs --no-forest-service
 |Conflicting|--no-forest-service --forest-service
@@ -1442,15 +1458,14 @@ PY
 test_source_preflight_is_immutable() {
   local workdir repo home codex before before_codex scenario diagnostic default_diagnostic status nfc_name nfd_name
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   nfc_name="$(python3 -B -c 'print("caf\u00e9")')"
   nfd_name="$(python3 -B -c 'print("cafe\u0301")')"
   for scenario in missing-default missing-forest-disabled missing-forest-enabled malformed-default malformed-forest equal-name case-name nfc-nfd-disabled nfc-nfd-enabled; do
     repo="$workdir/$scenario/repo"; home="$workdir/$scenario/home"; codex="$workdir/$scenario/codex"
     create_fixture_repo "$repo"
     mkdir -p "$home" "$codex"
-    printf '%s\n' sentinel > "$home/sentinel"
-    printf '%s\n' sentinel > "$codex/sentinel"
+    seed_cli_destinations "$home" "$codex"
     # Any dependency/configuration or converter stage reached before validation is a failure.
     printf '%s\n' 'from pathlib import Path' "Path('$workdir/stage-reached').write_text('reached')" 'raise SystemExit(98)' > "$repo/scripts/configure-rtk.py"
     cp "$repo/scripts/configure-rtk.py" "$repo/scripts/install-codex-agents.py"
@@ -1466,14 +1481,13 @@ test_source_preflight_is_immutable() {
       equal-name|case-name)
         diagnostic='skills/forest-service/alpha'
         if [[ "$scenario" == case-name ]]; then diagnostic='skills/forest-service/ALPHA'; fi
-        mkdir -p "$repo/$diagnostic"; printf '%s\n' 'A different frontmatter name.' > "$repo/$diagnostic/SKILL.md" ;;
+        write_regular_skill_fixture "$repo/$diagnostic" 'A different frontmatter name.' ;;
       nfc-nfd-disabled|nfc-nfd-enabled)
         # Different category parents keep both spellings representable even on
         # filesystems that collapse canonically equivalent destination names.
         default_diagnostic="skills/default/$nfc_name"; diagnostic="skills/forest-service/$nfd_name"
-        mkdir -p "$repo/$default_diagnostic" "$repo/$diagnostic"
-        printf '%s\n' '---' 'name: default-unicode' '---' 'Default Unicode skill.' > "$repo/$default_diagnostic/SKILL.md"
-        printf '%s\n' '---' 'name: forest-unicode' '---' 'Forest Unicode skill.' > "$repo/$diagnostic/SKILL.md"
+        write_regular_skill_fixture "$repo/$default_diagnostic" '---' 'name: default-unicode' '---' 'Default Unicode skill.'
+        write_regular_skill_fixture "$repo/$diagnostic" '---' 'name: forest-unicode' '---' 'Forest Unicode skill.'
         if [[ "$scenario" == nfc-nfd-enabled ]]; then set -- --fs; fi ;;
     esac
     before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
@@ -1485,8 +1499,8 @@ test_source_preflight_is_immutable() {
       assert_file_contains "$workdir/err" "$default_diagnostic" 'Expected both original collision paths.'
     fi
     assert_equals '' "$(cat "$workdir/out")" 'Expected no stdout for source errors.'
-    assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected source error not to mutate home.'
-    assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected source error not to mutate CODEX_HOME.'
+    assert_tree_unchanged "$before" "$home" 'Expected source error not to mutate home.'
+    assert_tree_unchanged "$before_codex" "$codex" 'Expected source error not to mutate CODEX_HOME.'
     [[ ! -e "$workdir/stage-reached" ]] || { echo 'Expected source validation before dependency, RTK, or converter stages.' >&2; exit 1; }
   done
 }
@@ -1494,13 +1508,12 @@ test_source_preflight_is_immutable() {
 test_helper_failures_are_installer_errors() {
   local workdir repo home codex helper before before_codex status
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   for helper in validate-skill-sources.py configure-rtk.py generate-hooks.py install-provider-hooks.py install-codex-agents.py rebase-skill-references.py; do
     repo="$workdir/$helper/repo"; home="$workdir/$helper/home"; codex="$workdir/$helper/codex"
     create_fixture_repo "$repo"
     mkdir -p "$home" "$codex"
-    printf '%s\n' sentinel > "$home/sentinel"
-    printf '%s\n' sentinel > "$codex/sentinel"
+    seed_cli_destinations "$home" "$codex"
     printf '%s\n' 'import sys' 'print("Fixture helper status")' 'print("Fixture helper failed; repair its input.", file=sys.stderr)' 'raise SystemExit(2)' > "$repo/scripts/$helper"
     before="$(tree_fingerprint "$home")"; before_codex="$(tree_fingerprint "$codex")"
     status=0
@@ -1511,8 +1524,8 @@ test_helper_failures_are_installer_errors() {
     case "$helper" in
       install-codex-agents.py|rebase-skill-references.py) ;;
       *)
-        assert_equals "$before" "$(tree_fingerprint "$home")" 'Expected preflight helper failure not to mutate home.'
-        assert_equals "$before_codex" "$(tree_fingerprint "$codex")" 'Expected preflight helper failure not to mutate CODEX_HOME.' ;;
+        assert_tree_unchanged "$before" "$home" 'Expected preflight helper failure not to mutate home.'
+        assert_tree_unchanged "$before_codex" "$codex" 'Expected preflight helper failure not to mutate CODEX_HOME.' ;;
     esac
   done
 }
@@ -1520,7 +1533,7 @@ test_helper_failures_are_installer_errors() {
 test_empty_categories_markers_and_exclusions() {
   local workdir repo home category selection status unicode_archive unicode_workspace
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"
   create_fixture_repo "$repo"
   for category in default forest-service; do
@@ -1541,10 +1554,9 @@ test_empty_categories_markers_and_exclusions() {
   unicode_archive="$(python3 -c 'print("archiv\u00ade")')"
   unicode_workspace="$(python3 -c 'print("x-work\u00adspace")')"
   mkdir -p "$repo/skills/default/Archive" "$repo/skills/default/My-Workspace" "$repo/skills/forest-service/second-name" "$repo/skills/default/$unicode_archive" "$repo/skills/default/$unicode_workspace"
-  printf '%s\n' 'Not excluded.' > "$repo/skills/default/$unicode_archive/SKILL.md"
-  printf '%s\n' 'Not excluded.' > "$repo/skills/default/$unicode_workspace/SKILL.md"
-  printf '%s\n' 'Not excluded.' > "$repo/skills/default/Archive/SKILL.md"
-  printf '%s\n' 'Not excluded.' > "$repo/skills/default/My-Workspace/SKILL.md"
+  for category in "$unicode_archive" "$unicode_workspace" Archive My-Workspace; do
+    write_regular_skill_fixture "$repo/skills/default/$category" 'Not excluded.'
+  done
   cp "$repo/skills/default/alpha/SKILL.md" "$repo/skills/forest-service/second-name/SKILL.md"
   home="$workdir/case-home"
   HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
@@ -1561,7 +1573,7 @@ test_empty_categories_markers_and_exclusions() {
 test_refreshed_imports_install_from_default_category() {
   local workdir repo home origin name source_path destination
   workdir="$(setup_test_workdir)"
-  trap 'cleanup_cli_fixture; trap - RETURN' RETURN
+  trap 'cleanup_test_workdir; trap - RETURN' RETURN
   repo="$workdir/repo"
   home="$workdir/home"
   origin="$workdir/upstream"

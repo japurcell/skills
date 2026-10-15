@@ -4,6 +4,21 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
 
+create_local_source_directories() {
+  local source_workdir="$1"
+  mkdir -p "$source_workdir/src/agents" "$source_workdir/src/skills/alpha" "$source_workdir/src/references"
+}
+
+run_local_source_install() (
+  local source_workdir="$1"
+  shift
+  ADDY_AGENTS_SRC="$source_workdir/src/agents" \
+    ADDY_SKILLS_SRC="$source_workdir/src/skills" \
+    ADDY_REFERENCES_SRC="$source_workdir/src/references" \
+    ADDY_SKILLS_STATE_FILE="$source_workdir/installed-skills.txt" \
+    bash "$REPO_ROOT/scripts/addy-install.sh" "$@"
+)
+
 commit_repo() {
   local repo="$1"
   local message="$2"
@@ -34,10 +49,8 @@ test_copies_referenced_skills_transitively() {
   local workdir="$1"
   local installed_skills
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/references" \
-    "$workdir/src/skills/alpha" \
     "$workdir/src/skills/beta" \
     "$workdir/src/skills/gamma" \
     "$workdir/dest/agents" \
@@ -49,14 +62,10 @@ test_copies_referenced_skills_transitively() {
   printf '%s\n' '---' 'name: beta' '---' 'Use gamma for deeper work.' > "$workdir/src/skills/beta/SKILL.md"
   printf '%s\n' '---' 'name: gamma' '---' 'Standalone.' > "$workdir/src/skills/gamma/SKILL.md"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   installed_skills="$(
     find "$workdir/dest/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | paste -sd ',' -
@@ -72,10 +81,8 @@ test_copies_referenced_skills_without_agents() {
   local workdir="$1"
   local installed_skills
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/references" \
-    "$workdir/src/skills/alpha" \
     "$workdir/src/skills/beta" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
@@ -84,14 +91,10 @@ test_copies_referenced_skills_without_agents() {
   printf '%s\n' '---' 'name: alpha' '---' 'Use beta for follow-up work.' > "$workdir/src/skills/alpha/SKILL.md"
   printf '%s\n' '---' 'name: beta' '---' 'Standalone.' > "$workdir/src/skills/beta/SKILL.md"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   installed_skills="$(
     find "$workdir/dest/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | paste -sd ',' -
@@ -107,10 +110,8 @@ test_copies_skills_selected_from_file() {
   local workdir="$1"
   local installed_skills
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/references" \
-    "$workdir/src/skills/alpha" \
     "$workdir/src/skills/beta" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
@@ -120,14 +121,10 @@ test_copies_skills_selected_from_file() {
   printf '%s\n' '---' 'name: beta' '---' 'Standalone.' > "$workdir/src/skills/beta/SKILL.md"
   printf '%s\n' 'alpha' > "$workdir/skills.txt"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills-file "$workdir/skills.txt" >/dev/null
+    run_local_source_install "$workdir" --skills-file "$workdir/skills.txt" >/dev/null
 
   installed_skills="$(
     find "$workdir/dest/skills" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort | paste -sd ',' -
@@ -144,10 +141,8 @@ test_writes_skills_state_file_for_current_install() {
   local installed_skills_file="$workdir/installed-skills.txt"
   local installed_skills
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/references" \
-    "$workdir/src/skills/alpha" \
     "$workdir/src/skills/beta" \
     "$workdir/src/skills/gamma" \
     "$workdir/dest/agents" \
@@ -159,14 +154,10 @@ test_writes_skills_state_file_for_current_install() {
   printf '%s\n' '---' 'name: gamma' '---' 'Standalone.' > "$workdir/src/skills/gamma/SKILL.md"
   printf '%s\n' 'gamma' > "$installed_skills_file"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$installed_skills_file" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   installed_skills="$(<"$installed_skills_file")"
 
@@ -181,10 +172,8 @@ test_copies_root_references_directory() {
   local copied_reference
   local stale_reference_exists
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
     "$workdir/dest/references"
@@ -193,14 +182,10 @@ test_copies_root_references_directory() {
   printf '%s\n' 'Testing patterns go here.' > "$workdir/src/references/testing-patterns.md"
   printf '%s\n' 'stale' > "$workdir/dest/references/stale.md"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   copied_reference="$(<"$workdir/dest/references/testing-patterns.md")"
   stale_reference_exists="no"
@@ -221,10 +206,8 @@ test_rewrites_root_reference_links_for_copied_skills() {
   local workdir="$1"
   local copied_skill
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
     "$workdir/dest/references"
@@ -237,14 +220,10 @@ test_rewrites_root_reference_links_for_copied_skills() {
     > "$workdir/src/skills/alpha/SKILL.md"
   printf '%s\n' 'Accessibility checklist.' > "$workdir/src/references/accessibility-checklist.md"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   copied_skill="$(<"$workdir/dest/skills/addy-alpha/SKILL.md")"
 
@@ -260,21 +239,15 @@ test_default_destination_uses_default_skill_category() {
   local old_skill_path="$workdir/repo-root/skills/addy-alpha/SKILL.md"
   local copied_skill
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/repo-root"
 
   printf '%s\n' '---' 'name: alpha' '---' 'See `references/shared.md`.' > "$workdir/src/skills/alpha/SKILL.md"
   printf '%s\n' 'Shared reference.' > "$workdir/src/references/shared.md"
 
   ADDY_REPO_ROOT="$workdir/repo-root" \
-    ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   assert_equals \
     "yes" \
@@ -346,10 +319,8 @@ test_copies_hooks_directory() {
   local workdir="$1"
   local copied_hook
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/src/.copilot/hooks" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
@@ -360,16 +331,12 @@ test_copies_hooks_directory() {
   printf '%s\n' '#!/bin/bash' 'echo "New hook"' > "$workdir/src/.copilot/hooks/new-hook.sh"
   chmod +x "$workdir/src/.copilot/hooks/new-hook.sh"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
     ADDY_HOOKS_SRC="$workdir/src/.copilot/hooks" \
     ADDY_HOOKS_DEST="$workdir/dest/.copilot/hooks" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   copied_hook="$(<"$workdir/dest/.copilot/hooks/new-hook.sh")"
 
@@ -383,10 +350,8 @@ test_preserves_existing_hooks_files() {
   local workdir="$1"
   local existing_content
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/src/.copilot/hooks" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
@@ -397,16 +362,12 @@ test_preserves_existing_hooks_files() {
   printf '%s\n' '#!/bin/bash' 'echo "Source hook"' > "$workdir/src/.copilot/hooks/source-hook.sh"
   printf '%s\n' '#!/bin/bash' 'echo "Existing hook"' > "$workdir/dest/.copilot/hooks/existing-hook.sh"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
     ADDY_HOOKS_SRC="$workdir/src/.copilot/hooks" \
     ADDY_HOOKS_DEST="$workdir/dest/.copilot/hooks" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   existing_content="$(<"$workdir/dest/.copilot/hooks/existing-hook.sh")"
 
@@ -419,10 +380,8 @@ test_preserves_existing_hooks_files() {
 test_handles_missing_hooks_dir_gracefully() {
   local workdir="$1"
 
+  create_local_source_directories "$workdir"
   mkdir -p \
-    "$workdir/src/agents" \
-    "$workdir/src/skills/alpha" \
-    "$workdir/src/references" \
     "$workdir/dest/agents" \
     "$workdir/dest/skills" \
     "$workdir/dest/references" \
@@ -430,16 +389,12 @@ test_handles_missing_hooks_dir_gracefully() {
 
   printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$workdir/src/skills/alpha/SKILL.md"
 
-  ADDY_AGENTS_SRC="$workdir/src/agents" \
-    ADDY_SKILLS_SRC="$workdir/src/skills" \
-    ADDY_AGENTS_DEST="$workdir/dest/agents" \
+  ADDY_AGENTS_DEST="$workdir/dest/agents" \
     ADDY_SKILLS_DEST="$workdir/dest/skills" \
-    ADDY_REFERENCES_SRC="$workdir/src/references" \
     ADDY_REFERENCES_DEST="$workdir/dest/references" \
     ADDY_HOOKS_SRC="$workdir/src/.copilot/hooks" \
     ADDY_HOOKS_DEST="$workdir/dest/.copilot/hooks" \
-    ADDY_SKILLS_STATE_FILE="$workdir/installed-skills.txt" \
-    bash "$REPO_ROOT/scripts/addy-install.sh" --skills alpha >/dev/null
+    run_local_source_install "$workdir" --skills alpha >/dev/null
 
   assert_equals \
     "yes" \
