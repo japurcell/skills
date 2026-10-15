@@ -1,0 +1,9 @@
+{
+  "fixture": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-history-frozen-c3xv8ee9",
+  "head": "cc0de351dc27e1dceda4463a6ecb7a888a221459",
+  "commits": 513,
+  "index_sha256": "59c09218646602fbf3f21dc8bccde844e693d53b788600e1472626c1ae3eec3a",
+  "prototype_sha256": "f711d37bbb898650d13a50af9763f808e69b754026a0156cb7d7c881427b9e10",
+  "fsck": 0,
+  "remote_main_absent": true
+}

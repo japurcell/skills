@@ -1,0 +1,29 @@
+{
+  "observations": [
+    {
+      "case": "relative-local",
+      "effective": "/privateFIXTURE/repository/relative hooks",
+      "origin": "local\tfile:.git/config\trelative hooks"
+    },
+    {
+      "case": "absolute-local",
+      "effective": "/privateFIXTURE/absolute hooks",
+      "origin": "local\tfile:.git/config\tFIXTURE/absolute hooks"
+    },
+    {
+      "case": "linked-inherits-common-local",
+      "effective": "/privateFIXTURE/absolute hooks",
+      "origin": "local\tfile:/privateFIXTURE/repository/.git/config\tFIXTURE/absolute hooks"
+    },
+    {
+      "case": "linked-worktree-override",
+      "effective": "/privateFIXTURE/linked/worktree hooks",
+      "origin": "worktree\tfile:/privateFIXTURE/repository/.git/worktrees/linked/config.worktree\tworktree hooks"
+    },
+    {
+      "case": "primary-unaffected-by-worktree-override",
+      "effective": "/privateFIXTURE/absolute hooks",
+      "origin": "local\tfile:.git/config\tFIXTURE/absolute hooks"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "rev-parse HEAD": {
+    "exit": 0,
+    "stdout": "e787a4f0e21c59aaa74071487dd0993a1856e78f\n",
+    "stderr": ""
+  },
+  "fsck --full": {
+    "exit": 2,
+    "stdout": "",
+    "stderr": "error: refs/heads/main: invalid sha1 pointer e787a4f0e21c59aaa74071487dd0993a1856e78f\nerror: HEAD: invalid sha1 pointer e787a4f0e21c59aaa74071487dd0993a1856e78f\nerror: HEAD: invalid reflog entry e787a4f0e21c59aaa74071487dd0993a1856e78f\nerror: refs/heads/main: invalid reflog entry e787a4f0e21c59aaa74071487dd0993a1856e78f\nnotice: No default references\n"
+  },
+  "config --show-origin --list": {
+    "exit": 0,
+    "stdout": "file:.git/config\tcore.repositoryformatversion=0\nfile:.git/config\tcore.filemode=true\nfile:.git/config\tcore.bare=false\nfile:.git/config\tcore.logallrefupdates=true\nfile:.git/config\tcore.ignorecase=true\nfile:.git/config\tcore.precomposeunicode=true\nfile:.git/config\tremote.origin.url=/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-history-preserved-42m9o5mr/remote.git\nfile:.git/config\tremote.origin.fetch=+refs/heads/*:refs/remotes/origin/*\n",
+    "stderr": ""
+  },
+  "count-objects -v": {
+    "exit": 0,
+    "stdout": "count: 1\nsize: 4\nin-pack: 1276\npacks: 4\nsize-pack: 148\nprune-packable: 0\ngarbage: 0\nsize-garbage: 0\n",
+    "stderr": ""
+  },
+  "failure_at_version_commit": 263,
+  "fixture_path": "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-history-preserved-42m9o5mr/repo",
+  "head": "ref: refs/heads/main\n",
+  "branch": "e787a4f0e21c59aaa74071487dd0993a1856e78f\n",
+  "last_reflog": [
+    "8b8e9d690a001111192f0c9e6ecdc695bd207e83 589d09f826ae54c968ac96a6914aa1fe8b1e316c D0 fixture <d0@example.invalid> 1792100101 -0700\tcommit: fixture",
+    "589d09f826ae54c968ac96a6914aa1fe8b1e316c f01d1371e302a1a088dccce452b73e23ac5aad0b D0 fixture <d0@example.invalid> 1792100101 -0700\tcommit: fixture",
+    "f01d1371e302a1a088dccce452b73e23ac5aad0b e787a4f0e21c59aaa74071487dd0993a1856e78f D0 fixture <d0@example.invalid> 1792100102 -0700\tcommit: fixture"
+  ],
+  "hypothesis": "automatic maintenance raced fixture construction; not established as cause"
+}

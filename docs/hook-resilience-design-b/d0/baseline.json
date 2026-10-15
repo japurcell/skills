@@ -1,0 +1,510 @@
+{
+  "source_revision": "074ca4fab21f081cbd1cbde9bf5f5ebdbdfa4d58",
+  "image_bytes": 20026474,
+  "image_sizes": [
+    3611602,
+    3131324,
+    2495842,
+    3340075,
+    3319151,
+    4128480
+  ],
+  "workloads": [
+    {
+      "name": "merge",
+      "pending_snapshots": 223,
+      "logical_candidate_bytes": 9453698
+    },
+    {
+      "name": "six-binaries",
+      "pending_snapshots": 7,
+      "logical_candidate_bytes": 20026493
+    }
+  ],
+  "observations": [
+    {
+      "workload": "merge",
+      "provider": "codex",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        }
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "codex",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        }
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "codex",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "decision": "block",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "codex",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "decision": "block",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "copilot",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "copilot",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "copilot",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "copilot",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "gemini",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "gemini",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "gemini",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "merge",
+      "provider": "gemini",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/git_index: total candidate byte limit exceeded (measured 8403665 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "git_index",
+        "measured": 8403665,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "codex",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        }
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "codex",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "hookSpecificOutput": {
+          "hookEventName": "PreToolUse",
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        }
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "codex",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "decision": "block",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "codex",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "decision": "block",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "copilot",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "copilot",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "copilot",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "copilot",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "continue": true,
+        "permissionDecision": "deny",
+        "hookSpecificOutput": {
+          "permissionDecision": "deny",
+          "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+        },
+        "permissionDecisionReason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "gemini",
+      "action": "read",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "gemini",
+      "action": "repair",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: tool scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "gemini",
+      "action": "completion",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    },
+    {
+      "workload": "six-binaries",
+      "provider": "gemini",
+      "action": "completion-repeat",
+      "exit": 0,
+      "response": {
+        "decision": "deny",
+        "reason": "scan-secrets blocked: session-end scan; scan incomplete; potential secrets could not be checked. total_bytes_limit/candidate_read: total candidate byte limit exceeded (measured 9238768 bytes, limit 8388608 bytes). Check pending scan size and unintended generated artifacts. security_outcome=incomplete; audit_outcome=written; enforcement=deny; build=471533ef86089e4b; profile=pending_snapshots_v1; route=pending_scan; cause=total_bytes_limit."
+      },
+      "diagnostic": {
+        "cause": "total_bytes_limit",
+        "operation": "candidate_read",
+        "measured": 9238768,
+        "limit": 8388608
+      },
+      "build": "471533ef86089e4b",
+      "pending_unchanged": true
+    }
+  ]
+}

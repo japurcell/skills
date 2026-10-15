@@ -1,0 +1,47 @@
+{
+  "prototype_sha256": "0bdc08de756daccf3f695c4028edd1f07ccdb343fa317866a543b87ee9c8aa26",
+  "initial_oid": "6d18f248eb58e9ace4b5e57a91d09b5018466a01",
+  "delivered_oid": "55de823c9d53ec6a34ae7abd1316e66e1e1ce99a",
+  "unexpected_incremental_allow": true,
+  "result": {
+    "dispatch_elapsed_seconds": 0.10532595799304545,
+    "dispatcher_children_peak_rss_bytes": 44023808,
+    "dispatcher_peak_rss_bytes": 32292864,
+    "dispatcher_pid": 10018,
+    "metrics": {
+      "acquisition_seconds": 0.020780332968570292,
+      "capture_bytes": 438,
+      "distinct_acquired_bytes": 279,
+      "elapsed_seconds": 0.04035774990916252,
+      "enumeration_seconds": 0.005599249969236553,
+      "logical_candidate_bytes": 240,
+      "matching_seconds": 0.005237541045062244,
+      "objects": 2,
+      "path_occurrences": 0,
+      "peak_child_rss_bytes": 5210112,
+      "peak_self_rss_bytes": 44023808,
+      "temp_peak_bytes": 780
+    },
+    "outcome": "clean",
+    "remote_arguments": [
+      "origin",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-path-before-ht481umt/remote.git"
+    ],
+    "scanner_dispatcher_handoff": true,
+    "scanner_pid": 10021,
+    "schema": "d0-prototype-v1",
+    "stdin_sha256": "22d9e5212bc4aad3809c890cff2dfc332ad61e5091899324a22529dc221db39b",
+    "transaction_sha256": "83755a16c51bec829fc6880fc83840e22d7ddd6751eb15bd8c51f2aa6d80cffb",
+    "tuples": [
+      [
+        "refs/heads/main",
+        "55de823c9d53ec6a34ae7abd1316e66e1e1ce99a",
+        "refs/heads/main",
+        "6d18f248eb58e9ace4b5e57a91d09b5018466a01"
+      ]
+    ],
+    "result_file_bytes": 1107,
+    "git_stdout_bytes": 0,
+    "git_stderr_bytes": 129
+  }
+}

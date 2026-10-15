@@ -1,0 +1,44 @@
+{
+  "prototype_sha256": "1703b0bb791d444c3792b47173e609aad6029c9146b1a0bd152d1778ba3306b6",
+  "observed": {
+    "dispatch_elapsed_seconds": 0.12260833301115781,
+    "dispatcher_children_peak_rss_bytes": 44072960,
+    "dispatcher_peak_rss_bytes": 31948800,
+    "metrics": {
+      "acquisition_seconds": 0,
+      "capture_bytes": 347,
+      "distinct_acquired_bytes": 207,
+      "elapsed_seconds": 0.057229458005167544,
+      "enumeration_seconds": 0.006031875032931566,
+      "logical_candidate_bytes": 0,
+      "matching_seconds": 0,
+      "objects": 3,
+      "path_occurrences": 0,
+      "peak_child_rss_bytes": 5111808,
+      "peak_self_rss_bytes": 44072960,
+      "temp_peak_bytes": 340
+    },
+    "outcome": "incomplete",
+    "reason": "ScanLimitExceeded",
+    "remote_arguments": [
+      "origin",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-large-before-8sxqonhn/remote.git"
+    ],
+    "scanner_pid": 72132,
+    "schema": "d0-prototype-v1",
+    "stdin_sha256": "6902c2497c0408a589c0b36909cf0868529fc86d056ab9851e033e8fb05434ab",
+    "transaction_sha256": "2f4a2790117eec57022b0b5b806cfab1888c7940a99c2c0a170c553e9e910891",
+    "tuples": [
+      [
+        "refs/heads/main",
+        "97f83044dbdf3e628cbf01eebe68f8435d5a3516",
+        "refs/heads/main",
+        "0000000000000000000000000000000000000000"
+      ]
+    ],
+    "result_file_bytes": 1044,
+    "git_stdout_bytes": 0,
+    "git_stderr_bytes": 130
+  },
+  "diagnosed_cause": "prototype changed contextlib wrapper globals; maintained 8388608-byte Git capture limit remained active"
+}

@@ -1,0 +1,711 @@
+{
+  "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "python": "3.14.6 (main, Jul 30 2026, 16:35:50) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "git": "git version 2.54.0 (Apple Git-157)",
+  "lfs": "git-lfs/3.8.0 (GitHub; darwin arm64; go 1.27.0; git aece9221)",
+  "source_revision": "074ca4fab21f081cbd1cbde9bf5f5ebdbdfa4d58",
+  "fingerprints": {
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/docs/hook-resilience-design-b/d0/d0-capacity.py": "dd6f17c1aa19360f87e47cae14fae547d8d842fc2565de39d94ee2e8bb6fedf0",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/docs/hook-resilience-design-b/d0/d0-probe.py": "a68052fb6ce7fc418d352fa6cedd9d4ed41362d5c770977ee5fffd735478fb2f",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/docs/hook-resilience-design-b/d0/d0-test.py": "b3939da507cc847469e9465f46fec8230c4072cb2e724a9954cac8698046ae39",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/helpers/audit.py": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/helpers/common.py": "55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/helpers/okf.py": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/helpers/okf_audit.py": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/helpers/tool_guard_policy.py": "c3ee195c5bd9eb51c35c799f3d41cf39440d1ec7771917df5411aeecb07a60fe",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/hooks-diagnostics.py": "2e02f71647db797c600641a1986a69e5f34b48f0eef40242c4dcd640c1ecfca7",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/load-required-skills.py": "6183fcd7aa6b833138878a92c9c0e5ecaa19970571b1d3183ed3f44fd59c5c58",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/repository-okf.py": "56d21dd4c59676d91c12c748e4ba16f61a79d0f28c3c9991bc137f4bb8924fda",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/scan-secrets.py": "8f74d85673eb4e9597c398832f04052408ff3b347f311cf72a9e196b77ebe315",
+    "/Users/adam/.codex/worktrees/design-b-d0/skills/.codex/hooks/tool-guard.py": "c9da6189c9c89151bdbdf23064cb784a1930852ba07692bd90de805349ada526"
+  },
+  "observations": [
+    {
+      "case": "first-publication",
+      "clean": {
+        "dispatch_elapsed_seconds": 0.3146616250742227,
+        "dispatcher_children_peak_rss_bytes": 60194816,
+        "dispatcher_peak_rss_bytes": 32243712,
+        "dispatcher_pid": 85923,
+        "metrics": {
+          "acquisition_seconds": 0.09019783302210271,
+          "capture_bytes": 20027647,
+          "distinct_acquired_bytes": 20026887,
+          "elapsed_seconds": 0.24561320804059505,
+          "enumeration_seconds": 0.005962583003565669,
+          "logical_candidate_bytes": 20026653,
+          "matching_seconds": 0.14896999998018146,
+          "objects": 8,
+          "path_occurrences": 6,
+          "peak_child_rss_bytes": 5144576,
+          "peak_self_rss_bytes": 60194816,
+          "temp_peak_bytes": 24155367
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/first-publication/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 85924,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "563016df22b47b5848c3b4b68afe4e3fa77a46ebaffc4aff91cd7aa5d0f8ca26",
+        "transaction_sha256": "c97ae52be7fff7080b61a394d7c4c5480d0105d1b3533b6606af8a83880750e7",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "97a30db7111578d8bdbd55664549c7ef8b056307",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1139,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 144
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 0.374545875005424,
+        "dispatcher_children_peak_rss_bytes": 60964864,
+        "dispatcher_peak_rss_bytes": 32227328,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 0.11915029108058661,
+          "capture_bytes": 20028782,
+          "distinct_acquired_bytes": 20027423,
+          "elapsed_seconds": 0.3020500830607489,
+          "enumeration_seconds": 0.006401584018021822,
+          "logical_candidate_bytes": 40053386,
+          "matching_seconds": 0.17609670804813504,
+          "objects": 11,
+          "path_occurrences": 13,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 60964864,
+          "temp_peak_bytes": 24155628
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/first-publication/remote.git"
+        ],
+        "scanner_pid": 86007,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "a1645dc4e4de3581ea81264533850db46283c4f0a84d2344873f6ab7e6821165",
+        "transaction_sha256": "03ce267dbe262f7370aee992df5b13a495be8b9c6e62a1d69c658c03b4580063",
+        "tuples": [
+          [
+            "HEAD",
+            "b0072fc87e7df382f6ab237a11762145ca0129e2",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1093,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 144
+      }
+    },
+    {
+      "case": "merge-sized",
+      "clean": {
+        "dispatch_elapsed_seconds": 2.874401416978799,
+        "dispatcher_children_peak_rss_bytes": 43810816,
+        "dispatcher_peak_rss_bytes": 32342016,
+        "dispatcher_pid": 86121,
+        "metrics": {
+          "acquisition_seconds": 2.392600040999241,
+          "capture_bytes": 9487867,
+          "distinct_acquired_bytes": 9462797,
+          "elapsed_seconds": 2.8016922500682995,
+          "enumeration_seconds": 0.008147333050146699,
+          "logical_candidate_bytes": 9453877,
+          "matching_seconds": 0.3997170829679817,
+          "objects": 225,
+          "path_occurrences": 223,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 43810816,
+          "temp_peak_bytes": 9505190
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/merge-sized/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 86122,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "f4111641ef46aa5547baa2d0ade9d3aad3645a16f00e149af7a927de98f30d2e",
+        "transaction_sha256": "a1b8d10f33a5108de75be6e39b92457192c4f0efee5c0dbb45b102cece45f494",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "0a8d2e247fe5fd4f355594d6b27d87645dd624f4",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1128,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 138
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 2.9744303330080584,
+        "dispatcher_children_peak_rss_bytes": 44072960,
+        "dispatcher_peak_rss_bytes": 32423936,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 2.49398850009311,
+          "capture_bytes": 9512016,
+          "distinct_acquired_bytes": 9472019,
+          "elapsed_seconds": 2.9030912090092897,
+          "enumeration_seconds": 0.008125791093334556,
+          "logical_candidate_bytes": 18907834,
+          "matching_seconds": 0.3998715829802677,
+          "objects": 228,
+          "path_occurrences": 447,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 44072960,
+          "temp_peak_bytes": 9505451
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/merge-sized/remote.git"
+        ],
+        "scanner_pid": 86614,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "832692691c4fa73504a50d43c40d84ed2cc1d49c0f8ce90344744255d84cf459",
+        "transaction_sha256": "0cbf0bbddb830c8384787d32ecda450c6d31f00e800bc9bb435160f1bad20584",
+        "tuples": [
+          [
+            "HEAD",
+            "d44f08b24414a9ab06940a6294ffdf686b9f0ce1",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1083,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 138
+      }
+    },
+    {
+      "case": "repeated-blobs",
+      "clean": {
+        "dispatch_elapsed_seconds": 0.11087474995292723,
+        "dispatcher_children_peak_rss_bytes": 43876352,
+        "dispatcher_peak_rss_bytes": 32161792,
+        "dispatcher_pid": 87117,
+        "metrics": {
+          "acquisition_seconds": 0.03103366692084819,
+          "capture_bytes": 275519,
+          "distinct_acquired_bytes": 267187,
+          "elapsed_seconds": 0.04529616702347994,
+          "enumeration_seconds": 0.006090375012718141,
+          "logical_candidate_bytes": 33554611,
+          "matching_seconds": 0.00782629195600748,
+          "objects": 3,
+          "path_occurrences": 128,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 43876352,
+          "temp_peak_bytes": 529331
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/repeated-blobs/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 87118,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "c8ba62e8b7bebd0f744d37587ca60d3cf63bd236450760a2d3f028522abcc83e",
+        "transaction_sha256": "6887bd30a964b3cfa2342aa0517b6037b250c2f5a79b092d54f2933398def05f",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "bad788b391bb107a7238419ba4cb291441dcdaf0",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1133,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 141
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 0.14855470892507583,
+        "dispatcher_children_peak_rss_bytes": 43974656,
+        "dispatcher_peak_rss_bytes": 32227328,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 0.06535950000397861,
+          "capture_bytes": 289086,
+          "distinct_acquired_bytes": 272353,
+          "elapsed_seconds": 0.0857507080072537,
+          "enumeration_seconds": 0.006125416955910623,
+          "logical_candidate_bytes": 67109302,
+          "matching_seconds": 0.013982667005620897,
+          "objects": 6,
+          "path_occurrences": 257,
+          "peak_child_rss_bytes": 5160960,
+          "peak_self_rss_bytes": 43974656,
+          "temp_peak_bytes": 529592
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/repeated-blobs/remote.git"
+        ],
+        "scanner_pid": 87137,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "6704fd44a820054dbe8c4419be70fdef73c7ed7c4a4500504a462ca4567464a1",
+        "transaction_sha256": "7369e09b5c0a6067aaab641011bf03868ea7919436c9c9b2f6815b9458cac0d3",
+        "tuples": [
+          [
+            "HEAD",
+            "e388ee2e35aee3bb813331d3ac04f367f019dc65",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1087,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 141
+      }
+    },
+    {
+      "case": "multi-ref",
+      "clean": {
+        "dispatch_elapsed_seconds": 0.6448380420915782,
+        "dispatcher_children_peak_rss_bytes": 44875776,
+        "dispatcher_peak_rss_bytes": 32325632,
+        "dispatcher_pid": 87213,
+        "metrics": {
+          "acquisition_seconds": 0.4104166249744594,
+          "capture_bytes": 12589902,
+          "distinct_acquired_bytes": 12586570,
+          "elapsed_seconds": 0.5767457500332966,
+          "enumeration_seconds": 0.008046292001381516,
+          "logical_candidate_bytes": 12585828,
+          "matching_seconds": 0.1576040000654757,
+          "objects": 39,
+          "path_occurrences": 25,
+          "peak_child_rss_bytes": 5160960,
+          "peak_self_rss_bytes": 44875776,
+          "temp_peak_bytes": 13635114
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/multi-ref/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 87214,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "43898618b8028771ce5986c899e5190cb63d027fc329acd6731c20d0a438feb0",
+        "transaction_sha256": "f129603595903c1c081a400ab6c04653e7f166f519d8ddf66c495971a37ad6d8",
+        "tuples": [
+          [
+            "refs/heads/branch-0",
+            "b2d38171c64a01639515fb32063269fac9d21bfc",
+            "refs/heads/branch-0",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-1",
+            "f04bb11dc12fa1e34da0a05f6c1b2eb895701410",
+            "refs/heads/branch-1",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-2",
+            "2f1b17b327a9ed790a467ff69db16afec3fc0838",
+            "refs/heads/branch-2",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-3",
+            "6bf24df26d35281074b866205d57514792d82bff",
+            "refs/heads/branch-3",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-4",
+            "089b80f2badf54319c4f35c37cf3e72948f07ace",
+            "refs/heads/branch-4",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-5",
+            "69b02fa736c25e949488ea87ed5534e5831b4ebb",
+            "refs/heads/branch-5",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-6",
+            "5fd363310bcbe246dd5b6830daef5c0dc1c7443c",
+            "refs/heads/branch-6",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-7",
+            "a50291ad8a836cc5d929876733488a7581bbccf5",
+            "refs/heads/branch-7",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-8",
+            "575876b4fd3d1f3c786e2a647c9524d31fae2309",
+            "refs/heads/branch-8",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-9",
+            "1a1f2623083fd355bc915644c47b0949bf9bc537",
+            "refs/heads/branch-9",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-10",
+            "0848a4aaf688a3e5c54fb1f4d285711914ba1b2f",
+            "refs/heads/branch-10",
+            "0000000000000000000000000000000000000000"
+          ],
+          [
+            "refs/heads/branch-11",
+            "eaafa113e190a771b52e0bc8f077584d3fcf97c6",
+            "refs/heads/branch-11",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 2638,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 610
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 0.14726604195311666,
+        "dispatcher_children_peak_rss_bytes": 43876352,
+        "dispatcher_peak_rss_bytes": 32210944,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 0.06339483405463398,
+          "capture_bytes": 1011,
+          "distinct_acquired_bytes": 546,
+          "elapsed_seconds": 0.08143029094208032,
+          "enumeration_seconds": 0.006722958059981465,
+          "logical_candidate_bytes": 449,
+          "matching_seconds": 0.011023457976989448,
+          "objects": 6,
+          "path_occurrences": 3,
+          "peak_child_rss_bytes": 5111808,
+          "peak_self_rss_bytes": 43876352,
+          "temp_peak_bytes": 1212
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/multi-ref/remote.git"
+        ],
+        "scanner_pid": 87318,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "efb7f5324692dc4fc1cb08edaff3d93d401d9e0de844da2196878896fd380976",
+        "transaction_sha256": "7cae3ec50978dee94f8f45c44a612dca249c61d38fbc36718ca7e31eb1f8b143",
+        "tuples": [
+          [
+            "HEAD",
+            "9bb9befa578e2ea1126f39edf174f99a9d5d8d6f",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1069,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 136
+      }
+    },
+    {
+      "case": "long-history",
+      "clean": {
+        "dispatch_elapsed_seconds": 19.84433195798192,
+        "dispatcher_children_peak_rss_bytes": 44679168,
+        "dispatcher_peak_rss_bytes": 32391168,
+        "dispatcher_pid": 87336,
+        "metrics": {
+          "acquisition_seconds": 17.00499345897697,
+          "capture_bytes": 1132948,
+          "distinct_acquired_bytes": 999116,
+          "elapsed_seconds": 19.728197167045437,
+          "enumeration_seconds": 0.03431654197629541,
+          "logical_candidate_bytes": 135181482,
+          "matching_seconds": 2.6816067500039935,
+          "objects": 1539,
+          "path_occurrences": 1025,
+          "peak_child_rss_bytes": 5357568,
+          "peak_self_rss_bytes": 44679168,
+          "temp_peak_bytes": 1000234
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-history-frozen-c3xv8ee9/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 87337,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "57ebc670accfdec1e115fd3f162b6c690705a87666d69852d0ebc102b59b4914",
+        "transaction_sha256": "e8ae704883a02dc6a03e0692548350c560fbf3ab1b5a1dbd2e31f3b9af9d205b",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "cc0de351dc27e1dceda4463a6ecb7a888a221459",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1124,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 132
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 19.128727000090294,
+        "dispatcher_children_peak_rss_bytes": 44695552,
+        "dispatcher_peak_rss_bytes": 32604160,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 16.251118166022934,
+          "capture_bytes": 1133649,
+          "distinct_acquired_bytes": 999487,
+          "elapsed_seconds": 19.014533833018504,
+          "enumeration_seconds": 0.03455912496428937,
+          "logical_candidate_bytes": 135445037,
+          "matching_seconds": 2.7219039160991088,
+          "objects": 1542,
+          "path_occurrences": 1028,
+          "peak_child_rss_bytes": 5390336,
+          "peak_self_rss_bytes": 44695552,
+          "temp_peak_bytes": 1000605
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-history-frozen-c3xv8ee9/remote.git"
+        ],
+        "scanner_pid": 91007,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "46ef2face6e215cfaff5e3cdf94f77abfe828f760ee781109dfa60a2d1a95a07",
+        "transaction_sha256": "034e84de830cd072da87fd912e288fe676aec3155947dd30a2443bf2f8c15595",
+        "tuples": [
+          [
+            "HEAD",
+            "ced84bd4d3a7816a4766cc9bbc6af411f2b55d6a",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1080,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 132
+      }
+    },
+    {
+      "case": "large-blob",
+      "clean": {
+        "dispatch_elapsed_seconds": 0.6270760409533978,
+        "dispatcher_children_peak_rss_bytes": 110706688,
+        "dispatcher_peak_rss_bytes": 32391168,
+        "dispatcher_pid": 94716,
+        "metrics": {
+          "acquisition_seconds": 0.06397566699888557,
+          "capture_bytes": 67109283,
+          "distinct_acquired_bytes": 67109080,
+          "elapsed_seconds": 0.5600435419473797,
+          "enumeration_seconds": 0.006205125013366342,
+          "logical_candidate_bytes": 67109043,
+          "matching_seconds": 0.4894620419945568,
+          "objects": 3,
+          "path_occurrences": 1,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 110706688,
+          "temp_peak_bytes": 134217944
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/large-blob/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 94717,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "eb3321a4e5800674cb5d6469192594f30e75d2d04b3e95b03b51faf0f673422d",
+        "transaction_sha256": "1b37aea558f1936b9de7751bca6249dac02e9ca7d4e967cb647b86073684f94e",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "673677fe45cf37ca141b7dce96cb5debcf632c87",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1133,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 137
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 0.6672227090457454,
+        "dispatcher_children_peak_rss_bytes": 110739456,
+        "dispatcher_peak_rss_bytes": 32129024,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 0.09497549990192056,
+          "capture_bytes": 67109894,
+          "distinct_acquired_bytes": 67109419,
+          "elapsed_seconds": 0.602937207906507,
+          "enumeration_seconds": 0.0060078330570831895,
+          "logical_candidate_bytes": 134218166,
+          "matching_seconds": 0.5016695000231266,
+          "objects": 6,
+          "path_occurrences": 3,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 110739456,
+          "temp_peak_bytes": 134218205
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/large-blob/remote.git"
+        ],
+        "scanner_pid": 94736,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "696f059b5b1d57df760b4555d9919507ad6395861a86022d75277bb7353373af",
+        "transaction_sha256": "39a9ca905e05602f424765a961edd6cd8a71fd6017c2f5d7d66dfdd2dc3d7f15",
+        "tuples": [
+          [
+            "HEAD",
+            "e9534f23719c3b756796b54e81468deec32398eb",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1088,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 137
+      }
+    },
+    {
+      "case": "large-lfs",
+      "clean": {
+        "dispatch_elapsed_seconds": 0.7709149159491062,
+        "dispatcher_children_peak_rss_bytes": 43991040,
+        "dispatcher_peak_rss_bytes": 99368960,
+        "dispatcher_pid": 94763,
+        "metrics": {
+          "acquisition_seconds": 0.031521250028163195,
+          "capture_bytes": 552,
+          "distinct_acquired_bytes": 67109213,
+          "elapsed_seconds": 0.5801596250385046,
+          "enumeration_seconds": 0.006403125007636845,
+          "logical_candidate_bytes": 67109176,
+          "matching_seconds": 0.5416660410119221,
+          "objects": 3,
+          "path_occurrences": 1,
+          "peak_child_rss_bytes": 5144576,
+          "peak_self_rss_bytes": 43991040,
+          "temp_peak_bytes": 134218868
+        },
+        "outcome": "clean",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/large-lfs/remote.git"
+        ],
+        "scanner_dispatcher_handoff": true,
+        "scanner_pid": 94764,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "c7e0508cf6db8c5e32c54e31f9f293b56465068d4102b28a13319c8208cb6af3",
+        "transaction_sha256": "710c73b065259e49c448fe803c44ec67a2bb557bc79097dadb7fb6a2de95d133",
+        "tuples": [
+          [
+            "refs/heads/main",
+            "34bc73c29ed060e7cd2290abdab248f1b570c1d4",
+            "refs/heads/main",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1126,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 136,
+        "uploaded_objects": 1,
+        "uploaded_bytes": 67108864,
+        "delivered_snapshot_matches": true
+      },
+      "late_control": {
+        "dispatch_elapsed_seconds": 0.6800608750199899,
+        "dispatcher_children_peak_rss_bytes": 43925504,
+        "dispatcher_peak_rss_bytes": 32194560,
+        "findings": 1,
+        "metrics": {
+          "acquisition_seconds": 0.06362470798194408,
+          "capture_bytes": 1163,
+          "distinct_acquired_bytes": 67109552,
+          "elapsed_seconds": 0.6168139999499545,
+          "enumeration_seconds": 0.00603449996560812,
+          "logical_candidate_bytes": 67109568,
+          "matching_seconds": 0.5467296249698848,
+          "objects": 6,
+          "path_occurrences": 3,
+          "peak_child_rss_bytes": 5128192,
+          "peak_self_rss_bytes": 43925504,
+          "temp_peak_bytes": 134219182
+        },
+        "outcome": "findings",
+        "remote_arguments": [
+          "origin",
+          "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-snh1df72/large-lfs/remote.git"
+        ],
+        "scanner_pid": 94804,
+        "schema": "d0-prototype-v1",
+        "stdin_sha256": "f41c2db85b72860af555313316166255f2a372bbbd71ccef6f4eded0b7d72ecb",
+        "transaction_sha256": "ebc973bdf630efb73a9eefd8ea8f0366100275ff5c13816825458716c8cc2af5",
+        "tuples": [
+          [
+            "HEAD",
+            "45d1be33a3cff2967ad897d3deb8009a46c44998",
+            "refs/heads/late-control",
+            "0000000000000000000000000000000000000000"
+          ]
+        ],
+        "result_file_bytes": 1079,
+        "git_stdout_bytes": 0,
+        "git_stderr_bytes": 136
+      }
+    },
+    {
+      "case": "checkpoint-images",
+      "candidate_entry_sha256": "eb7c3fd19e5e7c5c956f49e6a58e304d154a322ccd4f423dd6195a76caa41cfc",
+      "logical_candidate_bytes": 20026474,
+      "snapshots": 6,
+      "elapsed_seconds": 0.2940800000214949,
+      "stdout_bytes": 3,
+      "time_stderr": "        0.28 real         0.21 user         0.04 sys\n            34258944  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               15595  page reclaims\n                  67  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                  10  voluntary context switches\n                 205  involuntary context switches\n          6022876932  instructions retired\n           887992966  cycles elapsed\n            22888880  peak memory footprint\n",
+      "clean_status": "clean",
+      "late_status": "findings"
+    },
+    {
+      "case": "checkpoint-merge",
+      "candidate_entry_sha256": "eb7c3fd19e5e7c5c956f49e6a58e304d154a322ccd4f423dd6195a76caa41cfc",
+      "logical_candidate_bytes": 9453698,
+      "snapshots": 223,
+      "elapsed_seconds": 0.27015766606200486,
+      "stdout_bytes": 3,
+      "time_stderr": "        0.26 real         0.16 user         0.07 sys\n            34521088  maximum resident set size\n                   0  average shared memory size\n                   0  average unshared data size\n                   0  average unshared stack size\n               15594  page reclaims\n                  67  page faults\n                   0  swaps\n                   0  block input operations\n                   0  block output operations\n                   0  messages sent\n                   0  messages received\n                   0  signals received\n                  11  voluntary context switches\n                 617  involuntary context switches\n          3630356381  instructions retired\n           736355666  cycles elapsed\n            23151048  peak memory footprint\n",
+      "clean_status": "clean",
+      "late_status": "findings"
+    }
+  ],
+  "status": "passed",
+  "publication_profile": {
+    "max_objects": 20000,
+    "max_candidate_bytes": 268435456,
+    "max_seconds": 120,
+    "max_capture_bytes": 536870912,
+    "max_temp_bytes": 805306368
+  }
+}

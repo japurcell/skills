@@ -1,0 +1,125 @@
+{
+  "clean": {
+    "dispatch_elapsed_seconds": 0.12546162493526936,
+    "dispatcher_children_peak_rss_bytes": 44171264,
+    "dispatcher_peak_rss_bytes": 32276480,
+    "dispatcher_pid": 13219,
+    "git_stderr_bytes": 132,
+    "git_stdout_bytes": 0,
+    "metrics": {
+      "acquisition_seconds": 0.03160895803011954,
+      "capture_bytes": 1051542,
+      "distinct_acquired_bytes": 1049770,
+      "elapsed_seconds": 0.05901129194535315,
+      "enumeration_seconds": 0.005920458002947271,
+      "logical_candidate_bytes": 25166010,
+      "matching_seconds": 0.021102124941535294,
+      "objects": 3,
+      "path_occurrences": 24,
+      "peak_child_rss_bytes": 5111808,
+      "peak_self_rss_bytes": 44171264,
+      "temp_peak_bytes": 2098346
+    },
+    "outcome": "clean",
+    "remote_arguments": [
+      "origin",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-proof-q6ym_pv1/remote.git"
+    ],
+    "result_file_bytes": 1127,
+    "scanner_dispatcher_handoff": true,
+    "scanner_pid": 13220,
+    "schema": "d0-prototype-v1",
+    "stdin_sha256": "9d956636724a9ff1cf0e1ae864090a5e929e84e9d6e2cc1547ab0700896b1855",
+    "transaction_sha256": "abf92eeaedf287ad7b62cdf7ea366a8b8e196f04dcf56e76bf3ef8159e7a9693",
+    "tuples": [
+      [
+        "refs/heads/main",
+        "412b07c3526c863435661774edb94336c7efbac9",
+        "refs/heads/main",
+        "0000000000000000000000000000000000000000"
+      ]
+    ]
+  },
+  "finding": {
+    "dispatch_elapsed_seconds": 0.16458104201592505,
+    "dispatcher_children_peak_rss_bytes": 44220416,
+    "dispatcher_peak_rss_bytes": 32161792,
+    "findings": 1,
+    "git_stderr_bytes": 132,
+    "git_stdout_bytes": 0,
+    "metrics": {
+      "acquisition_seconds": 0.06491354200989008,
+      "capture_bytes": 1054677,
+      "distinct_acquired_bytes": 1051072,
+      "elapsed_seconds": 0.09904637502040714,
+      "enumeration_seconds": 0.006611749995499849,
+      "logical_candidate_bytes": 50332093,
+      "matching_seconds": 0.027240999974310398,
+      "objects": 6,
+      "path_occurrences": 49,
+      "peak_child_rss_bytes": 5128192,
+      "peak_self_rss_bytes": 44220416,
+      "temp_peak_bytes": 2098599
+    },
+    "outcome": "findings",
+    "remote_arguments": [
+      "origin",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-proof-q6ym_pv1/remote.git"
+    ],
+    "result_file_bytes": 1084,
+    "scanner_pid": 13239,
+    "schema": "d0-prototype-v1",
+    "stdin_sha256": "29f66d4145a9a5b305a0a8d79b34c93697bbd7881fede59eb8cd4aaac65b81fe",
+    "transaction_sha256": "1fe3dc022dd0604539cc5e79612873b203058df2b556fcdffc02b7560c9c8dae",
+    "tuples": [
+      [
+        "refs/heads/main",
+        "02629ad81e013dcbef1619d0a24efd4d6156b65e",
+        "refs/heads/late",
+        "0000000000000000000000000000000000000000"
+      ]
+    ]
+  },
+  "late_control_detected": true,
+  "over_limit": {
+    "dispatch_elapsed_seconds": 0.12560520903207362,
+    "dispatcher_children_peak_rss_bytes": 44072960,
+    "dispatcher_peak_rss_bytes": 32292864,
+    "git_stderr_bytes": 132,
+    "git_stdout_bytes": 0,
+    "metrics": {
+      "acquisition_seconds": 0.03212545800488442,
+      "capture_bytes": 1051542,
+      "distinct_acquired_bytes": 1049770,
+      "elapsed_seconds": 0.060309667023830116,
+      "enumeration_seconds": 0.006440958008170128,
+      "logical_candidate_bytes": 25166010,
+      "matching_seconds": 0,
+      "objects": 3,
+      "path_occurrences": 24,
+      "peak_child_rss_bytes": 5128192,
+      "peak_self_rss_bytes": 44072960,
+      "temp_peak_bytes": 2098346
+    },
+    "outcome": "incomplete",
+    "reason": "ValueError",
+    "remote_arguments": [
+      "origin",
+      "/private/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/d0-capacity-proof-q6ym_pv1/remote.git"
+    ],
+    "result_file_bytes": 1083,
+    "scanner_pid": 13259,
+    "schema": "d0-prototype-v1",
+    "stdin_sha256": "652fd4797a62efc399af0622769b3b6e48f34fed962fe5ca2e388f880c3504d6",
+    "transaction_sha256": "d747b033111ecebdcccc51ae069c6e6376e4dc2777891b4a22b10a3118870c2e",
+    "tuples": [
+      [
+        "refs/heads/main",
+        "412b07c3526c863435661774edb94336c7efbac9",
+        "refs/heads/over-limit",
+        "0000000000000000000000000000000000000000"
+      ]
+    ]
+  },
+  "over_limit_incomplete": true
+}
