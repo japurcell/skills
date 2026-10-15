@@ -22,14 +22,14 @@ The feature changes skill selection only. Agents, references, RTK configuration,
 - [x] (2026-10-14) [milestone-2] Verify the complete behavior matrix in Bash and macOS PowerShell against integrated implementation `6f406a1f`; all targeted local checks passed, retained in `verification.json`.
 - [x] (2026-10-14) [milestone-2] R1: Make the reference-rebasing CLI directly executable; integrated `d07be4368ecc9b190867979ebc82c2bd050cc71a`. Direct help passed on base, with identical content blob and mode `100755`.
 - [x] (2026-10-14) [milestone-3] T4 local: Obtain integrated source evidence and preserve existing protections; evidence commit rebased to integrated `7fe20edaef6485d1263c9c8f9cad8bd3e3e9c40c`.
-- [ ] [milestone-3] T4 Windows: User authorizes push/CI, then run the existing native Windows installer job on this implementation and record its revision/result/run URL and junction capability.
+- [ ] [milestone-3] T4 Windows: Obtain a Windows-capable host, or later user-authorized push/CI, then run the native installer suite and record revision/result/host or run URL and junction capability.
 - [x] (2026-10-14) [milestone-4] T5D: Finish user-facing installation documentation; integrated `3110cea24bd20221b235b3d941f345bb02c3fc72`, with both public help outputs and source diagnostics checked.
 - [x] (2026-10-14) [milestone-4] Complete the single coordinated agent-doc pass after all delegated work finished; repair PowerShell ordinal-matching/profile guidance, review category-path repairs, verify OKF/links/whitespace, and preserve protected AGENTS sections.
 - [ ] [milestone-4] T5: Close the effort after native Windows acceptance; retain current owner actions and this active plan until then.
 - [x] (2026-10-14) [milestone-1] R4: Repaired eight source-reference pointers and the live benchmark path in `e63d4951`. All eight targets resolve; four vendored-YAML definition validations and whitespace checks passed.
 - [x] (2026-10-14) [milestone-2] R2: NFC-normalized casefold validation rejects canonical aliases before writes. Both full suites and focused enabled/disabled immutability cases passed; integrated as `a18e778a`.
 - [x] (2026-10-14) [milestone-2] R3: Safe read-only rebasing, repeat copying/pruning, dotted references, actual Addy targets, and hardlink refusal/pruning passed both full suites at `671f1e78`; integrated as `362dad54` with only this plan differing after rebase.
-- [ ] [milestone-2] R5: Verify the integrated five-finding repairs, refresh current evidence, and complete this session's coordinated KB pass without pushing.
+- [x] (2026-10-14) [milestone-2] R5: Independent review found no further required findings. Seven focused public cases per installer, affected consumers, four definitions, and source targets passed at `698d5410`. Retained source-identical full-suite proof and repair audit; final coordinated KB pass warranted no changes. No push.
 
 ## Surprises & Discoveries
 
@@ -52,7 +52,7 @@ The user selected or confirmed the public contract on 2026-10-14 and authorized 
 
 ### D1: Repository and installed layout
 
-Move all currently published root skills into `skills/default/<name>/`. Create `skills/forest-service/` with `.gitkeep` while it has no published skills. Keep `skills/archive/` and generated `skills/*-workspace/` at the root. New generated workspaces also remain at the root, even when the associated skill lives in a category. Install selected leaf directories into `~/.agents/skills/<name>/`, never into a category wrapper.
+Published skills now live under `skills/default/<name>/`. `skills/forest-service/` contains `.gitkeep` while it has no published skills. Keep `skills/archive/` and generated `skills/*-workspace/` at the root. New generated workspaces also remain at the root, even when the associated skill lives in a category. Install selected leaf directories into `~/.agents/skills/<name>/`, never into a category wrapper.
 
 Default both import workflows to `skills/default/`. Preserve Addy's flat external `SOURCE_ROOT/skills` layout and its explicit destination overrides. Repair maintained source paths and links. Preserve immutable `.agents/sources/`, archived content, and historical transcripts rather than bulk-rewriting them.
 
@@ -95,7 +95,7 @@ Help must work without valid sources or installer dependencies. Diagnostics iden
 
 ## Outcomes & Retrospective
 
-All five repairs are integrated: source paths at `e63d4951`, Unicode validation at `a18e778a`, and reference/mode safety at `362dad54`. R3's final full Bash and macOS PowerShell suites passed at `671f1e78`; integration changed only this plan, preserving all implementation/test inputs. The current frontier is R5's independent composed proof and repair review. Milestones 1/2 remain unmet until that proof passes. The coordinator owns plan/evidence/KB reconciliation. No push or CI is authorized. Native Windows and final closure remain open; the macOS junction skip is not native acceptance.
+All five repairs are integrated and independently verified: source paths at `e63d4951`, Unicode validation at `a18e778a`, and reference/mode safety at `362dad54`. R3's full Bash and macOS PowerShell suites passed at `671f1e78`; R5 verified identical implementation/test inputs at `698d5410` and passed seven public repair cases per installer plus affected consumers and four definition validations. Independent review found no further required findings. Milestones 1/2 are accepted locally; [repair-verification.json](repair-verification.json) retains current proof and platform limits. The final coordinated KB admission pass found no warranted changes; OKF lint passed. All clean repair worktrees/branches were removed. No authorized local work remains, and no push or CI occurred. Native Windows and final closure remain open; a macOS junction skip is not native acceptance. The user controls any later host or CI authorization.
 
 ## Context and Orientation
 
@@ -126,20 +126,20 @@ This document was saved and reviewed against Q1-Q18. A read-only check verified 
 
 ### Milestone 1: Deliver the category layout and repair consumers
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
-Reopened for R4 after actual moved bundle pointers and benchmark guidance failed source-path resolution. Original T1/T2 evidence below is retained; acceptance requires current source resolution plus R5's composed proof.
+R4 repaired the eight actual source pointers and benchmark guidance. R5 independently verified all eight source/installed targets through both public installers, the benchmark sample, four definitions, Addy, and registry consumers at `698d5410`. Current acceptance evidence is [repair-verification.json](repair-verification.json); original T1/T2 proof below is retained as historical context.
 
 #### Task T1: Migrate published skills and default traversal
 
-Prerequisites: explicit user authorization to implement. Inputs: D1 and D3, the current root `SKILL.md` inventory, both installers, and both installer fixture suites. Own the published directory moves, new category directories, `copy_skills`, `Copy-Skills`, and matching default-copy fixture changes.
+Prerequisites: explicit user authorization to implement. Inputs: D1 and D3, the original pre-migration root `SKILL.md` inventory, both installers, and both installer fixture suites. Own the published directory moves, new category directories, `copy_skills`, `Copy-Skills`, and matching default-copy fixture changes.
 
 Completed evidence: commit `1dadc9993b2885f5448d91a97177872509c706fc`, integrated without rebase changes. Both public fixture suites first failed on missing flat `alpha` installation, then exited 0 after traversal and fixture changes. PowerShell's junction case was skipped on macOS, so this is not Windows evidence. Coordinator review verified 361 `R100` moves and unchanged root workspaces. The task worktree was clean before integration and base tip matched its verified tip.
 
 Completed task scope: public installer fixtures placed `alpha` under `skills/default/` and proved `~/.agents/skills/alpha/SKILL.md` exists without a wrapper. Both old traversals failed that assertion before repair. Complete published bundles, including evaluation fixtures, moved while root workspaces and archives remained in place.
 
-Both suites verified category fixtures, empty Forest Service content, artifact exclusions, and preservation of unrelated installed files. Conditional selection and the complete new validation contract remain T3.
+Both suites verified category fixtures, empty Forest Service content, artifact exclusions, and preservation of unrelated installed files. T3 subsequently delivered conditional selection and the complete validation contract.
 
 #### Task T2: Repair maintained source consumers and imports
 
@@ -147,7 +147,7 @@ Prerequisites: T1's moved layout. Inputs: D1, the old-to-new path inventory, cur
 
 Completed evidence: commit `d141e63d6531973f7de98759610d216635b212a0`, integrated without rebase changes. T2 also owned the observed reference-copy boundary repair in both installers and its shared Python helper. Addy's default-category public case failed before its destination change. Installed source-relative reference links failed before rebasing. Review reproduced external target mutation through a linked skill root, then verified preserved link identity, unchanged external bytes, and safe nested-link handling after repair. The spec-to-tasks suite exposed two repository-root failures and passed all 38 tests after the depth correction. All targeted T2 checks passed; these outcomes do not establish Windows execution.
 
-Search maintained files for literal old skill paths and one-level discovery assumptions. Update the test registry, `skills/default/create-skill/SKILL.md`, relevant README paths, `.agents/instructions/skills.md`, `.agents/instructions/testing/skills.md`, and affected admitted guidance in `.agents/memory/known-issues/skills.md`. Adjust `.gitignore` exceptions for moved checked-in fixtures without exposing generated outputs. Leave `.agents/skills/` and its tests at their existing local-workflow paths.
+Completed T2 scope, retained for context: search maintained files for literal old skill paths and one-level discovery assumptions. Update the test registry, `skills/default/create-skill/SKILL.md`, relevant README paths, `.agents/instructions/skills.md`, `.agents/instructions/testing/skills.md`, and affected admitted guidance in `.agents/memory/known-issues/skills.md`. Adjust `.gitignore` exceptions for moved checked-in fixtures without exposing generated outputs. Leave `.agents/skills/` and its tests at their existing local-workflow paths. The following T2 implementation and verification paragraphs describe that completed scope, not current work.
 
 Route Addy's default destination to `skills/default/`, preserving explicit overrides and external source paths. Update only destination sides of `import-skill-repos.sh` mappings. Use syntax/static review for that human-only script; do not invoke it. For moved skill bundles, preserve intra-bundle links and distinguish source-relative paths from installed runtime examples. Check Addy reference rewriting and installed shared-reference resolution before considering path migration complete; fix any observed broken installed links at the appropriate copying/import boundary with a public behavior test, rather than globally replacing relative paths.
 
@@ -159,24 +159,24 @@ Completed on base `d141e63d`: both default installer suites and Addy passed; reg
 
 ### Milestone 2: Deliver the agreed CLI contract
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
-Reopened for R2/R3 after public probes found destination alias overwrite, read-only rebasing failure, and successful installs with broken dotted references. Original verification below predates these fixes. Current acceptance requires R5's integrated proof.
+R2/R3 repaired Unicode aliases, read-only rebasing and repeats, and dotted references. Both final full suites passed on the source-identical composed implementation. R5 independently passed seven public repair cases per installer at `698d5410`, reviewed safety/failure paths, and found no further required findings. Current local acceptance is [repair-verification.json](repair-verification.json). Native Windows remains Milestone 3.
 
-Composed proof: T4 ran the full Bash and macOS PowerShell suites on integrated revision `6f406a1f`, including every agreed CLI/source case, Unicode literal parity, profile isolation, and existing installer protections. All targeted checks exited 0. Evidence is retained in [verification.json](verification.json). Its evidence-only rebase changed no product source or tests; differences from the tested revision were README and plan updates only. Native Windows belongs to Milestone 3 and remains unverified.
+Historical composed proof: T4 ran the full Bash and macOS PowerShell suites on integrated revision `6f406a1f`, including every agreed CLI/source case, Unicode literal parity, profile isolation, and existing installer protections. All targeted checks exited 0. Evidence is retained in [verification.json](verification.json). This predates the review repairs and is not their acceptance evidence.
 
 #### Task R1: Repair helper executable mode
 
-Completed prerequisite: integrated T2. Source inspection found `scripts/rebase-skill-references.py` recorded as mode `100644`, while script conventions require directly executable helpers. Direct public help failed with permission denied, then passed with exit 0 after mode `100755` was committed as `d07be4368ecc9b190867979ebc82c2bd050cc71a`. The content blob remained `bc20dfbc7895a4ee2412873039c5a201e349f820`. Coordinator verified direct help again on base after matching task/base tips, then removed the clean task worktree and local branch. T3 was subsequently integrated; new R2/R3 repairs are unfinished.
+Completed prerequisite: integrated T2. Source inspection found `scripts/rebase-skill-references.py` recorded as mode `100644`, while script conventions require directly executable helpers. Direct public help failed with permission denied, then passed with exit 0 after mode `100755` was committed as `d07be4368ecc9b190867979ebc82c2bd050cc71a`. The content blob remained `bc20dfbc7895a4ee2412873039c5a201e349f820`. Coordinator verified direct help again on base after matching task/base tips, then removed the clean task worktree and local branch. T3 and all local repair tasks are now complete; the helper remains executable.
 
 #### Task T3: Implement selection, help, and preflight parity
 
 Prerequisites: integrated Milestone 1. Inputs: D2-D4 and both disposable-home fixture suites. Own argument handling, selection state, source inventory validation, user-facing output, and matching cases in `scripts/install.sh`, `scripts/install.ps1`, `scripts/test-install.sh`, and `scripts/test-install.ps1`.
 
-Completed evidence: original task commit `fd5de97af199bcccd4f595af85c3a50890f4c265` rebased to integrated `af3e4806f32a3d89cafa962bd579819af496019a`; all five tested source/test blobs and modes were identical across rebase. Complete installer suites passed on macOS, with native junction proof explicitly skipped. RTK 12 and Codex 14 tests passed. Public cycles reproduced help, selection, environment, preflight ordering, streams, helper exit mapping, invisible-character spellings, exclusion matching, and hook-extension mode failures, then proved their fixes. Failure cases fingerprint home and external `CODEX_HOME`; source failures assert stage markers remain absent. APPDATA/LOCALAPPDATA child isolation and parent restoration passed against disposable external sentinels. Only the four named files and executable `scripts/validate-skill-sources.py` changed. T4 will prove their composed behavior on the integrated result.
+Completed evidence: original task commit `fd5de97af199bcccd4f595af85c3a50890f4c265` rebased to integrated `af3e4806f32a3d89cafa962bd579819af496019a`; all five tested source/test blobs and modes were identical across rebase. Complete installer suites passed on macOS, with native junction proof explicitly skipped. RTK 12 and Codex 14 tests passed. Public cycles reproduced help, selection, environment, preflight ordering, streams, helper exit mapping, invisible-character spellings, exclusion matching, and hook-extension mode failures, then proved their fixes. Failure cases fingerprint home and external `CODEX_HOME`; source failures assert stage markers remain absent. APPDATA/LOCALAPPDATA child isolation and parent restoration passed against disposable external sentinels. Only the four named files and executable `scripts/validate-skill-sources.py` changed. T4 subsequently recorded original composed proof; R5 established current repair proof.
 
-Use successive vertical test cycles at the installer process boundary: one failing behavior, its minimal implementation, then the next case. Implement native shell argument scanning with identical exact spellings; PowerShell must handle literal double-hyphen arguments explicitly. Reuse existing standard-library/runtime facilities for category validation instead of introducing packages. Keep selection and validated source enumeration separate from copying so both categories can be validated while only selected skills are copied.
+Completed T3 scope, retained for context: use successive vertical test cycles at the installer process boundary: one failing behavior, its minimal implementation, then the next case. Implement native shell argument scanning with identical exact spellings; PowerShell must handle literal double-hyphen arguments explicitly. Reuse existing standard-library/runtime facilities for category validation instead of introducing packages. Keep selection and validated source enumeration separate from copying so both categories can be validated while only selected skills are copied. The following implementation and stopping instructions describe that completed scope.
 
 Order execution as full argument validation, help exit if requested, selection/environment resolution, category and collision validation, existing dependency/configuration preflights, then existing writes. Preserve existing safety checks and diagnostics. Ensure usage and errors do not accidentally enter PowerShell's success pipeline and that native child output is routed appropriately. Verify exit codes at the process boundary, not through private parser calls.
 
@@ -191,7 +191,7 @@ Acceptance: not met
 
 Prerequisites: accepted Milestone 1 and integrated T3/R1 with their recorded local task proof. Inputs: changed tree, CLI matrix, existing regression suites, and `.github/workflows/ready-ideas-windows.yml`. Own integration verification and minimal workflow adjustments only if the existing native Windows job does not exercise the changed suites. Its local composed proof establishes Milestone 2 acceptance; its native Windows proof establishes Milestone 3 acceptance. Retain command/revision/platform/exit evidence in `docs/conditional-skill-installer/verification.json`; the coordinator owns this ExecPlan.
 
-Local work is complete: [verification.json](verification.json) records all targeted commands at `6f406a1fee1f640106d459c682561af8fedb7c1b`, macOS arm64/PowerShell 7.6.6, exit 0 results, registry/grader counts, inventory, and platform limits. The evidence commit rebased from `a15aef68` to `7fe20edaef6485d1263c9c8f9cad8bd3e3e9c40c`; only README/plan differed from its tested tree before integration, with no source/test changes. Coordinator confirmed task/base tips and cleaned the worktree/branch. The existing `windows-latest` workflow already runs `pwsh -NoProfile -File scripts/test-install.ps1`, so no workflow modification was needed. Native execution is `not_run`: no Windows host was available, and push/CI authorization is absent. Keep this milestone acceptance unmet.
+Historical original local work is complete: [verification.json](verification.json) records all targeted commands at `6f406a1fee1f640106d459c682561af8fedb7c1b`, macOS arm64/PowerShell 7.6.6, exit 0 results, registry/grader counts, inventory, and platform limits. The evidence commit rebased from `a15aef68` to `7fe20edaef6485d1263c9c8f9cad8bd3e3e9c40c`; only README/plan differed from its tested tree before integration, with no source/test changes. Coordinator confirmed task/base tips and cleaned the worktree/branch. The existing `windows-latest` workflow already runs `pwsh -NoProfile -File scripts/test-install.ps1`, so no workflow modification was needed. Native execution is `not_run`: no Windows host was available, and push/CI authorization is absent. Keep this milestone acceptance unmet.
 
 Run the targeted commands below sequentially where fixture mutation could interfere. Obtain native Windows execution of `scripts/test-install.ps1` through the existing workflow or a Windows-capable host. Record the run URL or host, revision, command, result, and any junction-capability limit. A macOS `pwsh` pass or a platform skip cannot satisfy Windows acceptance. Do not dispatch CI or push changes without session authorization for that action.
 
@@ -212,7 +212,7 @@ Completed evidence: `3110cea24bd20221b235b3d941f345bb02c3fc72` changes only `REA
 
 Prerequisites: integrated implementation work and tests have finished; native Windows acceptance must be recorded before full completion. Inputs: final diff, current README, CLI help, changed authoring guidance, and admission rules. Own final documentation reconciliation and the single end-of-session KB pass.
 
-Local documentation/quality work is complete. T5D delivered README guidance. The coordinator's single admission pass reviewed the final diff, repaired `.agents/instructions/powershell.md` for ordinal external-string matching and `APPDATA`/`LOCALAPPDATA` child isolation, and reviewed T2's path repairs. No new memory, splits, index changes, or skill edits were warranted. OKF representation used the shared profile only; lint, scoped links, whitespace, and protected-section checks passed. Final T5 closure remains blocked on T4's native Windows evidence, not on unfinished local documentation.
+Local documentation/quality work is complete. T5D delivered README guidance. The original implementation session's admission pass repaired `.agents/instructions/powershell.md` for ordinal matching and profile isolation. This repair session's final coordinated pass reviewed current guidance and found no warranted KB additions, corrections, splits, or index changes; easily rediscovered code facts and session history were omitted. OKF lint passed. Final T5 closure remains pending T4's native Windows evidence, with no unfinished authorized local documentation.
 
 Document both invocation forms, environment values and precedence, explicit disabling, preservation of previously installed skills, empty initial Forest Service content, and error recovery. After all work and any delegated tasks finish, activate `update-agent-docs` once. Apply knowledge admission, update the smallest relevant canonical documents, and activate `okf-authoring` for canonical semantic edits. Do not create memory solely to record this task. Repair affected indexes and inbound links without editing protected `AGENTS.md` sections.
 
@@ -220,9 +220,11 @@ Review the final diff for lost behavior, incorrect installed paths, ignored fixt
 
 ## Concrete Steps
 
-Execute R5's independent repair review and composed proof on the integrated implementation. R2/R4/R3 are verified and integrated; their clean worktrees and branches were removed. R3's final full-suite proof remains valid because `git diff --name-only 671f1e78 362dad54` lists only this plan. Do not push. Native Windows remains outside available local verification; retain its unmet gate after local repairs.
+No authorized local action remains. All five repairs, independent R5 proof, evidence retention, and the final coordinated KB pass are complete. Next unfinished action belongs to the user and a Windows-capable verifier: obtain permission/host for native `pwsh -NoProfile -File scripts/test-install.ps1` against this repaired implementation, retain actual revision/run/result, then reconcile Milestones 3/4. Do not push or dispatch CI under the current instruction. R3's full-suite proof is source-identical after integration; [repair-verification.json](repair-verification.json) records R5's independent local checks.
 
-### Repair task graph and ownership
+### Completed repair task graph and ownership
+
+R2/R4/R3 scopes below are retained as completed task specifications. Their verification and integration are recorded in Progress; they are not instructions to restart implementation.
 
 R2 has prerequisite `a5f50664` and owns `scripts/validate-skill-sources.py` plus canonical-collision cases in `scripts/test-install.sh` and `scripts/test-install.ps1`. First reproduce the public overwrite/accepted collision, then reject NFC-normalized casefold aliases before any writes; assert whole-home/external-Codex fingerprints and stage markers. Stop at a tested scoped commit.
 
@@ -230,15 +232,15 @@ R4 independently consumes `a5f50664` and owns the three `skills/default/addy-{co
 
 R3 requires integrated R2/R4 and owns `scripts/rebase-skill-references.py`, minimal installer copy-boundary changes if needed, and both shared installer fixture suites. Reproduce read-only and dotted-reference failures through both public processes before fixing them. Preserve file/directory modes, source bytes, unrelated installed assets, and root/nested link safety. Handle leading `./` equivalently; verify actual migrated Addy pointers resolve in source and installed copies. Avoid broad text replacements unrelated to reference paths.
 
-R5 requires integrated R2/R4/R3 and owns composed verification and retained repair evidence. R3 runs both full installer suites sequentially on its frozen composed implementation. Reuse that proof only after verifying integration preserves every implementation/test input; a documentation-only rebase does not require duplicate full-suite execution. R5 independently reviews the repair diff, exercises all five repair outcomes through focused public installer cases on the integrated implementation, and runs Addy plus affected consumers/validators. Any implementation difference or new unresolved concern requires the affected full check again. The coordinator updates this plan, evidence, and final canonical KB admission pass only after delegated work finishes. Milestones 1/2 remain unmet until composed proof passes; Milestones 3/4 retain native Windows closure limits.
+R5 completed after integrated R2/R4/R3. It verified all implementation/test inputs match R3's full-suite revision, independently reviewed the repair diff, exercised seven canonical public cases per installer, and ran Addy, registry, RTK, Codex, and four definition validations. All checks exited 0 at `698d5410`; no further required findings. The coordinator retained [repair-verification.json](repair-verification.json) and [repair-dispatch-audit.json](repair-dispatch-audit.json), then completed the no-change final KB pass after delegated work ended. Milestones 1/2 are accepted locally; Milestones 3/4 retain native Windows closure limits.
 
-The reconciled graph is T1 before T2; their integrated proof before T3; integrated T3 and independent R1 before T4; T3 before T5D; verified T4 native execution and T5D before final T5 closure. Shared installer and fixture files require serialized ownership. Fresh implementer subagents own distinct tasks. The coordinator owns the ExecPlan and final canonical-document admission pass; T2 owned only its named layout guidance repairs.
+The original graph was T1 before T2, their integrated proof before T3, integrated T3 and independent R1 before T4, and T3 before T5D. The completed repair graph is independent R2/R4 before serialized R3, then independent R5 proof. Only T4 native execution and final T5 closure remain unfinished; native T4 acceptance precedes that closure. Shared installer ownership was serialized; the coordinator retained exclusive plan/evidence/KB ownership.
 
 Use the repository root as the working directory for every command. Prefix shell commands with RTK; use `rtk proxy` when exact subprocess behavior matters. Keep disposable profile roots in task-specific variables rather than repurposing `$HOME` in the orchestrating shell. Tests establish the child process home themselves.
 
 ## Validation and Acceptance
 
-The targeted local checks below were executed successfully by T4 on the integrated implementation; actual results are retained in [verification.json](verification.json). None was executed during the earlier planning-only session. Native Windows remains the unfinished proof.
+Current repair proof is [repair-verification.json](repair-verification.json): both source-identical full suites, independent public repair cases, affected consumer checks, four definitions, and five-axis review passed. The original T4 targeted checks below are historical results in [verification.json](verification.json); unchanged relocated graders need no duplicate run for these repairs. Native Windows remains unfinished.
 
 ### Public behavior matrix
 
@@ -258,7 +260,12 @@ Use disposable copied repositories containing default `alpha` and Forest Service
 | Either category missing, including disabled Forest Service | Exit 1, missing-path diagnostic, no writes. |
 | Empty Forest Service directory with `.gitkeep`, enabled or disabled | Valid; no marker or wrapper installed. |
 | Category child directory lacks `SKILL.md` | Exit 1, source-path diagnostic, no writes. |
-| Equal or case-only destination basenames across categories | Exit 1 with both paths, even when Forest Service is disabled; no writes. |
+| Equal, case-only, or canonically equivalent Unicode destination basenames across categories | Exit 1 with both original paths, even when Forest Service is disabled; no writes. |
+| Read-only Markdown and directories, first and repeat install | Exit 0; flat references resolve; copied modes, source bytes, and pruning remain correct. |
+| Shared references with one or repeated leading `./`, including nested Markdown | Equivalent flat target resolves; unrelated slash-prefixed examples remain unchanged. |
+| Actual migrated Addy bundles and create-skill benchmark guidance | All eight source/installed targets and the benchmark source sample resolve. |
+| Optional reference directory absent | Pruning still occurs; unresolved source reference text remains unchanged. |
+| Read-only installed regular file has multiple hardlinks | Exit 1 before unsafe chmod/copy/rebase; external bytes, inode, and mode remain unchanged. |
 | Excluded `archive` or `*-workspace` entries | Not installed; retain existing case-sensitive exclusion semantics. |
 | Opted-in install followed by default-only install | Previously installed Forest Service skill remains. |
 | Successful installs and repeats | Existing pruning, modes, links, settings preservation, and agents/hooks behavior remain correct; status on stderr. |
@@ -314,4 +321,4 @@ Keep Bash portability consistent with the current supported host shell; do not r
 
 ## Artifacts and Notes
 
-Current implementation proof is [verification.json](verification.json), with actual commands/exits/revision/platform limits. [dispatch-audit.json](dispatch-audit.json) reports all six selected/submitted configurations, verified outputs, warning mechanisms, and unconfirmed executed settings without inference. Every implementation branch was private and integrated serially. Native Windows CI references will be added only when obtained. The active plan is retained because that acceptance and the associated owner authorization remain pending.
+Current repair proof is [repair-verification.json](repair-verification.json), with actual revisions, commands/results, all five outcomes, independent review, and platform limits. [repair-dispatch-audit.json](repair-dispatch-audit.json) records four repair dispatches, verified outputs, warning mechanisms, and unconfirmed executed settings. Historical initial implementation proof remains in [verification.json](verification.json) and [dispatch-audit.json](dispatch-audit.json). Every implementation branch stayed private and integrated serially; clean task worktrees/branches were removed. Native Windows evidence will be added only when obtained. This user-requested plan remains active for that unmet acceptance; no push occurred.

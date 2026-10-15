@@ -1,0 +1,106 @@
+{
+  "dispatches": [
+    {
+      "subtask_id": "R2",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "12 minutes",
+        "mechanism": "Coordination-boundary status checks and noninterrupting overrun warning",
+        "warning_sent": false
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "integrated_commit": "a18e778a524ee4198c3a837f59b4d6144156696b"
+    },
+    {
+      "subtask_id": "R4",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "7 minutes",
+        "mechanism": "Coordination-boundary status checks and noninterrupting overrun warning",
+        "warning_sent": false
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "integrated_commit": "e63d49516409ca313003ad78a9a514a317ffaf9a"
+    },
+    {
+      "subtask_id": "R3",
+      "selected": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "15 minutes",
+        "mechanism": "Coordination-boundary status checks and noninterrupting overrun warning",
+        "warning_sent": true
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "integrated_commit": "362dad5468707245545195987f363a9d3694bbbd"
+    },
+    {
+      "subtask_id": "R5",
+      "selected": {
+        "model": "gpt-6-sol",
+        "reasoning_effort": "high"
+      },
+      "submitted": {
+        "model": "gpt-6-sol",
+        "reasoning_effort": "high"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "runtime_limit": {
+        "value": "15 minutes",
+        "mechanism": "Coordination-boundary status checks and noninterrupting overrun warning",
+        "warning_sent": false
+      },
+      "status": "completed",
+      "output_verified": true,
+      "routing_compliant": true,
+      "verified_revision": "698d54104d16e37682d159b1f1b29146be783b2d"
+    }
+  ],
+  "notes": [
+    "Executed model settings were not returned by runtime metadata and remain unconfirmed.",
+    "Routing used provisional catalog rates, not measured account billing.",
+    "All implementation branches were private, reviewed, rebased serially, and integrated locally. Clean task worktrees and branches were removed.",
+    "R5 was read-only and retained evidence without creating an empty commit. No push or CI occurred."
+  ]
+}
