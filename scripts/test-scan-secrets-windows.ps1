@@ -43,12 +43,32 @@ function Invoke-Case {
         'success' { "@echo off`r`n`"$realGit`" %*" }
     }
     [System.IO.File]::WriteAllText((Join-Path $bin 'git.cmd'), $shim)
-    $event = if ($Mode -eq 'block') {
-        if ($Provider -eq 'gemini') { 'BeforeTool' } else { 'PreToolUse' }
+    if ($Provider -eq 'copilot') {
+        $payload = if ($Mode -eq 'block') {
+            @{
+                sessionId = 'capture-windows'
+                timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+                cwd = $repo
+                toolName = 'bash'
+                toolArgs = @{ command = 'git status --short' }
+            }
+        } else {
+            @{
+                sessionId = 'capture-windows'
+                timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+                cwd = $repo
+                reason = 'complete'
+            }
+        }
     } else {
-        if ($Provider -eq 'gemini') { 'SessionEnd' } else { 'Stop' }
+        $event = if ($Mode -eq 'block') {
+            if ($Provider -eq 'gemini') { 'BeforeTool' } else { 'PreToolUse' }
+        } else {
+            if ($Provider -eq 'gemini') { 'SessionEnd' } else { 'Stop' }
+        }
+        $payload = @{ hook_event_name = $event; session_id = 'capture-windows'; cwd = $repo; reason = 'complete' }
     }
-    $payload = @{ hook_event_name = $event; session_id = 'capture-windows'; cwd = $repo; reason = 'complete' } | ConvertTo-Json -Compress
+    $payload = $payload | ConvertTo-Json -Compress
     $inputPath = Join-Path $caseDir 'input.json'
     $outputPath = Join-Path $caseDir 'output.json'
     $errorPath = Join-Path $caseDir 'stderr.txt'
@@ -92,13 +112,40 @@ function Invoke-Case {
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
         if ($Scenario -eq 'success') {
+            $responseType = if ($response -is [System.Collections.IDictionary]) {
+                'object'
+            } elseif ($response -is [array]) {
+                'array'
+            } elseif ($null -eq $response) {
+                'null'
+            } else {
+                'scalar'
+            }
+            $responseCount = if ($response -is [System.Collections.IDictionary] -or $response -is [array]) {
+                $response.Count
+            } else {
+                0
+            }
+            $hasSystemMessage = $response -is [System.Collections.IDictionary] -and $response.Contains('systemMessage')
+            $stdoutBytes = (Get-Item -LiteralPath $outputPath).Length
+            $stderrBytes = (Get-Item -LiteralPath $errorPath).Length
+            $auditState = if ($log -match '"status":"clean"') {
+                'clean'
+            } elseif ($log -match '"status":"incomplete"') {
+                'incomplete'
+            } elseif ($log -match '"status":"findings"') {
+                'findings'
+            } else {
+                'missing-or-other'
+            }
+            $diagnostic = "response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
             $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
                 $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
             } else {
                 $response.Count -eq 0
             }
-            if (-not $cleanResponse) { throw "$Provider $Mode no-HEAD response failed" }
-            if ($log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD audit failed" }
+            if (-not $cleanResponse) { throw "$Provider $Mode no-HEAD response failed ($diagnostic)" }
+            if ($log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD audit failed ($diagnostic)" }
         } else {
             $rendered = $response | ConvertTo-Json -Compress
             if ($rendered -notmatch 'incomplete' -or $log -match '"status":"clean"' -or $log -notmatch '"status":"incomplete"') {
