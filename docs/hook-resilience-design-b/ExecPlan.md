@@ -27,7 +27,7 @@ Success is observable in a disposable repository: reproduce the large merge and 
 - [x] (2026-10-15) [milestone-2] R1: Independent static review and primary repair review complete. CRLF suppression and private-name filter execution reproducers pass after repair; final streaming 22/merge 33/generator 26 plus all-provider capture checks pass. See [review](t3a-review.md). Fixture-tool adaptation is integrated with T3a; standalone CLI/status acceptance remains open.
 - [x] (2026-10-15) [milestone-2] T3b: Integrated `99f1d1c631d5e364be7dd902b4c3c47d1a595078`; source CLI 28/generator 26/streaming 22/merge 33/reporting 14/preflight 25 and all-provider capture checks pass. Combined T9b native cases pass; see [evidence](t3b-evidence.md).
 - [ ] [milestone-2] T3c: Deliver the provider-neutral installed bundle including status and native launchers.
-- [ ] [milestone-2] T4: Deliver bounded saved-status storage and the read-only status CLI.
+- [ ] [milestone-2] T4: Active in isolated `codex/design-b-t4`; deliver bounded saved-status storage and the read-only status CLI.
 - [ ] [milestone-2] I2: Verify CLI, scan-result, cancellation, capture, and status contracts together.
 - [ ] [milestone-3] T5: Deliver staged and outgoing publication collectors through the gate CLI.
 - [ ] [milestone-3] T6: Deliver verified LFS content acquisition and scan-before-upload composition.
