@@ -6,13 +6,13 @@ description: Rules and conventions for skills under `skills/`.
 # Skills Conventions
 
 - Use `SKILL.md` as the entry point for each skill.
-- Store published skill bundles under `skills/<category>/<skill-name>/`; use `skills/default/` for the default category. Keep repository-level `skills/archive/` and root `skills/*-workspace/` directories at their existing locations.
+- Store published skill bundles under `skills/<category>/<skill-name>/`; use `skills/default/` for the default category. Keep repository-level `skills/archive/` separate from published categories.
 - Start `SKILL.md` with YAML frontmatter.
 - Keep `name` lowercase kebab-case.
 - Keep `description` concrete and trigger-oriented.
 - Write skill invocations as “activate the `<skill-name>` skill” or the plural “activate the `<skill-name>` and `<skill-name>` skills”, substituting the actual names. Use these forms in worker instructions too.
 - Do not remove an existing `disable-model-invocation: true` frontmatter key from a skill without explicit human approval.
-- Put generated evaluation output in a sibling `*-workspace/` directory unless the repository already treats it as a checked-in fixture.
+- Put generated evaluation output in a sibling `<skill-name>-workspace/` directory unless the repository already treats it as a checked-in fixture. Published workspaces live under the skill's category, such as `skills/default/<skill-name>-workspace/`; repo-local workspaces live beside their owners under `.agents/skills/`.
 - Treat `skills/archive/` as historical reference; use it as an edit target or current baseline only when the task explicitly calls for it.
 - Validate skill changes with `.agents/instructions/testing/skills.md`.
 
@@ -30,7 +30,7 @@ Manage skill benchmark evals and iterations using this workflow.
 
 For existing-skill comparisons:
 
-- Snapshot the pre-edit skill under `skills/<skill>-workspace/skill-snapshot/`
+- Snapshot the pre-edit skill under `skills/<category>/<skill>-workspace/skill-snapshot/`, or the corresponding repo-local sibling workspace.
 - Benchmark the edited skill in a fresh `iteration-N/` directory
 
 ### Canonical Eval Layout
@@ -49,7 +49,7 @@ Repo-local skill evaluations may use a disposable external workspace with the sa
 If a skill ships `evals/grade_benchmark.py`, use it to grade iteration artifacts:
 
 ```bash
-python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>
+python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>
 ```
 
 Review the authored documents and retained evidence as well as the scores. A fixture-specific text check can mistake valid wording for a failure or miss contradictory current guidance. Correct the rubric with positive and negative public-CLI cases before comparing runs; include missing/malformed artifacts and make each assertion fail when its required inputs are unavailable. Exclude scenario-inapplicable assertions from success totals. Preserve earlier valid failures and identify the selected run per scenario. State intended write boundaries in the scenario prompt. If an assertion adds an unstated restriction, preserve the original output and grade, clarify the prompt, and rerun instead of relabeling the failed assertion as a pass.

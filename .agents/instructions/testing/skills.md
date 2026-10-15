@@ -8,8 +8,8 @@ description: Validation and public grader tests for publishable and repo-local s
 - Run `rtk proxy env PYTHONPATH=scripts/vendor python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/<skill-name>` (use `.agents/skills/<skill-name>` for local workflows) after changing a skill definition, except for the explicitly scoped `dotnet-upgrade` document review below.
 - If packaging behavior changed, run `PYTHONPATH=skills/default/skill-creator python3 skills/default/skill-creator/scripts/package_skill.py skills/default/<skill-name> /tmp/skill-dist`.
 - If a default-category skill ships `evals/grade_benchmark.py` and you edited it, run `python3 -m py_compile skills/default/<skill-name>/evals/grade_benchmark.py`.
-- If benchmark grading behavior changed, run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/<skill-name>-workspace/<iteration-dir>`.
-- Treat `skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
+- If benchmark grading behavior changed, run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>`.
+- Treat `skills/<category>/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/outputs/` as generated artifacts, not maintained source.
 
 ## Document-maintenance graders
 
