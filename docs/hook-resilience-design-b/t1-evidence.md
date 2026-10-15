@@ -1,6 +1,6 @@
 # T1 fixture-patch preflight evidence
 
-Status: owner-approved verification-only implementation complete. All 18 public tests, actual-repository checking, generated freshness and staged whitespace verification pass. Integration/registry/plan reconciliation remain with the primary. This document records source-only evidence on native macOS, Python 3.14.6 and Git 2.54.0. It does not establish installed provider delivery, Windows execution, live-home deployment, or publication protection. The primary agent owns the active ExecPlan and any scope decision.
+Status: owner-approved verification-only implementation complete, including the canonical scanner Git-session cancellation repair. The complete 20-case cleanup suite passed; two later B3 diagnostic cases and existing affected cases passed separately on the final source. Actual-repository checking and generated freshness pass. Exact runs and source identities appear below. Integration/registry/plan reconciliation remain with the primary. This document records source-only evidence on native macOS, Python 3.14.6 and Git 2.54.0. It does not establish installed provider delivery, Windows execution, live-home deployment, or publication protection. The primary agent owns the active ExecPlan and any scope decision.
 
 The implementation is [the public preflight CLI](../../scripts/verify-security-fixture-patch.py). The [public-process acceptance suite](../../scripts/test-verify-security-fixture-patch.py) covers the owner-approved read-only process seam. The owner explicitly removed application and journaling after the concurrency finding; mutation-only product cases were removed with that feature. Check coverage and existing unrelated suites remain intact.
 
@@ -10,7 +10,7 @@ The CLI requires `--patch PATH|-`, explicit repeated `--path`, explicit `--activ
 
 A private owner-only disposable repository reproduces the HEAD tree, staged entries, worktree bytes/modes and relevant untracked files. Raw objects populate its index without source configuration or hooks. Real Git applies and classifies the patch. The three real generated scanners inspect the pending state plus complete changed worktree/index views through native provider envelopes in block mode. Runtime-assembled fake controls must produce the maintained credential finding under both bundles. The tool validates fresh owner-only `scan.log` records, build, mode, scope, coverage and native permissions; process exit zero alone never authorizes the candidate. Generic `audit_init` only creates the generic audit directory; the scanner's required fsynced audit is `scan.log`.
 
-Unsafe relative paths, linked targets/parents, special/binary targets, rename/binary patches, unresolved indexes and observed state drift reject before target mutation. Ambient scan-skip, warning and allowlist settings are removed. Child waits, patch input and retained output are bounded; subprocess groups are terminated on completion/cancellation. Windows checking currently refuses before starting subprocesses because descendant cleanup has not been verified there.
+Unsafe relative paths, linked targets/parents, special/binary targets, rename/binary patches, unresolved indexes and observed state drift reject before target mutation. Ambient scan-skip, warning and allowlist settings are removed. Child waits, patch input and retained output are bounded. POSIX cleanup first gives the scanner SIGINT so its protected Git capture can clean its separate session, then uses bounded observed-descendant cleanup when needed. Numeric process observation is a prerequisite; its failure makes verification incomplete. Windows checking currently refuses before starting subprocesses because descendant cleanup has not been verified there.
 
 ## Red/green observations before the concurrency finding
 
@@ -106,7 +106,7 @@ Measured per-file process overhead justified batching. The current implementatio
 
 The public tracked-attribute fixture stores a raw CRLF HEAD/index blob alongside tracked text attributes. The reviewed active adapter observes the actual pending repository's HEAD bytes, and the test checks exact CRLF preservation and unchanged live/index fingerprints. The focused case passed in 4.115 seconds. Source configuration and tracked attributes never normalize the captured baseline during raw object/index construction.
 
-Final suite: `rtk proxy python3 scripts/test-verify-security-fixture-patch.py` passed all 18 cases in 52.130 seconds. Generated freshness: `rtk proxy python3 scripts/generate-hooks.py --check` reported `Generated hooks are current (38 files).` Staged whitespace: `rtk git diff --cached --check` passed.
+Initial delivery suite: `rtk proxy python3 scripts/test-verify-security-fixture-patch.py` passed all 18 cases in 52.130 seconds. Generated freshness: `rtk proxy python3 scripts/generate-hooks.py --check` reported `Generated hooks are current (38 files).` Staged whitespace: `rtk git diff --cached --check` passed.
 
 The same harmless actual-worktree check then passed in 7.846 seconds, exit 0, six real credential controls, no stderr, and unchanged target/index fingerprints. Its public invocation was:
 
@@ -116,7 +116,37 @@ rtk proxy python3 -I -S -B scripts/verify-security-fixture-patch.py --patch /pri
 
 This establishes practical source verification at the observed footprint; it is not a general latency benchmark or native provider-delivery claim. Both outcome records were retained separately in private temporary artifacts during execution and their decisive measurements are captured here.
 
-Final tested source SHA-256:
+Initial delivery source SHA-256 (private commit `73f48e5cc0e74df87a5285cfa813365f17787d72`):
 
 - `scripts/verify-security-fixture-patch.py`: `0640d17d3a2dd285fd16970ce0d3959a906bb669a6b008724501a4986fddcdde`
 - `scripts/test-verify-security-fixture-patch.py`: `d1ee439940d539ec1422cfac479c7e5eb96488389bec34a7bf974acbb0363106`
+
+
+## Canonical protected-capture cancellation repair
+
+Primary review identified a process class absent from the initial inherited-group cancellation fixture: the maintained scanner's `capture_git` launches Git with `start_new_session=True`. Immediately killing only the scanner's group can prevent its `finally` cleanup and leave that Git session alive.
+
+The retained public test `test_cancellation_cleans_real_scanner_capture_git_session` copies the real generated scanner and leaves its protected-capture implementation intact. At module entry it selects a harmless temporary Git executable that records numeric PID, parent, group and session metadata before sleeping. The observed Git PID equals its group and session IDs, and differs from the parent scanner's group. Two subcases use a responsive scanner and a scanner that ignores SIGINT. Each cancels the actual public verifier while that canonical capture is waiting, requires exit 130 and stable JSON without traceback, requires bounded completion, and checks that the recorded Git child is gone or a zombie before fixture cleanup. The fixture's final cleanup cannot turn a surviving child into a pass.
+
+Red against the exact initial delivery source `0640d17d3a2dd285fd16970ce0d3959a906bb669a6b008724501a4986fddcdde`: both subcases failed in 1.706 seconds, with surviving Git process status `Ss`. Unlike the earlier unsafe application snapshot, this source identity is retained exactly in commit `73f48e5cc0e74df87a5285cfa813365f17787d72`.
+
+The repair records cancellation intent without interrupting child PID ownership assignment. It observes bounded PID/parent/group/start-time/state metadata through absolute `/bin/ps`, retains observed ancestry through reparenting, and matches recorded identities before signaling. Cleanup gives the scanner SIGINT first so canonical `capture_git` can run its own cleanup. A bounded grace period is followed by forced signaling and fresh observation of the recorded descendants and their groups. A redundant group-signal race initially surfaced as `PermissionError`; fresh observed liveness now decides whether cleanup succeeded. Root reaping and observation termination have reserved headroom within the two-second cleanup allowance. No command arguments, source paths, child stderr, or fixture bytes enter process metadata diagnostics.
+
+Process observation is limited to 1 MiB and 0.25 seconds per snapshot; cleanup retains at most 256 observed processes. Failure to access numeric process metadata refuses before Git/scanner launch. The public observer-failure case proved no Git launch and unchanged live fingerprints. Windows continues to refuse before launch. This is evidence for the maintained scanner's separate Git-session behavior, including a scanner unresponsive to SIGINT; it does not establish containment of arbitrary malicious daemonization or unobservable processes. Observation/cleanup failure remains incomplete.
+
+Focused green: both cancellation methods passed in 6.178 seconds; the canonical session test alone passed in 4.609 seconds. The complete command `rtk proxy python3 scripts/test-verify-security-fixture-patch.py` then passed all 20 cases in 86.576 seconds, with scoped process-inspection permission. That full-run snapshot had source SHA-256 `3f39cbb6e02887b92c5b9edf19bf2e90c06154c27c45b038383e76db7a8dc3ee` and suite SHA-256 `8706e444927a5f9dcecf4e2d86365fdbe705e18bc71c6c51c157cf2cb11728b7`.
+
+## Final B3 diagnostics and frozen workload proof
+
+Two additional public cases reproduced missing safe resource measurements and a misleading generic Git-availability repair action. The resource case initially failed all three subcases: a 1,048,577-byte patch against a 1,048,576-byte limit, 65 targets against a 64-path limit, and controlled child stderr exceeding its 1,048,576-byte limit. The missing-Git case reproduced the generic action. The final implementation returns safe measured/limit/unit values where known, static reason-specific repair text for Git/process/platform/resource failures, and no raw stderr, paths or argument echoes. Runtime fake credential bytes in oversized input/output remain redacted. These changes retain all existing resource bounds.
+
+Focused final-source results: resource measurements passed in 0.301 seconds, missing Git in 0.126 seconds, observer prerequisite in 0.113 seconds, and existing help/version in 0.471 seconds. The suite now contains 22 cases. The complete 20-case algorithm suite above and these focused final-source cases are the evidence; no aggregate 22-case pass is claimed. No broad rerun was performed solely for diagnostic wording.
+
+The final frozen actual-repository invocation used the same harmless docstring patch and public command recorded above. It completed in 10.360 seconds, exit 0, with six real credential controls and empty stderr. Target bytes/mode and raw index SHA-256 remained unchanged. Source mode was 0755; raw index SHA-256 was `039854f2948b21238ccbcab5b1fbb192d9300ccdefa1ab1c531e0e8e13acad1b`. Its separate private result artifact was `/private/tmp/design-b-t1-realistic-cleanup-repair-result.json`; prior failed and successful workload artifacts were preserved. Generated freshness again reported `Generated hooks are current (38 files).`
+
+Final repair source identities:
+
+- `scripts/verify-security-fixture-patch.py`: `07da7b8a321104f4e2b525bade6e62a21fb5f577074915a798aa418517abbc06`
+- `scripts/test-verify-security-fixture-patch.py`: `06a48f6da41c86948e1b68ee0665f8e8644a47128afb9a3ffa830057381b53e5`
+
+The repair remains private, source-only and verification-only. Initial delivery history is preserved; shared files, generated scanner sources and installed hooks remain outside this task's changes.

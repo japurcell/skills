@@ -28,6 +28,10 @@ MAX_PATHS = 4096
 MAX_TARGETS = 64
 TIMEOUT = 12
 DEADLINE = None
+CANCEL_REQUESTS = 0
+PROCESS_BYTES = 1024 * 1024
+PROCESS_SECONDS = 0.25
+CLEANUP_SECONDS = 2.0
 
 
 class Failure(Exception):
@@ -79,11 +83,16 @@ def regular(root, name, missing=False):
     return path
 
 
-def read_file(path, bound=LIMIT):
+def read_file(path, bound=LIMIT, *, phase="capture"):
+    check_cancelled()
     # Filesystem snapshots use no-follow descriptors and compare opened identity.
     info = path.lstat()
-    if unsafe(info) or not stat.S_ISREG(info.st_mode) or info.st_size > bound:
-        raise Failure("unsafe_or_oversized_file", 3, "capture")
+    if unsafe(info) or not stat.S_ISREG(info.st_mode):
+        raise Failure("unsafe_file", 3, phase)
+    if info.st_size > bound:
+        raise Failure("patch_limit" if phase == "input" else "capture_limit",
+                      3 if phase == "input" else 2, phase,
+                      limit=bound, measured=info.st_size, unit="bytes")
     fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     with os.fdopen(fd, "rb") as stream:
         opened = os.fstat(stream.fileno())
@@ -92,11 +101,149 @@ def read_file(path, bound=LIMIT):
         data = stream.read(bound + 1)
         after = os.fstat(stream.fileno())
     if len(data) > bound:
-        raise Failure("capture_limit", 2, "capture")
+        raise Failure("patch_limit" if phase == "input" else "capture_limit",
+                      3 if phase == "input" else 2, phase,
+                      limit=bound, measured=max(len(data), after.st_size), unit="bytes")
     identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns, s.st_mode)
     if identity(opened) != identity(after):
         raise Failure("state_drift", 2, "capture")
     return data, stat.S_IMODE(opened.st_mode), identity(opened)
+
+
+
+def check_cancelled():
+    if CANCEL_REQUESTS:
+        raise KeyboardInterrupt
+
+
+def process_snapshot():
+    """Read bounded PID/parent/group/start/state metadata, never command text."""
+    with tempfile.TemporaryFile() as output:
+        started = time.monotonic()
+        try:
+            observer = subprocess.Popen(["/bin/ps", "-axo", "pid=,ppid=,pgid=,lstart=,stat="],
+                stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.DEVNULL,
+                env={"LC_ALL": "C", "PATH": os.defpath}, start_new_session=True)
+        except OSError:
+            raise Failure("process_observation_unavailable", 2, "cleanup") from None
+        try:
+            try:
+                observer.wait(timeout=PROCESS_SECONDS)
+            except subprocess.TimeoutExpired:
+                raise Failure("process_observation_timeout", 2, "cleanup", limit=PROCESS_SECONDS, measured=round(time.monotonic() - started, 3), unit="seconds") from None
+            if observer.returncode:
+                raise Failure("process_observation_unavailable", 2, "cleanup")
+            measured = os.fstat(output.fileno()).st_size
+            if measured > PROCESS_BYTES:
+                raise Failure("process_observation_limit", 2, "cleanup", limit=PROCESS_BYTES, measured=measured, unit="bytes")
+            output.seek(0)
+            raw = output.read(PROCESS_BYTES + 1)
+            result = {}
+            for line in raw.splitlines():
+                fields = line.split()
+                if len(fields) != 9 or not all(value.isdigit() for value in fields[:3]):
+                    raise Failure("process_observation_invalid", 2, "cleanup")
+                pid, parent, group = map(int, fields[:3])
+                result[pid] = (parent, group, tuple(fields[3:8]), fields[8])
+            return result
+        finally:
+            if observer.poll() is None:
+                with contextlib.suppress(ProcessLookupError, PermissionError):
+                    os.killpg(observer.pid, signal.SIGKILL)
+            with contextlib.suppress(subprocess.TimeoutExpired):
+                observer.wait(timeout=PROCESS_SECONDS)
+
+
+def remember_descendants(process, known, snapshot):
+    # Retain observed ancestors after reparenting so a separate Git session and
+    # any children it creates remain discoverable after the scanner exits.
+    roots = {pid for pid, previous in known.items()
+             if pid in snapshot and snapshot[pid][1:3] == previous[1:3]}
+    if process.returncode is None and process.pid in snapshot:
+        known.setdefault(process.pid, snapshot[process.pid])
+        roots.add(process.pid)
+    while roots:
+        children = {pid for pid, record in snapshot.items() if record[0] in roots and pid not in known}
+        for pid in children:
+            known[pid] = snapshot[pid]
+        roots = children
+    if len(known) > 256:
+        raise Failure("descendant_limit", 2, "cleanup", limit=256, measured=len(known), unit="processes")
+
+
+def living_descendants(known, snapshot):
+    return {pid: current for pid, previous in known.items()
+            if (current := snapshot.get(pid)) is not None
+            and current[1:3] == previous[1:3] and not current[3].startswith(b"Z")}
+
+
+def signal_observed(living, signum):
+    for pid, record in living.items():
+        try:
+            if record[1] == pid:
+                os.killpg(pid, signum)
+            else:
+                os.kill(pid, signum)
+        except (ProcessLookupError, PermissionError):
+            # A group can disappear between the bounded snapshot and signal.
+            # Fresh observation below decides whether cleanup actually finished.
+            pass
+
+
+def stop_process(process, known):
+    # Reserve observer termination and leader reaping inside the same 2s allowance.
+    deadline = time.monotonic() + CLEANUP_SECONDS - 2 * PROCESS_SECONDS
+    try:
+        snapshot = process_snapshot()
+        remember_descendants(process, known, snapshot)
+        # SIGINT lets canonical capture_git catch BaseException and stop its own
+        # independently created Git session before the scanner itself exits.
+        if process.returncode is None:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.killpg(process.pid, signal.SIGINT)
+        graceful = min(deadline, time.monotonic() + 0.6)
+        while True:
+            process.poll()
+            snapshot = process_snapshot()
+            remember_descendants(process, known, snapshot)
+            living = living_descendants(known, snapshot)
+            if process.returncode is not None and not living:
+                return
+            if time.monotonic() >= graceful:
+                break
+            time.sleep(0.01)
+        # A scanner ignoring interruption must not strand capture_git's separate
+        # process group. Verify remembered identities, kill all observed groups,
+        # and rescan retained ancestors within the same finite cleanup window.
+        while time.monotonic() < deadline:
+            signal_observed(living, signal.SIGKILL)
+            process.poll()
+            if process.returncode is None and process.pid not in living:
+                with contextlib.suppress(ProcessLookupError, PermissionError):
+                    os.killpg(process.pid, signal.SIGKILL)
+            process.poll()
+            snapshot = process_snapshot()
+            remember_descendants(process, known, snapshot)
+            living = living_descendants(known, snapshot)
+            if process.returncode is not None and not living:
+                return
+            time.sleep(0.01)
+        raise Failure("process_cleanup_incomplete", 2, "cleanup", limit=CLEANUP_SECONDS, unit="seconds")
+    finally:
+        if process.poll() is None:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.killpg(process.pid, signal.SIGKILL)
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            process.wait(timeout=PROCESS_SECONDS)
+
+
+
+def enforce_output_bounds(out, err):
+    for stream, name, limit in ((out, "stdout", LIMIT), (err, "stderr", PATCH_LIMIT)):
+        measured = os.fstat(stream.fileno()).st_size
+        if measured > limit:
+            raise Failure("subprocess_output_limit", 2, "subprocess",
+                          limit=limit, measured=measured, unit="bytes", stream=name)
 
 
 def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
@@ -105,19 +252,25 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
     if DEADLINE is not None:
         timeout = min(timeout, DEADLINE - time.monotonic())
         if timeout <= 0:
-            raise Failure("operation_time_limit", 2, "subprocess", limit=180, unit="seconds")
+            raise Failure("operation_time_limit", 2, "subprocess", limit=180, measured=round(time.monotonic() - DEADLINE + 180, 3), unit="seconds")
+    check_cancelled()
     # Spools bound retained output and avoid pipe EOF being held by descendants.
     with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
         process = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE,
                                    stdout=out, stderr=err, start_new_session=os.name != "nt")
+        known = {}
+        observed_at = time.monotonic()
         try:
             started = time.monotonic()
             request = data or b""
             while True:
+                check_cancelled()
+                if time.monotonic() - observed_at >= 0.05:
+                    remember_descendants(process, known, process_snapshot())
+                    observed_at = time.monotonic()
                 if time.monotonic() - started > timeout:
-                    raise Failure("subprocess_timeout", 2, "subprocess", limit=timeout, unit="seconds")
-                if os.fstat(out.fileno()).st_size > LIMIT or os.fstat(err.fileno()).st_size > PATCH_LIMIT:
-                    raise Failure("subprocess_output_limit", 2, "subprocess")
+                    raise Failure("subprocess_timeout", 2, "subprocess", limit=timeout, measured=round(time.monotonic() - started, 3), unit="seconds")
+                enforce_output_bounds(out, err)
                 try:
                     process.communicate(input=request, timeout=min(0.02, timeout))
                     break
@@ -125,16 +278,12 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
                     request = None
             out.seek(0)
             output = out.read(LIMIT + 1)
-            if len(output) > LIMIT or os.fstat(err.fileno()).st_size > PATCH_LIMIT:
-                raise Failure("subprocess_output_limit", 2, "subprocess")
+            enforce_output_bounds(out, err)
             if check and process.returncode:
                 raise Failure("git_or_hook_failed", 2, "subprocess")
             return process.returncode, output
         finally:
-            if os.name != "nt":
-                with contextlib.suppress(ProcessLookupError):
-                    os.killpg(process.pid, signal.SIGKILL)
-            process.wait(timeout=2)
+            stop_process(process, known)
 
 
 def environment(home, git):
@@ -177,8 +326,9 @@ def read_patch_stdin():
     deadline = time.monotonic() + 2
     result = bytearray()
     while True:
+        check_cancelled()
         if time.monotonic() >= deadline:
-            raise Failure("stdin_timeout", 2, "input", limit=2, unit="seconds")
+            raise Failure("stdin_timeout", 2, "input", limit=2, measured=round(time.monotonic() - deadline + 2, 3), unit="seconds")
         if os.name == "nt" and not stat.S_ISREG(os.fstat(fd).st_mode):
             import ctypes
             import msvcrt
@@ -261,13 +411,14 @@ def capture(git, repo):
     untracked = {relative(p.decode()) for p in git(repo, "ls-files", "--others", "--exclude-standard", "-z").split(b"\0") if p}
     names = set(tree) | set(selected) | untracked
     if len(names) > MAX_PATHS:
-        raise Failure("path_limit", 2, "capture")
+        raise Failure("path_limit", 2, "capture", limit=MAX_PATHS, measured=len(names), unit="paths")
     work = {}
     for name in sorted(names):
         path = regular(repo, name, missing=True)
         work[name] = read_file(path) if path else None
-    if sum(len(v[0]) for v in work.values() if v) > LIMIT:
-        raise Failure("capture_limit", 2, "capture")
+    captured_bytes = sum(len(v[0]) for v in work.values() if v)
+    if captured_bytes > LIMIT:
+        raise Failure("capture_limit", 2, "capture", limit=LIMIT, measured=captured_bytes, unit="bytes")
     # Source Git status may execute configured clean filters. Raw index,
     # object IDs and captured working bytes already supply the required state.
     return {"head": head, "tree": tree, "selected": selected, "work": work, "index": index, "object_format": object_format}
@@ -296,7 +447,7 @@ def acquire_objects(git, live, state):
             raise Failure("invalid_object_capture", 2, "capture")
         size = int(parts[2])
         if size + len(oid) + 64 > LIMIT:
-            raise Failure("object_capture_limit", 2, "capture", limit=LIMIT - 128, measured=size, unit="bytes")
+            raise Failure("object_capture_limit", 2, "capture", limit=LIMIT - len(oid) - 64, measured=size, unit="bytes")
         total += size
         if total > 2 * LIMIT:
             raise Failure("object_capture_limit", 2, "capture", limit=2 * LIMIT, measured=total, unit="bytes")
@@ -443,7 +594,7 @@ def scan(git, bundle_root, identities, repo, logs, expected="clean"):
                         cwd=repo, env=env, data=json.dumps(payload).encode())
         try:
             if len(raw) > 16384:
-                raise Failure("invalid_scanner_result", 2, "scan")
+                raise Failure("scanner_output_limit", 2, "scan", limit=16384, measured=len(raw), unit="bytes")
             response = strict_json(raw)
             records = [strict_json(row) for row in read_file(log / "scan.log", PATCH_LIMIT)[0].splitlines()]
             record = records[-1]
@@ -496,6 +647,7 @@ def parser():
                     "Active root contains .codex/hooks, .copilot/hooks/scripts and .gemini/hooks/scripts. "
                     "Verification leaves live targets and the index unchanged. No environment configuration is accepted. "
                     "Bounds: patch 1 MiB; state 64 MiB/4096 paths; 64 targets; each child 12 seconds; total 180 seconds; stdin 2 seconds. "
+                    "POSIX checking requires /bin/ps access to numeric process metadata (1 MiB, 0.25 seconds per observation); cleanup is bounded at 2 seconds and 256 observed processes. "
                     "Windows checking refuses before subprocess launch until bounded descendant cleanup is available. "
                     "Exit: 0 verified, 1 findings, 2 incomplete, 3 invalid invocation, 130 canceled.")
     result.add_argument("--version", action="version", version="%(prog)s " + VERSION + " schema=" + SCHEMA)
@@ -514,8 +666,12 @@ def execute(args):
     global DEADLINE
     DEADLINE = time.monotonic() + 180
     targets = [relative(p) for p in args.path]
-    if len(set(targets)) != len(targets) or len(targets) > MAX_TARGETS:
+    if len(targets) > MAX_TARGETS:
+        raise Failure("target_limit", 3, "arguments", limit=MAX_TARGETS, measured=len(targets), unit="paths")
+    if len(set(targets)) != len(targets):
         raise Failure("invalid_targets", 3, "arguments")
+    process_snapshot()  # Refuse before launching Git/scanners if observation is unavailable.
+    check_cancelled()
     git_path = shutil.which("git", path=os.defpath + os.pathsep + "/opt/homebrew/bin")
     if git_path is None:
         raise Failure("git_unavailable", 2, "capture")
@@ -531,9 +687,9 @@ def execute(args):
                 raise Failure("patch_stdin_required", 3, "input")
             patch = read_patch_stdin()
         else:
-            patch = read_file(Path(args.patch).absolute(), PATCH_LIMIT)[0]
+            patch = read_file(Path(args.patch).absolute(), PATCH_LIMIT, phase="input")[0]
         if len(patch) > PATCH_LIMIT:
-            raise Failure("patch_limit", 3, "input")
+            raise Failure("patch_limit", 3, "input", limit=PATCH_LIMIT, measured=len(patch), unit="bytes")
         if any(marker in patch for marker in (b"GIT binary patch", b"Binary files ", b"rename from ", b"rename to ", b"copy from ", b"new file mode ", b"deleted file mode ", b"old mode ", b"new mode ")):
             raise Failure("unsupported_patch", 3, "input")
         state = capture(git, live)
@@ -585,6 +741,47 @@ def execute(args):
                 "reason": "complete_clean", "phase": "complete", "targets": len(targets), "builds": builds, "controls_detected": 6}
 
 
+
+def failure_action(reason):
+    if reason == "git_unavailable":
+        return "Install Git or restore it in the supported system search path, then rerun --check."
+    if reason == "bounded_descendant_cleanup_unavailable":
+        return "Run verification on a supported POSIX host with process-observation access."
+    if reason.startswith("process_observation_"):
+        return "Restore /bin/ps access to bounded numeric process metadata, then rerun --check."
+    if reason == "process_cleanup_incomplete":
+        return "Stop remaining verifier-owned children and restore process-observation access before retrying --check."
+    if reason == "descendant_limit":
+        return "Investigate excessive children in the reviewed scanner or Git process before retrying --check."
+    if reason in {"path_limit", "target_limit", "capture_limit", "object_capture_limit", "patch_limit"}:
+        return "Reduce the fixture/state workload within the documented path and byte bounds, then rerun --check."
+    if reason in {"operation_time_limit", "subprocess_timeout"}:
+        return "Investigate stalled Git/scanner processes or reduce the workload within the documented time bound, then retry --check."
+    if reason in {"subprocess_output_limit", "scanner_output_limit"}:
+        return "Review excessive output from Git or the selected scanner bundle before retrying --check."
+    if reason.startswith("stdin_") or reason == "patch_stdin_required":
+        return "Provide a complete EOF-terminated patch on stdin, or use --patch PATH, then rerun --check."
+    if reason == "invalid_arguments":
+        return "Run --help and supply the documented explicit --check arguments."
+    if reason in {"not_repository", "run_from_repository_root"}:
+        return "Run from the Git repository root containing the named fixtures, then retry --check."
+    if reason == "state_drift":
+        return "Wait for concurrent edits to finish, regenerate the patch against current files, and rerun --check."
+    if reason in {"unsupported_index", "unsupported_index_flags"}:
+        return "Resolve index conflicts and unsupported index flags, then retry --check."
+    if reason in {"head_capture_failed", "invalid_head", "invalid_object_capture", "unsupported_head"}:
+        return "Repair Git HEAD or object storage while preserving pending fixture content, then retry --check."
+    if reason in {"invalid_targets", "patch_target_mismatch", "unsupported_patch"}:
+        return "Regenerate a text-only patch against current files and name each regular fixture target exactly once."
+    if reason in {"unsafe_path", "unsafe_file", "unsafe_directory", "missing_file", "target_requires_regular_text"}:
+        return "Select existing regular UTF-8 fixtures using safe repository-relative paths, then retry --check."
+    if reason == "findings":
+        return "Repair the fixture representation while preserving its intended runtime controls, then rerun --check."
+    if reason == "git_or_hook_failed":
+        return "Check Git and the reviewed scanner dependencies before retrying --check."
+    return "Select complete reviewed scanner bundles with working audit storage and readable fixture files, then retry --check."
+
+
 def main():
     command = parser()
     if len(sys.argv) == 1 or sys.argv[1:] in (["help"], ["help", "check"]):
@@ -595,14 +792,17 @@ def main():
     try:
         args = command.parse_args()
         def interrupted(signum, frame):
-            raise KeyboardInterrupt
-        signal.signal(signal.SIGTERM, interrupted)
+            global CANCEL_REQUESTS
+            CANCEL_REQUESTS += 1
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            signal.signal(signum, interrupted)
         report = execute(args)
+        check_cancelled()
     except Failure as failure:
         code = failure.code
         report = {"schema": SCHEMA, "version": VERSION, "result": "rejected", "reason": failure.reason,
                   "phase": failure.phase, **failure.measurements,
-                  "action": "Repair the reported state or fixture, then rerun --check."}
+                  "action": failure_action(failure.reason)}
     except KeyboardInterrupt:
         code = 130
         report = {"schema": SCHEMA, "version": VERSION, "result": "canceled", "reason": "interrupted", "phase": "cancellation"}
@@ -613,7 +813,7 @@ def main():
         if "--json" in sys.argv:
             print(json.dumps(report, sort_keys=True), flush=True)
         elif code:
-            print("Fixture preflight rejected: " + report["reason"] + ". Repair the fixture or state and rerun --check.", file=sys.stderr)
+            print("Fixture preflight rejected: " + report["reason"] + ". " + report.get("action", "Retry --check when ready."), file=sys.stderr)
         elif not args.quiet:
             print("Fixture patch " + report["result"] + ".")
     except BrokenPipeError:

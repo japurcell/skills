@@ -423,5 +423,139 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(marker.read_bytes(), raw)
         self.assertEqual(self.fingerprint(), before)
 
+    @unittest.skipIf(os.name == "nt", "POSIX canonical Git-session cancellation")
+    def test_cancellation_cleans_real_scanner_capture_git_session(self):
+        before = self.fingerprint()
+        patch = self.patch("value = 'repaired'\n")
+        for responsive in (True, False):
+            with self.subTest(responsive=responsive):
+                label = "responsive-capture" if responsive else "unresponsive-capture"
+                active = self.active_copy(label)
+                marker = self.base / (label + "-git.json")
+                binaries = self.base / (label + "-bin")
+                binaries.mkdir()
+                fake_git = binaries / "git"
+                fake_git.write_text("#!" + sys.executable + "\nimport json,os,time\nfrom pathlib import Path\n"
+                    "Path(" + repr(str(marker)) + ").write_text(json.dumps({'pid':os.getpid(), 'parent':os.getppid(), 'group':os.getpgrp(), 'session':os.getsid(0)}))\n"
+                    "time.sleep(60)\n")
+                fake_git.chmod(0o755)
+                scanner = active / ".codex/hooks/scan-secrets.py"
+                injection = "os.environ['PATH'] = " + repr(str(binaries)) + " + os.pathsep + os.environ['PATH']\n"
+                if not responsive:
+                    injection += "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
+                scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+                child = None
+                try:
+                    with subprocess.Popen([sys.executable, str(CLI), "--patch", str(patch), "--path", "fixture.py",
+                            "--active-hook-root", str(active), "--check", "--json"], cwd=self.repo, env=self.env,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                        deadline = time.monotonic() + 6
+                        while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+                            time.sleep(0.02)
+                        self.assertTrue(marker.exists(), "the real scanner did not enter protected Git capture")
+                        details = json.loads(marker.read_text())
+                        child = details["pid"]
+                        self.assertEqual(details["group"], child)
+                        self.assertEqual(details["session"], child)
+                        self.assertNotEqual(details["parent"], child)
+                        self.assertNotEqual(os.getpgid(details["parent"]), child)
+                        started = time.monotonic()
+                        process.send_signal(signal.SIGINT)
+                        stdout, stderr = process.communicate(timeout=5)
+                        self.assertEqual(process.returncode, 130, stdout + stderr)
+                        self.assertLess(time.monotonic() - started, 3)
+                        self.assertEqual(json.loads(stdout)["reason"], "interrupted")
+                        self.assertNotIn(b"Traceback", stderr)
+                    result = subprocess.run(["ps", "-o", "stat=", "-p", str(child)], capture_output=True, timeout=2)
+                    self.assertTrue(not result.stdout.strip() or result.stdout.lstrip().startswith(b"Z"),
+                                    "canonical capture Git survived preflight cancellation: " + repr(result.stdout))
+                    self.assertEqual(self.fingerprint(), before)
+                finally:
+                    # Assertion occurs before this cleanup, so fixture cleanup
+                    # cannot turn a surviving canonical Git child into a pass.
+                    if child is not None:
+                        try:
+                            os.kill(child, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+
+    def test_unavailable_process_observation_stops_before_git_or_scanners(self):
+        before = self.fingerprint()
+        marker = self.base / "unexpected-git-start"
+        wrapper = self.base / "observer-failure.py"
+        wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
+            "real = subprocess.Popen\n"
+            "def launched(command,*args,**kwargs):\n"
+            " if command[0] == '/bin/ps':\n"
+            "  command = [sys.executable, '-I', '-S', '-B', '-c', 'raise SystemExit(1)']\n"
+            " elif Path(command[0]).name == 'git':\n"
+            "  Path(" + repr(str(marker)) + ").touch()\n"
+            " return real(command,*args,**kwargs)\n"
+            "subprocess.Popen = launched\n"
+            "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
+            "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n")
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper),
+            "--patch", str(self.patch("value = 'repaired'\n")), "--path", "fixture.py",
+            "--active-hook-root", str(ROOT), "--check", "--json"],
+            cwd=self.repo, env=self.env, capture_output=True, timeout=3)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "process_observation_unavailable")
+        self.assertFalse(marker.exists())
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_resource_failures_report_safe_measurements(self):
+        before = self.fingerprint()
+        patch = self.patch("value = 'repaired'\n")
+        oversized = self.base / "oversized.patch"
+        oversized.write_bytes(TOKEN.encode() + b"x" * (1048577 - len(TOKEN)))
+        cases = [
+            (self.run_cli(oversized, "--check"), 3, 1048576, 1048577, "bytes"),
+            (self.run_cli(patch, "--check", *[item for number in range(64)
+                for item in ("--path", "target" + str(number) + ".py")]), 3, 64, 65, "paths"),
+        ]
+        wrapper = self.base / "stderr-limit.py"
+        wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
+            "real = subprocess.Popen\n"
+            "def launched(command,*args,**kwargs):\n"
+            " if Path(command[0]).name == 'git':\n"
+            "  command = [sys.executable, '-I', '-S', '-B', '-c', \"import sys; token='gh'+'p_'+'FAKE'*9; sys.stderr.buffer.write(token.encode()+b'x'*(1048577-len(token)))\"]\n"
+            " return real(command,*args,**kwargs)\n"
+            "subprocess.Popen = launched\n"
+            "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
+            "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n")
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "--patch", str(patch),
+            "--path", "fixture.py", "--active-hook-root", str(ROOT), "--check", "--json"],
+            cwd=self.repo, env=self.env, capture_output=True, timeout=4)
+        cases.append((result, 2, 1048576, 1048577, "bytes"))
+        for result, code, limit, measured, unit in cases:
+            with self.subTest(limit=limit, unit=unit):
+                self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report.get("limit"), limit, report)
+                self.assertEqual(report.get("measured"), measured, report)
+                self.assertEqual(report.get("unit"), unit, report)
+                self.assertTrue(report.get("action"))
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+
+    def test_missing_git_has_actionable_repair(self):
+        before = self.fingerprint()
+        patch = self.patch("value = 'repaired'\n")
+        wrapper = self.base / "missing-git.py"
+        wrapper.write_text("import shutil,runpy,sys\n"
+            "real = shutil.which\n"
+            "shutil.which = lambda name,*args,**kwargs: None if name == 'git' else real(name,*args,**kwargs)\n"
+            "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
+            "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n")
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "--patch", str(patch),
+            "--path", "fixture.py", "--active-hook-root", str(ROOT), "--check", "--json"],
+            cwd=self.repo, env=self.env, capture_output=True, timeout=3)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["reason"], "git_unavailable")
+        self.assertIn("Git", report["action"])
+        self.assertIn("install", report["action"].lower())
+        self.assertEqual(self.fingerprint(), before)
+
 if __name__ == "__main__":
     unittest.main()
