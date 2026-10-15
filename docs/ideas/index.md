@@ -2,6 +2,7 @@
 
 ## Active ideas
 
+- [Source Inject Manifest Issue](source-inject-manifest-issue.md)
 - [Conditional Skill Installer](1-conditional-skill-installer.md)
 - [Agency Priorities Skill](2-agency-priorities-skill.md)
 - [Pre-Commit Hook](3-pre-commit-hook.md)
