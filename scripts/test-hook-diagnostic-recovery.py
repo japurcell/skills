@@ -187,6 +187,66 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout), result
 
+    def assert_native_enforcement(self, response, provider, expected):
+        if provider == "gemini":
+            decision = response.get("decision", "allow")
+        elif provider == "copilot":
+            decision = response.get("permissionDecision", "allow")
+        else:
+            decision = response.get("hookSpecificOutput", {}).get("permissionDecision", "allow")
+        self.assertEqual(decision, expected, response)
+        if expected == "allow":
+            self.assertIsNot(response.get("continue"), False, response)
+            self.assertNotIn(response.get("decision"), ("deny", "block"), response)
+            self.assertNotIn(response.get("permissionDecision"), ("deny", "ask"), response)
+            self.assertNotIn(response.get("hookSpecificOutput", {}).get("permissionDecision"), ("deny", "ask"), response)
+
+    def test_launch_honors_scan_mode(self):
+        for provider in PROVIDERS:
+            for mode, inherited, enforcement in (("block", "warn", "deny"), ("warn", "block", "allow")):
+                with self.subTest(provider=provider, mode=mode), tempfile.TemporaryDirectory() as directory:
+                    script, cwd, env = self.setup_fixture(directory, provider)
+                    env.update(SCAN_MODE=inherited, GUARD_MODE=inherited)
+                    (cwd / "credential.txt").write_text("ghp_" + "FAKE" * 9)
+                    audit = Path(env["SECRETS_LOG_DIR"]) / "scan.log"
+                    self.assertFalse(audit.exists())
+                    response, _ = self.launch(script, cwd, env, envelope(provider, "echo safe"), mode)
+                    self.assert_native_enforcement(response, provider, enforcement)
+                    self.assertIn("potential secrets detected", reason(response) + response.get("systemMessage", ""))
+                    rows = [json.loads(line) for line in audit.read_text().splitlines()]
+                    self.assertEqual(len(rows), 1, rows)
+                    self.assertEqual(rows[0]["mode"], mode)
+                    self.assertEqual(rows[0]["enforcement"], enforcement)
+                    self.assertEqual(rows[0]["security_outcome"], "findings")
+                    self.assertEqual(rows[0]["audit_outcome"], "written")
+                    self.assertEqual([finding["pattern"] for finding in rows[0]["findings"]], ["github_classic_pat"])
+
+    def test_launch_honors_guard_mode(self):
+        # This is hook input only. The protected operation is never executed.
+        command = "git push" + " --force origin main"
+        for provider in PROVIDERS:
+            for mode, inherited, enforcement in (("block", "warn", "deny"), ("warn", "block", "allow")):
+                with self.subTest(provider=provider, mode=mode), tempfile.TemporaryDirectory() as directory:
+                    script, cwd, env = self.setup_fixture(directory, provider)
+                    for key in ("SKIP_TOOL_GUARD", "TOOL_GUARD_ALLOWLIST"):
+                        env.pop(key, None)
+                    log_dir = Path(directory).resolve() / "guardian"
+                    log_dir.mkdir()
+                    audit = log_dir / "guard.log"
+                    env.update(SCAN_MODE=inherited, GUARD_MODE=inherited,
+                               TOOL_GUARD_LOG_DIR=str(log_dir if provider == "gemini" else audit))
+                    self.assertFalse(audit.exists())
+                    response, _ = self.launch(script.with_name("tool-guard.py"), cwd, env, envelope(provider, command), mode)
+                    self.assert_native_enforcement(response, provider, enforcement)
+                    self.assertIn("force_push_protected_branch", reason(response) + response.get("systemMessage", ""))
+                    rows = [json.loads(line[line.find("{"):]) for line in audit.read_text().splitlines()]
+                    self.assertEqual(len(rows), 1, rows)
+                    self.assertEqual(rows[0]["mode"], mode)
+                    self.assertEqual(rows[0]["enforcement"], enforcement)
+                    self.assertEqual(rows[0]["security_outcome"], "findings")
+                    self.assertEqual(rows[0]["audit_outcome"], "written")
+                    self.assertEqual([threat["rule_id"] for threat in rows[0]["threats"]], ["force_push_protected_branch"])
+
     def diagnostics(self, response, result, provider):
         if provider == "gemini":
             self.assertEqual(response.get("decision"), "deny", response)
@@ -236,6 +296,7 @@ class RecoveryTests(unittest.TestCase):
                 for mode in ("block", "warn"):
                     ordinary, _ = self.launch(script, cwd, env, envelope(provider, "echo safe"), mode)
                     self.assertIn("audit helper unavailable", reason(ordinary))
+                    self.assert_native_enforcement(ordinary, provider, "deny")
                     response, result = self.launch(script, cwd, env, envelope(provider), mode)
                     report = self.diagnostics(response, result, provider)
                     states = {item["asset"]: item["state"] for item in report["assets"]["records"]}
@@ -243,17 +304,26 @@ class RecoveryTests(unittest.TestCase):
                     self.assertEqual(states["helpers/tool_guard_policy.py"], "missing")
                 # Guardian retains its independent fail-closed missing-policy path.
                 audit.write_bytes(audit_source)
-                guardian, _ = self.launch(script.with_name("tool-guard.py"), cwd, env, envelope(provider), "warn")
-                self.assertIn("internal error", reason(guardian))
+                for mode in ("block", "warn"):
+                    guardian, _ = self.launch(script.with_name("tool-guard.py"), cwd, env, envelope(provider), mode)
+                    self.assertIn("internal error", reason(guardian))
+                    self.assert_native_enforcement(guardian, provider, "deny")
                 audit.write_text("raise RuntimeError('corrupt audit')\n")
                 (script.parent / "helpers/tool_guard_policy.py").write_text("raise RuntimeError('corrupt policy')\n")
-                ordinary, _ = self.launch(script, cwd, env, envelope(provider, "echo safe"), "warn")
-                self.assertIn("audit helper unavailable", reason(ordinary))
-                response, result = self.launch(script, cwd, env, envelope(provider), "warn")
-                report = self.diagnostics(response, result, provider)
-                states = {item["asset"]: item["state"] for item in report["assets"]["records"]}
-                self.assertEqual(states["helpers/audit.py"], "drift")
-                self.assertEqual(states["helpers/tool_guard_policy.py"], "drift")
+                for mode in ("block", "warn"):
+                    ordinary, _ = self.launch(script, cwd, env, envelope(provider, "echo safe"), mode)
+                    self.assertIn("audit helper unavailable", reason(ordinary))
+                    self.assert_native_enforcement(ordinary, provider, "deny")
+                    response, result = self.launch(script, cwd, env, envelope(provider), mode)
+                    report = self.diagnostics(response, result, provider)
+                    states = {item["asset"]: item["state"] for item in report["assets"]["records"]}
+                    self.assertEqual(states["helpers/audit.py"], "drift")
+                    self.assertEqual(states["helpers/tool_guard_policy.py"], "drift")
+                audit.write_bytes(audit_source)
+                for mode in ("block", "warn"):
+                    guardian, _ = self.launch(script.with_name("tool-guard.py"), cwd, env, envelope(provider), mode)
+                    self.assertIn("internal error", reason(guardian))
+                    self.assert_native_enforcement(guardian, provider, "deny")
                 (script.parent / "helpers/common.py").write_text("raise RuntimeError('broken common')\n")
                 broken = subprocess.run([sys.executable, "-I", "-S", "-B", str(script)], cwd=cwd, env=env, input=json.dumps(envelope(provider)).encode(), capture_output=True, timeout=5)
                 self.assertNotEqual(broken.returncode, 0)
