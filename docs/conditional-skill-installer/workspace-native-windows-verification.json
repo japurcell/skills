@@ -1,11 +1,11 @@
 {
   "date": "2026-10-15",
-  "status": "in_progress",
+  "status": "complete",
   "repository": "japurcell/skills",
   "visibility": "PUBLIC",
   "branch": "codex/plan-conditional-skill-installer",
-  "target_sha": "b03d627a9e95fd3fa22222fcf8e07c9672bfbab4",
-  "native_result": "failure",
+  "target_sha": "05776602f284dc177ee23b515c3ee4e185b9a7b7",
+  "native_result": "success",
   "workflow": ".github/workflows/ready-ideas-windows.yml",
   "native_command": "pwsh -NoProfile -File scripts/test-install.ps1",
   "publication": {
@@ -13,7 +13,8 @@
     "pushed_sha": "e8742b79ad8e0e55ac0543f315a4222640dfc19c",
     "normal_push": true,
     "remote_head_confirmed": true,
-    "repair_pushed_sha": "b03d627a9e95fd3fa22222fcf8e07c9672bfbab4"
+    "repair_pushed_sha": "b03d627a9e95fd3fa22222fcf8e07c9672bfbab4",
+    "capture_repair_pushed_sha": "05776602f284dc177ee23b515c3ee4e185b9a7b7"
   },
   "attempts": [
     {
@@ -174,7 +175,7 @@
         "image_version": "20261007.264.1",
         "python": "3.13.16",
         "rtk": "0.50.0",
-        "powershell": "7; patch not printed"
+        "powershell": "7; patch not printed in workflow logs"
       },
       "diagnostic": [
         "Expected one maintained Copilot handler.",
@@ -188,7 +189,8 @@
         "Installer stopped at provider refresh; later installer fixtures are unverified.",
         "Five downstream Windows test steps skipped after installer failure.",
         "No successful native acceptance at this revision."
-      ]
+      ],
+      "job_duration_seconds": 272
     },
     {
       "run": {
@@ -345,10 +347,10 @@
         "os": "Microsoft Windows Server 2025",
         "os_version": "10.0.26100",
         "image": "windows-2025-vs2026",
-        "image_version": "20261007.264.1",
-        "python": "3.13.16",
+        "image_version": "20260925.250.1",
+        "python": "3.13.15",
         "rtk": "0.50.0",
-        "powershell": "7; patch not printed"
+        "powershell": "7; patch not printed in workflow logs"
       },
       "installer_success_message": "test-install.ps1: all tests passed.",
       "native_skips_observed": [
@@ -364,10 +366,194 @@
       "limits": [
         "Generated scanner capture failed; three downstream Windows test steps skipped.",
         "Full workflow acceptance remains unmet."
-      ]
+      ],
+      "job_duration_seconds": 270,
+      "installer_duration_seconds": 216
+    },
+    {
+      "run": {
+        "conclusion": "success",
+        "createdAt": "2026-10-15T16:25:29Z",
+        "event": "push",
+        "headSha": "05776602f284dc177ee23b515c3ee4e185b9a7b7",
+        "jobs": [
+          {
+            "completedAt": "2026-10-15T16:30:57Z",
+            "conclusion": "success",
+            "databaseId": 116539150270,
+            "name": "hooks",
+            "startedAt": "2026-10-15T16:25:33Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-15T16:25:34Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-15T16:25:33Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:25:42Z",
+                "conclusion": "success",
+                "name": "Run actions/checkout@v7",
+                "number": 2,
+                "startedAt": "2026-10-15T16:25:34Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:25:42Z",
+                "conclusion": "success",
+                "name": "Run actions/setup-python@v7",
+                "number": 3,
+                "startedAt": "2026-10-15T16:25:42Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:25:51Z",
+                "conclusion": "success",
+                "name": "Install stable Rust Token Killer",
+                "number": 4,
+                "startedAt": "2026-10-15T16:25:42Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:25:51Z",
+                "conclusion": "success",
+                "name": "Check native prerequisites",
+                "number": 5,
+                "startedAt": "2026-10-15T16:25:51Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:26:00Z",
+                "conclusion": "success",
+                "name": "Check generated hooks",
+                "number": 6,
+                "startedAt": "2026-10-15T16:25:51Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:26:19Z",
+                "conclusion": "success",
+                "name": "Test security banner envelopes",
+                "number": 7,
+                "startedAt": "2026-10-15T16:26:00Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:29:26Z",
+                "conclusion": "success",
+                "name": "Test native PowerShell installer",
+                "number": 8,
+                "startedAt": "2026-10-15T16:26:19Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:29:29Z",
+                "conclusion": "success",
+                "name": "Test Codex scanner Windows envelopes",
+                "number": 9,
+                "startedAt": "2026-10-15T16:29:26Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:40Z",
+                "conclusion": "success",
+                "name": "Test generated scanner capture on native Windows",
+                "number": 10,
+                "startedAt": "2026-10-15T16:29:29Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:42Z",
+                "conclusion": "success",
+                "name": "Test stable RTK configuration on native Windows",
+                "number": 11,
+                "startedAt": "2026-10-15T16:30:40Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:46Z",
+                "conclusion": "success",
+                "name": "Test repository OKF hooks on native Windows",
+                "number": 12,
+                "startedAt": "2026-10-15T16:30:42Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:53Z",
+                "conclusion": "success",
+                "name": "Test lifecycle messages on native Windows",
+                "number": 13,
+                "startedAt": "2026-10-15T16:30:46Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:53Z",
+                "conclusion": "success",
+                "name": "Post Run actions/setup-python@v7",
+                "number": 25,
+                "startedAt": "2026-10-15T16:30:53Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:55Z",
+                "conclusion": "success",
+                "name": "Post Run actions/checkout@v7",
+                "number": 26,
+                "startedAt": "2026-10-15T16:30:53Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-15T16:30:55Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 27,
+                "startedAt": "2026-10-15T16:30:55Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/japurcell/skills/actions/runs/38768873988/job/116539150270"
+          }
+        ],
+        "status": "completed",
+        "updatedAt": "2026-10-15T16:30:57Z",
+        "url": "https://github.com/japurcell/skills/actions/runs/38768873988"
+      },
+      "host": {
+        "os": "Microsoft Windows Server 2025",
+        "os_version": "10.0.26100",
+        "image": "windows-2025-vs2026",
+        "image_version": "20261007.264.1",
+        "python": "3.13.16",
+        "rtk": "0.50.0",
+        "powershell": "7; patch not printed in workflow logs"
+      },
+      "installer_success_message": "test-install.ps1: all tests passed.",
+      "capture_success_message": "PASS: native Windows generated scanner capture tests",
+      "native_skips_observed": [
+        "POSIX directory/file modes and unreadable000 copy-failure assertions do not prove NTFS ACL behavior.",
+        "executable-bit assertions do not apply on Windows.",
+        "Unix file mode assertions do not apply on Windows."
+      ],
+      "capabilities": {
+        "junction_fixture": "Passed in the complete suite; no junction capability skip.",
+        "readonly_hardlinks": "Passed in the complete suite; pruning/copy refusal and unchanged external inode/bytes assertions ran without capability skips.",
+        "provider_refresh": "Passed with a space-containing home, parsed isolated launch, preserved retired/user registrations and repeat-install fingerprint.",
+        "unicode_and_profiles": "Passed, including legacy encoding and child profile isolation.",
+        "scanner_capture": "All provider/mode/scenario combinations and repeated Gemini controls completed, retaining strict clean/audit and incomplete denial/warning checks.",
+        "downstream_windows_steps": "All completed successfully."
+      },
+      "limits": [
+        "POSIX mode and unreadable000 assertions do not prove general NTFS ACL behavior.",
+        "The workflow does not run the Bash cleanup suite or new public create-skill grader suite; Milestone 8 retains their unchanged local proof.",
+        "Disposable-profile fixtures do not establish live provider delivery."
+      ],
+      "job_duration_seconds": 324,
+      "installer_duration_seconds": 187
     }
   ],
-  "next_action": "W7 investigates native capture fixture provider event fidelity; W8 repeats complete native verification after repair.",
   "initial_target_sha": "e8742b79ad8e0e55ac0543f315a4222640dfc19c",
   "repair": {
     "commit": "b03d627a9e95fd3fa22222fcf8e07c9672bfbab4",
@@ -404,6 +590,84 @@
       "routing_compliant": true,
       "status": "completed",
       "output_verified": true
+    },
+    {
+      "subtask_id": "W7",
+      "agent": "/root/native_capture_provider_events",
+      "selected": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "submitted": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "max"
+      },
+      "executed": {
+        "model": "unconfirmed",
+        "reasoning_effort": "unconfirmed"
+      },
+      "started_at": "2026-10-15T16:16:37Z",
+      "runtime_limit": {
+        "value_seconds": 900,
+        "mechanism": "Coordinator checks UTC during bounded waits; at 2026-10-15T16:31:37Z sends a non-interrupting overdue warning and requests status and ETA. No cancellation solely for timeout."
+      },
+      "routing_compliant": true,
+      "status": "completed",
+      "output_verified": true
     }
-  ]
+  ],
+  "run_id": 38768873988,
+  "capture_repair": {
+    "commit": "05776602f284dc177ee23b515c3ee4e185b9a7b7",
+    "evidence": "workspace-native-capture-repair.md",
+    "production_inputs_unchanged": true,
+    "private_worktree_and_branch_removed_after_clean_integration": true
+  },
+  "input_sha256": {
+    "scripts/test-install.ps1": "7e173a09befb689de12fda1d1a5e10ca93b745be0be9952c8e06ce6969ba31f8",
+    "scripts/test-scan-secrets-windows.ps1": "7fc5e7298d1a549d7ae55c94b4583b667758c4ebe405a1ebb154edc0237e4bec",
+    "scripts/install.ps1": "81f8dc7b24d8d6a09d32286a188ac20db0f4ede9263c58818ea04d0fa27ce72c",
+    "scripts/trusted_hook_launch.py": "74d224f7498a5191c23d351f11f03cb72301387daf631555c487616db2392079",
+    "scripts/install-provider-hooks.py": "c872999e10ace2033ea91248c83cd18b292c75a4e8dd64d893c06402c2feb3ae",
+    "hooks/families/scan_secrets.py": "223e6bb341fdd9c4111801c5d0eb8e1bd613ef4fccb116a8cdb620cf31c8f0c9"
+  },
+  "tested_tree_ids": {
+    "scripts": "be49025498edcb185343fc7c36595d32c5dee61e",
+    "skills": "cd81df3b5eff33b72c426dbc91e94f1ad07cf55e",
+    ".agents": "49c08bffdf4c5fc6cf22ac22f612c3363fdbbe62",
+    "hooks": "77950b1117c8f53abab4775d079eb21fa0cf86e9",
+    ".github": "63594833d27ef2858dc8a107b6cd1e6249143a91",
+    ".codex": "a5a38f4fa0915242460a71d49ed7124352f48bd9",
+    ".copilot": "b552349ed06c31c1a6e0a5a798c8a75d426de7e9",
+    ".gemini": "ef748f87b4f7e1bd952cc5e36ca97f41db90cc8b",
+    "agents": "abb71432b6655cdefaf23a97d556f1a4b4658c09",
+    "references": "61d54adef5d43d862bf599fba7fd6fe0a344c3e6"
+  },
+  "result_documentation": {
+    "scope": [
+      "docs/conditional-skill-installer/ExecPlan.md",
+      "docs/conditional-skill-installer/workspace-native-windows-verification.json"
+    ],
+    "native_tested_sha": "05776602f284dc177ee23b515c3ee4e185b9a7b7",
+    "later_documentation_commit_is_not_a_separate_native_run": true
+  },
+  "evidence_commands": [
+    "rtk proxy gh run view 38763664559 --repo japurcell/skills --json status,conclusion,headSha,event,url,jobs,createdAt,updatedAt",
+    "rtk proxy gh run view 38763664559 --repo japurcell/skills --log",
+    "rtk proxy gh run view 38766556979 --repo japurcell/skills --json status,conclusion,headSha,event,url,jobs,createdAt,updatedAt",
+    "rtk proxy gh run view 38766556979 --repo japurcell/skills --log",
+    "rtk proxy gh run view 38768873988 --repo japurcell/skills --json status,conclusion,headSha,event,url,jobs,createdAt,updatedAt",
+    "rtk proxy gh run view 38768873988 --repo japurcell/skills --log"
+  ],
+  "knowledge_admission": {
+    "result": "No canonical changes warranted. Fixture corrections and per-run facts belong in retained feature evidence; existing testing and hook rules already cover their obligations.",
+    "Added": "None",
+    "Changed": "None",
+    "Split or moved": "None",
+    "Deduplicated": "None",
+    "Index updates": "None",
+    "Remaining doc quality TODOs": "None",
+    "validation": "OKF lint passed; links/JSON/whitespace and unchanged tested inputs verified."
+  },
+  "skill_improvements": "No skill improvements identified."
 }
