@@ -100,10 +100,59 @@ jobs:
       - name: Test security reporting
         run: rtk proxy python3 scripts/test-security-reporting.py
       # Each scanner shell already runs its provider's capture suite.
-      # T9b adds explicit Darwin native_once evidence and later CLI/gate suites.
       - name: Test Codex scanner and capture
-        run: rtk proxy bash scripts/test-codex-hooks-secrets-scanner.sh
+        run: |
+          rtk proxy bash scripts/test-codex-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/codex-scanner.log"
       - name: Test Copilot scanner and capture
-        run: rtk proxy bash scripts/test-hooks-secrets-scanner.sh
+        run: |
+          rtk proxy bash scripts/test-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/copilot-scanner.log"
       - name: Test Gemini scanner and capture
-        run: rtk proxy bash scripts/test-gemini-hooks-secrets-scanner.sh
+        run: |
+          rtk proxy bash scripts/test-gemini-hooks-secrets-scanner.sh 2>&1 | tee "$RUNNER_TEMP/hook security/logs/gemini-scanner.log"
+      - name: Require verified native Darwin capture evidence
+        run: |
+          rtk proxy python3 - <<'PYTHON'
+          import errno
+          import itertools
+          import json
+          import os
+          from pathlib import Path
+          import sys
+
+          if sys.platform != "darwin":
+              raise SystemExit("Native capture evidence requires Darwin.")
+          def unique_fields(pairs):
+              event = dict(pairs)
+              if len(event) != len(pairs):
+                  raise ValueError("Duplicate evidence field")
+              return event
+
+          prefix = "SCANNER_NATIVE_CAPTURE "
+          required = set(itertools.product(("block", "warn"), ("clean", "findings")))
+          for provider in ("codex", "copilot", "gemini"):
+              log = Path(os.environ["RUNNER_TEMP"]) / "hook security" / "logs" / f"{provider}-scanner.log"
+              observed = set()
+              for line in log.read_text(encoding="utf-8").splitlines():
+                  if not line.startswith(prefix):
+                      continue
+                  try:
+                      event = json.loads(line[len(prefix):], object_pairs_hook=unique_fields)
+                      expected = {"provider": provider, "mode": event["mode"],
+                                  "status": event["status"], "native_errno": errno.EAGAIN,
+                                  "soft_limit_restored": True, "post_lowering_hard_retained": True,
+                                  "hard_limit_clamped": event["hard_limit_clamped"]}
+                      case = (event["mode"], event["status"])
+                      valid = (event == expected and type(event["native_errno"]) is int
+                               and event["soft_limit_restored"] is True
+                               and event["post_lowering_hard_retained"] is True
+                               and type(event["hard_limit_clamped"]) is bool
+                               and case in required and case not in observed)
+                  except (ValueError, KeyError, TypeError):
+                      valid = False
+                  if not valid:
+                      raise SystemExit(f"Invalid native capture evidence for {provider}.")
+                  observed.add(case)
+              if observed != required:
+                  raise SystemExit(f"Missing native capture evidence for {provider}: {len(observed)}/4 cases.")
+          print("Verified all 12 native Darwin capture cases with restored soft process limits.")
+          PYTHON

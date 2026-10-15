@@ -57,6 +57,7 @@ def run_case(
             subprocess.run([real_git, "-C", str(repo), "add", "--", *(files or {})], check=True)
         output_path = root / "response.json"
         error_path = root / "stderr.txt"
+        native_observation_path = root / "native-observation.json"
         env = {key: value for key, value in os.environ.items()
                if not key.startswith(("AUDIT_", "OBSERVABILITY_", "COPILOT_OBSERVABILITY_",
                                       "GEMINI_OBSERVABILITY_"))}
@@ -142,7 +143,7 @@ def run_case(
             command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
         if launch_fault:
             wrapper = (
-                "import errno, runpy, subprocess\n"
+                "import errno, json, runpy, subprocess\n"
                 f"fault = {launch_fault!r}\n"
                 "original_popen = subprocess.Popen\n"
                 "failures = 0\n"
@@ -153,14 +154,29 @@ def run_case(
                 "        if fault == 'native_once' and failures == 1:\n"
                 "            import resource\n"
                 "            before = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "            native_errno = None\n"
                 "            resource.setrlimit(resource.RLIMIT_NPROC, (0, before[1]))\n"
                 "            try:\n"
-                "                child = original_popen(args, *positional, **keyword)\n"
+                "                lowered = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "                try:\n"
+                "                    child = original_popen(args, *positional, **keyword)\n"
+                "                except OSError as error:\n"
+                "                    native_errno = error.errno\n"
+                "                    raise\n"
                 "                child.wait(timeout=1)\n"
                 "                raise RuntimeError('native process limit did not prevent launch')\n"
                 "            finally:\n"
+                # Darwin can clamp the hard limit when lowering the soft one.
+                # Restore the original soft limit without raising that clamp.
                 "                current = resource.getrlimit(resource.RLIMIT_NPROC)\n"
-                "                resource.setrlimit(resource.RLIMIT_NPROC, (before[0], current[1]))\n"
+                "                restored = (before[0], current[1])\n"
+                "                resource.setrlimit(resource.RLIMIT_NPROC, restored)\n"
+                "                after = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "                if after != restored:\n"
+                "                    raise RuntimeError('native process limit was not restored')\n"
+                "                if native_errno == errno.EAGAIN:\n"
+                f"                    with open({str(native_observation_path)!r}, 'x', encoding='ascii') as observation:\n"
+                "                        json.dump({'native_errno': native_errno, 'before': before, 'lowered': lowered, 'after': after}, observation)\n"
                 "        if fault == 'eagain_deadline':\n"
                 "            import time\n"
                 "            time.sleep(5.05)\n"
@@ -210,6 +226,29 @@ def run_case(
             assert marker not in output_path.read_text() + error_path.read_text() + log
         if "incomplete" in json.dumps(response):
             assert str(repo) not in output_path.read_text() + error_path.read_text() + log
+        if launch_fault == "native_once":
+            # The child records only an actual kernel launch failure followed
+            # by a verified restoration. A selected fault label is not proof.
+            with native_observation_path.open("rb") as observation:
+                raw_observation = observation.read(257)
+            assert len(raw_observation) <= 256, "Native observation exceeded its bound"
+            observed = json.loads(raw_observation)
+            assert set(observed) == {"native_errno", "before", "lowered", "after"}
+            assert type(observed["native_errno"]) is int and observed["native_errno"] == errno.EAGAIN
+            before, lowered, after = (observed[key] for key in ("before", "lowered", "after"))
+            for limits in (before, lowered, after):
+                assert isinstance(limits, list) and len(limits) == 2
+                assert all(type(limit) is int for limit in limits)
+            assert before[0] > 0 and lowered[0] == 0
+            assert 0 < lowered[1] <= before[1]
+            assert after == [before[0], lowered[1]]
+            assert provider in HOOKS and mode in ("block", "warn")
+            status = "findings" if files else "clean"
+            assert json.loads(log.splitlines()[-1])["status"] == status
+            event = {"provider": provider, "mode": mode, "status": status,
+                     "native_errno": observed["native_errno"], "soft_limit_restored": True,
+                     "post_lowering_hard_retained": True, "hard_limit_clamped": lowered[1] != before[1]}
+            print("SCANNER_NATIVE_CAPTURE " + json.dumps(event, sort_keys=True), flush=True)
         return response, log
 
 
