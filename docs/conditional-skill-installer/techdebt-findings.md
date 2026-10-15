@@ -6,7 +6,7 @@ The user requested all meaningful duplication findings in `main...HEAD`, with no
 
 Three discovery lanes inspected substantively changed production units, Bash tests, PowerShell tests, and maintained consumers. Nearby existing helpers were considered for reuse. Pure unchanged file moves, historical evidence, immutable sources, and unrelated unchanged bodies were excluded. Safe preexisting repetition inside substantively changed units was eligible. Discovery found 23 safe candidates; there is no top-three cutoff.
 
-All changes must preserve the [ExecPlan](ExecPlan.md) D1-D4 contract, public CLI seams, fixture inputs, independent assertions, diagnostics, environment isolation, source bytes, permission restoration, and external link/inode safety. Private helpers and literal loops are implementation details. Distinct platform and failure semantics remain explicit. All 23 safe candidates are fixed and independently validated locally against the frozen source/test files. Native Windows verification of this cleanup remains pending.
+All changes must preserve the [ExecPlan](ExecPlan.md) D1-D4 contract, public CLI seams, fixture inputs, independent assertions, diagnostics, environment isolation, source bytes, permission restoration, and external link/inode safety. Private helpers and literal loops are implementation details. Distinct platform and failure semantics remain explicit. All 23 safe candidates are fixed and independently validated locally against the frozen source/test files. Native Windows verification subsequently passed at published `b1e3704a` in [Windows run 38737045419](https://github.com/japurcell/skills/actions/runs/38737045419).
 
 ## Candidate ledger
 
@@ -90,7 +90,7 @@ The following SHA-256 values were captured before the suite runs and remained id
 | `scripts/test-install.ps1` | `b4b868c1343e2f548a1ec4adc7dab9697731f8cbcc3cc8fb508fa875b04c7240` |
 | `scripts/test-addy-install.sh` | `b2cb1c5351819254fbec19bdd4b9dc9f943daa67e067cac2db930c6224829050` |
 
-All 23 candidates meet local acceptance. PROD-06's junction path and current Windows reparse/ReadOnly/profile behavior still need native Windows evidence before a fresh cross-platform acceptance claim. Prior native evidence at `44a47e5b` is historical. The remaining external action is publication of the final revision and the existing Windows workflow when requested; no native result was inferred from the macOS skip.
+All 23 candidates meet local acceptance, and [Windows run 38737045419](https://github.com/japurcell/skills/actions/runs/38737045419) established native Windows fixture acceptance at published `b1e3704a`. PROD-06 junction preservation, external-target safety, Windows ReadOnly hard-link refusal and profile/Unicode cases passed without native capability skips. All downstream workflow checks succeeded. The three skips concern inapplicable POSIX mode/executable/unreadable000 assertions and retain local proof; general NTFS ACL behavior is not established. [Current native evidence](techdebt-native-windows-verification.json) retains actual host, versions, step times and exact input. Prior native evidence at `44a47e5b` remains historical.
 
 ## Agent-doc admission and disposition
 
@@ -98,4 +98,4 @@ The single coordinated `update-agent-docs` pass followed all workers and validat
 
 Added: None. Changed: None. Split or moved: None. Deduplicated: None. Index updates: None. Remaining doc quality TODOs: None. No skill improvements identified.
 
-No additional safe in-scope dedupe target remains from discovery. All selected candidates were fixed; none was reverted or blocked. The retained groups above are intentional, incompatible, ambiguous in value, or outside the substantive scope. This cleanup is uncommitted and has not been pushed.
+No additional safe in-scope dedupe target remains from discovery. All selected candidates were fixed; none was reverted or blocked. The retained groups above are intentional, incompatible, ambiguous in value, or outside the substantive scope. Cleanup is committed and published as `b1e3704a` after explicit user approval on 2026-10-15. [Windows run 38737045419](https://github.com/japurcell/skills/actions/runs/38737045419) passed on that exact revision; [native evidence](techdebt-native-windows-verification.json) and ExecPlan Milestone 6 record its actual outcome. The previous publication rejection is resolved history. Only result-documentation edits remain uncommitted.
