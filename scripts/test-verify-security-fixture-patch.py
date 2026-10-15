@@ -1,0 +1,427 @@
+#!/usr/bin/env python3
+"""Acceptance at the fixture-preflight CLI and generated-provider seams."""
+from __future__ import annotations
+import difflib
+import json
+import os
+import shutil
+import signal
+import shlex
+import time
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parent.parent
+CLI = ROOT / "scripts/verify-security-fixture-patch.py"
+TOKEN = "gh" + "p_" + "FAKE" * 9
+
+class PreflightTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix="fixture-preflight-test-")
+        self.addCleanup(self.temp.cleanup)
+        self.base = Path(self.temp.name).resolve()
+        self.repo = self.base / "repo"
+        self.repo.mkdir()
+        self.env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+        self.env.update(HOME=str(self.base / "home"), GIT_CONFIG_GLOBAL=os.devnull,
+                        GIT_CONFIG_NOSYSTEM="1", GIT_OPTIONAL_LOCKS="0")
+        self.git("init", "-q", "-b", "main")
+        self.target = self.repo / "fixture.py"
+        self.target.write_text("value = 'safe'\n")
+        self.git("add", ".")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-qm", "baseline")
+
+    def git(self, *args):
+        result = subprocess.run(["git", "-C", str(self.repo), *args], env=self.env,
+                                capture_output=True, check=True, timeout=10)
+        return result.stdout
+
+    def patch(self, after, before=None, path="fixture.py"):
+        before = self.target.read_text() if before is None else before
+        patch = self.base / "candidate.patch"
+        patch.write_text("".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True),
+                                                     fromfile="a/" + path, tofile="b/" + path)))
+        return patch
+
+    def run_cli(self, patch, *extra, active=ROOT, timeout=60):
+        return subprocess.run([sys.executable, str(CLI), "--patch", str(patch),
+                               "--path", "fixture.py", "--active-hook-root", str(active),
+                               "--json", "--no-input", *extra], cwd=self.repo, env=self.env,
+                              capture_output=True, timeout=timeout)
+
+    def fingerprint(self):
+        return (self.target.read_bytes(), self.target.stat().st_mode,
+                (self.repo / ".git/index").read_bytes(), self.git("status", "--porcelain=v1", "-z"))
+
+    def test_moved_literal_is_rejected_without_mutation(self):
+        # The end-user hazard: a retained credential is moved into an added line.
+        original = "left = '" + TOKEN + "'\nright = 'safe'\n"
+        self.target.write_text(original)
+        self.git("add", ".")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-qm", "fake baseline")
+        candidate = "left = 'safe'\nright = '" + TOKEN + "'\n"
+        patch = self.patch(candidate)
+        before = self.fingerprint()
+        result = self.run_cli(patch, "--check")
+        self.assertEqual(result.returncode, 1, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["reason"], "findings")
+        self.assertEqual(self.fingerprint(), before)
+        self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+
+    def test_complete_changed_content_catches_retained_credential(self):
+        baseline = "value = '" + TOKEN + "'\nother = 'old'\n"
+        self.target.write_text(baseline)
+        self.git("add", ".")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-qm", "fake baseline")
+        patch = self.patch(baseline.replace("old", "new"))
+        before = self.fingerprint()
+        result = self.run_cli(patch, "--check")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_repaired_representation_preserves_runtime_and_dirty_state(self):
+        self.target.chmod(0o755)
+        self.target.write_text("value = 'staged'\n")
+        self.git("add", "fixture.py")
+        self.target.write_text("value = 'worktree'\n")
+        (self.repo / "untracked.txt").write_text("retained untracked data\n")
+        sentinel = self.base / "hook-executed"
+        hook = self.repo / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\nprintf bad > " + str(sentinel) + "\n")
+        hook.chmod(0o755)
+        self.git("config", "filter.hostile.clean", "touch " + str(sentinel))
+        after = "value = 'gh' + 'p_' + 'FAKE' * 9\nprint(value, end='')\n"
+        patch = self.patch(after)
+        before = self.fingerprint()
+        checked = self.run_cli(patch, "--check")
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+        self.assertEqual(self.fingerprint(), before)
+        self.assertEqual(json.loads(checked.stdout)["controls_detected"], 6)
+        # Execute only the reviewed representation in a separate disposable
+        # fixture, never the live repository target or arbitrary tool input.
+        candidate = self.base / "verified-candidate.py"
+        candidate.write_text(after)
+        runtime = subprocess.run([sys.executable, "-I", "-S", "-B", str(candidate)], capture_output=True, check=True)
+        self.assertEqual(runtime.stdout, TOKEN.encode())
+        self.assertEqual(self.fingerprint(), before)
+        self.assertEqual((self.repo / "untracked.txt").read_text(), "retained untracked data\n")
+        self.assertFalse(sentinel.exists())
+        report = json.loads(checked.stdout)
+        self.assertEqual(set(report["builds"]), {"active", "candidate"})
+        self.assertEqual(report["result"], "verified")
+
+    def active_copy(self, fault):
+        active = self.base / ("active-" + fault)
+        for directory in (".codex/hooks", ".copilot/hooks/scripts", ".gemini/hooks/scripts"):
+            origin = ROOT / directory
+            target = active / directory
+            target.mkdir(parents=True)
+            for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py"):
+                (target / name).parent.mkdir(exist_ok=True)
+                shutil.copy2(origin / name, target / name)
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        source = scanner.read_text()
+        if fault == "malformed":
+            source = source.replace('if __name__ == "__main__":', 'print("not-json")\nif __name__ == "__main__":')
+        elif fault == "audit":
+            source = source.replace('raise SystemExit(main())', 'code = main()\n        resolve_scan_log().unlink()\n        raise SystemExit(code)')
+        elif fault == "timeout":
+            source = source.replace('if __name__ == "__main__":', 'time.sleep(60)\nif __name__ == "__main__":')
+        elif fault == "build":
+            source = source.replace('REPORT_BUILD = "', 'REPORT_BUILD = "bad')
+        elif fault == "clean-findings":
+            source = source.replace("raise SystemExit(main())", "code = main()\n        log = resolve_scan_log()\n        record = json.loads(log.read_text())\n        record.update(findings=[{'pattern': 'github_classic_pat'}], findingsTruncated=True, omittedFindings=1)\n        log.write_text(json.dumps(record) + '\\n')\n        raise SystemExit(code)")
+        elif fault == "findings-allow":
+            source = source.replace('if __name__ == "__main__":', 'emit_block_denial = lambda reason: emit_json({})\nif __name__ == "__main__":')
+        elif fault == "findings-unsafe-audit":
+            source = source.replace("raise SystemExit(main())", "code = main()\n        resolve_scan_log().chmod(0o644)\n        raise SystemExit(code)")
+        scanner.write_text(source)
+        return active
+
+    def test_active_scanner_faults_fail_closed(self):
+        patch = self.patch("value = 'repaired'\n")
+        before = self.fingerprint()
+        for fault in ("malformed", "audit", "timeout", "build"):
+            with self.subTest(fault=fault):
+                started = time.monotonic()
+                result = self.run_cli(patch, "--check", active=self.active_copy(fault), timeout=20)
+                self.assertIn(result.returncode, (2, 3), result.stdout + result.stderr)
+                self.assertLess(time.monotonic() - started, 16)
+                self.assertEqual(self.fingerprint(), before)
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+
+    def test_unsafe_targets_and_patch_forms_never_write(self):
+        patch = self.patch("value = 'repaired'\n")
+        before = self.fingerprint()
+        cases = (("--path", "../outside"), ("--path", "/absolute"),
+                 ("--path", "C:/outside"), ("--path", "fixture.py"))
+        for extra in cases:
+            with self.subTest(extra=extra):
+                result = self.run_cli(patch, "--check", *extra)
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+        original = self.target.read_bytes()
+        self.target.unlink()
+        outside = self.base / "outside"
+        outside.write_bytes(original)
+        self.target.symlink_to(outside)
+        result = self.run_cli(patch, "--check")
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual(outside.read_bytes(), original)
+        self.target.unlink()
+        self.target.write_bytes(original)
+        for content in (b"GIT binary patch\n", b"rename from fixture.py\nrename to other.py\n"):
+            patch.write_bytes(content)
+            result = self.run_cli(patch, "--check")
+            self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+            self.assertEqual(self.target.read_bytes(), original)
+        self.target.write_bytes(b"binary\0data")
+        result = self.run_cli(self.patch("value = 'safe'\n", before="binary"), "--check")
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual(self.target.read_bytes(), b"binary\0data")
+
+    def test_help_version_invalid_arguments_and_explicit_check(self):
+        for args in ([], ["--help"], ["help"], ["help", "check"], ["--version"]):
+            with self.subTest(args=args):
+                result = subprocess.run([sys.executable, str(CLI), *args], cwd=self.base,
+                                        env=self.env, capture_output=True, timeout=2)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(result.stdout)
+        patch = self.patch("value = 'repaired'\n")
+        for extra in ((), ("--che",), ("--unknown=" + TOKEN,), ("--check", "--check=invalid")):
+            with self.subTest(extra=extra):
+                before = self.fingerprint()
+                result = self.run_cli(patch, *extra)
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                self.assertEqual(json.loads(result.stdout)["reason"], "invalid_arguments")
+                self.assertEqual(result.stderr, b"")
+                self.assertNotIn(TOKEN.encode(), result.stdout)
+                self.assertEqual(self.fingerprint(), before)
+
+    def test_active_scan_detects_live_drift_without_overwriting_it(self):
+        active = self.active_copy("drift")
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":',
+            "Path(" + repr(str(self.target)) + ").write_text('concurrent user edit')\nif __name__ == \"__main__\":"))
+        index = (self.repo / ".git/index").read_bytes()
+        result = self.run_cli(self.patch("value = 'repaired'\n"), "--check", active=active)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "state_drift")
+        self.assertEqual(self.target.read_text(), "concurrent user edit")
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+
+    def test_dirty_staged_and_untracked_credentials_are_inspected(self):
+        patch = self.patch("value = 'repaired'\n")
+        for location in ("untracked", "staged"):
+            with self.subTest(location=location):
+                control = self.repo / "dirty-control.txt"
+                control.write_text(TOKEN)
+                if location == "staged":
+                    self.git("add", "dirty-control.txt")
+                    control.write_text("safe worktree bytes")
+                before = self.fingerprint()
+                result = self.run_cli(patch, "--check")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(self.fingerprint(), before)
+                if location == "staged":
+                    self.assertEqual(control.read_text(), "safe worktree bytes")
+                control.unlink()
+
+    def test_unresolved_index_is_rejected_without_writes(self):
+        self.git("branch", "other")
+        for branch, value in (("main", "one"), ("other", "two")):
+            self.git("checkout", "-q", branch)
+            self.target.write_text("value = '" + value + "'\n")
+            self.git("add", "fixture.py")
+            self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                     "-c", "commit.gpgsign=false", "commit", "-qm", branch)
+        merged = subprocess.run(["git", "-C", str(self.repo), "-c", "user.name=Fixture",
+            "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "merge", "main"],
+            env=self.env, capture_output=True, timeout=5)
+        self.assertEqual(merged.returncode, 1)
+        before = self.fingerprint()
+        result = self.run_cli(self.patch("value = 'resolved'\n"), "--check")
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "unsupported_index")
+        self.assertEqual(self.fingerprint(), before)
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "POSIX special-file case")
+    def test_special_file_and_linked_parent_are_rejected(self):
+        patch = self.patch("value = 'repaired'\n")
+        original = self.target.read_bytes()
+        index = (self.repo / ".git/index").read_bytes()
+        self.target.unlink()
+        os.mkfifo(self.target)
+        result = self.run_cli(patch, "--check", timeout=3)
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+        self.target.unlink()
+        self.target.write_bytes(original)
+        outside = self.base / "outside-directory"
+        outside.mkdir()
+        (outside / "nested.py").write_bytes(original)
+        (self.repo / "linked").symlink_to(outside, target_is_directory=True)
+        patch = self.patch("value = 'repaired'\n", path="linked/nested.py")
+        result = self.run_cli(patch, "--check", "--path", "linked/nested.py")
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual((outside / "nested.py").read_bytes(), original)
+
+    def test_active_bundle_identity_is_independent(self):
+        active = self.active_copy("reviewed")
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        scanner.write_text(scanner.read_text() + "\n# separately reviewed active build\n")
+        result = self.run_cli(self.patch("value = 'repaired'\n"), "--check", active=active)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        builds = json.loads(result.stdout)["builds"]
+        self.assertNotEqual(builds["active"]["codex"]["bundle"], builds["candidate"]["codex"]["bundle"])
+
+    def test_open_stdin_is_bounded_and_help_does_not_read_it(self):
+        before = self.fingerprint()
+        for args, expected in ((["--help"], 0), (["--patch", "-", "--path", "fixture.py",
+                "--active-hook-root", str(ROOT), "--check", "--json"], 2)):
+            with self.subTest(args=args), subprocess.Popen([sys.executable, str(CLI), *args],
+                    cwd=self.repo, env=self.env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                process.wait(timeout=4)
+                stdout = process.stdout.read()
+                stderr = process.stderr.read()
+                self.assertEqual(process.returncode, expected, stdout + stderr)
+                self.assertNotIn(b"Traceback", stderr)
+                if expected:
+                    self.assertEqual(json.loads(stdout)["reason"], "stdin_timeout")
+        patch = self.patch("value = 'repaired'\n")
+        result = subprocess.run([sys.executable, str(CLI), "--patch", "-", "--path", "fixture.py",
+                "--active-hook-root", str(ROOT), "--check", "--json", "--quiet", "--no-color"],
+                cwd=self.repo, env={**self.env, "SKIP_SECRETS_SCAN": "true", "SCAN_MODE": "warn",
+                    "SECRETS_ALLOWLIST": ".*", "NO_COLOR": "1", "TERM": "dumb"},
+                input=patch.read_bytes(), capture_output=True, timeout=20)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["controls_detected"], 6)
+        self.assertEqual(result.stderr, b"")
+        self.assertEqual(self.fingerprint(), before)
+
+    @unittest.skipIf(os.name == "nt", "POSIX process-group cancellation")
+    def test_cancellation_cleans_child_and_preserves_live_state(self):
+        active = self.active_copy("cancel")
+        marker = self.base / "child-pid"
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        injection = ("import subprocess\n"
+            "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])\n"
+            "Path(" + repr(str(marker)) + ").write_text(str(child.pid))\n"
+            "time.sleep(60)\n")
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        patch = self.patch("value = 'repaired'\n")
+        before = self.fingerprint()
+        with subprocess.Popen([sys.executable, str(CLI), "--patch", str(patch), "--path", "fixture.py",
+                "--active-hook-root", str(active), "--check", "--json"], cwd=self.repo, env=self.env,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            deadline = time.monotonic() + 6
+            while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+                time.sleep(0.02)
+            self.assertTrue(marker.exists())
+            child = int(marker.read_text())
+            process.send_signal(signal.SIGINT)
+            stdout, stderr = process.communicate(timeout=4)
+            self.assertEqual(process.returncode, 130, stdout + stderr)
+            self.assertEqual(json.loads(stdout)["reason"], "interrupted")
+            self.assertNotIn(b"Traceback", stderr)
+        # A dead process may remain briefly as an orphan zombie; it must never run.
+        result = subprocess.run(["ps", "-o", "stat=", "-p", str(child)], capture_output=True, timeout=2)
+        self.assertTrue(not result.stdout.strip() or result.stdout.lstrip().startswith(b"Z"), result.stdout)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_failed_committed_head_capture_is_not_treated_as_unborn(self):
+        patch = self.patch("value = 'repaired'\n")
+        before = self.fingerprint()
+        wrapper = self.base / "head-fault.py"
+        wrapper.write_text("import subprocess,runpy,sys\n"
+            "real = subprocess.Popen\n"
+            "def failed(command,*args,**kwargs):\n"
+            " if command[-3:] == ['rev-parse','--verify','HEAD']:\n"
+            "  command = [sys.executable, '-I', '-S', '-B', '-c', 'raise SystemExit(128)']\n"
+            " return real(command,*args,**kwargs)\n"
+            "subprocess.Popen = failed\n"
+            "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
+            "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n")
+        result = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "--patch", str(patch),
+            "--path", "fixture.py", "--active-hook-root", str(ROOT), "--check", "--json"],
+            cwd=self.repo, env=self.env, capture_output=True, timeout=25)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_broken_output_pipes_are_bounded_without_tracebacks(self):
+        patch = self.patch("value = 'repaired'\n")
+        arguments = (["--help"], ["--patch", str(patch), "--path", "fixture.py",
+            "--active-hook-root", str(ROOT), "--check", "--json"])
+        before = self.fingerprint()
+        for args in arguments:
+            with self.subTest(args=args), subprocess.Popen([sys.executable, str(CLI), *args],
+                    cwd=self.repo, env=self.env, stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                process.stdout.close()
+                process.wait(timeout=15)
+                stderr = process.stderr.read()
+                self.assertNotIn(b"Traceback", stderr)
+                self.assertNotIn(b"Exception ignored", stderr)
+                self.assertNotEqual(process.returncode, 0)
+        self.assertEqual(self.fingerprint(), before)
+
+    def test_source_filter_commands_are_never_executed(self):
+        self.target.write_text("value = 'dirt'\n")
+        patch = self.patch("value = 'repaired'\n")
+        marker = self.base / "filter-executed"
+        driver = self.base / "filter.py"
+        driver.write_text("import sys\nfrom pathlib import Path\nPath(" + repr(str(marker)) +
+                          ").write_text('unexpected execution')\nsys.stdout.buffer.write(sys.stdin.buffer.read())\n")
+        (self.repo / ".gitattributes").write_text("fixture.py filter=fixture-preflight\n")
+        self.git("config", "filter.fixture-preflight.clean", shlex.join([sys.executable, str(driver)]))
+        original = self.target.read_bytes()
+        index = (self.repo / ".git/index").read_bytes()
+        result = self.run_cli(patch, "--check")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertFalse(marker.exists(), "verification executed source Git filter configuration")
+        self.assertEqual(self.target.read_bytes(), original)
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+
+    def test_inconsistent_scanner_results_are_incomplete(self):
+        original = self.fingerprint()
+        for fault in ("clean-findings", "findings-allow", "findings-unsafe-audit"):
+            with self.subTest(fault=fault):
+                after = "value = 'repaired'\n" if fault == "clean-findings" else "value = '" + TOKEN + "'\n"
+                result = self.run_cli(self.patch(after), "--check", active=self.active_copy(fault))
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(self.fingerprint(), original)
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+
+    def test_tracked_attributes_preserve_raw_head_and_index(self):
+        raw = b"value = 'safe'\r\n"
+        self.target.write_bytes(raw)
+        (self.repo / ".gitattributes").write_text("fixture.py text\n")
+        self.git("add", ".gitattributes")
+        oid = subprocess.run(["git", "-C", str(self.repo), "hash-object", "-w", "--stdin"],
+                             env=self.env, input=raw, capture_output=True, check=True).stdout.strip().decode()
+        self.git("update-index", "--cacheinfo", "100644", oid, "fixture.py")
+        self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                 "-c", "commit.gpgsign=false", "commit", "-qm", "raw attributed baseline")
+        marker = self.base / "captured-head-bytes"
+        active = self.active_copy("raw-head")
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        injection = ("import subprocess\n"
+            "captured = subprocess.run(['git', 'show', 'HEAD:fixture.py'], capture_output=True)\n"
+            "if captured.returncode == 0:\n Path(" + repr(str(marker)) + ").write_bytes(captured.stdout)\n")
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        before = self.fingerprint()
+        patch = self.patch(raw.replace(b"safe", b"repaired").decode(), before=raw.decode())
+        result = self.run_cli(patch, "--check", active=active)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(marker.read_bytes(), raw)
+        self.assertEqual(self.fingerprint(), before)
+
+if __name__ == "__main__":
+    unittest.main()

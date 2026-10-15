@@ -1,0 +1,637 @@
+#!/usr/bin/env python3
+"""Preflight text-fixture patches through independently identified real scanners."""
+from __future__ import annotations
+
+import argparse
+import ast
+import contextlib
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import re
+import shutil
+import signal
+import stat
+import subprocess
+import sys
+import tempfile
+import time
+
+VERSION = "1.0.0"
+SCHEMA = "security_fixture_verification_v1"
+ROOT = Path(__file__).resolve().parent.parent
+PROVIDERS = {"codex": ".codex/hooks", "copilot": ".copilot/hooks/scripts", "gemini": ".gemini/hooks/scripts"}
+LIMIT = 64 * 1024 * 1024
+PATCH_LIMIT = 1024 * 1024
+MAX_PATHS = 4096
+MAX_TARGETS = 64
+TIMEOUT = 12
+DEADLINE = None
+
+
+class Failure(Exception):
+    def __init__(self, reason, code=2, phase="preflight", **measurements):
+        self.reason, self.code, self.phase = reason, code, phase
+        self.measurements = measurements
+
+
+class Parser(argparse.ArgumentParser):
+    def error(self, message):
+        # argparse's message can contain a credential-bearing argument.
+        raise Failure("invalid_arguments", 3, "arguments")
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def unsafe(info):
+    return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)
+
+
+def relative(value):
+    path = PurePosixPath(value)
+    if (not value or path.is_absolute() or ".." in path.parts or ".git" in path.parts
+            or "\\" in value or ":" in value or str(path) != value
+            or any(ord(c) < 32 or ord(c) > 126 for c in value)):
+        raise Failure("unsafe_path", 3, "paths")
+    return value
+
+
+def regular(root, name, missing=False):
+    relative(name)
+    path = root
+    for part in PurePosixPath(name).parts:
+        path = path / part
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            if missing:
+                return None
+            raise Failure("missing_file", 3, "paths") from None
+        if unsafe(info):
+            raise Failure("unsafe_path", 3, "paths")
+        if path != root / name and not stat.S_ISDIR(info.st_mode):
+            raise Failure("unsafe_path", 3, "paths")
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise Failure("unsafe_file", 3, "paths")
+    return path
+
+
+def read_file(path, bound=LIMIT):
+    # Filesystem snapshots use no-follow descriptors and compare opened identity.
+    info = path.lstat()
+    if unsafe(info) or not stat.S_ISREG(info.st_mode) or info.st_size > bound:
+        raise Failure("unsafe_or_oversized_file", 3, "capture")
+    fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+    with os.fdopen(fd, "rb") as stream:
+        opened = os.fstat(stream.fileno())
+        if (opened.st_dev, opened.st_ino) != (info.st_dev, info.st_ino):
+            raise Failure("state_drift", 2, "capture")
+        data = stream.read(bound + 1)
+        after = os.fstat(stream.fileno())
+    if len(data) > bound:
+        raise Failure("capture_limit", 2, "capture")
+    identity = lambda s: (s.st_dev, s.st_ino, s.st_size, s.st_mtime_ns, s.st_ctime_ns, s.st_mode)
+    if identity(opened) != identity(after):
+        raise Failure("state_drift", 2, "capture")
+    return data, stat.S_IMODE(opened.st_mode), identity(opened)
+
+
+def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
+    if os.name == "nt":
+        raise Failure("bounded_descendant_cleanup_unavailable", 2, "platform")
+    if DEADLINE is not None:
+        timeout = min(timeout, DEADLINE - time.monotonic())
+        if timeout <= 0:
+            raise Failure("operation_time_limit", 2, "subprocess", limit=180, unit="seconds")
+    # Spools bound retained output and avoid pipe EOF being held by descendants.
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+        process = subprocess.Popen(command, cwd=cwd, env=env, stdin=subprocess.PIPE,
+                                   stdout=out, stderr=err, start_new_session=os.name != "nt")
+        try:
+            started = time.monotonic()
+            request = data or b""
+            while True:
+                if time.monotonic() - started > timeout:
+                    raise Failure("subprocess_timeout", 2, "subprocess", limit=timeout, unit="seconds")
+                if os.fstat(out.fileno()).st_size > LIMIT or os.fstat(err.fileno()).st_size > PATCH_LIMIT:
+                    raise Failure("subprocess_output_limit", 2, "subprocess")
+                try:
+                    process.communicate(input=request, timeout=min(0.02, timeout))
+                    break
+                except subprocess.TimeoutExpired:
+                    request = None
+            out.seek(0)
+            output = out.read(LIMIT + 1)
+            if len(output) > LIMIT or os.fstat(err.fileno()).st_size > PATCH_LIMIT:
+                raise Failure("subprocess_output_limit", 2, "subprocess")
+            if check and process.returncode:
+                raise Failure("git_or_hook_failed", 2, "subprocess")
+            return process.returncode, output
+        finally:
+            if os.name != "nt":
+                with contextlib.suppress(ProcessLookupError):
+                    os.killpg(process.pid, signal.SIGKILL)
+            process.wait(timeout=2)
+
+
+def environment(home, git):
+    # No caller Git configuration, hook environment, Python startup, or scanner bypasses.
+    keys = ("SYSTEMROOT", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP")
+    env = {k: os.environ[k] for k in keys if k in os.environ}
+    env.update(PATH=os.pathsep.join(dict.fromkeys([str(Path(git).parent), os.defpath])),
+               HOME=str(home), USERPROFILE=str(home), CODEX_HOME=str(home / ".codex"),
+               XDG_CONFIG_HOME=str(home / ".config"), GIT_CONFIG_GLOBAL=os.devnull,
+               GIT_CONFIG_NOSYSTEM="1", GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0",
+               GIT_NO_REPLACE_OBJECTS="1", GIT_NO_LAZY_FETCH="1", LC_ALL="C", TMPDIR=str(home.parent))
+    return env
+
+
+class Git:
+    def __init__(self, executable, env):
+        self.executable, self.env = executable, env
+
+    def __call__(self, repo, *args, data=None, check=True, status=False):
+        if args and args[0] == "init":
+            args = (*args, "--object-format=" + getattr(self, "object_format", "sha1"))
+        result = run([self.executable, "--no-replace-objects", "-c", "core.hooksPath=" + os.devnull,
+                    "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false",
+                    "-C", str(repo), *args], cwd=repo, env=self.env, data=data, check=check)
+        return result if status else result[1]
+
+
+
+def directory_no_links(path):
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current = current / part
+        info = current.lstat()
+        if unsafe(info) or not stat.S_ISDIR(info.st_mode):
+            raise Failure("unsafe_directory", 3, "paths")
+
+
+def read_patch_stdin():
+    fd = sys.stdin.fileno()
+    deadline = time.monotonic() + 2
+    result = bytearray()
+    while True:
+        if time.monotonic() >= deadline:
+            raise Failure("stdin_timeout", 2, "input", limit=2, unit="seconds")
+        if os.name == "nt" and not stat.S_ISREG(os.fstat(fd).st_mode):
+            import ctypes
+            import msvcrt
+            available = ctypes.c_ulong()
+            kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+            if not kernel.PeekNamedPipe(ctypes.c_void_p(msvcrt.get_osfhandle(fd)), None, 0, None, ctypes.byref(available), None):
+                if ctypes.get_last_error() in (109, 233):
+                    return bytes(result)
+                raise Failure("stdin_unavailable", 2, "input")
+            ready = available.value > 0
+        elif os.name != "nt":
+            import select
+            ready = bool(select.select([fd], [], [], 0.02)[0])
+        else:
+            ready = True
+        if not ready:
+            time.sleep(0.01)
+            continue
+        chunk = os.read(fd, min(65536, PATCH_LIMIT + 1 - len(result)))
+        if not chunk:
+            return bytes(result)
+        result.extend(chunk)
+        if len(result) > PATCH_LIMIT:
+            raise Failure("patch_limit", 3, "input", limit=PATCH_LIMIT, measured=len(result), unit="bytes")
+
+
+def entries(raw):
+    result = {}
+    for row in raw.split(b"\0"):
+        if not row:
+            continue
+        meta, name = row.split(b"\t", 1)
+        mode, oid, stage = meta.decode("ascii").split()
+        if stage != "0" or mode not in {"100644", "100755"}:
+            raise Failure("unsupported_index", 3, "capture")
+        name = relative(name.decode("utf-8"))
+        result[name] = (mode, oid)
+    return result
+
+
+def capture(git, repo):
+    top = git(repo, "rev-parse", "--show-toplevel", check=False).strip()
+    if not top:
+        raise Failure("not_repository", 3, "capture")
+    if top.decode() != str(repo):
+        raise Failure("run_from_repository_root", 3, "capture")
+    object_format = git(repo, "rev-parse", "--show-object-format").strip().decode()
+    if object_format not in {"sha1", "sha256"}:
+        raise Failure("unsupported_object_format", 3, "capture")
+    git.object_format = object_format
+    index_path = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-path", "index").strip().decode())
+    index = read_file(index_path) if index_path.exists() else None
+    head_code, head_raw = git(repo, "rev-parse", "--verify", "HEAD", check=False, status=True)
+    head = head_raw.strip()
+    if head_code:
+        branch_code, branch_raw = git(repo, "symbolic-ref", "--quiet", "HEAD", check=False, status=True)
+        branch = branch_raw.strip()
+        if branch_code or not branch.startswith(b"refs/heads/"):
+            raise Failure("head_capture_failed", 2, "capture")
+        ref_code, _ = git(repo, "show-ref", "--verify", "--quiet", branch.decode(), check=False, status=True)
+        if ref_code != 1:
+            raise Failure("head_capture_failed", 2, "capture")
+        head = b""
+    if head and not re.fullmatch(rb"[0-9a-f]{40}|[0-9a-f]{64}", head):
+        raise Failure("invalid_head", 3, "capture")
+    tree = {}
+    if head:
+        for row in git(repo, "ls-tree", "-rz", "--full-tree", head.decode()).split(b"\0"):
+            if row:
+                meta, name = row.split(b"\t", 1)
+                mode, kind, oid = meta.decode().split()
+                if kind != "blob" or mode not in {"100644", "100755"}:
+                    raise Failure("unsupported_head", 3, "capture")
+                tree[relative(name.decode())] = (mode, oid)
+    selected = entries(git(repo, "ls-files", "--stage", "-z"))
+    # Sparse and assume-unchanged states cannot faithfully prove worktree coverage.
+    flags = git(repo, "ls-files", "-v", "-z").split(b"\0")
+    if any(row and row[:1] != b"H" for row in flags):
+        raise Failure("unsupported_index_flags", 3, "capture")
+    untracked = {relative(p.decode()) for p in git(repo, "ls-files", "--others", "--exclude-standard", "-z").split(b"\0") if p}
+    names = set(tree) | set(selected) | untracked
+    if len(names) > MAX_PATHS:
+        raise Failure("path_limit", 2, "capture")
+    work = {}
+    for name in sorted(names):
+        path = regular(repo, name, missing=True)
+        work[name] = read_file(path) if path else None
+    if sum(len(v[0]) for v in work.values() if v) > LIMIT:
+        raise Failure("capture_limit", 2, "capture")
+    # Source Git status may execute configured clean filters. Raw index,
+    # object IDs and captured working bytes already supply the required state.
+    return {"head": head, "tree": tree, "selected": selected, "work": work, "index": index, "object_format": object_format}
+
+
+def put(root, name, data, mode):
+    path = root / name
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.write_bytes(data)
+    path.chmod(mode)
+
+
+def acquire_objects(git, live, state):
+    oids = sorted({oid for table in (state["tree"], state["selected"]) for mode, oid in table.values()})
+    if not oids:
+        return {}
+    request = ("\n".join(oids) + "\n").encode("ascii")
+    rows = git(live, "cat-file", "--batch-check=%(objectname) %(objecttype) %(objectsize)", data=request).splitlines()
+    if len(rows) != len(oids):
+        raise Failure("invalid_object_capture", 2, "capture")
+    sizes = {}
+    total = 0
+    for oid, row in zip(oids, rows):
+        parts = row.split()
+        if len(parts) != 3 or parts[0] != oid.encode() or parts[1] != b"blob" or not parts[2].isdigit():
+            raise Failure("invalid_object_capture", 2, "capture")
+        size = int(parts[2])
+        if size + len(oid) + 64 > LIMIT:
+            raise Failure("object_capture_limit", 2, "capture", limit=LIMIT - 128, measured=size, unit="bytes")
+        total += size
+        if total > 2 * LIMIT:
+            raise Failure("object_capture_limit", 2, "capture", limit=2 * LIMIT, measured=total, unit="bytes")
+        sizes[oid] = size
+    batches, batch, used = [], [], 0
+    for oid in oids:
+        required = sizes[oid] + len(oid) + 64
+        if batch and used + required > LIMIT:
+            batches.append(batch)
+            batch, used = [], 0
+        batch.append(oid)
+        used += required
+    if batch:
+        batches.append(batch)
+    objects = {}
+    for batch in batches:
+        raw = git(live, "cat-file", "--batch", data=("\n".join(batch) + "\n").encode("ascii"))
+        offset = 0
+        for oid in batch:
+            header = (oid + " blob " + str(sizes[oid]) + "\n").encode("ascii")
+            if raw[offset:offset + len(header)] != header:
+                raise Failure("invalid_object_capture", 2, "capture")
+            offset += len(header)
+            end = offset + sizes[oid]
+            if raw[end:end + 1] != b"\n":
+                raise Failure("invalid_object_capture", 2, "capture")
+            objects[oid] = raw[offset:end]
+            offset = end + 1
+        if offset != len(raw):
+            raise Failure("invalid_object_capture", 2, "capture")
+    return objects
+
+
+def reproduce(git, live, state, destination):
+    destination.mkdir(mode=0o700)
+    git(destination, "init", "-q")
+    objects = acquire_objects(git, live, state)
+    # Fast-import stores raw blobs and constructs the HEAD tree without clean
+    # filters, tracked attributes, copied config, or one process per file.
+    stream = bytearray()
+    for oid, data in objects.items():
+        stream.extend(("blob\ndata " + str(len(data)) + "\n").encode("ascii"))
+        stream.extend(data)
+        stream.extend(b"\n")
+    if state["head"]:
+        git(destination, "symbolic-ref", "HEAD", "refs/heads/preflight")
+        message = b"isolated baseline\n"
+        stream.extend(b"commit refs/heads/preflight\ncommitter Fixture <fixture@example.invalid> 0 +0000\n")
+        stream.extend(("data " + str(len(message)) + "\n").encode("ascii"))
+        stream.extend(message)
+        for name, (mode, oid) in state["tree"].items():
+            stream.extend(("M " + mode + " " + oid + " " + json.dumps(name, ensure_ascii=True) + "\n").encode("ascii"))
+        stream.extend(b"\n")
+    stream.extend(b"done\n")
+    git(destination, "fast-import", "--quiet", "--done", data=bytes(stream))
+    index = b"".join((mode + " " + oid + "\t" + name).encode("ascii") + b"\0"
+                     for name, (mode, oid) in state["selected"].items())
+    git(destination, "update-index", "-z", "--index-info", data=index)
+    for name, item in state["work"].items():
+        if item:
+            put(destination, name, item[0], item[1])
+
+
+def complete_views(git, pending, base, state, targets):
+    # Real Git identifies changed paths; a fresh unborn repository forces the
+    # maintained detector to inspect their complete bytes without diff suppression.
+    tracked_changes = {relative(p.decode()) for p in git(pending, "diff", "--name-only", "--no-renames", "-z").split(b"\0") if p}
+    staged_changes = {relative(p.decode()) for p in git(pending, "diff", "--cached", "--name-only", "--no-renames", "-z").split(b"\0") if p}
+    untracked = {relative(p.decode()) for p in git(pending, "ls-files", "--others", "--exclude-standard", "-z").split(b"\0") if p}
+    work_view, index_view = base / "complete-worktree", base / "complete-index"
+    for view in (work_view, index_view):
+        view.mkdir(mode=0o700)
+        git(view, "init", "-q")
+    for name in sorted(tracked_changes | staged_changes | untracked | set(targets)):
+        path = regular(pending, name, missing=True)
+        if path:
+            data, mode, _ = read_file(path)
+            put(work_view, name, data, mode)
+    for name in sorted(staged_changes):
+        item = state["selected"].get(name)
+        if item:
+            mode, oid = item
+            data = git(pending, "cat-file", "blob", oid)
+            put(index_view, name, data, int(mode, 8) & 0o777)
+    return (work_view, index_view)
+
+
+def bundle(root, destination):
+    identities = {}
+    for provider, folder in PROVIDERS.items():
+        origin = root / folder
+        directory_no_links(origin)
+        target = destination / provider
+        target.mkdir(parents=True, mode=0o700)
+        for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py"):
+            path = regular(origin, name)
+            data, mode, _ = read_file(path, PATCH_LIMIT)
+            put(target, name, data, mode)
+        source = (target / "scan-secrets.py").read_text()
+        values = {}
+        for node in ast.parse(source).body:
+            if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                if node.targets[0].id in {"REPORT_BUILD", "DIAG_BUILD", "DIAG_ASSETS"}:
+                    values[node.targets[0].id] = ast.literal_eval(node.value)
+        if not re.fullmatch("[0-9a-f]{16}", values.get("REPORT_BUILD", "")):
+            raise Failure("unsupported_scanner_build", 3, "build")
+        expected = dict(values.get("DIAG_ASSETS", []))
+        for name in ("helpers/common.py", "helpers/audit.py"):
+            if digest((target / name).read_bytes()) != expected.get(name):
+                raise Failure("scanner_asset_drift", 2, "build")
+        identities[provider] = {"build": values["REPORT_BUILD"], "diagnostics_build": values.get("DIAG_BUILD"),
+                                "bundle": digest(b"".join((target / n).read_bytes() for n in
+                                                          ("scan-secrets.py", "helpers/common.py", "helpers/audit.py")))}
+    return identities
+
+
+def strict_json(raw):
+    def object_pairs(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate key")
+            result[key] = value
+        return result
+    return json.loads(raw, object_pairs_hook=object_pairs)
+
+
+def scan(git, bundle_root, identities, repo, logs, expected="clean"):
+    for provider in PROVIDERS:
+        log = logs / provider
+        log.mkdir(parents=True, mode=0o700)
+        env = {**git.env, "SCAN_MODE": "block", "SCAN_SCOPE": "diff", "GUARD_MODE": "block",
+               "SECRETS_LOG_DIR": str(log), "AUDIT_LOG": str(log / "audit.log"),
+               "AUDIT_LOCK": str(log / "audit.lock"), "OBSERVABILITY_TESTING": "1",
+               "OBSERVABILITY_LOG_PATH": str(log / "observability.jsonl")}
+        if provider == "copilot":
+            payload = {"hook_event_name": "preToolUse", "toolName": "bash", "toolArgs": {"command": "git status"}}
+        else:
+            payload = {"hook_event_name": "PreToolUse" if provider == "codex" else "BeforeTool",
+                       "tool_name": "exec_command" if provider == "codex" else "run_shell_command",
+                       "tool_input": {"cmd": "git status", "login": False} if provider == "codex" else {"command": "git status"},
+                       "cwd": str(repo)}
+        code, raw = run([sys.executable, "-I", "-S", "-B", str(bundle_root / provider / "scan-secrets.py")],
+                        cwd=repo, env=env, data=json.dumps(payload).encode())
+        try:
+            if len(raw) > 16384:
+                raise Failure("invalid_scanner_result", 2, "scan")
+            response = strict_json(raw)
+            records = [strict_json(row) for row in read_file(log / "scan.log", PATCH_LIMIT)[0].splitlines()]
+            record = records[-1]
+            if not isinstance(response, dict) or not isinstance(record, dict):
+                raise Failure("invalid_scanner_result", 2, "scan")
+        except (ValueError, IndexError, OSError):
+            raise Failure("invalid_scanner_result", 2, "scan") from None
+        # Validate infrastructure and native output before assigning a security
+        # result. A findings-shaped log cannot hide a malformed allow response
+        # or unavailable audit behind a nonzero-but-misclassified result.
+        audit_path = regular(log, "scan.log")
+        audit_bytes, audit_mode, _ = read_file(audit_path, PATCH_LIMIT)
+        if not audit_bytes.endswith(b"\n") or len(records) != 1 or (os.name != "nt" and audit_mode & 0o077):
+            raise Failure("invalid_required_audit", 2, "scan")
+        status = record.get("status")
+        findings = record.get("findings", [])
+        truncated = record.get("findingsTruncated")
+        omitted = record.get("omittedFindings")
+        checks = {"provider": provider, "build": identities[provider]["build"], "mode": "block", "scope": "diff",
+                  "profile": "pending_snapshots_v1", "route": "pending_scan",
+                  "inspection_outcome": "complete", "audit_outcome": "written"}
+        if (any(record.get(k) != v for k, v in checks.items())
+                or status not in {"clean", "findings"} or not isinstance(findings, list)
+                or truncated is not False or type(omitted) is not int or omitted != 0):
+            raise Failure("incomplete_scan", 2, "scan", findings_present=bool(findings))
+        if status == "clean":
+            if findings or record.get("security_outcome") != "clean" or record.get("enforcement") != "allow":
+                raise Failure("inconsistent_scanner_result", 2, "scan", findings_present=bool(findings))
+            if response != {}:
+                raise Failure("invalid_native_permission", 2, "scan")
+        else:
+            if not findings or record.get("security_outcome") != "findings" or record.get("enforcement") != "deny":
+                raise Failure("inconsistent_scanner_result", 2, "scan", findings_present=bool(findings))
+            native = response if provider == "gemini" else response.get("hookSpecificOutput", {})
+            deny = native.get("decision") == "deny" if provider == "gemini" else native.get("permissionDecision") == "deny"
+            reason = native.get("reason" if provider == "gemini" else "permissionDecisionReason")
+            if not deny or not isinstance(reason, str) or not reason.startswith("scan-secrets blocked:"):
+                raise Failure("invalid_native_permission", 2, "scan", findings_present=True)
+        if status != expected:
+            raise Failure("findings" if status == "findings" else "control_not_detected",
+                          1 if status == "findings" else 2, "scan", findings_present=bool(findings))
+        if expected == "findings" and not any(isinstance(f, dict) and f.get("pattern") == "github_classic_pat" for f in findings):
+            raise Failure("control_not_detected", 2, "scan")
+
+
+
+def parser():
+    result = Parser(description=__doc__, allow_abbrev=False,
+                    epilog="Example: --patch repair.patch --path scripts/fixture.py --active-hook-root /reviewed/home --check. "
+                    "Active root contains .codex/hooks, .copilot/hooks/scripts and .gemini/hooks/scripts. "
+                    "Verification leaves live targets and the index unchanged. No environment configuration is accepted. "
+                    "Bounds: patch 1 MiB; state 64 MiB/4096 paths; 64 targets; each child 12 seconds; total 180 seconds; stdin 2 seconds. "
+                    "Windows checking refuses before subprocess launch until bounded descendant cleanup is available. "
+                    "Exit: 0 verified, 1 findings, 2 incomplete, 3 invalid invocation, 130 canceled.")
+    result.add_argument("--version", action="version", version="%(prog)s " + VERSION + " schema=" + SCHEMA)
+    result.add_argument("--patch", required=True, help="Unified Git text patch, or - for bounded stdin")
+    result.add_argument("--path", action="append", required=True, help="Exact existing regular text fixture target; repeat for each target")
+    result.add_argument("--active-hook-root", required=True, type=Path, help="Reviewed active home/source root, supplied explicitly")
+    result.add_argument("--check", action="store_true", required=True, help="Verify without changing checkout or index")
+    for name in ("json", "no-input", "quiet", "no-color"):
+        result.add_argument("--" + name, action="store_true")
+    return result
+
+
+def execute(args):
+    if os.name == "nt":
+        raise Failure("bounded_descendant_cleanup_unavailable", 2, "platform")
+    global DEADLINE
+    DEADLINE = time.monotonic() + 180
+    targets = [relative(p) for p in args.path]
+    if len(set(targets)) != len(targets) or len(targets) > MAX_TARGETS:
+        raise Failure("invalid_targets", 3, "arguments")
+    git_path = shutil.which("git", path=os.defpath + os.pathsep + "/opt/homebrew/bin")
+    if git_path is None:
+        raise Failure("git_unavailable", 2, "capture")
+    live = Path.cwd().resolve()
+    with tempfile.TemporaryDirectory(prefix="verified-fixture-") as temporary:
+        base = Path(temporary).resolve()
+        base.chmod(0o700)
+        home = base / "home"
+        home.mkdir(mode=0o700)
+        git = Git(git_path, environment(home, git_path))
+        if args.patch == "-":
+            if sys.stdin.isatty():
+                raise Failure("patch_stdin_required", 3, "input")
+            patch = read_patch_stdin()
+        else:
+            patch = read_file(Path(args.patch).absolute(), PATCH_LIMIT)[0]
+        if len(patch) > PATCH_LIMIT:
+            raise Failure("patch_limit", 3, "input")
+        if any(marker in patch for marker in (b"GIT binary patch", b"Binary files ", b"rename from ", b"rename to ", b"copy from ", b"new file mode ", b"deleted file mode ", b"old mode ", b"new mode ")):
+            raise Failure("unsupported_patch", 3, "input")
+        state = capture(git, live)
+        for name in targets:
+            if not state["work"].get(name) or b"\0" in state["work"][name][0]:
+                raise Failure("target_requires_regular_text", 3, "paths")
+            try:
+                state["work"][name][0].decode("utf-8")
+            except UnicodeError:
+                raise Failure("target_requires_regular_text", 3, "paths") from None
+        work = base / "pending"
+        reproduce(git, live, state, work)
+        stats = git(work, "apply", "--numstat", "-z", "-", data=patch)
+        changed = []
+        for record in stats.split(b"\0"):
+            if record:
+                added, removed, path = record.split(b"\t", 2)
+                if not added.isdigit() or not removed.isdigit():
+                    raise Failure("unsupported_patch", 3, "input")
+                changed.append(relative(path.decode()))
+        if set(changed) != set(targets) or len(changed) != len(targets):
+            raise Failure("patch_target_mismatch", 3, "input")
+        git(work, "apply", "--check", "--whitespace=nowarn", "-", data=patch)
+        git(work, "apply", "--whitespace=nowarn", "-", data=patch)
+        for name in targets:
+            data, mode, _ = read_file(regular(work, name))
+            if b"\0" in data:
+                raise Failure("target_requires_regular_text", 3, "paths")
+            try:
+                data.decode("utf-8")
+            except UnicodeError:
+                raise Failure("target_requires_regular_text", 3, "paths") from None
+        views = complete_views(git, work, base, state, targets)
+        control = base / "credential-control"
+        control.mkdir(mode=0o700)
+        git(control, "init", "-q")
+        # Unmistakably fake, assembled only in private disposable storage.
+        put(control, "credential-control.txt", ("gh" + "p_" + "FAKE" * 9).encode(), 0o600)
+        builds = {}
+        for label, origin in (("active", args.active_hook_root.absolute()), ("candidate", ROOT)):
+            builds[label] = bundle(origin, base / label)
+            scan(git, base / label, builds[label], work, base / "logs" / label / "pending")
+            for number, view in enumerate(views):
+                scan(git, base / label, builds[label], view, base / "logs" / label / ("complete-" + str(number)))
+            scan(git, base / label, builds[label], control, base / "logs" / label / "control", expected="findings")
+        if capture(git, live) != state:
+            raise Failure("state_drift", 2, "capture")
+        return {"schema": SCHEMA, "version": VERSION, "result": "verified",
+                "reason": "complete_clean", "phase": "complete", "targets": len(targets), "builds": builds, "controls_detected": 6}
+
+
+def main():
+    command = parser()
+    if len(sys.argv) == 1 or sys.argv[1:] in (["help"], ["help", "check"]):
+        command.print_help()
+        return 0
+    report = None
+    code = 0
+    try:
+        args = command.parse_args()
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt
+        signal.signal(signal.SIGTERM, interrupted)
+        report = execute(args)
+    except Failure as failure:
+        code = failure.code
+        report = {"schema": SCHEMA, "version": VERSION, "result": "rejected", "reason": failure.reason,
+                  "phase": failure.phase, **failure.measurements,
+                  "action": "Repair the reported state or fixture, then rerun --check."}
+    except KeyboardInterrupt:
+        code = 130
+        report = {"schema": SCHEMA, "version": VERSION, "result": "canceled", "reason": "interrupted", "phase": "cancellation"}
+    except Exception:  # Fail closed without payload-derived exception text.
+        code = 2
+        report = {"schema": SCHEMA, "version": VERSION, "result": "rejected", "reason": "unsafe_or_unavailable_state", "phase": "preflight"}
+    try:
+        if "--json" in sys.argv:
+            print(json.dumps(report, sort_keys=True), flush=True)
+        elif code:
+            print("Fixture preflight rejected: " + report["reason"] + ". Repair the fixture or state and rerun --check.", file=sys.stderr)
+        elif not args.quiet:
+            print("Fixture patch " + report["result"] + ".")
+    except BrokenPipeError:
+        with contextlib.suppress(OSError):
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        return code or 2
+    return code
+
+
+if __name__ == "__main__":
+    try:
+        try:
+            exit_code = main()
+        except SystemExit as requested_exit:
+            exit_code = requested_exit.code
+        sys.stdout.flush()
+    except BrokenPipeError:
+        with contextlib.suppress(OSError):
+            os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        exit_code = 2
+    raise SystemExit(exit_code)
