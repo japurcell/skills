@@ -3,7 +3,13 @@
 set -euo pipefail
 
 readonly REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-readonly SKILLS_ROOT="${CLEANUP_SKILLS_ROOT:-$REPO_ROOT/skills}"
+if [[ "${CLEANUP_SKILLS_ROOT+x}" == "x" ]]; then
+  readonly SKILLS_ROOT="$CLEANUP_SKILLS_ROOT"
+  readonly CONFIGURED_SKILLS_ROOT=1
+else
+  readonly SKILLS_ROOT="$REPO_ROOT/skills"
+  readonly CONFIGURED_SKILLS_ROOT=0
+fi
 
 dir_creation_epoch() {
   local dir="$1"
@@ -82,17 +88,37 @@ prune_workspace_iterations() {
   workspace_report "$workspace" "$kept_name" "$deleted_names"
 }
 
-main() {
+scan_workspace_root() {
+  local root="$1"
+  local max_depth="$2"
   local workspace
+
+  while IFS= read -r -d '' workspace; do
+    prune_workspace_iterations "$workspace"
+  done < <(
+    find -P "$root" -mindepth 1 -maxdepth "$max_depth" \
+      \( -type d -name archive -prune \) -o \
+      \( -type d -name '*-workspace' -print0 \) | sort -z
+  )
+}
+
+main() {
+  local local_skills_root="$REPO_ROOT/.agents/skills"
 
   [[ -d "$SKILLS_ROOT" ]] || {
     echo "Skills root not found: $SKILLS_ROOT" >&2
     exit 1
   }
 
-  while IFS= read -r -d '' workspace; do
-    prune_workspace_iterations "$workspace"
-  done < <(find "$SKILLS_ROOT" -mindepth 1 -maxdepth 1 -type d -name '*-workspace' -print0 | sort -z)
+  if [[ "$CONFIGURED_SKILLS_ROOT" -eq 1 ]]; then
+    scan_workspace_root "$SKILLS_ROOT" 2
+    return
+  fi
+
+  scan_workspace_root "$SKILLS_ROOT" 2
+  if [[ -d "$local_skills_root" ]]; then
+    scan_workspace_root "$local_skills_root" 1
+  fi
 }
 
 main "$@"
