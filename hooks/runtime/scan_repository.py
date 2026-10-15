@@ -140,11 +140,19 @@ class ProtectedRepository:
         self.root, gitdir, common = (Path(os.fsdecode(value)).resolve(strict=True) for value in rows[:3])
         self.gitdir, self.common = gitdir, common
         index = self.read(gitdir / "index", missing=True)
-        config = (self.query("config", "--local", "--includes", "--null", "--list")
-                  + self.query("config", "--worktree", "--includes", "--null", "--list"))
+        # Git loads config.worktree only when its extension is enabled. Scope
+        # labels retain that precedence without importing command overrides or
+        # invoking --worktree in an ordinary multi-worktree repository.
+        config = self.query("config", "--includes", "--null", "--show-scope", "--list")
+        scoped = config.split(b"\0")
+        if scoped[-1] or len(scoped) % 2 != 1:
+            raise GitCommandError("git_output_invalid", "repository")
         selected = {}
-        for record in config.split(b"\0"):
-            if not record:
+        for offset in range(0, len(scoped) - 1, 2):
+            scope, record = scoped[offset:offset + 2]
+            if scope not in {b"system", b"global", b"local", b"worktree", b"command"} or not record:
+                raise GitCommandError("git_output_invalid", "repository")
+            if scope not in {b"local", b"worktree"}:
                 continue
             key, separator, value = record.partition(b"\n")
             if not separator:

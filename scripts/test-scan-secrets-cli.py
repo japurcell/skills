@@ -214,6 +214,78 @@ class CheckpointTests(unittest.TestCase):
         path.write_bytes(path.read_bytes() + self.credential() + b"\r\n")
         self.result(self.cli("check", "--json", "--repo", str(linked)), 1)
 
+    def test_ordinary_linked_worktree_checks_without_worktree_config_extension(self):
+        (self.repo / "selected.txt").write_bytes(self.credential() + b"\nbase\n")
+        self.commit()
+        self.git("config", "core.autocrlf", "true")
+        linked = self.base / "ordinary-linked"
+        self.git("worktree", "add", "--quiet", "-b", "fixture-ordinary", str(linked))
+        gitdir = Path(os.fsdecode(self.git("-C", str(linked), "rev-parse", "--absolute-git-dir")).strip())
+        protected = (self.repo / ".git/config", gitdir / "index", gitdir / "HEAD")
+        before = {path: path.read_bytes() for path in protected}
+        path = linked / "selected.txt"
+        path.write_bytes(self.credential() + b"\r\nbase\r\nnew clean\r\n")
+        self.result(self.cli("check", "--json", "--repo", str(linked)), 0)
+        path.write_bytes(path.read_bytes() + self.credential() + b"\r\n")
+        self.result(self.cli("check", "--json", "--repo", str(linked)), 1)
+        self.assertEqual({path: path.read_bytes() for path in protected}, before)
+        self.assertTrue(path.read_bytes().endswith(self.credential() + b"\r\n"))
+
+    def test_enabled_worktree_config_can_be_missing_but_cannot_be_malformed(self):
+        (self.repo / "selected.txt").write_bytes(self.credential() + b"\nbase\n")
+        self.commit()
+        self.git("config", "core.autocrlf", "true")
+        linked = self.base / "missing-settings-linked"
+        self.git("worktree", "add", "--quiet", "-b", "fixture-missing-settings", str(linked))
+        self.git("config", "extensions.worktreeConfig", "true")
+        gitdir = Path(os.fsdecode(self.git("-C", str(linked), "rev-parse", "--absolute-git-dir")).strip())
+        settings = gitdir / "config.worktree"
+        self.assertFalse(settings.exists())
+        path = linked / "selected.txt"
+        path.write_bytes(self.credential() + b"\r\nbase\r\nnew clean\r\n")
+        self.result(self.cli("check", "--json", "--repo", str(linked)), 0)
+        self.assertFalse(settings.exists())
+        settings.write_text("[malformed\n")
+        before = {entry: entry.read_bytes() for entry in (settings, gitdir / "index", self.repo / ".git/config")}
+        value = self.result(self.cli("check", "--json", "--repo", str(linked)), 2)
+        self.assertEqual(value["reason"], "git_failed")
+        self.assertEqual({entry: entry.read_bytes() for entry in before}, before)
+        # An enabled override must win over the common normalization setting.
+        settings.write_text("[core]\nautocrlf = false\n")
+        self.result(self.cli("check", "--json", "--repo", str(linked)), 1)
+
+    def test_repository_attribute_setting_survives_command_layer_isolation(self):
+        path = self.repo / "selected.txt"
+        path.write_text("base\n")
+        self.commit()
+        attributes = self.base / "repository-attributes"
+        attributes.write_text("*.txt filter=fixture\n")
+        marker = self.base / "unexpected-helper"
+        helper = self.base / "filter.sh"
+        helper.write_text(f"#!/bin/sh\nprintf executed > '{marker}'\ncat\n")
+        helper.chmod(0o755)
+        self.git("config", "core.attributesFile", str(attributes))
+        self.git("config", "filter.fixture.clean", str(helper))
+        path.write_bytes(b"base\n" + self.credential() + b"\n")
+        value = self.result(self.cli("check", "--json"), 2)
+        self.assertEqual(value["reason"], "conversion_unsupported")
+        self.assertFalse(marker.exists())
+
+    def test_malformed_scoped_configuration_capture_is_incomplete(self):
+        for number, raw in enumerate((b"local\0core.autocrlf\ntrue", b"unknown\0core.autocrlf\ntrue\0",
+                                      b"local\0", b"local\0\0")):
+            with self.subTest(raw=raw):
+                wrapper = self.base / f"malformed-config-{number}.py"
+                wrapper.write_text("import subprocess,runpy,sys\nreal=subprocess.Popen\n"
+                    "def launched(command,*args,**kwargs):\n"
+                    " if command[1:2]==['config'] and '--show-scope' in command:\n"
+                    "  command=[sys.executable,'-I','-S','-B','-c'," + repr("import sys;sys.stdout.buffer.write(" + repr(raw) + ")") + "]\n"
+                    " return real(command,*args,**kwargs)\nsubprocess.Popen=launched\n"
+                    "sys.argv=[" + repr(str(CLI)) + "]+sys.argv[1:]\nrunpy.run_path(" + repr(str(CLI)) + ",run_name='__main__')\n")
+                process = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "check", "--json"],
+                    cwd=self.repo, env=self.env, capture_output=True, timeout=5)
+                self.assertEqual(self.result(process, 2)["reason"], "git_output_invalid")
+
     def test_object_replacements_cannot_hide_selected_index_content(self):
         path = self.repo / "selected.bin"
         path.write_bytes(b"\0" + self.credential())
