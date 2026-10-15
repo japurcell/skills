@@ -30,6 +30,8 @@ def _policy_limits(repo: Path) -> dict:
     for label, (filename, names) in POLICY_NAMES.items():
         outer = ast.parse((repo / "hooks/families" / filename).read_text())
         trees = [outer]
+        if label == "scanner":
+            trees.append(ast.parse((repo / "hooks/runtime/scan_types.py").read_text()))
         for node in ast.walk(outer):
             if isinstance(node, ast.Constant) and isinstance(node.value, str) and "MAX_" in node.value:
                 try:
@@ -499,7 +501,7 @@ def collector_source(provider: Provider) -> str:
     entryroot = provider.hook_root if provider.name == "codex" else provider.hook_root / "scripts"
     assets = []
     for target in targets():
-        if target.provider == provider.name and target.family in {"scan_secrets", "common", "audit", "tool_guard"}:
+        if target.provider == provider.name and target.family in {"scan_secrets", "scan_runtime", "common", "audit", "tool_guard"}:
             family = importlib.import_module("hooks.families." + target.family)
             # Entrypoints can embed this collector later: no self-render/hash cycle.
             expected = None if target.output_path.parent == entryroot else hashlib.sha256(family.render(provider, target).encode()).hexdigest()

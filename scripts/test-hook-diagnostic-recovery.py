@@ -331,6 +331,32 @@ class RecoveryTests(unittest.TestCase):
                 self.assertEqual(cli.returncode, 0, cli.stderr)
                 self.assertEqual(json.loads(cli.stdout)["security"]["outcome"], "not_scanned")
 
+    def test_scanner_runtime_helper_closure_fails_closed_and_preserves_recovery(self):
+        helpers = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
+                   "scan_git", "scan_audit", "scan_engine")
+        for provider in PROVIDERS:
+            with tempfile.TemporaryDirectory() as directory:
+                script, cwd, env = self.setup_fixture(directory, provider)
+                for helper in helpers:
+                    path = script.parent / "helpers" / (helper + ".py")
+                    original = path.read_bytes()
+                    for state in ("missing", "drift"):
+                        if state == "missing":
+                            path.unlink()
+                        else:
+                            path.write_text("raise RuntimeError('fixture corrupt helper')\n")
+                        for mode in ("block", "warn"):
+                            with self.subTest(provider=provider, helper=helper, state=state, mode=mode):
+                                ordinary, result = self.launch(script, cwd, env, envelope(provider, "echo safe"), mode)
+                                self.assertEqual(result.returncode, 0)
+                                self.assertIn("scanner helper unavailable", reason(ordinary))
+                                self.assert_native_enforcement(ordinary, provider, "deny")
+                                response, result = self.launch(script, cwd, env, envelope(provider), mode)
+                                report = self.diagnostics(response, result, provider)
+                                states = {item["asset"]: item["state"] for item in report["assets"]["records"]}
+                                self.assertEqual(states["helpers/" + helper + ".py"], state)
+                        path.write_bytes(original)
+
     def test_git_audit_unsafe_candidate_failure_does_not_block_recovery(self):
         for provider in PROVIDERS:
             for fault in ("git", "audit", "scan_log", "unsafe"):

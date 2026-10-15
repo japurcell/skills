@@ -15,9 +15,9 @@ class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
         super().setUp()
         self.env["HOME"] = str(self.root)
 
-    def findings(self, provider, expected, scope="diff"):
+    def findings(self, provider, expected, scope="diff", status="findings"):
         response, record = self.scan(provider, "block", scope)
-        self.assertEqual(record["status"], "findings", record)
+        self.assertEqual(record["status"], status, record)
         self.assertTrue(response)
         self.assertEqual([(row["pattern"], row["line"], row["redactedMatch"])
                           for row in record["findings"]], expected)
@@ -128,9 +128,27 @@ class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
         (self.repo / "dense.txt").write_text("x\n" * 100000 + (token + "\n") * 1001)
         for provider in fixture.PROVIDERS:
             record = self.findings(provider, [("github_classic_pat", line, "ghp_...FAKE")
-                                              for line in range(100001, 100101)])
+                                              for line in range(100001, 100101)], status="incomplete")
             self.assertEqual(record["omittedFindings"], 900)
             self.assertTrue(record["findingsTruncated"])
+
+    def test_result_coverage_distinguishes_retention_from_inspection_stop(self):
+        path = self.repo / "coverage.txt"
+        path.write_text((fixture.FAKE_TOKEN + "\n") * 101)
+        for provider in fixture.PROVIDERS:
+            _, record = self.scan(provider)
+            self.assertEqual(record["scanResult"]["outcome"], "complete_findings")
+            self.assertTrue(record["scanResult"]["coverage_complete"])
+            self.assertEqual(record["scanResult"]["counts"]["processed_findings"], 101)
+        path.write_text((fixture.FAKE_TOKEN + "\n") * 1001)
+        for provider in fixture.PROVIDERS:
+            _, record = self.scan(provider)
+            self.assertEqual(record["status"], "incomplete")
+            self.assertEqual(record["scanResult"]["outcome"], "incomplete")
+            self.assertFalse(record["scanResult"]["coverage_complete"])
+            self.assertEqual(record["diagnostic"]["cause"], "findings_limit")
+            self.assertEqual(len(record["findings"]), 100)
+            self.assertEqual(record["security_outcome"], "findings")
 
     def test_credential_path_precedes_tokens_and_report_is_shared_across_candidates(self):
         token = fixture.FAKE_TOKEN
@@ -142,7 +160,7 @@ class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
             record = self.findings(provider, [
                 ("credential_path", 1, "[SENSITIVE PATH]"),
                 ("github_classic_pat", 1, "ghp_...FAKE"),
-                *[("github_classic_pat", line, "ghp_...FAKE") for line in range(1, 99)]])
+                *[("github_classic_pat", line, "ghp_...FAKE") for line in range(1, 99)]], status="incomplete")
             self.assertEqual(record["omittedFindings"], 900)
             self.assertEqual([row["path"] for row in record["findings"][:2]],
                              [".aws/credentials", ".aws/credentials"])
@@ -170,6 +188,80 @@ class StreamingScannerTests(ScannerFixtureMixin, unittest.TestCase):
             "    os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n")
         for provider in fixture.PROVIDERS:
             self.assert_outcome(provider, "block", "diff", "incomplete", cause="git_output_invalid")
+
+    def test_diff_matches_captured_worktree_even_when_path_changes_before_git_diff(self):
+        path = self.repo / "captured.txt"
+        path.write_text("baseline\n")
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        self.install_fake_git(
+            "import os, sys\nfrom pathlib import Path\n"
+            "args = sys.argv[1:]\n"
+            "if args[0] == 'diff' and '--name-only' not in args:\n"
+            "    Path('captured.txt').write_text('baseline\\n')\n"
+            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
+            directory="mutable-diff-bin")
+        for provider in fixture.PROVIDERS:
+            path.write_text(fixture.FAKE_TOKEN + "\n")
+            self.assert_outcome(provider, "block", "diff", "findings", "captured.txt")
+            self.assertEqual(path.read_text(), "baseline\n")
+
+    def test_worktree_diff_baseline_is_pinned_before_candidate_capture(self):
+        from unittest import mock
+        path = self.repo / "captured.txt"
+        path.write_text("baseline\n")
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        path.write_text(fixture.FAKE_TOKEN + "\n")
+        secret_oid = self.git("hash-object", "-w", "captured.txt").stdout.strip()
+        for provider in fixture.PROVIDERS:
+            self.git("reset", "-q", base, "--", "captured.txt")
+            wrapper = self.root / (provider + "-baseline.py")
+            wrapper.write_text(
+                "import os, runpy, subprocess\n"
+                "original_open, original_read = os.open, os.read\n"
+                "selected = set()\nchanged = False\n"
+                "def opening(path, flags, *args, **kwargs):\n"
+                "    fd = original_open(path, flags, *args, **kwargs)\n"
+                "    if os.fspath(path) == 'captured.txt': selected.add(fd)\n"
+                "    return fd\n"
+                "def reading(fd, size):\n"
+                "    global changed\n"
+                "    chunk = original_read(fd, size)\n"
+                "    if fd in selected and not chunk and not changed:\n"
+                "        changed = True\n"
+                "        subprocess.run(" + repr([str(self.git_path), "update-index", "--cacheinfo", "100644," + secret_oid + ",captured.txt"]) + ", check=True)\n"
+                "    return chunk\n"
+                "os.open, os.read = opening, reading\n"
+                "os.supports_dir_fd.add(opening)\n"
+                "runpy.run_path(" + repr(str(fixture.HOOKS[provider])) + ", run_name='__main__')\n")
+            with mock.patch.dict(fixture.HOOKS, {provider: wrapper}):
+                self.assert_outcome(provider, "block", "diff", "findings", "captured.txt")
+
+    def test_staged_diff_baseline_is_pinned_before_candidate_capture(self):
+        path = self.repo / "captured.txt"
+        path.write_text("baseline\n")
+        self.git("add", "--all")
+        self.git("commit", "-qm", "baseline")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        path.write_text(fixture.FAKE_TOKEN + "\n")
+        self.git("add", "--all")
+        tree = self.git("write-tree").stdout.strip()
+        secret_commit = self.git("commit-tree", tree, "-p", base, "-m", "fixture").stdout.strip()
+        self.install_fake_git(
+            "import os, subprocess, sys\n"
+            "args = sys.argv[1:]\n"
+            "if args[:2] == ['cat-file', '--batch-check']:\n"
+            "    result = subprocess.run([os.environ['REAL_GIT'], *args], input=sys.stdin.buffer.read(), capture_output=True)\n"
+            "    subprocess.run([os.environ['REAL_GIT'], 'update-ref', 'HEAD', " + repr(secret_commit) + "], check=True)\n"
+            "    sys.stdout.buffer.write(result.stdout)\n"
+            "    sys.exit(result.returncode)\n"
+            "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
+            directory="head-move-bin")
+        for provider in fixture.PROVIDERS:
+            self.git("update-ref", "HEAD", base)
+            self.assert_outcome(provider, "block", "diff", "findings", "captured.txt")
 
     def test_input_time_and_git_work_share_nonextendable_deadline(self):
         (self.repo / "pending.txt").write_text("safe\n")

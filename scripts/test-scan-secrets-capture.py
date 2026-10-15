@@ -33,7 +33,7 @@ def run_case(
     unexpected_failure: bool = False, unexpected_input: bool = False, files: dict[str, bytes] | None = None,
     input_text: str | None = None, missing_git: bool = False,
     storage_fault: str = "", hostile_payload: bool = False, descriptor_fault: str = "",
-    launch_fault: str = "",
+    launch_fault: str = "", track_files: bool = False,
 ) -> tuple[dict, str]:
     with tempfile.TemporaryDirectory(prefix="scan-capture-test-") as directory:
         root = Path(directory)
@@ -53,6 +53,8 @@ def run_case(
             ], check=True)
         for name, content in (files or {}).items():
             (repo / name).write_bytes(content)
+        if track_files:
+            subprocess.run([real_git, "-C", str(repo), "add", "--", *(files or {})], check=True)
         output_path = root / "response.json"
         error_path = root / "stderr.txt"
         env = {key: value for key, value in os.environ.items()
@@ -370,7 +372,7 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
             assert_incomplete(provider, mode, run_case(provider, mode, fake_git, maximum),
                               cause, operation, **numbers)
         assert_incomplete(provider, mode, run_case(
-            provider, mode, failed_diff_git, committed=True, files={"--name-only": b"safe\n"},
+            provider, mode, failed_diff_git, committed=True, files={"--name-only": b"safe\n"}, track_files=True,
         ), "git_failed", "git_diff", exit_status=9)
         assert_incomplete(provider, mode, run_case(
             provider, mode, unsafe_candidate_git,

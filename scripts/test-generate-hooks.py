@@ -29,13 +29,13 @@ def verified_fixture(module, content):
     with tempfile.TemporaryFile(mode="w+b") as stream:
         stream.write(content)
         stream.flush()
-        yield module.VerifiedCapture(stream, len(content), time.monotonic() + 8, "git_index")
+        yield module.VerifiedCapture(module.ScanContext(module.ScanLimits()), stream, len(content), time.monotonic() + 8, "git_index")
 
 
 def acquire_fixture(module, root, path):
     """Exercise current worktree acquisition, classification and protected replay."""
     candidate = (module.CANDIDATE_UNTRACKED, path)
-    with module.snapshot_source(root, [candidate], module.ScanBudget(time.monotonic() + 8)) as source:
+    with module.snapshot_source(root, [candidate], module.ScanBudget(module.ScanContext(module.ScanLimits()))) as source:
         with source.acquire(candidate) as snapshot:
             return b"".join(snapshot.chunks()), snapshot.classification
 
@@ -85,6 +85,12 @@ SECRET_SCANNER_TARGETS = (
     ".copilot/hooks/scripts/scan-secrets.py",
     ".gemini/hooks/scripts/scan-secrets.py",
     ".codex/hooks/scan-secrets.py",
+)
+SCANNER_RUNTIME_TARGETS = tuple(
+    str(Path(entry).parent / "helpers" / (name + ".py"))
+    for entry in SECRET_SCANNER_TARGETS
+    for name in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
+                 "scan_git", "scan_audit", "scan_engine")
 )
 CODEX_HELPER_TARGETS = (
     ".codex/hooks/helpers/common.py",
@@ -159,6 +165,31 @@ def load_module(name: str, path: Path):
     sys.modules[specification.name] = module
     specification.loader.exec_module(module)
     return module
+
+
+def load_scanner_runtime(name: str, entrypoint: Path):
+    import types
+    package_name = name + "_runtime"
+    package = types.ModuleType(package_name)
+    package.__path__ = [str(entrypoint.parent / "helpers")]
+    sys.modules[package_name] = package
+    import importlib
+    git = importlib.import_module(package_name + ".scan_git")
+    for suffix in ("scan_types", "scan_stream", "scan_engine", "scan_allowlist"):
+        other = importlib.import_module(package_name + "." + suffix)
+        for key, value in vars(other).items():
+            if key not in vars(git) and not key.startswith("__"):
+                setattr(git, key, value)
+    git.engine = importlib.import_module(package_name + ".scan_engine")
+    git.audit = importlib.import_module(package_name + ".scan_audit")
+    return git
+
+
+def append_fixture_log(module, **arguments):
+    module.audit.append_scan_log(module.audit.AuditPolicy(
+        "fixture", "fixture", "tool scan", module.MAX_FILES,
+        os.environ.get("AUDIT_LOG_MAX_BYTES", "1048576"),
+        os.environ.get("AUDIT_LOG_MAX_BACKUPS", "3")), **arguments)
 
 
 def snapshot(root: Path) -> dict[str, tuple[bytes, int]]:
@@ -293,7 +324,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (38 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (59 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -334,7 +365,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (38 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (59 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -360,7 +391,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(OKF_TARGETS) - set(DIAGNOSTICS_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(SCANNER_RUNTIME_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(OKF_TARGETS) - set(DIAGNOSTICS_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -575,9 +606,9 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
 
     def test_secret_scanner_renderings_share_policy_outside_provider_adapters(self) -> None:
+        generator = load_generator()
         from hooks.families.allowlist import ALLOWLIST_SOURCE
 
-        generator = load_generator()
         rendered = {
             output.target.output_path.as_posix(): output.content.decode("utf-8")
             for output in generator.render_all(ROOT)
@@ -599,7 +630,9 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(len(sections), 5, f"Expected four explicit provider adapters in {target}.")
             self.assertNotIn('"permissionDecision": "deny"', "".join(sections))
             self.assertNotIn('"decision": "deny"', "".join(sections))
-            self.assertEqual(source.count(ALLOWLIST_SOURCE), 1)
+            self.assertNotIn(ALLOWLIST_SOURCE, source)
+            helper = str(Path(target).parent / "helpers/scan_allowlist.py")
+            self.assertEqual(rendered[helper].count(ALLOWLIST_SOURCE), 1)
             shared_sections.append(sections)
 
         for target in TOOL_GUARD_POLICY_TARGETS:
@@ -617,8 +650,8 @@ class GenerateHooksTests(unittest.TestCase):
             ROOT / "scripts" / "fixtures" / "secret_scanner_vectors.py",
         )
         modules = (
-            load_module("copilot_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_vectors", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
 
         provider_outcomes = []
@@ -655,7 +688,7 @@ class GenerateHooksTests(unittest.TestCase):
             process.poll.return_value = 0
             with mock.patch("subprocess.Popen", return_value=process) as run, \
                  mock.patch("os.killpg", side_effect=ProcessLookupError):
-                self.assertEqual(module.run_git(["status"], cwd=ROOT), "")
+                self.assertEqual(module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT), "")
             invocation = run.call_args
             self.assertEqual(invocation.args[0], [shutil.which("git"), "status"])
             self.assertEqual(invocation.kwargs["env"]["GIT_TERMINAL_PROMPT"], "0")
@@ -689,8 +722,8 @@ class GenerateHooksTests(unittest.TestCase):
 
     def test_secret_scanner_git_failures_are_not_clean_results(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_git_errors", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
         commands = (
             ["diff", "--name-only", "--"],
@@ -707,16 +740,16 @@ class GenerateHooksTests(unittest.TestCase):
                     with mock.patch("subprocess.Popen", return_value=process), \
                          mock.patch("os.killpg", side_effect=ProcessLookupError):
                         with self.assertRaises(module.GitCommandError):
-                            module.run_git(command, cwd=ROOT)
+                            module.run_git(module.ScanContext(module.ScanLimits()), command, cwd=ROOT)
                 with self.subTest(provider=module.__name__, command=command[0], failure="launch"):
                     with mock.patch("subprocess.Popen", side_effect=OSError("unavailable")):
                         with self.assertRaises(module.GitCommandError):
-                            module.run_git(command, cwd=ROOT)
+                            module.run_git(module.ScanContext(module.ScanLimits()), command, cwd=ROOT)
 
     def test_secret_scanner_git_output_and_cumulative_deadline_are_bounded(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_git_bounds", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
 
         with tempfile.TemporaryDirectory() as directory:
@@ -743,10 +776,10 @@ class GenerateHooksTests(unittest.TestCase):
                         os.environ,
                         {"PATH": bounded_path, "GIT_TEST_PID_PATH": str(pid_path)},
                     ):
-                        with mock.patch.object(module, "MAX_GIT_OUTPUT_BYTES", 1024):
+                        with mock.patch.object(module, "ScanLimits", return_value=module.ScanLimits(max_capture_bytes=1024)):
                             started = time.monotonic()
                             with self.assertRaises(module.ScanLimitExceeded):
-                                module.run_git(
+                                module.run_git(module.ScanContext(module.ScanLimits()),
                                     ["status"],
                                     cwd=ROOT,
                                     deadline=time.monotonic() + 2.0,
@@ -767,16 +800,16 @@ class GenerateHooksTests(unittest.TestCase):
                     deadline = time.monotonic() + 0.25
                     with mock.patch.dict(os.environ, {"PATH": bounded_path}):
                         self.assertEqual(
-                            module.run_git(["status"], cwd=ROOT, deadline=deadline),
+                            module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT, deadline=deadline),
                             "ok\n",
                         )
                         with self.assertRaises(module.ScanLimitExceeded):
-                            module.run_git(["status"], cwd=ROOT, deadline=deadline)
+                            module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT, deadline=deadline)
 
     def test_secret_scanner_parses_git_paths_and_diff_lines_without_ambiguity(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_git_parsing", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
         cached_output = b"shared.txt\0"
         worktree_output = b"shared.txt\0"
@@ -808,13 +841,13 @@ class GenerateHooksTests(unittest.TestCase):
                     side_effect=[verified_fixture(module, data) for data in (b"", cached_output, worktree_output, untracked_output)],
                 ) as run:
                     self.assertEqual(
-                        module.collect_files(ROOT, "diff", True),
+                        module.collect_files(module.ScanContext(module.ScanLimits()), ROOT, "diff", True),
                         expected_candidates,
                     )
-                unmerged_args = run.call_args_list[0].args[0]
-                cached_args = run.call_args_list[1].args[0]
-                worktree_args = run.call_args_list[2].args[0]
-                ls_args = run.call_args_list[3].args[0]
+                unmerged_args = run.call_args_list[0].args[1]
+                cached_args = run.call_args_list[1].args[1]
+                worktree_args = run.call_args_list[2].args[1]
+                ls_args = run.call_args_list[3].args[1]
                 self.assertIn("--unmerged", unmerged_args)
                 self.assertIn("-z", unmerged_args)
                 self.assertIn("-z", cached_args)
@@ -828,7 +861,9 @@ class GenerateHooksTests(unittest.TestCase):
                 self.assertIn("--no-textconv", worktree_args)
 
             with self.subTest(provider=module.__name__, behavior="diff"):
-                with mock.patch.object(module, "capture_git",
+                with mock.patch.object(module.engine, "snapshot_diff_inputs",
+                                       return_value=__import__("contextlib").nullcontext((Path("before"), Path("after")))), \
+                     mock.patch.object(module.engine, "capture_git",
                                        return_value=verified_fixture(module, diff_output)) as run:
                     events = list(module.diff_added_line_events([diff_output]))
                     self.assertEqual(
@@ -837,10 +872,10 @@ class GenerateHooksTests(unittest.TestCase):
                          ("start", 2), ("data", "++starts-with-two-plus"), ("end", None)],
                     )
                     report = module.StreamReport()
-                    module.scan_diff_added_lines(ROOT, "notes.txt", module.CANDIDATE_WORKTREE,
-                                                 report, lambda key: False, root_has_head=True)
+                    module.scan_diff_added_lines(module.ScanContext(module.ScanLimits()), ROOT, "notes.txt", module.CANDIDATE_WORKTREE,
+                                                 report, lambda key: False, root_has_head=True, snapshot=None)
                     self.assertEqual(report.findings, [])
-                args = run.call_args.args[0]
+                args = run.call_args.args[1]
                 self.assertIn("--no-color", args)
                 self.assertIn("--no-textconv", args)
                 self.assertIn("--output-indicator-new=+", args)
@@ -853,19 +888,19 @@ class GenerateHooksTests(unittest.TestCase):
                 header = oid + b" blob 5\n"
                 outputs = (b"100644 " + oid + b" 0\t0:notes.env\0", header, header + b"token\n")
                 with mock.patch.object(module, "capture_git", side_effect=[verified_fixture(module, data) for data in outputs]) as run:
-                    with module.snapshot_source(ROOT, [candidate], module.ScanBudget(time.monotonic() + 8)) as source:
+                    with module.snapshot_source(ROOT, [candidate], module.ScanBudget(module.ScanContext(module.ScanLimits()))) as source:
                         with source.acquire(candidate) as snapshot:
                             self.assertEqual(b"".join(snapshot.chunks()), b"token")
-                self.assertEqual(run.call_args_list[0].args[0], ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", "0:notes.env"])
+                self.assertEqual(run.call_args_list[0].args[1], ["--literal-pathspecs", "ls-files", "--stage", "-z", "--", "0:notes.env"])
                 for invocation in run.call_args_list[1:]:
                     self.assertEqual(invocation.kwargs["input_bytes"], oid + b"\n")
-                self.assertEqual(run.call_args_list[1].args[0], ["cat-file", "--batch-check"])
-                self.assertEqual(run.call_args_list[2].args[0], ["cat-file", "--batch"])
+                self.assertEqual(run.call_args_list[1].args[1], ["cat-file", "--batch-check"])
+                self.assertEqual(run.call_args_list[2].args[1], ["cat-file", "--batch"])
 
     def test_secret_scanner_rejects_unsafe_or_oversized_candidate_files(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_file_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
 
         with tempfile.TemporaryDirectory() as directory:
@@ -900,8 +935,8 @@ class GenerateHooksTests(unittest.TestCase):
 
     def test_secret_scanner_enforces_file_count_total_bytes_and_time_limits(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_limits", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
         for module in modules:
             too_many_paths = b"".join(
@@ -915,22 +950,18 @@ class GenerateHooksTests(unittest.TestCase):
                     side_effect=[verified_fixture(module, data) for data in (b"", too_many_paths, b"", b"")],
                 ):
                     with self.assertRaises(module.ScanLimitExceeded):
-                        module.collect_files(ROOT, "diff", True)
+                        module.collect_files(module.ScanContext(module.ScanLimits()), ROOT, "diff", True)
             with self.subTest(provider=module.__name__, case="total-bytes"):
                 with self.assertRaises(module.ScanLimitExceeded):
-                    module.enforce_scan_budget(10.0, module.MAX_TOTAL_BYTES + 1, now=10.0)
+                    module.ScanBudget(module.ScanContext(module.ScanLimits())).charge(module.MAX_TOTAL_BYTES + 1)
             with self.subTest(provider=module.__name__, case="elapsed-time"):
                 with self.assertRaises(module.ScanLimitExceeded):
-                    module.enforce_scan_budget(
-                        10.0,
-                        0,
-                        now=10.0 + module.MAX_SCAN_SECONDS + 0.01,
-                    )
+                    module.ScanContext(module.ScanLimits(), started=time.monotonic() - module.MAX_SCAN_SECONDS - 0.01).check_deadline()
 
     def test_secret_scanner_logs_are_owner_only_and_reject_links(self) -> None:
         modules = (
-            load_module("copilot_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_log_safety", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
 
         for module in modules:
@@ -950,7 +981,7 @@ class GenerateHooksTests(unittest.TestCase):
                     "env_files": [],
                     "findings": [],
                 }
-                module.append_scan_log(**arguments)
+                append_fixture_log(module, **arguments)
                 existing_size = log_path.stat().st_size
                 with mock.patch.dict(
                     os.environ,
@@ -959,7 +990,7 @@ class GenerateHooksTests(unittest.TestCase):
                         "AUDIT_LOG_MAX_BACKUPS": "2",
                     },
                 ):
-                    module.append_scan_log(**arguments)
+                    append_fixture_log(module, **arguments)
 
                 self.assertEqual(stat.S_IMODE(log_dir.stat().st_mode), 0o700)
                 self.assertEqual(stat.S_IMODE(log_path.stat().st_mode), 0o600)
@@ -971,7 +1002,7 @@ class GenerateHooksTests(unittest.TestCase):
                     "session_id": "x" * module.MAX_LOG_RECORD_BYTES,
                 }
                 with self.subTest(provider=module.__name__, case="oversized-record"):
-                    module.append_scan_log(**oversized_arguments)
+                    append_fixture_log(module, **oversized_arguments)
                     record_bytes = log_path.read_bytes().splitlines(keepends=True)[-1]
                     self.assertLessEqual(len(record_bytes), module.MAX_LOG_RECORD_BYTES)
                     record = json.loads(record_bytes)
@@ -987,7 +1018,7 @@ class GenerateHooksTests(unittest.TestCase):
                     log_path.symlink_to(target)
                     with self.subTest(provider=module.__name__, case="linked-log"):
                         with self.assertRaises(module.ScanSecurityError):
-                            module.append_scan_log(**arguments)
+                            append_fixture_log(module, **arguments)
                     self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
                     log_path.unlink()
                     lock_path = log_dir / "scan.log.lock"
@@ -995,7 +1026,7 @@ class GenerateHooksTests(unittest.TestCase):
                     lock_path.symlink_to(target)
                     with self.subTest(provider=module.__name__, case="linked-lock"):
                         with self.assertRaises(module.ScanSecurityError):
-                            module.append_scan_log(**arguments)
+                            append_fixture_log(module, **arguments)
                     self.assertEqual(target.read_text(encoding="utf-8"), "unchanged\n")
                     lock_path.unlink()
                     linked_log_dir = root / "linked-logs"
@@ -1006,7 +1037,7 @@ class GenerateHooksTests(unittest.TestCase):
                     }
                     with self.subTest(provider=module.__name__, case="linked-directory"):
                         with self.assertRaises(module.ScanSecurityError):
-                            module.append_scan_log(**linked_dir_arguments)
+                            append_fixture_log(module, **linked_dir_arguments)
 
     def test_secret_scanner_log_lock_wait_is_bounded(self) -> None:
         try:
@@ -1015,8 +1046,8 @@ class GenerateHooksTests(unittest.TestCase):
             self.skipTest("POSIX flock is unavailable")
 
         modules = (
-            load_module("copilot_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[0]),
-            load_module("gemini_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[1]),
+            load_scanner_runtime("copilot_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[0]),
+            load_scanner_runtime("gemini_secret_scanner_log_lock", ROOT / SECRET_SCANNER_TARGETS[1]),
         )
         for module in modules:
             with tempfile.TemporaryDirectory() as directory:
@@ -1027,10 +1058,10 @@ class GenerateHooksTests(unittest.TestCase):
                 lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
                 fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 try:
-                    with mock.patch.object(module, "LOG_LOCK_TIMEOUT_SECONDS", 0.1):
+                    with mock.patch.object(module.audit, "LOG_LOCK_TIMEOUT_SECONDS", 0.1):
                         started = time.monotonic()
                         with self.assertRaises(module.ScanLimitExceeded):
-                            module.append_scan_log(
+                            append_fixture_log(module,
                                 log_path=log_path,
                                 status="clean",
                                 session_id="locked",
