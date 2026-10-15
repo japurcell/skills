@@ -19,7 +19,7 @@ Success is observable in a disposable repository: reproduce the large merge and 
 - [x] (2026-10-15) [execution] E1: Confirm all public test seams with the user and dispatch independent D0/T1/T2 work. Retain the routing/runtime audit in [delegation.md](delegation.md).
 - [ ] [milestone-1] D0: Prove the publication transaction, LFS delivery, supported capacity, and installation interfaces in disposable feasibility fixtures; record the concrete limits and supported platform matrix.
 - [ ] [milestone-1] T1: Deliver retrospective candidate 1, the public fixture-patch preflight CLI and its check/apply behavior.
-- [ ] [milestone-1] T2: Deliver retrospective candidate 3, all 12 mode-helper cases and both mutation controls.
+- [x] (2026-10-15) [milestone-1] T2: Deliver retrospective candidate 3, all 12 mode-helper cases and both mutation controls. Integrated at `45401b4789ba9071d6cf90b435fed8bfd8722c51`; [evidence](t2-evidence.md). Full recovery: 15 methods pass. Both assignment-removal controls fail all six corresponding cases.
 - [ ] [milestone-1] I1: Verify the preparation tools together without mutating live hooks or the user's pending work.
 - [ ] [milestone-2] T3: Extract the result-producing scan engine and deliver the checkpoint CLI with compatibility evidence.
 - [ ] [milestone-2] T4: Deliver bounded saved-status storage and the read-only status CLI.
@@ -220,6 +220,8 @@ Acceptance covers unsafe moved fixtures, Git/text-diff disagreement, dirty stage
 
 In two disposable source copies, remove one environment assignment at a time; the corresponding focused test must fail. Do not mutate the live helper for this proof. Run both named methods and then the full recovery suite. Stop after retaining the behavioral contract; scanner gate mode semantics are handled independently in T3/T5.
 
+T2 observed result: both focused methods and both-mode missing/corrupt-helper cases pass; the full recovery suite passes 15 methods. Both disposable assignment-removal controls fail all six native permission cases. The primary reviewed all five quality axes with no blockers, then rebased conflict-free and fast-forwarded base to `45401b4789ba9071d6cf90b435fed8bfd8722c51`. Only plan/audit documentation changed under the rebase, so the retained test evidence covers the resulting executable tree; no redundant rerun was needed. The clean task worktree was archived and its local branch removed. Milestone acceptance remains unmet pending D0/T1/I1.
+
 **I1 - Preparation integration.** Prerequisites: T1 and T2. Run their public suites serially, generated parity, and affected provider scanner shell suites. Verify that fixture application preserves test data behavior and does not rely on ambient warning/skip settings. D0's contract artifact must exist before gate work begins. Missing prerequisites or unpublished prototype evidence leave acceptance not met.
 
 ### Milestone 2: Deliver synchronous checkpoints and historical status
@@ -365,7 +367,7 @@ When a gate finds a secret, remove it from the relevant staged content or outgoi
 
 ## Outcomes & Retrospective
 
-Planning is complete and implementation is authorized. Branch preparation is complete; implementation tasks, new CLI commands, repository gates, provider migration, CI execution, and live deployment have not occurred. The plan incorporates the user-selected no-background design, candidates 1-3, the five accepted adversarial findings, and source-derived CLI requirements. The two promoted idea reports are retained in `docs/ideas/archive/` with their historical scope and repaired links.
+Planning is complete and implementation is authorized. Branch preparation is complete; T2 is implemented, reviewed, and integrated; D0/T1 are running. New CLI commands, repository gates, provider migration, CI execution, and live deployment have not occurred. The plan incorporates the user-selected no-background design, candidates 1-3, the five accepted adversarial findings, and source-derived CLI requirements. The two promoted idea reports are retained in `docs/ideas/archive/` with their historical scope and repaired links.
 
 Documentation-only verification on 2026-10-15 checked all 60 local Markdown links across the plan, idea index, and archived reports; required living sections and all five open milestone states; preserved report contents apart from archive notices and link repair; and Git whitespace checks. Runtime tests were not run for this planning-only change. The coordinated knowledge-maintenance pass adds no canonical instruction or memory: the new behavior is proposed, and current runtime guidance remains current until implementation.
 
