@@ -8,7 +8,7 @@ All three routes are Premium `gpt-6.1-sol` with `high` reasoning effort, explici
 
 | Task | Agent | Branch/worktree | Warning threshold | Status | Output verified |
 | --- | --- | --- | --- | --- | --- |
-| D0 | `/root/implement_d0` | `codex/design-b-d0`, `/Users/adam/.codex/worktrees/design-b-d0/skills` | 20 minutes | running | no |
+| D0 | `/root/implement_d0` | `codex/design-b-d0`, `/Users/adam/.codex/worktrees/design-b-d0/skills` | 20 minutes | completed | yes |
 | T1 | `/root/implement_t1` | `codex/design-b-t1`, `/Users/adam/.codex/worktrees/design-b-t1/skills` | 20 minutes | running | no |
 | T2 | `/root/implement_t2` | `codex/design-b-t2`, `/Users/adam/.codex/worktrees/design-b-t2/skills` | 10 minutes | completed | yes |
 
@@ -27,3 +27,5 @@ At approximately 21:34 UTC, D0 and T1 reached their 20-minute warning thresholds
 ## R0 independent D0 promotion review
 
 Dispatched around 21:40 UTC on 2026-10-15: `/root/review_d0`, read-only ownership none, no nested delegation or test execution. Selected/submitted Premium `gpt-6.1-sol`, `high`, `fork_turns: none`; executed values unconfirmed. Security review establishes Premium floor. Catalog fit provisional; exact source/evidence trace required. Fallback `gpt-6-sol`, `high`. Ten-minute warning threshold monitored by primary UTC checks; completed before threshold. Output verified by primary source trace and retained in `d0-review.md`. Status completed, routing compliant. Verdict changes required; no promotion approval. Same-blob filename-policy omission sent to original D0 implementer for red/green repair.
+
+D0 completed after the non-interrupting warning. R0 required a filename-policy repair; the original D0 implementer reproduced/fixed it and remeasured the frozen source. Independent source re-review found no new blockers. Primary verified refreshed13 fingerprints and9 paired workload outcomes/volumes, then integrated `555aa6bf8ff49f77a3979730744d1621543586b5`. Exact tips/clean worktrees checked; integrated task archived and branch removed. Selected/submitted configuration unchanged; executed values unconfirmed; routing compliant. R0 repair continued on its original explicitly configured agent; no new model selection occurred. It completed before the10-minute threshold and left a deterministic capacity-artifact condition, subsequently verified by primary.
