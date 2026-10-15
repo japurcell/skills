@@ -55,12 +55,14 @@ def _open_secure_regular(path: Path, flags: int) -> int:
     no_follow = getattr(os, "O_NOFOLLOW", 0)
     binary = getattr(os, "O_BINARY", 0)
     try:
-        descriptor = os.open(path, flags | no_follow | binary, 0o600)
+        descriptor = os.open(path, flags | no_follow | binary | getattr(os, "O_NONBLOCK", 0), 0o600)
     except OSError as exc:
         raise ScanSecurityError("log_unavailable", "scan_log") from exc
     try:
         details = os.fstat(descriptor)
-        if not stat.S_ISREG(details.st_mode) or _is_reparse_point(details):
+        if (not stat.S_ISREG(details.st_mode) or _is_reparse_point(details)
+                or details.st_nlink != 1
+                or (os.name == "posix" and details.st_uid != os.geteuid())):
             raise ScanSecurityError("log_unsafe", "scan_log")
         try:
             os.fchmod(descriptor, 0o600)
@@ -87,7 +89,7 @@ def rotate_scan_log(
     details = _assert_safe_log_path(log_path)
     if details is None:
         return
-    if not stat.S_ISREG(details.st_mode):
+    if not stat.S_ISREG(details.st_mode) or details.st_nlink != 1:
         raise ScanSecurityError("log_unsafe", "scan_log")
     if details.st_size + incoming_bytes <= max_bytes:
         return
@@ -95,7 +97,7 @@ def rotate_scan_log(
     paths = [log_path.with_name(f"{log_path.name}.{index}") for index in range(1, backups + 2)]
     for path in paths:
         details = _assert_safe_log_path(path)
-        if details is not None and not stat.S_ISREG(details.st_mode):
+        if details is not None and (not stat.S_ISREG(details.st_mode) or details.st_nlink != 1):
             raise ScanSecurityError("log_unsafe", "scan_log")
 
     try:

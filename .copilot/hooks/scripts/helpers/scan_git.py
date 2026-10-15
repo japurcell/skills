@@ -47,7 +47,8 @@ def capture_git(context: ScanContext,
         "cat-file": "git_index", "show": "git_index",
     }.get(command, "git_command")
     context.phase = operation
-    git_executable = shutil.which("git")
+    repository_context = context.repository_context
+    git_executable = (repository_context.executable if repository_context is not None else shutil.which("git"))
     if git_executable is None:
         raise GitCommandError("git_unavailable", operation)
 
@@ -56,9 +57,9 @@ def capture_git(context: ScanContext,
     if deadline is not None:
         command_deadline = min(command_deadline, deadline)
     if command_deadline <= now:
-        raise ScanLimitExceeded("scan_timeout", seconds=int(context.limits.max_seconds))
+        raise ScanLimitExceeded("scan_timeout", seconds=context.limits.max_seconds)
 
-    env = os.environ.copy()
+    env = (repository_context.environment.copy() if repository_context is not None else os.environ.copy())
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_ASKPASS"] = ""
     env["GIT_LITERAL_PATHSPECS"] = "1"
@@ -527,6 +528,10 @@ def collect_files(context: ScanContext,
     root: Path, scope: str, root_has_head: bool, *, deadline: float | None = None,
 ) -> list[tuple[str, str]]:
     candidates = set(collect_unmerged_files(context, root, deadline=deadline))
+    if context.repository_context is not None:
+        if scope == "staged" and candidates:
+            raise ScanSecurityError("index_unresolved", "git_index")
+        context.repository_context.validate_index(scope)
     unmerged_paths = {path for _, path in candidates}
     diff_options = ["--name-only", "-z", "--no-ext-diff", "--no-color",
                     "--no-textconv", "--diff-filter=ACMRTUXB"]
@@ -1117,9 +1122,11 @@ def head_baseline_oids(context, root, revision, paths):
     return result
 
 
-def worktree_conversions(context, root, paths):
+def worktree_conversions(context, root, paths, *, protected=False):
     if not paths:
         return {}
+    if context.repository_context is not None and not protected:
+        return context.repository_context.conversions(paths)
     configured = run_git(context, ["config", "--get", "core.autocrlf"], cwd=root,
                          allow_nonzero=True, deadline=context.deadline)
     value = configured.strip().lower() if isinstance(configured, str) else "false"

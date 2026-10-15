@@ -124,13 +124,16 @@ def scan_diff_added_lines(context, root, path, source, report, is_allowlisted, *
                 raise GitCommandError("git_output_invalid", "git_diff") from exc
 
 
-def scan(work_dir: Path, policy: ScanPolicy, limits: ScanLimits, *, started: float | None = None) -> ScanResult:
+def scan(work_dir: Path, policy: ScanPolicy, limits: ScanLimits, *, started: float | None = None,
+         context: ScanContext | None = None) -> ScanResult:
     """Inspect protected pending snapshots and retain partial findings on failure.
 
     Returned snapshots are scoped to the captured reads. Worktree collection is
     not globally atomic. A caller owns audit and presentation after inspection.
     """
-    context = ScanContext(limits, started)
+    context = ScanContext(limits, started) if context is None else context
+    if context.limits != limits:
+        raise ValueError("scan context limits mismatch")
     findings = RetainedFindings()
     report = StreamReport(findings)
     budget = ScanBudget(context)

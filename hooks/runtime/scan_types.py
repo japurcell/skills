@@ -83,6 +83,9 @@ INCOMPLETE_CAUSES = {
     "temporary_bytes_limit": ("private temporary byte limit exceeded", "Increase the explicit temporary budget within its supported range or repair temporary storage.", "bytes"),
     "conversion_unsupported": ("declared Git conversion requires unsupported inspection", "Review the declared conversion and use a supported full-content check.", ""),
     "candidate_changed": ("candidate changed during capture", "Retry against a stable candidate.", ""),
+    "index_unresolved": ("index contains unresolved conflicts", "Resolve and stage the conflicts, then rerun the index check.", ""),
+    "index_flags_unsupported": ("index flags prevent complete worktree inspection", "Use an ordinary full worktree index, then rerun the check.", ""),
+    "cleanup_failed": ("private capture cleanup failed", "Repair temporary storage permissions and rerun the explicit check.", ""),
     "findings_limit": ("finding inspection limit reached", "Reduce pending findings and rerun the scan.", "findings"),
     "internal_error": ("internal scanner failure", "Check the hook installation and retry.", ""),
 }
@@ -97,7 +100,7 @@ class ScanFailure(RuntimeError):
     """Carry only scanner-owned vocabulary and bounded numeric measurements."""
 
     def __init__(self, cause: str, operation: str | None = None, *,
-                 capture_step: str | None = None, **numbers: int) -> None:
+                 capture_step: str | None = None, **numbers: int | float) -> None:
         self.cause = cause if cause in INCOMPLETE_CAUSES else "internal_error"
         phase = "initialization" if operation is None else operation
         self.operation = phase if phase in INCOMPLETE_OPERATIONS else "initialization"
@@ -108,7 +111,7 @@ class ScanFailure(RuntimeError):
         self.numbers = {
             key: value for key, value in numbers.items()
             if key in {"exit_status", "measured", "limit", "seconds", "os_errno", "attempts"}
-            and type(value) is int
+            and (type(value) is int or key == "seconds" and type(value) is float and math.isfinite(value))
             and (-2147483648 if key == "exit_status" else 0) <= value <= 9223372036854775807
         }
         super().__init__(self.cause)
@@ -192,11 +195,12 @@ class ScanContext:
         self.capture_bytes = 0
         self.temp_bytes = 0
         self.temp_peak_bytes = 0
+        self.repository_context = None
 
     def check_deadline(self, deadline: float | None = None):
         effective = self.deadline if deadline is None else min(deadline, self.deadline)
         if time.monotonic() >= effective:
-            raise ScanLimitExceeded("scan_timeout", self.phase, seconds=int(self.limits.max_seconds))
+            raise ScanLimitExceeded("scan_timeout", self.phase, seconds=self.limits.max_seconds)
 
     def charge_capture(self, size: int):
         self.capture_bytes += size
