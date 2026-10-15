@@ -447,7 +447,7 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'copilot'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '7a96670683b287f165f188500403d4e717e9b6acf02081bf4541efa3a0aac28f'
+DIAG_BUILD = '82708aa1dd1e10e48562efea3392ea8faf1f1ae0a6578c4dd241d7873838771f'
 DIAG_ASSETS = [('helpers/common.py', '55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b'), ('helpers/audit.py', '06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c3ee195c5bd9eb51c35c799f3d41cf39440d1ec7771917df5411aeecb07a60fe'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['agentStop', 'errorOccurred', 'notification', 'permissionRequest', 'postToolUse', 'postToolUseFailure', 'preCompact', 'preToolUse', 'sessionEnd', 'sessionStart', 'subagentStart', 'subagentStop', 'userPromptSubmitted', 'userPromptTransformed']

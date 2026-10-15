@@ -142,24 +142,38 @@ INCOMPLETE_OPERATIONS = {
 class ScanFailure(RuntimeError):
     """Carry only scanner-owned vocabulary and bounded numeric measurements."""
 
-    def __init__(self, cause: str, operation: str | None = None, **numbers: int) -> None:
+    def __init__(self, cause: str, operation: str | None = None, *,
+                 capture_step: str | None = None, **numbers: int) -> None:
         self.cause = cause if cause in INCOMPLETE_CAUSES else "internal_error"
         phase = SCAN_PHASE if operation is None else operation
         self.operation = phase if phase in INCOMPLETE_OPERATIONS else "initialization"
+        self.capture_step = capture_step if capture_step in {
+            "temporary_file", "verify_capture", "request_write", "spawn",
+            "wait", "descendants", "consume", "cleanup",
+        } else None
         self.numbers = {
             key: value for key, value in numbers.items()
-            if key in {"exit_status", "measured", "limit", "seconds"}
+            if key in {"exit_status", "measured", "limit", "seconds", "os_errno", "attempts"}
             and type(value) is int
             and (-2147483648 if key == "exit_status" else 0) <= value <= 9223372036854775807
         }
         super().__init__(self.cause)
 
     def diagnostic(self) -> dict[str, object]:
-        return {"cause": self.cause, "operation": self.operation, **self.numbers}
+        result: dict[str, object] = {"cause": self.cause, "operation": self.operation, **self.numbers}
+        if self.capture_step is not None:
+            result["capture_step"] = self.capture_step
+        return result
 
     def detail(self) -> str:
         description, recovery, unit = INCOMPLETE_CAUSES[self.cause]
         measures = []
+        if self.capture_step is not None:
+            measures.append(f"capture step {self.capture_step}")
+        if "os_errno" in self.numbers:
+            measures.append(f"OS error {self.numbers['os_errno']}")
+        if "attempts" in self.numbers:
+            measures.append(f"launch attempts {self.numbers['attempts']}")
         if "exit_status" in self.numbers:
             measures.append(f"exit status {self.numbers['exit_status']}")
         if "measured" in self.numbers:
@@ -266,6 +280,7 @@ def capture_git(
     deadline: float | None = None,
     input_bytes: bytes | None = None,
 ) -> Iterator[VerifiedCapture | None]:
+    import errno
     import subprocess
 
     global SCAN_PHASE
@@ -305,21 +320,44 @@ def capture_git(
     if os.name == "nt":
         popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
+    capture_step = "temporary_file"
+    attempts = 0
     try:
         with contextlib.ExitStack() as resources:
             capture = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+            capture_step = "verify_capture"
             _verify_private_capture(capture)
             if input_bytes is not None:
                 if len(input_bytes) > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("git_input_limit", operation, measured=len(input_bytes), limit=MAX_GIT_OUTPUT_BYTES)
+                capture_step = "temporary_file"
                 request = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
+                capture_step = "verify_capture"
                 _verify_private_capture(request)
+                capture_step = "request_write"
                 request.write(input_bytes)
                 request.seek(0)
                 popen_options["stdin"] = request
-            process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+            capture_step = "spawn"
+            for attempt in range(3):
+                if time.monotonic() >= command_deadline:
+                    enforce_deadline(deadline)
+                    raise ScanLimitExceeded("git_timeout", operation, seconds=5)
+                try:
+                    attempts = attempt + 1
+                    process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+                    break
+                except OSError as exc:
+                    # Popen has no live child when launch raises. Retry only
+                    # temporary process-resource exhaustion, within the original
+                    # command deadline; never replay a command that ran.
+                    if exc.errno != errno.EAGAIN or attempt == 2:
+                        raise
+                    time.sleep(min(0.01 * (2 ** attempt),
+                                   max(0.0, command_deadline - time.monotonic())))
             observed_descendants: list[int] = []
             try:
+                capture_step = "wait"
                 while True:
                     size = os.fstat(capture.fileno()).st_size
                     if size > MAX_GIT_OUTPUT_BYTES:
@@ -340,6 +378,7 @@ def capture_git(
                     except subprocess.TimeoutExpired:
                         pass
 
+                capture_step = "descendants"
                 if os.name == "posix":
                     try:
                         os.killpg(process.pid, 0)
@@ -351,26 +390,40 @@ def capture_git(
                     observed_descendants = _windows_git_descendants(process.pid)
                     if observed_descendants:
                         raise GitCommandError("git_descendant_running")
+                capture_step = "verify_capture"
                 size = os.fstat(capture.fileno()).st_size
                 if size > MAX_GIT_OUTPUT_BYTES:
                     raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=MAX_GIT_OUTPUT_BYTES)
                 if return_code != 0:
                     if allow_nonzero and size == 0:
                         if args == ["rev-parse", "--verify", "HEAD"] and return_code == 128:
+                            capture_step = "consume"
                             yield None
+                            capture_step = "cleanup"
                             return
                         if (len(args) == 4 and args[:3] == ["show-ref", "--verify", "--quiet"]
                                 and return_code == 1):
+                            capture_step = "consume"
                             yield None
+                            capture_step = "cleanup"
                             return
                     raise GitCommandError("git_failed", operation, exit_status=return_code)
+                capture_step = "verify_capture"
                 _verify_private_capture(capture)
+                capture_step = "consume"
                 yield VerifiedCapture(capture, size, deadline, operation)
+                capture_step = "cleanup"
             except BaseException:
                 _stop_git_process(process, subprocess, observed_descendants)
                 raise
     except OSError as exc:
-        raise GitCommandError("git_capture_failed") from exc
+        details: dict[str, int] = {}
+        if type(exc.errno) is int:
+            details["os_errno"] = exc.errno
+        if capture_step == "spawn":
+            details["attempts"] = attempts
+        raise GitCommandError("git_capture_failed", operation,
+                              capture_step=capture_step, **details) from exc
 
 
 def _verify_private_capture(handle: BinaryIO) -> None:
@@ -378,7 +431,7 @@ def _verify_private_capture(handle: BinaryIO) -> None:
     if (not stat.S_ISREG(details.st_mode) or _is_reparse_point(details)
             or (os.name == "posix" and
                 (details.st_mode & 0o077 or details.st_uid != os.geteuid()))):
-        raise GitCommandError("git_capture_failed")
+        raise GitCommandError("git_capture_failed", capture_step="verify_capture")
 
 
 class VerifiedCapture:

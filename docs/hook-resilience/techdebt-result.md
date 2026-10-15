@@ -93,6 +93,8 @@ These are functional and verification-mechanics checks. They do not replace earl
 
 The first Copilot shell run stopped in its capture precheck: a credential control returned incomplete `git_capture_failed/git_head` instead of findings. Focused block/warn controls, the complete Copilot capture matrix, and the exact isolated full shell suite subsequently passed. The original cause remains unexplained; later passes do not erase or explain it. Its expected-finding assertion was unchanged.
 
+The [follow-up investigation](capture-reliability-result.md) reproduces and repairs transient Git launch exhaustion and adds safe OS diagnostics. It preserves the distinction between that proven failure class and the historical incident's missing errno.
+
 Initial RSS collection was sandbox-denied. A later mechanics run overlapped high-rate testing and failed a gate; its temporary report was removed by the existing test, leaving its cause unproven. Final independent serial checks passed with retained logs. No complete performance acceptance is inferred.
 
 Moved synthetic literals initially blocked normal source tools. Automatic review rejected Terminal; the user approved the narrow repair, but the computer-use runtime still prohibited that app. The user restored the three extraction files twice. No alternate app or disabled guard was used. Successful recovery dynamically constructed all fixture literals, preserved runtime bytes, and checked complete candidate files plus actual Git additions using installed/generated scanners in disposable Git before repository writes.

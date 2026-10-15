@@ -53,6 +53,11 @@ again. Git captures retain their separate 8 MiB bound. For example,
 allowance without exposing its name or contents. Large or unusually dense inputs
 can still reach the work or Git-capture limits.
 
+Git capture failures report a trusted `capture_step` and numeric `os_errno` when
+available. Failed launches also report `attempts`. Temporary process
+exhaustion gets at most three launch attempts within the existing deadlines;
+permanent errors and failed Git commands remain incomplete scans.
+
 Scanner audit records retain at most 100 findings from 1,000 processed findings
 and stay within 64 KiB including JSON escaping and the newline. Guardian audit
 records stay within 16 KiB. Reports bound and sanitize displayed labels before

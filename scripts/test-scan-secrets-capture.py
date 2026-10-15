@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 from pathlib import Path
@@ -32,6 +33,7 @@ def run_case(
     unexpected_failure: bool = False, unexpected_input: bool = False, files: dict[str, bytes] | None = None,
     input_text: str | None = None, missing_git: bool = False,
     storage_fault: str = "", hostile_payload: bool = False, descriptor_fault: str = "",
+    launch_fault: str = "",
 ) -> tuple[dict, str]:
     with tempfile.TemporaryDirectory(prefix="scan-capture-test-") as directory:
         root = Path(directory)
@@ -136,6 +138,41 @@ def run_case(
                 f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
             )
             command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
+        if launch_fault:
+            wrapper = (
+                "import errno, runpy, subprocess\n"
+                f"fault = {launch_fault!r}\n"
+                "original_popen = subprocess.Popen\n"
+                "failures = 0\n"
+                "def launch(args, *positional, **keyword):\n"
+                "    global failures\n"
+                "    if list(args[1:]) == ['rev-parse', '--verify', 'HEAD']:\n"
+                "        failures += 1\n"
+                "        if fault == 'native_once' and failures == 1:\n"
+                "            import resource\n"
+                "            before = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "            resource.setrlimit(resource.RLIMIT_NPROC, (0, before[1]))\n"
+                "            try:\n"
+                "                child = original_popen(args, *positional, **keyword)\n"
+                "                child.wait(timeout=1)\n"
+                "                raise RuntimeError('native process limit did not prevent launch')\n"
+                "            finally:\n"
+                "                current = resource.getrlimit(resource.RLIMIT_NPROC)\n"
+                "                resource.setrlimit(resource.RLIMIT_NPROC, (before[0], current[1]))\n"
+                "        if fault == 'eagain_deadline':\n"
+                "            import time\n"
+                "            time.sleep(5.05)\n"
+                "            raise BlockingIOError(errno.EAGAIN, 'temporary launch failure')\n"
+                "        if (fault == 'eagain_always' or (fault == 'eagain_once' and failures == 1)\n"
+                "                or (fault == 'eagain_twice' and failures <= 2)):\n"
+                "            raise BlockingIOError(errno.EAGAIN, '/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
+                "        if fault == 'permission':\n"
+                "            raise PermissionError(errno.EACCES, '/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN')\n"
+                "    return original_popen(args, *positional, **keyword)\n"
+                "subprocess.Popen = launch\n"
+                f"runpy.run_path({str(HOOKS[provider])!r}, run_name='__main__')\n"
+            )
+            command = [sys.executable, "-I", "-S", "-B", "-c", wrapper]
         with output_path.open("wb") as output, error_path.open("wb") as errors:
             process = subprocess.Popen(
                 command,
@@ -175,7 +212,8 @@ def run_case(
 
 
 def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
-                      cause: str, operation: str, logging: bool = True, **numbers: int | float) -> None:
+                      cause: str, operation: str, logging: bool = True,
+                      **details: int | float | str) -> None:
     response, log = result
     rendered = json.dumps(response).lower()
     assert "incomplete" in rendered, (provider, mode, response)
@@ -184,7 +222,7 @@ def assert_incomplete(provider: str, mode: str, result: tuple[dict, str],
     assert "check" in rendered or "retry" in rendered, response
     if logging:
         record = json.loads(log.splitlines()[-1])
-        assert record["diagnostic"] == {"cause": cause, "operation": operation, **numbers}, record
+        assert record["diagnostic"] == {"cause": cause, "operation": operation, **details}, record
         assert record["note"].lower() in rendered, (response, record)
         assert record["action"] in rendered, (response, record)
         assert '"status":"clean"' not in log, (provider, mode, log)
@@ -241,6 +279,27 @@ else:
     os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])
 """
     real_git = "import os\nos.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *__import__('sys').argv[1:]])\n"
+    recovery_faults = ["eagain_once", "eagain_twice"]
+    if sys.platform == "darwin":
+        recovery_faults.append("native_once")
+    for mode in ("block", "warn"):
+        for fault in recovery_faults:
+            response, log = run_case(provider, mode, real_git, launch_fault=fault,
+                                     files={"fake.txt": ("gh" + "p_" + "A" * 36).encode()})
+            assert "potential secrets detected" in json.dumps(response), (fault, response)
+            assert json.loads(log.splitlines()[-1])["status"] == "findings", (fault, log)
+            response, log = run_case(provider, mode, real_git, launch_fault=fault)
+            expected = {"systemMessage": "scan-secrets: pass; 0 modified files"} if provider == "codex" and mode == "warn" else {}
+            assert response == expected, (fault, response)
+            assert json.loads(log.splitlines()[-1])["status"] == "clean", (fault, log)
+        for fault, number, attempts in (("permission", errno.EACCES, 1),
+                                        ("eagain_always", errno.EAGAIN, 3)):
+            assert_incomplete(provider, mode, run_case(
+                provider, mode, real_git, launch_fault=fault,
+            ), "git_capture_failed", "git_head", capture_step="spawn", os_errno=number, attempts=attempts)
+        assert_incomplete(provider, mode, run_case(
+            provider, mode, real_git, launch_fault="eagain_deadline", maximum=7.0,
+        ), "git_timeout", "git_head", seconds=5)
     failed_head_git = """import os, sys
 if sys.argv[1:] == ['rev-parse', '--verify', 'HEAD']:
     sys.exit(128)
@@ -324,7 +383,7 @@ os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *sys.argv[1:]])
         ), "scan_timeout", "git_head", seconds=8)
         assert_incomplete(provider, mode, run_case(
             provider, mode, real_git, capture_failure=True,
-        ), "git_capture_failed", "git_repository")
+        ), "git_capture_failed", "git_repository", capture_step="temporary_file")
         assert_incomplete(provider, mode, run_case(
             provider, mode, failed_head_git, committed=True,
         ), "git_head_invalid", "git_head")
