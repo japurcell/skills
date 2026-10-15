@@ -115,6 +115,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
         expected.add("scripts/test-verify-hook-release.py")
+        expected.add("scripts/test-verify-security-fixture-patch.py")
         expected.update({
             "scripts/test-hook-input-bounds.py",
             "scripts/test-hook-diagnostics.py",

@@ -48,6 +48,7 @@ SUITES = (
     ("python3", "scripts/test-hook-input-bounds.py"),
     ("python3", "scripts/test-hook-diagnostics.py"),
     ("python3", "scripts/test-hook-diagnostic-recovery.py"),
+    ("python3", "scripts/test-verify-security-fixture-patch.py"),
     ("python3", "scripts/test-scan-secrets-merge.py"),
     ("python3", "scripts/test-scan-secrets-stream-component.py"),
     ("python3", "scripts/test-scan-secrets-streaming.py"),
