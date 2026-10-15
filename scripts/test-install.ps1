@@ -1249,7 +1249,7 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
     $workdir = New-TestWorkdir
     try {
         $repo = Join-Path $workdir 'repo'
-        $homeDir = Join-Path $workdir 'home'
+        $homeDir = Join-Path $workdir 'home with spaces'
         New-FixtureRepo $repo
         Set-PostRetirementFixture $repo
         Write-FixtureFile (Join-Path $repo '.gemini/global-settings.json') @('{"general":{"enableAutoUpdate":false},"hooks":{"BeforeTool":[{"hooks":[{"command":"python \"$HOME/.gemini/hooks/scripts/tool-guard.py\""}]}]}}')
@@ -1273,7 +1273,33 @@ function Test-ProviderRefreshPreservesRetiredAndUserEntries {
         Assert-True -Condition $copilot['userSetting']['keep'] -Message 'Expected unrelated Copilot settings to survive refresh.'
         Assert-Equals -Expected 17 -Actual $copilot['hooks']['preToolUse'][0]['timeoutSec'] -Message 'Expected the exact old Copilot repository-state registration.'
         Assert-Equals -Expected 'echo custom' -Actual $copilot['hooks']['preToolUse'][1]['bash'] -Message 'Expected custom Copilot hook to survive.'
-        Assert-Equals -Expected 1 -Actual @($copilot['hooks']['preToolUse'] | Where-Object { $_['bash'] -clike '*tool-guard.py' }).Count -Message 'Expected one maintained Copilot handler.'
+        $expectedGuardScript = [System.IO.Path]::GetFullPath((Join-Path $homeDir '.copilot/hooks/scripts/tool-guard.py'))
+        $guardHandlers = @($copilot['hooks']['preToolUse'] | Where-Object {
+            $_['bash'] -is [string] -and
+            $_['bash'].IndexOf($expectedGuardScript, [System.StringComparison]::Ordinal) -ge 0
+        })
+        Assert-Equals -Expected 1 -Actual $guardHandlers.Count -Message 'Expected one maintained Copilot handler.'
+        Assert-True -Condition (Test-Path -LiteralPath $expectedGuardScript -PathType Leaf) -Message 'Expected the maintained Copilot handler to target the installed tool-guard.py script.'
+        $python = Get-PythonForFixture
+        $verifyGuardCommand = @'
+import os
+import shlex
+import sys
+
+command, expected_script = sys.argv[1:]
+try:
+    arguments = shlex.split(command)
+except ValueError as exc:
+    raise SystemExit(f"Copilot handler command is not valid shell syntax: {exc}")
+if len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]:
+    raise SystemExit("Copilot handler must use an isolated Python launch")
+if not os.path.isabs(arguments[0]):
+    raise SystemExit("Copilot handler interpreter must be an absolute path")
+if os.path.normcase(os.path.abspath(arguments[4])) != os.path.normcase(os.path.abspath(expected_script)):
+    raise SystemExit("Copilot handler must target the installed tool-guard.py script")
+'@
+        & $python.Path @($python.Arguments) -c $verifyGuardCommand $guardHandlers[0]['bash'] $expectedGuardScript
+        if ($LASTEXITCODE -ne 0) { Fail 'Expected maintained Copilot handler to use the isolated interpreter and installed script.' }
         Assert-Equals -Expected 'final' -Actual $copilot['hooks']['agentStop'][0]['env']['MARKDOWN_HEALTH_EVENT'] -Message 'Expected old Copilot Markdown Health registration.'
         Assert-Equals -Expected 'echo unrelated' -Actual $copilot['hooks']['agentStop'][1]['bash'] -Message 'Expected unrelated Copilot stop handler.'
         Assert-Equals -Expected $false -Actual $gemini['general']['enableAutoUpdate'] -Message 'Expected maintained Gemini setting to update.'
