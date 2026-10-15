@@ -1,0 +1,109 @@
+name: Hook security macOS
+
+on:
+  push:
+    paths:
+      - 'hooks/**'
+      - '.codex/**'
+      - '.copilot/**'
+      - '.gemini/**'
+      - 'scripts/**'
+      - '.github/workflows/hooks-posix.yml'
+  pull_request:
+    paths:
+      - 'hooks/**'
+      - '.codex/**'
+      - '.copilot/**'
+      - '.gemini/**'
+      - 'scripts/**'
+      - '.github/workflows/hooks-posix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install native prerequisites
+        run: |
+          # Bootstrap RTK before using it for exact test commands.
+          command -v brew
+          brew install git bash jq powershell git-lfs rtk
+          for formula in git bash jq powershell git-lfs rtk; do
+            printf '%s/bin\n' "$(brew --prefix "$formula")" >> "$GITHUB_PATH"
+          done
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Prepare disposable test environment
+        run: |
+          task_root="$RUNNER_TEMP/hook security"
+          mkdir -p "$task_root/home" "$task_root/tmp" "$task_root/logs" "$task_root/config" "$task_root/data" "$task_root/cache"
+          {
+            printf 'HOME=%s/home\n' "$task_root"
+            printf 'USERPROFILE=%s/home\n' "$task_root"
+            printf 'CODEX_HOME=%s/home/.codex\n' "$task_root"
+            printf 'TMPDIR=%s/tmp\n' "$task_root"
+            printf 'XDG_CONFIG_HOME=%s/config\n' "$task_root"
+            printf 'XDG_DATA_HOME=%s/data\n' "$task_root"
+            printf 'XDG_CACHE_HOME=%s/cache\n' "$task_root"
+            printf 'SECRETS_LOG_DIR=%s/logs/secrets\n' "$task_root"
+            printf 'TOOL_GUARD_LOG_DIR=%s/logs/guardian\n' "$task_root"
+            printf 'AUDIT_LOG=%s/logs/audit.log\n' "$task_root"
+            printf 'OBSERVABILITY_LOG_PATH=%s/logs/observability.jsonl\n' "$task_root"
+            printf 'OBSERVABILITY_TESTING=1\n'
+            printf 'GIT_CONFIG_GLOBAL=/dev/null\n'
+            printf 'GIT_CONFIG_NOSYSTEM=1\n'
+            printf 'GIT_TERMINAL_PROMPT=0\n'
+          } >> "$GITHUB_ENV"
+      - name: Verify native tools and stable RTK processors
+        run: |
+          for tool in python3 git bash jq pwsh git-lfs rtk; do
+            command -v "$tool"
+          done
+          rtk proxy python3 -c 'import sys; print(sys.version); assert sys.version_info[:2] == (3, 13), "CI requires Python 3.13"'
+          rtk proxy git --version
+          rtk proxy bash --version
+          rtk proxy jq --version
+          rtk proxy pwsh -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $PSVersionTable.PSVersion.ToString(); if ($PSVersionTable.PSVersion.Major -lt 7) { throw "PowerShell 7 or newer is required." }'
+          rtk proxy git lfs version
+          rtk --version
+          rtk gain
+          rtk proxy python3 - <<'PYTHON'
+          import re
+          import subprocess
+          version = subprocess.check_output(["rtk", "--version"], text=True).strip()
+          match = re.fullmatch(r"rtk (\d+)\.(\d+)\.(\d+)", version)
+          if match is None or tuple(map(int, match.groups())) < (0, 50, 0):
+              raise SystemExit(f"Stable RTK >=0.50.0 is required, got: {version}")
+          help_text = subprocess.check_output(["rtk", "hook", "--help"], text=True)
+          for processor in ("copilot", "gemini"):
+              if re.search(rf"^\s+{processor}\s+", help_text, re.MULTILINE) is None:
+                  raise SystemExit(f"Required RTK hook processor is missing: {processor}")
+          print(f"Verified {version} with Copilot and Gemini hook processors.")
+          PYTHON
+      - name: Check generated hooks
+        run: rtk proxy python3 scripts/generate-hooks.py --check
+      - name: Test verification-only fixture preflight
+        run: rtk proxy python3 scripts/test-verify-security-fixture-patch.py
+      - name: Test diagnostic recovery
+        run: rtk proxy python3 scripts/test-hook-diagnostic-recovery.py
+      - name: Test security reporting
+        run: rtk proxy python3 scripts/test-security-reporting.py
+      # Each scanner shell already runs its provider's capture suite.
+      # T9b adds explicit Darwin native_once evidence and later CLI/gate suites.
+      - name: Test Codex scanner and capture
+        run: rtk proxy bash scripts/test-codex-hooks-secrets-scanner.sh
+      - name: Test Copilot scanner and capture
+        run: rtk proxy bash scripts/test-hooks-secrets-scanner.sh
+      - name: Test Gemini scanner and capture
+        run: rtk proxy bash scripts/test-gemini-hooks-secrets-scanner.sh
