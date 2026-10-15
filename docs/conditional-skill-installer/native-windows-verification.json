@@ -1,0 +1,277 @@
+{
+  "verification_status": "passed",
+  "workflow": ".github/workflows/ready-ideas-windows.yml",
+  "native_command": "pwsh -NoProfile -File scripts/test-install.ps1",
+  "current_run": {
+    "run_id": 38660179633,
+    "url": "https://github.com/japurcell/skills/actions/runs/38660179633",
+    "job_id": 116179325137,
+    "tested_revision": "44a47e5bd758966a6d7e37d9e8ad2b9f834eaba9",
+    "runner_labels": [
+      "windows-latest"
+    ],
+    "os": "Microsoft Windows Server 2025",
+    "image": "windows-2025-vs2026",
+    "image_version": "20260925.250.1",
+    "python": "3.13.15",
+    "rtk": "0.50.0",
+    "started_at": "2026-10-15T00:28:06Z",
+    "completed_at": "2026-10-15T00:33:05Z",
+    "conclusion": "success",
+    "installer_step": "success",
+    "steps": [
+      {
+        "name": "Set up job",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v7",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/setup-python@v7",
+        "conclusion": "success"
+      },
+      {
+        "name": "Install stable Rust Token Killer",
+        "conclusion": "success"
+      },
+      {
+        "name": "Check native prerequisites",
+        "conclusion": "success"
+      },
+      {
+        "name": "Check generated hooks",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test security banner envelopes",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test native PowerShell installer",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test Codex scanner Windows envelopes",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test generated scanner capture on native Windows",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test stable RTK configuration on native Windows",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test repository OKF hooks on native Windows",
+        "conclusion": "success"
+      },
+      {
+        "name": "Test lifecycle messages on native Windows",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/setup-python@v7",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/checkout@v7",
+        "conclusion": "success"
+      },
+      {
+        "name": "Complete job",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "attempts": [
+    {
+      "run_id": 38658790851,
+      "url": "https://github.com/japurcell/skills/actions/runs/38658790851",
+      "job_id": 116174825136,
+      "tested_revision": "31d1d799020c519f9d57e74d402d719ed57f3556",
+      "runner_labels": [
+        "windows-latest"
+      ],
+      "python": "3.13.15",
+      "started_at": "2026-10-15T00:13:35Z",
+      "completed_at": "2026-10-15T00:15:03Z",
+      "conclusion": "failure",
+      "installer_step": "failure",
+      "diagnostic": "Expected bad source path: nfc-nfd-disabled.",
+      "later_tests": "skipped after installer failure"
+    },
+    {
+      "run_id": 38660179633,
+      "url": "https://github.com/japurcell/skills/actions/runs/38660179633",
+      "job_id": 116179325137,
+      "tested_revision": "44a47e5bd758966a6d7e37d9e8ad2b9f834eaba9",
+      "runner_labels": [
+        "windows-latest"
+      ],
+      "os": "Microsoft Windows Server 2025",
+      "image": "windows-2025-vs2026",
+      "image_version": "20260925.250.1",
+      "python": "3.13.15",
+      "rtk": "0.50.0",
+      "started_at": "2026-10-15T00:28:06Z",
+      "completed_at": "2026-10-15T00:33:05Z",
+      "conclusion": "success",
+      "installer_step": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install stable Rust Token Killer",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check native prerequisites",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check generated hooks",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test security banner envelopes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test native PowerShell installer",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test Codex scanner Windows envelopes",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test generated scanner capture on native Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test stable RTK configuration on native Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test repository OKF hooks on native Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test lifecycle messages on native Windows",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "encoding_repair": {
+    "integrated_commit": "306daa22d56ebbfe4f89ce44924cc86b6e0ed219",
+    "local_tested_commit": "19ffb9f2d63f545193ca4da51b430daef14158dc",
+    "root_cause": "Redirected cp1252 Python stderr emits NFC as byte e9 and NFD as literal backslash-u0301; a UTF-8 decoder replaces e9 with U+FFFD.",
+    "fix": "Pair PYTHONIOENCODING=utf-8 and Console.OutputEncoding=UTF8Encoding(false) only around source validation; restore both previous settings in finally.",
+    "changed_files": [
+      "scripts/install.ps1",
+      "scripts/test-install.ps1"
+    ],
+    "local_checks": [
+      {
+        "check": "Normal and controlled-cp1252 public NFC/NFD enabled/disabled cases",
+        "exit_code": 0,
+        "result": "Exact original paths, exit 1, empty stdout, unchanged home/external CODEX_HOME, absent stage markers."
+      },
+      {
+        "check": "Producer/consumer encoding restoration on success and failure",
+        "exit_code": 0
+      },
+      {
+        "command": "rtk proxy pwsh -NoProfile -File scripts/test-install.ps1",
+        "exit_code": 0,
+        "limit": "macOS junction creation unsupported; not native proof."
+      },
+      {
+        "check": "PowerShell parsers, validator AST, executable modes and git diff --check",
+        "exit_code": 0
+      }
+    ],
+    "rebase_identity": "git diff --name-only 19ffb9f2 44a47e5b lists only ExecPlan; implementation/test inputs remain identical."
+  },
+  "dispatch_audit": {
+    "subtask_id": "W1",
+    "selected": {
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "submitted": {
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high"
+    },
+    "executed": {
+      "model": "unconfirmed",
+      "reasoning_effort": "unconfirmed"
+    },
+    "runtime_limit": {
+      "value": "15 minutes",
+      "mechanism": "Coordination-boundary checks and noninterrupting overrun warning",
+      "warning_sent": false
+    },
+    "status": "completed",
+    "output_verified": true,
+    "routing_compliant": true
+  },
+  "scope_limits": [
+    "No real-home installation, live model evaluation, or human-only import orchestration.",
+    "POSIX mode assertions and generic NTFS ACL behavior are not established by native file ReadOnly checks."
+  ],
+  "acceptance_met": true,
+  "native_capabilities": {
+    "original_unicode_diagnostics": "Passed normal and forced-cp1252 NFC/NFD collision cases with original path assertions intact.",
+    "read_only_files": "Windows ReadOnly attributes, content/reference resolution, source preservation, repeat installation, and hardlink refusal cases passed.",
+    "junctions": "Registered junction cases ran within the passing native installer suite; no junction-capability skip was logged.",
+    "intentional_skips": [
+      "POSIX directory/file mode and unreadable000 copy-failure assertions do not prove NTFS ACL behavior.",
+      "Executable-bit assertions do not apply on Windows.",
+      "Unix file mode assertions do not apply on Windows."
+    ]
+  },
+  "knowledge_pass": {
+    "result": "No changes warranted. Protocol behavior and regression are explicit in source/tests; generic encoding facts and session history do not warrant duplicate KB memory.",
+    "added": "None",
+    "changed": "None",
+    "split_or_moved": "None",
+    "deduplicated": "None",
+    "index_updates": "None",
+    "remaining_doc_quality_todos": "None"
+  },
+  "final_documentation_checks": {
+    "local_plan_links": 28,
+    "json_valid": true,
+    "all_milestones_accepted": true,
+    "implementation_unchanged_after_native_revision": true,
+    "okf_lint_exit_code": 0,
+    "whitespace_check_exit_code": 0
+  }
+}
