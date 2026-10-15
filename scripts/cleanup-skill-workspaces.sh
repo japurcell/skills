@@ -78,7 +78,7 @@ prune_workspace_iterations() {
   kept_name="$(basename "$kept_path")"
 
   for iteration in "${ordered[@]:0:${#ordered[@]}-1}"; do
-    rm -rf "$iteration"
+    rm -rf -- "$iteration"
     if [[ -n "$deleted_names" ]]; then
       deleted_names+=","
     fi
@@ -96,9 +96,11 @@ scan_workspace_root() {
   while IFS= read -r -d '' workspace; do
     prune_workspace_iterations "$workspace"
   done < <(
+    # Stop at payload and skill boundaries before considering category children.
     find -P "$root" -mindepth 1 -maxdepth "$max_depth" \
       \( -type d -name archive -prune \) -o \
-      \( -type d -name '*-workspace' -print0 \) | sort -z
+      \( -type d -exec test -f '{}/SKILL.md' \; -prune \) -o \
+      \( -type d -name '*-workspace' -print0 -prune \) | sort -z
   )
 }
 
