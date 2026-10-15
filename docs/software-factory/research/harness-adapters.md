@@ -2,6 +2,8 @@
 
 Research date: 2026-10-08. These are documented integration surfaces, not implemented or conformance-tested factory adapters. Model choice and harness choice are separate: a provider/model available in Pi does not mean the Codex or Gemini CLI harness is supported.
 
+For the 2026-10-14 permission/approval investigation, use [Native permission interaction design](native-permissions/findings.md) and its pinned per-harness reports. They refine this historical survey's approval, scope and lifecycle questions; they still do not establish live adapter conformance.
+
 | Harness | Evidence-backed entry point | What remains to prove |
 | --- | --- | --- |
 | Codex | Local `codex-cli 0.160.1` help confirms `codex exec --json`, model selection, structured final output via `--output-schema`, and resume. OpenAI distinguishes bounded CLI jobs, SDK integration, and app-server for persistent conversations, streamed events, and approvals. [Official integration guide](https://developers.openai.com/blog/codex-as-a-platform) | Confirm which protocol fits interactive approvals; pin version and fixtures; test cancellation and interruption recovery. |

@@ -11,13 +11,34 @@ Who owns and runs the factory, and what installation and lifecycle contract must
 
 Compare per-repository execution, a per-user local service, and a shared service. Set initial expectations for simultaneous repositories/users, supported operating systems, offline operation, trust and filesystem access, credentials, and start/stop/uninstall behavior.
 
-Decide which files belong to the target repo versus managed storage, whether its application dependencies may change, and how an upgrade preserves user-owned workflow edits and unfinished runs. The executor choice below is settled; exact runtime commands and recovery mechanisms remain downstream design work.
+The current resolution distinguishes installation/version pinning from retained observability history. Durable workflow resume and retention of old executable versions were explicitly removed on 2026-10-15.
 
 Resolution should state the initial operating envelope, installation ownership, and deferred deployment modes. This is a product/deployment decision, not an installer implementation task.
 
 ---
 
-## Decision record
+## Resolution
+
+Updated on 2026-10-15 by the explicit SSSF-continuation decision. The [continuation contract](workflow-versioning-and-run-changes.md#resolution) owns its detailed semantics. The original 2026-10-12 record below is retained for rationale; conflicting durable-resume and version-retention requirements are superseded.
+
+### Selected executor and continuation
+
+Use a factory-owned foreground TypeScript runner with local SQLite history, not a durable workflow executor. Each explicit invocation executes the current selected script from its entry point. It may join prior history and compatible agent context, but does not restore execution position or automatically skip completed phases. No separate workflow engine, database service, or permanent supervisor is required.
+
+| Decision | Current accepted policy |
+| --- | --- |
+| Installation and ownership | Per-repository isolated factory directory and dependency files. Keep editable workflows/prompts/settings in version control, managed install files and history outside version control, and application dependencies unchanged. |
+| Runtime provisioning | The installation skill manages a pinned JavaScript runtime. A compatible global runtime is not required. The specific distribution and SQLite binding remain undecided. |
+| Operating envelope | Local single-user operation in trusted repositories; native macOS, Linux, and Windows are validation targets. Existing harness authentication/permissions apply; no mandatory factory sandbox. Credentials stay out of configuration and logs. |
+| Offline operation | Local history, inspection, and available local controls require no cloud account. Individual steps retain their own network requirements. |
+| Upgrades | Preserve user-owned files and readable history. Later invocations use the current installation. Do not retain obsolete executable versions merely to resume unfinished work. Safe upgrades during active processes remain lifecycle design work. |
+| Pause/Ctrl+C | Stop new dispatch, request graceful interruption, preserve partial work/history, and report uncertainty honestly. There is no durable execution position to resume after exit. |
+| History retention | Retain history, transcripts, and registered evidence until explicit cleanup, with storage use visible. Interruption does not authorize deleting partial work. History supports observation, not automatic execution reconstruction. |
+| Uninstall | Refuse active or uncertain owned work. Remove managed runtime/install files while preserving history and user-owned files; full purge remains separate. A later invocation needs an available installation, not restoration of the old run environment. |
+
+Publication, native permissions, shutdown grace, worktree isolation, gate validity, and bounded attempts remain governed by their owning tickets. The [lifecycle ticket](recovery-and-runtime-selection.md) now covers interrupted work and explicit follow-up invocations without durable resume. No runtime or platform behavior has been implemented or proved.
+
+## Historical decision record
 
 Claimed on 2026-10-12. The exact prerequisite, [Confirmed factory requirements](confirmed-factory-requirements.md), is closed. Installation through a skill, customizable workflows, multiple workflows, and live/historical session visibility are already confirmed there. [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns the accepted TypeScript authoring contract. Do not ask for those decisions again.
 
@@ -37,7 +58,7 @@ The user selected **foreground execution**. The earlier automatic-recovery-on-ne
 
 The final answer round below settles runtime provisioning, upgrade ownership, resumable Pause, history retention, and uninstall defaults. Detailed cancellation/recovery mechanisms remain downstream. Native platform support and real-time session visibility remain required. A shared per-user installation is not selected.
 
-### Selected executor and continuation
+### Former executor and continuation, superseded
 
 On 2026-10-12, after the runtime comparison and the illustrative TypeScript workflow discussion, the user explicitly selected **a factory-owned SQLite executor and human-triggered Continue**.
 
@@ -49,7 +70,7 @@ On 2026-10-12, after the runtime comparison and the illustrative TypeScript work
 
 The rationale is to fit the selected local foreground lifecycle and editable code-defined workflows without operating a separate workflow engine or database service. The tradeoff is owning durable execution correctness and upgrades. The linked [runtime comparison](../research/embedded-runtime-comparison.md) retains the alternatives and their evidence limits.
 
-The exact SQLite binding/version, database layout, managed-operation method names, replay/graph mechanism, ownership protocol, and schema/version migration design are not selected by the example code. An on-demand UI host and configured agent CLIs may still be separate processes. Runtime provisioning ownership is settled in the final answer round below; exact distribution/version remains to be specified. Detailed recovery requirements remain with [Recovery guarantees and runtime selection](recovery-and-runtime-selection.md), whose engine-choice input is now settled.
+The exact SQLite binding/version, database layout, managed-operation method names, replay/graph mechanism, ownership protocol, and schema/version migration design are not selected by the example code. An on-demand UI host and configured agent CLIs may still be separate processes. Runtime provisioning ownership is settled in the final answer round below; exact distribution/version remains to be specified. Detailed recovery requirements remain with [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md), whose engine-choice input is now settled.
 
 ### Alternatives considered
 
@@ -98,7 +119,7 @@ The closed [Local runtime prerequisites](local-runtime-prerequisites.md) fact ch
 
 The user requested a comparison of embedded TypeScript runtimes against Restate and DBOS, then asked about non-TypeScript options and SSSF's recovery behavior. The [combined runtime comparison](../research/embedded-runtime-comparison.md) links delegated source findings and distinguishes documented capabilities from untested platform/recovery claims. Its earlier library-prototype recommendations are retained as research history; they do not supersede the user's factory-owned executor choice. Python workflows or a cross-language bridge were not selected.
 
-## Resolution
+### Historical resolution, superseded where amended
 
 Closed on 2026-10-12 after the human explicitly accepted all five recommendations in the final answer round. The exact prerequisite, [Confirmed factory requirements](confirmed-factory-requirements.md), was verified closed. The confirmed answers and selected executor/continuation sections above, together with this resolution, own the accepted operating contract.
 
@@ -114,7 +135,7 @@ Terminology update on 2026-10-14: the human renamed the resumable Stop control t
 
 The initial envelope is local single-user operation in trusted repositories on native macOS, Linux, and Windows, with separate repository installations and foreground invocations. A shared per-user runtime service and a shared team service are outside this initial envelope. The selected architecture needs no separate workflow engine or database service. Configured agent CLIs retain their own authentication, permission controls, and network needs.
 
-Remaining work has existing owners: [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) for compatible retained definitions and intentional changes; [Human control and publication](human-control-and-publication.md) for cancellation, intervention, and child-process behavior; [Recovery guarantees and runtime selection](recovery-and-runtime-selection.md) for execution ownership, SQLite/replay mechanisms, and failure acceptance; and the live-progress/UI tickets for observer lifecycle and rendering. Do not reopen the policy choices recorded here when designing those mechanisms.
+Remaining work has existing owners: [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) for compatible retained definitions and intentional changes; [Human control and publication](human-control-and-publication.md) for cancellation, intervention, and child-process behavior; [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) for execution ownership, SQLite/replay mechanisms, and failure acceptance; and the live-progress/UI tickets for observer lifecycle and rendering. Do not reopen the policy choices recorded here when designing those mechanisms.
 
 No new decision ticket is needed. No executor, installer, upgrade, signal-handling, native-platform, or recovery behavior was implemented or tested in this planning session.
 

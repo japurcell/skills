@@ -1,0 +1,695 @@
+{
+  "research_date": "2026-10-14",
+  "local_cli_version": "codex-cli 0.162.1",
+  "release_tag": "rust-v0.162.1",
+  "release_commit": "092d3acd6bec3e3a14bdc7e7a2810ab628ab759d",
+  "probe_scope": "Help and schema generation only. No authenticated model job, installation, credentials read, or live permission test.",
+  "commands": [
+    "rtk proxy codex --version",
+    "rtk proxy codex --help",
+    "rtk proxy codex exec --help",
+    "rtk proxy codex app-server --help",
+    "rtk proxy codex app-server generate-json-schema --out <temporary-directory>",
+    "rtk proxy codex app-server generate-json-schema --experimental --out <temporary-directory>"
+  ],
+  "schemas": {
+    "CommandExecutionRequestApprovalParams": {
+      "sha256": "16a71816c2d66e319c2c4aa83dd636dfdc43c61e72b6d5475e421ce08d8e6558",
+      "required": [
+        "itemId",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ],
+      "properties": {
+        "approvalId": {
+          "description": "Unique identifier for this specific approval callback.\n\nFor regular shell/unified_exec approvals, this is null.\n\nFor zsh-exec-bridge subcommand approvals, multiple callbacks can belong to one parent `itemId`, so `approvalId` is a distinct opaque callback id (a UUID) used to disambiguate routing. Stdin approvals also use a distinct callback id; inspect `kind` to distinguish them.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "command": {
+          "description": "The command to be executed.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commandActions": {
+          "description": "Best-effort parsed command actions for friendly display.",
+          "items": {
+            "$ref": "#/definitions/CommandAction"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "cwd": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LegacyAppPathString"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The command's working directory."
+        },
+        "environmentId": {
+          "default": null,
+          "description": "Environment in which the command will run.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/CommandExecutionApprovalKind"
+            }
+          ],
+          "default": "command",
+          "description": "Kind of action under review. Defaults to `command` for older servers."
+        },
+        "networkApprovalContext": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NetworkApprovalContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional context for a managed-network approval prompt."
+        },
+        "proposedExecpolicyAmendment": {
+          "description": "Optional proposed execpolicy amendment to allow similar commands without prompting.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "proposedNetworkPolicyAmendments": {
+          "description": "Optional proposed network policy amendments (allow/deny host) for future requests.",
+          "items": {
+            "$ref": "#/definitions/NetworkPolicyAmendment"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "reason": {
+          "description": "Optional explanatory reason (e.g. request for network access).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedAtMs": {
+          "description": "Unix timestamp (in milliseconds) when this approval request started.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {
+        "CommandExecutionApprovalDecision": {
+          "oneOf": [
+            {
+              "description": "User approved the command.",
+              "enum": [
+                "accept"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User approved the command and future prompts in the same session-scoped approval cache should run without prompting.",
+              "enum": [
+                "acceptForSession"
+              ],
+              "type": "string"
+            },
+            {
+              "additionalProperties": false,
+              "description": "User approved the command, and wants to apply the proposed execpolicy amendment so future matching commands can run without prompting.",
+              "properties": {
+                "acceptWithExecpolicyAmendment": {
+                  "properties": {
+                    "execpolicy_amendment": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "execpolicy_amendment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "acceptWithExecpolicyAmendment"
+              ],
+              "title": "AcceptWithExecpolicyAmendmentCommandExecutionApprovalDecision",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "User chose a persistent network policy rule (allow/deny) for this host.",
+              "properties": {
+                "applyNetworkPolicyAmendment": {
+                  "properties": {
+                    "network_policy_amendment": {
+                      "$ref": "#/definitions/NetworkPolicyAmendment"
+                    }
+                  },
+                  "required": [
+                    "network_policy_amendment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "applyNetworkPolicyAmendment"
+              ],
+              "title": "ApplyNetworkPolicyAmendmentCommandExecutionApprovalDecision",
+              "type": "object"
+            },
+            {
+              "description": "User denied the command. The agent will continue the turn.",
+              "enum": [
+                "decline"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User denied the command. The turn will also be immediately interrupted.",
+              "enum": [
+                "cancel"
+              ],
+              "type": "string"
+            }
+          ]
+        },
+        "CommandExecutionApprovalKind": {
+          "description": "Distinguishes a command approval from input sent to an existing terminal.",
+          "enum": [
+            "command",
+            "writeStdin"
+          ],
+          "type": "string"
+        },
+        "NetworkApprovalContext": {
+          "properties": {
+            "host": {
+              "type": "string"
+            },
+            "protocol": {
+              "$ref": "#/definitions/NetworkApprovalProtocol"
+            }
+          },
+          "required": [
+            "host",
+            "protocol"
+          ],
+          "type": "object"
+        },
+        "NetworkPolicyAmendment": {
+          "properties": {
+            "action": {
+              "$ref": "#/definitions/NetworkPolicyRuleAction"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "host"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "CommandExecutionRequestApprovalResponse": {
+      "sha256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7",
+      "required": [
+        "decision"
+      ],
+      "properties": {
+        "decision": {
+          "$ref": "#/definitions/CommandExecutionApprovalDecision"
+        }
+      },
+      "selected_definitions": {
+        "CommandExecutionApprovalDecision": {
+          "oneOf": [
+            {
+              "description": "User approved the command.",
+              "enum": [
+                "accept"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User approved the command and future prompts in the same session-scoped approval cache should run without prompting.",
+              "enum": [
+                "acceptForSession"
+              ],
+              "type": "string"
+            },
+            {
+              "additionalProperties": false,
+              "description": "User approved the command, and wants to apply the proposed execpolicy amendment so future matching commands can run without prompting.",
+              "properties": {
+                "acceptWithExecpolicyAmendment": {
+                  "properties": {
+                    "execpolicy_amendment": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "execpolicy_amendment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "acceptWithExecpolicyAmendment"
+              ],
+              "title": "AcceptWithExecpolicyAmendmentCommandExecutionApprovalDecision",
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "User chose a persistent network policy rule (allow/deny) for this host.",
+              "properties": {
+                "applyNetworkPolicyAmendment": {
+                  "properties": {
+                    "network_policy_amendment": {
+                      "$ref": "#/definitions/NetworkPolicyAmendment"
+                    }
+                  },
+                  "required": [
+                    "network_policy_amendment"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "applyNetworkPolicyAmendment"
+              ],
+              "title": "ApplyNetworkPolicyAmendmentCommandExecutionApprovalDecision",
+              "type": "object"
+            },
+            {
+              "description": "User denied the command. The agent will continue the turn.",
+              "enum": [
+                "decline"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User denied the command. The turn will also be immediately interrupted.",
+              "enum": [
+                "cancel"
+              ],
+              "type": "string"
+            }
+          ]
+        },
+        "NetworkPolicyAmendment": {
+          "properties": {
+            "action": {
+              "$ref": "#/definitions/NetworkPolicyRuleAction"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "host"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "FileChangeRequestApprovalParams": {
+      "sha256": "13848b26814c286ad6425a20d01c1691c86790e1f9e2529399677a8a22fe0d18",
+      "required": [
+        "itemId",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ],
+      "properties": {
+        "grantRoot": {
+          "description": "[UNSTABLE] When set, the agent is asking the user to allow writes under this root for the remainder of the session (unclear if this is honored today).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "reason": {
+          "description": "Optional explanatory reason (e.g. request for extra write access).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedAtMs": {
+          "description": "Unix timestamp (in milliseconds) when this approval request started.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {}
+    },
+    "FileChangeRequestApprovalResponse": {
+      "sha256": "b95b03ee6be674e25cee2e863cc135a28620e1070addd2f34685aadee27cde08",
+      "required": [
+        "decision"
+      ],
+      "properties": {
+        "decision": {
+          "$ref": "#/definitions/FileChangeApprovalDecision"
+        }
+      },
+      "selected_definitions": {
+        "FileChangeApprovalDecision": {
+          "oneOf": [
+            {
+              "description": "User approved the file changes.",
+              "enum": [
+                "accept"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User approved the file changes and future changes to the same files should run without prompting.",
+              "enum": [
+                "acceptForSession"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User denied the file changes. The agent will continue the turn.",
+              "enum": [
+                "decline"
+              ],
+              "type": "string"
+            },
+            {
+              "description": "User denied the file changes. The turn will also be immediately interrupted.",
+              "enum": [
+                "cancel"
+              ],
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "PermissionsRequestApprovalParams": {
+      "sha256": "c11fbe632472ab0923aba5c0a53da3d6d86929bcd5c78e7c13c51c6b2db508ff",
+      "required": [
+        "cwd",
+        "itemId",
+        "permissions",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ],
+      "properties": {
+        "cwd": {
+          "$ref": "#/definitions/LegacyAppPathString"
+        },
+        "environmentId": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "permissions": {
+          "$ref": "#/definitions/RequestPermissionProfile"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedAtMs": {
+          "description": "Unix timestamp (in milliseconds) when this approval request started.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {}
+    },
+    "PermissionsRequestApprovalResponse": {
+      "sha256": "23f3f24e9dbf35db3e0b85703f0d934da5a1cff3cbb611fba8bcd41f3b4a04b0",
+      "required": [
+        "permissions"
+      ],
+      "properties": {
+        "permissions": {
+          "$ref": "#/definitions/GrantedPermissionProfile"
+        },
+        "scope": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/PermissionGrantScope"
+            }
+          ],
+          "default": "turn"
+        },
+        "strictAutoReview": {
+          "description": "Review every subsequent command in this turn before normal sandboxed execution.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "selected_definitions": {
+        "GrantedPermissionProfile": {
+          "properties": {
+            "fileSystem": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AdditionalFileSystemPermissions"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "network": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AdditionalNetworkPermissions"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "PermissionGrantScope": {
+          "enum": [
+            "turn",
+            "session"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "ToolRequestUserInputParams": {
+      "sha256": "fda15b62e7446105b59c8ed85c908abed2a47db70653e57c92c47a2f204fa77a",
+      "required": [
+        "isBlocking",
+        "itemId",
+        "questions",
+        "threadId",
+        "turnId"
+      ],
+      "properties": {
+        "autoResolutionMs": {
+          "default": null,
+          "description": "@deprecated Use `isBlocking` to decide whether the request should block.",
+          "format": "uint64",
+          "minimum": 0.0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "isBlocking": {
+          "type": "boolean"
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/definitions/ToolRequestUserInputQuestion"
+          },
+          "type": "array"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {}
+    },
+    "ToolRequestUserInputResponse": {
+      "sha256": "5073b245f741fa8ce62ec52e4dd1809b7831f9c4284c279a78abc9b171f8e3f2",
+      "required": [
+        "answers"
+      ],
+      "properties": {
+        "answers": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ToolRequestUserInputAnswer"
+          },
+          "type": "object"
+        }
+      },
+      "selected_definitions": {
+        "ToolRequestUserInputAnswer": {
+          "description": "EXPERIMENTAL. Captures a user's answer to a request_user_input question.",
+          "properties": {
+            "answers": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "answers"
+          ],
+          "type": "object"
+        }
+      }
+    },
+    "McpServerElicitationRequestResponse": {
+      "sha256": "792a012fdfe53ac211575a6c37ffbd492be848d15cb313d1bb4b534ade1f54ac",
+      "required": [
+        "action"
+      ],
+      "properties": {
+        "_meta": {
+          "description": "Optional client metadata for form-mode action handling."
+        },
+        "action": {
+          "$ref": "#/definitions/McpServerElicitationAction"
+        },
+        "content": {
+          "description": "Structured user input for accepted elicitations, mirroring RMCP `CreateElicitationResult`.\n\nThis is nullable because decline/cancel responses have no content."
+        }
+      },
+      "selected_definitions": {}
+    },
+    "v2/ServerRequestResolvedNotification": {
+      "sha256": "4f03d586a5af04edd912cad08cc97eceb658e7e06744565e6d41a93e04a55966",
+      "required": [
+        "requestId",
+        "threadId"
+      ],
+      "properties": {
+        "requestId": {
+          "$ref": "#/definitions/RequestId"
+        },
+        "threadId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {}
+    },
+    "v2/TurnInterruptParams": {
+      "sha256": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
+      "required": [
+        "threadId",
+        "turnId"
+      ],
+      "properties": {
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "selected_definitions": {}
+    }
+  },
+  "experimental_command_properties": {
+    "additionalPermissions": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AdditionalPermissionProfile"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Optional additional permissions requested for this command."
+    },
+    "availableDecisions": {
+      "description": "Ordered list of decisions the client may present for this prompt.",
+      "items": {
+        "$ref": "#/definitions/CommandExecutionApprovalDecision"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    }
+  }
+}

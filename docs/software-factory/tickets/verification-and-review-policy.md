@@ -1,5 +1,7 @@
 # Verification and review policy
 
+> Continuation amendment, 2026-10-15: [explicit script invocation](workflow-versioning-and-run-changes.md#resolution) replaces durable resume. Required gates, bounded live-invocation repairs, recorded accounting, and evidence validity remain. Reusing history or agent context does not restore a previous attempt or automatically reuse a pass.
+
 **Type:** grilling
 **Status:** closed
 **Blocked By:** workflow-authoring-and-task-contract.md
@@ -31,7 +33,7 @@ Claimed on 2026-10-13 after verifying the exact prerequisite, `workflow-authorin
 - [Task scheduling and integration](task-scheduling-and-integration.md#resolution) already establishes findings-only default reviewers against a fixed revision, a separate repair writer, configured task and combined-candidate checks, bounded conflict repair, and preservation of stale work for refresh. Shared capacity is two agent sessions and two managed command steps per repository by default; parallel reviewers share that capacity.
 - That scheduling contract also distinguishes a parked unintegrated candidate from stale content already in the combined result. Parking permits eligible independent integrations; integrated stale content pauses ordinary scheduling during refresh. Neither refresh nor another attempt resets existing budgets.
 - [Session events and live progress](session-events-and-live-progress.md#resolution) owns durable visible attempts and immutable registered evidence. Historical evidence remains inspectable but cannot silently certify changed content. Rich usage telemetry may be unavailable; absence is not zero usage.
-- [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) owns human-triggered Continue after interruption. Continue does not approve a checkpoint, reset a budget, or authorize blindly repeating uncertain effects.
+- [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) owns explicit script invocation after interruption. Joining history does not approve a request, reset applicable budgets, or authorize blindly repeating uncertain effects.
 
 ### Confirmed answers, round one
 
@@ -53,7 +55,7 @@ On 2026-10-13, the human explicitly accepted all five recommendations:
 2. **Blocking findings:** actionable defects, unmet acceptance criteria, and violations of required repository rules block by default. Require evidence and an actionable explanation. Optional improvements and personal style preferences are advisory; repositories may customize the policy. Blocking only high-severity defects or every suggestion were not selected as defaults.
 3. **Disputed or contradictory findings:** allow one visible clarification round with the relevant reviewer or reviewers, who may revise their findings with recorded reasons. Request human input if the conflict remains; the repair agent cannot dismiss blockers itself. Clarification sessions count against the shared agent limit. Going directly to human input without this bounded clarification was not selected as the default. This permits an attributed revision of a finding, not majority voting or silently dropping an unresolved blocker.
 4. **Starting repair limits:** two code-repair attempts per loop and twenty additional agent attempts per run, both configurable. Additional attempts include repairs, repeated reviews, clarification, format correction, and fresh recovery sessions; initial planned attempts are separate. One repair/ten additional attempts and three repairs/thirty additional attempts were not selected. These are accepted starting defaults, not measured optimal values.
-5. **Transient infrastructure retry:** at most one automatic retry per step for a recognized transient infrastructure failure, after reconciling prior effects. Test assertion failures follow quality repair rather than repeated execution until a pass. Preserve both attempts; a newly started agent session also consumes the shared agent allowance. Zero or two automatic infrastructure retries were not selected as defaults. This policy applies to a live managed run; it does not replace human-triggered Continue after runner interruption.
+5. **Transient infrastructure retry:** at most one automatic retry per step for a recognized transient infrastructure failure, after reconciling prior effects. Test assertion failures follow quality repair rather than repeated execution until a pass. Preserve both attempts; a newly started agent session also consumes the shared agent allowance. Zero or two automatic infrastructure retries were not selected as defaults. This policy applies to a live managed run; it does not provide recovery after runner interruption; later work requires explicit script invocation.
 
 These choices are settled and must not be asked again. The shared allowance can be exhausted before any particular repair loop reaches its own cap. Neither an infrastructure retry nor a clarification may bypass the accepted recording, effect-reconciliation, freshness, or failure-isolation contracts.
 
@@ -68,7 +70,7 @@ On 2026-10-13, the human explicitly accepted all four remaining recommendations:
 
 ## Resolution
 
-Closed on 2026-10-13 after fourteen explicit human decisions across three rounds. The exact prerequisite, `workflow-authoring-and-task-contract.md`, is closed. The confirmed-answer sections own the policy choices; the following contract applies them without changing the accepted authoring, scheduling, profiles, or human-triggered Continue policies. No next ticket is claimed.
+Closed on 2026-10-13 after fourteen explicit human decisions across three rounds. The exact prerequisite, `workflow-authoring-and-task-contract.md`, is closed. The confirmed-answer sections own the policy choices; the following contract applies them subject to the later continuation amendment while retaining the accepted authoring, live scheduling, profiles, and verification policies. No next ticket is claimed.
 
 ### Gate contract and ownership
 
@@ -95,9 +97,9 @@ These are accounting obligations derived from the accepted limits, not new numer
 | Format correction | One correction for the invalid result, using its saved output | One per correction attempt; no code-repair slot |
 | Recognized transient infrastructure retry | One retry per logical step execution by default | One if another agent attempt is started; command-only retries use no agent allowance |
 | Fresh-session recovery | Accepted explicit recovery policy and retained budgets | One for the new attempt |
-| Reconnect to the same interrupted attempt | Continue and effect reconciliation still apply | No new attempt debit |
+| Reuse a conversation in a later invocation | Record newly executed work separately; context reuse is not attempt restoration | Charge applicable attempt allowance; no free retry merely because context is reused |
 
-The shared default is twenty additional agent attempts per run. Preserve counters across Pause, Continue, process restart, session reuse, and refresh. Record attempt purpose and lineage so a retry, repair, repeated reviewer, or correction cannot become a supposedly initial operation merely by changing its ID. A repaired revision can require a new check execution, but repeating a failed execution against the same inputs does not reset its infrastructure retry allowance. Corrections do not recursively receive fresh correction budgets.
+The shared default is twenty additional agent attempts per run. Preserve recorded counters across interruption, explicitly joined history, session reuse, and refresh; this accounting does not restore execution position. Record attempt purpose and lineage so a retry, repair, repeated reviewer, or correction cannot become a supposedly initial operation merely by changing its ID. A repaired revision can require a new check execution, but repeating a failed execution against the same inputs does not reset its infrastructure retry allowance. Corrections do not recursively receive fresh correction budgets.
 
 A repair attempt consumes allowance even if it makes no useful change; a failed repair must not become free work. Multiple findings handled by one repair attempt do not create multiple repair debits. Admitting parallel work must respect shared remaining capacity and budget before launch; recovery must reconcile uncertain launches without permitting duplicate spending or effects. Exact reservation and reconciliation transactions belong to the recovery ticket.
 
@@ -134,7 +136,7 @@ A successfully finished workflow report names the configured checks it satisfied
 
 **Task graph:** A and B are independent; C depends on both. A and B use isolated worktrees and integrate in ready-result order after their configured gates. C receives the accepted combined revision. Default review examines the final combined diff after all required tasks integrate. If the workflow selects per-task plus final review, each task also runs its own review/repair loop; all additional attempts share the twenty-attempt default. A final cross-task defect is repaired in a separate combined candidate, with freshness/refresh rules applied and the final gate rerun. Required criterion coverage must be satisfied at its declared scope; passing an earlier task gate alone does not prove a later cross-task interaction.
 
-**Interrupted or disputed work:** after a crash, old checks and findings remain visible. Human-triggered Continue reconciles work and uses the retained counters, inputs, and evidence-validity rules. A disputed blocking finding gets its one recorded reviewer-clarification round if allowance remains. An unresolved dispute waits for human input. Neither Continue nor a prior approval converts an old finding, stale check, or incomplete criterion into a current pass.
+**Interrupted or disputed work:** after a crash, old checks and findings remain visible. A later invocation executes its selected script from the entry point; it may explicitly use preserved artifacts/context but does not automatically inherit prior gate passes. Apply current evidence-validity rules and existing accounting when joining history. A disputed blocking finding still gets one recorded reviewer-clarification round if allowance remains, then human input if unresolved. Neither context reuse nor prior approval makes an incomplete criterion a current pass.
 
 ### Implementation acceptance obligations
 
@@ -142,9 +144,9 @@ These are future proof obligations, not completed runtime tests:
 
 - Exercise final-only, per-task-only, combined, and disabled review modes; task/integration/final check sets; and required versus advisory outcomes. Demonstrate optional agent-led UI exploration without repeated permission prompts when enabled.
 - Run parallel reviewers against the same revision. A blocker survives another reviewer's pass, a malformed required result cannot pass, and a repair agent cannot silently dismiss a finding. Retain one clarification round and any attributed revision of findings.
-- Enforce two repair attempts per loop and twenty additional agent attempts across nested/parallel work. Include repeated reviews, session reuse, format corrections, fresh recovery, no-op repairs, and crash-adjacent launches. Renaming operations must not reset budgets.
+- Enforce two repair attempts per loop and twenty additional agent attempts across nested/parallel work. Include repeated reviews, session reuse, format corrections, explicit follow-up invocations, no-op repairs, and crash-adjacent launches. Renaming operations must not reset budgets.
 - Retry a recognized transient infrastructure failure at most once; do not retry an assertion failure until green. Exercise invalid-output correction without repeating implementation or granting code-edit authority. Preserve failure history and uncertain effects.
-- Exercise attempt timeout, queue time, recorded human wait, Pause, and Continue. Preserve elapsed-time and attempt accounting; show unsupported hard spending limits honestly. Native process-stop behavior requires its own platform evidence.
+- Exercise attempt timeout, queue time, recorded live human wait, interruption, and later explicit invocation. Preserve earlier elapsed-time records and applicable attempt accounting without pretending to resume an old timer; show unsupported hard spending limits honestly. Native process-stop behavior requires its own platform evidence.
 - Change code after review and verify affected-gate reruns, retained historical evidence, explicit valid reuse, and rejection of stale or unverifiable reuse. Exercise combined repair without bypassing stale-consumer refresh.
 - Show criterion-level coverage using command results, structured assessments, and optional human decisions. Missing evidence and required unavailable/disabled work cannot create a false pass; advisory or deliberately unperformed optional work stays visible.
 - Run the quick-change and task-graph scenarios, including a shared budget exhausted before a local loop cap, and confirm required unfinished work prevents overall success while eligible independent branches follow the accepted scheduling policy.
@@ -152,8 +154,8 @@ These are future proof obligations, not completed runtime tests:
 ### Downstream owners and limits
 
 - [Human control and publication](human-control-and-publication.md) owns responses to unresolved disputes and exhausted limits, checkpoint controls and authorization, stale/duplicate human answers, publication identity, and process-stop escalation. Optional pre-PR approval remains optional.
-- [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) owns authorized edits to policies, budgets, criteria, profiles, and plans in unfinished runs, retained versions, and repair-output representation. An agent cannot silently rewrite a gate to pass it.
-- [Recovery guarantees and runtime selection](recovery-and-runtime-selection.md) owns durable counter/timeout enforcement, launch reconciliation, fencing, atomic candidate acceptance, and evidence/version compatibility under Continue.
+- [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) owns current files/inputs on later invocation and observable provenance, without suspended-run migration. An agent cannot silently rewrite a gate to pass it.
+- [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns accounting integrity, process ownership, incomplete records, and safe explicit follow-up work. No durable control-flow or timer restoration is selected.
 - [Swimlane interaction design](swimlane-interaction-design.md) owns presentation of coverage, gates, findings, budgets, retries, warnings, and disabled/unavailable work using the accepted saved-event model.
 - [Specification readiness and acceptance](specification-readiness-and-acceptance.md) assembles these defaults and obligations with the other closed contracts. Check commands, reviewer count, model choices, and numerical overrides remain repository/workflow configuration rather than universal prescribed values.
 
