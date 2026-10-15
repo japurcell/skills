@@ -1865,11 +1865,15 @@ function Test-InvalidSelectionIsImmutable {
 }
 
 function Test-SourcePreflightIsImmutable {
+    param(
+        [string[]]$Scenarios = @('missing-default', 'missing-forest-disabled', 'missing-forest-enabled', 'malformed-default', 'malformed-forest', 'equal-name', 'case-name', 'nfc-nfd-disabled', 'nfc-nfd-enabled')
+    )
+
     $workdir = New-TestWorkdir
     try {
         $nfcName = "caf$([char]0x00e9)"
         $nfdName = "cafe$([char]0x0301)"
-        foreach ($scenario in @('missing-default', 'missing-forest-disabled', 'missing-forest-enabled', 'malformed-default', 'malformed-forest', 'equal-name', 'case-name', 'nfc-nfd-disabled', 'nfc-nfd-enabled')) {
+        foreach ($scenario in $Scenarios) {
             $repo = Join-Path $workdir "$scenario/repo"
             $homeDir = Join-Path $workdir "$scenario/home"
             $codex = Join-Path $workdir "$scenario/codex"
@@ -1906,9 +1910,9 @@ function Test-SourcePreflightIsImmutable {
             $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue '0' -InstallArguments $arguments
             Assert-Equals 1 $result.ExitCode "Expected source error exit 1: $scenario."
             $stderr = ($result.Stderr -join "`n").Replace('\', '/')
-            Assert-True ($stderr.Contains($diagnostic)) "Expected bad source path: $scenario."
+            Assert-True ($stderr.Contains($diagnostic)) "Expected bad source path: $scenario. Actual stderr: $stderr"
             if ($scenario -in @('equal-name', 'case-name', 'nfc-nfd-disabled', 'nfc-nfd-enabled')) {
-                Assert-True ($stderr.Contains($defaultDiagnostic)) 'Expected both original collision paths.'
+                Assert-True ($stderr.Contains($defaultDiagnostic)) "Expected both original collision paths: $scenario. Actual stderr: $stderr"
             }
             Assert-Equals '' ($result.Stdout -join "`n") 'Expected no stdout for source errors.'
             Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected source error not to mutate home.'
@@ -1917,6 +1921,19 @@ function Test-SourcePreflightIsImmutable {
         }
     }
     finally { Remove-Workdir $workdir }
+}
+
+function Test-SourceDiagnosticsWithLegacyEncoding {
+    $oldEncoding = [System.Environment]::GetEnvironmentVariable('PYTHONIOENCODING', [System.EnvironmentVariableTarget]::Process)
+    try {
+        # Windows redirected Python streams can use a legacy encoding. Exercise
+        # the real installer with that same producer constraint on every host.
+        [System.Environment]::SetEnvironmentVariable('PYTHONIOENCODING', 'cp1252', [System.EnvironmentVariableTarget]::Process)
+        Test-SourcePreflightIsImmutable -Scenarios @('nfc-nfd-disabled', 'nfc-nfd-enabled')
+    }
+    finally {
+        [System.Environment]::SetEnvironmentVariable('PYTHONIOENCODING', $oldEncoding, [System.EnvironmentVariableTarget]::Process)
+    }
 }
 
 function Test-HelperFailuresAreInstallerErrors {
@@ -2031,6 +2048,7 @@ Test-ChildProfileEnvironmentIsIsolated
 Test-HelperFailuresAreInstallerErrors
 Test-EmptyCategoriesMarkersAndExclusions
 Test-SourcePreflightIsImmutable
+Test-SourceDiagnosticsWithLegacyEncoding
 Test-InvalidSelectionIsImmutable
 Test-SelectionEnvironmentAndRepeats
 Test-ExplicitForestServiceSelection

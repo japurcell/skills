@@ -534,7 +534,20 @@ foreach ($relative in $CodexHookFiles) {
 }
 
 $pythonCommand = Get-PythonCommand
-& $pythonCommand.Path @($pythonCommand.Arguments) $ValidateSkillSourcesSrc $SkillsSrc | Write-InstallStatus
+# Python uses the Windows ANSI codepage for redirected stderr by default.
+# Pair its stream encoding with PowerShell's native-output decoder so original
+# Unicode source paths survive the validation boundary without replacement.
+$previousPythonIoEncoding = [Environment]::GetEnvironmentVariable('PYTHONIOENCODING', 'Process')
+$previousConsoleOutputEncoding = [Console]::OutputEncoding
+try {
+    [Environment]::SetEnvironmentVariable('PYTHONIOENCODING', 'utf-8', 'Process')
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ValidateSkillSourcesSrc $SkillsSrc | Write-InstallStatus
+}
+finally {
+    [Console]::OutputEncoding = $previousConsoleOutputEncoding
+    [Environment]::SetEnvironmentVariable('PYTHONIOENCODING', $previousPythonIoEncoding, 'Process')
+}
 if ($LASTEXITCODE -ne 0) { Fail "Skill source validation exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK preflight exited with code $LASTEXITCODE." }
