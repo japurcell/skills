@@ -1,6 +1,6 @@
 # Keep editing available and scan at explicit checkpoints and Git gates
 
-This is the active Design B ExecPlan at `docs/hook-resilience-design-b/ExecPlan.md`. Maintain it according to [exec-plans](../../.agents/skills/exec-plans/SKILL.md). Written on 2026-10-15 against repository revision `9e5f88950cda434600bad7051362588296fea33d`. All implementation milestones are open. The current request authorizes writing this plan and the required documentation moves, not implementing, installing, enabling, committing, or publishing hooks.
+This is the active Design B ExecPlan at `docs/hook-resilience-design-b/ExecPlan.md`. Maintain it according to [exec-plans](../../.agents/skills/exec-plans/SKILL.md). Written on 2026-10-15 against repository revision `9e5f88950cda434600bad7051362588296fea33d`. Implementation is authorized by the 2026-10-15 `execplan-implement` request. Work proceeds on `codex/hook-resilience-design-b`, starting from `1cbe2cdf162b823b5f331f002a93464a0a1adca0`. Source changes, isolated fixtures, private task branches, and implementation commits are authorized. Real-home deployment, hook enablement/trust changes, and publication remain separate owner actions.
 
 ## Purpose / Big Picture
 
@@ -14,6 +14,7 @@ Success is observable in a disposable repository: reproduce the large merge and 
 
 ## Progress
 
+- [x] (2026-10-15) [execution] E0: Create clean base branch `codex/hook-resilience-design-b` from the committed plan at `1cbe2cdf`; verify RTK 0.51.0, Python 3.14.6, Git 2.54.0, PowerShell 7.6.7, and jq 1.7.1. Git LFS is absent on PATH and must be supplied before LFS acceptance.
 - [x] (2026-10-15) [planning] P0: Inspect the reports, retrospective candidates, current source and installers, prior implementation evidence, repository rules, and the three saved CLI design sources. Write this implementation contract. No runtime changes made.
 - [ ] [milestone-1] D0: Prove the publication transaction, LFS delivery, supported capacity, and installation interfaces in disposable feasibility fixtures; record the concrete limits and supported platform matrix.
 - [ ] [milestone-1] T1: Deliver retrospective candidate 1, the public fixture-patch preflight CLI and its check/apply behavior.
@@ -197,7 +198,7 @@ All proposed test files below are new unless identified as existing. Record comm
 
 ### Milestone 1: Establish publication feasibility and safe maintenance tools
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 **D0 - Publication and capacity decision proof.** Prerequisites: implementation authorization and the public test seams confirmed. Inputs: B3-B6, incident descriptions, existing capture/matching implementation, and Git/provider source references below. First reproduce the existing read/repair/completion lockout through public provider entrypoints in isolated incident-shaped repositories, recording expected native denials and the unchanged pending state. This is the baseline failure, not acceptance of the replacement. Use isolated local repositories, bare remotes, and an LFS endpoint; do not publish to a real service. Prove pre-push tuple/OID binding, multi-ref/new-ref/deletion/force/tag handling, replacement-object resistance, supported preserved-hook ordering/stdin replay, and LFS snapshot-to-upload binding. A rejected LFS push must transfer zero payload objects. Measure a first publication, long outgoing history, repeated blobs, multiple refs, a large individual blob/LFS payload, and the incident-sized workloads. Retain logical candidate bytes, distinct acquired object bytes, object/path counts, capture/temp usage, elapsed time, and peak memory separately.
@@ -282,7 +283,7 @@ One integrator owns `hooks/manifest.py`, `scripts/generate-hooks.py`, both platf
 
 ## Concrete Steps
 
-The next action is implementation authorization, then D0's bounded feasibility proof and confirmation of the public test seams required by TDD. Writing this plan did not authorize implementation or deployment. At that time, recheck `rtk git status --short`, the current revision, affected source, and local instructions; do not reset to the authoring revision.
+Implementation authorization has arrived. The base branch is `codex/hook-resilience-design-b`, created from the clean planning commit `1cbe2cdf162b823b5f331f002a93464a0a1adca0`. Explicit TDD seam confirmation is pending; no new tests may be written before it arrives. Next: dispatch D0, T1, and T2 to separate private worktrees once their prerequisites are verified. The primary agent owns this plan, shared generator/install/registry files, integration, and the final coordinated documentation pass. Recheck current source rather than resetting to the authoring revision.
 
 Use these existing baseline commands from the repository root before changing code. They demonstrate current limits and contracts, not success of Design B:
 
@@ -361,7 +362,7 @@ When a gate finds a secret, remove it from the relevant staged content or outgoi
 
 ## Outcomes & Retrospective
 
-Planning is complete; implementation, new CLI commands, repository gates, provider migration, CI execution, and live deployment have not occurred. The plan incorporates the user-selected no-background design, candidates 1-3, the five accepted adversarial findings, and source-derived CLI requirements. The two promoted idea reports are retained in `docs/ideas/archive/` with their historical scope and repaired links.
+Planning is complete and implementation is authorized. Branch preparation is complete; implementation tasks, new CLI commands, repository gates, provider migration, CI execution, and live deployment have not occurred. The plan incorporates the user-selected no-background design, candidates 1-3, the five accepted adversarial findings, and source-derived CLI requirements. The two promoted idea reports are retained in `docs/ideas/archive/` with their historical scope and repaired links.
 
 Documentation-only verification on 2026-10-15 checked all 60 local Markdown links across the plan, idea index, and archived reports; required living sections and all five open milestone states; preserved report contents apart from archive notices and link repair; and Git whitespace checks. Runtime tests were not run for this planning-only change. The coordinated knowledge-maintenance pass adds no canonical instruction or memory: the new behavior is proposed, and current runtime guidance remains current until implementation.
 
