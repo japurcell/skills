@@ -323,7 +323,7 @@ One integrator owns `hooks/manifest.py`, `scripts/generate-hooks.py`, both platf
 
 Implementation authorization has arrived. The base branch is `codex/hook-resilience-design-b`, created from the clean planning commit `1cbe2cdf162b823b5f331f002a93464a0a1adca0`. The user explicitly confirmed all listed public seams on 2026-10-15. D0, T1, T2 and X0 are integrated. I1 is integrated and Milestone 1 acceptance is met. Next: resolve R1's reproduced attribute-specific CRLF suppression defect in T3a, adapt the fixture-tool closure, and complete its affected compatibility proof. T9a initial CI wiring can proceed independently with exclusive workflow ownership. Integrate clean branches serially. The user resolved the apply race by choosing verification-only candidate 1; no apply-backend owner decision remains pending. The primary owns this plan, integration, and the final coordinated documentation pass; delegated shared-file ownership is explicit in each node. Recheck current source rather than resetting to the authoring revision.
 
-Use these existing baseline commands from the repository root before changing code. They demonstrate current limits and contracts, not success of Design B:
+Completed baseline commands from the repository root are retained below as evidence of the original limits and contracts, not success of Design B. Rerun only when a new change or failure warrants it:
 
 ```sh
 rtk proxy python3 scripts/generate-hooks.py --check
