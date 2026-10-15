@@ -1,6 +1,6 @@
 # Hook resilience session retrospective
 
-Saved on 2026-10-15 from the independent `retro` retrospective. [Companion report](2026-10-15-hook-resilience-retro-automate.md). Original findings are retained below. The implementation guide adds concrete steps without claiming the proposals are built. Transcript links are machine-local historical evidence and may be unavailable on another computer. Repository links are relative, and historical line numbers may drift.
+Saved on 2026-10-15 from the independent `retro` retrospective. Original findings are retained below. The implementation guide adds concrete steps without claiming the proposals are built. Transcript links are machine-local historical evidence and may be unavailable on another computer. Repository links are relative, and historical line numbers may drift.
 
 This report applies the `retro` skill and its `writing-for-agents` reference to the scanner and Tool Guardian coding session. It proposes environment improvements only. No implementation, hook installation, skill change, or knowledge-base change was performed for this retrospective.
 
@@ -118,7 +118,6 @@ Four review roles were required, but the runtime supported only three children. 
 The transcript contains compactions, summaries, and delegated reports. The reviewed physical lines preserve the later coding sequence directly; this report distinguishes assistant claims from tool results instead of treating summaries as proof of every earlier milestone. Historical validation was inspected, not rerun. CI configuration was read, but remote CI run state and branch-protection settings were not inspected. No authenticated provider invocation or native Windows run was performed here.
 
 A separate retrospective-time read-only parsing command was denied by Tool Guardian after it interpreted a diagnostic marker word as a SQL operation. The denial is preserved in this retrospective agent's tool history. It is outside the original coding evidence window and is not used to establish a coding-session finding. The read was reformulated without changing any security control.
-
 
 ## Implementation guide for a new contributor
 
