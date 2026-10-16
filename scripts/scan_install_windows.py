@@ -86,7 +86,10 @@ def private(handle, *, create=False, ancestor=False, drive_root=False, creation_
                 return text.value
             finally:
                 kernel.LocalFree(ctypes.cast(text, pointer))
-        trusted = {owner, "S-1-5-18", "S-1-5-32-544"}
+        # Windows Resource Protection owns system ancestry through the fixed
+        # TrustedInstaller service SID. Private bundle ownership remains exact.
+        trusted = {owner, "S-1-5-18", "S-1-5-32-544",
+            "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"}
         if (sid_text(actual_owner) not in trusted if ancestor else not advapi.EqualSid(actual_owner, sid)):
             raise OSError("Unsafe installation access control")
         if not acl:
