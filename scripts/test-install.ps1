@@ -2002,6 +2002,16 @@ function Test-HelperFailuresAreInstallerErrors {
 '@
             Assert-True ($scannerSource.Contains($originalHandler)) 'Expected the fixture scanner failure boundary to exist.'
             [System.IO.File]::WriteAllText($scannerInstaller, $scannerSource.Replace($originalHandler, $fixtureHandler))
+            $windowsSupport = Join-Path $repo 'scripts/scan_install_windows.py'
+            $windowsSource = [System.IO.File]::ReadAllText($windowsSupport).Replace("`r`n", "`n")
+            $ownerBoundary = '        trusted = {owner, "S-1-5-18", "S-1-5-32-544"}'
+            $ownerReceipt = @'
+        if drive_root:
+            labels = {owner: "current-user", "S-1-5-18": "system", "S-1-5-32-544": "administrators", "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464": "trustedinstaller"}
+            print("Fixture drive-root owner category: " + labels.get(sid_text(actual_owner), "other"), file=__import__("sys").stderr)
+'@
+            Assert-True ($windowsSource.Contains($ownerBoundary)) 'Expected the fixture native owner boundary to exist.'
+            [System.IO.File]::WriteAllText($windowsSupport, $windowsSource.Replace($ownerBoundary, "$ownerReceipt`n$ownerBoundary"))
             Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $repo "scripts/$helper") @('import sys', 'print("Fixture helper status")', 'print("Fixture helper failed; repair its input.", file=sys.stderr)', 'raise SystemExit(2)')
