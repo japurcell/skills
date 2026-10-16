@@ -76,7 +76,7 @@ Execution baseline on 2026-10-15: `generate-hooks.py --check` passed (38 files),
 
 Current `RecoveryTests.launch` explicitly sets both `SCAN_MODE` and `GUARD_MODE`. Candidate 3 protects this existing correction; it is not a request to rediscover or reapply a missing assignment.
 
-T3c primary review reproduced unsafe installer ownership: an explicit destination containing an unrelated owner-only file returned success and removed that file. The active T3c repair must validate the exact owned manifest, inventory and bytes before replacement or backup cleanup, serialize installers with a bounded kernel-released lock, and retain public preservation/rollback proof. Installation remains unaccepted until those controls pass.
+T3c primary review reproduced unsafe installer ownership: an explicit destination containing an unrelated owner-only file returned success and removed that file. The active T3c repair must validate the exact owned manifest, inventory and bytes before replacement or backup cleanup, serialize installers with a bounded kernel-released lock, and retain public preservation/rollback proof. Installation remains unaccepted until those controls pass. A later public source-closure control produced 65 inventory entries: first install succeeded, but identical reinstall failed the 64-entry reader bound. Source admission must enforce the same finite inventory limit before any mutation; the current 13-asset bundle remains within that bound.
 
 ## Decision Log
 
