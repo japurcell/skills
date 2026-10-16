@@ -21,13 +21,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.codex/hooks/scan-secrets.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\"",
-            "timeout": 10,
-            "statusMessage": "Scanning modified files for secrets"
-          },
-          {
-            "type": "command",
             "command": "python3 ~/.codex/hooks/tool-guard.py",
             "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\tool-guard.py\"",
             "timeout": 10,
@@ -41,10 +34,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/.codex/hooks/scan-secrets.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\"",
-            "timeout": 10,
-            "statusMessage": "Checking modified files for secrets"
+            "command": "python3 ~/.codex/hooks/scan-status.py",
+            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-status.py\"",
+            "timeout": 2,
+            "statusMessage": "Reading last secret-scan status"
           }
         ]
       }

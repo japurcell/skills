@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import sys
 
-SECURITY_HOOK_FILES = ("scan-secrets.py", "tool-guard.py")
+SECURITY_HOOK_FILES = ("scan-secrets.py", "tool-guard.py", "scan-status.py")
 
 
 def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False) -> str:
@@ -61,12 +61,20 @@ def is_trusted_pair(handler: dict, script: Path) -> bool:
 
 
 def pin_provider_commands(template: dict, provider: str, home: Path) -> None:
-    for entries in template.get("hooks", {}).values():
+    for event, entries in template.get("hooks", {}).items():
+        if provider == "gemini" and event == "disabled":
+            continue
         for entry in entries:
             for handler in ([entry] if provider == "copilot" else entry["hooks"]):
                 for filename in SECURITY_HOOK_FILES:
                     keys = ("bash", "powershell") if provider == "copilot" else ("command",)
-                    if not any(filename in handler.get(key, "") for key in keys):
+                    path = f"$HOME/.{provider}/hooks/scripts/{filename}"
+                    legacy = {"bash": path, "powershell": f'python "{path}"'} if provider == "copilot" else {"command": f'python "{path}"'}
+                    if provider == "copilot":
+                        matches = handler.get("bash") == legacy["bash"] and ("powershell" not in handler or handler["powershell"] == legacy["powershell"])
+                    else:
+                        matches = handler.get("command") == legacy["command"]
+                    if not matches:
                         continue
                     script = home / f".{provider}/hooks/scripts" / filename
                     for key in keys:

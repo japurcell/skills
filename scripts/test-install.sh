@@ -622,12 +622,13 @@ assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
 pre_tool = config["hooks"]["PreToolUse"]
 pre_commands = [hook["command"] for hook in pre_tool[0]["hooks"]]
-assert any(command.endswith("/scan-secrets.py") and " -I -S -B " in command for command in pre_commands)
+assert len(pre_commands) == 1
+assert any(command.endswith("/tool-guard.py") and " -I -S -B " in command for command in pre_commands)
 assert any(command.endswith("/tool-guard.py") and " -I -S -B " in command for command in pre_commands)
 stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
-assert any(command.endswith("/scan-secrets.py") and " -I -S -B " in command for command in stop_commands)
-assert sum(hook["command"].endswith("/scan-secrets.py") and " -I -S -B " in hook["command"] for group in pre_tool for hook in group["hooks"]) == 1
-assert sum(hook["command"].endswith("/scan-secrets.py") and " -I -S -B " in hook["command"] for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
+assert any(command.endswith("/scan-status.py") and " -I -S -B " in command for command in stop_commands)
+assert sum(hook["command"].endswith("/tool-guard.py") and " -I -S -B " in hook["command"] for group in pre_tool for hook in group["hooks"]) == 1
+assert sum(hook["command"].endswith("/scan-status.py") and " -I -S -B " in hook["command"] for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY
 }
 
@@ -652,12 +653,12 @@ test_preserves_unrelated_codex_configuration_and_replaces_owned_handler() {
         {"type": "command", "command": "echo keep"},
         {"type": "command", "command": "python3 ~/.CODEX/hooks/load-required-skills.py"},
         {"type": "command", "command": "echo ~/.codex/hooks/load-required-skills.py"},
-        {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"},
+        {"type": "command", "command": "python3 /user/hooks/load-required-skills.py"},
         {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\load-required-skills.py\""}
       ]},
       {"matcher": "resume", "hooks": []},
       {"matcher": "clear", "hooks": [
-        {"type": "command", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\load-required-skills.py\""}
+        {"type": "command", "commandWindows": "py -3 \"C:\\user\\load-required-skills.py\""}
       ]}
     ]
   }
@@ -680,11 +681,11 @@ assert groups[0]["hooks"] == [
     {"type": "command", "command": "echo keep"},
     {"type": "command", "command": "python3 ~/.CODEX/hooks/load-required-skills.py"},
     {"type": "command", "command": "echo ~/.codex/hooks/load-required-skills.py"},
-    {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"},
+    {"type": "command", "command": "python3 /user/hooks/load-required-skills.py"},
 ]
 assert groups[1] == {"matcher": "resume", "hooks": []}
 assert groups[2]["hooks"] == [
-    {"type": "command", "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'},
+    {"type": "command", "commandWindows": 'py -3 "C:\\user\\load-required-skills.py"'},
 ]
 assert groups[3]["hooks"][0]["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 PY

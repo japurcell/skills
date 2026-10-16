@@ -1526,12 +1526,12 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
         $preCommands = @($config['hooks']['PreToolUse'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition (@($preCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition ($preCommands.Count -eq 1) -Message 'Expected the single synchronous Tool Guardian handler.'
         Assert-True -Condition (@($preCommands -match ' -I -S -B .*tool-guard.py').Count -eq 1) -Message 'Expected Codex Tool Guardian registration.'
         $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected Stop to retain the maintained scanner.'
-        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
-        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
+        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-status.py').Count -eq 1) -Message 'Expected Stop to report historical scan status.'
+        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*tool-guard.py' }).Count -eq 1) -Message 'Expected exactly one synchronous Guardian registration.'
+        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-status.py' }).Count -eq 1) -Message 'Expected exactly one historical-status registration.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {
@@ -1674,7 +1674,7 @@ function Test-PreservesCodexConfigurationAndIsIdempotent {
             '    "BeforeTool": [{"hooks": [{"type": "command", "command": "echo preserve"}]}],',
             '    "SessionStart": [{"matcher": "startup", "hooks": [',
             '      {"type": "command", "command": "echo preserve"},',
-            '      {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"}',
+            '      {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\load-required-skills.py\""}',
             '    ]}]',
             '  }',
             '}'
