@@ -1993,9 +1993,19 @@ function Test-HelperFailuresAreInstallerErrors {
             $before = Get-TreeFingerprint $homeDir
             $beforeCodex = Get-TreeFingerprint $codex
             $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue '0'
-            Assert-Equals 1 $result.ExitCode "Expected helper exit 2 to become installer exit 1: $helper."
-            Assert-True (($result.Stderr -join "`n").Contains('Fixture helper failed; repair its input.')) 'Expected helper diagnostic and recovery preserved.'
-            Assert-Equals '' ($result.Stdout -join "`n") 'Expected helper status not to leak stdout.'
+            # Report only this disposable fixture's bounded output on assertion failure.
+            # The original diagnostic alone can conceal earlier native preflight failures.
+            $context = "Helper: $helper; installer exit: $($result.ExitCode)"
+            foreach ($stream in @('Stdout', 'Stderr')) {
+                $captured = ($result.$stream -join "`n").Replace($workdir, '<fixture>')
+                if ($captured.Length -gt 2000) {
+                    $captured = $captured.Substring(0, 2000) + '<truncated>'
+                }
+                $context += "`n${stream}: $captured"
+            }
+            Assert-Equals 1 $result.ExitCode "Expected helper exit 2 to become installer exit 1: $helper.`n$context"
+            Assert-True (($result.Stderr -join "`n").Contains('Fixture helper failed; repair its input.')) "Expected helper diagnostic and recovery preserved.`n$context"
+            Assert-Equals '' ($result.Stdout -join "`n") "Expected helper status not to leak stdout.`n$context"
             if ($helper -notin @('install-codex-agents.py', 'rebase-skill-references.py')) {
                 Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected preflight helper failure not to mutate home.'
                 Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected preflight helper failure not to mutate CODEX_HOME.'
