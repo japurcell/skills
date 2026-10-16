@@ -54,7 +54,7 @@ def parser():
         help="inspect a captured Git action", description="Synchronous fail-closed Git feedback. No stdin is read for pre-commit.")
     gates = gate.add_subparsers(dest="action")
     pre_commit = gates.add_parser("pre-commit", parents=[common], allow_abbrev=False,
-        help="inspect the full selected staged index", description="Inspect every full version in Git's selected index. This feedback describes the captured staged state; later hooks may change it.")
+        help="inspect changed staged files in full", description="Inspect full stored versions of files changed between captured HEAD and Git's selected index. This feedback describes the captured staged state; later hooks may change it.")
     pre_commit.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     pre_commit.add_argument("--budget-file", help="explicit schema-1 JSON budget file; uses checkpoint profile")
     status = commands.add_parser("status", parents=[common], allow_abbrev=False,
@@ -202,7 +202,7 @@ def check(args, *, load, runtime, entry, status_capture):
             if is_gate:
                 status_capture["gate"] = dict(repository_identity=gate.repository_identity(protected), index_identity=protected.index_identity)
             result = engine.scan(protected.root, engine.ScanPolicy(build.hexdigest(), scope="staged" if args.scope == "index" else "diff",
-                                 version=gate.POLICY if is_gate else POLICY, full_index=is_gate),
+                                 version=gate.POLICY if is_gate else POLICY, staged_gate=is_gate),
                                  limits, context=context)
     except repository.NotRepository:
         raise Failure("not_repository", 3, "repository", "Choose a Git worktree with --repo PATH.") from None
@@ -249,7 +249,7 @@ def check(args, *, load, runtime, entry, status_capture):
     code = 2 if result.outcome == "incomplete" else 1 if result.counts["processed_findings"] else 0
     if is_gate:
         value.update(schema=gate.SCHEMA, action=args.action, **status_capture["gate"], budget_profile="checkpoint",
-                     accounting_units=gate.UNITS, scope_description="full_selected_index", exit_code=code)
+                     accounting_units=gate.UNITS, scope_description="changed_staged_files", exit_code=code)
     return value, code
 
 

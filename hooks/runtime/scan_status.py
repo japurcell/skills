@@ -202,7 +202,7 @@ def validate_record(value, identity):
             raise ValueError
         if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", value["scanner_version"]) is None or len(value["scanner_version"]) > 32:
             raise ValueError
-        if ((value["policy_version"], value["scope"]) not in {("pending_snapshots_v1", "worktree"), ("pending_snapshots_v1", "index"), ("selected_index_v1", "index")}):
+        if ((value["policy_version"], value["scope"]) not in {("pending_snapshots_v1", "worktree"), ("pending_snapshots_v1", "index"), ("selected_index_v1", "index"), ("selected_staged_v1", "index")}):
             raise ValueError
         for key in ("build", "scope_identity"):
             if value[key] is not None and re.fullmatch(r"[0-9a-f]{64}", value[key]) is None:

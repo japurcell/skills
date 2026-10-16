@@ -1,4 +1,4 @@
-"""Full selected-index collection and strict caller-owned gate admission.
+"""Strict caller-owned admission for changed staged-file gates.
 
 A dispatcher must call validate_result on the captured process output with its
 own expected identities. Scanner self-validation cannot authorize Git or prove
@@ -11,11 +11,8 @@ import json
 import math
 import re
 
-from .scan_git import capture_git, parse_index_record
-from .scan_types import ScanSecurityError, ScanLimitExceeded
-
 SCHEMA = "scan_secrets_gate_v1"
-POLICY = "selected_index_v1"
+POLICY = "selected_staged_v1"
 UNITS = dict(max_objects="snapshots", max_candidate_bytes="bytes", max_seconds="seconds",
              max_capture_bytes="bytes", max_temp_bytes="bytes")
 COUNT_KEYS = {"candidates", "inspected_snapshots", "candidate_bytes", "capture_bytes",
@@ -25,25 +22,6 @@ COUNT_KEYS = {"candidates", "inspected_snapshots", "candidate_bytes", "capture_b
 def repository_identity(repository):
     return hashlib.sha256(b"\0".join(str(path).encode("utf-8", "surrogateescape")
         for path in (repository.root, repository.gitdir, repository.common))).hexdigest()
-
-
-def collect_index(context, root):
-    """Every stage-zero path in the captured index, even unchanged HEAD paths."""
-    candidates = set()
-    with capture_git(context, ["ls-files", "--stage", "-z"], cwd=root,
-                     deadline=context.deadline) as capture:
-        for row in capture.records(b"\0"):
-            source, path, _ = parse_index_record(row, allowed_stages={0, 1, 2, 3},
-                                                operation="git_index", canonical_path=True)
-            if source != "staged":
-                raise ScanSecurityError("index_unresolved", "git_index")
-            if (source, path) in candidates:
-                raise ScanSecurityError("git_output_invalid", "git_index")
-            candidates.add((source, path))
-            if len(candidates) > context.limits.max_objects:
-                raise ScanLimitExceeded("snapshot_count_limit", "git_index",
-                                        measured=len(candidates), limit=context.limits.max_objects)
-    return sorted(candidates, key=lambda item: item[1])
 
 
 def _unique(pairs):
@@ -77,7 +55,7 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
             raise ValueError
         if (value["schema"] != SCHEMA or value["schema_version"] != 1 or type(value["schema_version"]) is not int
                 or value["action"] != action or action != "pre-commit" or value["scope"] != "index"
-                or value["scope_description"] != "full_selected_index" or value["policy_version"] != POLICY
+                or value["scope_description"] != "changed_staged_files" or value["policy_version"] != POLICY
                 or value["budget_profile"] != "checkpoint" or value["accounting_units"] != UNITS
                 or value["exit_code"] != exit_code or type(value["exit_code"]) is not int
                 or value["cli_version"] != "1.0.0"):

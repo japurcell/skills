@@ -46,7 +46,7 @@ class GateTests(unittest.TestCase):
     def credential():
         return ("gh" + "p_" + "A" * 36).encode()
 
-    def test_full_selected_index_ignores_worktree_bytes(self):
+    def test_changed_staged_files_are_full_versions_independent_of_worktree_bytes(self):
         path = self.repo / "selected.txt"
         path.write_bytes(self.credential())
         self.git("add", ".")
@@ -55,7 +55,7 @@ class GateTests(unittest.TestCase):
         self.assertEqual(value["schema"], "scan_secrets_gate_v1")
         self.assertEqual(value["action"], "pre-commit")
         self.assertEqual(value["scope"], "index")
-        self.assertEqual(value["policy_version"], "selected_index_v1")
+        self.assertEqual(value["policy_version"], "selected_staged_v1")
         self.assertEqual(value["budget_profile"], "checkpoint")
         self.assertEqual(value["audit_outcome"], "written")
         path.write_text("clean staged\n")
@@ -85,7 +85,7 @@ class GateTests(unittest.TestCase):
             "p=subprocess.run(" + repr([sys.executable, "-I", "-S", "-B", str(CLI), "gate", "pre-commit", "--json", "--repo", str(self.repo), *extra_args]) + ",capture_output=True)\n" +
             "raw=p.stdout\nmutation=" + repr(mutation) + "\n" +
             "if mutation=='missing': raw=b''\nelif mutation=='malformed': raw=b'{}'\n" +
-            "elif mutation:\n v=json.loads(raw)\n v[mutation]='0'*64 if mutation in {'build','repository_identity','index_identity','budget_identity'} else 'mismatched'\n raw=json.dumps(v).encode()\n" +
+            "elif mutation:\n v=json.loads(raw)\n v[mutation]=('selected_index_v1' if mutation=='policy_version' else '0'*64 if mutation in {'build','repository_identity','index_identity','budget_identity'} else 'mismatched')\n raw=json.dumps(v).encode()\n" +
             "try:\n validate_result(raw,p.returncode,action='pre-commit',build=" + repr(build.hexdigest()) +
             ",repository_identity=" + repr(identity) + ",index_identity=index_identity,budget_identity=" + repr(budget_identity) + ")\n" +
             "except Exception: sys.exit(2)\nsys.exit(p.returncode)\n")
@@ -116,11 +116,35 @@ class GateTests(unittest.TestCase):
         self.assertNotEqual(self.head(), before)
         self.assertEqual(self.git("show", "HEAD:selected.txt").stdout, b"safe staged\n")
 
-    def test_unchanged_index_paths_are_full_gate_scope(self):
-        self.seed(self.credential())
-        self.assertGreater(self.gate(1)["counts"]["processed_findings"], 0)
-        # Explicit checkpoint index semantics still enumerate pending versions.
-        self.assertEqual(self.cli("check", "--scope", "index", "--json").returncode, 0)
+    def test_unchanged_fixture_allows_unrelated_commit_but_full_changed_file_blocks(self):
+        self.seed(self.credential() + b"\n")
+        self.install_dispatcher()
+        before = self.head()
+        (self.repo / "unrelated.txt").write_text("safe unrelated change\n")
+        self.git("add", "unrelated.txt")
+        # An existing fixture in another unchanged file is outside this commit.
+        process = self.git("commit", "--quiet", "-m", "safe unrelated change", check=False)
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        self.assertNotEqual(self.head(), before)
+        self.assertEqual(self.git("show", "HEAD:unrelated.txt").stdout, b"safe unrelated change\n")
+        # The old secret's line did not change, but the selected file did.
+        before = self.head()
+        (self.repo / "selected.txt").write_bytes(self.credential() + b"\nnew safe line\n")
+        self.git("add", "selected.txt")
+        value = self.gate(1)
+        self.assertEqual(value["scope_description"], "changed_staged_files")
+        self.assertEqual(value["counts"]["candidates"], 1)
+        self.assertGreater(value["counts"]["processed_findings"], 0)
+        process = self.git("commit", "--quiet", "-m", "old secret on unchanged line", check=False)
+        self.assertNotEqual(process.returncode, 0)
+        self.assertEqual(self.head(), before)
+        # Deleting that old fixture contributes no absent content to inspect.
+        self.git("rm", "--force", "--", "selected.txt")
+        (self.repo / "unrelated.txt").write_text("another safe change\n")
+        self.git("add", "unrelated.txt")
+        self.assertEqual(self.gate(0)["counts"]["candidates"], 1)
+        self.git("commit", "--quiet", "-m", "remove old fixture and change safe file")
+        self.assertNotEqual(self.head(), before)
 
     def test_alternate_index_and_real_partial_commit_select_the_actual_tree(self):
         self.seed()
@@ -165,6 +189,8 @@ class GateTests(unittest.TestCase):
         oid = self.git("hash-object", "-w", "--stdin", data=b"safe\n").stdout.strip()
         self.git("update-index", "--index-info", data=b"0 " + b"0" * 40 + b"\tselected.txt\n" +
                  b"100644 " + oid + b" 1\tselected.txt\n100644 " + oid + b" 2\tselected.txt\n")
+        (self.repo / "unrelated.txt").write_text("safe staged file\n")
+        self.git("add", "unrelated.txt")
         self.assertEqual(self.gate(2)["reason"], "index_unresolved")
 
     def test_skip_warn_environment_and_unrelated_git_redirects_do_not_authorize(self):
@@ -230,7 +256,7 @@ class GateTests(unittest.TestCase):
         self.assertEqual(value["audit_outcome"], "written")
         records = [json.loads(row) for row in (status.parent / "audit.jsonl").read_text().splitlines()]
         self.assertEqual(records[-1]["action"], "pre-commit")
-        self.assertEqual(records[-1]["profile"], "selected_index_v1")
+        self.assertEqual(records[-1]["profile"], "selected_staged_v1")
         self.assertEqual(records[-1]["route"], "git_gate")
         self.assertEqual(records[-1]["scope"], "index")
         # Required audit failure stays incomplete, retaining known findings.
@@ -370,26 +396,47 @@ class GateTests(unittest.TestCase):
         self.assertEqual(value["exit_code"], 3)
         self.assertEqual(value["reason"], "not_repository")
 
-    def test_neutral_installed_bundle_executes_gate_without_source_checkout(self):
+    def test_neutral_installed_bundle_selects_changed_files_without_source_checkout(self):
+        sys.path.insert(0, str(ROOT))
+        from hooks.runtime.scan_cli import MODULES
+        source = self.base / "copied-source"
+        (source / "scripts").mkdir(parents=True)
+        (source / "hooks/runtime").mkdir(parents=True)
+        shutil.copy2(CLI, source / "scripts/scan-secrets.py")
+        shutil.copy2(ROOT / "scripts/scan_install_windows.py", source / "scripts/scan_install_windows.py")
+        for name in (*MODULES, "scan_cli", "scan_status"):
+            shutil.copy2(ROOT / "hooks/runtime" / (name + ".py"), source / "hooks/runtime" / (name + ".py"))
         destination = self.base / "installed"
         process = subprocess.run([sys.executable, "-I", "-S", "-B", str(ROOT / "scripts/install-scan-secrets.py"),
-            "install", "--source-dir", str(ROOT), "--destination", str(destination), "--json"],
+            "install", "--source-dir", str(source), "--destination", str(destination), "--json"],
             cwd=self.base, env=self.env, capture_output=True, timeout=30)
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         manifest = json.loads((destination / "installation.json").read_text())
         self.assertEqual(len(manifest["files"]), 14)
-        (self.repo / "selected.txt").write_bytes(self.credential())
-        self.git("add", ".")
-        process = self.cli("gate", "pre-commit", "--json", entry=destination / "scripts/scan-secrets.py")
+        shutil.rmtree(source)
+        self.seed(self.credential() + b"\n")
+        (self.repo / "unrelated.txt").write_text("safe unrelated staged change\n")
+        self.git("add", "unrelated.txt")
+        entry = destination / "scripts/scan-secrets.py"
+        process = self.cli("gate", "pre-commit", "--json", entry=entry)
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        value = json.loads(process.stdout)
+        self.assertEqual(value["scope_description"], "changed_staged_files")
+        self.assertEqual(value["counts"]["candidates"], 1)
+        (self.repo / "selected.txt").write_bytes(self.credential() + b"\nnew safe line\n")
+        self.git("add", "selected.txt")
+        process = self.cli("gate", "pre-commit", "--json", entry=entry)
         self.assertEqual(process.returncode, 1, process.stdout + process.stderr)
         value = json.loads(process.stdout)
         self.assertEqual(value["schema"], "scan_secrets_gate_v1")
         self.assertEqual(value["audit_outcome"], "written")
-        self.assertEqual(value["policy_version"], "selected_index_v1")
+        self.assertEqual(value["policy_version"], "selected_staged_v1")
 
     @unittest.skipUnless(sys.platform == "darwin", "macOS fixed system aliases")
     def test_selected_index_accepts_verified_macos_system_alias(self):
         self.seed()
+        (self.repo / "selected.txt").write_text("safe changed staged version\n")
+        self.git("add", "selected.txt")
         physical = self.repo / ".git/index"
         for alias in (Path("/tmp"), Path("/var")):
             target = alias.resolve(strict=True)
@@ -449,6 +496,72 @@ class GateTests(unittest.TestCase):
             before = self.head()
             self.assertNotEqual(self.git("commit", "--quiet", "-m", "no gate result", check=False).returncode, 0)
             self.assertEqual(self.head(), before)
+
+    def test_renamed_and_new_credential_paths_reusing_old_blob_stay_selected(self):
+        self.seed()
+        self.install_dispatcher()
+        oid = self.git("rev-parse", "HEAD:selected.txt").stdout
+        before = self.head()
+        self.git("mv", "selected.txt", "credentials.cfg")
+        self.assertEqual(self.git("rev-parse", ":credentials.cfg").stdout, oid)
+        value = self.gate(1)
+        self.assertIn("credential_path", {finding["pattern"] for finding in value["findings"]})
+        self.assertNotEqual(self.git("commit", "--quiet", "-m", "credential path rename", check=False).returncode, 0)
+        self.assertEqual(self.head(), before)
+        self.git("reset", "--hard", "HEAD")
+        (self.repo / "credentials.cfg").write_bytes(b"base\n")
+        self.git("add", "credentials.cfg")
+        self.assertEqual(self.git("rev-parse", ":credentials.cfg").stdout, oid)
+        self.assertEqual(self.gate(1)["counts"]["candidates"], 1)
+        self.assertNotEqual(self.git("commit", "--quiet", "-m", "new credential path", check=False).returncode, 0)
+        self.assertEqual(self.head(), before)
+
+    def test_status_displays_old_policy_and_admits_new_policy_only_for_index(self):
+        self.seed()
+        (self.repo / "selected.txt").write_text("safe changed content\n")
+        self.git("add", "selected.txt")
+        self.gate(0)
+        process = self.cli("status", "--json")
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        self.assertEqual(json.loads(process.stdout)["last_scan"]["policy_version"], "selected_staged_v1")
+        records = list((self.base / "data/scan-secrets/status").glob("*.json"))
+        self.assertEqual(len(records), 1)
+        record = json.loads(records[0].read_text())
+        record["policy_version"] = "selected_index_v1"
+        records[0].write_text(json.dumps(record))
+        process = self.cli("status", "--json")
+        self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
+        value = json.loads(process.stdout)
+        self.assertTrue(value["historical"])
+        self.assertFalse(value["authorizes_publication"])
+        self.assertEqual(value["last_scan"]["policy_version"], "selected_index_v1")
+        record.update(policy_version="selected_staged_v1", scope="worktree")
+        records[0].write_text(json.dumps(record))
+        self.assertEqual(self.cli("status", "--json").returncode, 2)
+
+    def test_sha256_selection_keeps_full_changed_bytes_and_blob_hash_verification(self):
+        import zlib
+        self.repo = self.base / "sha256-repo"
+        self.repo.mkdir()
+        self.git("init", "--quiet", "--object-format=sha256")
+        self.seed(self.credential() + b"\n")
+        self.install_dispatcher()
+        (self.repo / "unrelated.txt").write_text("safe unrelated change\n")
+        self.git("add", "unrelated.txt")
+        self.git("commit", "--quiet", "-m", "safe unrelated SHA256 commit")
+        before = self.head()
+        (self.repo / "selected.txt").write_bytes(self.credential() + b"\nnew safe line\n")
+        self.git("add", "selected.txt")
+        self.assertEqual(self.gate(1)["counts"]["candidates"], 1)
+        self.assertNotEqual(self.git("commit", "--quiet", "-m", "unchanged secret line SHA256", check=False).returncode, 0)
+        self.assertEqual(self.head(), before)
+        oid = self.git("rev-parse", ":selected.txt").stdout.decode().strip()
+        self.assertEqual(len(oid), 64)
+        object_file = self.repo / ".git/objects" / oid[:2] / oid[2:]
+        object_file.chmod(0o600)
+        substituted = b"clean substituted bytes\n"
+        object_file.write_bytes(zlib.compress(b"blob " + str(len(substituted)).encode() + b"\0" + substituted))
+        self.assertEqual(self.gate(2)["reason"], "git_output_invalid")
 
 
 if __name__ == "__main__":
