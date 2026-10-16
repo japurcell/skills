@@ -154,3 +154,8 @@ T5b-M completed before its twenty-five-minute warning threshold. Source rebase `
 
 
 Primary reconciled rebase references in documentation-only `c14147d5acfbb1ac41a08e3bfc74177f5f0ec9c9`, confirmed unchanged executable inputs, and fast-forwarded the base to that exact tip. Both worktrees were clean and tips equal. Managed archival is confirmed; integrated `codex/design-b-t5b` branch is removed. T5b and T5b-M are complete; separate T5-I combined acceptance is next. No native Windows, LFS, production installation or milestone acceptance is inferred.
+
+
+## T5-I combined gate verification
+
+Dispatched around 17:28 UTC on 2026-10-16 to `/root/verify_t5_i`, private `codex/design-b-t5-i`, `/Users/adam/.codex/worktrees/design-b-t5-i/skills`, starting `67133de126037d7bebe51e2c9a694f755f33255c`. Selected/submitted Premium `gpt-6.1-sol`, `high`, `fork_turns: none`; executed values unconfirmed. Independent installed security-gate composition establishes the floor; local task evidence supports this provisional configuration and catalog cost assumptions. Exact same-tier fallback `gpt-6-sol`, `high`. Twenty-minute warning threshold monitored by primary UTC checks and non-interrupting status requests. Owns only `t5-i-evidence.md` and optional reproducible `t5-i-probe.py`; no product, shared test, installer, generated, plan, KB or CI changes. Primary retains original-owner repair routing and final acceptance. No nested delegation, external push or live deployment. Matching 62-case suite evidence may be reused for unchanged runtime bytes; current public source/source-free installed composition supplies this node's proof. Submitted arguments match printed route. Status running, output unverified; T6 remains closed pending acceptance.
