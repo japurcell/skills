@@ -287,28 +287,60 @@ test_block_mode_denies_when_findings_exist() {
     "Expected block mode to log findings before denying."
 }
 
-test_hooks_json_registers_session_end_scanner() {
-  assert_equals '$HOME/.copilot/hooks/scripts/bell.py' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/bell.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register the session-end bell Python hook."
-  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register the secrets scanner on sessionEnd."
-  assert_equals warn \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to default secrets scanning to warn mode."
-  assert_equals diff \
-    "$(jq -r '.hooks.sessionEnd[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_SCOPE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to scan working tree diffs by default."
+test_hooks_json_registers_status_and_session_end_handlers() {
+  python3 - "$REPO_ROOT/.copilot/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]
+for event, filename in (("agentStop", "scan-status.py"), ("sessionEnd", "bell.py")):
+    positions = []
+    for script in ("send-event.py", filename):
+        command = f"$HOME/.copilot/hooks/scripts/{script}"
+        matches = [(index, handler) for index, handler in enumerate(hooks[event])
+                   if handler.get("bash") == command]
+        assert len(matches) == 1, f"Expected one {script} registration on {event}"
+        index, handler = matches[0]
+        positions.append(index)
+        assert handler["type"] == "command"
+        assert handler["powershell"] == f'python "{command}"'
+        if script == "send-event.py":
+            assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
+            assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == event
+            if event == "sessionEnd":
+                assert handler["timeoutSec"] == 30
+        elif script == "scan-status.py":
+            assert handler["timeoutSec"] == 2
+    assert positions[0] < positions[1], f"Expected observability before {filename}"
+PY
 }
 
-test_hooks_json_registers_pre_tool_scanner() {
-  assert_equals '$HOME/.copilot/hooks/scripts/scan-secrets.py' \
-    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .bash' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to register the secrets scanner on preToolUse."
-  assert_equals block \
-    "$(jq -r '.hooks.preToolUse[] | select(.bash == "$HOME/.copilot/hooks/scripts/scan-secrets.py") | .env.SCAN_MODE' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to default secrets scanning to block mode under preToolUse."
+test_hooks_json_registers_pre_tool_guard() {
+  python3 - "$REPO_ROOT/.copilot/hooks/hooks.json" <<'PY'
+import json
+import pathlib
+import sys
+
+handlers = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]["preToolUse"]
+positions = []
+for script in ("send-event.py", "tool-guard.py"):
+    command = f"$HOME/.copilot/hooks/scripts/{script}"
+    matches = [(index, handler) for index, handler in enumerate(handlers)
+               if handler.get("bash") == command]
+    assert len(matches) == 1, f"Expected one {script} registration on preToolUse"
+    index, handler = matches[0]
+    positions.append(index)
+    assert handler["type"] == "command"
+    assert handler["powershell"] == f'python "{command}"'
+    if script == "send-event.py":
+        assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
+        assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "preToolUse"
+    else:
+        assert handler["env"]["GUARD_MODE"] == "block"
+        assert handler["timeoutSec"] == 10
+assert positions[0] < positions[1], "Expected observability before Tool Guardian"
+PY
 }
 
 main() {
@@ -339,8 +371,8 @@ main() {
   test_generic_secrets_filename_stays_clean
   test_allowlist_suppresses_credential_path_finding
   test_diff_mode_ignores_secret_like_diff_headers
-  test_hooks_json_registers_session_end_scanner
-  test_hooks_json_registers_pre_tool_scanner
+  test_hooks_json_registers_status_and_session_end_handlers
+  test_hooks_json_registers_pre_tool_guard
 }
 
 security_run_suite main "$@"
