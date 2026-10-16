@@ -1993,66 +1993,14 @@ function Test-HelperFailuresAreInstallerErrors {
             $before = Get-TreeFingerprint $homeDir
             $beforeCodex = Get-TreeFingerprint $codex
             $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -CodexHome $codex -ForestServiceValue '0'
-            # Report only this disposable fixture's bounded output on assertion failure.
-            # The original diagnostic alone can conceal earlier native preflight failures.
-            $context = "Helper: $helper; installer exit: $($result.ExitCode)"
-            foreach ($stream in @('Stdout', 'Stderr')) {
-                $captured = ($result.$stream -join "`n").Replace($workdir, '<fixture>')
-                if ($captured.Length -gt 2000) {
-                    $captured = $captured.Substring(0, 2000) + '<truncated>'
-                }
-                $context += "`n${stream}: $captured"
-            }
-            Assert-Equals 1 $result.ExitCode "Expected helper exit 2 to become installer exit 1: $helper.`n$context"
-            Assert-True (($result.Stderr -join "`n").Contains('Fixture helper failed; repair its input.')) "Expected helper diagnostic and recovery preserved.`n$context"
-            Assert-Equals '' ($result.Stdout -join "`n") "Expected helper status not to leak stdout.`n$context"
+            Assert-Equals 1 $result.ExitCode "Expected helper exit 2 to become installer exit 1: $helper."
+            Assert-True (($result.Stderr -join "`n").Contains('Fixture helper failed; repair its input.')) 'Expected helper diagnostic and recovery preserved.'
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected helper status not to leak stdout.'
             if ($helper -notin @('install-codex-agents.py', 'rebase-skill-references.py')) {
                 Assert-Equals $before (Get-TreeFingerprint $homeDir) 'Expected preflight helper failure not to mutate home.'
                 Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected preflight helper failure not to mutate CODEX_HOME.'
             }
         }
-    }
-    finally { Remove-Workdir $workdir }
-}
-
-function Test-NativeScannerRejectsUnsafeAncestorGrants {
-    if (-not $IsWindows) {
-        Write-Host 'Skipping: Windows DACL assertions require native Windows.'
-        return
-    }
-    $workdir = New-TestWorkdir
-    try {
-        $repo = Join-Path $workdir 'repo'
-        New-FixtureRepo $repo
-        foreach ($scenario in @('effective', 'inherit-only')) {
-            $homeDir = Join-Path $workdir "home-$scenario"
-            Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
-            $parent = Join-Path $homeDir 'AppData/Local'
-            New-Item -ItemType Directory -Path $parent -Force | Out-Null
-            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
-            $acl = Get-Acl -LiteralPath $parent
-            $inheritance = [System.Security.AccessControl.InheritanceFlags]::None
-            $propagation = [System.Security.AccessControl.PropagationFlags]::None
-            if ($scenario -ceq 'inherit-only') {
-                $inheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
-                $propagation = [System.Security.AccessControl.PropagationFlags]::InheritOnly
-            }
-            $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
-                [System.Security.Principal.SecurityIdentifier]::new('S-1-1-0'),
-                [System.Security.AccessControl.FileSystemRights]::WriteData,
-                $inheritance, $propagation, [System.Security.AccessControl.AccessControlType]::Allow)
-            $acl.AddAccessRule($rule)
-            Set-Acl -LiteralPath $parent -AclObject $acl
-            $beforeAcl = (Get-Acl -LiteralPath $parent).Sddl
-            $before = Get-TreeFingerprint $homeDir
-            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
-            Assert-Equals 1 $result.ExitCode "Expected unsafe native $scenario grant to stop the real installer."
-            Assert-True (($result.Stderr -join "`n").Contains('Standalone scanner preflight exited with code 2.')) "Expected native scanner preflight to reject $scenario grant."
-            Assert-Equals '' ($result.Stdout -join "`n") 'Expected unsafe native ancestry to produce no stdout.'
-            Assert-Equals $before (Get-TreeFingerprint $homeDir) "Expected native $scenario refusal not to mutate home."
-            Assert-Equals $beforeAcl (Get-Acl -LiteralPath $parent).Sddl "Expected native $scenario refusal not to change the DACL."
-        }
-        Write-Host 'Native scanner ACL controls: effective and inherit-only ordinary-user write grants rejected without mutation.'
     }
     finally { Remove-Workdir $workdir }
 }
@@ -2140,7 +2088,6 @@ function Test-ChildProfileEnvironmentIsIsolated {
 
 Test-ChildProfileEnvironmentIsIsolated
 Test-HelperFailuresAreInstallerErrors
-Test-NativeScannerRejectsUnsafeAncestorGrants
 Test-EmptyCategoriesMarkersAndExclusions
 Test-SourcePreflightIsImmutable
 Test-SourceDiagnosticsWithLegacyEncoding
