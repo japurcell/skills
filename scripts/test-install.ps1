@@ -163,6 +163,9 @@ function New-FixtureRepo {
     }
 
     Copy-Item -LiteralPath $InstallScriptSrc -Destination (Join-Path $Repo 'scripts/install.ps1') -Force
+    foreach ($name in @('install-scan-secrets.py', 'scan-secrets.py', 'scan_install_windows.py')) {
+        Copy-Item -LiteralPath (Join-Path $RepoRoot "scripts/$name") -Destination (Join-Path $Repo "scripts/$name") -Force
+    }
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/file_io.py') -Destination (Join-Path $Repo 'scripts/file_io.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/trusted_hook_launch.py') -Destination (Join-Path $Repo 'scripts/trusted_hook_launch.py') -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'scripts/install-codex-agents.py') -Destination (Join-Path $Repo 'scripts/install-codex-agents.py') -Force

@@ -107,6 +107,7 @@ $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
 $RebaseSkillReferencesSrc = Join-Path $RepoRoot 'scripts/rebase-skill-references.py'
 $ValidateSkillSourcesSrc = Join-Path $RepoRoot 'scripts/validate-skill-sources.py'
 $GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
+$InstallScanSecretsSrc = Join-Path $RepoRoot 'scripts/install-scan-secrets.py'
 $ConfigureRtkSrc = Join-Path $RepoRoot 'scripts/configure-rtk.py'
 $CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
 
@@ -523,7 +524,7 @@ foreach ($src in @((Join-Path $SkillsSrc 'default'), (Join-Path $SkillsSrc 'fore
 
 foreach ($src in @(
     $CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc,
-    $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $ValidateSkillSourcesSrc, $GenerateHooksSrc, $ConfigureRtkSrc
+    $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $ValidateSkillSourcesSrc, $GenerateHooksSrc, $ConfigureRtkSrc, $InstallScanSecretsSrc
 )) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
@@ -552,6 +553,8 @@ finally {
     [Environment]::SetEnvironmentVariable('PYTHONIOENCODING', $previousPythonIoEncoding, 'Process')
 }
 if ($LASTEXITCODE -ne 0) { Fail "Skill source validation exited with code $LASTEXITCODE." }
+& $pythonCommand.Path @($pythonCommand.Arguments) -I -S -B $InstallScanSecretsSrc install --no-input --dry-run | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Standalone scanner preflight exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK preflight exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check | Write-InstallStatus
@@ -576,6 +579,8 @@ foreach ($config in @(
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "Codex hook configuration preflight exited with code $LASTEXITCODE." }
 
+& $pythonCommand.Path @($pythonCommand.Arguments) -I -S -B $InstallScanSecretsSrc install --no-input | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Standalone scanner installation exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }
 & $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest | Write-InstallStatus

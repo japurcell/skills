@@ -25,7 +25,7 @@ create_fixture_repo() {
     "$repo/.copilot/hooks" \
     "$repo/.gemini/policies"
 
-  for script in install.sh file_io.py trusted_hook_launch.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
+  for script in install.sh install-scan-secrets.py scan-secrets.py scan_install_windows.py file_io.py trusted_hook_launch.py install-codex-agents.py install-codex-hooks.py configure-rtk.py; do
     cp -p "$REPO_ROOT/scripts/$script" "$repo/scripts/$script"
   done
   mkdir -p "$repo/bin"
