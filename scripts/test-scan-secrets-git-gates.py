@@ -253,10 +253,10 @@ class GateTests(unittest.TestCase):
         self.assertEqual(value["security_outcome"], "findings")
         self.assertGreater(value["counts"]["processed_findings"], 0)
 
-    def test_publication_lfs_is_explicitly_incomplete(self):
+    def test_publication_missing_lfs_payload_is_explicitly_incomplete(self):
         self.seed(b"version https://git-lfs.github.com/spec/v1\noid sha256:" + b"a" * 64 + b"\nsize 42\n")
         value = self.push_gate(2, self.transaction())
-        self.assertEqual(value["reason"], "lfs_unsupported")
+        self.assertEqual(value["reason"], "lfs_payload_unavailable")
         self.assertFalse(value["coverage_complete"])
 
     def test_publication_empty_and_deletion_only_are_clean_transactions(self):
@@ -459,7 +459,7 @@ class GateTests(unittest.TestCase):
             "--source-dir",str(ROOT),"--destination",str(destination),"--json"],cwd=self.base,env=self.env,capture_output=True,timeout=30)
         self.assertEqual(process.returncode,0,process.stdout+process.stderr)
         manifest = json.loads((destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]),16)
+        self.assertEqual(len(manifest["files"]),19)
         self.seed(self.credential())
         process = subprocess.run([sys.executable,"-I","-S","-B",str(destination / "scripts/scan-secrets.py"),"gate","pre-push",
             "--remote","fixture","--url","fixture","--json"],cwd=self.repo,env=self.env,input=self.transaction(),capture_output=True,timeout=20)
@@ -1141,7 +1141,7 @@ class GateTests(unittest.TestCase):
             cwd=self.base, env=self.env, capture_output=True, timeout=30)
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         manifest = json.loads((destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]), 16)
+        self.assertEqual(len(manifest["files"]), 19)
         shutil.rmtree(source)
         self.seed(self.credential() + b"\n")
         (self.repo / "unrelated.txt").write_text("safe unrelated staged change\n")

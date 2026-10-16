@@ -13,7 +13,7 @@ import time
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_publication")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch")
 
 
 class Failure(Exception):
@@ -58,23 +58,32 @@ def parser():
     pre_commit.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     pre_commit.add_argument("--budget-file", help="explicit schema-1 JSON budget file; uses checkpoint profile")
     pre_push = gates.add_parser("pre-push", parents=[common], allow_abbrev=False,
-        help="inspect the actual outgoing Git transaction", description="Read Git pre-push tuples once through EOF. Inspect complete immutable outgoing history, messages and supported paths. Components and full encoded paths are limited to 4096 bytes; CR, LF, backslashes and gitlinks are unsupported and block publication. Recognized LFS publication requires later verified payload support.")
+        help="inspect the actual outgoing Git transaction", description="Read Git pre-push tuples once through EOF. Inspect complete immutable outgoing history, messages and supported paths. Components and full encoded paths are limited to 4096 bytes; CR, LF, backslashes and gitlinks are unsupported and block publication. Canonical v1 LFS pointers require complete ordinary local payloads matching declared size and SHA256; inspection never downloads.")
     pre_push.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     pre_push.add_argument("--remote", required=True, help="Git-supplied destination name")
     pre_push.add_argument("--url", required=True, help="Git-supplied destination URL (never displayed)")
     pre_push.add_argument("--budget-file", help="explicit schema-1 JSON budget file; uses publication profile")
+    pre_push.add_argument("--invocation", help=argparse.SUPPRESS)
+    dispatch = commands.add_parser("dispatch", parents=[common], allow_abbrev=False,
+        help="scan then run an explicitly bound publication workflow", description="Own one synchronous pre-push invocation. Inspect and audit before any downstream step. Replay exact Git stdin and arguments to preserved hooks. Basic HTTP LFS upload uses verified private bytes and a pinned Git LFS 3.8.0 binary. Inspection and downstream steps have separate finite deadlines. Downstream errors preserve their exit status; scan errors use 1/2/3/130. No saved status authorizes dispatch.")
+    dispatch.add_argument("action", choices=("pre-push",))
+    dispatch.add_argument("--repo", default=".")
+    dispatch.add_argument("--binding", required=True, help="owner-only schema-1 installation binding")
+    dispatch.add_argument("destination", nargs=2, help="-- followed by original remote name and URL")
     status = commands.add_parser("status", parents=[common], allow_abbrev=False,
         help="display the last scan without inspecting content", description="Display historical scan metadata only. Never scans or authorizes publication.",
         epilog="Examples: scan-secrets status --repo .; scan-secrets status --repo . --json. Exit 0 means valid information, including not_scanned; unreadable or corrupt reports exit 2. Reports are bounded to 64 KiB, use metadata reads with a two-second deadline, and live outside the worktree and executable bundle under XDG_DATA_HOME/scan-secrets/status, macOS Application Support/scan-secrets/status, or Windows LOCALAPPDATA/scan-secrets/status. Status never waits for a scan or certifies current content.")
     status.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     help_parser = commands.add_parser("help", allow_abbrev=False, help="show command help")
-    help_parser.add_argument("topic", nargs="?", choices=("check", "status", "gate"))
-    return root, {"check": check, "status": status, "gate": gate}
+    help_parser.add_argument("topic", nargs="?", choices=("check", "status", "gate", "dispatch"))
+    return root, {"check": check, "status": status, "gate": gate, "dispatch": dispatch}
 
 
 def output(value, *, json_mode, quiet=False):
     if json_mode:
         data = json.dumps(value, ensure_ascii=True, separators=(",", ":")) + "\n"
+    elif value.get("schema") == "scan_secrets_dispatch_v1":
+        data = "" if quiet and value["exit_code"] == 0 else f"scan-secrets: publication {value['outcome']}; {value['reason']}; {value.get('completed_steps', 0)} downstream steps completed. {value['recovery']}\n"
     elif value.get("schema") == "scan_secrets_status_v1":
         data = f"scan-secrets: last scan unavailable; saved time and scope unavailable; {value['reason']}. {value['recovery']}\n"
     elif value["outcome"] == "complete_clean":
@@ -172,17 +181,13 @@ def recovery_for(result):
     return "Remove the reported credentials from the selected content and rerun the check." if result.counts["processed_findings"] else "No action required."
 
 
-def check(args, *, load, runtime, entry, status_capture):
-    started = time.monotonic()
-    is_gate = args.command == "gate"
-    publication = is_gate and args.action == "pre-push"
+def runtime_modules(load, runtime, entry):
     build = hashlib.sha256()
     try:
         try:
             status_source = (runtime / "scan_status.py").read_bytes()
         except OSError:
             status_source = None
-        status_capture["source"] = status_source
         sources = {name: (runtime / (name + ".py")).read_bytes() for name in MODULES}
         for name, raw in ((entry.name, entry.read_bytes()), ("scan_cli.py", load.sources["scan_cli"]),
                           ("scan_status.py", status_source if status_source is not None else b"status-runtime-unavailable"),
@@ -191,6 +196,32 @@ def check(args, *, load, runtime, entry, status_capture):
         modules = {name: load(name, sources[name]) for name in MODULES}
     except Exception:
         raise Failure("runtime_unavailable") from None
+    return modules, build.hexdigest(), status_source
+
+
+def check(args, *, load, runtime, entry, status_capture):
+    import contextlib
+    # The invocation handles outlive graph/repository capture, required audit
+    # and handoff emission. Reopening the root pathname would lose that anchor.
+    with contextlib.ExitStack() as invocation_resources:
+        if getattr(args, "invocation", None):
+            import signal
+            # Dispatcher cancellation terminates this controlled child. Convert
+            # that termination into normal stack unwinding for private captures.
+            def terminate(signum, frame):
+                raise KeyboardInterrupt
+            previous = signal.signal(signal.SIGTERM, terminate)
+            invocation_resources.callback(signal.signal, signal.SIGTERM, previous)
+        return _check(args, load=load, runtime=runtime, entry=entry, status_capture=status_capture,
+                      invocation_resources=invocation_resources)
+
+
+def _check(args, *, load, runtime, entry, status_capture, invocation_resources):
+    started = time.monotonic()
+    is_gate = args.command == "gate"
+    publication = is_gate and args.action == "pre-push"
+    modules, build, status_source = runtime_modules(load, runtime, entry)
+    status_capture["source"] = status_source
     gate = modules["scan_gate"] if is_gate else None
     types = modules["scan_types"]
     engine = modules["scan_engine"]
@@ -203,6 +234,8 @@ def check(args, *, load, runtime, entry, status_capture):
     context = types.ScanContext(limits, started)
     repository = modules["scan_repository"]
     result = None
+    handoff = None
+    records = []
     try:
         with repository.ProtectedRepository(context, args.repo, selected_index=os.environ.get("GIT_INDEX_FILE") if is_gate else None, capture_selected_index=is_gate and not publication, publication=publication) as protected:
             status_capture["repository"] = {"root": protected.root, "gitdir": protected.gitdir, "common": protected.common}
@@ -210,11 +243,19 @@ def check(args, *, load, runtime, entry, status_capture):
                 transaction = modules["scan_transaction"].capture_transaction(protected.object_format, args.remote, args.url, context)
                 status_capture["gate"] = dict(repository_identity=gate.repository_identity(protected),
                     transaction_identity=transaction.identity, destination_identity=transaction.destination_identity)
-                result = modules["scan_publication"].scan(protected, transaction, build.hexdigest())
+                invocation = getattr(args, "invocation", None)
+                if invocation:
+                    handoff = modules["scan_dispatch"].scan_request(invocation, protected, transaction, build, budget_identity, resources=invocation_resources)
+                result = modules["scan_publication"].scan(protected, transaction, build,
+                    payload_directory=handoff[1] if handoff else None, retained=records if handoff else None)
+                if handoff:
+                    # The repository context closes its held handles on exit;
+                    # handoff is emitted below only after required audit succeeds.
+                    status_capture["handoff_request"] = handoff[2]
             else:
                 if is_gate:
                     status_capture["gate"] = dict(repository_identity=gate.repository_identity(protected), index_identity=protected.index_identity)
-                result = engine.scan(protected.root, engine.ScanPolicy(build.hexdigest(), scope="staged" if args.scope == "index" else "diff",
+                result = engine.scan(protected.root, engine.ScanPolicy(build, scope="staged" if args.scope == "index" else "diff",
                                  version=gate.POLICY if is_gate else POLICY, staged_gate=is_gate),
                                  limits, context=context)
     except repository.NotRepository:
@@ -225,7 +266,7 @@ def check(args, *, load, runtime, entry, status_capture):
             result.coverage_complete = False
         else:
             raise Failure(failure.cause, 2, failure.operation, failure.detail(),
-                details={"build": build.hexdigest(), "policy_version": modules["scan_publication"].POLICY if publication else gate.POLICY if is_gate else POLICY, "scope": args.scope,
+                details={"build": build, "policy_version": modules["scan_publication"].POLICY if publication else gate.POLICY if is_gate else POLICY, "scope": args.scope,
                          "limits": configured, "budget_identity": budget_identity, "diagnostic": diagnostic(failure, types)}) from None
     except Exception:
         if result is not None:
@@ -268,9 +309,25 @@ def check(args, *, load, runtime, entry, status_capture):
              "recovery": recovery_for(result)}
     if is_gate:
         value.update(gate_metadata)
-    save_display(value, args, load=load, entry=entry, capture=status_capture)
     code = (130 if result.failure and result.failure.cause == "cancelled" else
             2 if result.outcome == "incomplete" else 1 if result.counts["processed_findings"] else 0)
+    if publication:
+        value["lfs_handoff_identity"] = None
+        if handoff and code == 0:
+            try:
+                directory = handoff[0]
+                directory.validate()
+                value["lfs_handoff_identity"] = modules["scan_dispatch"].write_handoff(directory, status_capture["handoff_request"], records)
+                value["counts"]["capture_bytes"] = context.capture_bytes
+                value["counts"]["temp_peak_bytes"] = context.temp_peak_bytes
+            except Exception as error:
+                failure = error if isinstance(error, types.ScanFailure) else types.ScanSecurityError("handoff_invalid", "repository")
+                value.update(outcome="incomplete", coverage_complete=False, security_outcome="incomplete",
+                    reason=failure.cause, phase=failure.operation, diagnostic=diagnostic(failure, types), recovery=failure.detail())
+                value["counts"]["capture_bytes"] = context.capture_bytes
+                value["counts"]["temp_peak_bytes"] = context.temp_peak_bytes
+                code = 2
+    save_display(value, args, load=load, entry=entry, capture=status_capture)
     if is_gate:
         value.update(schema=gate.SCHEMA, exit_code=code)
     return value, code
@@ -296,8 +353,9 @@ def _main(argv, *, load, runtime, entry):
     json_mode = "--json" in argv
     args = None
     status_capture = {}
-    invocation = next((item for item in argv if item in {"check", "status", "gate", "help"}), None)
+    invocation = next((item for item in argv if item in {"check", "status", "gate", "dispatch", "help"}), None)
     gate_invocation = invocation == "gate"
+    dispatch_invocation = invocation == "dispatch"
     status_invocation = invocation == "status"
     try:
         root, topics = parser()
@@ -326,6 +384,13 @@ def _main(argv, *, load, runtime, entry):
                 sys.stdout.write(f"scan-secrets: last scan: {description}. {value['message']}\n")
                 sys.stdout.flush()
             return code
+        if args.command == "dispatch":
+            modules, build, _ = runtime_modules(load, runtime, entry)
+            if args.destination[:1] == ["--"]:
+                args.destination = args.destination[1:]
+            value, code = modules["scan_dispatch"].run(args, build=build, entry=entry)
+            output(value, json_mode=getattr(args, "json", False), quiet=getattr(args, "quiet", False))
+            return code
         if args.command == "gate":
             if args.action is None:
                 topics["gate"].print_help()
@@ -337,6 +402,8 @@ def _main(argv, *, load, runtime, entry):
     except Failure as failure:
         value = {"schema": SCHEMA, "cli_version": VERSION, "outcome": "invalid" if failure.code == 3 else "incomplete",
                  "coverage_complete": False, "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery, **failure.details}
+        if dispatch_invocation:
+            value.update(schema="scan_secrets_dispatch_v1", exit_code=failure.code)
         if gate_invocation:
             value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="outgoing" if getattr(args, "action", None) == "pre-push" else "index", exit_code=failure.code)
         if status_invocation:
@@ -353,6 +420,8 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "cancelled", "phase": "cancellation", "recovery": "Rerun the explicit command when ready."}
+        if dispatch_invocation:
+            value.update(schema="scan_secrets_dispatch_v1", exit_code=130)
         if gate_invocation:
             value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="outgoing" if getattr(args, "action", None) == "pre-push" else "index", exit_code=130)
         if status_invocation:
@@ -368,6 +437,8 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "internal_error", "phase": "initialization", "recovery": "Restore the scanner runtime and retry."}
+        if dispatch_invocation:
+            value.update(schema="scan_secrets_dispatch_v1", exit_code=2)
         if gate_invocation:
             value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="outgoing" if getattr(args, "action", None) == "pre-push" else "index", exit_code=2)
         if status_invocation:

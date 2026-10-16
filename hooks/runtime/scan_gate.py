@@ -54,7 +54,7 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
         publication = action == "pre-push"
         if publication:
             keys.remove("index_identity")
-            keys.update(("transaction_identity", "destination_identity"))
+            keys.update(("transaction_identity", "destination_identity", "lfs_handoff_identity"))
         if type(value) is not dict or value.keys() != keys:
             raise ValueError
         if (value["schema"] != SCHEMA or value["schema_version"] != 1 or type(value["schema_version"]) is not int
@@ -81,7 +81,7 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
                 or not math.isfinite(value["elapsed_seconds"]) or value["elapsed_seconds"] < 0):
             raise ValueError
         counts = value["counts"]
-        expected_counts = COUNT_KEYS | ({"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes"} if publication else set())
+        expected_counts = COUNT_KEYS | ({"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes", "lfs_objects", "lfs_payload_bytes", "lfs_occurrences", "lfs_logical_bytes"} if publication else set())
         if (type(counts) is not dict or counts.keys() != expected_counts
                 or any(type(n) is not int or not 0 <= n < 2**63 for n in counts.values())
                 or counts["retained_findings"] + counts["omitted_findings"] != counts["processed_findings"]
@@ -104,10 +104,12 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
             if type(n) not in ((int, float) if key == "max_seconds" else (int,)) or not math.isfinite(n) or not low <= n <= high:
                 raise ValueError
         if publication:
+            if value["lfs_handoff_identity"] is not None and (type(value["lfs_handoff_identity"]) is not str or re.fullmatch(r"[0-9a-f]{64}", value["lfs_handoff_identity"]) is None):
+                raise ValueError
             if (counts["selected_objects"] > counts["git_objects"] or counts["transaction_bytes"] > 1048576
                     or counts["path_occurrences"] > counts["candidates"] or counts["message_bytes"] > counts["candidate_bytes"]):
                 raise ValueError
-            if value["coverage_complete"] and (counts["git_objects"] > limits["max_objects"]
+            if value["coverage_complete"] and (counts["git_objects"] + counts["lfs_objects"] > limits["max_objects"]
                     or counts["candidate_bytes"] > limits["max_candidate_bytes"] or counts["capture_bytes"] > limits["max_capture_bytes"]
                     or counts["temp_peak_bytes"] > limits["max_temp_bytes"]):
                 raise ValueError

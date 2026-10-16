@@ -101,8 +101,9 @@ class ProtectedRepository:
                 raise ScanSecurityError("candidate_changed", "repository")
         return bytes(raw)
 
-    def read_selected_index(self, path, *, missing, maximum=None, parent_only=False):
-        """Read a selected index through held parents on both supported APIs."""
+    @contextlib.contextmanager
+    def open_selected(self, path, *, missing=False, parent_only=False):
+        """Hold every metadata ancestor and return a non-following leaf descriptor."""
         if sys.platform == "darwin":
             for alias in (Path("/tmp"), Path("/var")):
                 if path.is_relative_to(alias):
@@ -132,14 +133,22 @@ class ProtectedRepository:
                 opener = lambda: os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
             if parent_only:
                 # Publication needs this held ancestry, not unused config bytes.
-                return None
+                yield None
+                return
             try:
                 descriptor = opener()
             except FileNotFoundError:
                 if missing:
-                    return None
+                    yield None
+                    return
                 raise
             resources.callback(os.close, descriptor)
+            yield descriptor
+
+    def read_selected_index(self, path, *, missing, maximum=None, parent_only=False):
+        with self.open_selected(path, missing=missing, parent_only=parent_only) as descriptor:
+            if descriptor is None:
+                return None
             return self.read(path, descriptor=descriptor, maximum=maximum)
 
     def query(self, *args, cwd=None, allow_nonzero=False, data=None):

@@ -180,7 +180,7 @@ REASONS = frozenset(("clean", "findings", "git_unavailable", "audit_unavailable"
     "conversion_unsupported", "candidate_changed", "index_unresolved", "index_flags_unsupported", "cleanup_failed",
     "findings_limit", "internal_error", "runtime_unavailable", "cancelled", "transaction_invalid", "transaction_interactive",
     "transaction_unavailable", "transaction_timeout", "transaction_bytes_limit", "transaction_records_limit",
-    "object_count_limit", "publication_path_unsupported", "history_unsupported", "object_missing", "lfs_unsupported", "publication_validation_unavailable"))
+    "object_count_limit", "publication_path_unsupported", "history_unsupported", "object_missing", "lfs_unsupported", "lfs_pointer_invalid", "lfs_payload_invalid", "lfs_payload_unavailable", "handoff_invalid", "dispatch_platform_unsupported", "publication_validation_unavailable"))
 RECORD_KEYS = frozenset(("schema", "worktree_identity", "completed_at", "completed_ns", "completion_order_ns",
     "scanner_version", "policy_version", "build", "scope", "scope_identity", "outcome", "security_outcome",
     "coverage_complete", "counts", "reason", "audit_outcome", "status_outcome"))
@@ -239,9 +239,13 @@ def validate_record(value, identity):
         if value["audit_outcome"] not in {"written", "failed", "not_attempted"} or value["status_outcome"] != "written":
             raise ValueError
         counts = value["counts"]
-        expected_counts = COUNT_KEYS | ({"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes"}
-                                       if value["policy_version"] == "publication_v1" else set())
-        if type(counts) is not dict or counts.keys() != expected_counts:
+        publication_counts = {"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes"}
+        lfs_counts = {"lfs_objects", "lfs_payload_bytes", "lfs_occurrences", "lfs_logical_bytes"}
+        expected_counts = COUNT_KEYS | (publication_counts if publication else set())
+        # Historical pre-LFS publication records remain informational. Accept
+        # exactly either known shape; partial/unknown fields still corrupt it.
+        if type(counts) is not dict or (counts.keys() != expected_counts and
+                (not publication or counts.keys() != expected_counts | lfs_counts)):
             raise ValueError
         if any(type(number) is not int or not 0 <= number < 2**63 for number in counts.values()):
             raise ValueError

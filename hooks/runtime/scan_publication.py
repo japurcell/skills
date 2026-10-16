@@ -19,6 +19,7 @@ from .scan_types import ScanFailure, ScanSecurityError, ScanLimitExceeded
 from .scan_git import capture_git, VerifiedCapture, Snapshot, ScanBudget
 from .scan_engine import ScanResult, RetainedFindings, build_findings_json, is_credential_path, redact_match
 from .scan_stream import StreamReport, full_line_events, scan_line_events
+from .scan_lfs import PayloadStore, pointer
 
 POLICY = "publication_v1"
 UNITS = dict(max_objects="objects", max_candidate_bytes="bytes", max_seconds="seconds",
@@ -255,6 +256,7 @@ class ObjectStore:
         self.handle = resources.enter_context(tempfile.TemporaryFile(mode="w+b"))
         self.objects = {}
         self.verified_objects = 0
+        self.external_objects = lambda: 0
         self.verified_bytes = 0
         self.size = 0
         resources.callback(lambda: self.context.release_temp(self.size))
@@ -292,8 +294,8 @@ class ObjectStore:
                 raise ScanSecurityError("git_output_invalid", "candidate_read")
             self.verified_objects += 1
             self.verified_bytes += size
-            if self.verified_objects > context.limits.max_objects:
-                raise ScanLimitExceeded("object_count_limit", "candidate_read", measured=self.verified_objects, limit=context.limits.max_objects)
+            if self.verified_objects + self.external_objects() > context.limits.max_objects:
+                raise ScanLimitExceeded("object_count_limit", "candidate_read", measured=self.verified_objects + self.external_objects(), limit=context.limits.max_objects)
             start = self.size
             self.size += size
             self.context.charge_temp(size)
@@ -469,7 +471,7 @@ def walk_graph(store, tips, excluded, visit=None):
     return visited
 
 
-def scan(repository, transaction, build):
+def scan(repository, transaction, build, *, payload_directory=None, retained=None):
     context = repository.context
     budget = ScanBudget(context)
     findings = RetainedFindings()
@@ -479,7 +481,10 @@ def scan(repository, transaction, build):
     selected = set()
     scanned = set()
     logical_blobs = set()
-    store = None
+    store = payloads = None
+    lfs_scanned = set()
+    lfs_seen_paths = set()
+    lfs_occurrences = lfs_logical_bytes = 0
     identity = hashlib.sha256(b"publication-scope-v1\0" + bytes.fromhex(transaction.identity))
 
     def content(oid, label, message=None):
@@ -497,22 +502,37 @@ def scan(repository, transaction, build):
         candidates += 1
         snapshot = Snapshot(("publication", label), capture, start + offset, size - offset)
         snapshot.classify()
-        # T6 owns verified payload acquisition. Recognized LFS content is never
-        # represented as payload coverage by this Git-only collector.
-        if kind == "blob":
-            prefix = b"".join(capture.chunks(start, min(size, 256)))
-            if prefix.startswith(b"version https://git-lfs.github.com/spec/v1"):
-                raise ScanSecurityError("lfs_unsupported", "candidate_scan")
         scan_line_events(label, full_line_events(snapshot.chunks(), snapshot.classification, context.check_deadline),
                          report, lambda _: False, redact_match, context.check_deadline)
         checked += 1
         scanned.add(oid)
+        if kind == "blob":
+            payload(oid, label)
         identity.update(oid.encode() + b"\0" + snapshot.digest)
         if report.stopped:
             raise ScanLimitExceeded("findings_limit", "candidate_scan", measured=report.processed, limit=1000)
 
+    def payload(oid, label):
+        nonlocal checked, candidates, lfs_occurrences, lfs_logical_bytes
+        capture, start, size = store.view(oid)
+        declared = pointer(capture, start, size)
+        if declared is None:
+            return None
+        digest, declared_size = declared
+        snapshot = payloads.acquire(digest, declared_size, git_objects=store.verified_objects)
+        if digest not in lfs_scanned:
+            budget.charge(declared_size)
+            candidates += 1
+            scan_line_events(label, full_line_events(snapshot.chunks(), snapshot.classification, context.check_deadline),
+                             report, lambda _: False, redact_match, context.check_deadline)
+            checked += 1
+            snapshot.capture.handle.close()
+            lfs_scanned.add(digest)
+            identity.update(b"lfs\0" + digest.encode() + b"\0" + str(declared_size).encode())
+        return declared
+
     def occurrence_tree(tree):
-        nonlocal checked, candidates, paths
+        nonlocal checked, candidates, paths, lfs_occurrences, lfs_logical_bytes
         frames = [("", iter(store.tree(tree)))]
         while frames:
             context.check_deadline()
@@ -544,13 +564,19 @@ def scan(repository, transaction, build):
                 budget.charge(size)
             if is_credential_path(path):
                 report.record_findings(1, (("credential_path", "critical", path, 1, "[SENSITIVE PATH]"),))
-            if child in baseline:
-                capture, start, _ = store.view(child)
-                if b"".join(capture.chunks(start, min(size, 256))).startswith(b"version https://git-lfs.github.com/spec/v1"):
-                    raise ScanSecurityError("lfs_unsupported", "candidate_scan")
             if child not in baseline:
                 selected.add(child)
                 content(child, path)
+            declared = payload(child, path)
+            if declared is not None:
+                digest, declared_size = declared
+                # Full matching is deduplicated by payload OID; logical bytes
+                # retain every outgoing commit/path occurrence.
+                if digest in lfs_seen_paths:
+                    budget.charge(declared_size)
+                lfs_seen_paths.add(digest)
+                lfs_occurrences += 1
+                lfs_logical_bytes += declared_size
             checked += 1
             identity.update(b"path\0" + os.fsencode(path) + b"\0" + child.encode())
             if report.stopped:
@@ -562,6 +588,8 @@ def scan(repository, transaction, build):
         if local_tips:
             with contextlib.ExitStack() as resources:
                 store = ObjectStore(repository, resources)
+                payloads = PayloadStore(repository, resources, directory=payload_directory)
+                store.external_objects = lambda: len(payloads.objects)
                 # Each baseline contributes exclusions only after its entire graph
                 # verified locally. A missing node contributes no partial exclusions.
                 remote_tips = dict.fromkeys(row[3].decode() for row in transaction.records if set(row[3]) != {48})
@@ -592,7 +620,15 @@ def scan(repository, transaction, build):
                     walk_graph(store, local_tips, baseline, visit)
                 except MissingObject:
                     raise ScanSecurityError("object_missing", "candidate_read") from None
+                for digest, snapshot in payloads.objects.items():
+                    if digest not in lfs_seen_paths:
+                        lfs_occurrences += 1
+                        lfs_logical_bytes += snapshot.byte_count
                 validate_storage(repository)
+                if store.verified_objects + len(payloads.objects) > context.limits.max_objects:
+                    raise ScanLimitExceeded("object_count_limit", "candidate_read", measured=store.verified_objects + len(payloads.objects), limit=context.limits.max_objects)
+                if retained is not None:
+                    retained.extend(payloads.records())
                 context.check_deadline()
     except KeyboardInterrupt:
         failure = ScanFailure("cancelled", "candidate_scan")
@@ -603,7 +639,9 @@ def scan(repository, transaction, build):
         capture_bytes=context.capture_bytes, temp_peak_bytes=context.temp_peak_bytes,
         processed_findings=report.processed, retained_findings=len(findings), omitted_findings=max(0, report.processed - len(findings)),
         git_objects=store.verified_objects if store else 0, selected_objects=len(selected), path_occurrences=paths,
-        message_bytes=message_bytes, object_body_bytes=store.verified_bytes if store else 0, transaction_bytes=len(transaction.raw))
+        message_bytes=message_bytes, object_body_bytes=store.verified_bytes if store else 0, transaction_bytes=len(transaction.raw),
+        lfs_objects=len(payloads.objects) if payloads else 0, lfs_payload_bytes=payloads.bytes if payloads else 0,
+        lfs_occurrences=lfs_occurrences, lfs_logical_bytes=lfs_logical_bytes)
     return ScanResult(1, build, POLICY, "outgoing", identity.hexdigest(),
         "incomplete" if not complete else "complete_findings" if report.processed else "complete_clean", complete,
         build_findings_json(findings), counts, round(max(0., time.monotonic() - context.started), 6),

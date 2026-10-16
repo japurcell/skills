@@ -31,6 +31,9 @@ def capture_git(context: ScanContext,
     auto_crlf: bool = False,
     private_operation: bool = False,
     private_git_dir: Path | None = None,
+    executable: str | None = None,
+    environment: dict | None = None,
+    command_seconds: float = 5.0,
 ) -> Iterator[VerifiedCapture | None]:
     import errno
     import subprocess
@@ -46,18 +49,18 @@ def capture_git(context: ScanContext,
     }.get(command, "git_command")
     context.phase = operation
     repository_context = context.repository_context
-    git_executable = (repository_context.executable if repository_context is not None else shutil.which("git"))
+    git_executable = executable or (repository_context.executable if repository_context is not None else shutil.which("git"))
     if git_executable is None:
         raise GitCommandError("git_unavailable", operation)
 
     now = time.monotonic()
-    command_deadline = now + 5.0
+    command_deadline = now + command_seconds
     if deadline is not None:
         command_deadline = min(command_deadline, deadline)
     if command_deadline <= now:
         raise ScanLimitExceeded("scan_timeout", seconds=context.limits.max_seconds)
 
-    env = (repository_context.environment.copy() if repository_context is not None else os.environ.copy())
+    env = (environment.copy() if environment is not None else repository_context.environment.copy() if repository_context is not None else os.environ.copy())
     env["GIT_TERMINAL_PROMPT"] = "0"
     env["GIT_ASKPASS"] = ""
     env["GIT_LITERAL_PATHSPECS"] = "1"
@@ -126,7 +129,7 @@ def capture_git(context: ScanContext,
             for attempt in range(3):
                 if time.monotonic() >= command_deadline:
                     context.check_deadline(deadline)
-                    raise ScanLimitExceeded("git_timeout", operation, seconds=5)
+                    raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
                 try:
                     attempts = attempt + 1
                     process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
@@ -149,7 +152,7 @@ def capture_git(context: ScanContext,
                         raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=context.limits.max_capture_bytes)
                     if time.monotonic() >= command_deadline:
                         context.check_deadline(deadline)
-                        raise ScanLimitExceeded("git_timeout", operation, seconds=5)
+                        raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
                     return_code = process.poll()
                     if return_code is not None:
                         break
@@ -181,6 +184,15 @@ def capture_git(context: ScanContext,
                 if size > context.limits.max_capture_bytes:
                     raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=context.limits.max_capture_bytes)
                 if return_code != 0:
+                    if executable is not None and allow_nonzero:
+                        capture_step = "verify_capture"
+                        _verify_private_capture(capture)
+                        capture_step = "consume"
+                        result = VerifiedCapture(context, capture, size, deadline, operation)
+                        result.exit_code = return_code
+                        yield result
+                        capture_step = "cleanup"
+                        return
                     if (allow_nonzero and return_code == 1 and size > 0
                             and args[:2] == ["diff", "--no-index"]):
                         capture_step = "consume"
@@ -208,7 +220,9 @@ def capture_git(context: ScanContext,
                 capture_step = "verify_capture"
                 _verify_private_capture(capture)
                 capture_step = "consume"
-                yield VerifiedCapture(context, capture, size, deadline, operation)
+                result = VerifiedCapture(context, capture, size, deadline, operation)
+                result.exit_code = return_code
+                yield result
                 capture_step = "cleanup"
             except BaseException:
                 _stop_git_process(process, subprocess, observed_descendants)
