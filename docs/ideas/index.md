@@ -5,6 +5,7 @@
 - [Hook Failure Repair](./hook-failure-repair.md)
 - [Hook Failures](./hook-failures.md)
 - [Source Inject Manifest Issue](source-inject-manifest-issue.md)
+- [Wayfinder Grill Refining](wayfinder-grill-refining.md)
 - [Agency Priorities Skill](2-agency-priorities-skill.md)
 - [Pre-Commit Hook](3-pre-commit-hook.md)
 - [Agent Memory Architecture](5-agent-memory-arch.md)
