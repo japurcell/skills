@@ -93,6 +93,7 @@ T5b self-review then constructed a strict-fsck-valid commit with 70,232 bytes of
 
 ## Decision Log
 
+- 2026-10-16: Keep `gate pre-push` inspection-only and give explicit `dispatch pre-push --binding PATH -- REMOTE URL` ownership of the current-invocation verified payload store and downstream steps. T7 generates the binding; this avoids implicit upload during checks and premature scanner cleanup.
 - 2026-10-16: Make the initial publication path-support boundary explicit: component/full encoded path at most 4,096 bytes, no CR/LF/backslash/gitlinks. Other valid bare-tree shapes return a named incomplete result with safe recovery, retained prior findings and zero transfer. This documents supported path representation; it neither truncates content nor raises budgets.
 - 2026-10-16: Resolve publication object accounting as distinct verified Git/LFS identities. Stream graph traversal; bound tree-name uniqueness through invocation-private SQLite storage charged to existing temp limits, with bounded cache/deadline checks. This preserves strict sorted/duplicate tree validation without mislabeling path entries or duplicate references as new objects. No publication limit is raised.
 - 2026-10-16: The user chose changed staged files inspected in full for pre-commit after the real-index probe found six existing fake fixture matches. Select paths changed between the captured HEAD and Git-selected index, then inspect their full captured bytes with object-hash verification and no diff-line suppression. Use policy `selected_staged_v1` and description `changed_staged_files`; historical old `selected_index_v1` records remain informational. Pre-push retains complete B5 outgoing coverage.
@@ -126,7 +127,8 @@ git commit
   complete-clean permits the configured commit workflow
 
 git push
-  installed pre-push dispatcher -> scan-secrets gate pre-push
+  installed pre-push shim -> scan-secrets dispatch pre-push --binding PATH -- REMOTE URL
+  dispatcher -> separate scan-secrets gate pre-push inspection
   complete-clean permits downstream hooks/LFS and then Git transfer
 
 End Turn
@@ -166,11 +168,14 @@ scan-secrets check --repo PATH --scope worktree|index [--json] [--budget-file PA
 scan-secrets status --repo PATH [--json]
 scan-secrets gate pre-commit --repo PATH
 scan-secrets gate pre-push --remote NAME --url URL
+scan-secrets dispatch pre-push --binding PATH -- REMOTE URL
 scan-secrets hooks install --repo PATH [--budget-file PATH] [--dry-run]
 scan-secrets hooks uninstall --repo PATH [--dry-run]
 ```
 
 `--repo` defaults to the current directory for user commands; dispatchers supply the repository context explicitly. Gate pre-push reads Git's ref-update records from stdin. It never guesses the transaction from HEAD, upstream, or a cached remote-tracking branch. It rejects interactive stdin immediately with usage guidance and bounds input bytes, records, parsing time, and trailing malformed data. A verified empty update stream is a complete empty transaction, distinct from malformed or unavailable input. Help/version never read stdin, resolve Git, load policies, or mutate files.
+
+`gate pre-push` remains inspection-only. The explicit `dispatch pre-push` command owns the current invocation's private verified payloads across a separate scanner process and supported downstream upload. Its versioned owner-validated binding pins repository/runtime/configuration/data/tool context; T7 creates that binding during explicit installation. Users do not need to hand-author it. Every scan, required-audit, caller-result and private-handoff check finishes before any upload. Ordered downstream steps preserve original arguments/stdin and replace the recognized standard LFS upload rather than duplicating it. Dispatch success requires both clean inspection and successful intended downstream work; downstream nonzero statuses remain distinguishable from scanner findings and propagate according to the documented dispatch contract. Neither a saved status nor help/version admits dispatch.
 
 Check defaults to `worktree`. `worktree` retains current pending-change semantics, including required conflict versions and untracked content. `index` scans the selected staged versions in full and refuses an unresolved index. `gate pre-commit` selects changed staged paths relative to captured HEAD, then inspects each full selected version, including unchanged lines within those files. It never uses diff-line suppression, and unchanged tracked files outside that staged selection do not block unrelated commits. Publication is exposed through `gate pre-push`, not a misleading bare `--scope outgoing` that lacks a transaction. There is no watch, background, retry, force-clean, skip, or warning-only gate flag.
 
