@@ -133,6 +133,9 @@ class PackageDirectory:
         self.deadline = time.monotonic() + 10
         native.kernel.GetFileInformationByHandleEx.argtypes = (wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD)
         native.kernel.GetFileInformationByHandleEx.restype = wintypes.BOOL
+        native.native.NtSetInformationFile.argtypes = (wintypes.HANDLE, ctypes.POINTER(native.IoStatus),
+            ctypes.c_void_p, wintypes.ULONG, ctypes.c_int)
+        native.native.NtSetInformationFile.restype = wintypes.LONG
 
     def check(self):
         if time.monotonic() > self.deadline:
@@ -250,8 +253,13 @@ class PackageDirectory:
                 _fields_ = [("replace", wintypes.BOOL), ("root", wintypes.HANDLE),
                     ("length", wintypes.DWORD), ("name", wintypes.WCHAR * (units + 1))]
             value = Rename(False, parent, units * 2, destination)
-            if not self.native.kernel.SetFileInformationByHandle(handle, 3, ctypes.byref(value), ctypes.sizeof(value)):
-                raise ctypes.WinError(ctypes.get_last_error())
+            # The native FileRenameInformation contract preserves RootDirectory
+            # without Win32 path normalization of the simple relative name.
+            status = self.native.IoStatus()
+            result = self.native.native.NtSetInformationFile(handle, ctypes.byref(status),
+                ctypes.byref(value), ctypes.sizeof(value), 10)
+            if result < 0:
+                raise ctypes.WinError(self.native.native.RtlNtStatusToDosError(result))
 
     def dispose(self, handle):
         value = wintypes.BOOLEAN(1)
