@@ -459,7 +459,7 @@ class GateTests(unittest.TestCase):
             "--source-dir",str(ROOT),"--destination",str(destination),"--json"],cwd=self.base,env=self.env,capture_output=True,timeout=30)
         self.assertEqual(process.returncode,0,process.stdout+process.stderr)
         manifest = json.loads((destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]),19)
+        self.assertEqual(len(manifest["files"]),20)
         self.seed(self.credential())
         process = subprocess.run([sys.executable,"-I","-S","-B",str(destination / "scripts/scan-secrets.py"),"gate","pre-push",
             "--remote","fixture","--url","fixture","--json"],cwd=self.repo,env=self.env,input=self.transaction(),capture_output=True,timeout=20)
@@ -1141,7 +1141,7 @@ class GateTests(unittest.TestCase):
             cwd=self.base, env=self.env, capture_output=True, timeout=30)
         self.assertEqual(process.returncode, 0, process.stdout + process.stderr)
         manifest = json.loads((destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]), 19)
+        self.assertEqual(len(manifest["files"]), 20)
         shutil.rmtree(source)
         self.seed(self.credential() + b"\n")
         (self.repo / "unrelated.txt").write_text("safe unrelated staged change\n")

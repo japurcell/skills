@@ -122,6 +122,7 @@ class TestTestAll(unittest.TestCase):
             "scripts/test-scan-secrets-lfs.py",
             "scripts/test-scan-secrets-status.py",
             "scripts/test-install-scan-secrets.py",
+            "scripts/test-install-repo-gates.py",
             "scripts/test-hook-input-bounds.py",
             "scripts/test-hook-diagnostics.py",
             "scripts/test-hook-diagnostic-recovery.py",
@@ -139,7 +140,7 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))
         self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
-        for suite in ("test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py", "test-scan-secrets-lfs.py", "test-scan-secrets-status.py", "test-install-scan-secrets.py"):
+        for suite in ("test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py", "test-scan-secrets-lfs.py", "test-scan-secrets-status.py", "test-install-scan-secrets.py", "test-install-repo-gates.py"):
             self.assertIn(["python3", "scripts/" + suite], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):

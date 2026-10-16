@@ -59,7 +59,7 @@ class InstalledScannerTests(unittest.TestCase):
         source = self.copy_source()
         self.assertEqual(self.install(source=source).returncode, 0)
         manifest = json.loads((self.destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]), 19)
+        self.assertEqual(len(manifest["files"]), 20)
         self.assertEqual(manifest["interpreter"], PYTHON)
         self.assertEqual(Path(manifest["runtime"]), self.destination / "hooks/runtime")
         shutil.rmtree(source)
@@ -202,7 +202,7 @@ runpy.run_path(helper, run_name='__main__')
             self.assertEqual(result.returncode, 0, result.stderr)
             installed = self.home / ".local/lib/scan-secrets"
             manifest = json.loads((installed / "installation.json").read_text())
-            self.assertEqual(len(manifest["files"]), 19)
+            self.assertEqual(len(manifest["files"]), 20)
             hidden = source.with_name("source unavailable")
             source.rename(hidden)
             try:
@@ -352,7 +352,7 @@ runpy.run_path(helper, run_name='__main__')
         return source
 
     def test_oversized_or_reserved_closure_fails_before_first_install(self):
-        source = self.expand_source_closure(40)
+        source = self.expand_source_closure(39)
         before = self.fingerprint(self.root)
         result = self.install(source=source)
         self.assertEqual(result.returncode, 2, result.stdout)
@@ -371,7 +371,7 @@ runpy.run_path(helper, run_name='__main__')
             shutil.rmtree(source)
 
     def test_largest_supported_closure_installs_reinstalls_and_checks(self):
-        source = self.expand_source_closure(39)
+        source = self.expand_source_closure(38)
         result = self.install(source=source)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)["asset_count"], 58)

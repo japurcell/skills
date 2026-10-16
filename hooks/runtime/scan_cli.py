@@ -13,7 +13,7 @@ import time
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch", "scan_repo_install")
 
 
 class Failure(Exception):
@@ -41,7 +41,7 @@ def parser():
         common.add_argument(flag, action="store_true", default=argparse.SUPPRESS, help=text)
     root = Parser(prog="scan-secrets", description="Explicit, synchronous secret checks. No background scans.",
                   parents=[common], allow_abbrev=False)
-    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; status scan_secrets_status_v1; policy {POLICY}; budget schema 1")
+    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; status scan_secrets_status_v1; policy {POLICY}; repository preview scan_secrets_repo_install_v1; budget schema 1")
     commands = root.add_subparsers(dest="command")
     check = commands.add_parser("check", parents=[common], allow_abbrev=False,
         help="inspect pending worktree or staged index content", description="Inspect captured pending content without changing source, index, refs or Git configuration.",
@@ -70,13 +70,24 @@ def parser():
     dispatch.add_argument("--repo", default=".")
     dispatch.add_argument("--binding", required=True, help="owner-only schema-1 installation binding")
     dispatch.add_argument("destination", nargs=2, help="-- followed by original remote name and URL")
+    hooks = commands.add_parser("hooks", parents=[common], allow_abbrev=False,
+        help="preview explicit repository gate installation", description="Read-only repository installation discovery. Activation and recovery are not implemented. Never executes existing hooks or changes repository configuration.")
+    hook_actions = hooks.add_subparsers(dest="action")
+    for action in ("install", "uninstall"):
+        command = hook_actions.add_parser(action, parents=[common], allow_abbrev=False,
+            help=f"preview repository gate {action}",
+            epilog="Example: scan-secrets hooks " + action + " --repo . --dry-run --json. Exit 0 means a read-only preview; 2 means unavailable metadata/infrastructure; 3 means unsupported invocation/configuration; 130 means cancelled. Discovery: 10 seconds overall, 2 seconds per Git command, 64 KiB per file/capture, 1 MiB aggregate capture, 2048 configuration entries and 128 worktrees. No writes, hooks, managers or network. Select --git PATH when ambient Git is an Apple launcher; preview never invokes xcrun. The exact selected Git defines configuration discovery and is reported. Relative hooksPath is resolved separately for each hook cwd. Existing repository ownership requires later activation schema support. Data uses the documented platform user data directory; runtime and interpreter use this exact isolated invocation. Budget files use schema 1 checkpoint/publication profiles; absent selection uses finite built-in defaults.")
+        command.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
+        command.add_argument("--budget-file", help="explicit trusted schema-1 budget file location; otherwise built-in finite defaults")
+        command.add_argument("--git", help="absolute trusted direct Git executable for discovery; Apple launchers require explicit selection")
+        command.add_argument("--dry-run", action="store_true", help="discover and describe intended operations without writes (currently required)")
     status = commands.add_parser("status", parents=[common], allow_abbrev=False,
         help="display the last scan without inspecting content", description="Display historical scan metadata only. Never scans or authorizes publication.",
         epilog="Examples: scan-secrets status --repo .; scan-secrets status --repo . --json. Exit 0 means valid information, including not_scanned; unreadable or corrupt reports exit 2. Reports are bounded to 64 KiB, use metadata reads with a two-second deadline, and live outside the worktree and executable bundle under XDG_DATA_HOME/scan-secrets/status, macOS Application Support/scan-secrets/status, or Windows LOCALAPPDATA/scan-secrets/status. Status never waits for a scan or certifies current content.")
     status.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     help_parser = commands.add_parser("help", allow_abbrev=False, help="show command help")
-    help_parser.add_argument("topic", nargs="?", choices=("check", "status", "gate", "dispatch"))
-    return root, {"check": check, "status": status, "gate": gate, "dispatch": dispatch}
+    help_parser.add_argument("topic", nargs="?", choices=("check", "status", "gate", "dispatch", "hooks"))
+    return root, {"check": check, "status": status, "gate": gate, "dispatch": dispatch, "hooks": hooks}
 
 
 def output(value, *, json_mode, quiet=False):
@@ -84,6 +95,12 @@ def output(value, *, json_mode, quiet=False):
         data = json.dumps(value, ensure_ascii=True, separators=(",", ":")) + "\n"
     elif value.get("schema") == "scan_secrets_dispatch_v1":
         data = "" if quiet and value["exit_code"] == 0 else f"scan-secrets: publication {value['outcome']}; {value['reason']}; {value.get('completed_steps', 0)} downstream steps completed. {value['recovery']}\n"
+    elif value.get("schema") == "scan_secrets_repo_install_v1" and value["outcome"] == "preview":
+        data = "" if quiet else (f"scan-secrets: read-only {value['action']} preview; activation unavailable.\n"
+            + f"  Repository: {value['snapshot']['repository']['root']}\n"
+            + f"  Scope: {value['snapshot']['repository']['proposed_scope']}\n"
+            + f"  Hook source: {value['snapshot']['hooks_path']['effective']}\n"
+            + "".join("  Proposed: " + operation + "\n" for operation in value["proposed_operations"]) + value["recovery"] + "\n")
     elif value.get("schema") == "scan_secrets_status_v1":
         data = f"scan-secrets: last scan unavailable; saved time and scope unavailable; {value['reason']}. {value['recovery']}\n"
     elif value["outcome"] == "complete_clean":
@@ -95,7 +112,7 @@ def output(value, *, json_mode, quiet=False):
             data += "  Use --json for the bounded finding report.\n"
     else:
         data = f"scan-secrets: {value['outcome']}; {value['reason']}. {value['recovery']}\n"
-    target = sys.stdout if json_mode or value["outcome"] in {"complete_clean", "complete_findings"} else sys.stderr
+    target = sys.stdout if json_mode or value["outcome"] in {"complete_clean", "complete_findings", "preview"} else sys.stderr
     target.write(data)
     target.flush()
     if value.get("status_outcome") == "failed":
@@ -353,10 +370,11 @@ def _main(argv, *, load, runtime, entry):
     json_mode = "--json" in argv
     args = None
     status_capture = {}
-    invocation = next((item for item in argv if item in {"check", "status", "gate", "dispatch", "help"}), None)
+    invocation = next((item for item in argv if item in {"check", "status", "gate", "dispatch", "hooks", "help"}), None)
     gate_invocation = invocation == "gate"
     dispatch_invocation = invocation == "dispatch"
     status_invocation = invocation == "status"
+    hooks_invocation = invocation == "hooks"
     try:
         root, topics = parser()
         args = root.parse_args(argv)
@@ -364,6 +382,16 @@ def _main(argv, *, load, runtime, entry):
             (topics.get(getattr(args, "topic", None), root)).print_help()
             sys.stdout.flush()
             return 0
+        if args.command == "hooks":
+            if args.action is None:
+                topics["hooks"].print_help()
+                return 0
+            for name in ("scan_types", "scan_git", "scan_native_file", "scan_repository", "scan_status", "scan_budget"):
+                load(name)
+            installer = load("scan_repo_install")
+            value, code = installer.run(args, entry=entry, runtime=runtime)
+            output(value, json_mode=getattr(args, "json", False), quiet=getattr(args, "quiet", False))
+            return code
         if args.command == "status":
             try:
                 load("scan_native_file")
@@ -402,6 +430,8 @@ def _main(argv, *, load, runtime, entry):
     except Failure as failure:
         value = {"schema": SCHEMA, "cli_version": VERSION, "outcome": "invalid" if failure.code == 3 else "incomplete",
                  "coverage_complete": False, "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery, **failure.details}
+        if hooks_invocation:
+            value.update(schema="scan_secrets_repo_install_v1", activated=False, changes_applied=False, authorizes_publication=False, exit_code=failure.code)
         if dispatch_invocation:
             value.update(schema="scan_secrets_dispatch_v1", exit_code=failure.code)
         if gate_invocation:
@@ -420,6 +450,8 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "cancelled", "phase": "cancellation", "recovery": "Rerun the explicit command when ready."}
+        if hooks_invocation:
+            value.update(schema="scan_secrets_repo_install_v1", activated=False, changes_applied=False, authorizes_publication=False, exit_code=130)
         if dispatch_invocation:
             value.update(schema="scan_secrets_dispatch_v1", exit_code=130)
         if gate_invocation:
@@ -437,6 +469,8 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "internal_error", "phase": "initialization", "recovery": "Restore the scanner runtime and retry."}
+        if hooks_invocation:
+            value.update(schema="scan_secrets_repo_install_v1", activated=False, changes_applied=False, authorizes_publication=False, exit_code=2)
         if dispatch_invocation:
             value.update(schema="scan_secrets_dispatch_v1", exit_code=2)
         if gate_invocation:
