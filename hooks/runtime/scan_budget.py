@@ -33,7 +33,7 @@ def unique(pairs):
     return value
 
 
-def load_budget(path: str | None):
+def load_budget(path: str | None, *, profile="checkpoint"):
     if path is None:
         document = dict(schema_version=1, **DEFAULTS)
         raw = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
@@ -59,8 +59,8 @@ def load_budget(path: str | None):
     if (not isinstance(document, dict) or set(document) != {"schema_version", "checkpoint", "publication"}
             or type(document["schema_version"]) is not int or document["schema_version"] != 1):
         raise ValueError("invalid schema")
-    for profile, fields in RANGES.items():
-        values = document[profile]
+    for profile_name, fields in RANGES.items():
+        values = document[profile_name]
         if not isinstance(values, dict) or set(values) != set(fields):
             raise ValueError("invalid profile")
         for key, (minimum, maximum) in fields.items():
@@ -68,4 +68,6 @@ def load_budget(path: str | None):
             accepted = (int, float) if key == "max_seconds" else (int,)
             if type(value) not in accepted or not math.isfinite(value) or not minimum <= value <= maximum:
                 raise ValueError("invalid limit")
-    return document["checkpoint"], hashlib.sha256(raw).hexdigest()
+    if profile not in RANGES:
+        raise ValueError("invalid selected profile")
+    return document[profile], hashlib.sha256(raw).hexdigest()

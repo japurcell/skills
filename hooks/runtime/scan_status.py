@@ -178,7 +178,9 @@ REASONS = frozenset(("clean", "findings", "git_unavailable", "audit_unavailable"
     "candidate_unsafe", "candidate_read_failed", "log_unavailable", "log_unsafe", "log_lock_timeout",
     "log_configuration_invalid", "log_record_limit", "capture_bytes_limit", "temporary_bytes_limit",
     "conversion_unsupported", "candidate_changed", "index_unresolved", "index_flags_unsupported", "cleanup_failed",
-    "findings_limit", "internal_error", "runtime_unavailable", "cancelled"))
+    "findings_limit", "internal_error", "runtime_unavailable", "cancelled", "transaction_invalid", "transaction_interactive",
+    "transaction_unavailable", "transaction_timeout", "transaction_bytes_limit", "transaction_records_limit",
+    "object_count_limit", "publication_path_unsupported", "history_unsupported", "object_missing", "lfs_unsupported", "publication_validation_unavailable"))
 RECORD_KEYS = frozenset(("schema", "worktree_identity", "completed_at", "completed_ns", "completion_order_ns",
     "scanner_version", "policy_version", "build", "scope", "scope_identity", "outcome", "security_outcome",
     "coverage_complete", "counts", "reason", "audit_outcome", "status_outcome"))
@@ -196,13 +198,30 @@ def unique_object(pairs):
 def validate_record(value, identity):
     """Only documented safe scalars/counts survive an existing report read."""
     try:
-        if type(value) is not dict or value.keys() != RECORD_KEYS:
+        publication = type(value) is dict and value.get("policy_version") == "publication_v1"
+        publication_keys = {"action", "transaction_identity", "destination_identity", "budget_profile", "accounting_units", "limits", "budget_identity"}
+        if type(value) is not dict or value.keys() != RECORD_KEYS | (publication_keys if publication else set()):
             raise ValueError
+        if publication:
+            if value["action"] != "pre-push" or value["budget_profile"] != "publication":
+                raise ValueError
+            for key in ("transaction_identity", "destination_identity", "budget_identity"):
+                if type(value[key]) is not str or re.fullmatch(r"[0-9a-f]{64}", value[key]) is None:
+                    raise ValueError
+            units = dict(max_objects="objects", max_candidate_bytes="bytes", max_seconds="seconds", max_capture_bytes="bytes", max_temp_bytes="bytes")
+            if value["accounting_units"] != units or type(value["limits"]) is not dict or value["limits"].keys() != units.keys():
+                raise ValueError
+            ranges = dict(max_objects=(1,100000), max_candidate_bytes=(1048576,1073741824), max_seconds=(1,600),
+                          max_capture_bytes=(1048576,2147483648), max_temp_bytes=(1048576,3221225472))
+            for key, (low, high) in ranges.items():
+                number = value["limits"][key]
+                if type(number) not in ((int,float) if key == "max_seconds" else (int,)) or not low <= number <= high:
+                    raise ValueError
         if value["schema"] != "scan_secrets_last_scan_v1" or value["worktree_identity"] != identity:
             raise ValueError
         if re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", value["scanner_version"]) is None or len(value["scanner_version"]) > 32:
             raise ValueError
-        if ((value["policy_version"], value["scope"]) not in {("pending_snapshots_v1", "worktree"), ("pending_snapshots_v1", "index"), ("selected_index_v1", "index"), ("selected_staged_v1", "index")}):
+        if ((value["policy_version"], value["scope"]) not in {("pending_snapshots_v1", "worktree"), ("pending_snapshots_v1", "index"), ("selected_index_v1", "index"), ("selected_staged_v1", "index"), ("publication_v1", "outgoing")}):
             raise ValueError
         for key in ("build", "scope_identity"):
             if value[key] is not None and re.fullmatch(r"[0-9a-f]{64}", value[key]) is None:
@@ -220,7 +239,9 @@ def validate_record(value, identity):
         if value["audit_outcome"] not in {"written", "failed", "not_attempted"} or value["status_outcome"] != "written":
             raise ValueError
         counts = value["counts"]
-        if type(counts) is not dict or counts.keys() != COUNT_KEYS:
+        expected_counts = COUNT_KEYS | ({"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes"}
+                                       if value["policy_version"] == "publication_v1" else set())
+        if type(counts) is not dict or counts.keys() != expected_counts:
             raise ValueError
         if any(type(number) is not int or not 0 <= number < 2**63 for number in counts.values()):
             raise ValueError
@@ -623,6 +644,9 @@ def save_status(requested, data_root, bundle, result, *, version, captured_repos
             "outcome": result["outcome"], "security_outcome": "findings" if counts["processed_findings"] else "clean" if coverage else "incomplete",
             "coverage_complete": coverage, "counts": counts, "reason": result["reason"],
             "audit_outcome": result.get("audit_outcome", "not_attempted"), "status_outcome": "written"}
+        if record["policy_version"] == "publication_v1":
+            for key in ("action", "transaction_identity", "destination_identity", "budget_profile", "accounting_units", "limits", "budget_identity"):
+                record[key] = result[key]
         with Store(data_root(), repository, bundle, deadline, write=True) as store:
             return store.replace(record), "status_saved"
     except StatusError as error:

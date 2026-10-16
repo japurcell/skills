@@ -34,7 +34,7 @@ def _unique(pairs):
 
 
 def validate_result(raw, exit_code, *, action, build, repository_identity,
-                    index_identity, budget_identity, scope_identity=None):
+                    index_identity=None, budget_identity, scope_identity=None, transaction_identity=None, destination_identity=None):
     """Reject unusable process output; return a validated result, never a pass bool.
 
     The caller may proceed only when this succeeds AND exit_code == 0. Expected
@@ -51,17 +51,26 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
                 "status_outcome", "status_reason", "security_outcome", "limits", "budget_identity", "phase",
                 "diagnostic", "findings", "recovery", "action", "repository_identity", "index_identity",
                 "budget_profile", "accounting_units", "scope_description", "exit_code"}
+        publication = action == "pre-push"
+        if publication:
+            keys.remove("index_identity")
+            keys.update(("transaction_identity", "destination_identity"))
         if type(value) is not dict or value.keys() != keys:
             raise ValueError
         if (value["schema"] != SCHEMA or value["schema_version"] != 1 or type(value["schema_version"]) is not int
-                or value["action"] != action or action != "pre-commit" or value["scope"] != "index"
-                or value["scope_description"] != "changed_staged_files" or value["policy_version"] != POLICY
-                or value["budget_profile"] != "checkpoint" or value["accounting_units"] != UNITS
+                or value["action"] != action or action not in {"pre-commit", "pre-push"}
+                or value["scope"] != ("outgoing" if publication else "index")
+                or value["scope_description"] != ("complete_outgoing_transaction" if publication else "changed_staged_files")
+                or value["policy_version"] != ("publication_v1" if publication else POLICY)
+                or value["budget_profile"] != ("publication" if publication else "checkpoint")
+                or value["accounting_units"] != ({**UNITS, "max_objects": "objects"} if publication else UNITS)
                 or value["exit_code"] != exit_code or type(value["exit_code"]) is not int
                 or value["cli_version"] != "1.0.0"):
             raise ValueError
-        for key, expected in (("build", build), ("repository_identity", repository_identity),
-                              ("index_identity", index_identity), ("budget_identity", budget_identity)):
+        expected_identities = [("build", build), ("repository_identity", repository_identity), ("budget_identity", budget_identity)]
+        expected_identities.extend([("transaction_identity", transaction_identity), ("destination_identity", destination_identity)]
+                                   if publication else [("index_identity", index_identity)])
+        for key, expected in expected_identities:
             if type(expected) is not str or re.fullmatch(r"[0-9a-f]{64}", expected) is None or value[key] != expected:
                 raise ValueError
         if type(value["scope_identity"]) is not str or re.fullmatch(r"[0-9a-f]{64}", value["scope_identity"]) is None:
@@ -72,7 +81,8 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
                 or not math.isfinite(value["elapsed_seconds"]) or value["elapsed_seconds"] < 0):
             raise ValueError
         counts = value["counts"]
-        if (type(counts) is not dict or counts.keys() != COUNT_KEYS
+        expected_counts = COUNT_KEYS | ({"git_objects", "selected_objects", "path_occurrences", "message_bytes", "object_body_bytes", "transaction_bytes"} if publication else set())
+        if (type(counts) is not dict or counts.keys() != expected_counts
                 or any(type(n) is not int or not 0 <= n < 2**63 for n in counts.values())
                 or counts["retained_findings"] + counts["omitted_findings"] != counts["processed_findings"]
                 or counts["inspected_snapshots"] > counts["candidates"]):
@@ -89,9 +99,17 @@ def validate_result(raw, exit_code, *, action, build, repository_identity,
         limits = value["limits"]
         if type(limits) is not dict or limits.keys() != UNITS.keys():
             raise ValueError
-        for key, (low, high) in RANGES["checkpoint"].items():
+        for key, (low, high) in RANGES["publication" if publication else "checkpoint"].items():
             n = limits[key]
             if type(n) not in ((int, float) if key == "max_seconds" else (int,)) or not math.isfinite(n) or not low <= n <= high:
+                raise ValueError
+        if publication:
+            if (counts["selected_objects"] > counts["git_objects"] or counts["transaction_bytes"] > 1048576
+                    or counts["path_occurrences"] > counts["candidates"] or counts["message_bytes"] > counts["candidate_bytes"]):
+                raise ValueError
+            if value["coverage_complete"] and (counts["git_objects"] > limits["max_objects"]
+                    or counts["candidate_bytes"] > limits["max_candidate_bytes"] or counts["capture_bytes"] > limits["max_capture_bytes"]
+                    or counts["temp_peak_bytes"] > limits["max_temp_bytes"]):
                 raise ValueError
         security = "findings" if counts["processed_findings"] else "clean" if value["coverage_complete"] else "incomplete"
         if value["security_outcome"] != security or value["audit_outcome"] not in {"written", "failed", "not_attempted"}:

@@ -25,7 +25,8 @@ class NotRepository(Exception):
 
 
 class ProtectedRepository:
-    def __init__(self, context, requested, *, selected_index=None, capture_selected_index=False):
+    def __init__(self, context, requested, *, selected_index=None, capture_selected_index=False, publication=False):
+        self.publication = publication
         self.capture_selected_index = capture_selected_index
         self.selected_index = selected_index
         self.context = context
@@ -66,7 +67,7 @@ class ProtectedRepository:
         self.charged -= size
         self.context.release_temp(size)
 
-    def read(self, path, *, missing=False, descriptor=None):
+    def read(self, path, *, missing=False, descriptor=None, maximum=None):
         try:
             info = path.lstat() if descriptor is None else os.fstat(descriptor)
         except FileNotFoundError:
@@ -76,7 +77,7 @@ class ProtectedRepository:
         if (not stat.S_ISREG(info.st_mode) or stat.S_ISLNK(info.st_mode)
                 or getattr(info, "st_file_attributes", 0) & 0x400):
             raise ScanSecurityError("candidate_unsafe", "repository")
-        limit = self.context.limits.max_capture_bytes
+        limit = self.context.limits.max_capture_bytes if maximum is None else min(maximum, self.context.limits.max_capture_bytes)
         if info.st_size > limit:
             raise ScanLimitExceeded("git_output_limit", "repository", measured=info.st_size, limit=limit)
         descriptor = (os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0))
@@ -100,7 +101,7 @@ class ProtectedRepository:
                 raise ScanSecurityError("candidate_changed", "repository")
         return bytes(raw)
 
-    def read_selected_index(self, path, *, missing):
+    def read_selected_index(self, path, *, missing, maximum=None, parent_only=False):
         """Read a selected index through held parents on both supported APIs."""
         if sys.platform == "darwin":
             for alias in (Path("/tmp"), Path("/var")):
@@ -129,6 +130,9 @@ class ProtectedRepository:
                     parent = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
                     resources.callback(os.close, parent)
                 opener = lambda: os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+            if parent_only:
+                # Publication needs this held ancestry, not unused config bytes.
+                return None
             try:
                 descriptor = opener()
             except FileNotFoundError:
@@ -136,9 +140,14 @@ class ProtectedRepository:
                     return None
                 raise
             resources.callback(os.close, descriptor)
-            return self.read(path, descriptor=descriptor)
+            return self.read(path, descriptor=descriptor, maximum=maximum)
 
     def query(self, *args, cwd=None, allow_nonzero=False, data=None):
+        if self.publication:
+            with capture_git(self.context, list(args), cwd=cwd or self.root, deadline=self.context.deadline, input_bytes=data) as capture:
+                if capture.size > 65536:
+                    raise GitCommandError("git_output_invalid", "repository")
+                return b"".join(capture.chunks())
         return run_git(self.context, list(args), cwd=cwd or self.root,
                        deadline=self.context.deadline, allow_nonzero=allow_nonzero,
                        input_bytes=data, text=False)
@@ -181,6 +190,11 @@ class ProtectedRepository:
             raise GitCommandError("git_output_invalid", "repository")
         self.root, gitdir, common = (Path(os.fsdecode(value)).resolve(strict=True) for value in rows[:3])
         self.gitdir, self.common = gitdir, common
+        self.object_format = rows[3].decode("ascii")
+        if self.publication:
+            from .scan_publication import prepare_repository
+            prepare_repository(self)
+            return
         index_path = gitdir / "index"
         if self.capture_selected_index:
             if self.selected_index is not None:

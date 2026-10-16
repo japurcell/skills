@@ -59,6 +59,19 @@ CANDIDATE_UNMERGED_STAGES = ("unmerged-base", "unmerged-ours", "unmerged-theirs"
 CANDIDATE_UNMERGED_WORKTREE = "unmerged-worktree"
 
 INCOMPLETE_CAUSES = {
+    "publication_validation_unavailable": ("publication validation runtime is unavailable", "Restore SQLite support in the recorded Python interpreter and retry publication.", ""),
+    "cancelled": ("publication inspection was cancelled", "Rerun the explicit Git action when ready.", ""),
+    "transaction_invalid": ("pre-push records are malformed", "Supply Git's complete four-field pre-push records with final newlines.", ""),
+    "transaction_interactive": ("pre-push stdin is interactive", "Run this gate from Git pre-push or pipe a complete transaction.", ""),
+    "transaction_unavailable": ("pre-push stdin is unavailable", "Supply a readable completed transaction stream.", ""),
+    "transaction_timeout": ("pre-push input deadline reached", "Close the transaction input stream and rerun the Git action.", "seconds"),
+    "transaction_bytes_limit": ("pre-push input byte limit exceeded", "Reduce the ref-update transaction and rerun the Git action.", "bytes"),
+    "transaction_records_limit": ("pre-push record limit exceeded", "Reduce the ref-update transaction and rerun the Git action.", "records"),
+    "object_count_limit": ("publication object limit exceeded", "Adjust max_objects in the explicit publication budget and rerun.", "objects"),
+    "publication_path_unsupported": ("publication path shape is unsupported", "Use components and full encoded paths of at most 4096 bytes, without CR, LF, backslashes or gitlinks; rerun publication with supported paths.", "bytes"),
+    "history_unsupported": ("source history or object storage is unsupported", "Use complete ordinary local object storage without shallow, graft or alternate substitutions.", ""),
+    "object_missing": ("required publication object is missing", "Restore complete local publication objects and rerun; inspection never fetches.", ""),
+    "lfs_unsupported": ("LFS publication requires verified payload handling", "Use a gate with verified LFS payload support before publishing these objects.", ""),
     "git_unavailable": ("Git is unavailable", "Check Git availability in the hook environment.", ""),
     "audit_unavailable": ("audit storage is unavailable", "Check hook audit storage.", ""),
     "input_invalid": ("hook input is invalid", "Check the provider hook envelope.", ""),
