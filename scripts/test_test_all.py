@@ -122,6 +122,7 @@ class TestTestAll(unittest.TestCase):
             "scripts/test-scan-secrets-lfs.py",
             "scripts/test-scan-secrets-status.py",
             "scripts/test-scan-secrets-lifecycle.py",
+            "scripts/test-scan-status-cancellation.py",
             "scripts/test-install-scan-secrets.py",
             "scripts/test-install-repo-gates.py",
             "scripts/test-hook-input-bounds.py",

@@ -24,6 +24,14 @@ CLEANUP_SECONDS = 0.10
 MAX_INPUT = 65536
 MAX_OUTPUT = 65536
 UNAVAILABLE = "unavailable; saved scope/time unavailable"
+CANCELLED = False
+
+
+def cancel(signum, frame):
+    # Do not raise asynchronously across Popen assignment or group cleanup.
+    # The bounded input/child waits observe this flag and unwind normally.
+    global CANCELLED
+    CANCELLED = True
 
 
 def unique_object(pairs):
@@ -42,7 +50,7 @@ def read_input():
     raw = bytearray()
     deadline = min(STARTED + INPUT_SECONDS, time.monotonic() + INPUT_SECONDS)
     fd = sys.stdin.fileno()
-    while time.monotonic() < deadline:
+    while not CANCELLED and time.monotonic() < deadline:
         ready, _, _ = select.select([fd], [], [], max(0, deadline - time.monotonic()))
         if not ready:
             return None
@@ -84,7 +92,7 @@ os.execv(sys.executable,[sys.executable,'-I','-S','-B',*sys.argv[1:]])
 
 
 def child_status(repo):
-    if os.name != "posix":
+    if os.name != "posix" or CANCELLED:
         return None
     process = None
     deadline = STARTED + CHILD_SECONDS
@@ -93,7 +101,7 @@ def child_status(repo):
             process = subprocess.Popen([sys.executable, "-I", "-S", "-B", "-c", CHILD_BRIDGE, str(entrypoint()),
                 "status", "--json", "--no-input", "--repo", repo], stdin=subprocess.DEVNULL,
                 stdout=output, stderr=subprocess.DEVNULL, start_new_session=True)
-            while time.monotonic() < deadline:
+            while not CANCELLED and time.monotonic() < deadline:
                 if os.fstat(output.fileno()).st_size > MAX_OUTPUT:
                     return None
                 try:
@@ -103,7 +111,7 @@ def child_status(repo):
                     pass
             else:
                 return None
-            if process.returncode != 0 or os.fstat(output.fileno()).st_size > MAX_OUTPUT:
+            if CANCELLED or process.returncode != 0 or os.fstat(output.fileno()).st_size > MAX_OUTPUT:
                 return None
             output.seek(0)
             return json.loads(output.read(MAX_OUTPUT + 1), object_pairs_hook=unique_object)
@@ -140,6 +148,9 @@ def display(value):
 
 
 def main():
+    if os.name == "posix":
+        signal.signal(signal.SIGTERM, cancel)
+        signal.signal(signal.SIGINT, cancel)
     payload = None
     summary = UNAVAILABLE
     try:

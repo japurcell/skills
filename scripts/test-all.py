@@ -54,6 +54,7 @@ SUITES = (
     ("python3", "scripts/test-scan-secrets-lfs.py"),
     ("python3", "scripts/test-scan-secrets-status.py"),
     ("python3", "scripts/test-scan-secrets-lifecycle.py"),
+    ("python3", "scripts/test-scan-status-cancellation.py"),
     ("python3", "scripts/test-install-scan-secrets.py"),
     ("python3", "scripts/test-install-repo-gates.py"),
     ("python3", "scripts/test-scan-secrets-merge.py"),
