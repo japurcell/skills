@@ -86,23 +86,84 @@ function Invoke-Case {
         $env:TEMP = $caseDir
         $env:TMP = $caseDir
         $started = [Diagnostics.Stopwatch]::StartNew()
-        $runner = $hooks[$Provider]
-        if ($Scenario -eq 'capture-error') {
-            $runner = Join-Path $caseDir 'capture-error.py'
-            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
-            [System.IO.File]::WriteAllText($runner, "import runpy, tempfile`n" +
-                "def fail(*args, **kwargs):`n    raise OSError('private capture failure detail')`n" +
-                "tempfile.TemporaryFile = fail`nrunpy.run_path($hookLiteral, run_name='__main__')`n")
-        }
+        $runner = Join-Path $caseDir 'capture-fixture.py'
+        $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+        $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
+        $fixture = @'
+import ast, ctypes, os, pathlib, runpy, subprocess, sys, tempfile, time
+hook = pathlib.Path(HOOK_LITERAL)
+source = hook.parent / "helpers" / "scan_git.py"
+phase_lines = {node.lineno for node in ast.walk(ast.parse(source.read_text(encoding="utf-8")))
+               if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name)
+               and target.id == "capture_step" for target in node.targets)}
+started = time.monotonic()
+records = 0
+kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+kernel.GetCurrentProcess.restype = ctypes.c_void_p
+kernel.GetProcessHandleCount.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+kernel.GetProcessHandleCount.restype = ctypes.c_int
+def emit(phase, pid=0, code=0):
+    global records
+    if records >= 128:
+        return
+    records += 1
+    handles = ctypes.c_uint32()
+    ok = kernel.GetProcessHandleCount(kernel.GetCurrentProcess(), ctypes.byref(handles))
+    count = handles.value if ok else 0
+    elapsed = int((time.monotonic() - started) * 1000)
+    print(f"W2 phase={phase} pid={pid} code={code} handles={count} ms={elapsed}", file=sys.stderr, flush=True)
+original_popen = subprocess.Popen
+class ObservedPopen(original_popen):
+    def __init__(self, *args, **kwargs):
+        emit(8001)
+        try:
+            super().__init__(*args, **kwargs)
+        except OSError as error:
+            emit(8003, code=error.winerror or error.errno or 0)
+            raise
+        emit(8002, pid=self.pid)
+subprocess.Popen = ObservedPopen
+def trace(frame, event, argument):
+    if pathlib.Path(frame.f_code.co_filename).name != "scan_git.py":
+        return None
+    name = frame.f_code.co_name
+    if name == "capture_git" and event == "line" and frame.f_lineno in phase_lines:
+        emit(frame.f_lineno)
+    elif name in {"_windows_git_descendants", "_stop_git_process"} and event in {"call", "return"}:
+        emit((9000 if name == "_windows_git_descendants" else 9100) + (1 if event == "call" else 2))
+    return trace
+if CAPTURE_ERROR_LITERAL:
+    def fail(*args, **kwargs):
+        raise OSError("private capture failure detail")
+    tempfile.TemporaryFile = fail
+emit(1, pid=os.getpid())
+sys.settrace(trace)
+try:
+    runpy.run_path(str(hook), run_name="__main__")
+finally:
+    sys.settrace(None)
+    emit(2, pid=os.getpid())
+'@
+        $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('CAPTURE_ERROR_LITERAL', $captureErrorLiteral)
+        [System.IO.File]::WriteAllText($runner, $fixture)
         $process = Start-Process -FilePath $python -ArgumentList @('-I', '-S', '-B', "`"$runner`"") `
             -WorkingDirectory $repo -RedirectStandardInput $inputPath -RedirectStandardOutput $outputPath `
             -RedirectStandardError $errorPath -PassThru -NoNewWindow
         if (-not $process.WaitForExit(8000)) {
             $process.Kill($true)
             $process.WaitForExit(1000) | Out-Null
+            # Fixture diagnostics are numeric and bounded. Never publish raw hook stderr.
+            Get-Content -LiteralPath $errorPath | Where-Object {
+                $_ -cmatch '^W2 phase=[0-9]+ pid=[0-9]+ code=[0-9]+ handles=[0-9]+ ms=[0-9]+$'
+            } | Select-Object -First 128 | ForEach-Object { Write-Output $_ }
             throw "$Provider $Mode $Scenario exceeded outer watchdog"
         }
         $started.Stop()
+        if ($Provider -eq 'gemini' -and $Mode -eq 'block' -and $Scenario -eq 'partial') {
+            Get-Content -LiteralPath $errorPath | Where-Object {
+                $_ -cmatch '^W2 phase=[0-9]+ pid=[0-9]+ code=[0-9]+ handles=[0-9]+ ms=[0-9]+$'
+            } | Select-Object -First 128 | ForEach-Object { Write-Output $_ }
+        }
         if ($process.ExitCode -ne 0) { throw "$Provider $Mode $Scenario exited $($process.ExitCode)" }
         if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
         $response = Get-Content -LiteralPath $outputPath -Raw | ConvertFrom-Json -AsHashtable
