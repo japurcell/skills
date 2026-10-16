@@ -1,0 +1,125 @@
+{
+  "files": {
+    ".codex/hooks/helpers/audit.py": {
+      "bytes": 5977,
+      "sha256": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87"
+    },
+    ".codex/hooks/helpers/common.py": {
+      "bytes": 13774,
+      "sha256": "55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b"
+    },
+    ".codex/hooks/helpers/scan_allowlist.py": {
+      "bytes": 2155,
+      "sha256": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43"
+    },
+    ".codex/hooks/helpers/scan_audit.py": {
+      "bytes": 11670,
+      "sha256": "985bef410cdb55ea8eb7995837ab49de4929274939e761490a415f2a6ed457c6"
+    },
+    ".codex/hooks/helpers/scan_engine.py": {
+      "bytes": 10353,
+      "sha256": "8de961f82a1fb51167d9bbdb0f0e3a3528e58cb7a2252cac7f74379e6add6def"
+    },
+    ".codex/hooks/helpers/scan_git.py": {
+      "bytes": 56156,
+      "sha256": "8e42af5e484c1f4512d8f4c3f4b6967ced6458e74db6a4b0aaad0f6281438399"
+    },
+    ".codex/hooks/helpers/scan_reporting.py": {
+      "bytes": 2755,
+      "sha256": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28"
+    },
+    ".codex/hooks/helpers/scan_stream.py": {
+      "bytes": 14977,
+      "sha256": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31"
+    },
+    ".codex/hooks/helpers/scan_types.py": {
+      "bytes": 10583,
+      "sha256": "f5fb4241deb8c1fc0ae51c3f2a14fb2398d4d509157be55577123700a4e53c98"
+    },
+    ".codex/hooks/scan-secrets.py": {
+      "bytes": 38920,
+      "sha256": "83791051945d073830d92bf296cb158e035bc442157dcb37f08132931b328761"
+    },
+    ".copilot/hooks/scripts/helpers/audit.py": {
+      "bytes": 5979,
+      "sha256": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022"
+    },
+    ".copilot/hooks/scripts/helpers/common.py": {
+      "bytes": 13774,
+      "sha256": "55be5cd5746e2674ab1e8446135d3da569c453ed43b5cdb78d0618ca6ba4a45b"
+    },
+    ".copilot/hooks/scripts/helpers/scan_allowlist.py": {
+      "bytes": 2155,
+      "sha256": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43"
+    },
+    ".copilot/hooks/scripts/helpers/scan_audit.py": {
+      "bytes": 11670,
+      "sha256": "985bef410cdb55ea8eb7995837ab49de4929274939e761490a415f2a6ed457c6"
+    },
+    ".copilot/hooks/scripts/helpers/scan_engine.py": {
+      "bytes": 10353,
+      "sha256": "8de961f82a1fb51167d9bbdb0f0e3a3528e58cb7a2252cac7f74379e6add6def"
+    },
+    ".copilot/hooks/scripts/helpers/scan_git.py": {
+      "bytes": 56156,
+      "sha256": "8e42af5e484c1f4512d8f4c3f4b6967ced6458e74db6a4b0aaad0f6281438399"
+    },
+    ".copilot/hooks/scripts/helpers/scan_reporting.py": {
+      "bytes": 2755,
+      "sha256": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28"
+    },
+    ".copilot/hooks/scripts/helpers/scan_stream.py": {
+      "bytes": 14977,
+      "sha256": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31"
+    },
+    ".copilot/hooks/scripts/helpers/scan_types.py": {
+      "bytes": 10583,
+      "sha256": "f5fb4241deb8c1fc0ae51c3f2a14fb2398d4d509157be55577123700a4e53c98"
+    },
+    ".copilot/hooks/scripts/scan-secrets.py": {
+      "bytes": 42729,
+      "sha256": "42f6b0d9dad5e3338b19a2c90b74c4aef08638f0db8b77e3fe42cb3b2dab2df1"
+    },
+    ".gemini/hooks/scripts/helpers/audit.py": {
+      "bytes": 5975,
+      "sha256": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661"
+    },
+    ".gemini/hooks/scripts/helpers/common.py": {
+      "bytes": 13647,
+      "sha256": "f8f2bf01352288c56a763f178359c0a57f958c2f047a2e2b9a81c7f6853bd169"
+    },
+    ".gemini/hooks/scripts/helpers/scan_allowlist.py": {
+      "bytes": 2155,
+      "sha256": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43"
+    },
+    ".gemini/hooks/scripts/helpers/scan_audit.py": {
+      "bytes": 11670,
+      "sha256": "985bef410cdb55ea8eb7995837ab49de4929274939e761490a415f2a6ed457c6"
+    },
+    ".gemini/hooks/scripts/helpers/scan_engine.py": {
+      "bytes": 10353,
+      "sha256": "8de961f82a1fb51167d9bbdb0f0e3a3528e58cb7a2252cac7f74379e6add6def"
+    },
+    ".gemini/hooks/scripts/helpers/scan_git.py": {
+      "bytes": 56156,
+      "sha256": "8e42af5e484c1f4512d8f4c3f4b6967ced6458e74db6a4b0aaad0f6281438399"
+    },
+    ".gemini/hooks/scripts/helpers/scan_reporting.py": {
+      "bytes": 2755,
+      "sha256": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28"
+    },
+    ".gemini/hooks/scripts/helpers/scan_stream.py": {
+      "bytes": 14977,
+      "sha256": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31"
+    },
+    ".gemini/hooks/scripts/helpers/scan_types.py": {
+      "bytes": 10583,
+      "sha256": "f5fb4241deb8c1fc0ae51c3f2a14fb2398d4d509157be55577123700a4e53c98"
+    },
+    ".gemini/hooks/scripts/scan-secrets.py": {
+      "bytes": 41195,
+      "sha256": "9342c2c41566ad1d1909be0360bd2cbd1be9ca20564d976fcf0ac571e9a8bccc"
+    }
+  },
+  "source_revision": "50c12113563b2c1f519514bdb2bcd73b32339334"
+}

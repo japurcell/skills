@@ -426,6 +426,116 @@ class CheckpointTests(unittest.TestCase):
         self.assertEqual(source.read_text(), "original source\n")
         self.assertEqual(source.stat().st_mode & 0o777, 0o644)
 
+    @unittest.skipIf(os.name == "nt", "POSIX directory substitution; native Windows handle proof is separate")
+    def test_audit_ancestor_swap_cannot_redirect_writes_into_tracked_source(self):
+        root = self.base.resolve()
+        repo = self.repo.resolve()
+        data = root / "data"
+        data.mkdir(mode=0o700)
+        redirected = repo / "redirected" / "scan-secrets"
+        redirected.mkdir(parents=True, mode=0o700)
+        source = redirected / "audit.jsonl"
+        source.write_text("original tracked source\n")
+        source.chmod(0o644)
+        self.commit()
+        before = source.read_bytes()
+        index = (repo / ".git/index").read_bytes()
+        marker = root / "swap-activated"
+        wrapper = root / "audit-ancestor-swap.py"
+        wrapper.write_text("import os,runpy,sys\nfrom pathlib import Path\nreal=os.mkdir\n"
+            "data=Path(" + repr(str(data)) + ")\nmarker=Path(" + repr(str(marker)) + ")\nidentity=data.stat()\n"
+            "def mkdir(path,mode=0o777,*,dir_fd=None):\n"
+            " absolute=dir_fd is None and str(path)==str(data/'scan-secrets')\n"
+            " anchored=dir_fd is not None and str(path)=='scan-secrets' and (os.fstat(dir_fd).st_dev,os.fstat(dir_fd).st_ino)==(identity.st_dev,identity.st_ino)\n"
+            " if (absolute or anchored) and not marker.exists():\n"
+            "  data.rename(data.with_name('held-data'))\n"
+            "  data.symlink_to(" + repr(str(repo / "redirected")) + ",target_is_directory=True)\n"
+            "  marker.write_text('anchored' if anchored else 'pathname')\n"
+            " return real(path,mode,dir_fd=dir_fd)\nos.mkdir=mkdir\n"
+            "sys.argv=[" + repr(str(CLI)) + "]+sys.argv[1:]\nrunpy.run_path(" + repr(str(CLI)) + ",run_name='__main__')\n")
+        process = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "check", "--repo", str(repo), "--json"],
+            cwd=repo, env={**self.env, "XDG_DATA_HOME": str(data)}, capture_output=True, timeout=8)
+        self.assertTrue(marker.exists(), "directory swap did not activate")
+        self.assertEqual(marker.read_text(), "anchored", "swap must activate with a verified parent descriptor held")
+        self.assertEqual(source.read_bytes(), before, process.stdout + process.stderr)
+        self.assertEqual(source.stat().st_mode & 0o777, 0o644)
+        self.assertEqual((repo / ".git/index").read_bytes(), index)
+        self.assertIn(process.returncode, (0, 2), process.stdout + process.stderr)
+        value = self.result(process, process.returncode)
+        self.assertEqual(value["audit_outcome"], "written" if process.returncode == 0 else "failed")
+
+    @unittest.skipIf(os.name == "nt", "POSIX rotation substitution; native Windows handle proof is separate")
+    def test_audit_rotation_remains_anchored_after_ancestor_swap(self):
+        root, repo = self.base.resolve(), self.repo.resolve()
+        data = root / "data"
+        audit = data / "scan-secrets"
+        audit.mkdir(parents=True, mode=0o700)
+        (audit / "audit.jsonl").write_bytes(b"x" * 1048576)
+        (audit / "audit.jsonl.1").write_text("older audit record\n")
+        redirected = repo / "redirected" / "scan-secrets"
+        redirected.mkdir(parents=True, mode=0o700)
+        sources = [redirected / name for name in ("audit.jsonl", "audit.jsonl.1", "audit.jsonl.2")]
+        for source in sources:
+            source.write_text("tracked source " + source.name + "\n")
+            source.chmod(0o644)
+        self.commit()
+        before = {source.name: source.read_bytes() for source in sources}
+        index = (repo / ".git/index").read_bytes()
+        marker, wrapper = root / "rotation-activated", root / "audit-rotation-swap.py"
+        wrapper.write_text("import os,runpy,sys\nfrom pathlib import Path\nreal=os.replace\n"
+            "data=Path(" + repr(str(data)) + ")\nmarker=Path(" + repr(str(marker)) + ")\n"
+            "def replace(source,destination,*,src_dir_fd=None,dst_dir_fd=None):\n"
+            " if str(source)=='audit.jsonl.1' and src_dir_fd is not None and not marker.exists():\n"
+            "  data.rename(data.with_name('held-data'))\n"
+            "  data.symlink_to(" + repr(str(repo / "redirected")) + ",target_is_directory=True)\n"
+            "  marker.write_text('anchored')\n"
+            " return real(source,destination,src_dir_fd=src_dir_fd,dst_dir_fd=dst_dir_fd)\nos.replace=replace\n"
+            "sys.argv=[" + repr(str(CLI)) + "]+sys.argv[1:]\nrunpy.run_path(" + repr(str(CLI)) + ",run_name='__main__')\n")
+        process = subprocess.run([sys.executable, "-I", "-S", "-B", str(wrapper), "check", "--repo", str(repo), "--json"],
+            cwd=repo, env={**self.env, "XDG_DATA_HOME": str(data)}, capture_output=True, timeout=8)
+        self.assertTrue(marker.exists(), "rotation swap did not activate with the audit parent held")
+        self.result(process, 0)
+        for source in sources:
+            self.assertEqual(source.read_bytes(), before[source.name])
+            self.assertEqual(source.stat().st_mode & 0o777, 0o644)
+        self.assertEqual((repo / ".git/index").read_bytes(), index)
+        held = root / "held-data" / "scan-secrets"
+        self.assertEqual((held / "audit.jsonl.1").stat().st_size, 1048576)
+        self.assertEqual((held / "audit.jsonl.2").read_text(), "older audit record\n")
+        self.assertEqual(json.loads((held / "audit.jsonl").read_text())["audit_outcome"], "written")
+
+    @unittest.skipIf(os.name == "nt", "POSIX signal and lock fixture; native Windows cancellation is separate")
+    def test_cancellation_while_waiting_for_required_audit_lock(self):
+        import fcntl
+        audit = self.base / "data" / "scan-secrets"
+        audit.mkdir(parents=True, mode=0o700)
+        marker, wrapper = self.base / "lock-attempted", self.base / "audit-lock-cancel.py"
+        wrapper.write_text("import fcntl,runpy,sys\nfrom pathlib import Path\nreal=fcntl.flock\n"
+            "def flock(fd,operation):\n"
+            " if operation & fcntl.LOCK_NB: Path(" + repr(str(marker)) + ").write_text('attempted')\n"
+            " return real(fd,operation)\nfcntl.flock=flock\n"
+            "sys.argv=[" + repr(str(CLI)) + "]+sys.argv[1:]\nrunpy.run_path(" + repr(str(CLI)) + ",run_name='__main__')\n")
+        with (audit / "audit.jsonl.lock").open("wb") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            process = subprocess.Popen([sys.executable, "-I", "-S", "-B", str(wrapper), "check", "--json"],
+                cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                deadline = time.monotonic() + 3
+                while not marker.exists() and process.poll() is None and time.monotonic() < deadline:
+                    time.sleep(0.005)
+                self.assertTrue(marker.exists(), "real required-audit lock was never attempted")
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=3)
+                self.assertEqual(process.returncode, 130, stdout + stderr)
+                self.assertEqual(json.loads(stdout)["reason"], "cancelled")
+                self.assertEqual(stderr, b"")
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.communicate()
+        self.assertFalse((audit / "audit.jsonl").exists())
+        self.result(self.cli("check", "--json"), 0)
+
     @unittest.skipIf(os.name == "nt", "POSIX executable fixture; native Windows remains separate")
     def test_fractional_deadline_reports_the_effective_configured_limit(self):
         binary = self.base / "bin"

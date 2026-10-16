@@ -546,6 +546,9 @@ RESULT_HELPERS = tuple("helpers/" + name + ".py" for name in (
     "scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
     "scan_git", "scan_audit", "scan_engine"))
 
+NATIVE_HELPER = "helpers/scan_native_file.py"
+REVIEWED_RESULT_CLOSURES = (RESULT_HELPERS, (*RESULT_HELPERS, NATIVE_HELPER))
+
 
 def bundle(root, destination):
     identities = {}
@@ -565,12 +568,13 @@ def bundle(root, destination):
         if not re.fullmatch("[0-9a-f]{16}", values.get("REPORT_BUILD", "")):
             raise Failure("unsupported_scanner_build", 3, "build")
         expected = dict(values.get("DIAG_ASSETS", []))
-        declared = set(RESULT_HELPERS).intersection(expected)
-        if declared and declared != set(RESULT_HELPERS):
+        declared = set((*RESULT_HELPERS, NATIVE_HELPER)).intersection(expected)
+        if declared and declared not in [set(closure) for closure in REVIEWED_RESULT_CLOSURES]:
             raise Failure("unsupported_scanner_closure", 2, "build")
         # Inventory entries for Guardian/diagnostics never authorize copying or
-        # executing additional code. Only these two reviewed scanner closures do.
-        helpers = SCANNER_HELPERS + (RESULT_HELPERS if declared else ())
+        # executing additional code. Only these reviewed scanner closures do.
+        selected = next((closure for closure in REVIEWED_RESULT_CLOSURES if set(closure) == declared), ())
+        helpers = SCANNER_HELPERS + selected
         for name in helpers:
             path = regular(origin, name)
             data, mode, _ = read_file(path, PATCH_LIMIT)

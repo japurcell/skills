@@ -1,5 +1,6 @@
 """One bounded redacted scanner audit writer."""
 from __future__ import annotations
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
@@ -23,55 +24,109 @@ class AuditPolicy:
     max_bytes: str | int = 1048576
     backups: str | int = 3
 
-def _assert_safe_log_path(path: Path, *, allow_missing: bool = True) -> os.stat_result | None:
-    try:
-        details = path.lstat()
-    except FileNotFoundError:
-        if allow_missing:
+class _AuditDirectory:
+    """One verified audit parent held for every operation in a write/rotation."""
+
+    def __init__(self, path, deadline=None):
+        self.path = Path(path).absolute()
+        self.deadline = deadline
+        self.resources = contextlib.ExitStack()
+        self.fd = None
+        self.windows = None
+
+    def __enter__(self):
+        try:
+            if ".." in self.path.parts:
+                raise ScanSecurityError("log_unsafe", "scan_log")
+            current = Path(self.path.anchor)
+            if os.name == "nt":
+                from .scan_native_file import WindowsDirectoryHandles
+                self.windows = WindowsDirectoryHandles(self.resources)
+                self.windows.pin_root(current)
+            else:
+                self.fd = os.open(current, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+                self.resources.callback(os.close, self.fd)
+            for component in self.path.parts[1:]:
+                enforce_deadline(self.deadline)
+                if self.windows:
+                    self.windows.descend(component, create=True)
+                else:
+                    try:
+                        os.mkdir(component, 0o700, dir_fd=self.fd)
+                    except FileExistsError:
+                        pass
+                    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+                    # macOS /var and /tmp are trusted system aliases. Only a
+                    # root-owned, non-writable held parent may supply an alias.
+                    parent = os.fstat(self.fd)
+                    info = os.stat(component, dir_fd=self.fd, follow_symlinks=False)
+                    if stat.S_ISLNK(info.st_mode) and parent.st_uid == 0 and not parent.st_mode & 0o022 and info.st_uid == 0:
+                        flags &= ~os.O_NOFOLLOW
+                    descriptor = os.open(component, flags, dir_fd=self.fd)
+                    self.resources.callback(os.close, descriptor)
+                    self.fd = descriptor
+            if self.fd is not None:
+                info = os.fstat(self.fd)
+                if info.st_uid != os.geteuid():
+                    raise ScanSecurityError("log_unsafe", "scan_log")
+                os.fchmod(self.fd, 0o700)
+            return self
+        except BaseException:
+            self.resources.close()
+            raise
+
+    def __exit__(self, *args):
+        self.resources.close()
+
+    def stat(self, name):
+        try:
+            info = (self.windows.stat(name) if self.windows else
+                    os.stat(name, dir_fd=self.fd, follow_symlinks=False))
+            if info is None:
+                return None
+        except FileNotFoundError:
             return None
-        raise ScanSecurityError("log_unavailable", "scan_log") from None
-    except OSError as exc:
-        raise ScanSecurityError("log_unavailable", "scan_log") from exc
-    if stat.S_ISLNK(details.st_mode) or _is_reparse_point(details):
-        raise ScanSecurityError("log_unsafe", "scan_log")
-    return details
+        if stat.S_ISLNK(info.st_mode) or _is_reparse_point(info):
+            raise ScanSecurityError("log_unsafe", "scan_log")
+        return info
+
+    def open(self, name, flags):
+        self.stat(name)
+        descriptor = (self.windows.open(name, flags, normalize_readonly=True) if self.windows else
+            os.open(name, flags | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600, dir_fd=self.fd))
+        try:
+            info = os.fstat(descriptor)
+            if (not stat.S_ISREG(info.st_mode) or _is_reparse_point(info) or info.st_nlink != 1
+                    or (os.name == "posix" and info.st_uid != os.geteuid())):
+                raise ScanSecurityError("log_unsafe", "scan_log")
+            if not self.windows:
+                os.fchmod(descriptor, 0o600)
+            return descriptor
+        except BaseException:
+            os.close(descriptor)
+            raise
+
+    def replace(self, source, destination):
+        if self.windows:
+            self.windows.replace(source, destination)
+        else:
+            os.replace(source, destination, src_dir_fd=self.fd, dst_dir_fd=self.fd)
+
+    def remove(self, name):
+        if self.windows:
+            self.windows.remove(name)
+        else:
+            os.unlink(name, dir_fd=self.fd)
 
 
 def _ensure_secure_log_directory(directory: Path) -> None:
     try:
-        directory.mkdir(parents=True, mode=0o700, exist_ok=True)
-        details = _assert_safe_log_path(directory, allow_missing=False)
-        if details is None or not stat.S_ISDIR(details.st_mode):
-            raise ScanSecurityError("log_unsafe", "scan_log")
-        os.chmod(directory, 0o700)
+        with _AuditDirectory(directory):
+            pass
     except ScanSecurityError:
         raise
     except OSError as exc:
         raise ScanSecurityError("log_unavailable", "scan_log") from exc
-
-
-def _open_secure_regular(path: Path, flags: int) -> int:
-    _assert_safe_log_path(path)
-    no_follow = getattr(os, "O_NOFOLLOW", 0)
-    binary = getattr(os, "O_BINARY", 0)
-    try:
-        descriptor = os.open(path, flags | no_follow | binary | getattr(os, "O_NONBLOCK", 0), 0o600)
-    except OSError as exc:
-        raise ScanSecurityError("log_unavailable", "scan_log") from exc
-    try:
-        details = os.fstat(descriptor)
-        if (not stat.S_ISREG(details.st_mode) or _is_reparse_point(details)
-                or details.st_nlink != 1
-                or (os.name == "posix" and details.st_uid != os.geteuid())):
-            raise ScanSecurityError("log_unsafe", "scan_log")
-        try:
-            os.fchmod(descriptor, 0o600)
-        except (AttributeError, OSError):
-            os.chmod(path, 0o600)
-        return descriptor
-    except BaseException:
-        os.close(descriptor)
-        raise
 
 
 def rotate_scan_log(
@@ -79,14 +134,19 @@ def rotate_scan_log(
     incoming_bytes: int,
     max_bytes: int = 1048576,
     backups: int = 3,
+    *,
+    _directory: _AuditDirectory | None = None,
 ) -> None:
+    if _directory is None:
+        with _AuditDirectory(log_path.parent) as directory:
+            return rotate_scan_log(log_path, incoming_bytes, max_bytes, backups, _directory=directory)
     if max_bytes < 1 or backups < 1 or backups > 100:
         raise ScanSecurityError("log_configuration_invalid", "scan_log")
     if incoming_bytes < 1 or incoming_bytes > MAX_LOG_RECORD_BYTES:
         raise ScanLimitExceeded("log_record_limit", "scan_log", measured=incoming_bytes, limit=MAX_LOG_RECORD_BYTES)
     if incoming_bytes > max_bytes:
         raise ScanLimitExceeded("log_record_limit", "scan_log", measured=incoming_bytes, limit=max_bytes)
-    details = _assert_safe_log_path(log_path)
+    details = _directory.stat(log_path.name)
     if details is None:
         return
     if not stat.S_ISREG(details.st_mode) or details.st_nlink != 1:
@@ -96,7 +156,7 @@ def rotate_scan_log(
 
     paths = [log_path.with_name(f"{log_path.name}.{index}") for index in range(1, backups + 2)]
     for path in paths:
-        details = _assert_safe_log_path(path)
+        details = _directory.stat(path.name)
         if details is not None and (not stat.S_ISREG(details.st_mode) or details.st_nlink != 1):
             raise ScanSecurityError("log_unsafe", "scan_log")
 
@@ -104,16 +164,19 @@ def rotate_scan_log(
         for index in range(backups, 0, -1):
             current = log_path.with_name(f"{log_path.name}.{index}")
             next_path = log_path.with_name(f"{log_path.name}.{index + 1}")
-            if not current.exists():
+            if _directory.stat(current.name) is None:
                 continue
+            # Set mode through a verified opened leaf before moving its name.
+            descriptor = _directory.open(current.name, os.O_RDONLY)
+            os.close(descriptor)
             if index == backups:
-                os.remove(current)
+                _directory.remove(current.name)
             else:
-                os.replace(current, next_path)
-                os.chmod(next_path, 0o600)
+                _directory.replace(current.name, next_path.name)
         first_backup = log_path.with_name(f"{log_path.name}.1")
-        os.replace(log_path, first_backup)
-        os.chmod(first_backup, 0o600)
+        descriptor = _directory.open(log_path.name, os.O_RDONLY)
+        os.close(descriptor)
+        _directory.replace(log_path.name, first_backup.name)
     except OSError as exc:
         raise ScanSecurityError("log_unavailable", "scan_log") from exc
 
@@ -204,7 +267,6 @@ def _append_scan_log(
     scan_result: dict | None = None,
 ) -> None:
     enforce_deadline(deadline)
-    _ensure_secure_log_directory(log_path.parent)
     payload: dict[str, object] = {
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "sessionId": report_label(session_id),
@@ -266,28 +328,28 @@ def _append_scan_log(
     except ImportError:
         msvcrt = None
 
-    lock_path = log_path.with_name(f"{log_path.name}.lock")
-    lock_fd = _open_secure_regular(lock_path, os.O_CREAT | os.O_RDWR)
-    lock_kind = ""
-    try:
-        lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt, deadline=deadline)
-        enforce_deadline(deadline)
+    with _AuditDirectory(log_path.parent, deadline) as directory:
+        lock_fd = directory.open(f"{log_path.name}.lock", os.O_CREAT | os.O_RDWR)
+        lock_kind = ""
         try:
-            max_bytes = int(policy.max_bytes)
-            backups = int(policy.backups)
-        except ValueError as exc:
-            raise ScanSecurityError("log_configuration_invalid", "scan_log") from exc
-        rotate_scan_log(log_path, len(record), max_bytes, backups)
-        enforce_deadline(deadline)
-        log_fd = _open_secure_regular(log_path, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
-        with os.fdopen(log_fd, "ab") as handle:
-            handle.write(record)
-            handle.flush()
-            os.fsync(handle.fileno())
-    finally:
-        if lock_kind:
+            lock_kind = _acquire_log_lock(lock_fd, fcntl, msvcrt, deadline=deadline)
+            enforce_deadline(deadline)
             try:
-                _release_log_lock(lock_fd, lock_kind, fcntl, msvcrt)
-            except OSError:
-                pass
-        os.close(lock_fd)
+                max_bytes = int(policy.max_bytes)
+                backups = int(policy.backups)
+            except ValueError as exc:
+                raise ScanSecurityError("log_configuration_invalid", "scan_log") from exc
+            rotate_scan_log(log_path, len(record), max_bytes, backups, _directory=directory)
+            enforce_deadline(deadline)
+            log_fd = directory.open(log_path.name, os.O_APPEND | os.O_CREAT | os.O_WRONLY)
+            with os.fdopen(log_fd, "ab") as handle:
+                handle.write(record)
+                handle.flush()
+                os.fsync(handle.fileno())
+        finally:
+            if lock_kind:
+                try:
+                    _release_log_lock(lock_fd, lock_kind, fcntl, msvcrt)
+                except OSError:
+                    pass
+            os.close(lock_fd)

@@ -132,20 +132,20 @@ class PreflightTests(unittest.TestCase):
                 self.assertEqual(self.fingerprint(), before)
                 self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
 
-    def legacy_active(self):
+    def historical_active(self, label, revision, helpers=()):
         fixture = ROOT / "scripts/fixtures/hook-resilience"
-        manifest = json.loads((fixture / "legacy-active-scanners.json").read_text())
-        self.assertEqual(manifest["source_revision"], "6c3c2d8c8033525792fb1c5effd04e3e32cd7682")
+        manifest = json.loads((fixture / (label + ".json")).read_text())
+        self.assertEqual(manifest["source_revision"], revision)
         names = {folder + "/" + name for folder in
                  (".codex/hooks", ".copilot/hooks/scripts", ".gemini/hooks/scripts")
-                 for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py")}
+                 for name in ("scan-secrets.py", "helpers/common.py", "helpers/audit.py", *helpers)}
         self.assertEqual(set(manifest["files"]), names)
-        archive_path = fixture / "legacy-active-scanners.zip"
+        archive_path = fixture / (label + ".zip")
         self.assertLess(archive_path.stat().st_size, 1024 * 1024)
-        active = self.base / "legacy-active"
+        active = self.base / label
         with zipfile.ZipFile(archive_path) as archive:
             self.assertEqual(set(archive.namelist()), names)
-            self.assertEqual(len(archive.infolist()), 9)
+            self.assertEqual(len(archive.infolist()), len(names))
             for name in sorted(names):
                 info = archive.getinfo(name)
                 self.assertEqual(stat.S_IFMT(info.external_attr >> 16), stat.S_IFREG)
@@ -157,6 +157,26 @@ class PreflightTests(unittest.TestCase):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
         return active
+
+    def legacy_active(self):
+        return self.historical_active("legacy-active-scanners", "6c3c2d8c8033525792fb1c5effd04e3e32cd7682")
+
+    def test_historical_seven_helper_active_and_current_eight_helper_candidate(self):
+        helpers = tuple("helpers/" + name + ".py" for name in ("scan_types", "scan_reporting",
+            "scan_allowlist", "scan_stream", "scan_git", "scan_audit", "scan_engine"))
+        active = self.historical_active("seven-helper-active-scanners",
+            "50c12113563b2c1f519514bdb2bcd73b32339334", helpers)
+        before = self.fingerprint()
+        result = self.run_cli(self.patch("value = 'gh' + 'p_' + 'FAKE' * 9\n"), "--check", active=active)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["controls_detected"], 6)
+        for provider in ("codex", "copilot", "gemini"):
+            old, new = (report["builds"][label][provider] for label in ("active", "candidate"))
+            self.assertEqual(old["coverage_schema"], 1)
+            self.assertEqual(new["coverage_schema"], 1)
+            self.assertNotEqual(old["bundle"], new["bundle"])
+        self.assertEqual(self.fingerprint(), before)
 
     def test_reviewed_legacy_active_and_new_candidate_remain_independent(self):
         before = self.fingerprint()
@@ -188,7 +208,7 @@ class PreflightTests(unittest.TestCase):
             target.mkdir(parents=True)
             names = ("scan-secrets.py", "helpers/common.py", "helpers/audit.py", *(
                 "helpers/" + name + ".py" for name in ("scan_types", "scan_reporting",
-                "scan_allowlist", "scan_stream", "scan_git", "scan_audit", "scan_engine")))
+                "scan_allowlist", "scan_stream", "scan_git", "scan_native_file", "scan_audit", "scan_engine")))
             for name in names:
                 (target / name).parent.mkdir(exist_ok=True)
                 shutil.copy2(origin / name, target / name)
