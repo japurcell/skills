@@ -478,7 +478,7 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'gemini'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '0d4b8c80226ae15319ded8f2a362373b92c2805c467e25c9e24e962d6886cd41'
+DIAG_BUILD = 'f82f0578b8cbe4604ca0e7b768105c354357493619f27bcd101841d61c53d65a'
 DIAG_ASSETS = [('helpers/common.py', 'f8f2bf01352288c56a763f178359c0a57f958c2f047a2e2b9a81c7f6853bd169'), ('helpers/audit.py', '0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c3ee195c5bd9eb51c35c799f3d41cf39440d1ec7771917df5411aeecb07a60fe'), ('helpers/scan_types.py', 'f5fb4241deb8c1fc0ae51c3f2a14fb2398d4d509157be55577123700a4e53c98'), ('helpers/scan_reporting.py', '0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28'), ('helpers/scan_allowlist.py', '370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43'), ('helpers/scan_stream.py', '631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31'), ('helpers/scan_git.py', '8e42af5e484c1f4512d8f4c3f4b6967ced6458e74db6a4b0aaad0f6281438399'), ('helpers/scan_audit.py', 'ad2d7e4bc045940bf521267a21ec36c5e01eb2d1d5ee1a25ff539f200d359e0f'), ('helpers/scan_native_file.py', '52dd7df2f11c151b65a22f2a52cb5f248f38eae552523cbbc01c4b8defd8d0e3'), ('helpers/scan_engine.py', '8de961f82a1fb51167d9bbdb0f0e3a3528e58cb7a2252cac7f74379e6add6def'), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 65536, 'MAX_NATIVE_PATCH_BYTES': 262144, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['AfterAgent', 'AfterModel', 'AfterTool', 'BeforeAgent', 'BeforeModel', 'BeforeTool', 'BeforeToolSelection', 'Notification', 'PreCompress', 'SessionEnd', 'SessionStart']
@@ -580,7 +580,7 @@ INCOMPLETE_LOG = None
 SCAN_ACTION = "scan"
 SCAN_RESULT = None
 SCAN_SECURITY_OUTCOME = "incomplete"
-REPORT_BUILD = "eaa6329716a3a96c"
+REPORT_BUILD = "4f0abf846b0c575d"
 REPORT_PROVIDER = DIAG_PROVIDER
 
 # Optional detector assets load only after exact diagnostics recovery routing.

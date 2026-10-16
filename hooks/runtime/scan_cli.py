@@ -7,12 +7,13 @@ import json
 import os
 from pathlib import Path
 import sys
+import stat
 import time
 
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_audit", "scan_budget", "scan_repository")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository")
 
 
 class Failure(Exception):
@@ -23,7 +24,7 @@ class Failure(Exception):
 
 class Parser(argparse.ArgumentParser):
     def error(self, message):
-        raise Failure("invalid_arguments", 3, "arguments", "Run scan-secrets help check for supported options.")
+        raise Failure("invalid_arguments", 3, "arguments", "Run scan-secrets help COMMAND for supported options.")
 
     def exit(self, status=0, message=None):
         if message:
@@ -35,28 +36,34 @@ class Parser(argparse.ArgumentParser):
 
 def parser():
     common = Parser(add_help=False, allow_abbrev=False)
-    for flag, text in (("--json", "print one versioned JSON result"), ("--no-input", "never prompt (checks never read stdin)"),
+    for flag, text in (("--json", "print one versioned JSON result"), ("--no-input", "never prompt (check and status never read stdin)"),
                        ("--quiet", "suppress human success output"), ("--no-color", "disable terminal color")):
         common.add_argument(flag, action="store_true", default=argparse.SUPPRESS, help=text)
     root = Parser(prog="scan-secrets", description="Explicit, synchronous secret checks. No background scans.",
                   parents=[common], allow_abbrev=False)
-    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; policy {POLICY}; budget schema 1")
+    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; status scan_secrets_status_v1; policy {POLICY}; budget schema 1")
     commands = root.add_subparsers(dest="command")
     check = commands.add_parser("check", parents=[common], allow_abbrev=False,
         help="inspect pending worktree or staged index content", description="Inspect captured pending content without changing source, index, refs or Git configuration.",
-        epilog="Examples: scan-secrets check --repo .; scan-secrets check --scope index --json. Publication checks require a future gate command. Required audit data uses XDG_DATA_HOME/scan-secrets, macOS Application Support/scan-secrets, or Windows LOCALAPPDATA/scan-secrets. No status is saved by this source command.")
+        epilog="Examples: scan-secrets check --repo .; scan-secrets check --scope index --json. Publication checks require a future gate command. Required audit data uses XDG_DATA_HOME/scan-secrets, macOS Application Support/scan-secrets, or Windows LOCALAPPDATA/scan-secrets. The last scan is saved for informational status; status never authorizes publication.")
     check.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     check.add_argument("--scope", choices=("worktree", "index"), default="worktree",
                        help="worktree: pending changes, conflicts and untracked; index: staged versions in full")
     check.add_argument("--budget-file", help="explicit schema-1 JSON budget file; otherwise built-in finite defaults")
+    status = commands.add_parser("status", parents=[common], allow_abbrev=False,
+        help="display the last scan without inspecting content", description="Display historical scan metadata only. Never scans or authorizes publication.",
+        epilog="Examples: scan-secrets status --repo .; scan-secrets status --repo . --json. Exit 0 means valid information, including not_scanned; unreadable or corrupt reports exit 2. Reports are bounded to 64 KiB, use metadata reads with a two-second deadline, and live outside the worktree and executable bundle under XDG_DATA_HOME/scan-secrets/status, macOS Application Support/scan-secrets/status, or Windows LOCALAPPDATA/scan-secrets/status. Status never waits for a scan or certifies current content.")
+    status.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     help_parser = commands.add_parser("help", allow_abbrev=False, help="show command help")
-    help_parser.add_argument("topic", nargs="?", choices=("check",))
-    return root, check
+    help_parser.add_argument("topic", nargs="?", choices=("check", "status"))
+    return root, {"check": check, "status": status}
 
 
 def output(value, *, json_mode, quiet=False):
     if json_mode:
         data = json.dumps(value, ensure_ascii=True, separators=(",", ":")) + "\n"
+    elif value.get("schema") == "scan_secrets_status_v1":
+        data = f"scan-secrets: last scan unavailable; saved time and scope unavailable; {value['reason']}. {value['recovery']}\n"
     elif value["outcome"] == "complete_clean":
         data = "" if quiet else f"scan-secrets: complete clean; {value['counts']['inspected_snapshots']} snapshots inspected.\n"
     elif value["outcome"] == "complete_findings":
@@ -69,6 +76,9 @@ def output(value, *, json_mode, quiet=False):
     target = sys.stdout if json_mode or value["outcome"] in {"complete_clean", "complete_findings"} else sys.stderr
     target.write(data)
     target.flush()
+    if value.get("status_outcome") == "failed":
+        sys.stderr.write(f"scan-secrets: last-scan display was not saved; {value['status_reason']}. Repair the platform data directory or status runtime, then rerun an explicit check.\n")
+        sys.stderr.flush()
 
 
 def data_root():
@@ -84,6 +94,48 @@ def data_root():
     if not base.is_absolute():
         raise Failure("audit_location_invalid", phase="scan_log", recovery="Choose an absolute platform data directory and retry.")
     return base / "scan-secrets"
+
+
+def safe_audit_location(path):
+    # Resolve only after rejecting redirected user directories. macOS provides
+    # these root-owned system aliases for otherwise ordinary platform paths.
+    path = Path(os.path.abspath(path))
+    current = Path(path.anchor)
+    deadline = time.monotonic() + 2
+    for component in path.parts[1:]:
+        if time.monotonic() >= deadline:
+            raise Failure("audit_location_invalid", phase="scan_log")
+        current = current / component
+        try:
+            info = current.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
+            if not (sys.platform == "darwin" and str(current) in {"/var", "/tmp"} and info.st_uid == 0):
+                raise Failure("audit_location_invalid", phase="scan_log")
+    if sys.platform == "darwin":
+        for alias in (Path("/var"), Path("/tmp")):
+            if path.is_relative_to(alias):
+                path = alias.resolve(strict=True) / path.relative_to(alias)
+                break
+    return path / "audit.jsonl"
+
+
+def audit_inside_directory(path, directory):
+    if path.is_relative_to(directory):
+        return True
+    root = directory.stat()
+    deadline = time.monotonic() + 2
+    for ancestor in (path, *path.parents):
+        if time.monotonic() >= deadline:
+            raise Failure("audit_location_invalid", phase="scan_log")
+        try:
+            info = ancestor.stat()
+        except FileNotFoundError:
+            continue
+        if (info.st_dev, info.st_ino) == (root.st_dev, root.st_ino):
+            return True
+    return False
 
 
 def diagnostic(failure, types):
@@ -107,12 +159,18 @@ def recovery_for(result):
     return "Remove the reported credentials from the selected content and rerun the check." if result.counts["processed_findings"] else "No action required."
 
 
-def check(args, *, load, runtime, entry):
+def check(args, *, load, runtime, entry, status_capture):
     started = time.monotonic()
     build = hashlib.sha256()
     try:
+        try:
+            status_source = (runtime / "scan_status.py").read_bytes()
+        except OSError:
+            status_source = None
+        status_capture["source"] = status_source
         sources = {name: (runtime / (name + ".py")).read_bytes() for name in MODULES}
         for name, raw in ((entry.name, entry.read_bytes()), ("scan_cli.py", load.sources["scan_cli"]),
+                          ("scan_status.py", status_source if status_source is not None else b"status-runtime-unavailable"),
                           *((name + ".py", sources[name]) for name in MODULES)):
             build.update(name.encode() + b"\0" + raw)
         modules = {name: load(name, sources[name]) for name in MODULES}
@@ -131,6 +189,7 @@ def check(args, *, load, runtime, entry):
     result = None
     try:
         with repository.ProtectedRepository(context, args.repo) as protected:
+            status_capture["repository"] = {"root": protected.root, "gitdir": protected.gitdir, "common": protected.common}
             result = engine.scan(protected.root, engine.ScanPolicy(build.hexdigest(), scope="staged" if args.scope == "index" else "diff"),
                                  limits, context=context)
     except repository.NotRepository:
@@ -153,10 +212,8 @@ def check(args, *, load, runtime, entry):
     result.audit_outcome = "written"
     try:
         requested_data = data_root()
-        if requested_data.is_symlink():
-            raise Failure("audit_location_invalid", phase="scan_log")
-        audit_path = requested_data.parent.resolve() / requested_data.name / "audit.jsonl"
-        if (audit_path.is_relative_to(result.root.resolve()) or audit_path.is_relative_to(entry.parent.parent.resolve())):
+        audit_path = safe_audit_location(requested_data)
+        if (audit_inside_directory(audit_path, result.root) or audit_inside_directory(audit_path, entry.parent.parent)):
             raise Failure("audit_location_invalid", phase="scan_log")
         audit.append_scan_log(audit.AuditPolicy(result.build, "standalone", "check", max_objects=limits.max_objects),
             log_path=audit_path, status=result.security_outcome if result.coverage_complete else "incomplete",
@@ -169,41 +226,100 @@ def check(args, *, load, runtime, entry):
         result.audit_outcome = "failed"
         result.outcome = "incomplete"
         result.reason = "audit_unavailable"
-    value = {"schema": SCHEMA, "cli_version": VERSION, **result.summary(), "scope": args.scope,
+    value = {"schema": SCHEMA, "cli_version": VERSION, **result.summary(), "security_outcome": result.security_outcome, "scope": args.scope,
              "limits": configured, "budget_identity": budget_identity,
              "phase": result.failure.operation if result.failure else "scan_log" if result.audit_outcome == "failed" else "complete",
              "diagnostic": diagnostic(result.failure, types),
              "findings": [{**finding, "redactedMatch": "[REDACTED]"} for finding in result.findings],
              "recovery": recovery_for(result)}
+    save_display(value, args, load=load, entry=entry, capture=status_capture)
     return value, 2 if result.outcome == "incomplete" else 1 if result.counts["processed_findings"] else 0
+
+
+def save_display(value, args, *, load, entry, capture):
+    try:
+        if "scan_native_file" not in load.sources:
+            load("scan_native_file")
+        if "source" in capture:
+            if capture["source"] is None:
+                raise OSError
+            status_module = load("scan_status", capture["source"])
+        else:
+            status_module = load("scan_status")
+        value["status_outcome"], value["status_reason"] = status_module.save_status(
+            args.repo, data_root, entry.parent.parent, value, version=VERSION, captured_repository=capture.get("repository"))
+    except Exception:
+        value["status_outcome"], value["status_reason"] = "failed", "status_runtime_unavailable"
 
 
 def _main(argv, *, load, runtime, entry):
     json_mode = "--json" in argv
+    args = None
+    status_capture = {}
+    status_invocation = next((item for item in argv if item in {"check", "status", "help"}), None) == "status"
     try:
-        root, check_parser = parser()
+        root, topics = parser()
         args = root.parse_args(argv)
         if args.command is None or args.command == "help":
-            (check_parser if getattr(args, "topic", None) == "check" else root).print_help()
+            (topics.get(getattr(args, "topic", None), root)).print_help()
             sys.stdout.flush()
             return 0
-        value, code = check(args, load=load, runtime=runtime, entry=entry)
+        if args.command == "status":
+            try:
+                load("scan_native_file")
+                status_module = load("scan_status")
+            except Exception:
+                raise Failure("status_runtime_unavailable", phase="status", recovery="Restore the status runtime and retry.") from None
+            value, code = status_module.read_status(args.repo, data_root, entry.parent.parent)
+            if getattr(args, "json", False):
+                output(value, json_mode=True)
+            elif code:
+                sys.stderr.write(f"scan-secrets: last scan unavailable; saved time and scope unavailable; {value['reason']}. Repair status storage and rerun an explicit check.\n")
+                sys.stderr.flush()
+            elif not getattr(args, "quiet", False):
+                last = value["last_scan"]
+                description = (f"{last['completed_at']}; scope {last['scope']}; {last['outcome']}; reason {last['reason']}; "
+                               f"{last['counts']['processed_findings']} findings" if last else
+                               f"not_scanned; no saved scan time or scope; {value['reason']}")
+                sys.stdout.write(f"scan-secrets: last scan: {description}. {value['message']}\n")
+                sys.stdout.flush()
+            return code
+        value, code = check(args, load=load, runtime=runtime, entry=entry, status_capture=status_capture)
         output(value, json_mode=getattr(args, "json", False), quiet=getattr(args, "quiet", False))
         return code
     except Failure as failure:
         value = {"schema": SCHEMA, "cli_version": VERSION, "outcome": "invalid" if failure.code == 3 else "incomplete",
                  "coverage_complete": False, "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery, **failure.details}
+        if status_invocation:
+            value = {"schema": "scan_secrets_status_v1", "cli_version": VERSION, "historical": True,
+                     "authorizes_publication": False, "last_scan": None, "outcome": "invalid" if failure.code == 3 else "unavailable",
+                     "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery}
+        elif args is not None and args.command == "check" and failure.code == 2:
+            value["scope"] = args.scope
+            value["security_outcome"] = "incomplete"
+            save_display(value, args, load=load, entry=entry, capture=status_capture)
         output(value, json_mode=json_mode)
         return failure.code
     except KeyboardInterrupt:
-        output({"schema": SCHEMA, "outcome": "incomplete", "coverage_complete": False,
-                "reason": "cancelled", "phase": "cancellation", "recovery": "Rerun the explicit check when ready."}, json_mode=json_mode)
+        value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
+                 "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
+                 "reason": "cancelled", "phase": "cancellation", "recovery": "Rerun the explicit command when ready."}
+        if status_invocation:
+            value.update(historical=True, authorizes_publication=False, last_scan=None)
+        elif args is not None and args.command == "check":
+            value.update(scope=args.scope, security_outcome="incomplete")
+            save_display(value, args, load=load, entry=entry, capture=status_capture)
+        output(value, json_mode=json_mode)
         return 130
     except BrokenPipeError:
         raise
     except Exception:
-        output({"schema": SCHEMA, "outcome": "incomplete", "coverage_complete": False,
-                "reason": "internal_error", "phase": "initialization", "recovery": "Restore the scanner runtime and retry."}, json_mode=json_mode)
+        value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
+                 "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
+                 "reason": "internal_error", "phase": "initialization", "recovery": "Restore the scanner runtime and retry."}
+        if status_invocation:
+            value.update(historical=True, authorizes_publication=False, last_scan=None)
+        output(value, json_mode=json_mode)
         return 2
 
 

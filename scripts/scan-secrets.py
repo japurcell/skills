@@ -39,9 +39,14 @@ except Exception:
     # The parser itself is unavailable. Do not expose import paths or errors.
     if "--json" in sys.argv[1:]:
         try:
-            os.write(1, b'{"schema":"scan_secrets_check_v1","outcome":"incomplete","coverage_complete":false,"reason":"runtime_unavailable","phase":"initialization","recovery":"Restore the scanner runtime."}\n')
+            if next((item for item in sys.argv[1:] if item in {"check", "status", "help"}), None) == "status":
+                os.write(1, b'{"schema":"scan_secrets_status_v1","historical":true,"authorizes_publication":false,"last_scan":null,"outcome":"unavailable","reason":"runtime_unavailable","phase":"initialization","recovery":"Restore the scanner runtime."}\n')
+            else:
+                os.write(1, b'{"schema":"scan_secrets_check_v1","outcome":"incomplete","coverage_complete":false,"reason":"runtime_unavailable","phase":"initialization","recovery":"Restore the scanner runtime."}\n')
         except BrokenPipeError:
             pass
+    elif next((item for item in sys.argv[1:] if item in {"check", "status", "help"}), None) == "status":
+        os.write(2, b"scan-secrets: last scan unavailable; saved time and scope unavailable; runtime_unavailable. Restore the scanner runtime.\n")
     else:
         os.write(2, b"scan-secrets: runtime_unavailable. Restore the scanner runtime.\n")
     raise SystemExit(2)
