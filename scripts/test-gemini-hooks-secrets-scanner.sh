@@ -57,65 +57,19 @@ test_invalid_json_degrades_to_noop_json() {
   jq -e '.systemMessage | contains("scan-secrets warning") and contains("incomplete")' >/dev/null <<<"$output"
 }
 
-test_gemini_settings_register_status_and_session_end_handlers() {
-  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PY'
-import json
-import pathlib
-import sys
-
-hooks = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]
-for event in ("AfterAgent", "SessionEnd"):
-    handlers = [handler for group in hooks[event] for handler in group["hooks"]]
-    command = 'python "$HOME/.gemini/hooks/scripts/send-event.py"'
-    matches = [(index, handler) for index, handler in enumerate(handlers)
-               if handler.get("command") == command]
-    assert len(matches) == 1, f"Expected one observability registration on {event}"
-    observer_index, observer = matches[0]
-    assert observer["type"] == "command"
-    assert observer["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
-    assert observer["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == event
-    if event == "AfterAgent":
-        status = [(index, handler) for index, handler in enumerate(handlers)
-                  if handler.get("command") == 'python "$HOME/.gemini/hooks/scripts/scan-status.py"']
-        assert len(status) == 1, "Expected one historical scan-status registration on AfterAgent"
-        status_index, handler = status[0]
-        assert handler["type"] == "command"
-        # Keep the existing logical name so disabled-hook intent survives upgrades.
-        assert handler["name"] == "scan-secrets"
-        assert handler["timeout"] == 2000
-        assert observer_index < status_index, "Expected observability before scan status"
-PY
+test_gemini_settings_register_session_end_scanner() {
+  assert_equals 'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"' \
+    "$(jq -r '.hooks.SessionEnd[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register scan-secrets.py for Gemini SessionEnd."
 }
 
-test_gemini_settings_register_before_tool_guard() {
-  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PY'
-import json
-import pathlib
-import sys
-
-config = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-handlers = [(group, handler) for group in config["hooks"]["BeforeTool"] for handler in group["hooks"]]
-positions = []
-for script in ("send-event.py", "tool-guard.py", "rtk-hook-gemini.py"):
-    command = f'python "$HOME/.gemini/hooks/scripts/{script}"'
-    matches = [(index, group, handler) for index, (group, handler) in enumerate(handlers)
-               if handler.get("command") == command]
-    assert len(matches) == 1, f"Expected one {script} registration on BeforeTool"
-    index, group, handler = matches[0]
-    positions.append(index)
-    assert handler["type"] == "command"
-    if script == "rtk-hook-gemini.py":
-        assert group["matcher"] == "run_shell_command"
-        assert handler["timeout"] == 5000
-    else:
-        assert group["matcher"] == "*"
-        if script == "send-event.py":
-            assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
-            assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "BeforeTool"
-        else:
-            assert handler["name"] == "tool-guard"
-assert positions[0] < positions[1] < positions[2], "Expected observability, Guardian, then RTK"
-PY
+test_gemini_settings_register_before_tool_scanner() {
+  assert_equals 'python "$HOME/.gemini/hooks/scripts/scan-secrets.py"' \
+    "$(jq -r '.hooks.BeforeTool[0].hooks[] | select(.name == "scan-secrets") | .command // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json to register scan-secrets.py for Gemini BeforeTool."
+  assert_equals 'block' \
+    "$(jq -r '.hooks.BeforeTool[0].hooks[] | select(.name == "scan-secrets") | .env.SCAN_MODE // empty' "$REPO_ROOT/.gemini/global-settings.json")" \
+    "Expected .gemini/global-settings.json scan-secrets before tools to default to block."
 }
 
 main() {
@@ -143,8 +97,8 @@ main() {
   test_allowlist_suppresses_credential_path_finding
   test_invalid_json_degrades_to_noop_json
   test_invalid_json_block_mode_denies_with_json_and_exit_zero
-  test_gemini_settings_register_status_and_session_end_handlers
-  test_gemini_settings_register_before_tool_guard
+  test_gemini_settings_register_session_end_scanner
+  test_gemini_settings_register_before_tool_scanner
 }
 
 security_run_suite main "$@"
