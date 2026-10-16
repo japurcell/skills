@@ -783,10 +783,12 @@ def resolve_index_candidates(context: ScanContext, root: Path, index_candidates:
 class SnapshotSource:
     """Own one index capture and one worktree spool in candidate order."""
 
-    def __init__(self, root: Path, candidates: list[tuple[str, str]], budget: ScanBudget, *, diff_baselines: bool = False):
+    def __init__(self, root: Path, candidates: list[tuple[str, str]], budget: ScanBudget, *, diff_baselines: bool = False, verify_objects: bool = False):
         context = budget.context
         self.root = root
         self.budget = budget
+        self.verify_objects = verify_objects
+        self.resolved_oids = {}
         self.objects: list[tuple[tuple[str, str], bytes, int, bytes]] = []
         self.cursor = 0
         self.batch_owner = contextlib.ExitStack()
@@ -816,6 +818,7 @@ class SnapshotSource:
                                    if source == CANDIDATE_WORKTREE]
         required = list(dict.fromkeys([*index_candidates, *baseline_candidates]))
         resolved = resolve_index_candidates(context, root, required, deadline=budget.deadline) if required else {}
+        self.resolved_oids = resolved
         self.baselines = {path: resolved[(CANDIDATE_STAGED, path)] for _, path in baseline_candidates}
         self._capture_baselines(context)
         if diff_baselines and any(source in {CANDIDATE_STAGED, CANDIDATE_WORKTREE} for source, _ in candidates):
@@ -973,6 +976,14 @@ class SnapshotSource:
                 snapshot.baseline_oid = self.head_baselines.get(path)
                 snapshot.baseline_capture = self.baseline_ranges.get(snapshot.baseline_oid)
                 snapshot.classify()
+                if self.verify_objects:
+                    oid = self.resolved_oids[candidate]
+                    object_hash = hashlib.new("sha1" if len(oid) == 40 else "sha256")
+                    object_hash.update(b"blob " + str(snapshot.byte_count).encode("ascii") + b"\0")
+                    for chunk in snapshot.chunks():
+                        object_hash.update(chunk)
+                    if object_hash.hexdigest().encode("ascii") != oid:
+                        raise GitCommandError("git_output_invalid", "git_index")
                 yield snapshot
             else:
                 with _worktree_descriptor(self.root, path,
@@ -1035,10 +1046,10 @@ class SnapshotSource:
 
 @contextlib.contextmanager
 def snapshot_source(root: Path, candidates: list[tuple[str, str]],
-                    budget: ScanBudget, *, diff_baselines: bool = False) -> Iterator[SnapshotSource]:
+                    budget: ScanBudget, *, diff_baselines: bool = False, verify_objects: bool = False) -> Iterator[SnapshotSource]:
     source = SnapshotSource.__new__(SnapshotSource)
     try:
-        source.__init__(root, candidates, budget, diff_baselines=diff_baselines)
+        source.__init__(root, candidates, budget, diff_baselines=diff_baselines, verify_objects=verify_objects)
         yield source
     finally:
         source.finish()

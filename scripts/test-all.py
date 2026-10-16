@@ -50,6 +50,7 @@ SUITES = (
     ("python3", "scripts/test-hook-diagnostic-recovery.py"),
     ("python3", "scripts/test-verify-security-fixture-patch.py"),
     ("python3", "scripts/test-scan-secrets-cli.py"),
+    ("python3", "scripts/test-scan-secrets-git-gates.py"),
     ("python3", "scripts/test-scan-secrets-status.py"),
     ("python3", "scripts/test-install-scan-secrets.py"),
     ("python3", "scripts/test-scan-secrets-merge.py"),

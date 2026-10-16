@@ -265,6 +265,8 @@ def _append_scan_log(
     security_outcome: str | None = None,
     audit_outcome: str = "written",
     scan_result: dict | None = None,
+    profile: str = "pending_snapshots_v1",
+    route: str = "pending_scan",
 ) -> None:
     enforce_deadline(deadline)
     payload: dict[str, object] = {
@@ -284,7 +286,7 @@ def _append_scan_log(
     if note:
         payload["note"] = report_text(note, 512)
     payload.update(build=policy.build, provider=policy.provider,
-                   profile="pending_snapshots_v1", route="pending_scan", action=policy.action,
+                   profile=profile, route=route, action=policy.action,
                    cause=diagnostic["cause"] if diagnostic else status,
                    security_outcome=security_outcome or status, audit_outcome=audit_outcome,
                    inspection_outcome="incomplete" if status == "incomplete" else "complete",

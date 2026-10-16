@@ -13,7 +13,7 @@ import time
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate")
 
 
 class Failure(Exception):
@@ -50,13 +50,20 @@ def parser():
     check.add_argument("--scope", choices=("worktree", "index"), default="worktree",
                        help="worktree: pending changes, conflicts and untracked; index: staged versions in full")
     check.add_argument("--budget-file", help="explicit schema-1 JSON budget file; otherwise built-in finite defaults")
+    gate = commands.add_parser("gate", parents=[common], allow_abbrev=False,
+        help="inspect a captured Git action", description="Synchronous fail-closed Git feedback. No stdin is read for pre-commit.")
+    gates = gate.add_subparsers(dest="action")
+    pre_commit = gates.add_parser("pre-commit", parents=[common], allow_abbrev=False,
+        help="inspect the full selected staged index", description="Inspect every full version in Git's selected index. This feedback describes the captured staged state; later hooks may change it.")
+    pre_commit.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
+    pre_commit.add_argument("--budget-file", help="explicit schema-1 JSON budget file; uses checkpoint profile")
     status = commands.add_parser("status", parents=[common], allow_abbrev=False,
         help="display the last scan without inspecting content", description="Display historical scan metadata only. Never scans or authorizes publication.",
         epilog="Examples: scan-secrets status --repo .; scan-secrets status --repo . --json. Exit 0 means valid information, including not_scanned; unreadable or corrupt reports exit 2. Reports are bounded to 64 KiB, use metadata reads with a two-second deadline, and live outside the worktree and executable bundle under XDG_DATA_HOME/scan-secrets/status, macOS Application Support/scan-secrets/status, or Windows LOCALAPPDATA/scan-secrets/status. Status never waits for a scan or certifies current content.")
     status.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     help_parser = commands.add_parser("help", allow_abbrev=False, help="show command help")
-    help_parser.add_argument("topic", nargs="?", choices=("check", "status"))
-    return root, {"check": check, "status": status}
+    help_parser.add_argument("topic", nargs="?", choices=("check", "status", "gate"))
+    return root, {"check": check, "status": status, "gate": gate}
 
 
 def output(value, *, json_mode, quiet=False):
@@ -161,6 +168,7 @@ def recovery_for(result):
 
 def check(args, *, load, runtime, entry, status_capture):
     started = time.monotonic()
+    is_gate = args.command == "gate"
     build = hashlib.sha256()
     try:
         try:
@@ -176,6 +184,7 @@ def check(args, *, load, runtime, entry, status_capture):
         modules = {name: load(name, sources[name]) for name in MODULES}
     except Exception:
         raise Failure("runtime_unavailable") from None
+    gate = modules["scan_gate"] if is_gate else None
     types = modules["scan_types"]
     engine = modules["scan_engine"]
     audit = modules["scan_audit"]
@@ -188,9 +197,12 @@ def check(args, *, load, runtime, entry, status_capture):
     repository = modules["scan_repository"]
     result = None
     try:
-        with repository.ProtectedRepository(context, args.repo) as protected:
+        with repository.ProtectedRepository(context, args.repo, selected_index=os.environ.get("GIT_INDEX_FILE") if is_gate else None, capture_selected_index=is_gate) as protected:
             status_capture["repository"] = {"root": protected.root, "gitdir": protected.gitdir, "common": protected.common}
-            result = engine.scan(protected.root, engine.ScanPolicy(build.hexdigest(), scope="staged" if args.scope == "index" else "diff"),
+            if is_gate:
+                status_capture["gate"] = dict(repository_identity=gate.repository_identity(protected), index_identity=protected.index_identity)
+            result = engine.scan(protected.root, engine.ScanPolicy(build.hexdigest(), scope="staged" if args.scope == "index" else "diff",
+                                 version=gate.POLICY if is_gate else POLICY, full_index=is_gate),
                                  limits, context=context)
     except repository.NotRepository:
         raise Failure("not_repository", 3, "repository", "Choose a Git worktree with --repo PATH.") from None
@@ -199,7 +211,7 @@ def check(args, *, load, runtime, entry, status_capture):
             result.outcome, result.reason, result.failure = "incomplete", failure.cause, failure
         else:
             raise Failure(failure.cause, 2, failure.operation, failure.detail(),
-                details={"build": build.hexdigest(), "policy_version": POLICY, "scope": args.scope,
+                details={"build": build.hexdigest(), "policy_version": gate.POLICY if is_gate else POLICY, "scope": args.scope,
                          "limits": configured, "budget_identity": budget_identity, "diagnostic": diagnostic(failure, types)}) from None
     except Exception:
         if result is not None:
@@ -215,13 +227,14 @@ def check(args, *, load, runtime, entry, status_capture):
         audit_path = safe_audit_location(requested_data)
         if (audit_inside_directory(audit_path, result.root) or audit_inside_directory(audit_path, entry.parent.parent)):
             raise Failure("audit_location_invalid", phase="scan_log")
-        audit.append_scan_log(audit.AuditPolicy(result.build, "standalone", "check", max_objects=limits.max_objects),
+        audit.append_scan_log(audit.AuditPolicy(result.build, "standalone", args.action if is_gate else "check", max_objects=limits.max_objects),
             log_path=audit_path, status=result.security_outcome if result.coverage_complete else "incomplete",
             session_id="", timestamp="", mode="block", scope=args.scope,
             repo_root_path=result.root, env_files=result.env_files, findings=result.findings,
             omitted_findings=result.counts["omitted_findings"], scan_result=result.summary(),
             diagnostic=result.failure.diagnostic() if result.failure else None,
-            security_outcome=result.security_outcome, deadline=time.monotonic() + 2)
+            security_outcome=result.security_outcome, deadline=time.monotonic() + 2,
+            profile=gate.POLICY if is_gate else POLICY, route="git_gate" if is_gate else "pending_scan")
     except Exception:
         result.audit_outcome = "failed"
         result.outcome = "incomplete"
@@ -233,7 +246,11 @@ def check(args, *, load, runtime, entry, status_capture):
              "findings": [{**finding, "redactedMatch": "[REDACTED]"} for finding in result.findings],
              "recovery": recovery_for(result)}
     save_display(value, args, load=load, entry=entry, capture=status_capture)
-    return value, 2 if result.outcome == "incomplete" else 1 if result.counts["processed_findings"] else 0
+    code = 2 if result.outcome == "incomplete" else 1 if result.counts["processed_findings"] else 0
+    if is_gate:
+        value.update(schema=gate.SCHEMA, action=args.action, **status_capture["gate"], budget_profile="checkpoint",
+                     accounting_units=gate.UNITS, scope_description="full_selected_index", exit_code=code)
+    return value, code
 
 
 def save_display(value, args, *, load, entry, capture):
@@ -256,7 +273,9 @@ def _main(argv, *, load, runtime, entry):
     json_mode = "--json" in argv
     args = None
     status_capture = {}
-    status_invocation = next((item for item in argv if item in {"check", "status", "help"}), None) == "status"
+    invocation = next((item for item in argv if item in {"check", "status", "gate", "help"}), None)
+    gate_invocation = invocation == "gate"
+    status_invocation = invocation == "status"
     try:
         root, topics = parser()
         args = root.parse_args(argv)
@@ -284,17 +303,24 @@ def _main(argv, *, load, runtime, entry):
                 sys.stdout.write(f"scan-secrets: last scan: {description}. {value['message']}\n")
                 sys.stdout.flush()
             return code
+        if args.command == "gate":
+            if args.action is None:
+                topics["gate"].print_help()
+                return 0
+            args.scope = "index"
         value, code = check(args, load=load, runtime=runtime, entry=entry, status_capture=status_capture)
         output(value, json_mode=getattr(args, "json", False), quiet=getattr(args, "quiet", False))
         return code
     except Failure as failure:
         value = {"schema": SCHEMA, "cli_version": VERSION, "outcome": "invalid" if failure.code == 3 else "incomplete",
                  "coverage_complete": False, "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery, **failure.details}
+        if gate_invocation:
+            value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="index", exit_code=failure.code)
         if status_invocation:
             value = {"schema": "scan_secrets_status_v1", "cli_version": VERSION, "historical": True,
                      "authorizes_publication": False, "last_scan": None, "outcome": "invalid" if failure.code == 3 else "unavailable",
                      "reason": failure.reason, "phase": failure.phase, "recovery": failure.recovery}
-        elif args is not None and args.command == "check" and failure.code == 2:
+        elif args is not None and args.command in {"check", "gate"} and failure.code == 2:
             value["scope"] = args.scope
             value["security_outcome"] = "incomplete"
             save_display(value, args, load=load, entry=entry, capture=status_capture)
@@ -304,9 +330,11 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "cancelled", "phase": "cancellation", "recovery": "Rerun the explicit command when ready."}
+        if gate_invocation:
+            value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="index", exit_code=130)
         if status_invocation:
             value.update(historical=True, authorizes_publication=False, last_scan=None)
-        elif args is not None and args.command == "check":
+        elif args is not None and args.command in {"check", "gate"}:
             value.update(scope=args.scope, security_outcome="incomplete")
             save_display(value, args, load=load, entry=entry, capture=status_capture)
         output(value, json_mode=json_mode)
@@ -317,6 +345,8 @@ def _main(argv, *, load, runtime, entry):
         value = {"schema": "scan_secrets_status_v1" if status_invocation else SCHEMA,
                  "outcome": "unavailable" if status_invocation else "incomplete", "coverage_complete": False,
                  "reason": "internal_error", "phase": "initialization", "recovery": "Restore the scanner runtime and retry."}
+        if gate_invocation:
+            value.update(schema="scan_secrets_gate_v1", action=getattr(args, "action", None), scope="index", exit_code=2)
         if status_invocation:
             value.update(historical=True, authorizes_publication=False, last_scan=None)
         output(value, json_mode=json_mode)

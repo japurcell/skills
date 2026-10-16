@@ -29,6 +29,7 @@ class ScanPolicy:
     scope: str = "diff"
     version: str = "pending_snapshots_v1"
     allowlist: tuple[dict[str, str], ...] = ()
+    full_index: bool = False
 
     def __post_init__(self):
         if self.scope not in {"diff", "staged"}:
@@ -151,11 +152,15 @@ def scan(work_dir: Path, policy: ScanPolicy, limits: ScanLimits, *, started: flo
         else:
             root = repo_root(context, work_dir, deadline=context.deadline)
             root_has_head = has_head(context, root, deadline=context.deadline)
-            candidates = collect_files(context, root, policy.scope, root_has_head, deadline=context.deadline)
+            if policy.full_index:
+                from .scan_gate import collect_index
+                candidates = collect_index(context, root)
+            else:
+                candidates = collect_files(context, root, policy.scope, root_has_head, deadline=context.deadline)
             context.phase = "candidate_scan"
             is_allowlisted = lambda key: allowlist_contains("scan_secrets", key, policy.allowlist)
             with snapshot_source(root, candidates, budget,
-                                 diff_baselines=policy.scope == "diff" and root_has_head) as snapshots:
+                                 diff_baselines=policy.scope == "diff" and root_has_head, verify_objects=policy.full_index) as snapshots:
                 for source, path in candidates:
                     context.phase = "candidate_read"
                     with snapshots.acquire((source, path)) as snapshot:

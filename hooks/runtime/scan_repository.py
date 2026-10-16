@@ -7,11 +7,13 @@ reads borrow the original object store, with replacements and lazy fetch off.
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import stat
+import sys
 import tempfile
 
 from .scan_types import GitCommandError, ScanSecurityError, ScanLimitExceeded
@@ -23,7 +25,9 @@ class NotRepository(Exception):
 
 
 class ProtectedRepository:
-    def __init__(self, context, requested):
+    def __init__(self, context, requested, *, selected_index=None, capture_selected_index=False):
+        self.capture_selected_index = capture_selected_index
+        self.selected_index = selected_index
         self.context = context
         self.requested = Path(requested).resolve()
         self.executable = shutil.which("git")
@@ -96,6 +100,44 @@ class ProtectedRepository:
                 raise ScanSecurityError("candidate_changed", "repository")
         return bytes(raw)
 
+    def read_selected_index(self, path, *, missing):
+        """Read a selected index through held parents on both supported APIs."""
+        if sys.platform == "darwin":
+            for alias in (Path("/tmp"), Path("/var")):
+                if path.is_relative_to(alias):
+                    info = alias.lstat()
+                    if stat.S_ISLNK(info.st_mode) and info.st_uid == 0:
+                        path = alias.resolve(strict=True) / path.relative_to(alias)
+                    break
+        with contextlib.ExitStack() as resources:
+            parts = path.relative_to(Path(path.anchor)).parts
+            if not parts:
+                raise ScanSecurityError("candidate_unsafe", "git_index")
+            if os.name == "nt":
+                from .scan_native_file import WindowsDirectoryHandles
+                native = WindowsDirectoryHandles(resources)
+                native.pin_root(Path(path.anchor))
+                for part in parts[:-1]:
+                    self.context.check_deadline()
+                    native.descend(part)
+                opener = lambda: native.open(parts[-1], os.O_RDONLY)
+            else:
+                parent = os.open(path.anchor, os.O_RDONLY | os.O_DIRECTORY)
+                resources.callback(os.close, parent)
+                for part in parts[:-1]:
+                    self.context.check_deadline()
+                    parent = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+                    resources.callback(os.close, parent)
+                opener = lambda: os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+            try:
+                descriptor = opener()
+            except FileNotFoundError:
+                if missing:
+                    return None
+                raise
+            resources.callback(os.close, descriptor)
+            return self.read(path, descriptor=descriptor)
+
     def query(self, *args, cwd=None, allow_nonzero=False, data=None):
         return run_git(self.context, list(args), cwd=cwd or self.root,
                        deadline=self.context.deadline, allow_nonzero=allow_nonzero,
@@ -139,7 +181,16 @@ class ProtectedRepository:
             raise GitCommandError("git_output_invalid", "repository")
         self.root, gitdir, common = (Path(os.fsdecode(value)).resolve(strict=True) for value in rows[:3])
         self.gitdir, self.common = gitdir, common
-        index = self.read(gitdir / "index", missing=True)
+        index_path = gitdir / "index"
+        if self.capture_selected_index:
+            if self.selected_index is not None:
+                if not self.selected_index or "\0" in self.selected_index:
+                    raise ScanSecurityError("candidate_unsafe", "git_index")
+                index_path = Path(os.path.abspath(self.selected_index))
+            index = self.read_selected_index(index_path, missing=self.selected_index is None)
+        else:
+            index = self.read(index_path, missing=True)
+        self.index_identity = hashlib.sha256(b"selected-index-v1\0" + (index if index is not None else b"absent")).hexdigest()
         # Git loads config.worktree only when its extension is enabled. Scope
         # labels retain that precedence without importing command overrides or
         # invoking --worktree in an ordinary multi-worktree repository.
@@ -199,7 +250,9 @@ class ProtectedRepository:
                     count += 1
                     if count > 64:
                         raise GitCommandError("git_output_invalid", "repository")
-                    self.put(private / entry.name, self.read(Path(entry.path)))
+                    raw = (self.read_selected_index(Path(entry.path), missing=False) if self.capture_selected_index
+                           else self.read(Path(entry.path)))
+                    self.put(private / entry.name, raw)
         exclude = self.read(common / "info" / "exclude", missing=True)
         if exclude is not None:
             self.put(private / "info" / "exclude", exclude)
