@@ -93,6 +93,8 @@ T5b self-review then constructed a strict-fsck-valid commit with 70,232 bytes of
 
 T6 source validation found that D0's `lfs.transfer.maxretries=0` does not disable retries: the [versioned Git LFS 3.8 configuration contract](https://github.com/git-lfs/git-lfs/blob/v3.8.0/docs/man/git-lfs-config.adoc) requires at least one and falls back to eight for an invalid value. Production must use a valid finite setting and an independent downstream deadline. Server-requested retry delays can override the ordinary retry-delay cap; cancellation and cleanup must not depend on that cap alone. D0's successful binding measurements remain historical evidence, not proof of disabled retries. Its retained source is unchanged.
 
+T6's private implementation review reproduced five additional public-process defects before integration: copying a preserved hook changed its sibling-file lookup, an unquoted semicolon in the LFS endpoint changed the requested path, invalid budget edits returned incomplete instead of invalid configuration, replacing the entire invocation directory caused pathname cleanup to delete foreign content, and a nonzero child could return an unsafe output capture without final private-file verification. The original T6 owner is repairing these within the existing B3-B6 contracts. Each requires its retained red/green control before acceptance; no private candidate or live deployment is accepted by these progress reports.
+
 ## Decision Log
 
 - 2026-10-16: Keep `gate pre-push` inspection-only and give explicit `dispatch pre-push --binding PATH -- REMOTE URL` ownership of the current-invocation verified payload store and downstream steps. T7 generates the binding; this avoids implicit upload during checks and premature scanner cleanup.
