@@ -91,6 +91,7 @@ Primary T5b public-process review reproduced two false blockers. Removing option
 
 ## Decision Log
 
+- 2026-10-16: Resolve publication object accounting as distinct verified Git/LFS identities. Stream graph traversal; bound tree-name uniqueness through invocation-private SQLite storage charged to existing temp limits, with bounded cache/deadline checks. This preserves strict sorted/duplicate tree validation without mislabeling path entries or duplicate references as new objects. No publication limit is raised.
 - 2026-10-16: The user chose changed staged files inspected in full for pre-commit after the real-index probe found six existing fake fixture matches. Select paths changed between the captured HEAD and Git-selected index, then inspect their full captured bytes with object-hash verification and no diff-line suppression. Use policy `selected_staged_v1` and description `changed_staged_files`; historical old `selected_index_v1` records remain informational. Pre-push retains complete B5 outgoing coverage.
 - 2026-10-16 UTC: Explicit `check` and `gate pre-commit` select the checkpoint budget profile; `gate pre-push` selects publication. Staged feedback counts index snapshots and uses the shorter checkpoint deadline. Outgoing history counts Git/LFS objects and uses the measured publication limits. Every result identifies its effective profile and units.
 - 2026-10-16 UTC: Pre-commit captures the index selected by Git, including `GIT_INDEX_FILE` used by partial/alternate-index commits, as an explicit validated input. Other inherited Git redirects remain excluded. A default-index scan cannot certify a different index Git will commit.
@@ -211,6 +212,8 @@ D0 profile values (bytes are decimal counts; seconds are finite positive numbers
 | `max_seconds` | 30 / 1-120 | 120 / 1-600 |
 | `max_capture_bytes` | 134,217,728 / 1,048,576-1,073,741,824 | 536,870,912 / 1,048,576-2,147,483,648 |
 | `max_temp_bytes` | 268,435,456 / 1,048,576-2,147,483,648 | 805,306,368 / 1,048,576-3,221,225,472 |
+
+Publication `max_objects` counts distinct verified Git object IDs and, after T6, distinct LFS payload identities. Tree names and repeated graph references are not distinct objects. Charge repeated logical content occurrences to candidate bytes and every private validation database/spool to actual temporary bytes. Stream traversal work and use bounded private storage rather than silently imposing an undocumented lower path-entry cap.
 
 Publication stdin is separately capped at 1,048,576 bytes, 4,096 records and two seconds absolute acquisition/parse time. Logical candidate charging includes repeated relevant blob/path occurrences and LFS payloads; storage dedup does not remove filename-policy checks. Ranges are admission limits, not a promise that every combination completes. D0 measured the scoped macOS/SHA-1/basic-HTTP prototype only; production, other transports/platforms, hostile stdin and active-transfer cancellation require their remaining tests. The [publication contract](publication-contract.md) retains exact metrics and limits.
 
