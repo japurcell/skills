@@ -151,3 +151,6 @@ Dispatched around 17:16 UTC on 2026-10-16 to `/root/merge_t5b`, exclusively reus
 
 
 T5b-M completed before its twenty-five-minute warning threshold. Source rebase `835d0e11` to `dee1f6439c186aed34fe1c53acfc28d2a3f2324b` preserves accepted staged policy and complete outgoing coverage; evidence tip `7b5eb63f330450a4a7e90e7dc3c16e9201c3750e` is clean. Primary reviewed conflict choices and independently verified all 16 composed runtime hashes, three historical artifacts and evidence SHA-256 `810b4b8816016eb06cf2b18dbada64551908835bfc9e6dc57f2ca28a57830195`. All affected suites pass serially, including 62 gates on both Python versions. Original and merger owners stopped edits; primary owns documentation-only reconciliation and promotion. Selected/submitted settings unchanged, executed values unconfirmed, output verified and routing compliant. No milestone acceptance is inferred before T5-I/I3.
+
+
+Primary reconciled rebase references in documentation-only `c14147d5acfbb1ac41a08e3bfc74177f5f0ec9c9`, confirmed unchanged executable inputs, and fast-forwarded the base to that exact tip. Both worktrees were clean and tips equal. Managed archival is confirmed; integrated `codex/design-b-t5b` branch is removed. T5b and T5b-M are complete; separate T5-I combined acceptance is next. No native Windows, LFS, production installation or milestone acceptance is inferred.
