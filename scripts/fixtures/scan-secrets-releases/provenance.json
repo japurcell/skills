@@ -1,0 +1,273 @@
+{
+  "capture": "Exact git-show file bytes and git-ls-tree modes from accepted local commits. Deterministic USTAR/gzip; capture only, tests need no Git history or network.",
+  "releases": {
+    "t6": {
+      "revision": "342287dde89ec772293b4c3df24a7a80cb216a22",
+      "archive": "t6.tar.gz",
+      "sha256": "04d1d01ca62b0d6ac0e1a6cf7c8b72c8315c867e515a11b62ba4dba1d3191258",
+      "runtime_asset_count": 19,
+      "modules": [
+        "scan_types",
+        "scan_reporting",
+        "scan_allowlist",
+        "scan_stream",
+        "scan_git",
+        "scan_engine",
+        "scan_native_file",
+        "scan_audit",
+        "scan_budget",
+        "scan_repository",
+        "scan_gate",
+        "scan_transaction",
+        "scan_lfs",
+        "scan_private",
+        "scan_publication",
+        "scan_dispatch"
+      ],
+      "files": {
+        "hooks/runtime/scan_allowlist.py": {
+          "sha256": "80eb5a115707ad03c227b6e3c1c43da463b0ce303a60909f398eab6dd9c7c7e7",
+          "mode": "0o755",
+          "bytes": 2041
+        },
+        "hooks/runtime/scan_audit.py": {
+          "sha256": "86b5527ad96a9495079b4e3a5fdb6ed8562a900744665c39b9fdd9000ca18451",
+          "mode": "0o755",
+          "bytes": 14471
+        },
+        "hooks/runtime/scan_budget.py": {
+          "sha256": "0ce123e105ef306fef10c7be66e1666ef890f55463b61360cd9c170fefd40ca0",
+          "mode": "0o755",
+          "bytes": 3623
+        },
+        "hooks/runtime/scan_cli.py": {
+          "sha256": "c234badf2cea32bf2c9b825091a4d1981ed6f268a711e187470edfe3784689e1",
+          "mode": "0o755",
+          "bytes": 29086
+        },
+        "hooks/runtime/scan_dispatch.py": {
+          "sha256": "f23165bec799972b3211fcdf68d48aeab9932563a1eb6f91f7be6cc445eb68f9",
+          "mode": "0o755",
+          "bytes": 25691
+        },
+        "hooks/runtime/scan_engine.py": {
+          "sha256": "33bbfb091672a9ef5b03d04c291e9e91ec063945cbbfbc08a0007ab2c3ab2249",
+          "mode": "0o755",
+          "bytes": 10304
+        },
+        "hooks/runtime/scan_gate.py": {
+          "sha256": "a8c36bcfad6aec72ac0ce9d9325a25cf9854eee7c9f15eda136251166b4381db",
+          "mode": "0o755",
+          "bytes": 9112
+        },
+        "hooks/runtime/scan_git.py": {
+          "sha256": "477d20d49d0c148e0fc35a2db56d5ba4d48d5be752044e6b6fa230575e5c22aa",
+          "mode": "0o755",
+          "bytes": 57661
+        },
+        "hooks/runtime/scan_lfs.py": {
+          "sha256": "bcd53cb7738e43f52e6097fbfeaf461b130f15b35f2912a7fba2d53b5aa6112b",
+          "mode": "0o755",
+          "bytes": 6460
+        },
+        "hooks/runtime/scan_native_file.py": {
+          "sha256": "660222d89c1b01d3ef77a34920362c99d2567a11c98cdddc24db542e34a788fb",
+          "mode": "0o644",
+          "bytes": 9877
+        },
+        "hooks/runtime/scan_private.py": {
+          "sha256": "e5562785406b2f06727f520dd2755182ab8d49922a456d4204abd23c1a220a59",
+          "mode": "0o755",
+          "bytes": 8795
+        },
+        "hooks/runtime/scan_publication.py": {
+          "sha256": "6e07c3ec4763671781963e4e12b237acf817e5f04f1a74376666ecbcebfe9bce",
+          "mode": "0o755",
+          "bytes": 31558
+        },
+        "hooks/runtime/scan_reporting.py": {
+          "sha256": "c57d577217aed68e7e0e191c3225195a1950e0b4fd18c8524f93984a2de2d8c9",
+          "mode": "0o755",
+          "bytes": 2641
+        },
+        "hooks/runtime/scan_repository.py": {
+          "sha256": "b2abd9ceca8004c3c2ea72a9f571e8eac338c618a95e0ad38a75c67f3d57030e",
+          "mode": "0o755",
+          "bytes": 17868
+        },
+        "hooks/runtime/scan_status.py": {
+          "sha256": "c70549592deb0db92ab44a6e5dac4352343f89afec903fc34647eff056d136fc",
+          "mode": "0o755",
+          "bytes": 32511
+        },
+        "hooks/runtime/scan_stream.py": {
+          "sha256": "2b91062b6440457ca26488d9dba43e2a4bda9d2a7dc309e256da1c0b6c9b707b",
+          "mode": "0o755",
+          "bytes": 14863
+        },
+        "hooks/runtime/scan_transaction.py": {
+          "sha256": "005b2bb173cadf708ccc0f1041404c90797421843a8a88d07e2c626497c90894",
+          "mode": "0o755",
+          "bytes": 4716
+        },
+        "hooks/runtime/scan_types.py": {
+          "sha256": "57f6116d711302a3c106556caa4f6ed98aa60a7b2e5a8f6cd78081b914e6581e",
+          "mode": "0o755",
+          "bytes": 13394
+        },
+        "scripts/install-scan-secrets.py": {
+          "sha256": "97d7edeaca305ba47edc7acb8c8d4208dee4d1ede08faf1d8d8e42fee7c07ed0",
+          "mode": "0o755",
+          "bytes": 20463
+        },
+        "scripts/scan-secrets.py": {
+          "sha256": "ea9f6adf225889e0ff9297d32e88e9660cea6a9d917ca87f6d95ada6d3afc497",
+          "mode": "0o755",
+          "bytes": 2353
+        },
+        "scripts/scan_install_windows.py": {
+          "sha256": "c0cb6161cdf6d9b0bf2bb2c1899a23ff6f87d62cfcf6a541b9a61dc0b88af3f0",
+          "mode": "0o644",
+          "bytes": 20018
+        }
+      }
+    },
+    "t7a": {
+      "revision": "37ebafcc1330a99fd5a1a419a9725d026f85dd8c",
+      "archive": "t7a.tar.gz",
+      "sha256": "29eac6f655a5c34f207e3d760ad7503df89f2db18df3c1714a477a8b1da0c12e",
+      "runtime_asset_count": 20,
+      "modules": [
+        "scan_types",
+        "scan_reporting",
+        "scan_allowlist",
+        "scan_stream",
+        "scan_git",
+        "scan_engine",
+        "scan_native_file",
+        "scan_audit",
+        "scan_budget",
+        "scan_repository",
+        "scan_gate",
+        "scan_transaction",
+        "scan_lfs",
+        "scan_private",
+        "scan_publication",
+        "scan_dispatch",
+        "scan_repo_install"
+      ],
+      "files": {
+        "hooks/runtime/scan_allowlist.py": {
+          "sha256": "80eb5a115707ad03c227b6e3c1c43da463b0ce303a60909f398eab6dd9c7c7e7",
+          "mode": "0o755",
+          "bytes": 2041
+        },
+        "hooks/runtime/scan_audit.py": {
+          "sha256": "86b5527ad96a9495079b4e3a5fdb6ed8562a900744665c39b9fdd9000ca18451",
+          "mode": "0o755",
+          "bytes": 14471
+        },
+        "hooks/runtime/scan_budget.py": {
+          "sha256": "0ce123e105ef306fef10c7be66e1666ef890f55463b61360cd9c170fefd40ca0",
+          "mode": "0o755",
+          "bytes": 3623
+        },
+        "hooks/runtime/scan_cli.py": {
+          "sha256": "fd4bf28daefc1e6e719be0197f3838e1a82413f22cda71211c3f8c77dbd1bb8e",
+          "mode": "0o755",
+          "bytes": 32942
+        },
+        "hooks/runtime/scan_dispatch.py": {
+          "sha256": "f23165bec799972b3211fcdf68d48aeab9932563a1eb6f91f7be6cc445eb68f9",
+          "mode": "0o755",
+          "bytes": 25691
+        },
+        "hooks/runtime/scan_engine.py": {
+          "sha256": "33bbfb091672a9ef5b03d04c291e9e91ec063945cbbfbc08a0007ab2c3ab2249",
+          "mode": "0o755",
+          "bytes": 10304
+        },
+        "hooks/runtime/scan_gate.py": {
+          "sha256": "a8c36bcfad6aec72ac0ce9d9325a25cf9854eee7c9f15eda136251166b4381db",
+          "mode": "0o755",
+          "bytes": 9112
+        },
+        "hooks/runtime/scan_git.py": {
+          "sha256": "477d20d49d0c148e0fc35a2db56d5ba4d48d5be752044e6b6fa230575e5c22aa",
+          "mode": "0o755",
+          "bytes": 57661
+        },
+        "hooks/runtime/scan_lfs.py": {
+          "sha256": "bcd53cb7738e43f52e6097fbfeaf461b130f15b35f2912a7fba2d53b5aa6112b",
+          "mode": "0o755",
+          "bytes": 6460
+        },
+        "hooks/runtime/scan_native_file.py": {
+          "sha256": "660222d89c1b01d3ef77a34920362c99d2567a11c98cdddc24db542e34a788fb",
+          "mode": "0o644",
+          "bytes": 9877
+        },
+        "hooks/runtime/scan_private.py": {
+          "sha256": "e5562785406b2f06727f520dd2755182ab8d49922a456d4204abd23c1a220a59",
+          "mode": "0o755",
+          "bytes": 8795
+        },
+        "hooks/runtime/scan_publication.py": {
+          "sha256": "6e07c3ec4763671781963e4e12b237acf817e5f04f1a74376666ecbcebfe9bce",
+          "mode": "0o755",
+          "bytes": 31558
+        },
+        "hooks/runtime/scan_repo_install.py": {
+          "sha256": "f7b5671dec95eae1050936930073b869a60153a6bc2080b4d514046ee3f13567",
+          "mode": "0o755",
+          "bytes": 21151
+        },
+        "hooks/runtime/scan_reporting.py": {
+          "sha256": "c57d577217aed68e7e0e191c3225195a1950e0b4fd18c8524f93984a2de2d8c9",
+          "mode": "0o755",
+          "bytes": 2641
+        },
+        "hooks/runtime/scan_repository.py": {
+          "sha256": "b2abd9ceca8004c3c2ea72a9f571e8eac338c618a95e0ad38a75c67f3d57030e",
+          "mode": "0o755",
+          "bytes": 17868
+        },
+        "hooks/runtime/scan_status.py": {
+          "sha256": "c70549592deb0db92ab44a6e5dac4352343f89afec903fc34647eff056d136fc",
+          "mode": "0o755",
+          "bytes": 32511
+        },
+        "hooks/runtime/scan_stream.py": {
+          "sha256": "2b91062b6440457ca26488d9dba43e2a4bda9d2a7dc309e256da1c0b6c9b707b",
+          "mode": "0o755",
+          "bytes": 14863
+        },
+        "hooks/runtime/scan_transaction.py": {
+          "sha256": "005b2bb173cadf708ccc0f1041404c90797421843a8a88d07e2c626497c90894",
+          "mode": "0o755",
+          "bytes": 4716
+        },
+        "hooks/runtime/scan_types.py": {
+          "sha256": "57f6116d711302a3c106556caa4f6ed98aa60a7b2e5a8f6cd78081b914e6581e",
+          "mode": "0o755",
+          "bytes": 13394
+        },
+        "scripts/install-scan-secrets.py": {
+          "sha256": "97d7edeaca305ba47edc7acb8c8d4208dee4d1ede08faf1d8d8e42fee7c07ed0",
+          "mode": "0o755",
+          "bytes": 20463
+        },
+        "scripts/scan-secrets.py": {
+          "sha256": "ea9f6adf225889e0ff9297d32e88e9660cea6a9d917ca87f6d95ada6d3afc497",
+          "mode": "0o755",
+          "bytes": 2353
+        },
+        "scripts/scan_install_windows.py": {
+          "sha256": "c0cb6161cdf6d9b0bf2bb2c1899a23ff6f87d62cfcf6a541b9a61dc0b88af3f0",
+          "mode": "0o644",
+          "bytes": 20018
+        }
+      }
+    }
+  }
+}

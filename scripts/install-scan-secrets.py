@@ -146,6 +146,30 @@ def unique_object(pairs):
     return result
 
 
+def runtime_asset_names(cli_bytes):
+    """Read the declared closure as data, never by importing the runtime."""
+    declarations = []
+    for node in ast.parse(cli_bytes).body:
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, (ast.AnnAssign, ast.AugAssign)) else []
+        if any(isinstance(target, ast.Name) and target.id == "MODULES" for target in targets):
+            declarations.append(node)
+    if len(declarations) != 1 or not isinstance(declarations[0], ast.Assign) or len(declarations[0].targets) != 1:
+        raise ValueError
+    modules = ast.literal_eval(declarations[0].value)
+    if (not isinstance(modules, tuple) or not modules or
+        any(not isinstance(name, str) or not name.startswith("scan_") or not name.isidentifier() for name in modules) or
+        len(set(modules)) != len(modules)):
+        raise ValueError
+    folded = {unicodedata.normalize("NFD", name).casefold() for name in modules}
+    if len(folded) != len(modules) or {"scan_cli", "scan_status"}.intersection(folded):
+        raise ValueError
+    names = ("scripts/scan-secrets.py", "hooks/runtime/scan_cli.py", "hooks/runtime/scan_status.py", *(f"hooks/runtime/{name}.py" for name in modules))
+    # Three directories, two launchers and one manifest share the reader cap.
+    if len(names) + 6 > 64:
+        raise ValueError
+    return names
+
+
 def validate_owned(inventory, read, assets, destination):
     try:
         raw = read("installation.json")
@@ -153,14 +177,27 @@ def validate_owned(inventory, read, assets, destination):
             raise ValueError
         manifest = json.loads(raw, object_pairs_hook=unique_object)
         expected_keys = {"schema", "version", "interpreter", "entrypoint", "runtime", "data", "configuration", "files", "launchers"}
-        if (set(manifest) != expected_keys or manifest["schema"] != SCHEMA or
+        if (not isinstance(manifest, dict) or set(manifest) != expected_keys or manifest["schema"] != SCHEMA or
             manifest["version"] != VERSION or manifest["configuration"] is not None or
             manifest["entrypoint"] != str(destination / "scripts/scan-secrets.py") or
             manifest["runtime"] != str(destination / "hooks/runtime") or
-            not Path(manifest["interpreter"]).is_absolute() or not Path(manifest["data"]).is_absolute() or
-            set(manifest["files"]) != set(assets) or set(manifest["launchers"]) != {"scan-secrets", "scan-secrets.ps1"}):
+            any(not isinstance(manifest[key], str) or not Path(manifest[key]).is_absolute() for key in ("interpreter", "data")) or
+            not isinstance(manifest["files"], dict) or not isinstance(manifest["launchers"], dict) or
+            set(manifest["launchers"]) != {"scan-secrets", "scan-secrets.ps1"}):
             raise ValueError
         owned = {**manifest["files"], **manifest["launchers"]}
+        if any(not isinstance(digest, str) or len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest) for digest in owned.values()):
+            raise ValueError
+        # Ownership describes the prior closure, independently of the desired
+        # payload. Hash the protected declaration before parsing it as data.
+        prior_cli = read("hooks/runtime/scan_cli.py")
+        if hashlib.sha256(prior_cli).hexdigest() != manifest["files"].get("hooks/runtime/scan_cli.py"):
+            raise ValueError
+        if set(manifest["files"]) != set(runtime_asset_names(prior_cli)):
+            raise ValueError
+        launchers = bundle_payload(destination, {}, manifest["interpreter"], manifest["data"])
+        if any(hashlib.sha256(launchers[name]).hexdigest() != digest for name, digest in manifest["launchers"].items()):
+            raise ValueError
         expected = {*owned, "installation.json"}
         for name in list(expected):
             expected.update(str(parent).replace(os.sep, "/") for parent in Path(name).parents if str(parent) != ".")
@@ -169,7 +206,7 @@ def validate_owned(inventory, read, assets, destination):
         for name, digest in owned.items():
             if hashlib.sha256(read(name)).hexdigest() != digest:
                 raise ValueError
-    except (OSError, ValueError, TypeError, KeyError):
+    except (OSError, SyntaxError, ValueError, TypeError, KeyError):
         raise Failure("installation_ownership_invalid") from None
 
 
@@ -263,18 +300,7 @@ def source_assets(source):
     try:
         cli = source / "hooks/runtime/scan_cli.py"
         cli_bytes = bounded_read(cli, reason="source_assets_invalid")
-        statements = ast.parse(cli_bytes).body
-        modules = next(ast.literal_eval(node.value) for node in statements if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "MODULES" for target in node.targets))
-        if not isinstance(modules, tuple) or not modules or len(set(modules)) != len(modules) or any(not isinstance(name, str) or not name.startswith("scan_") or not name.isidentifier() for name in modules):
-            raise ValueError
-        folded = {unicodedata.normalize("NFD", name).casefold() for name in modules}
-        if len(folded) != len(modules) or {"scan_cli", "scan_status"}.intersection(folded):
-            raise ValueError
-        names = ("scripts/scan-secrets.py", "hooks/runtime/scan_cli.py", "hooks/runtime/scan_status.py", *(f"hooks/runtime/{name}.py" for name in modules))
-        # Three parent directories, two launchers and one manifest share the
-        # same 64-entry inventory bound as both installed ownership readers.
-        if len(names) + 6 > 64:
-            raise ValueError
+        names = runtime_asset_names(cli_bytes)
         assets = {}
         for name in names:
             path = source / name

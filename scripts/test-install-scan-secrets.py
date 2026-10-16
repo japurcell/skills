@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import tarfile
 import unittest
 
 SOURCE = Path(__file__).resolve().parent.parent
@@ -50,6 +51,33 @@ class InstalledScannerTests(unittest.TestCase):
         for name in ("scan-secrets.py", "scan_install_windows.py"):
             shutil.copy2(SOURCE / "scripts" / name, source / "scripts" / name)
         return source
+
+    def install_release(self, release):
+        # Immutable real release bytes keep this public regression offline and
+        # independent of historical Git objects, including shallow CI clones.
+        fixtures = SOURCE / "scripts/fixtures/scan-secrets-releases"
+        expected = {
+            "t6": "04d1d01ca62b0d6ac0e1a6cf7c8b72c8315c867e515a11b62ba4dba1d3191258",
+            "t7a": "29eac6f655a5c34f207e3d760ad7503df89f2db18df3c1714a477a8b1da0c12e",
+        }
+        archive = fixtures / (release + ".tar.gz")
+        self.assertEqual(hashlib.sha256(archive.read_bytes()).hexdigest(), expected[release])
+        provenance = json.loads((fixtures / "provenance.json").read_bytes())["releases"][release]
+        source = self.root / (release + " actual release")
+        source.mkdir()
+        with tarfile.open(archive, "r:gz") as captured:
+            self.assertEqual(set(captured.getnames()), set(provenance["files"]))
+            captured.extractall(source, filter="data")
+        for name, record in provenance["files"].items():
+            asset = source / name
+            self.assertEqual(hashlib.sha256(asset.read_bytes()).hexdigest(), record["sha256"])
+            self.assertEqual(asset.stat().st_mode & 0o777, int(record["mode"], 8))
+        result = self.invoke([PYTHON, "-I", "-S", "-B", str(source / "scripts/install-scan-secrets.py"),
+            "install", "--source-dir", str(source), "--destination", str(self.destination), "--json"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["asset_count"], provenance["runtime_asset_count"])
+        shutil.rmtree(source)
+        return json.loads((self.destination / "installation.json").read_bytes())
 
     def fingerprint(self, root):
         return [(str(path.relative_to(root)), path.lstat().st_mode, hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else None)
@@ -93,6 +121,151 @@ class InstalledScannerTests(unittest.TestCase):
         self.assertFalse(marker.exists())
         self.assertEqual(list(self.destination.rglob("__pycache__")), [])
         self.assertFalse((self.root / "NEVER").exists())
+
+    def test_actual_prior_releases_upgrade_without_old_or_new_source(self):
+        for release, count in (("t6", 19), ("t7a", 20)):
+            with self.subTest(release=release):
+                self.destination = self.root / (release + " runtime")
+                prior = self.install_release(release)
+                self.assertEqual(len(prior["files"]), count)
+                before = self.fingerprint(self.destination)
+                validated = self.install("--dry-run")
+                self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
+                self.assertEqual(before, self.fingerprint(self.destination))
+                source = self.copy_source()
+                upgraded = self.install(source=source)
+                self.assertEqual(upgraded.returncode, 0, upgraded.stdout + upgraded.stderr)
+                self.assertEqual(json.loads(upgraded.stdout)["asset_count"], 22)
+                current = json.loads((self.destination / "installation.json").read_bytes())
+                self.assertEqual(len(current["files"]), 22)
+                stable = self.fingerprint(self.destination)
+                self.assertEqual(self.install(source=source).returncode, 0)
+                self.assertEqual(stable, self.fingerprint(self.destination))
+                shutil.rmtree(source)
+                repository = self.root / (release + " repository")
+                repository.mkdir()
+                self.assertEqual(self.invoke(["git", "init", "-q", str(repository)]).returncode, 0)
+                (repository / "notes.txt").write_text("safe upgraded content\n")
+                result = self.command("check", "--repo", str(repository), "--json")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(json.loads(result.stdout)["outcome"], "complete_clean")
+                self.assertEqual(self.command("status", "--repo", str(repository), "--json").returncode, 0)
+                shutil.rmtree(self.destination)
+
+    def test_prior_release_drift_and_unknown_inventory_preserve_both_locations(self):
+        for location in ("destination", "backup"):
+            for damage in ("edited", "missing", "incomplete-record", "extra", "unknown-record", "traversal-record", "mode", "symlink", "hardlink", "digest", "files-type", "launcher", "schema"):
+                with self.subTest(location=location, damage=damage):
+                    self.destination = self.root / (location + " " + damage)
+                    manifest = self.install_release("t6")
+                    target = self.destination / "hooks/runtime/scan_engine.py"
+                    manifest_path = self.destination / "installation.json"
+                    if damage == "edited":
+                        target.write_bytes(target.read_bytes() + b"\n# changed prior content\n")
+                    elif damage in {"missing", "incomplete-record"}:
+                        target.unlink()
+                        if damage == "incomplete-record":
+                            del manifest["files"]["hooks/runtime/scan_engine.py"]
+                    elif damage in {"extra", "unknown-record"}:
+                        extra = self.destination / "hooks/runtime/scan_unknown.py"
+                        extra.write_bytes(b"# foreign content\n")
+                        extra.chmod(0o600)
+                        if damage == "unknown-record":
+                            manifest["files"]["hooks/runtime/scan_unknown.py"] = hashlib.sha256(extra.read_bytes()).hexdigest()
+                    elif damage == "traversal-record":
+                        manifest["files"]["../outside"] = "0" * 64
+                    elif damage == "mode":
+                        target.chmod(0o644)
+                    elif damage in {"symlink", "hardlink"}:
+                        external = self.root / (location + " " + damage + " external")
+                        external.write_bytes(target.read_bytes())
+                        external.chmod(0o600)
+                        target.unlink()
+                        if damage == "symlink":
+                            target.symlink_to(external)
+                        else:
+                            os.link(external, target)
+                    elif damage == "digest":
+                        manifest["files"]["hooks/runtime/scan_engine.py"] = ["invalid"]
+                    elif damage == "files-type":
+                        manifest["files"] = list(manifest["files"])
+                    elif damage == "launcher":
+                        launcher = self.destination / "scan-secrets"
+                        launcher.write_bytes(b"#!/bin/sh\nexit 0\n")
+                        manifest["launchers"]["scan-secrets"] = hashlib.sha256(launcher.read_bytes()).hexdigest()
+                    elif damage == "schema":
+                        manifest["schema"] = "unknown_owner"
+                    manifest_path.write_text(json.dumps(manifest))
+                    if location == "backup":
+                        self.destination.rename(self.destination.with_name(self.destination.name + ".previous"))
+                    before = self.fingerprint(self.root)
+                    for arguments in (("--dry-run",), ()):
+                        result = self.install(*arguments)
+                        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                        self.assertIn(json.loads(result.stdout)["reason"], {"installation_ownership_invalid", "unsafe_destination"})
+                        self.assertEqual(before, self.fingerprint(self.root))
+
+    def test_prior_runtime_closure_must_be_one_complete_bounded_literal(self):
+        values = ("[]", "('scan_engine', 'scan_engine')", "('scan_engine', 1)",
+            "('scan_engine', 'scan_ENGINE')", "('scan_caf\u00e9', 'scan_cafe\u0301')",
+            "('scan_cli',)", "('scan_STATUS',)", "('../outside',)",
+            "tuple(['scan_engine'])", repr(tuple('scan_extra_' + str(i) for i in range(56))))
+        for index, replacement in enumerate((*values, "duplicate")):
+            with self.subTest(declaration=replacement):
+                self.destination = self.root / ("invalid closure " + str(index))
+                manifest = self.install_release("t7a")
+                cli = self.destination / "hooks/runtime/scan_cli.py"
+                lines = cli.read_text().splitlines(keepends=True)
+                if replacement == "duplicate":
+                    lines.append("\nMODULES = ('scan_engine',)\n")
+                else:
+                    lines = ["MODULES = " + replacement + "\n" if line.startswith("MODULES = ") else line for line in lines]
+                cli.write_text("".join(lines))
+                manifest["files"]["hooks/runtime/scan_cli.py"] = hashlib.sha256(cli.read_bytes()).hexdigest()
+                (self.destination / "installation.json").write_text(json.dumps(manifest))
+                before = self.fingerprint(self.root)
+                result = self.install()
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(json.loads(result.stdout)["reason"], "installation_ownership_invalid")
+                self.assertEqual(before, self.fingerprint(self.root))
+
+    def test_prior_release_recovery_never_executes_prior_runtime(self):
+        wrapper = self.root / "prior-execution-audit.py"
+        marker = self.root / "prior-runtime-executed"
+        wrapper.write_text("""import runpy, sys
+from pathlib import Path
+helper, destination, marker, fail = sys.argv[1:]
+sys.argv = [helper, 'install', '--destination', destination, '--json']
+def audit(event, arguments):
+    if event == 'exec' and str(arguments[0].co_filename).startswith(destination):
+        Path(marker).touch()
+        raise RuntimeError('prior runtime must never execute during ownership validation')
+    if event == 'os.rename' and fail == 'yes' and '.scan-secrets-stage-' in str(arguments[0]) and str(Path(arguments[1]).absolute()) == destination:
+        raise OSError('controlled promotion failure')
+sys.addaudithook(audit)
+runpy.run_path(helper, run_name='__main__')
+""")
+        for release in ("t6", "t7a"):
+            with self.subTest(release=release):
+                self.destination = self.root / (release + " recovery")
+                self.install_release(release)
+                before = self.fingerprint(self.destination)
+                arguments = [PYTHON, "-I", "-S", "-B", str(wrapper), str(SOURCE / "scripts/install-scan-secrets.py"), str(self.destination), str(marker)]
+                failed = self.invoke([*arguments, "yes"])
+                self.assertEqual(failed.returncode, 2, failed.stdout + failed.stderr)
+                self.assertEqual(json.loads(failed.stdout)["reason"], "installation_failed")
+                self.assertEqual(before, self.fingerprint(self.destination))
+                previous = self.destination.with_name(self.destination.name + ".previous")
+                self.destination.rename(previous)
+                validated = self.install("--dry-run")
+                self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
+                self.assertFalse(self.destination.exists())
+                self.assertEqual(before, self.fingerprint(previous))
+                recovered = self.invoke([*arguments, "no"])
+                self.assertEqual(recovered.returncode, 0, recovered.stdout + recovered.stderr)
+                self.assertFalse(previous.exists())
+                self.assertFalse(marker.exists())
+                self.assertEqual(self.command("--version").returncode, 0)
 
     def test_dry_run_and_parser_have_no_writes(self):
         before = self.fingerprint(self.root)
