@@ -91,6 +91,8 @@ Primary T5b public-process review reproduced two false blockers. Removing option
 
 T5b self-review then constructed a strict-fsck-valid commit with 70,232 bytes of multiline signature headers. The gate returned `2/git_output_invalid` at an undocumented 65,536-byte structural-header cap. The original owner replaced whole-header retention with bounded streaming parsing. Actual clean push and following credential-message rejection pass with large names, emails and signature continuations. Final 58-case gate runs pass on Python 3.14.6 and 3.13.14. The final supported-path diagnostic/no-transfer/retained-findings proof passes within the 59-case suite. T5b and combined T5-I are integrated and accepted; LFS and later publication acceptance remain open.
 
+T6 source validation found that D0's `lfs.transfer.maxretries=0` does not disable retries: the [versioned Git LFS 3.8 configuration contract](https://github.com/git-lfs/git-lfs/blob/v3.8.0/docs/man/git-lfs-config.adoc) requires at least one and falls back to eight for an invalid value. Production must use a valid finite setting and an independent downstream deadline. Server-requested retry delays can override the ordinary retry-delay cap; cancellation and cleanup must not depend on that cap alone. D0's successful binding measurements remain historical evidence, not proof of disabled retries. Its retained source is unchanged.
+
 ## Decision Log
 
 - 2026-10-16: Keep `gate pre-push` inspection-only and give explicit `dispatch pre-push --binding PATH -- REMOTE URL` ownership of the current-invocation verified payload store and downstream steps. T7 generates the binding; this avoids implicit upload during checks and premature scanner cleanup.
