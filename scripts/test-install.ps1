@@ -1526,12 +1526,12 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $handler['command'] -Message "Expected the Codex handler's POSIX command to target the installed hook."
         Assert-Equals -Expected 'py -3 "%USERPROFILE%\.codex\hooks\load-required-skills.py"' -Actual $handler['commandWindows'] -Message "Expected the exact Windows Codex command."
         $preCommands = @($config['hooks']['PreToolUse'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition (@($preCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected PreToolUse to retain the maintained scanner.'
+        Assert-True -Condition ($preCommands.Count -eq 1) -Message 'Expected the single synchronous Tool Guardian handler.'
         Assert-True -Condition (@($preCommands -match ' -I -S -B .*tool-guard.py').Count -eq 1) -Message 'Expected Codex Tool Guardian registration.'
         $stopCommands = @($config['hooks']['Stop'][0]['hooks'] | ForEach-Object { $_['command'] })
-        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-secrets.py').Count -eq 1) -Message 'Expected Stop to retain the maintained scanner.'
-        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one PreToolUse scanner registration.'
-        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-secrets.py' }).Count -eq 1) -Message 'Expected exactly one Stop scanner registration.'
+        Assert-True -Condition (@($stopCommands -match ' -I -S -B .*scan-status.py').Count -eq 1) -Message 'Expected Stop to report historical scan status.'
+        Assert-True -Condition (@($config['hooks']['PreToolUse'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*tool-guard.py' }).Count -eq 1) -Message 'Expected exactly one synchronous Guardian registration.'
+        Assert-True -Condition (@($config['hooks']['Stop'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -cmatch ' -I -S -B .*scan-status.py' }).Count -eq 1) -Message 'Expected exactly one historical-status registration.'
         Assert-True -Condition (-not (Test-Path -LiteralPath (Join-Path $homeDir '.codex/hooks.json.bak'))) -Message "Expected a fresh Codex install not to create a backup."
 
         if (-not $IsWindows) {
@@ -1674,7 +1674,7 @@ function Test-PreservesCodexConfigurationAndIsIdempotent {
             '    "BeforeTool": [{"hooks": [{"type": "command", "command": "echo preserve"}]}],',
             '    "SessionStart": [{"matcher": "startup", "hooks": [',
             '      {"type": "command", "command": "echo preserve"},',
-            '      {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py"}',
+            '      {"type": "command", "command": "python3 ~/.codex/hooks/load-required-skills.py", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\load-required-skills.py\""}',
             '    ]}]',
             '  }',
             '}'
@@ -1986,32 +1986,6 @@ function Test-HelperFailuresAreInstallerErrors {
             $homeDir = Join-Path $workdir "$helper/home"
             $codex = Join-Path $workdir "$helper/codex"
             New-FixtureRepo $repo
-            # Instrument only the disposable installer copy. Never emit exception
-            # messages, local values, or paths from the production CLI.
-            $scannerInstaller = Join-Path $repo 'scripts/install-scan-secrets.py'
-            $scannerSource = [System.IO.File]::ReadAllText($scannerInstaller).Replace("`r`n", "`n")
-            $originalHandler = "    except Exception:`n        reason, code = ""installation_failed"", 2"
-            $fixtureHandler = @'
-    except Exception as fixture_error:
-        import traceback
-        frames = traceback.extract_tb(fixture_error.__traceback__)[-8:]
-        trace = ">".join(f"{frame.name[:64]}:{frame.lineno}" for frame in frames)
-        numeric = lambda name: getattr(fixture_error, name, None) if type(getattr(fixture_error, name, None)) is int else None
-        print(f"Fixture scanner failure: type={type(fixture_error).__name__[:64]} winerror={numeric('winerror')} errno={numeric('errno')} frames={trace}", file=sys.stderr)
-        reason, code = "installation_failed", 2
-'@
-            Assert-True ($scannerSource.Contains($originalHandler)) 'Expected the fixture scanner failure boundary to exist.'
-            [System.IO.File]::WriteAllText($scannerInstaller, $scannerSource.Replace($originalHandler, $fixtureHandler))
-            $windowsSupport = Join-Path $repo 'scripts/scan_install_windows.py'
-            $windowsSource = [System.IO.File]::ReadAllText($windowsSupport).Replace("`r`n", "`n")
-            $ownerBoundary = '        trusted = {owner, "S-1-5-18", "S-1-5-32-544"}'
-            $ownerReceipt = @'
-        if drive_root:
-            labels = {owner: "current-user", "S-1-5-18": "system", "S-1-5-32-544": "administrators", "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464": "trustedinstaller"}
-            print("Fixture drive-root owner category: " + labels.get(sid_text(actual_owner), "other"), file=__import__("sys").stderr)
-'@
-            Assert-True ($windowsSource.Contains($ownerBoundary)) 'Expected the fixture native owner boundary to exist.'
-            [System.IO.File]::WriteAllText($windowsSupport, $windowsSource.Replace($ownerBoundary, "$ownerReceipt`n$ownerBoundary"))
             Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $repo "scripts/$helper") @('import sys', 'print("Fixture helper status")', 'print("Fixture helper failed; repair its input.", file=sys.stderr)', 'raise SystemExit(2)')
@@ -2037,6 +2011,48 @@ function Test-HelperFailuresAreInstallerErrors {
                 Assert-Equals $beforeCodex (Get-TreeFingerprint $codex) 'Expected preflight helper failure not to mutate CODEX_HOME.'
             }
         }
+    }
+    finally { Remove-Workdir $workdir }
+}
+
+function Test-NativeScannerRejectsUnsafeAncestorGrants {
+    if (-not $IsWindows) {
+        Write-Host 'Skipping: Windows DACL assertions require native Windows.'
+        return
+    }
+    $workdir = New-TestWorkdir
+    try {
+        $repo = Join-Path $workdir 'repo'
+        New-FixtureRepo $repo
+        foreach ($scenario in @('effective', 'inherit-only')) {
+            $homeDir = Join-Path $workdir "home-$scenario"
+            Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
+            $parent = Join-Path $homeDir 'AppData/Local'
+            New-Item -ItemType Directory -Path $parent -Force | Out-Null
+            Initialize-ChildPowerShellHome -HomeDir $homeDir -Workdir $workdir
+            $acl = Get-Acl -LiteralPath $parent
+            $inheritance = [System.Security.AccessControl.InheritanceFlags]::None
+            $propagation = [System.Security.AccessControl.PropagationFlags]::None
+            if ($scenario -ceq 'inherit-only') {
+                $inheritance = [System.Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [System.Security.AccessControl.InheritanceFlags]::ObjectInherit
+                $propagation = [System.Security.AccessControl.PropagationFlags]::InheritOnly
+            }
+            $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+                [System.Security.Principal.SecurityIdentifier]::new('S-1-1-0'),
+                [System.Security.AccessControl.FileSystemRights]::WriteData,
+                $inheritance, $propagation, [System.Security.AccessControl.AccessControlType]::Allow)
+            $acl.AddAccessRule($rule)
+            Set-Acl -LiteralPath $parent -AclObject $acl
+            $beforeAcl = (Get-Acl -LiteralPath $parent).Sddl
+            $before = Get-TreeFingerprint $homeDir
+            $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir
+            Assert-Equals 1 $result.ExitCode "Expected unsafe native $scenario grant to stop the real installer."
+            Assert-True (($result.Stderr -join "`n").Contains('Standalone scanner preflight exited with code 2.')) "Expected native scanner preflight to reject $scenario grant."
+            Assert-Equals '' ($result.Stdout -join "`n") 'Expected unsafe native ancestry to produce no stdout.'
+            Assert-Equals $before (Get-TreeFingerprint $homeDir) "Expected native $scenario refusal not to mutate home."
+            Assert-Equals $beforeAcl (Get-Acl -LiteralPath $parent).Sddl "Expected native $scenario refusal not to change the DACL."
+        }
+        Write-Host 'Native scanner ACL controls: effective and inherit-only ordinary-user write grants rejected without mutation.'
     }
     finally { Remove-Workdir $workdir }
 }
@@ -2124,6 +2140,7 @@ function Test-ChildProfileEnvironmentIsIsolated {
 
 Test-ChildProfileEnvironmentIsIsolated
 Test-HelperFailuresAreInstallerErrors
+Test-NativeScannerRejectsUnsafeAncestorGrants
 Test-EmptyCategoriesMarkersAndExclusions
 Test-SourcePreflightIsImmutable
 Test-SourceDiagnosticsWithLegacyEncoding

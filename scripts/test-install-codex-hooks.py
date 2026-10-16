@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,6 +24,9 @@ def run(
     *,
     environment: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    assets = destination.parent / "hooks"
+    assets.mkdir(exist_ok=True)
+    shutil.copy2(ROOT / ".codex/hooks/scan-status.py", assets / "scan-status.py")
     return subprocess.run(
         [sys.executable, str(INSTALLER), "--template", str(template), "--destination", str(destination)],
         text=True,
@@ -67,10 +71,11 @@ def main() -> None:
         template = Path(temporary) / "template.json"
         maintained = json.loads(SOURCE_TEMPLATE.read_text(encoding="utf-8"))
         for event in ("PreToolUse", "Stop"):
+            filename = "tool-guard.py" if event == "PreToolUse" else "scan-status.py"
             maintained["hooks"][event] = [{"hooks": [{
                 "type": "command",
-                "command": "python3 ~/.codex/hooks/scan-secrets.py",
-                "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"',
+                "command": f"python3 ~/.codex/hooks/{filename}",
+                "commandWindows": f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"',
             }]}]
         template.write_text(json.dumps(maintained), encoding="utf-8")
         destination = Path(temporary) / "hooks.json"
@@ -79,16 +84,16 @@ def main() -> None:
             "hooks": {
                 "PreToolUse": [{"matcher": "Bash", "custom": "keep", "hooks": [
                     {"type": "command", "command": "echo user"},
-                    {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
+                    {"type": "command", "command": "python3 /user/hooks/scan-secrets.py",
                      "commandWindows": "echo windows user"},
                     {"type": "command", "command": "echo unix user",
-                     "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
+                     "commandWindows": 'py -3 "C:\\user\\scan-secrets.py"'},
                     {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
                     {"type": "command", "command": "python3 ~/.codex/hooks/rtk-explicit-codex.py",
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'},
                 ]}],
-                "Stop": [{"hooks": [{"type": "command", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\""}]}],
+                "Stop": [{"hooks": [{"type": "command", "commandWindows": "echo user stop"}]}],
                 "SessionStart": [{"hooks": [{"type": "command", "command": "echo unrelated"}]}],
             },
         }
@@ -105,10 +110,11 @@ def main() -> None:
                 for handler in group["hooks"]:
                     command = handler["command"]
                     expected = dict(handler)
-                    if command.endswith("/scan-secrets.py"):
-                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks/scan-secrets.py")])
+                    filename = command.rsplit("/", 1)[-1]
+                    if filename in {"tool-guard.py", "scan-status.py"}:
+                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename)])
                         expected["command"] = command
-                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks/scan-secrets.py"}"'
+                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"'
                     matches = [candidate for existing_group in merged["hooks"][event]
                                for candidate in existing_group["hooks"]
                                if candidate.get("command") == command
@@ -124,7 +130,8 @@ def main() -> None:
         old_python = str(Path(temporary) / "old python & tools" / "python.exe")
         for event in ("PreToolUse", "Stop"):
             owned = old["hooks"][event][-1]["hooks"][0]
-            script = str(destination.parent / "hooks/scan-secrets.py")
+            filename = "tool-guard.py" if event == "PreToolUse" else "scan-status.py"
+            script = str(destination.parent / "hooks" / filename)
             owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
             owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
         destination.write_text(json.dumps(old))
@@ -142,8 +149,9 @@ def main() -> None:
         unowned["hooks"]["PreToolUse"][0]["hooks"].append(custom)
         destination.write_text(json.dumps(unowned))
         preserved = run(template, destination)
-        assert preserved.returncode == 0, preserved.stderr
-        assert custom in json.loads(destination.read_bytes())["hooks"]["PreToolUse"][0]["hooks"]
+        assert preserved.returncode == 1, preserved.stderr
+        assert "Ambiguous" in preserved.stderr
+        assert json.loads(destination.read_bytes()) == unowned
         destination.write_bytes(first_bytes)
 
         malformed = json.loads(template.read_text(encoding="utf-8"))

@@ -1,0 +1,23 @@
+{
+  "codex": {
+    "source": ".codex/global-hooks.json",
+    "commit": "0bf18e9764b9a2e00763e089af2c41a7710f6141",
+    "sha256": "15d1f58f3c245e1cc514b1e3e0992d131cdac249f55f59ace10b5750ef17bb08",
+    "git_mode": "100644",
+    "git_blob": "217cae6fddbb2322d8d30a35be4f8a0dafec55bd"
+  },
+  "copilot": {
+    "source": ".copilot/hooks/hooks.json",
+    "commit": "0bf18e9764b9a2e00763e089af2c41a7710f6141",
+    "sha256": "a05b4871cdf151486f1f2e4a2a4f2e05bbefb580cf43dc4649529ef54a11ccac",
+    "git_mode": "100644",
+    "git_blob": "18f3bf1b42c3277b525a642f0c5009114ad22c2d"
+  },
+  "gemini": {
+    "source": ".gemini/global-settings.json",
+    "commit": "0bf18e9764b9a2e00763e089af2c41a7710f6141",
+    "sha256": "6686efb4dc6477391c0ae2347ca87618efff1843553c252ada102da3d0bf221e",
+    "git_mode": "100644",
+    "git_blob": "2c0ddd3dd01b0b1c56ebaeb543232addd3dd8ce4"
+  }
+}

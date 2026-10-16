@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -58,6 +59,20 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(installed.returncode, 0, installed.stderr)
             paths = {"codex": ".codex/hooks.json", "copilot": ".copilot/hooks/hooks.json", "gemini": ".gemini/settings.json"}
             configs = {provider: json.loads((home / path).read_bytes()) for provider, path in paths.items()}
+            # Scanner recovery remains an explicit installed invocation; tool
+            # registrations now select Guardian and End Turn selects status.
+            manual_scanners = {}
+            for provider in PROVIDERS:
+                legacy = json.loads((ROOT / "scripts/fixtures/provider-hooks-pre-status" / (provider + ".json")).read_bytes())
+                handler = registered_handler(legacy, provider, "scan-secrets.py").copy()
+                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B", str(home / entry(provider))]
+                handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
+                if provider == "copilot":
+                    handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
+                manual_scanners[provider] = handler
+
+            def selected_handler(config, provider, filename):
+                return manual_scanners[provider] if filename == "scan-secrets.py" else registered_handler(config, provider, filename)
             for provider in PROVIDERS:
                 for helper in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
                                "scan_git", "scan_native_file", "scan_audit", "scan_engine"):
@@ -84,7 +99,7 @@ class RecoveryTests(unittest.TestCase):
                     for filename in ("scan-secrets.py", "tool-guard.py"):
                         with self.subTest(installer=installer, attack=attack, provider=provider, hook=filename):
                             sentinel.unlink(missing_ok=True)
-                            handler = registered_handler(config, provider, filename)
+                            handler = selected_handler(config, provider, filename)
                             registered = handler["bash" if provider == "copilot" else "command"]
                             result = subprocess.run(["/bin/sh", "-c", registered], cwd=cwd, env={**attack_env, **handler.get("env", {})}, input=json.dumps(envelope(provider)).encode(), capture_output=True, timeout=12)
                             self.assertFalse(sentinel.exists(), (registered, attack))
@@ -120,7 +135,7 @@ class RecoveryTests(unittest.TestCase):
             candidate = cwd / "credential.txt"
             candidate.write_text("ghp_" + "A" * 36)
             for provider, config in configs.items():
-                handler = registered_handler(config, provider, "scan-secrets.py")
+                handler = selected_handler(config, provider, "scan-secrets.py")
                 result = subprocess.run(["/bin/sh", "-c", handler["bash" if provider == "copilot" else "command"]], cwd=cwd, env={**env, **handler.get("env", {})}, input=json.dumps(envelope(provider, "echo safe")).encode(), capture_output=True, timeout=12)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn("potential secrets detected", reason(json.loads(result.stdout)))
@@ -132,7 +147,7 @@ class RecoveryTests(unittest.TestCase):
                 registrations = json.loads(doctor.stdout)["registrations"]
                 self.assertEqual(registrations["health"], "observed", registrations)
                 config = configs[provider]
-                handler = registered_handler(config, provider, "scan-secrets.py")
+                handler = registered_handler(config, provider, "tool-guard.py")
                 key = "bash" if provider == "copilot" else "command"
                 original = handler[key]
                 handler[key] += " --doctor"

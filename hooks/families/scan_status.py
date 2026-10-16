@@ -1,4 +1,4 @@
-"""Inactive informational turn-end adapter, independent of scanner helpers."""
+"""Informational turn-end adapter, independent of scanner helpers."""
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 

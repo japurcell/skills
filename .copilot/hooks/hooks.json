@@ -10,6 +10,12 @@
           "OBSERVABILITY_CAPTURE_EVENT": "true",
           "OBSERVABILITY_SOURCE_EVENT_NAME": "agentStop"
         }
+      },
+      {
+        "type": "command",
+        "bash": "$HOME/.copilot/hooks/scripts/scan-status.py",
+        "powershell": "python \"$HOME/.copilot/hooks/scripts/scan-status.py\"",
+        "timeoutSec": 2
       }
     ],
     "errorOccurred": [
@@ -74,16 +80,6 @@
           "GUARD_MODE": "block"
         },
         "timeoutSec": 10
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
-        "powershell": "python \"$HOME/.copilot/hooks/scripts/scan-secrets.py\"",
-        "env": {
-          "SCAN_MODE": "block",
-          "SCAN_SCOPE": "diff"
-        },
-        "timeoutSec": 30
       }
     ],
     "preCompact": [
@@ -145,16 +141,6 @@
         "type": "command",
         "bash": "$HOME/.copilot/hooks/scripts/bell.py",
         "powershell": "python \"$HOME/.copilot/hooks/scripts/bell.py\""
-      },
-      {
-        "type": "command",
-        "bash": "$HOME/.copilot/hooks/scripts/scan-secrets.py",
-        "powershell": "python \"$HOME/.copilot/hooks/scripts/scan-secrets.py\"",
-        "env": {
-          "SCAN_MODE": "warn",
-          "SCAN_SCOPE": "diff"
-        },
-        "timeoutSec": 30
       }
     ],
     "sessionStart": [

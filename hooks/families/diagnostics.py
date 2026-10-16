@@ -376,6 +376,10 @@ def _diag_registrations(script, deadline):
         matched = set()
         events = set()
         for event, groups in config["hooks"].items():
+            if DIAG_PROVIDER == "gemini" and event == "disabled":
+                if not isinstance(groups, list) or not all(isinstance(name, str) for name in groups):
+                    raise _DiagnosticsUnavailable("malformed")
+                continue
             if _diag_time.monotonic() >= deadline:
                 raise _DiagnosticsUnavailable("time_limit")
             if not isinstance(groups, list):
@@ -495,6 +499,8 @@ def collector_source(provider: Provider) -> str:
     config = json.loads((repo / template).read_bytes())
     registrations = []
     for event, groups in config.get("hooks", {}).items():
+        if provider.name == "gemini" and event == "disabled":
+            continue
         for group in groups:
             for handler in ([group] if provider.name == "copilot" else group["hooks"]):
                 registrations.append(json.dumps([event, None if provider.name == "copilot" else group.get("matcher"), handler], sort_keys=True, separators=(",", ":"), ensure_ascii=True))
