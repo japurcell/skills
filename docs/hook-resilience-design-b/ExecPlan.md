@@ -28,7 +28,7 @@ Success is observable in a disposable repository: reproduce the large merge and 
 - [x] (2026-10-15) [milestone-2] T3b: Integrated `99f1d1c631d5e364be7dd902b4c3c47d1a595078`; source CLI 28/generator 26/streaming 22/merge 33/reporting 14/preflight 25 and all-provider capture checks pass. Combined T9b native cases pass; see [evidence](t3b-evidence.md).
 - [x] (2026-10-15) [milestone-2] T3b-R: Integrated `9c15d10e7e6deb39cd330a08c7119906ddabc6ab`; ordinary/enabled linked-worktree controls, CLI 32/generator 26/parity 59 pass. See [repair evidence](t3b-repair-evidence.md).
 - [x] (2026-10-16 UTC) [milestone-2] T3b-A: Integrated `5e637a080aeaaf717e344bfe12af8f3a7d66394e`; activated ancestor/rotation/cancellation controls, CLI 35, generator 26, recovery 16, preflight 26, reporting 14, all-provider capture and 62-asset freshness pass. See [audit repair evidence](t3b-audit-evidence.md). Native Windows execution remains unverified.
-- [ ] [milestone-2] T3c: Deliver the provider-neutral installed bundle including status and native launchers.
+- [ ] [milestone-2] T3c: Active in isolated `codex/design-b-t3c`; deliver the provider-neutral installed bundle including status and native launchers.
 - [x] (2026-10-16 UTC) [milestone-2] T4: Integrated `8b4972424850e8f57fe72b262773b330f2e13f5d`; status 29, CLI 35, generator 26 and 62-asset freshness pass. Historical reporting remains independent of content/audit results; see [evidence](t4-evidence.md).
 - [ ] [milestone-2] I2: Verify CLI, scan-result, cancellation, capture, and status contracts together.
 - [ ] [milestone-3] T5: Deliver staged and outgoing publication collectors through the gate CLI.
