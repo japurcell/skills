@@ -31,7 +31,8 @@ TIMEOUT = 12
 DEADLINE = None
 CANCEL_REQUESTS = 0
 PROCESS_BYTES = 1024 * 1024
-PROCESS_SECONDS = 0.25
+PROCESS_SECONDS = 0.5
+REAP_SECONDS = 0.1
 CLEANUP_SECONDS = 2.0
 
 
@@ -117,10 +118,16 @@ def check_cancelled():
         raise KeyboardInterrupt
 
 
-def process_snapshot():
+def process_snapshot(*, deadline=None):
     """Read bounded PID/parent/group/start/state metadata, never command text."""
     with tempfile.TemporaryFile() as output:
         started = time.monotonic()
+        # Observation includes process startup. Cleanup supplies its own absolute
+        # deadline; ordinary observations share the invocation's remaining time.
+        deadline = DEADLINE if deadline is None else deadline
+        allowance = PROCESS_SECONDS
+        if deadline is not None:
+            allowance = max(0, min(allowance, deadline - started - REAP_SECONDS))
         try:
             observer = subprocess.Popen(["/bin/ps", "-axo", "pid=,ppid=,pgid=,lstart=,stat="],
                 stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.DEVNULL,
@@ -129,9 +136,9 @@ def process_snapshot():
             raise Failure("process_observation_unavailable", 2, "cleanup") from None
         try:
             try:
-                observer.wait(timeout=PROCESS_SECONDS)
+                observer.wait(timeout=max(0, allowance - (time.monotonic() - started)))
             except subprocess.TimeoutExpired:
-                raise Failure("process_observation_timeout", 2, "cleanup", limit=PROCESS_SECONDS, measured=round(time.monotonic() - started, 3), unit="seconds") from None
+                raise Failure("process_observation_timeout", 2, "cleanup", limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds") from None
             if observer.returncode:
                 raise Failure("process_observation_unavailable", 2, "cleanup")
             measured = os.fstat(output.fileno()).st_size
@@ -152,7 +159,7 @@ def process_snapshot():
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(observer.pid, signal.SIGKILL)
             with contextlib.suppress(subprocess.TimeoutExpired):
-                observer.wait(timeout=PROCESS_SECONDS)
+                observer.wait(timeout=REAP_SECONDS)
 
 
 def remember_descendants(process, known, snapshot):
@@ -192,42 +199,47 @@ def signal_observed(living, signum):
 
 
 def stop_process(process, known):
-    # Reserve observer termination and leader reaping inside the same 2s allowance.
-    deadline = time.monotonic() + CLEANUP_SECONDS - 2 * PROCESS_SECONDS
+    # One absolute cleanup deadline covers observation, escalation and reaping.
+    # Start forced cleanup while a full observation and both reaps still fit.
+    deadline = time.monotonic() + CLEANUP_SECONDS
+    force_at = deadline - PROCESS_SECONDS - 2 * REAP_SECONDS
     try:
-        snapshot = process_snapshot()
+        snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
         remember_descendants(process, known, snapshot)
         # SIGINT lets canonical capture_git catch BaseException and stop its own
         # independently created Git session before the scanner itself exits.
         if process.returncode is None:
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(process.pid, signal.SIGINT)
-        graceful = min(deadline, time.monotonic() + 0.6)
+        graceful = min(force_at, time.monotonic() + 0.6)
         while True:
             process.poll()
-            snapshot = process_snapshot()
+            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
             if process.returncode is not None and not living:
                 return
-            if time.monotonic() >= graceful:
+            if (time.monotonic() >= graceful
+                    or time.monotonic() + PROCESS_SECONDS + REAP_SECONDS >= force_at):
                 break
             time.sleep(0.01)
         # A scanner ignoring interruption must not strand capture_git's separate
         # process group. Verify remembered identities, kill all observed groups,
         # and rescan retained ancestors within the same finite cleanup window.
-        while time.monotonic() < deadline:
+        while True:
             signal_observed(living, signal.SIGKILL)
             process.poll()
             if process.returncode is None and process.pid not in living:
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(process.pid, signal.SIGKILL)
             process.poll()
-            snapshot = process_snapshot()
+            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
             if process.returncode is not None and not living:
                 return
+            if time.monotonic() + REAP_SECONDS >= deadline:
+                break
             time.sleep(0.01)
         raise Failure("process_cleanup_incomplete", 2, "cleanup", limit=CLEANUP_SECONDS, unit="seconds")
     finally:
@@ -235,7 +247,7 @@ def stop_process(process, known):
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(process.pid, signal.SIGKILL)
         with contextlib.suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=PROCESS_SECONDS)
+            process.wait(timeout=max(0, min(REAP_SECONDS, deadline - time.monotonic())))
 
 
 
@@ -709,7 +721,7 @@ def parser():
                     "Active root contains .codex/hooks, .copilot/hooks/scripts and .gemini/hooks/scripts. "
                     "Verification leaves live targets and the index unchanged. No environment configuration is accepted. "
                     "Bounds: patch 1 MiB; state 64 MiB/4096 paths; 64 targets; each child 12 seconds; total 180 seconds; stdin 2 seconds. "
-                    "POSIX checking requires /bin/ps access to numeric process metadata (1 MiB, 0.25 seconds per observation); cleanup is bounded at 2 seconds and 256 observed processes. "
+                    "POSIX checking requires /bin/ps access to numeric process metadata (1 MiB, 0.5 seconds per observation, 0.1 seconds for observer reaping); cleanup is bounded at 2 seconds and 256 observed processes. "
                     "Windows checking refuses before subprocess launch until bounded descendant cleanup is available. "
                     "Exit: 0 verified, 1 findings, 2 incomplete, 3 invalid invocation, 130 canceled.")
     result.add_argument("--version", action="version", version="%(prog)s " + VERSION + " schema=" + SCHEMA)
@@ -810,7 +822,7 @@ def failure_action(reason):
     if reason == "bounded_descendant_cleanup_unavailable":
         return "Run verification on a supported POSIX host with process-observation access."
     if reason.startswith("process_observation_"):
-        return "Restore /bin/ps access to bounded numeric process metadata, then rerun --check."
+        return "Restore /bin/ps access and responsive numeric process metadata within the 0.5-second observation allowance, then rerun --check."
     if reason == "process_cleanup_incomplete":
         return "Stop remaining verifier-owned children and restore process-observation access before retrying --check."
     if reason == "descendant_limit":
