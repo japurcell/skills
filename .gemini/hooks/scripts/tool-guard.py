@@ -51,7 +51,7 @@ def emit_deny_response(reason: str) -> None:
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
-REPORT_BUILD = "6367ccf607c6810a"
+REPORT_BUILD = "ebaa2bd0a1f1b4ef"
 
 
 def inspection_incomplete(threats):

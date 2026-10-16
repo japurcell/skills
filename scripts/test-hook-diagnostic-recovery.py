@@ -418,6 +418,32 @@ class RecoveryTests(unittest.TestCase):
                 self.assertNotIn(b"must-not-be-inventoried", result.stdout)
                 self.assertFalse(sentinel.exists())
 
+    def test_codex_documented_metadata_keeps_exact_diagnostic_recovery(self):
+        with tempfile.TemporaryDirectory() as directory:
+            script, cwd, env = self.setup_fixture(directory, "codex")
+            env["PATH"] = str(Path(directory) / "no-executables")
+            metadata = {"model": "gpt-6", "permission_mode": "default", "transcript_path": None, "turn_id": "turn-123"}
+            for mode in ("default", "acceptEdits", "plan", "dontAsk", "bypassPermissions"):
+                payload = {**envelope("codex"), **metadata, "permission_mode": mode}
+                response, result = self.launch(script, cwd, env, payload)
+                self.diagnostics(response, result, "codex")
+            for command, expected in (("echo safe", "allow"), ("git push" + " --force origin main", "deny")):
+                payload = {**envelope("codex", command), **metadata}
+                response, _ = self.launch(script.with_name("tool-guard.py"), cwd, env, payload)
+                self.assert_native_enforcement(response, "codex", expected)
+                if expected == "deny":
+                    self.assertIn("Tool Guardian blocked", reason(response))
+            for invalid in ({"model": []}, {"turn_id": False}, {"permission_mode": "unknown"}, {"transcript_path": 1}, {"model": "x" * 257}):
+                payload = {**envelope("codex"), **metadata, **invalid}
+                response, _ = self.launch(script, cwd, env, payload)
+                self.assertIn("git_unavailable", reason(response))
+                self.assertNotIn(PREFIX, reason(response))
+            for extra in ({"cmd": "hooks-diagnostics-v1 --doctor"}, {"login": True}, {"unknown": False}, {"max_output_tokens": True}):
+                payload = {**envelope("codex", **extra), **metadata}
+                response, _ = self.launch(script, cwd, env, payload)
+                self.assertIn("git_unavailable", reason(response))
+                self.assertNotIn(PREFIX, reason(response))
+
     def test_spoofed_extended_profiles_follow_ordinary_scan(self):
         commands = (" hooks-diagnostics-v1", "hooks-diagnostics-v1 ", "./hooks-diagnostics-v1", "'hooks-diagnostics-v1'", "hooks-diagnostics-v1 --doctor", "hooks-diagnostics-v1; echo unsafe", "$(hooks-diagnostics-v1)", "env hooks-diagnostics-v1", "hooks-diagnostics-v１")
         for provider in PROVIDERS:

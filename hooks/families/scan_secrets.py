@@ -249,9 +249,16 @@ def _diagnostic_request(payload):
         if payload.get("hook_event_name") != event or type(payload.get(tool_key)) is not str or payload[tool_key] not in tools:
             return False
         metadata = {"session_id": 256, "cwd": 8192, "transcript_path": 8192, "tool_use_id": 256}
-    if not set(payload) <= {"hook_event_name", tool_key, args_key, "timestamp", *metadata}:
+    if DIAG_PROVIDER == "codex":
+        metadata.update(model=256, turn_id=256)
+        if "permission_mode" in payload and (type(payload["permission_mode"]) is not str or payload["permission_mode"] not in {"default", "acceptEdits", "plan", "dontAsk", "bypassPermissions"}):
+            return False
+    extra_metadata = {"permission_mode"} if DIAG_PROVIDER == "codex" else set()
+    if not set(payload) <= {"hook_event_name", tool_key, args_key, "timestamp", *metadata, *extra_metadata}:
         return False
-    if any(type(payload[key]) is not str or len(payload[key]) > limit for key, limit in metadata.items() if key in payload):
+    if any((type(payload[key]) is not str or len(payload[key]) > limit)
+           and not (DIAG_PROVIDER == "codex" and key == "transcript_path" and payload[key] is None)
+           for key, limit in metadata.items() if key in payload):
         return False
     if "timestamp" in payload:
         stamp = payload["timestamp"]

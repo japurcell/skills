@@ -501,7 +501,7 @@ def collector_source(provider: Provider) -> str:
     entryroot = provider.hook_root if provider.name == "codex" else provider.hook_root / "scripts"
     assets = []
     for target in targets():
-        if target.provider == provider.name and target.family in {"scan_secrets", "scan_runtime", "common", "audit", "tool_guard"}:
+        if target.provider == provider.name and target.family in {"scan_secrets", "scan_status", "scan_runtime", "common", "audit", "tool_guard"}:
             family = importlib.import_module("hooks.families." + target.family)
             # Entrypoints can embed this collector later: no self-render/hash cycle.
             expected = None if target.output_path.parent == entryroot else hashlib.sha256(family.render(provider, target).encode()).hexdigest()
