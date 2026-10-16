@@ -1986,6 +1986,22 @@ function Test-HelperFailuresAreInstallerErrors {
             $homeDir = Join-Path $workdir "$helper/home"
             $codex = Join-Path $workdir "$helper/codex"
             New-FixtureRepo $repo
+            # Instrument only the disposable installer copy. Never emit exception
+            # messages, local values, or paths from the production CLI.
+            $scannerInstaller = Join-Path $repo 'scripts/install-scan-secrets.py'
+            $scannerSource = [System.IO.File]::ReadAllText($scannerInstaller).Replace("`r`n", "`n")
+            $originalHandler = "    except Exception:`n        reason, code = ""installation_failed"", 2"
+            $fixtureHandler = @'
+    except Exception as fixture_error:
+        import traceback
+        frames = traceback.extract_tb(fixture_error.__traceback__)[-8:]
+        trace = ">".join(f"{frame.name[:64]}:{frame.lineno}" for frame in frames)
+        numeric = lambda name: getattr(fixture_error, name, None) if type(getattr(fixture_error, name, None)) is int else None
+        print(f"Fixture scanner failure: type={type(fixture_error).__name__[:64]} winerror={numeric('winerror')} errno={numeric('errno')} frames={trace}", file=sys.stderr)
+        reason, code = "installation_failed", 2
+'@
+            Assert-True ($scannerSource.Contains($originalHandler)) 'Expected the fixture scanner failure boundary to exist.'
+            [System.IO.File]::WriteAllText($scannerInstaller, $scannerSource.Replace($originalHandler, $fixtureHandler))
             Write-FixtureFile (Join-Path $homeDir 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $codex 'sentinel') @('sentinel')
             Write-FixtureFile (Join-Path $repo "scripts/$helper") @('import sys', 'print("Fixture helper status")', 'print("Fixture helper failed; repair its input.", file=sys.stderr)', 'raise SystemExit(2)')
