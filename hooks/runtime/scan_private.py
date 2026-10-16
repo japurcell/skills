@@ -28,7 +28,7 @@ def decoded(raw):
 
 
 class Directory:
-    def __init__(self, path, context, resources):
+    def __init__(self, path, context, resources, *, private=True):
         self.context = context
         self.path = Path(path)
         self.resources = resources
@@ -47,7 +47,8 @@ class Directory:
             resources.callback(os.close, parent)
         self.descriptor = parent
         self.info = os.fstat(parent)
-        if self.info.st_uid != os.getuid() or stat.S_IMODE(self.info.st_mode) != 0o700:
+        self.mode = stat.S_IMODE(self.info.st_mode)
+        if (self.info.st_uid != os.getuid() or (self.mode != 0o700 if private else bool(self.mode & 0o022))):
             raise ScanSecurityError("handoff_invalid", "repository")
 
     def name(self, name):
@@ -58,7 +59,7 @@ class Directory:
     def validate(self):
         self.context.check_deadline()
         current = self.path.lstat()
-        if (current.st_dev, current.st_ino) != (self.info.st_dev, self.info.st_ino) or stat.S_IMODE(current.st_mode) != 0o700:
+        if (current.st_dev, current.st_ino) != (self.info.st_dev, self.info.st_ino) or stat.S_IMODE(current.st_mode) != self.mode:
             raise ScanSecurityError("handoff_invalid", "repository")
 
     def child(self, name, *, create=False):
@@ -71,6 +72,7 @@ class Directory:
         child.descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=self.descriptor)
         self.resources.callback(child.close)
         child.info = os.fstat(child.descriptor)
+        child.mode = 0o700
         if child.info.st_uid != os.getuid() or stat.S_IMODE(child.info.st_mode) != 0o700:
             raise ScanSecurityError("handoff_invalid", "repository")
         return child

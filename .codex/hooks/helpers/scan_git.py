@@ -36,6 +36,7 @@ def capture_git(context: ScanContext,
     executable: str | None = None,
     environment: dict | None = None,
     command_seconds: float = 5.0,
+    cwd_descriptor: int | None = None,
 ) -> Iterator[VerifiedCapture | None]:
     import errno
     import subprocess
@@ -89,6 +90,17 @@ def capture_git(context: ScanContext,
         "stdin": subprocess.DEVNULL,
         "stderr": subprocess.DEVNULL,
     }
+    command_arguments = [git_executable, *args]
+    if cwd_descriptor is not None:
+        if os.name != "posix" or not stat.S_ISDIR(os.fstat(cwd_descriptor).st_mode):
+            raise ScanSecurityError("candidate_unsafe", operation)
+        import sys
+        # macOS /dev/fd/N is not a usable Popen cwd. An isolated bridge changes
+        # only the child cwd, closes the inherited handle, then execs the exact
+        # executable in the same PID/process group used by capture cancellation.
+        bridge = "import os,sys; descriptor=int(sys.argv[1]); os.fchdir(descriptor); os.close(descriptor); os.execve(sys.argv[2],sys.argv[2:],os.environ)"
+        command_arguments = [sys.executable, "-I", "-S", "-B", "-c", bridge, str(cwd_descriptor), git_executable, *args]
+        popen_options.update(cwd=os.path.sep, pass_fds=(cwd_descriptor,))
     if os.name == "posix":
         popen_options["start_new_session"] = True
     if os.name == "nt":
@@ -134,7 +146,7 @@ def capture_git(context: ScanContext,
                     raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
                 try:
                     attempts = attempt + 1
-                    process = subprocess.Popen([git_executable, *args], stdout=capture, **popen_options)
+                    process = subprocess.Popen(command_arguments, stdout=capture, **popen_options)
                     break
                 except OSError as exc:
                     # Popen has no live child when launch raises. Retry only

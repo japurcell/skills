@@ -13,7 +13,7 @@ import time
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch", "scan_repo_install")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch", "scan_repo_install", "scan_repo_state", "scan_repo_dispatch")
 
 
 class Failure(Exception):
@@ -41,7 +41,7 @@ def parser():
         common.add_argument(flag, action="store_true", default=argparse.SUPPRESS, help=text)
     root = Parser(prog="scan-secrets", description="Explicit, synchronous secret checks. No background scans.",
                   parents=[common], allow_abbrev=False)
-    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; status scan_secrets_status_v1; policy {POLICY}; repository preview scan_secrets_repo_install_v1; budget schema 1")
+    root.add_argument("--version", action="version", version=f"scan-secrets {VERSION}; result {SCHEMA}; status scan_secrets_status_v1; policy {POLICY}; repository installation scan_secrets_repo_install_v1; budget schema 1")
     commands = root.add_subparsers(dest="command")
     check = commands.add_parser("check", parents=[common], allow_abbrev=False,
         help="inspect pending worktree or staged index content", description="Inspect captured pending content without changing source, index, refs or Git configuration.",
@@ -55,10 +55,12 @@ def parser():
     gates = gate.add_subparsers(dest="action")
     pre_commit = gates.add_parser("pre-commit", parents=[common], allow_abbrev=False,
         help="inspect changed staged files in full", description="Inspect full stored versions of files changed between captured HEAD and Git's selected index. This feedback describes the captured staged state; later hooks may change it.")
+    pre_commit.add_argument("--git", help=argparse.SUPPRESS)
     pre_commit.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     pre_commit.add_argument("--budget-file", help="explicit schema-1 JSON budget file; uses checkpoint profile")
     pre_push = gates.add_parser("pre-push", parents=[common], allow_abbrev=False,
         help="inspect the actual outgoing Git transaction", description="Read Git pre-push tuples once through EOF. Inspect complete immutable outgoing history, messages and supported paths. Components and full encoded paths are limited to 4096 bytes; CR, LF, backslashes and gitlinks are unsupported and block publication. Canonical v1 LFS pointers require complete ordinary local payloads matching declared size and SHA256; inspection never downloads.")
+    pre_push.add_argument("--git", help=argparse.SUPPRESS)
     pre_push.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
     pre_push.add_argument("--remote", required=True, help="Git-supplied destination name")
     pre_push.add_argument("--url", required=True, help="Git-supplied destination URL (never displayed)")
@@ -66,21 +68,31 @@ def parser():
     pre_push.add_argument("--invocation", help=argparse.SUPPRESS)
     dispatch = commands.add_parser("dispatch", parents=[common], allow_abbrev=False,
         help="scan then run an explicitly bound publication workflow", description="Own one synchronous pre-push invocation. Inspect and audit before any downstream step. Replay exact Git stdin and arguments to preserved hooks. Basic HTTP LFS upload uses verified private bytes and a pinned Git LFS 3.8.0 binary. Inspection and downstream steps have separate finite deadlines. Downstream errors preserve their exit status; scan errors use 1/2/3/130. No saved status authorizes dispatch.")
+    dispatch.add_argument("--git", help=argparse.SUPPRESS)
     dispatch.add_argument("action", choices=("pre-push",))
     dispatch.add_argument("--repo", default=".")
     dispatch.add_argument("--binding", required=True, help="owner-only schema-1 installation binding")
     dispatch.add_argument("destination", nargs=2, help="-- followed by original remote name and URL")
     hooks = commands.add_parser("hooks", parents=[common], allow_abbrev=False,
-        help="preview explicit repository gate installation", description="Read-only repository installation discovery. Activation and recovery are not implemented. Never executes existing hooks or changes repository configuration.")
+        help="install explicit repository Git gates", description="Install, preview or restore repository-owned Git gates. Installation never executes existing hooks or contacts remotes.")
     hook_actions = hooks.add_subparsers(dest="action")
     for action in ("install", "uninstall"):
         command = hook_actions.add_parser(action, parents=[common], allow_abbrev=False,
-            help=f"preview repository gate {action}",
-            epilog="Example: scan-secrets hooks " + action + " --repo . --dry-run --json. Exit 0 means a read-only preview; 2 means unavailable metadata/infrastructure; 3 means unsupported invocation/configuration; 130 means cancelled. Discovery: 10 seconds overall, 2 seconds per Git command, 64 KiB per file/capture, 1 MiB aggregate capture, 2048 configuration entries and 128 worktrees. No writes, hooks, managers or network. Select --git PATH when ambient Git is an Apple launcher; preview never invokes xcrun. The exact selected Git defines configuration discovery and is reported. Relative hooksPath is resolved separately for each hook cwd. Existing repository ownership requires later activation schema support. Data uses the documented platform user data directory; runtime and interpreter use this exact isolated invocation. Budget files use schema 1 checkpoint/publication profiles; absent selection uses finite built-in defaults.")
+            help=f"{action} repository Git gates",
+            epilog="Examples: scan-secrets hooks " + action + " --repo . --dry-run --json; scan-secrets hooks " + action + " --repo . --git /absolute/trusted/git. Exit 0 means successful installation/restoration, idempotent no-op, or read-only preview; 2 means unavailable infrastructure/lock contention; 3 means invalid or unsupported configuration; 130 means cancelled. Dry-run writes no configuration, locks, reports, backups or hooks. Normal installation holds installer and Git config locks for cooperating writers, prepares complete private generations, then activates configuration; simultaneous direct editor replacement is outside that guarantee. Backups and retired generations remain private. Explicitly rerun after cancellation or journaled interruption; ambiguous orphan locks require manual review and are never deleted by guesswork. Discovery limits: 10 seconds overall, 2 per Git command, 64 KiB per metadata file, 1 MiB captured output, 2048 settings and 128 worktrees. Installation limits: 20 seconds, 1 MiB per runtime file, 16 MiB captured/temporary bytes, 128 owned files per generation, 16 retained generations; pinned LFS tools are hashed within 64 MiB. Installation never runs original hooks, managers, credential helpers or network. Direct Git selection is required for Apple launchers. Shared multi-worktree scope, included local hook bindings, branch-dependent includes, URL rewrites and custom LFS managers are refused. Already enabled worktree configuration requires --scope worktree; no extension is enabled. Destination bindings use unambiguous configured push URLs or paired --remote NAME --url URL. Budget LOCATION is pinned; valid owner-only content edits apply on explicit retry without reinstall. An explicit install updates changed binding/runtime selections and captures original hook edits; identical state is a no-op.")
         command.add_argument("--repo", default=".", help="Git worktree path (default: current directory)")
         command.add_argument("--budget-file", help="explicit trusted schema-1 budget file location; otherwise built-in finite defaults")
         command.add_argument("--git", help="absolute trusted direct Git executable for discovery; Apple launchers require explicit selection")
-        command.add_argument("--dry-run", action="store_true", help="discover and describe intended operations without writes (currently required)")
+        command.add_argument("--dry-run", action="store_true", help="discover and describe intended operations without writes")
+        command.add_argument("--scope", choices=("repository", "worktree"), help="explicit configuration scope; worktree requires extensions.worktreeConfig already enabled")
+        command.add_argument("--remote", help="explicit destination name, paired with --url")
+        command.add_argument("--url", help="exact destination URL, paired with --remote; never displayed")
+        command.add_argument("--lfs", help="absolute pinned Git LFS 3.8.0 tool for a recognized standard pre-push hook")
+        command.add_argument("--lfs-endpoint", help="explicit basic HTTP LFS endpoint; HTTP is limited to 127.0.0.1")
+    internal_hook = commands.add_parser("repository-hook", allow_abbrev=False, help="advanced: invoke an owned repository hook launcher")
+    internal_hook.add_argument("--installation", required=True)
+    internal_hook.add_argument("hook")
+    internal_hook.add_argument("arguments", nargs=argparse.REMAINDER)
     status = commands.add_parser("status", parents=[common], allow_abbrev=False,
         help="display the last scan without inspecting content", description="Display historical scan metadata only. Never scans or authorizes publication.",
         epilog="Examples: scan-secrets status --repo .; scan-secrets status --repo . --json. Exit 0 means valid information, including not_scanned; unreadable or corrupt reports exit 2. Reports are bounded to 64 KiB, use metadata reads with a two-second deadline, and live outside the worktree and executable bundle under XDG_DATA_HOME/scan-secrets/status, macOS Application Support/scan-secrets/status, or Windows LOCALAPPDATA/scan-secrets/status. Status never waits for a scan or certifies current content.")
@@ -95,8 +107,10 @@ def output(value, *, json_mode, quiet=False):
         data = json.dumps(value, ensure_ascii=True, separators=(",", ":")) + "\n"
     elif value.get("schema") == "scan_secrets_dispatch_v1":
         data = "" if quiet and value["exit_code"] == 0 else f"scan-secrets: publication {value['outcome']}; {value['reason']}; {value.get('completed_steps', 0)} downstream steps completed. {value['recovery']}\n"
+    elif value.get("schema") == "scan_secrets_repo_install_v1" and value["outcome"] != "preview" and value.get("exit_code") == 0:
+        data = "" if quiet else f"scan-secrets: repository gates {value['outcome']}; {value['recovery']}\n"
     elif value.get("schema") == "scan_secrets_repo_install_v1" and value["outcome"] == "preview":
-        data = "" if quiet else (f"scan-secrets: read-only {value['action']} preview; activation unavailable.\n"
+        data = "" if quiet else (f"scan-secrets: read-only {value['action']} preview.\n"
             + f"  Repository: {value['snapshot']['repository']['root']}\n"
             + f"  Scope: {value['snapshot']['repository']['proposed_scope']}\n"
             + f"  Hook source: {value['snapshot']['hooks_path']['effective']}\n"
@@ -112,7 +126,7 @@ def output(value, *, json_mode, quiet=False):
             data += "  Use --json for the bounded finding report.\n"
     else:
         data = f"scan-secrets: {value['outcome']}; {value['reason']}. {value['recovery']}\n"
-    target = sys.stdout if json_mode or value["outcome"] in {"complete_clean", "complete_findings", "preview"} else sys.stderr
+    target = sys.stdout if json_mode or value["outcome"] in {"complete_clean", "complete_findings", "preview"} or value.get("schema") == "scan_secrets_repo_install_v1" and value.get("exit_code") == 0 else sys.stderr
     target.write(data)
     target.flush()
     if value.get("status_outcome") == "failed":
@@ -254,7 +268,7 @@ def _check(args, *, load, runtime, entry, status_capture, invocation_resources):
     handoff = None
     records = []
     try:
-        with repository.ProtectedRepository(context, args.repo, selected_index=os.environ.get("GIT_INDEX_FILE") if is_gate else None, capture_selected_index=is_gate and not publication, publication=publication) as protected:
+        with repository.ProtectedRepository(context, args.repo, selected_index=os.environ.get("GIT_INDEX_FILE") if is_gate else None, capture_selected_index=is_gate and not publication, publication=publication, executable=getattr(args, "git", None)) as protected:
             status_capture["repository"] = {"root": protected.root, "gitdir": protected.gitdir, "common": protected.common}
             if publication:
                 transaction = modules["scan_transaction"].capture_transaction(protected.object_format, args.remote, args.url, context)
@@ -389,9 +403,17 @@ def _main(argv, *, load, runtime, entry):
             for name in ("scan_types", "scan_git", "scan_native_file", "scan_repository", "scan_status", "scan_budget"):
                 load(name)
             installer = load("scan_repo_install")
+            if not args.dry_run:
+                runtime_modules(load, runtime, entry)
+            for name in ("scan_lfs", "scan_private", "scan_gate", "scan_repo_state", "scan_repo_dispatch"):
+                load(name)
             value, code = installer.run(args, entry=entry, runtime=runtime)
             output(value, json_mode=getattr(args, "json", False), quiet=getattr(args, "quiet", False))
             return code
+        if args.command == "repository-hook":
+            load("scan_status")
+            modules, build, _ = runtime_modules(load, runtime, entry)
+            return modules["scan_repo_dispatch"].run(args, build=build, entry=entry)
         if args.command == "status":
             try:
                 load("scan_native_file")

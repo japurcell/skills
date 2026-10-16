@@ -209,7 +209,7 @@ def run(args, *, build, entry):
         # Downstream steps share a separate explicit wall-clock deadline.
         context = ScanContext(ScanLimits(**DEFAULTS["publication"], max_capture_total_bytes=DEFAULTS["publication"]["max_capture_bytes"]))
         with contextlib.ExitStack() as resources:
-            repository = resources.enter_context(ProtectedRepository(context, args.repo, publication=True))
+            repository = resources.enter_context(ProtectedRepository(context, args.repo, publication=True, executable=getattr(args, "git", None)))
             value["phase"] = "binding"
             try:
                 configured, binding_identity = binding(repository, args, build)
@@ -255,7 +255,7 @@ def run(args, *, build, entry):
             scanner_environment["XDG_DATA_HOME"] = str(Path(configured["data_directory"]).parent)
             parent_scan_temp = context.temp_bytes + len(transaction.raw)
             with capture_git(context, ["-I", "-S", "-B", str(entry), "gate", "pre-push", "--repo", str(repository.root), "--json",
-                    "--remote", args.destination[0], "--url", args.destination[1], "--budget-file", str(budget_path), "--invocation", str(root)],
+                    *(["--git", args.git] if getattr(args, "git", None) else []), "--remote", args.destination[0], "--url", args.destination[1], "--budget-file", str(budget_path), "--invocation", str(root)],
                     cwd=repository.root, executable=sys.executable, environment=scanner_environment, input_bytes=transaction.raw,
                     allow_nonzero=True, command_seconds=limits["max_seconds"], deadline=context.deadline) as scan:
                 raw = b"".join(scan.chunks())
@@ -267,7 +267,7 @@ def run(args, *, build, entry):
                     value.update(outcome=result["outcome"], coverage_complete=result["coverage_complete"],
                         reason=result["reason"], phase=result["phase"], recovery=result["recovery"], diagnostic=result["diagnostic"],
                         audit_outcome=result["audit_outcome"], status_outcome=result["status_outcome"],
-                        security_outcome=result["security_outcome"], counts=result["counts"], exit_code=scan.exit_code)
+                        security_outcome=result["security_outcome"], counts=result["counts"], findings=result["findings"], exit_code=scan.exit_code)
                     return value, scan.exit_code
             # Reconcile the scanner process's actual captures into this
             # invocation's aggregate budget before any downstream work.

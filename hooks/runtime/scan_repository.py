@@ -25,13 +25,13 @@ class NotRepository(Exception):
 
 
 class ProtectedRepository:
-    def __init__(self, context, requested, *, selected_index=None, capture_selected_index=False, publication=False):
+    def __init__(self, context, requested, *, selected_index=None, capture_selected_index=False, publication=False, executable=None):
         self.publication = publication
         self.capture_selected_index = capture_selected_index
         self.selected_index = selected_index
         self.context = context
         self.requested = Path(requested).resolve()
-        self.executable = shutil.which("git")
+        self.executable = executable or shutil.which("git")
         self.resources = contextlib.ExitStack()
         self.charged = 0
         self.environment = {}
