@@ -37,7 +37,7 @@ function Invoke-Case {
     $grandchildMarker = Join-Path $caseDir 'grandchild.json'
     $grandchildRunner = Join-Path $caseDir 'grandchild.py'
     $grandchildObserver = Join-Path $caseDir 'observe-grandchild.py'
-    if ($Scenario -eq 'grandchild') {
+    if ($Scenario -eq 'grandchild' -or $Scenario -eq 'launch-death') {
         [System.IO.File]::WriteAllText($grandchildRunner, @'
 import subprocess, sys
 middle = r"""
@@ -116,6 +116,7 @@ finally:
 '@)
     }
     $shim = switch ($Scenario) {
+        'launch-death' { "@echo off`r`n`"$realGit`" %*" }
         'grandchild' { "@echo off`r`nif `"%1 %2`"==`"rev-parse --is-inside-work-tree`" (`"$python`" -I -S -B `"$grandchildRunner`" `"$grandchildMarker`" & exit /b 0)`r`n`"$realGit`" %*" }
         'descendant' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (start "" /B cmd /c "ping -n 11 127.0.0.1 >nul" & echo true & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'partial' { '@echo off' + "`r`n" + 'echo true' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
@@ -171,7 +172,7 @@ finally:
         $env:TMP = $caseDir
         $started = [Diagnostics.Stopwatch]::StartNew()
         $runner = $hooks[$Provider]
-        if ($Diagnostic) {
+        if ($Diagnostic -and $Scenario -ne 'launch-death') {
             $runner = Join-Path $caseDir 'capture-fixture.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
             $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
@@ -244,6 +245,63 @@ finally:
 '@
             $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('CAPTURE_ERROR_LITERAL', $captureErrorLiteral)
             [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'launch-death') {
+            $runner = Join-Path $caseDir 'launch-death.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $markerLiteral = $grandchildMarker | ConvertTo-Json -Compress
+            $fixture = @'
+import ctypes, json, os, pathlib, runpy
+class Information(ctypes.Structure):
+    _fields_ = [('process', ctypes.c_void_p), ('thread', ctypes.c_void_p),
+                ('pid', ctypes.c_uint32), ('tid', ctypes.c_uint32)]
+original_library = ctypes.WinDLL
+observer = original_library('kernel32', use_last_error=True)
+observer.GetProcessTimes.argtypes = [ctypes.c_void_p] + [ctypes.POINTER(ctypes.c_uint64)] * 4
+observer.GetProcessTimes.restype = ctypes.c_int
+class CreateProcessBoundary:
+    def __init__(self, function):
+        self.function = function
+    @property
+    def argtypes(self):
+        return self.function.argtypes
+    @argtypes.setter
+    def argtypes(self, value):
+        self.function.argtypes = value
+    @property
+    def restype(self):
+        return self.function.restype
+    @restype.setter
+    def restype(self, value):
+        self.function.restype = value
+    def __call__(self, *arguments):
+        result = self.function(*arguments)
+        if result:
+            # The real kernel returned a real suspended child. End the public
+            # scanner process before its next post-creation Python operation.
+            information = ctypes.cast(arguments[-1], ctypes.POINTER(Information)).contents
+            times = [ctypes.c_uint64() for _ in range(4)]
+            if not observer.GetProcessTimes(information.process, *(ctypes.byref(item) for item in times)):
+                os._exit(98)
+            marker = pathlib.Path(MARKER_LITERAL)
+            writing = marker.with_suffix('.writing')
+            writing.write_text(json.dumps({'pid': int(information.pid), 'created': times[0].value}), encoding='ascii')
+            writing.replace(marker)
+            os._exit(99)
+        return result
+class Library:
+    def __init__(self, library):
+        self.library = library
+        self.create = CreateProcessBoundary(library.CreateProcessW)
+    def __getattr__(self, name):
+        return self.create if name == 'CreateProcessW' else getattr(self.library, name)
+def library(name, *arguments, **keywords):
+    result = original_library(name, *arguments, **keywords)
+    return Library(result) if name.casefold() == 'kernel32' else result
+ctypes.WinDLL = library
+runpy.run_path(HOOK_LITERAL, run_name='__main__')
+'@
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('MARKER_LITERAL', $markerLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
         } elseif ($Scenario -eq 'capture-error') {
             $runner = Join-Path $caseDir 'capture-error.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
@@ -268,6 +326,19 @@ finally:
             Get-Content -LiteralPath $errorPath | Where-Object {
                 $_ -cmatch '^W2 phase=[0-9]+ pid=[0-9]+ code=[0-9]+ handles=[0-9]+ ms=[0-9]+$'
             } | Select-Object -First 128 | ForEach-Object { Write-Output $_ }
+        }
+        if ($Scenario -eq 'launch-death') {
+            if ($process.ExitCode -ne 99 -or -not (Test-Path -LiteralPath $grandchildMarker)) {
+                throw "$Provider $Mode launch-death did not reach the real post-create boundary: $($process.ExitCode)"
+            }
+            & $python -I -S -B $grandchildObserver $grandchildMarker inspect
+            $observed = $LASTEXITCODE
+            if ($observed -eq 1) { throw "$Provider $Mode launch-death left owned suspended root alive" }
+            if ($observed -ne 0) { throw "$Provider $Mode launch-death ownership check failed: $observed" }
+            if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
+            $leaked = @(Get-ChildItem -LiteralPath $caseDir -Filter 'tmp*')
+            if ($leaked.Count) { throw "$Provider $Mode $Scenario leaked capture files: $($leaked.Name -join ', ')" }
+            return
         }
         if ($process.ExitCode -ne 0) { throw "$Provider $Mode $Scenario exited $($process.ExitCode)" }
         if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
@@ -354,7 +425,7 @@ finally:
     }
     finally {
         $cleanupCode = 0
-        if ($Scenario -eq 'grandchild' -and (Test-Path -LiteralPath $grandchildMarker)) {
+        if (($Scenario -eq 'grandchild' -or $Scenario -eq 'launch-death') -and (Test-Path -LiteralPath $grandchildMarker)) {
             & $python -I -S -B $grandchildObserver $grandchildMarker cleanup
             $cleanupCode = $LASTEXITCODE
         }
@@ -371,7 +442,7 @@ try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
-            foreach ($scenario in @('grandchild', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
+            foreach ($scenario in @('grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }
         }
