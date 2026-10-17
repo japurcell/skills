@@ -3,7 +3,7 @@ from pathlib import Path
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
-MODULES = ('scan_types', 'scan_reporting', 'scan_allowlist', 'scan_stream', 'scan_git', 'scan_native_file', 'scan_native_process', 'scan_audit', 'scan_engine')
+MODULES = ('scan_types', 'scan_reporting', 'scan_allowlist', 'scan_stream', 'scan_git', 'scan_native_file', 'scan_audit', 'scan_engine')
 
 
 def render(provider: Provider, target: GeneratedTarget) -> str:

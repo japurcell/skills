@@ -91,7 +91,7 @@ SCANNER_RUNTIME_TARGETS = tuple(
     str(Path(entry).parent / "helpers" / (name + ".py"))
     for entry in SECRET_SCANNER_TARGETS
     for name in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
-                 "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine")
+                 "scan_git", "scan_native_file", "scan_audit", "scan_engine")
 )
 CODEX_HELPER_TARGETS = (
     ".codex/hooks/helpers/common.py",
@@ -325,7 +325,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (68 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (65 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -366,7 +366,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (68 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (65 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
