@@ -160,6 +160,10 @@ jobs:
           PYTHON
       - name: Check generated hooks
         run: rtk proxy python3 scripts/generate-hooks.py --check
+      - name: Test generator behavior and closure
+        run: rtk proxy python3 scripts/test-generate-hooks.py
+      - name: Test maintained suite registry and runner
+        run: rtk proxy python3 scripts/test_test_all.py
       - name: Test verification-only fixture preflight
         run: rtk proxy python3 scripts/test-verify-security-fixture-patch.py
       - name: Test diagnostic recovery
@@ -245,9 +249,5 @@ jobs:
         run: rtk proxy bash scripts/test-install.sh
       - name: Test complete PowerShell installer on macOS
         run: rtk proxy pwsh -NoProfile -File scripts/test-install.ps1
-      - name: Test generator behavior and closure
-        run: rtk proxy python3 scripts/test-generate-hooks.py
-      - name: Test maintained suite registry and runner
-        run: rtk proxy python3 scripts/test_test_all.py
       - name: Recheck generated hooks after complete suites
         run: rtk proxy python3 scripts/generate-hooks.py --check

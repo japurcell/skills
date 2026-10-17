@@ -807,13 +807,15 @@ class GenerateHooksTests(unittest.TestCase):
 
                 git_path.write_text(
                     "#!/usr/bin/env bash\n"
-                    "sleep 0.15\n"
+                    "sleep 1.2\n"
                     "printf 'ok\\n'\n",
                     encoding="utf-8",
                 )
                 git_path.chmod(0o755)
                 with self.subTest(provider=module.__name__, case="cumulative-deadline"):
-                    deadline = time.monotonic() + 0.25
+                    # Each command fits; both cannot. Allow real process-startup
+                    # margin while preserving the shared cumulative deadline.
+                    deadline = time.monotonic() + 2.0
                     with mock.patch.dict(os.environ, {"PATH": bounded_path}):
                         self.assertEqual(
                             module.run_git(module.ScanContext(module.ScanLimits()), ["status"], cwd=ROOT, deadline=deadline),
