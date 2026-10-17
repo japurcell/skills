@@ -156,3 +156,43 @@ jobs:
                   raise SystemExit(f"Missing native capture evidence for {provider}: {len(observed)}/4 cases.")
           print("Verified all 12 native Darwin capture cases with restored soft process limits.")
           PYTHON
+
+  focused_preflight_diagnostics:
+    name: Focused preflight diagnostic observation
+    runs-on: macos-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install focused native prerequisites
+        run: |
+          command -v brew
+          brew install git rtk
+          for formula in git rtk; do
+            printf '%s/bin\n' "$(brew --prefix "$formula")" >> "$GITHUB_PATH"
+          done
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Prepare disposable diagnostic environment
+        run: |
+          task_root="$RUNNER_TEMP/focused preflight"
+          mkdir -p "$task_root/home" "$task_root/tmp"
+          {
+            printf 'HOME=%s/home\n' "$task_root"
+            printf 'USERPROFILE=%s/home\n' "$task_root"
+            printf 'CODEX_HOME=%s/home/.codex\n' "$task_root"
+            printf 'TMPDIR=%s/tmp\n' "$task_root"
+            printf 'GIT_CONFIG_GLOBAL=/dev/null\n'
+            printf 'GIT_CONFIG_NOSYSTEM=1\n'
+            printf 'GIT_TERMINAL_PROMPT=0\n'
+          } >> "$GITHUB_ENV"
+      - name: Observe real source-filter and redaction controls once
+        run: |
+          rtk proxy python3 -c 'import platform, sys; print(platform.platform()); print(sys.version); assert sys.version_info[:2] == (3, 13)'
+          rtk proxy git --version
+          rtk proxy python3 scripts/test-verify-security-fixture-patch.py PreflightTests.test_scanner_boundary_diagnostics_exclude_payload_strings PreflightTests.test_source_filter_commands_are_never_executed

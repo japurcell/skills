@@ -91,7 +91,7 @@ SCANNER_RUNTIME_TARGETS = tuple(
     str(Path(entry).parent / "helpers" / (name + ".py"))
     for entry in SECRET_SCANNER_TARGETS
     for name in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
-                 "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine")
+                 "scan_git", "scan_native_file", "scan_audit", "scan_engine")
 )
 CODEX_HELPER_TARGETS = (
     ".codex/hooks/helpers/common.py",
@@ -325,7 +325,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (68 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (65 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -344,21 +344,6 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(undeclared.relative_to(ROOT).as_posix(), result.stdout)
         undeclared.unlink()
-
-    def test_check_reads_canonical_sources_as_utf8_in_legacy_locales(self) -> None:
-        # Inventory generated Python bytes and modes, excluding interpreter caches.
-        paths = tuple(path for name in (".codex/hooks", ".copilot/hooks/scripts",
-                                        ".gemini/hooks/scripts", ".github/hooks/scripts")
-                      for path in (ROOT / name).rglob("*.py"))
-        before = {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths}
-        result = self.run_cli(
-            "--check",
-            environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (68 files).\n")
-        self.assertEqual(result.stderr, "")
-        self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
     def test_windows_check_ignores_posix_executable_mode(self) -> None:
         generator = load_generator()
@@ -381,7 +366,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (68 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (65 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")

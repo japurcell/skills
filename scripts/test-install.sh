@@ -565,7 +565,7 @@ test_installs_codex_hook_and_global_configuration() {
     echo "Expected the Codex required-skills hook to be installed and executable." >&2
     exit 1
   fi
-  for installed in scan-secrets.py scan-status.py tool-guard.py helpers/common.py helpers/audit.py helpers/tool_guard_policy.py helpers/scan_types.py helpers/scan_reporting.py helpers/scan_allowlist.py helpers/scan_stream.py helpers/scan_git.py helpers/scan_native_file.py helpers/scan_native_process.py helpers/scan_audit.py helpers/scan_engine.py; do
+  for installed in scan-secrets.py scan-status.py tool-guard.py helpers/common.py helpers/audit.py helpers/tool_guard_policy.py helpers/scan_types.py helpers/scan_reporting.py helpers/scan_allowlist.py helpers/scan_stream.py helpers/scan_git.py helpers/scan_native_file.py helpers/scan_audit.py helpers/scan_engine.py; do
     if [[ ! -x "$home/.codex/hooks/$installed" ]]; then
       echo "Expected maintained Codex hook to be installed and executable: $installed" >&2
       exit 1
