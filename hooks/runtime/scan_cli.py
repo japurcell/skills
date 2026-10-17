@@ -13,7 +13,7 @@ import time
 VERSION = "1.0.0"
 SCHEMA = "scan_secrets_check_v1"
 POLICY = "pending_snapshots_v1"
-MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch", "scan_repo_install", "scan_repo_state", "scan_repo_dispatch")
+MODULES = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream", "scan_git", "scan_engine", "scan_native_file", "scan_native_process", "scan_audit", "scan_budget", "scan_repository", "scan_gate", "scan_transaction", "scan_lfs", "scan_private", "scan_publication", "scan_dispatch", "scan_repo_install", "scan_repo_state", "scan_repo_dispatch")
 
 
 class Failure(Exception):
