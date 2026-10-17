@@ -71,6 +71,83 @@ class PreflightTests(unittest.TestCase):
                     print(json.dumps(record, sort_keys=True), flush=True)
         return result
 
+    def scanner_git_diagnostics(self):
+        """Keep bounded numeric evidence at each real scanner Git boundary."""
+        launcher = self.base / "scanner-git-diagnostics.py"
+        launcher.write_text(textwrap.dedent("""
+            import json, os, runpy, stat, subprocess, sys, time
+            from pathlib import Path
+            script, trace = sys.argv[1:]
+            real = subprocess.Popen
+            sequence = 0
+            operations = {'rev-parse', 'diff', 'ls-files', 'ls-tree', 'cat-file',
+                          'check-attr', 'show', 'init', 'hash-object', 'update-index', 'status'}
+            def append(record):
+                encoded = (json.dumps(record, sort_keys=True) + '\\n').encode('ascii')
+                if len(encoded) > 1024:
+                    encoded = b'{"trace_error":"record_limit"}\\n'
+                try:
+                    fd = os.open(trace, os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, 'O_NOFOLLOW', 0), 0o600)
+                    with os.fdopen(fd, 'ab') as stream:
+                        info = os.fstat(stream.fileno())
+                        if stat.S_ISREG(info.st_mode) and info.st_size + len(encoded) <= 1048576:
+                            stream.write(encoded)
+                except OSError:
+                    pass  # The outer observer reports an unavailable trace.
+            class GitObserved(real):
+                def __init__(self, command, *args, **kwargs):
+                    global sequence
+                    self.observe = Path(command[0]).name == 'git'
+                    self.recorded = False
+                    self.started = time.monotonic()
+                    self.output = kwargs.get('stdout')
+                    self.errors = kwargs.get('stderr')
+                    self.operation = next((arg for arg in command[1:] if arg in operations), 'other_git')
+                    if self.observe:
+                        sequence += 1
+                    self.sequence = sequence
+                    super().__init__(command, *args, **kwargs)
+                    self.launch_seconds = time.monotonic() - self.started
+                    self.group = None
+                    if self.observe:
+                        try:
+                            self.group = os.getpgid(self.pid)
+                        except OSError:
+                            pass
+                def poll(self):
+                    code = super().poll()
+                    self.record()
+                    return code
+                def wait(self, *args, **kwargs):
+                    code = super().wait(*args, **kwargs)
+                    self.record()
+                    return code
+                def record(self):
+                    if not self.observe or self.returncode is None or self.recorded:
+                        return
+                    self.recorded = True
+                    if self.sequence > 256:
+                        if self.sequence == 257:
+                            append({'trace_error': 'event_limit'})
+                        return
+                    record = {'operation': self.operation, 'sequence': self.sequence,
+                              'pid': self.pid, 'exit_status': self.returncode,
+                              'launch_seconds': round(self.launch_seconds, 6),
+                              'elapsed_seconds': round(time.monotonic() - self.started, 6)}
+                    if self.group is not None:
+                        record['group'] = self.group
+                    for name, stream in (('stdout_bytes', self.output), ('stderr_bytes', self.errors)):
+                        try:
+                            record[name] = os.fstat(stream.fileno()).st_size
+                        except (AttributeError, OSError, ValueError):
+                            pass
+                    append(record)
+            subprocess.Popen = GitObserved
+            sys.argv = [script]
+            runpy.run_path(script, run_name='__main__')
+        """))
+        return launcher
+
     def scanner_diagnostics(self):
         """Observe real scanner completion using bounded, allowlisted audit fields."""
         types = ast.parse((ROOT / ".codex/hooks/helpers/scan_types.py").read_text())
@@ -79,10 +156,12 @@ class PreflightTests(unittest.TestCase):
                      and isinstance(node.targets[0], ast.Name)
                      and node.targets[0].id in {"INCOMPLETE_CAUSES", "INCOMPLETE_OPERATIONS"}}
         launcher = self.base / "scanner-diagnostics.py"
-        source = "KNOWN_CAUSES = " + repr(set(constants["INCOMPLETE_CAUSES"]) | {"clean", "findings", "not_repository"}) + "\n"
+        inner_launcher = self.scanner_git_diagnostics()
+        source = "INNER_LAUNCHER = " + repr(str(inner_launcher)) + "\n"
+        source += "KNOWN_CAUSES = " + repr(set(constants["INCOMPLETE_CAUSES"]) | {"clean", "findings", "not_repository"}) + "\n"
         source += "KNOWN_OPERATIONS = " + repr(constants["INCOMPLETE_OPERATIONS"]) + "\n"
         source += textwrap.dedent("""
-            import atexit, json, math, subprocess, sys, time, runpy
+            import ast, atexit, json, math, subprocess, sys, time, runpy
             from pathlib import Path
             real = subprocess.Popen
             work = {'git': 0, 'scanner': 0, 'observer': 0}
@@ -104,6 +183,17 @@ class PreflightTests(unittest.TestCase):
                     self.recorded = False
                     self.started = time.monotonic()
                     self.audit = Path(kwargs.get('env', {}).get('SECRETS_LOG_DIR', '.')) / 'scan.log'
+                    self.trace = self.audit.with_name('scanner-git-diagnostic.jsonl')
+                    self.expected_build = None
+                    if self.scanner:
+                        try:
+                            nodes = ast.parse(Path(command[-1]).read_text()).body
+                            self.expected_build = next(ast.literal_eval(node.value) for node in nodes
+                                if isinstance(node, ast.Assign) and len(node.targets) == 1
+                                and isinstance(node.targets[0], ast.Name) and node.targets[0].id == 'REPORT_BUILD')
+                        except Exception:
+                            pass
+                        command = [*command[:-1], INNER_LAUNCHER, command[-1], str(self.trace)]
                     super().__init__(command, *args, **kwargs)
                 def poll(self):
                     code = super().poll()
@@ -134,6 +224,21 @@ class PreflightTests(unittest.TestCase):
                             if not isinstance(record, dict):
                                 raise ValueError
                             report['audit_result'] = 'read'
+                            expected = {'provider': parts[-2], 'build': self.expected_build, 'mode': 'block',
+                                'scope': 'diff', 'profile': 'pending_snapshots_v1', 'route': 'pending_scan',
+                                'inspection_outcome': 'complete', 'audit_outcome': 'written'}
+                            report['required_mismatches'] = [key for key, value in expected.items()
+                                if type(record.get(key)) is not type(value) or record.get(key) != value]
+                            if self.expected_build is None:
+                                report['required_mismatches'].append('expected_build_unavailable')
+                            if record.get('status') not in {'clean', 'findings'}:
+                                report['required_mismatches'].append('status')
+                            if not isinstance(record.get('findings', []), list):
+                                report['required_mismatches'].append('findings_type')
+                            if type(record.get('findingsTruncated')) is not bool:
+                                report['required_mismatches'].append('truncation_type')
+                            if type(record.get('omittedFindings')) is not int or record['omittedFindings'] < 0:
+                                report['required_mismatches'].append('omitted_count')
                             for key, choices in {'status': {'clean', 'findings', 'incomplete'},
                                     'inspection_outcome': {'complete', 'incomplete'},
                                     'audit_outcome': {'written', 'failed', 'not_attempted'},
@@ -170,6 +275,35 @@ class PreflightTests(unittest.TestCase):
                     except Exception:
                         # No audit/parser exception text crosses this boundary.
                         report['audit_result'] = 'unavailable_or_invalid'
+                    try:
+                        with self.trace.open('rb') as stream:
+                            trace = stream.read(1048577)
+                        if len(trace) > 1048576:
+                            raise ValueError
+                        rows = [json.loads(line) for line in trace.splitlines()]
+                        if len(rows) > 257:
+                            raise ValueError
+                        events = []
+                        limited = False
+                        for row in rows:
+                            if row in ({'trace_error': 'event_limit'}, {'trace_error': 'record_limit'}):
+                                limited = True
+                                continue
+                            if (not isinstance(row, dict) or set(row) - {'operation', 'sequence', 'pid', 'group',
+                                    'exit_status', 'launch_seconds', 'elapsed_seconds', 'stdout_bytes', 'stderr_bytes'}
+                                    or row.get('operation') not in {'rev-parse', 'diff', 'ls-files', 'ls-tree', 'cat-file',
+                                        'check-attr', 'show', 'init', 'hash-object', 'update-index', 'status', 'other_git'}
+                                    or any(not number(value) for key, value in row.items() if key != 'operation')):
+                                raise ValueError
+                            events.append(row)
+                        report['inner_trace_result'] = 'limited' if limited else 'read'
+                        report['inner_git_count'] = len(events)
+                        report['inner_git_seconds'] = round(sum(row.get('elapsed_seconds', 0) for row in events), 6)
+                        if report.get('status') == 'incomplete' or report.get('required_mismatches') or report.get('audit_result') != 'read':
+                            report['git_events'] = events[-4:]
+                            report['git_events_omitted'] = max(0, len(events) - 4)
+                    except Exception:
+                        report['inner_trace_result'] = 'unavailable_or_invalid'
                     print(json.dumps(report, sort_keys=True), file=sys.stderr, flush=True)
             subprocess.Popen = Diagnosed
         """)
@@ -618,7 +752,7 @@ class PreflightTests(unittest.TestCase):
         git = binaries / "git"
         real_git = shutil.which("git")
         git.write_text("#!" + sys.executable + "\nimport os,sys\n"
-            "if 'diff' in sys.argv[1:]: raise SystemExit(128)\n"
+            "if 'diff' in sys.argv[1:]:\n canary='gh'+'p_'+'FAKE'*9\n sys.stdout.write(canary)\n sys.stderr.write(canary)\n raise SystemExit(128)\n"
             "os.execv(" + repr(real_git) + ", [" + repr(real_git) + ", *sys.argv[1:]])\n")
         git.chmod(0o755)
         scanner = active / ".codex/hooks/scan-secrets.py"
@@ -647,6 +781,13 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(record["cause"], "git_failed")
         self.assertEqual(record["diagnostic"], {"cause": "git_failed", "operation": "git_candidates", "exit_status": 128})
         self.assertEqual(record["audit_result"], "read")
+        self.assertEqual(record["inner_trace_result"], "read")
+        self.assertGreater(record["inner_git_count"], 0)
+        self.assertIn("status", record["required_mismatches"])
+        self.assertIn("inspection_outcome", record["required_mismatches"])
+        self.assertEqual(record["git_events"][-1]["operation"], "diff")
+        self.assertEqual(record["git_events"][-1]["exit_status"], 128)
+        self.assertEqual(record["git_events"][-1]["stdout_bytes"], len(TOKEN))
         self.assertLessEqual(record["audit_bytes"], 1048576)
         self.assertLess(len(result.stderr), 4096)
         self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
