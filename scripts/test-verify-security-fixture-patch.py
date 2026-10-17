@@ -601,13 +601,21 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
         git_started = self.base / "observer-git-started"
         child = ("import os,sys,time\ntime.sleep(" + repr(delay) + ")\n"
                  "os.execv('/bin/ps', ['/bin/ps', *sys.argv[1:]])\n")
+        if seen is not None:
+            child = ("import os,sys,time,subprocess\nfrom pathlib import Path\n"
+                "time.sleep(" + repr(delay) + ")\n"
+                "raw = subprocess.check_output(['/bin/ps', *sys.argv[1:]])\n"
+                "marker = Path(" + repr(str(after)) + ")\n"
+                "if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
+                " Path(" + repr(str(seen)) + ").touch()\n"
+                "os.write(1, raw)\n")
         wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
             "real = subprocess.Popen\nobservations = 0\n"
             "def launched(command,*args,**kwargs):\n"
@@ -674,16 +682,21 @@ class PreflightTests(unittest.TestCase):
     def test_delayed_metadata_cleanup_stops_resistant_separate_session(self):
         active = self.active_copy("slow-observer-cancel")
         marker = self.base / 'slow-observer-child'
+        observed = self.base / 'child-observed-before-setsid'
+        ready = self.base / 'child-session-ready'
         scanner = active / '.codex/hooks/scan-secrets.py'
-        child_code = ('import signal,time; signal.signal(signal.SIGINT,signal.SIG_IGN); '
-                      'signal.signal(signal.SIGTERM,signal.SIG_IGN); time.sleep(60)')
+        child_code = ('import os,signal,time\nfrom pathlib import Path\n'
+                      'signal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+                      'signal.signal(signal.SIGTERM,signal.SIG_IGN)\n'
+                      'while not Path(' + repr(str(observed)) + ').exists(): time.sleep(0.01)\n'
+                      'os.setsid()\nPath(' + repr(str(ready)) + ').touch()\ntime.sleep(60)')
         injection = ("import subprocess\n"
             "signal.signal(signal.SIGINT, signal.SIG_IGN)\n"
-            "child = subprocess.Popen([sys.executable, '-c', " + repr(child_code) + "], start_new_session=True)\n"
+            "child = subprocess.Popen([sys.executable, '-c', " + repr(child_code) + "])\n"
             "Path(" + repr(str(marker)) + ").write_text(str(child.pid))\n"
             "time.sleep(60)\n")
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
-        wrapper, observers, _ = self.observation_wrapper(0.3, after=marker)
+        wrapper, observers, _ = self.observation_wrapper(0.3, after=marker, seen=observed)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -693,10 +706,11 @@ class PreflightTests(unittest.TestCase):
                     '--check', '--json', '--no-input'], cwd=self.repo, env=self.env,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
                 deadline = time.monotonic() + 6
-                while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+                while not ready.exists() and time.monotonic() < deadline and process.poll() is None:
                     time.sleep(0.02)
-                self.assertTrue(marker.exists(), 'real scanner did not create its separate-session child')
-                child = int(marker.read_text())
+                if marker.exists():
+                    child = int(marker.read_text())
+                self.assertTrue(ready.exists(), 'real scanner child did not change session after metadata observation')
                 started = time.monotonic()
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)

@@ -195,8 +195,10 @@ def process_snapshot(*, deadline=None):
 def remember_descendants(process, known, snapshot):
     # Retain observed ancestors after reparenting so a separate Git session and
     # any children it creates remain discoverable after the scanner exits.
+    # A child may change process groups after observation; its start identity
+    # stays stable. Use the current group only when choosing how to signal it.
     roots = {pid for pid, previous in known.items()
-             if pid in snapshot and snapshot[pid][1:3] == previous[1:3]}
+             if pid in snapshot and snapshot[pid][2] == previous[2]}
     if process.returncode is None and process.pid in snapshot:
         known.setdefault(process.pid, snapshot[process.pid])
         roots.add(process.pid)
@@ -212,7 +214,7 @@ def remember_descendants(process, known, snapshot):
 def living_descendants(known, snapshot):
     return {pid: current for pid, previous in known.items()
             if (current := snapshot.get(pid)) is not None
-            and current[1:3] == previous[1:3] and not current[3].startswith(b"Z")}
+            and current[2] == previous[2] and not current[3].startswith(b"Z")}
 
 
 def signal_observed(living, signum):
