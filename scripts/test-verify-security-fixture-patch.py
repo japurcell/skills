@@ -161,7 +161,7 @@ class PreflightTests(unittest.TestCase):
     def legacy_active(self):
         return self.historical_active("legacy-active-scanners", "6c3c2d8c8033525792fb1c5effd04e3e32cd7682")
 
-    def test_historical_seven_helper_active_and_current_eight_helper_candidate(self):
+    def test_historical_seven_helper_active_and_current_candidate(self):
         helpers = tuple("helpers/" + name + ".py" for name in ("scan_types", "scan_reporting",
             "scan_allowlist", "scan_stream", "scan_git", "scan_audit", "scan_engine"))
         active = self.historical_active("seven-helper-active-scanners",
@@ -208,7 +208,7 @@ class PreflightTests(unittest.TestCase):
             target.mkdir(parents=True)
             names = ("scan-secrets.py", "helpers/common.py", "helpers/audit.py", *(
                 "helpers/" + name + ".py" for name in ("scan_types", "scan_reporting",
-                "scan_allowlist", "scan_stream", "scan_git", "scan_native_file", "scan_audit", "scan_engine")))
+                "scan_allowlist", "scan_stream", "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine")))
             for name in names:
                 (target / name).parent.mkdir(exist_ok=True)
                 shutil.copy2(origin / name, target / name)

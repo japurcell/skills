@@ -31,7 +31,7 @@ The existing schema-1 resource budgets stay unchanged. Checkpoint defaults are 4
 - [x] (2026-10-16) [milestone-1] W2: actual Windows run 38989319821 passed every step, including native containment. Removed 203 optional diagnostic lines while retaining all controls.
 - [x] (2026-10-16) [milestone-1] Primary: reviewed and integrated repairs serially through `37aeaa20`, preserving tested inputs and the unresolved historical observation.
 - [x] (2026-10-16) [milestone-2] T9c-P: integrated CI coverage, verified prerequisites and the targeted alias-fixture repair at `d61250aa`. Early hosted results and the exact fixture red/green are retained in [evidence](t9c-p-evidence.md).
-- [ ] [milestone-2] Primary: Windows run 38990193171 passed completely on `2b1936d4`. Corrected-bootstrap macOS run 38990328070 passed preflight, then exposed a missing required-helper bootstrap import. Its one-line fix and six generated outputs pass targeted public red/green; push the repaired source and await complete workflows. No full local replay.
+- [ ] [milestone-2] Primary: push the explicit nine-helper preflight packaging repair, then await complete macOS and Windows workflows. Earlier integrated Windows run 38990193171 passed. All 28 preflight tests now pass locally after the coupled helper-bootstrap/package fixes. No full local workflow replay.
 - [x] (2026-10-16) [milestone-3] Primary: aligned README/CLI-help/support guidance, repaired historical links and completed one coordinated knowledge pass. Updated existing security instructions and scanner-consistency memory; no new memory/index/skill/source files. OKF lint, affected links, generated freshness (68 files) and whitespace checks pass.
 - [ ] [milestone-3] Primary: retain final integrated CI results and completion status.
 
@@ -81,7 +81,7 @@ After all code work finishes, complete one `update-agent-docs` pass using the kn
 
 ## Concrete Steps
 
-Work from `/Users/adam/.codex/worktrees/a468/skills`. All code owners have completed and their clean branches are integrated through `37aeaa20`. The single coordinated documentation pass is complete. Source `2b1936d4` is pushed; primary awaits the two final workflow links in Progress. Inspect actual failures and repair only their demonstrated cause. No full local replay or new workstream is needed.
+Work from `/Users/adam/.codex/worktrees/a468/skills`. All code owners have completed and their clean branches are integrated through `37aeaa20`. The single coordinated documentation pass is complete. Source `73bc4b86` is pushed; primary awaits the two final workflow links in Progress. Inspect actual failures and repair only their demonstrated cause. No full local replay or new workstream is needed.
 
 Useful validation commands, selected according to the changed files, are:
 
@@ -113,6 +113,8 @@ Use disposable homes/repositories for tests. Keep exactly owned backups and drif
 Actual Windows tests exposed real process-lifetime and OS-image compatibility defects; source inspection alone had missed them. Those bounded fixes are justified. The expanded platform/backend/diagnostic effort was not needed to finish the selected core and has been removed from the active work.
 
 Integrated recovery exposed a concrete helper-admission gap: `scan_native_process` was declared in the installed closure but loaded lazily only on Windows. Missing/corrupt copies therefore escaped the existing POSIX bootstrap-denial assertion. Actual macOS run 38990328070/job 117271086073 and a targeted local public-entrypoint run reproduced all 12 provider/mode/state failures. One canonical import restores the required-helper contract. The unchanged targeted closure test passes in 9.477 seconds; existing mode and repair/retry tests pass together in 2.775 seconds. No assertion, platform boundary or retry policy changed. The hosted log is `/private/tmp/design-b-final-macos-117271086073.log`, SHA-256 `e11a51b5e45332865d81960ab01c2ebf95ddc9ccc2aca7667d1d6ba8abc3094f`.
+
+The next macOS run 38990998653/job 117273162031 exposed the paired packaging omission: preflight still copied only the reviewed seven/eight-helper closures. Its current scanner correctly denied the missing ninth helper, so 27 assertions and one dependent report access failed. A direct source-filter CLI test reproduced `invalid_scanner_result`. The verifier now explicitly admits and hashes the reviewed nine-helper closure alongside its historical closures, and its existing active-copy fixture includes that helper. All 28 unchanged behavioral tests pass in 112.299 seconds on Python 3.14.6. The hosted log is `/private/tmp/design-b-final-macos-117273162031.log`, SHA-256 `56476da07060c659f0372a7ee504fde2702381d51c2aa99f467ab634036a7fdc`. This is a demonstrated packaging failure, distinct from the older unexplained incomplete result.
 
 The historical unexplained preflight incomplete result is retained honestly. Later greens are scoped proof, not a reconstructed cause. The direct existing test remains the check for recurrence.
 
