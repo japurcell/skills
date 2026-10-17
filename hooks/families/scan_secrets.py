@@ -56,6 +56,7 @@ REPORT_PROVIDER = DIAG_PROVIDER
 _SCAN_RUNTIME_ERROR = None
 try:
     from helpers.scan_native_file import WindowsDirectoryHandles
+    from helpers.scan_native_process import NativeProcess
     from helpers.scan_types import ScanLimits, ScanFailure, ScanSecurityError, GitCommandError
     from helpers.scan_engine import ScanPolicy, scan
     from helpers.scan_allowlist import parse_allowlist

@@ -31,7 +31,7 @@ The existing schema-1 resource budgets stay unchanged. Checkpoint defaults are 4
 - [x] (2026-10-16) [milestone-1] W2: actual Windows run 38989319821 passed every step, including native containment. Removed 203 optional diagnostic lines while retaining all controls.
 - [x] (2026-10-16) [milestone-1] Primary: reviewed and integrated repairs serially through `37aeaa20`, preserving tested inputs and the unresolved historical observation.
 - [x] (2026-10-16) [milestone-2] T9c-P: integrated CI coverage, verified prerequisites and the targeted alias-fixture repair at `d61250aa`. Early hosted results and the exact fixture red/green are retained in [evidence](t9c-p-evidence.md).
-- [ ] [milestone-2] Primary: final integrated source `2b1936d445f5378c88140566ce812906c2c8520b` is pushed. The first [macOS run 38990193053](https://github.com/japurcell/skills/actions/runs/38990193053) stopped before tests because the image had RTK 0.48.0. Bootstrap now explicitly updates Homebrew and upgrades RTK. [Windows run 38990193171](https://github.com/japurcell/skills/actions/runs/38990193171) remains active; rerun macOS on the bootstrap repair without a full local replay.
+- [ ] [milestone-2] Primary: Windows run 38990193171 passed completely on `2b1936d4`. Corrected-bootstrap macOS run 38990328070 passed preflight, then exposed a missing required-helper bootstrap import. Its one-line fix and six generated outputs pass targeted public red/green; push the repaired source and await complete workflows. No full local replay.
 - [x] (2026-10-16) [milestone-3] Primary: aligned README/CLI-help/support guidance, repaired historical links and completed one coordinated knowledge pass. Updated existing security instructions and scanner-consistency memory; no new memory/index/skill/source files. OKF lint, affected links, generated freshness (68 files) and whitespace checks pass.
 - [ ] [milestone-3] Primary: retain final integrated CI results and completion status.
 
@@ -111,6 +111,8 @@ Use disposable homes/repositories for tests. Keep exactly owned backups and drif
 ## Surprises & Discoveries
 
 Actual Windows tests exposed real process-lifetime and OS-image compatibility defects; source inspection alone had missed them. Those bounded fixes are justified. The expanded platform/backend/diagnostic effort was not needed to finish the selected core and has been removed from the active work.
+
+Integrated recovery exposed a concrete helper-admission gap: `scan_native_process` was declared in the installed closure but loaded lazily only on Windows. Missing/corrupt copies therefore escaped the existing POSIX bootstrap-denial assertion. Actual macOS run 38990328070/job 117271086073 and a targeted local public-entrypoint run reproduced all 12 provider/mode/state failures. One canonical import restores the required-helper contract. The unchanged targeted closure test passes in 9.477 seconds; existing mode and repair/retry tests pass together in 2.775 seconds. No assertion, platform boundary or retry policy changed. The hosted log is `/private/tmp/design-b-final-macos-117271086073.log`, SHA-256 `e11a51b5e45332865d81960ab01c2ebf95ddc9ccc2aca7667d1d6ba8abc3094f`.
 
 The historical unexplained preflight incomplete result is retained honestly. Later greens are scoped proof, not a reconstructed cause. The direct existing test remains the check for recurrence.
 
