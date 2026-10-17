@@ -18,6 +18,17 @@ $hooks = @{
     codex = Join-Path $repoRoot '.codex/hooks/scan-secrets.py'
 }
 
+$failureDiagnostic = Join-Path $workdir 'fixture-failure.py'
+
+function Write-FixtureFailure {
+    param([string]$CaseDir, [int]$ExitCode)
+    # This runs only after a fixture failed, outside the measured hook process.
+    & $python -I -S -B $failureDiagnostic $CaseDir ([string]$ExitCode) 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output '{"schema":"w2_fixture_failure_v1","collector":"unavailable"}'
+    }
+}
+
 function Invoke-Case {
     param([string]$Provider, [string]$Mode, [string]$Scenario, [int]$Attempt = 0)
     $caseDir = Join-Path $workdir "$Provider-$Mode-$Scenario-$Attempt"
@@ -329,6 +340,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         }
         if ($Scenario -eq 'launch-death') {
             if ($process.ExitCode -ne 99 -or -not (Test-Path -LiteralPath $grandchildMarker)) {
+                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
                 throw "$Provider $Mode launch-death did not reach the real post-create boundary: $($process.ExitCode)"
             }
             & $python -I -S -B $grandchildObserver $grandchildMarker inspect
@@ -343,7 +355,10 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         if ($process.ExitCode -ne 0) { throw "$Provider $Mode $Scenario exited $($process.ExitCode)" }
         if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
         if ($Scenario -eq 'grandchild') {
-            if (-not (Test-Path -LiteralPath $grandchildMarker)) { throw "$Provider grandchild fixture did not execute" }
+            if (-not (Test-Path -LiteralPath $grandchildMarker)) {
+                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
+                throw "$Provider grandchild fixture did not execute"
+            }
             & $python -I -S -B $grandchildObserver $grandchildMarker inspect
             $observed = $LASTEXITCODE
             if ($observed -eq 1) { throw "$Provider $Mode grandchild left owned descendant alive" }
@@ -440,6 +455,111 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 
 try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
+    [System.IO.File]::WriteAllText($failureDiagnostic, @'
+import json, os, pathlib, sys
+
+def collect_audit(root):
+    result = dict(state='missing', status='unknown', cause='unknown', operation='unknown',
+                  capture_step='unknown', os_errno=-1)
+    path = root / 'logs' / 'scan.log'
+    try:
+        if not path.exists():
+            return result
+        if not 0 < path.stat().st_size <= 65536:
+            result['state'] = 'size_refused'
+            return result
+        with path.open('rb') as stream:
+            raw = stream.read(65537)
+        if len(raw) > 65536:
+            result['state'] = 'size_refused'
+            return result
+        value = json.loads(raw.splitlines()[-1])
+        if type(value) is not dict:
+            raise ValueError
+        result['state'] = 'present'
+        if value.get('status') in {'clean', 'findings', 'incomplete'}:
+            result['status'] = value['status']
+        diagnostic = value.get('diagnostic')
+        if type(diagnostic) is not dict:
+            return result
+        allowed = dict(
+            cause={'git_unavailable', 'git_failed', 'git_capture_failed', 'git_descendant_running',
+                   'git_head_invalid', 'git_output_invalid', 'repository_unavailable', 'scan_timeout',
+                   'git_timeout', 'git_output_limit', 'internal_error', 'input_invalid', 'audit_unavailable'},
+            operation={'initialization', 'input', 'repository', 'git_repository', 'git_head',
+                       'git_candidates', 'git_index', 'git_diff', 'git_command', 'candidate_read',
+                       'candidate_scan', 'scan_log'},
+            capture_step={'temporary_file', 'verify_capture', 'request_write', 'spawn', 'wait',
+                          'descendants', 'consume', 'cleanup'})
+        for key, choices in allowed.items():
+            if type(diagnostic.get(key)) is str and diagnostic[key] in choices:
+                result[key] = diagnostic[key]
+        number = diagnostic.get('os_errno')
+        if type(number) is int and 0 <= number <= 0xFFFFFFFF:
+            result['os_errno'] = number
+    except Exception:
+        result['state'] = 'invalid'
+    return result
+
+def native_metadata(root):
+    if os.name != 'nt':
+        return []
+    import ctypes
+    dword, pointer = ctypes.c_uint32, ctypes.c_void_p
+    class FileTime(ctypes.Structure):
+        _fields_ = [('low', dword), ('high', dword)]
+    class FileInformation(ctypes.Structure):
+        _fields_ = [('attributes', dword), ('created', FileTime), ('accessed', FileTime),
+                    ('written', FileTime), ('volume', dword), ('size_high', dword),
+                    ('size_low', dword), ('links', dword), ('index_high', dword), ('index_low', dword)]
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.GetSystemDirectoryW.argtypes = [ctypes.c_wchar_p, dword]
+    kernel.GetSystemDirectoryW.restype = dword
+    kernel.CreateFileW.argtypes = [ctypes.c_wchar_p, dword, dword, pointer, dword, dword, pointer]
+    kernel.CreateFileW.restype = pointer
+    kernel.GetFileInformationByHandle.argtypes = [pointer, ctypes.POINTER(FileInformation)]
+    kernel.GetFileInformationByHandle.restype = ctypes.c_int
+    kernel.CloseHandle.argtypes = [pointer]
+    kernel.CloseHandle.restype = ctypes.c_int
+    directory = ctypes.create_unicode_buffer(32768)
+    length = kernel.GetSystemDirectoryW(directory, len(directory))
+    system_error = ctypes.get_last_error() if not length else 0
+    files = [(1, root / 'bin' / 'git.cmd'),
+             (2, pathlib.Path(directory.value) / 'cmd.exe' if 0 < length < len(directory) else None)]
+    result = []
+    for slot, path in files:
+        record = dict(slot=slot, opened=0, links=0, attributes=0, os_error=0)
+        result.append(record)
+        if path is None:
+            record['os_error'] = system_error or 122
+            continue
+        # Read attributes only, OPEN_EXISTING and OPEN_REPARSE_POINT. No mutation.
+        handle = kernel.CreateFileW(str(path), 0x80, 7, None, 3, 0x00200000, None)
+        if handle == pointer(-1).value:
+            record['os_error'] = ctypes.get_last_error()
+            continue
+        try:
+            information = FileInformation()
+            if not kernel.GetFileInformationByHandle(handle, ctypes.byref(information)):
+                record['os_error'] = ctypes.get_last_error()
+            else:
+                record.update(opened=1, links=int(information.links), attributes=int(information.attributes))
+        finally:
+            if not kernel.CloseHandle(handle):
+                record['os_error'] = ctypes.get_last_error()
+    return result
+
+try:
+    root = pathlib.Path(sys.argv[1])
+    exit_code = int(sys.argv[2])
+    if not -2147483648 <= exit_code <= 0xFFFFFFFF:
+        exit_code = -1
+    report = dict(schema='w2_fixture_failure_v1', hook_exit=exit_code,
+                  audit=collect_audit(root), files=native_metadata(root))
+except BaseException:
+    report = dict(schema='w2_fixture_failure_v1', collector='unavailable')
+print(json.dumps(report, sort_keys=True, separators=(',', ':')))
+'@)
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
