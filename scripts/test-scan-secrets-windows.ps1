@@ -1,5 +1,7 @@
 #!/usr/bin/env pwsh
 
+param([switch]$Diagnostic)
+
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) {
     Write-Output 'SKIP: native Windows scanner capture tests require Windows'
@@ -32,7 +34,89 @@ function Invoke-Case {
         if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
     }
 
+    $grandchildMarker = Join-Path $caseDir 'grandchild.json'
+    $grandchildRunner = Join-Path $caseDir 'grandchild.py'
+    $grandchildObserver = Join-Path $caseDir 'observe-grandchild.py'
+    if ($Scenario -eq 'grandchild') {
+        [System.IO.File]::WriteAllText($grandchildRunner, @'
+import subprocess, sys
+middle = r"""
+import pathlib, subprocess, sys, time
+grandchild = r'''
+import ctypes, json, os, pathlib, sys, time
+kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+kernel.GetCurrentProcess.restype = ctypes.c_void_p
+kernel.GetProcessTimes.argtypes = [ctypes.c_void_p] + [ctypes.POINTER(ctypes.c_uint64)] * 4
+kernel.GetProcessTimes.restype = ctypes.c_int
+times = [ctypes.c_uint64() for _ in range(4)]
+if not kernel.GetProcessTimes(kernel.GetCurrentProcess(), *(ctypes.byref(item) for item in times)):
+    raise SystemExit(3)
+marker = pathlib.Path(sys.argv[1])
+writing = marker.with_suffix('.writing')
+writing.write_text(json.dumps({'pid': os.getpid(), 'created': times[0].value}), encoding='ascii')
+writing.replace(marker)
+time.sleep(60)
+'''
+child = subprocess.Popen([sys.executable, '-I', '-S', '-B', '-c', grandchild, sys.argv[1]],
+                         stdin=subprocess.DEVNULL)
+deadline = time.monotonic() + 4
+while not pathlib.Path(sys.argv[1]).exists():
+    if child.poll() is not None or time.monotonic() >= deadline:
+        raise SystemExit(3)
+    time.sleep(0.01)
+"""
+# The intermediate exits and is reaped before the Git root emits valid output.
+# The long-lived grandchild keeps the root's capture handle open.
+subprocess.run([sys.executable, '-I', '-S', '-B', '-c', middle, sys.argv[1]], check=True)
+print('true', flush=True)
+'@)
+        [System.IO.File]::WriteAllText($grandchildObserver, @'
+import ctypes, json, pathlib, sys
+record = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding='ascii'))
+if (type(record) is not dict or record.keys() != {'pid', 'created'}
+        or type(record['pid']) is not int or not 0 < record['pid'] < 2**32
+        or type(record['created']) is not int or record['created'] <= 0):
+    raise SystemExit(3)
+kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+kernel.OpenProcess.restype = ctypes.c_void_p
+kernel.GetProcessTimes.argtypes = [ctypes.c_void_p] + [ctypes.POINTER(ctypes.c_uint64)] * 4
+kernel.GetProcessTimes.restype = ctypes.c_int
+kernel.WaitForSingleObject.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+kernel.WaitForSingleObject.restype = ctypes.c_uint32
+kernel.TerminateProcess.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+kernel.TerminateProcess.restype = ctypes.c_int
+kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+kernel.CloseHandle.restype = ctypes.c_int
+# SYNCHRONIZE | QUERY_LIMITED_INFORMATION | TERMINATE. PID reuse is refused
+# using creation FILETIME read on this same held process handle.
+handle = kernel.OpenProcess(0x00101001, False, record['pid'])
+if not handle:
+    raise SystemExit(0 if ctypes.get_last_error() == 87 else 3)
+try:
+    times = [ctypes.c_uint64() for _ in range(4)]
+    if not kernel.GetProcessTimes(handle, *(ctypes.byref(item) for item in times)):
+        raise SystemExit(3)
+    if times[0].value != record['created']:
+        raise SystemExit(3)
+    state = kernel.WaitForSingleObject(handle, 0)
+    if state == 0:
+        raise SystemExit(0)
+    if state != 258:
+        raise SystemExit(3)
+    if sys.argv[2] == 'inspect':
+        raise SystemExit(1)
+    if sys.argv[2] != 'cleanup':
+        raise SystemExit(3)
+    if not kernel.TerminateProcess(handle, 99) and kernel.WaitForSingleObject(handle, 0) != 0:
+        raise SystemExit(3)
+    raise SystemExit(0 if kernel.WaitForSingleObject(handle, 1000) == 0 else 2)
+finally:
+    kernel.CloseHandle(handle)
+'@)
+    }
     $shim = switch ($Scenario) {
+        'grandchild' { "@echo off`r`nif `"%1 %2`"==`"rev-parse --is-inside-work-tree`" (`"$python`" -I -S -B `"$grandchildRunner`" `"$grandchildMarker`" & exit /b 0)`r`n`"$realGit`" %*" }
         'descendant' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (start "" /B cmd /c "ping -n 11 127.0.0.1 >nul" & echo true & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'partial' { '@echo off' + "`r`n" + 'echo true' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
         'oversized' { '@echo off' + "`r`n" + 'powershell -NoProfile -Command "$b = New-Object byte[] 8388609; [Console]::OpenStandardOutput().Write($b, 0, $b.Length)"' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
@@ -86,10 +170,12 @@ function Invoke-Case {
         $env:TEMP = $caseDir
         $env:TMP = $caseDir
         $started = [Diagnostics.Stopwatch]::StartNew()
-        $runner = Join-Path $caseDir 'capture-fixture.py'
-        $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
-        $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
-        $fixture = @'
+        $runner = $hooks[$Provider]
+        if ($Diagnostic) {
+            $runner = Join-Path $caseDir 'capture-fixture.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
+            $fixture = @'
 import ast, ctypes, os, pathlib, runpy, subprocess, sys, tempfile, time
 hook = pathlib.Path(HOOK_LITERAL)
 source = hook.parent / "helpers" / "scan_git.py"
@@ -124,7 +210,7 @@ class ObservedPopen(original_popen):
         emit(8002, pid=self.pid)
 subprocess.Popen = ObservedPopen
 def trace(frame, event, argument):
-    if pathlib.Path(frame.f_code.co_filename).name != "scan_git.py":
+    if not frame.f_code.co_filename.endswith(("/scan_git.py", "\\scan_git.py")):
         return None
     name = frame.f_code.co_name
     if name == "capture_git" and event == "line" and frame.f_lineno in phase_lines:
@@ -136,7 +222,19 @@ if CAPTURE_ERROR_LITERAL:
     def fail(*args, **kwargs):
         raise OSError("private capture failure detail")
     tempfile.TemporaryFile = fail
+def audit(event, arguments):
+    if event == "exec":
+        filename = arguments[0].co_filename
+        if filename == str(hook):
+            emit(10)
+        elif filename.endswith(("/common.py", "\\common.py")):
+            emit(11)
+        elif filename.endswith(("/scan_engine.py", "\\scan_engine.py")):
+            emit(12)
+        elif filename.endswith(("/scan_git.py", "\\scan_git.py")):
+            emit(13)
 emit(1, pid=os.getpid())
+sys.addaudithook(audit)
 sys.settrace(trace)
 try:
     runpy.run_path(str(hook), run_name="__main__")
@@ -144,8 +242,15 @@ finally:
     sys.settrace(None)
     emit(2, pid=os.getpid())
 '@
-        $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('CAPTURE_ERROR_LITERAL', $captureErrorLiteral)
-        [System.IO.File]::WriteAllText($runner, $fixture)
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('CAPTURE_ERROR_LITERAL', $captureErrorLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'capture-error') {
+            $runner = Join-Path $caseDir 'capture-error.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            [System.IO.File]::WriteAllText($runner, "import runpy, tempfile`n" +
+                "def fail(*args, **kwargs):`n    raise OSError('private capture failure detail')`n" +
+                "tempfile.TemporaryFile = fail`nrunpy.run_path($hookLiteral, run_name='__main__')`n")
+        }
         $process = Start-Process -FilePath $python -ArgumentList @('-I', '-S', '-B', "`"$runner`"") `
             -WorkingDirectory $repo -RedirectStandardInput $inputPath -RedirectStandardOutput $outputPath `
             -RedirectStandardError $errorPath -PassThru -NoNewWindow
@@ -166,6 +271,13 @@ finally:
         }
         if ($process.ExitCode -ne 0) { throw "$Provider $Mode $Scenario exited $($process.ExitCode)" }
         if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
+        if ($Scenario -eq 'grandchild') {
+            if (-not (Test-Path -LiteralPath $grandchildMarker)) { throw "$Provider grandchild fixture did not execute" }
+            & $python -I -S -B $grandchildObserver $grandchildMarker inspect
+            $observed = $LASTEXITCODE
+            if ($observed -eq 1) { throw "$Provider $Mode grandchild left owned descendant alive" }
+            if ($observed -ne 0) { throw "$Provider $Mode grandchild ownership check failed: $observed" }
+        }
         $response = Get-Content -LiteralPath $outputPath -Raw | ConvertFrom-Json -AsHashtable
         if ($Scenario -eq 'capture-error' -and ((Get-Content -LiteralPath $outputPath -Raw) -match 'private capture failure detail')) {
             throw "$Provider leaked a capture error"
@@ -241,11 +353,17 @@ finally:
         }
     }
     finally {
+        $cleanupCode = 0
+        if ($Scenario -eq 'grandchild' -and (Test-Path -LiteralPath $grandchildMarker)) {
+            & $python -I -S -B $grandchildObserver $grandchildMarker cleanup
+            $cleanupCode = $LASTEXITCODE
+        }
         $env:PATH = $savedPath
         $env:SCAN_MODE = $savedMode
         $env:SECRETS_LOG_DIR = $savedLog
         $env:TEMP = $savedTemp
         $env:TMP = $savedTmp
+        if ($cleanupCode -ne 0) { throw "$Provider $Mode grandchild cleanup refused or failed: $cleanupCode" }
     }
 }
 
@@ -253,7 +371,7 @@ try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
-            foreach ($scenario in @('descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
+            foreach ($scenario in @('grandchild', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }
         }
