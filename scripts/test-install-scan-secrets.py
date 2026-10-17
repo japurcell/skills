@@ -515,6 +515,19 @@ runpy.run_path(helper, run_name='__main__')
         self.assertEqual(json.loads(result.stdout)["reason"], "source_assets_invalid")
         self.assertEqual(before, self.fingerprint(self.destination))
 
+    def test_missing_readonly_image_pin_preserves_existing_bundle(self):
+        self.assertEqual(self.install().returncode, 0)
+        before = self.fingerprint(self.destination)
+        source = self.copy_source()
+        helper = source / "hooks/runtime/scan_native_file.py"
+        content = helper.read_text(encoding="utf-8")
+        self.assertEqual(content.count("def pin_readonly_image("), 1)
+        helper.write_text(content.replace("def pin_readonly_image(", "def unavailable_readonly_image(", 1), encoding="utf-8")
+        result = self.install(source=source)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "source_assets_invalid")
+        self.assertEqual(before, self.fingerprint(self.destination))
+
     def expand_source_closure(self, count):
         source = self.copy_source()
         extra = ["scan_extra_" + str(index) for index in range(count)]

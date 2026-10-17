@@ -165,7 +165,7 @@ def _quote(argument):
     return "".join(result)
 
 
-def _held_path(path, resources, *, file=False):
+def _held_path(path, resources, *, file=False, system_image=False):
     path = Path(path)
     if not path.is_absolute() or re.fullmatch(r"[A-Za-z]:\\", path.anchor) is None:
         raise OSError(errno.EINVAL, "Unsupported native path")
@@ -181,8 +181,11 @@ def _held_path(path, resources, *, file=False):
     for part in parts[:-1] if file else parts:
         native.descend(part)
     if file:
-        handle, _ = native.open_handle(parts[-1])
-        resources.callback(native.kernel.CloseHandle, handle)
+        if system_image:
+            native.pin_readonly_image(parts[-1])
+        else:
+            handle, _ = native.open_handle(parts[-1])
+            resources.callback(native.kernel.CloseHandle, handle)
     return str(path)
 
 
@@ -203,7 +206,7 @@ def _command(api, arguments, resources):
         length = api.kernel.GetSystemDirectoryW(directory, len(directory))
         if not length or length >= len(directory):
             raise OSError(errno.EIO, "Native system directory unavailable")
-        interpreter = _held_path(Path(directory.value) / "cmd.exe", resources, file=True)
+        interpreter = _held_path(Path(directory.value) / "cmd.exe", resources, file=True, system_image=True)
         body = '"' + executable + '"'
         if len(arguments) > 1:
             body += " " + " ".join(arguments[1:])

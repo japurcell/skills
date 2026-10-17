@@ -74,7 +74,7 @@ class WindowsDirectoryHandles:
         if not name or name in {".", ".."} or any(char in name for char in "\\/:\0"):
             raise OSError(errno.ELOOP, "Unsafe native file")
 
-    def open_handle(self, name, access=0, *, directory=False, create=False, exclusive=False, share_delete=False):
+    def _open_relative(self, name, access, share, disposition, options):
         self.validate_name(name)
         from ctypes import wintypes
         length = len(name.encode("utf-16-le"))
@@ -87,18 +87,43 @@ class WindowsDirectoryHandles:
         attributes = self.ObjectAttributes(self.ctypes.sizeof(self.ObjectAttributes), self.parent,
             self.ctypes.pointer(text), 0x1040, None, None)
         handle, status = wintypes.HANDLE(), self.IoStatus()
-        # SYNCHRONIZE + synchronous nonalert I/O, OPEN_REPARSE_POINT, and an
-        # explicit directory/non-directory constraint. Delete sharing is opt-in.
-        result = self.native.NtCreateFile(self.ctypes.byref(handle), access | 0x100080,
-            self.ctypes.byref(attributes), self.ctypes.byref(status), None, 0, 7 if share_delete else 3,
-            2 if create and exclusive else (3 if create else 1), 0x200020 | (1 if directory else 0x40), None, 0)
+        result = self.native.NtCreateFile(self.ctypes.byref(handle), access,
+            self.ctypes.byref(attributes), self.ctypes.byref(status), None, 0, share,
+            disposition, options, None, 0)
         if result < 0:
             raise self.ctypes.WinError(self.native.RtlNtStatusToDosError(result))
+        return handle.value, status.information == 2
+
+    def open_handle(self, name, access=0, *, directory=False, create=False, exclusive=False, share_delete=False):
+        # Preserve the data-file contract: single link, same access/share/create modes.
+        # SYNCHRONIZE + synchronous nonalert I/O, OPEN_REPARSE_POINT, and an
+        # explicit directory/non-directory constraint. Delete sharing is opt-in.
+        handle, created = self._open_relative(name, access | 0x100080,
+            7 if share_delete else 3, 2 if create and exclusive else (3 if create else 1),
+            0x200020 | (1 if directory else 0x40))
         try:
             info = self.information(handle)
             if bool(info.attributes & 0x10) != directory or (not directory and info.links != 1):
                 raise OSError(errno.ELOOP, "Unsafe native file")
-            return handle.value, status.information == 2
+            return handle, created
+        except BaseException:
+            self.kernel.CloseHandle(handle)
+            raise
+
+    def pin_readonly_image(self, name):
+        """Hold an existing ordinary image without write/delete sharing until owner close.
+
+        The caller selects the trusted system image. This fixed read-only capability
+        accepts its positive hardlink count and exposes no create/mutation handle.
+        """
+        # EXECUTE | READ_ATTRIBUTES | SYNCHRONIZE; SHARE_READ; OPEN only;
+        # OPEN_REPARSE_POINT | SYNCHRONOUS_IO_NONALERT | NON_DIRECTORY_FILE.
+        handle, _ = self._open_relative(name, 0x1000A0, 1, 1, 0x200060)
+        try:
+            info = self.information(handle)
+            if info.attributes & 0x10 or info.links < 1:
+                raise OSError(errno.ELOOP, "Unsafe native image")
+            self.resources.callback(self.kernel.CloseHandle, handle)
         except BaseException:
             self.kernel.CloseHandle(handle)
             raise
