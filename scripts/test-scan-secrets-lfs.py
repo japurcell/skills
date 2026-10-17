@@ -675,7 +675,7 @@ class LFSTests(unittest.TestCase):
             with self.subTest(alias=str(alias)):
                 self.assertTrue(alias.is_symlink())
                 self.assertEqual(alias.lstat().st_uid, 0)
-                parent = "/private/tmp" if alias.name == "tmp" else str(self.base / "tmp")
+                parent = alias.resolve(strict=True) / "tmp" if alias.name == "var" else alias.resolve(strict=True)
                 with tempfile.TemporaryDirectory(prefix="t6-alias-", dir=parent) as temporary:
                     actual = Path(temporary).resolve()
                     lexical = alias / actual.relative_to(alias.resolve())
