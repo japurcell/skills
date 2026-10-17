@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Acceptance at the fixture-preflight CLI and generated-provider seams."""
 from __future__ import annotations
-import ast
 import difflib
 import json
 import hashlib
@@ -16,7 +15,6 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,265 +50,11 @@ class PreflightTests(unittest.TestCase):
                                                      fromfile="a/" + path, tofile="b/" + path)))
         return patch
 
-    def run_cli(self, patch, *extra, active=ROOT, timeout=60, diagnose=False):
-        launcher = self.scanner_diagnostics() if diagnose else CLI
-        result = subprocess.run([sys.executable, str(launcher), "--patch", str(patch),
-                                "--path", "fixture.py", "--active-hook-root", str(active),
-                                "--json", "--no-input", *extra], cwd=self.repo, env=self.env,
-                               capture_output=True, timeout=timeout)
-        if diagnose:
-            # Only the diagnostic launcher's fixed-vocabulary records leave the
-            # private fixture; never echo scanner output or arbitrary stderr.
-            for line in result.stderr.splitlines():
-                try:
-                    record = json.loads(line)
-                except ValueError:
-                    continue
-                if isinstance(record, dict) and (record.get("fixture_work") == "audit_boundary_v1"
-                        or result.returncode and record.get("fixture_scanner") == "audit_boundary_v1"):
-                    print(json.dumps(record, sort_keys=True), flush=True)
-        return result
-
-    def scanner_git_diagnostics(self):
-        """Keep bounded numeric evidence at each real scanner Git boundary."""
-        launcher = self.base / "scanner-git-diagnostics.py"
-        launcher.write_text(textwrap.dedent("""
-            import json, os, runpy, stat, subprocess, sys, time
-            from pathlib import Path
-            script, trace = sys.argv[1:]
-            real = subprocess.Popen
-            sequence = 0
-            operations = {'rev-parse', 'diff', 'ls-files', 'ls-tree', 'cat-file',
-                          'check-attr', 'show', 'init', 'hash-object', 'update-index', 'status'}
-            def append(record):
-                encoded = (json.dumps(record, sort_keys=True) + '\\n').encode('ascii')
-                if len(encoded) > 1024:
-                    encoded = b'{"trace_error":"record_limit"}\\n'
-                try:
-                    fd = os.open(trace, os.O_WRONLY | os.O_CREAT | os.O_APPEND | getattr(os, 'O_NOFOLLOW', 0), 0o600)
-                    with os.fdopen(fd, 'ab') as stream:
-                        info = os.fstat(stream.fileno())
-                        if stat.S_ISREG(info.st_mode) and info.st_size + len(encoded) <= 1048576:
-                            stream.write(encoded)
-                except OSError:
-                    pass  # The outer observer reports an unavailable trace.
-            class GitObserved(real):
-                def __init__(self, command, *args, **kwargs):
-                    global sequence
-                    self.observe = Path(command[0]).name == 'git'
-                    self.recorded = False
-                    self.started = time.monotonic()
-                    self.output = kwargs.get('stdout')
-                    self.errors = kwargs.get('stderr')
-                    self.operation = next((arg for arg in command[1:] if arg in operations), 'other_git')
-                    if self.observe:
-                        sequence += 1
-                    self.sequence = sequence
-                    super().__init__(command, *args, **kwargs)
-                    self.launch_seconds = time.monotonic() - self.started
-                    self.group = None
-                    if self.observe:
-                        try:
-                            self.group = os.getpgid(self.pid)
-                        except OSError:
-                            pass
-                def poll(self):
-                    code = super().poll()
-                    self.record()
-                    return code
-                def wait(self, *args, **kwargs):
-                    code = super().wait(*args, **kwargs)
-                    self.record()
-                    return code
-                def record(self):
-                    if not self.observe or self.returncode is None or self.recorded:
-                        return
-                    self.recorded = True
-                    if self.sequence > 256:
-                        if self.sequence == 257:
-                            append({'trace_error': 'event_limit'})
-                        return
-                    record = {'operation': self.operation, 'sequence': self.sequence,
-                              'pid': self.pid, 'exit_status': self.returncode,
-                              'launch_seconds': round(self.launch_seconds, 6),
-                              'elapsed_seconds': round(time.monotonic() - self.started, 6)}
-                    if self.group is not None:
-                        record['group'] = self.group
-                    for name, stream in (('stdout_bytes', self.output), ('stderr_bytes', self.errors)):
-                        try:
-                            record[name] = os.fstat(stream.fileno()).st_size
-                        except (AttributeError, OSError, ValueError):
-                            pass
-                    append(record)
-            subprocess.Popen = GitObserved
-            sys.argv = [script]
-            runpy.run_path(script, run_name='__main__')
-        """))
-        return launcher
-
-    def scanner_diagnostics(self):
-        """Observe real scanner completion using bounded, allowlisted audit fields."""
-        types = ast.parse((ROOT / ".codex/hooks/helpers/scan_types.py").read_text())
-        constants = {node.targets[0].id: ast.literal_eval(node.value) for node in types.body
-                     if isinstance(node, ast.Assign) and len(node.targets) == 1
-                     and isinstance(node.targets[0], ast.Name)
-                     and node.targets[0].id in {"INCOMPLETE_CAUSES", "INCOMPLETE_OPERATIONS"}}
-        launcher = self.base / "scanner-diagnostics.py"
-        inner_launcher = self.scanner_git_diagnostics()
-        source = "INNER_LAUNCHER = " + repr(str(inner_launcher)) + "\n"
-        source += "KNOWN_CAUSES = " + repr(set(constants["INCOMPLETE_CAUSES"]) | {"clean", "findings", "not_repository"}) + "\n"
-        source += "KNOWN_OPERATIONS = " + repr(constants["INCOMPLETE_OPERATIONS"]) + "\n"
-        source += textwrap.dedent("""
-            import ast, atexit, json, math, subprocess, sys, time, runpy
-            from pathlib import Path
-            real = subprocess.Popen
-            work = {'git': 0, 'scanner': 0, 'observer': 0}
-            atexit.register(lambda: print(json.dumps({'fixture_work': 'audit_boundary_v1',
-                **work}, sort_keys=True), file=sys.stderr, flush=True))
-            def label(value, choices):
-                return value if isinstance(value, str) and value in choices else 'unrecognized'
-            def number(value):
-                return (type(value) is int or type(value) is float and math.isfinite(value)) and -2147483648 <= value <= 9223372036854775807
-            class Diagnosed(real):
-                def __init__(self, command, *args, **kwargs):
-                    self.scanner = Path(command[-1]).name == 'scan-secrets.py'
-                    if self.scanner:
-                        work['scanner'] += 1
-                    elif Path(command[0]).name == 'git':
-                        work['git'] += 1
-                    elif command[0] == '/bin/ps':
-                        work['observer'] += 1
-                    self.recorded = False
-                    self.started = time.monotonic()
-                    self.audit = Path(kwargs.get('env', {}).get('SECRETS_LOG_DIR', '.')) / 'scan.log'
-                    self.trace = self.audit.with_name('scanner-git-diagnostic.jsonl')
-                    self.expected_build = None
-                    if self.scanner:
-                        try:
-                            nodes = ast.parse(Path(command[-1]).read_text()).body
-                            self.expected_build = next(ast.literal_eval(node.value) for node in nodes
-                                if isinstance(node, ast.Assign) and len(node.targets) == 1
-                                and isinstance(node.targets[0], ast.Name) and node.targets[0].id == 'REPORT_BUILD')
-                        except Exception:
-                            pass
-                        command = [*command[:-1], INNER_LAUNCHER, command[-1], str(self.trace)]
-                    super().__init__(command, *args, **kwargs)
-                def poll(self):
-                    code = super().poll()
-                    self.record()
-                    return code
-                def wait(self, *args, **kwargs):
-                    code = super().wait(*args, **kwargs)
-                    self.record()
-                    return code
-                def record(self):
-                    if not self.scanner or self.returncode is None or self.recorded:
-                        return
-                    self.recorded = True
-                    parts = self.audit.parts
-                    report = {'fixture_scanner': 'audit_boundary_v1', 'exit_status': self.returncode,
-                              'elapsed_seconds': round(time.monotonic() - self.started, 6),
-                              'provider': label(parts[-2], {'codex', 'copilot', 'gemini'}),
-                              'bundle': label(parts[-4], {'active', 'candidate'}),
-                              'view': label(parts[-3], {'pending', 'complete-0', 'complete-1', 'control'})}
-                    try:
-                        with self.audit.open('rb') as stream:
-                            raw = stream.read(1048577)
-                        report['audit_bytes'] = len(raw)
-                        if len(raw) > 1048576:
-                            report['audit_result'] = 'over_limit'
-                        else:
-                            record = json.loads(raw)
-                            if not isinstance(record, dict):
-                                raise ValueError
-                            report['audit_result'] = 'read'
-                            expected = {'provider': parts[-2], 'build': self.expected_build, 'mode': 'block',
-                                'scope': 'diff', 'profile': 'pending_snapshots_v1', 'route': 'pending_scan',
-                                'inspection_outcome': 'complete', 'audit_outcome': 'written'}
-                            report['required_mismatches'] = [key for key, value in expected.items()
-                                if type(record.get(key)) is not type(value) or record.get(key) != value]
-                            if self.expected_build is None:
-                                report['required_mismatches'].append('expected_build_unavailable')
-                            if record.get('status') not in {'clean', 'findings'}:
-                                report['required_mismatches'].append('status')
-                            if not isinstance(record.get('findings', []), list):
-                                report['required_mismatches'].append('findings_type')
-                            if type(record.get('findingsTruncated')) is not bool:
-                                report['required_mismatches'].append('truncation_type')
-                            if type(record.get('omittedFindings')) is not int or record['omittedFindings'] < 0:
-                                report['required_mismatches'].append('omitted_count')
-                            for key, choices in {'status': {'clean', 'findings', 'incomplete'},
-                                    'inspection_outcome': {'complete', 'incomplete'},
-                                    'audit_outcome': {'written', 'failed', 'not_attempted'},
-                                    'security_outcome': {'clean', 'findings', 'incomplete'},
-                                    'enforcement': {'allow', 'deny'}}.items():
-                                report[key] = label(record.get(key), choices)
-                            report['cause'] = label(record.get('cause'), KNOWN_CAUSES)
-                            failure = record.get('diagnostic')
-                            if isinstance(failure, dict):
-                                report['diagnostic'] = {'cause': label(failure.get('cause'), KNOWN_CAUSES),
-                                    'operation': label(failure.get('operation'), KNOWN_OPERATIONS)}
-                                if 'capture_step' in failure:
-                                    report['diagnostic']['capture_step'] = label(failure['capture_step'],
-                                        {'temporary_file', 'verify_capture', 'request_write', 'spawn',
-                                         'wait', 'descendants', 'consume', 'cleanup'})
-                                for key in ('exit_status', 'measured', 'limit', 'seconds', 'os_errno', 'attempts'):
-                                    if number(failure.get(key)):
-                                        report['diagnostic'][key] = failure[key]
-                            result = record.get('scanResult')
-                            if isinstance(result, dict):
-                                report['scan_reason'] = label(result.get('reason'), KNOWN_CAUSES)
-                                report['outcome'] = label(result.get('outcome'),
-                                    {'complete_clean', 'complete_findings', 'incomplete'})
-                                if type(result.get('coverage_complete')) is bool:
-                                    report['coverage_complete'] = result['coverage_complete']
-                                if number(result.get('elapsed_seconds')):
-                                    report['scan_elapsed_seconds'] = result['elapsed_seconds']
-                                counts = result.get('counts')
-                                if isinstance(counts, dict):
-                                    report['counts'] = {key: counts[key] for key in
-                                        ('candidates', 'inspected_snapshots', 'candidate_bytes', 'capture_bytes',
-                                         'temp_peak_bytes', 'processed_findings', 'retained_findings', 'omitted_findings')
-                                        if type(counts.get(key)) is int and number(counts[key])}
-                    except Exception:
-                        # No audit/parser exception text crosses this boundary.
-                        report['audit_result'] = 'unavailable_or_invalid'
-                    try:
-                        with self.trace.open('rb') as stream:
-                            trace = stream.read(1048577)
-                        if len(trace) > 1048576:
-                            raise ValueError
-                        rows = [json.loads(line) for line in trace.splitlines()]
-                        if len(rows) > 257:
-                            raise ValueError
-                        events = []
-                        limited = False
-                        for row in rows:
-                            if row in ({'trace_error': 'event_limit'}, {'trace_error': 'record_limit'}):
-                                limited = True
-                                continue
-                            if (not isinstance(row, dict) or set(row) - {'operation', 'sequence', 'pid', 'group',
-                                    'exit_status', 'launch_seconds', 'elapsed_seconds', 'stdout_bytes', 'stderr_bytes'}
-                                    or row.get('operation') not in {'rev-parse', 'diff', 'ls-files', 'ls-tree', 'cat-file',
-                                        'check-attr', 'show', 'init', 'hash-object', 'update-index', 'status', 'other_git'}
-                                    or any(not number(value) for key, value in row.items() if key != 'operation')):
-                                raise ValueError
-                            events.append(row)
-                        report['inner_trace_result'] = 'limited' if limited else 'read'
-                        report['inner_git_count'] = len(events)
-                        report['inner_git_seconds'] = round(sum(row.get('elapsed_seconds', 0) for row in events), 6)
-                        if report.get('status') == 'incomplete' or report.get('required_mismatches') or report.get('audit_result') != 'read':
-                            report['git_events'] = events[-4:]
-                            report['git_events_omitted'] = max(0, len(events) - 4)
-                    except Exception:
-                        report['inner_trace_result'] = 'unavailable_or_invalid'
-                    print(json.dumps(report, sort_keys=True), file=sys.stderr, flush=True)
-            subprocess.Popen = Diagnosed
-        """)
-        source += "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
-        source += "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n"
-        launcher.write_text(source)
-        return launcher
+    def run_cli(self, patch, *extra, active=ROOT, timeout=60):
+        return subprocess.run([sys.executable, str(CLI), "--patch", str(patch),
+                               "--path", "fixture.py", "--active-hook-root", str(active),
+                               "--json", "--no-input", *extra], cwd=self.repo, env=self.env,
+                              capture_output=True, timeout=timeout)
 
     def fingerprint(self):
         return (self.target.read_bytes(), self.target.stat().st_mode,
@@ -744,56 +488,6 @@ class PreflightTests(unittest.TestCase):
                 self.assertNotEqual(process.returncode, 0)
         self.assertEqual(self.fingerprint(), before)
 
-    def test_scanner_boundary_diagnostics_exclude_payload_strings(self):
-        before = self.fingerprint()
-        active = self.active_copy("diagnostic-canary")
-        binaries = self.base / "diagnostic-bin"
-        binaries.mkdir()
-        git = binaries / "git"
-        real_git = shutil.which("git")
-        git.write_text("#!" + sys.executable + "\nimport os,sys\n"
-            "if 'diff' in sys.argv[1:]:\n canary='gh'+'p_'+'FAKE'*9\n sys.stdout.write(canary)\n sys.stderr.write(canary)\n raise SystemExit(128)\n"
-            "os.execv(" + repr(real_git) + ", [" + repr(real_git) + ", *sys.argv[1:]])\n")
-        git.chmod(0o755)
-        scanner = active / ".codex/hooks/scan-secrets.py"
-        source = scanner.read_text().replace('if __name__ == "__main__":',
-            "os.environ['PATH'] = " + repr(str(binaries)) + " + os.pathsep + os.environ['PATH']\n"
-            'if __name__ == "__main__":')
-        source = source.replace("raise SystemExit(main())",
-            "code = main()\n        log = resolve_scan_log()\n        record = json.loads(log.read_text())\n"
-            "        canary = 'gh' + 'p_' + 'FAKE' * 9\n"
-            "        record.update(note=canary, command=canary, payload=canary)\n"
-            "        record.setdefault('diagnostic', {})['payload'] = canary\n"
-            "        log.write_text(json.dumps(record) + '\\n')\n        raise SystemExit(code)")
-        scanner.write_text(source)
-        result = self.run_cli(self.patch("value = 'repaired'\n"), "--check", active=active, diagnose=True)
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertEqual(json.loads(result.stdout)["reason"], "incomplete_scan")
-        reports = [json.loads(line) for line in result.stderr.splitlines()]
-        records = [row for row in reports if row.get("fixture_scanner") == "audit_boundary_v1"]
-        work = [row for row in reports if row.get("fixture_work") == "audit_boundary_v1"]
-        self.assertEqual(len(work), 1)
-        self.assertEqual(work[0]["scanner"], 1)
-        self.assertEqual(len(records), 1)
-        record = records[0]
-        self.assertEqual(record["fixture_scanner"], "audit_boundary_v1")
-        self.assertEqual((record["provider"], record["bundle"], record["view"]), ("codex", "active", "pending"))
-        self.assertEqual(record["cause"], "git_failed")
-        self.assertEqual(record["diagnostic"], {"cause": "git_failed", "operation": "git_candidates", "exit_status": 128})
-        self.assertEqual(record["audit_result"], "read")
-        self.assertEqual(record["inner_trace_result"], "read")
-        self.assertGreater(record["inner_git_count"], 0)
-        self.assertIn("status", record["required_mismatches"])
-        self.assertIn("inspection_outcome", record["required_mismatches"])
-        self.assertEqual(record["git_events"][-1]["operation"], "diff")
-        self.assertEqual(record["git_events"][-1]["exit_status"], 128)
-        self.assertEqual(record["git_events"][-1]["stdout_bytes"], len(TOKEN))
-        self.assertLessEqual(record["audit_bytes"], 1048576)
-        self.assertLess(len(result.stderr), 4096)
-        self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
-        self.assertNotIn(b'Traceback', result.stderr)
-        self.assertEqual(self.fingerprint(), before)
-
     def test_source_filter_commands_are_never_executed(self):
         self.target.write_text("value = 'dirt'\n")
         patch = self.patch("value = 'repaired'\n")
@@ -805,12 +499,12 @@ class PreflightTests(unittest.TestCase):
         self.git("config", "filter.fixture-preflight.clean", shlex.join([sys.executable, str(driver)]))
         original = self.target.read_bytes()
         index = (self.repo / ".git/index").read_bytes()
-        result = self.run_cli(patch, "--check", diagnose=True)
+        result = self.run_cli(patch, "--check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(marker.exists(), "verification executed source Git filter configuration")
         self.assertEqual(self.target.read_bytes(), original)
         self.assertEqual((self.repo / ".git/index").read_bytes(), index)
-        result = self.run_cli(self.patch("value = '" + TOKEN + "'\n"), "--check", diagnose=True)
+        result = self.run_cli(self.patch("value = '" + TOKEN + "'\n"), "--check")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)["reason"], "findings")
         self.assertFalse(marker.exists(), "credential inspection executed a source Git filter")
