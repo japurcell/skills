@@ -45,6 +45,36 @@ function Invoke-Case {
         if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
     }
 
+    $executionMarker = Join-Path $caseDir 'fixture-executed'
+    $imageObserver = Join-Path $caseDir 'observe-image-pin.py'
+    if ($Scenario -eq 'image-pin') {
+        $imageDirectory = Join-Path $caseDir 'image-system'
+        New-Item -ItemType Directory -Path $imageDirectory | Out-Null
+        [System.IO.File]::WriteAllText((Join-Path $imageDirectory 'cmd.exe'), "disposable non-image fixture`n")
+        New-Item -ItemType HardLink -Path (Join-Path $imageDirectory 'alias.exe') -Target (Join-Path $imageDirectory 'cmd.exe') | Out-Null
+        [System.IO.File]::WriteAllText($imageObserver, @'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+image = root / 'image-system' / 'cmd.exe'
+alias = image.with_name('alias.exe')
+try:
+    report = json.loads((root / 'image-pin.json').read_text(encoding='ascii'))
+    if report != {'write_alias':32, 'rename_leaf':32, 'rename_parent':32}:
+        raise SystemExit(3)
+    if image.stat().st_nlink != 2 or image.read_bytes() != b'disposable non-image fixture\n':
+        raise SystemExit(4)
+    with alias.open('r+b'):
+        pass
+    renamed = image.with_name('renamed.exe')
+    image.rename(renamed)
+    renamed.rename(image)
+    renamed_directory = image.parent.with_name('renamed-system')
+    image.parent.rename(renamed_directory)
+    renamed_directory.rename(image.parent)
+except Exception:
+    raise SystemExit(2)
+'@)
+    }
     $grandchildMarker = Join-Path $caseDir 'grandchild.json'
     $grandchildRunner = Join-Path $caseDir 'grandchild.py'
     $grandchildObserver = Join-Path $caseDir 'observe-grandchild.py'
@@ -127,6 +157,9 @@ finally:
 '@)
     }
     $shim = switch ($Scenario) {
+        'hardlinked-batch' { "@echo off`r`necho executed > `"$executionMarker`"`r`n`"$realGit`" %*" }
+        'image-pin' { "@echo off`r`n`"$realGit`" %*" }
+        'hostile-comspec' { "@echo off`r`n`"$realGit`" %*" }
         'launch-death' { "@echo off`r`n`"$realGit`" %*" }
         'grandchild' { "@echo off`r`nif `"%1 %2`"==`"rev-parse --is-inside-work-tree`" (`"$python`" -I -S -B `"$grandchildRunner`" `"$grandchildMarker`" & exit /b 0)`r`n`"$realGit`" %*" }
         'descendant' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (start "" /B cmd /c "ping -n 11 127.0.0.1 >nul" & echo true & exit /b 0)' + "`r`n" + 'exit /b 9' }
@@ -139,6 +172,9 @@ finally:
         'success' { "@echo off`r`n`"$realGit`" %*" }
     }
     [System.IO.File]::WriteAllText((Join-Path $bin 'git.cmd'), $shim)
+    if ($Scenario -eq 'hardlinked-batch') {
+        New-Item -ItemType HardLink -Path (Join-Path $bin 'alias.cmd') -Target (Join-Path $bin 'git.cmd') | Out-Null
+    }
     if ($Provider -eq 'copilot') {
         $payload = if ($Mode -eq 'block') {
             @{
@@ -172,18 +208,24 @@ finally:
 
     $savedPath = $env:PATH
     $savedMode = $env:SCAN_MODE
+    $savedComspec = $env:COMSPEC
     $savedLog = $env:SECRETS_LOG_DIR
     $savedTemp = $env:TEMP
     $savedTmp = $env:TMP
     try {
         $env:PATH = "$bin;$savedPath"
         $env:SCAN_MODE = $Mode
+        if ($Scenario -eq 'hostile-comspec') {
+            $hostileComspec = Join-Path $caseDir 'hostile-comspec.cmd'
+            [System.IO.File]::WriteAllText($hostileComspec, "@echo off`r`necho executed > `"$executionMarker`"`r`nexit /b 9")
+            $env:COMSPEC = $hostileComspec
+        }
         $env:SECRETS_LOG_DIR = Join-Path $caseDir 'logs'
         $env:TEMP = $caseDir
         $env:TMP = $caseDir
         $started = [Diagnostics.Stopwatch]::StartNew()
         $runner = $hooks[$Provider]
-        if ($Diagnostic -and $Scenario -ne 'launch-death') {
+        if ($Diagnostic -and $Scenario -notin @('launch-death', 'image-pin')) {
             $runner = Join-Path $caseDir 'capture-fixture.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
             $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
@@ -313,6 +355,89 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 '@
             $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('MARKER_LITERAL', $markerLiteral)
             [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'image-pin') {
+            $runner = Join-Path $caseDir 'image-pin.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $rootLiteral = $caseDir | ConvertTo-Json -Compress
+            $fixture = @'
+import ctypes, json, os, pathlib, runpy
+root = pathlib.Path(ROOT_LITERAL)
+image = root / 'image-system' / 'cmd.exe'
+alias = image.with_name('alias.exe')
+marker = root / 'image-pin.json'
+original_library = ctypes.WinDLL
+observer = original_library('kernel32', use_last_error=True)
+observer.CreateFileW.argtypes = [ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32,
+                               ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p]
+observer.CreateFileW.restype = ctypes.c_void_p
+observer.CloseHandle.argtypes = [ctypes.c_void_p]
+observer.CloseHandle.restype = ctypes.c_int
+class Function:
+    def __init__(self, function):
+        self.function = function
+    @property
+    def argtypes(self):
+        return self.function.argtypes
+    @argtypes.setter
+    def argtypes(self, value):
+        self.function.argtypes = value
+    @property
+    def restype(self):
+        return self.function.restype
+    @restype.setter
+    def restype(self, value):
+        self.function.restype = value
+class SystemDirectory(Function):
+    def __call__(self, buffer, count):
+        directory = str(image.parent)
+        if count <= len(directory):
+            return len(directory) + 1
+        buffer.value = directory
+        return len(directory)
+class CreateProcessBoundary(Function):
+    def __call__(self, *arguments):
+        # Refuse to probe any non-fixture image, including the real OS image.
+        if arguments[0] != str(image):
+            os._exit(97)
+        report = {}
+        handle = observer.CreateFileW(str(alias), 0x40000000, 7, None, 3, 0, None)
+        if handle == ctypes.c_void_p(-1).value:
+            report['write_alias'] = ctypes.get_last_error()
+        else:
+            observer.CloseHandle(handle)
+            report['write_alias'] = 0
+        for name, source, destination in (
+                ('rename_leaf', image, image.with_name('renamed.exe')),
+                ('rename_parent', image.parent, image.parent.with_name('renamed-system'))):
+            try:
+                os.rename(source, destination)
+            except OSError as error:
+                report[name] = error.winerror or 0
+            else:
+                os.rename(destination, source)
+                report[name] = 0
+        marker.write_text(json.dumps(report), encoding='ascii')
+        # Forward to the real API. Disposable non-image content must fail launch.
+        return self.function(*arguments)
+class Library:
+    def __init__(self, library):
+        self.library = library
+        self.create = CreateProcessBoundary(library.CreateProcessW)
+        self.system = SystemDirectory(library.GetSystemDirectoryW)
+    def __getattr__(self, name):
+        if name == 'CreateProcessW':
+            return self.create
+        if name == 'GetSystemDirectoryW':
+            return self.system
+        return getattr(self.library, name)
+def library(name, *arguments, **keywords):
+    result = original_library(name, *arguments, **keywords)
+    return Library(result) if name.casefold() == 'kernel32' else result
+ctypes.WinDLL = library
+runpy.run_path(HOOK_LITERAL, run_name='__main__')
+'@
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('ROOT_LITERAL', $rootLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
         } elseif ($Scenario -eq 'capture-error') {
             $runner = Join-Path $caseDir 'capture-error.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
@@ -364,13 +489,23 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             if ($observed -eq 1) { throw "$Provider $Mode grandchild left owned descendant alive" }
             if ($observed -ne 0) { throw "$Provider $Mode grandchild ownership check failed: $observed" }
         }
+        if ($Scenario -eq 'image-pin') {
+            & $python -I -S -B $imageObserver $caseDir
+            if ($LASTEXITCODE -ne 0) {
+                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
+                throw "$Provider $Mode disposable image pin sharing or lifetime control failed"
+            }
+        }
+        if ($Scenario -in @('hardlinked-batch', 'hostile-comspec') -and (Test-Path -LiteralPath $executionMarker)) {
+            throw "$Provider $Mode $Scenario executed the refused fixture"
+        }
         $response = Get-Content -LiteralPath $outputPath -Raw | ConvertFrom-Json -AsHashtable
         if ($Scenario -eq 'capture-error' -and ((Get-Content -LiteralPath $outputPath -Raw) -match 'private capture failure detail')) {
             throw "$Provider leaked a capture error"
         }
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
-        if ($Scenario -eq 'success') {
+        if ($Scenario -in @('success', 'hostile-comspec')) {
             $responseType = if ($response -is [System.Collections.IDictionary]) {
                 'object'
             } elseif ($response -is [array]) {
@@ -406,6 +541,13 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             if (-not $cleanResponse) { throw "$Provider $Mode no-HEAD response failed ($diagnostic)" }
             if ($log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD audit failed ($diagnostic)" }
         } else {
+            if ($Scenario -eq 'hardlinked-batch') {
+                $record = $log.Trim() | ConvertFrom-Json -AsHashtable
+                if ($record.diagnostic.cause -ne 'git_capture_failed' -or $record.diagnostic.capture_step -ne 'spawn' -or
+                    $record.diagnostic.os_errno -ne 10062) {
+                    throw "$Provider $Mode hardlinked batch did not retain the original single-link refusal"
+                }
+            }
             $rendered = $response | ConvertTo-Json -Compress
             if ($rendered -notmatch 'incomplete' -or $log -match '"status":"clean"' -or $log -notmatch '"status":"incomplete"') {
                 throw "$Provider $Mode $Scenario returned a false clean result"
@@ -446,6 +588,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         }
         $env:PATH = $savedPath
         $env:SCAN_MODE = $savedMode
+        $env:COMSPEC = $savedComspec
         $env:SECRETS_LOG_DIR = $savedLog
         $env:TEMP = $savedTemp
         $env:TMP = $savedTmp
@@ -562,7 +705,7 @@ print(json.dumps(report, sort_keys=True, separators=(',', ':')))
 '@)
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
-            foreach ($scenario in @('grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
+            foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }
         }
