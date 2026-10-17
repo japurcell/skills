@@ -26,12 +26,14 @@ The existing schema-1 resource budgets stay unchanged. Checkpoint defaults are 4
 
 - [x] Core source checkpoint/status, selected-index commit gates, outgoing-history/LFS gates and POSIX installation/recovery are implemented with retained source/source-free proof.
 - [x] Provider registration migration and installed repair/End Turn workflows pass. All three maintained scanner suites and 12 Darwin cases pass in actual macOS run 38986235261; the 130-input scanner closure is preserved on accepted source.
-- [x] Windows main installer passes actual native tests. Existing Windows capture tests exposed real child-containment defects; the already-written fix is awaiting its final native run.
+- [x] Windows main installer passes actual native tests. Existing Windows capture tests exposed real child-containment defects; their bounded repair passed the complete standard native workflow.
 - [x] (2026-10-16) [milestone-1] T1: integrated the observer repair and direct 28-test core suite at `1a1c3b8c`. One Python 3.13 run passed in 112.568 seconds; optional diagnostic machinery is removed. All 68 tested input hashes/modes survive integration.
-- [ ] [milestone-1] W2 owner: finish the existing creation-time Job Object fix, remove temporary diagnostic tracing/collectors, and pass existing native hook/capture controls. No new native platform features.
-- [ ] [milestone-1] Primary: review and integrate these completed repairs serially, preserving tested source identities and the unresolved historical observation.
-- [ ] [milestone-2] T9c-P owner/primary: integrate the already-written CI coverage and verified prerequisites. Use actual complete workflows for final proof; no duplicate full local workflow replay.
-- [ ] [milestone-3] Primary: align README/CLI-help/support guidance, repair affected links, complete one coordinated knowledge-maintenance pass, and retain final checks/results.
+- [x] (2026-10-16) [milestone-1] W2: actual Windows run 38989319821 passed every step, including native containment. Removed 203 optional diagnostic lines while retaining all controls.
+- [x] (2026-10-16) [milestone-1] Primary: reviewed and integrated repairs serially through `37aeaa20`, preserving tested inputs and the unresolved historical observation.
+- [x] (2026-10-16) [milestone-2] T9c-P: integrated CI coverage, verified prerequisites and the targeted alias-fixture repair at `d61250aa`. Early hosted results and the exact fixture red/green are retained in [evidence](t9c-p-evidence.md).
+- [ ] [milestone-2] Primary: run complete final macOS and Windows workflows on the integrated core; no duplicate full local replay.
+- [x] (2026-10-16) [milestone-3] Primary: aligned README/CLI-help/support guidance, repaired historical links and completed one coordinated knowledge pass. Updated existing security instructions and scanner-consistency memory; no new memory/index/skill/source files. OKF lint, affected links, generated freshness (68 files) and whitespace checks pass.
+- [ ] [milestone-3] Primary: retain final integrated CI results and completion status.
 
 ## Context and Orientation
 
@@ -50,8 +52,8 @@ The observer repair has mechanism-specific local and actual hosted proof, includ
 ## Plan of Work
 
 ### Milestone 1: Finish the existing repairs
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 T1 keeps the small verifier process-observation repair and removes the optional generated audit/inner-Git diagnostic wrappers from its tests. The source-filter case returns to the actual CLI directly. Preserve all original positive, negative, timeout, cancellation, nonmutation and no-filter-execution assertions, including the added ordinary 0.65-second observation case. Remove only the diagnostic feature and its diagnostic-only test; do not add deletion regression tests. Run the resulting core suite once on Python 3.13 and preserve its output and source identity.
 
@@ -63,14 +65,14 @@ Primary reviews each final diff, reuses unchanged proof, checks the exact releva
 Status: in progress
 Acceptance: not met
 
-T9c-P's existing workflow adds the already-registered CLI/status/gate/LFS/installation/lifecycle suites, preserves all existing required commands and the 12-case native Darwin validator, provisions actual Python 3.11 plus Python 3.13, and selects hash-verified Git LFS 3.8.0 through an absolute path. Its disposable global Git config is a private writable empty file so checkout cleanup works. All these prerequisites pass locally and on the early hosted run; full headroom and final integrated proof remain to be observed. The early full job exposed a gate-test fixture assumption about its temporary directory; repair that fixture without weakening its actual alias/gate assertions.
+T9c-P's existing workflow adds the already-registered CLI/status/gate/LFS/installation/lifecycle suites, preserves all existing required commands and the 12-case native Darwin validator, provisions actual Python 3.11 plus Python 3.13, and selects hash-verified Git LFS 3.8.0 through an absolute path. Its disposable global Git config is a private writable empty file so checkout cleanup works. All these prerequisites pass locally and on the early hosted run; full headroom and final integrated proof remain to be observed. The early full job exposed a gate-test fixture assumption about its temporary directory; its explicit-alias fixture repair is now integrated, preserving actual gate assertions.
 
 Use `.github/workflows/hooks-posix.yml` and `.github/workflows/ready-ideas-windows.yml` for actual final proof. Remove temporary supplemental diagnostic jobs from the final source. Existing scanner shells already include capture tests, so do not add duplicate aggregate capture runs. Preserve all current tests; fix actual failures without more frameworks. A CI job timeout may be set from observed complete workload needs, but product deadlines and test assertions do not change.
 
 One actual complete final workflow per platform is the main integration check. Run additional targeted local tests only for changed code or a concrete failure. Do not replay the entire hosted command list locally after matching host proof. Record the tested commit, run link, result and material support limits.
 
 ### Milestone 3: Document and finish
-Status: open
+Status: in progress
 Acceptance: not met
 
 Update README and verify existing CLI help to describe the actual installed command, explicit check/gates, historical status, migration/recovery and supported platforms. The default command is under `$HOME/.local/lib/scan-secrets/scan-secrets`; do not imply PATH is modified. Explain how a user explicitly installs/uninstalls repository gates and how failures leave editing available. Document Windows repository-gate refusal plainly without promising unfinished native features.
@@ -79,7 +81,7 @@ After all code work finishes, complete one `update-agent-docs` pass using the kn
 
 ## Concrete Steps
 
-Work from `/Users/adam/.codex/worktrees/a468/skills`. Await the W2 creation-time job candidate in existing Windows Actions run 38989319821. Keep its source frozen until the native result. T1 is integrated. Early macOS run 38988495837 passed prerequisites, preflight, recovery, reporting, scanner, CLI and status checks, then exposed an alias-test fixture assuming the temporary root lies under `/tmp` or `/var`. T9c-P owns the bounded fixture repair and its targeted red/green; no runtime change or full local replay is needed. Finish the two existing owners' cleanup and integrate serially, then integrate T9c-P wiring onto those accepted sources.
+Work from `/Users/adam/.codex/worktrees/a468/skills`. All code owners have completed and their clean branches are integrated through `37aeaa20`. Primary finishes the single coordinated documentation pass, commits the integrated source, and pushes it for the standard macOS and Windows workflows. Inspect actual failures and repair only their demonstrated cause. No full local replay or new workstream is needed.
 
 Useful validation commands, selected according to the changed files, are:
 
@@ -114,4 +116,4 @@ The historical unexplained preflight incomplete result is retained honestly. Lat
 
 ## Outcomes & Retrospective
 
-The core implementation already exists, including explicit scans/gates, status-only turn end, migration and POSIX installation. Remaining work is to integrate the existing minimal repairs, complete final CI, align documentation and report exact results/support limits. No live deployment has happened. This plan is not complete until those remaining acceptance checks are met.
+The core implementation already exists, including explicit scans/gates, status-only turn end, migration and POSIX installation. Minimal repairs and CI coverage are integrated. Remaining work is final integrated CI, documentation validation and exact results/support limits. No live deployment has happened. This plan is not complete until those remaining acceptance checks are met.

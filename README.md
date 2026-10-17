@@ -151,6 +151,21 @@ Explicit budget files retain finite capture and temporary-storage limits. Limit,
 Git, audit and cancellation failures remain incomplete, never clean. Reports
 sanitize labels and omit arbitrary file bodies. No scan downloads missing content.
 
+### Security fixture patches
+
+For a proposed text-fixture repair, verify the patch before applying it with your
+normal patch tool. Run from the repository root, name each existing fixture with
+`--path`, and select the reviewed active hook root explicitly:
+
+```sh
+python3 -I -S -B scripts/verify-security-fixture-patch.py --patch repair.patch --path scripts/fixture.py --active-hook-root "$HOME" --check --json
+```
+
+Replace the example patch and fixture paths with your actual files. The verifier
+checks disposable copies against active and candidate scanners and independent
+credential controls. It never applies the patch or changes the live index. Native
+Windows verification is unsupported and refuses before launching children.
+
 ### Hook diagnostics
 
 The installed standalone diagnostics command collects bounded metadata without
