@@ -78,57 +78,84 @@ Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH`
 
 The Codex merge preserves unrelated hooks. A real configuration change keeps the previous valid file as owner-only `~/.codex/hooks.json.bak`; malformed existing JSON is left unchanged and stops installation. After installing or changing the non-managed hook, open `/hooks` in Codex CLI to review and trust its exact definition.
 
-Tool Guardian recognizes native Copilot and Codex patches as file data with a
-256 KiB input budget. Shell-command limits and protected delete/move checks
-remain active. Secret scanning independently checks pending repository changes,
-including when the requested tool only reads files or documentation. In block
-mode, an incomplete scan denies the tool and reports a stable cause, safe counts
-where available, and recovery advice. The scanner accepts up to 8 MiB of aggregate candidate snapshot bytes, 256
-snapshots and eight seconds of total input/scan work. A single file may use the
-remaining aggregate allowance; index framing and snapshot replay do not count
-again. Git captures retain their separate 8 MiB bound. For example,
-`total_bytes_limit/candidate_read` identifies pending content beyond the remaining
-allowance without exposing its name or contents. Large or unusually dense inputs
-can still reach the work or Git-capture limits.
+### Explicit secret checks and Git gates
 
-Git capture failures report a trusted `capture_step` and numeric `os_errno` when
-available. Failed launches also report `attempts`. Temporary process
-exhaustion gets at most three launch attempts within the existing deadlines;
-permanent errors and failed Git commands remain incomplete scans.
+Tool Guardian checks dangerous tool actions, including native Copilot and Codex
+patches within its 256 KiB input budget. Secret scanning runs only when explicitly
+requested or when an explicitly installed Git gate runs. Reads, repairs and ending
+a turn do not trigger a secret scan.
 
-Scanner audit records retain at most 100 findings from 1,000 processed findings
-and stay within 64 KiB including JSON escaping and the newline. Guardian audit
-records stay within 16 KiB. Reports bound and sanitize displayed labels before
-serialization, replace token-shaped identifiers, remove control characters, and
-use hook-generated timestamps. Omitted finding and path counts are explicit;
-reports never include arbitrary file bodies. Build, provider, profile, route and
-cause fields identify the compiled policy and classification path, including
-strict fallback for unsupported or malformed native input.
+End Turn displays the last saved scan result, its time and scope. Missing, stale,
+corrupt or unavailable status does not block completion. Status never scans,
+retries, starts background work or authorizes a later commit or push.
 
-Security findings, inspection completeness, audit writes and final enforcement
-are separate outcomes. A known finding survives later incomplete inspection or
-audit failure. Block mode denies these calls; scanner warn mode keeps its warning
-behavior. Guardian preserves warnings for detected operations, while incomplete
-inspection and clean calls whose audit fails remain denied.
+Both provider installers install the standalone CLI without adding it to PATH or
+activating repository Git gates. On macOS/POSIX, use the installed command directly:
 
-For hook-owned recovery metadata, request the exact literal command
-`hooks-diagnostics-v1` through the provider's native shell tool. Codex uses
-`exec_command` (or `functions.exec_command`) with
-`{"cmd":"hooks-diagnostics-v1","login":false}`; only integer
-`max_output_tokens` and `yield_time_ms` from 0 through 2,147,483,647 may be added.
-Copilot uses native `bash` and Gemini uses `run_shell_command`, each with exactly
-`{"command":"hooks-diagnostics-v1"}`. Do not add a path, arguments, shell,
-working directory, environment, or permission options.
+```sh
+"$HOME/.local/lib/scan-secrets/scan-secrets" check --repo .
+"$HOME/.local/lib/scan-secrets/scan-secrets" check --repo . --scope index --json
+"$HOME/.local/lib/scan-secrets/scan-secrets" status --repo .
+"$HOME/.local/lib/scan-secrets/scan-secrets" help hooks
+```
 
-The scanner always denies this request in both block and warn modes and returns
-`scan-secrets diagnostics (request not executed):` followed by bounded JSON.
-The marker is never executed and does not need an executable on PATH. The report
-inventories the hook process directory, marks a differing payload directory
-unverified, and reports security as `not_scanned` and audit as `not_attempted`.
-Missing audit/policy helpers, Git failures, unsafe candidates, and oversized files
-do not prevent this route. Guardian still inspects the request independently;
-its own failure may hide scanner diagnostics in a provider. A broken common
-transport helper or interpreter requires the standalone human CLI below.
+`check` inspects pending worktree changes by default; `--scope index` inspects
+staged versions. It saves historical status outside the repository and installed
+executable bundle. Checks return `0` for complete clean, `1` for findings, `2` for
+incomplete inspection, `3` for invalid invocation and `130` for cancellation.
+Findings and incomplete inspection include recovery advice. Repair the reported
+problem, then rerun the explicit command. Editing remains available.
+
+To activate gates for one repository, first preview the change, then install it.
+Select a trusted direct Git executable; on macOS the Command Line Tools path is
+usually the following:
+
+```sh
+"$HOME/.local/lib/scan-secrets/scan-secrets" hooks install --repo . --git /Library/Developer/CommandLineTools/usr/bin/git --dry-run --json
+"$HOME/.local/lib/scan-secrets/scan-secrets" hooks install --repo . --git /Library/Developer/CommandLineTools/usr/bin/git
+```
+
+Pre-commit checks each changed staged file in full using Git's selected index.
+Pre-push independently checks outgoing history and messages, including credentials
+removed by a later commit. A saved clean checkpoint never replaces either check.
+A failed gate blocks that Git operation; fix the content or infrastructure and
+retry. Existing hooks run in the preserved order after required checks. Supported
+LFS delivery inspects verified local payloads before upload and requires an
+explicit pinned Git LFS 3.8.0 tool and supported endpoint binding; use
+`hooks install --help` for those options and unsupported configurations.
+
+To restore the original repository hook binding:
+
+```sh
+"$HOME/.local/lib/scan-secrets/scan-secrets" hooks uninstall --repo . --git /Library/Developer/CommandLineTools/usr/bin/git --dry-run --json
+"$HOME/.local/lib/scan-secrets/scan-secrets" hooks uninstall --repo . --git /Library/Developer/CommandLineTools/usr/bin/git
+```
+
+Installation preserves owned backups, uses locks for cooperating writers and
+refuses ownership drift. It does not protect against arbitrary simultaneous edits
+by another program. Review an ambiguous backup or orphan lock before retrying;
+do not delete unrelated hooks. Provider migration retires only exactly owned old
+scanner registrations and preserves unrelated handlers and existing disable/trust
+choices. Review and trust changed definitions through the provider's normal flow.
+
+The complete checkpoint/commit/push workflow is validated on macOS. Existing
+Windows provider hooks have separate native tests. Windows repository-gate
+activation is unsupported and refuses before mutation. Do not infer Linux or
+native Windows gate support from portable source alone. Windows standalone
+launchers live under `%LOCALAPPDATA%\Programs\scan-secrets`; invoke the
+PowerShell launcher with `pwsh -NoProfile -File`.
+
+Checkpoint defaults are 4096 objects, 64 MiB candidate content and 30 seconds.
+Publication defaults are 20000 objects, 256 MiB candidate content and 120 seconds.
+Explicit budget files retain finite capture and temporary-storage limits. Limit,
+Git, audit and cancellation failures remain incomplete, never clean. Reports
+sanitize labels and omit arbitrary file bodies. No scan downloads missing content.
+
+### Hook diagnostics
+
+The installed standalone diagnostics command collects bounded metadata without
+scanning content. The legacy `hooks-diagnostics-v1` marker applies only to old
+scanner registrations; use the standalone command for current installations.
 
 Each provider also installs a standalone `hooks-diagnostics.py` beside its scanner.
 Both installers pin scanner and Tool Guardian registrations to the absolute Python
@@ -159,12 +186,12 @@ Reports separate the loaded canonical build from observed disk hashes, helper
 drift, registration counts, repository metadata, audit status, and content
 security. Entrypoint disk hashes remain unverified observations. Diagnostics do
 not establish a clean scan, authenticate installed execution, or grant an agent
-command an exemption. Ordinary hooked agent calls may still be denied. The human
+command an exemption. Tool Guardian may still deny an unsafe tool action. The human
 owns interpreter and installation trust; reinstall from trusted source if the
 CLI itself is damaged. Platforms without descriptor-relative no-follow access
 report limited checks instead of claiming equivalent filesystem guarantees.
 
-The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers do not delete old installed scripts or clean old Codex registrations.
+The repository-state guard is retired from maintained source and fresh installs. An older installation may still have `~/.copilot/hooks/scripts/repository-state.py`, `~/.gemini/hooks/scripts/repository-state.py`, or `~/.codex/hooks/repository-state.py`. Review `~/.copilot/hooks/hooks.json`, `~/.gemini/settings.json`, and `~/.codex/hooks.json` for matching `repository-state.py` commands before manually removing those entries and files. On Windows, use the equivalent paths under `%USERPROFILE%`; Gemini's settings path is `%USERPROFILE%\.gemini\settings.json`. Back up modified configuration first, preserve unrelated hooks, and use each provider's hook review or trust flow afterward. The installers retire only exactly owned scanner registrations; unrelated retired scripts and registrations still require manual review.
 
 ### Old Markdown Health installations
 

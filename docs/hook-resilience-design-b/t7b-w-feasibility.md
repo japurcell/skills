@@ -1,6 +1,6 @@
 # Native Windows repository delivery feasibility
 
-X3 is a read-only feasibility result, checked on 2026-10-16. Native delivery is feasible through the existing shared handle helper, with missing adapters and native proof identified below. It is not accepted Windows behavior. The [current T7b-W/X3 contract](ExecPlan.md#milestone-3-enforce-configured-git-publication-workflows) and [X2 Windows map](repository-install-source-map.md#windows-seams-implementation-gaps-and-proof-limits) remain authoritative context. Primary owns plan reconciliation, source dispatch, integration and the coordinated knowledge pass. This task changes only this document.
+X3 is a read-only feasibility result, checked on 2026-10-16. Native delivery is feasible through the existing shared handle helper, with missing adapters and native proof identified below. It is not accepted Windows behavior. The [historical T7b-W/X3 contract](ExecPlan.history-2026-10-16-before-scope-reduction.md#milestone-3-enforce-configured-git-publication-workflows) and [X2 Windows map](repository-install-source-map.md#windows-seams-implementation-gaps-and-proof-limits) record historical context. The [active plan](ExecPlan.md) excludes native repository-gate implementation. Primary owns plan reconciliation, source dispatch, integration and the coordinated knowledge pass. This task changes only this document.
 
 ## Evidence boundary and provisional inputs
 

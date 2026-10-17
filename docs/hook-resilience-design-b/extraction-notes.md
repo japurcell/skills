@@ -1,6 +1,6 @@
 # X0: scanner extraction map for T3
 
-Source exploration only, 2026-10-15, base `675b25fb6d4f53b087df494545a074208f8c7e2c`. No runtime implementation or new product tests. [ExecPlan B2-B4 and T3](ExecPlan.md#b2-scanner-module-and-packaging) remain the contract; recommendations below do not authorize new semantics or replace D0 capacity decisions. Line references name the inspected base and can shift after extraction.
+Source exploration only, 2026-10-15, base `675b25fb6d4f53b087df494545a074208f8c7e2c`. No runtime implementation or new product tests. [ExecPlan B2-B4 and T3](ExecPlan.history-2026-10-16-before-scope-reduction.md#b2-scanner-module-and-packaging) remain the contract; recommendations below do not authorize new semantics or replace D0 capacity decisions. Line references name the inspected base and can shift after extraction.
 
 ## Current facts and exact move boundaries
 

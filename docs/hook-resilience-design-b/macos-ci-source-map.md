@@ -1,6 +1,6 @@
 # Complete the macOS hook-security CI commands
 
-X4 documentation-only preparation, observed 2026-10-16. The current source identity is `df95c107e990fb732563df066a840d37427dce7b` on `codex/design-b-x4`. The task contract is [X4](ExecPlan.md#L492); [T9c-P](ExecPlan.md#L490) remains gated on accepted I4. Accepted prerequisites are T9b `f250a87c3a8f9ff5c665442e55512d7c6e80b2da`, I3-P `cf85ee4c32866844d27dfa3a82d88796dfd34f9c`, and T8a-C `3ff06db82a28764c0e67ee80a1e044886abc8fce`.
+X4 documentation-only preparation, observed 2026-10-16. The inspected source identity was `df95c107e990fb732563df066a840d37427dce7b` on `codex/design-b-x4`. The task contract is [X4](ExecPlan.history-2026-10-16-before-scope-reduction.md#L492); [T9c-P](ExecPlan.history-2026-10-16-before-scope-reduction.md#L490) remains gated on accepted I4. Accepted prerequisites are T9b `f250a87c3a8f9ff5c665442e55512d7c6e80b2da`, I3-P `cf85ee4c32866844d27dfa3a82d88796dfd34f9c`, and T8a-C `3ff06db82a28764c0e67ee80a1e044886abc8fce`.
 
 This map supplies commands and review pointers, not migration, runtime, CI, native Windows, authenticated host-delivery or deployment acceptance. No product test, generator, installer, benchmark or hosted job ran for X4. The primary owns plan/registry/workflow integration and the one coordinated knowledge pass; this worker owns only this document.
 
@@ -50,7 +50,7 @@ Three additions need explicit prerequisite treatment before T9c-P can reproduce 
 
 LFS tests bind a loopback recording HTTP endpoint; [I3-P](i3-p-evidence.md#L53) records sandbox socket denial separately from scoped successful loopback runs. Local execution needs loopback sockets and process inspection/signaling for owned fixture PIDs/groups. Missing prerequisites or sandbox denials remain incomplete validation, not successful skips. Native Darwin capture must execute on Darwin. PowerShell 7, Bash, jq, Git and RTK processors remain required; the neutral suite explicitly [requires PowerShell](../../scripts/test-install-scan-secrets.py#L40). Offline prior-release [archives and provenance](../../scripts/test-install-scan-secrets.py#L55) avoid relying on shallow-checkout historical Git objects.
 
-Keep generator checks, installer suites, migration fixtures and timing runs serialized. [The plan's integration rule](ExecPlan.md#L508) notes generator tests compare whole-checkout state. Do not edit final canonical inputs while any proof is running. Keep per-step logs, source hashes, interpreter/tool identities, command exit codes and elapsed wall time. Check that all deliberate faults are absent before the final clean run.
+Keep generator checks, installer suites, migration fixtures and timing runs serialized. [The plan's integration rule](ExecPlan.history-2026-10-16-before-scope-reduction.md#L508) notes generator tests compare whole-checkout state. Do not edit final canonical inputs while any proof is running. Keep per-step logs, source hashes, interpreter/tool identities, command exit codes and elapsed wall time. Check that all deliberate faults are absent before the final clean run.
 
 ## Refresh provisional T8b inputs
 

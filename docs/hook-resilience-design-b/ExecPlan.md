@@ -27,11 +27,11 @@ The existing schema-1 resource budgets stay unchanged. Checkpoint defaults are 4
 - [x] Core source checkpoint/status, selected-index commit gates, outgoing-history/LFS gates and POSIX installation/recovery are implemented with retained source/source-free proof.
 - [x] Provider registration migration and installed repair/End Turn workflows pass. All three maintained scanner suites and 12 Darwin cases pass in actual macOS run 38986235261; the 130-input scanner closure is preserved on accepted source.
 - [x] Windows main installer passes actual native tests. Existing Windows capture tests exposed real child-containment defects; the already-written fix is awaiting its final native run.
-- [ ] [milestone-1] T1 owner: retain the verified observer repair, remove optional test-only diagnostic launchers and keep all direct core fixture-verifier assertions. Run one final targeted full preflight suite and return clean source.
+- [x] (2026-10-16) [milestone-1] T1: integrated the observer repair and direct 28-test core suite at `1a1c3b8c`. One Python 3.13 run passed in 112.568 seconds; optional diagnostic machinery is removed. All 68 tested input hashes/modes survive integration.
 - [ ] [milestone-1] W2 owner: finish the existing creation-time Job Object fix, remove temporary diagnostic tracing/collectors, and pass existing native hook/capture controls. No new native platform features.
 - [ ] [milestone-1] Primary: review and integrate these completed repairs serially, preserving tested source identities and the unresolved historical observation.
 - [ ] [milestone-2] T9c-P owner/primary: integrate the already-written CI coverage and verified prerequisites. Use actual complete workflows for final proof; no duplicate full local workflow replay.
-- [ ] [milestone-3] Primary: align README/CLI/support guidance, repair affected links, complete one coordinated knowledge-maintenance pass, and retain final checks/results.
+- [ ] [milestone-3] Primary: align README/CLI-help/support guidance, repair affected links, complete one coordinated knowledge-maintenance pass, and retain final checks/results.
 
 ## Context and Orientation
 
@@ -63,7 +63,7 @@ Primary reviews each final diff, reuses unchanged proof, checks the exact releva
 Status: in progress
 Acceptance: not met
 
-T9c-P's existing workflow adds the already-registered CLI/status/gate/LFS/installation/lifecycle suites, preserves all existing required commands and the 12-case native Darwin validator, provisions actual Python 3.11 plus Python 3.13, and selects hash-verified Git LFS 3.8.0 through an absolute path. Its disposable global Git config is a private writable empty file so checkout cleanup works. All these prerequisites pass locally and on the early hosted run; full headroom and final integrated proof remain to be observed.
+T9c-P's existing workflow adds the already-registered CLI/status/gate/LFS/installation/lifecycle suites, preserves all existing required commands and the 12-case native Darwin validator, provisions actual Python 3.11 plus Python 3.13, and selects hash-verified Git LFS 3.8.0 through an absolute path. Its disposable global Git config is a private writable empty file so checkout cleanup works. All these prerequisites pass locally and on the early hosted run; full headroom and final integrated proof remain to be observed. The early full job exposed a gate-test fixture assumption about its temporary directory; repair that fixture without weakening its actual alias/gate assertions.
 
 Use `.github/workflows/hooks-posix.yml` and `.github/workflows/ready-ideas-windows.yml` for actual final proof. Remove temporary supplemental diagnostic jobs from the final source. Existing scanner shells already include capture tests, so do not add duplicate aggregate capture runs. Preserve all current tests; fix actual failures without more frameworks. A CI job timeout may be set from observed complete workload needs, but product deadlines and test assertions do not change.
 
@@ -73,13 +73,13 @@ One actual complete final workflow per platform is the main integration check. R
 Status: open
 Acceptance: not met
 
-Update README and existing CLI documentation to describe the actual installed command, explicit check/gates, historical status, migration/recovery and supported platforms. The default command is under `$HOME/.local/lib/scan-secrets/scan-secrets`; do not imply PATH is modified. Explain how a user explicitly installs/uninstalls repository gates and how failures leave editing available. Document Windows repository-gate refusal plainly without promising unfinished native features.
+Update README and verify existing CLI help to describe the actual installed command, explicit check/gates, historical status, migration/recovery and supported platforms. The default command is under `$HOME/.local/lib/scan-secrets/scan-secrets`; do not imply PATH is modified. Explain how a user explicitly installs/uninstalls repository gates and how failures leave editing available. Document Windows repository-gate refusal plainly without promising unfinished native features.
 
 After all code work finishes, complete one `update-agent-docs` pass using the knowledge-admission rules. Add no memory unless evidence warrants it. Preserve protected AGENTS.md sections and immutable `.agents/sources/`. Repair links affected by the plan reduction, run applicable documentation validation and inspect the final diff. Retain concise outcomes; no new review/audit system.
 
 ## Concrete Steps
 
-Work from `/Users/adam/.codex/worktrees/a468/skills`. First run the already-staged W2 creation-time job candidate through the existing native Actions capture test. Keep its tested source frozen until result. T1 may concurrently perform its one authorized local simplified preflight suite; no other local functional suite runs during that window. Finish the two existing owners' cleanup and integrate serially, then integrate T9c-P wiring onto those accepted sources.
+Work from `/Users/adam/.codex/worktrees/a468/skills`. Await the W2 creation-time job candidate in existing Windows Actions run 38989319821. Keep its source frozen until the native result. T1 is integrated. Early macOS run 38988495837 passed prerequisites, preflight, recovery, reporting, scanner, CLI and status checks, then exposed an alias-test fixture assuming the temporary root lies under `/tmp` or `/var`. T9c-P owns the bounded fixture repair and its targeted red/green; no runtime change or full local replay is needed. Finish the two existing owners' cleanup and integrate serially, then integrate T9c-P wiring onto those accepted sources.
 
 Useful validation commands, selected according to the changed files, are:
 
