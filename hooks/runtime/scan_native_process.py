@@ -1,7 +1,7 @@
 """Owned native scanner processes; no detector, gate or publication policy.
 
-Create the root suspended, put it in a non-breakaway kill-on-close Job Object,
-then resume its returned initial thread. Only duplicated standard handles are
+Create the root suspended with membership in a non-breakaway kill-on-close Job
+Object, then resume its returned initial thread. Only duplicated standard handles are
 inherited. No CPython process handles or argument-conversion internals are used.
 """
 from __future__ import annotations
@@ -84,7 +84,6 @@ class _Api:
             "CreateJobObjectW": ([pointer, ctypes.c_wchar_p], pointer),
             "SetInformationJobObject": ([pointer, ctypes.c_int, pointer, dword], boolean),
             "QueryInformationJobObject": ([pointer, ctypes.c_int, pointer, dword, pointer], boolean),
-            "AssignProcessToJobObject": ([pointer, pointer], boolean),
             "TerminateJobObject": ([pointer, dword], boolean),
             "InitializeProcThreadAttributeList": ([pointer, dword, dword, ctypes.POINTER(ctypes.c_size_t)], boolean),
             "UpdateProcThreadAttribute": ([pointer, dword, ctypes.c_size_t, pointer, ctypes.c_size_t, pointer, pointer], boolean),
@@ -272,14 +271,20 @@ class NativeProcess:
                 startup_resources.callback(kernel.CloseHandle, duplicate.value)
                 handles.append(duplicate.value)
             inherited = (ctypes.c_void_p * len(handles))(*handles)
+            assigned_jobs = (ctypes.c_void_p * 1)(self._job)
             size = ctypes.c_size_t()
-            if kernel.InitializeProcThreadAttributeList(None, 1, 0, ctypes.byref(size)) or ctypes.get_last_error() != 122:
+            if kernel.InitializeProcThreadAttributeList(None, 2, 0, ctypes.byref(size)) or ctypes.get_last_error() != 122:
                 raise OSError(errno.EIO, "Native handle list unavailable")
             attributes = ctypes.create_string_buffer(size.value)
-            api.checked(kernel.InitializeProcThreadAttributeList(attributes, 1, 0, ctypes.byref(size)))
+            api.checked(kernel.InitializeProcThreadAttributeList(attributes, 2, 0, ctypes.byref(size)))
             startup_resources.callback(kernel.DeleteProcThreadAttributeList, attributes)
             api.checked(kernel.UpdateProcThreadAttribute(attributes, 0, 0x20002,
                         inherited, ctypes.sizeof(inherited), None, None))
+            # JOB_LIST assigns membership during creation, before the returned
+            # suspended root can be abandoned between creation and assignment.
+            # Both value arrays remain held until the attribute list is deleted.
+            api.checked(kernel.UpdateProcThreadAttribute(attributes, 0, 0x2000D,
+                        assigned_jobs, ctypes.sizeof(assigned_jobs), None, None))
             startup = _StartupInfoEx()
             startup.startup.size = ctypes.sizeof(startup)
             startup.startup.flags = 0x100  # STARTF_USESTDHANDLES.
@@ -293,7 +298,6 @@ class NativeProcess:
             self._process, self.pid = information.process, int(information.pid)
             self._resources.callback(kernel.CloseHandle, self._process)
             startup_resources.callback(kernel.CloseHandle, information.thread)
-            api.checked(kernel.AssignProcessToJobObject(self._job, self._process))
             resumed = kernel.ResumeThread(information.thread)
             if resumed != 1:
                 if resumed == 0xFFFFFFFF:
@@ -343,7 +347,7 @@ class NativeProcess:
         try:
             if self._api is not None:
                 kernel = self._api.kernel
-                # The root can be unassigned when construction failed.
+                # Retain an explicit root stop in addition to job termination.
                 if self._process is not None and self._poll() is None:
                     if not kernel.TerminateProcess(self._process, 1) and self._poll() is None:
                         failure = ctypes.WinError(ctypes.get_last_error())
