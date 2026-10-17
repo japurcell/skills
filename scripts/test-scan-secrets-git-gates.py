@@ -1163,17 +1163,22 @@ class GateTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == "darwin", "macOS fixed system aliases")
     def test_selected_index_accepts_verified_macos_system_alias(self):
+        alias = Path("/tmp")
+        self.assertTrue(alias.is_symlink())
+        target = alias.resolve(strict=True)
+        self.assertEqual(target, Path("/private/tmp"))
+        temporary = tempfile.TemporaryDirectory(prefix="git-gate-alias-", dir=target)
+        self.addCleanup(temporary.cleanup)
+        self.repo = Path(temporary.name).resolve() / "repo"
+        self.repo.mkdir()
+        self.git("init", "--quiet")
         self.seed()
         (self.repo / "selected.txt").write_text("safe changed staged version\n")
         self.git("add", "selected.txt")
         physical = self.repo / ".git/index"
-        for alias in (Path("/tmp"), Path("/var")):
-            target = alias.resolve(strict=True)
-            if physical.is_relative_to(target):
-                selected = alias / physical.relative_to(target)
-                self.assertEqual(self.gate(0, env={**self.env, "GIT_INDEX_FILE": str(selected)})["counts"]["candidates"], 1)
-                return
-        self.fail("fixture did not use a macOS system alias target")
+        selected = alias / physical.relative_to(target)
+        self.assertEqual(selected.resolve(strict=True), physical)
+        self.assertEqual(self.gate(0, env={**self.env, "GIT_INDEX_FILE": str(selected)})["counts"]["candidates"], 1)
 
     def test_gate_never_runs_optional_helpers_or_mutates_repository(self):
         import hashlib
