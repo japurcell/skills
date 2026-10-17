@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Acceptance at the fixture-preflight CLI and generated-provider seams."""
 from __future__ import annotations
+import ast
 import difflib
 import json
 import hashlib
@@ -15,6 +16,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -50,11 +52,131 @@ class PreflightTests(unittest.TestCase):
                                                      fromfile="a/" + path, tofile="b/" + path)))
         return patch
 
-    def run_cli(self, patch, *extra, active=ROOT, timeout=60):
-        return subprocess.run([sys.executable, str(CLI), "--patch", str(patch),
-                               "--path", "fixture.py", "--active-hook-root", str(active),
-                               "--json", "--no-input", *extra], cwd=self.repo, env=self.env,
-                              capture_output=True, timeout=timeout)
+    def run_cli(self, patch, *extra, active=ROOT, timeout=60, diagnose=False):
+        launcher = self.scanner_diagnostics() if diagnose else CLI
+        result = subprocess.run([sys.executable, str(launcher), "--patch", str(patch),
+                                "--path", "fixture.py", "--active-hook-root", str(active),
+                                "--json", "--no-input", *extra], cwd=self.repo, env=self.env,
+                               capture_output=True, timeout=timeout)
+        if diagnose:
+            # Only the diagnostic launcher's fixed-vocabulary records leave the
+            # private fixture; never echo scanner output or arbitrary stderr.
+            for line in result.stderr.splitlines():
+                try:
+                    record = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(record, dict) and (record.get("fixture_work") == "audit_boundary_v1"
+                        or result.returncode and record.get("fixture_scanner") == "audit_boundary_v1"):
+                    print(json.dumps(record, sort_keys=True), flush=True)
+        return result
+
+    def scanner_diagnostics(self):
+        """Observe real scanner completion using bounded, allowlisted audit fields."""
+        types = ast.parse((ROOT / ".codex/hooks/helpers/scan_types.py").read_text())
+        constants = {node.targets[0].id: ast.literal_eval(node.value) for node in types.body
+                     if isinstance(node, ast.Assign) and len(node.targets) == 1
+                     and isinstance(node.targets[0], ast.Name)
+                     and node.targets[0].id in {"INCOMPLETE_CAUSES", "INCOMPLETE_OPERATIONS"}}
+        launcher = self.base / "scanner-diagnostics.py"
+        source = "KNOWN_CAUSES = " + repr(set(constants["INCOMPLETE_CAUSES"]) | {"clean", "findings", "not_repository"}) + "\n"
+        source += "KNOWN_OPERATIONS = " + repr(constants["INCOMPLETE_OPERATIONS"]) + "\n"
+        source += textwrap.dedent("""
+            import atexit, json, math, subprocess, sys, time, runpy
+            from pathlib import Path
+            real = subprocess.Popen
+            work = {'git': 0, 'scanner': 0, 'observer': 0}
+            atexit.register(lambda: print(json.dumps({'fixture_work': 'audit_boundary_v1',
+                **work}, sort_keys=True), file=sys.stderr, flush=True))
+            def label(value, choices):
+                return value if isinstance(value, str) and value in choices else 'unrecognized'
+            def number(value):
+                return (type(value) is int or type(value) is float and math.isfinite(value)) and -2147483648 <= value <= 9223372036854775807
+            class Diagnosed(real):
+                def __init__(self, command, *args, **kwargs):
+                    self.scanner = Path(command[-1]).name == 'scan-secrets.py'
+                    if self.scanner:
+                        work['scanner'] += 1
+                    elif Path(command[0]).name == 'git':
+                        work['git'] += 1
+                    elif command[0] == '/bin/ps':
+                        work['observer'] += 1
+                    self.recorded = False
+                    self.started = time.monotonic()
+                    self.audit = Path(kwargs.get('env', {}).get('SECRETS_LOG_DIR', '.')) / 'scan.log'
+                    super().__init__(command, *args, **kwargs)
+                def poll(self):
+                    code = super().poll()
+                    self.record()
+                    return code
+                def wait(self, *args, **kwargs):
+                    code = super().wait(*args, **kwargs)
+                    self.record()
+                    return code
+                def record(self):
+                    if not self.scanner or self.returncode is None or self.recorded:
+                        return
+                    self.recorded = True
+                    parts = self.audit.parts
+                    report = {'fixture_scanner': 'audit_boundary_v1', 'exit_status': self.returncode,
+                              'elapsed_seconds': round(time.monotonic() - self.started, 6),
+                              'provider': label(parts[-2], {'codex', 'copilot', 'gemini'}),
+                              'bundle': label(parts[-4], {'active', 'candidate'}),
+                              'view': label(parts[-3], {'pending', 'complete-0', 'complete-1', 'control'})}
+                    try:
+                        with self.audit.open('rb') as stream:
+                            raw = stream.read(1048577)
+                        report['audit_bytes'] = len(raw)
+                        if len(raw) > 1048576:
+                            report['audit_result'] = 'over_limit'
+                        else:
+                            record = json.loads(raw)
+                            if not isinstance(record, dict):
+                                raise ValueError
+                            report['audit_result'] = 'read'
+                            for key, choices in {'status': {'clean', 'findings', 'incomplete'},
+                                    'inspection_outcome': {'complete', 'incomplete'},
+                                    'audit_outcome': {'written', 'failed', 'not_attempted'},
+                                    'security_outcome': {'clean', 'findings', 'incomplete'},
+                                    'enforcement': {'allow', 'deny'}}.items():
+                                report[key] = label(record.get(key), choices)
+                            report['cause'] = label(record.get('cause'), KNOWN_CAUSES)
+                            failure = record.get('diagnostic')
+                            if isinstance(failure, dict):
+                                report['diagnostic'] = {'cause': label(failure.get('cause'), KNOWN_CAUSES),
+                                    'operation': label(failure.get('operation'), KNOWN_OPERATIONS)}
+                                if 'capture_step' in failure:
+                                    report['diagnostic']['capture_step'] = label(failure['capture_step'],
+                                        {'temporary_file', 'verify_capture', 'request_write', 'spawn',
+                                         'wait', 'descendants', 'consume', 'cleanup'})
+                                for key in ('exit_status', 'measured', 'limit', 'seconds', 'os_errno', 'attempts'):
+                                    if number(failure.get(key)):
+                                        report['diagnostic'][key] = failure[key]
+                            result = record.get('scanResult')
+                            if isinstance(result, dict):
+                                report['scan_reason'] = label(result.get('reason'), KNOWN_CAUSES)
+                                report['outcome'] = label(result.get('outcome'),
+                                    {'complete_clean', 'complete_findings', 'incomplete'})
+                                if type(result.get('coverage_complete')) is bool:
+                                    report['coverage_complete'] = result['coverage_complete']
+                                if number(result.get('elapsed_seconds')):
+                                    report['scan_elapsed_seconds'] = result['elapsed_seconds']
+                                counts = result.get('counts')
+                                if isinstance(counts, dict):
+                                    report['counts'] = {key: counts[key] for key in
+                                        ('candidates', 'inspected_snapshots', 'candidate_bytes', 'capture_bytes',
+                                         'temp_peak_bytes', 'processed_findings', 'retained_findings', 'omitted_findings')
+                                        if type(counts.get(key)) is int and number(counts[key])}
+                    except Exception:
+                        # No audit/parser exception text crosses this boundary.
+                        report['audit_result'] = 'unavailable_or_invalid'
+                    print(json.dumps(report, sort_keys=True), file=sys.stderr, flush=True)
+            subprocess.Popen = Diagnosed
+        """)
+        source += "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
+        source += "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n"
+        launcher.write_text(source)
+        return launcher
 
     def fingerprint(self):
         return (self.target.read_bytes(), self.target.stat().st_mode,
@@ -488,6 +610,49 @@ class PreflightTests(unittest.TestCase):
                 self.assertNotEqual(process.returncode, 0)
         self.assertEqual(self.fingerprint(), before)
 
+    def test_scanner_boundary_diagnostics_exclude_payload_strings(self):
+        before = self.fingerprint()
+        active = self.active_copy("diagnostic-canary")
+        binaries = self.base / "diagnostic-bin"
+        binaries.mkdir()
+        git = binaries / "git"
+        real_git = shutil.which("git")
+        git.write_text("#!" + sys.executable + "\nimport os,sys\n"
+            "if 'diff' in sys.argv[1:]: raise SystemExit(128)\n"
+            "os.execv(" + repr(real_git) + ", [" + repr(real_git) + ", *sys.argv[1:]])\n")
+        git.chmod(0o755)
+        scanner = active / ".codex/hooks/scan-secrets.py"
+        source = scanner.read_text().replace('if __name__ == "__main__":',
+            "os.environ['PATH'] = " + repr(str(binaries)) + " + os.pathsep + os.environ['PATH']\n"
+            'if __name__ == "__main__":')
+        source = source.replace("raise SystemExit(main())",
+            "code = main()\n        log = resolve_scan_log()\n        record = json.loads(log.read_text())\n"
+            "        canary = 'gh' + 'p_' + 'FAKE' * 9\n"
+            "        record.update(note=canary, command=canary, payload=canary)\n"
+            "        record.setdefault('diagnostic', {})['payload'] = canary\n"
+            "        log.write_text(json.dumps(record) + '\\n')\n        raise SystemExit(code)")
+        scanner.write_text(source)
+        result = self.run_cli(self.patch("value = 'repaired'\n"), "--check", active=active, diagnose=True)
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)["reason"], "incomplete_scan")
+        reports = [json.loads(line) for line in result.stderr.splitlines()]
+        records = [row for row in reports if row.get("fixture_scanner") == "audit_boundary_v1"]
+        work = [row for row in reports if row.get("fixture_work") == "audit_boundary_v1"]
+        self.assertEqual(len(work), 1)
+        self.assertEqual(work[0]["scanner"], 1)
+        self.assertEqual(len(records), 1)
+        record = records[0]
+        self.assertEqual(record["fixture_scanner"], "audit_boundary_v1")
+        self.assertEqual((record["provider"], record["bundle"], record["view"]), ("codex", "active", "pending"))
+        self.assertEqual(record["cause"], "git_failed")
+        self.assertEqual(record["diagnostic"], {"cause": "git_failed", "operation": "git_candidates", "exit_status": 128})
+        self.assertEqual(record["audit_result"], "read")
+        self.assertLessEqual(record["audit_bytes"], 1048576)
+        self.assertLess(len(result.stderr), 4096)
+        self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+        self.assertNotIn(b'Traceback', result.stderr)
+        self.assertEqual(self.fingerprint(), before)
+
     def test_source_filter_commands_are_never_executed(self):
         self.target.write_text("value = 'dirt'\n")
         patch = self.patch("value = 'repaired'\n")
@@ -499,12 +664,12 @@ class PreflightTests(unittest.TestCase):
         self.git("config", "filter.fixture-preflight.clean", shlex.join([sys.executable, str(driver)]))
         original = self.target.read_bytes()
         index = (self.repo / ".git/index").read_bytes()
-        result = self.run_cli(patch, "--check")
+        result = self.run_cli(patch, "--check", diagnose=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertFalse(marker.exists(), "verification executed source Git filter configuration")
         self.assertEqual(self.target.read_bytes(), original)
         self.assertEqual((self.repo / ".git/index").read_bytes(), index)
-        result = self.run_cli(self.patch("value = '" + TOKEN + "'\n"), "--check")
+        result = self.run_cli(self.patch("value = '" + TOKEN + "'\n"), "--check", diagnose=True)
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)["reason"], "findings")
         self.assertFalse(marker.exists(), "credential inspection executed a source Git filter")
