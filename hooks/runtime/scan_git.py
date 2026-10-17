@@ -101,8 +101,6 @@ def capture_git(context: ScanContext,
         popen_options.update(cwd=os.path.sep, pass_fds=(cwd_descriptor,))
     if os.name == "posix":
         popen_options["start_new_session"] = True
-    if os.name == "nt":
-        popen_options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
     capture_step = "temporary_file"
     attempts = 0
@@ -144,7 +142,17 @@ def capture_git(context: ScanContext,
                     raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
                 try:
                     attempts = attempt + 1
-                    process = subprocess.Popen(command_arguments, stdout=capture, **popen_options)
+                    if os.name == "nt":
+                        from .scan_native_process import NativeProcess
+                        process = NativeProcess(command_arguments)
+                        # Register the handle-free owner before start can create
+                        # a suspended child or receive a Python interruption.
+                        resources.callback(process.close)
+                        process.start(cwd=str(cwd), environment=env,
+                                      stdin=popen_options["stdin"] if input_bytes is not None else None,
+                                      stdout=capture)
+                    else:
+                        process = subprocess.Popen(command_arguments, stdout=capture, **popen_options)
                     break
                 except OSError as exc:
                     # Popen has no live child when launch raises. Retry only
@@ -154,7 +162,6 @@ def capture_git(context: ScanContext,
                         raise
                     time.sleep(min(0.01 * (2 ** attempt),
                                    max(0.0, command_deadline - time.monotonic())))
-            observed_descendants: list[int] = []
             try:
                 capture_step = "wait"
                 while True:
@@ -187,8 +194,7 @@ def capture_git(context: ScanContext,
                     else:
                         raise GitCommandError("git_descendant_running", operation)
                 elif os.name == "nt":
-                    observed_descendants = _windows_git_descendants(process.pid)
-                    if observed_descendants:
+                    if process.active_processes():
                         raise GitCommandError("git_descendant_running", operation)
                 capture_step = "verify_capture"
                 size = os.fstat(capture.fileno()).st_size
@@ -237,7 +243,7 @@ def capture_git(context: ScanContext,
                 yield result
                 capture_step = "cleanup"
             except BaseException:
-                _stop_git_process(process, subprocess, observed_descendants)
+                _stop_git_process(process, subprocess)
                 raise
     except OSError as exc:
         details: dict[str, int] = {}
@@ -323,103 +329,9 @@ def run_git(context: ScanContext, args: list[str], *, cwd: Path, text: bool = Tr
         return os.fsdecode(output) if text else output
 
 
-def _windows_git_descendants(
-    parent_pid: int, ancestor_pids: set[int] | None = None,
-) -> list[int]:
-    import ctypes
-    from ctypes import wintypes
-
-    class ProcessEntry(ctypes.Structure):
-        _fields_ = [
-            ("size", wintypes.DWORD), ("usage", wintypes.DWORD),
-            ("pid", wintypes.DWORD), ("default_heap", ctypes.c_void_p),
-            ("module", wintypes.DWORD), ("threads", wintypes.DWORD),
-            ("parent_pid", wintypes.DWORD), ("priority", ctypes.c_long),
-            ("flags", wintypes.DWORD), ("name", ctypes.c_wchar * 260),
-        ]
-
-    kernel = ctypes.windll.kernel32
-    kernel.CreateToolhelp32Snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
-    kernel.CreateToolhelp32Snapshot.restype = wintypes.HANDLE
-    kernel.Process32FirstW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
-    kernel.Process32NextW.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry)]
-    kernel.CloseHandle.argtypes = [wintypes.HANDLE]
-    snapshot = kernel.CreateToolhelp32Snapshot(2, 0)
-    if snapshot == ctypes.c_void_p(-1).value:
-        return []
-    parents: dict[int, int] = {}
-    try:
-        entry = ProcessEntry()
-        entry.size = ctypes.sizeof(entry)
-        if kernel.Process32FirstW(snapshot, ctypes.byref(entry)):
-            while True:
-                parents[int(entry.pid)] = int(entry.parent_pid)
-                if not kernel.Process32NextW(snapshot, ctypes.byref(entry)):
-                    break
-    finally:
-        kernel.CloseHandle(snapshot)
-    descendants: set[int] = set()
-    frontier = {parent_pid}
-    if ancestor_pids:
-        frontier.update(ancestor_pids)
-    while frontier:
-        children = {pid for pid, parent in parents.items() if parent in frontier}
-        children -= descendants
-        descendants.update(children)
-        frontier = children
-    return list(descendants)
-
-
-def _stop_git_process(
-    process: object, subprocess_module: object,
-    observed_descendants: list[int] | None = None,
-) -> None:
+def _stop_git_process(process: object, subprocess_module: object) -> None:
     if os.name == "nt":
-        import ctypes
-        from ctypes import wintypes
-
-        kernel = ctypes.windll.kernel32
-        kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-        kernel.OpenProcess.restype = wintypes.HANDLE
-        kernel.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
-        kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
-        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
-        cleanup_deadline = time.monotonic() + 0.75
-        known_descendants = set(observed_descendants or [])
-        quiet_scans = 0
-        while time.monotonic() < cleanup_deadline:
-            known_descendants.update(_windows_git_descendants(process.pid, known_descendants))
-            handles = []
-            for pid in [process.pid, *sorted(known_descendants)]:
-                handle = kernel.OpenProcess(0x00100001, False, pid)
-                if not handle:
-                    continue
-                if kernel.WaitForSingleObject(handle, 0) == 0x102:
-                    handles.append(handle)
-                else:
-                    kernel.CloseHandle(handle)
-            try:
-                if not handles:
-                    quiet_scans += 1
-                    if quiet_scans >= 2:
-                        break
-                    time.sleep(min(0.01, max(0.0, cleanup_deadline - time.monotonic())))
-                    continue
-                quiet_scans = 0
-                for handle in handles:
-                    kernel.TerminateProcess(handle, 1)
-                for handle in handles:
-                    remaining_ms = max(0, min(50, int((cleanup_deadline - time.monotonic()) * 1000)))
-                    kernel.WaitForSingleObject(handle, remaining_ms)
-            finally:
-                for handle in handles:
-                    kernel.CloseHandle(handle)
-        if process.poll() is None:
-            process.kill()
-        try:
-            process.wait(timeout=max(0.0, cleanup_deadline - time.monotonic()))
-        except subprocess_module.TimeoutExpired:
-            pass
+        process.close()
         return
     try:
         if os.name == "posix":

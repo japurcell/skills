@@ -1,0 +1,76 @@
+# T7b-W2 evidence
+
+W2 remains in progress. The native process implementation and complete native source/source-free check/gate matrix are not accepted yet. Repository activation remains unavailable until W3. Native LFS remains unsupported before upload. The primary owns plan/KB reconciliation and integration; this private worker branch is not pushed.
+
+## Actual public native red and existing observations
+
+The original native W0 run [38981299888](https://github.com/japurcell/skills/actions/runs/38981299888), job `117242529406`, passed its full installer and Codex envelopes before `gemini block partial exceeded outer watchdog`. Its tested snapshot was `700c6e7774a275b3854e1d9f4e997f342abc13f3`, tree `6d7cee965edd509eb1b1243deab2fe78f1e5306c`. The public watchdog is eight seconds and remains unchanged. A later unchanged integrated-source run [38982851069](https://github.com/japurcell/skills/actions/runs/38982851069), job `117247468623`, passed the maintained native capture suite. The earlier watchdog is intermittent and has no established launch/capture/cleanup cause.
+
+The diagnostic-only candidate `b613aa4e80cf52c97bfe3f9c09f227417dc37556`, tree `fe649fb87026c0ebe8cd9f2edb009f5195c346ae`, was transported as snapshot `bc6838db8718f780a270cbd49a86bbf3a9b80684` to [38983390319](https://github.com/japurcell/skills/actions/runs/38983390319), job `117249180517`. It timed out at `copilot block descendant` and emitted only wrapper phase 1, PID 8636, handle count 122, elapsed 0 ms. There was no capture, Popen or cleanup trace before the watchdog. This is inconclusive about Git execution. The initial global trace constructed paths on every Python call and could perturb bootstrap. Diagnostics are now opt-in, use cheap filename suffix checks and record bounded numeric bootstrap/capture phases. Default execution is direct and uninstrumented. The retained failed-step log `/private/tmp/design-b-w2-diagnostic-38983390319.log` has SHA-256 `4a004a8875a8a0f870a917f0bc8b05a23e3238989c3e0c50ce96688abaeba29b` (17 lines).
+
+The independent containment red is [38984475386](https://github.com/japurcell/skills/actions/runs/38984475386), job `117252610632`, exact candidate `a5efd27a689b0fe1939a16bec04bfc355c579997`, snapshot `0c7bb5aa700bbf77ebc344546989ed6d9c2e5940`, tree `a36fc9ff84ef6a00bb6f7904048ab389f7546a41`. At 2026-10-17 00:06:47 UTC the maintained public entrypoint case failed with `copilot block grandchild left owned descendant alive`. This was the liveness assertion, not the outer watchdog. A real intermediate process exited and was reaped before the Git root emitted valid output; its long-lived grandchild retained the capture handle. The observer validates PID plus native creation FILETIME on one held process handle before liveness or termination, uses that same handle for any kill/wait, and closes it in `finally`. The retained failed-step log `/private/tmp/design-b-w2-grandchild-red-38984475386.log` has SHA-256 `c25ec6afa22ef0f4d664afcc279702be6015a62a16bc4488c4e298d2b4c7b958` (16 lines).
+
+These hosted observations use the recorded Windows Server 2025 10.0.26100, Git 2.56.0.windows.2, Python 3.13.16 and RTK 0.50.0 environment from the accepted W0 proof. A later native candidate still needs its own exact run and runtime receipts.
+
+## First contained-runner candidate and local proof
+
+The first candidate replaces only the Windows child boundary with one shared `scan_native_process.py`. It uses typed public native APIs, suspended creation, explicit executable and cwd, duplicated standard handles in the documented inheritance allowlist, a non-breakaway kill-on-close Job Object, root/thread handles returned by `CreateProcessW`, bounded waits/accounting and explicit closure. The accepted POSIX cleanup block stays exact. The handle-free process owner is registered before startup can allocate handles. Ordinary SIGINT remains flag-only while handles exist and unwinds through cleanup; this does not add SIGBREAK policy.
+
+The candidate implements the public MS CRT argument-conversion rules locally. Python 3.13's `subprocess.py` explicitly marks `list2cmdline` as an internal implementation detail; neither it nor private Popen handles or `_winapi` is used. Real native executables receive quoted exact arguments. Batch compatibility uses the API-selected system `cmd.exe` with `/d /s /v:off /c` and an explicit narrow subset: no empty/whitespace-bearing arguments, expansion characters, shell operators, embedded quotes or NUL; no general batch argv parity is claimed. The documented 8191-character command-processor limit is enforced separately from native executable limits. Native executable/cwd ancestors are held through the existing canonical native file layer; no file mutation implementation is changed.
+
+Mechanical packaging adds one module: provider helper closure 9, neutral owned file closure 23 and generated inventory 68. The maximum owned inventory stays 64 entries. Extra-module controls retain their original boundary by changing the synthetic added-module count, and immutable old-release fixtures are untouched.
+
+Local commands ran serially in `/Users/adam/.codex/worktrees/design-b-w2/skills` with RTK and `login:false`, on macOS 26.7.1 arm64, Python 3.14.6. These establish closure/POSIX compatibility only:
+
+```text
+rtk proxy python3 scripts/generate-hooks.py --write
+rtk proxy python3 scripts/generate-hooks.py --check
+rtk proxy python3 scripts/test-generate-hooks.py
+rtk proxy python3 scripts/test-install-scan-secrets.py
+```
+
+The first generator run failed two exact message expectations that still named 65 assets; its other 24 methods passed. The assertions were mechanically updated to 68, with no weakened case. `/private/tmp/w2-generator-first.log` SHA-256 is `052536cd5d08ebacbc054894b1bed460bb6c83f4ed16515b7f2b787e703101d5`. This initial run preceded the SHA inventory and is not described as a pre-inventoried pass.
+
+The final generator run passed 26 methods in 18.636 seconds, log `/private/tmp/w2-generator-final.log`, SHA-256 `7804cb6207eb96529be914d9129ac0b61844d114073d5f0d62edd73ee5298d2c`. Neutral installation passed 25 methods in 53.028 seconds, log `/private/tmp/w2-neutral-first.log`, SHA-256 `b910bbf5e5755fe5e05fe2814f96febbbdba730c1f15dc4daa8180685aa26c50`. Freshness reported 68 current files, log SHA-256 `e68e17cbd859976bcccc3ca4f2a7cbaf22978a7350846cbaaa7f60fce3bed80d`. All 133 canonical/generated/test SHA/mode rows were identical before and after this final proof. Both inventory files `/private/tmp/w2-first-runner-inputs.json` and `/private/tmp/w2-first-runner-inputs-after.json` have SHA-256 `e2e800ae384943ae1f776322c8e9e1f36535f82cdc14d8844bc65db564d2baab`.
+
+The subsequent caller-death fixture is an additional native test edit and was not part of those local suite inputs. Changed PowerShell/Bash syntax and all six embedded/nested Python programs parse successfully. No product behavior on Windows is inferred from these static checks.
+
+## Next native control and design question
+
+The maintained native suite now places a caller-death control immediately after the ordinary orphaned-grandchild case. A fixture-only wrapper calls the real typed `CreateProcessW`, records the real returned child's PID and creation FILETIME from its real handle, then exits the public scanner process with 99 before its next post-create Python operation. It does not fabricate an API return or substitute a mock process. The observer requires no surviving exact owned suspended root; cleanup remains identity-bound. Every original scenario, outcome/audit/redaction assertion, immediate capture-file check, repeated Gemini case and eight-second watchdog is retained.
+
+This candidate still performs separate post-create job assignment so the actual control can establish whether that window leaves a suspended root after caller death. Microsoft documents `PROC_THREAD_ATTRIBUTE_JOB_LIST` on Windows 10/Server 2016 and newer. After an actual red, the next candidate should evaluate assigning the job through the creation attribute and resuming only after returned handles are registered. This does not establish a guarantee for arbitrary caller death inside the kernel's process-creation call.
+
+Actual source/source-free check, selected-index pre-commit, outgoing non-LFS pre-push, cancellation, failed launch/assignment, nested-host constraints, overflow, exact binary/argv controls, handle closure and relevant final POSIX capture checks remain open. No live-home deployment, repository activation, trust change, branch push, PR or release has occurred from this worker.
+
+## Official API sources
+
+- [CreateProcessW](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw): explicit executable/cwd, Unicode environment, suspended creation and ownership of returned handles.
+- [UpdateProcThreadAttribute](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute): restricted inherited handle list and creation-time job list.
+- [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects), [basic limits](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information), [assignment](https://learn.microsoft.com/en-us/windows/win32/api/jobapi2/nf-jobapi2-assignprocesstojobobject) and [nested jobs](https://learn.microsoft.com/en-us/windows/win32/procthread/nested-jobs): containment, no breakaway, kill on close and nested-host refusal.
+- [QueryInformationJobObject](https://learn.microsoft.com/en-us/windows/win32/api/jobapi2/nf-jobapi2-queryinformationjobobject) and [basic accounting](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_accounting_information): active membership without PID ancestry inference.
+- [ResumeThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-resumethread), [DuplicateHandle](https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-duplicatehandle), [OpenProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-openprocess) and [GetProcessTimes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes): typed ownership and exact process identity controls.
+- [Python 3.13 subprocess argument conversion](https://docs.python.org/3.13/library/subprocess.html#converting-an-argument-sequence-to-a-string-on-windows), [cmd](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/cmd) and [command-processor string limit](https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/command-line-string-limitation): exact native quoting and the separately admitted batch subset.
+
+The supplied [Old New Thing assignment-window article](https://devblogs.microsoft.com/oldnewthing/20230209-00/?p=107812) returned 403 to this worker's browser. No unseen article text is quoted or treated as an observed native outcome.
+
+## First runner native freshness failure and UTF-8 repair
+
+The first contained-runner candidate `c7c813d5c06a0bb9facd7f99bbe569612105d5b6`, tree `93d215c45acf73aa016ffa9b443fc7ff472cd3f1`, was transported unchanged as snapshot `0d72b19aa785afbd32bf1bd6fbbc26cc34ed4cb3`. Actual Windows run [38986175554](https://github.com/japurcell/skills/actions/runs/38986175554), job `117258053807`, failed at generated-hook freshness on Python 3.13.16 before installer or capture. Its nine stale paths were the three new native-process helper copies plus the three diagnostics and three scan entrypoints. Neither ordinary containment nor the launch-death control ran. Log `/private/tmp/design-b-w2-first-runner-38986175554.log`, 2097 bytes, SHA-256 `11587f9662241dc665478fc735239bae3a3e80e4df13a1b8b0529fed47c37283`.
+
+The canonical runtime renderer used locale-default `Path.read_text()`. The new source contains UTF-8 superscript digits in its reserved DOS name set. Different source decoding changes those helper bodies and the asset hashes embedded in six entrypoints. Git checkout files are LF under the existing attributes. The repair explicitly reads canonical runtime source as UTF-8, preserving those characters and native process policy. Python documents that [Path.read_text passes encoding through to open](https://docs.python.org/3.13/library/pathlib.html#pathlib.Path.read_text), whose [default text encoding is platform dependent](https://docs.python.org/3.13/library/functions.html#open).
+
+A public standalone generator control disables Python UTF-8 mode and locale coercion with `LC_ALL=C`, `PYTHONUTF8=0`, `PYTHONCOERCECLOCALE=0`. Before the repair, Python 3.13.14 returned 2 with an ASCII decoding error at source byte 6912. That public red is retained in `/private/tmp/w2-generator-locale-red.log`, SHA-256 `1f2fea560fa874d529d56a80a7817f86aee78c93c4354ab8871f7217036f49b6`. This local ASCII-locale failure establishes locale dependence; it is distinct from the actual Windows nine-path stale result.
+
+The first post-fix test attempted whole-checkout preservation, including interpreter caches. Python-version cache churn failed that new assertion; its large dictionary diff was interrupted with SIGINT, exit 130. This is a test-inventory failure, not a product or containment result. Log `/private/tmp/w2-generator-locale-green.log`, SHA-256 `c9c5c7d510cbba235410072deaf942f692cd36cdad4dc2a549bf67fea2587d81`. The maintained control now checks generated Python bytes and modes explicitly, excluding cache files; all pre-existing assertions remain unchanged.
+
+After final generation, all 133 canonical/generated/test SHA and mode rows were recorded before proof. The locale control passed on Python 3.13.14 in 0.551 seconds; the affected generator suite passed 27 methods on Python 3.14.6 in 19.319 seconds. Freshness reports 68 current files. Reproducible commands from the W2 checkout:
+
+```sh
+rtk proxy python3 scripts/generate-hooks.py --write
+rtk proxy /Users/adam/.pyenv/versions/3.13.14/bin/python3 scripts/test-generate-hooks.py GenerateHooksTests.test_check_reads_canonical_sources_as_utf8_in_legacy_locales
+rtk proxy python3 scripts/generate-hooks.py --check
+rtk proxy python3 scripts/test-generate-hooks.py
+```
+
+Logs are `/private/tmp/w2-generator-locale-green-preservation.log`, SHA-256 `f98769daf0c7664a1b01663e3201534498e49ad09eb249dd10e97fb858c11c94`; `/private/tmp/w2-generator-locale-suite-final.log`, SHA-256 `57c950e5706f0977ea1b72246c376e78c94cfbfb655e823043af1c620af98d08`; and `/private/tmp/w2-generator-locale-freshness.log`, SHA-256 `e68e17cbd859976bcccc3ca4f2a7cbaf22978a7350846cbaaa7f60fce3bed80d`. Input inventories `/private/tmp/w2-locale-inputs-final2.json` and `/private/tmp/w2-locale-inputs-after.json` are byte-identical, SHA-256 `7124f525e2ba0e3f34dda0c3f4ef79fe0da0600dbbae63aa092379e36d731ffd`. All local processes drained. Native capture remains open.
