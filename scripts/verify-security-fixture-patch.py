@@ -11,6 +11,7 @@ import math
 import os
 from pathlib import Path, PurePosixPath
 import re
+import select
 import shutil
 import signal
 import stat
@@ -31,9 +32,11 @@ TIMEOUT = 12
 DEADLINE = None
 CANCEL_REQUESTS = 0
 PROCESS_BYTES = 1024 * 1024
-PROCESS_SECONDS = 0.5
-REAP_SECONDS = 0.1
 CLEANUP_SECONDS = 2.0
+# Observation may use half the cleanup envelope; escalation and reaping share
+# its remaining absolute deadline rather than multiplying independent waits.
+PROCESS_SECONDS = CLEANUP_SECONDS / 2
+REAP_SECONDS = 0.1
 
 
 class Failure(Exception):
@@ -118,6 +121,33 @@ def check_cancelled():
         raise KeyboardInterrupt
 
 
+def wait_process(process, timeout):
+    """Wait for kernel exit notification on macOS, then reap the exact child."""
+    if process.poll() is not None:
+        return process.returncode
+    if not hasattr(select, "kqueue"):
+        return process.wait(timeout=timeout)
+    deadline = time.monotonic() + timeout
+    with contextlib.closing(select.kqueue()) as queue:
+        event = select.kevent(process.pid, filter=select.KQ_FILTER_PROC,
+                             flags=select.KQ_EV_ADD | select.KQ_EV_ONESHOT,
+                             fflags=select.KQ_NOTE_EXIT)
+        try:
+            queue.control([event], 0, 0)
+        except ProcessLookupError:
+            # The kernel can remove a dying PID before waitpid is ready. Reap
+            # only our exact child, within the same remaining wait allowance.
+            return process.wait(timeout=max(0, deadline - time.monotonic()))
+        if process.poll() is not None:
+            return process.returncode
+        events = queue.control(None, 1, max(0, deadline - time.monotonic()))
+        if not events:
+            raise subprocess.TimeoutExpired(process.args, timeout)
+        # NOTE_EXIT may precede waitpid readiness by a short kernel teardown
+        # interval. Reaping shares this wait's remaining absolute allowance.
+        return process.wait(timeout=max(0, deadline - time.monotonic()))
+
+
 def process_snapshot(*, deadline=None):
     """Read bounded PID/parent/group/start/state metadata, never command text."""
     with tempfile.TemporaryFile() as output:
@@ -136,7 +166,7 @@ def process_snapshot(*, deadline=None):
             raise Failure("process_observation_unavailable", 2, "cleanup") from None
         try:
             try:
-                observer.wait(timeout=max(0, allowance - (time.monotonic() - started)))
+                wait_process(observer, max(0, allowance - (time.monotonic() - started)))
             except subprocess.TimeoutExpired:
                 raise Failure("process_observation_timeout", 2, "cleanup", limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds") from None
             if observer.returncode:
@@ -159,7 +189,7 @@ def process_snapshot(*, deadline=None):
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(observer.pid, signal.SIGKILL)
             with contextlib.suppress(subprocess.TimeoutExpired):
-                observer.wait(timeout=REAP_SECONDS)
+                wait_process(observer, REAP_SECONDS)
 
 
 def remember_descendants(process, known, snapshot):
@@ -204,8 +234,12 @@ def stop_process(process, known):
     deadline = time.monotonic() + CLEANUP_SECONDS
     force_at = deadline - PROCESS_SECONDS - 2 * REAP_SECONDS
     try:
+        leader_stopped = process.poll() is not None
         snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
         remember_descendants(process, known, snapshot)
+        process.poll()
+        if leader_stopped and not living_descendants(known, snapshot):
+            return
         # SIGINT lets canonical capture_git catch BaseException and stop its own
         # independently created Git session before the scanner itself exits.
         if process.returncode is None:
@@ -284,7 +318,7 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
             request = data or b""
             while True:
                 check_cancelled()
-                if time.monotonic() - observed_at >= 0.05:
+                if process.poll() is None and time.monotonic() - observed_at >= 0.05:
                     remember_descendants(process, known, process_snapshot())
                     observed_at = time.monotonic()
                 if time.monotonic() - started > timeout:
@@ -727,7 +761,7 @@ def parser():
                     "Active root contains .codex/hooks, .copilot/hooks/scripts and .gemini/hooks/scripts. "
                     "Verification leaves live targets and the index unchanged. No environment configuration is accepted. "
                     "Bounds: patch 1 MiB; state 64 MiB/4096 paths; 64 targets; each child 12 seconds; total 180 seconds; stdin 2 seconds. "
-                    "POSIX checking requires /bin/ps access to numeric process metadata (1 MiB, 0.5 seconds per observation, 0.1 seconds for observer reaping); cleanup is bounded at 2 seconds and 256 observed processes. "
+                    "POSIX checking requires /bin/ps access to numeric process metadata (1 MiB, at most 1 second per observation, 0.1 seconds for observer reaping); cleanup is bounded at 2 seconds and 256 observed processes. "
                     "Windows checking refuses before subprocess launch until bounded descendant cleanup is available. "
                     "Exit: 0 verified, 1 findings, 2 incomplete, 3 invalid invocation, 130 canceled.")
     result.add_argument("--version", action="version", version="%(prog)s " + VERSION + " schema=" + SCHEMA)
@@ -828,7 +862,7 @@ def failure_action(reason):
     if reason == "bounded_descendant_cleanup_unavailable":
         return "Run verification on a supported POSIX host with process-observation access."
     if reason.startswith("process_observation_"):
-        return "Restore /bin/ps access and responsive numeric process metadata within the 0.5-second observation allowance, then rerun --check."
+        return "Restore /bin/ps access and responsive numeric process metadata within the 1-second observation allowance, then rerun --check."
     if reason == "process_cleanup_incomplete":
         return "Stop remaining verifier-owned children and restore process-observation access before retrying --check."
     if reason == "descendant_limit":

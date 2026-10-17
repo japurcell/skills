@@ -638,7 +638,7 @@ class PreflightTests(unittest.TestCase):
     def test_real_metadata_observation_allows_ordinary_host_latency_and_bounds_stalls(self):
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
-        for delay, expected in ((0.3, 0), (60, 2)):
+        for delay, expected in ((0.3, 0), (0.65, 0), (60, 2)):
             with self.subTest(delay=delay):
                 wrapper, observers, git_started = self.observation_wrapper(delay, first=2)
                 observers.unlink(missing_ok=True)
