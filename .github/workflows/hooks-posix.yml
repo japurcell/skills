@@ -37,7 +37,9 @@ jobs:
         run: |
           # Bootstrap RTK before using it for exact test commands.
           command -v brew
+          brew update
           brew install git bash jq powershell rtk
+          brew upgrade rtk
           for formula in git bash jq powershell rtk; do
             printf '%s/bin\n' "$(brew --prefix "$formula")" >> "$GITHUB_PATH"
           done

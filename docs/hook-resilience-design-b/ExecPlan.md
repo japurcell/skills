@@ -31,7 +31,7 @@ The existing schema-1 resource budgets stay unchanged. Checkpoint defaults are 4
 - [x] (2026-10-16) [milestone-1] W2: actual Windows run 38989319821 passed every step, including native containment. Removed 203 optional diagnostic lines while retaining all controls.
 - [x] (2026-10-16) [milestone-1] Primary: reviewed and integrated repairs serially through `37aeaa20`, preserving tested inputs and the unresolved historical observation.
 - [x] (2026-10-16) [milestone-2] T9c-P: integrated CI coverage, verified prerequisites and the targeted alias-fixture repair at `d61250aa`. Early hosted results and the exact fixture red/green are retained in [evidence](t9c-p-evidence.md).
-- [ ] [milestone-2] Primary: run complete final macOS and Windows workflows on the integrated core; no duplicate full local replay.
+- [ ] [milestone-2] Primary: final integrated source `2b1936d445f5378c88140566ce812906c2c8520b` is pushed. The first [macOS run 38990193053](https://github.com/japurcell/skills/actions/runs/38990193053) stopped before tests because the image had RTK 0.48.0. Bootstrap now explicitly updates Homebrew and upgrades RTK. [Windows run 38990193171](https://github.com/japurcell/skills/actions/runs/38990193171) remains active; rerun macOS on the bootstrap repair without a full local replay.
 - [x] (2026-10-16) [milestone-3] Primary: aligned README/CLI-help/support guidance, repaired historical links and completed one coordinated knowledge pass. Updated existing security instructions and scanner-consistency memory; no new memory/index/skill/source files. OKF lint, affected links, generated freshness (68 files) and whitespace checks pass.
 - [ ] [milestone-3] Primary: retain final integrated CI results and completion status.
 
@@ -81,7 +81,7 @@ After all code work finishes, complete one `update-agent-docs` pass using the kn
 
 ## Concrete Steps
 
-Work from `/Users/adam/.codex/worktrees/a468/skills`. All code owners have completed and their clean branches are integrated through `37aeaa20`. Primary finishes the single coordinated documentation pass, commits the integrated source, and pushes it for the standard macOS and Windows workflows. Inspect actual failures and repair only their demonstrated cause. No full local replay or new workstream is needed.
+Work from `/Users/adam/.codex/worktrees/a468/skills`. All code owners have completed and their clean branches are integrated through `37aeaa20`. The single coordinated documentation pass is complete. Source `2b1936d4` is pushed; primary awaits the two final workflow links in Progress. Inspect actual failures and repair only their demonstrated cause. No full local replay or new workstream is needed.
 
 Useful validation commands, selected according to the changed files, are:
 
