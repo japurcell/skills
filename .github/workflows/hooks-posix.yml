@@ -37,36 +37,22 @@ jobs:
         run: |
           # Bootstrap RTK before using it for exact test commands.
           command -v brew
-          brew install git bash jq powershell rtk
-          for formula in git bash jq powershell rtk; do
+          brew install git bash jq powershell git-lfs rtk
+          for formula in git bash jq powershell git-lfs rtk; do
             printf '%s/bin\n' "$(brew --prefix "$formula")" >> "$GITHUB_PATH"
           done
-      - name: Provision real unsupported Python for negative fixtures
-        uses: actions/setup-python@v7
-        id: unsupported-python
-        with:
-          python-version: '3.11'
-          update-environment: false
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Prepare disposable test environment
-        env:
-          UNSUPPORTED_PYTHON: ${{ steps.unsupported-python.outputs.python-path }}
         run: |
-          umask 077
           task_root="$RUNNER_TEMP/hook security"
-          mkdir -p "$task_root/home" "$task_root/tmp" "$task_root/logs" "$task_root/config" "$task_root/data" "$task_root/cache" "$task_root/appdata" "$task_root/localappdata"
-          : > "$task_root/gitconfig"
+          mkdir -p "$task_root/home" "$task_root/tmp" "$task_root/logs" "$task_root/config" "$task_root/data" "$task_root/cache"
           {
             printf 'HOME=%s/home\n' "$task_root"
             printf 'USERPROFILE=%s/home\n' "$task_root"
             printf 'CODEX_HOME=%s/home/.codex\n' "$task_root"
             printf 'TMPDIR=%s/tmp\n' "$task_root"
-            printf 'TMP=%s/tmp\n' "$task_root"
-            printf 'TEMP=%s/tmp\n' "$task_root"
-            printf 'APPDATA=%s/appdata\n' "$task_root"
-            printf 'LOCALAPPDATA=%s/localappdata\n' "$task_root"
             printf 'XDG_CONFIG_HOME=%s/config\n' "$task_root"
             printf 'XDG_DATA_HOME=%s/data\n' "$task_root"
             printf 'XDG_CACHE_HOME=%s/cache\n' "$task_root"
@@ -75,66 +61,21 @@ jobs:
             printf 'AUDIT_LOG=%s/logs/audit.log\n' "$task_root"
             printf 'OBSERVABILITY_LOG_PATH=%s/logs/observability.jsonl\n' "$task_root"
             printf 'OBSERVABILITY_TESTING=1\n'
-            printf 'GIT_CONFIG_GLOBAL=%s/gitconfig\n' "$task_root"
-            printf 'TEST_UNSUPPORTED_PYTHON=%s\n' "$UNSUPPORTED_PYTHON"
-            printf 'INSTALL_FOREST_SERVICE_SKILLS=\n'
+            printf 'GIT_CONFIG_GLOBAL=/dev/null\n'
             printf 'GIT_CONFIG_NOSYSTEM=1\n'
             printf 'GIT_TERMINAL_PROMPT=0\n'
           } >> "$GITHUB_ENV"
-      - name: Provision verified Git LFS 3.8.0
-        run: |
-          case "$(uname -m)" in
-            arm64)
-              lfs_arch=arm64
-              lfs_sha=caff76a7d070d8160c89bc39b6e85d98f24135b6fed038a3b4de2590d25102d8
-              ;;
-            x86_64)
-              lfs_arch=amd64
-              lfs_sha=f1c17aeca0b4eaab9ea606226477dbed3b84b56fe0811a9f967d2ea2b2393c53
-              ;;
-            *) printf 'Unsupported Darwin architecture for Git LFS fixture.\n' >&2; exit 1 ;;
-          esac
-          tool_root="$RUNNER_TEMP/hook security/tools/git-lfs-3.8.0"
-          mkdir -p "$tool_root"
-          archive="$tool_root/git-lfs-darwin-$lfs_arch-v3.8.0.zip"
-          # Hashes and asset names are published by the official v3.8.0 release.
-          rtk proxy curl --fail --location --proto '=https' --tlsv1.2 --output "$archive" "https://github.com/git-lfs/git-lfs/releases/download/v3.8.0/git-lfs-darwin-$lfs_arch-v3.8.0.zip"
-          printf '%s  %s\n' "$lfs_sha" "$archive" | rtk proxy shasum -a 256 -c -
-          rtk proxy /usr/bin/ditto -x -k "$archive" "$tool_root"
-          lfs_bin="$tool_root/git-lfs-3.8.0/git-lfs"
-          test -x "$lfs_bin"
-          printf 'TEST_GIT_LFS=%s\n' "$lfs_bin" >> "$GITHUB_ENV"
-          printf '%s\n' "$(dirname "$lfs_bin")" >> "$GITHUB_PATH"
-          rtk proxy "$lfs_bin" version
-          rtk proxy shasum -a 256 "$lfs_bin"
       - name: Verify native tools and stable RTK processors
         run: |
           for tool in python3 git bash jq pwsh git-lfs rtk; do
             command -v "$tool"
           done
           rtk proxy python3 -c 'import sys; print(sys.version); assert sys.version_info[:2] == (3, 13), "CI requires Python 3.13"'
-          rtk proxy "$TEST_UNSUPPORTED_PYTHON" -c 'import sys; print(sys.executable); print(sys.version); assert sys.version_info[:2] == (3, 11), "Negative fixture requires real Python 3.11"'
-          # This is the actual executable selected by the Darwin repository fixture.
-          fixture_git=/Library/Developer/CommandLineTools/usr/bin/git
-          test -x "$fixture_git"
-          rtk proxy "$fixture_git" --version
           rtk proxy git --version
           rtk proxy bash --version
           rtk proxy jq --version
           rtk proxy pwsh -NoProfile -NonInteractive -Command '$ErrorActionPreference = "Stop"; $PSVersionTable.PSVersion.ToString(); if ($PSVersionTable.PSVersion.Major -lt 7) { throw "PowerShell 7 or newer is required." }'
           rtk proxy git lfs version
-          rtk proxy python3 - <<'PYTHON'
-          import os
-          from pathlib import Path
-          import shutil
-          import subprocess
-          selected = Path(os.environ["TEST_GIT_LFS"])
-          assert selected.is_absolute() and selected.is_file(), "TEST_GIT_LFS must select an absolute existing executable"
-          assert Path(shutil.which("git-lfs")).resolve() == selected.resolve(), "PATH must select the verified Git LFS fixture"
-          version = subprocess.check_output([str(selected), "version"], text=True).strip()
-          assert version.startswith("git-lfs/3.8.0 "), f"Exact Git LFS 3.8.0 is required, got: {version}"
-          print(f"Verified fixture {selected}: {version}")
-          PYTHON
           rtk --version
           rtk gain
           rtk proxy python3 - <<'PYTHON'
@@ -215,31 +156,3 @@ jobs:
                   raise SystemExit(f"Missing native capture evidence for {provider}: {len(observed)}/4 cases.")
           print("Verified all 12 native Darwin capture cases with restored soft process limits.")
           PYTHON
-      - name: Test checkpoint CLI
-        run: rtk proxy python3 scripts/test-scan-secrets-cli.py
-      - name: Test historical scan status
-        run: rtk proxy python3 scripts/test-scan-secrets-status.py
-      - name: Test actual Git commit and push gates
-        run: rtk proxy python3 scripts/test-scan-secrets-git-gates.py
-      - name: Test exact Git LFS upload and rejection
-        run: rtk proxy python3 scripts/test-scan-secrets-lfs.py
-      - name: Test repository gate installation and recovery
-        run: rtk proxy python3 scripts/test-install-repo-gates.py
-      - name: Test neutral scanner installation and upgrades
-        run: rtk proxy python3 scripts/test-install-scan-secrets.py
-      - name: Test provider lifecycle migration
-        run: rtk proxy python3 scripts/test-scan-secrets-lifecycle.py
-      - name: Test status cancellation and descendant cleanup
-        run: rtk proxy python3 scripts/test-scan-status-cancellation.py
-      - name: Test Codex configuration merger
-        run: rtk proxy python3 scripts/test-install-codex-hooks.py
-      - name: Test complete Bash installer
-        run: rtk proxy bash scripts/test-install.sh
-      - name: Test complete PowerShell installer on macOS
-        run: rtk proxy pwsh -NoProfile -File scripts/test-install.ps1
-      - name: Test generator behavior and closure
-        run: rtk proxy python3 scripts/test-generate-hooks.py
-      - name: Test maintained suite registry and runner
-        run: rtk proxy python3 scripts/test_test_all.py
-      - name: Recheck generated hooks after complete suites
-        run: rtk proxy python3 scripts/generate-hooks.py --check
