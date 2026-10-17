@@ -82,27 +82,3 @@ jobs:
       - name: Test lifecycle messages on native Windows
         shell: pwsh
         run: pwsh -NoProfile -File scripts/test-lifecycle-messages-windows.ps1
-
-  focused_scanner_capture:
-    name: Focused native scanner capture observation
-    runs-on: windows-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - name: Check exact generated source
-        run: python scripts/generate-hooks.py --check
-      - name: Observe native scanner capture controls
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          python --version
-          if ($LASTEXITCODE -ne 0) { throw 'Python version check failed.' }
-          git --version
-          if ($LASTEXITCODE -ne 0) { throw 'Git version check failed.' }
-          pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1
-          if ($LASTEXITCODE -ne 0) { throw 'Native scanner capture controls failed.' }

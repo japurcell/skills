@@ -274,7 +274,6 @@ def validate_native_api(raw):
         "information": (("self", "handle"), (), 2),
         "validate_name": (("self", "name"), (), 2),
         "open_handle": (("self", "name", "access"), ("directory", "create", "exclusive", "share_delete"), 2),
-        "pin_readonly_image": (("self", "name"), (), 2),
         "pin_root": (("self", "path"), ("access",), 2),
         "descend": (("self", "name"), ("create", "exclusive", "access"), 2),
         "stat": (("self", "name"), (), 2),

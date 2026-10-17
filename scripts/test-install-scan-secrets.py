@@ -87,7 +87,7 @@ class InstalledScannerTests(unittest.TestCase):
         source = self.copy_source()
         self.assertEqual(self.install(source=source).returncode, 0)
         manifest = json.loads((self.destination / "installation.json").read_text())
-        self.assertEqual(len(manifest["files"]), 23)
+        self.assertEqual(len(manifest["files"]), 22)
         self.assertEqual(manifest["interpreter"], PYTHON)
         self.assertEqual(Path(manifest["runtime"]), self.destination / "hooks/runtime")
         shutil.rmtree(source)
@@ -135,9 +135,9 @@ class InstalledScannerTests(unittest.TestCase):
                 source = self.copy_source()
                 upgraded = self.install(source=source)
                 self.assertEqual(upgraded.returncode, 0, upgraded.stdout + upgraded.stderr)
-                self.assertEqual(json.loads(upgraded.stdout)["asset_count"], 23)
+                self.assertEqual(json.loads(upgraded.stdout)["asset_count"], 22)
                 current = json.loads((self.destination / "installation.json").read_bytes())
-                self.assertEqual(len(current["files"]), 23)
+                self.assertEqual(len(current["files"]), 22)
                 stable = self.fingerprint(self.destination)
                 self.assertEqual(self.install(source=source).returncode, 0)
                 self.assertEqual(stable, self.fingerprint(self.destination))
@@ -375,7 +375,7 @@ runpy.run_path(helper, run_name='__main__')
             self.assertEqual(result.returncode, 0, result.stderr)
             installed = self.home / ".local/lib/scan-secrets"
             manifest = json.loads((installed / "installation.json").read_text())
-            self.assertEqual(len(manifest["files"]), 23)
+            self.assertEqual(len(manifest["files"]), 22)
             hidden = source.with_name("source unavailable")
             source.rename(hidden)
             try:
@@ -515,19 +515,6 @@ runpy.run_path(helper, run_name='__main__')
         self.assertEqual(json.loads(result.stdout)["reason"], "source_assets_invalid")
         self.assertEqual(before, self.fingerprint(self.destination))
 
-    def test_missing_readonly_image_pin_preserves_existing_bundle(self):
-        self.assertEqual(self.install().returncode, 0)
-        before = self.fingerprint(self.destination)
-        source = self.copy_source()
-        helper = source / "hooks/runtime/scan_native_file.py"
-        content = helper.read_text(encoding="utf-8")
-        self.assertEqual(content.count("def pin_readonly_image("), 1)
-        helper.write_text(content.replace("def pin_readonly_image(", "def unavailable_readonly_image(", 1), encoding="utf-8")
-        result = self.install(source=source)
-        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-        self.assertEqual(json.loads(result.stdout)["reason"], "source_assets_invalid")
-        self.assertEqual(before, self.fingerprint(self.destination))
-
     def expand_source_closure(self, count):
         source = self.copy_source()
         extra = ["scan_extra_" + str(index) for index in range(count)]
@@ -538,7 +525,7 @@ runpy.run_path(helper, run_name='__main__')
         return source
 
     def test_oversized_or_reserved_closure_fails_before_first_install(self):
-        source = self.expand_source_closure(36)
+        source = self.expand_source_closure(37)
         before = self.fingerprint(self.root)
         result = self.install(source=source)
         self.assertEqual(result.returncode, 2, result.stdout)
@@ -557,7 +544,7 @@ runpy.run_path(helper, run_name='__main__')
             shutil.rmtree(source)
 
     def test_largest_supported_closure_installs_reinstalls_and_checks(self):
-        source = self.expand_source_closure(35)
+        source = self.expand_source_closure(36)
         result = self.install(source=source)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(json.loads(result.stdout)["asset_count"], 58)

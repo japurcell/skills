@@ -75,7 +75,7 @@ class RecoveryTests(unittest.TestCase):
                 return manual_scanners[provider] if filename == "scan-secrets.py" else registered_handler(config, provider, filename)
             for provider in PROVIDERS:
                 for helper in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
-                               "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine"):
+                               "scan_git", "scan_native_file", "scan_audit", "scan_engine"):
                     relative = entry(provider).parent / "helpers" / (helper + ".py")
                     installed_helper = home / relative
                     self.assertEqual(installed_helper.read_bytes(), (ROOT / relative).read_bytes(),
@@ -357,7 +357,7 @@ class RecoveryTests(unittest.TestCase):
 
     def test_scanner_runtime_helper_closure_fails_closed_and_preserves_recovery(self):
         helpers = ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
-                   "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine")
+                   "scan_git", "scan_native_file", "scan_audit", "scan_engine")
         for provider in PROVIDERS:
             with tempfile.TemporaryDirectory() as directory:
                 script, cwd, env = self.setup_fixture(directory, provider)
