@@ -1,7 +1,5 @@
 #!/usr/bin/env pwsh
 
-param([switch]$Diagnostic)
-
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) {
     Write-Output 'SKIP: native Windows scanner capture tests require Windows'
@@ -16,17 +14,6 @@ $hooks = @{
     copilot = Join-Path $repoRoot '.copilot/hooks/scripts/scan-secrets.py'
     gemini = Join-Path $repoRoot '.gemini/hooks/scripts/scan-secrets.py'
     codex = Join-Path $repoRoot '.codex/hooks/scan-secrets.py'
-}
-
-$failureDiagnostic = Join-Path $workdir 'fixture-failure.py'
-
-function Write-FixtureFailure {
-    param([string]$CaseDir, [int]$ExitCode)
-    # This runs only after a fixture failed, outside the measured hook process.
-    & $python -I -S -B $failureDiagnostic $CaseDir ([string]$ExitCode) 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Output '{"schema":"w2_fixture_failure_v1","collector":"unavailable"}'
-    }
 }
 
 function Invoke-Case {
@@ -225,80 +212,7 @@ finally:
         $env:TMP = $caseDir
         $started = [Diagnostics.Stopwatch]::StartNew()
         $runner = $hooks[$Provider]
-        if ($Diagnostic -and $Scenario -notin @('launch-death', 'image-pin')) {
-            $runner = Join-Path $caseDir 'capture-fixture.py'
-            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
-            $captureErrorLiteral = if ($Scenario -eq 'capture-error') { 'True' } else { 'False' }
-            $fixture = @'
-import ast, ctypes, os, pathlib, runpy, subprocess, sys, tempfile, time
-hook = pathlib.Path(HOOK_LITERAL)
-source = hook.parent / "helpers" / "scan_git.py"
-phase_lines = {node.lineno for node in ast.walk(ast.parse(source.read_text(encoding="utf-8")))
-               if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name)
-               and target.id == "capture_step" for target in node.targets)}
-started = time.monotonic()
-records = 0
-kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-kernel.GetCurrentProcess.restype = ctypes.c_void_p
-kernel.GetProcessHandleCount.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
-kernel.GetProcessHandleCount.restype = ctypes.c_int
-def emit(phase, pid=0, code=0):
-    global records
-    if records >= 128:
-        return
-    records += 1
-    handles = ctypes.c_uint32()
-    ok = kernel.GetProcessHandleCount(kernel.GetCurrentProcess(), ctypes.byref(handles))
-    count = handles.value if ok else 0
-    elapsed = int((time.monotonic() - started) * 1000)
-    print(f"W2 phase={phase} pid={pid} code={code} handles={count} ms={elapsed}", file=sys.stderr, flush=True)
-original_popen = subprocess.Popen
-class ObservedPopen(original_popen):
-    def __init__(self, *args, **kwargs):
-        emit(8001)
-        try:
-            super().__init__(*args, **kwargs)
-        except OSError as error:
-            emit(8003, code=error.winerror or error.errno or 0)
-            raise
-        emit(8002, pid=self.pid)
-subprocess.Popen = ObservedPopen
-def trace(frame, event, argument):
-    if not frame.f_code.co_filename.endswith(("/scan_git.py", "\\scan_git.py")):
-        return None
-    name = frame.f_code.co_name
-    if name == "capture_git" and event == "line" and frame.f_lineno in phase_lines:
-        emit(frame.f_lineno)
-    elif name in {"_windows_git_descendants", "_stop_git_process"} and event in {"call", "return"}:
-        emit((9000 if name == "_windows_git_descendants" else 9100) + (1 if event == "call" else 2))
-    return trace
-if CAPTURE_ERROR_LITERAL:
-    def fail(*args, **kwargs):
-        raise OSError("private capture failure detail")
-    tempfile.TemporaryFile = fail
-def audit(event, arguments):
-    if event == "exec":
-        filename = arguments[0].co_filename
-        if filename == str(hook):
-            emit(10)
-        elif filename.endswith(("/common.py", "\\common.py")):
-            emit(11)
-        elif filename.endswith(("/scan_engine.py", "\\scan_engine.py")):
-            emit(12)
-        elif filename.endswith(("/scan_git.py", "\\scan_git.py")):
-            emit(13)
-emit(1, pid=os.getpid())
-sys.addaudithook(audit)
-sys.settrace(trace)
-try:
-    runpy.run_path(str(hook), run_name="__main__")
-finally:
-    sys.settrace(None)
-    emit(2, pid=os.getpid())
-'@
-            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('CAPTURE_ERROR_LITERAL', $captureErrorLiteral)
-            [System.IO.File]::WriteAllText($runner, $fixture)
-        } elseif ($Scenario -eq 'launch-death') {
+        if ($Scenario -eq 'launch-death') {
             $runner = Join-Path $caseDir 'launch-death.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
             $markerLiteral = $grandchildMarker | ConvertTo-Json -Compress
@@ -451,21 +365,11 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         if (-not $process.WaitForExit(8000)) {
             $process.Kill($true)
             $process.WaitForExit(1000) | Out-Null
-            # Fixture diagnostics are numeric and bounded. Never publish raw hook stderr.
-            Get-Content -LiteralPath $errorPath | Where-Object {
-                $_ -cmatch '^W2 phase=[0-9]+ pid=[0-9]+ code=[0-9]+ handles=[0-9]+ ms=[0-9]+$'
-            } | Select-Object -First 128 | ForEach-Object { Write-Output $_ }
             throw "$Provider $Mode $Scenario exceeded outer watchdog"
         }
         $started.Stop()
-        if ($Provider -eq 'gemini' -and $Mode -eq 'block' -and $Scenario -eq 'partial') {
-            Get-Content -LiteralPath $errorPath | Where-Object {
-                $_ -cmatch '^W2 phase=[0-9]+ pid=[0-9]+ code=[0-9]+ handles=[0-9]+ ms=[0-9]+$'
-            } | Select-Object -First 128 | ForEach-Object { Write-Output $_ }
-        }
         if ($Scenario -eq 'launch-death') {
             if ($process.ExitCode -ne 99 -or -not (Test-Path -LiteralPath $grandchildMarker)) {
-                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
                 throw "$Provider $Mode launch-death did not reach the real post-create boundary: $($process.ExitCode)"
             }
             & $python -I -S -B $grandchildObserver $grandchildMarker inspect
@@ -481,7 +385,6 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         if ($started.Elapsed.TotalSeconds -ge 8) { throw "$Provider $Mode $Scenario was too slow" }
         if ($Scenario -eq 'grandchild') {
             if (-not (Test-Path -LiteralPath $grandchildMarker)) {
-                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
                 throw "$Provider grandchild fixture did not execute"
             }
             & $python -I -S -B $grandchildObserver $grandchildMarker inspect
@@ -492,7 +395,6 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         if ($Scenario -eq 'image-pin') {
             & $python -I -S -B $imageObserver $caseDir
             if ($LASTEXITCODE -ne 0) {
-                Write-FixtureFailure -CaseDir $caseDir -ExitCode $process.ExitCode
                 throw "$Provider $Mode disposable image pin sharing or lifetime control failed"
             }
         }
@@ -598,111 +500,6 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 
 try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
-    [System.IO.File]::WriteAllText($failureDiagnostic, @'
-import json, os, pathlib, sys
-
-def collect_audit(root):
-    result = dict(state='missing', status='unknown', cause='unknown', operation='unknown',
-                  capture_step='unknown', os_errno=-1)
-    path = root / 'logs' / 'scan.log'
-    try:
-        if not path.exists():
-            return result
-        if not 0 < path.stat().st_size <= 65536:
-            result['state'] = 'size_refused'
-            return result
-        with path.open('rb') as stream:
-            raw = stream.read(65537)
-        if len(raw) > 65536:
-            result['state'] = 'size_refused'
-            return result
-        value = json.loads(raw.splitlines()[-1])
-        if type(value) is not dict:
-            raise ValueError
-        result['state'] = 'present'
-        if value.get('status') in {'clean', 'findings', 'incomplete'}:
-            result['status'] = value['status']
-        diagnostic = value.get('diagnostic')
-        if type(diagnostic) is not dict:
-            return result
-        allowed = dict(
-            cause={'git_unavailable', 'git_failed', 'git_capture_failed', 'git_descendant_running',
-                   'git_head_invalid', 'git_output_invalid', 'repository_unavailable', 'scan_timeout',
-                   'git_timeout', 'git_output_limit', 'internal_error', 'input_invalid', 'audit_unavailable'},
-            operation={'initialization', 'input', 'repository', 'git_repository', 'git_head',
-                       'git_candidates', 'git_index', 'git_diff', 'git_command', 'candidate_read',
-                       'candidate_scan', 'scan_log'},
-            capture_step={'temporary_file', 'verify_capture', 'request_write', 'spawn', 'wait',
-                          'descendants', 'consume', 'cleanup'})
-        for key, choices in allowed.items():
-            if type(diagnostic.get(key)) is str and diagnostic[key] in choices:
-                result[key] = diagnostic[key]
-        number = diagnostic.get('os_errno')
-        if type(number) is int and 0 <= number <= 0xFFFFFFFF:
-            result['os_errno'] = number
-    except Exception:
-        result['state'] = 'invalid'
-    return result
-
-def native_metadata(root):
-    if os.name != 'nt':
-        return []
-    import ctypes
-    dword, pointer = ctypes.c_uint32, ctypes.c_void_p
-    class FileTime(ctypes.Structure):
-        _fields_ = [('low', dword), ('high', dword)]
-    class FileInformation(ctypes.Structure):
-        _fields_ = [('attributes', dword), ('created', FileTime), ('accessed', FileTime),
-                    ('written', FileTime), ('volume', dword), ('size_high', dword),
-                    ('size_low', dword), ('links', dword), ('index_high', dword), ('index_low', dword)]
-    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-    kernel.GetSystemDirectoryW.argtypes = [ctypes.c_wchar_p, dword]
-    kernel.GetSystemDirectoryW.restype = dword
-    kernel.CreateFileW.argtypes = [ctypes.c_wchar_p, dword, dword, pointer, dword, dword, pointer]
-    kernel.CreateFileW.restype = pointer
-    kernel.GetFileInformationByHandle.argtypes = [pointer, ctypes.POINTER(FileInformation)]
-    kernel.GetFileInformationByHandle.restype = ctypes.c_int
-    kernel.CloseHandle.argtypes = [pointer]
-    kernel.CloseHandle.restype = ctypes.c_int
-    directory = ctypes.create_unicode_buffer(32768)
-    length = kernel.GetSystemDirectoryW(directory, len(directory))
-    system_error = ctypes.get_last_error() if not length else 0
-    files = [(1, root / 'bin' / 'git.cmd'),
-             (2, pathlib.Path(directory.value) / 'cmd.exe' if 0 < length < len(directory) else None)]
-    result = []
-    for slot, path in files:
-        record = dict(slot=slot, opened=0, links=0, attributes=0, os_error=0)
-        result.append(record)
-        if path is None:
-            record['os_error'] = system_error or 122
-            continue
-        # Read attributes only, OPEN_EXISTING and OPEN_REPARSE_POINT. No mutation.
-        handle = kernel.CreateFileW(str(path), 0x80, 7, None, 3, 0x00200000, None)
-        if handle == pointer(-1).value:
-            record['os_error'] = ctypes.get_last_error()
-            continue
-        try:
-            information = FileInformation()
-            if not kernel.GetFileInformationByHandle(handle, ctypes.byref(information)):
-                record['os_error'] = ctypes.get_last_error()
-            else:
-                record.update(opened=1, links=int(information.links), attributes=int(information.attributes))
-        finally:
-            if not kernel.CloseHandle(handle):
-                record['os_error'] = ctypes.get_last_error()
-    return result
-
-try:
-    root = pathlib.Path(sys.argv[1])
-    exit_code = int(sys.argv[2])
-    if not -2147483648 <= exit_code <= 0xFFFFFFFF:
-        exit_code = -1
-    report = dict(schema='w2_fixture_failure_v1', hook_exit=exit_code,
-                  audit=collect_audit(root), files=native_metadata(root))
-except BaseException:
-    report = dict(schema='w2_fixture_failure_v1', collector='unavailable')
-print(json.dumps(report, sort_keys=True, separators=(',', ':')))
-'@)
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
