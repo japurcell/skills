@@ -345,6 +345,21 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertIn(undeclared.relative_to(ROOT).as_posix(), result.stdout)
         undeclared.unlink()
 
+    def test_check_reads_canonical_sources_as_utf8_in_legacy_locales(self) -> None:
+        # Inventory generated Python bytes and modes, excluding interpreter caches.
+        paths = tuple(path for name in (".codex/hooks", ".copilot/hooks/scripts",
+                                        ".gemini/hooks/scripts", ".github/hooks/scripts")
+                      for path in (ROOT / name).rglob("*.py"))
+        before = {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths}
+        result = self.run_cli(
+            "--check",
+            environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "Generated hooks are current (68 files).\n")
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
+
     def test_windows_check_ignores_posix_executable_mode(self) -> None:
         generator = load_generator()
         outputs = generator.render_all(ROOT)
