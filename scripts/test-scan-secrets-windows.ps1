@@ -151,7 +151,7 @@ finally:
         'grandchild' { "@echo off`r`nif `"%1 %2`"==`"rev-parse --is-inside-work-tree`" (`"$python`" -I -S -B `"$grandchildRunner`" `"$grandchildMarker`" & exit /b 0)`r`n`"$realGit`" %*" }
         'descendant' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (start "" /B cmd /c "ping -n 11 127.0.0.1 >nul" & echo true & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'partial' { '@echo off' + "`r`n" + 'echo true' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
-        'oversized' { '@echo off' + "`r`n" + 'powershell -NoProfile -Command "$b = New-Object byte[] 8388609; [Console]::OpenStandardOutput().Write($b, 0, $b.Length)"' + "`r`n" + 'ping -n 11 127.0.0.1 >nul' }
+        'oversized' { "@echo off`r`n`"$python`" -I -S -B -c `"import sys,time; sys.stdout.buffer.write(bytes(8388609)); sys.stdout.buffer.flush(); time.sleep(11)`"`r`n" }
         'nonzero' { "@echo off`r`nexit /b 9" }
         'head-failure' { "@echo off`r`nif `"%1 %2 %3`"==`"rev-parse --verify HEAD`" exit /b 128`r`n`"$realGit`" %*" }
         'malformed' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (echo true & exit /b 0)' + "`r`n" + 'if "%1 %2"=="rev-parse --show-toplevel" (echo %CD% & exit /b 0)' + "`r`n" + 'if "%1"=="diff" (echo partial-path & exit /b 0)' + "`r`n" + 'exit /b 9' }
@@ -443,6 +443,12 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             if (-not $cleanResponse) { throw "$Provider $Mode no-HEAD response failed ($diagnostic)" }
             if ($log -notmatch '"status":"clean"') { throw "$Provider $Mode no-HEAD audit failed ($diagnostic)" }
         } else {
+            if ($Scenario -eq 'oversized') {
+                $record = $log.Trim() | ConvertFrom-Json -AsHashtable
+                if ($record.diagnostic.cause -ne 'git_output_limit') {
+                    throw "$Provider $Mode oversized did not reach the output limit"
+                }
+            }
             if ($Scenario -eq 'hardlinked-batch') {
                 $record = $log.Trim() | ConvertFrom-Json -AsHashtable
                 if ($record.diagnostic.cause -ne 'git_capture_failed' -or $record.diagnostic.capture_step -ne 'spawn' -or
