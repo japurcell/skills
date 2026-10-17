@@ -893,7 +893,7 @@ class LFSTests(unittest.TestCase):
         self.assertEqual(endpoint.received_bytes, len(data))
         self.assertEqual(self.git("--git-dir=" + str(remote), "rev-parse", "refs/heads/main").stdout.strip().decode(), head)
         manifest = json.loads((destination / "installation.json").read_bytes())
-        self.assertEqual(len(manifest["files"]), 22)
+        self.assertEqual(len(manifest["files"]), 23)
         self.assertEqual(list((self.base / "tmp").iterdir()), [])
 
     def test_persistent_payload_storage_stays_charged_until_handoff(self):

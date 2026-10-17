@@ -891,7 +891,7 @@ runpy.run_path(entry, run_name='__main__')
             "install", "--source-dir", str(source), "--destination", str(destination), "--json"],
             env=self.env, capture_output=True, text=True, timeout=15)
         self.assertEqual(installed.returncode, 0, installed.stdout + installed.stderr)
-        self.assertEqual(len(json.loads((destination / "installation.json").read_text())["files"]), 22)
+        self.assertEqual(len(json.loads((destination / "installation.json").read_text())["files"]), 23)
         shutil.rmtree(source)
         before = self.fingerprint()
         for action in ("install", "uninstall"):
