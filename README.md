@@ -131,6 +131,11 @@ To restore the original repository hook binding:
 "$HOME/.local/lib/scan-secrets/scan-secrets" hooks uninstall --repo . --git /Library/Developer/CommandLineTools/usr/bin/git
 ```
 
+Repository gates require trusted interpreter, runtime, Git and data paths.
+Group/other-writable ancestry is refused, except supported root-owned sticky
+temporary directories. Use a reviewed private installation if a system package
+fails these checks.
+
 Installation preserves owned backups, uses locks for cooperating writers and
 refuses ownership drift. It does not protect against arbitrary simultaneous edits
 by another program. Review an ambiguous backup or orphan lock before retrying;
