@@ -63,15 +63,15 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | OpenAI | `gpt-6.1-sol` | `medium` | GA | Connected or complex coding and broader analysis |
 | OpenAI | `gpt-6-sol` | `medium` | GA | Interactive and agentic coding |
 | OpenAI | `gpt-5.6-terra` | `medium` | GA | Connected coding and broader analysis |
-| OpenAI | `gpt-5.3-codex` | `high` | GA | Agentic coding and review |
-| Anthropic | `claude-sonnet-5.5` | `high` | GA | General coding and agent tasks; fallback to `claude-sonnet-5` |
-| Anthropic | `claude-sonnet-5` | `high` | GA | General coding and agent tasks; fallback for `claude-sonnet-5.5` |
-| Anthropic | `claude-sonnet-4.6` | `high` | Legacy annual Copilot Pro/Pro+ only | General coding and agent tasks when legacy access is confirmed |
-| Google | `gemini-3.7-flash` | `high` | GA | Versatile work; promotional pricing |
-| Google | `gemini-3.8-flash` | `high` | GA | Versatile work; promotional pricing |
-| xAI | `grok-4.5` | `high` | GA | Versatile work; long-context pricing |
-| xAI | `grok-4.6` | `high` | GA | Versatile work; long-context pricing |
-| xAI | `grok-4.7` | `high` | GA | Agentic coding; long-context pricing |
+| OpenAI | `gpt-5.3-codex` | `medium` | GA | Agentic coding and review |
+| Anthropic | `claude-sonnet-5.5` | `medium` | GA | General coding and agent tasks; fallback to `claude-sonnet-5` |
+| Anthropic | `claude-sonnet-5` | `medium` | GA | General coding and agent tasks; fallback for `claude-sonnet-5.5` |
+| Anthropic | `claude-sonnet-4.6` | `medium` | Legacy annual Copilot Pro/Pro+ only | General coding and agent tasks when legacy access is confirmed |
+| Google | `gemini-3.7-flash` | `medium` | GA | Versatile work; promotional pricing |
+| Google | `gemini-3.8-flash` | `medium` | GA | Versatile work; promotional pricing |
+| xAI | `grok-4.5` | `medium` | GA | Versatile work; long-context pricing |
+| xAI | `grok-4.6` | `medium` | GA | Versatile work; long-context pricing |
+| xAI | `grok-4.7` | `medium` | GA | Agentic coding; long-context pricing |
 
 ## Premium
 
@@ -80,18 +80,18 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | OpenAI | `gpt-6.1-sol` | `high` | GA | Demanding code or security review |
 | OpenAI | `gpt-6-sol` | `high` | GA | Demanding code or security review |
 | OpenAI | `gpt-5.6-terra` | `high` | GA | Demanding connected-code analysis |
-| OpenAI | `gpt-5.6-sol` | `max` | GA | Complex codebase reasoning and long-running agentic work |
-| OpenAI | `gpt-5.3-codex` | `max` | GA | Demanding agentic coding or review |
-| OpenAI | `gpt-5.4` | `max` | GA | Difficult general work; long-context pricing |
-| OpenAI | `gpt-5.5` | `max` | GA | Powerful reasoning; long-context pricing |
-| OpenAI | `gpt-6-astra` | `max` | GA | Demanding autonomous work; long-context pricing |
-| Anthropic | `claude-opus-4.8` | `max` | GA | Deep reasoning and debugging |
-| Anthropic | `claude-opus-4.8-fast` | `max` | GA | Premium reasoning when speed justifies cost |
-| Anthropic | `claude-fable-5` | `max` | GA | Long-horizon autonomous work |
-| Anthropic | `claude-opus-5` | `max` | GA | Powerful reasoning |
-| Anthropic | `claude-opus-5.5` | `max` | GA | Long-running agentic work |
-| Anthropic | `claude-fable-5.1` | `max` | GA | Long-horizon autonomous work; low cached-input rate |
-| Moonshot AI | `kimi-k3` | `max` | GA | Multi-step agentic coding over large contexts |
+| OpenAI | `gpt-5.6-sol` | `high` | GA | Complex codebase reasoning and long-running agentic work |
+| OpenAI | `gpt-5.3-codex` | `high` | GA | Demanding agentic coding or review |
+| OpenAI | `gpt-5.4` | `high` | GA | Difficult general work; long-context pricing |
+| OpenAI | `gpt-5.5` | `high` | GA | Powerful reasoning; long-context pricing |
+| OpenAI | `gpt-6-astra` | `medium` | GA | Demanding autonomous work; long-context pricing |
+| Anthropic | `claude-opus-4.8` | `medium` | GA | Deep reasoning and debugging |
+| Anthropic | `claude-opus-4.8-fast` | `medium` | GA | Premium reasoning when speed justifies cost |
+| Anthropic | `claude-fable-5` | `medium` | GA | Long-horizon autonomous work |
+| Anthropic | `claude-opus-5` | `medium` | GA | Powerful reasoning |
+| Anthropic | `claude-opus-5.5` | `medium` | GA | Long-running agentic work |
+| Anthropic | `claude-fable-5.1` | `medium` | GA | Long-horizon autonomous work; low cached-input rate |
+| Moonshot AI | `kimi-k3` | `medium` | GA | Multi-step agentic coding over large contexts |
 
 Do not substitute a lower effort when the listed effort is unavailable. Treat that configuration as unavailable.
 
@@ -102,10 +102,10 @@ These are provisional starting candidates, not measured quality rankings. Prefer
 | Default | Tier | Starting configuration | Alternatives |
 | --- | --- | --- | --- |
 | Bounded work | Fast | `gpt-6-luna`, `medium` | `claude-haiku-5.5`, `medium`; `gpt-5.6-luna`, `medium`; `mai-code-1.1-flash`, `medium`; compare the applicable context rates |
-| Budget review | Standard | `gpt-6-luna`, `max` | `gpt-5.6-luna`, `max`; then another Standard review configuration |
-| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gpt-5.6-terra`, `medium`; then `gpt-5.3-codex`, `high` |
-| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gpt-6-astra`, `max`; then another validated Premium review configuration |
-| Demanding autonomous work | Premium | `gpt-6-astra`, `max` | Another validated Premium autonomous-work configuration |
+| Budget review | Standard | `gpt-6-luna`, `high` | `gpt-5.6-luna`, `high`; then another Standard review configuration |
+| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gpt-5.6-terra`, `medium`; then `gpt-5.3-codex`, `medium` |
+| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gpt-6-astra`, `medium`; then another validated Premium review configuration |
+| Demanding autonomous work | Premium | `gpt-6-astra`, `medium` | Another validated Premium autonomous-work configuration |
 
 Use bounded work for low-risk coding and mechanical review only. Substantive review is at least Standard; review floors are defined in [`review-routing.md`](review-routing.md).
 

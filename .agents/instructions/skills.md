@@ -16,11 +16,24 @@ description: Rules and conventions for skills under `skills/`.
 - Treat `skills/archive/` as historical reference; use it as an edit target or current baseline only when the task explicitly calls for it.
 - Validate skill changes with `.agents/instructions/testing/skills.md`.
 
-## Reference Files
+## Best Practices
 
-Skills link to reference files for optimal performance by keeping SKILL.md bodies under 500 lines and by allowing conditional loading of relevant context.
+- [Concise is key](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#concise-is-key).
+  Default assumption: you are already very smart. Only add context you do not already have. Challenge each piece of information:
+  - "Do I really need this explanation?"
+  - "Do I already know this?"
+  - "Does this paragraph justify its token cost?"
+- Keep SKILL.md body under 500 lines for optimal performance.
+- Split content into separate [reference files](#reference-files) when approaching this limit.
+- [Checklist for effective skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#checklist-for-effective-skills).
 
-- Reference files longer than 100 lines MUST include a table of contents at the top so that agents can see the full scope of available information even when previewing for partial reads (see [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#structure-longer-reference-files-with-table-of-contents)).
+### Reference Files
+
+Skills link to reference files for optimal performance by keeping SKILL.md bodies under 500 lines and by allowing conditional loading of relevant context (see [progressive disclosure patterns](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#progressive-disclosure-patterns)).
+
+Reference files longer than 100 lines MUST include a table of contents at the top so that agents can see the full scope of available information even when previewing for partial reads (see [Official documentation](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#structure-longer-reference-files-with-table-of-contents)).
+
+[Avoid deeply nested references](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#avoid-deeply-nested-references). Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md to ensure you read complete files when needed.
 
 ## Benchmarking
 
