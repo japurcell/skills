@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "routing-3",
+  "prompt": "Compare claude-sonnet-5 at high and claude-sonnet-5.5 at high for ordinary substantive review. Both configurations are accepted by the Copilot dispatch interface and equally capable on this task. Expect 100000 confirmed cached-input tokens and 1000 output tokens; cache writes were paid previously, with no new writes or uncached input. No retries and identical verification. Select a route using bundled prices and show both costs. Also state whether that route remains dispatchable if the interface later advertises only the model names without any accepted effort values.",
+  "assertions": [
+    "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+    "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+    "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support."
+  ]
+}

@@ -4,7 +4,7 @@ This file owns capability floors for code review, PR review, change auditing, an
 
 ## Routing order
 
-1. Use **Premium** for security-sensitive or high-stakes review, or after a prior important miss on materially similar review work.
+1. Use **Premium** if any Premium condition below applies.
 2. Otherwise, use **Fast** only for mechanical or non-semantic changes with straightforward verification.
 3. Otherwise, use **Standard**.
 4. Apply [`escalation-policy.md`](escalation-policy.md) if verification reveals a reasoning gap or risk increases.
@@ -52,10 +52,6 @@ A prior important review miss establishes a Premium floor, not merely a one-tier
 
 ## Fallback and verification
 
-Preserve the review floor when a configuration is unavailable. Never substitute the bounded-work default for substantive review or lower Premium review to Standard.
-
-If no same-tier configuration is available, use the lowest-cost available higher-tier configuration that satisfies current-request constraints. If no exact configuration satisfies the review floor, return `dispatchable: false`.
+Apply [the availability rule](../SKILL.md#availability) without lowering the review floor.
 
 Model selection does not replace verification. Use checks appropriate to the review, such as tracing affected behavior and callers, checking tests and failure paths, validating trust boundaries, reproducing generated output, running focused checks, or obtaining independent high-stakes review.
-
-For unvalidated model-and-task combinations, state the uncertainty and require verification appropriate to the stakes.

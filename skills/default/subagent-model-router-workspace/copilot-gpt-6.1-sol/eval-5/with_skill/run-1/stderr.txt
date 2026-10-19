@@ -1,0 +1,1 @@
+Invalid --deny-tool value. Error: Invalid rule format: *

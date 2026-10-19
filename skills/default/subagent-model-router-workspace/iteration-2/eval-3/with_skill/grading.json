@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": false,
+      "evidence": "Selected Standard Sonnet 5.5 at high, but omitted the required same-tier fallback."
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "Ordinary substantive review has a Standard floor. The supplied facts establish that both exact high-effort configurations are accepted and equally capable. Select `claude-sonnet-5.5` at `high` because its estimated cost is lower.\n\n- `claude-sonnet-5`: 100,000 cached input \u00d7 $0.20/M + 1,000 output \u00d7 $10/M = **$0.03 USD**.\n- `claude-sonnet-5.5`: 100,000 cached input \u00d7 $0.10/M + 1,000 output \u00d7 $10/M = **$0.02 USD**.\n\nThe prior cache write is already paid, so it adds no cost here. If the interface later lists only model names and provides no accepted effort values, this route is not dispatchable: the dispatch contract requires exact model and effort values.\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "Ordinary substantive review has a Standard floor. The supplied facts establish that both exact high-effort configurations are accepted and equally capable. Select `claude-sonnet-5.5` at `high` because its estimated cost is lower.\n\n- `claude-sonnet-5`: 100,000 cached input \u00d7 $0.20/M + 1,000 output \u00d7 $10/M = **$0.03 USD**.\n- `claude-sonnet-5.5`: 100,000 cached input \u00d7 $0.10/M + 1,000 output \u00d7 $10/M = **$0.02 USD**.\n\nThe prior cache write is already paid, so it adds no cost here. If the interface later lists only model names and provides no accepted effort values, this route is not dispatchable: the dispatch contract requires exact model and effort values.\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

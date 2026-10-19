@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The routing decision remains structured and complete.",
+      "passed": true,
+      "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+    },
+    {
+      "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+      "passed": true,
+      "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+    },
+    {
+      "text": "Exact dispatch values remain mandatory.",
+      "passed": true,
+      "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

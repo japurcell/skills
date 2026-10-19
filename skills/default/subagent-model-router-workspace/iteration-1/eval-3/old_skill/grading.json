@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nestimated_token_cost_usd: 0.02\nreason: Ordinary substantive review has a Standard floor. Given the stated accepted, equally capable configurations and 100,000 confirmed cached input tokens plus 1,000 output tokens, Sonnet 5.5 costs $0.02 versus $0.03 for Sonnet 5. Previously paid cache writes, retries, and verification add no cost here.\nescalation_trigger: Escalate if verification reveals a reasoning gap or the review becomes higher-stakes or security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nlater_interface_dispatchable: false\nlater_interface_reason: Model names without accepted effort values do not confirm the exact high effort, so the route cannot be returned as dispatchable.\n"
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nestimated_token_cost_usd: 0.02\nreason: Ordinary substantive review has a Standard floor. Given the stated accepted, equally capable configurations and 100,000 confirmed cached input tokens plus 1,000 output tokens, Sonnet 5.5 costs $0.02 versus $0.03 for Sonnet 5. Previously paid cache writes, retries, and verification add no cost here.\nescalation_trigger: Escalate if verification reveals a reasoning gap or the review becomes higher-stakes or security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nlater_interface_dispatchable: false\nlater_interface_reason: Model names without accepted effort values do not confirm the exact high effort, so the route cannot be returned as dispatchable.\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nestimated_token_cost_usd: 0.02\nreason: Ordinary substantive review has a Standard floor. Given the stated accepted, equally capable configurations and 100,000 confirmed cached input tokens plus 1,000 output tokens, Sonnet 5.5 costs $0.02 versus $0.03 for Sonnet 5. Previously paid cache writes, retries, and verification add no cost here.\nescalation_trigger: Escalate if verification reveals a reasoning gap or the review becomes higher-stakes or security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nlater_interface_dispatchable: false\nlater_interface_reason: Model names without accepted effort values do not confirm the exact high effort, so the route cannot be returned as dispatchable.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

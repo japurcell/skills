@@ -1,0 +1,429 @@
+{
+  "metadata": {
+    "skill_name": "subagent-model-router",
+    "skill_path": "/Users/adam/dev/skills/skills/default/subagent-model-router",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-10-19T19:43:42Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 17.851012667058967,
+        "tokens": 30501,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+        },
+        {
+          "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+        },
+        {
+          "text": "Treats the configuration as provisional and preserves verification.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 13.098101374926046,
+        "tokens": 30502,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization stays at the Fast capability floor; context size increase from 80000 to 150000 tokens triggers rerouting and crosses the >100K pricing threshold for claude-haiku-5.5 while staying in the <=200K tier for gpt-5.6-luna. Both runtime-accepted candidates have demonstrated equal task fit, no cache writes or retries, and matching verification costs. At 150000 uncached input tokens and 2000 output tokens, gpt-5.6-luna costs $0.0324 USD ($0.0300 input at $0.20/1M + $0.0024 output at $1.20/1M), beating claude-haiku-5.5 at $0.0800 USD ($0.0750 input at $0.50/1M + $0.0050 output at $2.50/1M).\nescalation_trigger: Verification exposes a reasoning or correctness gap, required context exceeds Fast capacity, or task requirements shift from deterministic summarization to substantive analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization stays at the Fast capability floor; context size increase from 80000 to 150000 tokens triggers rerouting and crosses the >100K pricing threshold for claude-haiku-5.5 while staying in the <=200K tier for gpt-5.6-luna. Both runtime-accepted candidates have demonstrated equal task fit, no cache writes or retries, and matching verification costs. At 150000 uncached input tokens and 2000 output tokens, gpt-5.6-luna costs $0.0324 USD ($0.0300 input at $0.20/1M + $0.0024 output at $1.20/1M), beating claude-haiku-5.5 at $0.0800 USD ($0.0750 input at $0.50/1M + $0.0050 output at $2.50/1M).\nescalation_trigger: Verification exposes a reasoning or correctness gap, required context exceeds Fast capacity, or task requirements shift from deterministic summarization to substantive analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization stays at the Fast capability floor; context size increase from 80000 to 150000 tokens triggers rerouting and crosses the >100K pricing threshold for claude-haiku-5.5 while staying in the <=200K tier for gpt-5.6-luna. Both runtime-accepted candidates have demonstrated equal task fit, no cache writes or retries, and matching verification costs. At 150000 uncached input tokens and 2000 output tokens, gpt-5.6-luna costs $0.0324 USD ($0.0300 input at $0.20/1M + $0.0024 output at $1.20/1M), beating claude-haiku-5.5 at $0.0800 USD ($0.0750 input at $0.50/1M + $0.0050 output at $2.50/1M).\nescalation_trigger: Verification exposes a reasoning or correctness gap, required context exceeds Fast capacity, or task requirements shift from deterministic summarization to substantive analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 15.46157362498343,
+        "tokens": 30563,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+        },
+        {
+          "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+        },
+        {
+          "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 14.285029708989896,
+        "tokens": 30297,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+          "passed": true,
+          "evidence": "No, the record is inconsistent.\n\n- `fallback: none` is permitted only when no other exact same-tier configuration meets task requirements, runtime capabilities, and user constraints.\n- `model-b` at `high` is an exact `Standard`-tier configuration, equally capable, accepted by the runtime, and permitted under `none` user constraints, so it must be recorded as the fallback.\n- `model-c` at `medium` is excluded as a fallback because it is classified `Fast`, which is below the selected `Standard` tier and capability floor.\n\nCorrected fallback:\n\n```yaml\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 9.10645383305382,
+        "tokens": 30322,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+          "passed": true,
+          "evidence": "`fallback: none` is valid and required.\n\n```yaml\ndispatchable: true\ntier: Standard\nmodel: model-a\nreasoning_effort: high\nreason: Standard capability floor met by model-a at high. User constraint restricts selection to model-a's family, excluding model-b at high. No other configuration in model-a's family is available in the runtime, leaving no eligible same-tier fallback.\nescalation_trigger: Verification exposes a reasoning gap or risk increases.\nfallback: none\n```\n\nPer SKILL.md, `fallback: none` applies when no other exact same-tier configuration satisfies task requirements, runtime capabilities, and user constraints. `model-b` (`high`) fails the explicit user family constraint, and no other runtime candidate exists.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 13.904064290923998,
+        "tokens": 30377,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The routing decision remains structured and complete.",
+          "passed": true,
+          "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+        },
+        {
+          "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+          "passed": true,
+          "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+        },
+        {
+          "text": "Exact dispatch values remain mandatory.",
+          "passed": true,
+          "evidence": "- **Router return value**: Complete structured YAML decision (`dispatchable`, `tier`, `model`, `reasoning_effort`, `reason`, `escalation_trigger`, `fallback`). For a validated dispatchable route (`dispatchable: true`), it returns one tier, an exact model-and-effort pair accepted by the dispatch interface, and the lowest-cost eligible same-tier fallback pair (`model` and `reasoning_effort`, or `fallback: none` with an explanation of what excludes alternatives). If capability relies on provisional guidance, `reason` must label it provisional and state required verification. The result is a final decision, not a request for approval or confirmation.\n- **Storage and presentation**: Caller controls both storage and presentation.\n- **Implicit values**: Not permitted. Separation of output handling from storage/presentation never allows defaults, inheritance, placeholders, ranges, or conditional values in either the route output or dispatch call. Both `model` and `reasoning_effort` (and any `fallback` pair) must be exact dispatch-accepted values, and the caller must pass both returned values explicitly when delegating; if either value cannot be confirmed, the route is `dispatchable: false` and must never be dispatched.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 13.732368333963677,
+        "tokens": 32006,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without diagnosing code is bounded, low-risk mechanical work with a Fast floor. Dispatch accepts only claude-haiku-4.5 and claude-haiku-5.5 at medium effort. At 80000 uncached input tokens (<=100K threshold) and 2000 output tokens with no cache writes, retries, or verification difference, claude-haiku-5.5 costs $0.0090 USD (0.90 AI Credits) vs $0.0900 USD (9.00 AI Credits) for claude-haiku-4.5. Provisional catalog guidance used without task-specific evidence; verify summary matches raw failure output.\nescalation_trigger: Escalate to Standard if root-cause code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\n**Estimated token cost:**\n- `claude-haiku-5.5` (\u2264100K row: $0.10/1M input, $0.50/1M output): `(80000 \u00d7 $0.10 / 1,000,000) + (2000 \u00d7 $0.50 / 1,000,000) = $0.0080 + $0.0010 = $0.0090 USD` (`0.90` GitHub AI Credits).\n- `claude-haiku-4.5` fallback (default row: $1.00/1M input, $5.00/1M output): `(80000 \u00d7 $1.00 / 1,000,000) + (2000 \u00d7 $5.00 / 1,000,000) = $0.0800 + $0.0100 = $0.0900 USD` (`9.00` GitHub AI Credits).\n"
+        },
+        {
+          "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without diagnosing code is bounded, low-risk mechanical work with a Fast floor. Dispatch accepts only claude-haiku-4.5 and claude-haiku-5.5 at medium effort. At 80000 uncached input tokens (<=100K threshold) and 2000 output tokens with no cache writes, retries, or verification difference, claude-haiku-5.5 costs $0.0090 USD (0.90 AI Credits) vs $0.0900 USD (9.00 AI Credits) for claude-haiku-4.5. Provisional catalog guidance used without task-specific evidence; verify summary matches raw failure output.\nescalation_trigger: Escalate to Standard if root-cause code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\n**Estimated token cost:**\n- `claude-haiku-5.5` (\u2264100K row: $0.10/1M input, $0.50/1M output): `(80000 \u00d7 $0.10 / 1,000,000) + (2000 \u00d7 $0.50 / 1,000,000) = $0.0080 + $0.0010 = $0.0090 USD` (`0.90` GitHub AI Credits).\n- `claude-haiku-4.5` fallback (default row: $1.00/1M input, $5.00/1M output): `(80000 \u00d7 $1.00 / 1,000,000) + (2000 \u00d7 $5.00 / 1,000,000) = $0.0800 + $0.0100 = $0.0900 USD` (`9.00` GitHub AI Credits).\n"
+        },
+        {
+          "text": "Treats the configuration as provisional and preserves verification.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without diagnosing code is bounded, low-risk mechanical work with a Fast floor. Dispatch accepts only claude-haiku-4.5 and claude-haiku-5.5 at medium effort. At 80000 uncached input tokens (<=100K threshold) and 2000 output tokens with no cache writes, retries, or verification difference, claude-haiku-5.5 costs $0.0090 USD (0.90 AI Credits) vs $0.0900 USD (9.00 AI Credits) for claude-haiku-4.5. Provisional catalog guidance used without task-specific evidence; verify summary matches raw failure output.\nescalation_trigger: Escalate to Standard if root-cause code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\n**Estimated token cost:**\n- `claude-haiku-5.5` (\u2264100K row: $0.10/1M input, $0.50/1M output): `(80000 \u00d7 $0.10 / 1,000,000) + (2000 \u00d7 $0.50 / 1,000,000) = $0.0080 + $0.0010 = $0.0090 USD` (`0.90` GitHub AI Credits).\n- `claude-haiku-4.5` fallback (default row: $1.00/1M input, $5.00/1M output): `(80000 \u00d7 $1.00 / 1,000,000) + (2000 \u00d7 $5.00 / 1,000,000) = $0.0800 + $0.0100 = $0.0900 USD` (`9.00` GitHub AI Credits).\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 13.673462291946635,
+        "tokens": 32040,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization keeps a Fast floor. Context grew from 80,000 to 150,000 uncached input tokens (crossing claude-haiku-5.5's >100K threshold while staying under gpt-5.6-luna's \u2264200K threshold), requiring a reroute. With equal demonstrated task fit, 0 cache writes, 0 retries, and matching verification costs: gpt-5.6-luna costs $0.0324 USD (150,000 \u00d7 $0.20/1M = $0.0300 input + 2,000 \u00d7 $1.20/1M = $0.0024 output), whereas claude-haiku-5.5 costs $0.0800 USD (150,000 \u00d7 $0.50/1M = $0.0750 input + 2,000 \u00d7 $2.50/1M = $0.0050 output).\nescalation_trigger: Escalate to Standard if verification reveals reasoning or correctness gaps, input exceeds suitable Fast context limits, or requirements shift from deterministic summarization to behavioral analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n\n**Cost breakdown (150,000 uncached input + 2,000 output tokens):**\n- `gpt-5.6-luna` (`medium`, `\u2264200K` row): `0.15M \u00d7 $0.20 + 0.002M \u00d7 $1.20 = $0.0300 + $0.0024 = $0.0324` (3.24 AI Credits)\n- `claude-haiku-5.5` (`medium`, `>100K` row): `0.15M \u00d7 $0.50 + 0.002M \u00d7 $2.50 = $0.0750 + $0.0050 = $0.0800` (8.00 AI Credits)\n"
+        },
+        {
+          "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization keeps a Fast floor. Context grew from 80,000 to 150,000 uncached input tokens (crossing claude-haiku-5.5's >100K threshold while staying under gpt-5.6-luna's \u2264200K threshold), requiring a reroute. With equal demonstrated task fit, 0 cache writes, 0 retries, and matching verification costs: gpt-5.6-luna costs $0.0324 USD (150,000 \u00d7 $0.20/1M = $0.0300 input + 2,000 \u00d7 $1.20/1M = $0.0024 output), whereas claude-haiku-5.5 costs $0.0800 USD (150,000 \u00d7 $0.50/1M = $0.0750 input + 2,000 \u00d7 $2.50/1M = $0.0050 output).\nescalation_trigger: Escalate to Standard if verification reveals reasoning or correctness gaps, input exceeds suitable Fast context limits, or requirements shift from deterministic summarization to behavioral analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n\n**Cost breakdown (150,000 uncached input + 2,000 output tokens):**\n- `gpt-5.6-luna` (`medium`, `\u2264200K` row): `0.15M \u00d7 $0.20 + 0.002M \u00d7 $1.20 = $0.0300 + $0.0024 = $0.0324` (3.24 AI Credits)\n- `claude-haiku-5.5` (`medium`, `>100K` row): `0.15M \u00d7 $0.50 + 0.002M \u00d7 $2.50 = $0.0750 + $0.0050 = $0.0800` (8.00 AI Credits)\n"
+        },
+        {
+          "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: Deterministic log summarization keeps a Fast floor. Context grew from 80,000 to 150,000 uncached input tokens (crossing claude-haiku-5.5's >100K threshold while staying under gpt-5.6-luna's \u2264200K threshold), requiring a reroute. With equal demonstrated task fit, 0 cache writes, 0 retries, and matching verification costs: gpt-5.6-luna costs $0.0324 USD (150,000 \u00d7 $0.20/1M = $0.0300 input + 2,000 \u00d7 $1.20/1M = $0.0024 output), whereas claude-haiku-5.5 costs $0.0800 USD (150,000 \u00d7 $0.50/1M = $0.0750 input + 2,000 \u00d7 $2.50/1M = $0.0050 output).\nescalation_trigger: Escalate to Standard if verification reveals reasoning or correctness gaps, input exceeds suitable Fast context limits, or requirements shift from deterministic summarization to behavioral analysis.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n\n**Cost breakdown (150,000 uncached input + 2,000 output tokens):**\n- `gpt-5.6-luna` (`medium`, `\u2264200K` row): `0.15M \u00d7 $0.20 + 0.002M \u00d7 $1.20 = $0.0300 + $0.0024 = $0.0324` (3.24 AI Credits)\n- `claude-haiku-5.5` (`medium`, `>100K` row): `0.15M \u00d7 $0.50 + 0.002M \u00d7 $2.50 = $0.0750 + $0.0050 = $0.0800` (8.00 AI Credits)\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 14.909487124998122,
+        "tokens": 32209,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review requires Standard capability. User constrains evaluation to claude-sonnet-5 at high and claude-sonnet-5.5 at high, both accepted and equally capable here (note: catalog provisionally lists medium for Standard Sonnet 5/5.5; high is provisional for this route, verify review output). For 100,000 confirmed cached-input tokens and 1,000 output tokens (0 uncached input, 0 cache write, 0 retries, identical verification), claude-sonnet-5.5 costs $0.020 ($0.010 cached input at $0.10/1M + $0.010 output at $10.00/1M) versus $0.030 for claude-sonnet-5 ($0.020 cached input at $0.20/1M + $0.010 output at $10.00/1M).\nescalation_trigger: Escalate to Premium if verification exposes a reasoning gap, a prior important review miss applies, or the review becomes security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n### Cost comparison\n\n- **`claude-sonnet-5.5` (`high`)**: `(100,000 / 1,000,000) * $0.10 + (1,000 / 1,000,000) * $10.00 = $0.010 + $0.010 = $0.020` (2.0 AI Credits)\n- **`claude-sonnet-5` (`high`)**: `(100,000 / 1,000,000) * $0.20 + (1,000 / 1,000,000) * $10.00 = $0.020 + $0.010 = $0.030` (3.0 AI Credits)\n\n### If effort values are omitted by the interface\n\nNot dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). Every dispatchable route requires both an exact accepted model ID and an exact accepted reasoning-effort value; implicit, runtime-default, or unconfirmed efforts are not permitted.\n"
+        },
+        {
+          "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review requires Standard capability. User constrains evaluation to claude-sonnet-5 at high and claude-sonnet-5.5 at high, both accepted and equally capable here (note: catalog provisionally lists medium for Standard Sonnet 5/5.5; high is provisional for this route, verify review output). For 100,000 confirmed cached-input tokens and 1,000 output tokens (0 uncached input, 0 cache write, 0 retries, identical verification), claude-sonnet-5.5 costs $0.020 ($0.010 cached input at $0.10/1M + $0.010 output at $10.00/1M) versus $0.030 for claude-sonnet-5 ($0.020 cached input at $0.20/1M + $0.010 output at $10.00/1M).\nescalation_trigger: Escalate to Premium if verification exposes a reasoning gap, a prior important review miss applies, or the review becomes security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n### Cost comparison\n\n- **`claude-sonnet-5.5` (`high`)**: `(100,000 / 1,000,000) * $0.10 + (1,000 / 1,000,000) * $10.00 = $0.010 + $0.010 = $0.020` (2.0 AI Credits)\n- **`claude-sonnet-5` (`high`)**: `(100,000 / 1,000,000) * $0.20 + (1,000 / 1,000,000) * $10.00 = $0.020 + $0.010 = $0.030` (3.0 AI Credits)\n\n### If effort values are omitted by the interface\n\nNot dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). Every dispatchable route requires both an exact accepted model ID and an exact accepted reasoning-effort value; implicit, runtime-default, or unconfirmed efforts are not permitted.\n"
+        },
+        {
+          "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review requires Standard capability. User constrains evaluation to claude-sonnet-5 at high and claude-sonnet-5.5 at high, both accepted and equally capable here (note: catalog provisionally lists medium for Standard Sonnet 5/5.5; high is provisional for this route, verify review output). For 100,000 confirmed cached-input tokens and 1,000 output tokens (0 uncached input, 0 cache write, 0 retries, identical verification), claude-sonnet-5.5 costs $0.020 ($0.010 cached input at $0.10/1M + $0.010 output at $10.00/1M) versus $0.030 for claude-sonnet-5 ($0.020 cached input at $0.20/1M + $0.010 output at $10.00/1M).\nescalation_trigger: Escalate to Premium if verification exposes a reasoning gap, a prior important review miss applies, or the review becomes security-sensitive.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n### Cost comparison\n\n- **`claude-sonnet-5.5` (`high`)**: `(100,000 / 1,000,000) * $0.10 + (1,000 / 1,000,000) * $10.00 = $0.010 + $0.010 = $0.020` (2.0 AI Credits)\n- **`claude-sonnet-5` (`high`)**: `(100,000 / 1,000,000) * $0.20 + (1,000 / 1,000,000) * $10.00 = $0.020 + $0.010 = $0.030` (3.0 AI Credits)\n\n### If effort values are omitted by the interface\n\nNot dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). Every dispatchable route requires both an exact accepted model ID and an exact accepted reasoning-effort value; implicit, runtime-default, or unconfirmed efforts are not permitted.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 17.35623116698116,
+        "tokens": 31837,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+          "passed": true,
+          "evidence": "No. The recorded `fallback: none` is inconsistent.\n\nWhy:\n- `fallback: none` is allowed only when no other exact same-tier configuration meets runtime capabilities and user constraints.\n- `model-b` at `high` is an exact, runtime-accepted, capable `Standard` configuration with no user constraints excluding it, so it must be recorded as the fallback.\n- `model-c` at `medium` is `Fast`, below the `Standard` capability floor, and remains ineligible regardless of cost.\n\nCorrected route:\n\n```yaml\ndispatchable: true\ntier: Standard\nmodel: model-a\nreasoning_effort: high\nreason: Selected configuration meets the Standard capability floor and is accepted by the dispatch interface. model-b at high is an eligible same-tier fallback; model-c at medium is excluded because Fast is below the Standard floor.\nescalation_trigger: Escalate to Premium if verification exposes a reasoning gap or stakes/security sensitivity increase.\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 11.375879790983163,
+        "tokens": 31827,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+          "passed": true,
+          "evidence": "Yes, `fallback: none` is valid.\n\n`SKILL.md` states: \"Use `fallback: none` only if no other exact same-tier configuration meets runtime capabilities and user constraints. Explain what excludes the alternatives.\" Explicit user constraints take top selection precedence. Because `model-b` at `high` violates the user's explicit model-family constraint and no other `model-a`-family configuration is available, no other exact Standard configuration meets both runtime capabilities and user constraints.\n\n```yaml\ndispatchable: true\ntier: Standard\nmodel: model-a\nreasoning_effort: high\nreason: Standard configuration selected from fixture data. Only model-b at high is otherwise available in Standard, and it is excluded by the user's explicit constraint permitting only model-a's family. No other model-a-family configuration is available.\nescalation_trigger: Escalate if verification exposes a reasoning gap or the task becomes security-sensitive, subject to updated user constraints or dispatchable: false if the constraint blocks escalation.\nfallback: none\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 10.575283583952114,
+        "tokens": 31925,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The routing decision remains structured and complete.",
+          "passed": true,
+          "evidence": "**Router return value**\n\nRouter returns final routing decision (never tentative or approval request) in this YAML schema:\n\n```yaml\ndispatchable: true\ntier: <Fast|Standard|Premium>\nmodel: <exact dispatch value>\nreasoning_effort: <exact dispatch value>\nreason: <task fit, capability floor, cost assumptions, and uncertainty>\nescalation_trigger: <concrete trigger or none>\nfallback:\n  model: <exact same-tier dispatch value>\n  reasoning_effort: <exact dispatch value>\n```\n\n`fallback` is `none` only when no other exact same-tier configuration satisfies runtime capabilities and user constraints; `reason` then explains what excluded alternatives. For availability-driven promotion, `tier` reports the selected configuration's tier and `reason` states the lower floor plus the availability increase.\n\n**Storage and presentation control**\n\nRouter defines the required output contract and fields. Caller or host controls downstream storage, persistence, and user presentation, and must explicitly apply the returned `model` and `reasoning_effort` when delegating without requesting separate model-selection permission.\n\n**Implicit model or effort values**\n\nNo. Separation between routing, storage, and presentation never permits implicit, inherited, conditional, ranged, or unresolved values (`default`, `auto`, `runtime-selected`, `runtime default`, `\"runtime-supported\"`, `\"high or greater\"`, `\"strongest available\"`, `\"if applicable\"`, or unexpanded placeholders). Both `model` and `reasoning_effort` (and any `fallback`) must remain exact values accepted by the dispatch interface, or the route is `dispatchable: false` and cannot be dispatched.\n"
+        },
+        {
+          "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+          "passed": true,
+          "evidence": "**Router return value**\n\nRouter returns final routing decision (never tentative or approval request) in this YAML schema:\n\n```yaml\ndispatchable: true\ntier: <Fast|Standard|Premium>\nmodel: <exact dispatch value>\nreasoning_effort: <exact dispatch value>\nreason: <task fit, capability floor, cost assumptions, and uncertainty>\nescalation_trigger: <concrete trigger or none>\nfallback:\n  model: <exact same-tier dispatch value>\n  reasoning_effort: <exact dispatch value>\n```\n\n`fallback` is `none` only when no other exact same-tier configuration satisfies runtime capabilities and user constraints; `reason` then explains what excluded alternatives. For availability-driven promotion, `tier` reports the selected configuration's tier and `reason` states the lower floor plus the availability increase.\n\n**Storage and presentation control**\n\nRouter defines the required output contract and fields. Caller or host controls downstream storage, persistence, and user presentation, and must explicitly apply the returned `model` and `reasoning_effort` when delegating without requesting separate model-selection permission.\n\n**Implicit model or effort values**\n\nNo. Separation between routing, storage, and presentation never permits implicit, inherited, conditional, ranged, or unresolved values (`default`, `auto`, `runtime-selected`, `runtime default`, `\"runtime-supported\"`, `\"high or greater\"`, `\"strongest available\"`, `\"if applicable\"`, or unexpanded placeholders). Both `model` and `reasoning_effort` (and any `fallback`) must remain exact values accepted by the dispatch interface, or the route is `dispatchable: false` and cannot be dispatched.\n"
+        },
+        {
+          "text": "Exact dispatch values remain mandatory.",
+          "passed": true,
+          "evidence": "**Router return value**\n\nRouter returns final routing decision (never tentative or approval request) in this YAML schema:\n\n```yaml\ndispatchable: true\ntier: <Fast|Standard|Premium>\nmodel: <exact dispatch value>\nreasoning_effort: <exact dispatch value>\nreason: <task fit, capability floor, cost assumptions, and uncertainty>\nescalation_trigger: <concrete trigger or none>\nfallback:\n  model: <exact same-tier dispatch value>\n  reasoning_effort: <exact dispatch value>\n```\n\n`fallback` is `none` only when no other exact same-tier configuration satisfies runtime capabilities and user constraints; `reason` then explains what excluded alternatives. For availability-driven promotion, `tier` reports the selected configuration's tier and `reason` states the lower floor plus the availability increase.\n\n**Storage and presentation control**\n\nRouter defines the required output contract and fields. Caller or host controls downstream storage, persistence, and user presentation, and must explicitly apply the returned `model` and `reasoning_effort` when delegating without requesting separate model-selection permission.\n\n**Implicit model or effort values**\n\nNo. Separation between routing, storage, and presentation never permits implicit, inherited, conditional, ranged, or unresolved values (`default`, `auto`, `runtime-selected`, `runtime default`, `\"runtime-supported\"`, `\"high or greater\"`, `\"strongest available\"`, `\"if applicable\"`, or unexpanded placeholders). Both `model` and `reasoning_effort` (and any `fallback`) must remain exact values accepted by the dispatch interface, or the route is `dispatchable: false` and cannot be dispatched.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 13.951,
+        "stddev": 2.8915,
+        "min": 9.1065,
+        "max": 17.851
+      },
+      "tokens": {
+        "mean": 30427.0,
+        "stddev": 109.5646,
+        "min": 30297,
+        "max": 30563
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 13.6038,
+        "stddev": 2.4471,
+        "min": 10.5753,
+        "max": 17.3562
+      },
+      "tokens": {
+        "mean": 31974.0,
+        "stddev": 143.7943,
+        "min": 31827,
+        "max": 32209
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+0.3",
+      "tokens": "-1547"
+    }
+  },
+  "notes": [
+    "One completed CLI session per case and version at medium effort; all 24 model sessions completed successfully.",
+    "run-1 and run-2 are failed CLI startup attempts, retained but not graded. run-3 is the selected execution.",
+    "The complete skill bundle was supplied inline. This tests instruction following, not trigger discovery or selective reference loading.",
+    "No transcript sharing flags were used. Model identities were checked against usage.json."
+  ]
+}

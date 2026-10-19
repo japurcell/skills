@@ -1,0 +1,1 @@
+No. The record is inconsistent. model-b at high is an accepted, equally capable Standard configuration, so it is an eligible same-tier fallback. It is the only alternative at the selected tier; model-c is Fast and does not qualify as a Standard fallback. The fallback should be model-b at high.

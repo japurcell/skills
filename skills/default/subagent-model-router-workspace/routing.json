@@ -1,0 +1,50 @@
+{
+  "dispatchable": true,
+  "tier": "Standard",
+  "model": "gpt-6-luna",
+  "reasoning_effort": "max",
+  "reason": "Bounded instruction-following eval execution with independent grading. No user model constraints. Runtime accepts exact pair. Provisional Standard candidate with lowest listed token rates among accepted Standard candidates; actual runtime cost unconfirmed. Verify every output against frozen expectations.",
+  "escalation_trigger": "Repeated reasoning failures or material missed obligations",
+  "fallback": {
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "medium"
+  },
+  "runtime_limit": "5 minutes, coordinator checks elapsed time and warns without cancellation",
+  "subtasks": [
+    "new_evals",
+    "baseline_evals",
+    "final_evals"
+  ],
+  "completion": [
+    {
+      "task": "new_evals",
+      "submitted_model": "gpt-6-luna",
+      "submitted_reasoning_effort": "max",
+      "executed_model": "unconfirmed",
+      "executed_reasoning_effort": "unconfirmed",
+      "status": "completed",
+      "output_verified": true,
+      "elapsed_threshold_exceeded": false
+    },
+    {
+      "task": "baseline_evals",
+      "submitted_model": "gpt-6-luna",
+      "submitted_reasoning_effort": "max",
+      "executed_model": "unconfirmed",
+      "executed_reasoning_effort": "unconfirmed",
+      "status": "completed",
+      "output_verified": true,
+      "elapsed_threshold_exceeded": false
+    },
+    {
+      "task": "final_evals",
+      "submitted_model": "gpt-6-luna",
+      "submitted_reasoning_effort": "max",
+      "executed_model": "unconfirmed",
+      "executed_reasoning_effort": "unconfirmed",
+      "status": "completed",
+      "output_verified": true,
+      "elapsed_threshold_exceeded": false
+    }
+  ]
+}

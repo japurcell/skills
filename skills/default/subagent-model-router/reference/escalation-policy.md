@@ -56,19 +56,4 @@ Move directly to the tier required by a changed capability floor; stepwise escal
 
 Before escalating the capability floor, confirm that the change addresses a specific capability, context, or risk gap.
 
-## Availability
-
-When a configuration is unavailable:
-
-1. preserve the capability floor
-2. choose the lowest-cost capable same-tier configuration
-3. resolve it to an exact model and effort
-4. report the availability-driven fallback
-
-If no same-tier configuration is available, choose the lowest-cost available higher-tier configuration that satisfies the floor and current-request constraints. Report the availability-driven tier increase.
-
-If no qualifying configuration is available, return `dispatchable: false`.
-
-Never select a configuration below the capability floor.
-
-Selecting a higher-tier configuration solely because no same-tier configuration is available is an availability-driven promotion, not evidence that the task's capability floor increased.
+For unavailable configurations, apply [the availability rule](../SKILL.md#availability).

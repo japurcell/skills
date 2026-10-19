@@ -7,8 +7,7 @@
 - [Standard](#standard)
 - [Premium](#premium)
 - [Task defaults](#task-defaults)
-- [Defaults, evidence, and availability](#defaults-evidence-and-availability)
-- [Refresh](#refresh)
+- [Availability](#availability)
 
 Use this catalog after determining the task's capability floor.
 
@@ -26,18 +25,9 @@ Pricing or comparison entries do not establish runtime availability. Absence fro
 
 Tiers apply to model-and-effort configurations, not necessarily whole model families.
 
-Each table lists a local candidate effort for routing. Model status does not establish support for that effort. A configuration is available only if the dispatch interface accepts both the exact model ID and the listed effort value. If the model does not support that effort, remove the configuration rather than substituting another effort unless that alternative is separately listed for the required tier.
+Each table lists a local candidate effort for routing. Model status does not establish support for that effort. A configuration is available only if the dispatch interface accepts both the exact model ID and the listed effort value. Remove unsupported configurations. Do not substitute another effort unless its capability at the required tier is separately established by higher-priority task evidence or an explicit catalog entry.
 
-Before returning a route:
-
-1. confirm the exact model IDs and effort values accepted by the dispatch interface
-2. remove unavailable or below-floor configurations
-3. resolve the selection and fallback to one exact model and effort each
-4. return `dispatchable: false` if the selected values cannot be confirmed
-
-Do not replace the listed effort with `default`, `auto`, a range, or another unresolved description.
-
-Use [`pricing.md`](pricing.md) when exact cost matters.
+Apply the [dispatch contract](../SKILL.md#dispatch-contract) and compare eligible candidates using [pricing.md](pricing.md).
 
 ## Fast
 
@@ -95,59 +85,25 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | Google | `gemini-4-argon` | `high` | GA | Complex coding, agentic work, and reasoning; provisional candidate; promotional pricing |
 | Moonshot AI | `kimi-k3` | `medium` | GA | Multi-step agentic coding over large contexts |
 
-Do not substitute a lower effort when the listed effort is unavailable. Treat that configuration as unavailable.
-
 ## Task defaults
 
-These are provisional starting candidates, not measured quality rankings. Prefer task-specific evidence when available.
+These are provisional starting candidates, not measured quality rankings. Alternatives are unordered; compare all eligible candidates using the evidence and cost rules in SKILL.md.
 
 | Default | Tier | Starting configuration | Alternatives |
 | --- | --- | --- | --- |
-| Bounded work | Fast | `gpt-6-luna`, `medium` | `claude-haiku-5.5`, `medium`; `gpt-5.6-luna`, `medium`; `mai-code-1.1-flash`, `medium`; compare the applicable context rates |
-| Budget review | Standard | `gpt-6-luna`, `max` | `gpt-5.6-luna`, `max`; then another Standard review configuration |
-| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gemini-4-argon`, `medium`; `gpt-5.6-terra`, `medium`; then `gpt-5.3-codex`, `medium` |
-| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gemini-4-argon`, `high`; `gpt-6-astra`, `medium`; then another validated Premium review configuration |
+| Bounded work | Fast | `gpt-6-luna`, `medium` | `claude-haiku-5.5`, `medium`; `gpt-5.6-luna`, `medium`; `mai-code-1.1-flash`, `medium` |
+| Budget review | Standard | `gpt-6-luna`, `max` | `gpt-5.6-luna`, `max`; another Standard review configuration |
+| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gemini-4-argon`, `medium`; `gpt-5.6-terra`, `medium`; `gpt-5.3-codex`, `medium` |
+| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gemini-4-argon`, `high`; `gpt-6-astra`, `medium`; another validated Premium review configuration |
 | Demanding autonomous work | Premium | `gpt-6-astra`, `medium` | Another validated Premium autonomous-work configuration |
 
 Use bounded work for low-risk coding and mechanical review only. Substantive review is at least Standard; review floors are defined in [`review-routing.md`](review-routing.md).
 
-Every default and fallback must be confirmed as an exact accepted dispatch configuration before being returned.
-
-For bounded work at up to 100K input tokens, Claude Haiku 5.5 and GPT-6 Luna have equal published token rates. Above 100K, Haiku's rates increase while Luna's first threshold is 272K. Prefer task-fit evidence at equal expected cost; compare the applicable rates before ordering fallbacks. Haiku's Fast placement does not make it a substantive-review candidate.
-
-## Defaults, evidence, and availability
-
-Persistent configuration does not override routing.
-
-If the user explicitly requests configured defaults:
-
-1. resolve them to exact model and effort values
-2. verify that they satisfy the capability floor
-3. return `dispatchable: false` if they cannot be resolved or do not satisfy the floor
-
-Do not infer capability from model name, provider, recency, or price. For unvalidated task classes, identify the route as provisional and require verification appropriate to the stakes.
-
-Availability notes:
+## Availability
 
 - Public-preview behavior, pricing, and availability may change.
-- Effort-based tier assignments are local routing choices, not provider guarantees.
-- Published pricing does not establish selectability.
-- Gemini 4 Argon's GA status and task fit come from the [supported-models table](https://docs.github.com/en/copilot/reference/ai-models/supported-models#supported-ai-models-in-copilot) and [task comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison#recommended-models-by-task). `gemini-4-argon` is unconfirmed routing shorthand, not a verified runtime ID; `medium` is a local candidate effort.
-- Claude Fable 5 and 5.1 have special retention and enablement conditions; check the [supported-models footnotes](https://docs.github.com/en/copilot/reference/ai-models/supported-models#footnotes). Fable models and Kimi K3 are excluded from enterprise default enablement; confirm applicable administrator policy.
-- Do not select a model scheduled to retire before the subtask is expected to run.
-- Recheck runtime availability on or after a listed retirement date.
-- Claude Opus 4.7, Gemini 3.5 Flash, Gemini 3.6 Flash, and Kimi K2.7 Code retired on **2026-10-02** and are excluded from routing candidates. GitHub recommends the latest respective Opus, Gemini Flash, and Kimi models; confirm their exact dispatch configurations.
+- Claude Fable 5 and 5.1 have special retention and enablement conditions; check the [supported-models footnotes](https://docs.github.com/en/copilot/reference/ai-models/supported-models#footnotes). Fable models and Kimi K3 are excluded from enterprise default enablement; confirm administrator policy.
 - Claude Sonnet 4.6 retired for most users on **2026-09-01** but remains available to individual subscribers on annual Copilot Pro and Pro+ plans. Monthly plans do not qualify.
-- Claude Sonnet 4 retired on **2026-05-01** and is not a routing candidate.
-- Qwen2.5 lacks both a supported-models entry and a published Copilot rate in the cited snapshot.
+- Recheck runtime availability on or after a listed retirement date.
 
-## Refresh
-
-When refreshing:
-
-1. fetch live sources directly
-2. reconcile availability, restrictions, retirement dates, and intentionally excluded models
-3. do not infer availability from pricing or comparison pages alone
-4. verify exact runtime IDs and effort values separately
-5. bypass stale caches before claiming an entry is absent
-6. update the snapshot date
+For snapshot refreshes and historical exclusions, see [maintenance.md](maintenance.md).

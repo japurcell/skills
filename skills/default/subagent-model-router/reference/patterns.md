@@ -1,61 +1,47 @@
 # Routing Patterns
 
-These examples are non-authoritative. If they conflict with `SKILL.md`, [`review-routing.md`](review-routing.md), or [`escalation-policy.md`](escalation-policy.md), follow the authoritative rule.
+Non-authoritative examples. Follow [SKILL.md](../SKILL.md), [review-routing.md](review-routing.md), and [escalation-policy.md](escalation-policy.md) if an example conflicts.
 
-## Reuse
+## Boundary cases
 
-| Situation | Route |
+| Situation | Decision |
 | --- | --- |
-| Identical deterministic checks under unchanged constraints | Reuse a Fast route |
-| Reviews with unchanged scope, risk, behavior, history, and runtime constraints | Reuse the route |
-| Execution changes to architecture analysis | Route again |
-| A non-review task previously missed an important constraint | Route again and apply general escalation |
-| A similar review previously missed an important issue | Route again with a Premium floor |
-| Runtime model or effort availability changes | Route again |
+| Mechanical rename across many files, straightforward verification | Fast |
+| Substantive one-file review | At least Standard |
+| Bounded feature review | Standard; budget-review starting candidate |
+| Cross-component behavioral review | Standard; general-work starting candidate |
+| Review authentication or subtle concurrency/cache-consistency risk | Premium |
+| Similar review previously missed an important issue | Premium floor |
+| Non-review task previously missed an important constraint | Apply general escalation, normally one tier |
+| Tests fail or a dependency is missing | Diagnose code/environment before capability escalation |
+| Preferred configuration unavailable | Apply the availability rule; never go below the floor |
+| Scope, risk, context, constraints, or runtime capabilities change | Route again |
+| Premium work still fails | Better-fitting Premium configuration, decomposition, stronger verification, or human review |
 
-## Task examples
+## Output examples
 
-| Request | Tier |
-| --- | --- |
-| Run tests and summarize explicit failures | Fast |
-| Search a repository for relevant code | Fast |
-| Apply formatting or a specified mechanical edit | Fast |
-| Rename a symbol mechanically across many files | Fast |
-| Change behavior across connected files | Standard |
-| Debug a multi-component interaction | Standard |
-| Analyze subtle authentication, cache, or concurrency risk | Premium |
-| Perform long-horizon autonomous work over a large codebase | Premium |
+Synthetic IDs below assume confirmed runtime acceptance and task fit; they are not catalog entries or preferred models.
 
-## Review examples
+```yaml
+dispatchable: true
+tier: Standard
+model: model-a
+reasoning_effort: high
+reason: Substantive bounded review requires Standard. Both candidates have demonstrated task fit; model-a has the lower expected cost at the supplied token volumes and rates.
+escalation_trigger: Verification exposes a reasoning gap or security sensitivity emerges.
+fallback:
+  model: model-b
+  reasoning_effort: high
+```
 
-| Request | Tier or default |
-| --- | --- |
-| Review whitespace, comments, or reproducible generated output | Fast |
-| Review a substantive one-file change | Standard |
-| Review an ordinary bounded feature change | Standard; budget-review default |
-| Review cross-component behavior | Standard; general-work default |
-| Review tests or guard logic | Standard |
-| Review security-sensitive false-pass behavior | Premium |
-| Review authentication, authorization, redirects, or trust boundaries | Premium |
-| Conduct a security audit | Premium |
-| Repeat a similar review after an important miss | Premium |
+When accepted values cannot be confirmed:
 
-## Failure examples
-
-| Situation | Response |
-| --- | --- |
-| Tests fail | Diagnose before escalating |
-| A dependency is missing | Fix or report the environment problem |
-| The selected configuration is unavailable | Reroute within the same tier; move higher only if no same-tier configuration qualifies |
-| Verification repeatedly exposes reasoning gaps | Apply the escalation policy |
-| A task becomes security-sensitive | Reclassify the floor as Premium |
-| Premium work still fails | Change Premium configuration, split the task, strengthen verification, or seek human review |
-
-## Cost examples
-
-| Request shape | Primary consideration |
-| --- | --- |
-| Large input, short answer | Input and context-threshold cost |
-| Short input, long answer | Output cost |
-| Reused context | Confirmed cache behavior and cache-write cost |
-| Likely retries | Expected retry and verification cost |
+```yaml
+dispatchable: false
+tier: Standard
+model: unresolved
+reasoning_effort: unresolved
+reason: Standard capability is required, but the runtime exposes no accepted effort values, so neither a selection nor a fallback can be confirmed.
+escalation_trigger: none
+fallback: none
+```

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

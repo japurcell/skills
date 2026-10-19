@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The routing decision remains structured and complete.",
+      "passed": true,
+      "evidence": "The router returns the complete structured decision: dispatchability, tier, exact model and reasoning-effort values, reason, escalation trigger, and fallback. The caller controls how that result is stored and presented. This separation does not permit implicit model or effort values: a dispatchable route must contain exact values confirmed by the dispatch interface.\n"
+    },
+    {
+      "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+      "passed": true,
+      "evidence": "The router returns the complete structured decision: dispatchability, tier, exact model and reasoning-effort values, reason, escalation trigger, and fallback. The caller controls how that result is stored and presented. This separation does not permit implicit model or effort values: a dispatchable route must contain exact values confirmed by the dispatch interface.\n"
+    },
+    {
+      "text": "Exact dispatch values remain mandatory.",
+      "passed": true,
+      "evidence": "The router returns the complete structured decision: dispatchability, tier, exact model and reasoning-effort values, reason, escalation trigger, and fallback. The caller controls how that result is stored and presented. This separation does not permit implicit model or effort values: a dispatchable route must contain exact values confirmed by the dispatch interface.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

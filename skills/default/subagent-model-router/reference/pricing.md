@@ -5,7 +5,6 @@
 - [Cost rule](#cost-rule)
 - [Prices](#prices)
 - [Notes](#notes)
-- [Refresh](#refresh)
 
 Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-10-19**. Rates and conditions below were checked against its provider tables and footnotes.
 
@@ -43,7 +42,7 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 
 `default` in the `Condition` column identifies the ordinary pricing row. It is not a model or reasoning-effort dispatch value and does not authorize default-based routing.
 
-`N/A` means not listed or not applicable.
+`N/A` means not listed or not applicable, not necessarily zero. Confirm any unknown charge relevant to the request using the target platform's pricing. If unavailable, state the uncertainty and cost assumptions; do not claim a verified minimum cost.
 
 | Provider | Model | Condition | Input | Cached input | Cache write | Output |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -98,18 +97,10 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 
 - Conditions are input-token thresholds, not necessarily context-window limits.
 - Check [`model-catalog.md`](model-catalog.md) and the supported-models source before routing; this table may retain retired or restricted entries.
-- Claude Sonnet 4 is retired; Claude Sonnet 4.6 has restricted legacy availability.
-- GPT-5.4 Nano is limited to the Codex VS Code extension on Copilot Pro+.
-- GPT-6.1 Sol matches GPT-6 Sol's input, output, and cache-write rates and has half its cached-input rate.
-- Claude Sonnet 5.5 matches Sonnet 5's input, output, and cache-write rates and has half its cached-input rate.
-- Claude Haiku 5.5 matches GPT-6 Luna's rates through 100K input tokens, then costs five times its own base rates. GPT-6 Luna's long-context threshold is 272K. Use each model's applicable row, including cache-write charges.
-- Anthropic models and the listed GPT-5.6/GPT-6 families have published cache-write charges; earlier OpenAI models shown do not.
 - Gemini 3.7 and 3.8 Flash promotional rates apply through **2026-12-31**.
 - Gemini 4 Argon's [Google pricing row](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#google) lists no input threshold or cache-write charge. Its [promotional pricing footnote](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#footnotes) applies until **2026-12-01**; recheck before work on or after that date.
 - Legacy annual Copilot Pro or Pro+ plans may use [request multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
 - If the platform selects models automatically, do not claim precise per-model cost control.
 - Use the target platform's prices outside GitHub Copilot.
 
-## Refresh
-
-Fetch the live pricing source, reconcile all rows and thresholds, preserve cache charges and promotion dates, distinguish selectable from retired entries, verify the applicable billing model, bypass stale caches before claiming a price is absent, and update the snapshot date.
+For snapshot refreshes, see [maintenance.md](maintenance.md).

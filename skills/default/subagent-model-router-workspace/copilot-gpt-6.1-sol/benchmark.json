@@ -1,0 +1,429 @@
+{
+  "metadata": {
+    "skill_name": "subagent-model-router",
+    "skill_path": "/Users/adam/dev/skills/skills/default/subagent-model-router",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-10-19T19:43:42Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 11.859947499935515,
+        "tokens": 27440,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Treats the configuration as provisional and preserves verification.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit failures without diagnosis is bounded, low-risk work.\n  Capability is provisional from the bundled catalog; verify faithful coverage\n  without added diagnosis. Both accepted configurations qualify. At 80K input,\n  Haiku 5.5 costs $0.009 versus Haiku 4.5 at $0.090.\n  No cache writes or retries; verification costs are equal.\nestimated_token_cost_usd: 0.009\nescalation_trigger: Verification reveals material omissions or a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 10.427503625047393,
+        "tokens": 27450,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have demonstrated equal task fit.\n  At 150000 uncached input tokens and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 crosses its 100K input threshold and costs $0.0750 + $0.0050 = $0.0800.\n  No cache writes or retries; verification costs match. Select gpt-5.6-luna for lower expected cost.\nescalation_trigger: Verification reveals a reasoning gap or summarization becomes non-deterministic and judgment-heavy.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have demonstrated equal task fit.\n  At 150000 uncached input tokens and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 crosses its 100K input threshold and costs $0.0750 + $0.0050 = $0.0800.\n  No cache writes or retries; verification costs match. Select gpt-5.6-luna for lower expected cost.\nescalation_trigger: Verification reveals a reasoning gap or summarization becomes non-deterministic and judgment-heavy.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have demonstrated equal task fit.\n  At 150000 uncached input tokens and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 crosses its 100K input threshold and costs $0.0750 + $0.0050 = $0.0800.\n  No cache writes or retries; verification costs match. Select gpt-5.6-luna for lower expected cost.\nescalation_trigger: Verification reveals a reasoning gap or summarization becomes non-deterministic and judgment-heavy.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 13.602946334052831,
+        "tokens": 27584,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+        },
+        {
+          "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+        },
+        {
+          "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 10.245377041981556,
+        "tokens": 27345,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+          "passed": true,
+          "evidence": "No. `fallback: none` is inconsistent. `model-b` at `high` is accepted, equally capable, and Standard. Record:\n\n```yaml\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n\n`model-c` at `medium` is Fast, below the selected Standard tier. It is ineligible.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 7.614458040916361,
+        "tokens": 27243,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+          "passed": true,
+          "evidence": "Yes. `fallback: none` is valid. `model-b` violates the explicit family constraint. No other permitted same-tier configuration is available.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 8.63003029092215,
+        "tokens": 27238,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The routing decision remains structured and complete.",
+          "passed": true,
+          "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+        },
+        {
+          "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+          "passed": true,
+          "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+        },
+        {
+          "text": "Exact dispatch values remain mandatory.",
+          "passed": true,
+          "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 12.098475791048259,
+        "tokens": 28806,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+        },
+        {
+          "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+        },
+        {
+          "text": "Treats the configuration as provisional and preserves verification.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 10.267271083081141,
+        "tokens": 28786,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have\n  demonstrated equal task fit. At 150000 uncached input and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 exceeds its 100K threshold and costs\n  $0.0750 + $0.0050 = $0.0800.\n  Select gpt-5.6-luna, saving $0.0476. No cache writes or retries;\n  verification costs match. No user model constraint or task-fit uncertainty.\nescalation_trigger: Verification reveals a reasoning gap or task stops being deterministic.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have\n  demonstrated equal task fit. At 150000 uncached input and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 exceeds its 100K threshold and costs\n  $0.0750 + $0.0050 = $0.0800.\n  Select gpt-5.6-luna, saving $0.0476. No cache writes or retries;\n  verification costs match. No user model constraint or task-fit uncertainty.\nescalation_trigger: Verification reveals a reasoning gap or task stops being deterministic.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        },
+        {
+          "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nreason: >-\n  Deterministic summarization remains Fast. Both accepted configurations have\n  demonstrated equal task fit. At 150000 uncached input and 2000 output tokens,\n  gpt-5.6-luna costs $0.0300 + $0.0024 = $0.0324.\n  claude-haiku-5.5 exceeds its 100K threshold and costs\n  $0.0750 + $0.0050 = $0.0800.\n  Select gpt-5.6-luna, saving $0.0476. No cache writes or retries;\n  verification costs match. No user model constraint or task-fit uncertainty.\nescalation_trigger: Verification reveals a reasoning gap or task stops being deterministic.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n```\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 12.894465708057396,
+        "tokens": 28884,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+        },
+        {
+          "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+        },
+        {
+          "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+          "passed": true,
+          "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 7.813472374924459,
+        "tokens": 28600,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+          "passed": true,
+          "evidence": "No. `fallback: none` is inconsistent. `model-b` at `high` is accepted, equally capable, Standard, and unconstrained.\n\nRecord:\n```yaml\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n\n`model-c` at `medium` is ineligible: Fast falls below the Standard floor.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 5,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 6.715278291958384,
+        "tokens": 28560,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+          "passed": true,
+          "evidence": "Yes. `fallback: none` is valid. `model-b` violates the explicit family constraint; no other eligible same-tier configuration exists.\n"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 6,
+      "configuration": "old_skill",
+      "run_number": 3,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 6.819093083962798,
+        "tokens": 28553,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "The routing decision remains structured and complete.",
+          "passed": true,
+          "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+        },
+        {
+          "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+          "passed": true,
+          "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+        },
+        {
+          "text": "Exact dispatch values remain mandatory.",
+          "passed": true,
+          "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 10.3967,
+        "stddev": 2.159,
+        "min": 7.6145,
+        "max": 13.6029
+      },
+      "tokens": {
+        "mean": 27383.3333,
+        "stddev": 134.3185,
+        "min": 27238,
+        "max": 27584
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 9.4347,
+        "stddev": 2.7064,
+        "min": 6.7153,
+        "max": 12.8945
+      },
+      "tokens": {
+        "mean": 28698.1667,
+        "stddev": 143.9978,
+        "min": 28553,
+        "max": 28884
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00",
+      "time_seconds": "+1.0",
+      "tokens": "-1315"
+    }
+  },
+  "notes": [
+    "One completed CLI session per case and version at medium effort; all 24 model sessions completed successfully.",
+    "run-1 and run-2 are failed CLI startup attempts, retained but not graded. run-3 is the selected execution.",
+    "The complete skill bundle was supplied inline. This tests instruction following, not trigger discovery or selective reference loading.",
+    "No transcript sharing flags were used. Model identities were checked against usage.json."
+  ]
+}

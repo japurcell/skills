@@ -1,0 +1,1 @@
+Yes. fallback: none is valid. model-b at high is Standard, but the explicit constraint excludes its model family, and no other configuration in model-a's family is available. No eligible same-tier fallback remains.

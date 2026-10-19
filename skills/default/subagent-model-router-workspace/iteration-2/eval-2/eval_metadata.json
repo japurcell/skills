@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "routing-2",
+  "prompt": "Update a Fast route for deterministic log summarization. It previously used claude-haiku-5.5 at medium with 80000 input tokens; now it needs 150000 uncached input tokens and 2000 output tokens. The Copilot dispatch interface accepts claude-haiku-5.5 and gpt-5.6-luna, both at medium. Both have demonstrated equal task fit. No cache writes or retries; verification costs match. No user model preference. Use bundled prices, reroute, and show both estimated token costs.",
+  "assertions": [
+    "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+    "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+    "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold."
+  ]
+}

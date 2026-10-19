@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The routing decision remains structured and complete.",
+      "passed": true,
+      "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+    },
+    {
+      "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+      "passed": true,
+      "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+    },
+    {
+      "text": "Exact dispatch values remain mandatory.",
+      "passed": true,
+      "evidence": "Router returns complete structured decision: `dispatchable`, `tier`, exact `model`, exact `reasoning_effort`, `reason`, `escalation_trigger`, and same-tier `fallback` or `none`.\n\nCaller controls storage and presentation. That separation never permits implicit values: dispatch must explicitly apply both validated model and effort.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

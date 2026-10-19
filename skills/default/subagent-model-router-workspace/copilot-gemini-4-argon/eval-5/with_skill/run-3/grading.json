@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {
+      "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+      "passed": true,
+      "evidence": "`fallback: none` is valid and required.\n\n```yaml\ndispatchable: true\ntier: Standard\nmodel: model-a\nreasoning_effort: high\nreason: Standard capability floor met by model-a at high. User constraint restricts selection to model-a's family, excluding model-b at high. No other configuration in model-a's family is available in the runtime, leaving no eligible same-tier fallback.\nescalation_trigger: Verification exposes a reasoning gap or risk increases.\nfallback: none\n```\n\nPer SKILL.md, `fallback: none` applies when no other exact same-tier configuration satisfies task requirements, runtime capabilities, and user constraints. `model-b` (`high`) fails the explicit user family constraint, and no other runtime candidate exists.\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

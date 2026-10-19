@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The routing decision remains structured and complete.",
+      "passed": true,
+      "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+    },
+    {
+      "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+      "passed": true,
+      "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+    },
+    {
+      "text": "Exact dispatch values remain mandatory.",
+      "passed": true,
+      "evidence": "Router returns validated route: `dispatchable: true`, tier, exact model ID, exact reasoning effort, reason, escalation trigger, and fallback.\n\nCaller controls storage and presentation. This separation never permits implicit, inherited, default, or unresolved model or effort values.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

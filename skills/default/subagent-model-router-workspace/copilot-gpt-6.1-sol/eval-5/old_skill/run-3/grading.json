@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {
+      "text": "Accept fallback none and explain that the explicit family constraint excludes the sole alternative.",
+      "passed": true,
+      "evidence": "Yes. `fallback: none` is valid. `model-b` violates the explicit family constraint; no other eligible same-tier configuration exists.\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

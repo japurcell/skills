@@ -1,0 +1,1 @@
+The router returns the complete structured decision: dispatchability, tier, exact model and reasoning-effort values, reason, escalation trigger, and fallback. The caller controls how that result is stored and presented. This separation does not permit implicit model or effort values: a dispatchable route must contain exact values confirmed by the dispatch interface.

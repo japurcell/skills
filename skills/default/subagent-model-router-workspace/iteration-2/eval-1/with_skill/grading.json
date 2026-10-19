@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "Route: `claude-haiku-5.5` at `medium` (Fast). At 80,000 uncached input tokens, the \u2264100K pricing row applies: 80,000 \u00d7 $0.10/M plus 2,000 \u00d7 $0.50/M output = **$0.009 USD**. `claude-haiku-4.5` would cost 80,000 \u00d7 $1/M plus 2,000 \u00d7 $5/M = $0.09. With equal task fit and verification, Haiku 5.5 is the lower-cost route.\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "Route: `claude-haiku-5.5` at `medium` (Fast). At 80,000 uncached input tokens, the \u2264100K pricing row applies: 80,000 \u00d7 $0.10/M plus 2,000 \u00d7 $0.50/M output = **$0.009 USD**. `claude-haiku-4.5` would cost 80,000 \u00d7 $1/M plus 2,000 \u00d7 $5/M = $0.09. With equal task fit and verification, Haiku 5.5 is the lower-cost route.\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": false,
+      "evidence": "Route: `claude-haiku-5.5` at `medium` (Fast). At 80,000 uncached input tokens, the \u2264100K pricing row applies: 80,000 \u00d7 $0.10/M plus 2,000 \u00d7 $0.50/M output = **$0.009 USD**. `claude-haiku-4.5` would cost 80,000 \u00d7 $1/M plus 2,000 \u00d7 $5/M = $0.09. With equal task fit and verification, Haiku 5.5 is the lower-cost route.\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

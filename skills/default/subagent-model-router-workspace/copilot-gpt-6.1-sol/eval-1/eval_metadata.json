@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "routing-1",
+  "prompt": "Create a route for summarizing explicit test failures without diagnosing code. GitHub Copilot token billing applies. The dispatch interface accepts only claude-haiku-4.5 and claude-haiku-5.5, both with medium effort. Expect 80000 uncached input tokens and 2000 output tokens, no cache writes, no retries, equal verification cost, and no task-specific quality evidence. No model or effort constraints. Use the bundled source snapshot. Return the route and estimated token cost.",
+  "assertions": [
+    "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+    "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+    "Treats the configuration as provisional and preserves verification."
+  ]
+}

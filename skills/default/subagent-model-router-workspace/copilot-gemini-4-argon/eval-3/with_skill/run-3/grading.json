@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: Ordinary substantive review sets a Standard floor. Both configurations are accepted by the Copilot dispatch interface and have equal task capability here. With 100,000 confirmed cached-input tokens, 1,000 output tokens, zero uncached input or new cache writes, no retries, and identical verification: claude-sonnet-5.5 costs $0.02 (0.1M * $0.10 = $0.01 cached input + 0.001M * $10.00 = $0.01 output; 2 AI Credits), while claude-sonnet-5 costs $0.03 (0.1M * $0.20 = $0.02 cached input + 0.001M * $10.00 = $0.01 output; 3 AI Credits). claude-sonnet-5.5 is both cheaper and the latest version.\nescalation_trigger: Verification reveals a reasoning gap, a prior important review miss applies, or security/concurrency/trust-boundary risk emerges (escalate to Premium).\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later advertises only model names without accepted effort values, the route does **not** remain dispatchable (`dispatchable: false`, `reasoning_effort: unresolved`, `fallback: none`). The dispatch contract requires confirming both an exact model ID and an exact reasoning-effort value accepted by the interface; never dispatch when effort support cannot be confirmed.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}
