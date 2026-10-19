@@ -163,6 +163,6 @@ Load only when needed:
 
 - [`reference/review-routing.md`](reference/review-routing.md): review floors.
 - [`reference/escalation-policy.md`](reference/escalation-policy.md): escalation and failure diagnosis.
-- [`reference/model-catalog.md`](reference/model-catalog.md): configurations and task defaults.
-- [`reference/pricing.md`](reference/pricing.md): Copilot rates and expected-cost comparison.
+- [`reference/model-catalog.md`](reference/model-catalog.md): configurations, task defaults, and linked availability/task-fit sources.
+- [`reference/pricing.md`](reference/pricing.md): Copilot rates, promotion deadlines, linked pricing sources, and expected-cost comparison.
 - [`reference/patterns.md`](reference/patterns.md): non-authoritative examples.

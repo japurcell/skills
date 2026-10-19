@@ -7,7 +7,7 @@
 - [Notes](#notes)
 - [Refresh](#refresh)
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-10-08**.
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-10-19**. Rates and conditions below were checked against its provider tables and footnotes.
 
 Prices are USD per 1 million tokens for GitHub Copilot. They are not direct-provider API prices. Where GitHub AI Credits are used, 1 credit = $0.01 USD.
 
@@ -84,6 +84,7 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 | Anthropic | `claude-fable-5.1` | default | $10.00 | $0.25 | $12.50 | $50.00 |
 | Google | `gemini-3.7-flash` | promotional | $0.75 | $0.075 | N/A | $3.75 |
 | Google | `gemini-3.8-flash` | promotional | $0.75 | $0.075 | N/A | $3.75 |
+| Google | `gemini-4-argon` | promotional | $2.00 | $0.10 | N/A | $10.00 |
 | Microsoft | `mai-code-1.1-flash` | default | $0.20 | $0.02 | N/A | $1.20 |
 | xAI | `grok-4.5` | ≤200K | $2.00 | $0.50 | N/A | $6.00 |
 | xAI | `grok-4.5` | >200K | $4.00 | $1.00 | N/A | $12.00 |
@@ -104,6 +105,7 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 - Claude Haiku 5.5 matches GPT-6 Luna's rates through 100K input tokens, then costs five times its own base rates. GPT-6 Luna's long-context threshold is 272K. Use each model's applicable row, including cache-write charges.
 - Anthropic models and the listed GPT-5.6/GPT-6 families have published cache-write charges; earlier OpenAI models shown do not.
 - Gemini 3.7 and 3.8 Flash promotional rates apply through **2026-12-31**.
+- Gemini 4 Argon's [Google pricing row](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#google) lists no input threshold or cache-write charge. Its [promotional pricing footnote](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#footnotes) applies until **2026-12-01**; recheck before work on or after that date.
 - Legacy annual Copilot Pro or Pro+ plans may use [request multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
 - If the platform selects models automatically, do not claim precise per-model cost control.
 - Use the target platform's prices outside GitHub Copilot.

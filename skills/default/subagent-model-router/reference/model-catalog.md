@@ -18,7 +18,7 @@ Sources:
 - [AI model comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison)
 - [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
 
-Source snapshot: **2026-10-08**.
+Source snapshot: **2026-10-19**. The supported-models source owns status, restrictions, and retirement dates; the comparison source informs task fit; the pricing source owns rates. Capability tiers and candidate efforts below are local, provisional routing policy.
 
 Pricing or comparison entries do not establish runtime availability. Absence from this catalog does not establish retirement. Model IDs are routing shorthand until confirmed against the dispatch interface.
 
@@ -67,6 +67,7 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | Anthropic | `claude-sonnet-5.5` | `medium` | GA | General coding and agent tasks; fallback to `claude-sonnet-5` |
 | Anthropic | `claude-sonnet-5` | `medium` | GA | General coding and agent tasks; fallback for `claude-sonnet-5.5` |
 | Anthropic | `claude-sonnet-4.6` | `medium` | Legacy annual Copilot Pro/Pro+ only | General coding and agent tasks when legacy access is confirmed |
+| Google | `gemini-4-argon` | `medium` | GA | Complex coding, agentic work, and reasoning; provisional candidate; promotional pricing |
 | Google | `gemini-3.7-flash` | `medium` | GA | Versatile work; promotional pricing |
 | Google | `gemini-3.8-flash` | `medium` | GA | Versatile work; promotional pricing |
 | xAI | `grok-4.5` | `medium` | GA | Versatile work; long-context pricing |
@@ -91,6 +92,7 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | Anthropic | `claude-opus-5` | `medium` | GA | Powerful reasoning |
 | Anthropic | `claude-opus-5.5` | `medium` | GA | Long-running agentic work |
 | Anthropic | `claude-fable-5.1` | `medium` | GA | Long-horizon autonomous work; low cached-input rate |
+| Google | `gemini-4-argon` | `high` | GA | Complex coding, agentic work, and reasoning; provisional candidate; promotional pricing |
 | Moonshot AI | `kimi-k3` | `medium` | GA | Multi-step agentic coding over large contexts |
 
 Do not substitute a lower effort when the listed effort is unavailable. Treat that configuration as unavailable.
@@ -102,9 +104,9 @@ These are provisional starting candidates, not measured quality rankings. Prefer
 | Default | Tier | Starting configuration | Alternatives |
 | --- | --- | --- | --- |
 | Bounded work | Fast | `gpt-6-luna`, `medium` | `claude-haiku-5.5`, `medium`; `gpt-5.6-luna`, `medium`; `mai-code-1.1-flash`, `medium`; compare the applicable context rates |
-| Budget review | Standard | `gpt-6-luna`, `high` | `gpt-5.6-luna`, `high`; then another Standard review configuration |
-| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gpt-5.6-terra`, `medium`; then `gpt-5.3-codex`, `medium` |
-| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gpt-6-astra`, `medium`; then another validated Premium review configuration |
+| Budget review | Standard | `gpt-6-luna`, `max` | `gpt-5.6-luna`, `max`; then another Standard review configuration |
+| General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6-sol`, `medium`; `gemini-4-argon`, `medium`; `gpt-5.6-terra`, `medium`; then `gpt-5.3-codex`, `medium` |
+| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gemini-4-argon`, `high`; `gpt-6-astra`, `medium`; then another validated Premium review configuration |
 | Demanding autonomous work | Premium | `gpt-6-astra`, `medium` | Another validated Premium autonomous-work configuration |
 
 Use bounded work for low-risk coding and mechanical review only. Substantive review is at least Standard; review floors are defined in [`review-routing.md`](review-routing.md).
@@ -130,6 +132,8 @@ Availability notes:
 - Public-preview behavior, pricing, and availability may change.
 - Effort-based tier assignments are local routing choices, not provider guarantees.
 - Published pricing does not establish selectability.
+- Gemini 4 Argon's GA status and task fit come from the [supported-models table](https://docs.github.com/en/copilot/reference/ai-models/supported-models#supported-ai-models-in-copilot) and [task comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison#recommended-models-by-task). `gemini-4-argon` is unconfirmed routing shorthand, not a verified runtime ID; `medium` is a local candidate effort.
+- Claude Fable 5 and 5.1 have special retention and enablement conditions; check the [supported-models footnotes](https://docs.github.com/en/copilot/reference/ai-models/supported-models#footnotes). Fable models and Kimi K3 are excluded from enterprise default enablement; confirm applicable administrator policy.
 - Do not select a model scheduled to retire before the subtask is expected to run.
 - Recheck runtime availability on or after a listed retirement date.
 - Claude Opus 4.7, Gemini 3.5 Flash, Gemini 3.6 Flash, and Kimi K2.7 Code retired on **2026-10-02** and are excluded from routing candidates. GitHub recommends the latest respective Opus, Gemini Flash, and Kimi models; confirm their exact dispatch configurations.
