@@ -45,6 +45,18 @@
         "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
         "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support."
       ]
+    },
+    {
+      "id": 6,
+      "eval_name": "structured-route-handoff",
+      "prompt": "Describe output handling only; do not browse, select a new route or dispatch. A complete dispatchable route has already been validated for a caller. State what the router returns, who controls storage and presentation, and whether that separation permits implicit model or effort values.",
+      "expected_output": "Return the complete structured routing decision with exact model/effort and all route fields. Leave storage and presentation to the caller; never substitute implicit dispatch values or require a particular consumer skill.",
+      "files": [],
+      "assertions": [
+        "The routing decision remains structured and complete.",
+        "The caller controls storage and presentation without a dependency on a named consumer skill.",
+        "Exact dispatch values remain mandatory."
+      ]
     }
   ]
 }

@@ -7,7 +7,7 @@ description: Select source suites for hook runtime and registration changes; liv
 
 ## Repo checks
 
-For generated hook changes, run `rtk proxy python3 scripts/generate-hooks.py --check` before and after the affected suites, plus `rtk proxy python3 scripts/test-generate-hooks.py`. Use `--write` only to refresh manifest-owned output. Keep generator and installer fixture mutations serialized. Pause all repository edits during the generator suite: its read-only assertions compare whole-checkout snapshots, including unrelated files.
+For changes under `hooks/` or to generated hooks, run `rtk proxy python3 scripts/generate-hooks.py --check` immediately after editing and again after the affected suites, plus `rtk proxy python3 scripts/test-generate-hooks.py`. Canonical runtime edits can change generated build fingerprints. Use `--write` only to refresh manifest-owned output, and require successful regeneration before running generator tests. Stop dependent commands on failure with `&&` or an explicit exit-code check. When the sandbox protects repository-generated fixtures, use scoped write permission for regeneration and generator tests. Keep generator and installer fixture mutations serialized. Pause all repository edits during the generator suite: its read-only assertions compare whole-checkout snapshots, including unrelated files.
 
 Select the affected provider and behavior; do not run every row for a documentation-only change:
 

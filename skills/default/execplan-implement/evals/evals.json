@@ -42,6 +42,18 @@
         "Readiness does not grant owner approval or make unresolved verification pass.",
         "Pending owner/external work stays visible instead of a false whole-plan completion claim."
       ]
+    },
+    {
+      "id": 4,
+      "eval_name": "finish-authorized-scope",
+      "prompt": "Give a read-only execution decision; do not edit, commit or dispatch. Every authorized requirement and acceptance check is met. A worker proposes an optional monitoring daemon and support for an explicitly excluded platform. State whether either enters the frontier and what happens next. Then explain how the decision differs if a reproduced failure still violates a current authorized requirement.",
+      "expected_output": "Finish when authorized acceptance is met and defer the daemon and excluded platform. Reopen a bounded repair only for the reproduced in-scope failure; preserve prerequisites and acceptance evidence.",
+      "files": [],
+      "assertions": [
+        "Optional improvements stay outside the execution frontier.",
+        "Completed authorized work finishes without invented tasks or another approval question.",
+        "A reproduced in-scope failure still requires a bounded repair before completion."
+      ]
     }
   ]
 }

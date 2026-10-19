@@ -18,6 +18,19 @@
       "prompt": "Describe the immediate action only. A worker has verified a critical durable guidance error in a canonical document owned by another task. Several unrelated tasks are still running. Explain when and where the finding is recorded and how the owner learns about it.",
       "expected_output": "The worker retains scoped evidence and promptly notifies the document owner rather than waiting for the final session pass or rewriting another owner's document.",
       "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "record-routes-announce-scope",
+      "prompt": "Describe the dispatch/reporting procedure only; do not dispatch or write files. Two independent read-only reviewers have complete exact router decisions. The user has not requested routing details. Explain what must exist before approval or dispatch, what goes in chat, where submitted and executed settings and completion results belong, and what to record when execution metadata is unavailable.",
+      "expected_output": "Record complete decisions before approval or dispatch and append submitted settings, runtime observations and results to one session artifact outside maintained source. Announce roles and scope concisely without raw YAML. Apply exact settings; preserve runtime limits, approval boundaries and unconfirmed execution metadata.",
+      "files": [],
+      "assertions": [
+        "One session artifact contains routing decisions and all dispatch/results metadata.",
+        "Chat names roles and scope; raw routing/audit data requires a user request.",
+        "Exact submitted values, approval boundaries and runtime controls remain enforced.",
+        "Unavailable executed settings remain unconfirmed."
+      ]
     }
   ]
 }

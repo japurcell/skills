@@ -20,13 +20,13 @@ For each routing attempt:
 
 Absent model preferences are not ambiguity. Do not ask the user to choose, approve, confirm, or restate a model or effort before routing.
 
-A routing attempt begins with the task facts, runtime capabilities, and user constraints then in scope. Produce and print the route before any approval step.
+A routing attempt begins with the task facts, runtime capabilities, and user constraints then in scope. Record the route in one session artifact before any approval step.
 
 A dispatchable route is informational. Dispatch it without waiting for confirmation unless the user previously requested pre-dispatch approval or the runtime requires approval.
 
-If the user explicitly requests configured defaults, resolve them to concrete values, validate them through the router, print them, and submit them explicitly. Never preserve defaults by omitting dispatch arguments.
+If the user explicitly requests configured defaults, resolve them to concrete values, validate them through the router, record them, and submit them explicitly. Never preserve defaults by omitting dispatch arguments.
 
-If an explicit constraint prevents a dispatchable route, print the router's `dispatchable: false` result before asking the user to revise it.
+If an explicit constraint prevents a dispatchable route, record the router's `dispatchable: false` result and explain the limitation before asking the user to revise it.
 
 If the orchestrator improperly solicits a model or effort before routing:
 
@@ -47,7 +47,7 @@ AND route.dispatchable == true
 AND route.model is exact
 AND route.reasoning_effort is exact
 AND route used only task facts, runtime capabilities, and user constraints in scope when the current routing attempt began
-AND route was printed before any approval step
+AND route was recorded before any approval step
 AND dispatch.model == route.model
 AND dispatch.reasoning_effort == route.reasoning_effort
 AND runtime_limit is explicit and enforced
@@ -58,7 +58,7 @@ Do not dispatch with a routing value that is omitted, null, implicit, inherited,
 
 Values such as `default`, `auto`, `runtime-selected`, `runtime default`, “runtime-supported,” “high or greater,” and “strongest available” are not dispatchable routing values.
 
-A recommendation that is not printed and explicitly applied is not completed routing.
+A recommendation that is not recorded and explicitly applied is not completed routing.
 
 ## Procedure
 
@@ -109,54 +109,24 @@ The route must contain:
 - `escalation_trigger`
 - exact `fallback` or `none`
 
-If exact model or effort values cannot be determined, print a non-dispatchable route.
+If exact model or effort values cannot be determined, record a non-dispatchable route.
 
-A route may be reused only when the router's reuse criteria are satisfied. A reused route must still be printed and explicitly applied to every dispatch.
+A route may be reused only when the router's reuse criteria are satisfied. A reused route must still be recorded and explicitly applied to every dispatch.
 
-### 3. Print
+### 3. Record and announce
 
-Before the corresponding dispatch, print:
+Before approval or dispatch, record the router's complete decision in one session artifact outside maintained source. Use the same artifact for reused or revised routes, submitted arguments, runtime observations and completion results. Preserve the required fields; record unavailable execution metadata as `unconfirmed`.
 
-```yaml
-routing:
-  - subtask_id: <identifier>
-    dispatchable: true
-    tier: <Fast|Standard|Premium>
-    model: <exact dispatch value>
-    reasoning_effort: <exact dispatch value>
-    reason: <task fit, capability floor, cost assumptions, and uncertainty>
-    fallback:
-      model: <exact dispatch value>
-      reasoning_effort: <exact dispatch value>
-    escalation_trigger: <trigger or none>
-```
+In chat, give one concise sentence naming the roles and scope. Show raw routing or audit data only when the user requests it. A non-dispatchable route stays undispatched; explain its blocker briefly.
 
-Use `fallback: none` when no exact same-tier fallback exists.
-
-For an unresolved route, print:
-
-```yaml
-routing:
-  - subtask_id: <identifier>
-    dispatchable: false
-    tier: <Fast|Standard|Premium>
-    model: unresolved
-    reasoning_effort: unresolved
-    reason: <why an exact route could not be produced>
-    fallback: none
-    escalation_trigger: none
-```
-
-Do not dispatch a route with `dispatchable: false`.
-
-A runtime-default notice is not a routing summary. Print a dispatchable route as a decision, not a question. Proceed without pausing unless a preexisting user-requested or runtime-required approval step applies.
+A recorded route is a decision, not a question. Proceed without pausing unless a preexisting user-requested or runtime-required approval step applies.
 
 ### 4. Dispatch
 
 Explicitly configure outside the subagent prompt:
 
-- the printed `model`
-- the printed `reasoning_effort`
+- the recorded `model`
+- the recorded `reasoning_effort`
 - runtime-limit enforcement
 
 The subagent prompt may contain:
@@ -184,7 +154,7 @@ Prohibit nested delegation by default. Authorize it explicitly only when intenti
 
 If the user previously requested approval or the runtime requires it:
 
-1. route and print first
+1. route and record first
 2. request or invoke approval for the completed route
 3. dispatch only after approval
 
@@ -201,7 +171,7 @@ After dispatch, inspect the actual dispatch arguments and runtime-control state.
 - submitted `reasoning_effort`
 - enforced runtime limit and mechanism
 
-If submitted routing values are missing or differ from the printed route:
+If submitted routing values are missing or differ from the recorded route:
 
 1. mark the dispatch noncompliant
 2. do not describe it as router-selected
@@ -232,11 +202,11 @@ If routing cannot produce an exact model and effort:
 1. do not dispatch
 2. inspect the runtime's accepted values when possible
 3. begin a fresh routing attempt with any newly confirmed values
-4. print a non-dispatchable route and report the limitation if unresolved
+4. record a non-dispatchable route and report the limitation if unresolved
 
 Do not ask the user to choose an unverified value or substitute configured or runtime defaults.
 
-If the selected configuration becomes unavailable, reroute with it removed from the candidates. Print and apply the complete revised route. Do not dispatch if no exact configuration satisfies the capability floor.
+If the selected configuration becomes unavailable, reroute with it removed from the candidates. Record and apply the complete revised route. Do not dispatch if no exact configuration satisfies the capability floor.
 
 ### Execution failure
 
@@ -246,7 +216,7 @@ If a compliant subagent fails or times out:
 2. diagnose instructions, context, dependencies, permissions, tools, and environment
 3. revise the task or runtime limit when appropriate
 4. reroute if requirements or demonstrated capability needs changed
-5. print any revised route before redispatch
+5. record any revised route before redispatch
 6. dispatch at most one replacement unless the user authorizes more retries
 
 A timeout, unavailable dependency, failing test, or environment problem does not by itself justify a stronger tier.
@@ -255,13 +225,13 @@ A timeout, unavailable dependency, failing test, or environment problem does not
 
 Avoid duplicate file reads and repeated context gathering.
 
-When several subagents need substantially the same context, consider one routed exploration subagent. Apply the same routing, printing, dispatch, runtime-limit, and audit requirements to it.
+When several subagents need substantially the same context, consider one routed exploration subagent. Apply the same routing, recording, dispatch, runtime-limit, and audit requirements to it.
 
 The orchestrator may read files to plan, coordinate, resolve conflicts, or verify results.
 
-## Completion report
+## Completion record
 
-Report each dispatch as:
+Append each dispatch result to the same session artifact using:
 
 ```yaml
 dispatches:
@@ -298,10 +268,10 @@ Before declaring delegation complete, confirm that:
 - [ ] each route used only task facts, runtime capabilities, and user constraints in scope when its routing attempt began
 - [ ] no solicited preference retroactively justified a route
 - [ ] recovery from improper solicitation used a fresh routing attempt
-- [ ] each dispatchable route was printed as a decision
+- [ ] each dispatchable route was recorded as a decision before any approval or dispatch
 - [ ] no unnecessary approval pause occurred
-- [ ] every dispatch explicitly submitted the printed model and effort
-- [ ] no dispatch relied on implicit inheritance of configured or runtime defaults; any user-requested defaults were resolved, validated, printed, and submitted as concrete values
+- [ ] every dispatch explicitly submitted the recorded model and effort
+- [ ] no dispatch relied on implicit inheritance of configured or runtime defaults; any user-requested defaults were resolved, validated, recorded, and submitted as concrete values
 - [ ] routing and audit metadata stayed out of subagent prompts
 - [ ] runtime limits were explicit and enforced
 - [ ] actual dispatch arguments were audited
@@ -309,4 +279,4 @@ Before declaring delegation complete, confirm that:
 - [ ] failures were recorded before replacement
 - [ ] outputs were verified against their acceptance criteria
 
-If any routing-order, reporting, dispatch-argument, prompt-isolation, approval, or audit requirement fails, report the affected dispatch as noncompliant.
+If any routing-order, reporting, dispatch-argument, prompt-isolation, approval, or audit requirement fails, record the affected dispatch as noncompliant and report any material failure in chat.

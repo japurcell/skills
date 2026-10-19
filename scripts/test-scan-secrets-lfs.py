@@ -126,6 +126,14 @@ class LFSTests(unittest.TestCase):
         self.assertEqual(list((self.base / "tmp").iterdir()), [])
         return json.loads(result.stdout)
 
+    def test_child_data_directory_is_disposable(self):
+        child = subprocess.run(
+            [sys.executable, "-I", "-S", "-c",
+             "import os; print(os.environ['LOCALAPPDATA'])"],
+            env=self.env, capture_output=True, text=True, check=True, timeout=5,
+        )
+        self.assertEqual(Path(child.stdout.strip()).resolve(), (self.base / "data").resolve())
+
     def test_clean_local_payload_is_fully_inspected_without_mutation(self):
         data = b"safe payload\n" * 17
         oid, store = self.pointer(data)

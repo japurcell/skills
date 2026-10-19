@@ -24,7 +24,7 @@ Run independent **implementer subagents** concurrently when useful. Serialize sh
 
 4. If current branch is `main` or `master`, create a new **base topic branch**.
 
-5. Repeat steps 5-7 while authorized tasks are ready. You - the primary agent - coordinate this loop; subagents perform implementation. When integration or validation reveals additional work, record it in the ExecPlan by reopening an existing task or adding a bounded one with prerequisites, then delegate it through this step.
+5. Repeat steps 5-7 while authorized tasks are ready. You - the primary agent - coordinate this loop; subagents perform implementation. Add or reopen a task only to satisfy an authorized requirement or repair a reproduced failure within that scope. Record unrelated improvements as deferred; keep them outside the execution frontier. When authorized acceptance criteria are met, finish the task. Record necessary repairs with prerequisites, then delegate them through this step.
 
    Assign each distinct task to a fresh implementer subagent. Do not reuse an implementer for a different node, even with a new worktree. Reuse is allowed only for repairs or follow-up work on that implementer's original node. This preserves context isolation, ownership clarity, and independent task results.
 

@@ -92,6 +92,14 @@ class GateTests(unittest.TestCase):
         self.git("remote", "add", "fixture", str(remote))
         return remote
 
+    def test_child_data_directory_is_disposable(self):
+        child = subprocess.run(
+            [sys.executable, "-I", "-S", "-c",
+             "import os; print(os.environ['LOCALAPPDATA'])"],
+            env=self.env, capture_output=True, text=True, check=True, timeout=5,
+        )
+        self.assertEqual(Path(child.stdout.strip()).resolve(), (self.base / "data").resolve())
+
     def test_actual_push_transfers_checked_oid_and_blocks_history(self):
         self.seed()
         remote = self.remote()
