@@ -15,20 +15,6 @@
         ]
       }
     ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash|apply_patch|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.codex/hooks/tool-guard.py",
-            "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\tool-guard.py\"",
-            "timeout": 10,
-            "statusMessage": "Checking dangerous tool actions"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
