@@ -1,11 +1,93 @@
-# Task scheduling and integration
-
-> Continuation amendment, 2026-10-15: these scheduling and freshness policies apply within a live invocation. [SSSF-style continuation](workflow-versioning-and-run-changes.md#resolution) retains their history but does not restore the scheduler, ready queue, reservations, or completed-task position after exit.
+# Run workspace and implementer delegation
 
 **Type:** grilling
 **Status:** closed
 **Blocked By:** workflow-authoring-and-task-contract.md, operating-and-installation-model.md
 **Research Dir:** not applicable
+
+## Question
+
+How does the factory give all phases an isolated repository workspace while letting the implementer coordinate its own parallel subagents?
+
+## Resolution
+
+Apply the [accepted shared ownership mechanism](recovery-and-runtime-selection.md#accepted-shared-ownership-mechanism): worktree invocations share claim/check/release machinery with dashboard and maintenance owners, while retaining their own exclusive access and child-cleanup checks. Different worktrees may still run concurrently. No automatic stale takeover is introduced.
+
+On 2026-10-15, the human explicitly adopted the simpler model: remove factory-managed parallel tasks and integration, let the implementer manage its subagents, and retain subagent visibility where supported. The human also proposed creating the factory-owned worktree before any phase starts. Adopt that placement: one run workspace exists before planning, and every phase operates in that workspace. This supersedes the task scheduler and integration policies recorded below. The filename is retained for existing links. This is a design amendment, not runtime implementation authorization.
+
+### One workspace before the first phase
+
+- Bootstrap creates a factory-owned isolated Git worktree before invoking the first workflow phase, including planning, inspection, or a read-only audit. If workspace preparation fails, report the failure and launch no phase. Bootstrap is a recorded lifecycle operation, not an agent phase that runs in the user's checkout.
+- Create new worktrees only from a selected committed revision and record its resolved commit identity. Apply the committed-revision-only amendment below; do not capture uncommitted changes from the user's checkout.
+- Plan, implement, verify, review, and repair all use the same worktree as their repository working directory. No per-task or integration worktrees are created by the factory. The six-stage recipe remains optional; custom workflows use the same workspace contract.
+- A worktree is repository isolation, not a security sandbox or isolation for ports, databases, or other external resources. Existing native permissions apply. Repository commands and implementer policies must handle any internal shared-resource collisions; a built-in task-resource reservation scheduler is removed.
+- The managed installation, history, and saved outputs remain repository-scoped and independent of disposable workspace files. Executing inside the worktree does not install another factory or select an obsolete workflow executable from the starting commit. The explicit invocation still selects current workflow code and configuration under the continuation contract.
+- The factory does not promise that every file written by tools lives inside the worktree. Explicit artifacts, harness storage, and authorized external effects retain their own locations and controls. The worktree is the repository working context for every phase.
+
+### Committed-revision-only worktree creation
+
+On 2026-10-15 the human removed uncommitted-change capture as unnecessary complexity. This supersedes the earlier optional dirty-content snapshot and the subsequent file-selection proposal.
+
+New factory worktrees start only from a selected committed revision. Resolve and record the actual commit before preparing the workspace. Do not copy staged, unstaged, untracked, or ignored local changes; do not add file/hunk selection, snapshot previews, or capture-consistency machinery. The user's checkout and staging area remain untouched. A dirty source checkout alone does not require cleaning or stashing: its local changes are outside the new worktree's starting input. If the user wants local edits included, they must commit them separately and select that revision; the factory does not automatically commit on their behalf.
+
+This governs creation of new worktrees, not later reuse of an existing factory worktree. The accepted follow-up path still preserves unfinished work and validates ownership/current inputs before starting a fresh invocation. Do not reset a preserved worktree to enforce this creation rule. Step-start prompt/settings/skill resolution and saved learning history remain unchanged.
+
+### Exclusive invocation ownership
+
+On 2026-10-15 the human accepted one active factory invocation per worktree, including read-only invocations. This is worktree ownership, not a repository-wide single-run limit or a one-invocation-per-history restriction.
+
+- Acquire exclusive ownership before the first phase and keep it throughout the invocation. A separate invocation may not use the same worktree concurrently, even for read-only work.
+- Parallel agents, delegated subagents, and reviewers inside the owning invocation remain allowed under the existing stable-candidate and phase rules. The ownership rule does not serialize every agent operation.
+- Separate worktrees may host concurrent invocations within existing repository-wide managed-launch limits.
+- A later invocation cannot take over while earlier owned processes may still access the worktree. Parent exit or a saved terminal outcome alone does not establish that ownership is safely released.
+- Do not automatically steal ownership or kill earlier processes merely to force reuse. Normal authorized cancellation/interruption retains its existing owned-process cleanup rules. Uncertainty blocks reuse and is reported honestly.
+- This is factory coordination, not a filesystem sandbox or a guarantee against external editors/processes. The [accepted cleanup confirmation and ownership release contract](recovery-and-runtime-selection.md#accepted-cleanup-confirmation-and-ownership-release) governs explicit stale release; concrete ownership fields, native checks, and acquisition mechanics remain lifecycle specification work.
+
+The tradeoff is deliberate: independent read-only invocations cannot share a worktree concurrently, in exchange for one unambiguous execution owner. Ordinary read-only dashboard inspection of repository-scoped history is not a workflow invocation and remains available.
+
+### Implementer-owned delegation
+
+The factory launches an implementation phase as one managed agent operation. That implementer may delegate parallel investigations, edits, or internal reviews through its harness. The implementer/harness owns child assignments, dependencies, concurrent-edit coordination, and assembly of one candidate in the run worktree. Child activity is not admitted to a factory task queue and does not gain separate factory-managed worktrees, integration, retry, or scheduling semantics.
+
+The implementer must finish or stop its children and leave one stable candidate before the factory advances to verification or independent review. A parent result alone cannot establish this when children may still write. Apply the [accepted manual-cleanup fallback](recovery-and-runtime-selection.md#accepted-manual-cleanup-fallback): use reliable automatic control where supported; otherwise expose the limitation and support operator cleanup. Lack of automatic child control does not by itself disqualify a harness mode. Unresolved activity still blocks unsafe handoff/reuse, and unsupported explicitly required automatic-control capabilities block under the selected-profile-or-failure rule. Cleanup confirmation follows the [accepted release contract](recovery-and-runtime-selection.md#accepted-cleanup-confirmation-and-ownership-release); native harness proofs remain qualification work.
+
+A repair is a separately recorded managed operation that writes to the same run worktree after reviewers stop. Record the reviewed revision/content identity and save review/check outputs before repair. No immutable evidence-copying service is required. Factory review evaluates the combined candidate and does not manage individual child contributions. Multiple independent reviewers may still inspect the same fixed candidate where configured, with no concurrent implementation or repair writer. Custom phase composition remains code-defined; there is no task dependency scheduler.
+
+### Visibility and limits
+
+- Observe child sessions where the harness exposes reliable identities, parent relationships, lifecycle, and output. Nest those sessions beneath their parent implementation phase. Do not invent task progress, child output, or completion from the parent's narrative.
+- If child telemetry is unavailable, show the parent phase and an explicit limited-visibility indication. Optional child visibility does not weaken the required live output and stop path for factory-managed sessions. A workflow explicitly requiring child visibility must reject a harness that cannot provide it. The user may explicitly select a supported profile for a later invocation; no automatic substitution is permitted.
+- Keep the accepted configurable repository-wide limits for factory-managed launches, initially two agent sessions and two managed command steps. Remove task dispatch ordering, round-robin task fairness, ready-result queues, and built-in named task-resource reservations. Exact admission/ownership mechanics remain lifecycle work.
+- Factory attempt allowances and timeouts govern factory-managed operations. Internal child calls are not individually factory-managed attempts. Record child usage where supplied; do not double-count parent totals that already include it. Never claim the factory launch limit or additional-attempt cap bounds all internal subagents, tokens, or cost. Enforcing a hard internal-delegation limit requires a supported harness capability and explicit configuration.
+- This amendment does not select a factory subagent scheduler, universal child cap, or separate CLI response channel. Optional observability is not an automatic promise of child cancellation or accounting support.
+
+### Interruption and follow-up
+
+Preserve the run worktree and history on interruption. Apply the existing grace and owned-process termination rules, including known child work; never infer that all children ended merely because the parent exited. Block conflicting use when ownership or continued writing is uncertain.
+
+A later explicit invocation may select preserved work after ownership and input checks, or create a fresh run workspace. All its phases use the selected workspace from entry. There is no restoration of a task queue, workflow position, or child team. A selected preserved workspace satisfies the before-first-phase requirement through validation rather than destructive recreation. Cleanup remains explicit and must preserve user-owned work and saved outputs.
+
+### Removed scope and retained safeguards
+
+Remove factory-managed implementation task graphs, dependency scheduling, per-task worktrees, integration workspaces, task merge/conflict repair, automatic downstream invalidation/refresh, parked integration candidates, and per-task acceptance machinery. Plans may still describe tasks and dependencies for the implementer; those are planning data, not factory scheduling instructions.
+
+Keep current-script invocation, configurable workflow phases/profiles, run isolation, native permissions, managed attempt limits, fixed-candidate checks/review with bounded corrections, explicit subsequent inputs tied to the selected question/work, and saved traces/prompts/outputs. Managed PR publication and immutable evidence capture are removed. A changed candidate still needs applicable fresh checks and explicit authorization; removing dependency invalidation does not make stale evidence valid.
+
+### Acceptance obligations
+
+1. Prepare a new worktree from the selected committed revision before planning; record its resolved commit identity and verify every phase receives that worktree. Leave the user's checkout and index unchanged; local uncommitted changes are not copied.
+2. Have an implementer delegate parallel children and return one stable candidate. Verify supported child visibility and the parent-only fallback without factory task scheduling or automatic integration.
+3. Keep all writers stopped during checks/review. Block handoff if child activity is uncertain. Run repair in the same worktree, saving prior check/review outputs, then rerun the relevant checks.
+4. Interrupt parent and child work, retain files, and prevent conflicting reuse while activity is uncertain. Later invocation begins at the selected script's entry point.
+5. Keep managed launch/attempt limits truthful when internal delegation is opaque, and avoid double-counting available child usage.
+6. Reject a second invocation against the same worktree, including read-only work; permit separate-worktree invocations within launch limits and internal parallelism under one owner. Block takeover when earlier child access is uncertain, without automatic lock stealing or killing to force reuse.
+7. Preserve structured needs-input questions and saved traces/prompts/outputs independently of worktree cleanup; end the invocation rather than waiting for answers; no publication or immutable evidence subsystem is required.
+
+These are future acceptance cases. No runtime, harness delegation, isolation, or shutdown behavior has been implemented or tested. [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) remains open for mechanisms; [Detailed observability UI design](detailed-observability-ui-design.md) owns revised labels and supported/unsupported child examples.
+
+## Historical task scheduling decision, superseded
+
+The entire record below preserves the previous task scheduler design. Its task graphs, worktrees, queues, integration, freshness propagation, and acceptance obligations are superseded by the resolution above. Historical links and rationale remain available; this record is not an implementation requirement. Its optional uncommitted starting snapshot is also explicitly removed by the committed-revision-only amendment above.
 
 ## Question
 
@@ -136,7 +218,7 @@ These distinctions follow from accepted task checks, serialized integration, ret
 - A parked, failed, or stale required task prevents overall successful completion. Optional pre-publication human review remains separately configurable. Task or integration success does not itself authorize publication.
 - Preserve task output identity and its change relative to its captured input so integration or refresh cannot accidentally reintroduce superseded input content. Concrete Git representation, transactional publication of a revised combined result, and crash reconciliation remain downstream mechanisms.
 
-## Resolution
+## Historical resolution
 
 Closed on 2026-10-13 after the human selected both round-five recommendations, completing this ticket's policy choices. The accepted answers above remain configurable workflow defaults where stated. Identity, ownership, truthful evidence, and recovery obligations apply to custom workflows as well. The following walkthrough derives from those answers; it does not introduce another pipeline or authorize implementation.
 
@@ -177,7 +259,7 @@ These are required future checks, not evidence that an executor exists or passes
 ### Downstream owners and limits
 
 - [Verification and review policy](verification-and-review-policy.md) owns check selection, optional expensive verification, reviewer aggregation, assignment of repairs, exact rerun/reuse rules, and numerical retry/repair budgets. Findings followed by a separate writer, bounded visible conflict repair, and the freshness obligations above are settled inputs.
-- [Human control and publication](human-control-and-publication.md) owns checkpoint decisions, stale and duplicate answers, revision-bound approval, and publication controls. Parking is settled; an integration result still does not grant publication authority.
+- [Human input and execution controls](human-control-and-publication.md) owns checkpoint decisions, stale and duplicate answers, revision-bound approval, and publication controls. Parking is settled; an integration result still does not grant publication authority.
 - [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) owns current-code invocation and history/context reuse. In-invocation repair/freshness checks do not create an arbitrary suspended-plan editing feature.
 - [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns process/workspace/reservation ownership, incomplete history after crashes, safe handling of preserved files, and uncertain effects. No scheduler replay, restored execution graph, or retained executable versions are required.
 - [Swimlane interaction design](swimlane-interaction-design.md) owns presentation of waiting, parked, stale, refreshing, task-accepted, and integrated work using the accepted saved event contract. These terms describe distinguishable facts, not finalized database enum names.

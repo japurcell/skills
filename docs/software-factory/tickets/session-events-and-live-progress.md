@@ -1,8 +1,6 @@
 # Session events and live progress
 
-> Continuation amendment, 2026-10-15: [history is observational](workflow-versioning-and-run-changes.md#resolution). Persisted events, retained evidence, SSE catch-up, and UI replay remain required; none restores workflow execution after runner exit.
-
-> Updated boundary: the [2026-10-15 observability-only amendment](human-control-and-publication.md#observability-only-amendment-2026-10-15) keeps SSE and saved-event observation, but supersedes browser HTTP controls. Execution input belongs to configuration and CLI commands. Historical control references below must be read with that amendment.
+> Current history scope, 2026-10-15: save traces, prompts, and outputs. Immutable registered-evidence capture is removed. Live UI transport/reliability requirements remain accepted while the human compares them with SSSF; asking for that comparison does not change them.
 
 **Type:** grilling
 **Status:** closed
@@ -11,15 +9,70 @@
 
 ## Question
 
-What event and artifact contract makes every custom step and agent session visible in real time and inspectable later?
+How do saved traces, prompts, and outputs support a live and historical view of factory phases and supported subagent sessions?
 
-Define run/task/step/attempt/session identities, parentage, lifecycle events, sequence and cursor behavior, partial output, tool events, artifacts, observed skill use, and usage provenance. Include deterministic commands and work that emits no detailed harness telemetry.
+## Resolution
 
-Decide the user-visible latency target and streaming approach, persistence before display, reconnect behavior, ordering, deduplication, backpressure, retention, sensitive-data handling, and minimum instrumentation for custom steps.
+Apply [accepted uninstall maintenance admission](recovery-and-runtime-selection.md#accepted-uninstall-through-the-maintenance-gate): the dashboard host must stop before uninstall and cannot start during removal. Closing a browser tab is insufficient. History is preserved; factory inspection after successful uninstall requires a compatible installation.
 
-Resolution should define representative events, live/history consistency guarantees, honest unsupported-data states, and acceptance criteria. Do not equate a stored final result with real-time session progress.
+On 2026-10-15 the human simplified historical capture to saved traces, prompts, and outputs. Remove the separate immutable evidence registry, automatic screenshot/report/diff copying, content-addressed evidence storage obligations, and permanent integrity guarantee for arbitrary linked files. Keep useful history without a general artifact archival system.
 
----
+### Saved history
+
+- Save delivered trace events/output chunks, rendered prompts/effective configuration, structured results or textual outputs, check results, attempt outcomes, and available usage under identifiable runs/invocations/phases. Keep failed and corrected attempt outputs distinguishable through their attempt associations, not an immutable artifact service. Under [step-start input resolution](workflow-versioning-and-run-changes.md#step-start-input-resolution), record each step's actual supplied configuration/prompt/skill inputs rather than assuming every phase used one invocation-wide revision.
+- Apply [accepted history preservation for learning](recovery-and-runtime-selection.md#accepted-history-preservation-for-learning): retain full captured history by default, independently of worktree deletion or learning extraction. Keep traceable extraction/source references; cleanup is exceptional, informed, explicit, and repository-idle-only. Never imply capture of content the harness did not deliver or recording did not save.
+- Reports, screenshots, and other files may be ordinary workflow outputs or path/URL references. There is no automatic registration/copying guarantee. A reference may change or disappear; show that limitation and missing-file states rather than claiming the original bytes remain available. Workflows may explicitly save their own files without creating a core archival subsystem.
+- Do not call old outputs current verification of changed code. A later explicit answer refers to the actual saved question and current selected inputs, not an assumed immutable evidence repository.
+- Keep credentials out of saved traces/prompts/outputs using known-secret/configured filtering before persistence. Mark omitted/redacted content honestly; do not promise detection of every secret. No separate binary artifact capture/filter pipeline is required by this simplified history contract.
+
+Apply [accepted saved-history consistency](recovery-and-runtime-selection.md#accepted-saved-history-consistency): SQLite is authoritative for factory records and captured text/JSON, written in bounded chunks after configured filtering. Workflow-generated files remain ordinary references. Capture completeness is separate from execution outcome; retain saved chunks and mark unfinished capture partial/unknown without inventing missing content. Missing essential ownership/accounting storage blocks new invocations until explicit repair, while a missing external report alone does not block unrelated work.
+
+### Live UI reliability unchanged pending discussion
+
+On 2026-10-15 the human explicitly reaffirmed SSE after rejecting the proposed polling replacement. Keep one read-only SSE feed per dashboard document. The retained [transport findings](../research/live-progress-transport-fit/findings.md) support the one-way feed; EventSource handles protocol parsing/reconnection while the application still owns saved history and applied cursors. Polling would retain those correctness obligations while adding request scheduling and polling delay. No net complexity or measured performance benefit justified changing transport. The heading is retained for existing links; transport selection is settled, not pending. Do not add optional transport variants or shared-worker coordination without a demonstrated need. Native/browser qualification and the latency target remain unproved.
+
+- Persist an event or bounded output chunk before displaying it as recorded progress. Live and historical views read committed history. Reconnect catches up from saved cursors and suppresses duplicate delivery.
+- Use one read-only SSE feed per dashboard document for the repository's observed runs/sessions. Track events applied to the view, not only received transport IDs; rebuild or resynchronize when view state is lost. Rebuilding a UI never executes workflow code.
+- Bootstrap from a consistent saved view and cursor, then catch up and stream without omitting committed events. Durable ordering identifies events; timestamps alone do not determine causal order across parallel sessions.
+- A slow or disconnected dashboard must not stop execution. Bound delivery buffers and catch up from history. If recording itself fails or cannot keep up within bounded capacity, stop new dispatch, request graceful interruption, preserve saved data/partial files, and report uncertainty through the terminal if storage cannot record the fault.
+- Keep the independent on-demand dashboard and its lifetime separate from the foreground runner. Opening the UI never starts work; closing it does not stop a runner. Under [accepted idle-upgrade coordination and failure handling](recovery-and-runtime-selection.md#accepted-idle-upgrade-coordination-and-failure-handling), the dashboard process must stop before installation/history modification and cannot restart during the upgrade. Closing its browser tab alone does not establish process shutdown; no live observer migration is required. The [accepted shared maintenance gate](recovery-and-runtime-selection.md#accepted-shared-repository-maintenance-gate) supplies the common admission rule for upgrades, explicit repair, and exceptional history cleanup; this does not change SSE or require a resident coordinator.
+- Keep the acceptance target that at least 95% of small state/output updates appear within one second after factory receipt under documented connected-local load. Model/harness buffering and disconnected time are excluded. This is unmeasured, not a demonstrated advantage over SSSF.
+- Keep optional namespaced custom progress events with a generic readable data view. Only the runner controls authoritative lifecycle transitions; a custom event cannot declare success.
+
+These are stronger explicit delivery/failure contracts, not evidence that SSSF loses events or has an unreliable UI. The [SSSF lifecycle study](../research/sssf-lifecycle-comparison/findings.md) records narrower source findings and their limits.
+
+### Learning extraction visibility
+
+Apply [accepted explicit learning invocations](skill-and-prompt-improvement.md#accepted-explicit-learning-invocations): display extraction as an explicitly launched invocation using existing history/attempt records. Preserve the exact examined source references, candidate reports, and no-proposal findings. A later invocation under the same source run is not implicitly examined. Disclose partial/missing source content. Extracted proposals do not change active configuration and must not appear adopted or proven effective merely because extraction succeeded. Apply [accepted evaluation and human adoption](skill-and-prompt-improvement.md#accepted-evaluation-and-human-adoption): link baseline/candidate identities, cases/results/limitations, the explicit human decision, and actual adoption or revert revisions. Distinguish approved from applied and inconclusive from passing; this view remains observational.
+
+### Attention outcomes and notifications
+
+Apply the notification policy in [Human input and execution controls](human-control-and-publication.md#notifications). Save structured `needs_input`, its question/context/suggested answers, failure reasons, and invocation outcomes. “Needs input” is persistent attention status for an ended invocation, not a running wait or executable checkpoint. Show pending/uncertain cleanup honestly. The UI displays later input/invocation links without rewriting prior outcomes or accepting answers. Under the [accepted needs-input and invocation finalization contract](recovery-and-runtime-selection.md#accepted-needs-input-and-invocation-finalization), show a saved question even if finalization is incomplete, distinguish shutdown-induced interruption from independent failure, and show outcome and cleanup separately. A saved question or attempt result does not imply a finalized invocation outcome.
+
+Desktop delivery and dismissal do not control workflow execution or history retention. Presentation must distinguish a saved outcome from notification delivery failure. Apply the accepted bounded-delivery fallback and opt-in dashboard-scoped reminders from the linked policy. Reminder preferences/acknowledgment affect notification metadata only; no workflow mutation controls are added. Apply [accepted notification defaults and reminder ownership](recovery-and-runtime-selection.md#accepted-notification-defaults-and-reminder-ownership): one dashboard host per repository owns grouped reminders, browser tabs do not independently notify, and SQLite preserves preferences/per-invocation acknowledgment. Initial notices belong to the runner. Under [accepted optional notification links](recovery-and-runtime-selection.md#accepted-optional-notification-links), native click-through is optional and saved details remain accessible through the CLI/dashboard. Do not require a sender to stay alive for clicks or automatically start the dashboard from old alerts. The [accepted shared ownership mechanism](recovery-and-runtime-selection.md#accepted-shared-ownership-mechanism) supplies common claim/check/release behavior, verified existing-host reuse, and explicit stale clearance. An unresponsive endpoint does not prove shutdown. Native delivery and concrete coordination checks remain qualification work; no separate background notifier is authorized.
+
+### Workspace and subagent observation
+
+Apply [Run workspace and implementer delegation](task-scheduling-and-integration.md#resolution). Record pre-phase workspace preparation/failure and starting-content provenance. All phases operate in one run worktree. Observe parent/child identities, timing, lifecycle, output, and usage only where the harness exposes them; internal children are not factory-scheduled tasks.
+
+The accepted index, owner/session timeline, and beneath-timeline inspector remain. Nest supported children under the parent phase. Otherwise display the parent and limited child visibility. Never invent progress or completion from silence or parent exit. Required child visibility must be declared as a capability requirement. Child observability does not prove child shutdown control.
+
+Unknown telemetry stays unknown. Avoid double-counting child usage included in parent totals. The live-load acceptance scenario includes supported child streams and parent-only fallback; factory-managed launch limits do not bound internal child count.
+
+### Acceptance obligations
+
+1. Show the same saved phase outcomes, prompts, and outputs in live and historical views, including failed and corrected attempts.
+2. Exercise reload, reconnect, duplicate delivery, catch-up, and slow/disconnected viewers without skipping committed history or executing work.
+3. Expose recording failure and uncertain incomplete activity honestly; opening/closing the observer must not launch/stop workflow work.
+4. Show supported child sessions and a limited-visibility fallback; handle unavailable metrics and redact configured sensitive output.
+5. Show referenced output files that change or disappear without claiming immutable historical bytes. Preserve saved traces/prompts/outputs through explicit workspace cleanup.
+6. Measure the retained latency target under documented load before claiming compliance; no such measurement has been performed.
+
+[Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns history schema and recording/process mechanisms. [Detailed observability UI design](detailed-observability-ui-design.md) owns labels and fixtures. No runtime, browser transport, recorder, or harness behavior has been implemented or tested.
+
+## Historical observability decisions, superseded where noted
+
+The record below preserves prior choices and rationale. Immutable registered evidence, binary capture guarantees, and artifact integrity/copying obligations are removed by the current resolution. Earlier task scheduling/visibility assumptions are superseded by implementer-owned delegation. Other retained live UI choices are restated above.
 
 ## Decision record
 
@@ -28,9 +81,9 @@ Claimed on 2026-10-13 by `subagent-wmb34t` as the first eligible ticket in filen
 ### Prior answers applied
 
 - Every custom workflow must expose its steps and sessions in a real-time swimlane UI. The six-stage recipe is not a fixed workflow, and unknown future work must remain visibly unknown.
-- [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns run/task/step/session vocabulary, named scopes, parentage, managed effects, and declared outlines expanded with discovered work. Pure helpers need no separate visible step; managed external effects and agent sessions do.
+- [Workflow authoring and task contract](workflow-authoring-and-task-contract.md) owns run/invocation/step/session vocabulary, named scopes, parentage, managed effects, and outlines expanded with observed work. Pure helpers need no separate visible step; factory-managed external effects and agent sessions do. Harness-internal children follow the conditional observation contract above.
 - [Agent execution profiles](agent-execution-profiles.md) requires live output, lifecycle status, final output/artifact references, and a stop path. Rich tool events, exact usage/cost, and positive skill-loading evidence may be unavailable and must be labeled unknown or unsupported. Do not ask the user to choose that minimum again.
-- Requested instructions, delivery mode, observed loading, and actual compliance are distinct. Effective harness/model/reasoning/prompt/skills and configured fallbacks must be visible. Review verdicts, generated task graphs, and other agent outputs controlling execution require validated schemas; readable reports may use text and artifacts.
+- Requested instructions, delivery mode, observed loading, and actual compliance are distinct. Effective harness/model/reasoning/prompt/skills and unsupported-setting failures must be visible. The [selected-profile-or-failure decision](agent-execution-profiles.md#selected-profile-or-failure) removes automatic fallback chains. Review verdicts, implementation outcome reports, and other agent outputs controlling factory execution require validated schemas; readable reports may use text and artifacts.
 - [Operating and installation model](operating-and-installation-model.md#resolution) owns local offline inspection/control, keeping history/transcripts/artifacts until explicit cleanup, preserving partial work and historical evidence, and keeping credentials out of configuration and logs. These policies are settled.
 - The foreground TypeScript runner and SQLite history are selected. Opening the UI never starts work. Explicit script invocation and human approval remain distinct. An on-demand UI observer does not change this operating contract.
 
@@ -81,21 +134,23 @@ The following engineering obligations make the confirmed policies concrete. They
 - Live and historical inspection reconstruct the same committed step/session outcomes and output. Reload, connection loss, duplicate delivery, and events arriving during catch-up neither lose committed records nor apply a record twice to the UI projection. Cursor handling must cover a received event that was not yet successfully applied by the UI.
 - Parallel sessions retain distinct run/step/attempt/session identities and output ordering; an ordinary command and a quiet custom step remain visible without fabricated progress or unavailable usage metrics.
 - A namespaced custom event with an unfamiliar type appears through the generic message/data view and survives history replay. Attempts to impersonate reserved lifecycle events or use invalid event envelopes are rejected. A custom progress message cannot turn an unsuccessful attempt into a successful one.
-- Under the documented representative load, at least 95% of small updates appear within one second from factory receipt, including batching and persistence. Test each supported browser/OS combination and separate reconnect/catch-up measurements. The representative load must include the supported concurrency chosen in scheduling; selecting that workload does not weaken the accepted target.
+- Under the documented representative load, at least 95% of small updates appear within one second from factory receipt, including batching and persistence. Test each supported browser/OS combination and separate reconnect/catch-up measurements. The representative load must include factory-managed concurrency and supported internal child streams; selecting that workload does not weaken the accepted target.
 - Slow or closed viewers do not stop recording. Recording failure follows the accepted interruption policy and leaves uncertain process/effect outcomes for human resolution or relevant checks before another explicit invocation.
 - Overwriting or deleting the original screenshot/report leaves the registered historical evidence unchanged. Incomplete capture is never announced as an available artifact. Missing or corrupt retained evidence is visible, and cleanup must not silently discard retained evidence or partial work.
 - Opening/reconnecting the independent dashboard never dispatches workflow work. Closing the dashboard does not stop an independently running foreground invocation; closing that invocation follows the established interruption/recovery contract.
 - Sensitive payload handling is exercised across chunk boundaries and artifact registration. Redacted or excluded content remains visibly identified as such. No test result should claim that arbitrary unknown secrets can always be discovered.
 
-## Resolution
+## Historical resolution
+
+The delegation amendment above supersedes mandatory task-level instrumentation and universal child registration. Retain managed phase instrumentation and observe internal children where supported.
 
 Closed on 2026-10-13 after the human accepted all three answer rounds, including the separately explained retained-evidence choice. Both exact prerequisites, `workflow-authoring-and-task-contract.md` and `agent-execution-profiles.md`, were verified closed. The confirmed-answer sections above own the live/history, latency, recording-failure, dashboard, retained-evidence, transport, and custom-progress policies. The event/artifact obligations and acceptance cases carry those policies into the implementation-ready specification without claiming implementation proof.
 
 Remaining mechanisms have existing owners:
 
-- [Task scheduling and integration](task-scheduling-and-integration.md) supplies supported concurrency and resource limits for representative live-progress load tests.
+- [Run workspace and implementer delegation](task-scheduling-and-integration.md) owns the shared run worktree, managed launch limits, and conditional child visibility. Load tests must cover reported subagent streams without assuming factory limits cap internal delegation.
 - [Verification and review policy](verification-and-review-policy.md) determines what registered evidence proves and when new work invalidates its applicability. Retaining old evidence does not make it current evidence for a later revision.
-- [Human control and publication](human-control-and-publication.md) owns control authorization, stale decisions, native harness approvals, and CLI input to live requests and explicit subsequent invocation.
+- [Human input and execution controls](human-control-and-publication.md) owns control authorization, stale decisions, native harness approvals, and CLI input to live requests and explicit subsequent invocation.
 - [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns history-write integrity, process ownership, artifact publication/incomplete capture, and interrupted-work handling. A durable browser stream is not an exactly-once external-effect guarantee.
 - [Workflow versioning and run changes](workflow-versioning-and-run-changes.md) removes executable-state migration; readable event/result/artifact history across upgrades remains an obligation for the lifecycle ticket. Exact field spelling may change while preserving this contract.
 - [Swimlane interaction design](swimlane-interaction-design.md) owns the presentation of the agreed states, output, evidence, and custom events; [Specification readiness and acceptance](specification-readiness-and-acceptance.md) consolidates platform/browser and performance proof.

@@ -1,11 +1,13 @@
 # Swimlane interaction design
 
-> Post-acceptance lifecycle amendment, 2026-10-15: layout acceptance remains valid. [SSSF-style continuation](workflow-versioning-and-run-changes.md#resolution) supersedes fixture text about saved waits after runner exit or Continue restoring an interrupted run. The HTML is retained as layout evidence; the detailed UI ticket owns replacement labels and scenarios.
+> Post-acceptance lifecycle amendment, 2026-10-15: layout acceptance remains valid. [SSSF-style continuation](workflow-versioning-and-run-changes.md#resolution) supersedes fixture text about saved waits after runner exit or Continue restoring an interrupted run. The HTML is retained as layout evidence; the detailed UI ticket owns replacement labels and scenarios. The later non-interactive amendment also removes live human/native permission waits: show ended needs-input outcomes and attention notifications under [Human input and execution controls](human-control-and-publication.md#resolution).
 
 **Type:** prototype
 **Status:** closed
 **Blocked By:** session-events-and-live-progress.md, human-control-and-publication.md
 **Research Dir:** not applicable
+
+> Workspace/delegation amendment, 2026-10-15: the accepted layout remains. Interpret lanes as phases and owner/session activity, nesting harness-reported subagents beneath their parent. Factory task scheduling, integration lanes, and per-task workspace semantics are historical. The detailed UI ticket owns fixture updates, workspace preparation, and parent-only visibility examples. Managed publication, generic criterion-evidence/reviewer-policy panels, and immutable captured-artifact guarantees are also superseded; retain the accepted layout with ordinary saved results.
 
 ## Question
 
@@ -15,7 +17,7 @@ Work with the human using the prototype skill when this ticket is selected. Exis
 
 Choose lane grouping, nesting, planned versus observed work, dynamic task insertion, session/attempt drilldown, active output, wait/failure/skipped states, and live versus historical navigation. Observe the updated human-control contract: workflow inputs are configuration and command arguments, not browser controls.
 
-Use representative workflows: the default task graph, a review-only run, and a custom workflow with a branch and loop. Resolve through human review of a cheap interactive artifact; link that artifact rather than embedding it in this ticket.
+Use representative workflows: an implementation phase with supported nested subagents, a parent-only implementation with unavailable child telemetry, a review-only run, and a custom workflow with a branch and loop. Resolve through human review of a cheap interactive artifact; link that artifact rather than embedding it in this ticket.
 
 ---
 

@@ -1,6 +1,6 @@
-# Human control and publication
+# Human input and execution controls
 
-> Current policy: the [current resolution](#resolution) applies both 2026-10-15 amendments: observability-only UI and SSSF-style continuation without durable workflow resume. Earlier conversation rounds below are historical where they conflict.
+> Current policy, 2026-10-15: non-interactive harness steps with explicit permissions; structured `needs_input` ends the invocation; human decisions occur in later explicit invocations. No live human waits or native approval bridge. Managed PR publication remains removed. Earlier conflicting decisions below are historical.
 
 **Type:** grilling
 **Status:** closed
@@ -9,56 +9,78 @@
 
 ## Question
 
-Where can a workflow request human input, and what must be true before it creates a PR or another external artifact?
-
-Decide optional checkpoint semantics, approve/revise actions, timeouts, authorization, binding decisions to evidence and revisions, and rejection of stale or duplicate decisions. Apply the accepted Pause/Continue/Cancel controls below. Clarify workflow review versus a harness's native tool approval.
-
-Apply the closed [Verification and review policy](verification-and-review-policy.md#resolution): unresolved blocking disputes reach human input after one clarification round; attempts, evidence, budgets, and timeouts remain recorded; Continue does not renew limits or satisfy a missing gate. Discuss authorization for deliberate changes and how the human responds, without re-asking accepted verification defaults. Attempt timeouts do not select human-checkpoint deadlines or make pre-PR human approval mandatory.
-
-Apply the amended interruption policy for Pause/Ctrl+C in [Operating and installation model](operating-and-installation-model.md#resolution); do not re-ask whether Pause interrupts or drains active steps, or whether Cancel is terminal. Define steering actions, signal escalation, child-process and orphan handling, treatment of active runs during uninstall, and which changes require a new run or checkpoint.
-
-Set publication identity and reconciliation rules for a crash after the remote action but before recording its result. PR creation, pushing, merging, and deployment are separate actions; do not infer authorization from one to another.
-
-Resolution should specify the human interaction contract and acceptance cases for stale approvals and duplicate publication.
-
----
+How does the factory request human attention without interactive harness calls or a live human-response subsystem?
 
 ## Resolution
 
-### Continuation amendment, 2026-10-15
+On 2026-10-15 the human accepted non-interactive harnesses, structured `needs_input` outcomes, and the notification recommendation after clarifying that human review is not a mandatory stage. This supersedes optional live factory questions/reviews and factory-mediated native approval callbacks. Managed PR publication was removed earlier on the same date. The filename remains for existing links. This is a planning decision, not implementation authorization.
 
-The human explicitly removed durable workflow resume in favor of [SSSF-style continuation](workflow-versioning-and-run-changes.md#resolution). Keep the separate observability-only amendment: all execution inputs come from configuration/CLI; the dashboard has no execution mutation endpoints. This section supersedes conflicting lifecycle/checkpoint statements in the dated record below; unrelated accepted policies remain in force.
+### Non-interactive execution and permissions
+
+- Run managed harness steps without a live human answer channel. Supply instructions and effective permissions before launch, stream supported output, and capture the result. The exact CLI/RPC/SDK mode is adapter-specific and requires validation; non-interactive does not prescribe a single protocol.
+- Preserve native permission enforcement and existing authentication. Non-interactive does not mean blanket approval, disabling a sandbox, or widening access. Operations outside explicit permissions must be denied or reported as blocked. Do not silently switch to a permissive mode to keep work running.
+- Remove factory translation/routing of native questions and approval callbacks, pending native-request registries, live grants, response withdrawal, and live response deduplication machinery. Delegation grants no extra authority; internal children must operate within the supported non-interactive permission contract.
+- Reject unsupported required behavior under [selected profile or failure](agent-execution-profiles.md#selected-profile-or-failure); do not automatically substitute another profile. A harness that cannot provide the selected permission policy without interaction is not qualified for that profile. Unexpected interactive behavior must surface as unsupported/blocked failure and terminate safely, never an invisible wait or automatic approval. Concrete detection and cleanup remain lifecycle/adapter work.
+
+### Structured outcomes and human decisions
+
+- Normal work proceeds automatically through configured phases, checks, review, and bounded corrections. There is no mandatory human plan/candidate approval stage or factory-supported live review phase.
+- Use a schema-valid `needs_input` outcome when progress requires a human decision, clarification, or authorization. Preserve the question, relevant context, suggested answers where useful, saved outputs, and partial work. Exact field names and schema remain specification details.
+- `needs_input` is a recognized non-success outcome, not malformed output and not a reason to launch automatic format corrections. Stop further workflow dispatch, safely finish/stop owned work, record the outcome, and exit the invocation. Process shutdown uncertainty remains visible and blocks unsafe workspace reuse; the result alone is not proof that children stopped.
+- A failed operation, unsupported capability, or exhausted correction allowance remains a failed outcome, not automatically a question. Notify the human of the failure. Use `needs_input` only when an actual decision or missing input is identified; never disguise execution failure or approval refusal as success.
+- Human decisions are required only when `needs_input` identifies them, not as a routine gate. Failure may require intervention without requiring an answer to a question. The user may voluntarily inspect or change inputs between invocations.
+- Answers arrive as explicit CLI/configuration inputs to a later invocation. That invocation executes the selected current script from entry, may explicitly select preserved work/history and saved inputs, starts fresh native conversations, and validates current inputs and permissions. It does not resume a suspended phase or invoke an old callback. History records which prior question/context the new input addresses; it grants no authority by itself.
+- Keep selected input/candidate identity and explicit authorization meaningful across invocations. Changed or missing relevant inputs cannot silently inherit an old approval. This does not require a live response ledger, immutable evidence archive, or generic approval engine.
+- No process remains alive solely awaiting a human response. Live wait deadlines and human-wait exclusions from managed attempt timers are removed. Explicit allowance increases remain recorded without resetting consumed counters; answering a question or joining history is not an increase.
+
+Apply the [accepted needs-input and invocation finalization contract](recovery-and-runtime-selection.md#accepted-needs-input-and-invocation-finalization): save the minimal actionable question before cleanup, interrupt other active managed calls, preserve results received during shutdown, and distinguish the execution outcome from cleanup. Incomplete finalization remains unknown; question answers and ownership release are separate actions. Exact result field names and exit-code values remain specification details.
+
+### Notifications
+
+| Outcome | Accepted notification behavior |
+| --- | --- |
+| `needs_input` | Prominent desktop notification, persistent dashboard “Needs input” status, and a clear CLI message. |
+| Failed invocation or exhausted corrections | Prominent desktop notification explaining the blocker and next action, with saved failure status and CLI output. |
+| Successful completion | Quiet completion notification, configurable. |
+| Normal progress or successful automatic correction | Dashboard updates only; no attention notification. |
+
+Attention notifications identify the repository and run and explain the outcome. Native clickable links are optional under [accepted optional notification links](recovery-and-runtime-selection.md#accepted-optional-notification-links); saved details remain accessible through the CLI/dashboard independently of desktop delivery or click support. Questions include suggested answers where useful. Notification delivery is separate from execution: dismissing or missing a notification cannot discard the saved question, authorize work, or keep a runner waiting. The dashboard remains observability-only; supported notification links open details, not execution actions. Do not keep senders alive solely for clicks or automatically start the dashboard to open old alerts. Later explicit inputs do not erase the earlier invocation's saved outcome.
+
+On 2026-10-15 the human accepted bounded notification delivery and dashboard-scoped reminders:
+
+- Save the invocation outcome before attempting a desktop alert. Bound the delivery attempt with a timeout. If delivery fails or permission is denied, preserve the original outcome, record a separate delivery warning, show that warning in CLI/dashboard, and exit according to the original outcome. Do not keep the runner alive retrying notification delivery.
+- Surface known notification unavailability before work starts. Desktop attention is best effort; a user away from the terminal may miss the event. Saved questions and outcomes remain available independently of delivery.
+- Reminders are configurable and disabled by default. When enabled, reminders run only while the dashboard runs. Closing it stops reminders; reopening shows outstanding attention items without replaying a backlog of missed alerts. Do not install a separate background notifier or keep an invocation alive to deliver reminders.
+- Acknowledging a reminder only silences it. Reminder preferences and acknowledgment are notification metadata, not workflow inputs. They cannot answer a question, change an invocation outcome, authorize execution, or broaden the dashboard into an execution controller. This is a narrow allowance for notification controls within the observability UI; workflow mutation endpoints remain prohibited.
+
+Apply [accepted notification defaults and reminder ownership](recovery-and-runtime-selection.md#accepted-notification-defaults-and-reminder-ownership): one initial summary per invocation from the runner, a configurable five-second delivery timeout, and opt-in grouped repository reminders with a configurable fifteen-minute interval. One on-demand dashboard host per repository serves its browser tabs and owns reminders; repository SQLite stores preferences and per-invocation acknowledgment. Wait a full interval after startup/enablement and do not replay missed alerts. Stopping the host stops reminders; closing a browser tab alone may not stop the host. Exact native delivery, schema/single-host coordination, and presentation remain specification/qualification work. Delivery and native-platform behavior have not been implemented or proved.
 
 ### Accepted Pause and Cancel controls
 
-- **Pause/Ctrl+C:** stop new dispatch, request graceful interruption, retain partial work and history, and report incomplete/uncertain outcomes. Runner exit does not save a restorable execution position. The accepted configurable thirty-second grace and owned-process-only termination policy remain.
-- **Continue:** if this label is used, explicitly invoke the selected current script from its entry point, optionally joining prior history/context. Do not claim resume-at-failure or skip completed phases. Joining history is not approval, an allowance increase, or permission to blindly repeat an uncertain effect.
-- **Cancel:** mark abandonment after handling owned work and uncertain effects. Preserve history and files; do not present the cancelled execution as resumable. Subsequent work is a separate explicit invocation with its own authorization, even if it references preserved artifacts.
+- **Pause/Ctrl+C:** stop new dispatch, request graceful interruption, retain files/history, allow the accepted configurable thirty-second grace, then terminate only positively identified owned processes. Report uncertainty. No restorable execution position is saved.
+- **Continue:** if retained as a label, explicitly invoke the current selected script from entry, optionally joining history/context. It neither skips completed phases nor grants approval or extra allowance.
+- **Cancel:** mark abandonment while preserving files/history; handle owned work and surface unresolved activity. Subsequent execution requires an explicit invocation.
 
-### Human waits and approvals
+Apply [Run workspace and implementer delegation](task-scheduling-and-integration.md#resolution): one worktree before all phases; stable candidate handoff; unsafe reuse blocked by uncertain child activity. Uninstall still refuses active or uncertain owned work. Non-interactive execution does not remove process ownership or cleanup obligations.
 
-Factory gates still allow optional human review, no default expiry, bounded feedback repair, explicit allowance increases, approval withdrawal before dispatch, and revision/evidence/policy/action binding. Native requests retain their own capability/scope checks, with one-action default and broader grants only when the profile permits them.
+Apply the [accepted manual-cleanup fallback](recovery-and-runtime-selection.md#accepted-manual-cleanup-fallback). Use reliable automatic child cleanup where supported; otherwise preserve blocked ownership, explain the known activity and limitation, and notify the operator that manual cleanup is required. The runner may exit with unresolved cleanup recorded rather than waiting for the operator. This does not claim children stopped or turn a cleanup failure into a human question. Later clearance follows the [accepted cleanup confirmation and ownership release contract](recovery-and-runtime-selection.md#accepted-cleanup-confirmation-and-ownership-release): explicit confirmation and a short cleanup note, available checks, and atomic release of the inspected claim. Operator-confirmed clearance is distinct from machine-verified shutdown and does not launch work or answer a structured needs-input question.
 
-A workflow waiting for a response can proceed only while its foreground owner remains live. Requests/responses can be recorded for observation, but the previous default of saving a durable factory wait, exiting, and later resuming it is removed. After interruption, a later explicit workflow invocation must reach and validate its own gate; old responses do not automatically transfer to a new request. Dead native callbacks cannot be answered or revived. Exact CLI delivery and wait shutdown behavior remain lifecycle design work.
+### Publication remains removed
 
-### Publication and accounting remain bounded
+There is no built-in push/PR operation, draft-PR default, publication authority model, publication intent ledger, remote-outcome reconciliation, base-refresh publication protocol, or duplicate-PR guarantee. Workflows may finish with local changes and a report. A user or explicitly authored custom workflow may publish under its own authorization and failure handling; arbitrary command capability grants no publication authority or safe-retry guarantee. Do not recreate publication management as a generic effect engine.
 
-Keep launch-authorized destination/action scope, GitHub draft-PR default, optional configured checkpoint, separate push/PR effects, explicit merge/deploy authority, and completion only after the configured publication outcome is confirmed. Base advancement still requires refresh and affected gates/approval. Unexpected remote changes block for human resolution. Partial publication retains the branch rather than automatically compensating by deletion.
+### Acceptance obligations
 
-Keep stable publication intent and observed remote outcome records. Before repeating an uncertain publication action, establish its prior outcome or block for human resolution. A new script invocation does not itself prove repetition safe. These records support a bounded effect check, not restoration of workflow control flow. Preserve existing counters when joining the same history; history/context reuse alone grants no new allowance. Uninstall still refuses active or uncertain owned work.
+1. Complete ordinary workflow phases without human approval, preserving configured permissions and required capabilities.
+2. Return valid `needs_input`, save the actionable question/partial work, stop owned work, and exit without waiting or launching correction attempts for that valid outcome.
+3. Supply a later explicit answer, validate current inputs, and start from script entry without reviving callbacks, skipping phases automatically, or resetting allowances.
+4. Reject or report restricted operations and unsupported interactive requests without broadening permissions; exercise child shutdown uncertainty separately.
+5. Show needs-input, failed, and completed outcomes accurately; exercise desktop/CLI notices, persistent history, unavailable notification delivery, and no repeated reminders by default. Dismissing a notice must not execute work or lose the question.
+6. Preserve interruption and data-preserving uninstall; finish local workflows without managed publication or an immutable evidence registry.
+7. Exercise denied, unavailable, and stalled desktop delivery: preserve the original outcome, show a separate warning, and exit within the configured delivery bound. Show known unavailability before launch.
+8. Verify reminders are off by default and stop with the dashboard. Reopening shows outstanding items without replaying missed alerts. Acknowledgment silences reminders without answering, authorizing, or changing execution history.
 
-### Current acceptance scenarios
-
-1. Invoke the same workflow with existing history after interruption. It starts from its entry point, adds distinguishable invocation/phase records, and does not automatically skip old completed phases.
-2. Wait for CLI input with a live owner; reject stale/conflicting responses and record duplicate outcomes consistently. Closing the observer does not stop the runner. Owner exit invalidates its executable wait; reopening the UI or saving history never restarts work.
-3. Change candidate revision, evidence, gate policy, or action. Old approval cannot approve the changed request. Withdrawal before dispatch prevents the action; withdrawal after dispatch does not promise rollback.
-4. Pause/Cancel cooperative and unresponsive children. Apply the configured grace, terminate only positively identified owned processes, preserve incomplete history, and surface uncertain ownership/effects. No test expects restoration of a saved execution position.
-5. Reuse compatible agent context under explicit invocation, preserve required capabilities/permissions, and reject dead native callback IDs. Fresh-session fallback remains explicit and recorded.
-6. Crash after push/PR creation but before recording success. A subsequent publication attempt must resolve the existing intent or block; missing local completion must not create a duplicate PR.
-7. Verify recorded budgets, current gates, refreshed-base behavior, explicit scope increases, and partial-publication handling remain enforced independently of invocation/history identity.
-8. Verify the observer exposes no execution mutations. Keep platform/native-grant conformance cases from the retained research.
-
-[Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns detailed mechanisms. [Detailed observability UI design](detailed-observability-ui-design.md) owns truthful labels for interrupted invocations and historical requests. This amendment changes policy only; no runtime behavior has been implemented or tested.
+No runtime, notification delivery, or harness capability has been implemented or validated. [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) owns remaining mechanisms. The historical record below retains superseded live-wait, publication, and immutable-evidence policies.
 
 ## Historical decision record
 
@@ -83,10 +105,10 @@ Claimed on 2026-10-14 after verifying both exact prerequisites, `task-scheduling
 
 - [Confirmed factory requirements](confirmed-factory-requirements.md#confirmed-requirements) already makes pre-PR human review configurable. Arbitrary code-defined workflows may place checkpoints where needed; the six-stage recipe is not a mandatory pipeline. Do not ask whether human pre-PR review is always required.
 - [Operating and installation model](operating-and-installation-model.md#selected-executor-and-continuation) owns one foreground runner per invocation and explicit human-triggered Continue. Opening the repository, dashboard, or a new invocation does not automatically resume old work. Continue is not approval, a budget reset, or permission to blindly repeat effects.
-- The [operating resolution](operating-and-installation-model.md#resolution) already selects resumable Pause/Ctrl+C, preserving work and history, and data-preserving uninstall with a separate purge. Pause stops new dispatch and requests graceful interruption rather than merely draining active steps. The control was originally named Stop; the accepted rename below changes its label, not its behavior. Its signal escalation and uncertain child-process handling remain mechanisms for this ticket and recovery.
+- The [operating resolution](operating-and-installation-model.md#resolution) already selects resumable Pause/Ctrl+C, preserving work and history, and data-preserving uninstall. The later [full-purge removal](recovery-and-runtime-selection.md#accepted-removal-of-built-in-full-purge) supersedes the separate purge originally anticipated here. Pause stops new dispatch and requests graceful interruption rather than merely draining active steps. The control was originally named Stop; the accepted rename below changes its label, not its behavior. Its signal escalation and uncertain child-process handling remain mechanisms for this ticket and recovery.
 - [Agent execution profiles](agent-execution-profiles.md#resolution) owns existing harness authentication and permission controls, with no mandatory factory sandbox. Native tool approvals stay distinct from workflow checkpoints and cannot be silently approved or bypassed. The initial trust model is local single-user operation in explicitly selected trusted repositories, with credentials outside repository settings and logs.
 - [Session events and live progress](session-events-and-live-progress.md#resolution) owns the independent on-demand repository dashboard, saved-before-display events, SSE updates, separate HTTP controls, and immutable registered evidence. Closing the dashboard does not stop an independently running invocation. Round two below settles the UI Continue interaction; platform and ownership mechanisms remain unverified.
-- [Task scheduling and integration](task-scheduling-and-integration.md#resolution) owns independent-branch progress, parking unintegrated candidates awaiting input, and pausing ordinary scheduling when stale code is already integrated. A human response cannot bypass rebuilding/rechecking a parked candidate against changed combined inputs.
+- [Run workspace and implementer delegation](task-scheduling-and-integration.md#resolution) owns independent-branch progress, parking unintegrated candidates awaiting input, and pausing ordinary scheduling when stale code is already integrated. A human response cannot bypass rebuilding/rechecking a parked candidate against changed combined inputs.
 - [Verification and review policy](verification-and-review-policy.md#resolution) owns required/advisory gates, criterion-level evidence, bounded repair and correction, attempt timeouts, and one reviewer-clarification round before unresolved disputes reach a human. Missing required evidence and exhausted allowance do not become success through Continue. Attempt timeouts exclude recorded human waits but do not select checkpoint deadlines.
 - Stale approvals and duplicate publication remain required acceptance scenarios from the user's earlier prototype request. Task/gate acceptance does not itself authorize publication. Round two settles approval binding and stale/duplicate response policy; storage mechanics and remote-effect reconciliation remain to be specified. Do not treat prior illustrative methods as finalized interfaces.
 

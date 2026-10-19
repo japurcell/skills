@@ -9,17 +9,32 @@
 
 ## Question
 
-What is the smallest code-defined workflow contract that supports arbitrary workflow structure and both imported and agent-generated task graphs?
-
-Discuss workflow definitions versus run data; custom stages, conditions, nesting, parallel work, and bounded loops; task identity, dependencies, acceptance criteria, and artifacts; plan import and ambiguity handling; and which invariants every custom step must honor.
-
-Decide how much structure authors must declare so the UI can show planned work and dynamically discovered work. Consider plain TypeScript functions, a constrained builder, and configuration-driven recipes without assuming one is selected.
-
-Resolution should include vocabulary, example contracts for the user's default workflow and one structurally different workflow, validation rules, and the chosen extension seam. Do not implement the runtime.
-
----
+What ordinary TypeScript workflow contract supports configurable phases, plan inputs, and implementer-owned delegation without a factory task scheduler?
 
 ## Resolution
+
+Updated on 2026-10-15 for the accepted [run workspace and implementer delegation](task-scheduling-and-integration.md#resolution) model. The dated contract below is historical wherever it requires factory-executable task graphs, parallel task scheduling, or child registration before launch.
+
+- Apply [accepted workflow build and loading](recovery-and-runtime-selection.md#accepted-workflow-build-and-loading): type-check/build once at invocation start, before phases, and execute generated JavaScript from entry. Build failure launches no phase. Workflow-code edits affect later invocations; prompts/settings/skills retain step-start resolution. No watcher, hot reload, or factory-managed incremental build cache.
+- Apply [accepted workflow dependency installation](recovery-and-runtime-selection.md#accepted-workflow-dependency-installation): workflows share one repository factory dependency environment, including the compiler. Authors explicitly install/update additions through idle maintenance; missing/incompatible dependencies fail startup without automatic installation or lock changes. No per-workflow environments. Application dependency commands retain their separate authorized scope.
+- Workflows are ordinary TypeScript routines with managed agent and command operations, conditions, reusable scopes, and bounded loops. Configuration supplies values; code controls phase execution. There is no required task-graph builder, task dispatcher, or durable workflow engine.
+- Accept prompts, externally authored prose plans, and structured plans. Preserve original plan provenance and clarify consequential scope or acceptance gaps. Tasks and dependencies may inform the implementer's work, but the factory no longer requires every plan to become a normalized executable graph or dispatches its nodes. Workflow-specific input schemas may validate structured data without establishing a core scheduling contract.
+- A run groups history and accounting; each explicit invocation executes a selected current script from its entry point. A step/phase is a factory-managed operation, an attempt is one execution of it, and a session is a concrete harness conversation. A plan task describes work; an observed subagent session is not a factory-scheduled task. Exact identity fields remain lifecycle work.
+- Prepare or validate the selected run worktree before any workflow phase, including planning. All phases receive that repository working directory. The workspace owner ticket defines provenance, preservation, and writer handoff.
+- Factory-managed external operations have identities, parent scopes, input/output references, outcomes, and associated sessions. Pure helpers need no separate step. Harness-internal subagent operations remain parent-owned and are observed where supported, rather than individually wrapped in factory scheduling operations.
+- Declare an outline of expected phases and expansion points. Unknown future work stays unknown. Attach observed child sessions when the harness reports them; do not require factory registration before a harness launches a child. Preserve original event timing and reported parentage where available.
+- Validate agent-produced outputs that control factory execution, including completion/acceptance reports and review verdicts. Text reports and artifacts need not all use structured envelopes. Process exit or structurally valid output alone does not establish acceptance or child quiescence.
+- Keep arbitrary workflow composition. Independent read-only reviews can be configured against a fixed candidate, but concurrent repository writers and task integration are not a factory orchestration feature. The default implementer coordinates its internal team and supplies one result.
+
+A repository-change recipe may plan, implement with internal delegation, verify, review, repair, return structured `needs_input` when necessary, or report its local result. A read-only audit may inspect, delegate investigations through its harness, synthesize, and report. Both start inside an isolated run worktree; neither requires an executable task graph. The workflow language and UI must not hardcode these example phases. All managed harness calls are non-interactive. A valid `needs_input` stops further workflow dispatch and ends the invocation after safe cleanup; no live human gate remains. Apply the [accepted needs-input and invocation finalization contract](recovery-and-runtime-selection.md#accepted-needs-input-and-invocation-finalization): save the question before cleanup, stop new managed admissions, request interruption of other active managed calls, and preserve their received results. Normal phases proceed without human review. Later answers are inputs to an explicit new invocation from entry, as defined by [Human input and execution controls](human-control-and-publication.md#resolution).
+
+Profiles, skills, and explicit selection without automatic fallback remain with [Agent execution profiles](agent-execution-profiles.md). Structured results, checks, review phases, and bounded corrections remain with [Verification and review policy](verification-and-review-policy.md#resolution). Observation and UI tickets own nested child rendering, with unsupported telemetry labeled honestly. No implementation is authorized by this amendment.
+
+## Historical authoring contract, superseded where noted
+
+The original decisions below preserve rationale. The current resolution removes mandatory executable task records/graph validation, task scheduling, and universal pre-registration of child sessions. Other retained requirements are restated above or owned by their linked decisions.
+
+## Historical resolution
 
 Accepted on 2026-10-12 through the live exchange: the user selected three authoring choices, selected both task-record and ambiguity recommendations, then answered "accept all" to the four remaining contract details. The prerequisite, `confirmed-factory-requirements.md`, was verified closed. This resolves the authoring and task contract; it does not authorize implementation.
 
@@ -74,7 +89,7 @@ The final acceptance covers task data versus code, graph validation, the managed
 ### Downstream decisions and limits
 
 - Code-level scopes and reusable routines are accepted. Their mapping to observable scopes remains a schema detail; no persisted execution position is required.
-- Agent configuration precedence belongs to [Agent execution profiles](agent-execution-profiles.md). Scheduling, workspace ownership, and integration belong to [Task scheduling and integration](task-scheduling-and-integration.md).
+- Agent configuration precedence belongs to [Agent execution profiles](agent-execution-profiles.md). Scheduling, workspace ownership, and integration belong to [Run workspace and implementer delegation](task-scheduling-and-integration.md).
 - Review policies, evidence requirements, and exact repair limits belong to [Verification and review policy](verification-and-review-policy.md). Human control and publication policy remain in their own ticket.
 - Event schemas and delivery behavior belong to [Session events and live progress](session-events-and-live-progress.md); visual interaction belongs to [Swimlane interaction design](swimlane-interaction-design.md). The accepted outline does not choose a transport or UI layout.
 - Current inputs and later invocation semantics belong to [Workflow versioning and run changes](workflow-versioning-and-run-changes.md). Structural validation alone does not authorize arbitrary edits to an active run.
