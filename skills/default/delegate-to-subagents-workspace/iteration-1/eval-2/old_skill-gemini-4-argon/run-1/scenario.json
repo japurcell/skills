@@ -1,0 +1,6 @@
+{
+  "id": 2,
+  "prompt": "Describe the immediate action only. A worker has verified a critical durable guidance error in a canonical document owned by another task. Several unrelated tasks are still running. Explain when and where the finding is recorded and how the owner learns about it.",
+  "expected_output": "The worker retains scoped evidence and promptly notifies the document owner rather than waiting for the final session pass or rewriting another owner's document.",
+  "files": []
+}

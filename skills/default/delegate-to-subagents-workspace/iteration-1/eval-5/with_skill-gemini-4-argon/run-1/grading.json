@@ -1,0 +1,39 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "Warn the overdue worker without interrupting; request status, completed work, blockers and ETA.",
+      "passed": true,
+      "evidence": "Warns without interrupting overdue work, retains failed-work evidence, diagnoses before escalating, and caps replacement retries at one. See response.md and transcript.md."
+    },
+    {
+      "text": "Retain failed-worker settings, limit, error, partial work and artifacts before replacement.",
+      "passed": true,
+      "evidence": "Warns without interrupting overdue work, retains failed-work evidence, diagnoses before escalating, and caps replacement retries at one. See response.md and transcript.md."
+    },
+    {
+      "text": "Diagnose task and environment; timeout alone does not justify a stronger model.",
+      "passed": true,
+      "evidence": "Warns without interrupting overdue work, retains failed-work evidence, diagnoses before escalating, and caps replacement retries at one. See response.md and transcript.md."
+    },
+    {
+      "text": "Allow at most one replacement unless the user authorizes more.",
+      "passed": true,
+      "evidence": "Warns without interrupting overdue work, retains failed-work evidence, diagnoses before escalating, and caps replacement retries at one. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 819
+  },
+  "runtime_model": "gemini-4-argon",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

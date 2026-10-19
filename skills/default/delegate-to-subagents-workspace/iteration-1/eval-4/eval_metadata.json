@@ -1,0 +1,11 @@
+{
+  "eval_id": 4,
+  "eval_name": "approval-and-prompt-isolation",
+  "prompt": "Describe procedure only; do not dispatch or write files. The user requested pre-dispatch approval, but gave no model preference. All task facts are available. Explain routing and approval order, worker prompt contents, and what happens if approval adds a new model constraint.",
+  "assertions": [
+    "Route independently before requesting approval; do not solicit model preferences.",
+    "Wait for requested approval before dispatch; new constraints require a fresh route.",
+    "Apply exact model and effort outside worker prompts; exclude generated routing/audit metadata.",
+    "Prohibit nested delegation by default."
+  ]
+}

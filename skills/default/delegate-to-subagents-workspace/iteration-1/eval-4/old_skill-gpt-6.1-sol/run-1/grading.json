@@ -1,0 +1,39 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "Route independently before requesting approval; do not solicit model preferences.",
+      "passed": true,
+      "evidence": "Routes before requested approval, supplies none for absent preferences, reroutes for new constraints, isolates routing metadata from prompts, and prohibits nested delegation by default. See response.md and transcript.md."
+    },
+    {
+      "text": "Wait for requested approval before dispatch; new constraints require a fresh route.",
+      "passed": true,
+      "evidence": "Routes before requested approval, supplies none for absent preferences, reroutes for new constraints, isolates routing metadata from prompts, and prohibits nested delegation by default. See response.md and transcript.md."
+    },
+    {
+      "text": "Apply exact model and effort outside worker prompts; exclude generated routing/audit metadata.",
+      "passed": true,
+      "evidence": "Routes before requested approval, supplies none for absent preferences, reroutes for new constraints, isolates routing metadata from prompts, and prohibits nested delegation by default. See response.md and transcript.md."
+    },
+    {
+      "text": "Prohibit nested delegation by default.",
+      "passed": true,
+      "evidence": "Routes before requested approval, supplies none for absent preferences, reroutes for new constraints, isolates routing metadata from prompts, and prohibits nested delegation by default. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 1331
+  },
+  "runtime_model": "gpt-6.1-sol",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

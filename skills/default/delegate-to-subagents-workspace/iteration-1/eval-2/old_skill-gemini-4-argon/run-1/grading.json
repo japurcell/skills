@@ -1,0 +1,24 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "The worker retains scoped evidence and promptly notifies the document owner rather than waiting for the final session pass or rewriting another owner's document.",
+      "passed": false,
+      "evidence": "Contradiction: says notify promptly but permits \"(or awaits the explicit serial dependency)\". This weakens immediate owner notification while unrelated tasks run. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "pass_rate": 0.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 708
+  },
+  "runtime_model": "gemini-4-argon",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

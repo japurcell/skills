@@ -1,0 +1,1 @@
+Record the verified error immediately in the worker’s scoped evidence. Promptly notify the canonical document’s integration owner with evidence and correction needed. Don’t wait for unrelated tasks or edit another task’s document; the owner integrates the finding.

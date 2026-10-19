@@ -1,0 +1,41 @@
+{
+  "reviewed": [
+    "skills/default/delegate-to-subagents/SKILL.md",
+    "skills/default/delegate-to-subagents/evals/evals.json",
+    "skills/default/subagent-model-router/SKILL.md",
+    "skills/default/subagent-model-router/reference/escalation-policy.md",
+    "skills/default/subagent-model-router/reference/maintenance.md",
+    "skills/default/subagent-model-router/reference/model-catalog.md",
+    "skills/default/subagent-model-router/reference/patterns.md",
+    "skills/default/subagent-model-router/reference/pricing.md",
+    "skills/default/subagent-model-router/reference/review-routing.md"
+  ],
+  "findings": {
+    "duplication": "Routing, exact dispatch arguments, approval order, and completion checks repeated across six sections. Consolidated into four workflow stages; router retains selection policy ownership.",
+    "ambiguity": "Approval was numbered after dispatch although approval must precede dispatch. Moved approval into pre-dispatch instructions. Distinguished warning thresholds from runtime termination.",
+    "unnecessary_context": "Removed mandatory route ledger and completion YAML. Keep router decision in working context; persist only for requested audit or recovery needs.",
+    "omissions": "Original evals primarily covered documentation ownership and persistence. Added approval/prompt isolation, timeout/failure, and dispatch mismatch scenarios.",
+    "references": "No bundled reference files exist. Reviewed the referenced router and all six of its local references. Retained these separately owned, conditionally loaded selection policies without changes."
+  },
+  "preserved_obligations": {
+    "assignment fields, ownership, dependencies, documentation integration": "section 1",
+    "exact routing, explicit defaults, independent selection, reuse and rerouting": "section 2",
+    "route persistence": "changed by user-authorized simplification: optional unless needed for recovery or audit",
+    "approval boundaries, solicitation recovery, prompt isolation, nested delegation": "section 3",
+    "submission audit, runtime confirmation, aliases and overrides": "section 4",
+    "warning thresholds, failure evidence, bounded retries, output verification": "section 4"
+  },
+  "evaluation_change": "Case 3 now reflects authorized optional persistence, not a weakened safety check. Original case and skill retained in skill-snapshot. Other original scenarios retained; three behavioral scenarios added.",
+  "validation": {
+    "skill_structure": "passed",
+    "git_diff_check": "passed",
+    "okf_lint": "passed",
+    "live_evals": "passed: edited skill 7/7 scenarios and 19/19 assertions on each requested model, medium effort; read-only instruction-following evaluation",
+    "installation": "passed: user-approved full installer refresh completed; installed skill matches source",
+    "baseline": "GPT 7/7; Gemini 5/7; original outputs and two failures retained"
+  },
+  "model_probe": {
+    "gemini-4-argon": "Copilot returned OK and runtime metadata identified gemini-4-argon; not an evaluation pass"
+  },
+  "knowledge_pass": "Final coordinated pass: no durable KB additions or changes warranted; existing source-ingest operational state preserved."
+}

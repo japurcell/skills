@@ -1,0 +1,7 @@
+Before dispatch, each reviewer needs a complete assignment: scope, context, constraints, deliverable, acceptance criteria, resources, ownership, dependencies, and runtime limit. Mark inapplicable fields explicitly. Each route must remain valid, have `dispatchable: true`, and specify exact runtime-supported `model` and `reasoning_effort` values. Submit both through dispatch controls, not worker prompts. Runtime monitoring must exist; dependencies and required approvals must be satisfied.
+
+**No route file is required.** Keep complete router decisions available in context. No persistent record is needed here.
+
+**Chat:** Announce both reviewers’ roles and scopes in one concise sentence. Do not request approval or show raw routing data. Report blockers or material failures briefly. Start both ready, independent assignments before waiting.
+
+**Verification:** Inspect actual dispatch arguments and runtime-control state. Compare submitted model and effort against each route; confirm runtime monitoring. Only runtime metadata confirms executed settings. Without it, report **“submitted settings match the route; executed settings are unconfirmed.”** Never treat worker self-reports as confirmation. Missing or mismatched submissions are noncompliant; material runtime overrides are routing failures.

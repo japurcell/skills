@@ -5,278 +5,65 @@ description: Use subagents when parallel execution, specialized expertise, or co
 
 # Delegate to Subagents
 
-Delegate only when the expected benefit exceeds the coordination cost.
+Delegate when parallel work, specialized expertise, or context isolation outweighs coordination overhead.
 
-This workflow authorizes and requires the orchestrator to select and explicitly apply the router-chosen model and reasoning effort. No separate model-selection confirmation is required.
+## 1. Define assignments
 
-## Selection and routing order
+For each subtask, specify an identifier, objective, necessary context, constraints, deliverable, verification criteria, allowed resources, write ownership, dependencies, and runtime limit. Resolve applicable fields before dispatch; mark others `none` or `not applicable`.
 
-For each routing attempt:
+Run independent work in parallel and dependent work in waves. Serialize edits to shared files. Give each shared canonical document one integration owner or an explicit serial dependency. Workers retain scoped evidence and promptly notify the owner of durable findings, including critical guidance. Exclusive area documentation remains worker-owned. The coordinator reconciles admitted findings and completes the final documentation pass after all tasks finish.
 
-1. Collect explicit model or effort constraints already stated by the user.
-2. Activate the `subagent-model-router` skill with those constraints; use `none` when absent.
-3. Let the router select and validate the exact model-and-effort configuration.
-4. Do not use configured, inherited, or runtime defaults unless the user explicitly requested them.
+Ask only for essential missing task facts. Avoid duplicate reads and context gathering; consider one exploration worker when several workers need the same context. The coordinator may read files to plan, coordinate, resolve conflicts, and verify results.
 
-Absent model preferences are not ambiguity. Do not ask the user to choose, approve, confirm, or restate a model or effort before routing.
+## 2. Route
 
-A routing attempt begins with the task facts, runtime capabilities, and user constraints then in scope. Record the route in one session artifact before any approval step.
+Activate the `subagent-model-router` skill for each materially different subtask. Supply its required task facts, existing user model/effort constraints (or `none`), and exact supported values discovered from runtime metadata or the dispatch interface. The router owns capability, cost, fallback, and route-reuse rules.
 
-A dispatchable route is informational. Dispatch it without waiting for confirmation unless the user previously requested pre-dispatch approval or the runtime requires approval.
+This workflow authorizes selecting and explicitly applying the router's model and reasoning effort without separate model-selection confirmation. Missing preferences are not ambiguity. Do not solicit a model or effort before routing. Configured defaults apply only when the user explicitly requests them; resolve and validate concrete values through the router.
 
-If the user explicitly requests configured defaults, resolve them to concrete values, validate them through the router, record them, and submit them explicitly. Never preserve defaults by omitting dispatch arguments.
+Keep the complete router decision available for dispatch and verification. A separate route file or completion ledger is not required. Persist decisions only when requested or needed for recovery or an existing audit requirement; use one session artifact outside maintained source and reuse it for revisions and results.
 
-If an explicit constraint prevents a dispatchable route, record the router's `dispatchable: false` result and explain the limitation before asking the user to revise it.
+Dispatch requires all of the following:
 
-If the orchestrator improperly solicits a model or effort before routing:
+- `dispatchable: true` and exact runtime-supported `model` and `reasoning_effort` values;
+- task facts, capabilities, and user constraints valid for the current routing attempt;
+- explicit submission of both values outside the worker prompt;
+- an explicit runtime limit and a mechanism to monitor it;
+- satisfied dependencies and no pending required approval.
 
-1. do not use the response to justify that routing attempt
-2. invalidate any route derived from it
-3. disclose the sequencing error
-4. begin a fresh attempt using the original constraints, plus the solicited value only if the user clearly makes it a new requirement
+Omitted, null, inherited, placeholder, ranged, or runtime-selected values do not qualify. If no exact route is possible, inspect accepted values, reroute with new evidence, and report any unresolved limitation without dispatching. If an explicit user constraint blocks routing, explain the limitation before asking the user to revise it.
 
-## Dispatch gate
+Reuse routes only under the router's reuse criteria; still apply and check every dispatch. Reroute when work class, stakes, security sensitivity, ambiguity, affected behavior, review history, context, verification requirements, user constraints, or runtime capabilities materially change. If a configuration becomes unavailable, exclude it and let the router choose a complete replacement without lowering the capability floor.
 
-Enforce runtime limits as warning thresholds. When a subagent exceeds its limit, send a non-interrupting warning and request its current status, completed work, blockers, and updated ETA. Keep it running to preserve partial work; do not interrupt, cancel, or replace it solely because it is overdue.
+## 3. Announce and dispatch
 
-Dispatch only when:
+Announce roles and scope in one concise sentence. Show raw routing or audit data only on request; explain blockers and material failures briefly.
 
-```text
-route exists
-AND route.dispatchable == true
-AND route.model is exact
-AND route.reasoning_effort is exact
-AND route used only task facts, runtime capabilities, and user constraints in scope when the current routing attempt began
-AND route was recorded before any approval step
-AND dispatch.model == route.model
-AND dispatch.reasoning_effort == route.reasoning_effort
-AND runtime_limit is explicit and enforced
-AND no required approval is pending
-```
+Route before any approval. Pause only for preexisting user-requested or runtime-required approval, then dispatch the completed route after approval. A new model/effort constraint or changed runtime capability invalidates the route; begin a fresh attempt instead of modifying values to match an approval response.
 
-Do not dispatch with a routing value that is omitted, null, implicit, inherited, ranged, unresolved, an unexpanded placeholder, or left for the runtime to select.
+If you improperly solicited a preference before routing, invalidate routes derived from it and disclose the sequencing error. Start again with the original constraints; include the solicited value only if the user clearly makes it a new requirement.
 
-Values such as `default`, `auto`, `runtime-selected`, `runtime default`, “runtime-supported,” “high or greater,” and “strongest available” are not dispatchable routing values.
+Give workers their assignment, required dependency results, and nested-delegation policy. Prohibit nested delegation unless intentionally authorized. Tell workers they share the codebase, must preserve others' edits, and must stay within their write ownership.
 
-A recommendation that is not recorded and explicitly applied is not completed routing.
+Keep workflow-generated routing and audit metadata out of worker prompts: model, effort, tier, rationale, fallback, escalation trigger, and instructions to identify or report execution settings or dispatch compliance. Task-relevant source material may mention these subjects. The coordinator owns configuration and verification.
 
-## Procedure
+Submit the exact routed model and effort through dispatch controls. Start every ready, independent, compliant assignment before waiting.
 
-### 1. Plan
+## 4. Verify and coordinate
 
-For each subtask, define:
+Inspect actual dispatch arguments and runtime-control state. Compare submitted model/effort with the route and check runtime monitoring. Distinguish selected, submitted, and executed settings: only runtime metadata confirms executed values; otherwise they remain `unconfirmed`. Worker self-reports are not runtime confirmation.
 
-- `subtask_id`
-- objective and necessary context
-- constraints and expected deliverable
-- verification criteria
-- allowed resources and write ownership
-- dependencies
-- runtime limit
+If submitted values are missing or differ from the route, mark the dispatch noncompliant and do not describe it as router-selected. Cancel it if supported and safe; otherwise disclose the mismatch before relying on results. Redispatch at most once with corrected values when safe and useful.
 
-Use `none` or `not applicable` where appropriate. Do not dispatch with an unresolved applicable field.
+Documented alias resolution is not a mismatch. If runtime metadata shows a material execution override, report routing failure and pause affected dependent work.
 
-Run independent subtasks in parallel when beneficial. Run dependent subtasks in dependency-aware waves. Serialize changes to shared files.
+Treat runtime limits as warning thresholds. When overdue, send a non-interrupting warning and request status, completed work, blockers, and an updated ETA. Keep the worker running; lateness alone does not justify interruption, cancellation, or replacement.
 
-Before dispatch, give each shared canonical document (maps, indexes, known issues) one integration owner or an explicit serial dependency, even with disjoint source ownership. Workers retain scoped evidence, promptly notify that owner of durable findings, including critical guidance, and keep ownership of their exclusive area docs. The coordinator reconciles admitted claims and runs the final documentation pass after all tasks finish.
+If a compliant worker fails or the runtime terminates it on timeout:
 
-If essential task information is missing, ask only for that information. Do not ask for model preferences as a substitute for routing.
+1. Retain the error, submitted settings, runtime limit, completed work, findings, unresolved items, and artifacts before replacement.
+2. Diagnose instructions, context, dependencies, permissions, tools, and environment; revise the assignment or limit as needed.
+3. Reroute if requirements or demonstrated capability needs changed. A timeout, missing dependency, failing test, or environment problem alone does not justify a stronger tier.
+4. Dispatch at most one replacement unless the user authorizes more retries.
 
-### 2. Route
-
-Route before any model-selection confirmation.
-
-Activate the `subagent-model-router` skill for each materially different subtask using:
-
-- objective
-- stakes and security sensitivity
-- ambiguity and reasoning requirements
-- expected context size
-- review history
-- verification plan
-- exact runtime-supported models and effort values
-- model or effort constraints already in scope, or `none`
-
-Inspect runtime metadata or the dispatch interface to discover supported values. Do not ask the user to choose among them.
-
-The route must contain:
-
-- `dispatchable`
-- `tier`
-- exact `model`
-- exact `reasoning_effort`
-- `reason`
-- `escalation_trigger`
-- exact `fallback` or `none`
-
-If exact model or effort values cannot be determined, record a non-dispatchable route.
-
-A route may be reused only when the router's reuse criteria are satisfied. A reused route must still be recorded and explicitly applied to every dispatch.
-
-### 3. Record and announce
-
-Before approval or dispatch, record the router's complete decision in one session artifact outside maintained source. Use the same artifact for reused or revised routes, submitted arguments, runtime observations and completion results. Preserve the required fields; record unavailable execution metadata as `unconfirmed`.
-
-In chat, give one concise sentence naming the roles and scope. Show raw routing or audit data only when the user requests it. A non-dispatchable route stays undispatched; explain its blocker briefly.
-
-A recorded route is a decision, not a question. Proceed without pausing unless a preexisting user-requested or runtime-required approval step applies.
-
-### 4. Dispatch
-
-Explicitly configure outside the subagent prompt:
-
-- the recorded `model`
-- the recorded `reasoning_effort`
-- runtime-limit enforcement
-
-The subagent prompt may contain:
-
-- objective and necessary context
-- task constraints
-- expected deliverable
-- verification criteria
-- allowed resources and write ownership
-- required dependency results
-- intentional nested-delegation authorization or prohibition
-
-Do not include workflow-generated routing, dispatch, or audit metadata in the subagent prompt, including:
-
-- selected model, effort, or tier
-- route, rationale, fallback, or escalation trigger
-- instructions to identify or report model, effort, runtime configuration, or dispatch arguments
-- dispatch-compliance or orchestration-audit instructions
-
-The orchestrator—not the subagent—records execution settings. Task-relevant source material need not be removed merely because it mentions models, routing, effort, or subagents.
-
-Prohibit nested delegation by default. Authorize it explicitly only when intentional.
-
-### 5. Approval
-
-If the user previously requested approval or the runtime requires it:
-
-1. route and record first
-2. request or invoke approval for the completed route
-3. dispatch only after approval
-
-Do not change routed values merely to match an approval response. If the user adds a model or effort constraint, or approved runtime capabilities change, invalidate the route and begin a fresh routing attempt.
-
-Do not invent an approval requirement.
-
-### 6. Audit and coordinate
-
-After dispatch, inspect the actual dispatch arguments and runtime-control state. Record:
-
-- `subtask_id`
-- submitted `model`
-- submitted `reasoning_effort`
-- enforced runtime limit and mechanism
-
-If submitted routing values are missing or differ from the recorded route:
-
-1. mark the dispatch noncompliant
-2. do not describe it as router-selected
-3. cancel it if supported and safe
-4. otherwise, disclose the mismatch before relying on its result
-5. redispatch at most once with corrected values when safe and useful
-
-If the runtime reports different executed values, distinguish documented alias resolution or canonicalization from a material override. Record equivalent aliases without marking the dispatch noncompliant. Report a material override as a routing failure and pause affected dependent work.
-
-Do not infer executed values when the runtime does not report them.
-
-Dispatch all ready, independent, compliant subtasks before waiting. Verify prerequisites before dispatching dependent work.
-
-Begin a fresh routing attempt when any of these materially changes:
-
-- work class, stakes, security sensitivity, or ambiguity
-- affected behavior or review history
-- context or verification requirements
-- user constraints
-- runtime capabilities
-
-## Failures and fallback
-
-### Routing failure
-
-If routing cannot produce an exact model and effort:
-
-1. do not dispatch
-2. inspect the runtime's accepted values when possible
-3. begin a fresh routing attempt with any newly confirmed values
-4. record a non-dispatchable route and report the limitation if unresolved
-
-Do not ask the user to choose an unverified value or substitute configured or runtime defaults.
-
-If the selected configuration becomes unavailable, reroute with it removed from the candidates. Record and apply the complete revised route. Do not dispatch if no exact configuration satisfies the capability floor.
-
-### Execution failure
-
-If a compliant subagent fails or times out:
-
-1. record the error, submitted configuration, runtime limit, completed work, findings, unresolved items, and artifacts
-2. diagnose instructions, context, dependencies, permissions, tools, and environment
-3. revise the task or runtime limit when appropriate
-4. reroute if requirements or demonstrated capability needs changed
-5. record any revised route before redispatch
-6. dispatch at most one replacement unless the user authorizes more retries
-
-A timeout, unavailable dependency, failing test, or environment problem does not by itself justify a stronger tier.
-
-## Efficiency
-
-Avoid duplicate file reads and repeated context gathering.
-
-When several subagents need substantially the same context, consider one routed exploration subagent. Apply the same routing, recording, dispatch, runtime-limit, and audit requirements to it.
-
-The orchestrator may read files to plan, coordinate, resolve conflicts, or verify results.
-
-## Completion record
-
-Append each dispatch result to the same session artifact using:
-
-```yaml
-dispatches:
-  - subtask_id: <identifier>
-    selected:
-      model: <router-selected model>
-      reasoning_effort: <router-selected effort>
-    submitted:
-      model: <submitted model>
-      reasoning_effort: <submitted effort>
-    executed:
-      model: <runtime-confirmed model or unconfirmed>
-      reasoning_effort: <runtime-confirmed effort or unconfirmed>
-    runtime_limit:
-      value: <enforced limit>
-      mechanism: <enforcement mechanism>
-    status: <completed|failed|timed_out|cancelled>
-    output_verified: <true|false>
-    routing_compliant: <true|false>
-```
-
-Use:
-
-- `selected` for router output
-- `submitted` for actual dispatch arguments
-- `executed` only for values confirmed by the dispatch system or execution metadata
-
-Do not use a subagent's self-report as runtime confirmation. Use `unconfirmed` when the runtime does not report executed values.
-
-## Final checks
-
-Before declaring delegation complete, confirm that:
-
-- [ ] each route used only task facts, runtime capabilities, and user constraints in scope when its routing attempt began
-- [ ] no solicited preference retroactively justified a route
-- [ ] recovery from improper solicitation used a fresh routing attempt
-- [ ] each dispatchable route was recorded as a decision before any approval or dispatch
-- [ ] no unnecessary approval pause occurred
-- [ ] every dispatch explicitly submitted the recorded model and effort
-- [ ] no dispatch relied on implicit inheritance of configured or runtime defaults; any user-requested defaults were resolved, validated, recorded, and submitted as concrete values
-- [ ] routing and audit metadata stayed out of subagent prompts
-- [ ] runtime limits were explicit and enforced
-- [ ] actual dispatch arguments were audited
-- [ ] dependencies and write ownership were coordinated
-- [ ] failures were recorded before replacement
-- [ ] outputs were verified against their acceptance criteria
-
-If any routing-order, reporting, dispatch-argument, prompt-isolation, approval, or audit requirement fails, record the affected dispatch as noncompliant and report any material failure in chat.
+Before completion, verify outputs against acceptance criteria and reconcile dependencies and documentation ownership. Mark dispatches that violate routing order, reporting, dispatch arguments, prompt isolation, approval, or audit requirements noncompliant. Report material failures; correct-looking output does not establish compliance.

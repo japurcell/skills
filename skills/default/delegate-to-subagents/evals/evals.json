@@ -21,15 +21,54 @@
     },
     {
       "id": 3,
-      "eval_name": "record-routes-announce-scope",
-      "prompt": "Describe the dispatch/reporting procedure only; do not dispatch or write files. Two independent read-only reviewers have complete exact router decisions. The user has not requested routing details. Explain what must exist before approval or dispatch, what goes in chat, where submitted and executed settings and completion results belong, and what to record when execution metadata is unavailable.",
-      "expected_output": "Record complete decisions before approval or dispatch and append submitted settings, runtime observations and results to one session artifact outside maintained source. Announce roles and scope concisely without raw YAML. Apply exact settings; preserve runtime limits, approval boundaries and unconfirmed execution metadata.",
+      "eval_name": "route-without-mandatory-ledger",
+      "prompt": "Describe the dispatch/reporting procedure only; do not dispatch or write files. Two independent read-only reviewers have complete exact router decisions. No recovery or audit requirement calls for persistent records. The user requested neither approval nor routing details. Explain what must exist before dispatch, whether a route file is required, what goes in chat, how submitted and executed settings are checked, and how unavailable execution metadata is described.",
+      "expected_output": "Keep complete router decisions available without requiring a route file. Announce roles and scope concisely. Submit and verify exact model and effort through dispatch controls, enforce runtime monitoring, and proceed without invented approval. Unavailable executed settings remain unconfirmed.",
       "files": [],
       "assertions": [
-        "One session artifact contains routing decisions and all dispatch/results metadata.",
-        "Chat names roles and scope; raw routing/audit data requires a user request.",
-        "Exact submitted values, approval boundaries and runtime controls remain enforced.",
-        "Unavailable executed settings remain unconfirmed."
+        "No route file or completion ledger is required for this scenario.",
+        "Chat names roles and scope without raw routing/audit data.",
+        "Exact submitted values and runtime monitoring are verified; no unnecessary approval pause.",
+        "Unavailable executed settings remain unconfirmed; worker self-report is not runtime proof."
+      ]
+    },
+    {
+      "id": 4,
+      "eval_name": "approval-and-prompt-isolation",
+      "prompt": "Describe procedure only; do not dispatch or write files. The user requested pre-dispatch approval, but gave no model preference. All task facts are available. Explain routing and approval order, worker prompt contents, and what happens if approval adds a new model constraint.",
+      "expected_output": "Route independently before requesting approval; do not solicit model preferences. Wait for requested approval before dispatch; new constraints require a fresh route. Apply exact model and effort outside worker prompts; exclude generated routing/audit metadata. Prohibit nested delegation by default.",
+      "files": [],
+      "assertions": [
+        "Route independently before requesting approval; do not solicit model preferences.",
+        "Wait for requested approval before dispatch; new constraints require a fresh route.",
+        "Apply exact model and effort outside worker prompts; exclude generated routing/audit metadata.",
+        "Prohibit nested delegation by default."
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "overdue-and-failed-workers",
+      "prompt": "Describe coordination only; do not dispatch or write files. One compliant worker is overdue but still running. Another was terminated by a runtime timeout with partial results. Explain immediate actions, evidence retention, retries, and whether either event requires a stronger model.",
+      "expected_output": "Warn the overdue worker without interrupting; request status, completed work, blockers and ETA. Retain failed-worker settings, limit, error, partial work and artifacts before replacement. Diagnose task and environment; timeout alone does not justify a stronger model. Allow at most one replacement unless the user authorizes more.",
+      "files": [],
+      "assertions": [
+        "Warn the overdue worker without interrupting; request status, completed work, blockers and ETA.",
+        "Retain failed-worker settings, limit, error, partial work and artifacts before replacement.",
+        "Diagnose task and environment; timeout alone does not justify a stronger model.",
+        "Allow at most one replacement unless the user authorizes more."
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "dispatch-mismatch",
+      "prompt": "Describe checks only; do not dispatch or write files. A valid router decision specifies exact model and effort. Compare three cases: the actual dispatch omitted effort; runtime metadata reports a documented equivalent model alias; runtime metadata reports a materially different executed configuration. Explain compliance, recovery, and dependent work.",
+      "expected_output": "Missing effort makes dispatch noncompliant; do not call it router-selected. Cancel mismatched submission if safe and supported, otherwise disclose before reliance; at most one corrected redispatch. Documented equivalent alias is not noncompliance. A material runtime override is a routing failure and pauses affected dependent work.",
+      "files": [],
+      "assertions": [
+        "Missing effort makes dispatch noncompliant; do not call it router-selected.",
+        "Cancel mismatched submission if safe and supported, otherwise disclose before reliance; at most one corrected redispatch.",
+        "Documented equivalent alias is not noncompliance.",
+        "A material runtime override is a routing failure and pauses affected dependent work."
       ]
     }
   ]
