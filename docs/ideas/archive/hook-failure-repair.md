@@ -1,6 +1,6 @@
 # Repair the secret-scanner size-limit deadlock during a merge
 
-Archived on 2026-10-15 when the [Design B ExecPlan](../../hook-resilience-design-b/ExecPlan.md) was created. This report retains historical incident evidence; its repair proposals are superseded by that plan.
+Archived on 2026-10-15 when the Design B plan was created. This report retains historical incident evidence; its repair proposals were superseded by that plan. The plan has since been removed.
 
 ## Incident and current status
 

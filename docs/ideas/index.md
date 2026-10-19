@@ -15,7 +15,7 @@
 
 ## Archived ideas
 
-- [Hook Failure Repair](archive/hook-failure-repair.md) - planned in [Design B](../hook-resilience-design-b/ExecPlan.md).
-- [Hook Failures](archive/hook-failures.md) - planned in [Design B](../hook-resilience-design-b/ExecPlan.md).
+- [Hook Failure Repair](archive/hook-failure-repair.md)
+- [Hook Failures](archive/hook-failures.md)
 - [Conditional Skill Installer](archive/1-conditional-skill-installer.md)
 - [Ideas Archive](archive/4-ideas-archive.md)

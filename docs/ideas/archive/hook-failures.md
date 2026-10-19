@@ -1,6 +1,6 @@
 # Secret-scanner size-limit incident
 
-Archived on 2026-10-15 when the [Design B ExecPlan](../../hook-resilience-design-b/ExecPlan.md) was created. This report retains historical incident evidence; its repair proposals are superseded by that plan.
+Archived on 2026-10-15 when the Design B plan was created. This report retains historical incident evidence; its repair proposals were superseded by that plan. The plan has since been removed.
 
 Date: 2026-10-15. Status: investigation report, not a repair. Audience: the hook's maintainer, including someone unfamiliar with this scanner.
 
