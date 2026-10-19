@@ -23,6 +23,7 @@ class GateTests(unittest.TestCase):
         self.repo.mkdir()
         self.env = {k: v for k, v in os.environ.items() if not k.startswith(("GIT_", "SCAN_", "PYTHON"))}
         self.env.update(HOME=str(self.base / "home"), USERPROFILE=str(self.base / "home"),
+                        LOCALAPPDATA=str(self.base / "data"),
                         XDG_DATA_HOME=str(self.base / "data"), XDG_CONFIG_HOME=str(self.base / "config"),
                         GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
         self.git("init", "--quiet")
