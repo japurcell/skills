@@ -164,11 +164,11 @@ try:
     path = hook["path"]
     parent = os.open(os.path.sep, os.O_RDONLY | os.O_DIRECTORY)
     try:
-        for part in path.split(os.path.sep)[1:-1]:
-            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
-            os.close(parent)
-            parent = child
         try:
+            for part in path.split(os.path.sep)[1:-1]:
+                child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent)
+                os.close(parent)
+                parent = child
             descriptor = os.open(os.path.basename(path), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
         except FileNotFoundError:
             if hook["state"] == "absent":

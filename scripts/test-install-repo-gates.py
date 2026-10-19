@@ -100,6 +100,53 @@ class RepositoryPreviewTests(unittest.TestCase):
         path.chmod(0o755)
         return path
 
+    def test_absent_original_hook_directories_preserve_real_git_operations(self):
+        for custom in (False, True):
+            with self.subTest(custom_hooks_path=custom):
+                self.repo = self.root / ("custom hooks repository" if custom else "empty template repository")
+                self.git("init", "-q", "--template=", "-b", "main", str(self.repo), cwd=self.root)
+                original_hooks = self.root / "missing hooks" / "nested" if custom else self.repo / ".git/hooks"
+                if custom:
+                    self.git("config", "core.hooksPath", str(original_hooks))
+                self.assertFalse(original_hooks.exists())
+                original_config = (self.repo / ".git/config").read_bytes()
+                self.activate()
+                (self.repo / "content.txt").write_text("safe content\n")
+                self.git("add", "content.txt")
+                self.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                         "-c", "commit.gpgsign=false", "commit", "-qm", "clean")
+                committed = self.git("rev-parse", "HEAD")
+                self.git("update-ref", "refs/heads/repair", committed.decode().strip())
+                self.git("checkout", "-q", "repair")
+                self.assertEqual(self.git("rev-parse", "HEAD"), committed)
+                self.assertEqual(self.git("show", "HEAD:content.txt"), b"safe content\n")
+                self.assertFalse(original_hooks.exists())
+                self.activate(action="uninstall")
+                self.assertEqual((self.repo / ".git/config").read_bytes(), original_config)
+                self.assertFalse(original_hooks.exists())
+
+    def test_original_hook_ancestor_drift_still_blocks_passthrough(self):
+        for replacement in ("missing", "symlink", "file"):
+            with self.subTest(replacement=replacement):
+                self.repo = self.root / (replacement + " hooks repository")
+                self.git("init", "-q", str(self.repo), cwd=self.root)
+                original_hooks = self.repo / ".git/hooks"
+                if replacement == "missing":
+                    self.hook("prepare-commit-msg", "exit 0\n")
+                self.activate()
+                directory = Path(self.owner_manifest()["installed_value"])
+                shutil.rmtree(original_hooks)
+                if replacement == "symlink":
+                    target = self.root / "foreign hooks"
+                    target.mkdir()
+                    original_hooks.symlink_to(target, target_is_directory=True)
+                elif replacement == "file":
+                    original_hooks.write_text("not a hook directory\n")
+                result = subprocess.run([str(directory / "prepare-commit-msg")], cwd=self.repo,
+                    env=self.env, input=b"", capture_output=True, timeout=5)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn(b"original_hook_drift", result.stderr)
+
     def test_actual_push_rejects_intermediate_history_before_original_hook(self):
         remote = self.root / "remote.git"
         self.git("init", "--bare", "-q", str(remote), cwd=self.root)
