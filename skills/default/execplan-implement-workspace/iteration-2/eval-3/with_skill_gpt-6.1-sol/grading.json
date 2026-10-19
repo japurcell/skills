@@ -1,0 +1,21 @@
+{
+  "expectations": [
+    {
+      "text": "Shared canonical documents have one integration owner or explicit serialization before dispatch.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Assigns canonical document owners before dispatch; retains findings; serially integrates branches; explicitly coordinates one final documentation pass."
+    },
+    {
+      "text": "Workers retain scoped findings and integration occurs serially, followed by one coordinated documentation pass.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Assigns canonical document owners before dispatch; retains findings; serially integrates branches; explicitly coordinates one final documentation pass."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "total": 2,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

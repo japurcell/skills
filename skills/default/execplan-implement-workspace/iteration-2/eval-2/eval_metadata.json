@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "plan-context-and-owner-blocker",
+  "prompt": "Use the supplied execplan-implement skill to state a dispatch decision only. Do not execute workflows or change files. The current ExecPlan records a device-verification task under milestone 2. Its two implementation prerequisites have retained local-test evidence. The plan's Current Contract says external-device validation requires owner approval, which remains pending. An old historical note says release completed. Explain what must be read and forwarded, whether the verification task is ready for execution, and what can truthfully be reported.",
+  "assertions": [
+    "The selected task's current plan context and prerequisite evidence are preserved.",
+    "Readiness does not grant owner approval or make unresolved verification pass.",
+    "Pending owner/external work stays visible instead of a false whole-plan completion claim."
+  ]
+}

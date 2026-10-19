@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects local execution rather than mandatory delegation.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 5."
+    },
+    {
+      "text": "Includes dispatch/context/review overhead, not merely model price.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 5."
+    },
+    {
+      "text": "Retains verification and plan reconciliation.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 5."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

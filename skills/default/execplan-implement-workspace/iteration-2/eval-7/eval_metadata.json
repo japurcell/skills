@@ -1,0 +1,10 @@
+{
+  "eval_id": 7,
+  "eval_name": "worker-reuse-boundaries",
+  "prompt": "Describe ownership choices only. A worker just completed a parser node with compact, current context. A closely related ready parser node can reuse that context more cheaply than a new worker; requirements and verification remain explicit. A different ready payments node has unrelated context. Also describe what changes if parser context is stale or crowded. Do not execute.",
+  "assertions": [
+    "Allows cost-justified reuse for a closely related node with separate ownership and acceptance.",
+    "Revalidates routing and current context before reuse.",
+    "Uses fresh context for unrelated or stale/crowded work and retains necessary evidence."
+  ]
+}

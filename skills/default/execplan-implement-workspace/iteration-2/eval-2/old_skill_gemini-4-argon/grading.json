@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The selected task's current plan context and prerequisite evidence are preserved.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 2."
+    },
+    {
+      "text": "Readiness does not grant owner approval or make unresolved verification pass.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 2."
+    },
+    {
+      "text": "Pending owner/external work stays visible instead of a false whole-plan completion claim.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 2."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

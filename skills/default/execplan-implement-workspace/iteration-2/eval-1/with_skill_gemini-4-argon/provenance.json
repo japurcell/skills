@@ -1,0 +1,6 @@
+{
+  "batch_artifacts": "../../batch-gemini-4-argon-with_skill",
+  "method": "nine independent paper scenarios batched in one session; no per-case timing or token allocation",
+  "model_submitted": "gemini-4-argon",
+  "reasoning_effort_submitted": "medium"
+}

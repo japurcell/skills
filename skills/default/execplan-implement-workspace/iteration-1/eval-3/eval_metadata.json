@@ -1,0 +1,9 @@
+{
+  "eval_id": 3,
+  "eval_name": "shared-document-ownership",
+  "prompt": "Describe assignments only; do not edit files, run Git, or dispatch agents. Two ready ExecPlan tasks will use private worktrees with disjoint source ownership. Both will update the canonical file map and known-issues document. Explain what ownership must be resolved before dispatch and how findings and branches are integrated.",
+  "assertions": [
+    "Shared canonical documents have one integration owner or explicit serialization before dispatch.",
+    "Workers retain scoped findings and integration occurs serially, followed by one coordinated documentation pass."
+  ]
+}

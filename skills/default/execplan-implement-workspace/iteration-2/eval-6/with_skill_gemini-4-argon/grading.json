@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Delegates the investigation and avoids three duplicate investigations.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Delegates one shared investigation, retains concise evidence rather than logs, and preserves authorization and negative cases in scoped packets."
+    },
+    {
+      "text": "Uses a small sufficient packet and concise evidence-backed results, not whole histories or logs.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Delegates one shared investigation, retains concise evidence rather than logs, and preserves authorization and negative cases in scoped packets."
+    },
+    {
+      "text": "Preserves acceptance, negative cases and authorization despite context trimming.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Delegates one shared investigation, retains concise evidence rather than logs, and preserves authorization and negative cases in scoped packets."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

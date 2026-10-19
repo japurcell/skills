@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Conflict-free integration does not waive the required composed-behavior check.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Rejects acceptance without composed recovery proof; names verification work and synchronized status, acceptance, Progress, Concrete Steps, and Outcomes."
+    },
+    {
+      "text": "The next node is verification/integration, without fabricated code edits or an empty commit.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Rejects acceptance without composed recovery proof; names verification work and synchronized status, acceptance, Progress, Concrete Steps, and Outcomes."
+    },
+    {
+      "text": "Status, acceptance, Progress, Concrete Steps and Outcomes are reconciled together.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Rejects acceptance without composed recovery proof; names verification work and synchronized status, acceptance, Progress, Concrete Steps, and Outcomes."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

@@ -1,0 +1,181 @@
+{
+  "results": [
+    {
+      "iteration": "iteration-1",
+      "variant": "old_skill",
+      "model_submitted": "gemini-4-argon",
+      "model_reported_by_runtime": "gemini-4-argon",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 22,
+      "assertions_total": 26,
+      "duration_seconds_batch": 40.11335450003389,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 10346
+        },
+        "cache_read": {
+          "tokenCount": 20220
+        },
+        "cache_write": {
+          "tokenCount": 0
+        },
+        "output": {
+          "tokenCount": 2717
+        }
+      },
+      "reported_totalNanoAiu_batch": 4988400000,
+      "artifacts": "iteration-1/batch-gemini-4-argon-old_skill"
+    },
+    {
+      "iteration": "iteration-1",
+      "variant": "with_skill",
+      "model_submitted": "gemini-4-argon",
+      "model_reported_by_runtime": "gemini-4-argon",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 25,
+      "assertions_total": 26,
+      "duration_seconds_batch": 46.02811316703446,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 9878
+        },
+        "cache_read": {
+          "tokenCount": 20508
+        },
+        "cache_write": {
+          "tokenCount": 0
+        },
+        "output": {
+          "tokenCount": 2394
+        }
+      },
+      "reported_totalNanoAiu_batch": 4574680000,
+      "artifacts": "iteration-1/batch-gemini-4-argon-with_skill"
+    },
+    {
+      "iteration": "iteration-1",
+      "variant": "old_skill",
+      "model_submitted": "gpt-6.1-sol",
+      "model_reported_by_runtime": "gpt-6.1-sol",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 22,
+      "assertions_total": 26,
+      "duration_seconds_batch": 44.87737004098017,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 6
+        },
+        "cache_read": {
+          "tokenCount": 38638
+        },
+        "cache_write": {
+          "tokenCount": 21959
+        },
+        "output": {
+          "tokenCount": 1903
+        }
+      },
+      "reported_totalNanoAiu_batch": 7780330000,
+      "artifacts": "iteration-1/batch-gpt-6.1-sol-old_skill"
+    },
+    {
+      "iteration": "iteration-1",
+      "variant": "with_skill",
+      "model_submitted": "gpt-6.1-sol",
+      "model_reported_by_runtime": "gpt-6.1-sol",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 25,
+      "assertions_total": 26,
+      "duration_seconds_batch": 39.531008416903205,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 3
+        },
+        "cache_read": {
+          "tokenCount": 10694
+        },
+        "cache_write": {
+          "tokenCount": 17121
+        },
+        "output": {
+          "tokenCount": 1683
+        }
+      },
+      "reported_totalNanoAiu_batch": 6070790000,
+      "artifacts": "iteration-1/batch-gpt-6.1-sol-with_skill"
+    },
+    {
+      "iteration": "iteration-2",
+      "variant": "with_skill",
+      "model_submitted": "gemini-4-argon",
+      "model_reported_by_runtime": "gemini-4-argon",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 26,
+      "assertions_total": 26,
+      "duration_seconds_batch": 44.01065191603266,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 9892
+        },
+        "cache_read": {
+          "tokenCount": 20508
+        },
+        "cache_write": {
+          "tokenCount": 0
+        },
+        "output": {
+          "tokenCount": 2473
+        }
+      },
+      "reported_totalNanoAiu_batch": 4656480000,
+      "artifacts": "iteration-2/batch-gemini-4-argon-with_skill"
+    },
+    {
+      "iteration": "iteration-2",
+      "variant": "with_skill",
+      "model_submitted": "gpt-6.1-sol",
+      "model_reported_by_runtime": "gpt-6.1-sol",
+      "reasoning_effort_submitted": "medium",
+      "scenarios": 9,
+      "assertions_passed": 26,
+      "assertions_total": 26,
+      "duration_seconds_batch": 44.92763016698882,
+      "usage_batch": {
+        "input": {
+          "tokenCount": 3
+        },
+        "cache_read": {
+          "tokenCount": 10694
+        },
+        "cache_write": {
+          "tokenCount": 17135
+        },
+        "output": {
+          "tokenCount": 1802
+        }
+      },
+      "reported_totalNanoAiu_batch": 6193290000,
+      "artifacts": "iteration-2/batch-gpt-6.1-sol-with_skill"
+    }
+  ],
+  "selected": "iteration-2 with_skill for both models; baseline retained from iteration-1",
+  "method": "Nine read-only scenarios batched per model/version to amortize common context and CLI startup. Manual semantic grading. Scenarios share a session; no independent-repeat or variance claim. Expected outputs and assertions were not included in executor prompts. Raw JSONL, shared transcript, prompts, usage and responses retained.",
+  "limits": [
+    "No real Git/worktree workflow exercised.",
+    "All bundled references were supplied, so these runs do not measure progressive-disclosure savings.",
+    "Runtime usage is batch-only; no fabricated per-scenario timing or token metrics. Cache and output differences confound general cost claims.",
+    "quick_validate.py rejects the preserved pre-existing disable-model-invocation field in both original and revised versions."
+  ],
+  "source_words": {
+    "entry_before": 931,
+    "entry_after": 640,
+    "all_bundled_guidance_before": 1128,
+    "all_bundled_guidance_after": 1104
+  },
+  "installation": "Approved ./scripts/install.sh completed; installed Markdown matches source."
+}

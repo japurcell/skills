@@ -1,0 +1,8 @@
+{
+  "model_submitted": "gpt-6.1-sol",
+  "reasoning_effort_submitted": "medium",
+  "variant": "with_skill",
+  "exit_code": 0,
+  "duration_seconds": 39.531008416903205,
+  "method": "nine independent paper scenarios batched in one session; no per-case timing or token allocation"
+}

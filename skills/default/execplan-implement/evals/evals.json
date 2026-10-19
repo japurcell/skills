@@ -4,8 +4,13 @@
     {
       "id": 3,
       "prompt": "Describe assignments only; do not edit files, run Git, or dispatch agents. Two ready ExecPlan tasks will use private worktrees with disjoint source ownership. Both will update the canonical file map and known-issues document. Explain what ownership must be resolved before dispatch and how findings and branches are integrated.",
-      "expected_output": "Apply delegate-to-subagents shared-document ownership before dispatch. Preserve fresh task owners, private worktrees, prompt evidence reporting, serialized branch integration, and the final documentation pass.",
-      "files": []
+      "expected_output": "Apply delegate-to-subagents shared-document ownership before dispatch. Preserve explicit task owners, private worktrees, prompt evidence reporting, serialized branch integration, and the final documentation pass.",
+      "files": [],
+      "eval_name": "shared-document-ownership",
+      "assertions": [
+        "Shared canonical documents have one integration owner or explicit serialization before dispatch.",
+        "Workers retain scoped findings and integration occurs serially, followed by one coordinated documentation pass."
+      ]
     },
     {
       "id": 0,
@@ -53,6 +58,54 @@
         "Optional improvements stay outside the execution frontier.",
         "Completed authorized work finishes without invented tasks or another approval question.",
         "A reproduced in-scope failure still requires a bounded repair before completion."
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "cheap-local-task",
+      "prompt": "Give an execution decision only; do not execute tools or delegate. A ready documentation task takes one small edit and a known check. The coordinator already holds all required current context. A worker would need that context copied, routing, startup, and handback review. No independent-review requirement applies. Choose the owner and explain the cost and correctness tradeoff.",
+      "expected_output": "Prefer local execution when its total expected cost is lower, with unchanged ownership, checks, evidence, and reconciliation.",
+      "files": [],
+      "assertions": [
+        "Selects local execution rather than mandatory delegation.",
+        "Includes dispatch/context/review overhead, not merely model price.",
+        "Retains verification and plan reconciliation."
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "isolated-large-exploration",
+      "prompt": "Give an execution decision only; do not run tools or dispatch. Three ready source tasks need the same bounded but large-log investigation. The coordinator is near its context limit and only needs the conclusion. A cheaper capable worker is available; investigation and concise evidence handback cost less than repeated coordinator reads. Choose execution, shared context handling, and the handback. Preserve current authorization and negative cases.",
+      "expected_output": "Delegate one shared investigation with scoped context and retained evidence; send concise results to the coordinator and dependent workers.",
+      "files": [],
+      "assertions": [
+        "Delegates the investigation and avoids three duplicate investigations.",
+        "Uses a small sufficient packet and concise evidence-backed results, not whole histories or logs.",
+        "Preserves acceptance, negative cases and authorization despite context trimming."
+      ]
+    },
+    {
+      "id": 7,
+      "eval_name": "worker-reuse-boundaries",
+      "prompt": "Describe ownership choices only. A worker just completed a parser node with compact, current context. A closely related ready parser node can reuse that context more cheaply than a new worker; requirements and verification remain explicit. A different ready payments node has unrelated context. Also describe what changes if parser context is stale or crowded. Do not execute.",
+      "expected_output": "Reuse for the related node when cost and context favor it, refresh routing and ownership, and keep separate acceptance. Prefer a fresh worker for unrelated or stale context.",
+      "files": [],
+      "assertions": [
+        "Allows cost-justified reuse for a closely related node with separate ownership and acceptance.",
+        "Revalidates routing and current context before reuse.",
+        "Uses fresh context for unrelated or stale/crowded work and retains necessary evidence."
+      ]
+    },
+    {
+      "id": 8,
+      "eval_name": "no-commit-boundary",
+      "prompt": "Give an execution decision only. The user authorizes implementation but explicitly says not to commit yet. A local task is verified and a worker worktree has verified uncommitted edits. Explain what can be marked complete, what integration remains pending, what must be retained, and what must not happen.",
+      "expected_output": "Honor the no-commit boundary, retain edits and evidence, and report pending commit-dependent integration without false milestone acceptance.",
+      "files": [],
+      "assertions": [
+        "Does not create commits, force a merge, or remove unintegrated worktrees.",
+        "Separates task verification from pending branch integration and milestone proof.",
+        "Retains changes and evidence and reports the actual state."
       ]
     }
   ]

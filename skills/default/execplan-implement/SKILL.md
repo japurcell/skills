@@ -4,79 +4,41 @@ description: Implement an ExecPlan in code.
 disable-model-invocation: true
 ---
 
-You have been provided an ExecPlan with milestone acceptance and a Progress checklist.
+Implement authorized ExecPlan tasks on one base branch, retaining verification evidence and committing implementation changes when permitted.
 
-The goal is to implement and verify the authorized ExecPlan work on one branch, with commits for implementation changes and evidence for milestone acceptance.
-
-Before creating any commit, read and follow [commit message guidelines](references/message.md). Apply them to every commit created by the primary agent or a subagent.
+Honor user restrictions on commits and branches. Before any permitted commit, every author must read [commit message guidelines](references/message.md).
 
 The **frontier** of the plan's task graph contains unfinished tasks whose prerequisites are verified and whose execution is authorized. If none are ready, report the blockers and next owner action instead of inventing work.
 
-Run independent **implementer subagents** concurrently when useful. Serialize shared files, shared state, and integration.
-
 ## Steps
 
-1. Activate the `exec-plans` and `delegate-to-subagents` skills.
+1. Activate the `exec-plans` skill for task boundaries, prerequisites, context, reconciliation, and acceptance. Read and reconcile the plan; select the frontier.
 
-2. Read and reconcile the ExecPlan using `exec-plans`, then select the frontier.
+2. Choose local execution or delegation for each ready task using [Execution cost and context](#execution-cost-and-context). Share exploration only when several tasks need it; retain reusable findings beside the ExecPlan with source and verification evidence.
 
-3. (optional) Use an **exploration subagent** to conduct any exploration required by the progress checklist items - relevant codebase files or external documentation. Ensure the exploration subagent can save files - it should save its markdown notes beside the ExecPlan, accessible by all future subagents. This lets **implementer subagents** focus on implementation rather than exploration.
+3. If current branch is `main` or `master`, create a new **base topic branch**.
 
-4. If current branch is `main` or `master`, create a new **base topic branch**.
+4. Execute ready tasks locally or through implementers. Add or reopen tasks only for authorized requirements or reproduced in-scope failures; record repair prerequisites. Defer unrelated improvements. Finish when authorized acceptance is met.
 
-5. Repeat steps 5-7 while authorized tasks are ready. You - the primary agent - coordinate this loop; subagents perform implementation. Add or reopen a task only to satisfy an authorized requirement or repair a reproduced failure within that scope. Record unrelated improvements as deferred; keep them outside the execution frontier. When authorized acceptance criteria are met, finish the task. Record necessary repairs with prerequisites, then delegate them through this step.
+   Before delegating, activate the `delegate-to-subagents` skill for routing, ownership, dispatch, and monitoring. Give shared canonical documents one integration owner or serial dependency, including across private worktrees. Run independent tasks concurrently when cost-effective; serialize shared files, state, and integration.
 
-   Assign each distinct task to a fresh implementer subagent. Do not reuse an implementer for a different node, even with a new worktree. Reuse is allowed only for repairs or follow-up work on that implementer's original node. This preserves context isolation, ownership clarity, and independent task results.
-
-   Before dispatch, apply `delegate-to-subagents` ownership rules to shared canonical docs, even across private worktrees.
-
-   Pass each implementer its full task and current plan context as required by `exec-plans`, plus prerequisite evidence and explicit file ownership. Instruct it to:
+   Give workers explicit file ownership and the task packet below. All executors must:
    1. Activate the `tdd` skill for source changes. Use task-appropriate evidence for decision, verification, integration, or documentation work; do not invent product tests or code changes for a read-only outcome.
-   2. Make repository changes in its own worktree and branch (see [Working with Worktrees](#working-with-worktrees)). A read-only task needs a retained evidence result, not an empty commit.
-   3. Follow [commit message guidelines](references/message.md).
-   4. Keep its branch private and unpushed because integration rebases it.
+   2. Delegated edits use a private worktree and unpushed branch because integration rebases it. Local edits may use the base worktree with exclusive ownership. Read-only tasks retain evidence without an empty commit or unnecessary worktree.
+   3. If commits are prohibited, retain changes and evidence; report commit-dependent integration as pending.
 
-6. Integrate completed **implementer subagent** branches into the **base topic branch** one at a time:
-   1. Confirm the implementer's worktree is clean, then rebase its branch onto the latest **base topic branch**.
-   2. If there are conflicts, resolve them and rerun the affected tests. For a conflict-prone rebase, stop the implementer and give a **merger subagent** exclusive ownership of the existing implementer's worktree before the rebase starts. The merger rebases the implementer branch and does not mutate the base branch. A conflict-free rebase does not waive required integration checks: reuse evidence only when it covers the resulting tree and relevant interactions; otherwise run the affected checks.
-      If affected tests fail, pause integration of that branch. Record the required repair as unfinished work in the ExecPlan and delegate it to an **implementer subagent** through step 5. Resume integration after the repair passes the affected tests.
-   3. Update and commit any ExecPlan references to SHAs changed by the rebase, then confirm the implementer's worktree is clean.
-   4. Confirm the base worktree is clean, then fast-forward the base branch with `git merge --ff-only <implementer-branch>`.
-   5. Confirm the base branch tip matches the verified implementer branch tip. Once related prerequisites are integrated, execute the plan's composed-behavior proof on base, or delegate it as the named integration task. If it fails or remains unrun, keep milestone acceptance unmet and record the repair or blocker.
-   6. After each fast-forward, remove clean worktrees and local branches for the integrated node, including superseded repair/merger branches once their changes are verified on base. Preserve base and unrelated worktrees.
+5. Before integrating a worker branch, read and follow [branch integration](references/integration.md). Local changes skip rebase/merge, but require verification and the plan's composed-behavior proof on base. Keep acceptance unmet when that proof fails or remains unrun.
 
-   Serialize this integration sequence so concurrent completions cannot race to update the base branch.
+6. After each result or integration, verify evidence and reconcile the plan. Return to step 2 for ready tasks, including repairs. Continue independent authorized work while blockers remain.
 
-7. After each task result or integration, reconcile the plan using `exec-plans`; verify retained evidence for read-only tasks before marking them complete. Reassess the **frontier**, including repairs, and return to step 5 for ready items. Independent authorized work may continue while repairs or owner actions are pending.
+7. After all active tasks finish, coordinate one final documentation pass across their findings. When complete or blocked, reconcile and report the plan and actual base state, including owner actions. Preserve unfinished work and evidence; remove only verified clean integrated worktrees.
 
-8. When authorized work is complete or blocked, reconcile and report the plan using `exec-plans`, including the base branch's actual state. Preserve unfinished work and evidence; clean up only verified clean integrated worktrees.
+## Execution cost and context
 
-## Working with Worktrees
+Minimize expected completion cost without reducing correctness: context loading, repeated turns, startup, routing, tools, handback review, integration, verification, and retries. Model price or parallelism alone does not establish savings. Use measured usage when available; otherwise state material assumptions briefly.
 
-For parallel AI agent work, use git worktrees to run multiple branches simultaneously:
-
-```bash
-# Create a worktree for a feature branch
-git worktree add ../project-feature-a feature/task-creation
-git worktree add ../project-feature-b feature/user-settings
-
-# Each worktree is a separate directory with its own branch
-# Agents can work in parallel without interfering
-ls ../
-  project/              ← main branch
-  project-feature-a/    ← task-creation branch
-  project-feature-b/    ← user-settings branch
-
-# After integration, clean up the worktree and it's associated branch
-git worktree remove ../project-feature-a
-git branch -d feature/task-creation
-git worktree remove ../project-feature-b
-git branch -d feature/user-settings
-```
-
-Benefits:
-
-- Multiple agents can work on different features simultaneously
-- No branch switching needed (each directory has its own branch)
-- Preserve unfinished changes and evidence before removing an experimental worktree
-- Changes are isolated until explicitly fast-forwarded into the base branch
+- Work locally when the coordinator already has the needed context and a bounded task costs less than dispatch and review.
+- Delegate when a cheaper capable worker, independent exploration, or context isolation is likely to save more than its overhead. Keep large searches and transcripts out of the coordinator's context; request conclusions, evidence paths, test results, and blockers.
+- Send the smallest sufficient task packet: current requirements, relevant design and shared invariants, prerequisites, negative cases, acceptance, stop condition, and source entry points. Reference bulky evidence; do not forward whole conversations or unrelated plan history. Never trim information required for correctness or authorization.
+- Prefer a fresh worker for unrelated tasks or stale, crowded context. Reuse a worker for same-task repairs or closely related nodes only when useful context outweighs contamination and reload costs. Revalidate routing and ownership, and give each node its own acceptance and result.
+- Before compaction or worker replacement, retain current task state, decisions, evidence, and next action in the plan or linked task notes. Reuse valid evidence; recheck changed inputs and integrated interactions.

@@ -1,0 +1,6 @@
+{
+  "batch_artifacts": "../../batch-gpt-6.1-sol-with_skill",
+  "method": "nine independent paper scenarios batched in one session; no per-case timing or token allocation",
+  "model_submitted": "gpt-6.1-sol",
+  "reasoning_effort_submitted": "medium"
+}

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Allows cost-justified reuse for a closely related node with separate ownership and acceptance.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 7."
+    },
+    {
+      "text": "Revalidates routing and current context before reuse.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 7."
+    },
+    {
+      "text": "Uses fresh context for unrelated or stale/crowded work and retains necessary evidence.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 7."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Does not create commits, force a merge, or remove unintegrated worktrees.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Honors no-commit restriction; separates verified task work from pending integration/acceptance; retains edits, worktrees, and evidence."
+    },
+    {
+      "text": "Separates task verification from pending branch integration and milestone proof.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Honors no-commit restriction; separates verified task work from pending integration/acceptance; retains edits, worktrees, and evidence."
+    },
+    {
+      "text": "Retains changes and evidence and reports the actual state.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Honors no-commit restriction; separates verified task work from pending integration/acceptance; retains edits, worktrees, and evidence."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects local execution rather than mandatory delegation.",
+      "passed": false,
+      "evidence": "Chooses mandatory delegation or leaves the local/delegated conflict unresolved."
+    },
+    {
+      "text": "Includes dispatch/context/review overhead, not merely model price.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 5."
+    },
+    {
+      "text": "Retains verification and plan reconciliation.",
+      "passed": false,
+      "evidence": "Does not preserve plan reconciliation in the selected small-task execution contract."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 2,
+    "total": 3,
+    "pass_rate": 0.3333333333333333
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "integrated-tree-after-clean-rebase",
+  "prompt": "Use the supplied execplan-implement skill for a read-only orchestration review. Do not run Git or product commands, edit files, or dispatch agents. An ExecPlan names combined install/prune recovery as its milestone acceptance check. Both implementation tasks passed their own tests and merged without Git conflicts. Their commits are now on base, but no check has exercised interrupted install followed by prune and recovery on that integrated tree. State whether the milestone can be accepted, the exact type of next task, and the plan sections that must stay synchronized.",
+  "assertions": [
+    "Conflict-free integration does not waive the required composed-behavior check.",
+    "The next node is verification/integration, without fabricated code edits or an empty commit.",
+    "Status, acceptance, Progress, Concrete Steps and Outcomes are reconciled together."
+  ]
+}
