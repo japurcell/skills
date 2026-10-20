@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: Reflect on the conversation and update the brain. Use when wrapping up, after mistakes or corrections, or when significant codebase knowledge was gained. Triggers on "reflect", "remember this".
+description: Reflect on the conversation and update the brain. Mandatory at the end of sessions that change code; also use after mistakes, corrections, or significant codebase learnings. Review may conclude no write is needed. Triggers on "reflect", "remember this".
 ---
 
 # Reflect
@@ -9,7 +9,7 @@ Review the conversation and persist learnings - to `brain/`, to skill files, or 
 
 ## Process
 
-**Use Tasks to track progress** (TaskCreate per step, TaskUpdate to in_progress/completed).
+Track the review in the active plan when one exists; otherwise use the available planning tools or a short checklist.
 
 1. **Read `brain/index.md`** to understand what notes already exist
 2. **Scan the conversation** for:
@@ -22,7 +22,7 @@ Review the conversation and persist learnings - to `brain/`, to skill files, or 
    - Repeated manual steps that could be automated or encoded
 3. **Skip** anything trivial or already captured in existing brain files
 4. **Route each learning** to the right destination (see Routing below)
-5. **Update `brain/index.md`** if any brain files were added or removed
+5. **Reconcile navigation** using the brain skill; hooks own the root inventory
 
 ## Routing
 

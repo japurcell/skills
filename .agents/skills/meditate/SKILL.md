@@ -11,13 +11,13 @@ disable-model-invocation: true
 When running non-interactively:
 
 - Apply all high-confidence changes autonomously. For ambiguous or risky changes (brain file deletions, principle rewrites), file a todo instead.
-- Commit all changes with the `/commit` skill.
+- Commit only when the user authorizes it; follow the repository commit workflow.
 
 **Quality bar:** A note earns its place by being **high-signal** (The agent would reliably get this wrong without it), **high-frequency** (comes up in most sessions or most tasks of a type), or **high-impact** (getting it wrong causes significant damage or wasted work). Everything else is noise. A lean, precise brain outperforms a comprehensive but bloated one.
 
 ## Process
 
-**Use Tasks to track progress** (TaskCreate per step, TaskUpdate to in_progress/completed).
+Track progress with the available planning tools or a short checklist.
 
 ### 1. Build snapshots
 
@@ -30,7 +30,7 @@ Files are delimited with `=== path/to/file.md ===` headers.
 
 ### 2. Auditor (blocking - its report feeds step 3)
 
-Spawn `general-purpose` subagent. See `references/agents.md § Auditor` for the full prompt spec. Inputs: brain snapshot, auto-memory path, AGENTS.md path.
+Use an available general analysis subagent, or perform a bounded local review when delegation is unavailable. See `references/agents.md § Auditor` for the full prompt spec. Inputs: brain snapshot, auto-memory path, AGENTS.md path.
 
 Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-value content, verbosity, and orphans. Returns a categorized report.
 
@@ -38,7 +38,7 @@ Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-va
 
 ### 3. Reviewer (after auditor completes)
 
-Spawn one `general-purpose` subagent. See `references/agents.md § Reviewer` for the full prompt spec. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
+Use one available general analysis subagent, or continue locally when delegation is unavailable. See `references/agents.md § Reviewer` for the full prompt spec. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
 
 Combines three concerns in a single pass:
 
@@ -72,7 +72,7 @@ Apply all changes directly. The user reviews the diff.
 
 ### 7. Housekeep
 
-Update `brain/index.md` for any files added or removed.
+Maintain curated navigation through the brain skill; let hooks reconcile the root inventory.
 
 ## Summary
 

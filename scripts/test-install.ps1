@@ -1513,7 +1513,7 @@ function Test-InstallsCodexHookAndGlobalConfiguration {
         $installedHook = Join-Path $homeDir '.codex/hooks/load-required-skills.py'
         Assert-True -Condition (Test-Path -LiteralPath $installedHook -PathType Leaf) -Message "Expected the Codex required-skills hook to be installed."
         Assert-Equals -Expected (Read-FileContent (Join-Path $repo '.codex/hooks/load-required-skills.py')) -Actual (Read-FileContent $installedHook) -Message "Expected the installed Codex hook to match the maintained source."
-        foreach ($relative in @('scan-secrets.py', 'scan-status.py', 'tool-guard.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py', 'helpers/scan_types.py', 'helpers/scan_reporting.py', 'helpers/scan_allowlist.py', 'helpers/scan_stream.py', 'helpers/scan_git.py', 'helpers/scan_native_file.py', 'helpers/scan_native_process.py', 'helpers/scan_audit.py', 'helpers/scan_engine.py')) {
+        foreach ($relative in @('auto-index-brain.py', 'inject-brain.py', 'scan-secrets.py', 'scan-status.py', 'tool-guard.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py', 'helpers/scan_types.py', 'helpers/scan_reporting.py', 'helpers/scan_allowlist.py', 'helpers/scan_stream.py', 'helpers/scan_git.py', 'helpers/scan_native_file.py', 'helpers/scan_native_process.py', 'helpers/scan_audit.py', 'helpers/scan_engine.py')) {
             $installed = Join-Path (Join-Path $homeDir '.codex/hooks') $relative
             Assert-True -Condition (Test-Path -LiteralPath $installed -PathType Leaf) -Message "Expected Codex hook file $relative to be installed."
             Assert-Equals -Expected (Read-FileContent (Join-Path $repo ".codex/hooks/$relative")) -Actual (Read-FileContent $installed) -Message "Expected Codex hook file $relative to match source."
@@ -1687,7 +1687,8 @@ function Test-PreservesCodexConfigurationAndIsIdempotent {
         Assert-True -Condition ($config['setting']['keep']) -Message "Expected unrelated top-level Codex configuration to be preserved."
         Assert-Equals -Expected 'echo preserve' -Actual $config['hooks']['BeforeTool'][0]['hooks'][0]['command'] -Message "Expected unrelated Codex hook events to be preserved."
         Assert-Equals -Expected 'echo preserve' -Actual $config['hooks']['SessionStart'][0]['hooks'][0]['command'] -Message "Expected unrelated SessionStart handlers to be preserved."
-        Assert-Equals -Expected 'python3 ~/.codex/hooks/load-required-skills.py' -Actual $config['hooks']['SessionStart'][-1]['hooks'][0]['command'] -Message "Expected the owned SessionStart handler to be replaced by the maintained handler."
+        $requiredSkillHandlers = @($config['hooks']['SessionStart'] | ForEach-Object { $_['hooks'] } | Where-Object { $_['command'] -ceq 'python3 ~/.codex/hooks/load-required-skills.py' })
+        Assert-Equals -Expected 1 -Actual $requiredSkillHandlers.Count -Message "Expected exactly one maintained required-skill startup handler."
 
         $backupPath = Join-Path $homeDir '.codex/hooks.json.bak'
         Assert-True -Condition (Test-Path -LiteralPath $backupPath -PathType Leaf) -Message "Expected a backup when a valid Codex configuration changes."

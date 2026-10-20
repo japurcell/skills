@@ -5,7 +5,7 @@ description: Add, complete, or view items in the brain/todos.md backlog. Use whe
 
 # Todo
 
-Manage the project backlog at `brain/todos.md`. Edit the file directly with Edit/Write tools.
+Manage the project backlog at `brain/todos.md`. Edit the file directly with available file-editing tools.
 
 ## File Format
 

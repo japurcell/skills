@@ -97,31 +97,26 @@ CODEX_HELPER_TARGETS = (
     ".codex/hooks/helpers/common.py",
     ".codex/hooks/helpers/audit.py",
 )
-AUTO_INGEST_TARGETS = (
-    ".github/hooks/scripts/helpers/auto_ingest.py",
-    ".gemini/hooks/scripts/helpers/source_ingest.py",
-    ".github/hooks/scripts/auto-ingest-source.py",
-    ".gemini/hooks/scripts/auto-ingest.py",
-    ".github/hooks/scripts/inject-auto-ingest-context.py",
-    ".gemini/hooks/scripts/inject-auto-ingest-context.py",
-)
 DIAGNOSTICS_TARGETS = (
     ".codex/hooks/hooks-diagnostics.py",
     ".copilot/hooks/scripts/hooks-diagnostics.py",
     ".gemini/hooks/scripts/hooks-diagnostics.py",
 )
 
+BRAIN_TARGETS = (
+    ".github/hooks/scripts/auto-index-brain.py",
+    ".github/hooks/scripts/inject-brain.py",
+    ".copilot/hooks/scripts/auto-index-brain.py",
+    ".copilot/hooks/scripts/inject-brain.py",
+    ".gemini/hooks/scripts/auto-index-brain.py",
+    ".gemini/hooks/scripts/inject-brain.py",
+    ".codex/hooks/auto-index-brain.py",
+    ".codex/hooks/inject-brain.py",
+)
+
 RTK_TARGETS = (
     ".copilot/hooks/scripts/rtk-hook-copilot.py",
     ".gemini/hooks/scripts/rtk-hook-gemini.py",
-)
-OKF_TARGETS = (
-    ".github/hooks/scripts/helpers/okf_audit.py",
-    ".gemini/hooks/scripts/helpers/okf_audit.py",
-    ".codex/hooks/helpers/okf_audit.py",
-    ".github/hooks/scripts/helpers/okf.py",
-    ".gemini/hooks/scripts/helpers/okf.py",
-    ".codex/hooks/helpers/okf.py",
 )
 OBSERVABILITY_ALLOWED_DIFFERENCES = (
     ('OBSERVABILITY_RUNTIME = "copilot"', 'OBSERVABILITY_RUNTIME = "gemini"'),
@@ -143,10 +138,8 @@ OBSERVABILITY_ALLOWED_DIFFERENCES = (
 COMMON_AUDIT_TARGETS = {
     ".copilot/hooks/scripts/helpers/common.py": "cf92657a61e2a51e92036e400fc06f1e0d226f29d10c5fe0f0f834a98030f326",
     ".gemini/hooks/scripts/helpers/common.py": "fc9639abd1d33dd3656eace90f01b1e37b205de19ebc90e7f7bfa288370a3afd",
-    ".github/hooks/scripts/helpers/common.py": "2a9e8d4cf9f31ecd38f4f3e99617f360ef5efc761560c179d042aebeab27732a",
     ".copilot/hooks/scripts/helpers/audit.py": "042d556890bea3596780d8e6f0ec162d71d242fdd2be32604123534961e7dc6b",
     ".gemini/hooks/scripts/helpers/audit.py": "a423db01bbf25bc7434299f3062a3e6ee40daac82e7a17f64e53e89036ab01fc",
-    ".github/hooks/scripts/helpers/audit.py": "4e4a18539d107c2358d0976adffa6faf602c9421b5b99da52c944cfee87b60f4",
 }
 
 
@@ -224,18 +217,6 @@ class GenerateHooksTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.restore_checked_in_outputs()
 
-    def test_auto_ingest_targets_are_generated_and_keep_runtime_boundaries(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
-        self.assertTrue(set(AUTO_INGEST_TARGETS).issubset(rendered))
-        for target in AUTO_INGEST_TARGETS:
-            with self.subTest(target=target):
-                self.assertIn("# Generated from hooks/families/auto_ingest.py", rendered[target])
-                self.assertNotIn(".github.hooks", rendered[target])
-                self.assertNotIn(".gemini.hooks", rendered[target])
 
     def test_rtk_targets_share_runtime_body_outside_explicit_provider_adapters(self) -> None:
         generator = load_generator()
@@ -325,7 +306,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (68 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (62 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -356,7 +337,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (68 files).\n")
+        self.assertEqual(result.stdout, "Generated hooks are current (62 files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -381,7 +362,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (68 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (62 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")
@@ -407,7 +388,7 @@ class GenerateHooksTests(unittest.TestCase):
             for output in generator.render_all(ROOT)
         }
         self.assertEqual(
-            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(STATUS_TARGETS) - set(SCANNER_RUNTIME_TARGETS) - set(CODEX_HELPER_TARGETS) - set(AUTO_INGEST_TARGETS) - set(RTK_TARGETS) - set(OKF_TARGETS) - set(DIAGNOSTICS_TARGETS),
+            set(rendered) - set(TARGETS) - set(OBSERVABILITY_TARGETS) - set(TOOL_GUARD_TARGETS) - set(TOOL_GUARD_POLICY_TARGETS) - set(SECRET_SCANNER_TARGETS) - set(STATUS_TARGETS) - set(SCANNER_RUNTIME_TARGETS) - set(CODEX_HELPER_TARGETS) - set(RTK_TARGETS) - set(DIAGNOSTICS_TARGETS) - set(BRAIN_TARGETS),
             set(COMMON_AUDIT_TARGETS),
         )
         for target, expected_digest in COMMON_AUDIT_TARGETS.items():
@@ -422,25 +403,6 @@ class GenerateHooksTests(unittest.TestCase):
                 body = "".join(lines[2:])
                 self.assertEqual(sha256(body.encode("utf-8")).hexdigest(), expected_digest)
 
-    def test_okf_helpers_are_owned_and_identical_across_providers(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
-        self.assertTrue(set(OKF_TARGETS).issubset(rendered))
-        for filename in ("okf.py", "okf_audit.py"):
-            bodies = []
-            for target in OKF_TARGETS:
-                if not target.endswith("/" + filename):
-                    continue
-                with self.subTest(target=target):
-                    lines = rendered[target].splitlines(keepends=True)
-                    self.assertEqual(lines[0], "#!/usr/bin/env python3\n")
-                    self.assertEqual(lines[1], "# Generated from hooks/families/okf.py by scripts/generate-hooks.py. Do not edit.\n")
-                    bodies.append("".join(lines[2:]))
-            self.assertEqual(len(bodies), 3)
-            self.assertEqual(bodies, [bodies[0]] * 3)
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
         generator = load_generator()

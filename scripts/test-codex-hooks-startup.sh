@@ -65,7 +65,7 @@ import pathlib
 import sys
 
 payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-groups = payload["hooks"]["SessionStart"]
+groups = [group for group in payload["hooks"]["SessionStart"] if any(handler.get("command") == "python3 ~/.codex/hooks/load-required-skills.py" for handler in group["hooks"])]
 assert len(groups) == 1
 group = groups[0]
 assert group["matcher"] == "startup|resume|clear|compact"

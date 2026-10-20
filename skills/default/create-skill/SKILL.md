@@ -28,7 +28,7 @@ Use the `skill-creator` skill for the broader authoring and iteration loop, but 
 
 2. **Load the required references**
    - Activate the `skill-creator` skill immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
-   - Read `.agents/instructions/skills.md`, `.agents/instructions/repo.md`, and `.agents/instructions/testing/skills.md` so the result follows repository-specific rules.
+   - Read `brain/codebase/skills-and-installation.md`, `brain/codebase/repository-workflow.md`, and `brain/codebase/skill-evaluation.md` so the result follows repository-specific rules.
 
 3. **Draft or revise the skill**
    - Keep the description trigger-oriented: say what the skill does concisely, then add clear `Use when ...` conditions. Do not stuff numbered workflow steps into the description.

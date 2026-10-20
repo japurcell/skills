@@ -219,10 +219,6 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.sessionStart[1].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register load-required-skills.py PowerShell command for sessionStart."
 
-  assert_equals '' \
-    "$(jq -r '.hooks.agentStop[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to stop owning the pending-ingest agentStop backstop."
-
   assert_equals '$HOME/.copilot/hooks/scripts/send-event.py' \
     "$(jq -r '.hooks.subagentStart[0].bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py first for subagentStart."
@@ -237,78 +233,6 @@ test_hooks_json_registers_cli_and_vscode_start_events() {
     "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
     "Expected hooks.json to register send-event.py PowerShell command for userPromptTransformed."
 
-  assert_equals '' \
-    "$(jq -r '.hooks.userPromptTransformed[] | select(.bash | test("inject-auto-ingest-context\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected hooks.json to stop owning auto-ingest wiring for userPromptTransformed."
-
-  assert_equals '.github/hooks/scripts/inject-auto-ingest-context.py' \
-    "$(jq -r '.hooks.userPromptTransformed[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py for userPromptTransformed."
-  assert_equals 'python ".github/hooks/scripts/inject-auto-ingest-context.py"' \
-    "$(jq -r '.hooks.userPromptTransformed[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to register repo-local inject-auto-ingest-context.py PowerShell command for userPromptTransformed."
-
-  assert_equals 1 \
-    "$(jq -r '.hooks.userPromptTransformed | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local hooks.json to keep userPromptTransformed auto-ingest wiring isolated."
-
-  assert_equals '.github/hooks/scripts/validate-stop.py' \
-    "$(jq -r '.hooks.agentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to register the combined stop validator."
-  assert_equals 'python ".github/hooks/scripts/validate-stop.py"' \
-    "$(jq -r '.hooks.agentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to register the combined PowerShell stop validator."
-  assert_equals 10 \
-    "$(jq -r '.hooks.agentStop[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop validator to use a 10-second timeout."
-  assert_equals 1 \
-    "$(jq -r '.hooks.agentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local agentStop to expose one combined stop validator."
-
-  assert_equals '.github/hooks/scripts/validate-stop.py' \
-    "$(jq -r '.hooks.subagentStop[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to register the combined stop validator."
-  assert_equals 'python ".github/hooks/scripts/validate-stop.py"' \
-    "$(jq -r '.hooks.subagentStop[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to register the combined PowerShell stop validator."
-  assert_equals 10 \
-    "$(jq -r '.hooks.subagentStop[0].timeoutSec // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop validator to use a 10-second timeout."
-  assert_equals 1 \
-    "$(jq -r '.hooks.subagentStop | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local subagentStop to expose one combined stop validator."
-
-  assert_equals '0' \
-    "$(jq -r '(.hooks.postToolUse // []) | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local OKF validation only at turn end."
-
-  assert_equals '' \
-    "$(jq -r '.hooks.sessionStart[] | select(.bash | test("auto-ingest-source\\.py$")) | .bash // empty' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected global Copilot hooks.json to stop registering auto-ingest-source.py."
-
-  assert_equals '.github/hooks/scripts/auto-ingest-source.py' \
-    "$(jq -r '.hooks.sessionStart[0].bash // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local Copilot hooks.json to register only auto-ingest-source.py."
-  assert_equals 'python ".github/hooks/scripts/auto-ingest-source.py"' \
-    "$(jq -r '.hooks.sessionStart[0].powershell // empty' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local Copilot hooks.json to register auto-ingest-source.py PowerShell command."
-
-  assert_equals 1 \
-    "$(jq -r '.hooks.sessionStart | length' "$REPO_ROOT/.github/hooks/hooks.json")" \
-    "Expected repo-local Copilot hooks.json to contain only auto-ingest for sessionStart."
-
-  assert_equals '' \
-    "$(jq -r '.hooks[][].bash | select(test("auto-ingest"))' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected .copilot/hooks/hooks.json to own no auto-ingest wiring."
-  assert_equals '' \
-    "$(jq -r '.hooks[][].bash | select(test("lint-okf"))' "$REPO_ROOT/.copilot/hooks/hooks.json")" \
-    "Expected .copilot/hooks/hooks.json to own no repository-specific OKF wiring."
-}
-
-test_validation_doc_records_vscode_subagent_start_strategy() {
-  assert_file_contains "$REPO_ROOT/.agents/instructions/testing/hooks-live.md" \
-    "If VS Code omits \`SubagentStart\` for \`runSubagent\` child sessions, verify the direct \`SubagentStart\` hook is installed and use \`SessionStart\` as the fallback evidence." \
-    "Expected validation guidance to codify the VS Code SubagentStart fallback strategy."
 }
 
 test_compact_mode_override_is_ignored() {
@@ -412,7 +336,6 @@ main() {
   test_subagent_start_outputs_vscode_schema_with_caveman_only_context
   test_compact_mode_override_is_ignored
   test_hooks_json_registers_cli_and_vscode_start_events
-  test_validation_doc_records_vscode_subagent_start_strategy
   test_multiple_skills_loading_works_correctly
   test_empty_skills_logs_no_skills_loaded_and_outputs_no_hook_specific_output
 }

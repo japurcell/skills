@@ -38,7 +38,9 @@ The destination knowledge base now links this record from the scoped `skills` in
 
 Follow-up portability correction (2026-10-01): the tracked-source inventory example originally embedded a machine-specific absolute checkout path. It now uses `WORKPLAN_SOURCE`; the immutable source commit hash remains the historical identity.
 
-## Non-mutating checks and results
+## Historical non-mutating checks and results
+
+These commands record the earlier migration evidence. The OKF linter was retired by the brain migration; use current repository validation guidance for new work.
 
 From the destination repository root:
 

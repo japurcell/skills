@@ -12,7 +12,6 @@ from uuid import uuid4
 
 # Add script directories to sys.path so we can import helpers
 repo_root = Path(__file__).resolve().parent.parent
-github_helpers_path = repo_root / ".github" / "hooks" / "scripts"
 gemini_helpers_path = repo_root / ".gemini" / "hooks" / "scripts"
 copilot_helpers_path = repo_root / ".copilot" / "hooks" / "scripts"
 
@@ -23,7 +22,7 @@ class TestHookHelpers(unittest.TestCase):
         import subprocess
         import tempfile
 
-        helper_paths = (github_helpers_path, gemini_helpers_path, copilot_helpers_path,
+        helper_paths = (gemini_helpers_path, copilot_helpers_path,
                         repo_root / ".codex" / "hooks")
         with tempfile.TemporaryDirectory(prefix="common-command-") as directory:
             for path in helper_paths:
@@ -45,7 +44,7 @@ class TestHookHelpers(unittest.TestCase):
     def test_run_command_preserves_failures_timeout_and_bytes_output(self):
         import subprocess
 
-        helper_paths = (github_helpers_path, gemini_helpers_path, copilot_helpers_path,
+        helper_paths = (gemini_helpers_path, copilot_helpers_path,
                         repo_root / ".codex" / "hooks")
         for path in helper_paths:
             with self.subTest(provider=path.parts[-3]):
@@ -132,28 +131,6 @@ class TestHookHelpers(unittest.TestCase):
     def _create_disposable_test_dir(self, name: str) -> Path:
         return Path(tempfile.mkdtemp(prefix=f"{name}-"))
 
-    def test_github_convert_windows_path_to_posix(self):
-        common = self._get_common_module(github_helpers_path)
-        convert = common.convert_windows_path_to_posix
-
-        # Test empty input
-        self.assertEqual(convert(""), "")
-
-        # Test Windows native platform behavior
-        if os.name == "nt":
-            self.assertEqual(convert("D:/foo/bar"), "D:\\foo\\bar")
-        else:
-            # Test POSIX behavior (like WSL/MSYS2) with Windows drive letters
-            # Drive letter conversion
-            self.assertTrue(convert("D:\\foo\\bar").startswith(("/mnt/d/foo/bar", "/d/foo/bar")))
-            self.assertTrue(convert("C:/Users/jeff").startswith(("/mnt/c/Users/jeff", "/c/Users/jeff")))
-
-            # Non-alphabetic character before colon should not be parsed as a drive letter
-            self.assertEqual(convert("..:\\foo\\bar"), "..:/foo/bar")
-            self.assertEqual(convert("1:\\foo\\bar"), "1:/foo/bar")
-
-            # General backslash normalization
-            self.assertEqual(convert("foo\\bar"), "foo/bar")
 
     def test_gemini_convert_windows_path_to_posix(self):
         common = self._get_common_module(gemini_helpers_path)
@@ -168,26 +145,11 @@ class TestHookHelpers(unittest.TestCase):
         else:
             # Test POSIX behavior
             self.assertTrue(convert("D:\\foo\\bar").startswith(("/mnt/d/foo/bar", "/d/foo/bar")))
+            self.assertTrue(convert("C:/Users/jeff").startswith(("/mnt/c/Users/jeff", "/c/Users/jeff")))
+            self.assertEqual(convert("..:\\foo\\bar"), "..:/foo/bar")
+            self.assertEqual(convert("1:\\foo\\bar"), "1:/foo/bar")
             self.assertEqual(convert("foo\\bar"), "foo/bar")
 
-    def test_github_unicode_emit_json_no_crash(self):
-        common = self._get_common_module(github_helpers_path)
-        emit_json = common.emit_json
-        import io
-
-        bytes_io = io.BytesIO()
-        old_stdout = sys.stdout
-        sys.stdout = io.TextIOWrapper(bytes_io, encoding="cp1252")
-        try:
-            # Test payload containing non-ASCII unicode arrow character '→'
-            test_payload = {"message": "D:/Projects/personal/skills/.github/global-settings.json → ~/.github/settings.json"}
-            emit_json(test_payload)
-            sys.stdout.flush()
-            written_bytes = bytes_io.getvalue()
-            decoded_output = written_bytes.decode("utf-8")
-            self.assertIn("→", decoded_output)
-        finally:
-            sys.stdout = old_stdout
 
     def test_gemini_unicode_emit_json_no_crash(self):
         common = self._get_common_module(gemini_helpers_path)
@@ -310,7 +272,7 @@ class TestHookHelpers(unittest.TestCase):
         self.assertEqual(common.strip_yaml_frontmatter(no_yaml_text), "body content only")
 
     def test_windows_drive_paths_resolve_as_absolute_on_posix(self):
-        for helpers_path in (copilot_helpers_path, github_helpers_path, gemini_helpers_path):
+        for helpers_path in (copilot_helpers_path, gemini_helpers_path):
             with self.subTest(runtime=helpers_path.parts[-3]):
                 common = self._get_common_module(helpers_path)
                 skills_dir = "/skills"
@@ -323,58 +285,7 @@ class TestHookHelpers(unittest.TestCase):
                 else:
                     self.assertEqual(resolved, common.convert_windows_path_to_posix(raw))
 
-    def test_github_audit_lock_timeout_default_is_one_second(self):
-        audit = self._get_audit_module(github_helpers_path)
 
-        self.assertEqual(audit._lock_timeout_seconds(None), 1.0)
-        self.assertEqual(audit._lock_timeout_seconds("1000"), 1.0)
-
-    def test_github_audit_rotates_primary_and_shadow_logs(self):
-        audit = self._get_audit_module(github_helpers_path)
-        workdir = self._create_disposable_test_dir("github-audit-rotation")
-        log_path = workdir / "audit.log"
-        shadow_path = workdir / "audit-shadow.log"
-
-        env_keys = [
-            "AUDIT_LOG",
-            "AUDIT_LOCK",
-            "AUDIT_LOG_MAX_BYTES",
-            "AUDIT_LOG_MAX_BACKUPS",
-            "AUDIT_PASSIVE_LOG_MODE",
-            "AUDIT_PASSIVE_LOG_SHADOW_LOG",
-            "AUDIT_LOCK_WAIT_MS",
-        ]
-        old_env = {key: os.environ.get(key) for key in env_keys}
-
-        os.environ["AUDIT_LOG"] = str(log_path)
-        os.environ["AUDIT_LOCK"] = str(workdir / "audit.log.lock")
-        os.environ["AUDIT_LOG_MAX_BYTES"] = "300"
-        os.environ["AUDIT_LOG_MAX_BACKUPS"] = "2"
-        os.environ["AUDIT_PASSIVE_LOG_MODE"] = "shadow"
-        os.environ["AUDIT_PASSIVE_LOG_SHADOW_LOG"] = str(shadow_path)
-        os.environ.pop("AUDIT_LOCK_WAIT_MS", None)
-
-        try:
-            for idx in range(8):
-                message = f"rotation-test-{idx}-" + ("x" * 160)
-                self.assertTrue(audit.audit_log_event("test", message))
-
-            self.assertTrue(log_path.exists(), "Expected primary audit log to exist.")
-            self.assertTrue((workdir / "audit.log.1").exists(), "Expected rotated primary backup audit.log.1.")
-            self.assertTrue(shadow_path.exists(), "Expected shadow audit log to exist.")
-            self.assertTrue((workdir / "audit-shadow.log.1").exists(), "Expected rotated shadow backup audit-shadow.log.1.")
-            self.assertIn(
-                "[mode=shadow]",
-                shadow_path.read_text(encoding="utf-8"),
-                "Expected passive shadow audit entries to keep legacy mode prefix.",
-            )
-        finally:
-            for key, value in old_env.items():
-                if value is None:
-                    os.environ.pop(key, None)
-                else:
-                    os.environ[key] = value
-            shutil.rmtree(workdir, ignore_errors=True)
 
     def test_observability_payload_size_fast_path_skips_utf8_encode(self):
         class ExplodingEncodeStr(str):

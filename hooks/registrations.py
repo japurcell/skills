@@ -6,26 +6,30 @@ are retained; an owned path combined with an unrecognized launch is ambiguous.
 from __future__ import annotations
 
 import copy
+import hashlib
+import sys
 from contextlib import contextmanager
 import os
 from pathlib import Path
 import stat
 import shlex
 
-from scripts.trusted_hook_launch import serialize_trusted_launch, trusted_posix_arguments
+from scripts.trusted_hook_launch import serialize_trusted_launch, trusted_posix_arguments, hook_arguments, template_commands
 
 DESIRED = {
-    "codex": {"SessionStart": ("load-required-skills.py",), "PreToolUse": ("tool-guard.py",), "Stop": ("scan-status.py",)},
+    "codex": {"SessionStart": ("load-required-skills.py", "inject-brain.py"), "PostToolUse": ("auto-index-brain.py",), "PreToolUse": ("tool-guard.py",), "Stop": ("scan-status.py",)},
     "copilot": {
         **{event: ("send-event.py",) for event in ("agentStop", "errorOccurred", "notification", "permissionRequest", "postToolUse", "preCompact", "postToolUseFailure", "subagentStart", "subagentStop", "userPromptSubmitted", "userPromptTransformed")},
         "agentStop": ("send-event.py", "scan-status.py"),
         "preToolUse": ("send-event.py", "tool-guard.py"),
         "sessionEnd": ("send-event.py", "bell.py"),
-        "sessionStart": ("send-event.py", "load-required-skills.py"),
+        "sessionStart": ("send-event.py", "load-required-skills.py", "inject-brain.py"),
+        "postToolUse": ("send-event.py", "auto-index-brain.py"),
     },
     "gemini": {
         **{event: ("send-event.py",) for event in ("AfterAgent", "BeforeAgent", "BeforeModel", "AfterModel", "BeforeToolSelection", "AfterTool", "PreCompress", "Notification", "SessionEnd")},
-        "SessionStart": ("send-event.py", "skill-context-injector.py"),
+        "SessionStart": ("send-event.py", "skill-context-injector.py", "inject-brain.py"),
+        "AfterTool": ("send-event.py", "auto-index-brain.py"),
         "BeforeTool": ("send-event.py", "tool-guard.py", "rtk-hook-gemini.py"),
         "AfterAgent": ("send-event.py", "scan-status.py"),
     },
@@ -37,12 +41,24 @@ RETIRED = {
     "gemini": {"BeforeTool": ("scan-secrets.py",), "SessionEnd": ("scan-secrets.py",)},
 }
 
+# Historical ingestion/OKF registrations are retired only at exact known launches.
+for _provider, _events in {
+    "codex": {"Stop": ("repository-okf.py",)},
+    "copilot": {"sessionStart": ("auto-ingest-source.py",),
+                "userPromptTransformed": ("inject-auto-ingest-context.py",),
+                "agentStop": ("validate-stop.py", "lint-okf.py", "inject-auto-ingest-context.py"),
+                "subagentStop": ("validate-stop.py", "lint-okf.py")},
+    "gemini": {"SessionStart": ("auto-ingest.py",),
+               "BeforeAgent": ("inject-auto-ingest-context.py",),
+               "AfterAgent": ("inject-auto-ingest-context.py", "lint-okf.py")},
+}.items():
+    for _event, _names in _events.items():
+        RETIRED[_provider][_event] = (*RETIRED[_provider].get(_event, ()), *_names)
+
+
 
 def legacy_commands(provider, filename):
-    if provider == "codex":
-        return {"command": f"python3 ~/.codex/hooks/{filename}", "commandWindows": f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'}
-    path = f"$HOME/.{provider}/hooks/scripts/{filename}"
-    return {"bash": path, "powershell": f'python "{path}"'} if provider == "copilot" else {"command": f'python "{path}"'}
+    return template_commands(provider, filename)
 
 
 def literal_output_command(command, provider, field):
@@ -95,11 +111,11 @@ def classify(handler, provider, event, directory):
         python = arguments[0] if arguments and arguments[4] == script else None
         if provider == "gemini" and os.name == "nt":
             prefix, separator, suffix = command.partition(" -I -S -B ")
-            if separator and suffix == f'"{script}"' and prefix.startswith('"') and prefix.endswith('"'):
+            if separator and suffix == f'"{script}"' + (" " + " ".join(hook_arguments(filename, provider)) if hook_arguments(filename, provider) else "") and prefix.startswith('"') and prefix.endswith('"'):
                 python = prefix[1:-1]
         if python:
             shells = ("posix", "windows") if provider == "codex" else ("posix", "powershell") if provider == "copilot" else ("native",)
-            if all(handler.get(key) == serialize_trusted_launch(python, script, shell, windows=os.name == "nt") for key, shell in zip(keys, shells)):
+            if all(handler.get(key) == serialize_trusted_launch(python, script, shell, windows=os.name == "nt", extra=hook_arguments(filename, provider)) for key, shell in zip(keys, shells)):
                 return admit(filename)
         # Mentioning our exact home path with unknown executable behavior is
         # neither ownership proof nor permission to delete that behavior.
@@ -281,3 +297,33 @@ def verify_unchanged(destination, existed, content):
         raise ValueError("Provider configuration changed during migration; review and retry")
     if existed and destination.read_bytes() != content:
         raise ValueError("Provider configuration changed during migration; review and retry")
+
+
+# Receipts for repository-owned retired assets at the migration boundary.
+# Modified files and runtime logs belong to the user and are preserved.
+RETIRED_ASSETS = {'codex': {'repository-okf.py': '56d21dd4c59676d91c12c748e4ba16f61a79d0f28c3c9991bc137f4bb8924fda', 'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b', 'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43'}, 'gemini': {'auto-ingest.py': 'd46ec00c738e03bc55417a66b97b85658d429737a484462a940af0b1cb374f9b', 'inject-auto-ingest-context.py': '8ea94475dc185ad5b95380faf81d4573928e6c3e0f0905ffb764dbc4e709aeed', 'lint-okf.py': '2bb08460c8a33d832cbdab5574616e2ceb8060aa592dc11b7528fdb9d980faa6', 'helpers/source_ingest.py': 'ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82', 'helpers/okf.py': 'e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b', 'helpers/okf_audit.py': '66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43'}}
+
+
+def retire_assets(provider, directory):
+    for name, expected in RETIRED_ASSETS.get(provider, {}).items():
+        path = directory / name
+        try:
+            check_parent_directories(directory, path)
+        except ValueError:
+            print("Preserved retired hook asset below a linked directory for manual review", file=sys.stderr)
+            continue
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            continue
+        if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+                or getattr(info, "st_file_attributes", 0) & 0x400):
+            print("Preserved linked or non-file retired hook asset for manual review", file=sys.stderr)
+            continue
+        if info.st_size > 2 * 1024 * 1024:
+            print("Preserved oversized retired hook asset for manual review", file=sys.stderr)
+            continue
+        if hashlib.sha256(path.read_bytes()).hexdigest() == expected:
+            path.unlink()
+        else:
+            print("Preserved modified retired hook asset for manual review", file=sys.stderr)

@@ -21,6 +21,7 @@ from hooks.registrations import (
     configuration_lock,
     preflight_status_path,
     reconcile,
+    retire_assets,
     validate_status_asset,
     verify_unchanged,
 )
@@ -149,6 +150,8 @@ def main() -> int:
                 )
                 if needs_private_copy and not arguments.check:
                     atomic_write(destination, old_bytes, home)
+                if not arguments.check:
+                    retire_assets(arguments.provider, home / f".{arguments.provider}/hooks/scripts")
                 return 0
             backup = destination.with_name(destination.name + ".bak")
             if exists and backup.is_symlink():
@@ -159,6 +162,7 @@ def main() -> int:
             if exists:
                 atomic_write(backup, old_bytes, home)
             atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
+            retire_assets(arguments.provider, home / f".{arguments.provider}/hooks/scripts")
             return 0
     except (OSError, ValueError) as exc:
         print(f"{arguments.provider.capitalize()} install failed: {exc}", file=sys.stderr)

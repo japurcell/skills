@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
-from trusted_hook_launch import SECURITY_HOOK_FILES, trusted_command
+from trusted_hook_launch import PINNED_HOOK_FILES, trusted_command, template_commands, hook_arguments
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from hooks.registrations import (
@@ -23,6 +23,7 @@ from hooks.registrations import (
     configuration_lock,
     preflight_status_path,
     reconcile,
+    retire_assets,
     validate_status_asset,
     verify_unchanged,
     unique_object,
@@ -31,7 +32,7 @@ from hooks.registrations import (
 
 MAINTAINED_HOOK_FILES = tuple(sorted({name for names in DESIRED["codex"].values() for name in names}))
 RETIRED_RTK_HOOK_FILES = ("rtk-explicit-codex.py", "rtk-agent-launcher.py")
-MAINTAINED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in MAINTAINED_HOOK_FILES}
+MAINTAINED_POSIX_COMMANDS = {template_commands("codex", name)["command"] for name in MAINTAINED_HOOK_FILES}
 OWNED_HOOK_FILES = MAINTAINED_HOOK_FILES + RETIRED_RTK_HOOK_FILES + ("scan-secrets.py",)
 OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
 OWNED_WINDOWS_COMMANDS = {
@@ -103,11 +104,8 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
                 windows = handler.get("commandWindows")
                 if not isinstance(posix, str) or posix not in MAINTAINED_POSIX_COMMANDS:
                     raise ValueError(f"Template hooks.{event} contains an unowned command")
-                if not isinstance(windows, str) or windows.casefold() not in OWNED_WINDOWS_COMMANDS:
-                    raise ValueError(f"Template hooks.{event} contains an unowned Windows command")
-                filename = posix.removeprefix("python3 ~/.codex/hooks/")
-                expected_windows = f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
-                if windows.casefold() != expected_windows.casefold():
+                filename = next(name for name in MAINTAINED_HOOK_FILES if template_commands("codex", name)["command"] == posix)
+                if windows != template_commands("codex", filename)["commandWindows"]:
                     raise ValueError(f"Template hooks.{event} has mismatched hook commands")
                 if posix in seen:
                     raise ValueError(f"Template repeats maintained handler: {posix}")
@@ -149,10 +147,10 @@ def main() -> int:
         for groups in maintained.values():
             for group in groups:
                 for handler in group["hooks"]:
-                    for filename in SECURITY_HOOK_FILES:
-                        if handler["command"] == f"python3 ~/.codex/hooks/{filename}":
-                            handler["command"] = trusted_command(hook_directory / filename, "posix")
-                            handler["commandWindows"] = trusted_command(hook_directory / filename, "windows")
+                    for filename in PINNED_HOOK_FILES:
+                        if handler["command"] == template_commands("codex", filename)["command"]:
+                            handler["command"] = trusted_command(hook_directory / filename, "posix", extra=hook_arguments(filename, "codex"))
+                            handler["commandWindows"] = trusted_command(hook_directory / filename, "windows", extra=hook_arguments(filename, "codex"))
         check_parent_directories(arguments.destination.absolute().parent, arguments.destination.absolute())
         if arguments.destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {arguments.destination}")
@@ -170,6 +168,8 @@ def main() -> int:
                 info = arguments.destination.stat()
                 if not arguments.check and (info.st_nlink > 1 or (os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600)):
                     atomic_write(arguments.destination, existing_bytes)
+                if not arguments.check:
+                    retire_assets("codex", hook_directory)
                 return 0
 
             if destination_exists:
@@ -183,6 +183,7 @@ def main() -> int:
             if destination_exists:
                 atomic_write(backup, existing_bytes)
             atomic_write(arguments.destination, serialized)
+            retire_assets("codex", hook_directory)
             return 0
     except (OSError, ValueError) as exc:
         print(f"Codex hook install failed: {exc}", file=sys.stderr)

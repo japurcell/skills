@@ -110,11 +110,12 @@ def main() -> None:
                 for handler in group["hooks"]:
                     command = handler["command"]
                     expected = dict(handler)
-                    filename = command.rsplit("/", 1)[-1]
-                    if filename in {"tool-guard.py", "scan-status.py"}:
-                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename)])
+                    filename = command.rsplit("/", 1)[-1].split()[0]
+                    extra = ["--provider", "codex"] if filename in {"inject-brain.py", "auto-index-brain.py"} else []
+                    if filename in {"tool-guard.py", "scan-status.py", "inject-brain.py", "auto-index-brain.py"}:
+                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename), *extra])
                         expected["command"] = command
-                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"'
+                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"' + (" " + " ".join(extra) if extra else "")
                     matches = [candidate for existing_group in merged["hooks"][event]
                                for candidate in existing_group["hooks"]
                                if candidate.get("command") == command

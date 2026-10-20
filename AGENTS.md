@@ -4,9 +4,12 @@ This repository publishes skills from `skills/`, canonical custom-agent Markdown
 
 ## Brain
 
-The `brain/` directory is an Obsidian vault — persistent memory across sessions.
+The `brain/` directory is an Obsidian vault - persistent memory across sessions.
 
 - **Read first.** Read brain files relevant to your task before acting.
 - **Write** after mistakes, corrections, or notable codebase learnings.
-- **Structure:** One topic per file. Directories with `[[wikilink]]` indexes — no inlined content.
+- **Structure:** One topic per file. Directories with `[[wikilink]]` indexes - no inlined content.
 - **Maintain:** Delete outdated notes. Clean completed/abandoned plans from `brain/plans/`.
+
+- **Reflect:** At the end of every session that changes code, run the `reflect` skill. Persist only durable findings; a review may require no write.
+- **Index ownership:** Hooks generate `brain/index.md`. Put prose in topic notes and maintain link-only curated subindexes. Invoke `meditate` and `ruminate` only on explicit request.

@@ -1,4 +1,4 @@
-"""Render installed security-hook launches without runtime interpreter lookup."""
+"""Render installed security and brain launches without runtime interpreter lookup."""
 
 from __future__ import annotations
 
@@ -7,17 +7,36 @@ from pathlib import Path
 import sys
 
 SECURITY_HOOK_FILES = ("scan-secrets.py", "tool-guard.py", "scan-status.py")
+BRAIN_HOOK_FILES = ("auto-index-brain.py", "inject-brain.py")
+PINNED_HOOK_FILES = SECURITY_HOOK_FILES + BRAIN_HOOK_FILES
 
 
-def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False) -> str:
-    """Quote an already validated five-operand security-hook launch."""
+def hook_arguments(filename: str, provider: str) -> tuple[str, ...]:
+    return ("--provider", provider) if filename in BRAIN_HOOK_FILES else ()
+
+
+def template_commands(provider: str, filename: str) -> dict[str, str]:
+    suffix = " --provider " + provider if filename in BRAIN_HOOK_FILES else ""
+    if provider == "codex":
+        return {"command": f"python3 ~/.codex/hooks/{filename}" + suffix,
+                "commandWindows": f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"' + suffix}
+    path = f"$HOME/.{provider}/hooks/scripts/{filename}"
+    if provider == "copilot":
+        bash = f'python3 "{path}"' if filename in BRAIN_HOOK_FILES else path
+        return {"bash": bash + suffix, "powershell": f'python "{path}"' + suffix}
+    return {"command": f'python "{path}"' + suffix}
+
+
+
+def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False, extra: tuple[str, ...] = ()) -> str:
+    """Quote a validated isolated-interpreter launch and constant hook arguments."""
     import shlex
 
-    arguments = [python, "-I", "-S", "-B", script]
+    arguments = [python, "-I", "-S", "-B", script, *extra]
     if shell == "powershell":
         return "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
     if shell == "windows" or (shell == "native" and windows):
-        return f'"{arguments[0]}" -I -S -B "{arguments[-1]}"'
+        return f'"{python}" -I -S -B "{script}"' + (" " + " ".join(extra) if extra else "")
     return shlex.join(arguments)
 
 
@@ -30,13 +49,13 @@ def trusted_posix_arguments(command: str) -> list[str] | None:
         arguments = shlex.split(command)
     except ValueError:
         return None
-    if (len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]
+    if ((len(arguments) != 5 and not (len(arguments) == 7 and arguments[5] == "--provider" and arguments[6] in {"codex", "copilot", "gemini"})) or arguments[1:4] != ["-I", "-S", "-B"]
             or not Path(arguments[0]).is_absolute()):
         return None
     return arguments
 
 
-def trusted_command(script: Path, shell: str = "native", executable: str | None = None) -> str:
+def trusted_command(script: Path, shell: str = "native", executable: str | None = None, *, extra: tuple[str, ...] = ()) -> str:
     python = Path(executable or sys.executable)
     if not python.is_absolute() or (executable is None and not python.is_file()):
         raise ValueError("Trusted Python must be an absolute executable file")
@@ -46,7 +65,7 @@ def trusted_command(script: Path, shell: str = "native", executable: str | None 
         # Percent/delayed expansion cannot be made literal across host shells.
         if any(any(character in item for character in ('"', '%', '!', '\r', '\n')) for item in (str(python), script_text)):
             raise ValueError("Trusted hook paths contain unsupported Windows shell characters")
-    return serialize_trusted_launch(str(python), script_text, shell, windows=os.name == "nt")
+    return serialize_trusted_launch(str(python), script_text, shell, windows=os.name == "nt", extra=extra)
 
 
 def is_trusted_pair(handler: dict, script: Path) -> bool:
@@ -66,10 +85,9 @@ def pin_provider_commands(template: dict, provider: str, home: Path) -> None:
             continue
         for entry in entries:
             for handler in ([entry] if provider == "copilot" else entry["hooks"]):
-                for filename in SECURITY_HOOK_FILES:
+                for filename in PINNED_HOOK_FILES:
                     keys = ("bash", "powershell") if provider == "copilot" else ("command",)
-                    path = f"$HOME/.{provider}/hooks/scripts/{filename}"
-                    legacy = {"bash": path, "powershell": f'python "{path}"'} if provider == "copilot" else {"command": f'python "{path}"'}
+                    legacy = template_commands(provider, filename)
                     if provider == "copilot":
                         matches = handler.get("bash") == legacy["bash"] and ("powershell" not in handler or handler["powershell"] == legacy["powershell"])
                     else:
@@ -78,4 +96,4 @@ def pin_provider_commands(template: dict, provider: str, home: Path) -> None:
                         continue
                     script = home / f".{provider}/hooks/scripts" / filename
                     for key in keys:
-                        handler[key] = trusted_command(script, "powershell" if key == "powershell" else ("posix" if key == "bash" else "native"))
+                        handler[key] = trusted_command(script, "powershell" if key == "powershell" else ("posix" if key == "bash" else "native"), extra=hook_arguments(filename, provider))

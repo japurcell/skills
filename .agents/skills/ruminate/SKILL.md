@@ -6,11 +6,11 @@ disable-model-invocation: true
 
 # Ruminate
 
-Mine conversation history for brain-worthy knowledge that was never captured. Complements `reflect` (current session) and `meditate` (brain vault audit) by looking at the full archive of past conversations across both providers.
+Mine conversation history for brain-worthy knowledge that was never captured. Complements `reflect` (current session) and `meditate` (brain vault audit) by looking at the full archive of past conversations across available providers.
 
 ## Process
 
-**Use Tasks to track progress.** Create a task for each step below (TaskCreate), mark each in_progress when starting and completed when done (TaskUpdate). Check TaskList after each step.
+Track each step through the available planning tools or a short checklist.
 
 ### 1. Read the brain
 
@@ -50,7 +50,7 @@ Choose N based on total extracted conversations (Claude + Codex + Copilot): ~1 b
 
 ### 4. Spawn analysis team
 
-Create an agent team (TeamCreate) with N agents (one per batch, matching the batch count from step 3), each with `subagent_type: general-purpose` and `model: opus`. Run all N in parallel.
+Analyze each batch with available general analysis subagents, following the model-routing skill when available and respecting harness concurrency limits. Use bounded local passes if delegation is unavailable.
 
 Each agent's prompt should include:
 
@@ -90,7 +90,7 @@ Apply only the changes the user approves. Follow brain writing conventions:
 
 - One topic per file, organized in directories
 - Use `[[wikilinks]]` to connect related notes
-- Update `brain/index.md` after all changes
+- Maintain curated indexes through the brain skill and let hooks reconcile the root inventory
 - Default to updating existing notes over creating new ones
 
 ### 7. Clean up

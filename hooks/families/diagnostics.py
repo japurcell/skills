@@ -11,7 +11,8 @@ from pathlib import Path
 from hooks.manifest import GeneratedTarget, targets
 from hooks.providers import Provider
 from hooks.families.reporting import CREDENTIAL_LABEL_SOURCE
-from scripts.trusted_hook_launch import SECURITY_HOOK_FILES, serialize_trusted_launch, trusted_posix_arguments
+from scripts.trusted_hook_launch import (SECURITY_HOOK_FILES, BRAIN_HOOK_FILES, PINNED_HOOK_FILES,
+                                         hook_arguments, serialize_trusted_launch, trusted_posix_arguments)
 
 LIMITS = {"directories": 1024, "entries": 4096, "records": 256,
           "unsafe_records": 16, "depth": 32, "label_bytes": 160,
@@ -321,14 +322,14 @@ def _diag_installed_expected(script, registrations=None, executable=None):
     for serialized in registrations:
         event, matcher, handler = _diag_json.loads(serialized)
         keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
-        for filename in SECURITY_HOOK_FILES:
+        for filename in PINNED_HOOK_FILES:
             if not any(filename in handler.get(key, "") for key in keys):
                 continue
             python = executable or _diag_sys.executable
             path = str(_DiagPath(script).absolute().parent / filename)
             for key in keys:
                 shell = "powershell" if key == "powershell" else "windows" if key == "commandWindows" else "native" if key == "command" else "posix"
-                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt")
+                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt", extra=hook_arguments(filename, DIAG_PROVIDER))
             expected.discard(serialized)
             expected.add(_diag_fingerprint(event, matcher, handler))
     return expected
@@ -517,6 +518,8 @@ def collector_source(provider: Provider) -> str:
     for path in sorted((repo / "hooks").rglob("*.py")):
         identity.update(path.relative_to(repo).as_posix().encode() + b"\0" + path.read_bytes() + b"\0")
     launch_source = (f"SECURITY_HOOK_FILES = {SECURITY_HOOK_FILES!r}\n"
+                     + f"BRAIN_HOOK_FILES = {BRAIN_HOOK_FILES!r}\nPINNED_HOOK_FILES = {PINNED_HOOK_FILES!r}\n"
+                     + inspect.getsource(hook_arguments) + "\n"
                      + inspect.getsource(serialize_trusted_launch) + "\n"
                      + inspect.getsource(trusted_posix_arguments) + "\n")
     identity.update(launch_source.encode())

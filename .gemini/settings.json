@@ -2,47 +2,24 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup",
         "hooks": [
           {
-            "name": "auto-ingest-sources",
+            "name": "inject-brain",
             "type": "command",
-            "command": "python .gemini/hooks/scripts/auto-ingest.py",
-            "description": "Scans .agents/sources at startup and injects stale source-summary context."
+            "command": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
+            "timeout": 5000
           }
         ]
       }
     ],
-    "BeforeAgent": [
+    "AfterTool": [
       {
-        "matcher": "*",
         "hooks": [
           {
-            "name": "inject-auto-ingest-context",
+            "name": "auto-index-brain",
             "type": "command",
-            "command": "python .gemini/hooks/scripts/inject-auto-ingest-context.py",
-            "description": "Injects current source-summary ingest work into prompt-time context."
-          }
-        ]
-      }
-    ],
-    "AfterAgent": [
-      {
-        "matcher": "*",
-        "sequential": true,
-        "hooks": [
-          {
-            "name": "block-pending-ingest",
-            "type": "command",
-            "command": "python .gemini/hooks/scripts/inject-auto-ingest-context.py",
-            "description": "Blocks model responses while source ingest remains pending."
-          },
-          {
-            "name": "lint-okf",
-            "type": "command",
-            "command": "python .gemini/hooks/scripts/lint-okf.py",
-            "timeout": 10000,
-            "description": "Blocks model responses while canonical agent documents violate the OKF profile."
+            "command": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
+            "timeout": 5000
           }
         ]
       }
