@@ -1,9 +1,6 @@
 {
   "context": {
-    "fileName": [
-      "AGENTS.md",
-      "GEMINI.md"
-    ]
+    "fileName": ["AGENTS.md", "GEMINI.md"]
   },
   "experimental": {
     "autoMemory": false,
@@ -22,9 +19,7 @@
     "enabled": true
   },
   "mcp": {
-    "allowed": [
-      "google-developer-knowledge"
-    ]
+    "allowed": ["google-developer-knowledge"]
   },
   "mcpServers": {
     "google-developer-knowledge": {
@@ -32,9 +27,7 @@
       "type": "http",
       "authProviderType": "google_credentials",
       "oauth": {
-        "scopes": [
-          "https://www.googleapis.com/auth/userinfo.email"
-        ]
+        "scopes": ["https://www.googleapis.com/auth/userinfo.email"]
       },
       "headers": {
         "x-goog-user-project": "usfs-code-assist"
@@ -245,16 +238,6 @@
             }
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "name": "inject-brain",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/inject-brain.py\" --provider gemini",
-            "timeout": 5000
-          }
-        ]
       }
     ],
     "AfterAgent": [
@@ -345,12 +328,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeTool"
             }
-          },
-          {
-            "name": "tool-guard",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/tool-guard.py\"",
-            "timeout": 5000
           }
         ]
       },
@@ -375,16 +352,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterTool"
             }
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "name": "auto-index-brain",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/auto-index-brain.py\" --provider gemini",
-            "timeout": 5000
           }
         ]
       }

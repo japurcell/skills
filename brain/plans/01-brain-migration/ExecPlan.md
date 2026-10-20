@@ -29,7 +29,8 @@ Future implementation is repository-scoped. Existing user-global installations m
 - [x] (2026-10-20) [milestone-4] T6: Remove legacy content roots, retired skills, ingestion/OKF infrastructure and exclusive tests. Update active routing, replacement skills, historical ADR status and machine-owned root inventory; verify links and IDs.
 - [x] (2026-10-20) [milestone-5] T7: Pass all 55 maintained suites on macOS, verify 62 generated outputs, complete documentation and reflection, and retain explicit platform skips.
 - [x] (2026-10-20) [milestone-5] T7: Verify the six native Windows/Linux/macOS jobs on Python 3.12/3.14 for published commit `f49edd58ca048438636ae40024db2818b35f6a4f`; record platform skips.
-- [ ] [milestone-5] T7: Finish checking related installer/security workflows and verify real provider startup/reset delivery in configured isolated profiles; then complete todo 1.
+- [x] (2026-10-20) [milestone-5] T7: Verify native Windows installer/security run `39510956697` succeeded for migration commit `f49edd58ca048438636ae40024db2818b35f6a4f`.
+- [ ] [milestone-5] T7: Finish checking the macOS security workflow and verify real provider startup/reset delivery in configured isolated profiles; then complete todo 1.
 
 ## Surprises & Discoveries
 
@@ -209,7 +210,7 @@ T1 content inventory precedes T2. T1 root/input feasibility precedes T3 and is v
 
 ## Concrete Steps
 
-The migration is committed and pushed as `f49edd58ca048438636ae40024db2818b35f6a4f` on `codex/brain-system-migration`. All six jobs in [Standalone brain hooks run 39510956769](https://github.com/japurcell/skills/actions/runs/39510956769) passed. The next executor action is to inspect completion of the related native Windows installer and macOS security workflows and repair any failures. Keep T7 and todo 1 open.
+The migration is committed and pushed as `f49edd58ca048438636ae40024db2818b35f6a4f` on `codex/brain-system-migration`. All six jobs in [Standalone brain hooks run 39510956769](https://github.com/japurcell/skills/actions/runs/39510956769) passed. The native Windows installer/security workflow also passed. The next executor action is to inspect completion of the macOS security workflow and repair any failures. Keep T7 and todo 1 open.
 
 Then verify actual startup/reset delivery in isolated configured provider profiles. The previous isolated Copilot probe lacked authentication, Codex isolated hook trust has not been established, and Gemini CLI is absent. Copilot is 1.0.101 and Codex is 0.163.0; version checks provide no delivery proof. Git push and GitHub Actions reads now work under the authorized execution context, so the earlier GitHub authentication error no longer blocks CI inspection. Do not bypass trust or modify active user-global installs. Commit and push are authorized; no merge or global installation is authorized.
 
@@ -229,7 +230,7 @@ The user confirmed all three proposed public test boundaries on 2026-10-20. The 
 
 `rtk gh run view 39510956769 --json jobs,conclusion,headSha,url` reports success for all six combinations of `windows-latest`, `ubuntu-latest`, and `macos-latest` with Python 3.12 and 3.14. The run's exact head is `f49edd58ca048438636ae40024db2818b35f6a4f`. Every job passed generated-output verification (`62 files`) and the 23-case standalone process suite. Windows reports two skipped cases per job, Ubuntu one, and macOS none. The suite retains its explicit POSIX permission-fixture and unsupported-interpreter availability limits; passing jobs do not establish skipped behavior. No test was changed or bypassed for this run.
 
-Evidence: [native matrix run](https://github.com/japurcell/skills/actions/runs/39510956769); retained log `/tmp/brain-native-matrix-39510956769.log`. This proves the copied scripts execute under the native operating systems and minimum supported Python. It does not prove actual provider context delivery. The related [Windows installer workflow](https://github.com/japurcell/skills/actions/runs/39510956697) and [macOS security workflow](https://github.com/japurcell/skills/actions/runs/39510956707) are still running at this checkpoint.
+Evidence: [native matrix run](https://github.com/japurcell/skills/actions/runs/39510956769); retained log `/tmp/brain-native-matrix-39510956769.log`. This proves the copied scripts execute under the native operating systems and minimum supported Python. It does not prove actual provider context delivery. The related [Windows installer workflow](https://github.com/japurcell/skills/actions/runs/39510956697) passed at the same commit, including every workflow step: native PowerShell installation, Windows scanner envelopes/capture, stable RTK configuration, and lifecycle messages. Its log is retained at `/tmp/brain-windows-installer-39510956697.log`. The [macOS security workflow](https://github.com/japurcell/skills/actions/runs/39510956707) is still running at this checkpoint. No source or test fix was needed for Windows.
 
 ### Behavioral scenarios
 
@@ -289,11 +290,11 @@ Index bounds: 20,000 scanned entries, two-second inventory deadline, 512 KiB ren
 
 - Branch: `codex/brain-system-migration`; published migration HEAD is `f49edd58ca048438636ae40024db2818b35f6a4f`, based on `092038394a2e3bb0cc21fffdec2eb60a12cece29`. Commit and push are authorized. No private implementation worktrees or global installations were changed.
 - New public entrypoints exist in all four provider trees and are registered in project configuration and installed templates. Copilot filters successful tool results; Gemini filters error results; Codex indexes every completed call. No actual user-global install was changed.
-- Canonical implementation: `hooks/families/brain.py`; subprocess suite: `scripts/test-brain-hooks.py`. `scripts/test-all.py` includes the new suite. `.github/workflows/brain-hooks.yml` prepares six native platform/version jobs but has not run remotely.
+- Canonical implementation: `hooks/families/brain.py`; subprocess suite: `scripts/test-brain-hooks.py`. `scripts/test-all.py` includes the new suite. `.github/workflows/brain-hooks.yml` passed all six native platform/version jobs in run `39510956769`.
 - Generation updates diagnostic/build fingerprints and registration receipts because canonical sources and templates changed. Installer E2E verification reproduced removal of the existing tool guard by incomplete maintained templates; all three templates now preserve that security registration. Security enforcement logic is unchanged; diagnostic collectors now recognize exact brain launch arguments.
 - Sandbox initially denied generator staging in `.codex`; scoped elevated regeneration succeeded. The failed generator rolled back, and subsequent freshness checks passed.
 - The user approved mechanical Codex reconciliation on every completed call, including failures, on 2026-10-20. No completion-policy decision remains pending. The subsequent execplan-implement invocation resumes execution after T2.
-- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. Related workflows are still running; real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
+- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. The related Windows installer/security workflow passed; macOS security is still running. Real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
 - Retired skills, source ingestion/OKF families/adapters, all three legacy content roots and `docs/ideas` are removed. The generator owns 62 surviving outputs; its post-cutover suite passes 25 cases after removing only two retired-family tests. The full maintained runner passes all 55 suites on macOS.
 - Reflection review: durable generator serialization, standalone input rules, provider schema limits, and source-versus-live verification distinctions are retained in codebase notes. No speculative session narrative was added as knowledge.
 
