@@ -1,1 +1,0 @@
-The target `.agents/memory/ARCHITECTURE.md` was conformed as an `Agent Memory` concept while preserving its exact Markdown body. The linter report is `unavailable`, so the outcome records `completion: unverified`. The scoped output contains only `.agents/memory/ARCHITECTURE.md`.

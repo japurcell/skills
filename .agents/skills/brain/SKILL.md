@@ -56,14 +56,6 @@ Format: `[[section/file-name]]`. Resolution order: same directory, then relative
 
 Let the brain hooks reconcile the machine-owned `brain/index.md` after additions or removals. If hooks are unavailable, run a standalone brain indexer as described in `docs/brain-hooks.md`. Keep human prose in topic notes. Also update the relevant entrypoint (`brain/principles.md`, `brain/delegation.md`, or `brain/plans/index.md`) when applicable. Keep indexes link-only and scannable.
 
-## Admission
-
-- Keep current project-specific facts that change future decisions and are costly to rediscover.
-- Link evidence, record the check date, state what it proves and does not prove, and give a recheck trigger for version-sensitive claims.
-- Resolve conflicting claims against current code and authoritative provider documentation. Label historical observations as historical.
-- Keep one canonical owner per rule. Merge duplicates; prefer structural enforcement when it prevents recurrence.
-- A reflection review may need no write. Follow-up work belongs in permanent-ID todos, not session-log notes.
-
 ## Durability Test
 
 Ask: "Would I include this in a prompt for a _different_ task?"
