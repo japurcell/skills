@@ -15,6 +15,43 @@ CAPACITY = 1048576
 
 
 class FileOperationTests(unittest.TestCase):
+    def test_quoted_shell_writer_keeps_the_body_out_of_execution_budgets(self):
+        body = ("literal text " * (CAPACITY // 13 + 1))[:CAPACITY - 1] + "\n"
+        writer = "cat > example.txt <<'EOF'\n" + body + "EOF"
+        for command, expected, cause in (
+            (writer, "allow", None),
+            (writer + "\n" + OPERATIONS["force_push_protected_branch"], "deny", "force_push_protected_branch"),
+            ("echo '" + body + "'", "deny", "security_outcome=incomplete"),
+        ):
+            fixture = Fixture("capacity-shell", "provider_shell", {"command": command},
+                              "deny", expected, "capacity", "bounded prototype")
+            for provider in PROVIDERS:
+                with self.subTest(provider=provider, expected=expected, cause=cause):
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(decision(provider, json.loads(result.stdout)), expected, result.stdout)
+                    if cause:
+                        self.assertIn(cause, result.stdout.decode())
+
+    def test_shell_literal_content_budget_counts_raw_utf8_and_tab_bytes(self):
+        for extra in (0, 1):
+            # 349525 three-byte characters plus newline exactly fill 1 MiB.
+            body = "界" * 349525 + "x" * extra + "\n"
+            for delimiter, contents in (("<<'EOF'", body), ("<<-'EOF'", "\t" + body[1:-1] + "xx\n")):
+                # The tab-stripping form still charges every original body byte.
+                self.assertEqual(len(contents.encode("utf-8")), 1048576 + extra)
+                fixture = Fixture("literal-bytes", "provider_shell",
+                                  {"command": "cat > example.txt " + delimiter + "\n" + contents + "EOF"},
+                                  "deny", "deny" if extra else "allow", "bounds", "raw literal byte accounting")
+                for provider in PROVIDERS:
+                    for mode in ("block", "warn"):
+                        result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
+                        with self.subTest(provider=provider, extra=extra, delimiter=delimiter, mode=mode):
+                            self.assertEqual(decision(provider, json.loads(result.stdout)), fixture.candidate, result.stdout)
+                            if extra:
+                                self.assertIn("literal_content_bytes", result.stdout.decode())
+                                self.assertIn("1048577 bytes exceeds limit 1048576 bytes", result.stdout.decode())
+
     def test_unused_envelope_metadata_is_bounded_independently(self):
         fixture = Fixture("envelope-metadata", "provider_shell", {"command": "echo safe"}, "deny", "deny", "bounds", "probe")
         for provider in PROVIDERS:

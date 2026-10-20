@@ -647,14 +647,16 @@ class InspectionFailure(ValueError):
 
 
 class _ShellWord:
-    def __init__(self, value: str, literal: bool = True, quoted: bool = False) -> None:
+    def __init__(self, value: str, literal: bool = True, quoted: bool = False, *, span=(0, 0), descriptor="") -> None:
         self.value, self.literal, self.quoted = value, literal, quoted
+        self.span, self.descriptor = span, descriptor
 
 
 class _ShellCommand:
     def __init__(self) -> None:
         self.words = []
         self.heredocs = []
+        self.heredoc_spans = []
         self.redirects = []
         self.pipe = False
 
@@ -692,26 +694,39 @@ class _InspectionBudget:
             raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, self.tokens, "tokens")
 
 
+def _without_spans(source, spans):
+    if not spans:
+        return source
+    pieces, cursor = [], 0
+    for start, end in sorted(spans):
+        if not cursor <= start <= end <= len(source):
+            raise InspectionFailure("invalid literal source provenance")
+        pieces.extend((source[cursor:start], " "))
+        cursor = end
+    pieces.append(source[cursor:])
+    return "".join(pieces)
+
+
 def _shell_representation(source: str, budget: _InspectionBudget):
     commands, nested, pending = [], [], []
     command = _ShellCommand()
     pieces = []
     active = quoted = False
     literal = True
-    quote = redirect = ""
+    quote = redirect = redirect_fd = ""
     strict = False
-    index = 0
+    index = word_start = 0
 
     def word():
-        nonlocal pieces, active, quoted, literal, redirect
+        nonlocal pieces, active, quoted, literal, redirect, redirect_fd
         if not active:
             return
-        value = _ShellWord("".join(pieces), literal, quoted)
+        value = _ShellWord("".join(pieces), literal, quoted, span=(word_start, index), descriptor=redirect_fd)
         if redirect:
             command.redirects.append((redirect, value))
             if redirect in {"<<", "<<-"}:
                 pending.append((command, value, redirect == "<<-"))
-            redirect = ""
+            redirect = redirect_fd = ""
         else:
             command.words.append(value)
         pieces = []
@@ -765,6 +780,8 @@ def _shell_representation(source: str, budget: _InspectionBudget):
         raise InspectionFailure("unterminated shell substitution")
 
     while index < len(source):
+        if not active:
+            word_start = index
         ch = source[index]
         if quote == "'":
             if ch == "'":
@@ -825,6 +842,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
                 for owner, delimiter, strip_tabs in pending:
                     body_start, body_lines = index, []
                     while index < len(source):
+                        line_start = index
                         end = source.find("\n", index)
                         end = len(source) if end < 0 else end
                         line = source[index:end]
@@ -837,6 +855,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
                         raise InspectionFailure("unterminated heredoc")
                     strict = strict or not delimiter.literal
                     owner.heredocs.append(("\n".join(body_lines), delimiter.quoted))
+                    owner.heredoc_spans.append((body_start, line_start))
                     if not delimiter.quoted:
                         cursor = body_start
                         body_end = index - len(delimiter.value) - 1
@@ -868,6 +887,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             strict = strict or operator in {"<&", ">&"} or descriptor not in {"", "0", "1", "2"}
             strict = strict or operator.startswith("<<") and descriptor not in {"", "0"}
             redirect = operator
+            redirect_fd = descriptor
             index += len(operator)
             continue
         strict = strict or ch in "(){}" or ch == "\x00"
@@ -905,6 +925,20 @@ def _literal_search(command):
         elif not pattern_seen:
             pattern_seen = True
     return pattern_seen and not needs_pattern
+
+
+def _literal_file_writer(command):
+    """Prove a quoted heredoc written through literal cat stdin/stdout redirects."""
+    if (len(command.words) != 1 or command.words[0].value != "cat" or not command.words[0].literal
+            or len(command.redirects) != 2 or len(command.heredocs) != 1 or not command.heredocs[0][1]):
+        return False
+    outputs = [(operator, operand) for operator, operand in command.redirects
+               if operator in {">", ">>"} and operand.descriptor in {"", "1"}]
+    inputs = [(operator, operand) for operator, operand in command.redirects
+              if operator in {"<<", "<<-"} and operand.descriptor in {"", "0"}]
+    return len(outputs) == len(inputs) == 1 and all(operand.literal for _operator, operand in command.redirects)
+
+
 def _python_preflight(source):
     """Bound parser work before ast.parse without importing another lexer."""
     index = depth = tokens = 0
@@ -1174,7 +1208,6 @@ def _inline_operand(words, offset):
 
 def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
-    budget.executable(source)
     commands, nested, strict = _shell_representation(source, budget)
     windows = any(command.words and (
         "\\" in command.words[0].value or command.words[0].value.casefold().endswith((".exe", ".cmd", ".bat"))
@@ -1183,8 +1216,9 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
     strict = strict or windows
     threats = []
     for fragment in nested:
-        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context))
+        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context, True))
     if strict:
+        budget.executable(source)
         if pipeline_context is not None:
             pipeline_context.append(source)
         if windows:
@@ -1199,9 +1233,9 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 inline = _inline_operand(command.words, offset)
                 if inline:
                     language, operand, _index = inline
-                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1, pipeline_context, True))
         return threats
-    rendered, segments, pipeline_rendered = [], [], []
+    rendered, segments, pipeline_rendered, excluded = [], [], [], []
     pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
     unsafe_pipeline = set()
     inherited_output_is_code = output_is_code
@@ -1273,6 +1307,11 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                     sql_segments = _command_segments(operand.value)
                     budget.matcher_tokens(sql_segments, 1)
                     threats.extend(_strict_threats(operand.value, sql_segments))
+        if id(command) not in unsafe_pipeline and _literal_file_writer(command):
+            proven = True
+            for start, end in command.heredoc_spans:
+                budget.content(len(source[start:end].encode("utf-8")))
+                excluded.append((start, end))
         if python_code is not None:
             threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context))
             proven = True
@@ -1307,6 +1346,7 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 heredoc_segments = _command_segments(heredoc)
                 budget.matcher_tokens(heredoc_segments)
                 threats.extend(_strict_threats(heredoc, heredoc_segments))
+    budget.executable(_without_spans(source, excluded))
     if pipeline_context is not None:
         pipeline_context.extend(pipeline_rendered)
     if rendered:
