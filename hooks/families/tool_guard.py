@@ -1599,80 +1599,6 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     return threats
 
 
-def sanitize_excerpt(value: str) -> str:
-    normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
-    normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
-    normalized = re.sub(
-        r'(?i)("[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*"\s*:\s*)"(?:\\.|[^"\\])*(?:"|$)',
-        r'\1"[REDACTED]"', normalized,
-    )
-    credential_value = r""""(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^\s,;&]+"""
-    normalized = re.sub(
-        r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))(?:" + credential_value + ")",
-        r"\1[REDACTED]", normalized,
-    )
-    normalized = re.sub(
-        r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*(?:" + credential_value + ")",
-        r"\1=[REDACTED]", normalized,
-    )
-    normalized = re.sub(r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+", r"\1: [REDACTED]", normalized)
-    normalized = re.sub(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,}|sk[-_](?:live_)?[A-Za-z0-9_-]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{8,})\b", REDACTED, normalized)
-    normalized = re.sub(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9_/-]{24,}(?![A-Za-z0-9_/-]))(?=[A-Za-z0-9_/-]*[A-Za-z])(?=[A-Za-z0-9_/-]*[0-9])[A-Za-z0-9_/-]+", REDACTED, normalized)
-    return normalized
-
-
-def safe_excerpt_context(tool_input: str, matched: str) -> str:
-    """Keep context only when every part outside the match is known safe."""
-    normalized = " ".join(unicodedata.normalize("NFKC", tool_input[:4096]).split())
-    if matched not in normalized:
-        return ""
-    context = sanitize_excerpt(tool_input)
-    if matched.casefold() == "drop" + " table" and re.fullmatch(
-        r'(?i)\{"command":"DROP' + r' TABLE [A-Z_][A-Z0-9_]*;"\}', context
-    ):
-        return context
-    remainder = context.replace(sanitize_excerpt(matched), "", 1)
-    remainder = re.sub(
-        r'(?i)(?:"(?:[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*)"\s*:\s*"\[REDACTED\]"|'
-        r'(?:--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+)|'
-        r'[A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*\s*=)\[REDACTED\])',
-        "",
-        remainder,
-    )
-    remainder = re.sub(r'(?i)"command"\s*:', "", remainder)
-    remainder = re.sub(r'([A-Za-z])\1{31,}', "", remainder)
-    if re.fullmatch(r'[\s,;:{}"\']*', remainder):
-        return context
-    return ""
-
-
-def safe_git_push_match(matched: str) -> str:
-    """Describe a protected push using only known flags, remotes, and branches."""
-    tokens = matched.split()
-    try:
-        push_index = next(index for index, token in enumerate(tokens) if token.casefold() == "push")
-    except StopIteration:
-        return " ".join(("git", "push"))
-    tail = tokens[push_index + 1 :]
-    folded = [token.casefold() for token in tail]
-    force = "--force" if "--force" in folded else "-f" if "-f" in folded else ""
-    remote = next((token for token in folded if token in {"origin", "upstream"}), "")
-    branch = ""
-    for token in folded:
-        destination = token.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-        if destination in {"main", "master"}:
-            branch = ("+" if token.startswith("+") and not force else "") + destination
-            break
-    summary = ["git", "push"]
-    if force:
-        summary.append(force)
-    if remote:
-        summary.append(remote)
-    if branch:
-        summary.append(branch)
-    return " ".join(summary)
-
-
 ACTION_SUMMARIES = {
     "recursive_remove_root": "rm -rf /",
     "recursive_remove_home": "rm -rf ~",
@@ -1697,7 +1623,7 @@ ACTION_SUMMARIES = {
 }
 
 
-def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
+def build_action_excerpt(threats: tuple[dict[str, str], ...]) -> str:
     """Describe the first finding using trusted text, never caller content."""
     return ACTION_SUMMARIES.get(threats[0].get("rule_id"), "command omitted") if threats else "command omitted"
 
@@ -1740,9 +1666,32 @@ def guard_attribution(*, security, audit, enforcement, profile, route, cause):
     # route/profile values so bootstrap and input failures retain attribution.
     return (f" security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
             f"profile={profile}; route={route}; cause={cause}.")
-TOOL_PROFILE = "unsupported"
-TOOL_ROUTE = "strict_fallback"
-PROFILE_CAUSE = "unsupported_tool_profile"
+
+
+class InspectionResult:
+    """Owned per-invocation inspection facts, independent of mode and auditing."""
+    __slots__ = ("profile", "route", "profile_cause", "findings", "complete")
+
+    def __init__(self, profile="unsupported", route="strict_fallback",
+                 profile_cause="unsupported_tool_profile"):
+        self.profile, self.route, self.profile_cause = profile, route, profile_cause
+        self.findings = ()
+        self.complete = True
+
+    def finish(self, findings):
+        self.findings = tuple(findings)
+        self.complete = not inspection_incomplete(self.findings)
+        return self
+
+    @property
+    def security(self):
+        return "incomplete" if not self.complete else "findings" if self.findings else "clean"
+
+
+def normal_enforcement(result, mode):
+    return "deny" if not result.complete or (result.findings and mode == "block") else "allow"
+
+
 MAX_GUARD_LOG_BYTES = 16384
 
 try:
@@ -1803,9 +1752,6 @@ try:
         sanitize_tool_name,
         build_threats,
         build_input_threats,
-        sanitize_excerpt,
-        safe_excerpt_context,
-        safe_git_push_match,
         build_action_excerpt,
         log_threat_metadata,
         build_block_reason,
@@ -1961,8 +1907,7 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
 
 
 
-def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
-    global TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE
+def read_tool_scan_inputs(payload: dict, result: InspectionResult) -> tuple[str, ...] | NativeToolInput:
     input_key = next((key for key in TOOL_INPUT_KEYS if key in payload), None)
     if len(payload) > MAX_STRUCTURED_NODES:
         raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(payload), "nodes")
@@ -2001,10 +1946,10 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     else:
         native = _native_tool_shape(tool_name, value)
     if native:
-        TOOL_PROFILE = native.kind + "_v1"
-        PROFILE_CAUSE = "recognized_profile"
+        result.profile = native.kind + "_v1"
+        result.profile_cause = "recognized_profile"
     elif tool_name.casefold() in KNOWN_TOOL_FIELDS:
-        PROFILE_CAUSE = "native_profile_rejected"
+        result.profile_cause = "native_profile_rejected"
     byte_limit = MAX_SCAN_TEXT
     if native and native.kind == "patch":
         byte_limit = MAX_NATIVE_PATCH_BYTES
@@ -2085,9 +2030,9 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
                 for path in native.metadata:
                     metadata_text(path)
         if native is not None:
-            TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE = native.kind + "_v1", "native", "recognized_profile"
+            result.profile, result.route, result.profile_cause = native.kind + "_v1", "native", "recognized_profile"
             return native
-        TOOL_PROFILE, PROFILE_CAUSE = "unsupported", "native_profile_rejected"
+        result.profile, result.profile_cause = "unsupported", "native_profile_rejected"
         if isinstance(value, str):
             return (value,)
         if total_string_bytes > MAX_SCAN_TEXT:
@@ -2098,69 +2043,66 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     return tuple(strings) + tuple(keys) + (serialized,)
 
 
-def guard_report(payload):
+def inspect_tool(payload):
+    result = InspectionResult()
+    tool_name = read_tool_name(payload)
+    try:
+        inputs = read_tool_scan_inputs(payload, result)
+        findings = build_input_threats(tool_name, inputs)
+    except ScanLimitExceeded as limit:
+        findings = [limit.threat()]
+    except UnicodeError:
+        findings = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure",
+                     "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
+    return result.finish(findings)
+
+
+def guard_report(event, mode, tool_name, result, enforcement, excerpt):
     """Retain bounded owned metadata, then serialize in the provider adapter."""
-    security = "findings" if payload.get("threat_count") else "clean"
-    threats = payload.get("threats", [])
-    incomplete = inspection_incomplete(threats)
-    if incomplete:
-        security = "incomplete"
-    payload.update(build=REPORT_BUILD, provider=TOOL_PROVIDER, profile=TOOL_PROFILE,
-                   route=TOOL_ROUTE, profile_cause=PROFILE_CAUSE,
-                   cause=threats[0]["rule_id"] if threats else payload["event"],
-                   security_outcome=security, audit_outcome="written",
-                   inspection_outcome="incomplete" if incomplete else "complete",
-                   enforcement="deny" if incomplete or (security == "findings" and payload["mode"] == "block") else "allow",
-                   omittedThreats=0)
-    payload["tool"] = report_text(payload["tool"])
-    if "excerpt" in payload:
-        payload["excerpt"] = report_text(payload["excerpt"])
+    threats = log_threat_metadata(result.findings)
+    payload = {"timestamp": TIMESTAMP, "event": event, "mode": mode,
+               "tool": sanitize_tool_name(tool_name), "build": REPORT_BUILD,
+               "provider": TOOL_PROVIDER, "profile": result.profile,
+               "route": result.route, "profile_cause": result.profile_cause,
+               "cause": threats[0]["rule_id"] if threats else event,
+               "security_outcome": result.security, "audit_outcome": "written",
+               "inspection_outcome": "complete" if result.complete else "incomplete",
+               "enforcement": enforcement, "omittedThreats": 0}
+    if event == "threats_detected":
+        payload.update(threat_count=len(threats), threats=threats, excerpt=report_text(excerpt))
     while report_json_bytes(payload) > MAX_GUARD_LOG_BYTES - 256 and threats:
         threats.pop()
         payload["omittedThreats"] += 1
     return payload
 
 
-def record_guard(event, mode, tool_name, threats=None, excerpt="command omitted"):
-    threats = threats or []
+def record_guard(event, mode, tool_name, result, enforcement, excerpt):
     try:
-        log_payload(event, mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+        log_payload(guard_report(event, mode, tool_name, result, enforcement, excerpt))
     except Exception:
         # A failed audit cannot erase a security finding or allow a clean call.
-        incomplete = inspection_incomplete(threats)
-        warning = mode == "warn" and threats and not incomplete
+        warning = enforcement == "allow" and result.findings and result.complete
+        audit_enforcement = "allow" if warning else "deny"
         outcome = "warning" if warning else "blocked"
-        reason = build_block_reason(tool_name, threats, excerpt, outcome) if threats else "Tool Guardian blocked: audit unavailable."
-        reason += guard_attribution(security="incomplete" if incomplete else "findings" if threats else "clean",
-                                    audit="failed", enforcement="allow" if warning else "deny",
-                                    profile=TOOL_PROFILE, route=TOOL_ROUTE, cause="audit_unavailable")
+        reason = build_block_reason(tool_name, result.findings, excerpt, outcome) if result.findings else "Tool Guardian blocked: audit unavailable."
+        reason += guard_attribution(security=result.security, audit="failed", enforcement=audit_enforcement,
+                                    profile=result.profile, route=result.route, cause="audit_unavailable")
         if warning:
             emit_allow_response(reason)
         emit_deny_response(reason)
 
 
-def attributed_reason(tool_name, threats, excerpt, outcome):
-    incomplete = inspection_incomplete(threats)
-    cause = threats[0]["rule_id"] if threats else PROFILE_CAUSE
-    return (build_block_reason(tool_name, threats, excerpt, outcome)
-            + guard_attribution(security="incomplete" if incomplete else "findings", audit="written",
-                                enforcement="allow" if outcome == "warning" else "deny",
-                                profile=TOOL_PROFILE, route=TOOL_ROUTE, cause=cause))
+def attributed_reason(tool_name, result, excerpt, enforcement):
+    outcome = "warning" if enforcement == "allow" else "blocked"
+    cause = result.findings[0]["rule_id"] if result.findings else result.profile_cause
+    return (build_block_reason(tool_name, result.findings, excerpt, outcome)
+            + guard_attribution(security=result.security, audit="written", enforcement=enforcement,
+                                profile=result.profile, route=result.route, cause=cause))
 
 
 def input_failure_reason(reason, cause):
     return reason + guard_attribution(security="incomplete", audit="not_attempted", enforcement="deny",
                                      profile="unsupported", route="input_validation", cause=cause)
-
-
-def guard_log_payload(event, mode, tool_name, timestamp, threat_count=0, threats=None, excerpt=None):
-    payload = {"timestamp": timestamp, "event": event, "mode": mode,
-               "tool": sanitize_tool_name(tool_name)}
-    if event == "threats_detected":
-        payload["threat_count"] = threat_count
-        payload["threats"] = threats or []
-        payload["excerpt"] = excerpt or "command omitted"
-    return guard_report(payload)
 
 '''
 
@@ -2180,9 +2122,7 @@ def configure_log() -> None:
     LOCK_FILE = f"{LOG_FILE}.lock"
 
 
-def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
-    payload = guard_log_payload(event, mode, tool_name, TIMESTAMP, threat_count, threats, excerpt)
-
+def log_payload(payload: dict) -> None:
     old_audit_log = os.environ.get("AUDIT_LOG")
     old_audit_lock = os.environ.get("AUDIT_LOCK")
     try:
@@ -2288,21 +2228,10 @@ def _release_log_lock(descriptor: int) -> None:
         os.close(descriptor)
 
 
-def append_log(
-    log_file: str,
-    event: str,
-    mode: str,
-    tool_name: str,
-    timestamp: str,
-    threat_count: int = 0,
-    threats: list[dict[str, str]] | None = None,
-    excerpt: str | None = None,
-) -> None:
+def append_log(log_file: str, payload: dict) -> None:
     parent = os.path.dirname(log_file)
     if parent:
         os.makedirs(parent, mode=0o700, exist_ok=True)
-
-    payload = guard_log_payload(event, mode, tool_name, timestamp, threat_count, threats, excerpt)
 
     lock_descriptor = _acquire_log_lock(f"{log_file}.lock")
     try:
@@ -2321,8 +2250,9 @@ def append_log(
         _release_log_lock(lock_descriptor)
 
 
-def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
-    append_log(LOG_FILE, event, mode, tool_name, TIMESTAMP, threat_count, threats, excerpt)
+def log_payload(payload: dict) -> None:
+    append_log(LOG_FILE, payload)
+
 '''
 
 
@@ -2353,35 +2283,23 @@ def main() -> int:
         emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
 
     tool_name = read_tool_name(payload)
-    try:
-        tool_scan_inputs = read_tool_scan_inputs(payload)
-        threats = build_input_threats(tool_name, tool_scan_inputs)
-    except ScanLimitExceeded as limit:
-        threats = [limit.threat()]
-    except UnicodeError:
-        threats = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
-    if inspection_incomplete(threats):
-        excerpt = "command omitted"
-        record_guard("threats_detected", mode, tool_name, threats, excerpt)
-        emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
+    result = inspect_tool(payload)
+    allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST")) if result.complete else []
+    if allowlist and allowlist_contains(tool_name, read_tool_input(payload), allowlist):
+        # Allowlist skips have always audited as clean; audit failure still denies.
+        result = InspectionResult(result.profile, result.route, result.profile_cause)
+        event = "guard_skipped"
+    else:
+        event = "threats_detected" if result.findings else "guard_passed"
+    enforcement = normal_enforcement(result, mode)
+    excerpt = build_action_excerpt(result.findings) if result.complete else "command omitted"
+    record_guard(event, mode, tool_name, result, enforcement, excerpt)
+    if enforcement == "deny":
+        emit_deny_response(attributed_reason(tool_name, result, excerpt, enforcement))
+    if result.findings:
+        emit_allow_response(attributed_reason(tool_name, result, excerpt, enforcement))
+    emit_allow_response()
 
-    tool_input = read_tool_input(payload)
-    allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
-
-    if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
-        record_guard("guard_skipped", mode, tool_name)
-        emit_allow_response()
-
-    if not threats:
-        record_guard("guard_passed", mode, tool_name)
-        emit_allow_response()
-
-    excerpt = build_action_excerpt(tool_input, threats)
-    record_guard("threats_detected", mode, tool_name, threats, excerpt)
-    if mode == "warn":
-        emit_allow_response(attributed_reason(tool_name, threats, excerpt, "warning"))
-
-    emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
 
 
 if __name__ == "__main__":

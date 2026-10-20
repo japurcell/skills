@@ -551,7 +551,7 @@ class GenerateHooksTests(unittest.TestCase):
                     "threats": module.log_threat_metadata(sensitive_threats),
                     "reason": module.build_block_reason(
                         "bash", sensitive_threats,
-                        module.build_action_excerpt(vectors.SENSITIVE_THREAT_TEXT, sensitive_threats),
+                        module.build_action_excerpt(sensitive_threats),
                         "blocked",
                     ),
                 }
@@ -594,7 +594,7 @@ class GenerateHooksTests(unittest.TestCase):
                         "request": {"query": vectors.STRUCTURED_DESTRUCTIVE_QUERY},
                         "options": {"timeout": 5},
                     }
-                }
+                }, module.InspectionResult()
             )
             self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
             metadata = module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs))
@@ -609,14 +609,14 @@ class GenerateHooksTests(unittest.TestCase):
                         "request": {"query": vectors.STRUCTURED_SAFE_QUERY},
                         "options": {"timeout": 5},
                     }
-                }
+                }, module.InspectionResult()
             )
             self.assertEqual(module.build_input_threats("database_query", safe_structured_inputs), [])
             overdeep: object = "safe"
             for _ in range(module.MAX_STRUCTURED_DEPTH + 1):
                 overdeep = {"nested": overdeep}
             with self.assertRaises(module.ScanLimitExceeded):
-                module.read_tool_scan_inputs({input_key: overdeep})
+                module.read_tool_scan_inputs({input_key: overdeep}, module.InspectionResult())
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])

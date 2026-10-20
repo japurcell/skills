@@ -25,6 +25,24 @@ class SecurityBannerTests(unittest.TestCase):
                     self.assertIn('Action: git push --force (main/master).', self.reason(response))
                     self.assertNotIn('private fixture value', self.reason(response) + json.dumps(rows))
 
+    def test_allowlisted_finding_still_denies_when_audit_is_unavailable(self) -> None:
+        for provider, tool in (('copilot', 'bash'), ('gemini', 'run_shell_command'), ('codex', 'Bash')):
+            value = {'command': 'git push --force origin main'}
+            allowlist = [{'tool': tool, 'input': json.dumps(value, separators=(',', ':'))}]
+            for mode in ('block', 'warn'):
+                with self.subTest(provider=provider, mode=mode):
+                    allowed, rows = self.invoke(provider, mode, tool, value, allowlist=allowlist)
+                    self.assertEqual(rows[-1]['event'], 'guard_skipped')
+                    self.assertEqual(rows[-1]['security_outcome'], 'clean')
+                    self.assertNotIn('Tool Guardian', self.reason(allowed))
+                    denied, rows = self.invoke(provider, mode, tool, value,
+                                               allowlist=allowlist, audit_unavailable=True)
+                    self.assertEqual(rows, [])
+                    reason = self.reason(denied)
+                    self.assertIn('audit_outcome=failed', reason)
+                    self.assertIn('security_outcome=clean', reason)
+                    self.assertIn('enforcement=deny', reason)
+
     def test_tool_identifiers_preserve_redaction_and_clipping(self) -> None:
         operation = 'git push' + ' --force origin main'
         cases = [('Bash', 'Bash'), ('run_shell_command', 'run_shell_command'),
@@ -49,10 +67,15 @@ class SecurityBannerTests(unittest.TestCase):
                     self.assertEqual(rows[-1]['tool'], expected)
                     self.assertIn(rows[-1]['excerpt'], self.reason(response))
 
-    def invoke(self, provider: str, mode: str, tool: str, value: object) -> tuple[dict, list[dict]]:
+    def invoke(self, provider: str, mode: str, tool: str, value: object, *,
+               allowlist: list | None = None, audit_unavailable: bool = False) -> tuple[dict, list[dict]]:
         path = ROOT / ('.codex/hooks/tool-guard.py' if provider == 'codex' else f'.{provider}/hooks/scripts/tool-guard.py')
         with tempfile.TemporaryDirectory() as temporary:
             log = Path(temporary) / ('gemini-log' if provider == 'gemini' else 'guard.log')
+            if audit_unavailable:
+                parent = Path(temporary) / 'unavailable-parent'
+                parent.write_text('regular file prevents audit-directory creation')
+                log = parent / 'guard.log'
             log_file = log / 'guard.log' if provider == 'gemini' else log
             payload = {'tool_name': tool, 'tool_input': value} if provider != 'copilot' else {'toolName': tool, 'toolArgs': value}
             if provider == 'codex':
@@ -60,7 +83,9 @@ class SecurityBannerTests(unittest.TestCase):
             result = subprocess.run([sys.executable, '-I', '-S', '-B', str(path)], input=json.dumps(payload), text=True, capture_output=True,
                                     env={**os.environ, 'HOME': temporary, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(log),
                                          'AUDIT_LOG': str(Path(temporary) / 'audit.log'),
-                                         'OBSERVABILITY_LOG_PATH': str(Path(temporary) / 'observability.jsonl')}, timeout=5)
+                                         'OBSERVABILITY_LOG_PATH': str(Path(temporary) / 'observability.jsonl'),
+                                         'TOOL_GUARD_ALLOWLIST': json.dumps(allowlist) if allowlist is not None else '',
+                                         'SKIP_TOOL_GUARD': ''}, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
             rows = [json.loads(line[line.find('{'):]) for line in log_file.read_text().splitlines()] if log_file.exists() else []
             return json.loads(result.stdout), rows

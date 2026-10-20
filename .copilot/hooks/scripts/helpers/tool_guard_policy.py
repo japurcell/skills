@@ -1495,80 +1495,6 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     return threats
 
 
-def sanitize_excerpt(value: str) -> str:
-    normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
-    normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
-    normalized = re.sub(
-        r'(?i)("[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*"\s*:\s*)"(?:\\.|[^"\\])*(?:"|$)',
-        r'\1"[REDACTED]"', normalized,
-    )
-    credential_value = r""""(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^\s,;&]+"""
-    normalized = re.sub(
-        r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))(?:" + credential_value + ")",
-        r"\1[REDACTED]", normalized,
-    )
-    normalized = re.sub(
-        r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*(?:" + credential_value + ")",
-        r"\1=[REDACTED]", normalized,
-    )
-    normalized = re.sub(r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+", r"\1: [REDACTED]", normalized)
-    normalized = re.sub(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,}|sk[-_](?:live_)?[A-Za-z0-9_-]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{8,})\b", REDACTED, normalized)
-    normalized = re.sub(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9_/-]{24,}(?![A-Za-z0-9_/-]))(?=[A-Za-z0-9_/-]*[A-Za-z])(?=[A-Za-z0-9_/-]*[0-9])[A-Za-z0-9_/-]+", REDACTED, normalized)
-    return normalized
-
-
-def safe_excerpt_context(tool_input: str, matched: str) -> str:
-    """Keep context only when every part outside the match is known safe."""
-    normalized = " ".join(unicodedata.normalize("NFKC", tool_input[:4096]).split())
-    if matched not in normalized:
-        return ""
-    context = sanitize_excerpt(tool_input)
-    if matched.casefold() == "drop" + " table" and re.fullmatch(
-        r'(?i)\{"command":"DROP' + r' TABLE [A-Z_][A-Z0-9_]*;"\}', context
-    ):
-        return context
-    remainder = context.replace(sanitize_excerpt(matched), "", 1)
-    remainder = re.sub(
-        r'(?i)(?:"(?:[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*)"\s*:\s*"\[REDACTED\]"|'
-        r'(?:--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+)|'
-        r'[A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*\s*=)\[REDACTED\])',
-        "",
-        remainder,
-    )
-    remainder = re.sub(r'(?i)"command"\s*:', "", remainder)
-    remainder = re.sub(r'([A-Za-z])\1{31,}', "", remainder)
-    if re.fullmatch(r'[\s,;:{}"\']*', remainder):
-        return context
-    return ""
-
-
-def safe_git_push_match(matched: str) -> str:
-    """Describe a protected push using only known flags, remotes, and branches."""
-    tokens = matched.split()
-    try:
-        push_index = next(index for index, token in enumerate(tokens) if token.casefold() == "push")
-    except StopIteration:
-        return " ".join(("git", "push"))
-    tail = tokens[push_index + 1 :]
-    folded = [token.casefold() for token in tail]
-    force = "--force" if "--force" in folded else "-f" if "-f" in folded else ""
-    remote = next((token for token in folded if token in {"origin", "upstream"}), "")
-    branch = ""
-    for token in folded:
-        destination = token.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-        if destination in {"main", "master"}:
-            branch = ("+" if token.startswith("+") and not force else "") + destination
-            break
-    summary = ["git", "push"]
-    if force:
-        summary.append(force)
-    if remote:
-        summary.append(remote)
-    if branch:
-        summary.append(branch)
-    return " ".join(summary)
-
-
 ACTION_SUMMARIES = {
     "recursive_remove_root": "rm -rf /",
     "recursive_remove_home": "rm -rf ~",
@@ -1593,7 +1519,7 @@ ACTION_SUMMARIES = {
 }
 
 
-def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
+def build_action_excerpt(threats: tuple[dict[str, str], ...]) -> str:
     """Describe the first finding using trusted text, never caller content."""
     return ACTION_SUMMARIES.get(threats[0].get("rule_id"), "command omitted") if threats else "command omitted"
 
