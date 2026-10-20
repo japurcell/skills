@@ -10,14 +10,14 @@ Also simplify policy representation, result flow, reporting, and generation wher
 
 ### Authorization boundary
 
-The user authorized creating and revising this plan and obtaining an Astra adversarial review, and explicitly said not to start implementation yet. The revisions and second review are complete. No baseline capture, prototype, test-code change, hook generation, installation, hook re-enablement, or implementation milestone is authorized by this document. The next action belongs to the user: authorize execution. After authorization, the implementation owner starts T1. Installation into real home-directory targets and re-enabling the disabled hook remain separate owner actions unless subsequently authorized. All source validation uses disposable homes.
+The user authorized implementation by invoking execplan-implement on 2026-10-20. Execute T1-T9 subject to their verified prerequisites and acceptance gates. Installation into real home-directory targets and re-enabling the disabled hook remain separate owner actions unless subsequently authorized. All source validation uses disposable homes.
 
 ## Progress
 
 - [x] (2026-10-20) [milestone-0] P0: Inspect current source, instruction routes, test and benchmark interfaces, and prior incident evidence; write this plan without implementation changes.
 - [x] (2026-10-20) [milestone-0] P0: Address the first Astra review's four gaps in transport sizing, versioned resource expectations, audit-failure evidence, and pre-proof writer admission.
 - [x] (2026-10-20) [milestone-0] P0: Complete second Astra review; all four original findings resolved, no new actionable P1/P2 findings; record outcome without implementation.
-- [ ] [milestone-1] T1: Reproduce the real file-writing failures through public entrypoints and freeze the current baseline and sanitized fixtures.
+- [x] (2026-10-20) [milestone-1] T1: Reproduce the real file-writing failures through public entrypoints and freeze the current baseline and sanitized fixtures.
 - [ ] [milestone-1] T2: Verify baseline selection, versioned shared fixtures, per-case decision/audit expectations, and pre-change throughput/resource evidence.
 - [ ] [milestone-1] Record combined reproducer and baseline evidence; accept milestone 1.
 - [ ] [milestone-2] T3: Resolve content budgets, escaped transport sizing, bounded pre-proof admission, and writer recognition through experiments including writers above 32 KiB.
@@ -50,7 +50,7 @@ The first Astra review verified four planning gaps against current source: raw t
 
 ## Decision Log
 
-- Decision D1: Planning only until the user authorizes execution. Rationale: the latest explicit instruction overrides earlier general agreement to the changes. Date/Author: 2026-10-20, user and Codex.
+- Decision D1: Execute the reviewed plan. Rationale: the user invoked execplan-implement on 2026-10-20, superseding the earlier planning-only restriction. Live installation and re-enablement remain unauthorized. Date/Author: 2026-10-20, user and Codex.
 - Decision D2: Preserve security boundaries and benchmark before replacing optimizations. Rationale: character codes or unusual representations may have a measured performance purpose; appearance alone does not justify removal. Date/Author: 2026-10-20, user and Codex.
 - Decision D3: Separate inert content from executable structure; never allow arbitrary oversized or uninspectable executable input. Rationale: the confirmed writers fail because literal document text consumes execution budgets. Date/Author: 2026-10-20, Codex, reflecting approved scope.
 - Decision D4: Retain exact native provider schemas, unknown-input strict fallback, existing patch delete/move-source protection, and incomplete-inspection denial in block and warn modes. Rationale: improving data handling must not create bypasses. Date/Author: 2026-10-20, Codex.
@@ -61,7 +61,7 @@ The first Astra review verified four planning gaps against current source: raw t
 
 ## Outcomes & Retrospective
 
-The plan revision and second Astra review are complete. Astra verified that all four first-review gaps are resolved in the active contract and reported no new actionable P1/P2 findings. This is acceptance of the planning revisions, not proof of implementation security, feasibility, capacity, or throughput. Source inspection and prior session evidence establish two persistent ordinary writer failures and several already-repaired historical false positives. No implementation, new benchmarks, generation, installation, or re-enablement has occurred in this planning task. All implementation milestone acceptance remains unmet. The next action is user authorization before T1. The coordinated documentation pass found no new knowledge-base or skill changes warranted; existing guidance already owns the relevant invariants.
+Implementation is authorized and T1 is complete. The immutable runtime baseline is revision effd0d7b (runtime unchanged from the planned 260c578a). Portable public-entrypoint fixtures reproduce six legitimate writer false blocks across three providers: 903/909 tokens exceed 256. All six paired executable controls deny. The pre-existing corpus passes 153 cases. Candidate writer assertions intentionally remain red until T5/T6; no production code or installed hook changed. T2 is the next frontier. All implementation milestone acceptance remains unmet.
 
 ## Context and Orientation
 
@@ -90,7 +90,7 @@ Task P0 has no prerequisites. Its outcome is this self-contained plan with curre
 
 ### Milestone 1: Establish reproducible failures and a trustworthy baseline
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T1: Reproduce and freeze the current behavior
@@ -207,15 +207,15 @@ Acceptance requires all integrated source checks, security review, complete timi
 
 ### Task graph and shared invariants
 
-P0, including second-review reconciliation, is complete. T1 requires new execution authorization and accepted P0. T2 requires T1; T3 requires accepted T1/T2; T4 requires accepted T3; T5 requires T4; T6 requires T5; T7 requires accepted T4/T5/T6; T8 requires T7; T9 requires T7/T8 and their evidence. T3 supplies new capacity fixtures through T2's already-delivered interface; this is a later input publication, not a circular prerequisite for T2's initial baseline. These prerequisites are explicit and do not derive merely from checklist order.
+P0, including second-review reconciliation, is complete. T1 required execution authorization and accepted P0; both are satisfied, and T1 is complete. T2 requires T1; T3 requires accepted T1/T2; T4 requires accepted T3; T5 requires T4; T6 requires T5; T7 requires accepted T4/T5/T6; T8 requires T7; T9 requires T7/T8 and their evidence. T3 supplies new capacity fixtures through T2's already-delivered interface; this is a later input publication, not a circular prerequisite for T2's initial baseline. These prerequisites are explicit and do not derive merely from checklist order.
 
 The shared invariants are whole-input inspection, exact schema validation, finite admission and post-proof budgets, preserved executable context, incomplete-inspection denial, redacted bounded diagnostics, isolated auditing with the declared success/failure outcome, and provider-local delivery. Milestone integration checks prove these jointly; passing individual tasks or merging cleanly is insufficient. The implementation owner reconciles the plan and generated outputs; tests that mutate fixtures, generation, and benchmarks must not run concurrently with repository edits.
 
 ## Concrete Steps
 
-Plan revision, second Astra review, and reconciliation are complete. The next unfinished action is implementation authorization from the user; until then, stop. The following commands are future execution instructions, not commands run during planning.
+Implementation is authorized. T1 is complete with evidence below. The next frontier is T2: validate the benchmark harness and capture A/A and pre-change evidence before production changes.
 
-After authorization, verify prerequisites from repository root:
+Verify prerequisites from repository root:
 
     rtk --version
     rtk gain
@@ -314,3 +314,11 @@ If source extraction is adopted, create `hooks/runtime/tool_guard_policy.py` as 
 Planning evidence: current revision `260c578ace3514c4f2f741f51d970fc2e938786d`, clean initial `git status --short`, inspected policy/readers/corpus and benchmark CLIs. The first Astra review found four P2 contract gaps; their source-verified repairs are incorporated throughout the tasks, decisions, commands, and acceptance rather than appended as exceptions. On 2026-10-20, Astra's second read-only review confirmed all four resolved and found no new actionable P1/P2 findings. Its verification covered derived encoded capacity, both runners' versioned expectations, mode-specific failed-audit evidence, and the full routing/source-budget/writer-proof admission contract. No implementation tests or new benchmark runs were performed while authoring, revising, or reviewing this plan. Later implementation must establish feasibility and satisfy all remaining milestone gates.
 
 Future temporary evidence belongs in `.agents/scratchpad/tool-guard-file-operations/` or a uniquely named `/private/tmp` directory. Retain hashes, environment, sanitized fixture IDs, raw timing samples, current decisions, and concise acceptance summaries. Keep the active plan sufficient to resume without private session logs. Do not store full transcripts as knowledge-base memory. Record the final end-of-session documentation disposition and all outstanding owner/platform actions here before closing the effort.
+
+### T1 execution evidence (2026-10-20)
+
+Frozen archive and fingerprints: `/private/tmp/tool-guard-file-operations-fjhc6r2a/baseline.json`; public observations: `/private/tmp/tool-guard-file-operations-fjhc6r2a/reproductions.json`. These are disposable local evidence, not portable prerequisites. `python3 scripts/test-tool-guard-false-positives.py`: 153 passed. Full shell suite: 18 tests, only the six new desired writer assertions red, all caused by command_tokens; executable pairs deny. Native suite: 26 passed. Limits suite: 18 passed. Generator freshness: 68 current files. The new fixture function is separate from historical fixtures so timing enumeration stays stable. The baseline archive precedes all test edits.
+
+### Optimization inventory before replacement (T2 input)
+
+`R(...)` first appears in the initial Python port, commit `2a789be1`; its commit message establishes no speed rationale. Treat its benefit as unknown until measured. Cached suffix summaries and quote-aware representations have explicit historical ablations in `scripts/benchmark-tool-guard-optimizations.py`; their old inline extraction is not usable unchanged today. Lazy `subprocess` import (`96d4eecc`) has illustrative 2.4-2.5 ms import profiles, with independent acceptance pending in that commit. ASCII sanitizer fast path (`1a4610ad`) reports a focused cold median benefit of 0.318-0.570 ms across 12 comparisons; its full cold run retained three failures with passing exact repeats and did not complete full warm acceptance. Preserve all these distinctions when evaluating candidates. Source extraction and explicit result objects have no established throughput benefit; they require the same measured acceptance as other changes.

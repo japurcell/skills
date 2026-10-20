@@ -9,13 +9,21 @@ import shlex
 import tempfile
 import unittest
 
-from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, script_path
+from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, file_operation_fixtures, script_path
 from tool_guard_test_support import invoke_guard, native_decision
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
 class ShellDataTests(unittest.TestCase):
+    def test_recent_document_writers_keep_literals_inert(self) -> None:
+        for fixture in file_operation_fixtures():
+            for provider in PROVIDERS:
+                with self.subTest(fixture=fixture.name, provider=provider):
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(decision(provider, json.loads(result.stdout)), fixture.candidate, result.stdout)
+
     def test_literal_delimiters_preserve_data_and_following_execution(self) -> None:
         operation = OPERATIONS['force_push_protected_branch']
         literals = [repr(operation + '\\'), repr('\\' * 257 + operation),

@@ -195,6 +195,22 @@ def fixtures() -> list[Fixture]:
     return cases
 
 
+def file_operation_fixtures() -> list[Fixture]:
+    """Portable recent writer incidents; excluded from historical timing cases."""
+    body = '\n'.join('Document section %d: these literal words and punctuation stay harmless document data.' % index for index in range(75))
+    shell = "cat > docs/guardian-fixture.md <<'EOF'\n" + body + '\nEOF'
+    source = "from pathlib import Path\nPath('docs/guardian-fixture.md').write_text(" + repr(body) + ")\n"
+    wrapped = "rtk proxy python3 - <<'PY'\n" + source + 'PY'
+    result = []
+    for name, command in (('writer.quoted-document', shell), ('writer.wrapped-python-document', wrapped)):
+        result.append(Fixture(name, 'provider_shell', {'command': command}, 'deny', 'allow',
+                              'literal-writer', 'sanitized October 2026 writer incident', name + '.execution'))
+        result.append(Fixture(name + '.execution', 'provider_shell',
+                              {'command': command + '\n' + OPERATIONS['force_push_protected_branch']},
+                              'deny', 'deny', 'execution-adjacent-data', 'paired executable control'))
+    return result
+
+
 def dimensions(fixture: Fixture) -> dict:
     value = fixture.value
     text = value if isinstance(value,str) else json.dumps(value,ensure_ascii=False,separators=(",",":"))
