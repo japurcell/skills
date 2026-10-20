@@ -65,45 +65,6 @@ class BrainHooksTests(unittest.TestCase):
                 context = output.get("additionalContext") or output["hookSpecificOutput"]["additionalContext"]
                 self.assertIn("[[note]]", context)
 
-    def test_installed_brain_launches_are_pinned_and_reinstall_is_idempotent(self):
-        for provider in ("codex", "copilot", "gemini"):
-            with self.subTest(provider=provider):
-                home = self.directory / ("home " + provider)
-                home.mkdir()
-                source = ROOT / (".codex/hooks" if provider == "codex" else "." + provider + "/hooks/scripts")
-                assets = home / (".codex/hooks" if provider == "codex" else "." + provider + "/hooks/scripts")
-                assets.mkdir(parents=True)
-                for name in ("scan-status.py", "inject-brain.py", "auto-index-brain.py"):
-                    shutil.copyfile(source / name, assets / name)
-                template = ROOT / {"codex": ".codex/global-hooks.json", "copilot": ".copilot/hooks/hooks.json", "gemini": ".gemini/global-settings.json"}[provider]
-                destination = home / (".codex/hooks.json" if provider == "codex" else "." + provider + "/settings.json")
-                destination.write_text('{"custom": "keep", "hooks": {}}')
-                installer = "install-codex-hooks.py" if provider == "codex" else "install-provider-hooks.py"
-                command = [sys.executable, str(ROOT / "scripts" / installer), "--template", str(template), "--destination", str(destination)]
-                if provider != "codex":
-                    command += ["--provider", provider, "--home", str(home)]
-                result = subprocess.run(command, capture_output=True, timeout=10)
-                self.assertEqual(result.returncode, 0, result.stderr)
-                first = destination.read_bytes()
-                doc = json.loads(first)
-                self.assertEqual(doc["custom"], "keep")
-                launches = []
-                for entries in doc["hooks"].values():
-                    for entry in entries:
-                        launches.extend([entry] if provider == "copilot" else entry["hooks"])
-                for name in ("inject-brain.py", "auto-index-brain.py"):
-                    field = "bash" if provider == "copilot" else "command"
-                    matches = [h for h in launches if name in h.get(field, "")]
-                    self.assertEqual(len(matches), 1)
-                    launch = matches[0][field]
-                    self.assertIn(str(sys.executable), launch)
-                    self.assertIn(str(assets / name), launch)
-                    self.assertTrue(launch.endswith("--provider " + provider))
-                    self.assertIn(" -I -S -B ", launch)
-                result = subprocess.run(command, capture_output=True, timeout=10)
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(destination.read_bytes(), first)
-
     def test_supported_resets_load_index_with_safe_startup_status(self):
         (self.vault / "private-name.md").touch()
         for provider, sources in (("codex", ("startup", "resume", "clear", "compact", "fork")),
@@ -124,11 +85,11 @@ class BrainHooksTests(unittest.TestCase):
                         context = documents[-1]["hookSpecificOutput"]["additionalContext"]
                     self.assertIn("[[private-name]]", context)
 
-    def test_maintained_templates_register_startup_and_completion(self):
+    def test_project_registrations_run_startup_and_completion(self):
         for provider, relative, start, completed, field in (
-            ("codex", ".codex/global-hooks.json", "SessionStart", "PostToolUse", "command"),
-            ("copilot", ".copilot/hooks/hooks.json", "sessionStart", "postToolUse", "bash"),
-            ("gemini", ".gemini/global-settings.json", "SessionStart", "AfterTool", "command"),
+            ("codex", ".codex/hooks.json", "SessionStart", "PostToolUse", "command"),
+            ("copilot", ".github/hooks/hooks.json", "sessionStart", "postToolUse", "bash"),
+            ("gemini", ".gemini/settings.json", "SessionStart", "AfterTool", "command"),
         ):
             hooks = json.loads((ROOT / relative).read_text(encoding="utf-8"))["hooks"]
             for event, name in ((start, "inject-brain.py"), (completed, "auto-index-brain.py")):
@@ -136,7 +97,20 @@ class BrainHooksTests(unittest.TestCase):
                 handlers = entries if provider == "copilot" else [h for g in entries for h in g["hooks"]]
                 owned = [h for h in handlers if name in h.get(field, "")]
                 self.assertEqual(len(owned), 1, (provider, event))
-                self.assertTrue(owned[0][field].endswith("--provider " + provider))
+                relative = {"copilot": ".github/hooks/scripts", "codex": ".codex/hooks",
+                            "gemini": ".gemini/hooks/scripts"}[provider]
+                assets = self.directory / relative
+                assets.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / relative / name, assets / name)
+                (self.vault / "registered-note.md").touch()
+                (self.vault / "index.md").unlink(missing_ok=True)
+                payload = {"cwd": str(self.directory), "source": "startup", "hook_event_name": event,
+                           "toolResult": {"resultType": "success"}, "tool_response": {"output": "done"}}
+                arguments = shlex.split(owned[0][field])
+                result = subprocess.run([sys.executable, *arguments[1:]], cwd=self.directory,
+                                        input=json.dumps(payload).encode(), capture_output=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("[[registered-note]]", (self.vault / "index.md").read_text())
 
     def test_completion_policy_respects_each_provider_result(self):
         (self.vault / "note.md").touch()
@@ -284,7 +258,6 @@ sys.stdin.read()
     def test_each_provider_artifact_runs_when_copied_alone(self):
         (self.vault / "note.md").touch()
         for provider, relative in (("copilot", ".github/hooks/scripts"),
-                                   ("copilot", ".copilot/hooks/scripts"),
                                    ("gemini", ".gemini/hooks/scripts"),
                                    ("codex", ".codex/hooks")):
             for name in ("auto-index-brain.py", "inject-brain.py"):

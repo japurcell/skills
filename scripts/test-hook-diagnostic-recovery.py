@@ -27,8 +27,7 @@ def envelope(provider, command="hooks-diagnostics-v1", **extra):
 
 
 def registered_handlers(config, provider):
-    event = {"codex": "PreToolUse", "copilot": "preToolUse", "gemini": "BeforeTool"}[provider]
-    groups = config["hooks"][event]
+    groups = [group for entries in config["hooks"].values() for group in entries]
     return groups if provider == "copilot" else [handler for group in groups for handler in group["hooks"]]
 
 
@@ -59,8 +58,8 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(installed.returncode, 0, installed.stderr)
             paths = {"codex": ".codex/hooks.json", "copilot": ".copilot/hooks/hooks.json", "gemini": ".gemini/settings.json"}
             configs = {provider: json.loads((home / path).read_bytes()) for provider, path in paths.items()}
-            # Scanner recovery remains an explicit installed invocation; tool
-            # registrations now select Guardian and End Turn selects status.
+            # Scanners and guards remain explicit installed invocations.
+            # End Turn registrations select status.
             manual_scanners = {}
             for provider in PROVIDERS:
                 legacy = json.loads((ROOT / "scripts/fixtures/provider-hooks-pre-status" / (provider + ".json")).read_bytes())
@@ -72,7 +71,14 @@ class RecoveryTests(unittest.TestCase):
                 manual_scanners[provider] = handler
 
             def selected_handler(config, provider, filename):
-                return manual_scanners[provider] if filename == "scan-secrets.py" else registered_handler(config, provider, filename)
+                if filename == "scan-secrets.py":
+                    return manual_scanners[provider]
+                handler = manual_scanners[provider].copy()
+                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B", str(home / entry(provider).with_name(filename))]
+                handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
+                if provider == "copilot":
+                    handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
+                return handler
             for provider in PROVIDERS:
                 for helper in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
                                "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine"):
@@ -147,7 +153,7 @@ class RecoveryTests(unittest.TestCase):
                 registrations = json.loads(doctor.stdout)["registrations"]
                 self.assertEqual(registrations["health"], "observed", registrations)
                 config = configs[provider]
-                handler = registered_handler(config, provider, "tool-guard.py")
+                handler = registered_handler(config, provider, "scan-status.py")
                 key = "bash" if provider == "copilot" else "command"
                 original = handler[key]
                 handler[key] += " --doctor"

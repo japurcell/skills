@@ -10,7 +10,7 @@
 - Ordinary pass messages must contain no path, command, document content, or secret. Keep high-rate tool passes, observability-only hooks, SessionEnd success, and the completion bell silent. Put blocks in native denial fields without duplicate display messages.
 - Normalize Windows drive-letter payload paths before absolute-path checks. Resolve extensionless commands with `shutil.which()` on Windows; keep provider helper copies synchronized with canonical sources.
 - Installers check generated freshness without write mode. Preserve destination runtime logs and unrelated configuration.
-- Installed brain commands pin Python with isolation flags and exact `--provider` arguments. Ownership must match the complete launch, including arguments. See [brain hook contracts](../../docs/brain-hooks.md).
+- Brain hooks register at repository scope. Copilot uses `.github/hooks`, not user-level `.copilot/hooks`. Global templates intentionally omit brain and tool-guard registrations. Retirement ownership must match the complete launch, including arguments. See [brain hook contracts](../../docs/brain-hooks.md).
 - Hook `.py` and `.sh` files use executable mode 755; Bash installation reapplies it.
 - Run same-named provider modules separately when type checking.
 

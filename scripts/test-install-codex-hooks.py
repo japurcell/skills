@@ -70,13 +70,6 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as temporary:
         template = Path(temporary) / "template.json"
         maintained = json.loads(SOURCE_TEMPLATE.read_text(encoding="utf-8"))
-        for event in ("PreToolUse", "Stop"):
-            filename = "tool-guard.py" if event == "PreToolUse" else "scan-status.py"
-            maintained["hooks"][event] = [{"hooks": [{
-                "type": "command",
-                "command": f"python3 ~/.codex/hooks/{filename}",
-                "commandWindows": f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"',
-            }]}]
         template.write_text(json.dumps(maintained), encoding="utf-8")
         destination = Path(temporary) / "hooks.json"
         original = {
@@ -105,17 +98,16 @@ def main() -> None:
         assert merged["hooks"]["PreToolUse"][0]["custom"] == "keep"
         assert merged["hooks"]["PreToolUse"][0]["hooks"] == original["hooks"]["PreToolUse"][0]["hooks"][:3]
         assert "rtk-explicit-codex.py" not in destination.read_text(encoding="utf-8")
-        for event in ("SessionStart", "PreToolUse", "Stop"):
+        for event in ("SessionStart", "Stop"):
             for group in maintained["hooks"][event]:
                 for handler in group["hooks"]:
                     command = handler["command"]
                     expected = dict(handler)
                     filename = command.rsplit("/", 1)[-1].split()[0]
-                    extra = ["--provider", "codex"] if filename in {"inject-brain.py", "auto-index-brain.py"} else []
-                    if filename in {"tool-guard.py", "scan-status.py", "inject-brain.py", "auto-index-brain.py"}:
-                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename), *extra])
+                    if filename == "scan-status.py":
+                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename)])
                         expected["command"] = command
-                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"' + (" " + " ".join(extra) if extra else "")
+                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"'
                     matches = [candidate for existing_group in merged["hooks"][event]
                                for candidate in existing_group["hooks"]
                                if candidate.get("command") == command
@@ -129,12 +121,10 @@ def main() -> None:
         # An upgrade can select a new interpreter after the previous one moved.
         old = json.loads(first_bytes)
         old_python = str(Path(temporary) / "old python & tools" / "python.exe")
-        for event in ("PreToolUse", "Stop"):
-            owned = old["hooks"][event][-1]["hooks"][0]
-            filename = "tool-guard.py" if event == "PreToolUse" else "scan-status.py"
-            script = str(destination.parent / "hooks" / filename)
-            owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
-            owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
+        owned = old["hooks"]["Stop"][-1]["hooks"][0]
+        script = str(destination.parent / "hooks/scan-status.py")
+        owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
+        owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
         destination.write_text(json.dumps(old))
         upgraded = run(template, destination)
         assert upgraded.returncode == 0, upgraded.stderr
@@ -156,7 +146,7 @@ def main() -> None:
         destination.write_bytes(first_bytes)
 
         malformed = json.loads(template.read_text(encoding="utf-8"))
-        malformed["hooks"]["PreToolUse"][0]["hooks"][0]["commandWindows"] = (
+        malformed["hooks"]["Stop"][0]["hooks"][0]["commandWindows"] = (
             'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
         )
         template.write_text(json.dumps(malformed), encoding="utf-8")

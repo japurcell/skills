@@ -17,28 +17,26 @@ import shlex
 from scripts.trusted_hook_launch import serialize_trusted_launch, trusted_posix_arguments, hook_arguments, template_commands
 
 DESIRED = {
-    "codex": {"SessionStart": ("load-required-skills.py", "inject-brain.py"), "PostToolUse": ("auto-index-brain.py",), "PreToolUse": ("tool-guard.py",), "Stop": ("scan-status.py",)},
+    "codex": {"SessionStart": ("load-required-skills.py",), "Stop": ("scan-status.py",)},
     "copilot": {
         **{event: ("send-event.py",) for event in ("agentStop", "errorOccurred", "notification", "permissionRequest", "postToolUse", "preCompact", "postToolUseFailure", "subagentStart", "subagentStop", "userPromptSubmitted", "userPromptTransformed")},
         "agentStop": ("send-event.py", "scan-status.py"),
-        "preToolUse": ("send-event.py", "tool-guard.py"),
+        "preToolUse": ("send-event.py",),
         "sessionEnd": ("send-event.py", "bell.py"),
-        "sessionStart": ("send-event.py", "load-required-skills.py", "inject-brain.py"),
-        "postToolUse": ("send-event.py", "auto-index-brain.py"),
+        "sessionStart": ("send-event.py", "load-required-skills.py"),
     },
     "gemini": {
         **{event: ("send-event.py",) for event in ("AfterAgent", "BeforeAgent", "BeforeModel", "AfterModel", "BeforeToolSelection", "AfterTool", "PreCompress", "Notification", "SessionEnd")},
-        "SessionStart": ("send-event.py", "skill-context-injector.py", "inject-brain.py"),
-        "AfterTool": ("send-event.py", "auto-index-brain.py"),
-        "BeforeTool": ("send-event.py", "tool-guard.py", "rtk-hook-gemini.py"),
+        "SessionStart": ("send-event.py", "skill-context-injector.py"),
+        "BeforeTool": ("send-event.py", "rtk-hook-gemini.py"),
         "AfterAgent": ("send-event.py", "scan-status.py"),
     },
 }
 # These identities do not depend on events present in the replacement template.
 RETIRED = {
-    "codex": {"PreToolUse": ("scan-secrets.py", "rtk-explicit-codex.py"), "PostToolUse": ("rtk-explicit-codex.py", "rtk-agent-launcher.py"), "Stop": ("scan-secrets.py",)},
-    "copilot": {"preToolUse": ("scan-secrets.py",), "sessionEnd": ("scan-secrets.py",)},
-    "gemini": {"BeforeTool": ("scan-secrets.py",), "SessionEnd": ("scan-secrets.py",)},
+    "codex": {"PreToolUse": ("scan-secrets.py", "rtk-explicit-codex.py", "tool-guard.py"), "PostToolUse": ("rtk-explicit-codex.py", "rtk-agent-launcher.py", "auto-index-brain.py"), "SessionStart": ("inject-brain.py",), "Stop": ("scan-secrets.py",)},
+    "copilot": {"preToolUse": ("scan-secrets.py", "tool-guard.py"), "sessionEnd": ("scan-secrets.py",), "sessionStart": ("inject-brain.py",), "postToolUse": ("auto-index-brain.py",)},
+    "gemini": {"BeforeTool": ("scan-secrets.py", "tool-guard.py"), "SessionEnd": ("scan-secrets.py",), "SessionStart": ("inject-brain.py",), "AfterTool": ("auto-index-brain.py",)},
 }
 
 # Historical ingestion/OKF registrations are retired only at exact known launches.

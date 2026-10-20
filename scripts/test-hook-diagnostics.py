@@ -253,9 +253,9 @@ sys.stdout.buffer.write(module["diagnostics_encode"](report))
         with tempfile.TemporaryDirectory() as directory:
             cli, settings, cwd = self.copied_installation(directory, "codex")
             config = json.loads(settings.read_bytes())
-            handler = config["hooks"]["PreToolUse"][0]["hooks"][0].copy()
+            handler = config["hooks"]["Stop"][0]["hooks"][0].copy()
             handler["env"] = {"CUSTOM": "untrusted value not emitted"}
-            config["hooks"]["PreToolUse"][0]["hooks"].append(handler)
+            config["hooks"]["Stop"][0]["hooks"].append(handler)
             settings.write_text(json.dumps(config))
             report, raw = self.launch(cli, cwd, "--doctor")
             self.assertEqual(report["registrations"]["unowned"], 1)

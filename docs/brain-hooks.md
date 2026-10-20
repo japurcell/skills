@@ -1,6 +1,6 @@
 # Portable brain hooks
 
-The two generated scripts require Python 3.12 or newer and only its standard library. Copy either script alone from a provider tree; neither imports repository helpers. Installed commands pin the installer's absolute interpreter with `-I -S -B`. The scripts need no Git, Bash, jq, RTK, packages, or network access at runtime.
+The two generated scripts require Python 3.12 or newer and only its standard library. Copy either script alone from a provider tree; neither imports repository helpers. The scripts need no Git, Bash, jq, RTK, packages, or network access at runtime.
 
 `auto-index-brain.py --provider copilot|codex|gemini` maintains `brain/index.md`. `inject-brain.py` takes the same selector and reconciles the index before returning startup context. Both read the provider's JSON object on stdin. Use the provider matching the registration; do not infer it from payload field names.
 
@@ -16,7 +16,7 @@ Limits are 2 MiB input, 64 JSON levels, 0.5-second input idle and 2-second total
 
 ## Provider registrations
 
-Repository registrations are `.github/hooks/hooks.json`, `.codex/hooks.json`, and `.gemini/settings.json`. Installed templates are `.copilot/hooks/hooks.json`, `.codex/global-hooks.json`, and `.gemini/global-settings.json`. Use their complete brain handlers when copying the scripts into another repository. Existing user installations change only after an explicit reinstall.
+Brain hooks are repository-scoped. Copilot scripts and registrations live in `.github/hooks`; `.copilot/hooks` contains user-level hooks and does not contain brain hooks. Codex uses `.codex/hooks.json` and Gemini uses `.gemini/settings.json`. Copy the complete repository brain handlers and their standalone scripts into another repository. Global templates do not register brain hooks or tool guards. Existing user installations change only after an explicit reinstall.
 
 - Copilot: `sessionStart` injects on startup, resume, and new sessions. `postToolUse` reconciles when `toolResult.resultType` is `success`. Failures use a separate event. Context is top-level `additionalContext`; startup progress uses the documented progress line followed by one final JSON object.
 - Codex: `SessionStart` matches startup, resume, clear, compact, and fork. Every completed `PostToolUse` reconciles, including failed commands that may have changed files. Context uses `hookSpecificOutput` with `hookEventName: SessionStart`. The injector's own byte cap permits `additionalContextLimit: 0` without unlimited output.
@@ -24,11 +24,11 @@ Repository registrations are `.github/hooks/hooks.json`, `.codex/hooks.json`, an
 
 Only startup/reset injection returns context. Tool passes stay quiet. The injector performs reconciliation itself, so correctness does not depend on handler order. Codex and Gemini startup messages use `systemMessage`. Normal status contains no filenames, commands, note bodies, or secrets. Hook configuration changes still require each provider's normal trust review.
 
-For a global copy, replace the script path with its absolute installed location. Example POSIX command: `/absolute/python3 -I -S -B /absolute/inject-brain.py --provider codex`. Quote paths containing spaces. In Windows Codex `commandWindows`, use `"C:\Python312\python.exe" -I -S -B "C:\Hooks\inject-brain.py" --provider codex`. In Copilot PowerShell, use `& 'C:\Python312\python.exe' -I -S -B 'C:\Hooks\inject-brain.py' --provider copilot`. Gemini uses the host-native `command` field and timeouts in milliseconds; Codex and Copilot use seconds.
+When copying a script to another repository, use its repository path or an absolute path within that repository. Example POSIX command: `/absolute/python3 -I -S -B /absolute/inject-brain.py --provider codex`. Quote paths containing spaces. In Windows Codex `commandWindows`, use `"C:\Python312\python.exe" -I -S -B "C:\Repo\.codex\hooks\inject-brain.py" --provider codex`. In Copilot PowerShell, use `& 'C:\Python312\python.exe' -I -S -B 'C:\Repo\.github\hooks\scripts\inject-brain.py' --provider copilot`. Gemini uses the host-native `command` field and timeouts in milliseconds; Codex and Copilot use seconds.
 
 ## Verification and recovery
 
-Run `python3 scripts/test-brain-hooks.py` for process, copied-script, registration, and isolated installer checks. Run `python3 scripts/generate-hooks.py --check` for freshness. The `brain-hooks` workflow prepares native Windows, Linux, and macOS checks on Python 3.12 and 3.14. Local contract checks do not prove actual provider context delivery or native Windows behavior; retain those results separately in the migration plan.
+Run `python3 scripts/test-brain-hooks.py` for process, copied-script, and repository registration checks. Installer preservation checks run in their dedicated suites. Run `python3 scripts/generate-hooks.py --check` for freshness. The `brain-hooks` workflow prepares native Windows, Linux, and macOS checks on Python 3.12 and 3.14. Local contract checks do not prove actual provider context delivery or native Windows behavior; retain those results separately in the migration plan.
 
 For a busy writer, retry after the other process exits. For a malformed or oversized existing index, inspect it before restoring a valid inventory or removing that index deliberately. Do not remove a lock file while another writer may hold it. A later valid startup or tool invocation repairs inventory drift. To roll back registration changes, restore only the affected reviewed configuration and scripts, preserving unrelated hooks and runtime logs.
 

@@ -75,8 +75,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("rtk", "gemini", PurePosixPath(".gemini/hooks/scripts/rtk-hook-gemini.py")),
         GeneratedTarget("brain", "github", PurePosixPath(".github/hooks/scripts/auto-index-brain.py")),
         GeneratedTarget("brain", "github", PurePosixPath(".github/hooks/scripts/inject-brain.py")),
-        GeneratedTarget("brain", "copilot", PurePosixPath(".copilot/hooks/scripts/auto-index-brain.py")),
-        GeneratedTarget("brain", "copilot", PurePosixPath(".copilot/hooks/scripts/inject-brain.py")),
         GeneratedTarget("brain", "gemini", PurePosixPath(".gemini/hooks/scripts/auto-index-brain.py")),
         GeneratedTarget("brain", "gemini", PurePosixPath(".gemini/hooks/scripts/inject-brain.py")),
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/auto-index-brain.py")),

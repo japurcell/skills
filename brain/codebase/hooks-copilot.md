@@ -1,5 +1,6 @@
 # Copilot hooks
 
+- `.copilot/hooks` supplies user-level hooks; `.github/hooks` supplies repository hooks. Brain hooks belong only in `.github/hooks`.
 - CLI hooks combine user and project configuration; cloud agent reads `.github/hooks/*.json` in its Linux sandbox.
 - `sessionStart` receives `cwd` and startup/resume/new source; return top-level `additionalContext`.
 - `postToolUse` carries successful `toolResult.resultType`; failure has a separate event. PascalCase compatibility uses snake_case payloads.

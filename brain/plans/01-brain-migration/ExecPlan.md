@@ -10,7 +10,7 @@ Two portable hook behaviors will maintain the root index and inject that index i
 
 ### Current authorization and stopping boundary
 
-On 2026-10-20 the user accepted decisions Q1-Q9 and confirmed the shared design. The user subsequently invoked execplan-implement, authorizing execution of the task graph. Repository implementation and isolated verification may proceed. On 2026-10-20 the user explicitly authorized committing and pushing the migration branch to run the native CI matrix. This supersedes the earlier commit/publication restriction. T7 and todo 1 must remain open until all remaining checks pass. Global installations remain out of scope.
+On 2026-10-20 the user accepted decisions Q1-Q9 and confirmed the shared design. The user subsequently invoked execplan-implement, authorizing execution of the task graph. Repository implementation and isolated verification may proceed. On 2026-10-20 the user explicitly authorized committing and pushing the migration branch to run the native CI matrix. This supersedes the earlier commit/publication restriction. T7 and todo 1 must remain open until all remaining checks pass. Global installations remain out of scope. The user clarified that Copilot brain hooks belong only in repository `.github/hooks`, not global `.copilot/hooks`, and explicitly confirmed removal of global tool-guard registrations for all three providers ("Remove global tool guards intentionally"). Commit `a73a33c1` also removes brain registrations from all three global templates; preserve that repository-only boundary.
 
 Future implementation is repository-scoped. Existing user-global installations must remain unchanged until the user explicitly reinstalls. Use isolated temporary destinations for installer validation. The old instruction to run the normal installer before live testing does not override this boundary.
 
@@ -30,7 +30,10 @@ Future implementation is repository-scoped. Existing user-global installations m
 - [x] (2026-10-20) [milestone-5] T7: Pass all 55 maintained suites on macOS, verify 62 generated outputs, complete documentation and reflection, and retain explicit platform skips.
 - [x] (2026-10-20) [milestone-5] T7: Verify the six native Windows/Linux/macOS jobs on Python 3.12/3.14 for published commit `f49edd58ca048438636ae40024db2818b35f6a4f`; record platform skips.
 - [x] (2026-10-20) [milestone-5] T7: Verify native Windows installer/security run `39510956697` succeeded for migration commit `f49edd58ca048438636ae40024db2818b35f6a4f`.
-- [ ] [milestone-5] T7: Finish checking the macOS security workflow and verify real provider startup/reset delivery in configured isolated profiles; then complete todo 1.
+- [x] (2026-10-20) [milestone-3] T8: Reconcile repository-only brain hooks, intentional global guard removal, generated assets, and affected local checks.
+- [ ] [milestone-3] T8: Publish the scoped correction and verify the native matrix, Windows installer, and macOS security workflows for the corrected commit.
+- [x] (2026-10-20) [milestone-5] T7: Verify original macOS security run `39510956707` passed, including all 12 native Darwin capture cases and both installers.
+- [ ] [milestone-5] T7: Verify corrected-tree CI and real provider startup/reset delivery in configured isolated profiles; then complete todo 1.
 
 ## Surprises & Discoveries
 
@@ -64,7 +67,7 @@ The actual skill directory is `update-agent-docs`, despite the original request 
 
 ## Outcomes & Retrospective
 
-Implementation started on 2026-10-20 from clean branch codex/brain-system-migration at 092038394a2e3bb0cc21fffdec2eb60a12cece29. T1 and T2 are complete. T4 now supplies documented completion policies, startup/reset context and safe diagnostics, plus both installed and project registrations. T5 integrates pinned provider arguments, isolated installation and receipt-based retirement cleanup. The 23 public brain checks pass on macOS/Python 3.14.6; generator and Codex merge checks pass. Final Bash and PowerShell installer suites passed on macOS. All six standalone native Windows/Linux/macOS jobs on Python 3.12/3.14 now pass for published commit `f49edd58ca048438636ae40024db2818b35f6a4f`, with explicit platform skips. Live provider delivery remains unverified. Milestone 3 contract and isolated installation acceptance is met. T6 cutover and T7 local integration are complete: all 55 maintained suites pass on macOS with explicit native-only skips. T7 remains open for related workflow completion and real provider delivery proof. The migration branch is committed and pushed; global installations remain untouched.
+Implementation started on 2026-10-20 from clean branch codex/brain-system-migration at 092038394a2e3bb0cc21fffdec2eb60a12cece29. T1 and T2 are complete. T4 now supplies documented completion policies, startup/reset context and safe diagnostics, plus both installed and project registrations. T5 integrates pinned provider arguments, isolated installation and receipt-based retirement cleanup. The original 23 public brain checks passed on macOS/Python 3.14.6; the repository-only suite now passes 22 cases after removing its exclusive global-install test; generator and Codex merge checks pass. Final Bash and PowerShell installer suites passed on macOS. All six standalone native Windows/Linux/macOS jobs on Python 3.12/3.14 now pass for published commit `f49edd58ca048438636ae40024db2818b35f6a4f`, with explicit platform skips. Live provider delivery remains unverified. Milestone 3 contract and isolated installation acceptance is met. T6 cutover and T7 local integration are complete: all 55 maintained suites pass on macOS with explicit native-only skips. T7 remains open for corrected-tree workflow completion and real provider delivery proof. The migration branch is committed and pushed; global installations remain untouched.
 
 ## Context and Orientation
 
@@ -141,8 +144,8 @@ Update human navigation enough to make every new file reachable before automatic
 Acceptance: the completed ledger accounts for the full source inventory; a reader can find retained knowledge and useful follow-up work through the brain without consulting the legacy roots.
 
 ### Milestone 3: Deliver portable index and context hooks
-Status: done
-Acceptance: met
+Status: in progress
+Acceptance: not met
 
 #### T3: Implement index reconciliation
 
@@ -158,13 +161,13 @@ Compare rendered bytes before writing. Replace atomically through a same-directo
 
 Prerequisites: T1 and T3's reconciliation contract. Public generated entrypoint: `inject-brain.py`. Emit only the root index as context, in the verified provider-specific JSON envelope. Logs go to stderr. Support explicit provider selection as accepted in Q5, using values `copilot`, `codex`, and `gemini`; the GitHub project variant uses Copilot's verified contract.
 
-Register startup/reset injection and post-tool reconciliation under Q8 (every completed Codex call; successful calls for the other providers) in `hooks/registrations.py` and the provider metadata/config owners identified by T1. Reconcile before reading the startup index. Do not inject on every prompt or every tool call. For Copilot and Gemini, recognize success through provider evidence, including shell tools, rather than editor tool names. Codex requires no success inference.
+Register startup/reset injection and post-tool reconciliation under Q8 (every completed Codex call; successful calls for the other providers) in repository provider configurations. `hooks/registrations.py` owns global installer identities and must retire, rather than add, the former global brain registrations. Reconcile before reading the startup index. Do not inject on every prompt or every tool call. For Copilot and Gemini, recognize success through provider evidence, including shell tools, rather than editor tool names. Codex requires no success inference.
 
 Use provider context limits where available and bound outputs without emitting malformed JSON or broken UTF-8. Preserve index content under normal limits; if a limit prevents full injection, provide a clear route to `brain/index.md` and record the limitation. Missing or unreadable input must not accidentally inject another repository's index. Keep lifecycle diagnostics consistent with retained local conventions and keep routine tool-pass output quiet.
 
 #### T5: Integrate generation and isolated installation
 
-Prerequisites: T3 and T4. Emit both scripts under `.github/hooks/scripts/`, `.copilot/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.codex/hooks/`, with corresponding project registrations in `.github/hooks/hooks.json`, `.gemini/settings.json`, and `.codex/hooks.json`. Maintain installed-provider templates in `.copilot/hooks/hooks.json`, `.gemini/global-settings.json`, and `.codex/global-hooks.json`; the last is an installer input, not a Codex-discovered runtime file.
+Prerequisites: T3 and T4. Emit both scripts under `.github/hooks/scripts/`, `.gemini/hooks/scripts/`, and `.codex/hooks/`, with corresponding project registrations in `.github/hooks/hooks.json`, `.gemini/settings.json`, and `.codex/hooks.json`. Do not emit Copilot brain hooks into the global `.copilot/hooks` tree. Global templates `.copilot/hooks/hooks.json`, `.gemini/global-settings.json`, and `.codex/global-hooks.json` intentionally omit brain and tool-guard registrations. The Codex global file is an installer input, not a Codex-discovered runtime file.
 
 Each script must run after being copied alone with its registration; no sibling import, third-party package, Bash, Git, jq, or RTK may be required at runtime. Build-time reuse is encouraged. Follow existing executable-mode and launcher conventions, including Windows Python invocation and paths containing spaces.
 
@@ -204,13 +207,19 @@ Perform the required reflection review and record only durable findings in the b
 
 Acceptance: integrated checks pass with actual output recorded, no required platform/provider result is falsely claimed, migration coverage is complete, and normal repository workflows operate without the legacy knowledge system. Missing native environments or CLI access leave the corresponding acceptance open.
 
+#### T8: Reconcile repository-only brain hooks and intentional global guard removal
+
+Prerequisites: the user's scope correction and commit `a73a33c1`. Keep Copilot brain scripts and registrations in `.github/hooks`; remove their duplicate `.copilot/hooks` outputs and generated targets. Preserve removal of brain and tool-guard registrations from all global templates. Reconcile installer ownership identities, generated diagnostics, documentation, and affected tests with that boundary. Keep direct guard-runtime tests and surviving installer preservation/idempotence checks. Recovery tests invoke installed guard scripts explicitly; registered launch-identity checks use the surviving scan-status handlers. Remove only assertions that require deleted automatic global registrations. Do not add regression tests for deleted features.
+
+Verification: reproduce the six stale generated outputs with `scripts/generate-hooks.py --check` and the obsolete installed-brain expectations with `scripts/test-brain-hooks.py` before editing. Regenerate, run affected process/generator/installer/recovery suites, then commit and push the scoped repair and inspect native CI. The three failed workflows for `a73a33c1` stop at generated freshness; the earlier green native matrix and Windows workflow for `f49edd58` do not prove the new tree. T7 stays open until current-tree checks and live-provider verification pass.
+
 ## Task Graph and Ownership
 
 T1 content inventory precedes T2. T1 root/input feasibility precedes T3 and is verified; the Codex completion policy is now approved, satisfying the remaining T1 prerequisite for T4. T4 depends on T1 and T3's contract. T5 depends on T3 and T4. T6 depends on T2 and T5. T7 depends on T6. One implementing owner integrates shared manifests, configuration, indexes, installer changes, and documentation. The invoked execplan-implement skill authorizes scoped delegation. Two read-only T1 assignments collect content and provider evidence; the coordinator owns repository integration. Routing selected gpt-6-luna/max (Standard), with gpt-5.6-luna/max as fallback: substantive cross-file judgments require Standard; published rates provisionally favor Luna. Runtime accepts both settings, but actual execution settings are unconfirmed. Each assignment has a 12-minute warning threshold. No delegated implementation worktrees or commits have been created.
 
 ## Concrete Steps
 
-The migration is committed and pushed as `f49edd58ca048438636ae40024db2818b35f6a4f` on `codex/brain-system-migration`. All six jobs in [Standalone brain hooks run 39510956769](https://github.com/japurcell/skills/actions/runs/39510956769) passed. The native Windows installer/security workflow also passed. The next executor action is to inspect completion of the macOS security workflow and repair any failures. Keep T7 and todo 1 open.
+The current published head is `a73a33c16f69c50f03b09137f95fdc0572717a70`. Its three CI workflows fail generated freshness after global templates changed. The T8 correction is now verified locally: duplicate Copilot global brain assets are removed, ownership/tests align with repository-only brain registrations and intentionally removed global guards, and 60 generated outputs are current. The next executor action is to commit and push this scoped correction, then verify all three native workflows for that new commit. Earlier commit `f49edd58` passed the six-job brain matrix, Windows installer workflow, and complete macOS security workflow. These results do not replace corrected-tree CI. Keep T7 and todo 1 open; earlier passes are historical evidence, not current-tree acceptance.
 
 Then verify actual startup/reset delivery in isolated configured provider profiles. The previous isolated Copilot probe lacked authentication, Codex isolated hook trust has not been established, and Gemini CLI is absent. Copilot is 1.0.101 and Codex is 0.163.0; version checks provide no delivery proof. Git push and GitHub Actions reads now work under the authorized execution context, so the earlier GitHub authentication error no longer blocks CI inspection. Do not bypass trust or modify active user-global installs. Commit and push are authorized; no merge or global installation is authorized.
 
@@ -230,7 +239,7 @@ The user confirmed all three proposed public test boundaries on 2026-10-20. The 
 
 `rtk gh run view 39510956769 --json jobs,conclusion,headSha,url` reports success for all six combinations of `windows-latest`, `ubuntu-latest`, and `macos-latest` with Python 3.12 and 3.14. The run's exact head is `f49edd58ca048438636ae40024db2818b35f6a4f`. Every job passed generated-output verification (`62 files`) and the 23-case standalone process suite. Windows reports two skipped cases per job, Ubuntu one, and macOS none. The suite retains its explicit POSIX permission-fixture and unsupported-interpreter availability limits; passing jobs do not establish skipped behavior. No test was changed or bypassed for this run.
 
-Evidence: [native matrix run](https://github.com/japurcell/skills/actions/runs/39510956769); retained log `/tmp/brain-native-matrix-39510956769.log`. This proves the copied scripts execute under the native operating systems and minimum supported Python. It does not prove actual provider context delivery. The related [Windows installer workflow](https://github.com/japurcell/skills/actions/runs/39510956697) passed at the same commit, including every workflow step: native PowerShell installation, Windows scanner envelopes/capture, stable RTK configuration, and lifecycle messages. Its log is retained at `/tmp/brain-windows-installer-39510956697.log`. The [macOS security workflow](https://github.com/japurcell/skills/actions/runs/39510956707) is still running at this checkpoint. No source or test fix was needed for Windows.
+Evidence: [native matrix run](https://github.com/japurcell/skills/actions/runs/39510956769); retained log `/tmp/brain-native-matrix-39510956769.log`. This proves the copied scripts execute under the native operating systems and minimum supported Python. It does not prove actual provider context delivery. The related [Windows installer workflow](https://github.com/japurcell/skills/actions/runs/39510956697) passed at the same commit, including every workflow step: native PowerShell installation, Windows scanner envelopes/capture, stable RTK configuration, and lifecycle messages. Its log is retained at `/tmp/brain-windows-installer-39510956697.log`. The [macOS security workflow](https://github.com/japurcell/skills/actions/runs/39510956707) also passed completely for the original migration commit, including all 12 required native Darwin capture cases, Bash and PowerShell installers, and final generated freshness. Its retained log is `/tmp/brain-macos-security-39510956707.log`. No source or test fix was needed for that original commit. The later `a73a33c1` template edits require the T8 correction and fresh CI before current-tree acceptance.
 
 ### Behavioral scenarios
 
@@ -288,14 +297,17 @@ Index bounds: 20,000 scanned entries, two-second inventory deadline, 512 KiB ren
 
 ## Current base state and remaining ownership
 
+Reflection review: the durable correction is captured in `brain/codebase/hooks-copilot.md` and `brain/codebase/hooks.md`. Repository and user-level hook paths define deployment scope; shared runtime behavior does not justify registering repository maintenance globally. No skill-file update or new backlog item is needed.
+
 - Branch: `codex/brain-system-migration`; published migration HEAD is `f49edd58ca048438636ae40024db2818b35f6a4f`, based on `092038394a2e3bb0cc21fffdec2eb60a12cece29`. Commit and push are authorized. No private implementation worktrees or global installations were changed.
 - New public entrypoints exist in all four provider trees and are registered in project configuration and installed templates. Copilot filters successful tool results; Gemini filters error results; Codex indexes every completed call. No actual user-global install was changed.
 - Canonical implementation: `hooks/families/brain.py`; subprocess suite: `scripts/test-brain-hooks.py`. `scripts/test-all.py` includes the new suite. `.github/workflows/brain-hooks.yml` passed all six native platform/version jobs in run `39510956769`.
 - Generation updates diagnostic/build fingerprints and registration receipts because canonical sources and templates changed. Installer E2E verification reproduced removal of the existing tool guard by incomplete maintained templates; all three templates now preserve that security registration. Security enforcement logic is unchanged; diagnostic collectors now recognize exact brain launch arguments.
 - Sandbox initially denied generator staging in `.codex`; scoped elevated regeneration succeeded. The failed generator rolled back, and subsequent freshness checks passed.
+- Current local correction: repository brain suite 22 cases, generator 25 cases, recovery 17 cases, lifecycle 32 cases, Codex merge CLI, and complete Bash installer pass. The lifecycle suite initially hit sandbox-only `/bin/ps` denial; its elevated rerun passed unchanged. Complete PowerShell installation, security banners (14 cases), and diagnostics (10 cases) also pass. Corrected native CI remains pending. No global installation was changed.
 - The user approved mechanical Codex reconciliation on every completed call, including failures, on 2026-10-20. No completion-policy decision remains pending. The subsequent execplan-implement invocation resumes execution after T2.
-- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. The related Windows installer/security workflow passed; macOS security is still running. Real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
-- Retired skills, source ingestion/OKF families/adapters, all three legacy content roots and `docs/ideas` are removed. The generator owns 62 surviving outputs; its post-cutover suite passes 25 cases after removing only two retired-family tests. The full maintained runner passes all 55 suites on macOS.
+- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. The original related Windows installer/security and macOS security workflows both passed. Corrected-tree CI remains pending. Real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
+- Retired skills, source ingestion/OKF families/adapters, all three legacy content roots and `docs/ideas` are removed. The corrected generator owns 60 surviving outputs; its post-cutover suite passes 25 cases after removing only two retired-family tests. The full maintained runner passes all 55 suites on macOS.
 - Reflection review: durable generator serialization, standalone input rules, provider schema limits, and source-versus-live verification distinctions are retained in codebase notes. No speculative session narrative was added as knowledge.
 
 ## T2 final coverage evidence (2026-10-20)
