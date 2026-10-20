@@ -201,8 +201,11 @@ def file_operation_fixtures() -> list[Fixture]:
     shell = "cat > docs/guardian-fixture.md <<'EOF'\n" + body + '\nEOF'
     source = "from pathlib import Path\nPath('docs/guardian-fixture.md').write_text(" + repr(body) + ")\n"
     wrapped = "rtk proxy python3 - <<'PY'\n" + source + 'PY'
+    reported_source = "from pathlib import Path\np = Path('docs/guardian-fixture.md')\np.write_text(" + repr(body) + ")\nprint('Saved fixture document')\n"
+    reported = "rtk proxy python3 - <<'PY'\n" + reported_source + 'PY'
     result = []
-    for name, command in (('writer.quoted-document', shell), ('writer.wrapped-python-document', wrapped)):
+    for name, command in (('writer.quoted-document', shell), ('writer.wrapped-python-document', wrapped),
+                          ('writer.wrapped-python-document-status', reported)):
         result.append(Fixture(name, 'provider_shell', {'command': command}, 'deny', 'allow',
                               'literal-writer', 'sanitized October 2026 writer incident', name + '.execution'))
         result.append(Fixture(name + '.execution', 'provider_shell',

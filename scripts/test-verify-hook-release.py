@@ -105,6 +105,20 @@ class ReleaseVerificationTests(unittest.TestCase):
             self.assertEqual([(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in release],
                              [(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in standalone])
 
+    def test_writer_execution_pairs_require_the_executable_finding(self) -> None:
+        adapter = load_adapter()
+        path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        for mode in ("timing", "resources"):
+            cases = adapter.selected_cases(Path("."), "candidate", [], mode, "file-operations-v1", path)
+            pairs = [case for case in cases if ".writer." in case.name and case.name.endswith(".execution")]
+            self.assertEqual(len(pairs), 9)
+            for case in pairs:
+                with self.subTest(case=case.name):
+                    contract = case.fixture_metadata["contract"]
+                    self.assertEqual(contract["decision"], "deny")
+                    self.assertEqual(contract["attribution"]["security_outcome"], "findings")
+                    self.assertEqual(contract["attribution"]["cause"], "force_push_protected_branch")
+
     def test_historical_fixture_hashes_and_expectations_are_pinned(self) -> None:
         adapter = load_adapter()
         digests = {

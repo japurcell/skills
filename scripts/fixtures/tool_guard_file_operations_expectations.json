@@ -2085,9 +2085,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -2099,7 +2099,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -2144,6 +2144,89 @@
           "injection": "none",
           "input_sha256": "3ab1ffde643a6fff4f37bf520752203cd83308a2e66e4c3526eaabe536d51b69"
         },
+        "codex.resources.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "7e18f922beb867b1813ad074ef7e77939eeff4edf2e1d5b766f65be5c0b90a38"
+        },
+        "codex.resources.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "58a4494344fa3cb720d1ea551e81e48acd19d1c8c6afe45aae5ba74ee0d15492"
+        },
         "codex.resources.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -2168,9 +2251,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -2182,7 +2265,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -4393,9 +4476,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -4407,7 +4490,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -4452,6 +4535,89 @@
           "injection": "none",
           "input_sha256": "b1308e438e9bdcaf42f66d4e82fceea524f7fddd7b9ca9873b748e5abc945eb5"
         },
+        "copilot.resources.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "95435d7f149f5aaa8ee09f9ec57e893ae8bc9827760932ba0f901ede8f27addf"
+        },
+        "copilot.resources.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "c579c2833082c25843b3dd34ca83286a8de7a819a0ab9b686da62284da9731e2"
+        },
         "copilot.resources.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -4476,9 +4642,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -4490,7 +4656,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -6243,9 +6409,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -6257,7 +6423,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -6302,6 +6468,89 @@
           "injection": "none",
           "input_sha256": "53406f7da5a0667a10eb1d64e2f70ec1a8ab0e5d875203964fa6df96ede50f2b"
         },
+        "gemini.resources.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "c340c1df92a7c83380c017dbddc02c08ff1eaf89efb30b08fc31bafdb41fbdd3"
+        },
+        "gemini.resources.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "3ad4a22219ad9f2aa686c44039cec296780d45469628a60aacd612b1a7a0b9c6"
+        },
         "gemini.resources.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -6326,9 +6575,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -6340,7 +6589,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -9049,9 +9298,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -9063,7 +9312,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -9108,6 +9357,89 @@
           "injection": "none",
           "input_sha256": "3ab1ffde643a6fff4f37bf520752203cd83308a2e66e4c3526eaabe536d51b69"
         },
+        "codex.guard.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "7e18f922beb867b1813ad074ef7e77939eeff4edf2e1d5b766f65be5c0b90a38"
+        },
+        "codex.guard.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "58a4494344fa3cb720d1ea551e81e48acd19d1c8c6afe45aae5ba74ee0d15492"
+        },
         "codex.guard.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -9132,9 +9464,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -9146,7 +9478,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -11853,9 +12185,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -11867,7 +12199,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -11912,6 +12244,89 @@
           "injection": "none",
           "input_sha256": "b1308e438e9bdcaf42f66d4e82fceea524f7fddd7b9ca9873b748e5abc945eb5"
         },
+        "copilot.guard.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "95435d7f149f5aaa8ee09f9ec57e893ae8bc9827760932ba0f901ede8f27addf"
+        },
+        "copilot.guard.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "c579c2833082c25843b3dd34ca83286a8de7a819a0ab9b686da62284da9731e2"
+        },
         "copilot.guard.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -11936,9 +12351,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -11950,7 +12365,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -14657,9 +15072,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -14671,7 +15086,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
@@ -14716,6 +15131,89 @@
           "injection": "none",
           "input_sha256": "53406f7da5a0667a10eb1d64e2f70ec1a8ab0e5d875203964fa6df96ede50f2b"
         },
+        "gemini.guard.writer.wrapped-python-document-status": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {},
+            "audit": {
+              "event": "guard_passed",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "allow",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "allow",
+              "security_outcome": "clean"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "c340c1df92a7c83380c017dbddc02c08ff1eaf89efb30b08fc31bafdb41fbdd3"
+        },
+        "gemini.guard.writer.wrapped-python-document-status.execution": {
+          "baseline": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "command_tokens",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "incomplete"
+            }
+          },
+          "candidate": {
+            "attribution": {
+              "audit_outcome": "written",
+              "cause": "force_push_protected_branch",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            },
+            "audit": {
+              "event": "threats_detected",
+              "outcome": "written",
+              "records_per_call": 1
+            },
+            "decision": "deny",
+            "mode": "block",
+            "record_attribution": {
+              "audit_outcome": "written",
+              "enforcement": "deny",
+              "security_outcome": "findings"
+            }
+          },
+          "injection": "none",
+          "input_sha256": "3ad4a22219ad9f2aa686c44039cec296780d45469628a60aacd612b1a7a0b9c6"
+        },
         "gemini.guard.writer.wrapped-python-document.execution": {
           "baseline": {
             "attribution": {
@@ -14740,9 +15238,9 @@
           "candidate": {
             "attribution": {
               "audit_outcome": "written",
-              "cause": "command_tokens",
+              "cause": "force_push_protected_branch",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             },
             "audit": {
               "event": "threats_detected",
@@ -14754,7 +15252,7 @@
             "record_attribution": {
               "audit_outcome": "written",
               "enforcement": "deny",
-              "security_outcome": "incomplete"
+              "security_outcome": "findings"
             }
           },
           "injection": "none",
