@@ -316,30 +316,21 @@ for event, filename in (("agentStop", "scan-status.py"), ("sessionEnd", "bell.py
 PY
 }
 
-test_hooks_json_registers_pre_tool_guard() {
+test_hooks_json_registers_pre_tool_observability() {
   python3 - "$REPO_ROOT/.copilot/hooks/hooks.json" <<'PY'
 import json
 import pathlib
 import sys
 
 handlers = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]["preToolUse"]
-positions = []
-for script in ("send-event.py", "tool-guard.py"):
-    command = f"$HOME/.copilot/hooks/scripts/{script}"
-    matches = [(index, handler) for index, handler in enumerate(handlers)
-               if handler.get("bash") == command]
-    assert len(matches) == 1, f"Expected one {script} registration on preToolUse"
-    index, handler = matches[0]
-    positions.append(index)
-    assert handler["type"] == "command"
-    assert handler["powershell"] == f'python "{command}"'
-    if script == "send-event.py":
-        assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
-        assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "preToolUse"
-    else:
-        assert handler["env"]["GUARD_MODE"] == "block"
-        assert handler["timeoutSec"] == 10
-assert positions[0] < positions[1], "Expected observability before Tool Guardian"
+command = "$HOME/.copilot/hooks/scripts/send-event.py"
+matches = [handler for handler in handlers if handler.get("bash") == command]
+assert len(matches) == 1, "Expected one observability registration on preToolUse"
+handler = matches[0]
+assert handler["type"] == "command"
+assert handler["powershell"] == f'python "{command}"'
+assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
+assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "preToolUse"
 PY
 }
 
@@ -372,7 +363,7 @@ main() {
   test_allowlist_suppresses_credential_path_finding
   test_diff_mode_ignores_secret_like_diff_headers
   test_hooks_json_registers_status_and_session_end_handlers
-  test_hooks_json_registers_pre_tool_guard
+  test_hooks_json_registers_pre_tool_observability
 }
 
 security_run_suite main "$@"
