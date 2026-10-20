@@ -4,11 +4,13 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+from hooks.families.scan_runtime import MODULES as SCAN_RUNTIME_MODULES
+
 
 def build_identity(family: str) -> str:
     """Hash trusted canonical inputs at generation, never during a hook call."""
     root = Path(__file__).resolve().parent
-    names = ("reporting.py", "allowlist.py", "common.py", "audit.py", family + ".py")
+    names = ("reporting.py", "common.py", "audit.py", family + ".py")
     if family == "scan_secrets":
         names += ("scanner_stream.py", "diagnostics.py", "scan_runtime.py")
     digest = hashlib.sha256()
@@ -16,7 +18,8 @@ def build_identity(family: str) -> str:
         digest.update(name.encode("ascii") + b"\0" + (root / name).read_bytes())
     for name in ("providers.py", "manifest.py"):
         digest.update(name.encode("ascii") + b"\0" + (root.parent / name).read_bytes())
-    runtime_names = None if family == "scan_secrets" else {"scan_reporting.py", "scan_allowlist.py"}
+    runtime_names = ({name + ".py" for name in SCAN_RUNTIME_MODULES} if family == "scan_secrets" else
+                     {"scan_reporting.py", "scan_allowlist.py", "tool_guard_policy.py"})
     for path in sorted((root.parent / "runtime").glob("*.py")):
         if runtime_names is not None and path.name not in runtime_names:
             continue
@@ -28,7 +31,5 @@ def build_identity(family: str) -> str:
 
 
 _RUNTIME_SOURCE = (Path(__file__).resolve().parents[1] / "runtime/scan_reporting.py").read_text()
-CREDENTIAL_LABEL_SOURCE, BODY_SOURCE = _RUNTIME_SOURCE.split("# Bounds apply", 1)
+CREDENTIAL_LABEL_SOURCE = _RUNTIME_SOURCE.split("# Bounds apply", 1)[0]
 CREDENTIAL_LABEL_SOURCE = CREDENTIAL_LABEL_SOURCE.split("import unicodedata\n", 1)[1][:-1]
-BODY_SOURCE = "\n# Bounds apply" + BODY_SOURCE
-SOURCE = CREDENTIAL_LABEL_SOURCE + BODY_SOURCE

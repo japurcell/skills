@@ -19,8 +19,8 @@ LIMITS = {"directories": 1024, "entries": 4096, "records": 256,
           "hash_bytes": 1048576, "settings_bytes": 262144}
 
 POLICY_NAMES = {
-    "scanner": ("scan_secrets.py", ("MAX_FILES", "MAX_FILE_BYTES", "MAX_TOTAL_BYTES", "MAX_SCAN_SECONDS")),
-    "guardian": ("tool_guard.py", ("MAX_SCAN_TEXT", "MAX_NATIVE_DATA_BYTES", "MAX_NATIVE_PATCH_BYTES", "MAX_COMMAND_SEGMENTS", "MAX_COMMAND_TOKENS", "MAX_STRUCTURED_DEPTH", "MAX_STRUCTURED_NODES", "MAX_STRUCTURED_STRINGS")),
+    "scanner": ("families/scan_secrets.py", ("MAX_FILES", "MAX_FILE_BYTES", "MAX_TOTAL_BYTES", "MAX_SCAN_SECONDS")),
+    "guardian": ("runtime/tool_guard_policy.py", ("MAX_SCAN_TEXT", "MAX_NATIVE_DATA_BYTES", "MAX_NATIVE_PATCH_BYTES", "MAX_COMMAND_SEGMENTS", "MAX_COMMAND_TOKENS", "MAX_STRUCTURED_DEPTH", "MAX_STRUCTURED_NODES", "MAX_STRUCTURED_STRINGS")),
 }
 
 
@@ -28,7 +28,7 @@ def _policy_limits(repo: Path) -> dict:
     """Extract trusted canonical numeric assignments without importing runtime code."""
     result = {"scope": "canonical scanner constants and Guardian input-bound subset"}
     for label, (filename, names) in POLICY_NAMES.items():
-        outer = ast.parse((repo / "hooks/families" / filename).read_text())
+        outer = ast.parse((repo / "hooks" / filename).read_text())
         trees = [outer]
         if label == "scanner":
             trees.append(ast.parse((repo / "hooks/runtime/scan_types.py").read_text()))

@@ -187,7 +187,9 @@ test_tool_guard_denies_unexpected_input_exception() {
   trap cleanup_test_workdir RETURN
   mkdir -p "$workdir/helpers"
   cp "$REPO_ROOT/.copilot/hooks/scripts/tool-guard.py" "$workdir/tool-guard.py"
-  cp "$REPO_ROOT/.copilot/hooks/scripts/helpers/tool_guard_policy.py" "$workdir/helpers/tool_guard_policy.py"
+  cp "$REPO_ROOT/.copilot/hooks/scripts/helpers/tool_guard_policy.py" \
+    "$REPO_ROOT/.copilot/hooks/scripts/helpers/scan_allowlist.py" \
+    "$REPO_ROOT/.copilot/hooks/scripts/helpers/scan_reporting.py" "$workdir/helpers/"
   printf '%s\n' \
     'import json' \
     'import sys' \

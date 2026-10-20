@@ -28,8 +28,8 @@ The user authorized implementation by invoking execplan-implement on 2026-10-20.
 - [x] (2026-10-20) [milestone-3] T6: Deliver Python writer proofs, syntax/content accounting, and validated wrappers, including writers above 32 KiB.
 - [x] (2026-10-20) [milestone-3] Verify the integrated native, shell, Python, strict-fallback, and adversarial matrix; accept milestone 3.
 - [x] (2026-10-20) [milestone-4] T7: Simplify result/decision flow and reporting without losing safe actionable diagnostics.
-- [ ] [milestone-4] T8: Evaluate rule representation, parser representation, runtime-source extraction, and survey-exemption simplifications separately; adopt only justified candidates.
-- [ ] [milestone-4] Record per-candidate security and throughput evidence and reasons for retained optimizations; accept milestone 4.
+- [x] (2026-10-20) [milestone-4] T8: Evaluate rule representation, parser representation, runtime-source extraction, and survey-exemption simplifications separately; adopt only justified candidates.
+- [x] (2026-10-20) [milestone-4] Record per-candidate security and throughput evidence and reasons for retained optimizations; accept milestone 4.
 - [ ] [milestone-5] T9: Complete integrated source, packaging, security, resource, throughput, and documentation validation.
 - [ ] [milestone-5] Record remaining platform or owner actions and reconcile outcomes; accept milestone 5 only with its required evidence.
 
@@ -76,15 +76,15 @@ The isolated T3 prototype initially missed stdout effects in assigned `print` ca
 
 Milestones 1 and 2 are accepted. The frozen original runtime is effd0d7b, fingerprint-identical to planned 260c578a. T1/T2 establish portable reproductions and trustworthy baseline/harness evidence. T3 selects 1 MiB using the reviewed r10 prototype, bounded public security checks, resource comparisons, and matched original-relative/equivalent-work timing with retained failures and exact repeats. The 4 MiB candidate fails the unchanged finite-case ceiling and is rejected.
 
-T4's production source slice now implements native aggregate capacity, independent bounded metadata, keyword-only reader bounds, exact raw-byte/marker diagnostics, and finite inspection-source/work admission. T4 deliberately retained whole-source executable charging as an intermediate state. Accepted T5/T6 now prove inert spans before excluding them; admission alone never allows a large unproved source. Native, limit, banner, helper, transport and generator checks pass as recorded below. The independent v2 harness slice and completeness repairs pass Astra re-review and rebased verification; fast-forward integration and the composed base check pass. T4 is accepted. T5 and T6 are accepted; milestone3 is complete. Python proof/accounting, output-effect repairs and trusted summaries pass integrated security/correctness, original-relative throughput and finite resources. T7 is accepted; T8 is next and T9 remains unfinished. Installed hooks remain unchanged and disabled; no live installation or re-enablement occurred or is authorized. Native Windows execution remains separate outstanding platform evidence.
+T4's production source slice now implements native aggregate capacity, independent bounded metadata, keyword-only reader bounds, exact raw-byte/marker diagnostics, and finite inspection-source/work admission. T4 deliberately retained whole-source executable charging as an intermediate state. Accepted T5/T6 now prove inert spans before excluding them; admission alone never allows a large unproved source. Native, limit, banner, helper, transport and generator checks pass as recorded below. The independent v2 harness slice and completeness repairs pass Astra re-review and rebased verification; fast-forward integration and the composed base check pass. T4 is accepted. T5 and T6 are accepted; milestone3 is complete. Python proof/accounting, output-effect repairs and trusted summaries pass integrated security/correctness, original-relative throughput and finite resources. T7 and T8 are accepted; T9 integrated release acceptance remains unfinished. Installed hooks remain unchanged and disabled; no live installation or re-enablement occurred or is authorized. Native Windows execution remains separate outstanding platform evidence.
 
 ## Context and Orientation
 
 Commands run from repository root, currently `/Users/adam/.codex/worktrees/05ea/skills`, using `rtk` by default. Planning started with a clean worktree at `260c578ace3514c4f2f741f51d970fc2e938786d`. This is the initial implementation baseline revision, not a claim that future worktrees are unchanged. Record runtime fingerprints and working-tree differences before use. RTK must be present; report a missing prerequisite rather than silently bypassing it.
 
-`hooks/families/tool_guard.py` renders provider entrypoints and the identical provider-local `helpers/tool_guard_policy.py`. `_native_tool_shape()` and `_native_shell_shape()` recognize provider arguments; `read_tool_scan_inputs()` traverses and routes them. `_parse_native_patch()` separates patch bodies and operations. `_shell_representation()`, `_shell_threats()`, `_inline_operand()`, `_python_inspection()`, and `_python_threats()` inspect executable structure. `_strict_threats()` invokes the rule catalog. `main()`, `record_guard()`, `guard_report()`, and reason helpers own enforcement and reporting.
+`hooks/families/tool_guard.py` renders provider entrypoints and the identical provider-local `helpers/tool_guard_policy.py` from ordinary canonical `hooks/runtime/tool_guard_policy.py`. Policy parsing, proofs, routing, `InspectionResult` and normal enforcement live in that canonical module; provider selection is explicit. `_native_tool_shape()` and `_native_shell_shape()` recognize provider arguments; `read_tool_scan_inputs()` traverses and routes them. `_parse_native_patch()` separates patch bodies and operations. `_shell_representation()`, `_shell_threats()`, `_inline_operand()`, `_python_inspection()`, and `_python_threats()` inspect executable structure. `_strict_threats()` invokes the rule catalog. `main()`, `record_guard()`, `guard_report()`, and reason helpers own enforcement and reporting.
 
-`hooks/families/common.py` owns the shared incremental JSON reader and provider JSON output. `hooks/families/allowlist.py` embeds `hooks/runtime/scan_allowlist.py`; `hooks/families/reporting.py` embeds primitives from `hooks/runtime/scan_reporting.py`. `hooks/families/audit.py` supplies shared logging. Do not change unrelated scanner behavior when reusing these helpers.
+`hooks/families/common.py` owns the shared incremental JSON reader and provider JSON output. The policy imports `hooks/runtime/scan_allowlist.py` and `hooks/runtime/scan_reporting.py` through the provider-local helper package. `hooks/families/reporting.py` owns build identities and the small credential-label primitive needed by self-contained diagnostic bootstrap. The retired allowlist renderer is removed. `hooks/families/diagnostics.py` reads Guardian limits from its canonical runtime module without importing runtime code. `hooks/families/audit.py` supplies shared logging. Do not change unrelated scanner behavior when reusing these helpers.
 
 `hooks/manifest.py` registers generated assets. `scripts/generate-hooks.py --write` refreshes manifest-owned outputs; never hand-edit them. Current entrypoints are `.codex/hooks/tool-guard.py`, `.copilot/hooks/scripts/tool-guard.py`, and `.gemini/hooks/scripts/tool-guard.py`. Each uses its own local helper and provider response envelope. No runtime may import another provider's directory.
 
@@ -188,8 +188,8 @@ Milestone integration uses the four policy suites, three provider suites, and se
 
 ### Milestone 4: Remove justified complexity without losing throughput
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T7: Make results, enforcement, and diagnostics explicit
 
@@ -213,7 +213,7 @@ Each adopted candidate must pass differential security tests and pre/post whole-
 
 ### Milestone 5: Prove integrated behavior and finish source delivery
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T9: Integrate, validate, review, and document
@@ -232,7 +232,7 @@ The shared invariants are whole-input inspection, exact schema validation, finit
 
 ## Concrete Steps
 
-Implementation is authorized. T1-T6 and milestones1-3 are accepted. Next, the implementation owner evaluates T8 candidates separately in disposable variants: readable unified rules, parsed command/pipeline matching, ordinary runtime-source extraction, and survey exemption removal. T7 explicit result/enforcement and unused reporting-helper removal are accepted. T6-R2 already delivers fixed trusted action summaries. Preserve the accepted fixed T6 equivalent-work reference: commit65cd978, archive `/private/tmp/tool-guard-file-operations-fjhc6r2a/t6-r2-candidate`; its76 runtime fingerprints match that revision. T7 public audit/allowlist/skip/failure parity and complete-process comparison pass. Each T8 candidate must pass security/differential checks before timing/adoption; rejected candidates remain recorded, and the fixed T6 reference stays unchanged. Keep edits and acceptance timing serialized. Installed hooks stay disabled and untouched.
+Implementation is authorized. T1-T6 and milestones1-3 are accepted. Next, complete T9 integrated checks, final security/code-quality review and full throughput/resource acceptance. T8-C ordinary source extraction is adopted; T8-D survey exceptions remain necessary. T8-A readable rules are adopted at fe2eea6; T8-B parsed pipeline replacement is rejected on a reproduced security regression. T7 explicit result/enforcement and unused reporting-helper removal are accepted. T6-R2 already delivers fixed trusted action summaries. Preserve the accepted fixed T6 equivalent-work reference: commit65cd978, archive `/private/tmp/tool-guard-file-operations-fjhc6r2a/t6-r2-candidate`; its76 runtime fingerprints match that revision. T7 public audit/allowlist/skip/failure parity and complete-process comparison pass. Each T8 candidate must pass security/differential checks before timing/adoption; rejected candidates remain recorded, and the fixed T6 reference stays unchanged. Keep edits and acceptance timing serialized. Installed hooks stay disabled and untouched.
 
 Verify prerequisites from repository root:
 
@@ -460,3 +460,38 @@ Composed checks pass banners16, incident153, limits19, file-operations18, shell1
 The isolated candidate `/private/tmp/tool-guard-file-operations-fjhc6r2a/t8-rules-prototype` replaces R character decoding and its variadic constructors with readable string literals, and joins rule ID/category/severity/precomputed matcher/cause/trusted action in one ordered record. Ignored suggestions and parallel PATTERNS/RULE_DETAILS/action tables disappear. A precomputed RULE_ORDER retains exact historical ordering, including duplicate force-push variants. Existing parsed representations and suffix caches remain. Independent static metadata verification matches all21 records/order entries and20 action summaries exactly. Public matcher vectors, incident153, shell18 and banners16 pass. The prototype initially retained an obsolete ordering-table reference; existing public tests caught its NameError, repaired before measurements. No production changes were made during that failing prototype.
 
 `t8-rules-pre-post-timing.json` compares accepted immediate predecessora12e7e4/frozen t7-candidate to the candidate on30 representative affected complete-hook cases. All90 warm/cold gates pass, no contract errors, unchanged sources/harness. `t8-rules-pre-post-resources.json` passes12 cases per condition with25/3 samples, first calls, audits and native RSS under500ms. Maximum observed launch74.9715 ms before/73.84225 ms after; peak RSS30,490,624/30,457,856 bytes. These observations support throughput preservation, not a blanket speed claim. Adopt the rule representation only; T8-B parsed-pipeline, T8-C source extraction and T8-D survey decisions remain.
+
+
+### T8-B direct parsed pipeline matching: retain current representation
+
+The disposable `/private/tmp/tool-guard-file-operations-fjhc6r2a/t8-parsed-pipeline-prototype` replaces the final reconstructed pipeline-text matcher with parsed command/pipe traversal, retaining producer state through intermediate commands. `t8-parsed-pipeline-reproduction.json` proves direct `curl ... | cat | bash` still denies, but `sh -c 'curl ...; printf safe' | bash` loses its nested/shared-stdout producer context and allows in all three providers. The accepted implementation denies for the intended download-execute rule. Fixture commands were only hook JSON and never executed.
+
+Reject the candidate before timing/resource adoption: security prerequisite fails, so latency/RSS deltas are not acceptance evidence and are intentionally unmeasured. Existing command rules already reuse parsed segments via _ScanText and cached suffix summaries. Replacing bounded cross-interpreter pipeline summaries with a complete graph would need the same inherited/nested/shared-stdout concepts rather than removing them. Retain the current representation and caches; no candidate production code is promoted. T8-C source extraction and T8-D survey evaluation remain.
+
+
+### T8-C ordinary runtime source: adopt
+
+The disposable `t8-runtime-prototype` extracts the policy into `hooks/runtime/tool_guard_policy.py` with ordinary relative imports from existing runtime allowlist/reporting helpers. Provider selection becomes an explicit argument. Provider-local generated paths and packaging assets remain unchanged. The renderer retains provider bootstrap, audit and response framing. Build identity and benchmark fingerprints include the canonical module; historical deleted allowlist-renderer paths remain fingerprintable for frozen references. The measured prototype is promoted after the following acceptance evidence.
+
+Astra completed structural comparison, provider precedence, result/enforcement, generated suffix, import closure, installer/manifest and identity review. Its sole P2 reproduced a maintained component test importing deleted `hooks/families/allowlist.py`. The test now loads canonical `hooks/runtime/scan_allowlist.py` directly, retaining every boundary/parity vector; all12 tests pass. No additional extraction-specific defect was found. All reviewer probes stopped before timing.
+
+The prototype passes file-operations18, native26, shell18, limits19, incident153, banners16 and all provider suites. A new public generator CLI test proves canonical module changes invalidate every provider build identity. The initial full generator run passed27 existing checks; its new fixture was repaired and passed separately, with a complete28-check rerun now passes. The disposable installer exposed obsolete Codex PreToolUse assertions from the deliberately removed Guardian registration. Remove those deletion-only assertions while preserving SessionStart/Stop installation checks; do not add deletion regression tests or alter real-home settings. Complete installer, generator and timing/resource evidence before adoption.
+
+
+### T8-D survey exceptions: retain
+
+The isolated `t8-survey-prototype` disables `_GUARD_TARGETS` without touching the accepted runtime. Existing public JSON fixtures prove both legitimate JSON-stdin and Python-subprocess surveys change from allow to deny on all three providers. Nearby force-push and hard-reset controls remain denied before and after. Evidence: `t8-survey-reproduction.json`,24 complete hook launches, fixture commands never executed. General literal file-writer proofs do not describe JSON passed to an inspected hook or its captured response. Retain the bounded survey recognition. The candidate fails behavior preservation before performance measurement, so timing/RSS deltas are intentionally not acceptance evidence. No survey-removal code is promoted.
+
+
+T8-C acceptance: `t8-runtime-pre-post-timing.json` passes all189 comparisons across63 affected cases with two25/3 warm pairs and25 independent cold calls per condition. No contract errors; source/harness unchanged. `t8-runtime-pre-post-resources.json` passes12 cases per condition including first calls,25/3 samples, audits and native RSS under500ms. Maximum launch67.314583ms before/64.394416ms after; peak RSS30,490,624/29,081,600bytes. Full generator28 and disposable installer suites pass after the stated fixture repairs. Generated production runtime fingerprints exactly matched the measured prototype before removing excess blank lines at EOF; an AST comparison including locations proves that whitespace-only repair preserves the canonical program. Final frozen-source acceptance will measure the delivered form. Extraction removes embedded policy/allowlist/reporting source splicing and private adapter imports without adding delivery assets. T8-A is adopted, T8-B rejected, T8-C adopted, T8-D retained; milestone4 is accepted. T9 remains open.
+
+
+### T9 integrated source checks in progress
+
+Integrated file-operations18, native26, shell18, limits19, incident153, banners16, generator28/freshness68, scanner component12 and high-rate harness checks pass. Release-harness34 initially failed two native RSS probes because sandbox denied `sysctl kern.clockrate`; the unchanged suite passes with native collection permitted. This is an environment repair, not a weakened check. Shared helpers17 pass. Input transport, provider/scanner/diagnostic checks and fresh integrated Astra security/code-quality review remain active. The maintained Codex scanner suite also contained a stale PreToolUse registration assertion; remove that intentionally deleted registration check, preserving Stop and all scanner behavior checks. No new deletion-only regression test. Real installed hook remains disabled and untouched.
+
+
+T9 integrated Astra review found one P2: diagnostics still read Guardian limits from the former embedded renderer, producing `not_defined` for all eight limits across all three public CLIs. Existing public CLI checks reproduced the failure before repair. `POLICY_NAMES` now identifies the ordinary canonical module; regenerated reports pass the10-check suite. Its existing source-mutation test additionally proves a canonical Guardian limit change updates the public limit and build identity. Astra rechecked the repair: all eight limits correct across all three public CLIs, canonical mutation passes, no weakened current security coverage or new actionable findings. All probes stopped. The full review otherwise found no actionable P1/P2 across schemas, budgets, proofs, nested/shared stdout, results, audits, reporting, imports, packaging and identities. Its72 independent public calls produced63 denies and9 intended warning allows. Probes stopped before repair recheck.
+
+
+T9 recovery17 passes through disposable Bash/PowerShell installations on this macOS host, retaining hostile interpreter startup/PATH, Guardian denial and audit checks via explicit invocation. This is installed fixture runtime proof, not provider dispatch of disabled hooks or native Windows evidence. Active status registration tamper/duplicate checks remain. Diagnostics10 including canonical Guardian mutation, shared input transport17, all provider Guardian suites, security reporting and Codex maintained configuration merge pass. Final generator/scanner checks and full timing/resources remain.

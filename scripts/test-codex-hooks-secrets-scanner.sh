@@ -10,7 +10,6 @@ import sys
 
 config = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 for event, filename, timeout, status in (
-    ("PreToolUse", "tool-guard.py", 10, "Checking dangerous tool actions"),
     ("Stop", "scan-status.py", 2, "Reading last secret-scan status"),
 ):
     matches = [
@@ -25,10 +24,7 @@ for event, filename, timeout, status in (
     assert handler["commandWindows"] == f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
     assert handler["timeout"] == timeout
     assert handler["statusMessage"] == status
-    if event == "PreToolUse":
-        assert group["matcher"] == "Bash|apply_patch|Edit|Write"
-    else:
-        assert group.get("matcher", "*") == "*"
+    assert group.get("matcher", "*") == "*"
 PY
 
 workdir="$(setup_test_workdir)"

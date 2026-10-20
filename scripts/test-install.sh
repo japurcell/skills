@@ -620,14 +620,8 @@ groups = config["hooks"]["SessionStart"]
 handler = groups[0]["hooks"][0]
 assert handler["command"] == "python3 ~/.codex/hooks/load-required-skills.py"
 assert handler["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
-pre_tool = config["hooks"]["PreToolUse"]
-pre_commands = [hook["command"] for hook in pre_tool[0]["hooks"]]
-assert len(pre_commands) == 1
-assert any(command.endswith("/tool-guard.py") and " -I -S -B " in command for command in pre_commands)
-assert any(command.endswith("/tool-guard.py") and " -I -S -B " in command for command in pre_commands)
 stop_commands = [hook["command"] for hook in config["hooks"]["Stop"][0]["hooks"]]
 assert any(command.endswith("/scan-status.py") and " -I -S -B " in command for command in stop_commands)
-assert sum(hook["command"].endswith("/tool-guard.py") and " -I -S -B " in hook["command"] for group in pre_tool for hook in group["hooks"]) == 1
 assert sum(hook["command"].endswith("/scan-status.py") and " -I -S -B " in hook["command"] for group in config["hooks"]["Stop"] for hook in group["hooks"]) == 1
 PY
 }

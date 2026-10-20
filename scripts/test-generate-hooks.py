@@ -168,6 +168,15 @@ def load_module(name: str, path: Path):
     return module
 
 
+def load_guard_runtime(name: str, entrypoint: Path):
+    import importlib
+    import types
+    package = types.ModuleType(name)
+    package.__path__ = [str(entrypoint.parent / "helpers")]
+    sys.modules[name] = package
+    return importlib.import_module(name + ".tool_guard_policy")
+
+
 def load_scanner_runtime(name: str, entrypoint: Path):
     import types
     package_name = name + "_runtime"
@@ -345,6 +354,34 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertIn(undeclared.relative_to(ROOT).as_posix(), result.stdout)
         undeclared.unlink()
 
+    def test_guardian_runtime_source_is_an_authoritative_generator_input(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Path(temporary)
+            shutil.copytree(ROOT / "hooks", fixture / "hooks", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            (fixture / "scripts").mkdir()
+            for name in ("generate-hooks.py", "file_io.py", "trusted_hook_launch.py"):
+                shutil.copy2(ROOT / "scripts" / name, fixture / "scripts" / name)
+            source = fixture / "hooks/runtime/tool_guard_policy.py"
+            self.assertTrue(source.is_file(), "Guardian policy must have an ordinary authoritative source")
+            command = [sys.executable, str(fixture / "scripts/generate-hooks.py")]
+            for name in (".copilot/hooks/hooks.json", ".gemini/global-settings.json", ".codex/global-hooks.json"):
+                destination = fixture / name
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / name, destination)
+            for output in load_generator().render_all(ROOT):
+                (fixture / output.target.output_path.parent).mkdir(parents=True, exist_ok=True)
+            initial = subprocess.run([*command, "--write"], capture_output=True, text=True)
+            self.assertEqual(initial.returncode, 0, initial.stderr)
+            before = [(fixture / target).read_bytes() for target in TOOL_GUARD_TARGETS]
+            source.write_text(source.read_text() + "\n# authoritative-source fingerprint probe\n")
+            stale = subprocess.run([*command, "--check"], capture_output=True, text=True)
+            self.assertEqual(stale.returncode, 1, stale.stdout + stale.stderr)
+            refreshed = subprocess.run([*command, "--write"], capture_output=True, text=True)
+            self.assertEqual(refreshed.returncode, 0, refreshed.stderr)
+            for target, original in zip(TOOL_GUARD_TARGETS, before, strict=True):
+                self.assertNotEqual((fixture / target).read_bytes(), original,
+                                    "Canonical policy edits must update every Guardian build identity")
+
     def test_check_reads_canonical_sources_as_utf8_in_legacy_locales(self) -> None:
         # Inventory generated Python bytes and modes, excluding interpreter caches.
         paths = tuple(path for name in (".codex/hooks", ".copilot/hooks/scripts",
@@ -496,12 +533,12 @@ class GenerateHooksTests(unittest.TestCase):
             ROOT / "scripts" / "fixtures" / "tool_guard_vectors.py",
         )
         modules = (
-            load_module("copilot_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[0]),
-            load_module("gemini_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[1]),
+            ("copilot", load_guard_runtime("copilot_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[0])),
+            ("gemini", load_guard_runtime("gemini_tool_guard_vectors", ROOT / TOOL_GUARD_TARGETS[1])),
         )
 
         provider_outcomes = []
-        for module in modules:
+        for provider, module in modules:
             self.assertEqual(len(module.RULES), len(vectors.POSITIVE_MATCHER_VECTORS))
             for pattern, vector in zip(module.RULES, vectors.POSITIVE_MATCHER_VECTORS, strict=True):
                 with self.subTest(provider=module.__name__, vector=vector.name):
@@ -589,14 +626,14 @@ class GenerateHooksTests(unittest.TestCase):
             internal_spacing = vectors.ALLOWLIST_INPUT.replace(" ", "  ", 1)
             self.assertFalse(module.allowlist_contains("bash", internal_spacing, allowlist))
 
-            input_key = module.TOOL_INPUT_KEYS[0]
+            input_key = module.PROVIDER_KEYS[provider][1][0]
             structured_inputs = module.read_tool_scan_inputs(
                 {
                     input_key: {
                         "request": {"query": vectors.STRUCTURED_DESTRUCTIVE_QUERY},
                         "options": {"timeout": 5},
                     }
-                }, module.InspectionResult()
+                }, module.InspectionResult(), provider
             )
             self.assertIn(vectors.STRUCTURED_DESTRUCTIVE_QUERY, structured_inputs)
             metadata = module.log_threat_metadata(module.build_input_threats("database_query", structured_inputs))
@@ -611,21 +648,21 @@ class GenerateHooksTests(unittest.TestCase):
                         "request": {"query": vectors.STRUCTURED_SAFE_QUERY},
                         "options": {"timeout": 5},
                     }
-                }, module.InspectionResult()
+                }, module.InspectionResult(), provider
             )
             self.assertEqual(module.build_input_threats("database_query", safe_structured_inputs), [])
             overdeep: object = "safe"
             for _ in range(module.MAX_STRUCTURED_DEPTH + 1):
                 overdeep = {"nested": overdeep}
             with self.assertRaises(module.ScanLimitExceeded):
-                module.read_tool_scan_inputs({input_key: overdeep}, module.InspectionResult())
+                module.read_tool_scan_inputs({input_key: overdeep}, module.InspectionResult(), provider)
             provider_outcomes.append((outcomes, multi_threats, allowlist))
 
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
 
     def test_secret_scanner_renderings_share_policy_outside_provider_adapters(self) -> None:
         generator = load_generator()
-        from hooks.families.allowlist import ALLOWLIST_SOURCE
+        allowlist_source = (ROOT / "hooks/runtime/scan_allowlist.py").read_text(encoding="utf-8")
 
         rendered = {
             output.target.output_path.as_posix(): output.content.decode("utf-8")
@@ -648,13 +685,13 @@ class GenerateHooksTests(unittest.TestCase):
             self.assertEqual(len(sections), 5, f"Expected four explicit provider adapters in {target}.")
             self.assertNotIn('"permissionDecision": "deny"', "".join(sections))
             self.assertNotIn('"decision": "deny"', "".join(sections))
-            self.assertNotIn(ALLOWLIST_SOURCE, source)
+            self.assertNotIn(allowlist_source, source)
             helper = str(Path(target).parent / "helpers/scan_allowlist.py")
-            self.assertEqual(rendered[helper].count(ALLOWLIST_SOURCE.rstrip()), 1)
+            self.assertEqual(rendered[helper].count(allowlist_source.rstrip()), 1)
             shared_sections.append(sections)
 
         for target in TOOL_GUARD_POLICY_TARGETS:
-            self.assertEqual(rendered[target].count(ALLOWLIST_SOURCE), 1)
+            self.assertIn("from .scan_allowlist import allowlist_contains, parse_allowlist", rendered[target])
 
         self.assertEqual(
             shared_sections[0],

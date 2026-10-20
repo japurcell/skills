@@ -37,7 +37,7 @@ def collect_macos_rss(command, checked_launch):
 
 
 def guardian_runtime_footprint() -> tuple[tuple[str, ...], tuple[str, ...], str]:
-    """Name runtime scripts, recursive Python helper roots, and canonical policy."""
+    """Name runtime scripts, recursive Python helper roots, and canonical renderer."""
     scripts = tuple(script_path(Path("."), provider).as_posix() for provider in PROVIDERS)
     helpers = tuple(str(Path(path).parent / "helpers") + "/" for path in scripts)
     return scripts, helpers, "hooks/families/tool_guard.py"
@@ -137,8 +137,9 @@ def guardian_decision(provider: str, output: dict, *, contract: dict | None = No
 
 
 def guardian_canonical_paths() -> tuple[str, ...]:
+    # Retain retired inputs when verifying frozen baseline source archives.
     return ("hooks/families/tool_guard.py", "hooks/families/reporting.py", "hooks/families/allowlist.py",
-            "hooks/families/common.py", "hooks/families/audit.py")
+            "hooks/families/common.py", "hooks/families/audit.py", "hooks/runtime/tool_guard_policy.py")
 
 
 def reader_boundary_proof(case) -> dict:

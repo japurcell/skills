@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 # Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.
 
+"""Bounded Guardian policy, literal proofs, and provider input inspection.
+
+inspect_tool returns owned inspection facts; enforcement and auditing stay separate.
+Rule records contain ID, category, severity, matcher, cause, and trusted action.
+"""
 from __future__ import annotations
 
 import json
-import sys
-
-
 import re
+import sys
 import unicodedata
 
+from .scan_allowlist import allowlist_contains, parse_allowlist
+from .scan_reporting import report_json_bytes, report_label, report_text
 
 MAX_SCAN_TEXT = 32768
 MAX_NATIVE_DATA_BYTES = 1048576
@@ -488,55 +493,6 @@ ACTION_SUMMARIES = {rule_id: action for rule_id, _category, _severity, _matcher,
 RULE_ORDER = {rule[0]: index for index, rule in enumerate(RULES)}
 
 
-def _normalize_allowlist_value(value: str) -> str:
-    return value.strip(" ")
-
-
-def _has_forbidden_allowlist_separator(value: str) -> bool:
-    return any(unicodedata.category(character) == "Cc" for character in value) or bool(
-        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", value, re.IGNORECASE)
-    )
-
-
-def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
-    if not raw_allowlist:
-        return []
-    try:
-        decoded = json.loads(raw_allowlist)
-    except (TypeError, ValueError):
-        return []
-    if not isinstance(decoded, list) or len(decoded) > 64:
-        return []
-
-    entries: list[dict[str, str]] = []
-    for raw_entry in decoded:
-        if not isinstance(raw_entry, dict) or set(raw_entry) != {"tool", "input"}:
-            return []
-        tool = raw_entry.get("tool")
-        tool_input = raw_entry.get("input")
-        if not isinstance(tool, str) or not isinstance(tool_input, str):
-            return []
-        if _has_forbidden_allowlist_separator(tool) or _has_forbidden_allowlist_separator(tool_input):
-            return []
-        normalized_tool = _normalize_allowlist_value(tool).casefold()
-        normalized_input = _normalize_allowlist_value(tool_input)
-        if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
-            return []
-        entries.append({"tool": normalized_tool, "input": normalized_input})
-    return entries
-
-
-def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
-    if _has_forbidden_allowlist_separator(tool_name) or _has_forbidden_allowlist_separator(tool_input):
-        return False
-    normalized_tool = _normalize_allowlist_value(tool_name).casefold()
-    normalized_input = _normalize_allowlist_value(tool_input)
-    return any(
-        entry["tool"] == normalized_tool and entry["input"] == normalized_input
-        for entry in entries
-    )
-
-
 
 
 
@@ -605,7 +561,7 @@ def _parse_native_patch(patch: str) -> NativeToolInput | None:
 
 
 def _native_operation_threats(native: NativeToolInput) -> list[dict[str, str]]:
-    threats: list[dict[str, str]] = []
+    threats: list[dict[str, str]] | tuple[dict[str, str], ...] = []
     seen: set[str] = set()
     normalized_bytes = 0
     for operation, path in native.operations:
@@ -1475,7 +1431,7 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
             except InspectionFailure:
                 return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
         return _native_operation_threats(tool_inputs)
-    threats: list[dict[str, str]] = []
+    threats: list[dict[str, str]] | tuple[dict[str, str], ...] = []
     seen: set[str] = set()
     for tool_input in tool_inputs:
         for threat in build_threats(f"{tool_name} {tool_input}"):
@@ -1489,19 +1445,19 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
 
 
 
-def build_action_excerpt(threats: tuple[dict[str, str], ...]) -> str:
+def build_action_excerpt(threats: list[dict[str, str]] | tuple[dict[str, str], ...]) -> str:
     """Describe the first finding using trusted text, never caller content."""
     return ACTION_SUMMARIES.get(threats[0].get("rule_id"), "command omitted") if threats else "command omitted"
 
 
-def log_threat_metadata(threats: list[dict[str, str]]) -> list[dict[str, str]]:
+def log_threat_metadata(threats: list[dict[str, str]] | tuple[dict[str, str], ...]) -> list[dict[str, str]]:
     return [
         {key: threat[key] for key in ("category", "severity", "rule_id", "cause") if key in threat}
         for threat in threats
     ]
 
 
-def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: str, mode: str) -> str:
+def build_block_reason(tool_name: str, threats: list[dict[str, str]] | tuple[dict[str, str], ...], excerpt: str, mode: str) -> str:
     summary = [
         f"{threat['category']}/{threat['severity']} [{threat['rule_id']}]: {threat['cause']}"
         if "rule_id" in threat else f"{threat['category']}/{threat['severity']}"
@@ -1518,54 +1474,325 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
     return message
 
 
-import re as _label_re
+def inspection_incomplete(threats):
+    return any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats)
 
 
-def credential_label(text):
-    """Recognize credentials in caller-normalized labels before display clipping."""
-    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+class InspectionResult:
+    """Owned per-invocation inspection facts, independent of mode and auditing."""
+    __slots__ = ("profile", "route", "profile_cause", "findings", "complete")
 
-# Bounds apply to retained report fields before JSON serialization. Labels are
-# ASCII, so each retained character costs at most two JSON bytes after escaping.
-REPORT_LABEL_CHARS = 160
+    def __init__(self, profile="unsupported", route="strict_fallback",
+                 profile_cause="unsupported_tool_profile"):
+        self.profile, self.route, self.profile_cause = profile, route, profile_cause
+        self.findings = ()
+        self.complete = True
 
+    def finish(self, findings):
+        self.findings = tuple(findings)
+        self.complete = not inspection_incomplete(self.findings)
+        return self
 
-def report_text(value, limit=REPORT_LABEL_CHARS):
-    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
-    text = "".join(char if 32 <= ord(char) <= 126 else " " for char in text)
-    return text if len(text) <= limit else text[:limit - 3] + "..."
-
-
-def report_label(value):
-    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
-    if text.isascii():
-        lowered = text.lower()
-        # This conservative filter only avoids regex work for impossible matches.
-        # Unicode case folding and all potential credentials stay with the regex.
-        triggers = ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk-", "sk_live_",
-                    "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-", "bearer", "token", "secret",
-                    "password", "passwd", "api", "authorization", "http")
-        if not any(trigger in lowered for trigger in triggers):
-            return report_text(text)
-    # Labels have no need to reproduce a credential-bearing identifier. Omit the
-    # whole label, including credentials crossing the display clipping boundary.
-    if credential_label(text):
-        return "[REDACTED]"
-    return report_text(text)
+    @property
+    def security(self):
+        return "incomplete" if not self.complete else "findings" if self.findings else "clean"
 
 
-def report_json_bytes(value):
-    """Exact ensure_ascii JSON byte cost without serializing retained data."""
+def normal_enforcement(result, mode):
+    return "deny" if not result.complete or (result.findings and mode == "block") else "allow"
+
+
+PROVIDER_KEYS = {
+    "copilot": (("toolName", "tool_name"), ("toolArgs", "toolInput", "tool_input")),
+    "gemini": (("tool_name", "toolName"), ("tool_input", "toolInput", "toolArgs")),
+    "codex": (("tool_name", "toolName"), ("tool_input", "toolInput", "toolArgs")),
+}
+
+
+def read_tool_name(payload: dict, provider: str) -> str:
+    for key in PROVIDER_KEYS[provider][0]:
+        value = payload.get(key)
+        if value is not None:
+            return str(value)
+    return ""
+
+
+
+def _read_tool_input_value(payload: dict, provider: str) -> object:
+    for key in PROVIDER_KEYS[provider][1]:
+        if key not in payload:
+            continue
+        value = payload.get(key)
+        if value is None:
+            return ""
+        return value
+    return ""
+
+
+
+def read_tool_input(payload: dict, provider: str) -> str:
+    value = _read_tool_input_value(payload, provider)
     if isinstance(value, str):
-        return 2 + sum(2 if char in '\\"' or char in '\b\f\n\r\t' else
-                       6 if ord(char) < 32 or 127 <= ord(char) <= 65535 else
-                       12 if ord(char) > 65535 else 1 for char in value)
-    if isinstance(value, dict):
-        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(key) + 1 + report_json_bytes(child) for key, child in value.items())
-    if isinstance(value, (list, tuple)):
-        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(child) for child in value)
-    if value is None:
-        return 4
-    if isinstance(value, bool):
-        return 4 if value else 5
-    return len(str(value))
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+
+def _native_shell_shape(tool_name: str, value: dict, provider: str) -> NativeToolInput | None:
+    """Only proven inert fields leave inspection; execution context stays strict."""
+    metadata: list[str] = []
+    numeric: tuple[str, ...] = ()
+    if provider == "codex" and tool_name in {"exec_command", "functions.exec_command"}:
+        key = "cmd"
+        optional = {"max_output_tokens": int, "yield_time_ms": int, "workdir": str,
+                    "shell": str, "login": bool, "tty": bool, "justification": str,
+                    "sandbox_permissions": str, "prefix_rule": list}
+        numeric = ("max_output_tokens", "yield_time_ms")
+    elif provider == "codex" and tool_name == "Bash":
+        key, optional = "command", {}
+    elif provider == "copilot" and tool_name == "bash":
+        key = "command"
+        optional = {"description": str, "initial_wait": int, "mode": str, "detach": bool}
+        numeric = ("initial_wait",)
+    elif provider == "gemini" and tool_name == "run_shell_command":
+        key = "command"
+        optional = {"description": str, "dir_path": str, "is_background": bool,
+                    "delay_ms": int, "additional_permissions": dict}
+        numeric = ("delay_ms",)
+    else:
+        return None
+    if not _matches_native_schema(value, {key: str}, optional):
+        return None
+    # Booleans are not integers here. Finite bounded counters cannot carry code.
+    if any(not 0 <= value[field] <= 2147483647 for field in numeric if field in value):
+        return None
+    if "shell" in value and value["shell"] not in {
+        "bash", "sh", "zsh", "/bin/bash", "/bin/sh", "/bin/zsh",
+        "/usr/bin/bash", "/usr/bin/sh", "/usr/bin/zsh",
+    }:
+        return None
+    if "sandbox_permissions" in value and value["sandbox_permissions"] not in {
+        "use_default", "require_escalated",
+    }:
+        return None
+    if "mode" in value and value["mode"] not in {"sync", "async"}:
+        return None
+    for field in ("workdir", "dir_path"):
+        if field in value:
+            metadata.append(value[field])
+    if "prefix_rule" in value:
+        prefix = value["prefix_rule"]
+        if len(prefix) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in prefix):
+            return None
+        metadata.extend(prefix)
+    if "additional_permissions" in value:
+        permissions = value["additional_permissions"]
+        if not _matches_native_schema(permissions, {}, {"network": bool, "fileSystem": dict}):
+            return None
+        if "fileSystem" in permissions:
+            filesystem = permissions["fileSystem"]
+            if not _matches_native_schema(filesystem, {}, {"read": list, "write": list}):
+                return None
+            for paths in filesystem.values():
+                if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
+                    return None
+                metadata.extend(paths)
+    return NativeToolInput("shell", tuple(metadata), (value[key],), data_fields=(key,))
+
+
+
+def _native_tool_shape(tool_name: str, value: object, provider: str) -> NativeToolInput | None:
+    if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
+        return None
+    shell = _native_shell_shape(tool_name, value, provider)
+    if shell is not None:
+        return shell
+    if provider == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
+        return NativeToolInput("patch", (), (value["command"],), data_fields=("command",))
+    if provider == "gemini":
+        if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
+            return NativeToolInput("write", (value["file_path"],), (value["content"],), data_fields=("content",))
+        if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
+            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]), data_fields=("old_string", "new_string"))
+        if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
+            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],), data_fields=("pattern",))
+    if provider == "copilot":
+        if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
+            return NativeToolInput("write", (value["path"],), (value["file_text"],), data_fields=("file_text",))
+        if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
+            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]), data_fields=("old_str", "new_str"))
+        if tool_name in {"grep", "rg"}:
+            # Observed CLI arguments, not a guessed complete provider schema.
+            pattern_keys = value.keys() & {"pattern", "query"}
+            if len(pattern_keys) != 1 or (tool_name == "rg" and "query" in value):
+                return None
+            pattern_key = next(iter(pattern_keys))
+            fields = {"path": str, "paths": (str, list), "output_mode": str, "head_limit": int,
+                      "n": (bool, int), "C": int, "case_sensitive": bool} if tool_name == "grep" else {
+                          "paths": (str, list), "output_mode": str, "head_limit": int, "glob": str,
+                          "-n": bool, "-i": bool, "-A": int, "-C": int, "n": int}
+            if not value.keys() <= fields.keys() | {pattern_key} or type(value[pattern_key]) is not str:
+                return None
+            if "path" in value and "paths" in value:
+                return None
+            for key, child in value.items():
+                if key == pattern_key:
+                    continue
+                allowed_types = fields[key] if isinstance(fields[key], tuple) else (fields[key],)
+                if type(child) not in allowed_types or (type(child) is list and (
+                    len(child) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in child)
+                )):
+                    return None
+            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)), data_fields=(pattern_key,))
+    return None
+
+
+
+def read_tool_scan_inputs(payload: dict, result: InspectionResult, provider: str) -> tuple[str, ...] | NativeToolInput:
+    input_key = next((key for key in PROVIDER_KEYS[provider][1] if key in payload), None)
+    if len(payload) > MAX_STRUCTURED_NODES:
+        raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(payload), "nodes")
+    envelope_nodes = envelope_bytes = 0
+    envelope_stack = [(child, 0) for key, child in payload.items() if key != input_key]
+    envelope_bytes = sum(len(key.encode("utf-8")) for key in payload)
+    while envelope_stack:
+        current, depth = envelope_stack.pop()
+        envelope_nodes += 1
+        if envelope_nodes > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, envelope_nodes, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("envelope_metadata_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, dict):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_bytes += sum(len(key.encode("utf-8")) for key in current)
+            envelope_stack.extend((child, depth + 1) for child in current.values())
+        elif isinstance(current, list):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_stack.extend((child, depth + 1) for child in current)
+        else:
+            envelope_bytes += len((current if isinstance(current, str) else json.dumps(current)).encode("utf-8"))
+        if envelope_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("envelope_metadata_bytes", MAX_SCAN_TEXT, envelope_bytes, "bytes")
+    value = _read_tool_input_value(payload, provider)
+    tool_name = read_tool_name(payload, provider)
+    if isinstance(value, str):
+        # Copilot's native patch transport is raw text in the primary fields.
+        # Alternate input/name fields and serialized objects remain strict.
+        if provider == "copilot" and payload.get("toolName") == "apply_patch" and type(payload.get("toolArgs")) is str:
+            native = NativeToolInput("patch", (), (value,))
+        else:
+            return (value,)
+    else:
+        native = _native_tool_shape(tool_name, value, provider)
+    if native:
+        result.profile = native.kind + "_v1"
+        result.profile_cause = "recognized_profile"
+    elif tool_name.casefold() in KNOWN_TOOL_FIELDS:
+        result.profile_cause = "native_profile_rejected"
+    byte_limit = MAX_SCAN_TEXT
+    if native and native.kind == "patch":
+        byte_limit = MAX_NATIVE_PATCH_BYTES
+    elif native and native.kind != "shell":
+        byte_limit = MAX_NATIVE_DATA_BYTES
+    known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
+    if native and native.kind == "shell":
+        byte_limit = MAX_INSPECTION_SOURCE_BYTES
+    strings: list[str] = []
+    node_count = 0
+    total_string_bytes = 0
+    keys: list[str] = []
+    content_bytes = metadata_bytes = normalized_metadata_bytes = 0
+
+    def metadata_text(text, *, key=False):
+        nonlocal metadata_bytes, normalized_metadata_bytes
+        metadata_bytes += len(text.encode("utf-8"))
+        if metadata_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("metadata_bytes", MAX_SCAN_TEXT, metadata_bytes, "bytes")
+        if not key:
+            normalized_metadata_bytes += len(_bounded_normalized_text(text).encode("utf-8"))
+            if normalized_metadata_bytes > MAX_SCAN_TEXT:
+                raise ScanLimitExceeded("normalized_metadata_bytes", MAX_SCAN_TEXT, normalized_metadata_bytes, "bytes")
+
+    def dictionary_children(mapping, depth):
+        for key, child in mapping.items():
+            keys.append(key)
+            if native:
+                metadata_text(key, key=True)
+            field = f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input"
+            data_field = bool(native and depth == 0 and key in native.data_fields)
+            yield child, depth + 1, field, data_field
+
+    def sequence_children(sequence, depth):
+        for child in sequence:
+            yield child, depth + 1, "tool input", False
+
+    stack = [iter(((value, 0, "tool input", bool(native and isinstance(value, str))),))]
+
+    while stack:
+        try:
+            current, depth, field, data_field = next(stack[-1])
+        except StopIteration:
+            stack.pop()
+            continue
+        node_count += 1
+        if node_count > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("structured_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, str):
+            strings.append(current)
+            current_bytes = len(current.encode("utf-8"))
+            total_string_bytes += current_bytes
+            if len(strings) > MAX_STRUCTURED_STRINGS:
+                raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
+            if native and data_field:
+                content_bytes += current_bytes
+                if content_bytes > byte_limit:
+                    raise ScanLimitExceeded("inspection_source_bytes" if native.kind == "shell" else "native_content_bytes", byte_limit, content_bytes, "bytes", field)
+            elif native:
+                metadata_text(current)
+            elif total_string_bytes > byte_limit:
+                source = field if current_bytes > byte_limit else "tool input"
+                raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
+        elif isinstance(current, dict):
+            stack.append(dictionary_children(current, depth))
+        elif isinstance(current, (list, tuple)):
+            stack.append(sequence_children(current, depth))
+        elif native:
+            metadata_text(json.dumps(current), key=True)
+
+    key_bytes = sum(len(key.encode("utf-8")) for key in keys)
+    if native:
+        if native.kind == "patch":
+            native = _parse_native_patch(native.data[0])
+            if native is not None:
+                for path in native.metadata:
+                    metadata_text(path)
+        if native is not None:
+            result.profile, result.route, result.profile_cause = native.kind + "_v1", "native", "recognized_profile"
+            return native
+        result.profile, result.profile_cause = "unsupported", "native_profile_rejected"
+        if isinstance(value, str):
+            return (value,)
+        if total_string_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
+    elif key_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
+    serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return tuple(strings) + tuple(keys) + (serialized,)
+
+
+def inspect_tool(payload, provider):
+    result = InspectionResult()
+    tool_name = read_tool_name(payload, provider)
+    try:
+        inputs = read_tool_scan_inputs(payload, result, provider)
+        findings = build_input_threats(tool_name, inputs)
+    except ScanLimitExceeded as limit:
+        findings = [limit.threat()]
+    except UnicodeError:
+        findings = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure",
+                     "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
+    return result.finish(findings)
