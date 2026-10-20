@@ -732,11 +732,13 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             word_start = index
         ch = source[index]
         if quote == "'":
-            if ch == "'":
-                quote = ""
-            else:
-                pieces.append(ch)
-            index += 1
+            end = source.find("'", index)
+            if end < 0:
+                raise InspectionFailure("unterminated shell quote or heredoc")
+            if end > index:
+                pieces.append(source[index:end])
+            quote = ""
+            index = end + 1
             continue
         if ch == "\\":
             if index + 1 >= len(source):
