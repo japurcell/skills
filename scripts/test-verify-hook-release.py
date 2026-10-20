@@ -76,7 +76,8 @@ class ReleaseVerificationTests(unittest.TestCase):
     def test_reviewed_contracts_reject_missing_unknown_stale_and_wrong_mode(self) -> None:
         source = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
         original = json.loads(source.read_text())
-        for mutation in ("missing", "unknown", "stale", "mode", "contradictory", "missing_attribution", "wrong_enforcement", "invalid_type"):
+        for mutation in ("missing", "unknown", "stale", "mode", "contradictory", "missing_attribution", "wrong_enforcement", "invalid_type",
+                         "written_missing", "written_partial", "written_conflict", "warn_missing", "silent_extra"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 document = json.loads(json.dumps(original))
                 cases = document["fixture_sets"]["file-operations-v1"]["timing"]
@@ -88,7 +89,15 @@ class ReleaseVerificationTests(unittest.TestCase):
                 elif mutation == "contradictory": target["candidate"]["audit"]["records_per_call"] = 0
                 elif mutation == "missing_attribution": cases["codex.guard.audit-unavailable.warn.finding"]["candidate"]["attribution"] = {}
                 elif mutation == "wrong_enforcement": cases["codex.guard.audit-unavailable.warn.finding"]["candidate"]["attribution"]["enforcement"] = "deny"
-                else: cases["codex.guard.clean"] = None
+                elif mutation == "invalid_type": cases["codex.guard.clean"] = None
+                elif mutation == "warn_missing": cases["codex.guard.mode.warn.finding"]["candidate"]["attribution"] = {}
+                elif mutation == "silent_extra":
+                    target["candidate"]["attribution"] = {"security_outcome": "clean", "audit_outcome": "written", "enforcement": "allow", "cause": "unexpected"}
+                else:
+                    pair = cases["codex.guard.writer.quoted-document.execution"]["candidate"]
+                    if mutation == "written_missing": pair["attribution"] = {}
+                    elif mutation == "written_partial": del pair["attribution"]["cause"]
+                    else: pair["attribution"]["security_outcome"] = "incomplete"
                 path = Path(temporary) / "expectations.json"
                 path.write_text(json.dumps(document))
                 result = self.run_cli("--list", "--fixture-set", "file-operations-v1",
@@ -118,6 +127,42 @@ class ReleaseVerificationTests(unittest.TestCase):
                     self.assertEqual(contract["decision"], "deny")
                     self.assertEqual(contract["attribution"]["security_outcome"], "findings")
                     self.assertEqual(contract["attribution"]["cause"], "force_push_protected_branch")
+
+    def test_response_attribution_requires_one_authoritative_suffix(self) -> None:
+        adapter = load_adapter()
+        contract = {"decision": "deny", "attribution": {
+            "security_outcome": "findings", "audit_outcome": "written",
+            "enforcement": "deny", "cause": "force_push_protected_branch"}}
+        suffix = ("security_outcome=findings; audit_outcome=written; enforcement=deny; "
+                  "build=0123456789abcdef; profile=shell_v1; route=native; cause=force_push_protected_branch.")
+
+        def response(provider, reason):
+            if provider == "codex":
+                return {"hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+            if provider == "copilot":
+                return {"permissionDecision": "deny", "permissionDecisionReason": reason,
+                        "hookSpecificOutput": {"permissionDecision": "deny", "permissionDecisionReason": reason}}
+            return {"decision": "deny", "reason": reason}
+
+        for provider in ("codex", "copilot", "gemini"):
+            good = "Tool Guardian blocked execution. " + suffix
+            adapter.validate_response(contract, response(provider, good), provider=provider)
+            bad_cause = good.replace("cause=force_push_protected_branch.", "cause=other.")
+            mutations = [
+                response(provider, "previous_cause=force_push_protected_branch; " + bad_cause),
+                response(provider, good[:-1] + "; cause=other."),
+                response(provider, good[:-1] + "; cause=force_push_protected_branch."),
+                response(provider, good + " " + suffix.replace("cause=force_push_protected_branch.", "cause=other.")),
+                {**response(provider, bad_cause), "unrelated": good},
+                {**response(provider, "missing suffix"), "unrelated": good},
+            ]
+            if provider == "copilot":
+                contradictory = response(provider, good)
+                contradictory["permissionDecisionReason"] = bad_cause
+                mutations.append(contradictory)
+            for index, output in enumerate(mutations):
+                with self.subTest(provider=provider, mutation=index), self.assertRaises(ValueError):
+                    adapter.validate_response(contract, output, provider=provider)
 
     def test_historical_fixture_hashes_and_expectations_are_pinned(self) -> None:
         adapter = load_adapter()
@@ -220,7 +265,7 @@ class ReleaseVerificationTests(unittest.TestCase):
         contract = {"mode": "block", "decision": "allow", "attribution": {}}
         from hook_benchmark_support import disposable_environment
         with tempfile.TemporaryDirectory() as temporary:
-            with patch.object(adapter.resources, "validate_response", side_effect=lambda *_: time.sleep(0.06)):
+            with patch.object(adapter.resources, "validate_response", side_effect=lambda *_, **__: time.sleep(0.06)):
                 start = time.perf_counter()
                 result = adapter.resources.checked_run([sys.executable, "-c", "print('{}')"], b"{}",
                                                        disposable_environment(Path(temporary), "codex"),

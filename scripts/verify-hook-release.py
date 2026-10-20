@@ -178,7 +178,7 @@ def checked_invocation(case, repo: Path, home: Path, *, observation: dict | None
         if contract:
             if code or output.get("invalid_stdout") or guardian_decision(case.name.split(".")[0], output, contract=contract) != case.expected_decision:
                 raise ValueError(f"{case.name}: expected {case.expected_decision}, unexpected permission response (exit {code})")
-            validate_response(contract, output)
+            validate_response(contract, output, provider=case.name.split(".", 1)[0])
         else:
             high_rate.verify_outcome(case, code, output)
     except (RuntimeError, ValueError) as exc:

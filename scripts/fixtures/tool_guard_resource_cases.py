@@ -237,6 +237,21 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
             if attrs and (attrs.get("enforcement") != contract["decision"] or attrs.get("audit_outcome") != outcome
                           or attrs.get("security_outcome") not in {"clean", "findings", "incomplete"} or not attrs.get("cause")):
                 raise ValueError(name + ": contradictory response attribution")
+            if fixture_set != "historical-v1":
+                nonsilent = contract["decision"] == "deny" or outcome != "written" or record_attrs.get("security_outcome") == "findings"
+                if nonsilent and set(attrs) != {"audit_outcome", "enforcement", "security_outcome", "cause"}:
+                    raise ValueError(name + ": missing complete response attribution")
+                if not nonsilent and attrs:
+                    raise ValueError(name + ": ordinary clean passes must be silent")
+                if attrs and any(attrs.get(key) != value for key, value in record_attrs.items()):
+                    raise ValueError(name + ": response and completed-record attribution conflict")
+                if outcome == "written":
+                    security = record_attrs["security_outcome"]
+                    if ((audit["event"] == "guard_passed") != (security == "clean")
+                            or security == "clean" and contract["decision"] != "allow"
+                            or security == "incomplete" and contract["decision"] != "deny"
+                            or security == "findings" and contract["decision"] != ("allow" if mode == "warn" else "deny")):
+                        raise ValueError(name + ": audit event, security outcome, and enforcement conflict")
             if outcome == "failed" and (attrs.get("audit_outcome") != "failed" or attrs.get("cause") != "audit_unavailable"):
                 raise ValueError(name + ": failed audit requires response attribution")
             if outcome == "not_attempted" and fixture_set != "historical-v1":
@@ -246,11 +261,37 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
     return contracts
 
 
-def validate_response(contract: dict, output: dict) -> None:
-    rendered = json.dumps(output, ensure_ascii=False)
-    for key, value in contract["attribution"].items():
-        # Attribution is a bounded semicolon-delimited public response suffix.
-        if f"{key}={value};" not in rendered and f"{key}={value}." not in rendered:
+def validate_response(contract: dict, output: dict, *, provider: str) -> None:
+    expected = contract["attribution"]
+    if not expected:
+        return
+    if contract["decision"] == "allow":
+        reason = output.get("systemMessage")
+    elif provider == "codex":
+        reason = output.get("hookSpecificOutput", {}).get("permissionDecisionReason")
+    elif provider == "copilot":
+        reason = output.get("permissionDecisionReason")
+        if reason != output.get("hookSpecificOutput", {}).get("permissionDecisionReason"):
+            raise ValueError("contradictory Copilot denial reasons")
+    elif provider == "gemini":
+        reason = output.get("reason")
+    else:
+        raise ValueError("unknown attribution provider")
+    marker = " security_outcome="
+    if not isinstance(reason, str) or reason.count(marker) != 1 or not reason.endswith("."):
+        raise ValueError("missing or ambiguous authoritative attribution suffix")
+    suffix = "security_outcome=" + reason.partition(marker)[2][:-1]
+    fields = [field.partition("=") for field in suffix.split("; ")]
+    keys = ("security_outcome", "audit_outcome", "enforcement", "build", "profile", "route", "cause")
+    if tuple(field[0] for field in fields) != keys or any(
+        not separator or not value or not value.isascii()
+        or any(not (char.isalnum() or char in "_.-") for char in value)
+        for _key, separator, value in fields
+    ):
+        raise ValueError("invalid or duplicate authoritative attribution fields")
+    actual = {key: value for key, _separator, value in fields}
+    for key, value in expected.items():
+        if actual.get(key) != value:
             raise ValueError(f"missing required response attribution {key}={value}")
 
 

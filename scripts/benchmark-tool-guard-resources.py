@@ -37,7 +37,7 @@ def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: 
         if result.returncode or guardian_decision(provider, output, contract=contract) != expected:
             raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
         if contract is not None:
-            validate_response(contract, output)
+            validate_response(contract, output, provider=provider)
     except (RuntimeError, ValueError, UnicodeDecodeError) as exc:
         exc.invocation = {"elapsed_ms": result.elapsed_ms, "exit_code": result.returncode,
                           "stdout": result.stdout[:1024].decode("utf-8", errors="replace"),
