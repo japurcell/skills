@@ -126,7 +126,7 @@ test_block_mode_denies_gemini_payload() {
     "Expected guard log to record the Gemini tool name."
 
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical [force_push_protected_branch]: forced push targets a protected branch. Action: git push --force origin main; {\"command\":\"git push --force origin main\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. destructive_git_ops/critical [force_push_protected_branch]: forced push targets a protected branch. Action: git push --force (main/master). Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg$(security_guard_report_suffix "$log_dir")" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct block reason."
   assert_equals "null" "$(jq -r '.systemMessage' <<<"$output")" \
@@ -155,7 +155,7 @@ test_block_mode_parses_gemini_tool_input_objects() {
     "Expected guard log to capture threat details from object-valued tool_input."
 
   local expected_msg
-  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical [drop_table]: SQL drops a table. Action: DROP TABLE; {\"command\":\"DROP TABLE users;\"}. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
+  expected_msg="Tool Guardian blocked run_shell_command. database_destruction/critical [drop_table]: SQL drops a table. Action: DROP TABLE. Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
   assert_equals "$expected_msg$(security_guard_report_suffix "$log_dir")" "$(jq -r '.reason' <<<"$output")" \
     "Expected block mode to include correct reason for object-valued input."
   assert_equals "null" "$(jq -r '.systemMessage' <<<"$output")" \

@@ -14,6 +14,17 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 class SecurityBannerTests(unittest.TestCase):
+    def test_action_uses_only_a_trusted_rule_summary(self) -> None:
+        for provider in ('copilot', 'gemini', 'codex'):
+            for mode in ('block', 'warn'):
+                response, rows = self.invoke(provider, mode, 'Bash',
+                                             {'command': 'git push --force origin main',
+                                              'password': 'private fixture value'})
+                with self.subTest(provider=provider, mode=mode):
+                    self.assertEqual(rows[-1]['excerpt'], 'git push --force (main/master)')
+                    self.assertIn('Action: git push --force (main/master).', self.reason(response))
+                    self.assertNotIn('private fixture value', self.reason(response) + json.dumps(rows))
+
     def test_tool_identifiers_preserve_redaction_and_clipping(self) -> None:
         operation = 'git push' + ' --force origin main'
         cases = [('Bash', 'Bash'), ('run_shell_command', 'run_shell_command'),
@@ -47,7 +58,9 @@ class SecurityBannerTests(unittest.TestCase):
             if provider == 'codex':
                 payload['hook_event_name'] = 'PreToolUse'
             result = subprocess.run([sys.executable, '-I', '-S', '-B', str(path)], input=json.dumps(payload), text=True, capture_output=True,
-                                    env={**os.environ, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(log)}, timeout=5)
+                                    env={**os.environ, 'HOME': temporary, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(log),
+                                         'AUDIT_LOG': str(Path(temporary) / 'audit.log'),
+                                         'OBSERVABILITY_LOG_PATH': str(Path(temporary) / 'observability.jsonl')}, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
             rows = [json.loads(line[line.find('{'):]) for line in log_file.read_text().splitlines()] if log_file.exists() else []
             return json.loads(result.stdout), rows
@@ -160,7 +173,7 @@ class SecurityBannerTests(unittest.TestCase):
                 self.assertNotIn(secret, output)
                 self.assertNotIn(secret, json.dumps(rows))
                 self.assertLessEqual(len(rows[-1]['excerpt']), 160)
-                self.assertTrue(rows[-1]['excerpt'].startswith(operation))
+                self.assertEqual(rows[-1]['excerpt'], 'git push --force (main/master)')
                 self.assertIn(rows[-1]['excerpt'], output)
                 warned, _ = self.invoke(provider, 'warn', 'Bash', command)
                 self.assertIn('Tool Guardian warning', json.dumps(warned))
@@ -173,8 +186,8 @@ class SecurityBannerTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 blocked, rows = self.invoke(provider, 'block', 'Bash', command)
                 excerpt = rows[-1]['excerpt']
-                self.assertEqual(len(excerpt), 160)
-                self.assertTrue(excerpt.startswith(operation))
+                self.assertLessEqual(len(excerpt), 160)
+                self.assertEqual(excerpt, 'git push --force (main/master)')
                 self.assertNotIn(secret, json.dumps(blocked))
                 self.assertNotIn(secret, json.dumps(rows))
                 too_long, limit_rows = self.invoke(provider, 'block', 'Bash', 'x' * 33000)
@@ -192,8 +205,7 @@ class SecurityBannerTests(unittest.TestCase):
                         blocked, rows = self.invoke(provider, 'block', 'Bash', command)
                         output = json.dumps(blocked)
                         logged = json.dumps(rows)
-                        self.assertTrue(rows[-1]['excerpt'].startswith(operation))
-                        self.assertIn(f'{prefix}[REDACTED]', rows[-1]['excerpt'])
+                        self.assertEqual(rows[-1]['excerpt'], 'git push --force (main/master)')
                         self.assertNotIn('alpha', output + logged)
                         self.assertNotIn('bravo', output + logged)
                         self.assertIn(rows[-1]['excerpt'], output)
@@ -207,8 +219,7 @@ class SecurityBannerTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 blocked, rows = self.invoke(provider, 'block', 'Bash', tool_input)
                 excerpt = rows[-1]['excerpt']
-                self.assertTrue(excerpt.startswith(operation))
-                self.assertIn('"password":"[REDACTED]"', excerpt)
+                self.assertEqual(excerpt, 'git push --force (main/master)')
                 self.assertNotIn(placeholder, json.dumps(blocked))
                 self.assertNotIn(placeholder, json.dumps(rows))
                 reason = (blocked.get('permissionDecisionReason') or blocked.get('reason')
@@ -230,7 +241,7 @@ class SecurityBannerTests(unittest.TestCase):
                     with self.subTest(provider=provider, mode=mode, value=value):
                         response, rows = self.invoke(provider, mode, 'Bash', value)
                         excerpt = rows[-1]['excerpt']
-                        self.assertTrue(excerpt.startswith(operation))
+                        self.assertEqual(excerpt, 'git push --force (main/master)')
                         self.assertNotIn(credential, json.dumps(response))
                         self.assertNotIn(credential, json.dumps(rows))
                         self.assertIn(f'Action: {excerpt}.', json.dumps(response))
@@ -262,7 +273,7 @@ class SecurityBannerTests(unittest.TestCase):
                     with self.subTest(provider=provider, mode=mode, command=command):
                         response, rows = self.invoke(provider, mode, 'Bash', command)
                         excerpt = rows[-1]['excerpt']
-                        self.assertTrue(excerpt.startswith('git push --force'))
+                        self.assertEqual(excerpt, 'git push --force (main/master)')
                         self.assertNotIn(remote, excerpt)
                         self.assertNotIn(credential, json.dumps(response))
                         self.assertNotIn(credential, json.dumps(rows))
@@ -275,7 +286,7 @@ class SecurityBannerTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 blocked, rows = self.invoke(provider, 'block', 'complete_task', {'result': f'check: {operation}'})
                 self.assertIn('Action:', json.dumps(blocked))
-                self.assertTrue(rows[-1]['excerpt'].startswith(operation))
+                self.assertEqual(rows[-1]['excerpt'], 'git push --force (main/master)')
 
 
 if __name__ == '__main__':

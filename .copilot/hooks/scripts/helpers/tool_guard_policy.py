@@ -1569,35 +1569,33 @@ def safe_git_push_match(matched: str) -> str:
     return " ".join(summary)
 
 
+ACTION_SUMMARIES = {
+    "recursive_remove_root": "rm -rf /",
+    "recursive_remove_home": "rm -rf ~",
+    "recursive_remove_current": "rm -rf .",
+    "recursive_remove_parent": "rm -rf ..",
+    "remove_env_file": "remove .env file",
+    "remove_git_metadata": "remove .git metadata",
+    "force_push_protected_branch": "git push --force (main/master)",
+    "hard_reset": "git reset --hard",
+    "forced_git_clean": "git clean -fd",
+    "drop_table": "DROP TABLE",
+    "drop_database": "DROP DATABASE",
+    "truncate_table": "TRUNCATE TABLE",
+    "delete_without_where": "DELETE FROM without WHERE",
+    "recursive_world_writable": "chmod -R 777",
+    "world_writable": "chmod 777",
+    "download_execute_bash": "curl | bash",
+    "download_execute_sh": "wget | sh",
+    "upload_local_data": "curl --data @file",
+    "privileged_command": "sudo command",
+    "publish_package": "npm publish",
+}
+
+
 def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
-    matched_threat = next((threat for threat in threats if threat.get("matched")), None)
-    if not matched_threat:
-        return "command omitted"
-    try:
-        matched = matched_threat["matched"]
-        safe_match = sanitize_excerpt(matched)
-        if matched_threat["category"] == "destructive_git_ops" and "push" in matched.casefold().split():
-            safe_match = safe_git_push_match(matched)
-        elif matched_threat["category"] == "network_exfiltration":
-            folded = matched.casefold()
-            if "curl" in folded and "bash" in folded and chr(124) in matched:
-                safe_match = "curl " + chr(124) + " bash"
-            elif "wget" in folded and "sh" in folded and chr(124) in matched:
-                safe_match = "wget " + chr(124) + " sh"
-            elif "curl" in folded and "--" + "data" in folded:
-                safe_match = "curl --" + "data " + chr(64)
-        elif re.search(r"\b[A-Za-z][A-Za-z0-9_-]*:\s+\S", matched):
-            return "command omitted"
-        safe_context = (
-            "" if matched_threat["category"] == "network_exfiltration" or safe_match != sanitize_excerpt(matched)
-            else safe_excerpt_context(tool_input, matched)
-        )
-        if not safe_match or "\n" in safe_match or "\r" in safe_match:
-            return "command omitted"
-        excerpt = safe_match if not safe_context or safe_context == safe_match else f"{safe_match}; {safe_context}"
-        return excerpt[:MAX_EXCERPT_LENGTH]
-    except (TypeError, ValueError, UnicodeError):
-        return "command omitted"
+    """Describe the first finding using trusted text, never caller content."""
+    return ACTION_SUMMARIES.get(threats[0].get("rule_id"), "command omitted") if threats else "command omitted"
 
 
 def log_threat_metadata(threats: list[dict[str, str]]) -> list[dict[str, str]]:
