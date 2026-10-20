@@ -1,12 +1,13 @@
 # Todos
 
-<!-- next-id: 8 -->
+<!-- next-id: 9 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
 ## Repository maintenance
 
 1. [ ] Replace the legacy agent knowledge system with brain notes and portable maintenance hooks [[plans/01-brain-migration/ExecPlan]]
+8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
 
 ## Investigations
 
