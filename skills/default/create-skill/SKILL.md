@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Creates or updates skills in this repository using the repo's anatomy, eval, and benchmark conventions while delegating the broader authoring loop to `skill-creator`. Use whenever the user asks to create, modify, refactor, dedupe, benchmark, or improve a skill under `skills/`, mentions `SKILL.md`, `evals/evals.json`, `grade_benchmark.py`, or wants a skill to work better on weaker models.
+description: Creates or updates skills in this repository using the repo's anatomy, eval, and benchmark conventions while delegating the broader authoring loop to `skill-creator`. Use whenever the user asks to create, modify, refactor, dedupe, benchmark, improve a skill under `skills/`, or mentions `SKILL.md`, `evals/evals.json`, or `grade_benchmark.py`.
 ---
 
 # Create Skill
@@ -9,7 +9,7 @@ description: Creates or updates skills in this repository using the repo's anato
 
 Create or revise a repository skill so it is ready to live under `skills/` with the right structure, concise instructions, realistic evals, and benchmark support.
 
-Use `skill-creator` for the broader authoring and iteration loop, but enforce this repository's anatomy, validation commands, and workspace layout here so the result matches local conventions instead of a generic skill draft.
+Use the `skill-creator` skill for the broader authoring and iteration loop, but enforce this repository's anatomy, validation commands, and workspace layout here so the result matches local conventions instead of a generic skill draft.
 
 ## When to Use
 
@@ -27,28 +27,27 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
    - Search `skills/` for near-duplicate names or overlapping descriptions before creating anything new. If a nearby skill already covers the request, refine that skill instead of creating a shadow skill.
 
 2. **Load the required references**
-   - Invoke `skill-creator` immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
+   - Activate the `skill-creator` skill immediately and use it for the authoring, eval, and benchmark loop instead of recreating that workflow from memory.
    - Read `.agents/instructions/skills.md`, `.agents/instructions/repo.md`, and `.agents/instructions/testing/skills.md` so the result follows repository-specific rules.
 
 3. **Draft or revise the skill**
-   - Keep the description trigger-oriented: say what the skill does, then add clear `Use when ...` conditions. Do not stuff numbered workflow steps into the description.
+   - Keep the description trigger-oriented: say what the skill does concisely, then add clear `Use when ...` conditions. Do not stuff numbered workflow steps into the description.
    - Keep the body concise. Reuse nearby skills and root references by name instead of copying long guidance blocks into the new skill.
-   - When the skill needs exact commands or exact paths, spell them out. Weaker models follow concrete instructions more reliably than implied conventions.
+   - When the skill needs exact commands or exact paths, spell them out.
 
 4. **Add eval and benchmark support**
-   - Add or update `evals/evals.json` with at least 3 realistic evals. Cover create, modify, and a negative or dedupe edge case. Add a weaker-model or benchmark-focused case when that behavior matters.
+   - Add or update `evals/evals.json` with at least 3 realistic evals. Cover create, modify, and a negative or dedupe edge case.
    - When assertions can be checked objectively, add `evals/grade_benchmark.py` and prefer deterministic file/content checks over subjective grading.
    - Put generated run artifacts beside the owning skill, never inside its bundle:
      - Published owner `skills/<category>/<name>/`: `skills/<category>/<name>-workspace/iteration-N/eval-*/...`. For example, `skills/default/create-skill/` uses `skills/default/create-skill-workspace/iteration-N/eval-*/...`.
      - Repo-local owner `.agents/skills/<name>/`: `.agents/skills/<name>-workspace/iteration-N/eval-*/...`; from the owner directory, use `../<name>-workspace/iteration-N/eval-*/...`.
    - Benchmark the skill against a baseline. For a new skill use `without_skill`; for an edited skill use `old_skill` or another explicit snapshot.
 
-5. **Validate and refresh**
+5. **Validate**
    - Run `python3 skills/default/skill-creator/scripts/quick_validate.py skills/default/<skill-name>`.
    - Run `python3 -m py_compile skills/default/<skill-name>/evals/grade_benchmark.py` when the skill ships a grader.
    - Run `python3 skills/default/<skill-name>/evals/grade_benchmark.py skills/default/<skill-name>-workspace/<iteration-dir>` when benchmark artifacts exist.
    - If the user wants a packaged archive, run `PYTHONPATH=skills/default/skill-creator python3 skills/default/skill-creator/scripts/package_skill.py skills/default/<skill-name> /tmp/skill-dist`.
-   - Run `./scripts/install.sh` after source edits so installed skills, references, hooks, and instructions stay in sync.
 
 ## Specific Techniques
 
@@ -57,13 +56,6 @@ Use `skill-creator` for the broader authoring and iteration loop, but enforce th
 - Compare the requested skill against existing names, descriptions, and nearby workflows before creating a new directory.
 - If the only meaningful change is tighter triggering, better evals, or clearer wording, update the existing skill instead of creating a sibling duplicate.
 - When you decide to reuse or refine an existing skill, name the closest existing skill explicitly and explain why it is a better fit than creating a new one.
-
-### Weaker-model guardrails
-
-- Prefer short numbered steps over prose paragraphs.
-- Name the exact files to create or edit.
-- Explain validation selection in order: infer the edited surface first, then choose the matching validation command. Do not fall back to generic `npm test` or other repo-wide commands that do not exist here.
-- Keep the core workflow in `SKILL.md`. Move bulky examples or long supporting material into bundled files only when they materially improve reliability.
 
 ### Benchmarking guidance
 
@@ -99,4 +91,4 @@ After completing the workflow, confirm:
 - [ ] The final `SKILL.md` is concise, trigger-oriented, and follows the anatomy section pattern.
 - [ ] `evals/evals.json` covers create, modify, and at least one dedupe or negative case.
 - [ ] `evals/grade_benchmark.py` exists when deterministic grading is practical, and its syntax is valid.
-- [ ] The narrow repo validation commands were run, and `./scripts/install.sh` refreshed installed copies after edits.
+- [ ] The narrow repo validation commands were run.
