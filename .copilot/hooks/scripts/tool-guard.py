@@ -59,7 +59,7 @@ def emit_deny_response(reason: str) -> None:
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
-REPORT_BUILD = "c63777b2a08db5af"
+REPORT_BUILD = "0ab4e196eada50bd"
 
 
 def inspection_incomplete(threats):
@@ -118,7 +118,6 @@ try:
         REDACTED,
         KNOWN_TOOL_FIELDS,
         ScanLimitExceeded,
-        R,
         _is_word_char,
         _find_word,
         _simple_match,
@@ -135,8 +134,7 @@ try:
         _match_delete_from,
         _match_pipe_chain,
         _match_data_upload,
-        PATTERNS,
-        RULE_DETAILS,
+        RULES,
         NativeToolInput,
         _matches_native_schema,
         _parse_native_patch,

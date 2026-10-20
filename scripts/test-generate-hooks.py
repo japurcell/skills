@@ -502,13 +502,15 @@ class GenerateHooksTests(unittest.TestCase):
 
         provider_outcomes = []
         for module in modules:
-            self.assertEqual(len(module.PATTERNS), len(vectors.POSITIVE_MATCHER_VECTORS))
-            for pattern, vector in zip(module.PATTERNS, vectors.POSITIVE_MATCHER_VECTORS, strict=True):
+            self.assertEqual(len(module.RULES), len(vectors.POSITIVE_MATCHER_VECTORS))
+            for pattern, vector in zip(module.RULES, vectors.POSITIVE_MATCHER_VECTORS, strict=True):
                 with self.subTest(provider=module.__name__, vector=vector.name):
-                    category, severity, matcher, suggestion = pattern
+                    rule_id, category, severity, matcher, cause, action = pattern
                     self.assertTrue(category)
                     self.assertTrue(severity)
-                    self.assertTrue(suggestion)
+                    self.assertTrue(rule_id)
+                    self.assertTrue(cause)
+                    self.assertTrue(action)
                     self.assertEqual(matcher(vector.text, vector.text.lower()), vector.expected_match)
                     aggregated_threats = module.build_threats(vector.text)
                     self.assertIn(category, {threat["category"] for threat in aggregated_threats})

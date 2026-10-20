@@ -207,10 +207,6 @@ class ScanLimitExceeded(ValueError):
             "cause": cause,
         }
 
-def R(*codes: int) -> str:
-    return "".join(chr(code) for code in codes)
-
-
 def _is_word_char(char: str) -> bool:
     return char.isalnum() or char == "_"
 
@@ -227,8 +223,7 @@ def _find_word(lower_text: str, word: str, start: int = 0) -> int:
     return -1
 
 
-def _simple_match(*codes: int):
-    needle = R(*codes)
+def _simple_match(needle: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         index = lower_text.find(needle)
@@ -325,8 +320,7 @@ def _matches_protected_remove_target(target: str, target_kind: str) -> bool:
     return unquoted == ".." or unquoted.startswith("../")
 
 
-def _match_recursive_rm_target(*target_codes: int):
-    target_kind = R(*target_codes)
+def _match_recursive_rm_target(target_kind: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         del lower_text
@@ -359,8 +353,8 @@ def _match_recursive_rm_target(*target_codes: int):
 
 
 def _match_rm_env(text: str, lower_text: str) -> str | None:
-    commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
-    suffix = R(46, 101, 110, 118)
+    commands = ('rm', 'del', 'unlink')
+    suffix = '.env'
     for command in commands:
         start = 0
         while True:
@@ -384,8 +378,8 @@ def _match_rm_env(text: str, lower_text: str) -> str | None:
 
 
 def _match_rm_git(text: str, lower_text: str) -> str | None:
-    commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
-    suffix = R(46, 103, 105, 116)
+    commands = ('rm', 'del', 'unlink')
+    suffix = '.git'
     for command in commands:
         start = 0
         while True:
@@ -408,10 +402,9 @@ def _match_rm_git(text: str, lower_text: str) -> str | None:
     return None
 
 
-def _match_git_push(*prefix_codes: int):
-    prefix = R(*prefix_codes)
+def _match_git_push(prefix: str):
     force_option = prefix.split()[-1]
-    protected = {R(109, 97, 105, 110), R(109, 97, 115, 116, 101, 114)}
+    protected = {'main', 'master'}
 
     options_with_values = {
         "-C",
@@ -548,30 +541,29 @@ def _sql_code_without_comments_or_literals(text: str) -> str:
 
 
 def _match_delete_from(text: str, lower_text: str) -> str | None:
-    if _find_word(lower_text, R(100, 101, 108, 101, 116, 101)) == -1:
+    if _find_word(lower_text, 'delete') == -1:
         return None
     normalized = _sql_code_without_comments_or_literals(_bounded_normalized_text(text))
     statement_pattern = re.compile(
-        R(92, 98, 100, 101, 108, 101, 116, 101, 92, 115, 43, 102, 114, 111, 109, 92, 115, 43)
+        '\\bdelete\\s+from\\s+'
         + r"[^\s;]+(?P<tail>.*?)(?:;|$)",
         re.IGNORECASE | re.DOTALL,
     )
     for statement in statement_pattern.finditer(normalized):
         tail = statement.group("tail")
-        if re.search(R(92, 98, 119, 104, 101, 114, 101, 92, 98), tail, re.IGNORECASE):
+        if re.search('\\bwhere\\b', tail, re.IGNORECASE):
             continue
         return statement.group(0).strip()
     return None
 
 
-def _match_pipe_chain(*codes: int):
-    first, second = (R(*codes[0]), R(*codes[1]))
+def _match_pipe_chain(first: str, second: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         index = lower_text.find(first)
         if index == -1:
             return None
-        pipe = lower_text.find(R(124), index + len(first))
+        pipe = lower_text.find('|', index + len(first))
         if pipe == -1:
             return None
         tail = lower_text.find(second, pipe + 1)
@@ -584,9 +576,9 @@ def _match_pipe_chain(*codes: int):
 
 
 def _match_data_upload(text: str, lower_text: str) -> str | None:
-    curl = R(99, 117, 114, 108)
-    data = R(45, 45, 100, 97, 116, 97)
-    at_sign = R(64)
+    curl = 'curl'
+    data = '--data'
+    at_sign = '@'
     index = lower_text.find(curl)
     if index == -1:
         return None
@@ -599,53 +591,53 @@ def _match_data_upload(text: str, lower_text: str) -> str | None:
     return text[index : end + 1]
 
 
-PATTERNS = [
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(47), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(126), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(46), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(46, 46), "Avoid recursive parent removal."),
-    ("destructive_file_ops", "critical", _match_rm_env, "Back up sensitive files first."),
-    ("destructive_file_ops", "critical", _match_rm_git, "Never delete repository metadata."),
-    ("destructive_git_ops", "critical", _match_git_push(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 114, 99, 101), "Use a safer push strategy."),
-    ("destructive_git_ops", "critical", _match_git_push(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 102), "Use a safer push strategy."),
-    ("destructive_git_ops", "high", _simple_match(103, 105, 116, 32, 114, 101, 115, 101, 116, 32, 45, 45, 104, 97, 114, 100), "Prefer a softer reset path."),
-    ("destructive_git_ops", "high", _simple_match(103, 105, 116, 32, 99, 108, 101, 97, 110, 32, 45, 102, 100), "Preview deletions first."),
-    ("database_destruction", "critical", _simple_match(100, 114, 111, 112, 32, 116, 97, 98, 108, 101), "Preserve the schema instead."),
-    ("database_destruction", "critical", _simple_match(100, 114, 111, 112, 32, 100, 97, 116, 97, 98, 97, 115, 101), "Back up before removing."),
-    ("database_destruction", "critical", _simple_match(116, 114, 117, 110, 99, 97, 116, 101), "Preserve the schema instead."),
-    ("database_destruction", "high", _match_delete_from, "Add a filter clause."),
-    ("permission_abuse", "high", _simple_match(99, 104, 109, 111, 100, 32, 45, 114, 32, 55, 55, 55), "Use narrower permissions."),
-    ("permission_abuse", "high", _simple_match(99, 104, 109, 111, 100, 32, 55, 55, 55), "Use narrower permissions."),
-    ("network_exfiltration", "critical", _match_pipe_chain((99, 117, 114, 108), (98, 97, 115, 104)), "Review downloads before execution."),
-    ("network_exfiltration", "critical", _match_pipe_chain((119, 103, 101, 116), (115, 104)), "Review downloads before execution."),
-    ("network_exfiltration", "high", _match_data_upload, "Review outbound data before sending."),
-    ("system_danger", "high", _simple_match(115, 117, 100, 111, 32), "Use least privilege."),
-    ("system_danger", "high", _simple_match(110, 112, 109, 32, 112, 117, 98, 108, 105, 115, 104), "Dry-run publication first."),
-]
-
-RULE_DETAILS = (
-    ("recursive_remove_root", "recursive forced removal targets the filesystem root"),
-    ("recursive_remove_home", "recursive forced removal targets the home directory"),
-    ("recursive_remove_current", "recursive forced removal targets the current directory"),
-    ("recursive_remove_parent", "recursive forced removal targets a parent directory"),
-    ("remove_env_file", "removal targets an environment file"),
-    ("remove_git_metadata", "removal targets Git metadata"),
-    ("force_push_protected_branch", "forced push targets a protected branch"),
-    ("force_push_protected_branch", "forced push targets a protected branch"),
-    ("hard_reset", "hard reset can discard local work"),
-    ("forced_git_clean", "forced Git clean can delete untracked work"),
-    ("drop_table", "SQL drops a table"),
-    ("drop_database", "SQL drops a database"),
-    ("truncate_table", "SQL truncates a table"),
-    ("delete_without_where", "SQL DELETE has no WHERE clause"),
-    ("recursive_world_writable", "recursive permissions grant write access to everyone"),
-    ("world_writable", "permissions grant write access to everyone"),
-    ("download_execute_bash", "download output is piped to bash"),
-    ("download_execute_sh", "download output is piped to sh"),
-    ("upload_local_data", "curl uploads local data"),
-    ("privileged_command", "command requests elevated privileges"),
-    ("publish_package", "command publishes a package"),
+RULES = (
+    ("recursive_remove_root", "destructive_file_ops", "critical", _match_recursive_rm_target('/'),
+     "recursive forced removal targets the filesystem root", "rm -rf /"),
+    ("recursive_remove_home", "destructive_file_ops", "critical", _match_recursive_rm_target('~'),
+     "recursive forced removal targets the home directory", "rm -rf ~"),
+    ("recursive_remove_current", "destructive_file_ops", "critical", _match_recursive_rm_target('.'),
+     "recursive forced removal targets the current directory", "rm -rf ."),
+    ("recursive_remove_parent", "destructive_file_ops", "critical", _match_recursive_rm_target('..'),
+     "recursive forced removal targets a parent directory", "rm -rf .."),
+    ("remove_env_file", "destructive_file_ops", "critical", _match_rm_env,
+     "removal targets an environment file", "remove .env file"),
+    ("remove_git_metadata", "destructive_file_ops", "critical", _match_rm_git,
+     "removal targets Git metadata", "remove .git metadata"),
+    ("force_push_protected_branch", "destructive_git_ops", "critical", _match_git_push('git push --force'),
+     "forced push targets a protected branch", "git push --force (main/master)"),
+    ("force_push_protected_branch", "destructive_git_ops", "critical", _match_git_push('git push -f'),
+     "forced push targets a protected branch", "git push --force (main/master)"),
+    ("hard_reset", "destructive_git_ops", "high", _simple_match('git reset --hard'),
+     "hard reset can discard local work", "git reset --hard"),
+    ("forced_git_clean", "destructive_git_ops", "high", _simple_match('git clean -fd'),
+     "forced Git clean can delete untracked work", "git clean -fd"),
+    ("drop_table", "database_destruction", "critical", _simple_match('drop table'),
+     "SQL drops a table", "DROP TABLE"),
+    ("drop_database", "database_destruction", "critical", _simple_match('drop database'),
+     "SQL drops a database", "DROP DATABASE"),
+    ("truncate_table", "database_destruction", "critical", _simple_match('truncate'),
+     "SQL truncates a table", "TRUNCATE TABLE"),
+    ("delete_without_where", "database_destruction", "high", _match_delete_from,
+     "SQL DELETE has no WHERE clause", "DELETE FROM without WHERE"),
+    ("recursive_world_writable", "permission_abuse", "high", _simple_match('chmod -r 777'),
+     "recursive permissions grant write access to everyone", "chmod -R 777"),
+    ("world_writable", "permission_abuse", "high", _simple_match('chmod 777'),
+     "permissions grant write access to everyone", "chmod 777"),
+    ("download_execute_bash", "network_exfiltration", "critical", _match_pipe_chain('curl', 'bash'),
+     "download output is piped to bash", "curl | bash"),
+    ("download_execute_sh", "network_exfiltration", "critical", _match_pipe_chain('wget', 'sh'),
+     "download output is piped to sh", "wget | sh"),
+    ("upload_local_data", "network_exfiltration", "high", _match_data_upload,
+     "curl uploads local data", "curl --data @file"),
+    ("privileged_command", "system_danger", "high", _simple_match('sudo '),
+     "command requests elevated privileges", "sudo command"),
+    ("publish_package", "system_danger", "high", _simple_match('npm publish'),
+     "command publishes a package", "npm publish"),
 )
+
+ACTION_SUMMARIES = {rule_id: action for rule_id, _category, _severity, _matcher, _cause, action in RULES}
+RULE_ORDER = {rule[0]: index for index, rule in enumerate(RULES)}
 
 
 # __ALLOWLIST_SOURCE__
@@ -1287,7 +1279,7 @@ def _strict_threats(text, segments=None, pipeline_text=None):
     pipeline_text = _bounded_normalized_text(pipeline_text) if pipeline_text is not None else normalized
     pipeline_lower = pipeline_text.lower()
     lower, threats = normalized.lower(), []
-    for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
+    for rule_id, category, severity, matcher, cause, _action in RULES:
         match = matcher(pipeline_text, pipeline_lower) if hasattr(matcher, "pipe_names") else matcher(scanned, lower)
         if match:
             threats.append({"category": category, "severity": severity, "rule_id": rule_id, "cause": cause, "matched": match})
@@ -1513,9 +1505,8 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
     if rendered:
         pipeline_text = "\n".join(pipeline_rendered) if any(command.pipe for command in commands) else ""
         threats.extend(_strict_threats("\n".join(rendered), segments, pipeline_text))
-    order = {rule: index for index, (rule, _cause) in enumerate(RULE_DETAILS)}
     ordered, seen = [], set()
-    for threat in sorted(threats, key=lambda threat: order.get(threat["rule_id"], -1)):
+    for threat in sorted(threats, key=lambda threat: RULE_ORDER.get(threat["rule_id"], -1)):
         if threat["rule_id"] not in seen:
             seen.add(threat["rule_id"])
             ordered.append(threat)
@@ -1599,28 +1590,7 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     return threats
 
 
-ACTION_SUMMARIES = {
-    "recursive_remove_root": "rm -rf /",
-    "recursive_remove_home": "rm -rf ~",
-    "recursive_remove_current": "rm -rf .",
-    "recursive_remove_parent": "rm -rf ..",
-    "remove_env_file": "remove .env file",
-    "remove_git_metadata": "remove .git metadata",
-    "force_push_protected_branch": "git push --force (main/master)",
-    "hard_reset": "git reset --hard",
-    "forced_git_clean": "git clean -fd",
-    "drop_table": "DROP TABLE",
-    "drop_database": "DROP DATABASE",
-    "truncate_table": "TRUNCATE TABLE",
-    "delete_without_where": "DELETE FROM without WHERE",
-    "recursive_world_writable": "chmod -R 777",
-    "world_writable": "chmod 777",
-    "download_execute_bash": "curl | bash",
-    "download_execute_sh": "wget | sh",
-    "upload_local_data": "curl --data @file",
-    "privileged_command": "sudo command",
-    "publish_package": "npm publish",
-}
+
 
 
 def build_action_excerpt(threats: tuple[dict[str, str], ...]) -> str:
@@ -1650,6 +1620,7 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
     if not any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
         message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     return message
+
 '''
 
 
@@ -1713,7 +1684,6 @@ try:
         REDACTED,
         KNOWN_TOOL_FIELDS,
         ScanLimitExceeded,
-        R,
         _is_word_char,
         _find_word,
         _simple_match,
@@ -1730,8 +1700,7 @@ try:
         _match_delete_from,
         _match_pipe_chain,
         _match_data_upload,
-        PATTERNS,
-        RULE_DETAILS,
+        RULES,
         NativeToolInput,
         _matches_native_schema,
         _parse_native_patch,
