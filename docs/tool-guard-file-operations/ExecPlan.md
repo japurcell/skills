@@ -25,8 +25,8 @@ The user authorized implementation by invoking execplan-implement on 2026-10-20.
 - [x] (2026-10-20) [milestone-3] T4 source slice: Deliver native capacity, bounded admission with whole-executable charging retained, and truthful independent reader/content/metadata diagnostics.
 - [x] (2026-10-20) [milestone-3] T4 integration: Integrate reviewed file-operations-v2 harness/contracts and verify composed source behavior; accept T4.
 - [x] (2026-10-20) [milestone-3] T5: Deliver quoted shell heredoc proofs and executable/content accounting, including writers above 32 KiB.
-- [ ] [milestone-3] T6: Deliver Python writer proofs, syntax/content accounting, and validated wrappers, including writers above 32 KiB.
-- [ ] [milestone-3] Verify the integrated native, shell, Python, strict-fallback, and adversarial matrix; accept milestone 3.
+- [x] (2026-10-20) [milestone-3] T6: Deliver Python writer proofs, syntax/content accounting, and validated wrappers, including writers above 32 KiB.
+- [x] (2026-10-20) [milestone-3] Verify the integrated native, shell, Python, strict-fallback, and adversarial matrix; accept milestone 3.
 - [ ] [milestone-4] T7: Simplify result/decision flow and reporting without losing safe actionable diagnostics.
 - [ ] [milestone-4] T8: Evaluate rule representation, parser representation, runtime-source extraction, and survey-exemption simplifications separately; adopt only justified candidates.
 - [ ] [milestone-4] Record per-candidate security and throughput evidence and reasons for retained optimizations; accept milestone 4.
@@ -70,11 +70,13 @@ The isolated T3 prototype initially missed stdout effects in assigned `print` ca
 
 - Decision D14: Freeze a reviewed throughput partition before T4: all 219 established file-operations-v1 timing cases keep the original-baseline warm/cold delta gates. Exactly 60 new chosen-capacity cases are changed-workload observations against the original fail-fast baseline, with the unchanged 500 ms finite-case ceiling. They are not original-relative timing passes. Accept and freeze T6 only after integrated security/correctness/resources and original-relative acceptance for all 219 established cases. Compare the final implementation against that fixed T6 reference on all 279 cases using the unchanged warm/cold delta gates, and compare each optional simplification against its immediate predecessor before adoption. Both references require complete rows, declared decisions/audits, immutable hashes, and unchanged sources. Missing rows, unexpected denials, wrong audit results, and timeouts always fail. Classification is explicit reviewed input, never inferred from observed latency or denial. Rationale: larger supported inputs perform work that the old smaller ceilings rejected; T6 supplies an equivalent-work reference without concealing cumulative optimization regressions. Astra reviewed this design without an actionable P1/P2 finding. The r10 scanner optimization also requires matched r9/r10 evidence before promotion; T6 cannot retrospectively authorize earlier optimization changes. Date/Author: 2026-10-20, Codex.
 
+- Decision D15: Bring the approved fixed trusted action-summary slice of T7 forward as T6-R2 to repair a repeated measured latency blocker. Public reporting checks, independent120-call security review and30-case pre/post timing justify adoption. The result/enforcement refactor remains T7. Freeze accepted T6 reference at65cd978 only after full original-relative acceptance and231 resource cases pass. Date/Author:2026-10-20,Codex.
+
 ## Outcomes & Retrospective
 
 Milestones 1 and 2 are accepted. The frozen original runtime is effd0d7b, fingerprint-identical to planned 260c578a. T1/T2 establish portable reproductions and trustworthy baseline/harness evidence. T3 selects 1 MiB using the reviewed r10 prototype, bounded public security checks, resource comparisons, and matched original-relative/equivalent-work timing with retained failures and exact repeats. The 4 MiB candidate fails the unchanged finite-case ceiling and is rejected.
 
-T4's production source slice now implements native aggregate capacity, independent bounded metadata, keyword-only reader bounds, exact raw-byte/marker diagnostics, and finite inspection-source/work admission. Every shell/Python source still spends the whole original executable budget until T5/T6 prove inert spans; admission alone never allows a large unproved source. Native, limit, banner, helper, transport and generator checks pass as recorded below. The independent v2 harness slice and completeness repairs pass Astra re-review and rebased verification; fast-forward integration and the composed base check pass. T4 is accepted. T5 is accepted. T6 Python proof/accounting is implemented and focused checks pass; independent security review passes; integrated throughput/resources remain pending. T7-T9 remain unfinished. Installed hooks remain unchanged and disabled; no live installation or re-enablement occurred or is authorized. Native Windows execution remains separate outstanding platform evidence.
+T4's production source slice now implements native aggregate capacity, independent bounded metadata, keyword-only reader bounds, exact raw-byte/marker diagnostics, and finite inspection-source/work admission. Every shell/Python source still spends the whole original executable budget until T5/T6 prove inert spans; admission alone never allows a large unproved source. Native, limit, banner, helper, transport and generator checks pass as recorded below. The independent v2 harness slice and completeness repairs pass Astra re-review and rebased verification; fast-forward integration and the composed base check pass. T4 is accepted. T5 and T6 are accepted; milestone3 is complete. Python proof/accounting, output-effect repairs and trusted summaries pass integrated security/correctness, original-relative throughput and finite resources. T7 is next; T8/T9 remain unfinished. Installed hooks remain unchanged and disabled; no live installation or re-enablement occurred or is authorized. Native Windows execution remains separate outstanding platform evidence.
 
 ## Context and Orientation
 
@@ -155,8 +157,8 @@ Stop after the plan's Decision Log contains exact proposed defaults/hard maxima,
 
 ### Milestone 3: Make normal file operations pass while dangerous variants deny
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T4: Implement native-content capacity and independent budgets
 
@@ -186,7 +188,7 @@ Milestone integration uses the four policy suites, three provider suites, and se
 
 ### Milestone 4: Remove justified complexity without losing throughput
 
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T7: Make results, enforcement, and diagnostics explicit
@@ -230,7 +232,7 @@ The shared invariants are whole-input inspection, exact schema validation, finit
 
 ## Concrete Steps
 
-Implementation is authorized. T1 is complete with evidence below. Milestone 1 is accepted. Next, freeze the verified T6-R2 candidate and repeat complete D14 original-relative timing plus finite-case resources. The trusted-summary repair passes its public contract, independent security review and pre/post timing. Independent T6 security review is complete. Python proofs and the reproduced output-keyword/reference repair are implemented; acceptance remains unmet. T5 quoted shell proofs are complete. T4 is complete and accepted. T4 has independently owned harness/schema and policy/reader slices; they may proceed in parallel after T3 acceptance, but both must integrate before T4 acceptance or production measurements. Keep T5/T6 proofs serialized in the policy source. The 256 KiB/1 MiB/4 MiB feasibility comparisons are complete; 1 MiB is selected. Preserve the accepted baseline and evidence. The full A/A timing also supplies pre-change timing because runtime fingerprints are identical; do not duplicate that matrix without changed inputs or an unresolved concern.
+Implementation is authorized. T1-T6 and milestones1-3 are accepted. Next, the implementation owner executes T7's explicit inspection/result/enforcement flow and removal of now-unused raw-context reporting helpers. T6-R2 already delivers fixed trusted action summaries. Preserve the accepted fixed T6 equivalent-work reference: commit65cd978, archive `/private/tmp/tool-guard-file-operations-fjhc6r2a/t6-r2-candidate`; its76 runtime fingerprints match that revision. T7 requires public audit/allowlist/skip/failure parity and complete-process comparison before proceeding to T8. Keep edits and acceptance timing serialized. Installed hooks stay disabled and untouched.
 
 Verify prerequisites from repository root:
 
@@ -257,7 +259,7 @@ After T2 adds and verifies the explicit baseline options, use its exact CLI as f
     rtk proxy python3 scripts/verify-hook-release.py --baseline-root "$GUARD_BASELINE" --candidate-root "$GUARD_CANDIDATE" --baseline-ref 260c578ace3514c4f2f741f51d970fc2e938786d --fixture-set file-operations-v2 --expectations scripts/fixtures/tool_guard_file_operations_expectations.json --mode resources --output "$GUARD_EVIDENCE/resources-original-v-final.json"
     rtk proxy python3 scripts/benchmark-tool-guard-resources.py --script-root "$GUARD_CANDIDATE" --fixture-set file-operations-v2 --expectations scripts/fixtures/tool_guard_file_operations_expectations.json --condition candidate --output "$GUARD_EVIDENCE/resources-finite-cases.json" --samples 25 --warmups 3 --ceiling-ms 500
 
-T2 delivered the new baseline, fixture-set, expectations, condition, and --candidate-condition baseline A/A options. Initial cases are available for T2 measurements; T3 must publish additional capacity cases before capacity measurements. T4 must implement explicit original/T6 reference selection and D14 partition validation before those final commands can establish acceptance. Add a second complete timing run using the accepted T6 archive/revision and the reviewed candidate condition contracts on both equivalent-work sides; no duplicated T6 contract map is necessary. Until that interface is implemented, these are intended commands, not proof. Use the same fixture/expectation hashes for both runners. Retain original results and use a new output filename for every retry. The historical ablation command is not a substitute; either keep it on its documented frozen revision or build a separately verified candidate-specific comparison using the maintained measurement mechanics.
+T2 delivered the new baseline, fixture-set, expectations, condition, and --candidate-condition baseline A/A options. Initial cases are available for T2 measurements; T3 must publish additional capacity cases before capacity measurements. T4 implements explicit original/equivalent reference selection and D14 partition validation. Add a second complete timing run using the accepted T6 archive/revision and the reviewed candidate condition contracts on both equivalent-work sides; no duplicated T6 contract map is necessary. The interface is implemented. Run the equivalent-reference final command with --baseline-ref65cd978, --baseline-root pointing to the accepted T6 archive, --baseline-condition candidate and --comparison-reference equivalent; use ordinary separated CLI arguments. Recorded results below remain distinct from future final measurements. Use the same fixture/expectation hashes for both runners. Retain original results and use a new output filename for every retry. The historical ablation command is not a substitute; either keep it on its documented frozen revision or build a separately verified candidate-specific comparison using the maintained measurement mechanics.
 
 ## Validation and Acceptance
 
@@ -430,3 +432,12 @@ Diagnostic cProfile output in `/private/tmp/tool-guard-t6-profile-aaqum9av` show
 A new public block/warn test was red for all six provider/mode calls under raw-context excerpts and passes with trusted fixed summaries. Existing banner expectations now assert the intentional fixed-summary contract; all secret-absence, caller-controlled tool redaction, rule/cause, size ceiling, and log parity checks remain. The obsolete requirement to fill exactly160 characters becomes the approved at-most160 bound. Banners15, three provider suites, corpus153, generator27 and freshness68 pass. Banner tests now isolate HOME/audit/observability paths. Astra completes the bounded diff review with no actionable P1/P2 and independently verifies120 public calls:20 rule IDs x3 providers x2 modes, exact actions, secrets absent in stdout/stderr/log, parity and enforcement. Fixture commands never execute.
 
 `t6-r2-pre-post-timing.json` compares frozen8f63b8c to `/private/tmp/tool-guard-file-operations-fjhc6r2a/t6-r2-candidate` on30 affected representative complete-hook cases, with25 measured/3 warmups, two adjacent reversed warm pairs and25 independent cold launches. All90 comparisons pass, with no errors and unchanged sources/harness. Gemini status-writer execution warm median improves1.380/1.171 ms; cold median improves1.408 ms. This justifies adopting the bounded repair, not full release acceptance. Complete original-relative timing and231 candidate resources remain required before accepting/fixing the T6 equivalent-work reference. Unused raw-context helper cleanup remains T7 work.
+
+
+### Milestone3 acceptance and fixed T6 reference
+
+Commit65cd978 and archive `/private/tmp/tool-guard-file-operations-fjhc6r2a/t6-r2-candidate` are the fixed equivalent-work reference required by D14. A fresh verification compares all76 runtime fingerprints against that Git revision and reports exact equality. Reviewed expectations SHA-256 is `59174284ca686cb27cf5a5e4c2f58afa8c964a5d5009b29e27d22b9e4a253c7a`. Preserve this archive/reference throughout T7-T9; do not redefine it around later simplifications.
+
+`t6-r2-original-timing.json` retains1116 warm rows and13950 cold launches across279 cases. All decisions/audits pass, no errors, sources/harness unchanged. Of657 original-relative gates,656 pass. The sole Codex audit-unavailable.warn.clean pair2 p95 delta+5.579 ms (median+.517 ms) is retained as a failed observation. Exact `t6-r2-original-timing-repeat-audit.json` passes warm p95-.375/-1.176 ms and cold+1.346 ms, with medians+.743/+.373/+1.162 ms, unchanged sources and no errors. The isolated tail miss does not repeat; original-relative acceptance is met under the reviewed repeat policy. The180 added-capacity comparisons remain changed-workload observations, never relative passes.
+
+`t6-r2-resources.json` passes all231 candidate cases with25 measured calls,3 warmups, first-call and separate native RSS. Worst first/measured latency289.249792 ms is below unchanged500 ms. Peak RSS51,298,304 bytes. No errors, wrong decisions or audit results; sources/harness unchanged. Final composed policy checks pass: file-operations18, shell18, native26, limits19, incident corpus153. Existing provider/banner/generator proof for the same policy is recorded above. Milestone3 acceptance is met. T7-T9 remain authorized and unfinished; installed hook remains disabled, and native Windows remains an outstanding platform check.
