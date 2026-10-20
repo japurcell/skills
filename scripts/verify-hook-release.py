@@ -13,6 +13,7 @@ from dataclasses import replace
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 import platform
 import shutil
@@ -287,31 +288,149 @@ def comparisons(report: dict) -> list[dict]:
     return rows
 
 
-def validate_measurements(report: dict, names: list[str], mode: str, cold_samples: int) -> None:
-    """Reject partial evidence, including entirely missing comparison rows."""
-    expected = set(names)
-    if len(expected) != len(names) or not names:
-        raise ValueError("complete unique selected cases required")
-    if mode == "resources":
-        rows = report["resources"]
-        identities = [(row.get("case"), row.get("condition")) for row in rows]
-        wanted = {(name, label) for name in names for label in ORDER[0]}
-        if len(identities) != len(wanted) or set(identities) != wanted or any("ceiling_met" not in row for row in rows):
-            raise ValueError("incomplete resource rows")
-        return
-    warm = [(row.get("case"), row.get("condition"), row.get("pair")) for row in report["warm"] if "summary" in row]
-    wanted = {(name, label, pair) for name in names for label in ORDER[0] for pair in (0, 1)}
-    cold = [(row.get("case"), row.get("condition"), row.get("index")) for row in report["cold"] if "elapsed_ms" in row]
-    wanted_cold = {(name, label, index) for name in names for label in ORDER[0] for index in range(cold_samples)}
-    comparisons = [(row.get("case"), row.get("phase")) for row in report.get("comparisons", [])]
-    wanted_comparisons = {(name, phase) for name in names for phase in ("warm-pair-1", "warm-pair-2", "cold")}
-    if (len(warm) != len(wanted) or set(warm) != wanted or len(cold) != len(wanted_cold)
-            or set(cold) != wanted_cold or len(comparisons) != len(wanted_comparisons)
-            or set(comparisons) != wanted_comparisons):
-        raise ValueError("incomplete timing rows or comparisons")
-    if report.get("fixture_set") == "file-operations-v2":
-        if any(max(row["first_process_ms"], *row["samples_ms"]) > 500 for row in report["warm"]) or any(row["elapsed_ms"] > 500 for row in report["cold"]):
-            raise ValueError("finite-case 500 ms ceiling exceeded")
+def validate_measurements(report: dict, selected: dict, mode: str, samples: int,
+                          warmups: int, cold_samples: int, *, reference="original", partition=None) -> None:
+    """Require complete call evidence against independently selected contracts."""
+    def require(condition, message):
+        if not condition:
+            raise ValueError("incomplete or inconsistent measurement evidence: " + message)
+
+    def elapsed(value):
+        require(type(value) in (int, float) and math.isfinite(value) and value > 0, "elapsed time")
+
+    def checksum(value):
+        return isinstance(value, str) and len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+
+    def response(observation, case):
+        contract = case.fixture_metadata["contract"]
+        require(isinstance(observation, dict) and type(observation.get("exit_code")) is int
+                and observation["exit_code"] == 0 and isinstance(observation.get("output"), dict), "call response")
+        output = observation["output"]
+        require(not output.get("invalid_stdout") and observation.get("decision") == case.expected_decision
+                and guardian_decision(case.name.split(".", 1)[0], output, contract=contract) == case.expected_decision,
+                "call decision")
+        validate_response(contract, output, provider=case.name.split(".", 1)[0])
+
+    def audit(proof, case, calls):
+        contract = case.fixture_metadata["contract"]
+        expected = contract["audit"]
+        required = calls * expected["records_per_call"]
+        require(isinstance(proof, dict) and "failure_injection" in proof, "audit proof")
+        require(all(type(proof.get(key)) is int and proof[key] == value
+                    for key, value in (("calls", calls), ("records", required), ("required_records", required))),
+                "audit call/record counts")
+        require(proof.get("status") == proof.get("audit_outcome") == expected["outcome"]
+                and proof.get("verified_after_elapsed") is True and proof.get("legacy_exception") is False,
+                "audit outcome")
+        files = proof.get("files")
+        require(isinstance(files, list) and bool(files) == bool(required), "audit files")
+        for file in files:
+            require(isinstance(file, dict) and isinstance(file.get("path"), str) and bool(file["path"])
+                    and type(file.get("bytes")) is int and file["bytes"] > 0 and checksum(file.get("sha256")),
+                    "audit file fingerprint")
+        injection = case.fixture_metadata["injection"]
+        failure = proof.get("failure_injection")
+        if injection == "none":
+            require(failure is None, "unexpected failure injection")
+        elif injection == "raw-envelope" or injection == "malformed-json" and "reader_limits" in case.fixture_metadata:
+            from hook_benchmark_support import reader_boundary_proof
+            require(failure == reader_boundary_proof(case), "reader boundary proof")
+        elif injection == "malformed-json":
+            require(failure == {"kind": injection, "invalid_json": True}, "malformed-input proof")
+        elif injection == "missing-policy":
+            require(failure == {"kind": injection, "policy_absent": True}, "bootstrap proof")
+        elif injection == "audit-unavailable":
+            require(isinstance(failure, dict) and set(failure) == {"kind", "parent_is_regular_file", "sha256"}
+                    and failure["kind"] == injection and failure["parent_is_regular_file"] is True
+                    and checksum(failure["sha256"]), "audit failure proof")
+        else:
+            require(False, "unknown failure injection")
+
+    def row_contract(row, cases):
+        case = cases[row["condition"]][row["case"]]
+        require(row.get("contract") == case.fixture_metadata["contract"]
+                and row.get("expected_decision") == case.expected_decision
+                and row.get("input_sha256") == hashlib.sha256(case.payload).hexdigest(), "selected contract/hash")
+        return case
+
+    def sampled(row, case, calls):
+        values, outputs = row.get("samples_ms"), row.get("outputs")
+        require(isinstance(values, list) and len(values) == samples
+                and isinstance(outputs, list) and len(outputs) == samples, "measured sample/output counts")
+        elapsed(row.get("first_process_ms"))
+        response(row.get("first_output"), case)
+        for value, observation in zip(values, outputs, strict=True):
+            elapsed(value)
+            response(observation, case)
+        require(row.get("summary") == high_rate.summary(values), "sample summary")
+        audit(row.get("logging"), case, calls)
+        if partition is not None:
+            require(max(row["first_process_ms"], *values) <= 500, "finite-case 500 ms ceiling")
+
+    try:
+        require(report.get("mode") == mode and isinstance(report.get("method"), dict)
+                and all(type(report["method"].get(key)) is int and report["method"][key] == value
+                        for key, value in (("samples", samples), ("warmups", warmups),
+                                           ("cold_launches_per_case_condition", cold_samples))), "declared method")
+        require(isinstance(selected, dict) and set(selected) == {"baseline", "candidate"}, "selected cases")
+        cases = {label: {case.name: case for case in values} for label, values in selected.items()}
+        names = set(cases["baseline"])
+        require(bool(names) and names == set(cases["candidate"])
+                and all(len(cases[label]) == len(selected[label]) for label in cases), "complete unique selected cases")
+        require(report.get("comparison_reference", "original") == reference
+                and report.get("throughput_partition") == partition, "reviewed reference/partition")
+        if mode == "resources":
+            rows = report["resources"]
+            identities = [(row.get("case"), row.get("condition")) for row in rows]
+            wanted = {(name, label) for name in names for label in ORDER[0]}
+            require(len(identities) == len(wanted) and set(identities) == wanted, "resource rows")
+            for row in rows:
+                case = row_contract(row, cases)
+                sampled(row, case, 2 + warmups + samples)
+                met = max(row["first_process_ms"], *row["samples_ms"]) <= 500
+                require(row.get("ceiling_ms") == 500 and row.get("ceiling_met") is met
+                        and type(row.get("peak_rss_bytes")) is int and row["peak_rss_bytes"] > 0, "resource ceiling/RSS")
+            return
+        warm = [(row.get("case"), row.get("condition"), row.get("pair")) for row in report["warm"]]
+        wanted = {(name, label, pair) for name in names for label in ORDER[0] for pair in (0, 1)}
+        cold = [(row.get("case"), row.get("condition"), row.get("index")) for row in report["cold"]]
+        wanted_cold = {(name, label, index) for name in names for label in ORDER[0] for index in range(cold_samples)}
+        require(len(warm) == len(wanted) and set(warm) == wanted and len(cold) == len(wanted_cold)
+                and set(cold) == wanted_cold, "timing rows")
+        for row in report["warm"]:
+            case = row_contract(row, cases)
+            sampled(row, case, 1 + warmups + samples)
+            invocations = row.get("invocations")
+            kinds = ["first"] + ["warmup"] * warmups + ["measured"] * samples
+            require(type(row.get("pair")) is int and isinstance(invocations, list) and len(invocations) == len(kinds),
+                    "warm invocation count")
+            previous = 0
+            for index, (call, kind) in enumerate(zip(invocations, kinds, strict=True)):
+                require(type(call.get("call_index")) is int and call["call_index"] == index and call.get("kind") == kind
+                        and type(call.get("start_monotonic_ns")) is int and type(call.get("end_monotonic_ns")) is int
+                        and previous <= call["start_monotonic_ns"] < call["end_monotonic_ns"], "warm invocation order")
+                previous = call["end_monotonic_ns"]
+        for row in report["cold"]:
+            case = row_contract(row, cases)
+            elapsed(row.get("elapsed_ms"))
+            response(row.get("outcome"), case)
+            audit(row.get("logging"), case, 1)
+            require(type(row.get("index")) is int
+                    and all(type(row.get(key)) is int and row[key] == 0 for key in ("bytecode_before", "bytecode_after"))
+                    and all(isinstance(row.get(key), str) and bool(row[key]) for key in ("copy_id", "home_id")),
+                    "fresh cold copy")
+            if partition is not None:
+                require(row["elapsed_ms"] <= 500, "finite-case 500 ms ceiling")
+        require(all(len({row[key] for row in report["cold"]}) == len(report["cold"]) for key in ("copy_id", "home_id")),
+                "unique cold copies/homes")
+        expected_comparisons = comparisons(report)
+        require(report.get("comparisons") == expected_comparisons, "comparison values/classification/gates")
+        require(all(actual["met"] is expected["met"]
+                    for actual, expected in zip(report["comparisons"], expected_comparisons, strict=True)),
+                "exact Boolean gates or observation None")
+        require(len(report["comparisons"]) == 3 * len(names), "complete comparisons")
+    except (KeyError, TypeError, AttributeError, IndexError) as error:
+        raise ValueError("incomplete measurement evidence: " + type(error).__name__) from error
 
 
 def compare(name: str, phase: str, conditions: dict, median_limit: float, p95_limit: float) -> dict:
@@ -420,6 +539,7 @@ def measure_resources(report: dict, roots: dict, selected: dict, temporary: Path
         for case in selected[condition]:
             print(f"resources: {condition} {case.name}", file=sys.stderr, flush=True)
             row = {"condition": condition, "case": case.name, "ceiling_ms": 500,
+                   "expected_decision": case.expected_decision,
                    "input_sha256": hashlib.sha256(case.payload).hexdigest(),
                    "contract": (case.fixture_metadata or {}).get("contract"),
                    "fixture_metadata": case.fixture_metadata}
@@ -493,7 +613,8 @@ def main() -> int:
               "release_acceptance_eligible": not args.mechanics_only and not args.case and args.candidate_condition == "candidate",
               "candidate_expectation_condition": args.candidate_condition,
               "baseline_expectation_condition": args.baseline_condition,
-              "comparison_reference": args.comparison_reference, "throughput_partition": partition,
+              "comparison_reference": args.comparison_reference,
+              "throughput_partition": {key: list(value) for key, value in partition.items()} if partition is not None else None,
               "environment": {"platform": platform.platform(), "machine": platform.machine(),
                               "python": sys.version, "python_executable": sys.executable,
                               "git": subprocess.check_output(["git", "--version"], text=True).strip()},
@@ -531,7 +652,8 @@ def main() -> int:
             report["sources_unchanged"] = False
             report["errors"].append(f"cannot recheck frozen source: {exc}")
         try:
-            validate_measurements(report, [case.name for case in selected["baseline"]], args.mode, counts[2])
+            validate_measurements(report, selected, args.mode, *counts,
+                                  reference=args.comparison_reference, partition=partition)
         except (ValueError, KeyError) as exc:
             report["errors"].append(str(exc))
         report["gate_partition"] = {

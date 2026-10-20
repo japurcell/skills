@@ -73,6 +73,23 @@ class ReleaseVerificationTests(unittest.TestCase):
             source += "print(" + repr(json.dumps(response)) + ")\n"
             script.write_text(source)
 
+    def measurement_evidence(self, mode="timing"):
+        adapter = load_adapter()
+        name = "codex.guard.clean" if mode == "timing" else "codex.resources.strict-max"
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root / "baseline")
+            self.fixture(root / "candidate")
+            output = root / "evidence.json"
+            result = self.run_cli("--baseline-root", str(root / "baseline"),
+                                  "--candidate-root", str(root / "candidate"),
+                                  "--output", str(output), "--mechanics-only", "--mode", mode, "--case", name)
+            self.assertEqual(result.returncode, 0, result.stderr + str(json.loads(output.read_text()).get("errors")))
+            report = json.loads(output.read_text())
+            selected = {label: adapter.selected_cases(root / label, label, [name], mode)
+                        for label in ("baseline", "candidate")}
+            return report, selected
+
     def test_v2_preserves_old_universes_and_adds_reviewed_capacity(self):
         adapter = load_adapter()
         path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
@@ -133,7 +150,9 @@ class ReleaseVerificationTests(unittest.TestCase):
         report["comparison_reference"] = "equivalent"
         self.assertTrue(all(row["met"] is False and row["classification"] == "gated" for row in adapter.comparisons(report)))
         with self.assertRaisesRegex(ValueError, "complete"):
-            adapter.validate_measurements(report, ["codex.guard.clean", name], "timing", 25)
+            adapter.validate_measurements(report, {label: adapter.selected_cases(Path("."), label, ["codex.guard.clean", name], "timing", "file-operations-v2", adapter.DEFAULT_EXPECTATIONS)
+                                                  for label in ("baseline", "candidate")}, "timing", 25, 3, 25,
+                                          reference="equivalent", partition=report["throughput_partition"])
         for reference, condition in (("equivalent", "baseline"), ("original", "candidate")):
             result = self.run_cli("--list", "--comparison-reference", reference, "--baseline-condition", condition)
             self.assertEqual(result.returncode, 2, result.stderr)
@@ -169,23 +188,54 @@ class ReleaseVerificationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 adapter.selected_cases(Path("."), "candidate", [], "resources", "file-operations-v2", altered)
 
+    @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
     def test_complete_evidence_rejects_each_missing_or_duplicate_row(self):
         adapter = load_adapter()
-        name = "codex.guard.clean"
-        report = {"warm": [{"case": name, "condition": label, "pair": pair,
-                            "summary": {"median_ms": 10, "p95_ms": 10}}
-                           for pair in (0, 1) for label in ("baseline", "candidate")],
-                  "cold": [{"case": name, "condition": label, "index": 0, "elapsed_ms": 10}
-                           for label in ("baseline", "candidate")]}
-        report["comparisons"] = adapter.comparisons(report)
-        adapter.validate_measurements(report, [name], "timing", 1)
+        report, selected = self.measurement_evidence()
+        adapter.validate_measurements(report, selected, "timing", 2, 0, 2)
         for section in ("warm", "cold", "comparisons"):
             for change in ("missing", "duplicate"):
                 altered = json.loads(json.dumps(report))
                 if change == "missing": altered[section].pop()
                 else: altered[section].append(altered[section][0])
                 with self.subTest(section=section, change=change), self.assertRaisesRegex(ValueError, "incomplete"):
-                    adapter.validate_measurements(altered, [name], "timing", 1)
+                    adapter.validate_measurements(altered, selected, "timing", 2, 0, 2)
+
+    @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
+    def test_complete_timing_evidence_rejects_missing_or_forged_call_proof(self):
+        adapter = load_adapter()
+        report, selected = self.measurement_evidence()
+        adapter.validate_measurements(report, selected, "timing", 2, 0, 2)
+        mutations = [("warm", key) for key in ("first_output", "outputs", "samples_ms", "logging", "contract", "input_sha256")]
+        mutations += [("cold", key) for key in ("outcome", "logging", "contract", "input_sha256")]
+        for section, key in mutations:
+            altered = json.loads(json.dumps(report))
+            del altered[section][0][key]
+            with self.subTest(section=section, missing=key), self.assertRaises(ValueError):
+                adapter.validate_measurements(altered, selected, "timing", 2, 0, 2)
+        for mutation in ("sample_count", "output_count", "wrong_hash", "wrong_contract", "wrong_audit", "missing_comparison_gate", "missing_failure_proof", "wrong_method", "duplicate_cold_copy", "boolean_bytecode"):
+            altered = json.loads(json.dumps(report))
+            if mutation == "sample_count": altered["warm"][0]["samples_ms"].pop()
+            elif mutation == "output_count": altered["warm"][0]["outputs"].pop()
+            elif mutation == "wrong_hash": altered["warm"][0]["input_sha256"] = "0" * 64
+            elif mutation == "wrong_contract": altered["warm"][0]["contract"]["decision"] = "deny"
+            elif mutation == "wrong_audit": altered["warm"][0]["logging"]["records"] = 0
+            elif mutation == "missing_failure_proof": del altered["warm"][0]["logging"]["failure_injection"]
+            elif mutation == "wrong_method": altered["method"]["samples"] = 1
+            elif mutation == "duplicate_cold_copy": altered["cold"][1]["copy_id"] = altered["cold"][0]["copy_id"]
+            elif mutation == "boolean_bytecode": altered["cold"][0]["bytecode_before"] = False
+            else: altered["comparisons"][0]["met"] = None
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                adapter.validate_measurements(altered, selected, "timing", 2, 0, 2)
+        altered = json.loads(json.dumps(report))
+        row = next(row for row in altered["warm"] if row["condition"] == "candidate" and row["pair"] == 0)
+        row["samples_ms"] = [1000, 1000]
+        row["summary"] = adapter.high_rate.summary(row["samples_ms"])
+        altered["comparisons"] = adapter.comparisons(altered)
+        failed = next(row for row in altered["comparisons"] if row["met"] is False)
+        failed["met"] = 0
+        with self.assertRaises(ValueError):
+            adapter.validate_measurements(altered, selected, "timing", 2, 0, 2)
 
     def test_resource_loader_rejects_consistently_forged_timing_partition(self):
         adapter = load_adapter()
@@ -199,6 +249,27 @@ class ReleaseVerificationTests(unittest.TestCase):
             path.write_text(json.dumps(document))
             with self.assertRaisesRegex(ValueError, "partition"):
                 adapter.resources.selected_cases(Path("."), "file-operations-v2", path, "candidate")
+
+    @unittest.skipUnless(sys.platform == "darwin", "native macOS RSS required")
+    def test_complete_resource_evidence_requires_calls_audits_and_native_rss(self):
+        adapter = load_adapter()
+        report, selected = self.measurement_evidence("resources")
+        adapter.validate_measurements(report, selected, "resources", 2, 0, 2)
+        for key in ("first_output", "outputs", "samples_ms", "logging", "contract", "input_sha256", "peak_rss_bytes"):
+            altered = json.loads(json.dumps(report))
+            del altered["resources"][0][key]
+            with self.subTest(missing=key), self.assertRaises(ValueError):
+                adapter.validate_measurements(altered, selected, "resources", 2, 0, 2)
+        for mutation in ("sample_count", "output_count", "wrong_audit", "wrong_ceiling", "wrong_rss"):
+            altered = json.loads(json.dumps(report))
+            row = altered["resources"][0]
+            if mutation == "sample_count": row["samples_ms"].pop()
+            elif mutation == "output_count": row["outputs"].pop()
+            elif mutation == "wrong_audit": row["logging"]["records"] = 0
+            elif mutation == "wrong_ceiling": row["ceiling_met"] = not row["ceiling_met"]
+            else: row["peak_rss_bytes"] = None
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                adapter.validate_measurements(altered, selected, "resources", 2, 0, 2)
 
     def test_reviewed_contracts_reject_missing_unknown_stale_and_wrong_mode(self) -> None:
         source = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
