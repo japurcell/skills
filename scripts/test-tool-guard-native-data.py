@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
+from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, sized_native_patch
 from tool_guard_test_support import invoke_guard, native_decision
 from tool_guard_corpus import full_shell_envelope
 
@@ -19,6 +19,14 @@ def text(*codes: int) -> str:
 
 
 FORCE_PUSH = text(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 114, 99, 101, 32, 111, 114, 105, 103, 105, 110, 32, 109, 97, 105, 110)
+
+
+def capacity_patch(*, utf8: bool = False, high_lines: int = 0) -> str:
+    prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
+    suffix = '\n' + '+\n' * high_lines + '*** End Patch'
+    available = 1048576 - len((prefix + suffix).encode('utf-8'))
+    body = '界' * (available // 3) + 'x' * (available % 3) if utf8 else 'x' * available
+    return prefix + body + suffix
 
 
 class NativeDataTests(unittest.TestCase):
@@ -105,7 +113,7 @@ class NativeDataTests(unittest.TestCase):
             result = invoke_guard(ROOT, provider, json.dumps(payload), mode='warn')
             response = json.loads(result.stdout)
             self.assert_decision(response, 'deny')
-            self.assertIn('structured_bytes', json.dumps(response))
+            self.assertIn('metadata_bytes', json.dumps(response))
 
     def test_codex_patch_body_is_data_and_shell_counterpart_is_denied(self) -> None:
         patch = '*** Begin Patch\n*** Add File: example.sh\n+Example: ' + FORCE_PUSH + '\n*** End Patch'
@@ -118,13 +126,13 @@ class NativeDataTests(unittest.TestCase):
 
     def test_copilot_raw_patch_aggregate_maximum_and_first_overflow(self) -> None:
         for utf8 in (False, True):
-            patch = full_capacity_native_patch(utf8=utf8)
-            self.assertEqual(len(patch.encode('utf-8')), 262144)
+            patch = capacity_patch(utf8=utf8)
+            self.assertEqual(len(patch.encode('utf-8')), 1048576)
             self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
             for mode in ('block', 'warn'):
                 response = self.invoke('copilot', 'apply_patch', patch.replace('\n*** End Patch', 'x\n*** End Patch'), mode=mode)
                 self.assert_decision(response, 'deny')
-                self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
+                self.assertIn('1048577 bytes exceeds limit 1048576 bytes', json.dumps(response))
                 self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
 
     def test_copilot_raw_patch_envelope_aliases_and_object_shapes_remain_strict(self) -> None:
@@ -225,14 +233,14 @@ class NativeDataTests(unittest.TestCase):
 
     def test_patch_native_aggregate_maximum_and_first_overflow(self) -> None:
         for utf8 in (False, True):
-            patch = full_capacity_native_patch(key_bytes=7, utf8=utf8)
-            self.assertEqual(len(patch.encode('utf-8')) + 7, 262144)
+            patch = capacity_patch(utf8=utf8)
+            self.assertEqual(len(patch.encode('utf-8')), 1048576)
             self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'allow')
             for mode in ('block', 'warn'):
                 with self.subTest(utf8=utf8, mode=mode):
                     response = self.invoke('codex', 'apply_patch', {'command': patch.replace('\n*** End Patch', 'x\n*** End Patch')}, mode=mode)
                     self.assert_decision(response, 'deny')
-                    self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
+                    self.assertIn('1048577 bytes exceeds limit 1048576 bytes', json.dumps(response))
                     self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
 
     def test_unknown_shape_keeps_original_executable_byte_limit(self) -> None:
@@ -342,8 +350,8 @@ class NativeDataTests(unittest.TestCase):
 
     def test_full_capacity_high_line_count_patch_requires_complete_grammar(self) -> None:
         for provider, key_bytes in (('codex', 7), ('copilot', 0)):
-            patch = full_capacity_native_patch(key_bytes=key_bytes, high_lines=130000)
-            self.assertEqual(len(patch.encode('utf-8')) + key_bytes, 262144)
+            patch = capacity_patch(high_lines=500000)
+            self.assertEqual(len(patch.encode('utf-8')), 1048576)
             value = patch if provider == 'copilot' else {'command': patch}
             self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')
             for mode in ('block', 'warn'):
@@ -357,9 +365,8 @@ class NativeDataTests(unittest.TestCase):
     def test_native_aggregate_byte_maximum_and_first_overflow(self) -> None:
         for provider, tool, path_key, content_key in (('gemini', 'write_file', 'file_path', 'content'),
                                                     ('copilot', 'create', 'path', 'file_text')):
-            # The public aggregate includes UTF-8 data, the destination and keys.
-            overhead = len((path_key + content_key + 'example.txt').encode('utf-8'))
-            length = 65536 - overhead
+            # Native contents spend their aggregate byte budget independently of bounded metadata.
+            length = 1048576
             for utf8 in (False, True):
                 body = 'x' * length if not utf8 else '界' * (length // 3) + 'x' * (length % 3)
                 valid = {path_key: 'example.txt', content_key: body}
@@ -367,11 +374,13 @@ class NativeDataTests(unittest.TestCase):
                 overflow = {path_key: 'example.txt', content_key: body + 'x'}
                 for mode in ('warn', 'block'):
                     with self.subTest(provider=provider, utf8=utf8, mode=mode):
-                        response = self.invoke(provider, tool, overflow, mode=mode, allowlist=True)
+                        # A valid exact allowlist entry is capped at 8192 characters,
+                        # so it cannot match this larger content-boundary input.
+                        response = self.invoke(provider, tool, overflow, mode=mode)
                         self.assert_decision(response, 'deny')
                         output = json.dumps(response)
-                        self.assertIn('65537 bytes', output)
-                        self.assertIn('65536 bytes', output)
+                        self.assertIn('1048577 bytes', output)
+                        self.assertIn('1048576 bytes', output)
                         self.assertNotIn('TOOL_GUARD_ALLOWLIST', output)
 
     def test_native_structural_overflow_and_encoding_failure_stay_closed(self) -> None:

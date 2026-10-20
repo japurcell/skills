@@ -18,6 +18,37 @@ copilot_helpers_path = repo_root / ".copilot" / "hooks" / "scripts"
 
 
 class TestHookHelpers(unittest.TestCase):
+    def test_json_reader_custom_bounds_preserve_exact_units_and_default_calls(self):
+        import json
+        import subprocess
+
+        for path in (github_helpers_path, gemini_helpers_path, copilot_helpers_path,
+                     repo_root / ".codex" / "hooks"):
+            for options, payload, expected in (
+                ({}, '{"x":"[{,:}\\\""}', {"x": '[{,:}"'}),
+                ({"max_bytes": 64}, '{"x":1' + ' ' * 57 + '}', {"x": 1}),
+                ({"max_bytes": 64}, '{"x":1' + ' ' * 58 + '}',
+                 {"rule": "raw_input_bytes", "limit": 64, "measured": 65, "unit": "bytes"}),
+                ({"max_markers": 5}, '{"x":"[{,:}\\\""}', {"x": '[{,:}"'}),
+                ({"max_markers": 4}, '{"x":"[{,:}\\\""}',
+                 {"rule": "raw_structural_markers", "limit": 4, "measured": 5, "unit": "markers"}),
+            ):
+                with self.subTest(provider=str(path), options=options, expected=expected):
+                    code = (
+                        "import json,sys\n"
+                        f"sys.path.insert(0, {str(path)!r})\n"
+                        "from helpers.common import read_json_input, InputLimitError\n"
+                        "try:\n"
+                        f" result=read_json_input(**{options!r})\n"
+                        "except InputLimitError as error:\n"
+                        " result=dict(rule=error.rule_id,limit=error.limit,measured=error.measured,unit=error.unit)\n"
+                        "print(json.dumps(result))\n"
+                    )
+                    result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", code],
+                                            input=payload, text=True, capture_output=True, timeout=5)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(json.loads(result.stdout), expected)
+
     def test_run_command_preserves_arguments_environment_and_process_results(self):
         import json
         import subprocess

@@ -164,12 +164,16 @@ import unicodedata
 
 
 MAX_SCAN_TEXT = 32768
-MAX_NATIVE_DATA_BYTES = 65536
-MAX_NATIVE_PATCH_BYTES = 262144
+MAX_NATIVE_DATA_BYTES = 1048576
+MAX_NATIVE_PATCH_BYTES = 1048576
+MAX_INSPECTION_SOURCE_BYTES = MAX_NATIVE_DATA_BYTES + MAX_SCAN_TEXT
+MAX_INSPECTION_WORK_BYTES = 2 * MAX_INSPECTION_SOURCE_BYTES
+MAX_GUARD_INPUT_BYTES = 6 * (MAX_NATIVE_DATA_BYTES + 3 * MAX_SCAN_TEXT) + 8192
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
 MAX_STRUCTURED_NODES = 256
+MAX_GUARD_INPUT_MARKERS = 8 * (2 * MAX_STRUCTURED_NODES)
 MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
 MAX_EXCERPT_LENGTH = 160
@@ -653,11 +657,12 @@ RULE_DETAILS = (
 
 class NativeToolInput:
     """Validated native arguments, with file operations separate from inert data."""
-    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = ()) -> None:
+    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = (), *, data_fields: tuple[str, ...] = ()) -> None:
         self.kind = kind
         self.metadata = metadata
         self.data = data
         self.operations = operations
+        self.data_fields = frozenset(data_fields)
 
 
 def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
@@ -761,15 +766,29 @@ class _ShellCommand:
 class _InspectionBudget:
     def __init__(self) -> None:
         self.bytes = self.commands = self.tokens = 0
+        self.source_bytes = self.content_bytes = 0
 
     def source(self, source: str, depth: int) -> str:
         if depth > 16:
             raise ScanLimitExceeded("executable_depth", 16, depth, "levels")
+        size = len(source.encode("utf-8"))
+        if size > MAX_INSPECTION_SOURCE_BYTES:
+            raise ScanLimitExceeded("inspection_source_bytes", MAX_INSPECTION_SOURCE_BYTES, size, "bytes")
+        self.source_bytes += size
+        if self.source_bytes > MAX_INSPECTION_WORK_BYTES:
+            raise ScanLimitExceeded("inspection_work_bytes", MAX_INSPECTION_WORK_BYTES, self.source_bytes, "bytes")
+        return source
+
+    def executable(self, source: str) -> None:
         normalized = _bounded_normalized_text(source)
         self.bytes += len(normalized.encode("utf-8"))
         if self.bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
-        return source
+
+    def content(self, size: int) -> None:
+        self.content_bytes += size
+        if self.content_bytes > MAX_NATIVE_DATA_BYTES:
+            raise ScanLimitExceeded("literal_content_bytes", MAX_NATIVE_DATA_BYTES, self.content_bytes, "bytes")
 
     def matcher_tokens(self, segments, charged=0):
         self.tokens += max(0, sum(len(segment) for segment in segments) - charged)
@@ -1202,6 +1221,7 @@ def _strict_threats(text, segments=None, pipeline_text=None):
 
 def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
     source = budget.source(source, depth)
+    budget.executable(source)
     proven, sinks, constants = _python_inspection(source)
     proven = proven and permit_data
     threats = []
@@ -1258,6 +1278,7 @@ def _inline_operand(words, offset):
 
 def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
+    budget.executable(source)
     commands, nested, strict = _shell_representation(source, budget)
     windows = any(command.words and (
         "\\" in command.words[0].value or command.words[0].value.casefold().endswith((".exe", ".cmd", ".bat"))
@@ -1630,10 +1651,14 @@ PROFILE_CAUSE = "unsupported_tool_profile"
 MAX_GUARD_LOG_BYTES = 16384
 
 try:
+    from helpers.common import InputLimitError
     from helpers.tool_guard_policy import (
         MAX_SCAN_TEXT,
         MAX_NATIVE_DATA_BYTES,
         MAX_NATIVE_PATCH_BYTES,
+        MAX_INSPECTION_SOURCE_BYTES,
+        MAX_GUARD_INPUT_BYTES,
+        MAX_GUARD_INPUT_MARKERS,
         MAX_COMMAND_SEGMENTS,
         MAX_COMMAND_TOKENS,
         MAX_STRUCTURED_DEPTH,
@@ -1790,7 +1815,7 @@ def _native_shell_shape(tool_name: str, value: dict) -> NativeToolInput | None:
                 if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
                     return None
                 metadata.extend(paths)
-    return NativeToolInput("shell", tuple(metadata), (value[key],))
+    return NativeToolInput("shell", tuple(metadata), (value[key],), data_fields=(key,))
 
 
 
@@ -1801,19 +1826,19 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
     if shell is not None:
         return shell
     if TOOL_PROVIDER == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
-        return NativeToolInput("patch", (), (value["command"],))
+        return NativeToolInput("patch", (), (value["command"],), data_fields=("command",))
     if TOOL_PROVIDER == "gemini":
         if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
-            return NativeToolInput("write", (value["file_path"],), (value["content"],))
+            return NativeToolInput("write", (value["file_path"],), (value["content"],), data_fields=("content",))
         if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
-            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]))
+            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]), data_fields=("old_string", "new_string"))
         if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
-            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],))
+            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],), data_fields=("pattern",))
     if TOOL_PROVIDER == "copilot":
         if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
-            return NativeToolInput("write", (value["path"],), (value["file_text"],))
+            return NativeToolInput("write", (value["path"],), (value["file_text"],), data_fields=("file_text",))
         if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
-            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]))
+            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]), data_fields=("old_str", "new_str"))
         if tool_name in {"grep", "rg"}:
             # Observed CLI arguments, not a guessed complete provider schema.
             pattern_keys = value.keys() & {"pattern", "query"}
@@ -1836,13 +1861,39 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
                     len(child) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in child)
                 )):
                     return None
-            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)))
+            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)), data_fields=(pattern_key,))
     return None
 
 
 
 def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     global TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE
+    input_key = next((key for key in TOOL_INPUT_KEYS if key in payload), None)
+    if len(payload) > MAX_STRUCTURED_NODES:
+        raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(payload), "nodes")
+    envelope_nodes = envelope_bytes = 0
+    envelope_stack = [(child, 0) for key, child in payload.items() if key != input_key]
+    envelope_bytes = sum(len(key.encode("utf-8")) for key in payload)
+    while envelope_stack:
+        current, depth = envelope_stack.pop()
+        envelope_nodes += 1
+        if envelope_nodes > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, envelope_nodes, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("envelope_metadata_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, dict):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_bytes += sum(len(key.encode("utf-8")) for key in current)
+            envelope_stack.extend((child, depth + 1) for child in current.values())
+        elif isinstance(current, list):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_stack.extend((child, depth + 1) for child in current)
+        else:
+            envelope_bytes += len((current if isinstance(current, str) else json.dumps(current)).encode("utf-8"))
+        if envelope_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("envelope_metadata_bytes", MAX_SCAN_TEXT, envelope_bytes, "bytes")
     value = _read_tool_input_value(payload)
     tool_name = read_tool_name(payload)
     if isinstance(value, str):
@@ -1865,25 +1916,42 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
     elif native and native.kind != "shell":
         byte_limit = MAX_NATIVE_DATA_BYTES
     known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
-    stack = [iter(((value, 0, "tool input"),))]
+    if native and native.kind == "shell":
+        byte_limit = MAX_INSPECTION_SOURCE_BYTES
     strings: list[str] = []
     node_count = 0
     total_string_bytes = 0
     keys: list[str] = []
+    content_bytes = metadata_bytes = normalized_metadata_bytes = 0
+
+    def metadata_text(text, *, key=False):
+        nonlocal metadata_bytes, normalized_metadata_bytes
+        metadata_bytes += len(text.encode("utf-8"))
+        if metadata_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("metadata_bytes", MAX_SCAN_TEXT, metadata_bytes, "bytes")
+        if not key:
+            normalized_metadata_bytes += len(_bounded_normalized_text(text).encode("utf-8"))
+            if normalized_metadata_bytes > MAX_SCAN_TEXT:
+                raise ScanLimitExceeded("normalized_metadata_bytes", MAX_SCAN_TEXT, normalized_metadata_bytes, "bytes")
 
     def dictionary_children(mapping, depth):
         for key, child in mapping.items():
             keys.append(key)
+            if native:
+                metadata_text(key, key=True)
             field = f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input"
-            yield child, depth + 1, field
+            data_field = bool(native and depth == 0 and key in native.data_fields)
+            yield child, depth + 1, field, data_field
 
     def sequence_children(sequence, depth):
         for child in sequence:
-            yield child, depth + 1, "tool input"
+            yield child, depth + 1, "tool input", False
+
+    stack = [iter(((value, 0, "tool input", bool(native and isinstance(value, str))),))]
 
     while stack:
         try:
-            current, depth, field = next(stack[-1])
+            current, depth, field, data_field = next(stack[-1])
         except StopIteration:
             stack.pop()
             continue
@@ -1898,21 +1966,29 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
             total_string_bytes += current_bytes
             if len(strings) > MAX_STRUCTURED_STRINGS:
                 raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
-            if total_string_bytes > byte_limit:
+            if native and data_field:
+                content_bytes += current_bytes
+                if content_bytes > byte_limit:
+                    raise ScanLimitExceeded("inspection_source_bytes" if native.kind == "shell" else "native_content_bytes", byte_limit, content_bytes, "bytes", field)
+            elif native:
+                metadata_text(current)
+            elif total_string_bytes > byte_limit:
                 source = field if current_bytes > byte_limit else "tool input"
                 raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
         elif isinstance(current, dict):
             stack.append(dictionary_children(current, depth))
         elif isinstance(current, (list, tuple)):
             stack.append(sequence_children(current, depth))
+        elif native:
+            metadata_text(json.dumps(current), key=True)
 
     key_bytes = sum(len(key.encode("utf-8")) for key in keys)
     if native:
-        aggregate_bytes = total_string_bytes + key_bytes
-        if aggregate_bytes > byte_limit:
-            raise ScanLimitExceeded("structured_bytes", byte_limit, aggregate_bytes, "bytes")
         if native.kind == "patch":
             native = _parse_native_patch(native.data[0])
+            if native is not None:
+                for path in native.metadata:
+                    metadata_text(path)
         if native is not None:
             TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE = native.kind + "_v1", "native", "recognized_profile"
             return native
@@ -2167,7 +2243,11 @@ def main() -> int:
         mode = "block"
 
     try:
-        payload = read_json_input()
+        payload = read_json_input(max_bytes=MAX_GUARD_INPUT_BYTES, max_markers=MAX_GUARD_INPUT_MARKERS)
+    except InputLimitError as limit:
+        threat = ScanLimitExceeded(limit.rule_id, limit.limit, limit.measured, limit.unit).threat()
+        reason = build_block_reason("", [threat], "command omitted", "blocked")
+        emit_deny_response(input_failure_reason(reason, limit.rule_id))
     except ValueError:
         emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
     except Exception as exc:  # noqa: BLE001 - intentional top-level fallback

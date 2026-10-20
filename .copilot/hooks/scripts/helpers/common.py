@@ -53,6 +53,12 @@ def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
         time.sleep(min(0.01, remaining))
 
 
+class InputLimitError(ValueError):
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str):
+        self.rule_id, self.limit, self.measured, self.unit = rule_id, limit, measured, unit
+        super().__init__(rule_id)
+
+
 def _read_stdin_chunk(stdin_fd: int, max_bytes: int, timeout: float) -> bytes | None:
     if os.name == "nt":
         # Pre-3.12 Windows pipes require PeekNamedPipe, not POSIX flags.
@@ -75,6 +81,7 @@ def _read_available_stdin_bytes(
     stdin_fd: int,
     max_bytes: int = INPUT_MAX_BYTES,
     deadline: float | None = None,
+    *, initial_bytes: int = 0,
 ) -> bytes:
     if deadline is None:
         deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
@@ -90,12 +97,12 @@ def _read_available_stdin_bytes(
             break
         total += len(chunk)
         if total > max_bytes:
-            raise ValueError("Invalid hook input: raw byte limit exceeded")
+            raise InputLimitError("raw_input_bytes", max_bytes + initial_bytes, total + initial_bytes, "bytes")
         chunks.append(chunk)
     return b"".join(chunks)
 
 
-def _read_json_input_text() -> str:
+def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int | None = None) -> str:
     try:
         stdin_fd = sys.stdin.fileno()
     except (AttributeError, OSError):
@@ -104,7 +111,7 @@ def _read_json_input_text() -> str:
 
     deadline = time.monotonic() + INPUT_COMPLETION_TOTAL_SECONDS
     chunks: list[bytes] = []
-    total = 0
+    total = markers = 0
     stack: list[int] = []
     started = False
     in_string = False
@@ -115,21 +122,22 @@ def _read_json_input_text() -> str:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise ValueError("Invalid hook input: input deadline exceeded")
-        chunk = _read_stdin_chunk(stdin_fd, min(65536, INPUT_MAX_BYTES - total + 1),
+        chunk = _read_stdin_chunk(stdin_fd, min(65536, max_bytes - total + 1),
                                   min(INPUT_COMPLETION_IDLE_SECONDS, remaining))
         if chunk is None:
             raise ValueError("Invalid hook input: malformed or incomplete JSON")
         if not chunk:
             return b"".join(chunks).decode("utf-8")
         total += len(chunk)
-        if total > INPUT_MAX_BYTES:
-            raise ValueError("Invalid hook input: raw byte limit exceeded")
+        if total > max_bytes:
+            raise InputLimitError("raw_input_bytes", max_bytes, total, "bytes")
         chunks.append(chunk)
 
         # Scan structural markers once in C, skipping ordinary UTF-8 bytes.
         # json.loads remains the full syntax authority after bounded collection.
-        cursor = 0
-        for match in re.finditer(rb'["\\\[\]{}]', chunk):
+        cursor = 1 if in_string and escaped else 0
+        escaped = False
+        for match in re.compile(rb'(?:\\[\s\S])+|["\\\[\]{},:]').finditer(chunk, cursor):
             position = match.start()
             byte = chunk[position]
             if not started:
@@ -137,28 +145,28 @@ def _read_json_input_text() -> str:
                     raise ValueError("Invalid hook input: expected a JSON object")
                 started = True
             if in_string:
-                if escaped and position == cursor:
-                    escaped = False
-                else:
-                    # Ordinary bytes between markers already consumed an escape.
-                    escaped = byte == 92
-                    if byte == 34:
-                        in_string = False
-            elif byte == 34:
-                in_string = True
-            elif byte in (123, 91):
-                stack.append(byte)
-                if len(stack) > INPUT_MAX_DEPTH:
-                    raise ValueError("Invalid hook input: nesting limit exceeded")
-            elif byte in (125, 93):
-                if not stack or stack.pop() != (123 if byte == 125 else 91):
-                    raise ValueError("Invalid hook input: malformed JSON")
-                complete = not stack
-                if complete:
-                    if chunk[position + 1:].strip(b" \t\r\n"):
-                        raise ValueError("Invalid hook input: trailing data")
-                    break
-            cursor = position + 1
+                escaped = byte == 92 and match.end() - position == 1
+                if byte == 34:
+                    in_string = False
+            else:
+                markers += 1
+                if max_markers is not None and markers > max_markers:
+                    raise InputLimitError("raw_structural_markers", max_markers, markers, "markers")
+                if byte == 34:
+                    in_string = True
+                elif byte in (123, 91):
+                    stack.append(byte)
+                    if len(stack) > INPUT_MAX_DEPTH:
+                        raise ValueError("Invalid hook input: nesting limit exceeded")
+                elif byte in (125, 93):
+                    if not stack or stack.pop() != (123 if byte == 125 else 91):
+                        raise ValueError("Invalid hook input: malformed JSON")
+                    complete = not stack
+                    if complete:
+                        if chunk[position + 1:].strip(b" \t\r\n"):
+                            raise ValueError("Invalid hook input: trailing data")
+                        break
+            cursor = match.end()
         if not started and chunk[cursor:].strip(b" \t\r\n"):
             raise ValueError("Invalid hook input: expected a JSON object")
         if escaped and cursor < len(chunk):
@@ -168,16 +176,18 @@ def _read_json_input_text() -> str:
         if time.monotonic() >= deadline:
             raise ValueError("Invalid hook input: input deadline exceeded")
         if complete:
-            trailing = _read_available_stdin_bytes(stdin_fd, INPUT_MAX_BYTES - total, deadline)
+            trailing = _read_available_stdin_bytes(stdin_fd, max_bytes - total, deadline, initial_bytes=total)
             if trailing.strip(b" \t\r\n"):
                 raise ValueError("Invalid hook input: trailing data")
             chunks.append(trailing)
             return b"".join(chunks).decode("utf-8")
 
 
-def read_json_input() -> dict:
+def read_json_input(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int | None = None) -> dict:
     try:
-        payload = json.loads(_read_json_input_text())
+        payload = json.loads(_read_json_input_text(max_bytes=max_bytes, max_markers=max_markers))
+    except InputLimitError:
+        raise
     except (ValueError, OSError) as exc:
         raise ValueError("Invalid hook input: expected a JSON object") from exc
 

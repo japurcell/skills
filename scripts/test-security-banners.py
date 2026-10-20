@@ -63,17 +63,18 @@ class SecurityBannerTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 # Only Gemini recognizes this native write schema. Other providers
                 # retain strict inspection and its original byte bound.
-                limit = 65536 if provider == 'gemini' else 32768
+                limit = 1048576 if provider == 'gemini' else 32768
                 measured = limit + 1
                 value = {'content': 'x' * measured, 'file_path': '/tmp/demo.txt'}
                 response, rows = self.invoke(provider, 'block', 'write_file', value)
                 reason = self.reason(response)
-                self.assertIn('structured_bytes', reason)
+                rule = 'native_content_bytes' if provider == 'gemini' else 'structured_bytes'
+                self.assertIn(rule, reason)
                 self.assertIn('write_file.content', reason)
                 self.assertIn(f'{limit} bytes', reason)
                 self.assertIn(f'{measured} bytes', reason)
                 self.assertNotIn('TOOL_GUARD_ALLOWLIST', reason)
-                self.assertEqual(rows[-1]['threats'][0]['rule_id'], 'structured_bytes')
+                self.assertEqual(rows[-1]['threats'][0]['rule_id'], rule)
                 self.assertIn(rows[-1]['threats'][0]['cause'], reason)
                 self.assertEqual(rows[-1]['excerpt'], 'command omitted')
                 warned, _ = self.invoke(provider, 'warn', 'write_file', value)

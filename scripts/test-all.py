@@ -64,6 +64,7 @@ SUITES = (
     ("python3", "scripts/test-tool-guard-native-data.py"),
     ("python3", "scripts/test-tool-guard-shell-data.py"),
     ("python3", "scripts/test-tool-guard-limits.py"),
+    ("python3", "scripts/test-tool-guard-file-operations.py"),
     ("python3", "scripts/test-benchmark-high-rate-hooks.py"),
     ("python3", "scripts/test-verify-hook-release.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),

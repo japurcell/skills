@@ -141,31 +141,39 @@ class HookInputBoundsTests(unittest.TestCase):
             if provider in ("copilot", "codex"):
                 prefix = "*** Begin Patch\n*** Add File: example.txt\n+"
                 suffix = "\n*** End Patch"
-                size = 262144 - (7 if provider == "codex" else 0)
+                size = 1048576
                 patch = prefix + "\x01" * (size - len(prefix + suffix)) + suffix
                 value = {"command": patch} if provider == "codex" else patch
                 tool = "apply_patch"
             else:
-                value = {"file_path": "example.txt", "content": "\x01" * (65536 - 27)}
+                value = {"file_path": "example.txt", "content": "\x01" * 1048576}
                 tool = "write_file"
             payload = self.payload(provider, tool, value)
-            payload["session_id"] = "m" * (500 * 1024)
+            payload["session_id"] = "m" * 16000
             raw = json.dumps(payload, separators=(",", ":")).encode()
-            self.assertLess(len(raw), 2 * 1024 * 1024)
+            self.assertLess(len(raw), 6889472)
             with self.subTest(provider=provider, raw_bytes=len(raw)):
                 process = self.start(provider)
                 process.stdin.write(raw)
                 process.stdin.flush()
                 self.assertEqual(decision(provider, self.response(process)), "allow")
+            # More transport headroom never grants unbounded envelope metadata.
+            payload["session_id"] = "m" * (500 * 1024)
+            process = self.start(provider)
+            process.stdin.write(json.dumps(payload, separators=(",", ":")).encode())
+            process.stdin.flush()
+            response = self.response(process)
+            self.assertEqual(decision(provider, response), "deny")
+            self.assertIn("envelope_metadata_bytes", json.dumps(response))
 
     def test_raw_ceiling_includes_buffered_trailing_whitespace(self) -> None:
         # A regular stdin fixture makes every trailing byte available at completion.
         # Producers writing after the reader observes an empty pipe are outside that boundary.
-        for length, expected in ((2097152, "allow"), (2097153, "deny")):
-            source = self.directory / ".git" / "input.json"
-            source.write_bytes(b"{}" + b" " * (length - 2))
-            for provider in PROVIDERS:
-                for hook in ("tool-guard", "scan-secrets"):
+        for hook, ceiling in (("tool-guard", 6889472), ("scan-secrets", 2097152)):
+            for length, expected in ((ceiling, "allow"), (ceiling + 1, "deny")):
+                source = self.directory / ".git" / "input.json"
+                source.write_bytes(b"{}" + b" " * (length - 2))
+                for provider in PROVIDERS:
                     path = script_path(ROOT, provider).with_name(hook + ".py")
                     with self.subTest(provider=provider, hook=hook, length=length), source.open("rb") as stream:
                         result = subprocess.run([sys.executable, "-B", str(path)], stdin=stream,
@@ -175,6 +183,8 @@ class HookInputBoundsTests(unittest.TestCase):
                                                 cwd=self.directory, timeout=1.5)
                         self.assertEqual(result.returncode, 0, result.stderr)
                         self.assertEqual(decision(provider, json.loads(result.stdout)), expected)
+                        if hook == "tool-guard" and expected == "deny":
+                            self.assertIn("6889473 bytes exceeds limit 6889472 bytes", result.stdout.decode())
 
     def test_finite_invalid_input_does_not_pay_idle_timeout(self) -> None:
         for provider in PROVIDERS:
@@ -264,7 +274,11 @@ class HookInputBoundsTests(unittest.TestCase):
                             self.assertIsNone(process.poll(), "valid object prefix was rejected or completed")
                             process.stdin.write(raw[split:])
                             process.stdin.flush()
-                            self.assertEqual(decision(provider, self.response(process)), "allow")
+                            response = self.response(process)
+                            exceeds_guard_metadata = hook == "tool-guard" and len(content.encode()) > 32768
+                            self.assertEqual(decision(provider, response), "deny" if exceeds_guard_metadata else "allow")
+                            if exceeds_guard_metadata:
+                                self.assertIn("envelope_metadata_bytes", json.dumps(response))
 
             # A valid string containing a literal escaped quote cannot hide the
             # dangerous field that follows it in the same object.

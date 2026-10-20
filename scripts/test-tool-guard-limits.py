@@ -69,12 +69,11 @@ class ResourceLimitTests(unittest.TestCase):
     def test_native_utf8_body_maximum_and_first_rejected_aggregate(self) -> None:
         for provider, tool, path_key, body_key in (('copilot', 'create', 'path', 'file_text'),
                                                   ('gemini', 'write_file', 'file_path', 'content')):
-            overhead = len(path_key + body_key + 'example.txt')
-            available = 65536 - overhead
+            available = 1048576
             body = '界' * (available // 3) + 'x' * (available % 3)
             maximum = {path_key: 'example.txt', body_key: body}
             overflow = {path_key: 'example.txt', body_key: body + 'x'}
-            self.assert_boundary(provider, tool, maximum, overflow, 'structured_bytes', '65537 bytes')
+            self.assert_boundary(provider, tool, maximum, overflow, 'native_content_bytes', '1048577 bytes')
 
 
     def assert_patch_boundary(self, maximum: str, overflow: str, rule: str, count: str) -> None:
@@ -83,24 +82,38 @@ class ResourceLimitTests(unittest.TestCase):
             invalid = overflow if provider == 'copilot' else {'command': overflow}
             self.assert_boundary(provider, 'apply_patch', valid, invalid, rule, count)
 
-    def test_native_patch_operation_normalization_ascii_maximum(self) -> None:
+    def test_native_patch_ascii_metadata_maximum(self) -> None:
         prefix, suffix = '*** Begin Patch\n*** Delete File: ', '\n*** End Patch'
-        self.assert_patch_boundary(prefix + 'x' * 32768 + suffix, prefix + 'x' * 32769 + suffix,
-                                   'normalized_operation_bytes', '32769 bytes')
+        for provider, key_bytes in (('codex', 7), ('copilot', 0)):
+            maximum = prefix + 'x' * (32768 - key_bytes) + suffix
+            overflow = prefix + 'x' * (32769 - key_bytes) + suffix
+            self.assert_boundary(provider, 'apply_patch',
+                                 {'command': maximum} if provider == 'codex' else maximum,
+                                 {'command': overflow} if provider == 'codex' else overflow,
+                                 'metadata_bytes', '32769 bytes')
 
     def test_native_patch_operation_nfkc_expansion_and_casefold_maxima(self) -> None:
         prefix, suffix = '*** Begin Patch\n*** Delete File: ', '\n*** End Patch'
         # U+FDFA expands 3 UTF-8 bytes to 33; U+0390 casefold expands 2 to 6.
-        for path in ('\ufdfa' * 992 + 'x' * 32, '\u0390' * 5461 + 'xx'):
+        for path, rule in (('\ufdfa' * 992 + 'x' * 32, 'normalized_scan_text_bytes'),
+                           ('\u0390' * 5461 + 'xx', 'normalized_operation_bytes')):
             self.assert_patch_boundary(prefix + path + suffix, prefix + path + 'x' + suffix,
-                                       'normalized_operation_bytes', '32769 bytes')
+                                       rule, '32769 bytes')
 
     def test_native_patch_normalized_work_is_aggregate_across_operations(self) -> None:
         prefix, suffix = '*** Begin Patch\n', '\n*** End Patch'
         path = '\ufdfa' * 496 + 'x' * 16
         maximum = prefix + '*** Delete File: ' + path + '\n*** Delete File: ' + path + suffix
         overflow = maximum.replace(path + suffix, path + 'x' + suffix)
-        self.assert_patch_boundary(maximum, overflow, 'normalized_operation_bytes', '32769 bytes')
+        self.assert_patch_boundary(maximum, overflow, 'normalized_metadata_bytes', '32769 bytes')
+
+    def test_patch_casefold_work_still_has_an_aggregate_operation_bound(self) -> None:
+        first = '\u0390' * 2730 + 'x'
+        second = '\u0390' * 2731 + 'x'
+        prefix = '*** Begin Patch\n*** Delete File: ' + first + '\n*** Delete File: '
+        suffix = '\n*** End Patch'
+        self.assert_patch_boundary(prefix + second + suffix, prefix + second + 'x' + suffix,
+                                   'normalized_operation_bytes', '32769 bytes')
 
     def test_recognized_search_paths_first_rejected_string(self) -> None:
         self.assert_boundary('copilot', 'grep', {'pattern': 'safe', 'paths': ['docs'] * 127},

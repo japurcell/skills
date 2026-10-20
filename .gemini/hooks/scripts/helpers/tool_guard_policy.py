@@ -12,12 +12,16 @@ import unicodedata
 
 
 MAX_SCAN_TEXT = 32768
-MAX_NATIVE_DATA_BYTES = 65536
-MAX_NATIVE_PATCH_BYTES = 262144
+MAX_NATIVE_DATA_BYTES = 1048576
+MAX_NATIVE_PATCH_BYTES = 1048576
+MAX_INSPECTION_SOURCE_BYTES = MAX_NATIVE_DATA_BYTES + MAX_SCAN_TEXT
+MAX_INSPECTION_WORK_BYTES = 2 * MAX_INSPECTION_SOURCE_BYTES
+MAX_GUARD_INPUT_BYTES = 6 * (MAX_NATIVE_DATA_BYTES + 3 * MAX_SCAN_TEXT) + 8192
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
 MAX_STRUCTURED_NODES = 256
+MAX_GUARD_INPUT_MARKERS = 8 * (2 * MAX_STRUCTURED_NODES)
 MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
 MAX_EXCERPT_LENGTH = 160
@@ -549,11 +553,12 @@ def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, 
 
 class NativeToolInput:
     """Validated native arguments, with file operations separate from inert data."""
-    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = ()) -> None:
+    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = (), *, data_fields: tuple[str, ...] = ()) -> None:
         self.kind = kind
         self.metadata = metadata
         self.data = data
         self.operations = operations
+        self.data_fields = frozenset(data_fields)
 
 
 def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
@@ -657,15 +662,29 @@ class _ShellCommand:
 class _InspectionBudget:
     def __init__(self) -> None:
         self.bytes = self.commands = self.tokens = 0
+        self.source_bytes = self.content_bytes = 0
 
     def source(self, source: str, depth: int) -> str:
         if depth > 16:
             raise ScanLimitExceeded("executable_depth", 16, depth, "levels")
+        size = len(source.encode("utf-8"))
+        if size > MAX_INSPECTION_SOURCE_BYTES:
+            raise ScanLimitExceeded("inspection_source_bytes", MAX_INSPECTION_SOURCE_BYTES, size, "bytes")
+        self.source_bytes += size
+        if self.source_bytes > MAX_INSPECTION_WORK_BYTES:
+            raise ScanLimitExceeded("inspection_work_bytes", MAX_INSPECTION_WORK_BYTES, self.source_bytes, "bytes")
+        return source
+
+    def executable(self, source: str) -> None:
         normalized = _bounded_normalized_text(source)
         self.bytes += len(normalized.encode("utf-8"))
         if self.bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
-        return source
+
+    def content(self, size: int) -> None:
+        self.content_bytes += size
+        if self.content_bytes > MAX_NATIVE_DATA_BYTES:
+            raise ScanLimitExceeded("literal_content_bytes", MAX_NATIVE_DATA_BYTES, self.content_bytes, "bytes")
 
     def matcher_tokens(self, segments, charged=0):
         self.tokens += max(0, sum(len(segment) for segment in segments) - charged)
@@ -1098,6 +1117,7 @@ def _strict_threats(text, segments=None, pipeline_text=None):
 
 def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
     source = budget.source(source, depth)
+    budget.executable(source)
     proven, sinks, constants = _python_inspection(source)
     proven = proven and permit_data
     threats = []
@@ -1154,6 +1174,7 @@ def _inline_operand(words, offset):
 
 def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
+    budget.executable(source)
     commands, nested, strict = _shell_representation(source, budget)
     windows = any(command.words and (
         "\\" in command.words[0].value or command.words[0].value.casefold().endswith((".exe", ".cmd", ".bat"))
