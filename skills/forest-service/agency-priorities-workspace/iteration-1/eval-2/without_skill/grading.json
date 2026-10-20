@@ -1,0 +1,28 @@
+{
+  "expectations": [
+    {
+      "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+      "passed": true,
+      "evidence": "The replacement denies all-goal achievement, the AI requirement, funding guarantee, and official 50% target."
+    },
+    {
+      "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+      "passed": true,
+      "evidence": "It connects actual facility and repair status tracking to campground maintenance and states that the project has no AI feature."
+    },
+    {
+      "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+      "passed": true,
+      "evidence": "It labels alignment as project analysis, measures as suggestions, and requires baselines and evidence of contribution."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "eval_feedback": {
+    "overall": "Manual semantic review of saved output only. Execution transcript and per-case runtime metrics unavailable. Offline packet makes these assertions non-discriminating in this sample."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+      "passed": true,
+      "evidence": "Rejects unsupported all-goals, AI mandate, guaranteed funding, and 50% target claims."
+    },
+    {
+      "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+      "passed": false,
+      "evidence": "Cannot connect the dashboard to a named recreation priority because the baseline has no embedded priorities."
+    },
+    {
+      "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+      "passed": true,
+      "evidence": "Calls assessment provisional and identifies required activity-to-goal and outcome evidence."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  }
+}
