@@ -13,7 +13,7 @@ import shlex
 
 from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
 
-FIXTURE_SETS = ("historical-v1", "file-operations-v1")
+FIXTURE_SETS = ("historical-v1", "file-operations-v1", "file-operations-v2")
 HISTORICAL_TIMING_CASES = (
     'guard.clean',
     'guard.finding',
@@ -150,7 +150,7 @@ def resource_inputs(provider: str, fixture_set: str):
         raise ValueError("unknown fixture set: " + fixture_set)
     result = [(name, payload(provider, tool, value), "block", "none")
               for name, tool, value, _expected in historical_fixtures(provider)]
-    if fixture_set == "file-operations-v1":
+    if fixture_set in {"file-operations-v1", "file-operations-v2"}:
         from tool_guard_corpus import file_operation_fixtures, encode, envelope
         result.extend((fixture.name, encode(envelope(provider, fixture)), "block", "none")
                       for fixture in file_operation_fixtures())
@@ -162,6 +162,10 @@ def resource_inputs(provider: str, fixture_set: str):
                 result.append((f"audit-unavailable.{mode}.{label}", payload(provider, shell, {"command": command}), mode, "audit-unavailable"))
             result.append((f"bootstrap.{mode}", payload(provider, shell, {"command": "echo safe"}), mode, "missing-policy"))
         result.append(("transport.malformed", b"{invalid json\n", "block", "malformed-json"))
+    if fixture_set == "file-operations-v2":
+        result = [(name, data, mode, "raw-envelope" if name in {"structure-wide-overflow", "native-wide-paths-overflow"} else injection)
+                  for name, data, mode, injection in result]
+        result.extend(capacity_inputs(provider))
     return result
 
 
@@ -180,7 +184,10 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
         document = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_unique_object)
         if not isinstance(document, dict) or type(document.get("schema_version")) is not int or document["schema_version"] != 1:
             raise ValueError("unsupported expectation schema version")
-        contracts = document["fixture_sets"][fixture_set][section]
+        suite = document["fixture_sets"][fixture_set]
+        contracts = suite[section]
+        if fixture_set == "file-operations-v2":
+            validate_partition(suite)
     except (OSError, KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError("missing or invalid reviewed expectations: " + str(exc)) from exc
     if not isinstance(contracts, dict):
@@ -190,7 +197,8 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
         raise ValueError("expectations require complete unique case IDs; missing or unknown cases")
     for name, data, mode, injection in inputs:
         entry = contracts[name]
-        if not isinstance(entry, dict) or set(entry) != {"input_sha256", "injection", "baseline", "candidate"}:
+        if (not isinstance(entry, dict) or not {"input_sha256", "injection", "baseline", "candidate"} <= set(entry)
+                or set(entry) - {"input_sha256", "injection", "baseline", "candidate", "reader_limits", "structural_markers"}):
             raise ValueError(name + ": invalid expectation entry")
         if entry["input_sha256"] != hashlib.sha256(data).hexdigest():
             raise ValueError(name + ": stale fixture hash")
@@ -206,8 +214,23 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
             if not isinstance(audit, dict) or set(audit) != {"outcome", "event", "records_per_call"}:
                 raise ValueError(name + ": invalid audit contract")
             outcome = audit["outcome"]
+            if injection == "raw-envelope" or "reader_limits" in entry or "structural_markers" in entry:
+                limits = entry.get("reader_limits")
+                if (not isinstance(limits, dict) or set(limits) != {"baseline", "candidate"}
+                        or any(not isinstance(value, dict) or set(value) != {"max_bytes", "max_markers"}
+                               or type(value["max_bytes"]) is not int or value["max_bytes"] <= 0
+                               or value["max_markers"] is not None and (type(value["max_markers"]) is not int or value["max_markers"] <= 0)
+                               for value in limits.values())):
+                    raise ValueError(name + ": missing reviewed reader limits")
+                count = raw_structural_size(data)
+                if type(entry.get("structural_markers")) is not int or entry["structural_markers"] != count:
+                    raise ValueError(name + ": stale structural marker count")
+                current = limits[condition]
+                exceeded = (len(data) > current["max_bytes"] or current["max_markers"] is not None and count > current["max_markers"])
+                if injection == "raw-envelope" and exceeded != (outcome == "not_attempted"):
+                    raise ValueError(name + ": reader boundary contract mismatch")
             if outcome == "written":
-                if type(audit["records_per_call"]) is not int or audit["records_per_call"] != 1 or audit["event"] not in ("guard_passed", "threats_detected") or injection not in {"none"}:
+                if type(audit["records_per_call"]) is not int or audit["records_per_call"] != 1 or audit["event"] not in ("guard_passed", "threats_detected") or injection not in {"none", "raw-envelope"}:
                     raise ValueError(name + ": contradictory written audit contract")
                 if contract["decision"] == "deny" and audit["event"] != "threats_detected":
                     raise ValueError(name + ": denied call cannot have clean audit")
@@ -216,7 +239,7 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
                     raise ValueError(name + ": contradictory absent audit contract")
                 if outcome == "failed" and injection != "audit-unavailable":
                     raise ValueError(name + ": failed audit requires failure injection")
-                if outcome == "not_attempted" and injection not in {"malformed-json", "missing-policy"}:
+                if outcome == "not_attempted" and injection not in {"malformed-json", "missing-policy", "raw-envelope"}:
                     raise ValueError(name + ": not_attempted requires transport/bootstrap injection")
             else:
                 raise ValueError(name + ": invalid audit outcome")
@@ -256,7 +279,17 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
                 raise ValueError(name + ": failed audit requires response attribution")
             if outcome == "not_attempted" and fixture_set != "historical-v1":
                 cause = "policy_unavailable" if injection == "missing-policy" else "input_invalid"
-                if attrs != {"audit_outcome": "not_attempted", "security_outcome": "incomplete", "enforcement": "deny", "cause": cause}:
+                allowed = {cause}
+                if "reader_limits" in entry:
+                    allowed = {"input_invalid"} if condition == "baseline" else set()
+                    limits = entry["reader_limits"][condition]
+                    if len(data) > limits["max_bytes"]:
+                        allowed.add("raw_input_bytes")
+                    if limits["max_markers"] is not None and entry["structural_markers"] > limits["max_markers"]:
+                        allowed.add("raw_structural_markers")
+                if (set(attrs) != {"audit_outcome", "security_outcome", "enforcement", "cause"}
+                        or attrs["audit_outcome"] != "not_attempted" or attrs["security_outcome"] != "incomplete"
+                        or attrs["enforcement"] != "deny" or attrs["cause"] not in allowed):
                     raise ValueError(name + ": missing transport/bootstrap attribution")
     return contracts
 
@@ -303,3 +336,139 @@ class ResourceCase:
     environment: dict[str, str]
     expected_decision: str
     fixture_metadata: dict
+
+
+# Reviewed 1 MiB capacity universe. Every size remains part of its frozen ID.
+def capacity_inputs(provider):
+    from tool_guard_corpus import Fixture, encode, envelope, patch
+    result = []
+    for capacity in (1048576,):
+        def native(body):
+            if provider == "codex":
+                return payload(provider, "apply_patch", {"command": body})
+            return payload(provider, "create" if provider == "copilot" else "write_file",
+                           {"path": "example.txt", "file_text": body} if provider == "copilot"
+                           else {"file_path": "example.txt", "content": body})
+        def shell(command):
+            fixture = Fixture("probe", "provider_shell", {"command": command}, "deny", "allow", "capacity", "probe")
+            return encode(envelope(provider, fixture))
+        for extra in (0, 1):
+            text = patch(4, size=capacity + extra) if provider == "codex" else "x" * (capacity + extra)
+            result.append((f"capacity-{capacity}.native-{'overflow' if extra else 'max'}", native(text), "block", "none"))
+        text = patch(4, size=capacity) if provider == "codex" else "x" * capacity
+        encoded = native(text).decode()
+        encoded = encoded.replace("x", "\\u0078").encode()
+        result.append((f"capacity-{capacity}.native-escaped-max", encoded, "block", "none"))
+        # High-line patch bodies exercise list/storage cost independently of bytes.
+        prefix, suffix = "*** Begin Patch\n*** Add File: example.txt\n", "*** End Patch"
+        high = prefix + "+\n" * ((capacity - len(prefix + suffix)) // 2) + suffix
+        high = high.replace("+\n", "+" + "x" * (capacity - len(high)) + "\n", 1)
+        assert len(high.encode("utf-8")) == capacity
+        if provider in {"codex", "copilot"}:
+            value = {"command": high} if provider == "codex" else high
+            data = payload(provider, "apply_patch", value)
+            result.append((f"capacity-{capacity}.patch-high-lines-exact", data, "block", "none"))
+        else:
+            data = payload(provider, "replace", {"file_path": "example.txt", "old_string": "x" * (capacity // 2),
+                                                  "new_string": "y" * (capacity - capacity // 2), "instruction": "Replace exact text"})
+            result.append((f"capacity-{capacity}.edit-aggregate", data, "block", "none"))
+        unicode_body = "界" * (capacity // 3) + "x" * (capacity % 3)
+        if provider == "codex":
+            unicode_body = patch(4, size=capacity - 3 * (capacity // 6))
+            unicode_body = unicode_body.replace("+safe", "+" + "界" * (capacity // 6) + "safe", 1)
+        result.append((f"capacity-{capacity}.native-unicode", native(unicode_body), "block", "none"))
+        body = "x" * (capacity - 1) + "\n"
+        writer = "cat > example.txt <<'EOF'\n" + body + "EOF"
+        result.append((f"capacity-{capacity}.shell-max", shell(writer), "block", "none"))
+        result.append((f"capacity-{capacity}.shell-unproved", shell("echo '" + body + "'"), "block", "none"))
+        literal = "x" * (capacity - len("example.txtSaved"))
+        source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(literal) + ")\nprint('Saved')\n"
+        result.append((f"capacity-{capacity}.python-wrapped", shell("rtk proxy python3 - <<'PY'\n" + source + "PY"), "block", "none"))
+        result.append((f"capacity-{capacity}.python-inline", shell("python3 -c " + shlex.quote(source)), "block", "none"))
+        raw_limit = 6 * (capacity + 3 * 32768) + 8192
+        clean = shell("echo safe").rstrip()
+        for extra in (0, 1):
+            result.append((f"capacity-{capacity}.raw-interior-{'overflow' if extra else 'max'}",
+                           clean[:-1] + b" " * (raw_limit + extra - len(clean)) + b"}", "block", "raw-envelope"))
+        text = patch(4, size=capacity).replace("x", '"') if provider == "codex" else '"' * capacity
+        result.append((f"capacity-{capacity}.native-quoted-max", native(text), "block", "none"))
+        event = json.loads(shell("echo safe"))
+        event["unused_metadata"] = ["x"] * capacity
+        result.append((f"capacity-{capacity}.envelope-wide", json.dumps(event, separators=(",", ":")).encode(), "block", "none"))
+        result.append((f"capacity-{capacity}.shell-source-overflow", shell("x" * (capacity + 32769)), "block", "none"))
+        result.append((f"capacity-{capacity}.shell-literal-overflow", shell("cat > example.txt <<'EOF'\n" + "x" * capacity + "\nEOF"), "block", "none"))
+        large_source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(literal + "x") + ")\nprint('Saved')\n"
+        result.append((f"capacity-{capacity}.python-constant-overflow", shell("rtk proxy python3 - <<'PY'\n" + large_source + "PY"), "block", "none"))
+        unproved = "value=" + repr("x" * (capacity - 32))
+        result.append((f"capacity-{capacity}.python-unproved", shell("python3 -c " + shlex.quote(unproved)), "block", "none"))
+        for label, command in (("shell-escaped-max", writer), ("python-escaped-max", "rtk proxy python3 - <<'PY'\n" + source + "PY")):
+            result.append((f"capacity-{capacity}.{label}", shell(command).decode().replace("x", "\\u0078").encode(), "block", "none"))
+        # Dense invalid markers stress bounded collection before json.loads rejects.
+        bomb = b'{"x":' + b'"' * (raw_limit - 6) + b'}'
+        assert len(bomb) == raw_limit
+        result.append((f"capacity-{capacity}.raw-marker-exhaustion", bomb, "block", "malformed-json"))
+    return [(name, data, mode, "raw-envelope" if injection != "malformed-json" and (injection == "raw-envelope" or len(data) > 2097152 or name.endswith(".envelope-wide")) else injection)
+            for name, data, mode, injection in result]
+
+
+def raw_structural_size(data):
+    """Independent fixture proof from decoded JSON, plus one declared invalid bomb."""
+    try:
+        value = json.loads(data)
+    except ValueError:
+        if data.startswith(b'{"x":') and data.endswith(b'}') and data[5:-1].count(b'"') == len(data) - 6 and (len(data) - 6) % 2 == 0:
+            return 4 + (len(data) - 6) // 2
+        raise ValueError("unsupported invalid structural fixture") from None
+    stack, total = [value], 0
+    while stack:
+        current = stack.pop()
+        if isinstance(current, str):
+            total += 1
+        elif isinstance(current, dict):
+            total += 2 + 2 * len(current) + max(0, len(current) - 1)
+            stack.extend(current.values())
+        elif isinstance(current, list):
+            total += 2 + max(0, len(current) - 1)
+            stack.extend(current)
+    return total
+
+
+def validate_partition(suite: dict) -> dict:
+    """Require the reviewed D14 split, independent of run results and filters."""
+    partition = suite.get("throughput_partition")
+    if not isinstance(partition, dict) or set(partition) != {"established", "observations"}:
+        raise ValueError("missing reviewed throughput partition")
+    from tool_guard_corpus import file_operation_fixtures
+    established = set(HISTORICAL_TIMING_CASES)
+    established.update("guard." + fixture.name for fixture in file_operation_fixtures())
+    for mode in ("block", "warn"):
+        for label in ("clean", "finding", "incomplete"):
+            established.update((f"guard.mode.{mode}.{label}", f"guard.audit-unavailable.{mode}.{label}"))
+        established.add(f"guard.bootstrap.{mode}")
+    established.add("guard.transport.malformed")
+    capacity_labels = ("native-max", "native-overflow", "native-escaped-max", "native-unicode",
+                       "shell-max", "shell-unproved", "python-wrapped", "python-inline",
+                       "raw-interior-max", "raw-interior-overflow", "native-quoted-max",
+                       "envelope-wide", "shell-source-overflow", "shell-literal-overflow",
+                       "python-constant-overflow", "python-unproved", "shell-escaped-max",
+                       "python-escaped-max", "raw-marker-exhaustion")
+    observations = {f"{provider}.guard.capacity-1048576.{label}" for provider in SHELL_TOOLS
+                    for label in (*capacity_labels, "edit-aggregate" if provider == "gemini" else "patch-high-lines-exact")}
+    expected = {"established": {f"{provider}.{name}" for provider in SHELL_TOOLS for name in established},
+                "observations": observations}
+    for label, count in (("established", 219), ("observations", 60)):
+        names = partition[label]
+        if (not isinstance(names, list) or any(not isinstance(name, str) for name in names)
+                or len(names) != count or len(set(names)) != count or set(names) != expected[label]):
+            raise ValueError("invalid reviewed throughput partition: " + label)
+    if set(partition["established"]) & set(partition["observations"]):
+        raise ValueError("overlapping throughput partition")
+    return partition
+
+
+def fixture_metadata(entry: dict, condition: str) -> dict:
+    result = {"contract": entry[condition], "injection": entry["injection"]}
+    if "reader_limits" in entry:
+        result.update(reader_limits=entry["reader_limits"][condition],
+                      structural_markers=entry["structural_markers"])
+    return result

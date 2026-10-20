@@ -28,7 +28,7 @@ from hook_benchmark_support import (
 )
 from fixtures.tool_guard_resource_cases import (
     FIXTURE_SETS, HISTORICAL_TIMING_CASES, DEFAULT_EXPECTATIONS, resource_inputs,
-    load_contracts, validate_response,
+    load_contracts, validate_response, fixture_metadata,
 )
 
 
@@ -74,7 +74,7 @@ def fixture_cases(root: Path, fixture_set: str, mode: str):
     if mode == "timing":
         cases = [case for case in release_cases(root, "candidate")
                  if case.name.split(".", 1)[1] in HISTORICAL_TIMING_CASES]
-        if fixture_set == "file-operations-v1":
+        if fixture_set in {"file-operations-v1", "file-operations-v2"}:
             from tool_guard_corpus import file_operation_fixtures, encode, envelope
             cases.extend(high_rate.Case(f"{provider}.guard.{fixture.name}", script_path(root, provider),
                                        encode(envelope(provider, fixture)), "clean", {"GUARD_MODE": "block"})
@@ -83,7 +83,7 @@ def fixture_cases(root: Path, fixture_set: str, mode: str):
                 cases.extend(high_rate.Case(f"{provider}.guard.{name}", script_path(root, provider), data,
                                            "clean", {"GUARD_MODE": guard_mode}, fixture_metadata={"injection": injection})
                              for name, data, guard_mode, injection in resource_inputs(provider, fixture_set)
-                             if injection != "none" or name.startswith("mode."))
+                             if injection not in {"none", "raw-envelope"} or name.startswith(("mode.", "capacity-")))
         return cases
     return [high_rate.Case(f"{provider}.resources.{name}", script_path(root, provider), data,
                            "clean", {"GUARD_MODE": guard_mode}, fixture_metadata={"injection": injection})
@@ -98,8 +98,7 @@ def selected_cases(root: Path, condition: str, names: list[str], mode: str,
                                 (case.fixture_metadata or {}).get("injection", "malformed-json" if case.name.endswith(".guard.failure") else "none"))
                                for case in cases])
     cases = [replace(case, expected_decision=contracts[case.name][condition]["decision"],
-                     fixture_metadata={**(case.fixture_metadata or {}), "contract": contracts[case.name][condition],
-                                       "injection": contracts[case.name]["injection"]}) for case in cases]
+                     fixture_metadata=fixture_metadata(contracts[case.name], condition)) for case in cases]
     known = {case.name for case in cases}
     if set(names) - known:
         raise ValueError("unknown exact case: " + ", ".join(sorted(set(names) - known)))
@@ -277,7 +276,42 @@ def comparisons(report: dict) -> list[dict]:
     for name, conditions in by_case.items():
         if len(conditions) == 2:
             rows.append(compare(name, "cold", {key: high_rate.summary(value) for key, value in conditions.items()}, 5, 10))
+    partition = report.get("throughput_partition")
+    if partition is not None:
+        for row in rows:
+            observation = (report["comparison_reference"] == "original"
+                           and row["case"] in partition["observations"])
+            row["classification"] = "changed-workload-observation" if observation else "gated"
+            if observation:
+                row["met"] = None
     return rows
+
+
+def validate_measurements(report: dict, names: list[str], mode: str, cold_samples: int) -> None:
+    """Reject partial evidence, including entirely missing comparison rows."""
+    expected = set(names)
+    if len(expected) != len(names) or not names:
+        raise ValueError("complete unique selected cases required")
+    if mode == "resources":
+        rows = report["resources"]
+        identities = [(row.get("case"), row.get("condition")) for row in rows]
+        wanted = {(name, label) for name in names for label in ORDER[0]}
+        if len(identities) != len(wanted) or set(identities) != wanted or any("ceiling_met" not in row for row in rows):
+            raise ValueError("incomplete resource rows")
+        return
+    warm = [(row.get("case"), row.get("condition"), row.get("pair")) for row in report["warm"] if "summary" in row]
+    wanted = {(name, label, pair) for name in names for label in ORDER[0] for pair in (0, 1)}
+    cold = [(row.get("case"), row.get("condition"), row.get("index")) for row in report["cold"] if "elapsed_ms" in row]
+    wanted_cold = {(name, label, index) for name in names for label in ORDER[0] for index in range(cold_samples)}
+    comparisons = [(row.get("case"), row.get("phase")) for row in report.get("comparisons", [])]
+    wanted_comparisons = {(name, phase) for name in names for phase in ("warm-pair-1", "warm-pair-2", "cold")}
+    if (len(warm) != len(wanted) or set(warm) != wanted or len(cold) != len(wanted_cold)
+            or set(cold) != wanted_cold or len(comparisons) != len(wanted_comparisons)
+            or set(comparisons) != wanted_comparisons):
+        raise ValueError("incomplete timing rows or comparisons")
+    if report.get("fixture_set") == "file-operations-v2":
+        if any(max(row["first_process_ms"], *row["samples_ms"]) > 500 for row in report["warm"]) or any(row["elapsed_ms"] > 500 for row in report["cold"]):
+            raise ValueError("finite-case 500 ms ceiling exceeded")
 
 
 def compare(name: str, phase: str, conditions: dict, median_limit: float, p95_limit: float) -> dict:
@@ -320,6 +354,7 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
                 row = {"pair": pair, "condition": condition, "case": case.name,
                        "expected_decision": case.expected_decision,
                        "contract": (case.fixture_metadata or {}).get("contract"),
+                       "fixture_metadata": case.fixture_metadata,
                        "input_sha256": hashlib.sha256(case.payload).hexdigest()}
                 report["warm"].append(row)
                 rows[condition] = row
@@ -336,6 +371,7 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
                 row = {"condition": condition, "case": case.name, "index": index,
                        "expected_decision": case.expected_decision,
                        "contract": (case.fixture_metadata or {}).get("contract"),
+                       "fixture_metadata": case.fixture_metadata,
                        "input_sha256": hashlib.sha256(case.payload).hexdigest(),
                        "copy_id": identity + "/source", "home_id": identity + "/home",
                        "bytecode_before": len(list(source.rglob("*.pyc")))}
@@ -385,7 +421,8 @@ def measure_resources(report: dict, roots: dict, selected: dict, temporary: Path
             print(f"resources: {condition} {case.name}", file=sys.stderr, flush=True)
             row = {"condition": condition, "case": case.name, "ceiling_ms": 500,
                    "input_sha256": hashlib.sha256(case.payload).hexdigest(),
-                   "contract": (case.fixture_metadata or {}).get("contract")}
+                   "contract": (case.fixture_metadata or {}).get("contract"),
+                   "fixture_metadata": case.fixture_metadata}
             report["resources"].append(row)
             home = temporary / condition / case.name
             warm_run(case, frozen, repo, home, samples, warmups, row)
@@ -410,6 +447,8 @@ def main() -> int:
     parser.add_argument("--fixture-set", choices=FIXTURE_SETS, default="historical-v1")
     parser.add_argument("--expectations", type=Path, help="reviewed hash-pinned per-condition expectations")
     parser.add_argument("--candidate-root", type=Path, help="frozen final candidate checkout")
+    parser.add_argument("--baseline-condition", choices=("baseline", "candidate"), default="baseline", help="reviewed reference expectation condition")
+    parser.add_argument("--comparison-reference", choices=("original", "equivalent"), default="original", help="original baseline or fixed equivalent-work candidate reference")
     parser.add_argument("--candidate-condition", choices=("baseline", "candidate"), default="candidate", help="baseline observations for an A/A check")
     parser.add_argument("--mode", choices=("timing", "resources"), default="timing")
     parser.add_argument("--case", action="append", default=[], help="exact case name; repeat this flag for an isolated repeat")
@@ -417,12 +456,15 @@ def main() -> int:
     parser.add_argument("--list", action="store_true", help="list maintained cases and explicit condition expectations")
     parser.add_argument("--mechanics-only", action="store_true", help="two samples and no warmups; NOT release evidence")
     args = parser.parse_args()
+    if ((args.comparison_reference == "equivalent" and (args.baseline_condition != "candidate" or args.candidate_condition != "candidate"))
+            or (args.comparison_reference == "original" and args.baseline_condition != "baseline")):
+        parser.error("comparison reference and expectation condition mismatch")
     if args.fixture_set != "historical-v1" and args.expectations is None:
         parser.error("--expectations is required for an explicit new fixture set")
     if args.list:
         try:
             candidate = selected_cases(Path("."), args.candidate_condition, args.case, args.mode, args.fixture_set, args.expectations)
-            baseline = {case.name: case for case in selected_cases(Path("."), "baseline", args.case, args.mode, args.fixture_set, args.expectations)}
+            baseline = {case.name: case for case in selected_cases(Path("."), args.baseline_condition, args.case, args.mode, args.fixture_set, args.expectations)}
         except ValueError as exc:
             parser.error(str(exc))
         print(json.dumps([{"case": case.name, "expected": {"baseline": baseline[case.name].expected_decision,
@@ -436,16 +478,22 @@ def main() -> int:
         parser.error("release verification requires native macOS")
     roots = {"baseline": args.baseline_root.resolve(), "candidate": args.candidate_root.resolve()}
     try:
-        selected = {condition: selected_cases(root, args.candidate_condition if condition == "candidate" else condition, args.case, args.mode, args.fixture_set, args.expectations) for condition, root in roots.items()}
+        selected = {condition: selected_cases(root, args.candidate_condition if condition == "candidate" else args.baseline_condition, args.case, args.mode, args.fixture_set, args.expectations) for condition, root in roots.items()}
         before = {condition: resources.fingerprints(root) for condition, root in roots.items()}
         if not args.mechanics_only and before["baseline"] != baseline_fingerprints(args.baseline_ref):
             raise ValueError("baseline runtime fingerprints do not match " + args.baseline_ref)
     except (ValueError, OSError, subprocess.CalledProcessError) as exc:
         parser.error(str(exc))
+    partition = None
+    if args.fixture_set == "file-operations-v2":
+        document = json.loads(args.expectations.read_text(encoding="utf-8"))
+        partition = document["fixture_sets"][args.fixture_set]["throughput_partition"]
     counts = (2, 0, 2) if args.mechanics_only else (25, 3, 25)
     report = {"baseline_reference": args.baseline_ref, "fixture_set": args.fixture_set, "mode": args.mode,
               "release_acceptance_eligible": not args.mechanics_only and not args.case and args.candidate_condition == "candidate",
               "candidate_expectation_condition": args.candidate_condition,
+              "baseline_expectation_condition": args.baseline_condition,
+              "comparison_reference": args.comparison_reference, "throughput_partition": partition,
               "environment": {"platform": platform.platform(), "machine": platform.machine(),
                               "python": sys.version, "python_executable": sys.executable,
                               "git": subprocess.check_output(["git", "--version"], text=True).strip()},
@@ -482,7 +530,14 @@ def main() -> int:
         except OSError as exc:
             report["sources_unchanged"] = False
             report["errors"].append(f"cannot recheck frozen source: {exc}")
-        passed = not report["errors"] and all(row["met"] for row in report.get("comparisons", [])) and all(row.get("ceiling_met", False) for row in report["resources"])
+        try:
+            validate_measurements(report, [case.name for case in selected["baseline"]], args.mode, counts[2])
+        except (ValueError, KeyError) as exc:
+            report["errors"].append(str(exc))
+        report["gate_partition"] = {
+            "gated_comparisons": sum(row.get("classification", "gated") == "gated" for row in report.get("comparisons", [])),
+            "changed_workload_observations": sum(row.get("classification") == "changed-workload-observation" for row in report.get("comparisons", []))}
+        passed = not report["errors"] and all(row["met"] is not False for row in report.get("comparisons", [])) and all(row.get("ceiling_met", False) for row in report["resources"])
         report["gates_met"] = passed
         # Mechanics checks exercise collection and validation without noisy
         # low-count timing comparisons becoming an acceptance claim.

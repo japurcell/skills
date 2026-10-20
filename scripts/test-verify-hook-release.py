@@ -73,6 +73,133 @@ class ReleaseVerificationTests(unittest.TestCase):
             source += "print(" + repr(json.dumps(response)) + ")\n"
             script.write_text(source)
 
+    def test_v2_preserves_old_universes_and_adds_reviewed_capacity(self):
+        adapter = load_adapter()
+        path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        for section, count in (("timing", 279), ("resources", 231)):
+            old = adapter.selected_cases(Path("."), "baseline", [], section, "file-operations-v1", path)
+            new = adapter.selected_cases(Path("."), "baseline", [], section, "file-operations-v2", path)
+            self.assertEqual(len(new), count)
+            by_name = {c.name: c for c in new}
+            for case in old:
+                self.assertEqual(case.payload, by_name[case.name].payload)
+                self.assertEqual(case.fixture_metadata["contract"], by_name[case.name].fixture_metadata["contract"])
+            if section == "resources":
+                other = adapter.resources.selected_cases(Path("."), "file-operations-v2", path, "baseline")
+                self.assertEqual([(c.name, c.payload, c.fixture_metadata) for c in new],
+                                 [(c.name, c.payload, c.fixture_metadata) for c in other])
+
+    def test_v2_rejects_stale_reader_proofs_before_filtering(self):
+        adapter = load_adapter()
+        path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        original = json.loads(path.read_text())
+        for mutation in ("missing", "extra", "classification", "markers", "boolean", "incomplete", "false_absence", "wrong_cause"):
+            document = json.loads(json.dumps(original))
+            suite = document["fixture_sets"]["file-operations-v2"]
+            entry = suite["timing"]["codex.guard.capacity-1048576.raw-interior-max"]
+            if mutation == "missing": suite["throughput_partition"]["established"].pop()
+            elif mutation == "extra": suite["throughput_partition"]["observations"].append("codex.guard.unknown")
+            elif mutation == "classification":
+                old = suite["throughput_partition"]["established"].pop()
+                new = suite["throughput_partition"]["observations"].pop()
+                suite["throughput_partition"]["established"].append(new)
+                suite["throughput_partition"]["observations"].append(old)
+            elif mutation == "markers": entry["structural_markers"] += 1
+            elif mutation == "boolean": entry["reader_limits"]["baseline"]["max_bytes"] = True
+            elif mutation == "incomplete": del entry["reader_limits"]["candidate"]
+            elif mutation == "false_absence":
+                entry["candidate"] = json.loads(json.dumps(entry["baseline"]))
+                entry["candidate"]["attribution"]["cause"] = "input_invalid"
+            else:
+                suite["timing"]["codex.guard.capacity-1048576.raw-interior-overflow"]["candidate"]["attribution"]["cause"] = "input_invalid"
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                altered = Path(temporary) / "expectations.json"
+                altered.write_text(json.dumps(document))
+                with self.assertRaises(ValueError):
+                    adapter.selected_cases(Path("."), "candidate", ["codex.guard.clean"], "timing", "file-operations-v2", altered)
+
+    def test_v2_reference_partition_and_complete_comparisons(self):
+        adapter = load_adapter()
+        name = "codex.guard.capacity-1048576.native-max"
+        report = {"comparison_reference": "original", "throughput_partition": {
+            "established": ["codex.guard.clean"], "observations": [name]},
+            "warm": [{"pair": pair, "case": case, "condition": condition,
+                      "summary": {"median_ms": 10 if condition == "baseline" else 100, "p95_ms": 100}}
+                     for pair in (0, 1) for case in ("codex.guard.clean", name)
+                     for condition in ("baseline", "candidate")], "cold": []}
+        rows = adapter.comparisons(report)
+        observations = [row for row in rows if row["case"] == name]
+        self.assertTrue(all(row["met"] is None and row["classification"] == "changed-workload-observation" for row in observations))
+        report["comparison_reference"] = "equivalent"
+        self.assertTrue(all(row["met"] is False and row["classification"] == "gated" for row in adapter.comparisons(report)))
+        with self.assertRaisesRegex(ValueError, "complete"):
+            adapter.validate_measurements(report, ["codex.guard.clean", name], "timing", 25)
+        for reference, condition in (("equivalent", "baseline"), ("original", "candidate")):
+            result = self.run_cli("--list", "--comparison-reference", reference, "--baseline-condition", condition)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("condition", result.stderr)
+
+    def test_v2_absent_audit_requires_independent_reader_overflow(self):
+        adapter = load_adapter()
+        from hook_benchmark_support import prepare_failure, verify_audit
+        case = adapter.selected_cases(Path("."), "candidate", ["codex.resources.capacity-1048576.raw-interior-overflow"],
+                                      "resources", "file-operations-v2", adapter.DEFAULT_EXPECTATIONS)[0]
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            prepare_failure(case, home)
+            proof = verify_audit(home, case, 1)
+            self.assertTrue(proof["failure_injection"]["valid_json"])
+            self.assertTrue(proof["failure_injection"]["reader_limit_exceeded"])
+            limits = {**case.fixture_metadata["reader_limits"], "max_bytes": len(case.payload)}
+            false = replace(case, fixture_metadata={**case.fixture_metadata, "reader_limits": limits})
+            with self.assertRaisesRegex(ValueError, "boundary"):
+                prepare_failure(false, home)
+            with self.assertRaisesRegex(ValueError, "boundary"):
+                verify_audit(home, false, 1)
+            stale = replace(case, fixture_metadata={**case.fixture_metadata, "structural_markers": True})
+            with self.assertRaisesRegex(ValueError, "marker"):
+                prepare_failure(stale, home)
+        original = json.loads(adapter.DEFAULT_EXPECTATIONS.read_text())
+        suite = original["fixture_sets"]["file-operations-v2"]
+        malformed = "codex.resources.capacity-1048576.raw-marker-exhaustion"
+        suite["resources"][malformed]["injection"] = "raw-envelope"
+        with tempfile.TemporaryDirectory() as temporary:
+            altered = Path(temporary) / "expectations.json"
+            altered.write_text(json.dumps(original))
+            with self.assertRaises(ValueError):
+                adapter.selected_cases(Path("."), "candidate", [], "resources", "file-operations-v2", altered)
+
+    def test_complete_evidence_rejects_each_missing_or_duplicate_row(self):
+        adapter = load_adapter()
+        name = "codex.guard.clean"
+        report = {"warm": [{"case": name, "condition": label, "pair": pair,
+                            "summary": {"median_ms": 10, "p95_ms": 10}}
+                           for pair in (0, 1) for label in ("baseline", "candidate")],
+                  "cold": [{"case": name, "condition": label, "index": 0, "elapsed_ms": 10}
+                           for label in ("baseline", "candidate")]}
+        report["comparisons"] = adapter.comparisons(report)
+        adapter.validate_measurements(report, [name], "timing", 1)
+        for section in ("warm", "cold", "comparisons"):
+            for change in ("missing", "duplicate"):
+                altered = json.loads(json.dumps(report))
+                if change == "missing": altered[section].pop()
+                else: altered[section].append(altered[section][0])
+                with self.subTest(section=section, change=change), self.assertRaisesRegex(ValueError, "incomplete"):
+                    adapter.validate_measurements(altered, [name], "timing", 1)
+
+    def test_resource_loader_rejects_consistently_forged_timing_partition(self):
+        adapter = load_adapter()
+        document = json.loads(adapter.DEFAULT_EXPECTATIONS.read_text())
+        suite = document["fixture_sets"]["file-operations-v2"]
+        suite["timing"]["codex.guard.unknown"] = suite["timing"].pop("codex.guard.clean")
+        names = suite["throughput_partition"]["established"]
+        names[names.index("codex.guard.clean")] = "codex.guard.unknown"
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "expectations.json"
+            path.write_text(json.dumps(document))
+            with self.assertRaisesRegex(ValueError, "partition"):
+                adapter.resources.selected_cases(Path("."), "file-operations-v2", path, "candidate")
+
     def test_reviewed_contracts_reject_missing_unknown_stale_and_wrong_mode(self) -> None:
         source = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
         original = json.loads(source.read_text())

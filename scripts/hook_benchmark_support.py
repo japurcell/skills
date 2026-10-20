@@ -61,10 +61,15 @@ def prepare_failure(case, home: Path):
         if (source / "helpers/tool_guard_policy.py").exists():
             raise ValueError("bootstrap failure injection did not remove policy")
         return replace(case, script=source / case.script.name)
+    if injection == "raw-envelope":
+        reader_boundary_proof(case)
+        return case
     if injection == "malformed-json":
         try:
             json.loads(case.payload)
         except (ValueError, UnicodeDecodeError):
+            if "reader_limits" in (case.fixture_metadata or {}):
+                reader_boundary_proof(case)
             return case
         raise ValueError("transport failure injection is valid JSON")
     if injection != "none":
@@ -88,11 +93,14 @@ def verify_audit(home: Path, case, calls: int) -> dict:
         if missing.exists() or not missing.parent.is_dir():
             raise ValueError("missing-policy failure condition missing")
         injection_proof = {"kind": injection, "policy_absent": True}
+    elif injection == "raw-envelope":
+        injection_proof = reader_boundary_proof(case)
     elif injection == "malformed-json":
         try:
             json.loads(case.payload)
         except (ValueError, UnicodeDecodeError):
-            injection_proof = {"kind": injection, "invalid_json": True}
+            injection_proof = (reader_boundary_proof(case) if "reader_limits" in case.fixture_metadata
+                               else {"kind": injection, "invalid_json": True})
         else:
             raise ValueError("transport failure condition missing")
     files = [home / "guard.log"] if not case.name.startswith("gemini.") else sorted((home / "guard").glob("*.log"))
@@ -131,3 +139,31 @@ def guardian_decision(provider: str, output: dict, *, contract: dict | None = No
 def guardian_canonical_paths() -> tuple[str, ...]:
     return ("hooks/families/tool_guard.py", "hooks/families/reporting.py", "hooks/families/allowlist.py",
             "hooks/families/common.py", "hooks/families/audit.py")
+
+
+def reader_boundary_proof(case) -> dict:
+    """Prove declared transport outcomes independently, outside subprocess clocks."""
+    from fixtures.tool_guard_resource_cases import raw_structural_size
+    metadata = case.fixture_metadata
+    limits = metadata.get("reader_limits")
+    if (not isinstance(limits, dict) or set(limits) != {"max_bytes", "max_markers"}
+            or type(limits["max_bytes"]) is not int or limits["max_bytes"] <= 0
+            or limits["max_markers"] is not None and (type(limits["max_markers"]) is not int or limits["max_markers"] <= 0)):
+        raise ValueError("missing reviewed reader limits")
+    markers = raw_structural_size(case.payload)
+    if type(metadata.get("structural_markers")) is not int or markers != metadata["structural_markers"]:
+        raise ValueError("stale structural marker count")
+    try:
+        json.loads(case.payload)
+        valid = True
+    except (ValueError, UnicodeDecodeError):
+        valid = False
+    injection = metadata["injection"]
+    if valid != (injection == "raw-envelope"):
+        raise ValueError("transport injection JSON validity mismatch")
+    exceeded = (len(case.payload) > limits["max_bytes"]
+                or limits["max_markers"] is not None and markers > limits["max_markers"])
+    if valid and exceeded != (metadata["contract"]["audit"]["outcome"] == "not_attempted"):
+        raise ValueError("raw boundary failure condition missing")
+    return {"kind": injection, "payload_bytes": len(case.payload), "reviewed_limits": limits,
+            "structural_markers": markers, "valid_json": valid, "reader_limit_exceeded": exceeded}

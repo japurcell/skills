@@ -21,7 +21,7 @@ from hook_benchmark_support import (
 )
 from fixtures.tool_guard_resource_cases import (
     FIXTURE_SETS, DEFAULT_EXPECTATIONS, resource_inputs, load_contracts,
-    validate_response, ResourceCase, historical_fixtures as fixtures, payload,
+    validate_response, fixture_metadata, ResourceCase, historical_fixtures as fixtures, payload,
 )
 
 
@@ -63,7 +63,7 @@ def selected_cases(root: Path, fixture_set: str, expectations: Path | None, cond
     contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, "resources", inputs)
     return [ResourceCase(name, script_path(root, name.split(".")[0]), data,
                          {"GUARD_MODE": mode}, contracts[name][condition]["decision"],
-                         {"contract": contracts[name][condition], "injection": injection})
+                         fixture_metadata(contracts[name], condition))
             for name, data, mode, injection in inputs]
 
 
@@ -136,7 +136,7 @@ def main() -> int:
                 contract = case.fixture_metadata['contract']
                 row = {'case': case.name, 'input_bytes': len(case.payload),
                        'input_sha256': hashlib.sha256(case.payload).hexdigest(),
-                       'contract': contract, 'expected_decision': case.expected_decision,
+                       'contract': contract, 'fixture_metadata': case.fixture_metadata, 'expected_decision': case.expected_decision,
                        'samples_ms': [], 'outputs': [], 'ceiling_ms': args.ceiling_ms}
                 report['results'].append(row)
                 calls = 0
