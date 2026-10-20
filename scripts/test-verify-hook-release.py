@@ -2,6 +2,7 @@
 """Check release evidence mechanics through bounded disposable CLI runs."""
 from __future__ import annotations
 
+import hashlib
 import json
 import importlib.util
 from dataclasses import replace
@@ -41,7 +42,7 @@ class ReleaseVerificationTests(unittest.TestCase):
             cache.mkdir()
             (cache / "source.pyc").write_bytes(b"stale bytecode must not be copied")
             source = (
-                "import hashlib, json, os, pathlib, sys\n"
+                "import fcntl, hashlib, json, os, pathlib, sys\n"
                 "from helpers import marker\n"
                 "assert os.environ['OBSERVABILITY_TESTING'] == '1'\n"
                 "if os.environ.get('PYTHONDONTWRITEBYTECODE'): assert not list(pathlib.Path(__file__).parent.rglob('*.pyc'))\n"
@@ -49,11 +50,14 @@ class ReleaseVerificationTests(unittest.TestCase):
             )
             if trace is not None:
                 source += (
+                    "sequence_lock = open(pathlib.Path(os.environ['HOME']) / 'sequence.lock', 'w')\n"
+                    "fcntl.flock(sequence_lock, fcntl.LOCK_EX)\n"
                     "sequence = pathlib.Path(os.environ['HOME']) / 'sequence'\n"
                     "index = int(sequence.read_text()) if sequence.exists() else 0\n"
                     "sequence.write_text(str(index + 1))\n"
                     "with pathlib.Path(" + repr(str(trace)) + ").open('a') as out: out.write(json.dumps(["
                     + repr(root.name) + ", hashlib.sha256(payload).hexdigest(), index]) + '\\n')\n"
+                    "fcntl.flock(sequence_lock, fcntl.LOCK_UN)\n"
                 )
             if logging:
                 source += (
@@ -68,6 +72,159 @@ class ReleaseVerificationTests(unittest.TestCase):
                         if provider == "copilot" else {})
             source += "print(" + repr(json.dumps(response)) + ")\n"
             script.write_text(source)
+
+    def test_reviewed_contracts_reject_missing_unknown_stale_and_wrong_mode(self) -> None:
+        source = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        original = json.loads(source.read_text())
+        for mutation in ("missing", "unknown", "stale", "mode", "contradictory", "missing_attribution", "wrong_enforcement", "invalid_type"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                document = json.loads(json.dumps(original))
+                cases = document["fixture_sets"]["file-operations-v1"]["timing"]
+                target = cases["codex.guard.clean"]
+                if mutation == "missing": del cases["codex.guard.clean"]
+                elif mutation == "unknown": cases["codex.guard.unknown"] = target
+                elif mutation == "stale": target["input_sha256"] = "0" * 64
+                elif mutation == "mode": target["candidate"]["mode"] = "warn"
+                elif mutation == "contradictory": target["candidate"]["audit"]["records_per_call"] = 0
+                elif mutation == "missing_attribution": cases["codex.guard.audit-unavailable.warn.finding"]["candidate"]["attribution"] = {}
+                elif mutation == "wrong_enforcement": cases["codex.guard.audit-unavailable.warn.finding"]["candidate"]["attribution"]["enforcement"] = "deny"
+                else: cases["codex.guard.clean"] = None
+                path = Path(temporary) / "expectations.json"
+                path.write_text(json.dumps(document))
+                result = self.run_cli("--list", "--fixture-set", "file-operations-v1",
+                                      "--expectations", str(path), "--case", "codex.guard.clean")
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_versioned_runners_agree_on_shared_resources(self) -> None:
+        adapter = load_adapter()
+        path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        for condition in ("baseline", "candidate"):
+            release = adapter.selected_cases(Path("."), condition, [], "resources", "file-operations-v1", path)
+            standalone = adapter.resources.selected_cases(Path("."), "file-operations-v1", path, condition)
+            self.assertEqual([(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in release],
+                             [(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in standalone])
+
+    def test_historical_fixture_hashes_and_expectations_are_pinned(self) -> None:
+        adapter = load_adapter()
+        digests = {
+            ("timing", "baseline"): "16f662c2d2b1c041613f8a6f2b79b26b64637a6904651d187b2505e8f4094dd6",
+            ("timing", "candidate"): "2b211b3f5bbe34cade8b88202132ddc80fa429fdcbe0e02aac0fc727ab73215e",
+            ("resources", "baseline"): "173af2be33560b9ef733579b749e83d3abe07ee5dd6320e31fb9ceac30d06789",
+            ("resources", "candidate"): "173af2be33560b9ef733579b749e83d3abe07ee5dd6320e31fb9ceac30d06789",
+        }
+        for mode, count in (("timing", 156), ("resources", 108)):
+            for condition in ("baseline", "candidate"):
+                cases = adapter.selected_cases(Path("."), condition, [], mode)
+                self.assertEqual(len(cases), count)
+                rows = [(case.name, hashlib.sha256(case.payload).hexdigest(), case.expected_decision) for case in cases]
+                self.assertEqual(hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest(),
+                                 digests[mode, condition])
+                self.assertFalse(any("writer.quoted-document" in case.name for case in cases))
+                self.assertTrue(all(case.environment["GUARD_MODE"] == "block" for case in cases))
+
+    def test_failure_contracts_through_real_public_entrypoints(self) -> None:
+        adapter = load_adapter()
+        expectations = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        root = CLI.resolve().parents[1]
+        cases = adapter.selected_cases(root, "baseline", [], "resources", "file-operations-v1", expectations)
+        with tempfile.TemporaryDirectory() as temporary:
+            for case in cases:
+                if not any(text in case.name for text in ("audit-unavailable", "bootstrap", "transport.malformed", ".mode.warn.")):
+                    continue
+                with self.subTest(case=case.name):
+                    home = Path(temporary) / case.name
+                    home.mkdir()
+                    current = adapter.prepared_case(case, root, home=home)
+                    adapter.checked_invocation(current, Path(temporary), home)
+                    proof = adapter.verify_logging(home, current, 1)
+                    adapter.logging_error(proof)
+                    self.assertEqual(proof["status"], case.fixture_metadata["contract"]["audit"]["outcome"])
+                    if case.fixture_metadata["injection"] != "none":
+                        self.assertIsNotNone(proof["failure_injection"])
+
+    @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
+    def test_wrong_mode_and_unexpected_allow_retain_failed_evidence(self) -> None:
+        for kind in ("mode", "allow"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.fixture(root / "baseline")
+                self.fixture(root / "candidate")
+                if kind == "mode":
+                    script = script_path(root / "candidate", "codex")
+                    script.write_text(script.read_text().replace("'mode': 'block'", "'mode': 'warn'"))
+                output = root / "failed.json"
+                result = self.run_cli("--baseline-root", str(root / "baseline"), "--candidate-root", str(root / "candidate"),
+                                      "--output", str(output), "--mechanics-only", "--case",
+                                      "codex.guard.clean" if kind == "mode" else "codex.guard.finding")
+                self.assertEqual(result.returncode, 1, result.stderr)
+                report = json.loads(output.read_text())
+                self.assertFalse(report["gates_met"])
+                self.assertIn("mode mismatch" if kind == "mode" else "expected deny", " ".join(report["errors"]))
+
+    @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
+    def test_clean_warn_pass_rejects_unexpected_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.fixture(root / "baseline")
+            self.fixture(root / "candidate")
+            script = script_path(root / "baseline", "codex")
+            script.write_text(script.read_text().replace("print('{}')", "print('{\"hookSpecificOutput\": {\"permissionDecision\": \"allow\"}, \"systemMessage\": \"unexpected warning\"}')"))
+            output = root / "failed.json"
+            result = self.run_cli("--baseline-root", str(root / "baseline"), "--candidate-root", str(root / "candidate"),
+                                  "--fixture-set", "file-operations-v1", "--expectations",
+                                  str(CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"),
+                                  "--output", str(output), "--mechanics-only", "--case", "codex.guard.mode.warn.clean")
+            self.assertEqual(result.returncode, 1, result.stderr)
+            report = json.loads(output.read_text())
+            self.assertIn("ordinary guardian passes must be silent", " ".join(report["errors"]))
+
+    @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
+    def test_completed_record_attribution_is_required_and_checked(self) -> None:
+        for field, value in ((None, None), ("enforcement", "deny"), ("security_outcome", "findings"), ("audit_outcome", "failed")):
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                self.fixture(root / "baseline")
+                self.fixture(root / "candidate")
+                if field is not None:
+                    script = script_path(root / "baseline", "codex")
+                    record = {"event": "guard_passed", "mode": "block", "enforcement": "allow",
+                              "security_outcome": "clean", "audit_outcome": "written"}
+                    record[field] = value
+                    script.write_text(script.read_text().replace("{'event': 'guard_passed', 'mode': 'block'}", repr(record)))
+                output = root / "failed.json"
+                result = self.run_cli("--baseline-root", str(root / "baseline"), "--candidate-root", str(root / "candidate"),
+                                      "--fixture-set", "file-operations-v1", "--expectations",
+                                      str(CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"),
+                                      "--output", str(output), "--mechanics-only", "--case", "codex.guard.clean")
+                self.assertEqual(result.returncode, 1, result.stderr)
+                report = json.loads(output.read_text())
+                self.assertIn("completed audit attribution mismatch", " ".join(report["errors"]))
+
+    def test_resource_latency_excludes_response_validation(self) -> None:
+        adapter = load_adapter()
+        contract = {"mode": "block", "decision": "allow", "attribution": {}}
+        from hook_benchmark_support import disposable_environment
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.object(adapter.resources, "validate_response", side_effect=lambda *_: time.sleep(0.06)):
+                start = time.perf_counter()
+                result = adapter.resources.checked_run([sys.executable, "-c", "print('{}')"], b"{}",
+                                                       disposable_environment(Path(temporary), "codex"),
+                                                       "codex", "allow", contract=contract)
+                wall_ms = (time.perf_counter() - start) * 1000
+            self.assertLess(result.elapsed_ms, wall_ms - 50)
+
+    def test_versioned_fixture_cli_requires_reviewed_expectations(self) -> None:
+        result = self.run_cli("--list", "--fixture-set", "file-operations-v1")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("--expectations", result.stderr)
+        result = self.run_cli("--list", "--fixture-set", "file-operations-v1",
+                              "--expectations", str(CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"),
+                              "--baseline-ref", "260c578ace3514c4f2f741f51d970fc2e938786d")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        rows = {row["case"]: row for row in json.loads(result.stdout)}
+        self.assertEqual(rows["codex.guard.writer.quoted-document"]["expected"],
+                         {"baseline": "deny", "candidate": "allow"})
 
     def test_public_list_maps_baseline_without_historical_mode(self) -> None:
         result = self.run_cli("--list")
@@ -147,7 +304,7 @@ class ReleaseVerificationTests(unittest.TestCase):
                                   "--output", str(output), "--mechanics-only",
                                   "--case", "codex.guard.clean",
                                   "--case", "codex.guard.patch.bytes-46899")
-            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.returncode, 0, result.stderr + str(json.loads(output.read_text())["errors"]))
             report = json.loads(output.read_text())
             self.assertFalse(report["release_acceptance_eligible"])
             self.assertEqual(report["method"]["warm_order"],
@@ -190,7 +347,7 @@ class ReleaseVerificationTests(unittest.TestCase):
             self.assertEqual(set(report["harness_sha256"]), {
                 "verify-hook-release.py", "benchmark-high-rate-hooks.py", "benchmark-tool-guard-resources.py",
                 "tool_guard_corpus.py", "fixtures/tool_guard_vectors.py", "hook_benchmark_support.py",
-                "hook_test_support.py",
+                "hook_test_support.py", "fixtures/tool_guard_resource_cases.py", "reviewed_expectations",
             })
 
     @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")

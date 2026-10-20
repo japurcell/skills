@@ -8,169 +8,183 @@ import json
 import math
 from pathlib import Path
 import platform
-import shlex
 import statistics
 import subprocess
 import sys
 import tempfile
 import time
 
-from tool_guard_corpus import PROVIDERS, decision, script_path
-from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
-from hook_benchmark_support import collect_macos_rss, disposable_environment, guardian_runtime_footprint
+from tool_guard_corpus import PROVIDERS, script_path
+from hook_benchmark_support import (
+    collect_macos_rss, disposable_environment, guardian_runtime_footprint,
+    prepare_failure, verify_audit, guardian_decision, guardian_canonical_paths,
+)
+from fixtures.tool_guard_resource_cases import (
+    FIXTURE_SETS, DEFAULT_EXPECTATIONS, resource_inputs, load_contracts,
+    validate_response, ResourceCase, historical_fixtures as fixtures, payload,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
-SHELL_TOOLS = {'copilot': 'bash', 'gemini': 'run_shell_command', 'codex': 'Bash'}
 
 
-def fixtures(provider: str) -> list[tuple[str, str, object, str]]:
-    shell = SHELL_TOOLS[provider]
-    cases = [
-        ('strict-max', 'X', 'x' * 32766, 'allow'),
-        ('strict-overflow', 'X', 'x' * 32767, 'deny'),
-        ('strict-utf8-max', 'X', '界' * 10922, 'allow'),
-        ('normalized-max', 'X', "'" + '\u0958' * 5460 + 'xxxx' + "'", 'allow'),
-        ('normalized-overflow', 'X', "'" + '\u0958' * 5460 + 'xxxxx' + "'", 'deny'),
-        ('quoted-max', shell, {'command': "echo '" + 'x' * 32754 + "'"}, 'allow'),
-        ('tokens-max', shell, {'command': ' '.join(['x'] * 256)}, 'allow'),
-        ('tokens-overflow', shell, {'command': ' '.join(['x'] * 257)}, 'deny'),
-        ('commands-max', shell, {'command': ';'.join(['x'] * 128)}, 'allow'),
-        ('commands-overflow', shell, {'command': ';'.join(['x'] * 129)}, 'deny'),
-        ('quoted-tokens-max', shell, {'command': "echo '" + 'x ' * 255 + "'"}, 'allow'),
-        ('quoted-tokens-overflow', shell, {'command': "echo '" + 'x ' * 256 + "'"}, 'deny'),
-        ('heredoc-tokens-max', shell, {'command': "cat <<'EOF'\n" + 'x ' * 254 + '\nEOF'}, 'allow'),
-        ('heredoc-tokens-overflow', shell, {'command': "cat <<'EOF'\n" + 'x ' * 255 + '\nEOF'}, 'deny'),
-        ('structure-nodes-max', 'unknown_tool', [0] * 255, 'allow'),
-        ('structure-wide-overflow', 'unknown_tool', [0] * 30000, 'deny'),
-        ('substitution-depth-max', shell, {'command': 'echo $(' * 16 + 'x' + ')' * 16}, 'allow'),
-        ('substitution-depth-overflow', shell, {'command': 'echo $(' * 17 + 'x' + ')' * 17}, 'deny'),
-    ]
-    writer = 'from pathlib import Path;Path("x").write_text('
-    assignment = 'from pathlib import Path;Path("x").write_text("safe");a='
-    for name, source, expected in (
-        ('python-syntax-max', writer + '"x"' * 1011 + ')', 'allow'),
-        ('python-syntax-overflow', writer + '"x"' * 1012 + ')', 'deny'),
-        ('python-literal-token-max', assignment + '"x"' * 1007, 'allow'),
-        ('python-literal-token-overflow', assignment + '"x"' * 1008, 'deny'),
-        ('python-ast-depth-max', 'x+' * 29 + 'x', 'allow'),
-        ('python-ast-depth-overflow', 'x+' * 30 + 'x', 'deny'),
-        ('python-decoded-literal', "x='" + '\\u754c' * 2000 + "'", 'allow')):
-        cases.append((name, shell, {'command': 'python3 -c ' + shlex.quote(source)}, expected))
-    resolved = "a='" + 'x' * 1024 + "';b=a+a;c=b+b;d=c+c;e=d+d;f=e+e"
-    cases.extend((('python-resolved-max', shell, {'command': 'python3 -c ' + shlex.quote(resolved)}, 'allow'),
-                  ('python-resolved-overflow', shell, {'command': 'python3 -c ' + shlex.quote(resolved + ';g=f+"x"')}, 'deny')))
-    if provider in {'copilot', 'gemini'}:
-        tool, path_key, body_key = ('create', 'path', 'file_text') if provider == 'copilot' else ('write_file', 'file_path', 'content')
-        available = 65536 - len(path_key + body_key + 'example.txt')
-        body = '界' * (available // 3) + 'x' * (available % 3)
-        cases.extend((('native-max', tool, {path_key: 'example.txt', body_key: body}, 'allow'),
-                      ('native-overflow', tool, {path_key: 'example.txt', body_key: body + 'x'}, 'deny')))
-    if provider in {'codex', 'copilot'}:
-        def patch_value(source: str) -> object:
-            return source if provider == 'copilot' else {'command': source}
-        key_bytes = 7 if provider == 'codex' else 0
-        case_prefix = 'native' if provider == 'codex' else 'patch'
-        patch = full_capacity_native_patch(key_bytes=key_bytes)
-        high_line_patch = full_capacity_native_patch(key_bytes=key_bytes, high_lines=130000)
-        path = '\ufdfa' * 496 + 'x' * 16
-        operations = '*** Begin Patch\n*** Delete File: ' + path + '\n*** Delete File: ' + path + '\n*** End Patch'
-        cases.extend(((case_prefix + '-max', 'apply_patch', patch_value(patch), 'allow'),
-                      (case_prefix + '-overflow', 'apply_patch', patch_value(patch.replace('+x', '+xx', 1)), 'deny'),
-                      (case_prefix + '-high-line-max', 'apply_patch', patch_value(high_line_patch), 'allow'),
-                      (case_prefix + '-malformed-full-size', 'apply_patch', patch_value(patch[:-1] + '!'), 'deny'),
-                      (case_prefix + '-malformed-high-line-full-size', 'apply_patch', patch_value(high_line_patch[:-1] + '!'), 'deny'),
-                      ('operation-normalized-max', 'apply_patch', patch_value(operations), 'allow'),
-                      ('operation-normalized-overflow', 'apply_patch', patch_value(operations.replace(path + '\n*** End', path + 'x\n*** End')), 'deny')))
-        for size in RECENT_NATIVE_PATCH_SIZES:
-            cases.append((case_prefix + '-recent-' + str(size), 'apply_patch', patch_value(sized_native_patch(size, files=3)), 'allow'))
-    if provider == 'copilot':
-        cases.append(('native-wide-paths-overflow', 'grep', {'pattern': 'safe', 'paths': ['docs'] * 30000}, 'deny'))
-    return cases
-
-
-def payload(provider: str, tool: str, value: object) -> bytes:
-    event = {'toolName': tool, 'toolArgs': value} if provider == 'copilot' else {'tool_name': tool, 'tool_input': value}
-    event['hook_event_name'] = 'BeforeTool' if provider == 'gemini' else 'PreToolUse'
-    return json.dumps(event, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
-
-
-def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str, *, cwd: Path | None = None) -> subprocess.CompletedProcess:
+def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: str, expected: str, *, cwd: Path | None = None, contract: dict | None = None) -> subprocess.CompletedProcess:
+    start = time.perf_counter_ns()
     result = subprocess.run(command, input=data, capture_output=True, env=env, cwd=cwd, timeout=5)
-    if result.returncode or decision(provider, json.loads(result.stdout)) != expected:
-        raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
+    result.elapsed_ms = (time.perf_counter_ns() - start) / 1_000_000
+    try:
+        output = json.loads(result.stdout)
+        if result.returncode or guardian_decision(provider, output, contract=contract) != expected:
+            raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
+        if contract is not None:
+            validate_response(contract, output)
+    except (RuntimeError, ValueError, UnicodeDecodeError) as exc:
+        exc.invocation = {"elapsed_ms": result.elapsed_ms, "exit_code": result.returncode,
+                          "stdout": result.stdout[:1024].decode("utf-8", errors="replace"),
+                          "stderr": result.stderr[:1024].decode("utf-8", errors="replace")}
+        raise
     return result
 
 
 def fingerprints(root: Path) -> dict[str, str]:
-    scripts, helpers, canonical = guardian_runtime_footprint()
+    scripts, helpers, _canonical = guardian_runtime_footprint()
     paths = {root / path for path in scripts}
     for helper in helpers:
         paths.update((root / helper).rglob('*.py'))
-    source = root / canonical
-    if source.is_file():
-        paths.add(source)
+    for source in [*(root / name for name in guardian_canonical_paths()), *(root / "hooks/runtime").rglob("*.py")]:
+        if source.is_file():
+            paths.add(source)
     return {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(paths)}
+
+
+def selected_cases(root: Path, fixture_set: str, expectations: Path | None, condition: str):
+    inputs = [(f"{provider}.resources.{name}", data, mode, injection)
+              for provider in PROVIDERS for name, data, mode, injection in resource_inputs(provider, fixture_set)]
+    contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, "resources", inputs)
+    return [ResourceCase(name, script_path(root, name.split(".")[0]), data,
+                         {"GUARD_MODE": mode}, contracts[name][condition]["decision"],
+                         {"contract": contracts[name][condition], "injection": injection})
+            for name, data, mode, injection in inputs]
+
+
+def harness_fingerprints(expectations: Path | None) -> dict:
+    names = ("benchmark-tool-guard-resources.py", "hook_benchmark_support.py", "tool_guard_corpus.py",
+             "fixtures/tool_guard_resource_cases.py", "fixtures/tool_guard_vectors.py")
+    result = {name: hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest() for name in names}
+    result["reviewed_expectations"] = hashlib.sha256((expectations or DEFAULT_EXPECTATIONS).read_bytes()).hexdigest()
+    return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--script-root', type=Path, default=ROOT)
-    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--fixture-set', choices=FIXTURE_SETS, default='historical-v1')
+    parser.add_argument('--expectations', type=Path)
+    parser.add_argument('--condition', choices=('baseline', 'candidate'), default='candidate')
+    parser.add_argument('--list', action='store_true')
+    parser.add_argument('--output', type=Path)
     parser.add_argument('--samples', type=int, default=25)
     parser.add_argument('--warmups', type=int, default=3)
-    parser.add_argument('--ceiling-ms', type=float, required=True, help='documented ceiling derived from retained existing workloads')
+    parser.add_argument('--ceiling-ms', type=float, default=500, help='accepted finite-case latency ceiling')
     args = parser.parse_args()
+    if args.fixture_set != 'historical-v1' and args.expectations is None:
+        parser.error('--expectations is required for an explicit new fixture set')
+    root = args.script_root.resolve()
+    try:
+        cases = selected_cases(root, args.fixture_set, args.expectations, args.condition)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
+    if args.list:
+        print(json.dumps([{'case': case.name, 'input_sha256': hashlib.sha256(case.payload).hexdigest(),
+                           **case.fixture_metadata['contract']} for case in cases], indent=2))
+        return 0
+    if args.output is None:
+        parser.error('--output is required')
+    if args.output.exists():
+        parser.error('--output already exists; retain original evidence and choose a new path')
     if platform.system() != 'Darwin':
         parser.error('peak-RSS collector requires native macOS /usr/bin/time -l')
     if args.samples < 5 or args.warmups < 0 or args.ceiling_ms <= 0:
         parser.error('samples must be at least 5; warmups nonnegative; ceiling positive')
-    root = args.script_root.resolve()
     missing = [str(script_path(root, provider)) for provider in PROVIDERS if not script_path(root, provider).is_file()]
     if missing:
         parser.error('missing hook entrypoints: ' + ', '.join(missing))
     before = fingerprints(root)
-    results = []
-    with tempfile.TemporaryDirectory(prefix='tool-guard-resources-') as temporary:
-        for provider in PROVIDERS:
-            for name, tool, value, expected in fixtures(provider):
-                home = Path(temporary) / provider / name
-                home.mkdir(parents=True)
-                env = disposable_environment(home, provider)
-                env['GUARD_MODE'] = 'block'
-                command = [sys.executable, str(script_path(root, provider))]
-                data, timings, first = payload(provider, tool, value), [], None
-                for index in range(1 + args.warmups + args.samples):
-                    start = time.perf_counter_ns()
-                    output = checked_run(command, data, env, provider, expected)
-                    elapsed = (time.perf_counter_ns() - start) / 1_000_000
-                    if index == 0:
-                        first = elapsed
-                    elif index > args.warmups:
-                        timings.append(elapsed)
-                memory, rss = collect_macos_rss(command, lambda argv: checked_run(argv, data, env, provider, expected))
-                if rss is None:
-                    raise RuntimeError('macOS time did not report peak resident set size')
-                median = statistics.median(timings)
-                results.append({'case': f'{provider}.resources.{name}', 'input_bytes': len(data),
-                                'expected_decision': expected, 'actual_decision': decision(provider, json.loads(output.stdout)),
-                                'first_run_ms': first, 'samples_ms': timings, 'median_ms': median,
-                                'p95_ms': sorted(timings)[max(0, math.ceil(len(timings) * .95) - 1)],
-                                'mad_ms': statistics.median(abs(sample - median) for sample in timings),
-                                'peak_rss_bytes': rss, 'ceiling_ms': args.ceiling_ms,
-                                'ceiling_met': max([first, *timings]) <= args.ceiling_ms})
-    after = fingerprints(root)
-    if before != after:
-        raise RuntimeError('hook source changed during resource measurement')
+    harness = harness_fingerprints(args.expectations)
     report = {'environment': {'platform': platform.platform(), 'python': platform.python_version(),
                               'python_executable': sys.executable, 'machine': platform.machine()},
               'method': {'script_root': str(root), 'samples': args.samples, 'warmups': args.warmups,
-                         'latency_command': 'same direct Python launch as fixed corpus runner',
+                         'fixture_set': args.fixture_set, 'condition': args.condition,
+                         'latency_command': 'direct Python launch; audit verification outside elapsed',
                          'memory_command': 'separate /usr/bin/time -l Python launch; macOS RSS in bytes',
-                         'first_run': 'fresh log home; operating-system caches uncleared',
-                         'ceiling_basis': 'caller-supplied and documented against retained existing workload'},
-              'script_sha256': before, 'results': results}
-    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-    return 0 if all(result['ceiling_met'] for result in results) else 1
+                         'first_run': 'fresh log home; operating-system caches uncleared'},
+              'script_sha256': before, 'harness_sha256': harness, 'results': [], 'errors': []}
+    try:
+        with tempfile.TemporaryDirectory(prefix='tool-guard-resources-') as temporary:
+            for case in cases:
+                provider = case.name.split('.')[0]
+                home = Path(temporary) / case.name
+                home.mkdir(parents=True)
+                current = prepare_failure(case, home)
+                env = disposable_environment(home, provider)
+                env.update({'OBSERVABILITY_TESTING': '1', 'PYTHONPYCACHEPREFIX': '', 'PYTHONDONTWRITEBYTECODE': '',
+                            'COPILOT_OBSERVABILITY_LOG_PATH': str(home / 'copilot-observability.ndjson'),
+                            'GEMINI_OBSERVABILITY_LOG_PATH': str(home / 'gemini-observability.ndjson'),
+                            'AUDIT_PASSIVE_LOG_MODE': 'default', 'AUDIT_LOG_MAX_BYTES': '134217728',
+                            'AUDIT_LOG_MAX_BACKUPS': '0', **current.environment})
+                command = [sys.executable, str(current.script)]
+                contract = case.fixture_metadata['contract']
+                row = {'case': case.name, 'input_bytes': len(case.payload),
+                       'input_sha256': hashlib.sha256(case.payload).hexdigest(),
+                       'contract': contract, 'expected_decision': case.expected_decision,
+                       'samples_ms': [], 'outputs': [], 'ceiling_ms': args.ceiling_ms}
+                report['results'].append(row)
+                calls = 0
+                def launch(argv):
+                    nonlocal calls
+                    output = checked_run(argv, case.payload, env, provider, case.expected_decision, contract=contract)
+                    calls += 1
+                    return output
+                for index in range(1 + args.warmups + args.samples):
+                    output = launch(command)
+                    elapsed = output.elapsed_ms
+                    if index == 0:
+                        row['first_run_ms'] = elapsed
+                        row['first_output'] = json.loads(output.stdout)
+                    elif index > args.warmups:
+                        row['samples_ms'].append(elapsed)
+                        row['outputs'].append(json.loads(output.stdout))
+                memory, rss = collect_macos_rss(command, launch)
+                if rss is None:
+                    row['rss_collector_stderr'] = memory.stderr.decode('utf-8', errors='replace')[:1024]
+                    raise RuntimeError('macOS time did not report peak resident set size')
+                proof = verify_audit(home, current, calls)
+                row['logging'] = proof
+                if proof['records'] != proof['required_records']:
+                    raise ValueError('unexpected completed audit record count')
+                timings = row['samples_ms']
+                median = statistics.median(timings)
+                row.update({'actual_decision': guardian_decision(provider, json.loads(output.stdout), contract=contract),
+                            'median_ms': median, 'p95_ms': sorted(timings)[max(0, math.ceil(len(timings) * .95) - 1)],
+                            'mad_ms': statistics.median(abs(sample - median) for sample in timings),
+                            'peak_rss_bytes': rss, 'ceiling_met': max(row['first_run_ms'], *timings) <= args.ceiling_ms})
+    except (Exception, KeyboardInterrupt) as exc:
+        report['errors'].append(f'{type(exc).__name__}: {exc}')
+        if hasattr(exc, 'invocation'):
+            report['failed_invocation'] = {'case': case.name, **exc.invocation}
+    finally:
+        try:
+            report['sources_unchanged'] = before == fingerprints(root) and harness == harness_fingerprints(args.expectations)
+            if not report['sources_unchanged']:
+                report['errors'].append('hook or harness sources changed during resource measurement')
+        except OSError as exc:
+            report['sources_unchanged'] = False
+            report['errors'].append(str(exc))
+        report['gates_met'] = not report['errors'] and len(report['results']) == len(cases) and all(row.get('ceiling_met', False) for row in report['results'])
+        with args.output.open('x', encoding='utf-8') as handle:
+            json.dump(report, handle, indent=2, sort_keys=True)
+            handle.write('\n')
+    return 0 if report['gates_met'] else 1
 
 
 if __name__ == '__main__':

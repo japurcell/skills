@@ -21,8 +21,15 @@ import sys
 import tempfile
 import time
 
-from tool_guard_corpus import PROVIDERS, decision, script_path
-from hook_benchmark_support import collect_macos_rss, guardian_runtime_footprint
+from tool_guard_corpus import PROVIDERS, script_path
+from hook_benchmark_support import (
+    collect_macos_rss, guardian_runtime_footprint, prepare_failure, verify_audit,
+    guardian_decision, guardian_canonical_paths,
+)
+from fixtures.tool_guard_resource_cases import (
+    FIXTURE_SETS, HISTORICAL_TIMING_CASES, DEFAULT_EXPECTATIONS, resource_inputs,
+    load_contracts, validate_response,
+)
 
 
 def load_runner(name: str, filename: str):
@@ -39,14 +46,14 @@ BASELINE_REF = "bc52d7d69aaa046ea97e323879402241a01fead7"
 ORDER = (("baseline", "candidate"), ("candidate", "baseline"))
 
 
-def baseline_fingerprints() -> dict[str, str]:
-    """Validate the supplied archive against the fixed Git source, not a label."""
+def baseline_fingerprints(reference: str = BASELINE_REF) -> dict[str, str]:
+    """Validate the supplied archive against the selected Git revision."""
     root = Path(__file__).resolve().parents[1]
-    names = subprocess.check_output(["git", "-C", str(root), "ls-tree", "-r", "--name-only", BASELINE_REF], text=True).splitlines()
-    scripts, helpers, canonical = guardian_runtime_footprint()
-    selected = [name for name in names if name in scripts or name == canonical
+    names = subprocess.check_output(["git", "-C", str(root), "ls-tree", "-r", "--name-only", reference], text=True).splitlines()
+    scripts, helpers, _canonical = guardian_runtime_footprint()
+    selected = [name for name in names if name in scripts or name in guardian_canonical_paths() or (name.startswith("hooks/runtime/") and name.endswith(".py"))
                 or (name.endswith(".py") and any(name.startswith(prefix) for prefix in helpers))]
-    return {name: hashlib.sha256(subprocess.check_output(["git", "-C", str(root), "show", f"{BASELINE_REF}:{name}"])).hexdigest()
+    return {name: hashlib.sha256(subprocess.check_output(["git", "-C", str(root), "show", f"{reference}:{name}"])).hexdigest()
             for name in selected}
 
 
@@ -63,15 +70,36 @@ def release_cases(root: Path, condition: str):
             else case for case in cases]
 
 
-def selected_cases(root: Path, condition: str, names: list[str], mode: str):
+def fixture_cases(root: Path, fixture_set: str, mode: str):
     if mode == "timing":
-        cases = release_cases(root, condition)
-    else:
-        cases = [high_rate.Case(f"{provider}.resources.{name}", script_path(root, provider),
-                                resources.payload(provider, tool, value), "clean",
-                                {"GUARD_MODE": "block"}, expected)
-                 for provider in PROVIDERS
-                 for name, tool, value, expected in resources.fixtures(provider)]
+        cases = [case for case in release_cases(root, "candidate")
+                 if case.name.split(".", 1)[1] in HISTORICAL_TIMING_CASES]
+        if fixture_set == "file-operations-v1":
+            from tool_guard_corpus import file_operation_fixtures, encode, envelope
+            cases.extend(high_rate.Case(f"{provider}.guard.{fixture.name}", script_path(root, provider),
+                                       encode(envelope(provider, fixture)), "clean", {"GUARD_MODE": "block"})
+                         for provider in PROVIDERS for fixture in file_operation_fixtures())
+            for provider in PROVIDERS:
+                cases.extend(high_rate.Case(f"{provider}.guard.{name}", script_path(root, provider), data,
+                                           "clean", {"GUARD_MODE": guard_mode}, fixture_metadata={"injection": injection})
+                             for name, data, guard_mode, injection in resource_inputs(provider, fixture_set)
+                             if injection != "none" or name.startswith("mode."))
+        return cases
+    return [high_rate.Case(f"{provider}.resources.{name}", script_path(root, provider), data,
+                           "clean", {"GUARD_MODE": guard_mode}, fixture_metadata={"injection": injection})
+            for provider in PROVIDERS for name, data, guard_mode, injection in resource_inputs(provider, fixture_set)]
+
+
+def selected_cases(root: Path, condition: str, names: list[str], mode: str,
+                   fixture_set: str = "historical-v1", expectations: Path | None = None):
+    cases = fixture_cases(root, fixture_set, mode)
+    contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, mode,
+                              [(case.name, case.payload, case.environment["GUARD_MODE"],
+                                (case.fixture_metadata or {}).get("injection", "malformed-json" if case.name.endswith(".guard.failure") else "none"))
+                               for case in cases])
+    cases = [replace(case, expected_decision=contracts[case.name][condition]["decision"],
+                     fixture_metadata={**(case.fixture_metadata or {}), "contract": contracts[case.name][condition],
+                                       "injection": contracts[case.name]["injection"]}) for case in cases]
     known = {case.name for case in cases}
     if set(names) - known:
         raise ValueError("unknown exact case: " + ", ".join(sorted(set(names) - known)))
@@ -97,14 +125,17 @@ def case_environment(*, cold: bool = False):
             "AUDIT_LOG_MAX_BACKUPS": "0"}
 
 
-def prepared_case(case, root: Path, *, cold: bool = False):
+def prepared_case(case, root: Path, *, cold: bool = False, home: Path | None = None):
     provider = case.name.split(".", 1)[0]
-    return replace(case, script=script_path(root, provider),
-                   environment={**case.environment, **case_environment(cold=cold)})
+    current = replace(case, script=script_path(root, provider),
+                      environment={**case.environment, **case_environment(cold=cold)})
+    return prepare_failure(current, home) if home is not None else current
 
 
 def verify_logging(home: Path, case, calls: int) -> dict:
     """Inspect completed records outside timed invocation, before home cleanup."""
+    if (case.fixture_metadata or {}).get("contract"):
+        return verify_audit(home, case, calls)
     files = [home / "guard.log"] if not case.name.startswith("gemini.") else sorted((home / "guard").glob("*.log"))
     records = []
     evidence = []
@@ -143,20 +174,27 @@ def checked_invocation(case, repo: Path, home: Path, *, observation: dict | None
         finally:
             observation["end_monotonic_ns"] = time.monotonic_ns()
     try:
-        high_rate.verify_outcome(case, code, output)
+        contract = (case.fixture_metadata or {}).get("contract")
+        if contract:
+            if code or output.get("invalid_stdout") or guardian_decision(case.name.split(".")[0], output, contract=contract) != case.expected_decision:
+                raise ValueError(f"{case.name}: expected {case.expected_decision}, unexpected permission response (exit {code})")
+            validate_response(contract, output)
+        else:
+            high_rate.verify_outcome(case, code, output)
     except (RuntimeError, ValueError) as exc:
         error = ValueError(str(exc))
         error.invocation = {"case": case.name, "elapsed_ms": elapsed, "exit_code": code,
-                            "expected_decision": case.expected_decision, "output": output,
+                            "expected_decision": case.expected_decision,
+                            "contract": (case.fixture_metadata or {}).get("contract"), "output": output,
                             **(observation or {})}
         raise error from exc
-    return elapsed, {"exit_code": code, "decision": decision(case.name.split(".", 1)[0], output),
+    return elapsed, {"exit_code": code, "decision": guardian_decision(case.name.split(".", 1)[0], output, contract=contract),
                      "output": output}
 
 
 def logging_error(proof: dict) -> None:
-    if not proof["legacy_exception"] and proof["records"] != proof["calls"]:
-        raise ValueError(f"expected {proof['calls']} completed guard records, found {proof['records']}")
+    if proof["records"] != proof["required_records"]:
+        raise ValueError(f"expected {proof['required_records']} completed guard records, found {proof['records']}")
 
 
 def retain_warm_sample(row: dict, index: int, warmups: int, elapsed: float, output: dict) -> None:
@@ -176,7 +214,7 @@ def finalize_warm_run(row: dict, case, home: Path, calls: int) -> None:
 
 def warm_run(case, root: Path, repo: Path, home: Path, samples: int, warmups: int, row: dict) -> None:
     home.mkdir(parents=True)
-    case = prepared_case(case, root)
+    case = prepared_case(case, root, home=home)
     row.update({"samples_ms": [], "outputs": []})
     for index in range(1 + warmups + samples):
         elapsed, output = checked_invocation(case, repo, home)
@@ -193,9 +231,10 @@ def warm_pair_run(cases: dict, roots: dict, repo: Path, homes: dict,
         raise ValueError("warm pair requires equal exact case IDs")
     if baseline.payload != candidate.payload:
         raise ValueError("warm pair requires identical payload bytes")
-    prepared = {label: prepared_case(case, roots[label]) for label, case in cases.items()}
+    prepared = {}
     for label in ORDER[pair]:
         homes[label].mkdir(parents=True)
+        prepared[label] = prepared_case(cases[label], roots[label], home=homes[label])
         rows[label].update({"samples_ms": [], "outputs": [], "invocations": []})
     last = {}
     for index in range(1 + warmups + samples):
@@ -249,11 +288,13 @@ def compare(name: str, phase: str, conditions: dict, median_limit: float, p95_li
             "met": delta["median_ms"] <= median_limit and delta["p95_ms"] <= p95_limit}
 
 
-def harness_fingerprints() -> dict[str, str]:
-    return {name: hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
+def harness_fingerprints(expectations: Path | None = None) -> dict[str, str]:
+    result = {name: hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
             for name in (Path(__file__).name, "benchmark-high-rate-hooks.py", "benchmark-tool-guard-resources.py",
                          "tool_guard_corpus.py", "fixtures/tool_guard_vectors.py", "hook_benchmark_support.py",
-                         "hook_test_support.py")}
+                         "hook_test_support.py", "fixtures/tool_guard_resource_cases.py")}
+    result["reviewed_expectations"] = hashlib.sha256((expectations or DEFAULT_EXPECTATIONS).read_bytes()).hexdigest()
+    return result
 
 
 def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, samples: int, warmups: int, cold_samples: int) -> None:
@@ -278,6 +319,7 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
                 print(f"warm pair {pair + 1}: {condition} {case.name}", file=sys.stderr, flush=True)
                 row = {"pair": pair, "condition": condition, "case": case.name,
                        "expected_decision": case.expected_decision,
+                       "contract": (case.fixture_metadata or {}).get("contract"),
                        "input_sha256": hashlib.sha256(case.payload).hexdigest()}
                 report["warm"].append(row)
                 rows[condition] = row
@@ -293,11 +335,12 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
                 home.mkdir(parents=True)
                 row = {"condition": condition, "case": case.name, "index": index,
                        "expected_decision": case.expected_decision,
+                       "contract": (case.fixture_metadata or {}).get("contract"),
                        "input_sha256": hashlib.sha256(case.payload).hexdigest(),
                        "copy_id": identity + "/source", "home_id": identity + "/home",
                        "bytecode_before": len(list(source.rglob("*.pyc")))}
                 report["cold"].append(row)
-                current = prepared_case(case, source, cold=True)
+                current = prepared_case(case, source, cold=True, home=home)
                 elapsed, outcome = checked_invocation(current, repo, home)
                 row.update({"elapsed_ms": elapsed, "outcome": outcome,
                             "bytecode_after": len(list(source.rglob("*.pyc"))),
@@ -313,7 +356,7 @@ def measure_timing(report: dict, roots: dict, selected: dict, temporary: Path, s
                 continue
             home = temporary / "concurrency" / condition / case.name
             home.mkdir(parents=True)
-            current = prepared_case(case, frozen[condition])
+            current = prepared_case(case, frozen[condition], home=home)
             start = time.perf_counter_ns()
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
                 calls = list(pool.map(lambda _: checked_invocation(current, repo, home), range(2)))
@@ -340,16 +383,18 @@ def measure_resources(report: dict, roots: dict, selected: dict, temporary: Path
             copy_provider(root, frozen, provider)
         for case in selected[condition]:
             print(f"resources: {condition} {case.name}", file=sys.stderr, flush=True)
-            row = {"condition": condition, "case": case.name, "ceiling_ms": 500}
+            row = {"condition": condition, "case": case.name, "ceiling_ms": 500,
+                   "input_sha256": hashlib.sha256(case.payload).hexdigest(),
+                   "contract": (case.fixture_metadata or {}).get("contract")}
             report["resources"].append(row)
             home = temporary / condition / case.name
             warm_run(case, frozen, repo, home, samples, warmups, row)
-            current = prepared_case(case, frozen)
+            current = prepared_case(case, frozen, home=home)
             env = high_rate.invocation_environment(current, home)
             memory, rss = collect_macos_rss([sys.executable, str(current.script)],
                                           lambda argv: resources.checked_run(argv, current.payload, env,
                                                                              case.name.split(".", 1)[0],
-                                                                             case.expected_decision, cwd=repo))
+                                                                             case.expected_decision, cwd=repo, contract=(case.fixture_metadata or {}).get("contract")))
             if rss is None:
                 raise ValueError("native macOS time did not report peak RSS: " + memory.stderr.decode("utf-8", errors="replace")[:512])
             row["peak_rss_bytes"] = rss
@@ -361,17 +406,23 @@ def measure_resources(report: dict, roots: dict, selected: dict, temporary: Path
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline-root", type=Path, help=f"git archive of {BASELINE_REF}")
+    parser.add_argument("--baseline-ref", default=BASELINE_REF, help="Git revision used to verify the baseline runtime archive")
+    parser.add_argument("--fixture-set", choices=FIXTURE_SETS, default="historical-v1")
+    parser.add_argument("--expectations", type=Path, help="reviewed hash-pinned per-condition expectations")
     parser.add_argument("--candidate-root", type=Path, help="frozen final candidate checkout")
+    parser.add_argument("--candidate-condition", choices=("baseline", "candidate"), default="candidate", help="baseline observations for an A/A check")
     parser.add_argument("--mode", choices=("timing", "resources"), default="timing")
     parser.add_argument("--case", action="append", default=[], help="exact case name; repeat this flag for an isolated repeat")
     parser.add_argument("--output", type=Path, help="new evidence JSON path; existing evidence is never replaced")
     parser.add_argument("--list", action="store_true", help="list maintained cases and explicit condition expectations")
     parser.add_argument("--mechanics-only", action="store_true", help="two samples and no warmups; NOT release evidence")
     args = parser.parse_args()
+    if args.fixture_set != "historical-v1" and args.expectations is None:
+        parser.error("--expectations is required for an explicit new fixture set")
     if args.list:
         try:
-            candidate = selected_cases(Path("."), "candidate", args.case, args.mode)
-            baseline = {case.name: case for case in selected_cases(Path("."), "baseline", args.case, args.mode)}
+            candidate = selected_cases(Path("."), args.candidate_condition, args.case, args.mode, args.fixture_set, args.expectations)
+            baseline = {case.name: case for case in selected_cases(Path("."), "baseline", args.case, args.mode, args.fixture_set, args.expectations)}
         except ValueError as exc:
             parser.error(str(exc))
         print(json.dumps([{"case": case.name, "expected": {"baseline": baseline[case.name].expected_decision,
@@ -385,15 +436,16 @@ def main() -> int:
         parser.error("release verification requires native macOS")
     roots = {"baseline": args.baseline_root.resolve(), "candidate": args.candidate_root.resolve()}
     try:
-        selected = {condition: selected_cases(root, condition, args.case, args.mode) for condition, root in roots.items()}
+        selected = {condition: selected_cases(root, args.candidate_condition if condition == "candidate" else condition, args.case, args.mode, args.fixture_set, args.expectations) for condition, root in roots.items()}
         before = {condition: resources.fingerprints(root) for condition, root in roots.items()}
-        if not args.mechanics_only and before["baseline"] != baseline_fingerprints():
-            raise ValueError("baseline runtime fingerprints do not match " + BASELINE_REF)
+        if not args.mechanics_only and before["baseline"] != baseline_fingerprints(args.baseline_ref):
+            raise ValueError("baseline runtime fingerprints do not match " + args.baseline_ref)
     except (ValueError, OSError, subprocess.CalledProcessError) as exc:
         parser.error(str(exc))
     counts = (2, 0, 2) if args.mechanics_only else (25, 3, 25)
-    report = {"baseline_reference": BASELINE_REF, "mode": args.mode,
-              "release_acceptance_eligible": not args.mechanics_only and not args.case,
+    report = {"baseline_reference": args.baseline_ref, "fixture_set": args.fixture_set, "mode": args.mode,
+              "release_acceptance_eligible": not args.mechanics_only and not args.case and args.candidate_condition == "candidate",
+              "candidate_expectation_condition": args.candidate_condition,
               "environment": {"platform": platform.platform(), "machine": platform.machine(),
                               "python": sys.version, "python_executable": sys.executable,
                               "git": subprocess.check_output(["git", "--version"], text=True).strip()},
@@ -408,7 +460,7 @@ def main() -> int:
                          "repeat_policy": "retain original failures; exact isolated repeats require separate output and an attributable explanation before acceptance"},
               "script_sha256": before,
               "baseline_archive_verified": not args.mechanics_only,
-              "harness_sha256": harness_fingerprints(),
+              "harness_sha256": harness_fingerprints(args.expectations),
               "warm": [], "cold": [], "concurrency": [], "resources": [], "errors": []}
     try:
         with tempfile.TemporaryDirectory(prefix="hook-release-") as temporary:
@@ -423,7 +475,7 @@ def main() -> int:
     finally:
         try:
             after = {condition: resources.fingerprints(root) for condition, root in roots.items()}
-            report["sources_unchanged"] = before == after and report["harness_sha256"] == harness_fingerprints()
+            report["sources_unchanged"] = before == after and report["harness_sha256"] == harness_fingerprints(args.expectations)
             if not report["sources_unchanged"]:
                 report["errors"].append("hook or harness sources changed during verification")
                 report["script_sha256_after"] = after
