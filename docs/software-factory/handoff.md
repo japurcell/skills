@@ -1,16 +1,16 @@
 # Software factory handoff
 
-Updated: 2026-10-16. Scope: software-factory.
+Updated: 2026-10-20. Scope: software-factory.
 
 ## Goal and current status
 
-Finish an implementation-ready specification through the [Customizable software factory map](map.md). Planning only: do not start runtime implementation, installation, or native qualification without a further request. The user explicitly authorized routine specification details and asked to see only consequential decisions.
-
-The map has twenty-six tickets: twenty-four closed and two open. [Invocation lifecycle and interrupted work](tickets/recovery-and-runtime-selection.md#resolution) is closed after the human accepted the older inbox Windows notification API on 2026-10-16. All five exact lifecycle prerequisites are closed. [Detailed observability UI design](tickets/detailed-observability-ui-design.md) is now unblocked and unclaimed. [Specification readiness and acceptance](tickets/specification-readiness-and-acceptance.md) waits on detailed UI. Delegated lifecycle research is complete.
+The implementation-ready specification is complete and explicitly accepted on 2026-10-20 through the [Customizable software factory map](map.md). All twenty-six tickets are closed. [Specification readiness and acceptance](tickets/specification-readiness-and-acceptance.md#resolution) records final human acceptance, scope, and remaining qualification obligations. The simpler SSSF-inspired direction remains intact. No implementation is authorized.
 
 ## Resume here
 
-The next frontier is [Detailed observability UI design](tickets/detailed-observability-ui-design.md). When continuing, claim that ticket after checking its exact prerequisites, use the prototype skill, and refine the accepted layout against the [lifecycle specification](lifecycle-specification.md). Do not reopen routine lifecycle details or start runtime implementation.
+No planning decision remains. Wait for a separate user request before implementation planning, task decomposition, runtime implementation, installation, or native qualification. For later authorized work, start with the final ticket's requirement trace and the lifecycle/UI acceptance contracts. Do not reopen settled decisions without a concrete conflict or explicit scope change.
+
+The [detailed UI contract](observability-ui-specification.md) and [refined prototype](prototypes/observability-prototype.html) are accepted. The final review added routine learning input/result/adoption shapes in the owning [learning ticket](tickets/skill-and-prompt-improvement.md#derived-record-and-invocation-shapes-2026-10-20). No new product policy, subsystem, or support guarantee is proposed.
 
 Windows basic alerts now use the older inbox WinRT helper with an owned per-user Start Menu shortcut/AUMID. The human accepted the older API dependency to avoid an extra Windows App SDK runtime package. Native helper delivery, required local handler, five-second lifetime, and registration/removal still require qualification. No post-exit click-through or Action Center retention is promised. Failed qualification must not silently introduce a larger installation or pretend delivery is supported.
 
@@ -31,9 +31,9 @@ The lifecycle document specifies store/layout, atomic admission and charges, bou
 
 ## UI and evidence
 
-The layout remains accepted: run cards, owner/session timelines, and beneath-timeline phase details. The [detailed UI ticket](tickets/detailed-observability-ui-design.md) owns replacement of stale prototype durable waits, tasks/integration, publication, and immutable-evidence fixtures, plus needs-input/cleanup/learning presentation. No prototype code changed in this lifecycle pass.
+The layout remains accepted: run cards, owner/session timelines, and beneath-timeline phase details. Current fixtures show needs-input plus manual cleanup, unknown final outcome with a saved question, partial capture with operator-confirmed clearance, supported/hidden child activity, provider failure, and learning with inconclusive evaluation and unconfirmed adoption. The [UI contract](observability-ui-specification.md) specifies paging, accessibility, and additional states not fully implemented in the fixture. No factory runtime was built.
 
-The preview server was not rechecked. If needed, from the repository root run `rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/software-factory`. Earlier browser checks prove layout simulations only, not runtime, transport, storage, or native behavior.
+The previous pass started a preview server on localhost:8765 (exec session 69245); its current liveness was not rechecked. It required approved sandbox escalation for local port binding. If it stops, from repository root run `rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/software-factory`. Review URL: http://localhost:8765/prototypes/observability-prototype.html#run=run-050 . Browser tab retained as a deliverable. Review screenshot: `/tmp/observability-detail-review.png` (temporary).
 
 - [Lifecycle platform findings](research/lifecycle-platform-constraints/findings.md) and [delegation audit](research/lifecycle-platform-constraints/delegation-audit.md): process-control boundaries, Windows notification alternatives, and SQLite constraints. Research and the product notification choice are closed; native qualification remains pending.
 - [Desktop notification study](research/desktop-notification-delivery/findings.md), [runtime/SQLite study](research/runtime-and-sqlite-packaging-fit/findings.md), and [native permissions](research/native-permissions/findings.md) retain sources and limits. No new native tests, helper installations, permission changes, or authenticated harness runs occurred.
@@ -44,4 +44,6 @@ The user disabled the repeatedly blocking secret-scan hook. The [incident report
 
 ## Validation and knowledge maintenance
 
-This pass changes planning Markdown only. The prior lifecycle pass checked ten Markdown files. This acceptance pass passed local link/anchor checks for all seven updated documents, verified lifecycle/UI prerequisite closure and the twenty-four-closed/two-open count, and passed `rtk git diff --check`. It does not establish native behavior. No runtime tests, native qualification, or measured SSE latency are claimed. Preserve the exact-runtime/platform/harness acceptance matrix for implementation. The coordinated knowledge pass keeps feature contracts in their owning documents; no canonical KB addition is warranted. No commit or publication was requested or performed.
+This pass changes planning Markdown only. The previous 2026-10-19 prototype pass changed HTML. Its browser checks exercised needs-input plus cleanup, acknowledgment preserving outcome/cleanup, phase selection, child hide/show, freeze remaining at its prior duration and catching up on Follow, disconnected display, and mobile search. At a 390px viewport, index/detail document width measured 375px with internal timeline scrolling; temporary viewport was reset. Desktop index and phase inspector were visually inspected. Full keyboard/screen-reader, zoom, scale, native, persistence, and SSE qualification remain pending. Inline JavaScript parsing, local Markdown link/anchor checks, prerequisite/status counts, and whitespace checks passed. See the UI ticket for the bounded evidence record.
+
+On 2026-10-20, changed-document link/anchor checks, exact prerequisite/status checks, and whitespace checks passed. Browser/native tests were not rerun for documentation-only acceptance changes. The coordinated update-agent-docs pass found no canonical KB addition warranted: feature decisions stay in their owning docs. No commit, publication, installation, or runtime execution was requested or performed.

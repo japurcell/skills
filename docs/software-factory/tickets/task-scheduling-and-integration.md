@@ -83,7 +83,7 @@ Keep current-script invocation, configurable workflow phases/profiles, run isola
 6. Reject a second invocation against the same worktree, including read-only work; permit separate-worktree invocations within launch limits and internal parallelism under one owner. Block takeover when earlier child access is uncertain, without automatic lock stealing or killing to force reuse.
 7. Preserve structured needs-input questions and saved traces/prompts/outputs independently of worktree cleanup; end the invocation rather than waiting for answers; no publication or immutable evidence subsystem is required.
 
-These are future acceptance cases. No runtime, harness delegation, isolation, or shutdown behavior has been implemented or tested. [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) remains open for mechanisms; [Detailed observability UI design](detailed-observability-ui-design.md) owns revised labels and supported/unsupported child examples.
+These are future acceptance cases. No runtime, harness delegation, isolation, or shutdown behavior has been implemented or tested. [Invocation lifecycle and interrupted work](recovery-and-runtime-selection.md) is closed, with mechanisms in the [lifecycle specification](../lifecycle-specification.md); [Detailed observability UI design](detailed-observability-ui-design.md) owns revised labels and supported/unsupported child examples.
 
 ## Historical task scheduling decision, superseded
 

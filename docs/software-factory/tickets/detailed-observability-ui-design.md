@@ -1,13 +1,13 @@
 # Detailed observability UI design
 
 **Type:** prototype
-**Status:** open
+**Status:** closed
 **Blocked By:** swimlane-interaction-design.md, recovery-and-runtime-selection.md, skill-and-prompt-improvement.md
 **Research Dir:** not applicable
 
 ## Question
 
-Use the [lifecycle records and states](../lifecycle-specification.md#records-and-state), [result and shutdown semantics](../lifecycle-specification.md#results-shutdown-and-exit-status), and [bounded observation contract](../lifecycle-specification.md#bounded-recording-and-observation) when refining fixtures. Native notification submission is distinct from visible delivery; no click support or workflow controls may be assumed. The lifecycle ticket is closed with the older inbox Windows API accepted. This UI ticket is now unblocked but remains unclaimed.
+Use the [lifecycle records and states](../lifecycle-specification.md#records-and-state), [result and shutdown semantics](../lifecycle-specification.md#results-shutdown-and-exit-status), and [bounded observation contract](../lifecycle-specification.md#bounded-recording-and-observation) when refining fixtures. Native notification submission is distinct from visible delivery; no click support or workflow controls may be assumed. The lifecycle ticket is closed with the older inbox Windows API accepted. This UI ticket is unblocked and claimed for detailed design on 2026-10-19.
 
 Within the accepted run-index, owner/session timeline, and beneath-timeline phase inspector layout, what detailed visual and interaction contract makes the observability UI ready to implement?
 
@@ -45,4 +45,22 @@ Resolution should link a human-reviewed refined prototype and record the detaile
 
 ---
 
-<!-- Resolution will be appended after human review. -->
+<!-- Human acceptance is recorded in the resolution below. -->
+
+## Detailed design pass, 2026-10-19
+
+All three exact prerequisites were checked closed before claiming this ticket. The user authorized routine details and requested only consequential choices. The [detailed UI contract](../observability-ui-specification.md) resolves those details within existing policy; no new consequential product decision was found.
+
+The [refined prototype](../prototypes/observability-prototype.html) preserves accepted cards, timelines, and beneath-timeline details. It replaces obsolete durable-wait, factory-task, publication, and immutable-evidence fixtures. Nine scenarios distinguish outcome, cleanup, capture, and telemetry; show supported children and parent-only observation; and inspect learning without an adoption control. One accepted layout is refined instead of reopening alternative layouts. This follows the user's explicit direction over the prototype skill's default variant exercise.
+
+The contract covers invocation/attempt navigation, retained allowances, workspace preparation/reuse, focus and live following, bounded history pages, missing/pruned evidence, installation availability, storage/backups, notification acknowledgment, responsive/accessibility criteria, and implementation acceptance datasets. The HTML is a selective review fixture, not every interaction's implementation. Multiple-invocation paging, large-history paging, actual persistence, SSE, and native behavior remain unimplemented and unqualified.
+
+At the end of the 2026-10-19 pass, human review remained pending. The resolution below records subsequent acceptance. No runtime implementation or final specification acceptance occurred in that pass.
+
+### Verification of this refinement
+
+On 2026-10-19 browser checks exercised ended needs-input plus manual cleanup; acknowledgment with unchanged outcome/cleanup; phase deep-link selection; child hide/show; a frozen duration remaining unchanged while synthetic recording advanced and catching up on Follow; disconnected display; and mobile search. At a 390px viewport, index/detail document width measured 375px; the timeline scrolls internally. Desktop index and inspector screenshots were inspected. A temporary review screenshot is `/tmp/observability-detail-review.png`. Inline JavaScript parsing, changed-document local links/anchors, and whitespace checks passed. No full keyboard/screen-reader/zoom audit or scale, persistence, SSE, native delivery, or runtime qualification is claimed. Prototype notes persistence was not retested. The current contract explicitly lists implementation validation obligations.
+
+## Resolution
+
+Accepted by the human on 2026-10-20: "Accept the refined UI design." The [detailed UI contract](../observability-ui-specification.md) and [refined prototype](../prototypes/observability-prototype.html) are the accepted design, preserving the simpler SSSF-inspired execution model and observability-only controls. The verification limits above remain implementation obligations, not acceptance blockers for the design. This closes the UI decision and unblocks final specification review; it does not authorize implementation.

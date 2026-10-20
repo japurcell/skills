@@ -1,7 +1,7 @@
 # Specification readiness and acceptance
 
 **Type:** grilling
-**Status:** open
+**Status:** closed
 **Blocked By:** swimlane-interaction-design.md, detailed-observability-ui-design.md, recovery-and-runtime-selection.md, skill-and-prompt-improvement.md
 **Research Dir:** not applicable
 
@@ -55,5 +55,53 @@ Apply [committed-revision-only worktree creation](task-scheduling-and-integratio
 
 ---
 
-<!-- Resolution will be appended after this ticket is claimed and worked with the human. -->
+<!-- Final human acceptance is recorded in the resolution below. -->
 
+
+## Detailed UI input, 2026-10-19
+
+The [UI contract](../observability-ui-specification.md) now specifies routine presentation and implementation validation datasets. The human accepted the refined prototype on 2026-10-20 in its owning ticket. All four exact prerequisites are now closed. Synthetic browser checks remain distinct from SSE, persistence, native notification, accessibility certification, or scale qualification.
+
+## Readiness review, 2026-10-20
+
+Claimed after verifying all four exact prerequisites closed. The human authorized recording UI acceptance and continuing to final specification acceptance, with no implementation. At the end of that review, only the UI ticket was resolved and final human acceptance was pending. The subsequent acceptance is recorded below.
+
+**Recommendation:** accept the specification as the design baseline for subsequent implementation planning. No further product decision or new subsystem is proposed. Acceptance does not authorize a build or declare any native combination supported.
+
+### Requirement trace and first implementation scope
+
+The scope below preserves accepted capabilities and exclusions rather than introducing a reduced release or extra machinery. Owning tickets remain authoritative; historical sections explicitly superseded by later decisions are not build requirements.
+
+| Requirement group | Owning contract | Acceptance evidence required later |
+| --- | --- | --- |
+| Custom code-controlled workflows, prompt/external plan intake, arbitrary branches/scopes | [Workflow authoring](workflow-authoring-and-task-contract.md#resolution) | Repository-change and differently shaped read-only audit recipes; build failure before phases; no mandatory task graph or six-stage pipeline |
+| Profiles, models, reasoning, prompt/skill selection | [Agent profiles](agent-execution-profiles.md) and [step-start inputs](workflow-versioning-and-run-changes.md#step-start-input-resolution) | Effective precedence/composition; changed later-step inputs; required-capability rejection; fresh independent reviews/later invocations and compatible correction reuse |
+| Worktree and implementer delegation | [Workspace](task-scheduling-and-integration.md#resolution) | Committed-only preparation before planning; untouched source checkout; stable candidate after children; supported and unavailable child telemetry; one owner including read-only work; separate-worktree concurrency |
+| Checks, optional expensive UI verification, reviews, bounded corrections | [Verification](verification-and-review-policy.md#resolution) | Configured checks and independent review, same-worktree correction, saved previous results, retained limits; no infrastructure retries, fallback chains, reviewer registry, or managed publication |
+| Fresh continuation, interruption, ownership and retained accounting | [Lifecycle specification](../lifecycle-specification.md#acceptance-matrix) | Explicit fresh invocation with selected context/preserved work; admission/spawn crashes and exact-claim races; uncertain charge retained; manual cleanup without falsely proving child shutdown |
+| Needs-input, permissions and notifications | [Human control](human-control-and-publication.md#resolution) and [lifecycle results](../lifecycle-specification.md#results-shutdown-and-exit-status) | Saved question before cleanup, ended invocation, later explicit answer; no interactive bridge or permission widening; bounded best-effort notice, saved details, opt-in host-only reminders |
+| Live and historical inspection | [Session events](session-events-and-live-progress.md#resolution) and [accepted UI contract](../observability-ui-specification.md) | Saved-before-display SSE, reconnect/deduplication, separate outcome/cleanup/capture, inert output, bounded pages, accessibility and scale datasets, measured live latency |
+| Full history and traceable improvement | [Learning](skill-and-prompt-improvement.md#derived-record-and-invocation-shapes-2026-10-20) | Explicit extraction/evaluation, no-proposal and inconclusive outcomes, unchanged active inputs, exact human-approved adoption with applied evidence, retained sources and explicit revert |
+| Skill installation, dependencies, upgrade, repair, uninstall and exceptional cleanup | [Operating model](operating-and-installation-model.md) and [maintenance protocol](../lifecycle-specification.md#maintenance-protocol) | Isolated pinned runtime/shared dependencies, idle exclusion, consistent retained backups, forward-only repair, incomplete-operation blocking, preserved user files/history/worktrees; no full purge |
+
+Codex CLI, Copilot CLI, and Gemini CLI remain primary. OpenCode and Pi remain desired; none is silently removed. The design accepts one common adapter contract with capability-specific evidence, not a promise that every named harness/version/platform combination works. A release support matrix must name versions/modes actually qualified. If qualification cannot honor required behavior, report it before proposing a scope reduction. Optional telemetry and manual child cleanup already have accepted limitation paths.
+
+### Consistency and remaining proof
+
+The cross-contract review preserves one foreground owner and one worktree, current script execution from entry, history without execution recovery, implementer-owned delegation, and observation-only browser controls. Routine learning record/input shapes now live in the owning learning ticket. Stale references to pending lifecycle/UI work encountered in current summaries were corrected. No unresolved policy contradiction was identified in the reviewed contracts.
+
+The lifecycle acceptance matrix and UI acceptance datasets define future evidence, not passing tests. Exact runtime pins, native permission/result/stop semantics, Windows inbox helper lifetime and registration/removal, SQLite durability/contention, SSE latency, scale and accessibility remain unqualified. Qualification failure may reveal a consequential decision later; unrun tests do not themselves require more speculative design now.
+
+The existing map fog describes possible future extension pressures, not an identified missing decision for the current specification. Final acceptance should close that speculative fog for this scope; new consequential findings reopen a focused decision only if they arise. No generic plugin, learning, recovery, scheduling, or publication platform is added.
+
+**Review decision, now accepted:** the linked specification and existing scope form the completed planning baseline. The resolution below records explicit final acceptance separately from UI approval.
+
+## Resolution
+
+Accepted by the human on 2026-10-20: "Accept the specification as the completed baseline." All four exact prerequisites are closed. The requirement trace above, its owning decisions, the [lifecycle specification](../lifecycle-specification.md), and the [detailed UI contract](../observability-ui-specification.md) form the accepted implementation-ready design baseline. This closes the final ticket and completes the twenty-six-ticket planning map.
+
+The simpler SSSF-inspired direction remains unchanged: current-script foreground invocation without durable resume; one exclusively owned worktree before all phases; implementer-owned subagents; non-interactive harnesses with structured needs-input outcomes; retained history for observation and explicit learning; bounded corrections; and shared idle maintenance with honest manual cleanup. Existing exclusions and human adoption authority remain intact.
+
+No unresolved decision or fog remains within this accepted scope. Possible future workflow extensions, qualification conflicts, or learning-domain questions become focused new decisions only if concrete evidence exposes them. They are not a standing authorization to expand the baseline.
+
+Design acceptance does not qualify any runtime, harness, platform, notification helper, performance target, or accessibility behavior. All recorded implementation acceptance obligations remain. The human explicitly prohibited implementation: no build, installation, native qualification, task decomposition, rollout, or configuration adoption is started by this closure. Further work requires a separate request.

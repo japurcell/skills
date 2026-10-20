@@ -6,6 +6,8 @@ An implementation-ready specification for a fully customizable, code-controlled 
 
 ## Notes
 
+- Completed on 2026-10-20 after explicit final specification acceptance. All twenty-six tickets are closed; no planning frontier remains. The accepted SSSF-inspired baseline and qualification obligations are retained. Implementation requires a separate request.
+
 - This is a planning map. The user chose this destination on 2026-10-12. The earlier Restate prototype and durable SQLite executor direction are superseded by the SSSF-style foreground runner; implementation remains outside this planning session.
 - Consult wayfinder and the narrow skills needed for the selected ticket. Use grilling plus codebase-design for design conversations. The user explicitly approved this substitute for the unavailable domain-modeling skill on 2026-10-12.
 - Consult prototype for a prototype ticket and research for a research ticket. Research tickets require an assigned research directory and a delegated researcher. No new research was launched merely to repeat the retained studies.
@@ -20,6 +22,10 @@ An implementation-ready specification for a fully customizable, code-controlled 
 - The [handoff](handoff.md) tracks current progress, verification limits, and the next session. Keep decision details in their owning tickets.
 
 ## Decisions so far
+
+- [Specification readiness and acceptance](tickets/specification-readiness-and-acceptance.md#resolution): completed design baseline accepted, all twenty-six decisions closed, qualification obligations preserved, and no implementation authorized.
+
+- [Detailed observability UI design](tickets/detailed-observability-ui-design.md#resolution): refined prototype and detailed interaction/accessibility/scale contract accepted; outcome, cleanup, and capture remain distinct, with observation-only controls and supported child visibility.
 
 - [Invocation lifecycle and interrupted work](tickets/recovery-and-runtime-selection.md#resolution): concrete foreground lifecycle, retained accounting/history, shared ownership and idle maintenance, honest manual cleanup, and the older inbox Windows notification API. The [lifecycle specification](lifecycle-specification.md) defines mechanisms and future qualification gates; no durable resume or implementation is added.
 
@@ -55,9 +61,7 @@ An implementation-ready specification for a fully customizable, code-controlled 
 ## Not yet specified
 
 <!-- FOG START -->
-- The accepted contract covers repository changes and read-only audits. Other concrete workflow patterns may expose extension pressures beyond these examples; no separate question is sharp enough to ticket yet.
-- Other deployment or harness interactions discovered during qualification may expose consequential conflicts with accepted behavior. Lifecycle design is closed, including the accepted older inbox Windows notification API. Detailed UI and readiness retain their existing owners. Do not turn unrun implementation tests into speculative product-decision tickets.
-- Observed improvement proposals may expose evaluation domains or ownership conflicts that need their own decisions beyond the accepted core learning contract.
+None within the accepted specification scope. Concrete future qualification conflicts or extension requests may require new decisions; they do not keep this completed map open.
 <!-- FOG END -->
 
 ## Out of scope
