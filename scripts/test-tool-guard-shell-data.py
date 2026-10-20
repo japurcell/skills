@@ -228,7 +228,13 @@ class ShellDataTests(unittest.TestCase):
         controls.append(prefix + 'sh -c ' + shlex.quote('eval ' + shlex.quote(search)))
         writer = 'from pathlib import Path;Path("example.txt").write_text(' + repr(operation) + ')'
         controls.append(prefix + 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer)))
-        controls.append('sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer) + '; printf safe') + ' ' + chr(124) + ' bash')
+        # A literal path may alias stdout through a descriptor or symlink.
+        # Keep normal writer coverage, and require incomplete denial when its
+        # output could become executable input, in both enforcement modes.
+        self.check('python3 -c ' + shlex.quote(writer), 'allow')
+        unsafe_writer = 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer) + '; printf safe') + ' ' + chr(124) + ' bash'
+        self.check(unsafe_writer, 'deny')
+        self.check(unsafe_writer, 'deny', mode='warn')
         for fixture in fixtures():
             if fixture.name in {'survey.json-stdin', 'survey.python-subprocess'}:
                 controls.append(prefix + 'sh -c ' + shlex.quote(fixture.value['command']))

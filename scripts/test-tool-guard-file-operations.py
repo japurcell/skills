@@ -15,6 +15,24 @@ CAPACITY = 1048576
 
 
 class FileOperationTests(unittest.TestCase):
+    def test_python_literal_writer_and_status_have_a_finite_aggregate_budget(self):
+        for extra in (0, 1):
+            body = "x" * (CAPACITY - len("example.txtSaved") + extra)
+            source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(body) + ")\nprint('Saved')\n"
+            commands = ["python3 - <<'PY'\n" + source + "PY",
+                        "rtk proxy python3 - <<'PY'\n" + source + "PY",
+                        "python3 -c " + shlex.quote(source)]
+            for command in commands:
+                fixture = Fixture("capacity-python", "provider_shell", {"command": command},
+                                  "deny", "allow", "capacity", "bounded prototype")
+                for provider in PROVIDERS:
+                    with self.subTest(provider=provider, wrapper=command[:25], extra=extra):
+                        result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny" if extra else "allow", result.stdout)
+                        if extra:
+                            self.assertIn("python_constant_bytes", result.stdout.decode())
+
     def test_quoted_shell_writer_keeps_the_body_out_of_execution_budgets(self):
         body = ("literal text " * (CAPACITY // 13 + 1))[:CAPACITY - 1] + "\n"
         writer = "cat > example.txt <<'EOF'\n" + body + "EOF"
@@ -52,6 +70,106 @@ class FileOperationTests(unittest.TestCase):
                                 self.assertIn("literal_content_bytes", result.stdout.decode())
                                 self.assertIn("1048577 bytes exceeds limit 1048576 bytes", result.stdout.decode())
 
+    def test_unsupported_output_keywords_keep_executable_consumer_context(self):
+        sources = [
+            'from pathlib import Path;Path("/dev/stdout").write_text("r" + "m -rf ./guardian-review-victim", encoding="utf-8")',
+            'result=print("r" + "m -rf ./guardian-review-victim", end="")',
+            'from pathlib import Path;writer=Path("/dev/stdout").write_text;writer("r" + "m -rf ./guardian-review-victim")',
+            'writer=print;writer("r" + "m -rf ./guardian-review-victim")',
+            'import builtins;writer=builtins.print;writer("r" + "m -rf ./guardian-review-victim")',
+            'from builtins import print as writer;writer("r" + "m -rf ./guardian-review-victim")',
+        ]
+        for source in sources:
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    fixture = Fixture("output-keywords", "provider_shell",
+                                      {"command": "python3 -c " + shlex.quote(source) + " | sh"},
+                                      "deny", "deny", "pipeline", "callee effect survives unsupported keywords")
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
+                    with self.subTest(provider=provider, source=source[:30], mode=mode):
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                        self.assertIn("inspection_failure", result.stdout.decode())
+
+    def test_status_output_inside_substitution_keeps_execution_context(self):
+        source = r'from pathlib import Path;Path("x").write_text("");print("\x72\x6d\x20\x2d\x72\x66\x20\x2f")'
+        commands = ["printf '%s\\n' \"$(python3 -c " + shlex.quote(source) + ")\" | sh",
+                    "python3 -c " + shlex.quote("exec(" + repr(source) + ")") + " | sh",
+                    "python3 -c " + shlex.quote("import os;os.system(" + repr("python3 -c " + shlex.quote(source)) + ")") + " | sh"]
+        for command in commands:
+            fixture = Fixture("nested-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
+            for provider in PROVIDERS:
+                with self.subTest(provider=provider, command=command[:60]):
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                    self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                    self.assertIn("inspection_failure", result.stdout.decode())
+
+
+    def test_strict_shell_fallback_preserves_stdout_consumers(self):
+        source = r'from pathlib import Path;Path("note").write_text("ok");print("\x72\x6d\x20\x2d\x72\x66\x20\x2f")'
+        child = "python3 -c " + shlex.quote(source)
+        command = "sh -c " + shlex.quote(child) + ' "${unused}" | sh'
+        fixture = Fixture("strict-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
+        for provider in PROVIDERS:
+            with self.subTest(provider=provider):
+                result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                self.assertIn("inspection_failure", result.stdout.decode())
+
+
+    def test_unproved_python_launchers_keep_nested_stdout_context(self):
+        source = r'from pathlib import Path;Path("note").write_text("ok");print("\x72\x6d\x20\x2d\x72\x66\x20\x2f")'
+        operand = shlex.quote("exec(" + repr(source) + ")")
+        commands = ["python3 -c " + operand + ' "${unused}" | sh',
+                    "python3 -c " + operand + " extra | sh",
+                    "env python3 -c " + operand + " | sh"]
+        for command in commands:
+            fixture = Fixture("unproved-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
+            for provider in PROVIDERS:
+                with self.subTest(provider=provider, command=command[:30]):
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                    self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                    self.assertIn("inspection_failure", result.stdout.decode())
+
+
+    def test_writer_destinations_cannot_launder_executable_stdout(self):
+        for destination in ("/dev/stdout", "/dev/fd/1", "/proc/self/fd/1", "example.txt"):
+            source = "from pathlib import Path;Path(" + repr(destination) + ").write_text(" + repr("rm -rf /tmp/guardian-review-target\n") + ")"
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    fixture = Fixture("writer-output", "provider_shell", {"command": "python3 -c " + shlex.quote(source) + " | sh"}, "deny", "deny", "pipeline", "probe")
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
+                    with self.subTest(provider=provider, destination=destination, mode=mode):
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                        self.assertIn("inspection_failure", result.stdout.decode())
+
+
+    def test_output_effects_survive_an_unproved_program(self):
+        output = '"r" + "m -rf ./guardian-review-victim"'
+        sources = ["from pathlib import Path;n=Path('/dev/stdout').write_text(" + output + ")",
+                   "from pathlib import Path\nif True:\n Path('/dev/stdout').write_text(" + output + ")",
+                   "result=print(" + output + ")",
+                   "if True:\n print(" + output + ")"]
+        for source in sources:
+            for provider in PROVIDERS:
+                for mode in ("block", "warn"):
+                    fixture = Fixture("unproved-output", "provider_shell", {"command": "python3 -c " + shlex.quote(source) + " | sh"}, "deny", "deny", "pipeline", "probe")
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
+                    with self.subTest(provider=provider, source=source[:30], mode=mode):
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                        self.assertIn("inspection_failure", result.stdout.decode())
+
+
+    def test_assigned_status_output_cannot_reach_an_interpreter(self):
+        source = 'from pathlib import Path;Path("x").write_text("");status=print("rm -rf /")'
+        command = "python3 -c " + shlex.quote(source) + " | sh"
+        fixture = Fixture("assigned-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
+        for provider in PROVIDERS:
+            with self.subTest(provider=provider):
+                result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                self.assertIn("inspection_failure", result.stdout.decode())
+
+
     def test_unused_envelope_metadata_is_bounded_independently(self):
         fixture = Fixture("envelope-metadata", "provider_shell", {"command": "echo safe"}, "deny", "deny", "bounds", "probe")
         for provider in PROVIDERS:
@@ -69,12 +187,15 @@ class FileOperationTests(unittest.TestCase):
                 else:
                     event = {"tool_name": "Bash" if provider == "codex" else "run_shell_command", "tool_input": {"command": "echo safe"}}
                 event["unused"] = [0] * (4079 + extra)
-                result = invoke_guard(ROOT, provider, encode(event))
-                with self.subTest(provider=provider, extra=extra):
-                    self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                    self.assertIn("raw_structural_markers" if extra else "envelope_metadata_nodes", result.stdout.decode())
-                    if extra:
-                        self.assertIn("4097 markers exceeds limit 4096 markers", result.stdout.decode())
+                tool = event.get("toolName", event.get("tool_name"))
+                allowlist = json.dumps([{"tool": tool, "input": '{"command":"echo safe"}'}])
+                for mode in ("block", "warn"):
+                    result = invoke_guard(ROOT, provider, encode(event), mode=mode, allowlist=allowlist)
+                    with self.subTest(provider=provider, extra=extra, mode=mode):
+                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+                        self.assertIn("raw_structural_markers" if extra else "envelope_metadata_nodes", result.stdout.decode())
+                        if extra:
+                            self.assertIn("4097 markers exceeds limit 4096 markers", result.stdout.decode())
 
     def test_raw_byte_limit_reports_the_first_rejected_byte(self):
         raw_limit = 6 * (CAPACITY + 3 * 32768) + 8192

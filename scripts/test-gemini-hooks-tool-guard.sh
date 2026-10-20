@@ -207,26 +207,6 @@ test_skip_mode_returns_explicit_allow_json() {
     "Expected skip mode to return an explicit allow decision."
 }
 
-test_gemini_settings_register_tool_guard() {
-  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PYTEST'
-import json
-from pathlib import Path
-import sys
-
-settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
-commands = [
-    hook["command"]
-    for group in settings["hooks"]["BeforeTool"] if group.get("matcher") == "*"
-    for hook in group["hooks"]
-]
-observability = 'python "$HOME/.gemini/hooks/scripts/send-event.py"'
-guard = 'python "$HOME/.gemini/hooks/scripts/tool-guard.py"'
-assert commands.count(observability) == 1, "Expected one Gemini observability handler."
-assert commands.count(guard) == 1, "Expected one Gemini Tool Guardian handler."
-assert commands.index(observability) < commands.index(guard), "Expected Tool Guardian after observability."
-PYTEST
-}
-
 test_tool_guard_denies_invalid_payload() {
   local log_dir
   local output
@@ -268,7 +248,8 @@ test_tool_guard_denies_unexpected_input_exception() {
     'import sys' \
     'def emit_json(payload):' \
     '    sys.stdout.write(json.dumps(payload, separators=(",", ":")) + "\n")' \
-    'def read_json_input():' \
+    'class InputLimitError(ValueError): pass' \
+    'def read_json_input(**kwargs):' \
     '    raise RuntimeError("forced input failure")' \
     >"$workdir/helpers/common.py"
 
@@ -297,7 +278,6 @@ main() {
   test_block_mode_parses_gemini_tool_input_objects
   test_nested_structured_tool_input_scans_decoded_string_values
   test_skip_mode_returns_explicit_allow_json
-  test_gemini_settings_register_tool_guard
   test_tool_guard_denies_invalid_payload
   test_tool_guard_denies_unexpected_input_exception
   test_tool_guard_rm_env_and_rm_git

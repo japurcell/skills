@@ -193,7 +193,8 @@ test_tool_guard_denies_unexpected_input_exception() {
     'import sys' \
     'def emit_json(payload):' \
     '    sys.stdout.write(json.dumps(payload, separators=(",", ":")) + "\n")' \
-    'def read_json_input():' \
+    'class InputLimitError(ValueError): pass' \
+    'def read_json_input(**kwargs):' \
     '    raise RuntimeError("forced input failure")' \
     'def sanitize_log_field(value):' \
     '    return str(value)' \

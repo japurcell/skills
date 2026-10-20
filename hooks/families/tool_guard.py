@@ -1046,6 +1046,7 @@ def _literal_file_writer(command):
 def _python_preflight(source):
     """Bound parser work before ast.parse without importing another lexer."""
     index = depth = tokens = 0
+    spans = []
     while index < len(source):
         char = source[index]
         if char == "#":
@@ -1053,13 +1054,25 @@ def _python_preflight(source):
             index = len(source) if end < 0 else end
             continue
         if char in "'\"":
+            start = index
             delimiter = char * 3 if source.startswith(char * 3, index) else char
             index += len(delimiter)
-            while index < len(source) and not source.startswith(delimiter, index):
-                index += 2 if source[index] == "\\" else 1
+            # Search ordinary literal text in C; only odd backslash parity escapes a delimiter.
+            while True:
+                end = source.find(delimiter, index)
+                if end < 0:
+                    raise InspectionFailure("unterminated Python literal")
+                backslash = end
+                while backslash > index and source[backslash - 1] == "\\":
+                    backslash -= 1
+                if (end - backslash) % 2 == 0:
+                    index = end
+                    break
+                index = end + 1
             if index >= len(source):
                 raise InspectionFailure("unterminated Python literal")
             index += len(delimiter)
+            spans.append((start, index))
             tokens += 1
             if tokens > 1024:
                 raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
@@ -1079,10 +1092,12 @@ def _python_preflight(source):
             raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
         index += 1
 
+    return spans
+
 
 def _python_inspection(source):
     """Prove whole writers/surveys, discovering execution sinks independently."""
-    _python_preflight(source)
+    literal_spans = _python_preflight(source)
     import ast
     try:
         tree = ast.parse(source)
@@ -1098,27 +1113,39 @@ def _python_inspection(source):
             raise ScanLimitExceeded("python_ast_depth", 32, depth, "levels")
         if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
             constant_bytes += len(node.value.encode("utf-8") if isinstance(node.value, str) else node.value)
-            if constant_bytes > MAX_SCAN_TEXT:
-                raise ScanLimitExceeded("python_constant_bytes", MAX_SCAN_TEXT, constant_bytes, "bytes")
+            if constant_bytes > MAX_NATIVE_DATA_BYTES:
+                raise ScanLimitExceeded("python_constant_bytes", MAX_NATIVE_DATA_BYTES, constant_bytes, "bytes")
         stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
     symbols = {}
     sink_aliases = {}
+    output_aliases = {}
     for node in nodes:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name in {"os", "subprocess"}:
                     sink_aliases[alias.asname or alias.name] = ("module", alias.name)
+                if alias.name == "builtins":
+                    output_aliases[alias.asname or alias.name] = "module"
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module in {"os", "subprocess"}:
             for alias in node.names:
                 sink_aliases[alias.asname or alias.name] = ("function", node.module + "." + alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module == "builtins":
+            for alias in node.names:
+                if alias.name == "print":
+                    output_aliases[alias.asname or alias.name] = "print"
     supported = True
-    wrote = surveyed = False
+    wrote = surveyed = may_emit_output = False
     sinks, inspected = [], set()
+    paths = {}
 
     def resolve(node):
+        nonlocal may_emit_output
         if isinstance(node, ast.Constant) and type(node.value) in {str, int, bool, type(None)}:
             return ("literal", node.value)
         if isinstance(node, ast.Name):
+            # Known output references stay tainted even when a later call is unsupported.
+            if node.id == "print" and node.id not in symbols or output_aliases.get(node.id) == "print":
+                may_emit_output = True
             return symbols.get(node.id)
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
             left, right = resolve(node.left), resolve(node.right)
@@ -1135,6 +1162,11 @@ def _python_inspection(source):
             return ("json", values) if all(key and value and key[0] == "literal" and value[0] in {"literal", "json", "sequence"} for key, value in values) else None
         if isinstance(node, ast.Attribute):
             base = resolve(node.value)
+            if (node.attr == "print" and isinstance(node.value, ast.Name)
+                    and output_aliases.get(node.value.id) == "module"):
+                may_emit_output = True
+            if base and base[0] == "path" and node.attr == "write_text":
+                may_emit_output = True
             if base == ("module", "sys") and node.attr == "executable":
                 return ("python", None)
             if base and base[0] == "survey_result" and node.attr == "stdout":
@@ -1143,11 +1175,14 @@ def _python_inspection(source):
                 return ("function", base[1] + "." + node.attr)
         if isinstance(node, ast.Call):
             function = resolve(node.func)
+            if function == ("function", "builtins.print"):
+                may_emit_output = True
             args = [resolve(argument) for argument in node.args]
             kwargs = {keyword.arg: resolve(keyword.value) for keyword in node.keywords}
             if None in kwargs or any(value is None for value in args) or any(value is None for value in kwargs.values()):
                 return None
             if function == ("function", "pathlib.Path") and len(args) == 1 and args[0][0] == "literal" and isinstance(args[0][1], str) and not kwargs:
+                paths[id(node)] = args[0][1]
                 return ("path", args[0][1])
             if isinstance(node.func, ast.Attribute):
                 base = resolve(node.func.value)
@@ -1165,12 +1200,16 @@ def _python_inspection(source):
                 return ("survey_display", None)
             if isinstance(node.func, ast.Name) and node.func.id == "print" and node.func.id not in symbols and args == [("survey_display", None)] and not kwargs:
                 return ("survey_print", None)
+            if isinstance(node.func, ast.Name) and node.func.id == "print" and node.func.id not in symbols and args and all(arg[0] == "literal" and isinstance(arg[1], str) for arg in args) and not kwargs:
+                return ("status_print", None)
         return None
 
     def inspect_sink(node):
         if not isinstance(node, ast.Call) or id(node) in inspected:
             return
         inspected.add(id(node))
+        # Discover recognized output effects even in unsupported statements.
+        resolve(node)
         function = resolve(node.func)
         name = function[1] if function and function[0] == "function" else None
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
@@ -1229,14 +1268,16 @@ def _python_inspection(source):
         elif isinstance(statement, ast.Expr):
             value = resolve(statement.value)
             wrote = wrote or bool(value and value[0] == "write")
-            if not value or value[0] not in {"write", "survey_print"}:
+            if not value or value[0] not in {"write", "survey_print", "status_print"}:
                 supported = False
         else:
             supported = False
             for node in ast.walk(statement):
                 if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                     symbols[node.id] = ("unknown", None)
-    return supported and (wrote or surveyed), sinks, [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)]
+    return (supported and (wrote or surveyed), sinks,
+            [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)],
+            literal_spans, list(paths.values()), constant_bytes, may_emit_output)
 
 
 def _strict_threats(text, segments=None, pipeline_text=None):
@@ -1253,13 +1294,20 @@ def _strict_threats(text, segments=None, pipeline_text=None):
     return threats
 
 
-def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
+def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
-    budget.executable(source)
-    proven, sinks, constants = _python_inspection(source)
+    proven, sinks, constants, spans, paths, constant_bytes, may_emit_output = _python_inspection(source)
     proven = proven and permit_data
     threats = []
-    if not proven:
+    if may_emit_output and output_is_code:
+        raise InspectionFailure("literal writer output may reach an executable consumer")
+    if proven:
+        budget.content(constant_bytes)
+        budget.executable(_without_spans(source, spans))
+        for path in paths:
+            budget.executable(path)
+    else:
+        budget.executable(source)
         if pipeline_context is not None:
             pipeline_context.append(source.replace("|", " "))
         segments = _command_segments(source)
@@ -1271,9 +1319,9 @@ def _python_threats(source, budget, depth, permit_data=True, pipeline_context=No
             threats.extend(_strict_threats(constant, segments))
     for language, sink in sinks:
         if language == "python":
-            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context))
+            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context, output_is_code=output_is_code))
         else:
-            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context))
+            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context, output_is_code))
     return threats
 
 
@@ -1337,8 +1385,13 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 inline = _inline_operand(command.words, offset)
                 if inline:
                     language, operand, _index = inline
-                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1, pipeline_context, True))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, output_is_code=True) if language == "python" else _shell_threats(operand, budget, depth + 1, pipeline_context, True))
         return threats
+    for command in commands:
+        if (len(command.words) >= 3 and [word.value for word in command.words[:2]] == ["rtk", "proxy"]
+                and all(word.literal for word in command.words[:3])
+                and command.words[2].value in {"python", "python3", sys.executable}):
+            command.words = command.words[2:]
     rendered, segments, pipeline_rendered, excluded = [], [], [], []
     pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
     unsafe_pipeline = set()
@@ -1367,7 +1420,7 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 language, operand, argument = inline
                 exact = offset == 0 and argument == 1 and len(words) == 3 and words[0] in {"python", "python3", sys.executable, "sh", "bash"}
                 if not exact:
-                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context, id(command) in unsafe_pipeline) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
         stdin = [(operator, operand) for operator, operand in command.redirects if operator in {"<", "<<", "<<-"}]
         body = command.heredocs[-1] if command.heredocs and stdin and stdin[-1][0] in {"<<", "<<-"} else None
         python_code = shell_code = None
@@ -1417,7 +1470,11 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 budget.content(len(source[start:end].encode("utf-8")))
                 excluded.append((start, end))
         if python_code is not None:
-            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context))
+            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context, output_is_code=id(command) in unsafe_pipeline))
+            if words[1:2] == ["-c"]:
+                excluded.append(command.words[2].span)
+            else:
+                excluded.extend(command.heredoc_spans)
             proven = True
         elif shell_code is not None:
             threats.extend(_shell_threats(shell_code, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
