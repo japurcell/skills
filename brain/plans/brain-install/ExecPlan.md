@@ -1,6 +1,6 @@
 # Create a portable brain-install skill
 
-This living plan is `brain/plans/brain-install/ExecPlan.md`. Follow the repository's `exec-plans` skill and keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. It is an approved design awaiting implementation authorization, not permission to start implementing during the planning turn.
+This living plan is `brain/plans/brain-install/ExecPlan.md`. Follow the repository's `exec-plans` skill and keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. Implementation is authorized by the user's execplan-implement invocation on 2026-10-21.
 
 ## Purpose / Big Picture
 
@@ -8,17 +8,21 @@ Publish `skills/default/brain-install` so an agent can install this brain system
 
 A successful installation creates a navigable starter vault, installs six local skills, adds the two agreed sections to root `AGENTS.md`, and optionally installs repository hooks for independently selected providers. Existing guidance is preserved obligation by obligation, with durable knowledge in brain and reusable procedures preferably in matching skills. Existing unrelated content remains intact.
 
-Current authorization is to correct the two review findings in this plan and stop. Do not implement, migrate a real target, commit, push, or install global hooks in this turn. Later execution must preserve the user's manual changes and recheck the working tree before editing.
+Current authorization covers implementation and verification of this plan. Preserve the user's manual changes. The user now authorizes committing and pushing the brain-install changes, inspecting native CI, and fixing resulting failures. Do not migrate a real target or install global hooks. The user confirmed all three test boundaries on 2026-10-21.
 
 ## Progress
 
 - [x] (2026-10-21) [milestone-0] Confirm the design through grilling, inspect source assets, and write this execution contract.
 - [x] (2026-10-21) [milestone-0] Resolve review findings with an existing-index preservation gate and per-file keep-existing choices.
-- [ ] [milestone-1] T1: Build the self-contained asset snapshot and portable six-skill bundle; verify source parity and intended adaptations.
-- [ ] [milestone-2] T2: Implement and verify base installation, AGENTS.md reconciliation, conflict handling, and manual indexing.
-- [ ] [milestone-3] T3: Implement and verify optional provider hook merging and preservation across reruns.
-- [ ] [milestone-4] T4: Author the brain-install workflow and obligation-level migration reference; evaluate fresh, legacy, and conflicting targets.
-- [ ] [milestone-5] T5: Run integrated checks, skill evaluations, and native platform checks; record actual evidence and remaining limits.
+- [x] (2026-10-21) [milestone-0] Reconcile execution authorization and verify a clean worktree on `codex/brain-system-migration`.
+- [x] (2026-10-21) [milestone-1] Confirm the relocated-helper, installer-CLI, and registered-hook test boundaries with the user before writing tests.
+- [x] (2026-10-21) [milestone-1] T1: Build the self-contained asset snapshot and portable six-skill bundle; verify source parity and intended adaptations.
+- [x] (2026-10-21) [milestone-2] T2: Implement and verify base installation, AGENTS.md reconciliation, conflict handling, and manual indexing.
+- [x] (2026-10-21) [milestone-3] T3: Implement and verify optional provider hook merging and preservation across reruns.
+- [x] (2026-10-21) [milestone-4] T4: Author the brain-install workflow and obligation-level migration reference; evaluate fresh, legacy, and conflicting targets.
+- [x] (2026-10-21) [milestone-5] T5a: Wire the verified installer tests into the existing native workflow.
+- [x] (2026-10-21) [milestone-5] T5: Verify the final integrated bundle locally and retain evaluation/parity evidence.
+- [ ] [milestone-5] T5: Obtain actual Windows/Linux/macOS Python 3.12/3.14 CI results after separately authorized publication; native acceptance remains unmet.
 
 ## Surprises & Discoveries
 
@@ -28,6 +32,9 @@ Current authorization is to correct the two review findings in this plan and sto
 - `ruminate` currently documents `--copilot-dir`, but `extract-conversations.py` only declares Claude and Codex input options. Do not ship an invalid command or claim unsupported extraction. Correct the bundled instructions to the actual supported inputs; adding another conversation parser is outside this plan.
 - Root indexing stops beneath curated indexes, except that all Markdown files under `brain/codebase/` remain listed. Preserve this behavior, including the archive boundary.
 - Review found that the unchanged indexer replaces an existing root index without migrating its prose or navigation; installation must gate that replacement before enabling hooks. Review also found that accepting a differing file needs an explicit keep-existing route through preflight.
+- Initial evaluation grading found a semantic narrowing from a deployment action to deployment plans. The migration reference now requires concrete trigger equivalence and unchanged operative wording when rewriting is unnecessary; the original failed run is retained.
+- A CP1252 subprocess reproducer exposed non-UTF-8 installer diagnostics and snapshot output paths. Both entrypoints now emit UTF-8; fifteen installer/helper tests pass.
+- The aggregate tool requires `run-1/` directories and cannot sum null timing. Original grading remains intact; canonical presentation copies omit null timing, and generated fallback metrics are removed from the final benchmark rather than treated as measurements.
 - The working tree was clean at planning inspection. This is historical evidence, not permission to discard later edits.
 
 ## Decision Log
@@ -38,13 +45,18 @@ Current authorization is to correct the two review findings in this plan and sto
 - D4 (user, 2026-10-21): Support Windows, Linux, and macOS across installer and bundled helpers. Prefer Python standard-library scripts and minimal adaptations; provide fallbacks for unavailable optional skills or tools.
 - D5 (user, 2026-10-21): Hook installation is optional. Copilot, Codex, and Gemini are independently selectable, including any combination or none. Never change user-global configurations.
 - D6 (user, 2026-10-21): Always install the existing standalone indexer inside the brain skill. Generate the initial index and document manual invocation when hooks are absent. Preserve the agreed AGENTS.md sections verbatim despite their hook-oriented wording.
+- D8 (user, 2026-10-21): make brain-install explicitly invoked with `disable-model-invocation: true` and an `argument-hint`; add the official Claude Code frontmatter reference to `skills/default/create-skill/SKILL.md`.
 - D7 (user, 2026-10-21): Unselected providers remain untouched, including previously installed brain hooks. Selection installs or updates; it never means uninstall.
 - Implementation choice: use one Python installer with an inspect/default mode and an explicit apply mode. Do not add an ownership database, daemon, generic migration engine, automatic update service, broad overwrite flag, or dependency framework. Resolve content conflicts through reviewed edits or explicit per-file `--keep-existing` choices, then rerun the installer.
 - Review correction (2026-10-21): existing root indexes require `--index-reviewed` before application. The agent must preserve original bytes and migrate meaningful content before giving this acknowledgement; an already generated index needs only review. These invocation-local choices require no ownership database.
 
 ## Outcomes & Retrospective
 
-Planning and both review corrections are complete. Existing-index preservation and keep-existing reruns now have explicit CLI, workflow, and acceptance contracts. No skill, installer, bundled asset, test, or workflow implementation has started. All implementation and runtime acceptance remain open. The next owner action is to authorize execution of this plan. Once authorized, start T1 after checking current source and worktree state; later tasks follow the explicit dependencies below.
+T1-T4 and T5a are complete. The self-contained skill includes deterministic starter assets, six portable local skills, preservation-first installation, optional provider hooks, migration guidance, maintenance documentation, and three realistic evaluated scenarios. Requested invocation metadata and the create-skill guidance reference are present. The validator's one-field allowlist correction accepts the documented argument hint.
+
+T5 local integration passes: fifteen installer/helper tests, twenty-six existing standalone hook tests (one platform-specific skip), eight skill validators, exact principle/AGENTS/hook parity, Python syntax, runtime resource/link checks, negative validator input, YAML matrix checks, and whitespace checks. Selected evaluations pass 14/14 per arm; the original semantic failure and all limitations remain in [evaluation results](evaluation-results.md). No performance improvement or live-provider delivery is claimed.
+
+T5 acceptance remains unmet because the changed implementation has not run on the six native CI cells. Python 3.12, Windows, and Linux are unavailable on this host. The user authorized commit/push and native CI repairs on 2026-10-21. The executing agent is publishing this implementation, then inspecting `.github/workflows/brain-hooks.yml` and fixing any failures. No publication has occurred yet for these changes; no real target migration or global installation occurred. All delegated tasks are complete. Reflection found the durable lessons already encoded in trigger-equivalence guidance, UTF-8 entrypoints, validation metadata support, and maintenance instructions; no additional brain topic note is needed.
 
 ## Context and Orientation
 
@@ -85,7 +97,7 @@ skills/default/brain-install/
   evals/evals.json
 ```
 
-The always-installed indexer lives in `assets/skills/brain/scripts/auto-index-brain.py` and installs to `.agents/skills/brain/scripts/auto-index-brain.py`. Reuse that asset when copying provider indexers; no second source implementation. The injector installs only for selected providers. Replace the bundled meditate snapshot helper with `scripts/snapshot.py`, preserving its snapshot format, and update bundled ruminate to use the portable command. Keep adaptations within the new bundle unless a separate source change is necessary and explicitly justified.
+The always-installed indexer lives in `assets/skills/brain/scripts/auto-index-brain.py` and installs to `.agents/skills/brain/scripts/auto-index-brain.py`. Reuse that asset when copying provider indexers; no second source implementation. The injector installs only for selected providers. Replace the bundled meditate snapshot helper with `scripts/snapshot.py`, preserving its snapshot format, and update bundled ruminate to use the portable command. Keep adaptations within the new bundle unless a separate source change is necessary and explicitly justified. D8 explicitly authorizes the create-skill reference addition. The existing quick validator rejected the documented `argument-hint` field through its public CLI; its allowlist received a one-field correction and the same CLI now passes. This is the only source-tooling change outside the bundle.
 
 `install.py TARGET [--provider copilot|codex|gemini ...] [--keep-existing RELATIVE_PATH ...] [--index-reviewed] [--apply]` uses an explicit target path. Omitted providers mean no hook installation. Default mode inspects and reports proposed changes without writes. `--apply` performs only conflict-free installation. Exit 0 means successful inspection or application, exit 1 means an I/O/application failure, and exit 2 means invalid input, prerequisites, malformed configuration, or a conflict. Print affected paths and actionable diagnostics. Do not prompt inside the script; the skill handles user choices.
 
@@ -108,12 +120,12 @@ The user confirmed D1-D7 and requested this plan only. Source inspection establi
 
 ### Milestone 1: Self-contained portable assets
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T1: Prepare the payload
 
-Prerequisites: new authorization to implement. Inputs: D1, D4, D6, the six source skill trees, principle files, AGENTS.md, and the two standalone hooks. Own the new bundle's `assets/` tree and asset/helper checks in `tests/test_install.py`.
+Prerequisites: implementation authorization and confirmation of applicable test boundaries (both received 2026-10-21). Inputs: D1, D4, D6, the six source skill trees, principle files, AGENTS.md, and the two standalone hooks. Own the new bundle's `assets/` tree and asset/helper checks in `tests/test_install.py`.
 
 Copy principle bytes exactly and extract the complete `## Brain` and `## End of Work Session Defined` sections into `assets/AGENTS-brain.md`. Do not include the source repository's opening publishing paragraph. Populate minimal skeletons and snapshot the six skills. Replace author-repository runtime document pointers with bundled instructions; intentional paths to files this installer creates in the target brain are allowed. Use activation language for other skills and explicit local fallbacks when optional skills, subagents, or planning tools are unavailable.
 
@@ -121,10 +133,12 @@ Port snapshot generation to Python, use portable temporary directories, and upda
 
 Verification: copy the payload to a temporary location outside the checkout. Check principle byte equality, runtime resource closure, portable helper operation on representative Markdown paths, and the documented extraction command against its parser. Compare copied hook bytes to source and validate all six skill frontmatters. Stop at verified assets; installer and migration behavior belong to later tasks.
 
+Observed 2026-10-21 on macOS, Python 3.14.6: the relocated snapshot subprocess test failed first because `snapshot.py` was absent, then passed after implementation (`python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'`, one test). A separate relocated extraction check parsed representative Claude and Codex JSONL into two conversations and two manifests. All six `quick_validate.py` runs passed; explicit-only flags remain. Byte comparisons passed for the 14 principle notes, principle index, complete AGENTS sections, both hooks, and three registration snapshots. Runtime reference review found no remaining author-repository document dependency. Snapshot/caller changes stay inside the new bundle. Native helper checks remain part of T5.
+
 ### Milestone 2: Safe base installation and manual indexing
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T2: Implement the base installer
 
@@ -138,10 +152,12 @@ Before any apply-time mutation, enforce the existing-index checkpoint from Inter
 
 Verification: fresh target, existing target, repeated application, read-only inspection, spaces/non-ASCII paths, conflicting principle/todo/skill/AGENTS files, unsafe links, and missing interpreter prerequisite. Compare unrelated-file fingerprints before and after, and unchanged managed-file timestamps on rerun. Exercise manual indexing from the copied installed bundle with no hook configurations. Add a legacy index containing unique prose and navigation: unacknowledged apply must leave the entire target unchanged; after preservation and migration, acknowledged apply must retain the original bytes in recovery evidence and keep the migrated content reachable. Also edit todos and a principle after installation, retain them with `--keep-existing`, and add another provider successfully without changing those files. Stop when base installation and its negative cases pass.
 
+Observed 2026-10-21 on macOS, Python 3.14.6: the installer CLI subprocess suite passed ten tests. Fresh inspection is read-only; fresh application and unchanged reruns work outside the checkout with disposable homes. Checks cover fenced AGENTS examples, section conflicts/duplicates, edited todo/principle/skill retention, invalid keep paths, existing-index preservation and recovery bytes, linked destinations/ancestors, hard-link-safe ignore updates, unrelated files, and indexing failures. The linked-parent case reproduced an unintended write before the safety fix and passes afterward. Provider-addition retention is composed with T3. Python version rejection is explicit; alternate interpreter/native checks remain T5.
+
 ### Milestone 3: Independently selectable repository hooks
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T3: Merge selected provider registrations
 
@@ -153,16 +169,18 @@ Keep the existing event semantics: Copilot successful postToolUse, Codex every c
 
 Verification: none, each individual provider, all combinations, reruns, and changing selections after installation. Unselected provider files and all user-global files must remain unchanged. Test unrelated handlers/settings preservation, malformed/duplicate JSON, conflicting brain handlers, and launcher execution from paths containing spaces. Exercise registered commands with representative provider payloads. Stop after the provider-selection matrix and preservation cases pass.
 
+Observed 2026-10-21 on macOS, Python 3.14.6: fourteen subprocess tests passed, including all eight provider combinations, unchanged reruns, provider additions with edited todos, unselected malformed configuration preservation, selected malformed/duplicate-key rejection before mutation, unrelated settings/handlers, ambiguous brain conflicts, and six startup/post-tool registered commands from a nested directory containing spaces. The selected host interpreter is pinned while the source root-discovery code and provider fields remain intact. Copilot progress lines and its final context JSON are both parsed. Official registration references were rechecked: [Copilot](https://docs.github.com/en/copilot/reference/hooks-reference), [Codex](https://learn.chatgpt.com/docs/hooks), and [Gemini](https://geminicli.com/docs/hooks/reference/). No live delivery or Windows/Linux pass is claimed. Subsequent malformed-config checks also reproduced acceptance of NaN and non-string command fields; both now fail before writes and the fourteen-test suite passes again.
+
 ### Milestone 4: Usable installation and migration skill
 
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T4: Author runtime guidance and migration procedure
 
 Prerequisites: T3. Inputs: verified installer behavior and D1-D7. Own SKILL.md, `references/migration.md`, README.md, and `evals/evals.json`.
 
-The runtime skill identifies the target and requested providers, inventories guidance including any existing root index, and runs installer inspection. Before mechanical installation, it preserves and migrates meaningful content from an existing root index, then supplies `--index-reviewed`; an already generated inventory only needs review. It resolves other concrete conflicts through reviewed edits or eligible `--keep-existing` choices, applies mechanical installation, completes the remaining guidance migration, and verifies the result. This runtime ordering is required even though T4 authors the procedure after the installer tasks. Do not require another approval for conflict-free work already requested by the target user. Read `references/migration.md` only when existing guidance requires migration. Keep skill maintenance, source refresh instructions, eval commands, and benchmark procedures in README.md.
+The runtime skill has `argument-hint` and `disable-model-invocation: true`, per D8. Its description is human-facing. The requested authoring guidance reference belongs in `skills/default/create-skill/SKILL.md`. The runtime skill identifies the target and requested providers, inventories guidance including any existing root index, and runs installer inspection. Before mechanical installation, it preserves and migrates meaningful content from an existing root index, then supplies `--index-reviewed`; an already generated inventory only needs review. It resolves other concrete conflicts through reviewed edits or eligible `--keep-existing` choices, applies mechanical installation, completes the remaining guidance migration, and verifies the result. This runtime ordering is required even though T4 authors the procedure after the installer tasks. Do not require another approval for conflict-free work already requested by the target user. Read `references/migration.md` only when existing guidance requires migration. Keep skill maintenance, source refresh instructions, eval commands, and benchmark procedures in README.md.
 
 Migration starts with an inventory of root/nested instructions, memory/KB notes, linked references, relevant existing skills, and registrations that load legacy guidance. Decompose obligations, including conditions, scope, exclusions, and approval requirements. Record each source obligation as retained, moved with an exact destination, consolidated with equivalent coverage, or obsolete with a specific reason. Preserve the mapping in a concise target migration audit under `brain/audits/`; do not dump source transcripts or secrets into it.
 
@@ -172,26 +190,36 @@ Validate every migration obligation, navigation, preserved scope, and source ret
 
 Verification: at least three realistic evaluations covering a fresh install with no hooks, a legacy guidance migration with selected providers and scoped rules, and a conflicting/repeated installation that preserves user changes. Include conditions and approval constraints that must survive migration, stale links to repair, and an unrelated provider handler. Use deterministic checks for file and config outcomes and review semantic obligation preservation directly. Benchmark against `without_skill` as required by authoring guidance. Stop at an authored, evaluated skill; integrated/native acceptance is T5.
 
+Observed 2026-10-21: all seven skill validators passed (brain-install plus six installed skills), runtime links resolve, and the requested invocation fields parse correctly. Six initial evaluation runs were independently graded 27/28; after the general trigger-equivalence correction, a fresh repeated-install pair passed 4/4 per arm. Selected evidence totals 14/14 per arm across three scenarios. Baselines share mechanical assets; no performance advantage is claimed. Missing metrics, model changes, baseline gaps, original failures, and evidence locations are recorded in [evaluation results](evaluation-results.md). Both initial and selected static viewers were generated with the existing skill-creator tooling.
+
 ### Milestone 5: Integrated and native verification
 
-Status: open
+Status: in progress
 Acceptance: not met
+
+#### T5a: Prepare native CI while evaluations complete
+
+Prerequisites: T3. The installer subprocess tests are already verified locally. Add the bundle path trigger and its unittest command to `.github/workflows/brain-hooks.yml`, preserving the existing six-cell matrix, ten-minute limit, and hook checks. Verify the YAML still describes that matrix and budget. This mechanical CI preparation is independent of semantic evaluation results; final acceptance remains T5. Commit/push is now authorized for this implementation; keep T5 open until native results pass.
+
+Observed 2026-10-21: the workflow now triggers on `skills/default/brain-install/**` and runs the installer unittest suite. Parsed YAML retains all six platform/version cells, existing hook checks, and the ten-minute budget. A narrow `.gitignore` exception retains the synthetic legacy release-skill fixture, which the generic `[Rr]elease/` rule otherwise excluded.
 
 #### T5: Prove the complete bundle
 
-Prerequisites: T4. Inputs: the integrated bundle, focused test evidence, evaluation artifacts, and existing CI workflow. Own integration verification and the minimal extension of `.github/workflows/brain-hooks.yml` needed to run the installer tests and trigger on bundle changes.
+Prerequisites: T4 and T5a. Inputs: the integrated bundle, focused test evidence, evaluation artifacts, and existing CI workflow. Own final integration verification; T5a owns the focused workflow registration.
 
 Run the installer from a relocated copy into disposable targets, with disposable homes, and exercise the installed manual indexer plus selected launchers. Prove fresh installation, migration preservation, conflict behavior, unchanged reruns, and hook-selection transitions together. All runtime resources must resolve without this checkout. Check source snapshot parity with explicit exceptions for portable skill/helper adaptations. Inspect diffs to ensure unrelated source skills, manual changes, and global installations remain untouched.
 
 Extend the existing six-cell native matrix for Python 3.12/3.14 on Windows/Linux/macOS. Keep its ten-minute job budget; do not move these tests into the slow general workflow or remove existing coverage. Native success is required to claim cross-platform installer verification. If dispatch needs a push not yet authorized, leave native acceptance open and report that exact owner action. Live-provider delivery is separate from process/config testing: report any live checks actually performed, but do not inherit historical delivery claims or add a mandatory Gemini live session to this installer scope.
 
+Observed 2026-10-21 on macOS/Python 3.14.6: `python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'` passed 15 tests in 4.505 seconds; `python3 scripts/test-brain-hooks.py` passed 26 tests with one platform-specific skip in 4.541 seconds. `generate-hooks.py --check` reports 60 current outputs. All eight validators and the unknown-field negative case passed; principle/index/AGENTS/hook parity, syntax, resource links, final metadata, new-bundle whitespace, and `git diff --check` passed. The workflow YAML preserves six native cells and the ten-minute budget. No native matrix was dispatched for these uncommitted changes.
+
 Completion requires passing integrated tests, skill validation/evaluations, and native checks with evidence. At the end of a code-changing implementation session activate reflect; persist only new durable findings. Do not mark completion from a clean diff alone. Stop without committing or pushing unless the user separately authorizes those actions.
 
 ## Concrete Steps
 
-The next action is the user's authorization to implement. No implementation command below is authorized during this planning turn. Once authorized, the executing agent checks `rtk git status --short`, reads this plan and current authoring guidance, confirms required TDD boundaries, and starts T1.
+The next action is to commit and push the reviewed brain-install implementation, then inspect its native six-cell matrix and repair failures; the user explicitly authorized this on 2026-10-21. T1-T4, independent semantic grading, T5a CI wiring, and T5 local integration are verified. After publication, inspect the actual six-cell native run and repair failures before marking T5 acceptance met. Do not treat older workflow runs as evidence for these unpublished changes. Evidence is retained in [evaluation results](evaluation-results.md) and `/private/tmp/brain-install-evals-g5zwusni/`.
 
-Run commands from the repository root. The following are proposed verification commands; none have been run for an implementation that does not yet exist:
+Run commands from the repository root. The following are the implementation verification commands; actual observed results are recorded per milestone and in the final integration evidence:
 
 ```text
 rtk proxy python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'

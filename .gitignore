@@ -609,6 +609,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,python,vs
 
 # Retained synthetic evaluation inputs.
+!skills/default/brain-install/evals/fixtures/legacy/.agents/skills/release/
 !skills/default/handoff/evals/files/root-create-fixture/logs/
 skills/default/handoff/evals/files/root-create-fixture/logs/*
 !skills/default/handoff/evals/files/root-create-fixture/logs/test-failure.txt
