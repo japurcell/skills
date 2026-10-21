@@ -178,6 +178,14 @@ def _unique_object(pairs):
     return result
 
 
+def valid_reader_limits(value) -> bool:
+    """Accept exactly positive byte and optional positive marker integer bounds."""
+    return (isinstance(value, dict) and set(value) == {"max_bytes", "max_markers"}
+            and type(value["max_bytes"]) is int and value["max_bytes"] > 0
+            and (value["max_markers"] is None
+                 or type(value["max_markers"]) is int and value["max_markers"] > 0))
+
+
 def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tuple]) -> dict:
     """Validate the complete selected universe before exact-case filtering."""
     try:
@@ -217,10 +225,7 @@ def load_contracts(path: Path, fixture_set: str, section: str, inputs: list[tupl
             if injection == "raw-envelope" or "reader_limits" in entry or "structural_markers" in entry:
                 limits = entry.get("reader_limits")
                 if (not isinstance(limits, dict) or set(limits) != {"baseline", "candidate"}
-                        or any(not isinstance(value, dict) or set(value) != {"max_bytes", "max_markers"}
-                               or type(value["max_bytes"]) is not int or value["max_bytes"] <= 0
-                               or value["max_markers"] is not None and (type(value["max_markers"]) is not int or value["max_markers"] <= 0)
-                               for value in limits.values())):
+                        or any(not valid_reader_limits(value) for value in limits.values())):
                     raise ValueError(name + ": missing reviewed reader limits")
                 count = raw_structural_size(data)
                 if type(entry.get("structural_markers")) is not int or entry["structural_markers"] != count:
@@ -338,6 +343,37 @@ class ResourceCase:
     fixture_metadata: dict
 
 
+def resource_cases(root: Path, fixture_set: str, expectations: Path | None, condition: str) -> list[ResourceCase]:
+    """Bind the complete resource universe to its reviewed condition contracts."""
+    from tool_guard_corpus import PROVIDERS, script_path
+    inputs = [(f"{provider}.resources.{name}", data, mode, injection)
+              for provider in PROVIDERS for name, data, mode, injection in resource_inputs(provider, fixture_set)]
+    contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, "resources", inputs)
+    return [ResourceCase(name, script_path(root, name.split(".")[0]), data,
+                         {"GUARD_MODE": mode}, contracts[name][condition]["decision"],
+                         fixture_metadata(contracts[name], condition))
+            for name, data, mode, injection in inputs]
+
+
+def pad_json_interior(data: bytes, target_bytes: int) -> bytes:
+    """Pad an encoded JSON object before its final brace, preserving other bytes."""
+    return data[:-1] + b" " * (target_bytes - len(data)) + data[-1:]
+
+
+def python_literal_writer(body: str, *, launcher: str) -> str:
+    """Build inert Python writer source with an explicit shell launcher."""
+    source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(body) + ")\nprint('Saved')\n"
+    if launcher == "inline":
+        return "python3 -c " + shlex.quote(source)
+    if launcher == "heredoc":
+        prefix = "python3"
+    elif launcher == "rtk-heredoc":
+        prefix = "rtk proxy python3"
+    else:
+        raise ValueError("unknown Python writer launcher: " + launcher)
+    return prefix + " - <<'PY'\n" + source + "PY"
+
+
 # Reviewed 1 MiB capacity universe. Every size remains part of its frozen ID.
 def capacity_inputs(provider):
     from tool_guard_corpus import Fixture, encode, envelope, patch
@@ -382,14 +418,14 @@ def capacity_inputs(provider):
         result.append((f"capacity-{capacity}.shell-max", shell(writer), "block", "none"))
         result.append((f"capacity-{capacity}.shell-unproved", shell("echo '" + body + "'"), "block", "none"))
         literal = "x" * (capacity - len("example.txtSaved"))
-        source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(literal) + ")\nprint('Saved')\n"
-        result.append((f"capacity-{capacity}.python-wrapped", shell("rtk proxy python3 - <<'PY'\n" + source + "PY"), "block", "none"))
-        result.append((f"capacity-{capacity}.python-inline", shell("python3 -c " + shlex.quote(source)), "block", "none"))
+        wrapped_writer = python_literal_writer(literal, launcher="rtk-heredoc")
+        result.append((f"capacity-{capacity}.python-wrapped", shell(wrapped_writer), "block", "none"))
+        result.append((f"capacity-{capacity}.python-inline", shell(python_literal_writer(literal, launcher="inline")), "block", "none"))
         raw_limit = 6 * (capacity + 3 * 32768) + 8192
         clean = shell("echo safe").rstrip()
         for extra in (0, 1):
             result.append((f"capacity-{capacity}.raw-interior-{'overflow' if extra else 'max'}",
-                           clean[:-1] + b" " * (raw_limit + extra - len(clean)) + b"}", "block", "raw-envelope"))
+                           pad_json_interior(clean, raw_limit + extra), "block", "raw-envelope"))
         text = patch(4, size=capacity).replace("x", '"') if provider == "codex" else '"' * capacity
         result.append((f"capacity-{capacity}.native-quoted-max", native(text), "block", "none"))
         event = json.loads(shell("echo safe"))
@@ -397,11 +433,10 @@ def capacity_inputs(provider):
         result.append((f"capacity-{capacity}.envelope-wide", json.dumps(event, separators=(",", ":")).encode(), "block", "none"))
         result.append((f"capacity-{capacity}.shell-source-overflow", shell("x" * (capacity + 32769)), "block", "none"))
         result.append((f"capacity-{capacity}.shell-literal-overflow", shell("cat > example.txt <<'EOF'\n" + "x" * capacity + "\nEOF"), "block", "none"))
-        large_source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(literal + "x") + ")\nprint('Saved')\n"
-        result.append((f"capacity-{capacity}.python-constant-overflow", shell("rtk proxy python3 - <<'PY'\n" + large_source + "PY"), "block", "none"))
+        result.append((f"capacity-{capacity}.python-constant-overflow", shell(python_literal_writer(literal + "x", launcher="rtk-heredoc")), "block", "none"))
         unproved = "value=" + repr("x" * (capacity - 32))
         result.append((f"capacity-{capacity}.python-unproved", shell("python3 -c " + shlex.quote(unproved)), "block", "none"))
-        for label, command in (("shell-escaped-max", writer), ("python-escaped-max", "rtk proxy python3 - <<'PY'\n" + source + "PY")):
+        for label, command in (("shell-escaped-max", writer), ("python-escaped-max", wrapped_writer)):
             result.append((f"capacity-{capacity}.{label}", shell(command).decode().replace("x", "\\u0078").encode(), "block", "none"))
         # Dense invalid markers stress bounded collection before json.loads rejects.
         bomb = b'{"x":' + b'"' * (raw_limit - 6) + b'}'

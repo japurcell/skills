@@ -25,10 +25,11 @@ import time
 from tool_guard_corpus import PROVIDERS, script_path
 from hook_benchmark_support import (
     collect_macos_rss, guardian_runtime_footprint, prepare_failure, verify_audit,
-    guardian_decision, guardian_canonical_paths,
+    guardian_decision, guardian_canonical_paths, guardian_benchmark_environment,
+    guardian_response_matches, read_audit_records,
 )
 from fixtures.tool_guard_resource_cases import (
-    FIXTURE_SETS, HISTORICAL_TIMING_CASES, DEFAULT_EXPECTATIONS, resource_inputs,
+    FIXTURE_SETS, HISTORICAL_TIMING_CASES, DEFAULT_EXPECTATIONS, resource_inputs, resource_cases,
     load_contracts, validate_response, fixture_metadata,
 )
 
@@ -71,7 +72,8 @@ def release_cases(root: Path, condition: str):
             else case for case in cases]
 
 
-def fixture_cases(root: Path, fixture_set: str, mode: str):
+def fixture_cases(root: Path, fixture_set: str, mode: str, *,
+                  expectations: Path | None = None, condition: str = "candidate"):
     if mode == "timing":
         cases = [case for case in release_cases(root, "candidate")
                  if case.name.split(".", 1)[1] in HISTORICAL_TIMING_CASES]
@@ -86,20 +88,21 @@ def fixture_cases(root: Path, fixture_set: str, mode: str):
                              for name, data, guard_mode, injection in resource_inputs(provider, fixture_set)
                              if injection not in {"none", "raw-envelope"} or name.startswith(("mode.", "capacity-")))
         return cases
-    return [high_rate.Case(f"{provider}.resources.{name}", script_path(root, provider), data,
-                           "clean", {"GUARD_MODE": guard_mode}, fixture_metadata={"injection": injection})
-            for provider in PROVIDERS for name, data, guard_mode, injection in resource_inputs(provider, fixture_set)]
+    return [high_rate.Case(case.name, case.script, case.payload, "clean", case.environment,
+                           case.expected_decision, case.fixture_metadata)
+            for case in resource_cases(root, fixture_set, expectations, condition)]
 
 
 def selected_cases(root: Path, condition: str, names: list[str], mode: str,
                    fixture_set: str = "historical-v1", expectations: Path | None = None):
-    cases = fixture_cases(root, fixture_set, mode)
-    contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, mode,
-                              [(case.name, case.payload, case.environment["GUARD_MODE"],
-                                (case.fixture_metadata or {}).get("injection", "malformed-json" if case.name.endswith(".guard.failure") else "none"))
-                               for case in cases])
-    cases = [replace(case, expected_decision=contracts[case.name][condition]["decision"],
-                     fixture_metadata=fixture_metadata(contracts[case.name], condition)) for case in cases]
+    cases = fixture_cases(root, fixture_set, mode, expectations=expectations, condition=condition)
+    if mode == "timing":
+        contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, mode,
+                                  [(case.name, case.payload, case.environment["GUARD_MODE"],
+                                    (case.fixture_metadata or {}).get("injection", "malformed-json" if case.name.endswith(".guard.failure") else "none"))
+                                   for case in cases])
+        cases = [replace(case, expected_decision=contracts[case.name][condition]["decision"],
+                         fixture_metadata=fixture_metadata(contracts[case.name], condition)) for case in cases]
     known = {case.name for case in cases}
     if set(names) - known:
         raise ValueError("unknown exact case: " + ", ".join(sorted(set(names) - known)))
@@ -119,10 +122,7 @@ def copy_provider(root: Path, destination: Path, provider: str) -> None:
 
 def case_environment(*, cold: bool = False):
     # Override inherited redirectors as well as HOME. No log reaches live state.
-    return {"OBSERVABILITY_TESTING": "1", "PYTHONDONTWRITEBYTECODE": "1" if cold else "",
-            "PYTHONPYCACHEPREFIX": "",
-            "AUDIT_PASSIVE_LOG_MODE": "default", "AUDIT_LOG_MAX_BYTES": "134217728",
-            "AUDIT_LOG_MAX_BACKUPS": "0"}
+    return guardian_benchmark_environment(cold=cold)
 
 
 def prepared_case(case, root: Path, *, cold: bool = False, home: Path | None = None):
@@ -136,25 +136,16 @@ def verify_logging(home: Path, case, calls: int) -> dict:
     """Inspect completed records outside timed invocation, before home cleanup."""
     if (case.fixture_metadata or {}).get("contract"):
         return verify_audit(home, case, calls)
-    files = [home / "guard.log"] if not case.name.startswith("gemini.") else sorted((home / "guard").glob("*.log"))
+    evidence, completed = read_audit_records(home, case, require_json=False)
     records = []
-    evidence = []
-    for path in files:
-        if not path.is_file():
-            continue
-        data = path.read_bytes()
-        evidence.append({"path": str(path.relative_to(home)), "bytes": len(data),
-                         "sha256": hashlib.sha256(data).hexdigest()})
-        for line in data.decode("utf-8").splitlines():
-            start = line.find("{")
-            record = json.loads(line[start:]) if start >= 0 else {}
-            if record.get("event") not in {"guard_passed", "threats_detected"} or record.get("mode") != "block":
-                raise ValueError("unexpected completed guard log record")
-            if not case.name.endswith(".guard.failure"):
-                expected_event = "guard_passed" if case.expected_decision == "allow" else "threats_detected"
-                if record["event"] != expected_event:
-                    raise ValueError("completed guard record does not match expected decision")
-            records.append(record)
+    for record in completed:
+        if record.get("event") not in {"guard_passed", "threats_detected"} or record.get("mode") != "block":
+            raise ValueError("unexpected completed guard log record")
+        if not case.name.endswith(".guard.failure"):
+            expected_event = "guard_passed" if case.expected_decision == "allow" else "threats_detected"
+            if record["event"] != expected_event:
+                raise ValueError("completed guard record does not match expected decision")
+        records.append(record)
     # Existing malformed-JSON fixture exits before audit initialization. New
     # attribution may add logging; neither zero nor new logging proves a pass.
     malformed = case.name.endswith(".guard.failure")
@@ -176,9 +167,9 @@ def checked_invocation(case, repo: Path, home: Path, *, observation: dict | None
     try:
         contract = (case.fixture_metadata or {}).get("contract")
         if contract:
-            if code or output.get("invalid_stdout") or guardian_decision(case.name.split(".")[0], output, contract=contract) != case.expected_decision:
+            if code or output.get("invalid_stdout") or not guardian_response_matches(
+                    case.name.split(".")[0], code, output, case.expected_decision, contract=contract):
                 raise ValueError(f"{case.name}: expected {case.expected_decision}, unexpected permission response (exit {code})")
-            validate_response(contract, output, provider=case.name.split(".", 1)[0])
         else:
             high_rate.verify_outcome(case, code, output)
     except (RuntimeError, ValueError) as exc:

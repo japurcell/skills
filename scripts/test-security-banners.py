@@ -10,6 +10,8 @@ import sys
 import tempfile
 import unittest
 
+from tool_guard_test_support import guard_test_environment
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -80,12 +82,15 @@ class SecurityBannerTests(unittest.TestCase):
             payload = {'tool_name': tool, 'tool_input': value} if provider != 'copilot' else {'toolName': tool, 'toolArgs': value}
             if provider == 'codex':
                 payload['hook_event_name'] = 'PreToolUse'
+            env = guard_test_environment(
+                os.environ, Path(temporary), home=Path(temporary), log=log, mode=mode,
+            )
+            env.update({
+                'TOOL_GUARD_ALLOWLIST': json.dumps(allowlist) if allowlist is not None else '',
+                'SKIP_TOOL_GUARD': '',
+            })
             result = subprocess.run([sys.executable, '-I', '-S', '-B', str(path)], input=json.dumps(payload), text=True, capture_output=True,
-                                    env={**os.environ, 'HOME': temporary, 'GUARD_MODE': mode, 'TOOL_GUARD_LOG_DIR': str(log),
-                                         'AUDIT_LOG': str(Path(temporary) / 'audit.log'),
-                                         'OBSERVABILITY_LOG_PATH': str(Path(temporary) / 'observability.jsonl'),
-                                         'TOOL_GUARD_ALLOWLIST': json.dumps(allowlist) if allowlist is not None else '',
-                                         'SKIP_TOOL_GUARD': ''}, timeout=5)
+                                    env=env, timeout=5)
             self.assertEqual(result.returncode, 0, result.stderr)
             rows = [json.loads(line[line.find('{'):]) for line in log_file.read_text().splitlines()] if log_file.exists() else []
             return json.loads(result.stdout), rows

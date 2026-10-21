@@ -159,23 +159,23 @@ def load_module(name: str, path: Path):
     return module
 
 
-def load_guard_runtime(name: str, entrypoint: Path):
+def load_runtime_module(package_name: str, entrypoint: Path, suffix: str):
     import importlib
     import types
-    package = types.ModuleType(name)
-    package.__path__ = [str(entrypoint.parent / "helpers")]
-    sys.modules[name] = package
-    return importlib.import_module(name + ".tool_guard_policy")
-
-
-def load_scanner_runtime(name: str, entrypoint: Path):
-    import types
-    package_name = name + "_runtime"
     package = types.ModuleType(package_name)
     package.__path__ = [str(entrypoint.parent / "helpers")]
     sys.modules[package_name] = package
+    return importlib.import_module(package_name + "." + suffix)
+
+
+def load_guard_runtime(name: str, entrypoint: Path):
+    return load_runtime_module(name, entrypoint, "tool_guard_policy")
+
+
+def load_scanner_runtime(name: str, entrypoint: Path):
+    package_name = name + "_runtime"
     import importlib
-    git = importlib.import_module(package_name + ".scan_git")
+    git = load_runtime_module(package_name, entrypoint, "scan_git")
     for suffix in ("scan_types", "scan_stream", "scan_engine", "scan_allowlist"):
         other = importlib.import_module(package_name + "." + suffix)
         for key, value in vars(other).items():

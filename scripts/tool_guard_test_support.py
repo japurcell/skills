@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 import os
 from pathlib import Path
 import subprocess
@@ -10,6 +11,25 @@ import sys
 import tempfile
 
 from tool_guard_corpus import script_path
+
+
+def guard_test_environment(
+    inherited: Mapping[str, str],
+    directory: Path,
+    *,
+    home: Path,
+    log: Path,
+    mode: str,
+) -> dict[str, str]:
+    """Set fixture-owned paths while retaining the caller's inheritance policy."""
+    return {
+        **inherited,
+        "HOME": str(home),
+        "GUARD_MODE": mode,
+        "TOOL_GUARD_LOG_DIR": str(log),
+        "AUDIT_LOG": str(directory / "audit.log"),
+        "OBSERVABILITY_LOG_PATH": str(directory / "observability.jsonl"),
+    }
 
 
 def invoke_guard(
@@ -34,13 +54,9 @@ def invoke_guard(
                 "COPILOT_OBSERVABILITY_LOG_PATH", "GEMINI_OBSERVABILITY_LOG_PATH",
             }
         }
-        env.update({
-            "HOME": str(home),
-            "GUARD_MODE": mode,
-            "TOOL_GUARD_LOG_DIR": str(directory / "guard-log"),
-            "AUDIT_LOG": str(directory / "audit.log"),
-            "OBSERVABILITY_LOG_PATH": str(directory / "observability.jsonl"),
-        })
+        env = guard_test_environment(
+            env, directory, home=home, log=directory / "guard-log", mode=mode,
+        )
         if allowlist is not None:
             env["TOOL_GUARD_ALLOWLIST"] = allowlist
         return subprocess.run(

@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, sized_native_patch
+from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
 from tool_guard_test_support import invoke_guard, native_decision
 from tool_guard_corpus import full_shell_envelope
 
@@ -19,14 +19,6 @@ def text(*codes: int) -> str:
 
 
 FORCE_PUSH = text(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 114, 99, 101, 32, 111, 114, 105, 103, 105, 110, 32, 109, 97, 105, 110)
-
-
-def capacity_patch(*, utf8: bool = False, high_lines: int = 0) -> str:
-    prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
-    suffix = '\n' + '+\n' * high_lines + '*** End Patch'
-    available = 1048576 - len((prefix + suffix).encode('utf-8'))
-    body = '界' * (available // 3) + 'x' * (available % 3) if utf8 else 'x' * available
-    return prefix + body + suffix
 
 
 class NativeDataTests(unittest.TestCase):
@@ -126,7 +118,7 @@ class NativeDataTests(unittest.TestCase):
 
     def test_copilot_raw_patch_aggregate_maximum_and_first_overflow(self) -> None:
         for utf8 in (False, True):
-            patch = capacity_patch(utf8=utf8)
+            patch = full_capacity_native_patch(capacity=1048576, utf8=utf8)
             self.assertEqual(len(patch.encode('utf-8')), 1048576)
             self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
             for mode in ('block', 'warn'):
@@ -233,7 +225,7 @@ class NativeDataTests(unittest.TestCase):
 
     def test_patch_native_aggregate_maximum_and_first_overflow(self) -> None:
         for utf8 in (False, True):
-            patch = capacity_patch(utf8=utf8)
+            patch = full_capacity_native_patch(capacity=1048576, utf8=utf8)
             self.assertEqual(len(patch.encode('utf-8')), 1048576)
             self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'allow')
             for mode in ('block', 'warn'):
@@ -350,7 +342,7 @@ class NativeDataTests(unittest.TestCase):
 
     def test_full_capacity_high_line_count_patch_requires_complete_grammar(self) -> None:
         for provider, key_bytes in (('codex', 7), ('copilot', 0)):
-            patch = capacity_patch(high_lines=500000)
+            patch = full_capacity_native_patch(capacity=1048576, high_lines=500000)
             self.assertEqual(len(patch.encode('utf-8')), 1048576)
             value = patch if provider == 'copilot' else {'command': patch}
             self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')

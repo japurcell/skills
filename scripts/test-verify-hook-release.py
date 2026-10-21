@@ -188,6 +188,40 @@ class ReleaseVerificationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 adapter.selected_cases(Path("."), "candidate", [], "resources", "file-operations-v2", altered)
 
+    def test_reader_limits_require_positive_integer_bounds(self):
+        from fixtures.tool_guard_resource_cases import valid_reader_limits
+        valid = [{"max_bytes": 1, "max_markers": None}, {"max_bytes": 1, "max_markers": 1},
+                 {"max_bytes": 2 ** 100, "max_markers": 2 ** 100}]
+        invalid = [None, [], True, 1, "limits", {}, {"max_bytes": 1}, {"max_markers": 1},
+                   {"max_bytes": 1, "max_markers": None, "extra": 1}]
+        invalid.extend({"max_bytes": value, "max_markers": None} for value in (None, True, False, 0, -1, 1.0, "1"))
+        invalid.extend({"max_bytes": 1, "max_markers": value} for value in (True, False, 0, -1, 1.0, "1"))
+        for value in valid:
+            with self.subTest(valid=value):
+                self.assertTrue(valid_reader_limits(value))
+        for value in invalid:
+            with self.subTest(invalid=value):
+                self.assertFalse(valid_reader_limits(value))
+
+    def test_transport_failure_is_rechecked_after_preparation(self):
+        adapter = load_adapter()
+        from hook_benchmark_support import prepare_failure, verify_audit
+        names = ["codex.resources.transport.malformed", "codex.resources.capacity-1048576.raw-marker-exhaustion"]
+        cases = adapter.selected_cases(Path("."), "candidate", names, "resources",
+                                       "file-operations-v2", adapter.DEFAULT_EXPECTATIONS)
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            for case in cases:
+                with self.subTest(case=case.name):
+                    current = prepare_failure(case, home)
+                    self.assertIsNotNone(verify_audit(home, current, 1)["failure_injection"])
+                    with self.assertRaisesRegex(ValueError, "transport failure condition missing"):
+                        verify_audit(home, replace(current, payload=b"{}"), 1)
+                    if "reader_limits" in current.fixture_metadata:
+                        stale = {**current.fixture_metadata, "structural_markers": current.fixture_metadata["structural_markers"] + 1}
+                        with self.assertRaisesRegex(ValueError, "stale structural marker count"):
+                            verify_audit(home, replace(current, fixture_metadata=stale), 1)
+
     @unittest.skipUnless(sys.platform == "darwin", "release execution requires native macOS")
     def test_complete_evidence_rejects_each_missing_or_duplicate_row(self):
         adapter = load_adapter()
@@ -306,11 +340,26 @@ class ReleaseVerificationTests(unittest.TestCase):
     def test_versioned_runners_agree_on_shared_resources(self) -> None:
         adapter = load_adapter()
         path = CLI.parent / "fixtures/tool_guard_file_operations_expectations.json"
-        for condition in ("baseline", "candidate"):
-            release = adapter.selected_cases(Path("."), condition, [], "resources", "file-operations-v1", path)
-            standalone = adapter.resources.selected_cases(Path("."), "file-operations-v1", path, condition)
-            self.assertEqual([(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in release],
-                             [(c.name, c.payload, c.expected_decision, c.fixture_metadata["contract"]) for c in standalone])
+        for fixture_set, count in (("historical-v1", 108), ("file-operations-v1", 171), ("file-operations-v2", 231)):
+            for condition in ("baseline", "candidate"):
+                with self.subTest(fixture_set=fixture_set, condition=condition):
+                    release = adapter.selected_cases(Path("."), condition, [], "resources", fixture_set, path)
+                    standalone = adapter.resources.selected_cases(Path("."), fixture_set, path, condition)
+                    self.assertEqual(len(release), count)
+                    self.assertTrue(all(case.repo == "clean" for case in release))
+                    self.assertEqual([(c.name, c.script, c.payload, c.environment, c.expected_decision, c.fixture_metadata) for c in release],
+                                     [(c.name, c.script, c.payload, c.environment, c.expected_decision, c.fixture_metadata) for c in standalone])
+
+    def test_resource_contracts_are_validated_before_exact_filtering(self) -> None:
+        adapter = load_adapter()
+        document = json.loads(adapter.DEFAULT_EXPECTATIONS.read_text())
+        document["fixture_sets"]["historical-v1"]["resources"]["gemini.resources.strict-max"]["input_sha256"] = "0" * 64
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "expectations.json"
+            path.write_text(json.dumps(document))
+            with self.assertRaisesRegex(ValueError, "stale fixture hash"):
+                adapter.selected_cases(Path("."), "candidate", ["codex.resources.strict-max"],
+                                       "resources", "historical-v1", path)
 
     def test_writer_execution_pairs_require_the_executable_finding(self) -> None:
         adapter = load_adapter()
@@ -462,8 +511,9 @@ class ReleaseVerificationTests(unittest.TestCase):
         adapter = load_adapter()
         contract = {"mode": "block", "decision": "allow", "attribution": {}}
         from hook_benchmark_support import disposable_environment
+        from fixtures import tool_guard_resource_cases
         with tempfile.TemporaryDirectory() as temporary:
-            with patch.object(adapter.resources, "validate_response", side_effect=lambda *_, **__: time.sleep(0.06)):
+            with patch.object(tool_guard_resource_cases, "validate_response", side_effect=lambda *_, **__: time.sleep(0.06)):
                 start = time.perf_counter()
                 result = adapter.resources.checked_run([sys.executable, "-c", "print('{}')"], b"{}",
                                                        disposable_environment(Path(temporary), "codex"),

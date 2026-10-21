@@ -18,10 +18,11 @@ from tool_guard_corpus import PROVIDERS, script_path
 from hook_benchmark_support import (
     collect_macos_rss, disposable_environment, guardian_runtime_footprint,
     prepare_failure, verify_audit, guardian_decision, guardian_canonical_paths,
+    guardian_benchmark_environment, guardian_response_matches,
 )
 from fixtures.tool_guard_resource_cases import (
-    FIXTURE_SETS, DEFAULT_EXPECTATIONS, resource_inputs, load_contracts,
-    validate_response, fixture_metadata, ResourceCase, historical_fixtures as fixtures, payload,
+    FIXTURE_SETS, DEFAULT_EXPECTATIONS, resource_cases,
+    validate_response, ResourceCase, historical_fixtures as fixtures, payload,
 )
 
 
@@ -34,10 +35,8 @@ def checked_run(command: list[str], data: bytes, env: dict[str, str], provider: 
     result.elapsed_ms = (time.perf_counter_ns() - start) / 1_000_000
     try:
         output = json.loads(result.stdout)
-        if result.returncode or guardian_decision(provider, output, contract=contract) != expected:
+        if not guardian_response_matches(provider, result.returncode, output, expected, contract=contract):
             raise RuntimeError(f'{provider}: expected {expected}, exit {result.returncode}, output {result.stdout[:1024]!r}, collector stderr {result.stderr[:1024]!r}')
-        if contract is not None:
-            validate_response(contract, output, provider=provider)
     except (RuntimeError, ValueError, UnicodeDecodeError) as exc:
         exc.invocation = {"elapsed_ms": result.elapsed_ms, "exit_code": result.returncode,
                           "stdout": result.stdout[:1024].decode("utf-8", errors="replace"),
@@ -58,13 +57,7 @@ def fingerprints(root: Path) -> dict[str, str]:
 
 
 def selected_cases(root: Path, fixture_set: str, expectations: Path | None, condition: str):
-    inputs = [(f"{provider}.resources.{name}", data, mode, injection)
-              for provider in PROVIDERS for name, data, mode, injection in resource_inputs(provider, fixture_set)]
-    contracts = load_contracts(expectations or DEFAULT_EXPECTATIONS, fixture_set, "resources", inputs)
-    return [ResourceCase(name, script_path(root, name.split(".")[0]), data,
-                         {"GUARD_MODE": mode}, contracts[name][condition]["decision"],
-                         fixture_metadata(contracts[name], condition))
-            for name, data, mode, injection in inputs]
+    return resource_cases(root, fixture_set, expectations, condition)
 
 
 def harness_fingerprints(expectations: Path | None) -> dict:
@@ -127,11 +120,10 @@ def main() -> int:
                 home.mkdir(parents=True)
                 current = prepare_failure(case, home)
                 env = disposable_environment(home, provider)
-                env.update({'OBSERVABILITY_TESTING': '1', 'PYTHONPYCACHEPREFIX': '', 'PYTHONDONTWRITEBYTECODE': '',
+                env.update({**guardian_benchmark_environment(),
                             'COPILOT_OBSERVABILITY_LOG_PATH': str(home / 'copilot-observability.ndjson'),
                             'GEMINI_OBSERVABILITY_LOG_PATH': str(home / 'gemini-observability.ndjson'),
-                            'AUDIT_PASSIVE_LOG_MODE': 'default', 'AUDIT_LOG_MAX_BYTES': '134217728',
-                            'AUDIT_LOG_MAX_BACKUPS': '0', **current.environment})
+                            **current.environment})
                 command = [sys.executable, str(current.script)]
                 contract = case.fixture_metadata['contract']
                 row = {'case': case.name, 'input_bytes': len(case.payload),

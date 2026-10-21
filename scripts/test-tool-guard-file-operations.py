@@ -7,6 +7,7 @@ from pathlib import Path
 import shlex
 import unittest
 
+from fixtures.tool_guard_resource_cases import pad_json_interior, python_literal_writer
 from tool_guard_corpus import Fixture, OPERATIONS, PROVIDERS, decision, encode, envelope, patch
 from tool_guard_test_support import invoke_guard
 
@@ -15,13 +16,18 @@ CAPACITY = 1048576
 
 
 class FileOperationTests(unittest.TestCase):
+    def assert_command_denied(self, provider, fixture, *, mode="block", cause=None):
+        result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
+        if cause:
+            self.assertIn(cause, result.stdout.decode())
+
     def test_python_literal_writer_and_status_have_a_finite_aggregate_budget(self):
         for extra in (0, 1):
             body = "x" * (CAPACITY - len("example.txtSaved") + extra)
-            source = "from pathlib import Path\np=Path('example.txt')\np.write_text(" + repr(body) + ")\nprint('Saved')\n"
-            commands = ["python3 - <<'PY'\n" + source + "PY",
-                        "rtk proxy python3 - <<'PY'\n" + source + "PY",
-                        "python3 -c " + shlex.quote(source)]
+            commands = [python_literal_writer(body, launcher=launcher)
+                        for launcher in ("heredoc", "rtk-heredoc", "inline")]
             for command in commands:
                 fixture = Fixture("capacity-python", "provider_shell", {"command": command},
                                   "deny", "allow", "capacity", "bounded prototype")
@@ -85,10 +91,8 @@ class FileOperationTests(unittest.TestCase):
                     fixture = Fixture("output-keywords", "provider_shell",
                                       {"command": "python3 -c " + shlex.quote(source) + " | sh"},
                                       "deny", "deny", "pipeline", "callee effect survives unsupported keywords")
-                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
                     with self.subTest(provider=provider, source=source[:30], mode=mode):
-                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                        self.assertIn("inspection_failure", result.stdout.decode())
+                        self.assert_command_denied(provider, fixture, mode=mode, cause="inspection_failure")
 
     def test_status_output_inside_substitution_keeps_execution_context(self):
         source = r'from pathlib import Path;Path("x").write_text("");print("\x72\x6d\x20\x2d\x72\x66\x20\x2f")'
@@ -99,9 +103,7 @@ class FileOperationTests(unittest.TestCase):
             fixture = Fixture("nested-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
             for provider in PROVIDERS:
                 with self.subTest(provider=provider, command=command[:60]):
-                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
-                    self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                    self.assertIn("inspection_failure", result.stdout.decode())
+                    self.assert_command_denied(provider, fixture, cause="inspection_failure")
 
 
     def test_strict_shell_fallback_preserves_stdout_consumers(self):
@@ -111,9 +113,7 @@ class FileOperationTests(unittest.TestCase):
         fixture = Fixture("strict-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
         for provider in PROVIDERS:
             with self.subTest(provider=provider):
-                result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
-                self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                self.assertIn("inspection_failure", result.stdout.decode())
+                self.assert_command_denied(provider, fixture, cause="inspection_failure")
 
 
     def test_unproved_python_launchers_keep_nested_stdout_context(self):
@@ -126,9 +126,7 @@ class FileOperationTests(unittest.TestCase):
             fixture = Fixture("unproved-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
             for provider in PROVIDERS:
                 with self.subTest(provider=provider, command=command[:30]):
-                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
-                    self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                    self.assertIn("inspection_failure", result.stdout.decode())
+                    self.assert_command_denied(provider, fixture, cause="inspection_failure")
 
 
     def test_writer_destinations_cannot_launder_executable_stdout(self):
@@ -137,10 +135,8 @@ class FileOperationTests(unittest.TestCase):
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     fixture = Fixture("writer-output", "provider_shell", {"command": "python3 -c " + shlex.quote(source) + " | sh"}, "deny", "deny", "pipeline", "probe")
-                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
                     with self.subTest(provider=provider, destination=destination, mode=mode):
-                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                        self.assertIn("inspection_failure", result.stdout.decode())
+                        self.assert_command_denied(provider, fixture, mode=mode, cause="inspection_failure")
 
 
     def test_output_effects_survive_an_unproved_program(self):
@@ -153,10 +149,8 @@ class FileOperationTests(unittest.TestCase):
             for provider in PROVIDERS:
                 for mode in ("block", "warn"):
                     fixture = Fixture("unproved-output", "provider_shell", {"command": "python3 -c " + shlex.quote(source) + " | sh"}, "deny", "deny", "pipeline", "probe")
-                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)), mode=mode)
                     with self.subTest(provider=provider, source=source[:30], mode=mode):
-                        self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                        self.assertIn("inspection_failure", result.stdout.decode())
+                        self.assert_command_denied(provider, fixture, mode=mode, cause="inspection_failure")
 
 
     def test_assigned_status_output_cannot_reach_an_interpreter(self):
@@ -165,9 +159,7 @@ class FileOperationTests(unittest.TestCase):
         fixture = Fixture("assigned-status", "provider_shell", {"command": command}, "deny", "deny", "pipeline", "probe")
         for provider in PROVIDERS:
             with self.subTest(provider=provider):
-                result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
-                self.assertEqual(decision(provider, json.loads(result.stdout)), "deny", result.stdout)
-                self.assertIn("inspection_failure", result.stdout.decode())
+                self.assert_command_denied(provider, fixture, cause="inspection_failure")
 
 
     def test_unused_envelope_metadata_is_bounded_independently(self):
@@ -203,7 +195,7 @@ class FileOperationTests(unittest.TestCase):
         for provider in PROVIDERS:
             event = encode(envelope(provider, fixture)).rstrip()
             for extra in (0, 1):
-                data = event[:-1] + b" " * (raw_limit + extra - len(event)) + b"}"
+                data = pad_json_interior(event, raw_limit + extra)
                 result = invoke_guard(ROOT, provider, data)
                 with self.subTest(provider=provider, extra=extra):
                     self.assertEqual(decision(provider, json.loads(result.stdout)), "deny" if extra else "allow", result.stdout)

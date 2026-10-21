@@ -12,6 +12,34 @@ security_run_suite() (
   with_hook_test_environment "$(test_home_for_workdir "$security_suite_workdir")" -- "$@"
 )
 
+security_write_forced_reader_failure_fixture() {
+  local entrypoint="$1"
+  local destination="$2"
+  local helpers_dir
+  helpers_dir="$(dirname "$entrypoint")/helpers"
+
+  mkdir -p "$destination/helpers"
+  cp "$entrypoint" "$destination/tool-guard.py"
+  cp "$helpers_dir/tool_guard_policy.py" \
+    "$helpers_dir/scan_allowlist.py" \
+    "$helpers_dir/scan_reporting.py" "$destination/helpers/"
+  printf '%s\n' \
+    'import json' \
+    'import sys' \
+    'def emit_json(payload):' \
+    '    sys.stdout.write(json.dumps(payload, separators=(",", ":")) + "\n")' \
+    'class InputLimitError(ValueError): pass' \
+    'def read_json_input(**kwargs):' \
+    '    raise RuntimeError("forced input failure")' \
+    'def sanitize_log_field(value):' \
+    '    return str(value)' \
+    >"$destination/helpers/common.py"
+  printf '%s\n' \
+    'def audit_log_event(*_args, **_kwargs):' \
+    '    return True' \
+    >"$destination/helpers/audit.py"
+}
+
 security_guard_payload() {
   local input="$1"
   local tool="${2:-$SECURITY_SHELL_TOOL}"

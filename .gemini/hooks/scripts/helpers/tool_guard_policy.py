@@ -509,6 +509,11 @@ class NativeToolInput:
         self.data_fields = frozenset(data_fields)
 
 
+def _native_data_input(kind: str, metadata: tuple[str, ...], value: dict, data_fields: tuple[str, ...]) -> NativeToolInput:
+    """Keep proven data values and their field provenance in the same order."""
+    return NativeToolInput(kind, metadata, tuple(value[field] for field in data_fields), data_fields=data_fields)
+
+
 def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
     fields = {**required, **(optional or {})}
     if not len(required) <= len(value) <= len(fields):
@@ -1599,7 +1604,7 @@ def _native_shell_shape(tool_name: str, value: dict, provider: str) -> NativeToo
                 if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
                     return None
                 metadata.extend(paths)
-    return NativeToolInput("shell", tuple(metadata), (value[key],), data_fields=(key,))
+    return _native_data_input("shell", tuple(metadata), value, (key,))
 
 
 
@@ -1610,19 +1615,19 @@ def _native_tool_shape(tool_name: str, value: object, provider: str) -> NativeTo
     if shell is not None:
         return shell
     if provider == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
-        return NativeToolInput("patch", (), (value["command"],), data_fields=("command",))
+        return _native_data_input("patch", (), value, ("command",))
     if provider == "gemini":
         if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
-            return NativeToolInput("write", (value["file_path"],), (value["content"],), data_fields=("content",))
+            return _native_data_input("write", (value["file_path"],), value, ("content",))
         if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
-            return NativeToolInput("edit", (value["file_path"], value["instruction"]), (value["old_string"], value["new_string"]), data_fields=("old_string", "new_string"))
+            return _native_data_input("edit", (value["file_path"], value["instruction"]), value, ("old_string", "new_string"))
         if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
-            return NativeToolInput("search", tuple(value.get(key, "") for key in ("path", "include")), (value["pattern"],), data_fields=("pattern",))
+            return _native_data_input("search", tuple(value.get(key, "") for key in ("path", "include")), value, ("pattern",))
     if provider == "copilot":
         if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
-            return NativeToolInput("write", (value["path"],), (value["file_text"],), data_fields=("file_text",))
+            return _native_data_input("write", (value["path"],), value, ("file_text",))
         if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
-            return NativeToolInput("edit", (value["path"],), (value["old_str"], value["new_str"]), data_fields=("old_str", "new_str"))
+            return _native_data_input("edit", (value["path"],), value, ("old_str", "new_str"))
         if tool_name in {"grep", "rg"}:
             # Observed CLI arguments, not a guessed complete provider schema.
             pattern_keys = value.keys() & {"pattern", "query"}

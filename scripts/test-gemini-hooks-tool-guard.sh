@@ -257,20 +257,8 @@ test_tool_guard_denies_unexpected_input_exception() {
 
   workdir="$(setup_test_workdir)"
   trap cleanup_test_workdir RETURN
-  mkdir -p "$workdir/helpers"
-  cp "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" "$workdir/tool-guard.py"
-  cp "$REPO_ROOT/.gemini/hooks/scripts/helpers/tool_guard_policy.py" \
-    "$REPO_ROOT/.gemini/hooks/scripts/helpers/scan_allowlist.py" \
-    "$REPO_ROOT/.gemini/hooks/scripts/helpers/scan_reporting.py" "$workdir/helpers/"
-  printf '%s\n' \
-    'import json' \
-    'import sys' \
-    'def emit_json(payload):' \
-    '    sys.stdout.write(json.dumps(payload, separators=(",", ":")) + "\n")' \
-    'class InputLimitError(ValueError): pass' \
-    'def read_json_input(**kwargs):' \
-    '    raise RuntimeError("forced input failure")' \
-    >"$workdir/helpers/common.py"
+  security_write_forced_reader_failure_fixture \
+    "$REPO_ROOT/.gemini/hooks/scripts/tool-guard.py" "$workdir"
 
   output="$(python3 "$workdir/tool-guard.py" <<<'{}' 2>"$workdir/stderr")"
 
