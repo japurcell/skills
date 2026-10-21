@@ -1,0 +1,5 @@
+interface:
+  display_name: "AGENTS.md Install"
+  short_description: "Install or update scoped project instructions"
+policy:
+  allow_implicit_invocation: false

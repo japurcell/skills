@@ -4,10 +4,6 @@
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
-## Skills
-
- 1. [ ] Create `skills/default/agents-md-install` to install or update root and nested `AGENTS.md` files plus progressive-disclosure reference docs in a target project (excluding tool-specific compatibility bridges like `CLAUDE.md` or `.github/copilot-instructions.md`). While authoring the skill, research these sources in priority order and use `grilling` to resolve conflicting guidance before baking the rules into the skill: (1) [harness-engineering](https://github.com/lopopolo/harness-engineering), (2) [A Complete Guide to AGENTS.md](https://www.aihero.dev/a-complete-guide-to-agents-md), (3) `~/.agents/skill/agents-md-improver/SKILL.md`, (4) [agents.md](https://agents.md/), (5) [Addy Osmani - AGENTS.md](https://addyosmani.com/agents/15-agents-md/), (6) [GitHub Blog - How to write a great agents.md](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/), and (7) [AAIF - Writing an effective AGENTS.md](https://aaif.io/blog/writing-an-effective-agents-md). Require nested `AGENTS.md` files when appropriate for per-scope progressive disclosure, and progressive disclosure for conditional content so agents read only what a task requires. This skill will replace both `skills/default/agents-md-improver` and `skills/default/create-agentsmd` skills.
-
 ## Repository maintenance
 
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
