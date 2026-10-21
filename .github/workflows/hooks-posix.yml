@@ -165,7 +165,42 @@ jobs:
       - name: Test maintained suite registry and runner
         run: rtk proxy python3 scripts/test_test_all.py
       - name: Test verification-only fixture preflight
+        id: fixture-preflight
         run: rtk proxy python3 scripts/test-verify-security-fixture-patch.py
+      - name: Profile failed fixture preflight in disposable storage
+        if: failure() && steps.fixture-preflight.outcome == 'failure'
+        run: |
+          rtk proxy python3 - <<'PYTHON'
+          import importlib.util
+          import json
+          from pathlib import Path
+          import pstats
+          import subprocess
+          import sys
+          import time
+
+          root = Path.cwd()
+          spec = importlib.util.spec_from_file_location("fixture_tests", root / "scripts/test-verify-security-fixture-patch.py")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          fixture = module.PreflightTests()
+          fixture.setUp()
+          try:
+              patch = fixture.patch("value = 'repaired'\n")
+              for label, script in (("ordinary", module.CLI),
+                                    ("delayed-metadata", fixture.observation_wrapper(0.65, first=2)[0])):
+                  profile = fixture.base / (label + ".prof")
+                  started = time.monotonic()
+                  result = subprocess.run([sys.executable, "-m", "cProfile", "-o", str(profile), str(script),
+                      "--patch", str(patch), "--path", "fixture.py", "--active-hook-root", str(root),
+                      "--check", "--json"], cwd=fixture.repo, env=fixture.env, capture_output=True, timeout=60)
+                  # Only fixed fixture metadata and function timings enter logs.
+                  print(json.dumps({"fixture_profile": label, "exit": result.returncode,
+                                    "elapsed_seconds": time.monotonic() - started}), flush=True)
+                  pstats.Stats(str(profile)).sort_stats("cumulative").print_stats(30)
+          finally:
+              fixture.doCleanups()
+          PYTHON
       - name: Test diagnostic recovery
         run: rtk proxy python3 scripts/test-hook-diagnostic-recovery.py
       - name: Test security reporting
