@@ -8,6 +8,7 @@
 ## codebase
 
 - [[codebase/agents-installation]]
+- [[codebase/brain-hooks]]
 - [[codebase/hook-observability]]
 - [[codebase/hook-testing]]
 - [[codebase/hooks-codex]]

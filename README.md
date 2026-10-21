@@ -251,7 +251,7 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 ### Brain hooks
 
-The standalone brain hooks maintain the root index and load it at supported session starts and resets. See [portable brain hook setup, limits, and verification](docs/brain-hooks.md). Existing user installations require an explicit reinstall.
+The standalone brain hooks maintain the root index and load it at supported session starts and resets. See [portable brain hook setup, limits, and verification](brain/codebase/brain-hooks.md). Existing user installations require an explicit reinstall.
 
 ### Generated provider hooks
 

@@ -1,6 +1,7 @@
 # Codebase
 
 - [[agents-installation]]
+- [Brain hooks](brain-hooks.md)
 - [[hook-observability]]
 - [[hook-testing]]
 - [[hooks]]

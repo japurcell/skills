@@ -54,7 +54,7 @@ Format: `[[section/file-name]]`. Resolution order: same directory, then relative
 
 ## After Writing
 
-Let the brain hooks reconcile the machine-owned `brain/index.md` after additions or removals. If hooks are unavailable, run a standalone brain indexer as described in `docs/brain-hooks.md`. Keep human prose in topic notes. Also update the relevant entrypoint (`brain/principles.md`, `brain/delegation.md`, or `brain/plans/index.md`) when applicable. Keep indexes link-only and scannable.
+Let the brain hooks reconcile the machine-owned `brain/index.md` after additions or removals. If hooks are unavailable, run a standalone brain indexer as described in `brain/codebase/brain-hooks.md`. Keep human prose in topic notes. Also update the relevant entrypoint (`brain/principles.md`, `brain/delegation.md`, or `brain/plans/index.md`) when applicable. Keep indexes link-only and scannable.
 
 ## Durability Test
 

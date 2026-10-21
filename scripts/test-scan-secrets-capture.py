@@ -218,7 +218,7 @@ def run_case(
         if capture_failure or unexpected_failure or unexpected_input:
             assert "/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN" not in output_path.read_text(encoding="utf-8")
             assert "/private/hostile-path token=FAKE_DIAGNOSTIC_TOKEN" not in error_path.read_text(encoding="utf-8")
-        assert elapsed < maximum, (provider, mode, elapsed)
+        assert elapsed < maximum, (provider, mode, storage_fault, elapsed)
         assert not list(root.glob("tmp*")), "Git capture file leaked"
         log_file = root / "logs" / "scan.log"
         log = log_file.read_text(encoding="utf-8") if log_file.is_file() else ""
