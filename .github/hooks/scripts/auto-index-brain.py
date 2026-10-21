@@ -178,6 +178,7 @@ INJECT = False
 import argparse
 import stat
 import secrets
+import struct
 from contextlib import contextmanager, ExitStack
 from urllib.parse import quote
 
@@ -190,8 +191,8 @@ def linked(info):
     return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)
 
 
-def windows_handle(path, access, sharing, creation, directory=False):
-    """Open the entry itself; directory handles deny rename and reparse edits."""
+def windows_handle(path, access, sharing, creation, directory=False, parent=None):
+    """Open the entry itself; directory handles deny replacement."""
     import ctypes
     from ctypes import wintypes
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
@@ -205,9 +206,46 @@ def windows_handle(path, access, sharing, creation, directory=False):
     kernel.CloseHandle.restype = wintypes.BOOL
     # OPEN_REPARSE_POINT inspects the entry rather than its target.
     flags = 0x00200000 | (0x02000000 if directory else 0)
-    handle = kernel.CreateFileW(str(path), access, sharing, None, creation, flags, None)
-    if handle == wintypes.HANDLE(-1).value:
-        raise ctypes.WinError(ctypes.get_last_error())
+    if parent is None:
+        handle = kernel.CreateFileW(str(path), access, sharing, None, creation, flags, None)
+        if handle == wintypes.HANDLE(-1).value:
+            raise ctypes.WinError(ctypes.get_last_error())
+    else:
+        # NtCreateFile binds the first lock creation to the validated vault,
+        # even if an empty vault becomes a junction before that creation.
+        class UnicodeString(ctypes.Structure):
+            _fields_ = [("Length", wintypes.USHORT), ("MaximumLength", wintypes.USHORT),
+                        ("Buffer", wintypes.LPWSTR)]
+
+        class ObjectAttributes(ctypes.Structure):
+            _fields_ = [("Length", wintypes.ULONG), ("RootDirectory", wintypes.HANDLE),
+                        ("ObjectName", ctypes.POINTER(UnicodeString)), ("Attributes", wintypes.ULONG),
+                        ("SecurityDescriptor", wintypes.LPVOID), ("SecurityQualityOfService", wintypes.LPVOID)]
+
+        class IoStatusBlock(ctypes.Structure):
+            _fields_ = [("Status", ctypes.c_void_p), ("Information", ctypes.c_size_t)]
+
+        native = ctypes.WinDLL("ntdll")
+        native.NtCreateFile.argtypes = (ctypes.POINTER(wintypes.HANDLE), wintypes.DWORD,
+            ctypes.POINTER(ObjectAttributes), ctypes.POINTER(IoStatusBlock), wintypes.LPVOID,
+            wintypes.ULONG, wintypes.ULONG, wintypes.ULONG, wintypes.ULONG, wintypes.LPVOID, wintypes.ULONG)
+        native.NtCreateFile.restype = wintypes.LONG
+        native.RtlNtStatusToDosError.argtypes = (wintypes.LONG,)
+        native.RtlNtStatusToDosError.restype = wintypes.ULONG
+        name = str(path)
+        length = len(name.encode("utf-16-le"))
+        text = UnicodeString(length, length + 2, name)
+        attributes = ObjectAttributes(ctypes.sizeof(ObjectAttributes), parent, ctypes.pointer(text),
+                                      0x1040, None, None)  # CASE_INSENSITIVE | DONT_REPARSE
+        status = IoStatusBlock()
+        opened = wintypes.HANDLE()
+        disposition = {1: 2, 3: 1, 4: 3}[creation]  # CREATE / OPEN / OPEN_IF
+        # Synchronous, non-directory, open the reparse entry itself.
+        result = native.NtCreateFile(ctypes.byref(opened), access | 0x100000, ctypes.byref(attributes),
+            ctypes.byref(status), None, 0, sharing, disposition, 0x200060, None, 0)
+        if result < 0:
+            raise ctypes.WinError(native.RtlNtStatusToDosError(result))
+        handle = opened.value
     try:
         attributes = (wintypes.DWORD * 2)()  # FILE_ATTRIBUTE_TAG_INFO, class 9
         if not kernel.GetFileInformationByHandleEx(handle, 9, attributes, ctypes.sizeof(attributes)):
@@ -230,12 +268,29 @@ class Directory:
             if os.name == "nt":
                 paths = [path] if parent else [*reversed(path.parents), path]
                 for item in paths:
-                    # READ sharing only: other writers cannot rename or turn
-                    # this directory into a junction while the handle is open.
-                    handle, close = windows_handle(item, 0, 1, 3, directory=True)
+                    # Deny replacement; attribute-only reparse edits are still
+                    # possible, so enumerate the handle rather than this path.
+                    handle, close = windows_handle(item, 0x21 if item == path else 0, 1, 3, directory=True)
                     self.stack.callback(close, handle)
                 self.fd = None
-                info = path.lstat()
+                self.handle = handle
+                import ctypes
+                from ctypes import wintypes
+                self.query = ctypes.WinDLL("kernel32", use_last_error=True).GetFileInformationByHandleEx
+                self.query.argtypes = (wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD)
+                self.query.restype = wintypes.BOOL
+                identity = ctypes.create_string_buffer(24)  # FILE_ID_INFO
+                if not self.query(handle, 18, identity, len(identity)):
+                    raise ctypes.WinError(ctypes.get_last_error())
+                self.identity = identity.raw
+                if isinstance(expected, bytes):
+                    if expected != self.identity:
+                        raise BrainError("directory changed")
+                elif expected is not None:
+                    # Python 3.12+ uses the volume serial and full 128-bit ID.
+                    if (expected.st_dev != int.from_bytes(self.identity[:8], "little")
+                            or expected.st_ino != int.from_bytes(self.identity[8:], "little")):
+                        raise BrainError("directory changed")
             else:
                 flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
                 if parent:
@@ -253,10 +308,10 @@ class Directory:
                         raise
                 self.stack.callback(os.close, self.fd)
                 info = os.fstat(self.fd)
-            if linked(info) or not stat.S_ISDIR(info.st_mode):
-                raise BrainError("unsafe directory")
-            if expected is not None and not os.path.samestat(expected, info):
-                raise BrainError("directory changed")
+                if linked(info) or not stat.S_ISDIR(info.st_mode):
+                    raise BrainError("unsafe directory")
+                if expected is not None and not os.path.samestat(expected, info):
+                    raise BrainError("directory changed")
         except BaseException:
             self.stack.close()
             raise
@@ -266,6 +321,37 @@ class Directory:
 
     def __exit__(self, *exception):
         return self.stack.__exit__(*exception)
+
+    def entries(self):
+        if self.fd is not None:
+            with os.scandir(self.fd) as entries:
+                for entry in entries:
+                    info = entry.stat(follow_symlinks=False)
+                    yield entry.name, stat.S_IFLNK if linked(info) else info.st_mode, info
+            return
+        import ctypes
+        # FILE_ID_EXTD_DIR_INFO: the name, attributes and 128-bit identity
+        # all come from the pinned handle, never from a reopened parent path.
+        buffer = ctypes.create_string_buffer(65536)
+        while True:
+            if not self.query(self.handle, 19, buffer, len(buffer)):
+                error = ctypes.get_last_error()
+                if error == 18:  # ERROR_NO_MORE_FILES
+                    return
+                raise ctypes.WinError(error)
+            records = buffer.raw
+            offset = 0
+            while True:
+                following, attributes, length, tag, identity = struct.unpack_from("<I52xII4xI16s", records, offset)
+                name = records[offset + 88:offset + 88 + length].decode("utf-16-le")
+                if name not in (".", ".."):
+                    mode = stat.S_IFDIR if attributes & 0x10 else stat.S_IFREG
+                    if attributes & 0x400 or tag:
+                        mode = stat.S_IFLNK
+                    yield name, mode, self.identity[:8] + identity
+                if not following:
+                    break
+                offset += following
 
     def stat(self, name):
         return (self.path / name).lstat() if self.fd is None else os.stat(name, dir_fd=self.fd, follow_symlinks=False)
@@ -284,8 +370,16 @@ class Directory:
             import msvcrt
             access = 0x80000000 | (0x40000000 if flags & os.O_RDWR or flags & os.O_WRONLY else 0)
             creation = 1 if flags & os.O_EXCL else 4 if flags & os.O_CREAT else 3
-            handle, close = windows_handle(self.path / name, access, 3, creation)
+            handle, close = windows_handle(name, access, 3, creation, parent=self.handle)
             try:
+                # Once the lock exists the vault is nonempty. Reject an in-place
+                # conversion that preceded creation before any path operations.
+                import ctypes
+                attributes = (ctypes.c_uint32 * 2)()
+                if not self.query(self.handle, 9, attributes, ctypes.sizeof(attributes)):
+                    raise ctypes.WinError(ctypes.get_last_error())
+                if attributes[0] & 0x400:
+                    raise BrainError("unsafe directory")
                 descriptor = msvcrt.open_osfhandle(handle, flags & (os.O_RDONLY | os.O_RDWR | os.O_WRONLY) | os.O_BINARY)
             except BaseException:
                 close(handle)
@@ -388,18 +482,14 @@ def inventory(vault):
                 if time.monotonic() > deadline:
                     raise BrainError("inventory budget exceeded")
                 directory = stack.enter_context(Directory(directory.path / part, identity, directory))
-            with os.scandir(directory.fd if directory.fd is not None else directory.path) as entries:
-                for entry in entries:
-                    count += 1
-                    if count > 20000 or time.monotonic() > deadline:
-                        raise BrainError("inventory budget exceeded")
-                    info = entry.stat(follow_symlinks=False)
-                    if linked(info):
-                        continue
-                    if stat.S_ISDIR(info.st_mode):
-                        pending.append(((*parts, entry.name), (*identities, info)))
-                    elif stat.S_ISREG(info.st_mode) and entry.name.lower().endswith(".md"):
-                        paths.append(Path(*parts, entry.name))
+            for name, mode, identity in directory.entries():
+                count += 1
+                if count > 20000 or time.monotonic() > deadline:
+                    raise BrainError("inventory budget exceeded")
+                if stat.S_ISDIR(mode):
+                    pending.append(((*parts, name), (*identities, identity)))
+                elif stat.S_ISREG(mode) and name.lower().endswith(".md"):
+                    paths.append(Path(*parts, name))
     for relative in sorted(paths):
         if relative.as_posix() == "index.md":
             continue

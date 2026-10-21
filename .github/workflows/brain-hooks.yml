@@ -3,6 +3,8 @@ name: Standalone brain hooks
 on:
   push:
     paths:
+      - '.codex/hooks.json'
+      - '.gemini/settings.json'
       - 'hooks/**'
       - '.github/hooks/**'
       - '.copilot/hooks/**'
@@ -13,6 +15,8 @@ on:
       - '.github/workflows/brain-hooks.yml'
   pull_request:
     paths:
+      - '.codex/hooks.json'
+      - '.gemini/settings.json'
       - 'hooks/**'
       - '.github/hooks/**'
       - '.copilot/hooks/**'

@@ -12,9 +12,16 @@ Two portable hook behaviors will maintain the root index and inject that index i
 
 On 2026-10-20 the user accepted decisions Q1-Q9 and confirmed the shared design. The user subsequently invoked execplan-implement, authorizing execution of the task graph. Repository implementation and isolated verification may proceed. On 2026-10-20 the user explicitly authorized committing and pushing the migration branch to run the native CI matrix. This supersedes the earlier commit/publication restriction. T7 and todo 1 must remain open until all remaining checks pass. Global installations remain out of scope. The user clarified that Copilot brain hooks belong only in repository `.github/hooks`, not global `.copilot/hooks`, and explicitly confirmed removal of global tool-guard registrations for all three providers ("Remove global tool guards intentionally"). Commit `a73a33c1` also removes brain registrations from all three global templates; preserve that repository-only boundary.
 
+On 2026-10-20 the user subsequently authorized committing and pushing the owner-reviewed fixes, checking native CI, and repairing any failures. This supersedes the T10 publication stop. Keep fixes minimal and within the spec; do not merge, modify real globals, or claim live-provider verification. T7 and todo 1 remain open until live-provider verification passes.
+
 Future implementation is repository-scoped. Existing user-global installations must remain unchanged until the user explicitly reinstalls. Use isolated temporary destinations for installer validation. The old instruction to run the normal installer before live testing does not override this boundary.
 
 ## Progress
+
+- [ ] [milestone-5] T7: Publish T10 fixes, verify the exact-head native matrix and related installer/security workflows, and repair failures. Live-provider acceptance remains open.
+
+- [x] (2026-10-20) [milestone-7] T10: Fix Git-root launcher precedence, handle-bound Windows enumeration/first lock creation, and both CI trigger filters; regenerate standalone artifacts and verify focused local behavior.
+- [x] (2026-10-20) [milestone-7] T10: Original owning security reviewer closed both security findings by source review; original test reviewer closed CI triggers and verified regression-test validity. Native Windows execution remains T7 work.
 
 - [x] (2026-10-20) [milestone-6] T9: Reproduce and fix launcher shadowing and vault/child directory swaps, restore original investigation IDs 2-7, and verify focused process/generator/installer checks. This checkpoint is delivered with the requested scoped commit; T7 remains open.
 
@@ -42,6 +49,8 @@ Future implementation is repository-scoped. Existing user-global installations m
 
 ## Surprises & Discoveries
 
+- Strict review confirmed that script-or-Git ancestor selection executed a nested competing script, and Windows write/delete sharing denial did not prevent attribute-only junction conversion. Native handle enumeration and relative first-lock creation close those underlying path reopenings. The dedicated real-API Windows regression is present but cannot run on this macOS host.
+
 - Commit `54b6a74f853d174fe8de71e2e6eb42db69cf9e9f` introduced the new brain and skills. At baseline, the brain had principles, an empty plans index and no todos.
 - At baseline, `docs/ideas/index.md` listed nine active and five archived idea files. Some active ideas explicitly require validation; archived does not necessarily mean completed, because the old workflow also archived ideas when a plan existed.
 - The legacy roots contained routed policies, known issues, raw third-party sources, summaries and ingestion state. They cannot be copied wholesale without retaining obsolete representation and lifecycle assumptions.
@@ -53,6 +62,8 @@ Future implementation is repository-scoped. Existing user-global installations m
 - Initial exploration reported `rtk gain` could not initialize its tracking database. RTK reads, searches, and Git commands worked; tracking failure is not evidence of a repository test failure.
 
 ## Decision Log
+
+- 2026-10-20 strict-review correction: choose Git root before any script fallback. On Windows, use documented `GetFileInformationByHandleEx(FileIdExtdDirectoryInfo)` records and `NtCreateFile` with `RootDirectory` inside existing runtime helpers. This binds enumeration metadata and initial file creation to validated handles without adding dependencies or a general filesystem layer. Python 3.12 `fileutils.c` confirms `st_dev` is the volume serial and `st_ino` is the full file ID. Keep native proof separate from source review and local POSIX tests.
 
 All decisions below were accepted by the user on 2026-10-20. Preserve them unless the user changes scope.
 
@@ -71,6 +82,8 @@ All decisions below were accepted by the user on 2026-10-20. Preserve them unles
 The actual skill directory is `update-agent-docs`, despite the original request spelling it `update-agents-docs`. Remove the actual retired skill and fix references to either spelling where present.
 
 ## Outcomes & Retrospective
+
+T10 implements all three subsequent strict-review findings and the original owning reviewers independently verified closure. Local process and generator evidence is below; no native Windows runtime proof is claimed for the new APIs. The current request authorizes publication and native CI verification of these fixes. T7 remains open until actual provider startup/reset verification passes; global installations remain untouched.
 
 The migration and scope correction are implemented and verified. Retained knowledge and ideas live in the brain; the three legacy content roots, old idea directory, retired skills, ingestion, and OKF infrastructure are removed. Copilot brain hooks live only in repository `.github/hooks`; Codex and Gemini also register brain maintenance at repository scope. Global templates intentionally omit brain and tool-guard registrations, as confirmed by the user. Guard runtime behavior remains tested through explicit invocation.
 
@@ -232,17 +245,28 @@ Acceptance: met
 
 Task T9 depends on the completed migration implementation. Its outcome is repository launches unaffected by cwd module names, filesystem operations confined to the validated vault despite path replacement, and unambiguous permanent todo IDs. Public process tests reproduce the actual failures before changes and verify safe outcomes afterward. Regenerate all six standalone outputs, verify registration/installer compatibility and no-change behavior, and record evidence here before one scoped commit. Existing T7 live-provider checks remain outside this task.
 
+### Milestone 7: Close strict-review findings
+Status: done
+Acceptance: met
+
+T10 depends on T9 and fixes only the confirmed launcher trust boundary, Windows in-place reparse race, and missing CI registration trigger paths. Public registered commands must ignore competing nested scripts inside a Git root, retain no-Git behavior, and preserve isolated imports. Native directory records carry names, types and volume/file identities; first-lock creation uses the validated vault handle. Both push and pull-request filters include `.codex/hooks.json` and `.gemini/settings.json`. Implementation and local checks are complete. The original security reviewer verified both security fixes against source/API contracts, and the original test reviewer verified CI triggers and regression-test validity; both reported closure with no new high-confidence defect. Native execution remains a separately disclosed T7 obligation.
+
 ## Concrete Steps
 
-T9 verification is complete (2026-10-20). Deliver this checkpoint in one scoped commit on `codex/brain-system-migration`. The three review fixes cover registered-launcher module shadowing, directory replacement outside the vault boundary, and duplicate todo IDs. The user already confirmed the process/vault, generated-registration, and isolated-installer test seams. The baseline at task start was `92912bb3`, with a clean worktree.
+Next action: commit and push the owner-reviewed T10 fixes on `codex/brain-system-migration`, then inspect the native matrix and related Windows installer/macOS security workflows for that exact runtime commit. Reproduce and repair any failures without weakening tests or adding machinery outside the spec, publish scoped fixes, and recheck affected native jobs. Record actual results below. Keep T7 and todo 1 open until live-provider verification passes; do not start live-provider work, merge, or change existing user-global installations in this CI task.
 
-Completed verification commands: `rtk python3 scripts/test-brain-hooks.py`, `rtk python3 scripts/test-generate-hooks.py`, `rtk python3 scripts/test-hook-diagnostics.py`, `rtk python3 scripts/test-hook-diagnostic-recovery.py`, `rtk python3 scripts/test-install-codex-hooks.py`, `rtk proxy bash scripts/test-install.sh`, and `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1` from the repository root. For future reruns, serialize generator and full installer fixtures. Final checks are `rtk python3 scripts/generate-hooks.py --check`, todo ID uniqueness/next-id, and `rtk git diff --check`. Commit exactly the review fixes, generated outputs, and their documentation, then stop. No additional infrastructure or follow-up implementation is included.
-
-T7 remains open. Its next work is a fresh native matrix for T9 followed by actual provider startup/reset delivery in isolated profiles; no new native or live result is claimed. The previous isolated Copilot probe lacked authentication, Codex isolated hook trust was not established, and Gemini CLI was absent. Last observed versions were Copilot 1.0.101 and Codex 0.163.0. Use normal trust/authentication and isolated profiles; do not bypass trust or change existing user-global installations. Prior native results for runtime commit `307d07d5` are retained below as baseline evidence, not proof of the T9 changes. Todo 8 (CI runtime) and todo 9 (Markdown links) remain separate follow-ups. No merge or global installation is authorized.
-
-After future canonical hook edits, run `rtk python3 scripts/generate-hooks.py --write` and `--check`. Generated outputs must remain self-contained. No global deployment is part of this task.
+From the repository root, focused verification uses `rtk python3 scripts/test-brain-hooks.py`, `rtk python3 scripts/test-generate-hooks.py`, `rtk python3 scripts/test-install-codex-hooks.py`, and `rtk python3 scripts/test-hook-diagnostics.py`. Serialize generator and installer fixtures. Final checks are `rtk python3 scripts/generate-hooks.py --check` and `rtk git diff --check`. The full 55-suite registry is not a required local rerun for this bounded correction. The current request now requires native CI verification of the published T10 runtime; do not present earlier native results as proof of T10.
 
 ## Validation and Acceptance
+
+### T10 strict-review correction evidence (2026-10-20)
+
+On macOS/Python 3.14.6, the new registered-command regression failed in all six startup/completion handlers before the launcher fix, executing the competing nested script. It passes afterward, alongside the no-Git nested launcher test and cwd module isolation. The Git-root fixture uses a worktree-style `.git` file.
+
+The brain process suite reports 26 tests, with one explicit native-Windows skip. The skipped test invokes real `DeviceIoControl` junction conversion at native enumeration and first-lock boundaries; it does not fake API results. Native wrappers retain the existing ordinary-directory and symlink replacement cases when enumeration no longer calls `os.scandir`. Windows red/green execution was unavailable locally and remains unverified. Generator tests pass 25 cases; diagnostics pass 10; the maintained Codex merge check passes. Generated freshness reports 60 files. Both missing configuration paths are included in each CI trigger block by direct inspection.
+
+Reflection: the process regressions, handle-bound runtime operations, CI filters, and revised hook contract structurally encode the findings. No separate brain note, skill change, or new backlog machinery is needed. Independent owner review completed on 2026-10-20: the security owner checked Git-root precedence, native access rights and record offsets, full identities, handle-relative creation, first-lock protection, status conversion and handle ownership; the test owner checked both trigger blocks and real-process/native-test assertions. Both closed their findings without edits or test execution. These are source-review closures, not native runtime proof. T7 stays open for native and live-provider evidence.
+
 
 ### T9 review-fix evidence (2026-10-20)
 

@@ -65,6 +65,39 @@ class BrainHooksTests(unittest.TestCase):
                 context = output.get("additionalContext") or output["hookSpecificOutput"]["additionalContext"]
                 self.assertIn("[[note]]", context)
 
+    def test_project_launches_ignore_nested_scripts_inside_git_root(self):
+        (self.directory / ".git").write_text("gitdir: elsewhere")
+        nested = self.directory / "dependency"
+        nested.mkdir()
+        (nested / "pathlib.py").write_text("raise RuntimeError('cwd module imported')")
+        (self.vault / "trusted.md").touch()
+        for provider, config, field, relative in (
+            ("copilot", ".github/hooks/hooks.json", "bash", ".github/hooks/scripts"),
+            ("codex", ".codex/hooks.json", "command", ".codex/hooks"),
+            ("gemini", ".gemini/settings.json", "command", ".gemini/hooks/scripts"),
+        ):
+            hooks = json.loads((ROOT / config).read_text())["hooks"]
+            for event, entries in hooks.items():
+                handlers = entries if provider == "copilot" else [h for g in entries for h in g["hooks"]]
+                for handler in handlers:
+                    command = handler.get(field, "")
+                    for name in ("inject-brain.py", "auto-index-brain.py"):
+                        if name not in command:
+                            continue
+                        with self.subTest(provider=provider, event=event):
+                            for base in (self.directory, nested):
+                                (base / relative).mkdir(parents=True, exist_ok=True)
+                            shutil.copyfile(ROOT / relative / name, self.directory / relative / name)
+                            (nested / relative / name).write_text("raise RuntimeError('nested hook executed')")
+                            (self.vault / "index.md").unlink(missing_ok=True)
+                            payload = {"cwd": str(nested), "source": "startup", "hook_event_name": event,
+                                       "toolResult": {"resultType": "success"}, "tool_response": {"output": "done"}}
+                            arguments = shlex.split(command)
+                            result = subprocess.run([sys.executable, *arguments[1:]], cwd=nested,
+                                                    input=json.dumps(payload).encode(), capture_output=True, timeout=5)
+                            self.assertEqual(result.returncode, 0, result.stderr)
+                            self.assertIn("[[trusted]]", (self.vault / "index.md").read_text())
+
     def test_supported_resets_load_index_with_safe_startup_status(self):
         (self.vault / "private-name.md").touch()
         for provider, sources in (("codex", ("startup", "resume", "clear", "compact", "fork")),
@@ -194,6 +227,26 @@ def replace_directory(event, args):
         # Windows directory handles deny replacement while in use.
         pass
 sys.addaudithook(replace_directory)
+if os.name == 'nt':
+    # Wrap only the native enumeration boundary, always calling the real API.
+    import ctypes
+    from ctypes import wintypes
+    original_dll = ctypes.WinDLL
+    def load_dll(*args, **kwargs):
+        library = original_dll(*args, **kwargs)
+        if str(args[0]).lower() == 'kernel32':
+            query = library.GetFileInformationByHandleEx
+            query.argtypes = (wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD)
+            query.restype = wintypes.BOOL
+            def before_query(handle, kind, buffer, size):
+                if kind == 19:
+                    identity = ctypes.create_string_buffer(24)
+                    if query(handle, 18, identity, 24) and int.from_bytes(identity.raw[8:], 'little') == expected.st_ino:
+                        replace_directory('os.scandir', (target,))
+                return query(handle, kind, buffer, size)
+            library.GetFileInformationByHandleEx = before_query
+        return library
+    ctypes.WinDLL = load_dll
 sys.argv = [str(script), '--provider', 'copilot']
 try:
     runpy.run_path(str(script), run_name='__main__')
@@ -240,6 +293,98 @@ finally:
                     index = directory / "index.md"
                     if index.exists() and not directory.is_symlink() and directory != victim:
                         self.assertNotIn("private-leak", index.read_text())
+
+    @unittest.skipUnless(sys.platform == "win32", "requires native Windows reparse APIs")
+    def test_in_place_junction_conversion_cannot_redirect_inventory_or_first_lock(self):
+        harness = r'''import ctypes, json, pathlib, runpy, struct, sys
+from ctypes import wintypes
+script, target, outside, marker = map(pathlib.Path, sys.argv[1:5])
+phase = sys.argv[5]
+expected = target.stat().st_ino
+original_dll = ctypes.WinDLL
+kernel = original_dll('kernel32', use_last_error=True)
+kernel.CreateFileW.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE)
+kernel.CreateFileW.restype = wintypes.HANDLE
+kernel.DeviceIoControl.argtypes = (wintypes.HANDLE, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, ctypes.POINTER(wintypes.DWORD), wintypes.LPVOID)
+kernel.DeviceIoControl.restype = wintypes.BOOL
+kernel.CloseHandle.argtypes = (wintypes.HANDLE,)
+attempted = False
+def convert():
+    global attempted
+    if attempted:
+        return
+    attempted = True
+    handle = kernel.CreateFileW(str(target), 0x100, 7, None, 3, 0x2200000, None)
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    substitute = (chr(92) + '??' + chr(92) + str(outside)).encode('utf-16-le')
+    display = str(outside).encode('utf-16-le')
+    paths = substitute + b'\0\0' + display + b'\0\0'
+    data = struct.pack('<IHHHHHH', 0xA0000003, 8 + len(paths), 0, 0, len(substitute), len(substitute) + 2, len(display)) + paths
+    returned = wintypes.DWORD()
+    try:
+        if not kernel.DeviceIoControl(handle, 0x900A4, ctypes.create_string_buffer(data), len(data), None, 0, ctypes.byref(returned), None):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        kernel.CloseHandle(handle)
+    marker.write_text('converted')
+def load_dll(*args, **kwargs):
+    library = original_dll(*args, **kwargs)
+    if str(args[0]).lower() == 'kernel32':
+        query = library.GetFileInformationByHandleEx
+        query.argtypes = (wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD)
+        query.restype = wintypes.BOOL
+        def before_query(handle, kind, buffer, size):
+            if kind == 19 and phase == 'scan':
+                identity = ctypes.create_string_buffer(24)
+                if query(handle, 18, identity, 24) and int.from_bytes(identity.raw[8:], 'little') == expected:
+                    convert()
+            return query(handle, kind, buffer, size)
+        library.GetFileInformationByHandleEx = before_query
+    return library
+ctypes.WinDLL = load_dll
+# The open audit boundary precedes the original path-based first lock; the
+# native function lookup precedes the replacement handle-relative first lock.
+def before_open(event, args):
+    if phase == 'scan' and event == 'os.scandir' and not attempted:
+        if pathlib.Path(args[0]).stat().st_ino == expected:
+            convert()
+    if phase == 'lock' and ((event == 'open' and str(args[0]).endswith('.brain-index.lock')) or
+                            (event == 'ctypes.dlsym' and args[1] in ('NtCreateFile', 'CreateFileW'))):
+        # Wait until the target directory has been validated and the runtime
+        # starts opening the lock, not while it pins ancestor directories.
+        import inspect
+        if any(frame.function == 'open_file' for frame in inspect.stack()):
+            convert()
+sys.addaudithook(before_open)
+sys.argv = [str(script), '--provider', 'copilot']
+runpy.run_path(str(script), run_name='__main__')
+'''
+        for phase in ("scan", "lock"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as temporary:
+                project = Path(temporary).resolve()
+                vault = project / "brain"
+                vault.mkdir()
+                target = vault / "empty" if phase == "scan" else vault
+                target.mkdir(exist_ok=True)
+                outside = project / "outside"
+                outside.mkdir()
+                (outside / "private-leak.md").touch()
+                (outside / "index.md").write_text("outside unchanged")
+                script = project / "auto-index-brain.py"
+                shutil.copyfile(ROOT / ".github/hooks/scripts/auto-index-brain.py", script)
+                marker = project / "converted"
+                result = subprocess.run([sys.executable, "-I", "-S", "-B", "-c", harness,
+                                         str(script), str(target), str(outside), str(marker), phase],
+                                        input=json.dumps({"cwd": str(project), "toolResult": {"resultType": "success"}}).encode(),
+                                        capture_output=True, timeout=5)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(marker.exists(), result.stderr)
+                self.assertEqual(json.loads(result.stdout), {})
+                self.assertEqual((outside / "index.md").read_text(), "outside unchanged")
+                self.assertFalse((outside / ".brain-index.lock").exists())
+                if phase == "scan" and (vault / "index.md").exists():
+                    self.assertNotIn("private-leak", (vault / "index.md").read_text())
 
     def test_linked_index_is_preserved_without_touching_its_target(self):
         outside = self.directory / "outside.md"
