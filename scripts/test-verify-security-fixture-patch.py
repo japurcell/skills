@@ -749,12 +749,21 @@ class PreflightTests(unittest.TestCase):
                     '--patch', str(patch), '--path', 'fixture.py', '--active-hook-root', str(active),
                     '--check', '--json', '--no-input'], cwd=self.repo, env=self.env,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
-                deadline = time.monotonic() + 6
+                # CLI preparation uses the ordinary verification watchdog. The
+                # child observation/session handshake retains its own six seconds.
+                preparation_deadline = time.monotonic() + 20
+                while not marker.exists() and time.monotonic() < preparation_deadline and process.poll() is None:
+                    time.sleep(0.02)
+                self.assertTrue(marker.exists(),
+                    'scanner child did not start during CLI preparation; observed=' + str(observed.exists())
+                    + ' ready=' + str(ready.exists()))
+                deadline = min(preparation_deadline, time.monotonic() + 6)
                 while not ready.exists() and time.monotonic() < deadline and process.poll() is None:
                     time.sleep(0.02)
-                if marker.exists():
-                    child = int(marker.read_text())
-                self.assertTrue(ready.exists(), 'real scanner child did not change session after metadata observation')
+                child = int(marker.read_text())
+                self.assertTrue(ready.exists(),
+                    'real scanner child did not change session after metadata observation; observed='
+                    + str(observed.exists()))
                 started = time.monotonic()
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)
