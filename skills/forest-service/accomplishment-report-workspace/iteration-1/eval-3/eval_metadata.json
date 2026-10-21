@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "incomplete-stale",
+  "prompt": "Close out plans/incomplete/ExecPlan.md and create an accomplishment report. Its progress checkboxes are all checked, but milestone acceptance says not met: the end-to-end export test is failing and owner signoff is pending. Do not fix implementation or edit the plan during this reporting task.",
+  "assertions": [
+    "No report created",
+    "Identifies acceptance failure and pending signoff",
+    "Does not change plan or implementation"
+  ]
+}

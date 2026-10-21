@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "No report created",
+      "passed": true,
+      "evidence": "Explicit response refuses report; no accomplishment report exists."
+    },
+    {
+      "text": "Identifies acceptance failure and pending signoff",
+      "passed": true,
+      "evidence": "Failing export test and pending owner signoff named."
+    },
+    {
+      "text": "Does not change plan or implementation",
+      "passed": true,
+      "evidence": "No plan or implementation edits recorded."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

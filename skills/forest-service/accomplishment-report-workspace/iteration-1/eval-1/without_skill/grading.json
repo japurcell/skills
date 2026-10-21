@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Correct sibling report and plan identity",
+      "passed": false,
+      "evidence": "Saved under outputs/recreation instead of outputs/plans/recreation and lacks exact plan identity."
+    },
+    {
+      "text": "Base costs and savings arithmetic correct",
+      "passed": true,
+      "evidence": "2400 minus 640 equals 1760; percentage rounds to 73.3."
+    },
+    {
+      "text": "Human hours and runtime separated",
+      "passed": true,
+      "evidence": "Human effort, aggregate agent runtime and elapsed time distinguished."
+    },
+    {
+      "text": "Agency skill activated; alignment supported and dated",
+      "passed": false,
+      "evidence": "Transcript reads agency-priorities, but report omits agency alignment and snapshot date."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  }
+}

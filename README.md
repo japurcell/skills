@@ -46,8 +46,9 @@ Without a selection flag, set `INSTALL_FOREST_SERVICE_SKILLS` to `1` or
 `true` to include Forest Service skills, or `0` or `false` to install only
 default skills. Values must match these strings exactly, ignoring case; unset
 or empty means default only. An explicit selection flag takes precedence over
-this variable. The Forest Service category currently has no skills, so
-opting in makes no additional skill copies today. Both `skills/default/` and
+this variable. The Forest Service category includes `agency-priorities` for
+strategic alignment and `accomplishment-report` for completed ExecPlan reports
+with estimated AI time and cost savings. Both `skills/default/` and
 `skills/forest-service/` source directories must exist; each skill directory
 must contain `SKILL.md`. The installer places selected skills directly in
 `~/.agents/skills/<name>/`. A later default-only install leaves previously

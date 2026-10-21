@@ -9,10 +9,6 @@
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
 13. [ ] Reproduce and fix stale observability cleanup deleting sessions SQLite still reports as running, finalizing, or sealing after seven days. Follow [the restored cleanup policy](codebase/hook-observability.md): require age over 24 hours and terminal/absent database state. Change the canonical helper, regenerate provider copies, and verify active-session retention, terminal/absent cleanup, and database-failure behavior through the existing disposable observability fixtures. Preserve unrelated logs and session state; do not test against real installed logs.
 
-## Forest Service skills
-
-10. [ ] Create `skills/forest-service/accomplishment-report`, invoked when all work in an ExecPlan is completed. Save the report as `accomplishment-report.md` in the same directory as that plan. Produce a concise executive-level report describing the repository, completed work, and alignment with Forest Service strategic goals and priorities by activating `agency-priorities`. Estimate AI-assisted versus human-only implementation time and cost, including AI spend and human oversight, with explicit assumptions and evidence. Show estimated net savings to support decisions about spending on AI coding assistants.
-
 ## Investigations
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
