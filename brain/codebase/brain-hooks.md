@@ -6,7 +6,7 @@ The two generated scripts require Python 3.12 or newer and only its standard lib
 
 ## Inventory and context
 
-Automation owns the root index. Put human prose in topic notes and curated subindexes. The inventory includes Markdown files in every directory, including plans and archives, sorted by directory and path. It excludes the root index, symlinks, and Windows reparse points. It reads filenames, not note bodies. Wikilink metacharacters use encoded ordinary Markdown links.
+Automation owns the root index. Put human prose in topic notes and curated subindexes. The root inventory lists Markdown notes in directories without a curated index, sorted by directory and path. When a subdirectory contains a regular `index.md`, it links that index and stops expanding that subtree. Curated indexes own navigation beneath that boundary, including archived plans. Exception: every Markdown file under `brain/codebase/` stays listed in the root inventory, even below nested curated indexes. It excludes the root index, symlinks, and Windows reparse points. It reads filenames, not note bodies. Wikilink metacharacters use encoded ordinary Markdown links.
 
 The validated absolute `cwd` selects the nearest ancestor vault, stopping at the nearest Git marker. A missing vault is a quiet no-op. The script location never selects the vault. Project launchers first select the nearest ancestor Git marker and use only that root's exact script. A competing nested script cannot override it. Only when no ancestor Git marker exists do they search ancestors for the script. They support worktree marker files and do not execute Git. All repository launch variants use `-I -S -B` before `-c`, so project modules cannot shadow standard-library imports.
 
@@ -29,6 +29,8 @@ When copying a script to another repository, use its repository path or an absol
 ## Verification and recovery
 
 Run `python3 scripts/test-brain-hooks.py` for process, copied-script, and repository registration checks. Installer preservation checks run in their dedicated suites. Run `python3 scripts/generate-hooks.py --check` for freshness. The `brain-hooks` workflow prepares native Windows, Linux, and macOS checks on Python 3.12 and 3.14. Local contract checks do not prove actual provider context delivery or native Windows behavior; retain those results separately in the migration plan.
+
+Live checks on 2026-10-21 verified Copilot CLI 1.0.101 startup, clear/new and interactive resume, and Codex CLI 0.163.0 startup, clear, compact and interactive resume. Codex noninteractive `exec resume` did not refresh hook context in that probe; use interactive resume when fresh context is required. Gemini CLI delivery was explicitly waived and is not claimed. Native process checks cover all three providers.
 
 For a busy writer, retry after the other process exits. For a malformed or oversized existing index, inspect it before restoring a valid inventory or removing that index deliberately. Do not remove a lock file while another writer may hold it. A later valid startup or tool invocation repairs inventory drift. To roll back registration changes, restore only the affected reviewed configuration and scripts, preserving unrelated hooks and runtime logs.
 

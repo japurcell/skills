@@ -5,6 +5,10 @@
 - [[principles]]
 - [[todos]]
 
+## archive
+
+- [[archive/index]]
+
 ## codebase
 
 - [[codebase/agents-installation]]
@@ -32,11 +36,6 @@
 ## plans
 
 - [[plans/index]]
-
-## plans/01-brain-migration
-
-- [[plans/01-brain-migration/ExecPlan]]
-- [[plans/01-brain-migration/migration-map]]
 
 ## principles
 

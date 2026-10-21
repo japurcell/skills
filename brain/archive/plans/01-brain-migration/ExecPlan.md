@@ -1,6 +1,6 @@
 # Replace the legacy agent knowledge system with brain
 
-This living ExecPlan is `brain/plans/01-brain-migration/ExecPlan.md`, associated with todo 1. Follow the `exec-plans`, `brain`, and `todo` skills. Keep the required living sections and milestone evidence current. The execution-plan contract requires a self-contained document, so this file intentionally exceeds the brain skill's usual note-length guideline.
+This living ExecPlan is `brain/archive/plans/01-brain-migration/ExecPlan.md`, associated with todo 1. Follow the `exec-plans`, `brain`, and `todo` skills. Keep the required living sections and milestone evidence current. The execution-plan contract requires a self-contained document, so this file intentionally exceeds the brain skill's usual note-length guideline.
 
 ## Purpose / Big Picture
 
@@ -16,9 +16,11 @@ On 2026-10-20 the user subsequently authorized committing and pushing the owner-
 
 Future implementation is repository-scoped. Existing user-global installations must remain unchanged until the user explicitly reinstalls. Use isolated temporary destinations for installer validation. The old instruction to run the normal installer before live testing does not override this boundary.
 
+On 2026-10-21 the user explicitly waived live Gemini CLI verification and authorized finishing T7. Gemini process/configuration/native checks remain retained evidence; actual Gemini context delivery is not claimed. Required live checks are Copilot and Codex startup/reset delivery in isolated profiles or temporary projects; these subsequently passed as recorded below. Existing user-global installations remain unchanged.
+
 ## Progress
 
-- [x] (2026-10-21) [milestone-5] T7: Publish T10 and native CI repairs at `b5e730b113822eeb4d857269b0525565a2bbd58b`; verify all six native brain jobs, Windows installer/security, and complete macOS security workflows passed. Live-provider acceptance remains open.
+- [x] (2026-10-21) [milestone-5] T7: Publish T10 and native CI repairs at `b5e730b113822eeb4d857269b0525565a2bbd58b`; verify all six native brain jobs, Windows installer/security, and complete macOS security workflows passed. Live-provider acceptance was still open at that native-only checkpoint.
 
 - [x] (2026-10-20) [milestone-7] T10: Fix Git-root launcher precedence, handle-bound Windows enumeration/first lock creation, and both CI trigger filters; regenerate standalone artifacts and verify focused local behavior.
 - [x] (2026-10-20) [milestone-7] T10: Original owning security reviewer closed both security findings by source review; original test reviewer closed CI triggers and verified regression-test validity. Native Windows execution subsequently passed in the current T7 CI checkpoint.
@@ -45,7 +47,7 @@ Future implementation is repository-scoped. Existing user-global installations m
 - [x] (2026-10-20) [milestone-3] T8: Publish final repair `307d07d51a827a4b433aef4356232b66dfc326ad`; verify matrix `39516402778`, Windows `39516385504`, and macOS security `39516385510` all passed for that exact commit.
 - [x] (2026-10-20) [milestone-3] T8: Complete integrated verification: `55 passed, 0 failed in 1904.3s`, generated freshness `60 files`, and clean whitespace checks. T8 and milestone 3 are complete; T7 remains open for live-provider verification.
 - [x] (2026-10-20) [milestone-5] T7: Verify original macOS security run `39510956707` passed, including all 12 native Darwin capture cases and both installers.
-- [ ] [milestone-5] T7: Verify real provider startup/reset delivery in configured isolated profiles; then complete todo 1. Corrected-tree CI and local integration are verified.
+- [x] (2026-10-21) [milestone-5] T7: Verify live Copilot startup, clear/new and interactive resume, plus Codex startup, clear, compact and interactive resume; record Gemini CLI waiver and Codex exec-resume limitation, then archive completed todo 1 and this plan.
 
 ## Surprises & Discoveries
 
@@ -83,13 +85,13 @@ The actual skill directory is `update-agent-docs`, despite the original request 
 
 ## Outcomes & Retrospective
 
-T10 and its native CI repairs are complete. Original owning reviewers independently verified the fixes. Published runtime `b5e730b113822eeb4d857269b0525565a2bbd58b` passed all six native Windows/Linux/macOS brain jobs, Windows installer/security, and complete macOS security workflows. The guide now lives in `brain/codebase/brain-hooks.md`, with references and indexes corrected. T7 and todo 1 remain open solely for actual provider startup/reset verification in isolated profiles; global installations remain untouched.
+T10 and its native CI repairs are complete. Original owning reviewers independently verified the fixes. Published runtime `b5e730b113822eeb4d857269b0525565a2bbd58b` passed all six native Windows/Linux/macOS brain jobs, Windows installer/security, and complete macOS security workflows. The guide now lives in `brain/codebase/brain-hooks.md`, with references and indexes corrected. T7 and todo 1 are complete under the user-approved scope. Copilot 1.0.101 and Codex 0.163.0 passed seven live context-delivery checks in isolated profiles and disposable projects. The user waived Gemini CLI verification on 2026-10-21; no Gemini live delivery is claimed. Codex noninteractive `exec resume` did not refresh context in the probe; normal interactive resume did. This provider-surface limitation remains explicit. Global hook installations remain untouched.
 
 The migration and scope correction are implemented and verified. Retained knowledge and ideas live in the brain; the three legacy content roots, old idea directory, retired skills, ingestion, and OKF infrastructure are removed. Copilot brain hooks live only in repository `.github/hooks`; Codex and Gemini also register brain maintenance at repository scope. Global templates intentionally omit brain and tool-guard registrations, as confirmed by the user. Guard runtime behavior remains tested through explicit invocation.
 
 Historical pre-T9 code commit `307d07d51a827a4b433aef4356232b66dfc326ad` passed the six-job native Windows/Linux/macOS matrix on Python 3.12/3.14, Windows installer/security workflow, and complete macOS security workflow. Native capture proof covers all 12 required Darwin cases. The final local integrated run passed all 55 maintained suites in 1904.3 seconds, with host-specific skips disclosed; generated freshness reports 60 files. That pre-T9 brain process suite had 22 cases. Logs and exact-head evidence are linked below; T9 now has 24 local cases.
 
-T8 and milestone 3 are complete. Review task T9 is complete: isolated repository launchers, identity-bound filesystem operations, and restored permanent todo IDs pass local verification. The commit containing this checkpoint delivers the three fixes. T7 and todo 1 remain open for actual provider startup/reset delivery in isolated profiles; the integrated T9/T10 runtime now has the successful native proof recorded below. Native process/configuration proof does not establish live context delivery. The user's subsequent documentation-only commit `24cccff0` adds todo 8 for choosing an acceptable CI feedback-runtime budget and then refactoring the slow macOS workflow. It changes no tested runtime or configuration. The earlier stop-after-T8 boundary was satisfied. The subsequent user request authorizes only the three review fixes and their verification/commit; do not begin the workflow-runtime follow-up or live-provider work. User-global installations remain untouched.
+T8 and milestone 3 are complete. Review task T9 is complete: isolated repository launchers, identity-bound filesystem operations, and restored permanent todo IDs pass local verification. The commit containing this checkpoint delivers the three fixes. T7 and todo 1 remained open at the T9 checkpoint for actual provider startup/reset delivery in isolated profiles; the integrated T9/T10 runtime now has the successful native proof recorded below. Native process/configuration proof does not establish live context delivery. The user's subsequent documentation-only commit `24cccff0` adds todo 8 for choosing an acceptable CI feedback-runtime budget and then refactoring the slow macOS workflow. It changes no tested runtime or configuration. The earlier stop-after-T8 boundary was satisfied. That earlier user request authorized only the three review fixes and their verification/commit. The 2026-10-21 request subsequently authorized the live-provider checks with Gemini waived. The separate workflow-runtime follow-up remains outside this migration. User-global installations remain untouched.
 
 ## Context and Orientation
 
@@ -103,7 +105,7 @@ Inspect installer ownership through `scripts/install.sh`, `scripts/install.ps1`,
 
 ### Migration map
 
-T1 completed the file-by-file disposition ledger at `brain/plans/01-brain-migration/migration-map.md`, linked from the plans index. T6 executed its dispositions after the coverage review. Each row records original path, keep/merge/drop decision, destination or deletion reason, provenance, and verification status. Include all file types, not just Markdown. This ledger replaces no ingestion runtime and is only migration evidence.
+T1 completed the file-by-file disposition ledger at `brain/archive/plans/01-brain-migration/migration-map.md`, linked from the plans index. T6 executed its dispositions after the coverage review. Each row records original path, keep/merge/drop decision, destination or deletion reason, provenance, and verification status. Include all file types, not just Markdown. This ledger replaces no ingestion runtime and is only migration evidence.
 
 | Source | Intended disposition |
 | --- | --- |
@@ -222,8 +224,8 @@ Before deleting originals, verify completed ledger coverage, destination links, 
 Acceptance: all three legacy roots are absent; active runtime/config/skill references no longer require them or retired skills; useful knowledge and todos remain reachable; historical mentions are clearly historical. Audit remaining references individually rather than blindly rewriting history or unrelated fixtures.
 
 ### Milestone 5: Prove the integrated result
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T7: Validate and document the cutover
 
@@ -233,7 +235,7 @@ Document Python prerequisites, copy/paste installation examples for every provid
 
 Perform the required reflection review and record only durable findings in the brain. Update this plan's acceptance/evidence and the disposition ledger. Mark todo 1 complete only after the user outcome is delivered and required checks pass; use the todo skill's archive convention. Do not commit or deploy unless subsequently requested.
 
-Acceptance: integrated checks pass with actual output recorded, no required platform/provider result is falsely claimed, migration coverage is complete, and normal repository workflows operate without the legacy knowledge system. Missing native environments or CLI access leave the corresponding acceptance open.
+Acceptance: integrated checks pass with actual output recorded, no required platform/provider result is falsely claimed, migration coverage is complete, and normal repository workflows operate without the legacy knowledge system. The 2026-10-21 user waiver removes actual Gemini CLI verification from required acceptance. Copilot and Codex normal interactive startup/reset delivery must pass; record additional surface/version limitations separately and do not claim those surfaces passed. Final evidence above meets this revised contract.
 
 ## Task Graph and Ownership
 
@@ -253,11 +255,25 @@ T10 depends on T9 and fixes only the confirmed launcher trust boundary, Windows 
 
 ## Concrete Steps
 
-Current CI task is complete: commit and push this evidence-only plan checkpoint, then stop. Runtime `b5e730b113822eeb4d857269b0525565a2bbd58b` passed all three required workflows. The next unfinished plan task is live startup/reset context-delivery verification for Copilot, Codex and Gemini in configured isolated profiles. That work is separate from this CI request; do not start it, merge, or change existing user-global installations here. Keep T7 and todo 1 open until actual live-provider verification passes.
+No implementation or acceptance work remains in this plan. T7 is complete under the explicit Gemini CLI waiver. Completed todo 1 and this plan are archived with evidence retained. Do not install globals, merge, or start the separate workflow-performance and Markdown-link backlog tasks as part of this completion. Codex noninteractive `exec resume` is a recorded surface limitation, not a claimed live pass; use the verified interactive resume surface for current delivery.
 
 From the repository root, focused verification uses `rtk python3 scripts/test-brain-hooks.py`, `rtk python3 scripts/test-generate-hooks.py`, `rtk python3 scripts/test-install-codex-hooks.py`, and `rtk python3 scripts/test-hook-diagnostics.py`. Serialize generator and installer fixtures. Final checks are `rtk python3 scripts/generate-hooks.py --check` and `rtk git diff --check`. The full 55-suite registry is not a required local rerun for this bounded correction. The current request required native CI verification of the published T10 runtime; the successful current-runtime results below satisfy that CI boundary. Earlier native results alone do not prove T10.
 
 ## Validation and Acceptance
+
+### Final live-provider acceptance (2026-10-21)
+
+The user explicitly waived Gemini CLI verification before these checks. Its process/configuration/native tests remain valid evidence, but actual Gemini context delivery was not tested or claimed.
+
+Copilot CLI 1.0.101 passed startup through prompt mode with normal `--trust-folder`, `/clear` through the interactive CLI, and interactive resume after normal folder trust. Codex CLI 0.163.0 passed startup, `/clear`, `/compact`, and interactive resume after normal project and exact-hook trust review. No hook-trust bypass was used. RTK strips terminal streams, so the interactive trust/reset commands used direct CLI invocation; all other shell commands retained RTK.
+
+Each check used a freshly generated `T7_CONTEXT_<random>` note name absent from the model prompt. Before each reset, compaction or resume, the controller replaced the note and deleted the index. The real provider regenerated that index and returned the exact fresh note name from hook context. Provider transcripts contain zero model tool calls across all seven successful cases. Copied standalone hook bytes match the published repository artifacts. Versions, expected/observed nonces and results are retained in `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/brain-t7-live-fepyu5ta/verified-evidence.json`; raw session evidence remains under that private probe root, outside both disposable Git repositories.
+
+Copilot startup returned `T7_CONTEXT_b5f50969d141438b91aeb7a98a281d84`; clear returned `T7_CONTEXT_0d15f2a0cc144ce4b0628ac649a31c38`; interactive resume returned `T7_CONTEXT_70f3dd29a3e64cad902baffdff1cb5a7`. Codex startup returned `T7_CONTEXT_a26516a847254206a53b02637085fa91`; clear returned `T7_CONTEXT_27c62b0b2d804ef6814ed2ecfa0a825e`; compact returned `T7_CONTEXT_268d2e706e034d7da7a5a91a189b2517`; interactive resume returned `T7_CONTEXT_3664bd651ba544b0afc656a06b77b69e`.
+
+Limitations observed and resolved or retained: the first Copilot prompt incorrectly requested an extension omitted by wikilinks; its corrected nonce-only prompt passed. A noninteractive Copilot resume without persisted folder trust correctly omitted repository hooks; normal interactive trust restored delivery. Codex `exec resume` exited 0 but returned the previous compact nonce and did not regenerate the index; the interactive resume returned the new nonce and regenerated it. Therefore this acceptance establishes interactive Codex lifecycle delivery, not noninteractive exec-resume delivery or untested fork behavior. No repository runtime change was needed. Temporary Codex authentication material was removed after the probes; existing global hook/config files were not modified.
+
+Reflection: no new machinery or skill change is needed. The guide records the measured surface limit, and this completed plan retains the waiver and exact outcome evidence. Migration coverage, native CI, local integration and the required live surfaces now meet the revised acceptance contract.
 
 ### Current native CI checkpoint (2026-10-21)
 
@@ -265,7 +281,7 @@ Published runtime `b5e730b113822eeb4d857269b0525565a2bbd58b` passes all six Wind
 
 Earlier matrix `39534838839` failed normal Windows indexing. Diagnostics at `36dad289` isolated `WinError 32` to atomic `Directory.replace`. Retained directory handles now allow read/write sharing for entry updates while still denying delete sharing; handle-bound enumeration, identities and relative file opens remain intact. The original security owner closed this correction by source review. Local 26-case brain checks and all 60 generated outputs passed before publication.
 
-Related [Windows installer/security 39602250636](https://github.com/japurcell/skills/actions/runs/39602250636) and [macOS security 39602250614](https://github.com/japurcell/skills/actions/runs/39602250614) both passed at the same runtime. macOS verified all 12 native Darwin capture cases, both complete installers, and final freshness of 60 generated files. Evidence is `/tmp/brain-final-ci-<run-id>.json` and `.log` for each run. These results establish native process/configuration and installation behavior, not live context delivery. Earlier macOS run `39535639328` failed its existing three-second process limit at 3.032973833 seconds. The scanner retried a failed scan-log lock write from its exception handler, spending the same one-second lock deadline twice. The bounded correction avoids only that duplicate retry; all three full capture suites passed locally, including all 12 native Darwin cases. All six held-lock provider/mode cases finished in 1.51-1.61 seconds. The unchanged elevated lifecycle suite passed 32 cases; generator tests passed 25, generated freshness passed 60 outputs, and whitespace checks passed. The original security owner closed the correction by source review: audit remains failed, block still denies, warn still reports, and other scan phases still attempt incomplete logging. No test limit is raised. T7 and todo 1 remain open for live-provider verification.
+Related [Windows installer/security 39602250636](https://github.com/japurcell/skills/actions/runs/39602250636) and [macOS security 39602250614](https://github.com/japurcell/skills/actions/runs/39602250614) both passed at the same runtime. macOS verified all 12 native Darwin capture cases, both complete installers, and final freshness of 60 generated files. Evidence is `/tmp/brain-final-ci-<run-id>.json` and `.log` for each run. These results establish native process/configuration and installation behavior, not live context delivery. Earlier macOS run `39535639328` failed its existing three-second process limit at 3.032973833 seconds. The scanner retried a failed scan-log lock write from its exception handler, spending the same one-second lock deadline twice. The bounded correction avoids only that duplicate retry; all three full capture suites passed locally, including all 12 native Darwin cases. All six held-lock provider/mode cases finished in 1.51-1.61 seconds. The unchanged elevated lifecycle suite passed 32 cases; generator tests passed 25, generated freshness passed 60 outputs, and whitespace checks passed. The original security owner closed the correction by source review: audit remains failed, block still denies, warn still reports, and other scan phases still attempt incomplete logging. No test limit is raised. T7 and todo 1 were open at this native-only checkpoint; final live acceptance above subsequently completed them under the Gemini waiver.
 
 The user requested moving the hook guide into `brain/codebase/brain-hooks.md`. All repository references now point there; curated codebase and generated root indexes include it. The old docs path is absent. This is a path correction with unchanged guide content. Link targets and the skill pointer were checked, and brain skill validation passed. Reflection: the documentation placement follows the brain knowledge boundary; existing deadline tests and the removed duplicate retry structurally capture the scanner lesson without extra notes or machinery.
 
@@ -275,7 +291,7 @@ On macOS/Python 3.14.6, the new registered-command regression failed in all six 
 
 The brain process suite reports 26 tests, with one explicit native-Windows skip. The skipped test invokes real `DeviceIoControl` junction conversion at native enumeration and first-lock boundaries; it does not fake API results. Native wrappers retain the existing ordinary-directory and symlink replacement cases when enumeration no longer calls `os.scandir`. Windows red/green execution was unavailable locally at this source-review checkpoint; subsequent native proof is recorded in the current CI checkpoint above. Generator tests pass 25 cases; diagnostics pass 10; the maintained Codex merge check passes. Generated freshness reports 60 files. Both missing configuration paths are included in each CI trigger block by direct inspection.
 
-Reflection: the process regressions, handle-bound runtime operations, CI filters, and revised hook contract structurally encode the findings. No separate brain note, skill change, or new backlog machinery is needed. Independent owner review completed on 2026-10-20: the security owner checked Git-root precedence, native access rights and record offsets, full identities, handle-relative creation, first-lock protection, status conversion and handle ownership; the test owner checked both trigger blocks and real-process/native-test assertions. Both closed their findings without edits or test execution. These are source-review closures, not native runtime proof. T7 stays open for live-provider evidence; subsequent native results are recorded above.
+Reflection: the process regressions, handle-bound runtime operations, CI filters, and revised hook contract structurally encode the findings. No separate brain note, skill change, or new backlog machinery is needed. Independent owner review completed on 2026-10-20: the security owner checked Git-root precedence, native access rights and record offsets, full identities, handle-relative creation, first-lock protection, status conversion and handle ownership; the test owner checked both trigger blocks and real-process/native-test assertions. Both closed their findings without edits or test execution. These are source-review closures, not native runtime proof. T7 remained open at that checkpoint; final live and native acceptance is recorded above.
 
 
 ### T9 review-fix evidence (2026-10-20)
@@ -284,7 +300,7 @@ Observed on macOS 26.7.1 arm64 / Python 3.14.6. Before the fix, actual registere
 
 Final local brain process suite: 24 tests passed. Generator suite: 25 passed. Diagnostics: 10 passed. Recovery: 17 passed. Codex maintained merge passed. Both complete Bash and PowerShell installer suites exited 0 using disposable homes; the PowerShell log `/tmp/brain-review-install-powershell.log` records native Windows DACL and junction skips and `test-install.ps1: all tests passed.` Freshness reports 60 generated files. Original todo IDs were checked against `f49edd58`: IDs 1-9 are unique and next-id is 10. Syntax, all repository launch fields, and whitespace checks passed. The full 55-suite registry and native matrix were not rerun for T9; prior results below belong to the earlier runtime.
 
-The fix uses only Python's standard library. POSIX operations use pinned directory descriptors and no-follow opens. At the T9 checkpoint, Windows directory handles denied write/delete sharing while in use and rejected reparse points. The current sharing and reparse contract is recorded in the native CI checkpoint above. Normal directory identities are revalidated before queued traversal. Reflection concluded that the regression tests and `brain/codebase/brain-hooks.md` encode the durable lesson directly; no additional brain note or skill change is needed. Fresh native proof remains T7 work after publication; live-provider acceptance remains open.
+The fix uses only Python's standard library. POSIX operations use pinned directory descriptors and no-follow opens. At the T9 checkpoint, Windows directory handles denied write/delete sharing while in use and rejected reparse points. The current sharing and reparse contract is recorded in the native CI checkpoint above. Normal directory identities are revalidated before queued traversal. Reflection concluded that the regression tests and `brain/codebase/brain-hooks.md` encode the durable lesson directly; no additional brain note or skill change is needed. Fresh native and live-provider proof were pending at that historical checkpoint; final results are recorded above.
 
 ### Test boundaries and workflow
 
@@ -356,11 +372,13 @@ The verified provider table below and `brain/codebase/brain-hooks.md` describe l
 | Codex | SessionStart startup/resume/clear/compact/fork; hookSpecificOutput with hookEventName and additionalContext; cwd input | PostToolUse includes failed Bash and has tool-specific responses without a documented universal success flag. command/commandWindows; timeout seconds. |
 | Gemini | SessionStart startup/resume/clear; hookSpecificOutput.additionalContext; cwd input | AfterTool has optional tool_response.error. PreCompress is notification-only. command is host-native; timeout milliseconds. |
 
-Official sources are linked above. Copilot CLI 1.0.100 and Codex CLI 0.163.0 are installed; no live delivery is claimed. New scripts target Python >=3.12, matching the maintained security installer's floor, with native minimum-version verification now passing in the published matrix. The injector reconciles internally before emitting context. Existing nearest Git boundaries prevent a nested unrelated repository from inheriting an ancestor vault. No script uses its installed location to find a vault.
+Official sources are linked above. At the initial feasibility checkpoint Copilot CLI 1.0.100 and Codex CLI 0.163.0 were installed, with live delivery unverified. Final live versions and evidence are recorded in final acceptance above. New scripts target Python >=3.12, matching the maintained security installer's floor, with native minimum-version verification now passing in the published matrix. The injector reconciles internally before emitting context. Existing nearest Git boundaries prevent a nested unrelated repository from inheriting an ancestor vault. No script uses its installed location to find a vault.
 
 Index bounds: 20,000 scanned entries, two-second inventory deadline, 512 KiB rendered index, 24,000-byte injection budget. Oversized injection returns a pointer to the complete disk index. Invalid inventory preserves the previous index. A persistent kernel-released `.brain-index.lock` serializes scans and atomic writes with a 300 ms wait; ignore it in version control. Wikilink metacharacters use encoded ordinary Markdown destinations.
 
-## Current base state and remaining ownership
+## Historical pre-T9 state (evidence only)
+
+The following retained snapshot describes the earlier correction and its then-pending ownership. It does not override final T7 acceptance or the 2026-10-21 Gemini waiver above.
 
 Reflection review: the durable correction is captured in `brain/codebase/hooks-copilot.md` and `brain/codebase/hooks.md`. Repository and user-level hook paths define deployment scope; shared runtime behavior does not justify registering repository maintenance globally. No skill-file update is needed. The user separately requested todo 8 for the slow CI workflow and todo 9 for standard Markdown links; both are recorded without starting implementation. T9 restores investigation IDs 2-7 from original migration commit `f49edd58`, matching the ledger; migration ID 1, later IDs 8/9, and next-id 10 stay intact.
 

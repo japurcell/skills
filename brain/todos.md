@@ -6,7 +6,6 @@
 
 ## Repository maintenance
 
-1. [ ] Replace the legacy agent knowledge system with brain notes and portable maintenance hooks [[plans/01-brain-migration/ExecPlan]]
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
 9. [ ] Convert all `[[<filename>]]` wikilinks to standard Markdown links with valid relative file destinations; update link-generation code and authoring guidance so files remain compatible with standard Markdown tools.
 

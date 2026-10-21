@@ -483,10 +483,17 @@ def inventory(vault):
                 if time.monotonic() > deadline:
                     raise BrainError("inventory budget exceeded")
                 directory = stack.enter_context(Directory(directory.path / part, identity, directory))
-            for name, mode, identity in directory.entries():
+            entries = []
+            for entry in directory.entries():
                 count += 1
                 if count > 20000 or time.monotonic() > deadline:
                     raise BrainError("inventory budget exceeded")
+                entries.append(entry)
+            if parts and parts[0] != "codebase" and any(
+                    name == "index.md" and stat.S_ISREG(mode) for name, mode, identity in entries):
+                paths.append(Path(*parts, "index.md"))
+                continue
+            for name, mode, identity in entries:
                 if stat.S_ISDIR(mode):
                     pending.append(((*parts, name), (*identities, identity)))
                 elif stat.S_ISREG(mode) and name.lower().endswith(".md"):

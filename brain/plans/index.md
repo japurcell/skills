@@ -1,4 +1,3 @@
 # Plans
 
-- [[plans/01-brain-migration/ExecPlan]]
-- [[plans/01-brain-migration/migration-map]]
+- [Completed plans](../archive/plans/index.md)

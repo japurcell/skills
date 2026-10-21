@@ -1,6 +1,6 @@
 ---
 name: reflect
-description: Reflect on the conversation and update the brain. Mandatory at the end of sessions that change code; also use after mistakes, corrections, or significant codebase learnings. Review may conclude no write is needed. Triggers on "reflect", "remember this".
+description: Reflect on the conversation and update the brain. Mandatory at the end of sessions that change code; also use after mistakes, corrections, or significant codebase learnings. Review may conclude no write is needed. Use when the user says "reflect", "remember this".
 ---
 
 # Reflect

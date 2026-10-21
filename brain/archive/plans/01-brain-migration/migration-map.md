@@ -1,6 +1,6 @@
 # Brain Migration Content Inventory (T1 Evidence)
 
-Inventory date: 2026-10-20. This is a read-only evidence report for `brain/plans/01-brain-migration/ExecPlan.md`, retained beside the active plan. The read-only inventory agent made no repository edits. RTK 1.0.1 is available. The initial repository status was clean; a later shared-tree check found the plan modified by the coordinator. I did not touch that edit.
+Inventory date: 2026-10-20. This is a read-only evidence report for `brain/archive/plans/01-brain-migration/ExecPlan.md`, retained beside the active plan. The read-only inventory agent made no repository edits. RTK 1.0.1 is available. The initial repository status was clean; a later shared-tree check found the plan modified by the coordinator. I did not touch that edit.
 
 ## Scope, counts, and disposition vocabulary
 
@@ -145,7 +145,7 @@ Current root `AGENTS.md` already points agents to `brain/` only, but `README.md`
 - Revalidated `known-issues/skills.md`: `quick_validate.py` still allows only `name`, `description`, `license`, `allowed-tools`, `metadata`, and `compatibility`; `aggregate_benchmark.py` still falls back to output character count for token metrics and zero for missing duration. Preserve the warning to distinguish missing/proxy metrics from measurements.
 - Installer archive decision checked against `scripts/install.sh` and `scripts/install.ps1`: both support the Forest Service opt-in flag/environment and category directories; conditional installer idea is complete.
 - Current brain admission/navigation: `.agents/skills/brain/SKILL.md` already requires `brain/index.md`, topic indexes, no frontmatter, a durability test, and cleanup of stale notes; `.agents/skills/reflect/SKILL.md` routes learnings to brain, skills, structural enforcement, or todos. Existing principles `encode-lessons-in-structure.md`, `prove-it-works.md`, and `subtract-before-you-add.md` should be reused before adding any duplicate content.
-- Active status read: the repository was initially clean. Coordinator later modified `brain/plans/01-brain-migration/ExecPlan.md`; this agent did not edit it.
+- Active status read: the repository was initially clean. Coordinator later modified `brain/archive/plans/01-brain-migration/ExecPlan.md`; this agent did not edit it.
 - Provider platform/live verification was not performed as part of this content-only inventory. The coordinator reports native Windows/Linux and Gemini CLI are unavailable here; do not claim cross-platform/provider delivery evidence from this report.
 
 ## Full content audit of raw snapshots

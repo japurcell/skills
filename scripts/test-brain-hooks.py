@@ -169,13 +169,25 @@ class BrainHooksTests(unittest.TestCase):
         (self.vault / "codebase").mkdir()
         (self.vault / "codebase/index.md").write_text("curated subindex")
         (self.vault / "codebase/café.md").write_text("another private body")
+        (self.vault / "codebase/plans/completed").mkdir(parents=True)
+        (self.vault / "codebase/plans/index.md").write_text("nested curated subindex")
+        (self.vault / "codebase/plans/completed/plan.md").touch()
+        (self.vault / "archive/plans").mkdir(parents=True)
+        (self.vault / "archive/index.md").write_text("curated archive")
+        (self.vault / "archive/plans/plan.md").touch()
+        (self.vault / "unindexed/nested").mkdir(parents=True)
+        (self.vault / "unindexed/nested/café.md").write_text("private body")
         result = self.invoke("auto-index-brain", self.successful_tool())
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stderr, b"")
         self.assertEqual(json.loads(result.stdout), {})
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"),
-                         "# Brain\n\n## Root\n\n- [[principles]]\n\n## codebase\n\n"
-                         "- [[codebase/café]]\n- [[codebase/index]]\n")
+                         "# Brain\n\n## Root\n\n- [[principles]]\n\n## archive\n\n"
+                         "- [[archive/index]]\n\n## codebase\n\n"
+                         "- [[codebase/café]]\n- [[codebase/index]]\n\n## codebase/plans\n\n"
+                         "- [[codebase/plans/index]]\n\n## codebase/plans/completed\n\n"
+                         "- [[codebase/plans/completed/plan]]\n\n## unindexed/nested\n\n"
+                         "- [[unindexed/nested/café]]\n")
         self.assertEqual((self.vault / "codebase/index.md").read_text(encoding="utf-8"), "curated subindex")
 
     def test_linked_notes_and_directories_never_enter_inventory(self):
