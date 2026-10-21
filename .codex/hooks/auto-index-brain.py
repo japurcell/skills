@@ -268,9 +268,10 @@ class Directory:
             if os.name == "nt":
                 paths = [path] if parent else [*reversed(path.parents), path]
                 for item in paths:
-                    # Deny replacement; attribute-only reparse edits are still
-                    # possible, so enumerate the handle rather than this path.
-                    handle, close = windows_handle(item, 0x21 if item == path else 0, 1, 3, directory=True)
+                    # Allow entry updates (including atomic index replacement),
+                    # but deny DELETE sharing so this directory cannot move.
+                    # Reparse edits are handled by bound enumeration/file opens.
+                    handle, close = windows_handle(item, 0x21 if item == path else 0, 3, 3, directory=True)
                     self.stack.callback(close, handle)
                 self.fd = None
                 self.handle = handle
