@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 11 -->
+<!-- next-id: 12 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -22,3 +22,4 @@
 5. [ ] Investigate whether nested AGENTS.md maps complement the root brain index for local context; evaluate [harness-engineering](https://github.com/lopopolo/harness-engineering).
 6. [ ] Audit skills against compatible [official skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), focusing on OpenAI usage, progressive disclosure, reference navigation, and feedback loops.
 7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [[codebase/secret-scanner]]
+11. [ ] Build an interface for assigning and monitoring agentic work across multiple repositories.
