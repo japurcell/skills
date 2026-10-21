@@ -138,10 +138,11 @@ def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int 
         cursor = 1 if in_string and escaped else 0
         escaped = False
         marker_pattern = re.compile(rb'(?:\\[\s\S])+|["\\\[\]{},:]')
-        # Expose a literal backslash first so ordinary data rejects quickly in C.
+        # Batch escape runs and ordinary spans between them inside strings.
+        # Keep contiguous Unicode and byte-pair runs on their direct C paths.
         string_pattern = re.compile(
             rb'\\(?:u[0-9a-fA-F]{4}(?:\\u[0-9a-fA-F]{4})*'
-            rb'|[\s\S](?:\\[\s\S])*)|["\\]'
+            rb'|[\s\S](?:\\[\s\S])*)(?:[^"\\]+\\[\s\S](?:\\[\s\S])*)*|["\\]'
         )
         while (match := (string_pattern if in_string else marker_pattern).search(chunk, cursor)) is not None:
             position = match.start()
