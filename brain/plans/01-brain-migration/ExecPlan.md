@@ -22,8 +22,8 @@ Future implementation is repository-scoped. Existing user-global installations m
 - [x] (2026-10-20) [milestone-1] T1: Verify provider contracts and record user approval to index after every completed Codex tool call.
 - [x] (2026-10-20) [milestone-2] T2: Add 19 topic notes and six investigation todos; verify wikilinks and permanent IDs.
 - [x] (2026-10-20) [milestone-2] T2: Complete claim-to-destination review, preserve admission rules and missing lifecycle/Windows/loader contracts, and verify navigation. Active skill routing was completed in T6.
-- [x] (2026-10-20) [milestone-3] T3: Deliver standalone index reconciliation with copied-process checks on macOS. Native OS/minimum-version proof remains in T7.
-- [x] (2026-10-20) [milestone-3] T4: Deliver provider completion policies, startup/reset envelopes and safe statuses, and project/global lifecycle registrations; verify public process/config contracts locally.
+- [x] (2026-10-20) [milestone-3] T3: Deliver standalone index reconciliation with copied-process checks on macOS. Native OS/minimum-version proof is recorded in T8.
+- [x] (2026-10-20) [milestone-3] T4: Deliver provider completion policies, startup/reset envelopes and safe statuses, and repository lifecycle registrations; verify public process/config contracts locally. T8 reconciles the final repository-only boundary.
 - [x] (2026-10-20) [milestone-3] T5: Integrate exact provider arguments, pinned installed launches, Codex copy lists, and content-verified retirement cleanup. Verify isolated fresh/repeat installs and nested project launches locally.
 - [x] (2026-10-20) [milestone-3] T5: Pass final Bash and PowerShell installer suites on macOS, including new Codex asset copies. Native platform/minimum-version and live provider acceptance remains T7.
 - [x] (2026-10-20) [milestone-4] T6: Remove legacy content roots, retired skills, ingestion/OKF infrastructure and exclusive tests. Update active routing, replacement skills, historical ADR status and machine-owned root inventory; verify links and IDs.
@@ -33,9 +33,10 @@ Future implementation is repository-scoped. Existing user-global installations m
 - [x] (2026-10-20) [milestone-3] T8: Reconcile repository-only brain hooks, intentional global guard removal, generated assets, and affected local checks.
 - [x] (2026-10-20) [milestone-3] T8: Publish correction `e62c3e8161f76cc6066b030db5a5238bac20d52b`; verify all six native matrix jobs passed in run `39514477471`.
 - [x] (2026-10-20) [milestone-3] T8: Verify corrected native Windows installer/security run `39514476129` passed.
-- [ ] [milestone-3] T8: Verify macOS security for the final corrected commit; run `39514476250` exposed an obsolete global guard assertion in the Codex scanner suite.
+- [x] (2026-10-20) [milestone-3] T8: Publish final repair `307d07d51a827a4b433aef4356232b66dfc326ad`; verify matrix `39516402778`, Windows `39516385504`, and macOS security `39516385510` all passed for that exact commit.
+- [x] (2026-10-20) [milestone-3] T8: Complete integrated verification: `55 passed, 0 failed in 1904.3s`, generated freshness `60 files`, and clean whitespace checks. T8 and milestone 3 are complete; T7 remains open for live-provider verification.
 - [x] (2026-10-20) [milestone-5] T7: Verify original macOS security run `39510956707` passed, including all 12 native Darwin capture cases and both installers.
-- [ ] [milestone-5] T7: Verify corrected-tree CI and real provider startup/reset delivery in configured isolated profiles; then complete todo 1.
+- [ ] [milestone-5] T7: Verify real provider startup/reset delivery in configured isolated profiles; then complete todo 1. Corrected-tree CI and local integration are verified.
 
 ## Surprises & Discoveries
 
@@ -69,7 +70,11 @@ The actual skill directory is `update-agent-docs`, despite the original request 
 
 ## Outcomes & Retrospective
 
-Implementation started on 2026-10-20 from clean branch codex/brain-system-migration at 092038394a2e3bb0cc21fffdec2eb60a12cece29. T1 and T2 are complete. T4 now supplies documented completion policies, startup/reset context and safe diagnostics, plus both installed and project registrations. T5 integrates pinned provider arguments, isolated installation and receipt-based retirement cleanup. The original 23 public brain checks passed on macOS/Python 3.14.6; the repository-only suite now passes 22 cases after removing its exclusive global-install test; generator and Codex merge checks pass. Final Bash and PowerShell installer suites passed on macOS. All six standalone native Windows/Linux/macOS jobs on Python 3.12/3.14 now pass for published commit `f49edd58ca048438636ae40024db2818b35f6a4f`, with explicit platform skips. Live provider delivery remains unverified. Milestone 3 contract and isolated installation acceptance is met. T6 cutover and T7 local integration are complete: all 55 maintained suites pass on macOS with explicit native-only skips. T7 remains open for corrected-tree workflow completion and real provider delivery proof. The migration branch is committed and pushed; global installations remain untouched.
+The migration and scope correction are implemented and verified. Retained knowledge and ideas live in the brain; the three legacy content roots, old idea directory, retired skills, ingestion, and OKF infrastructure are removed. Copilot brain hooks live only in repository `.github/hooks`; Codex and Gemini also register brain maintenance at repository scope. Global templates intentionally omit brain and tool-guard registrations, as confirmed by the user. Guard runtime behavior remains tested through explicit invocation.
+
+Published code commit `307d07d51a827a4b433aef4356232b66dfc326ad` passed the six-job native Windows/Linux/macOS matrix on Python 3.12/3.14, Windows installer/security workflow, and complete macOS security workflow. Native capture proof covers all 12 required Darwin cases. The final local integrated run passed all 55 maintained suites in 1904.3 seconds, with host-specific skips disclosed; generated freshness reports 60 files. The brain process suite has 22 cases. Logs and exact-head evidence are linked below.
+
+T8 and milestone 3 are complete. T7 and todo 1 remain open solely for actual provider startup/reset delivery in isolated profiles. Native process/configuration proof does not establish live context delivery. The user's subsequent documentation-only commit `24cccff0` adds todo 8 for choosing an acceptable CI feedback-runtime budget and then refactoring the slow macOS workflow. It changes no tested runtime or configuration. Stop after recording this checkpoint; do not begin that follow-up or live-provider work in this turn. User-global installations remain untouched.
 
 ## Context and Orientation
 
@@ -146,8 +151,8 @@ Update human navigation enough to make every new file reachable before automatic
 Acceptance: the completed ledger accounts for the full source inventory; a reader can find retained knowledge and useful follow-up work through the brain without consulting the legacy roots.
 
 ### Milestone 3: Deliver portable index and context hooks
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T3: Implement index reconciliation
 
@@ -221,7 +226,11 @@ T1 content inventory precedes T2. T1 root/input feasibility precedes T3 and is v
 
 ## Concrete Steps
 
-The corrected migration is committed and pushed as `e62c3e8161f76cc6066b030db5a5238bac20d52b` on `codex/brain-system-migration`. All six native matrix jobs passed in run `39514477471`. Native Windows installer run `39514476129` also passed. macOS security run `39514476250` failed at the scanner suite's obsolete global guard assertion (`KeyError: PreToolUse`), reproduced locally through the identical shell entrypoint. The test-only repair now passes all three complete scanner/capture suites, including all 12 native Darwin capture cases, plus the Gemini RTK and direct guard-runtime suites. It removes only deleted automatic global-guard expectations, retaining runtime checks and surviving observability/RTK assertions. The next executor action is to publish this repair, rerun native CI on the final commit, and run the complete 55-suite local registry before completing T8. Do not edit repository files while the full runner executes its generator snapshots. Keep T7 and todo 1 open for live-provider verification.
+The final corrected migration is committed and pushed as `307d07d51a827a4b433aef4356232b66dfc326ad` on `codex/brain-system-migration`. Native matrix run `39516402778` (all six OS/Python combinations), Windows installer run `39516385504`, and macOS security run `39516385510` all passed for this exact commit. macOS includes all 12 native Darwin capture cases and both complete installers.
+
+T8 is complete: the final local `scripts/test-all.py` run exited 0 with `Suites: 55 passed, 0 failed in 1904.3s.` Its log is `/tmp/brain-scope-final-test-all.log`. Generated freshness reports 60 current outputs and `git diff --check` passes. The current branch head is `24cccff021e6a9b7dc9c25fac6d5f9c5bac37589`, a subsequent todo-only commit; runtime/configuration remains identical to the CI-verified `307d07d5`.
+
+The next unfinished task is T7: establish actual provider startup/reset delivery in isolated profiles. Keep T7 and todo 1 open; no live delivery proof is claimed. Stop after this completed T8 checkpoint, as requested. Todo 8 separately records choosing a feedback-runtime budget and then refactoring `.github/workflows/hooks-posix.yml`; do not implement that follow-up during this correction.
 
 The preceding `a73a33c1` workflows failed generated freshness after global templates changed. T8 removed duplicate Copilot global brain assets, aligned ownership/tests with repository-only brain registrations and intentionally removed global guards, and regenerated 60 outputs. The earlier complete green workflows for `f49edd58` are historical evidence; use the corrected commit's results for current-tree acceptance.
 
@@ -240,6 +249,10 @@ Proposed public test seams are generated hook process stdin/stdout plus observab
 The user confirmed all three proposed public test boundaries on 2026-10-20. The TDD seam prerequisite is satisfied. For new executable behavior, use one failing public-behavior test followed by the minimal implementation, repeating in vertical slices. Do not add tests that only assert removed features remain absent.
 
 ### Published native matrix evidence (2026-10-20)
+
+Final correction: all three workflows report success at exact head `307d07d51a827a4b433aef4356232b66dfc326ad`: [six-job native matrix](https://github.com/japurcell/skills/actions/runs/39516402778), [Windows installer/security](https://github.com/japurcell/skills/actions/runs/39516385504), and [macOS security](https://github.com/japurcell/skills/actions/runs/39516385510). Exact-head/job results and logs are retained as `/tmp/brain-final-ci-<run-id>.json` and `.log`. macOS explicitly verified all 12 native capture cases, completed Bash and PowerShell installers, and rechecked generated freshness. Native scripts retain 60 outputs and 22 brain cases; platform skips remain disclosed. The final local registry passed all 55 suites in 1904.3 seconds; `/tmp/brain-scope-final-test-all.log` retains its output. T8 is complete. T7 remains open for real provider startup/reset delivery.
+
+The intermediate e62c3e81 result below is historical failure/repair evidence.
 
 Current correction: [run 39514477471](https://github.com/japurcell/skills/actions/runs/39514477471) passed all six native Windows/Linux/macOS jobs on Python 3.12/3.14 at exact head `e62c3e8161f76cc6066b030db5a5238bac20d52b`. The corrected inventory has 60 generated files and the brain suite has 22 cases after removing its exclusive global-install test. Matrix log `/tmp/brain-native-matrix-39514477471.log` records two skips per Windows job, one per Ubuntu job, and none on macOS; no skipped behavior is claimed as proved. Current [Windows installer run](https://github.com/japurcell/skills/actions/runs/39514476129) passed completely; its log is `/tmp/brain-windows-installer-39514476129.log`. The [macOS security run](https://github.com/japurcell/skills/actions/runs/39514476250) failed on the Codex scanner suite's obsolete automatic global-guard expectation; runtime scanner checks had not started. The public local shell entrypoint reproduced `KeyError: PreToolUse` before this test-only repair. T7 remains open for these current-tree results and real provider delivery.
 
@@ -305,26 +318,30 @@ Index bounds: 20,000 scanned entries, two-second inventory deadline, 512 KiB ren
 
 ## Current base state and remaining ownership
 
-Reflection review: the durable correction is captured in `brain/codebase/hooks-copilot.md` and `brain/codebase/hooks.md`. Repository and user-level hook paths define deployment scope; shared runtime behavior does not justify registering repository maintenance globally. No skill-file update or new backlog item is needed.
+Reflection review: the durable correction is captured in `brain/codebase/hooks-copilot.md` and `brain/codebase/hooks.md`. Repository and user-level hook paths define deployment scope; shared runtime behavior does not justify registering repository maintenance globally. No skill-file update is needed. The user separately requested todo 8 for the slow CI workflow; it is recorded without starting implementation.
 
-- Branch: `codex/brain-system-migration`; published corrected HEAD is `e62c3e8161f76cc6066b030db5a5238bac20d52b`, following user commits `91238738` and `a73a33c1` and original migration commit `f49edd58`. Commit and push are authorized. No private implementation worktrees or global installations were changed.
-- New public entrypoints exist in all four provider trees and are registered in project configuration and installed templates. Copilot filters successful tool results; Gemini filters error results; Codex indexes every completed call. No actual user-global install was changed.
-- Canonical implementation: `hooks/families/brain.py`; subprocess suite: `scripts/test-brain-hooks.py`. `scripts/test-all.py` includes the new suite. `.github/workflows/brain-hooks.yml` passed all six native platform/version jobs in run `39510956769`.
-- Generation updates diagnostic/build fingerprints and registration receipts because canonical sources and templates changed. Installer E2E verification reproduced removal of the existing tool guard by incomplete maintained templates; all three templates now preserve that security registration. Security enforcement logic is unchanged; diagnostic collectors now recognize exact brain launch arguments.
+- Branch: `codex/brain-system-migration`; current HEAD is todo-only commit `24cccff021e6a9b7dc9c25fac6d5f9c5bac37589`; the verified runtime/configuration commit is `307d07d51a827a4b433aef4356232b66dfc326ad`, following user commits `91238738` and `a73a33c1` and original migration commit `f49edd58`. Commit and push are authorized. No private implementation worktrees or global installations were changed.
+- Six public brain artifacts exist in three repository trees: `.github/hooks`, `.gemini/hooks`, and `.codex/hooks`. Brain handlers register only in project configuration. Copilot filters successful tool results; Gemini filters error results; Codex indexes every completed call. No actual user-global install was changed.
+- Canonical implementation: `hooks/families/brain.py`; subprocess suite: `scripts/test-brain-hooks.py`. `scripts/test-all.py` includes the new suite. `.github/workflows/brain-hooks.yml` passed all six native platform/version jobs in final run `39516402778`.
+- Generation updates diagnostic/build fingerprints and registration receipts because canonical sources and templates changed. Earlier installer checks required automatic global guard registration; the user subsequently removed it intentionally. Global ownership now retires exact known brain/guard handlers during explicit reinstall. Direct guard runtime coverage remains intact; security policy implementation is unchanged.
 - Sandbox initially denied generator staging in `.codex`; scoped elevated regeneration succeeded. The failed generator rolled back, and subsequent freshness checks passed.
-- Current local correction: repository brain suite 22 cases, generator 25 cases, recovery 17 cases, lifecycle 32 cases, Codex merge CLI, and complete Bash installer pass. The lifecycle suite initially hit sandbox-only `/bin/ps` denial; its elevated rerun passed unchanged. Complete PowerShell installation, security banners (14 cases), and diagnostics (10 cases) also pass. The corrected six-job native matrix and Windows installer/security workflow pass; macOS run `39514476250` failed an obsolete global guard-registration assertion. All five affected shell suites now pass after a test-only correction; final native CI and the complete local registry remain pending. No global installation was changed.
+- Current local correction: repository brain suite 22 cases, generator 25 cases, recovery 17 cases, lifecycle 32 cases, Codex merge CLI, and complete Bash installer pass. The lifecycle suite initially hit sandbox-only `/bin/ps` denial; its elevated rerun passed unchanged. Complete PowerShell installation, security banners (14 cases), and diagnostics (10 cases) also pass. The corrected six-job native matrix and Windows installer/security workflow pass; macOS run `39514476250` failed an obsolete global guard-registration assertion. All five affected shell suites now pass after a test-only correction. All three final native workflows pass for `307d07d5`. The final local registry also passed all 55 suites in 1904.3 seconds, completing T8. No global installation was changed.
 - The user approved mechanical Codex reconciliation on every completed call, including failures, on 2026-10-20. No completion-policy decision remains pending. The subsequent execplan-implement invocation resumes execution after T2.
-- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. The original related Windows installer/security and macOS security workflows both passed. Corrected-tree CI remains pending. Real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
+- Native standalone Windows/Linux/macOS and Python 3.12/3.14 matrix evidence is verified. The final related Windows installer/security and macOS security workflows both pass for `307d07d5`. Real provider startup/reset delivery remains unverified. Existing global installations must stay untouched.
 - Retired skills, source ingestion/OKF families/adapters, all three legacy content roots and `docs/ideas` are removed. The corrected generator owns 60 surviving outputs; its post-cutover suite passes 25 cases after removing only two retired-family tests. The full maintained runner passes all 55 suites on macOS.
 - Reflection review: durable generator serialization, standalone input rules, provider schema limits, and source-versus-live verification distinctions are retained in codebase notes. No speculative session narrative was added as knowledge.
 
-## T2 final coverage evidence (2026-10-20)
+## Historical checkpoints (evidence only)
+
+These retained checkpoints describe prior states. Current requirements, status, next actions, and final proof are above; historical wording does not override them.
+
+### T2 final coverage evidence (2026-10-20)
 
 Final validation passed: all 40 brain Markdown files are reachable from the root, every wikilink resolves, and all 62 tracked legacy content files have exactly one disposition row. `rtk git diff --check` passed.
 
 A read-only review compared all 19 topic notes, the codebase index, and todos with the complete migration ledger and nine raw snapshots. The coordinator restored the missing shared lifecycle-message policy, Windows path/command lookup rules, and required-skill loader output contract. The loader remains active and its generated output confirms the preserved fields. Version-sensitive Gemini telemetry detail is not promoted to a current claim without fresh verification; the retained no-raw-input logging rule covers the durable privacy requirement. Knowledge admission rules are retained in `brain/codebase/knowledge-maintenance.md`; active skill integration belongs to T6. The later T6 gate passed and originals were removed after this content-preservation review.
 
-## T4/T5 integration evidence (2026-10-20)
+### T4/T5 integration evidence (2026-10-20)
 
 The public completion-policy test failed for Copilot/Gemini errors and unrelated Codex events before filtering, then passed. Startup/reset status and maintained-template tests likewise failed before their implementation. All 23 `scripts/test-brain-hooks.py` cases now pass, including each independently copied artifact with a fresh index, all documented reset sources, large-index fallback, exact provider completion rules, nested project launchers without Git, and pinned/idempotent isolated installs for three providers. Copilot progress lines precede exactly one final JSON document; Codex/Gemini use safe `systemMessage`. Codex handlers set `additionalContextLimit: 0` because the script enforces its own 24,000-byte cap.
 
@@ -336,7 +353,7 @@ Setup, limits, provider examples, reset limitations and recovery are documented 
 
 Decision checkpoint (2026-10-20): T5 proves replacement process/config/install contracts on the available host. T7 retains the original native Windows/Linux/macOS, minimum Python and live-delivery obligations. No missing proof is waived or claimed; T6 can now retire the old source as the original task graph intends. The final deletion preflight reconfirmed exact ledger coverage for 62 files and full brain navigation.
 
-## T6 cutover and T7 current evidence (2026-10-20)
+### T6 cutover and T7 pre-publication evidence (2026-10-20)
 
 Cutover removed 37 explicitly owned source/runtime/test files, the retired skill bundles, all three legacy content roots, the superseded idea directory and exclusive OKF fixtures. Shared common/audit families remain for surviving providers; their now-unused GitHub helper outputs were removed. Mixed startup/lifecycle suites retain required-skill and security behavior. The Windows workflow no longer calls the removed OKF suite. README, create-skill routing and the live installer architecture eval point to brain notes. Historical dotnet migration validation is labeled historical; ADRs 0001/0002 are superseded. A generic cleanup fixture's `okf-authoring-workspace` name is only disposable test data, not an active retired-skill dependency.
 
@@ -354,7 +371,7 @@ T7 repair checkpoint: the third aggregate run passed suites 1-25, then exposed a
 
 T7 complete-run checkpoint: the fourth aggregate run completed in 1897.3 seconds with 54 passing suites and one failure in `scripts/test_helpers.py`. All failures there referenced the removed GitHub-only helper copies. Four exclusive GitHub helper tests and that provider's entries in shared loops were retired; three unique path-normalization assertions were retained in the live Gemini helper case. No surviving-provider assertion was weakened. The resulting 12-case helper suite passes. Product runtime code is unchanged by this cleanup. A final full run is in progress; `/tmp/brain-test-all-fourth-run.log` preserves the completed 54/55 result.
 
-## Final local validation and reflection (2026-10-20)
+### Final local validation and reflection (2026-10-20)
 
 `rtk python3 scripts/test-all.py` completed with exit 0 on macOS 26.7.1 arm64/Python 3.14.6: `Suites: 55 passed, 0 failed in 1890.8s.` Full output is `/tmp/brain-test-all.log`. Native Windows entrypoints explicitly skipped on macOS; they are not native proof. `rtk python3 scripts/generate-hooks.py --check` reports `Generated hooks are current (62 files).` The three new path-normalization assertion lines and changed provider loop in the mixed-line-ending helper suite were normalized to LF after the run; this whitespace-only cleanup does not change test behavior. Focused helper verification passed all 12 cases after that cleanup. `rtk git diff --check` passed. The final navigation audit found 40 reachable brain files with valid wikilinks, all legacy roots absent and HEAD unchanged.
 
@@ -362,6 +379,6 @@ Reflection completed: exact installed launch identity must include provider argu
 
 At the local validation checkpoint, no commits, staging, private implementation worktrees, real-home installs or publication had occurred. The starting HEAD was `092038394a2e3bb0cc21fffdec2eb60a12cece29` on `codex/brain-system-migration`. T7 acceptance stays unmet solely for required native/minimum-version and live-provider evidence; no unavailable result is claimed.
 
-## Active-hook source repair (2026-10-20)
+### Active-hook source repair (2026-10-20)
 
 After the local cutover, an actual Stop invocation failed because its `hook_run_id` named `/Users/adam/dev/skills/.codex/hooks.json`, while its Git-root-resolved command targeted the removed adapter in this worktree. The worktree configuration was already migrated; the unchanged main-checkout source still contained the retired OKF Stop handler. The coordinator removed exactly that baseline handler from the main checkout's repository-local file using an atomic write and preserved other settings. This is one additional uncommitted edit outside the implementation worktree, required to repair the active invocation. No user-global hook installation was changed. JSON and scoped diff verification confirm the stale registration is gone; a later actual Stop invocation is the live confirmation. No deletion regression test or compatibility shim was added.
