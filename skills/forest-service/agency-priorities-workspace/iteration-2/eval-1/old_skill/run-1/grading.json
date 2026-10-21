@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "Covers all six USDA goals and all eight Forest Service priorities using the assigned skill alone.",
+      "passed": false,
+      "evidence": "Explicitly says the baseline cannot name or summarize the six goals or eight priorities."
+    },
+    {
+      "text": "Identifies the 2026-10-20 snapshot and distinguishes the 2026-2030 framework from the full plan still in development.",
+      "passed": false,
+      "evidence": "Knowledge date and strategic-document status are both reported as absent."
+    },
+    {
+      "text": "Explains FY26 leadership context without asserting FY27 direction, requiring source access, or claiming live verification.",
+      "passed": true,
+      "evidence": "Distinguishes FY26 from unestablished FY27 direction without inventing annual content."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 2,
+    "total": 3,
+    "pass_rate": 0.3333333333333333
+  }
+}

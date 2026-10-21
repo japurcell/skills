@@ -1,0 +1,1 @@
+The skill snapshot checked 2026-10-20 does not establish final FY2027 priorities; it records FY26 leadership context. I cannot certify that an unrelated payroll color theme meets all agency priorities. No such connection is established.

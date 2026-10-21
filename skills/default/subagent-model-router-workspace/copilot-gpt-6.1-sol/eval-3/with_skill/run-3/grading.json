@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Both exact configurations\n  are accepted and equally capable on this task.\n  claude-sonnet-5: (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10.00) = $0.03.\n  claude-sonnet-5.5: (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10.00) = $0.02.\n  No new cache writes, uncached input, or retries; verification costs are identical.\nescalation_trigger: Verification reveals a reasoning gap or security sensitivity emerges.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\n**Model names alone:** route becomes `dispatchable: false`. Without confirmed accepted effort values, `reasoning_effort` is `unresolved`; neither selection nor fallback may dispatch.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

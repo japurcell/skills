@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: Summarizing explicit test failures without code diagnosis is bounded, low-risk mechanical work requiring the Fast floor. Capability is based on provisional catalog guidance; verify the summary includes every explicit failure verbatim without hallucinated root-cause claims. At 80,000 uncached input tokens (\u2264100K tier) and 2,000 output tokens with no cache writes or retries, claude-haiku-5.5 costs $0.0090 USD ($0.0080 input + $0.0010 output; 0.9 AI credits) versus $0.0900 USD ($0.0800 input + $0.0100 output; 9.0 AI credits) for claude-haiku-4.5, and is the latest version.\nescalation_trigger: Task expands to diagnosing root causes in code, input exceeds 100K tokens and changes cost comparison, or verification reveals missed/misstated failures.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n```\n\nEstimated token cost:\n- `claude-haiku-5.5` (`medium`, \u2264100K input): `$0.0090` USD (`0.08M * $0.10 = $0.0080` input + `0.002M * $0.50 = $0.0010` output; `0.9` AI credits).\n- `claude-haiku-4.5` (`medium`, fallback): `$0.0900` USD (`0.08M * $1.00 = $0.0800` input + `0.002M * $5.00 = $0.0100` output; `9.0` AI credits).\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

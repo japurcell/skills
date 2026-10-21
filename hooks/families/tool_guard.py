@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from hooks.families.allowlist import ALLOWLIST_SOURCE
+from hooks.families.reporting import SOURCE as REPORT_SOURCE, build_identity
 from hooks.manifest import GeneratedTarget
 from hooks.providers import Provider
 
@@ -164,6 +165,7 @@ import unicodedata
 
 MAX_SCAN_TEXT = 32768
 MAX_NATIVE_DATA_BYTES = 65536
+MAX_NATIVE_PATCH_BYTES = 262144
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -181,16 +183,19 @@ KNOWN_TOOL_FIELDS = {
 
 
 class ScanLimitExceeded(ValueError):
-    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input") -> None:
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input",
+                 *, measured_is_lower_bound: bool = False) -> None:
         self.rule_id = rule_id
         self.limit = limit
         self.measured = measured
+        self.measured_is_lower_bound = measured_is_lower_bound
         self.unit = unit
         self.field = field
         super().__init__(rule_id)
 
     def threat(self) -> dict[str, str]:
-        cause = f"{self.field}: {self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
+        qualifier = "at least " if self.measured_is_lower_bound else ""
+        cause = f"{self.field}: {qualifier}{self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
         return {
             "category": "input_limits",
             "severity": "critical",
@@ -256,7 +261,8 @@ def _command_segments(text: str) -> list[list[str]]:
         maxsplit=MAX_COMMAND_SEGMENTS,
     )
     if len(raw_segments) > MAX_COMMAND_SEGMENTS:
-        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments")
+        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments",
+                                measured_is_lower_bound=True)
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
         token_source = re.sub(r'[",]', " ", raw_segment)
@@ -806,7 +812,8 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             budget.commands += 1
             budget.tokens += len(command.words) + len(command.redirects)
             if budget.commands > MAX_COMMAND_SEGMENTS:
-                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments")
+                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments",
+                                        measured_is_lower_bound=True)
             if budget.tokens > MAX_COMMAND_TOKENS:
                 raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, budget.tokens, "tokens")
             command.pipe = pipe
@@ -1400,11 +1407,10 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
 
 def sanitize_tool_name(value: str) -> str:
     sanitized = unicodedata.normalize("NFKC", value[:4096])
-    # ASCII identifiers have no credential separators; token matches can only
-    # start at their first character because every character is a word character.
-    if (sanitized.isascii() and sanitized.replace("_", "").isalnum()
-            and not sanitized.lower().startswith(("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "akia"))):
-        return sanitized if len(sanitized) <= MAX_TOOL_NAME_LENGTH else sanitized[:MAX_TOOL_NAME_LENGTH - 3] + "..."
+    # Identifier components can contain credential prefixes after other words.
+    # Reuse the conservative whole-label check before any display clipping.
+    if sanitized.isascii() and sanitized.replace("_", "").isalnum():
+        return report_label(sanitized)
     sanitized = re.sub(
         r"(?i)\b(https?://)([^/\s@]+)@",
         lambda match: f"{match.group(1)}{REDACTED}@",
@@ -1436,14 +1442,14 @@ def sanitize_tool_name(value: str) -> str:
         sanitized,
     )
     sanitized = re.sub(
-        r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|sk-[A-Za-z0-9_-]{8,}|AKIA[A-Z0-9]{8,})\b",
+        r"(?i)(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{8,}|sk_live_[A-Za-z0-9]+|xox[baprs]-[A-Za-z0-9-]+|AKIA[A-Z0-9]{8,})",
         REDACTED,
         sanitized,
     )
     sanitized = " ".join(sanitized.split())
     if len(sanitized) > MAX_TOOL_NAME_LENGTH:
         sanitized = sanitized[: MAX_TOOL_NAME_LENGTH - 3] + "..."
-    return sanitized
+    return report_text(sanitized, MAX_TOOL_NAME_LENGTH)
 
 
 def build_threats(tool_text: str) -> list[dict[str, str]]:
@@ -1457,7 +1463,10 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     if isinstance(tool_inputs, NativeToolInput):
         if tool_inputs.kind == "shell":
             try:
-                return _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                threats = _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                for context in tool_inputs.metadata:
+                    threats.extend(_strict_threats(context))
+                return threats
             except InspectionFailure:
                 return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
         return _native_operation_threats(tool_inputs)
@@ -1603,10 +1612,28 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
 
 
 _PROVIDER_POLICY_SOURCE = r'''
+REPORT_BUILD = "__REPORT_BUILD__"
+
+
+def inspection_incomplete(threats):
+    return any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats)
+
+
+def guard_attribution(*, security, audit, enforcement, profile, route, cause):
+    # This helper is available before optional policy imports and takes explicit
+    # route/profile values so bootstrap and input failures retain attribution.
+    return (f" security_outcome={security}; audit_outcome={audit}; enforcement={enforcement}; build={REPORT_BUILD}; "
+            f"profile={profile}; route={route}; cause={cause}.")
+TOOL_PROFILE = "unsupported"
+TOOL_ROUTE = "strict_fallback"
+PROFILE_CAUSE = "unsupported_tool_profile"
+MAX_GUARD_LOG_BYTES = 16384
+
 try:
     from helpers.tool_guard_policy import (
         MAX_SCAN_TEXT,
         MAX_NATIVE_DATA_BYTES,
+        MAX_NATIVE_PATCH_BYTES,
         MAX_COMMAND_SEGMENTS,
         MAX_COMMAND_TOKENS,
         MAX_STRUCTURED_DEPTH,
@@ -1666,9 +1693,13 @@ try:
         _has_forbidden_allowlist_separator,
         parse_allowlist,
         allowlist_contains,
+        report_text,
+        report_json_bytes,
     )
 except Exception:
-    emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+    emit_deny_response("Tool Guardian blocked execution due to an internal error."
+                       + guard_attribution(security="incomplete", audit="not_attempted", enforcement="deny",
+                                           profile="unavailable", route="bootstrap", cause="policy_unavailable"))
 
 
 def read_tool_name(payload: dict) -> str:
@@ -1700,14 +1731,75 @@ def read_tool_input(payload: dict) -> str:
 
 
 
+def _native_shell_shape(tool_name: str, value: dict) -> NativeToolInput | None:
+    """Only proven inert fields leave inspection; execution context stays strict."""
+    metadata: list[str] = []
+    numeric: tuple[str, ...] = ()
+    if TOOL_PROVIDER == "codex" and tool_name in {"exec_command", "functions.exec_command"}:
+        key = "cmd"
+        optional = {"max_output_tokens": int, "yield_time_ms": int, "workdir": str,
+                    "shell": str, "login": bool, "tty": bool, "justification": str,
+                    "sandbox_permissions": str, "prefix_rule": list}
+        numeric = ("max_output_tokens", "yield_time_ms")
+    elif TOOL_PROVIDER == "codex" and tool_name == "Bash":
+        key, optional = "command", {}
+    elif TOOL_PROVIDER == "copilot" and tool_name == "bash":
+        key = "command"
+        optional = {"description": str, "initial_wait": int, "mode": str, "detach": bool}
+        numeric = ("initial_wait",)
+    elif TOOL_PROVIDER == "gemini" and tool_name == "run_shell_command":
+        key = "command"
+        optional = {"description": str, "dir_path": str, "is_background": bool,
+                    "delay_ms": int, "additional_permissions": dict}
+        numeric = ("delay_ms",)
+    else:
+        return None
+    if not _matches_native_schema(value, {key: str}, optional):
+        return None
+    # Booleans are not integers here. Finite bounded counters cannot carry code.
+    if any(not 0 <= value[field] <= 2147483647 for field in numeric if field in value):
+        return None
+    if "shell" in value and value["shell"] not in {
+        "bash", "sh", "zsh", "/bin/bash", "/bin/sh", "/bin/zsh",
+        "/usr/bin/bash", "/usr/bin/sh", "/usr/bin/zsh",
+    }:
+        return None
+    if "sandbox_permissions" in value and value["sandbox_permissions"] not in {
+        "use_default", "require_escalated",
+    }:
+        return None
+    if "mode" in value and value["mode"] not in {"sync", "async"}:
+        return None
+    for field in ("workdir", "dir_path"):
+        if field in value:
+            metadata.append(value[field])
+    if "prefix_rule" in value:
+        prefix = value["prefix_rule"]
+        if len(prefix) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in prefix):
+            return None
+        metadata.extend(prefix)
+    if "additional_permissions" in value:
+        permissions = value["additional_permissions"]
+        if not _matches_native_schema(permissions, {}, {"network": bool, "fileSystem": dict}):
+            return None
+        if "fileSystem" in permissions:
+            filesystem = permissions["fileSystem"]
+            if not _matches_native_schema(filesystem, {}, {"read": list, "write": list}):
+                return None
+            for paths in filesystem.values():
+                if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
+                    return None
+                metadata.extend(paths)
+    return NativeToolInput("shell", tuple(metadata), (value[key],))
+
+
+
 def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
     if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
         return None
-    shell_tools = {"codex": {"Bash", "exec_command", "functions.exec_command"}, "copilot": {"bash"}, "gemini": {"run_shell_command"}}
-    if tool_name in shell_tools.get(TOOL_PROVIDER, set()):
-        key = "cmd" if tool_name in {"exec_command", "functions.exec_command"} else "command"
-        if _matches_native_schema(value, {key: str}):
-            return NativeToolInput("shell", (), (value[key],))
+    shell = _native_shell_shape(tool_name, value)
+    if shell is not None:
+        return shell
     if TOOL_PROVIDER == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
         return NativeToolInput("patch", (), (value["command"],))
     if TOOL_PROVIDER == "gemini":
@@ -1750,13 +1842,28 @@ def _native_tool_shape(tool_name: str, value: object) -> NativeToolInput | None:
 
 
 def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
+    global TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE
     value = _read_tool_input_value(payload)
-    if isinstance(value, str):
-        return (value,)
-
     tool_name = read_tool_name(payload)
-    native = _native_tool_shape(tool_name, value)
-    byte_limit = MAX_NATIVE_DATA_BYTES if native and native.kind != "shell" else MAX_SCAN_TEXT
+    if isinstance(value, str):
+        # Copilot's native patch transport is raw text in the primary fields.
+        # Alternate input/name fields and serialized objects remain strict.
+        if TOOL_PROVIDER == "copilot" and payload.get("toolName") == "apply_patch" and type(payload.get("toolArgs")) is str:
+            native = NativeToolInput("patch", (), (value,))
+        else:
+            return (value,)
+    else:
+        native = _native_tool_shape(tool_name, value)
+    if native:
+        TOOL_PROFILE = native.kind + "_v1"
+        PROFILE_CAUSE = "recognized_profile"
+    elif tool_name.casefold() in KNOWN_TOOL_FIELDS:
+        PROFILE_CAUSE = "native_profile_rejected"
+    byte_limit = MAX_SCAN_TEXT
+    if native and native.kind == "patch":
+        byte_limit = MAX_NATIVE_PATCH_BYTES
+    elif native and native.kind != "shell":
+        byte_limit = MAX_NATIVE_DATA_BYTES
     known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
     stack = [iter(((value, 0, "tool input"),))]
     strings: list[str] = []
@@ -1807,13 +1914,82 @@ def read_tool_scan_inputs(payload: dict) -> tuple[str, ...] | NativeToolInput:
         if native.kind == "patch":
             native = _parse_native_patch(native.data[0])
         if native is not None:
+            TOOL_PROFILE, TOOL_ROUTE, PROFILE_CAUSE = native.kind + "_v1", "native", "recognized_profile"
             return native
+        TOOL_PROFILE, PROFILE_CAUSE = "unsupported", "native_profile_rejected"
+        if isinstance(value, str):
+            return (value,)
         if total_string_bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
     elif key_bytes > MAX_SCAN_TEXT:
         raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
     serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
     return tuple(strings) + tuple(keys) + (serialized,)
+
+
+def guard_report(payload):
+    """Retain bounded owned metadata, then serialize in the provider adapter."""
+    security = "findings" if payload.get("threat_count") else "clean"
+    threats = payload.get("threats", [])
+    incomplete = inspection_incomplete(threats)
+    if incomplete:
+        security = "incomplete"
+    payload.update(build=REPORT_BUILD, provider=TOOL_PROVIDER, profile=TOOL_PROFILE,
+                   route=TOOL_ROUTE, profile_cause=PROFILE_CAUSE,
+                   cause=threats[0]["rule_id"] if threats else payload["event"],
+                   security_outcome=security, audit_outcome="written",
+                   inspection_outcome="incomplete" if incomplete else "complete",
+                   enforcement="deny" if incomplete or (security == "findings" and payload["mode"] == "block") else "allow",
+                   omittedThreats=0)
+    payload["tool"] = report_text(payload["tool"])
+    if "excerpt" in payload:
+        payload["excerpt"] = report_text(payload["excerpt"])
+    while report_json_bytes(payload) > MAX_GUARD_LOG_BYTES - 256 and threats:
+        threats.pop()
+        payload["omittedThreats"] += 1
+    return payload
+
+
+def record_guard(event, mode, tool_name, threats=None, excerpt="command omitted"):
+    threats = threats or []
+    try:
+        log_payload(event, mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+    except Exception:
+        # A failed audit cannot erase a security finding or allow a clean call.
+        incomplete = inspection_incomplete(threats)
+        warning = mode == "warn" and threats and not incomplete
+        outcome = "warning" if warning else "blocked"
+        reason = build_block_reason(tool_name, threats, excerpt, outcome) if threats else "Tool Guardian blocked: audit unavailable."
+        reason += guard_attribution(security="incomplete" if incomplete else "findings" if threats else "clean",
+                                    audit="failed", enforcement="allow" if warning else "deny",
+                                    profile=TOOL_PROFILE, route=TOOL_ROUTE, cause="audit_unavailable")
+        if warning:
+            emit_allow_response(reason)
+        emit_deny_response(reason)
+
+
+def attributed_reason(tool_name, threats, excerpt, outcome):
+    incomplete = inspection_incomplete(threats)
+    cause = threats[0]["rule_id"] if threats else PROFILE_CAUSE
+    return (build_block_reason(tool_name, threats, excerpt, outcome)
+            + guard_attribution(security="incomplete" if incomplete else "findings", audit="written",
+                                enforcement="allow" if outcome == "warning" else "deny",
+                                profile=TOOL_PROFILE, route=TOOL_ROUTE, cause=cause))
+
+
+def input_failure_reason(reason, cause):
+    return reason + guard_attribution(security="incomplete", audit="not_attempted", enforcement="deny",
+                                     profile="unsupported", route="input_validation", cause=cause)
+
+
+def guard_log_payload(event, mode, tool_name, timestamp, threat_count=0, threats=None, excerpt=None):
+    payload = {"timestamp": timestamp, "event": event, "mode": mode,
+               "tool": sanitize_tool_name(tool_name)}
+    if event == "threats_detected":
+        payload["threat_count"] = threat_count
+        payload["threats"] = threats or []
+        payload["excerpt"] = excerpt or "command omitted"
+    return guard_report(payload)
 
 '''
 
@@ -1834,23 +2010,15 @@ def configure_log() -> None:
 
 
 def log_payload(event: str, mode: str, tool_name: str, threat_count: int = 0, threats: list[dict[str, str]] | None = None, excerpt: str | None = None) -> None:
-    payload: dict[str, object] = {
-        "timestamp": TIMESTAMP,
-        "event": event,
-        "mode": mode,
-        "tool": sanitize_tool_name(tool_name),
-    }
-    if event == "threats_detected":
-        payload["threat_count"] = threat_count
-        payload["threats"] = threats or []
-        payload["excerpt"] = excerpt or "command omitted"
+    payload = guard_log_payload(event, mode, tool_name, TIMESTAMP, threat_count, threats, excerpt)
 
     old_audit_log = os.environ.get("AUDIT_LOG")
     old_audit_lock = os.environ.get("AUDIT_LOCK")
     try:
         os.environ["AUDIT_LOG"] = LOG_FILE
         os.environ["AUDIT_LOCK"] = LOCK_FILE
-        audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        if not audit_log_event(SCRIPT_NAME, json.dumps(payload, ensure_ascii=True, separators=(",", ":"))):
+            raise OSError("audit_unavailable")
     finally:
         if old_audit_log is None:
             os.environ.pop("AUDIT_LOG", None)
@@ -1963,16 +2131,7 @@ def append_log(
     if parent:
         os.makedirs(parent, mode=0o700, exist_ok=True)
 
-    payload: dict[str, object] = {
-        "timestamp": timestamp,
-        "event": event,
-        "mode": mode,
-        "tool": sanitize_tool_name(tool_name),
-    }
-    if event == "threats_detected":
-        payload["threat_count"] = threat_count
-        payload["threats"] = threats or []
-        payload["excerpt"] = excerpt or "command omitted"
+    payload = guard_log_payload(event, mode, tool_name, timestamp, threat_count, threats, excerpt)
 
     lock_descriptor = _acquire_log_lock(f"{log_file}.lock")
     try:
@@ -2010,13 +2169,13 @@ def main() -> int:
     try:
         payload = read_json_input()
     except ValueError:
-        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
     except Exception as exc:  # noqa: BLE001 - intentional top-level fallback
         print(f"Tool Guardian failed to read input: {format_error(exc)}", file=sys.stderr)
-        emit_deny_response("Tool Guardian skipped: unexpected exception.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: unexpected exception.", "input_read_failed"))
 
     if not isinstance(payload, dict):
-        emit_deny_response("Tool Guardian skipped: invalid hook input JSON.")
+        emit_deny_response(input_failure_reason("Tool Guardian skipped: invalid hook input JSON.", "input_invalid"))
 
     tool_name = read_tool_name(payload)
     try:
@@ -2026,28 +2185,28 @@ def main() -> int:
         threats = [limit.threat()]
     except UnicodeError:
         threats = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
-    if any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
+    if inspection_incomplete(threats):
         excerpt = "command omitted"
-        log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
-        emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
+        record_guard("threats_detected", mode, tool_name, threats, excerpt)
+        emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
 
     tool_input = read_tool_input(payload)
     allowlist = parse_allowlist(os.environ.get("TOOL_GUARD_ALLOWLIST"))
 
     if allowlist and allowlist_contains(tool_name, tool_input, allowlist):
-        log_payload("guard_skipped", mode, tool_name)
+        record_guard("guard_skipped", mode, tool_name)
         emit_allow_response()
 
     if not threats:
-        log_payload("guard_passed", mode, tool_name)
+        record_guard("guard_passed", mode, tool_name)
         emit_allow_response()
 
     excerpt = build_action_excerpt(tool_input, threats)
-    log_payload("threats_detected", mode, tool_name, len(threats), log_threat_metadata(threats), excerpt)
+    record_guard("threats_detected", mode, tool_name, threats, excerpt)
     if mode == "warn":
-        emit_allow_response(build_block_reason(tool_name, threats, excerpt, "warning"))
+        emit_allow_response(attributed_reason(tool_name, threats, excerpt, "warning"))
 
-    emit_deny_response(build_block_reason(tool_name, threats, excerpt, "blocked"))
+    emit_deny_response(attributed_reason(tool_name, threats, excerpt, "blocked"))
 
 
 if __name__ == "__main__":
@@ -2057,7 +2216,7 @@ if __name__ == "__main__":
         raise
     except Exception as exc:  # noqa: BLE001 - intentional fail-closed safety net
         print(f"Tool Guardian failed unexpectedly: {format_error(exc)}", file=sys.stderr)
-        emit_deny_response("Tool Guardian blocked execution due to an internal error.")
+        emit_deny_response(input_failure_reason("Tool Guardian blocked execution due to an internal error.", "internal_error"))
 '''
 
 
@@ -2076,7 +2235,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
     if target.provider != provider.name or provider.name not in {"copilot", "gemini", "codex"}:
         raise ValueError(f"Unsupported Tool Guardian target/provider: {target.output_path}")
     if target.output_path.name == "tool_guard_policy.py":
-        return SHEBANG + HEADER + "\nfrom __future__ import annotations\n\nimport json\nimport sys\n" + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE)
+        return SHEBANG + HEADER + "\nfrom __future__ import annotations\n\nimport json\nimport sys\n" + _POLICY_SOURCE.replace("# __ALLOWLIST_SOURCE__\n", ALLOWLIST_SOURCE) + REPORT_SOURCE
     import_adapter, logging_adapter = _adapter_sources(provider)
     return (
         SHEBANG
@@ -2085,7 +2244,7 @@ def render(provider: Provider, target: GeneratedTarget) -> str:
         + ADAPTER_START
         + import_adapter
         + ADAPTER_END
-        + _PROVIDER_POLICY_SOURCE
+        + _PROVIDER_POLICY_SOURCE.replace("__REPORT_BUILD__", build_identity("tool_guard"))
         + "\n"
         + ADAPTER_START
         + logging_adapter

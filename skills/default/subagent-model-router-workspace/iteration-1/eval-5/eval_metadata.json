@@ -1,0 +1,8 @@
+{
+  "eval_id": 5,
+  "eval_name": "routing-5",
+  "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The only other runtime candidate is model-b at high, also Standard, but the user explicitly permits only model-a's family and model-b belongs to another family. No other configuration in that family is available. Is fallback none valid? Treat the synthetic IDs as fixture data.",
+  "assertions": [
+    "Accept fallback none and explain that the explicit family constraint excludes the sole alternative."
+  ]
+}

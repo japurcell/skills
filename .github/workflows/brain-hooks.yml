@@ -1,0 +1,42 @@
+name: Standalone brain hooks
+
+on:
+  push:
+    paths: &brain_hook_paths
+      - '.codex/hooks.json'
+      - '.gemini/settings.json'
+      - 'hooks/**'
+      - '.github/hooks/**'
+      - '.copilot/hooks/**'
+      - '.gemini/hooks/**'
+      - '.codex/hooks/**'
+      - 'scripts/test-brain-hooks.py'
+      - 'scripts/generate-hooks.py'
+      - '.github/workflows/brain-hooks.yml'
+  pull_request:
+    paths: *brain_hook_paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python: ['3.12', '3.14']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Verify generated outputs
+        run: python scripts/generate-hooks.py --check
+      - name: Exercise copied standalone scripts
+        run: python scripts/test-brain-hooks.py

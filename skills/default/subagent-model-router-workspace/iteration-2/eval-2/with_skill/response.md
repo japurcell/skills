@@ -1,0 +1,1 @@
+Route: `gpt-5.6-luna` at `medium` (Fast). At 150,000 input tokens, its ≤200K rates apply: 150,000 × $0.20/M plus 2,000 × $1.20/M output = **$0.0324 USD**. `claude-haiku-5.5` uses its >100K row: 150,000 × $0.50/M plus 2,000 × $2.50/M output = **$0.08 USD**. Equal task fit, no cache writes or retries, and equal verification make `gpt-5.6-luna` the lower-cost route.

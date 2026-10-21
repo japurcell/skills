@@ -1,0 +1,39 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "No route file or completion ledger is required for this scenario.",
+      "passed": true,
+      "evidence": "Keeps routing decisions available; explicitly submits and verifies exact values, monitors limits, avoids unrequested approval/raw metadata, and leaves unavailable execution settings unconfirmed. See response.md and transcript.md."
+    },
+    {
+      "text": "Chat names roles and scope without raw routing/audit data.",
+      "passed": true,
+      "evidence": "Keeps routing decisions available; explicitly submits and verifies exact values, monitors limits, avoids unrequested approval/raw metadata, and leaves unavailable execution settings unconfirmed. See response.md and transcript.md."
+    },
+    {
+      "text": "Exact submitted values and runtime monitoring are verified; no unnecessary approval pause.",
+      "passed": true,
+      "evidence": "Keeps routing decisions available; explicitly submits and verifies exact values, monitors limits, avoids unrequested approval/raw metadata, and leaves unavailable execution settings unconfirmed. See response.md and transcript.md."
+    },
+    {
+      "text": "Unavailable executed settings remain unconfirmed; worker self-report is not runtime proof.",
+      "passed": true,
+      "evidence": "Keeps routing decisions available; explicitly submits and verifies exact values, monitors limits, avoids unrequested approval/raw metadata, and leaves unavailable execution settings unconfirmed. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 1304
+  },
+  "runtime_model": "gpt-6.1-sol",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

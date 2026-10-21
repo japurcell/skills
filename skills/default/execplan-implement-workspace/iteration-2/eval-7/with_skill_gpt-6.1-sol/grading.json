@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Allows cost-justified reuse for a closely related node with separate ownership and acceptance.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Reuses the related parser worker, revalidates routing/ownership and separate acceptance, and prefers fresh context for unrelated or stale/crowded work."
+    },
+    {
+      "text": "Revalidates routing and current context before reuse.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Reuses the related parser worker, revalidates routing/ownership and separate acceptance, and prefers fresh context for unrelated or stale/crowded work."
+    },
+    {
+      "text": "Uses fresh context for unrelated or stale/crowded work and retains necessary evidence.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Reuses the related parser worker, revalidates routing/ownership and separate acceptance, and prefers fresh context for unrelated or stale/crowded work."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

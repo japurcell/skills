@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Delegates the investigation and avoids three duplicate investigations.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 6."
+    },
+    {
+      "text": "Uses a small sufficient packet and concise evidence-backed results, not whole histories or logs.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 6."
+    },
+    {
+      "text": "Preserves acceptance, negative cases and authorization despite context trimming.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 6."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

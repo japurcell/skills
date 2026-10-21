@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Conflict-free integration does not waive the required composed-behavior check.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 1."
+    },
+    {
+      "text": "The next node is verification/integration, without fabricated code edits or an empty commit.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 1."
+    },
+    {
+      "text": "Status, acceptance, Progress, Concrete Steps and Outcomes are reconciled together.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 1."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

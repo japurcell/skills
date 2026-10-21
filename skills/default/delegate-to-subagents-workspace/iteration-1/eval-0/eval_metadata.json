@@ -1,0 +1,8 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-0",
+  "prompt": "Describe assignments only; do not dispatch agents. Two independent component tasks own disjoint source files but both will update docs/file-map.md and docs/known-issues.md. Define documentation ownership before dispatch and explain how both workers' verified findings reach the final documents.",
+  "assertions": [
+    "Each shared document has one named integration owner or an explicit serialized dependency. Both workers retain evidence and the coordinator reconciles both sets of admitted findings before the final documentation pass."
+  ]
+}

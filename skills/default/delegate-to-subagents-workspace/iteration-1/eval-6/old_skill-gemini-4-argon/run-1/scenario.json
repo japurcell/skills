@@ -1,0 +1,13 @@
+{
+  "id": 6,
+  "eval_name": "dispatch-mismatch",
+  "prompt": "Describe checks only; do not dispatch or write files. A valid router decision specifies exact model and effort. Compare three cases: the actual dispatch omitted effort; runtime metadata reports a documented equivalent model alias; runtime metadata reports a materially different executed configuration. Explain compliance, recovery, and dependent work.",
+  "expected_output": "Missing effort makes dispatch noncompliant; do not call it router-selected. Cancel mismatched submission if safe and supported, otherwise disclose before reliance; at most one corrected redispatch. Documented equivalent alias is not noncompliance. A material runtime override is a routing failure and pauses affected dependent work.",
+  "files": [],
+  "assertions": [
+    "Missing effort makes dispatch noncompliant; do not call it router-selected.",
+    "Cancel mismatched submission if safe and supported, otherwise disclose before reliance; at most one corrected redispatch.",
+    "Documented equivalent alias is not noncompliance.",
+    "A material runtime override is a routing failure and pauses affected dependent work."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "eval_id": 5,
+  "eval_name": "cheap-local-task",
+  "prompt": "Give an execution decision only; do not execute tools or delegate. A ready documentation task takes one small edit and a known check. The coordinator already holds all required current context. A worker would need that context copied, routing, startup, and handback review. No independent-review requirement applies. Choose the owner and explain the cost and correctness tradeoff.",
+  "assertions": [
+    "Selects local execution rather than mandatory delegation.",
+    "Includes dispatch/context/review overhead, not merely model price.",
+    "Retains verification and plan reconciliation."
+  ]
+}

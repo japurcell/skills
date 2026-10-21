@@ -1,34 +1,20 @@
 {
   "version": 1,
   "hooks": {
-    "agentStop": [
-      {
-        "type": "command",
-        "bash": ".github/hooks/scripts/validate-stop.py",
-        "powershell": "python \".github/hooks/scripts/validate-stop.py\"",
-        "timeoutSec": 10
-      }
-    ],
-    "subagentStop": [
-      {
-        "type": "command",
-        "bash": ".github/hooks/scripts/validate-stop.py",
-        "powershell": "python \".github/hooks/scripts/validate-stop.py\"",
-        "timeoutSec": 10
-      }
-    ],
     "sessionStart": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/auto-ingest-source.py",
-        "powershell": "python \".github/hooks/scripts/auto-ingest-source.py\""
+        "bash": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "powershell": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "timeoutSec": 5
       }
     ],
-    "userPromptTransformed": [
+    "postToolUse": [
       {
         "type": "command",
-        "bash": ".github/hooks/scripts/inject-auto-ingest-context.py",
-        "powershell": "python \".github/hooks/scripts/inject-auto-ingest-context.py\""
+        "bash": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "powershell": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "timeoutSec": 5
       }
     ]
   }

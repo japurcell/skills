@@ -80,7 +80,7 @@ class TestTestAll(unittest.TestCase):
             )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("--list", result.stdout)
-        self.assertIn("143", result.stdout)
+        self.assertIn("143 SIGTERM", result.stdout)
         self.assertEqual(result.stderr, "")
 
     def test_list_covers_maintained_suites_without_running_them(self):
@@ -104,6 +104,7 @@ class TestTestAll(unittest.TestCase):
         }
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
+        expected.add("scripts/test-brain-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
         expected.add("scripts/test-probe-provider-hook-delivery.py")
         expected.add("scripts/test-rtk-stable.py")
@@ -114,8 +115,27 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-tool-guard-shell-data.py")
         expected.add("scripts/test-tool-guard-limits.py")
         expected.add("scripts/test-benchmark-high-rate-hooks.py")
-        expected.add("skills/spec-to-tasks/evals/test_grade_benchmark.py")
-        expected.add("skills/prd-ralph-loop/evals/test_grade_benchmark.py")
+        expected.add("scripts/test-verify-hook-release.py")
+        expected.add("scripts/test-verify-security-fixture-patch.py")
+        expected.update({
+            "scripts/test-scan-secrets-cli.py",
+            "scripts/test-scan-secrets-git-gates.py",
+            "scripts/test-scan-secrets-lfs.py",
+            "scripts/test-scan-secrets-status.py",
+            "scripts/test-scan-secrets-lifecycle.py",
+            "scripts/test-scan-status-cancellation.py",
+            "scripts/test-install-scan-secrets.py",
+            "scripts/test-install-repo-gates.py",
+            "scripts/test-hook-input-bounds.py",
+            "scripts/test-hook-diagnostics.py",
+            "scripts/test-hook-diagnostic-recovery.py",
+            "scripts/test-scan-secrets-stream-component.py",
+            "scripts/test-scan-secrets-streaming.py",
+            "scripts/test-security-reporting.py",
+        })
+        expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
+        expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
+        expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
         listed = {
             part for command in commands for part in command
             if part.startswith(("scripts/", "skills/"))
@@ -123,6 +143,8 @@ class TestTestAll(unittest.TestCase):
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))
         self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
+        for suite in ("test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py", "test-scan-secrets-lfs.py", "test-scan-secrets-status.py", "test-scan-secrets-lifecycle.py", "test-install-scan-secrets.py", "test-install-repo-gates.py"):
+            self.assertIn(["python3", "scripts/" + suite], commands)
 
     def test_missing_dependencies_fail_before_any_suite_runs(self):
         root, env = self.fixture()

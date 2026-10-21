@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Tasks and prerequisite evidence are derived from the ExecPlan itself.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 0."
+    },
+    {
+      "text": "The first task resolves feasibility before dependent source changes.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 0."
+    },
+    {
+      "text": "Task boundaries preserve negative cases and the milestone's integration acceptance.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 0."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

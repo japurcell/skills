@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Optional improvements stay outside the execution frontier.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Defers optional/excluded work, finishes satisfied scope, and reopens bounded reproduced in-scope repair with evidence."
+    },
+    {
+      "text": "Completed authorized work finishes without invented tasks or another approval question.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Defers optional/excluded work, finishes satisfied scope, and reopens bounded reproduced in-scope repair with evidence."
+    },
+    {
+      "text": "A reproduced in-scope failure still requires a bounded repair before completion.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Defers optional/excluded work, finishes satisfied scope, and reopens bounded reproduced in-scope repair with evidence."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

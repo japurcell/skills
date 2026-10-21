@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {
+      "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+      "passed": true,
+      "evidence": "consistent: false\nreason: Model-b at high is an accepted, equally capable Standard configuration and no user constraint excludes it, so a same-tier fallback exists. Model-c is Fast and below the selected Standard tier. The fallback should be model-b at high.\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

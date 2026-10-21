@@ -1,0 +1,1 @@
+Route: `claude-haiku-5.5` at `medium` (Fast). At 80,000 uncached input tokens, the ≤100K pricing row applies: 80,000 × $0.10/M plus 2,000 × $0.50/M output = **$0.009 USD**. `claude-haiku-4.5` would cost 80,000 × $1/M plus 2,000 × $5/M = $0.09. With equal task fit and verification, Haiku 5.5 is the lower-cost route.

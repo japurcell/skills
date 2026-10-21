@@ -1,0 +1,238 @@
+{
+  "metadata": {
+    "skill_name": "agency-priorities",
+    "skill_path": "skills/forest-service/agency-priorities",
+    "executor_model": "gpt-6-luna (requested; runtime execution settings unconfirmed)",
+    "analyzer_model": "coordinator manual review",
+    "timestamp": "2026-10-20T16:45:57Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "dated-briefing",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the available 2026-2030 document as a framework and the full plan as still in development in the packet.",
+          "passed": true,
+          "evidence": "The briefing states the full FY 2026-2030 plan is in development and the framework is not the completed full plan."
+        },
+        {
+          "text": "Does not present the 2022-2026 plan or the FY26 article as verified FY27 direction.",
+          "passed": true,
+          "evidence": "It calls FY 2022-2026 historical and states that the FY26 article does not establish FY27 direction."
+        },
+        {
+          "text": "Cites the framework PDF page 1 and both Forest Service source URLs while disclosing the supplied-evidence freshness limit.",
+          "passed": true,
+          "evidence": "It links all three required documents, locates the framework at page 1, and says it did not verify the sites live."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "repair-alignment",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+          "passed": true,
+          "evidence": "The replacement explicitly rejects mandatory AI, guaranteed funding, the official 50% target, and alignment with every goal."
+        },
+        {
+          "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+          "passed": true,
+          "evidence": "The first table row maps broken-facility and repair tracking to campgrounds and visitor service; the response states that there is no AI feature."
+        },
+        {
+          "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+          "passed": true,
+          "evidence": "The table labels connections as analysis, specifies baseline/follow-up evidence, and calls possible measures suggestions rather than official targets."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "stale-unrelated-request",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+          "passed": true,
+          "evidence": "The response states that final FY2027 direction cannot be established from FY26 evidence."
+        },
+        {
+          "text": "Does not fabricate a successor document or claim successful live retrieval.",
+          "passed": true,
+          "evidence": "It states sources were not verified live and invents no successor."
+        },
+        {
+          "text": "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection.",
+          "passed": true,
+          "evidence": "It declines certification and identifies the missing substantive connection for the cosmetic change."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "dated-briefing",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Identifies the available 2026-2030 document as a framework and the full plan as still in development in the packet.",
+          "passed": true,
+          "evidence": "The briefing calls the available document a framework, not a completed full plan, and says the full plan is being developed."
+        },
+        {
+          "text": "Does not present the 2022-2026 plan or the FY26 article as verified FY27 direction.",
+          "passed": true,
+          "evidence": "It places FY22-26 under past plans and states that the FY26 article is not verified FY27 direction."
+        },
+        {
+          "text": "Cites the framework PDF page 1 and both Forest Service source URLs while disclosing the supplied-evidence freshness limit.",
+          "passed": true,
+          "evidence": "It cites the PDF with p. 1 and both Forest Service pages; the opening says it is not a fresh check."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "repair-alignment",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+          "passed": true,
+          "evidence": "The replacement denies all-goal achievement, the AI requirement, funding guarantee, and official 50% target."
+        },
+        {
+          "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+          "passed": true,
+          "evidence": "It connects actual facility and repair status tracking to campground maintenance and states that the project has no AI feature."
+        },
+        {
+          "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+          "passed": true,
+          "evidence": "It labels alignment as project analysis, measures as suggestions, and requires baselines and evidence of contribution."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "stale-unrelated-request",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+          "passed": true,
+          "evidence": "It says the packet contains no FY27 leadership document and cannot establish final FY2027 priorities."
+        },
+        {
+          "text": "Does not fabricate a successor document or claim successful live retrieval.",
+          "passed": true,
+          "evidence": "It calls the excerpts dated and not live verification; no successor is invented."
+        },
+        {
+          "text": "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection.",
+          "passed": true,
+          "evidence": "It declines certification because there is no substantive connection between cosmetic payroll changes and the stated work."
+        }
+      ],
+      "notes": [
+        "Offline evidence only; runtime metrics unavailable."
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.00"
+    }
+  },
+  "notes": [
+    "Both configurations passed 9/9 assertions. No added skill value demonstrated in this sample.",
+    "One response per case and configuration; cases within each configuration shared worker context.",
+    "Timing, tokens, tool counts, errors, and per-case transcripts unavailable. No repeated-run variance measured.",
+    "Manual semantic review; source retrieval and automatic triggering not evaluated.",
+    "Aggregator requires nested run directories; this report was assembled from the six flat-layout grading records.",
+    "See review-notes.md for citation-label caveat and authoring verification scope."
+  ]
+}

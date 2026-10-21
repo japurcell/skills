@@ -42,3 +42,13 @@ Review the generated plan against these additional assertions:
 6. It preserves malformed-input and regression requirements rather than shrinking acceptance to create more tasks.
 
 Run a separate fresh-worker reading with only the generated plan and selected task. Request its first authorized action, prerequisites, exact first check, completion condition, and stopping boundary without product edits. Record every additional document it needs. Missing critical context fails this review even if every required heading is present.
+
+## Deterministic suite maintenance
+
+Run from the repository root after grader changes:
+
+    rtk proxy env PYTHONPYCACHEPREFIX=/private/tmp/execplan-grader-pycache python3 -m unittest discover -s .agents/skills/exec-plans/evals -p test_grade_benchmark.py
+
+The three deterministic scenarios cover novice creation, two resumed code checkpoints, and completed code with pending owner approval and recovery. Keep their own fixtures, assertions, grader and public CLI tests independently usable. Use canonical iteration directories with one eval metadata file beside configuration runs. Exit 0 means grades were written, including failed assertions; inspect `expectations` and `summary.failed`. Invalid invocation or input errors exit nonzero.
+
+Retain valid wording and line ranges alongside stale actions, missing archive evidence, history-only recovery, unauthorized agent actions and contradictory proof. Review conditional, comma-separated, coordinated and contrasting claims for independent factual assertions; wording checks remain scenario heuristics. Review the qualitative cases above manually for feasibility, both-path validation, prerequisites, shared invariants, integrated proof, owner boundaries and exact commands. Keep instruction coverage separate from sampled agent-performance claims.

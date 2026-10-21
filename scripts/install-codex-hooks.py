@@ -8,20 +8,35 @@ import argparse
 import json
 import os
 import sys
+import stat
 from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
+from trusted_hook_launch import _pin_hook_commands, template_commands
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from hooks.registrations import (
+    DESIRED,
+    RETIRED,
+    check_parent_directories,
+    configuration_lock,
+    preflight_status_path,
+    reconcile,
+    retire_assets,
+    validate_status_asset,
+    verify_unchanged,
+    unique_object,
+)
 
 
-MAINTAINED_HOOK_FILES = ("load-required-skills.py", "scan-secrets.py", "tool-guard.py")
-RETIRED_RTK_HOOK_FILES = ("rtk-explicit-codex.py", "rtk-agent-launcher.py")
-MAINTAINED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in MAINTAINED_HOOK_FILES}
-OWNED_HOOK_FILES = MAINTAINED_HOOK_FILES + RETIRED_RTK_HOOK_FILES
-OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
-OWNED_WINDOWS_COMMANDS = {
-    f'py -3 "%USERPROFILE%\\.codex\\hooks\\{name}"'.casefold() for name in OWNED_HOOK_FILES
+MAINTAINED_HOOK_FILES = tuple(sorted({name for names in DESIRED["codex"].values() for name in names}))
+_MAINTAINED_COMMANDS = {
+    commands["command"]: commands
+    for filename in MAINTAINED_HOOK_FILES
+    for commands in (template_commands("codex", filename),)
 }
+MAINTAINED_POSIX_COMMANDS = set(_MAINTAINED_COMMANDS)
 MAINTAINED_EVENTS = ("SessionStart", "PreToolUse", "PostToolUse", "Stop")
 
 
@@ -37,12 +52,14 @@ def parse_arguments() -> argparse.Namespace:
 
 def load_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
     try:
+        if not stat.S_ISREG(path.stat().st_mode):
+            raise ValueError("Configuration input must be a regular file")
         raw = path.read_bytes()
     except OSError as exc:
         raise ValueError(f"Unable to read {label}: {path}: {exc}") from exc
     try:
-        value = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        value = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
+    except (UnicodeDecodeError, ValueError) as exc:
         raise ValueError(f"Invalid JSON in {label}: {path}") from exc
     if not isinstance(value, dict):
         raise ValueError(f"{label.capitalize()} must contain a JSON object: {path}")
@@ -84,13 +101,10 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
             for handler in group["hooks"]:
                 posix = handler.get("command")
                 windows = handler.get("commandWindows")
-                if not isinstance(posix, str) or posix not in MAINTAINED_POSIX_COMMANDS:
+                maintained = _MAINTAINED_COMMANDS.get(posix) if isinstance(posix, str) else None
+                if maintained is None:
                     raise ValueError(f"Template hooks.{event} contains an unowned command")
-                if not isinstance(windows, str) or windows.casefold() not in OWNED_WINDOWS_COMMANDS:
-                    raise ValueError(f"Template hooks.{event} contains an unowned Windows command")
-                filename = posix.removeprefix("python3 ~/.codex/hooks/")
-                expected_windows = f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
-                if windows.casefold() != expected_windows.casefold():
+                if windows != maintained["commandWindows"]:
                     raise ValueError(f"Template hooks.{event} has mismatched hook commands")
                 if posix in seen:
                     raise ValueError(f"Template repeats maintained handler: {posix}")
@@ -99,38 +113,14 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
     return result
 
 
-def is_owned_handler(handler: dict[str, Any]) -> bool:
-    posix = handler.get("command")
-    windows = handler.get("commandWindows")
-    if not isinstance(posix, str) or not isinstance(windows, str):
-        return False
-    if posix not in OWNED_POSIX_COMMANDS:
-        return False
-    filename = posix.removeprefix("python3 ~/.codex/hooks/")
-    expected_windows = f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
-    return windows.casefold() == expected_windows.casefold()
-
-
-def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
+def merged_config(existing: dict[str, Any], maintained: dict[str, list[dict[str, Any]]], hook_directory: Path) -> dict[str, Any]:
     merged = json.loads(json.dumps(existing))
-    hooks = merged.get("hooks")
-    if hooks is None:
-        hooks = {}
-        merged["hooks"] = hooks
+    hooks = merged.get("hooks", {})
     if not isinstance(hooks, dict):
         raise ValueError("Existing hooks must be an object")
-
-    for event, maintained_groups in maintained.items():
-        groups = validate_groups(hooks.get(event, []), f"Existing hooks.{event}")
-        preserved_groups: list[dict[str, Any]] = []
-        for group in groups:
-            remaining_handlers = [handler for handler in group["hooks"] if not is_owned_handler(handler)]
-            if remaining_handlers:
-                group["hooks"] = remaining_handlers
-                preserved_groups.append(group)
-            elif len(remaining_handlers) == len(group["hooks"]):
-                preserved_groups.append(group)
-        hooks[event] = [*preserved_groups, *maintained_groups]
+    for event in set(maintained) | set(RETIRED["codex"]):
+        validate_groups(hooks.get(event, []), f"Existing hooks.{event}")
+    merged["hooks"] = reconcile(hooks, maintained, "codex", hook_directory)
     return merged
 
 
@@ -152,30 +142,42 @@ def main() -> int:
     try:
         template, _ = load_json_object(arguments.template, "template")
         maintained = template_groups(template)
+        hook_directory = arguments.destination.absolute().parent / "hooks"
+        _pin_hook_commands(
+            (group for groups in maintained.values() for group in groups), "codex", hook_directory,
+            (("command", "posix"), ("commandWindows", "windows")),
+        )
+        check_parent_directories(arguments.destination.absolute().parent, arguments.destination.absolute())
         if arguments.destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {arguments.destination}")
-        destination_exists = arguments.destination.exists()
-        if destination_exists:
-            existing, existing_bytes = load_json_object(arguments.destination, "destination")
-        else:
-            existing, existing_bytes = {}, b""
-        merged = merged_config(existing, maintained)
-        if destination_exists and merged == existing:
+        preflight_status_path("codex", maintained, hook_directory)
+        with configuration_lock(arguments.destination, arguments.check):
+            destination_exists = arguments.destination.exists()
+            if destination_exists:
+                existing, existing_bytes = load_json_object(arguments.destination, "destination")
+            else:
+                existing, existing_bytes = {}, b""
+            merged = merged_config(existing, maintained, hook_directory)
             if not arguments.check:
-                os.chmod(arguments.destination, 0o600)
+                validate_status_asset("codex", maintained, hook_directory)
+            if destination_exists and merged == existing:
+                info = arguments.destination.stat()
+                if not arguments.check and (info.st_nlink > 1 or (os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600)):
+                    atomic_write(arguments.destination, existing_bytes)
+            else:
+                if destination_exists:
+                    backup = arguments.destination.with_name("hooks.json.bak")
+                    if backup.is_symlink():
+                        raise ValueError(f"Backup must not be a symbolic link: {backup}")
+                if not arguments.check:
+                    serialized = (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+                    verify_unchanged(arguments.destination, destination_exists, existing_bytes)
+                    if destination_exists:
+                        atomic_write(backup, existing_bytes)
+                    atomic_write(arguments.destination, serialized)
+            if not arguments.check:
+                retire_assets("codex", hook_directory)
             return 0
-
-        if destination_exists:
-            backup = arguments.destination.with_name("hooks.json.bak")
-            if backup.is_symlink():
-                raise ValueError(f"Backup must not be a symbolic link: {backup}")
-        if arguments.check:
-            return 0
-        serialized = (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
-        if destination_exists:
-            atomic_write(backup, existing_bytes)
-        atomic_write(arguments.destination, serialized)
-        return 0
     except (OSError, ValueError) as exc:
         print(f"Codex hook install failed: {exc}", file=sys.stderr)
         return 1

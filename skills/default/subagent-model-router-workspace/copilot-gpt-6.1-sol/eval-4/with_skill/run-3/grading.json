@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {
+      "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+      "passed": true,
+      "evidence": "No. `fallback: none` is inconsistent. `model-b` at `high` is accepted, equally capable, and Standard. Record:\n\n```yaml\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n\n`model-c` at `medium` is Fast, below the selected Standard tier. It is ineligible.\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

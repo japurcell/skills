@@ -1,0 +1,10 @@
+{
+  "eval_id": 6,
+  "eval_name": "isolated-large-exploration",
+  "prompt": "Give an execution decision only; do not run tools or dispatch. Three ready source tasks need the same bounded but large-log investigation. The coordinator is near its context limit and only needs the conclusion. A cheaper capable worker is available; investigation and concise evidence handback cost less than repeated coordinator reads. Choose execution, shared context handling, and the handback. Preserve current authorization and negative cases.",
+  "assertions": [
+    "Delegates the investigation and avoids three duplicate investigations.",
+    "Uses a small sufficient packet and concise evidence-backed results, not whole histories or logs.",
+    "Preserves acceptance, negative cases and authorization despite context trimming."
+  ]
+}

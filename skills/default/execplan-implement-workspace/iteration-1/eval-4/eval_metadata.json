@@ -1,0 +1,10 @@
+{
+  "eval_id": 4,
+  "eval_name": "finish-authorized-scope",
+  "prompt": "Give a read-only execution decision; do not edit, commit or dispatch. Every authorized requirement and acceptance check is met. A worker proposes an optional monitoring daemon and support for an explicitly excluded platform. State whether either enters the frontier and what happens next. Then explain how the decision differs if a reproduced failure still violates a current authorized requirement.",
+  "assertions": [
+    "Optional improvements stay outside the execution frontier.",
+    "Completed authorized work finishes without invented tasks or another approval question.",
+    "A reproduced in-scope failure still requires a bounded repair before completion."
+  ]
+}

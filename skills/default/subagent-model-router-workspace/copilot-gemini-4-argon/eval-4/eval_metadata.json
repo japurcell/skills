@@ -1,0 +1,8 @@
+{
+  "eval_id": 4,
+  "eval_name": "routing-4",
+  "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The runtime also accepts model-b at high, classified Standard and equally capable, plus model-c at medium, classified Fast. No user constraints apply. The recorded fallback is none. Is that record consistent? Treat these synthetic IDs and tiers as fixture data, not a model catalog update.",
+  "assertions": [
+    "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute."
+  ]
+}

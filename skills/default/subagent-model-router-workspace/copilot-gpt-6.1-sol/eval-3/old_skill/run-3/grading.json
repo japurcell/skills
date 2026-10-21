@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: >-\n  Ordinary substantive review requires Standard. Supplied task evidence confirms\n  both exact configurations are accepted and equally capable, overriding\n  provisional catalog guidance. Sonnet 5.5 costs $0.02:\n  (100000 / 1000000 \u00d7 $0.10) + (1000 / 1000000 \u00d7 $10).\n  Sonnet 5 costs $0.03:\n  (100000 / 1000000 \u00d7 $0.20) + (1000 / 1000000 \u00d7 $10).\n  No new writes, uncached input, retries, or verification differences.\nescalation_trigger: Verification exposes a reasoning gap or security-sensitive behavior.\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\n```\n\nIf the interface later lists only model names, **dispatchable: false**. Accepted effort values become unresolved; prior acceptance cannot establish current availability.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

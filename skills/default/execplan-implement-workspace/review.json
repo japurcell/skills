@@ -1,0 +1,44 @@
+{
+  "scope": "execplan-implement and all bundled references; planning/delegation dependencies checked for compatibility",
+  "findings": {
+    "contradictions": [
+      "Mandatory delegation and fresh workers prevented cost-based local execution and context reuse. Replaced with expected completion cost and bounded reuse."
+    ],
+    "ambiguity": [
+      "Commit type selection had no matching criteria; added meanings and primary-purpose selection.",
+      "Example issue numbers and co-author identity could be copied literally; made placeholder status explicit."
+    ],
+    "duplication": [
+      "Removed generic worktree benefits and duplicate commit instructions.",
+      "Moved serialized integration procedure behind its execution trigger."
+    ],
+    "omissions": [
+      "Added sufficient task packets, concise evidence handback, compaction recovery, local execution, reuse criteria, and explicit no-commit behavior.",
+      "Added evals for local cost, shared exploration, worker reuse, and no-commit boundaries."
+    ]
+  },
+  "preserved_obligations": [
+    "Explicit invocation controls",
+    "ExecPlan task and acceptance authority",
+    "Verified prerequisites and user authorization",
+    "Bounded scope and in-scope repairs",
+    "TDD for source changes; appropriate proof for read-only tasks",
+    "Shared-document ownership and final coordinated documentation pass through delegate-to-subagents",
+    "Private unpushed worker branches; serial integration",
+    "Exclusive resolver ownership; affected tests; SHA reconciliation",
+    "Clean base and worker trees; fast-forward only; tip equality",
+    "Composed behavior proof and unmet acceptance if absent",
+    "Safe cleanup preserving unfinished or unrelated work",
+    "Conventional commit structure, required sections, trailer policy"
+  ],
+  "intentional_policy_changes": [
+    "Local execution allowed when cheaper",
+    "Related-node worker reuse allowed when current context and cost justify it",
+    "Conflict resolution can stay local when cheaper"
+  ],
+  "validation_limits": [
+    "Paper scenarios do not prove real Git/worktree execution",
+    "quick_validate.py rejects pre-existing disable-model-invocation key in both versions; retained control"
+  ],
+  "validation_results": "results.json"
+}

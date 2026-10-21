@@ -1,0 +1,8 @@
+{
+  "model_submitted": "gemini-4-argon",
+  "reasoning_effort_submitted": "medium",
+  "variant": "with_skill",
+  "exit_code": 0,
+  "duration_seconds": 44.01065191603266,
+  "method": "nine independent paper scenarios batched in one session; no per-case timing or token allocation"
+}

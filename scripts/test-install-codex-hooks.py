@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,6 +24,9 @@ def run(
     *,
     environment: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    assets = destination.parent / "hooks"
+    assets.mkdir(exist_ok=True)
+    shutil.copy2(ROOT / ".codex/hooks/scan-status.py", assets / "scan-status.py")
     return subprocess.run(
         [sys.executable, str(INSTALLER), "--template", str(template), "--destination", str(destination)],
         text=True,
@@ -65,12 +70,6 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as temporary:
         template = Path(temporary) / "template.json"
         maintained = json.loads(SOURCE_TEMPLATE.read_text(encoding="utf-8"))
-        for event in ("PreToolUse", "Stop"):
-            maintained["hooks"][event] = [{"hooks": [{
-                "type": "command",
-                "command": "python3 ~/.codex/hooks/scan-secrets.py",
-                "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"',
-            }]}]
         template.write_text(json.dumps(maintained), encoding="utf-8")
         destination = Path(temporary) / "hooks.json"
         original = {
@@ -78,16 +77,16 @@ def main() -> None:
             "hooks": {
                 "PreToolUse": [{"matcher": "Bash", "custom": "keep", "hooks": [
                     {"type": "command", "command": "echo user"},
-                    {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
+                    {"type": "command", "command": "python3 /user/hooks/scan-secrets.py",
                      "commandWindows": "echo windows user"},
                     {"type": "command", "command": "echo unix user",
-                     "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
+                     "commandWindows": 'py -3 "C:\\user\\scan-secrets.py"'},
                     {"type": "command", "command": "python3 ~/.codex/hooks/scan-secrets.py",
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'},
                     {"type": "command", "command": "python3 ~/.codex/hooks/rtk-explicit-codex.py",
                      "commandWindows": 'py -3 "%USERPROFILE%\\.codex\\hooks\\rtk-explicit-codex.py"'},
                 ]}],
-                "Stop": [{"hooks": [{"type": "command", "commandWindows": "py -3 \"%USERPROFILE%\\.codex\\hooks\\scan-secrets.py\""}]}],
+                "Stop": [{"hooks": [{"type": "command", "commandWindows": "echo user stop"}]}],
                 "SessionStart": [{"hooks": [{"type": "command", "command": "echo unrelated"}]}],
             },
         }
@@ -99,22 +98,55 @@ def main() -> None:
         assert merged["hooks"]["PreToolUse"][0]["custom"] == "keep"
         assert merged["hooks"]["PreToolUse"][0]["hooks"] == original["hooks"]["PreToolUse"][0]["hooks"][:3]
         assert "rtk-explicit-codex.py" not in destination.read_text(encoding="utf-8")
-        for event in ("SessionStart", "PreToolUse", "Stop"):
+        for event in ("SessionStart", "Stop"):
             for group in maintained["hooks"][event]:
                 for handler in group["hooks"]:
                     command = handler["command"]
+                    expected = dict(handler)
+                    filename = command.rsplit("/", 1)[-1].split()[0]
+                    if filename == "scan-status.py":
+                        command = shlex.join([sys.executable, "-I", "-S", "-B", str(destination.parent / "hooks" / filename)])
+                        expected["command"] = command
+                        expected["commandWindows"] = f'"{sys.executable}" -I -S -B "{destination.parent / "hooks" / filename}"'
                     matches = [candidate for existing_group in merged["hooks"][event]
                                for candidate in existing_group["hooks"]
                                if candidate.get("command") == command
-                               and candidate.get("commandWindows") == handler["commandWindows"]]
-                    assert matches == [handler], (event, command, matches)
+                               ]
+                    assert matches == [expected], (event, command, matches)
         first_bytes = destination.read_bytes()
         second = run(template, destination)
         assert second.returncode == 0, second.stderr
         assert destination.read_bytes() == first_bytes
 
+        # An upgrade can select a new interpreter after the previous one moved.
+        old = json.loads(first_bytes)
+        old_python = str(Path(temporary) / "old python & tools" / "python.exe")
+        owned = old["hooks"]["Stop"][-1]["hooks"][0]
+        script = str(destination.parent / "hooks/scan-status.py")
+        owned["command"] = shlex.join([old_python, "-I", "-S", "-B", script])
+        owned["commandWindows"] = f'"{old_python}" -I -S -B "{script}"'
+        destination.write_text(json.dumps(old))
+        upgraded = run(template, destination)
+        assert upgraded.returncode == 0, upgraded.stderr
+        assert destination.read_bytes() == first_bytes
+
+        unowned = json.loads(first_bytes)
+        script = str(destination.parent / "hooks/scan-secrets.py")
+        custom = {
+            "type": "command",
+            "command": shlex.join([str(Path(temporary) / "custom%python"), "-I", "-S", "-B", script]),
+            "commandWindows": "echo user supplied Windows handler",
+        }
+        unowned["hooks"]["PreToolUse"][0]["hooks"].append(custom)
+        destination.write_text(json.dumps(unowned))
+        preserved = run(template, destination)
+        assert preserved.returncode == 1, preserved.stderr
+        assert "Ambiguous" in preserved.stderr
+        assert json.loads(destination.read_bytes()) == unowned
+        destination.write_bytes(first_bytes)
+
         malformed = json.loads(template.read_text(encoding="utf-8"))
-        malformed["hooks"]["PreToolUse"][0]["hooks"][0]["commandWindows"] = (
+        malformed["hooks"]["Stop"][0]["hooks"][0]["commandWindows"] = (
             'py -3 "%USERPROFILE%\\.codex\\hooks\\load-required-skills.py"'
         )
         template.write_text(json.dumps(malformed), encoding="utf-8")

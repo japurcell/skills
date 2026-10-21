@@ -1,0 +1,11 @@
+{
+  "eval_id": 3,
+  "eval_name": "route-without-mandatory-ledger",
+  "prompt": "Describe the dispatch/reporting procedure only; do not dispatch or write files. Two independent read-only reviewers have complete exact router decisions. No recovery or audit requirement calls for persistent records. The user requested neither approval nor routing details. Explain what must exist before dispatch, whether a route file is required, what goes in chat, how submitted and executed settings are checked, and how unavailable execution metadata is described.",
+  "assertions": [
+    "No route file or completion ledger is required for this scenario.",
+    "Chat names roles and scope without raw routing/audit data.",
+    "Exact submitted values and runtime monitoring are verified; no unnecessary approval pause.",
+    "Unavailable executed settings remain unconfirmed; worker self-report is not runtime proof."
+  ]
+}

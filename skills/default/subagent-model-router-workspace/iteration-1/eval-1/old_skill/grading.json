@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nestimated_token_cost_usd: 0.009\nreason: Summarizing explicit test failures without diagnosing code is bounded Fast work. At 80,000 uncached input tokens and 2,000 output tokens, Haiku 5.5 costs $0.009 versus $0.090 for Haiku 4.5; cache, retry, and verification costs are excluded as specified.\nescalation_trigger: Escalate if the task expands into code diagnosis or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nestimated_token_cost_usd: 0.009\nreason: Summarizing explicit test failures without diagnosing code is bounded Fast work. At 80,000 uncached input tokens and 2,000 output tokens, Haiku 5.5 costs $0.009 versus $0.090 for Haiku 4.5; cache, retry, and verification costs are excluded as specified.\nescalation_trigger: Escalate if the task expands into code diagnosis or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": false,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nestimated_token_cost_usd: 0.009\nreason: Summarizing explicit test failures without diagnosing code is bounded Fast work. At 80,000 uncached input tokens and 2,000 output tokens, Haiku 5.5 costs $0.009 versus $0.090 for Haiku 4.5; cache, retry, and verification costs are excluded as specified.\nescalation_trigger: Escalate if the task expands into code diagnosis or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects Standard claude-sonnet-5.5 at high with Sonnet 5 at high as the same-tier fallback.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: \"Ordinary substantive review has a Standard floor. The prompt confirms both exact high-effort configurations are accepted and equally capable. For 100,000 confirmed cached-input tokens and 1,000 output tokens, claude-sonnet-5.5 costs $0.0200: $0.0100 cached input plus $0.0100 output. claude-sonnet-5 costs $0.0300: $0.0200 cached input plus $0.0100 output. Cache writes, uncached input, and retries are zero, and verification costs are identical.\"\nescalation_trigger: none\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nestimated_token_costs_usd:\n  claude-sonnet-5: 0.03\n  claude-sonnet-5.5: 0.02\nlater_interface_without_effort_values:\n  dispatchable: false\n  reason: \"The dispatch contract requires the exact effort to be confirmed. An interface that advertises only model names does not confirm high.\"\n"
+    },
+    {
+      "text": "Uses $0.10 per million cached-input tokens for Sonnet 5.5 and $0.20 for Sonnet 5, yielding $0.020 and $0.030.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: \"Ordinary substantive review has a Standard floor. The prompt confirms both exact high-effort configurations are accepted and equally capable. For 100,000 confirmed cached-input tokens and 1,000 output tokens, claude-sonnet-5.5 costs $0.0200: $0.0100 cached input plus $0.0100 output. claude-sonnet-5 costs $0.0300: $0.0200 cached input plus $0.0100 output. Cache writes, uncached input, and retries are zero, and verification costs are identical.\"\nescalation_trigger: none\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nestimated_token_costs_usd:\n  claude-sonnet-5: 0.03\n  claude-sonnet-5.5: 0.02\nlater_interface_without_effort_values:\n  dispatchable: false\n  reason: \"The dispatch contract requires the exact effort to be confirmed. An interface that advertises only model names does not confirm high.\"\n"
+    },
+    {
+      "text": "Rejects dispatch when accepted effort values cannot be confirmed instead of assuming the catalog proves support.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Standard\nmodel: claude-sonnet-5.5\nreasoning_effort: high\nreason: \"Ordinary substantive review has a Standard floor. The prompt confirms both exact high-effort configurations are accepted and equally capable. For 100,000 confirmed cached-input tokens and 1,000 output tokens, claude-sonnet-5.5 costs $0.0200: $0.0100 cached input plus $0.0100 output. claude-sonnet-5 costs $0.0300: $0.0200 cached input plus $0.0100 output. Cache writes, uncached input, and retries are zero, and verification costs are identical.\"\nescalation_trigger: none\nfallback:\n  model: claude-sonnet-5\n  reasoning_effort: high\nestimated_token_costs_usd:\n  claude-sonnet-5: 0.03\n  claude-sonnet-5.5: 0.02\nlater_interface_without_effort_values:\n  dispatchable: false\n  reason: \"The dispatch contract requires the exact effort to be confirmed. An interface that advertises only model names does not confirm high.\"\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

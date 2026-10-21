@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "dated-briefing",
+  "prompt": "Create a short USDA and Forest Service priorities briefing as of October 20, 2026. Use only the supplied source packet; network access is unavailable. Explain what strategic document is available and how the FY26 article relates to current agency direction. Cite the evidence and identify anything you cannot establish.",
+  "assertions": [
+    "Identifies the available 2026-2030 document as a framework and the full plan as still in development in the packet.",
+    "Does not present the 2022-2026 plan or the FY26 article as verified FY27 direction.",
+    "Cites the framework PDF page 1 and both Forest Service source URLs while disclosing the supplied-evidence freshness limit."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+      "passed": true,
+      "evidence": "Route: `gpt-5.6-luna` at `medium` (Fast). At 150,000 input tokens, its \u2264200K rates apply: 150,000 \u00d7 $0.20/M plus 2,000 \u00d7 $1.20/M output = **$0.0324 USD**. `claude-haiku-5.5` uses its >100K row: 150,000 \u00d7 $0.50/M plus 2,000 \u00d7 $2.50/M output = **$0.08 USD**. Equal task fit, no cache writes or retries, and equal verification make `gpt-5.6-luna` the lower-cost route.\n"
+    },
+    {
+      "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+      "passed": true,
+      "evidence": "Route: `gpt-5.6-luna` at `medium` (Fast). At 150,000 input tokens, its \u2264200K rates apply: 150,000 \u00d7 $0.20/M plus 2,000 \u00d7 $1.20/M output = **$0.0324 USD**. `claude-haiku-5.5` uses its >100K row: 150,000 \u00d7 $0.50/M plus 2,000 \u00d7 $2.50/M output = **$0.08 USD**. Equal task fit, no cache writes or retries, and equal verification make `gpt-5.6-luna` the lower-cost route.\n"
+    },
+    {
+      "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+      "passed": true,
+      "evidence": "Route: `gpt-5.6-luna` at `medium` (Fast). At 150,000 input tokens, its \u2264200K rates apply: 150,000 \u00d7 $0.20/M plus 2,000 \u00d7 $1.20/M output = **$0.0324 USD**. `claude-haiku-5.5` uses its >100K row: 150,000 \u00d7 $0.50/M plus 2,000 \u00d7 $2.50/M output = **$0.08 USD**. Equal task fit, no cache writes or retries, and equal verification make `gpt-5.6-luna` the lower-cost route.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

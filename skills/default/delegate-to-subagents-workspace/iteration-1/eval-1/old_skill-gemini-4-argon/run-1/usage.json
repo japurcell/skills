@@ -1,0 +1,138 @@
+{
+  "totalPremiumRequestCost": 1,
+  "totalUserRequests": 1,
+  "totalNanoAiu": 1241280000,
+  "aiCreditsStatus": "complete",
+  "tokenDetails": {
+    "input": {
+      "tokenCount": 4471
+    },
+    "cache_read": {
+      "tokenCount": 20508
+    },
+    "cache_write": {
+      "tokenCount": 0
+    },
+    "output": {
+      "tokenCount": 142
+    }
+  },
+  "totalApiDurationMs": 9501,
+  "sessionStartTime": "2026-10-19T19:55:54.422Z",
+  "codeChanges": {
+    "linesAdded": 0,
+    "linesRemoved": 0,
+    "filesModifiedCount": 0,
+    "filesModified": []
+  },
+  "modelMetrics": {
+    "gemini-4-argon": {
+      "requests": {
+        "count": 1,
+        "cost": 1
+      },
+      "usage": {
+        "inputTokens": 24979,
+        "outputTokens": 142,
+        "cacheReadTokens": 20508,
+        "cacheWriteTokens": 0,
+        "reasoningTokens": 340
+      },
+      "totalNanoAiu": 1241280000,
+      "aiCreditsStatus": "complete",
+      "tokenDetails": {
+        "input": {
+          "tokenCount": 4471
+        },
+        "cache_read": {
+          "tokenCount": 20508
+        },
+        "cache_write": {
+          "tokenCount": 0
+        },
+        "output": {
+          "tokenCount": 142
+        }
+      }
+    }
+  },
+  "agentMetrics": {
+    "main": {
+      "totalApiDurationMs": 9501,
+      "totalNanoAiu": 1241280000,
+      "modelMetrics": {
+        "gemini-4-argon": {
+          "requests": {
+            "count": 1,
+            "cost": 1
+          },
+          "usage": {
+            "inputTokens": 24979,
+            "outputTokens": 142,
+            "cacheReadTokens": 20508,
+            "cacheWriteTokens": 0,
+            "reasoningTokens": 340
+          },
+          "totalNanoAiu": 1241280000,
+          "tokenDetails": {
+            "input": {
+              "tokenCount": 4471
+            },
+            "cache_read": {
+              "tokenCount": 20508
+            },
+            "cache_write": {
+              "tokenCount": 0
+            },
+            "output": {
+              "tokenCount": 142
+            }
+          }
+        }
+      }
+    }
+  },
+  "providerModelMetrics": [
+    {
+      "provider": {
+        "id": "copilot",
+        "label": "GitHub Copilot",
+        "kind": "copilot"
+      },
+      "modelId": "gemini-4-argon",
+      "metrics": {
+        "requests": {
+          "count": 1,
+          "cost": 1
+        },
+        "usage": {
+          "inputTokens": 24979,
+          "outputTokens": 142,
+          "cacheReadTokens": 20508,
+          "cacheWriteTokens": 0,
+          "reasoningTokens": 340
+        },
+        "totalNanoAiu": 1241280000,
+        "aiCreditsStatus": "complete",
+        "tokenDetails": {
+          "input": {
+            "tokenCount": 4471
+          },
+          "cache_read": {
+            "tokenCount": 20508
+          },
+          "cache_write": {
+            "tokenCount": 0
+          },
+          "output": {
+            "tokenCount": 142
+          }
+        }
+      },
+      "modelDisplayName": "Gemini 4 Argon"
+    }
+  ],
+  "currentModel": "gemini-4-argon",
+  "lastCallInputTokens": 24979,
+  "lastCallOutputTokens": 142
+}

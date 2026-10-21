@@ -9,13 +9,22 @@ import pathlib
 import sys
 
 config = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-for event in ("PreToolUse", "Stop"):
-    handlers = [handler for group in config["hooks"][event] for handler in group["hooks"]]
-    scanner = [handler for handler in handlers if handler.get("command") == "python3 ~/.codex/hooks/scan-secrets.py"]
-    assert len(scanner) == 1
-    assert scanner[0]["commandWindows"] == 'py -3 "%USERPROFILE%\\.codex\\hooks\\scan-secrets.py"'
-    if event == "PreToolUse":
-        assert any(handler.get("command") == "python3 ~/.codex/hooks/tool-guard.py" for handler in handlers)
+for event, filename, timeout, status in (
+    ("Stop", "scan-status.py", 2, "Reading last secret-scan status"),
+):
+    matches = [
+        (group, handler)
+        for group in config["hooks"][event]
+        for handler in group["hooks"]
+        if handler.get("command") == f"python3 ~/.codex/hooks/{filename}"
+    ]
+    assert len(matches) == 1, f"Expected one {filename} registration on {event}"
+    group, handler = matches[0]
+    assert handler["type"] == "command"
+    assert handler["commandWindows"] == f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"'
+    assert handler["timeout"] == timeout
+    assert handler["statusMessage"] == status
+    assert group.get("matcher", "*") == "*"
 PY
 
 workdir="$(setup_test_workdir)"

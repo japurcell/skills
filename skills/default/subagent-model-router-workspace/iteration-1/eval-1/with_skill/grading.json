@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: \"Summarizing explicit test failures is bounded, low-risk work with a straightforward result, so Fast is the capability floor. At 80,000 uncached input tokens and 2,000 output tokens, claude-haiku-5.5 uses the <=100K row: (80,000 * $0.10 + 2,000 * $0.50) / 1,000,000 = $0.009. claude-haiku-4.5 costs $0.09 for the same token shape. Cache writes and retries are zero and verification costs are equal.\"\nescalation_trigger: none\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\nestimated_token_cost_usd: 0.009\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: \"Summarizing explicit test failures is bounded, low-risk work with a straightforward result, so Fast is the capability floor. At 80,000 uncached input tokens and 2,000 output tokens, claude-haiku-5.5 uses the <=100K row: (80,000 * $0.10 + 2,000 * $0.50) / 1,000,000 = $0.009. claude-haiku-4.5 costs $0.09 for the same token shape. Cache writes and retries are zero and verification costs are equal.\"\nescalation_trigger: none\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\nestimated_token_cost_usd: 0.009\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": false,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: \"Summarizing explicit test failures is bounded, low-risk work with a straightforward result, so Fast is the capability floor. At 80,000 uncached input tokens and 2,000 output tokens, claude-haiku-5.5 uses the <=100K row: (80,000 * $0.10 + 2,000 * $0.50) / 1,000,000 = $0.009. claude-haiku-4.5 costs $0.09 for the same token shape. Cache writes and retries are zero and verification costs are equal.\"\nescalation_trigger: none\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\nestimated_token_cost_usd: 0.009\n"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 1,
+    "total": 3,
+    "pass_rate": 0.6666666666666666
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

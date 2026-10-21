@@ -1,0 +1,26 @@
+[
+  {
+    "id": 4,
+    "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The runtime also accepts model-b at high, classified Standard and equally capable, plus model-c at medium, classified Fast. No user constraints apply. The recorded fallback is none. Is that record consistent? Treat these synthetic IDs and tiers as fixture data, not a model catalog update."
+  },
+  {
+    "id": 5,
+    "prompt": "Validate fallback eligibility only using these supplied facts; do not browse or dispatch. The selected Standard configuration is model-a at high. The only other runtime candidate is model-b at high, also Standard, but the user explicitly permits only model-a's family and model-b belongs to another family. No other configuration in that family is available. Is fallback none valid? Treat the synthetic IDs as fixture data."
+  },
+  {
+    "id": 1,
+    "prompt": "Create a route for summarizing explicit test failures without diagnosing code. GitHub Copilot token billing applies. The dispatch interface accepts only claude-haiku-4.5 and claude-haiku-5.5, both with medium effort. Expect 80000 uncached input tokens and 2000 output tokens, no cache writes, no retries, equal verification cost, and no task-specific quality evidence. No model or effort constraints. Use the bundled source snapshot. Return the route and estimated token cost."
+  },
+  {
+    "id": 2,
+    "prompt": "Update a Fast route for deterministic log summarization. It previously used claude-haiku-5.5 at medium with 80000 input tokens; now it needs 150000 uncached input tokens and 2000 output tokens. The Copilot dispatch interface accepts claude-haiku-5.5 and gpt-5.6-luna, both at medium. Both have demonstrated equal task fit. No cache writes or retries; verification costs match. No user model preference. Use bundled prices, reroute, and show both estimated token costs."
+  },
+  {
+    "id": 3,
+    "prompt": "Compare claude-sonnet-5 at high and claude-sonnet-5.5 at high for ordinary substantive review. Both configurations are accepted by the Copilot dispatch interface and equally capable on this task. Expect 100000 confirmed cached-input tokens and 1000 output tokens; cache writes were paid previously, with no new writes or uncached input. No retries and identical verification. Select a route using bundled prices and show both costs. Also state whether that route remains dispatchable if the interface later advertises only the model names without any accepted effort values."
+  },
+  {
+    "id": 6,
+    "prompt": "Describe output handling only; do not browse, select a new route or dispatch. A complete dispatchable route has already been validated for a caller. State what the router returns, who controls storage and presentation, and whether that separation permits implicit model or effort values."
+  }
+]

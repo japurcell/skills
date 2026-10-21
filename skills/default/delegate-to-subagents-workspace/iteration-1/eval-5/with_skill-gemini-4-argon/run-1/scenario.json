@@ -1,0 +1,13 @@
+{
+  "id": 5,
+  "eval_name": "overdue-and-failed-workers",
+  "prompt": "Describe coordination only; do not dispatch or write files. One compliant worker is overdue but still running. Another was terminated by a runtime timeout with partial results. Explain immediate actions, evidence retention, retries, and whether either event requires a stronger model.",
+  "expected_output": "Warn the overdue worker without interrupting; request status, completed work, blockers and ETA. Retain failed-worker settings, limit, error, partial work and artifacts before replacement. Diagnose task and environment; timeout alone does not justify a stronger model. Allow at most one replacement unless the user authorizes more.",
+  "files": [],
+  "assertions": [
+    "Warn the overdue worker without interrupting; request status, completed work, blockers and ETA.",
+    "Retain failed-worker settings, limit, error, partial work and artifacts before replacement.",
+    "Diagnose task and environment; timeout alone does not justify a stronger model.",
+    "Allow at most one replacement unless the user authorizes more."
+  ]
+}

@@ -250,6 +250,13 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "AfterAgent"
             }
+          },
+          {
+            "name": "scan-secrets",
+            "type": "command",
+            "command": "python \"$HOME/.gemini/hooks/scripts/scan-status.py\"",
+            "timeout": 2000,
+            "description": "Reports historical secret-scan status without scanning or blocking turn completion."
           }
         ]
       }
@@ -321,22 +328,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "BeforeTool"
             }
-          },
-          {
-            "name": "tool-guard",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/tool-guard.py\"",
-            "description": "Blocks dangerous Gemini tool invocations using same policy patterns as Copilot tool-guard."
-          },
-          {
-            "name": "scan-secrets",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/scan-secrets.py\"",
-            "env": {
-              "SCAN_MODE": "block",
-              "SCAN_SCOPE": "diff"
-            },
-            "description": "Scans workspace diffs for secrets before running any tool."
           }
         ]
       },
@@ -403,15 +394,6 @@
               "OBSERVABILITY_CAPTURE_EVENT": "true",
               "OBSERVABILITY_SOURCE_EVENT_NAME": "SessionEnd"
             }
-          },
-          {
-            "name": "scan-secrets",
-            "type": "command",
-            "command": "python \"$HOME/.gemini/hooks/scripts/scan-secrets.py\"",
-            "env": {
-              "SCAN_MODE": "warn"
-            },
-            "description": "Scans modified files for potential secrets and logs env-file access during Gemini session shutdown."
           }
         ]
       }

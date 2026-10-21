@@ -1,0 +1,39 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "One session artifact contains routing decisions and all dispatch/results metadata.",
+      "passed": true,
+      "evidence": "Requires one session artifact before dispatch, concise scope announcement, explicit settings/runtime controls, and unconfirmed unavailable execution metadata. See response.md and transcript.md."
+    },
+    {
+      "text": "Chat names roles and scope; raw routing/audit data requires a user request.",
+      "passed": true,
+      "evidence": "Requires one session artifact before dispatch, concise scope announcement, explicit settings/runtime controls, and unconfirmed unavailable execution metadata. See response.md and transcript.md."
+    },
+    {
+      "text": "Exact submitted values, approval boundaries and runtime controls remain enforced.",
+      "passed": true,
+      "evidence": "Requires one session artifact before dispatch, concise scope announcement, explicit settings/runtime controls, and unconfirmed unavailable execution metadata. See response.md and transcript.md."
+    },
+    {
+      "text": "Unavailable executed settings remain unconfirmed.",
+      "passed": true,
+      "evidence": "Requires one session artifact before dispatch, concise scope announcement, explicit settings/runtime controls, and unconfirmed unavailable execution metadata. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 1062
+  },
+  "runtime_model": "gpt-6.1-sol",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

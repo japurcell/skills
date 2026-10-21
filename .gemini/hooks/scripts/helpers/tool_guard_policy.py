@@ -13,6 +13,7 @@ import unicodedata
 
 MAX_SCAN_TEXT = 32768
 MAX_NATIVE_DATA_BYTES = 65536
+MAX_NATIVE_PATCH_BYTES = 262144
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
@@ -30,16 +31,19 @@ KNOWN_TOOL_FIELDS = {
 
 
 class ScanLimitExceeded(ValueError):
-    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input") -> None:
+    def __init__(self, rule_id: str, limit: int, measured: int, unit: str, field: str = "tool input",
+                 *, measured_is_lower_bound: bool = False) -> None:
         self.rule_id = rule_id
         self.limit = limit
         self.measured = measured
+        self.measured_is_lower_bound = measured_is_lower_bound
         self.unit = unit
         self.field = field
         super().__init__(rule_id)
 
     def threat(self) -> dict[str, str]:
-        cause = f"{self.field}: {self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
+        qualifier = "at least " if self.measured_is_lower_bound else ""
+        cause = f"{self.field}: {qualifier}{self.measured} {self.unit} exceeds limit {self.limit} {self.unit}"
         return {
             "category": "input_limits",
             "severity": "critical",
@@ -105,7 +109,8 @@ def _command_segments(text: str) -> list[list[str]]:
         maxsplit=MAX_COMMAND_SEGMENTS,
     )
     if len(raw_segments) > MAX_COMMAND_SEGMENTS:
-        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments")
+        raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, len(raw_segments), "segments",
+                                measured_is_lower_bound=True)
     segments: list[list[str]] = []
     for raw_segment in raw_segments:
         token_source = re.sub(r'[",]', " ", raw_segment)
@@ -703,7 +708,8 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             budget.commands += 1
             budget.tokens += len(command.words) + len(command.redirects)
             if budget.commands > MAX_COMMAND_SEGMENTS:
-                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments")
+                raise ScanLimitExceeded("command_segments", MAX_COMMAND_SEGMENTS, budget.commands, "segments",
+                                        measured_is_lower_bound=True)
             if budget.tokens > MAX_COMMAND_TOKENS:
                 raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, budget.tokens, "tokens")
             command.pipe = pipe
@@ -1297,11 +1303,10 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
 
 def sanitize_tool_name(value: str) -> str:
     sanitized = unicodedata.normalize("NFKC", value[:4096])
-    # ASCII identifiers have no credential separators; token matches can only
-    # start at their first character because every character is a word character.
-    if (sanitized.isascii() and sanitized.replace("_", "").isalnum()
-            and not sanitized.lower().startswith(("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "akia"))):
-        return sanitized if len(sanitized) <= MAX_TOOL_NAME_LENGTH else sanitized[:MAX_TOOL_NAME_LENGTH - 3] + "..."
+    # Identifier components can contain credential prefixes after other words.
+    # Reuse the conservative whole-label check before any display clipping.
+    if sanitized.isascii() and sanitized.replace("_", "").isalnum():
+        return report_label(sanitized)
     sanitized = re.sub(
         r"(?i)\b(https?://)([^/\s@]+)@",
         lambda match: f"{match.group(1)}{REDACTED}@",
@@ -1333,14 +1338,14 @@ def sanitize_tool_name(value: str) -> str:
         sanitized,
     )
     sanitized = re.sub(
-        r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|sk-[A-Za-z0-9_-]{8,}|AKIA[A-Z0-9]{8,})\b",
+        r"(?i)(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]+|sk-[A-Za-z0-9_-]{8,}|sk_live_[A-Za-z0-9]+|xox[baprs]-[A-Za-z0-9-]+|AKIA[A-Z0-9]{8,})",
         REDACTED,
         sanitized,
     )
     sanitized = " ".join(sanitized.split())
     if len(sanitized) > MAX_TOOL_NAME_LENGTH:
         sanitized = sanitized[: MAX_TOOL_NAME_LENGTH - 3] + "..."
-    return sanitized
+    return report_text(sanitized, MAX_TOOL_NAME_LENGTH)
 
 
 def build_threats(tool_text: str) -> list[dict[str, str]]:
@@ -1354,7 +1359,10 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     if isinstance(tool_inputs, NativeToolInput):
         if tool_inputs.kind == "shell":
             try:
-                return _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                threats = _shell_threats(tool_inputs.data[0], _InspectionBudget())
+                for context in tool_inputs.metadata:
+                    threats.extend(_strict_threats(context))
+                return threats
             except InspectionFailure:
                 return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
         return _native_operation_threats(tool_inputs)
@@ -1496,3 +1504,55 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
     if not any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats):
         message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     return message
+
+import re as _label_re
+
+
+def credential_label(text):
+    """Recognize credentials in caller-normalized labels before display clipping."""
+    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+
+# Bounds apply to retained report fields before JSON serialization. Labels are
+# ASCII, so each retained character costs at most two JSON bytes after escaping.
+REPORT_LABEL_CHARS = 160
+
+
+def report_text(value, limit=REPORT_LABEL_CHARS):
+    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    text = "".join(char if 32 <= ord(char) <= 126 else " " for char in text)
+    return text if len(text) <= limit else text[:limit - 3] + "..."
+
+
+def report_label(value):
+    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
+    if text.isascii():
+        lowered = text.lower()
+        # This conservative filter only avoids regex work for impossible matches.
+        # Unicode case folding and all potential credentials stay with the regex.
+        triggers = ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk-", "sk_live_",
+                    "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-", "bearer", "token", "secret",
+                    "password", "passwd", "api", "authorization", "http")
+        if not any(trigger in lowered for trigger in triggers):
+            return report_text(text)
+    # Labels have no need to reproduce a credential-bearing identifier. Omit the
+    # whole label, including credentials crossing the display clipping boundary.
+    if credential_label(text):
+        return "[REDACTED]"
+    return report_text(text)
+
+
+def report_json_bytes(value):
+    """Exact ensure_ascii JSON byte cost without serializing retained data."""
+    if isinstance(value, str):
+        return 2 + sum(2 if char in '\\"' or char in '\b\f\n\r\t' else
+                       6 if ord(char) < 32 or 127 <= ord(char) <= 65535 else
+                       12 if ord(char) > 65535 else 1 for char in value)
+    if isinstance(value, dict):
+        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(key) + 1 + report_json_bytes(child) for key, child in value.items())
+    if isinstance(value, (list, tuple)):
+        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(child) for child in value)
+    if value is None:
+        return 4
+    if isinstance(value, bool):
+        return 4 if value else 5
+    return len(str(value))

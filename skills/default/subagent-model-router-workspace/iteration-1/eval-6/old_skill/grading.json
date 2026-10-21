@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The routing decision remains structured and complete.",
+      "passed": true,
+      "evidence": "The router returns a routing decision with dispatchable status, tier, exact selected model and effort, reason, escalation trigger, and an exact same-tier fallback or none. The caller controls how that result is stored and presented. That separation does not permit implicit model or effort values: a dispatchable result requires exact values accepted by the interface; model names alone, default, auto, inherited, or unresolved values are insufficient.\n"
+    },
+    {
+      "text": "The caller controls storage and presentation without a dependency on a named consumer skill.",
+      "passed": true,
+      "evidence": "The router returns a routing decision with dispatchable status, tier, exact selected model and effort, reason, escalation trigger, and an exact same-tier fallback or none. The caller controls how that result is stored and presented. That separation does not permit implicit model or effort values: a dispatchable result requires exact values accepted by the interface; model names alone, default, auto, inherited, or unresolved values are insufficient.\n"
+    },
+    {
+      "text": "Exact dispatch values remain mandatory.",
+      "passed": true,
+      "evidence": "The router returns a routing decision with dispatchable status, tier, exact selected model and effort, reason, escalation trigger, and an exact same-tier fallback or none. The caller controls how that result is stored and presented. That separation does not permit implicit model or effort values: a dispatchable result requires exact values accepted by the interface; model names alone, default, auto, inherited, or unresolved values are insufficient.\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

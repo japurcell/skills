@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects claude-haiku-5.5 with medium effort and Fast tier.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+    },
+    {
+      "text": "Computes $0.009 using input and output rates and does not charge for absent cache writes.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+    },
+    {
+      "text": "Treats the configuration as provisional and preserves verification.",
+      "passed": true,
+      "evidence": "```yaml\ndispatchable: true\ntier: Fast\nmodel: claude-haiku-5.5\nreasoning_effort: medium\nreason: >-\n  Summarizing explicit test failures without diagnosis is bounded, low-risk work.\n  Both accepted configurations meet the provisional Fast floor.\n  With no quality evidence and equal verification costs, Haiku 5.5 is cheapest\n  at 80000 input tokens, below its 100K pricing threshold.\n  Verify the summary against the test output.\nestimated_token_cost_usd: 0.009\ncost_breakdown_usd:\n  uncached_input: 0.008\n  output: 0.001\nescalation_trigger: Reroute if code diagnosis is required or verification exposes a reasoning gap.\nfallback:\n  model: claude-haiku-4.5\n  reasoning_effort: medium\n  estimated_token_cost_usd: 0.09\n```\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

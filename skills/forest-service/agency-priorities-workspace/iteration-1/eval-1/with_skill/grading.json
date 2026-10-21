@@ -1,0 +1,28 @@
+{
+  "expectations": [
+    {
+      "text": "Identifies the available 2026-2030 document as a framework and the full plan as still in development in the packet.",
+      "passed": true,
+      "evidence": "The briefing states the full FY 2026-2030 plan is in development and the framework is not the completed full plan."
+    },
+    {
+      "text": "Does not present the 2022-2026 plan or the FY26 article as verified FY27 direction.",
+      "passed": true,
+      "evidence": "It calls FY 2022-2026 historical and states that the FY26 article does not establish FY27 direction."
+    },
+    {
+      "text": "Cites the framework PDF page 1 and both Forest Service source URLs while disclosing the supplied-evidence freshness limit.",
+      "passed": true,
+      "evidence": "It links all three required documents, locates the framework at page 1, and says it did not verify the sites live."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "eval_feedback": {
+    "overall": "Manual semantic review of saved output only. Execution transcript and per-case runtime metrics unavailable. Offline packet makes these assertions non-discriminating in this sample."
+  }
+}

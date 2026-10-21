@@ -1,0 +1,16 @@
+{
+  "expectations": [
+    {
+      "text": "Reject fallback none because model-b at high is an eligible same-tier alternative. Model-c is below the floor and cannot substitute.",
+      "passed": true,
+      "evidence": "No. The recorded `fallback: none` is inconsistent.\n\nWhy:\n- `fallback: none` is allowed only when no other exact same-tier configuration meets runtime capabilities and user constraints.\n- `model-b` at `high` is an exact, runtime-accepted, capable `Standard` configuration with no user constraints excluding it, so it must be recorded as the fallback.\n- `model-c` at `medium` is `Fast`, below the `Standard` capability floor, and remains ineligible regardless of cost.\n\nCorrected route:\n\n```yaml\ndispatchable: true\ntier: Standard\nmodel: model-a\nreasoning_effort: high\nreason: Selected configuration meets the Standard capability floor and is accepted by the dispatch interface. model-b at high is an eligible same-tier fallback; model-c at medium is excluded because Fast is below the Standard floor.\nescalation_trigger: Escalate to Premium if verification exposes a reasoning gap or stakes/security sensitivity increase.\nfallback:\n  model: model-b\n  reasoning_effort: high\n```\n"
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "grading_notes": "Objective model, effort, tier, and numeric checks combined with coordinator semantic review of all responses against unchanged eval expectations."
+}

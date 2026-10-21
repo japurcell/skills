@@ -1,1 +1,0 @@
-The requested document is outside the canonical OKF roots (`.agents/instructions/` and `.agents/memory/`). This work is out of scope for OKF authoring, so no repository document was created or modified.

@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Recomputes the route after context changes and selects gpt-5.6-luna at medium.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nestimated_token_cost_usd: 0.0324\nreason: Deterministic log summarization is bounded Fast work. With 150,000 uncached input tokens and 2,000 output tokens, GPT-5.6 Luna costs $0.0324 and Haiku 5.5 costs $0.0800; the supplied equal task fit and equal verification costs favor Luna. No cache writes or retries are included.\nescalation_trigger: Escalate if the task expands beyond deterministic summarization or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n"
+    },
+    {
+      "text": "Uses Haiku's >100K row for $0.080 and Luna's <=200K row for $0.0324.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nestimated_token_cost_usd: 0.0324\nreason: Deterministic log summarization is bounded Fast work. With 150,000 uncached input tokens and 2,000 output tokens, GPT-5.6 Luna costs $0.0324 and Haiku 5.5 costs $0.0800; the supplied equal task fit and equal verification costs favor Luna. No cache writes or retries are included.\nescalation_trigger: Escalate if the task expands beyond deterministic summarization or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n"
+    },
+    {
+      "text": "Preserves the Fast floor and does not infer a context-window limit from a pricing threshold.",
+      "passed": true,
+      "evidence": "dispatchable: true\ntier: Fast\nmodel: gpt-5.6-luna\nreasoning_effort: medium\nestimated_token_cost_usd: 0.0324\nreason: Deterministic log summarization is bounded Fast work. With 150,000 uncached input tokens and 2,000 output tokens, GPT-5.6 Luna costs $0.0324 and Haiku 5.5 costs $0.0800; the supplied equal task fit and equal verification costs favor Luna. No cache writes or retries are included.\nescalation_trigger: Escalate if the task expands beyond deterministic summarization or verification reveals a reasoning gap.\nfallback:\n  model: claude-haiku-5.5\n  reasoning_effort: medium\n"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "limitations": "One agent per bundle processed six prompts; metrics unavailable. Semantic review plus explicit values checked; not an independent session per prompt."
+}

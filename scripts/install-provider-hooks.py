@@ -13,6 +13,18 @@ from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
+from trusted_hook_launch import pin_provider_commands
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from hooks.registrations import (
+    check_parent_directories,
+    configuration_lock,
+    preflight_status_path,
+    reconcile,
+    retire_assets,
+    validate_status_asset,
+    verify_unchanged,
+)
 
 
 def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -26,6 +38,8 @@ def unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
 
 def load_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
     try:
+        if not stat.S_ISREG(path.stat().st_mode):
+            raise ValueError("Configuration input must be a regular file")
         raw = path.read_bytes()
         value = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
@@ -54,6 +68,10 @@ def validate_hooks(config: dict[str, Any], provider: str, label: str) -> dict[st
     if not isinstance(hooks, dict):
         raise ValueError(f"{label} hooks must be an object")
     for event, entries in hooks.items():
+        if provider == "gemini" and event == "disabled":
+            if not isinstance(entries, list) or not all(isinstance(name, str) for name in entries):
+                raise ValueError(f"{label} hooks.disabled must be a list of names")
+            continue
         if not isinstance(entries, list):
             raise ValueError(f"{label} hooks.{event} must be a list")
         for index, entry in enumerate(entries):
@@ -80,61 +98,18 @@ def merge_maps(existing: dict[str, Any], template: dict[str, Any]) -> dict[str, 
     return result
 
 
-def merge_hooks(existing: dict[str, Any], template: dict[str, Any], provider: str) -> dict[str, Any]:
+def merge_hooks(existing: dict[str, Any], template: dict[str, Any], provider: str, home: Path) -> dict[str, Any]:
     current = validate_hooks(existing, provider, "Existing")
     maintained = validate_hooks(template, provider, "Template")
     result = merge_maps(existing, {key: value for key, value in template.items() if key != "hooks"})
-    result_hooks = dict(current)
-    for event, entries in maintained.items():
-        managed_names = {
-            name
-            for entry in entries
-            for handler in ([entry] if provider == "copilot" else entry["hooks"])
-            for name in script_names(handler, provider)
-        }
-        preserved: list[Any] = []
-        for entry in current.get(event, []):
-            if provider == "copilot":
-                if not (script_names(entry, provider) & managed_names):
-                    preserved.append(entry)
-                continue
-            remaining = [
-                handler for handler in entry["hooks"]
-                if not (script_names(handler, provider) & managed_names)
-            ]
-            if remaining or not entry["hooks"]:
-                preserved.append({**entry, "hooks": remaining})
-        result_hooks[event] = [*preserved, *entries]
+    if provider == "copilot" and "disableAllHooks" in existing:
+        result["disableAllHooks"] = existing["disableAllHooks"]
+    directory = home / f".{provider}/hooks/scripts"
+    result_hooks = reconcile(current, maintained, provider, directory)
     if current or maintained or "hooks" in existing or "hooks" in template:
         result["hooks"] = result_hooks
     return result
 
-
-def check_parent_directories(home: Path, destination: Path) -> None:
-    home = Path(os.path.abspath(home))
-    destination = Path(os.path.abspath(destination))
-    try:
-        relative = destination.relative_to(home)
-    except ValueError as exc:
-        raise ValueError(f"Destination is outside the install home: {destination}") from exc
-    if not relative.parts:
-        raise ValueError(f"Destination must be a file below the install home: {destination}")
-
-    current = home
-    for part in ("", *relative.parts[:-1]):
-        if part:
-            current /= part
-        try:
-            info = current.lstat()
-        except FileNotFoundError:
-            continue
-        if stat.S_ISLNK(info.st_mode) or (
-            getattr(info, "st_file_attributes", 0)
-            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-        ):
-            raise ValueError(f"Refusing linked configuration directory: {current}")
-        if not stat.S_ISDIR(info.st_mode):
-            raise ValueError(f"Configuration parent must be a directory: {current}")
 
 
 def atomic_write(path: Path, content: bytes, home: Path) -> None:
@@ -154,31 +129,40 @@ def main() -> int:
     arguments = parser.parse_args()
     try:
         template, _ = load_object(arguments.template, "template")
+        validate_hooks(template, arguments.provider, "Template")
         home = Path(os.path.abspath(arguments.home))
+        hook_directory = home / f".{arguments.provider}/hooks/scripts"
+        pin_provider_commands(template, arguments.provider, home)
         destination = Path(os.path.abspath(arguments.destination))
         check_parent_directories(home, destination)
         if destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {destination}")
-        exists = destination.exists()
-        existing, old_bytes = load_object(destination, "existing") if exists else ({}, b"")
-        merged = merge_hooks(existing, template, arguments.provider)
-        if exists and merged == existing:
-            info = destination.stat()
-            needs_private_copy = info.st_nlink > 1 or (
-                os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600
-            )
-            if needs_private_copy and not arguments.check:
-                atomic_write(destination, old_bytes, home)
+        preflight_status_path(arguments.provider, template.get("hooks", {}), hook_directory)
+        with configuration_lock(destination, arguments.check):
+            exists = destination.exists()
+            existing, old_bytes = load_object(destination, "existing") if exists else ({}, b"")
+            merged = merge_hooks(existing, template, arguments.provider, home)
+            if not arguments.check:
+                validate_status_asset(arguments.provider, template.get("hooks", {}), hook_directory)
+            if exists and merged == existing:
+                info = destination.stat()
+                needs_private_copy = info.st_nlink > 1 or (
+                    os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600
+                )
+                if needs_private_copy and not arguments.check:
+                    atomic_write(destination, old_bytes, home)
+            else:
+                backup = destination.with_name(destination.name + ".bak")
+                if exists and backup.is_symlink():
+                    raise ValueError(f"Backup must not be a symbolic link: {backup}")
+                if not arguments.check:
+                    verify_unchanged(destination, exists, old_bytes)
+                    if exists:
+                        atomic_write(backup, old_bytes, home)
+                    atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
+            if not arguments.check:
+                retire_assets(arguments.provider, hook_directory)
             return 0
-        backup = destination.with_name(destination.name + ".bak")
-        if exists and backup.is_symlink():
-            raise ValueError(f"Backup must not be a symbolic link: {backup}")
-        if arguments.check:
-            return 0
-        if exists:
-            atomic_write(backup, old_bytes, home)
-        atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
-        return 0
     except (OSError, ValueError) as exc:
         print(f"{arguments.provider.capitalize()} install failed: {exc}", file=sys.stderr)
         return 1

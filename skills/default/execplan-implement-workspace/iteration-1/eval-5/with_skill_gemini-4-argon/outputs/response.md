@@ -1,0 +1,5 @@
+Choose **local execution by the coordinator** in the base worktree with exclusive ownership.
+
+**Cost and correctness tradeoff:**
+- **Cost:** The coordinator already holds all required current context, and the task is a bounded single edit with a known verification check. Delegating would incur higher total completion cost: routing (`subagent-model-router`), worker startup, copying context into a task packet, creating/managing a private worktree and branch, handback review, and rebase/fast-forward integration overhead.
+- **Correctness:** Local execution preserves full correctness without context-transfer loss. The coordinator must still follow all executor rules for documentation work: keep the edit within authorized scope, run the known verification check, retain task-appropriate evidence, verify on the base branch (skipping worker rebase/merge), read `references/message.md` before any permitted commit, and reconcile the ExecPlan (`Progress`, `Concrete Steps`, `Validation and Acceptance`, and `Outcomes & Retrospective`).

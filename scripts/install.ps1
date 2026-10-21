@@ -7,7 +7,8 @@
 .DESCRIPTION
     PowerShell 7 port of scripts/install.sh. Produces the same installed layout:
 
-    - skills/*                        -> ~/.agents/skills (skips *-workspace and archive; prunes evals/, README.md, and LICENSE.* from each installed skill)
+    - skills/default/* plus opted-in skills/forest-service/* -> ~/.agents/skills
+      (skips *-workspace and archive; prunes evals/, README.md, and LICENSE.*)
 
     Source Unix file modes are preserved on every copied file (like `cp -p`); on Windows the
     executable bit does not apply and mode handling is a no-op. Symlinks and junctions are
@@ -25,11 +26,66 @@
     Requires PowerShell 7+ and runs with -NoProfile; no external modules are used.
 #>
 
-[CmdletBinding()]
-param()
-
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Leave arguments unbound so only the documented literal spellings are accepted.
+$helpRequested = $false
+$forestService = $false
+$selection = ''
+foreach ($argument in $args) {
+    if ([string]::Equals($argument, '-h', [StringComparison]::Ordinal) -or [string]::Equals($argument, '--help', [StringComparison]::Ordinal)) {
+        $helpRequested = $true
+    } elseif ([string]::Equals($argument, '--forest-service', [StringComparison]::Ordinal) -or [string]::Equals($argument, '--fs', [StringComparison]::Ordinal)) {
+        if ($selection -ceq 'disable') {
+            [Console]::Error.WriteLine('Conflicting selection flags: choose --forest-service or --no-forest-service.')
+            exit 2
+        }
+        $selection = 'enable'
+        $forestService = $true
+    } elseif ([string]::Equals($argument, '--no-forest-service', [StringComparison]::Ordinal)) {
+        if ($selection -ceq 'enable') {
+            [Console]::Error.WriteLine('Conflicting selection flags: choose --forest-service or --no-forest-service.')
+            exit 2
+        }
+        $selection = 'disable'
+        $forestService = $false
+    } else {
+        [Console]::Error.WriteLine("Unknown argument: $argument. Use --help for usage.")
+        exit 2
+    }
+}
+if ($helpRequested) {
+    [Console]::Out.WriteLine(@'
+Usage: pwsh -NoProfile -File scripts/install.ps1 [--forest-service | --fs | --no-forest-service] [-h | --help]
+
+Install default skills, agents, references, and provider configuration.
+Use --forest-service or --fs to include Forest Service skills.
+Use --no-forest-service to install default skills only.
+Without a selection flag, INSTALL_FOREST_SERVICE_SKILLS accepts 1/true or
+0/false (case-insensitive); unset or empty disables Forest Service skills.
+Explicit selection flags override the environment. Existing skills remain.
+
+Examples:
+  pwsh -NoProfile -File scripts/install.ps1
+  pwsh -NoProfile -File scripts/install.ps1 --fs
+  $env:INSTALL_FOREST_SERVICE_SKILLS = 'true'; pwsh -NoProfile -File scripts/install.ps1
+  pwsh -NoProfile -File scripts/install.ps1 --no-forest-service
+'@)
+    exit 0
+}
+
+if ($selection -ceq '') {
+    $value = $env:INSTALL_FOREST_SERVICE_SKILLS
+    if ([string]::Equals($value, '1', [StringComparison]::Ordinal) -or [string]::Equals($value, 'true', [StringComparison]::OrdinalIgnoreCase)) {
+        $forestService = $true
+    } elseif ([string]::IsNullOrEmpty($value) -or [string]::Equals($value, '0', [StringComparison]::Ordinal) -or [string]::Equals($value, 'false', [StringComparison]::OrdinalIgnoreCase)) {
+        $forestService = $false
+    } else {
+        [Console]::Error.WriteLine('Invalid INSTALL_FOREST_SERVICE_SKILLS: use 1, true, 0, false, or empty; alternatively choose --forest-service or --no-forest-service.')
+        exit 2
+    }
+}
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $SkillsSrc = Join-Path $RepoRoot 'skills'
@@ -43,12 +99,15 @@ $ProviderHookMergerSrc = Join-Path $RepoRoot 'scripts/install-provider-hooks.py'
 $CopilotInstructionsSrc = Join-Path $RepoRoot '.copilot/copilot-instructions.md'
 $CopilotLspSrc = Join-Path $RepoRoot '.copilot/lsp-config.json'
 $CodexHookSrcDir = Join-Path $RepoRoot '.codex/hooks'
-$CodexHookFiles = @('load-required-skills.py', 'scan-secrets.py', 'tool-guard.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py')
+$CodexHookFiles = @('auto-index-brain.py', 'inject-brain.py', 'load-required-skills.py', 'scan-secrets.py', 'scan-status.py', 'tool-guard.py', 'hooks-diagnostics.py', 'helpers/common.py', 'helpers/audit.py', 'helpers/tool_guard_policy.py', 'helpers/scan_types.py', 'helpers/scan_reporting.py', 'helpers/scan_allowlist.py', 'helpers/scan_stream.py', 'helpers/scan_git.py', 'helpers/scan_native_file.py', 'helpers/scan_native_process.py', 'helpers/scan_audit.py', 'helpers/scan_engine.py')
 $CodexInstructionsSrc = Join-Path $RepoRoot '.codex/AGENTS.md'
 $CodexHookTemplateSrc = Join-Path $RepoRoot '.codex/global-hooks.json'
 $CodexHookMergerSrc = Join-Path $RepoRoot 'scripts/install-codex-hooks.py'
 $CodexAgentInstallerSrc = Join-Path $RepoRoot 'scripts/install-codex-agents.py'
+$RebaseSkillReferencesSrc = Join-Path $RepoRoot 'scripts/rebase-skill-references.py'
+$ValidateSkillSourcesSrc = Join-Path $RepoRoot 'scripts/validate-skill-sources.py'
 $GenerateHooksSrc = Join-Path $RepoRoot 'scripts/generate-hooks.py'
+$InstallScanSecretsSrc = Join-Path $RepoRoot 'scripts/install-scan-secrets.py'
 $ConfigureRtkSrc = Join-Path $RepoRoot 'scripts/configure-rtk.py'
 $CanonicalHooksSrc = Join-Path $RepoRoot 'hooks'
 
@@ -74,6 +133,15 @@ function Fail {
     exit 1
 }
 
+function Write-InstallStatus {
+    process { [Console]::Error.WriteLine($_) }
+}
+
+trap {
+    [Console]::Error.WriteLine($_.Exception.Message)
+    exit 1
+}
+
 function Get-PythonCommand {
     $python = @(Get-Command python3 -CommandType Application -ErrorAction SilentlyContinue)[0]
     $arguments = @('-B')
@@ -84,9 +152,13 @@ function Get-PythonCommand {
     if ($null -eq $python) {
         Fail 'Missing Python executable: expected python3 or py.'
     }
+    $resolved = & $python.Source @arguments -I -S -c 'import sys; print(sys.executable)'
+    if ($LASTEXITCODE -ne 0 -or @($resolved).Count -ne 1 -or -not [System.IO.Path]::IsPathFullyQualified([string]$resolved) -or -not (Test-Path -LiteralPath $resolved -PathType Leaf)) {
+        Fail 'Unable to resolve an absolute trusted Python executable.'
+    }
     return [pscustomobject]@{
-        Path = $python.Source
-        Arguments = $arguments
+        Path = [string]$resolved
+        Arguments = @('-B')
     }
 }
 
@@ -111,6 +183,22 @@ function Install-PreservedLink {
     }
 }
 
+function Complete-CopyMode {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [bool]$Copied,
+        $OriginalMode
+    )
+
+    if ($Copied) {
+        Set-FileModeFrom -Source $Source -Destination $Destination
+    }
+    elseif ($null -ne $OriginalMode) {
+        [System.IO.File]::SetUnixFileMode($Destination, $OriginalMode)
+    }
+}
+
 # Copies a regular file while preserving its Unix file mode.
 function Copy-FileWithMode {
     param(
@@ -118,8 +206,26 @@ function Copy-FileWithMode {
         [string]$Destination
     )
 
-    Copy-Item -LiteralPath $Source -Destination $Destination -Force
-    Set-FileModeFrom -Source $Source -Destination $Destination
+    $originalMode = $null
+    $copied = $false
+    try {
+        $destinationEntry = $null
+        if (Test-Path -LiteralPath $Destination) {
+            $destinationEntry = Get-Item -Force -LiteralPath $Destination
+            if ([string]$destinationEntry.LinkType -ceq 'HardLink' -and $destinationEntry.IsReadOnly) {
+                Fail "Refusing to change read-only hard-linked file: $Destination"
+            }
+        }
+        if (-not $IsWindows -and $null -ne $destinationEntry -and -not $destinationEntry.LinkType) {
+            $originalMode = [System.IO.File]::GetUnixFileMode($Destination)
+            [System.IO.File]::SetUnixFileMode($Destination, ($originalMode -bor [System.IO.UnixFileMode]::UserWrite))
+        }
+        Copy-Item -LiteralPath $Source -Destination $Destination -Force
+        $copied = $true
+    }
+    finally {
+        Complete-CopyMode -Source $Source -Destination $Destination -Copied $copied -OriginalMode $originalMode
+    }
 }
 
 # Copies one source entry into $DestinationDir, mirroring `cp -Rp`: symlinks and junctions
@@ -133,11 +239,7 @@ function Copy-Entry {
 
     # LinkType must be checked before PSIsContainer: a symlink to a directory reports PSIsContainer = $true.
     $linkType = [string]$Entry.LinkType
-    if ($linkType -ceq 'SymbolicLink') {
-        Install-PreservedLink -SourceDescription $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -LinkType $linkType -Target $Entry.Target
-        return
-    }
-    if ($linkType -ceq 'Junction') {
+    if ($linkType -ceq 'SymbolicLink' -or $linkType -ceq 'Junction') {
         Install-PreservedLink -SourceDescription $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -LinkType $linkType -Target $Entry.Target
         return
     }
@@ -151,12 +253,23 @@ function Copy-Entry {
     }
     if ($Entry.PSIsContainer) {
         $destPath = Join-Path $DestinationDir $Entry.Name
-        New-Item -ItemType Directory -Path $destPath -Force | Out-Null
-        Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath
+        $originalMode = $null
+        $copied = $false
+        try {
+            New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+            if (-not $IsWindows -and -not (Get-Item -Force -LiteralPath $destPath).LinkType) {
+                $originalMode = [System.IO.File]::GetUnixFileMode($destPath)
+                [System.IO.File]::SetUnixFileMode($destPath, ($originalMode -bor [System.IO.UnixFileMode]::UserWrite))
+            }
+            Copy-DirectoryContents -Source $Entry.FullName -Destination $destPath
+            $copied = $true
+        }
+        finally {
+            Complete-CopyMode -Source $Entry.FullName -Destination $destPath -Copied $copied -OriginalMode $originalMode
+        }
         return
     }
-    Copy-Item -LiteralPath $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name) -Force
-    Set-FileModeFrom -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
+    Copy-FileWithMode -Source $Entry.FullName -Destination (Join-Path $DestinationDir $Entry.Name)
 }
 
 function Copy-DirectoryContents {
@@ -171,14 +284,6 @@ function Copy-DirectoryContents {
     }
 }
 
-function Remove-IfExists {
-    param([string]$Path)
-
-    if (Test-Path -LiteralPath $Path) {
-        Remove-Item -LiteralPath $Path -Recurse -Force
-    }
-}
-
 function Set-HookScriptsExecutable {
     param([string]$Root)
 
@@ -187,10 +292,10 @@ function Set-HookScriptsExecutable {
     }
 
     # Mirrors `find <root> -type f \( -name "*.py" -o -name "*.sh" \) -exec chmod 755 {} +`.
-    # -ceq is explicitly case-sensitive (like `find -name`): `test.PY` is not a hook script.
+    # Ordinal matching preserves literal extensions: test.PY and .p<soft-hyphen>y are not hook scripts.
     # Link entries are skipped: chmod through a reparse point would change the target's mode.
     Get-ChildItem -Force -Path $Root -Recurse -File |
-        Where-Object { -not $_.LinkType -and ($_.Extension -ceq '.py' -or $_.Extension -ceq '.sh') } |
+        Where-Object { -not $_.LinkType -and ($_.Extension.Equals('.py', [StringComparison]::Ordinal) -or $_.Extension.Equals('.sh', [StringComparison]::Ordinal)) } |
         ForEach-Object {
             $mode = [System.IO.UnixFileMode]::UserRead -bor
                 [System.IO.UnixFileMode]::UserWrite -bor
@@ -249,28 +354,33 @@ function Set-CopiedFileModes {
 }
 
 function Copy-Skills {
-    foreach ($entry in (Get-ChildItem -Force -Path $SkillsSrc)) {
+    param([string]$Category)
+    foreach ($entry in (Get-ChildItem -Force -LiteralPath (Join-Path $SkillsSrc $Category))) {
+        if (-not $entry.PSIsContainer) {
+            continue
+        }
         # Mirrors bash `[[ $name == "archive" || $name == *-workspace ]]` case-sensitively:
         # `[ ] * ?` in the name are literal, and `My-Workspace` is not a workspace entry.
-        if ($entry.Name -ceq 'archive' -or $entry.Name.EndsWith('-workspace')) {
+        if ($entry.Name.Equals('archive', [StringComparison]::Ordinal) -or $entry.Name.EndsWith('-workspace', [StringComparison]::Ordinal)) {
             continue
         }
 
         Copy-Entry -Entry $entry -DestinationDir $SkillsDest
 
-        # Pruning and mode sync must not resolve a path through a preserved link:
-        # Remove-IfExists would otherwise delete files inside the link target.
+        # Pruning and mode sync must not resolve a preserved link's target.
         if ([string]$entry.LinkType) {
             continue
         }
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/evals")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/README.md")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.txt")
-        Remove-IfExists (Join-Path $SkillsDest "$($entry.Name)/LICENSE.md")
-        if ($entry.PSIsContainer) {
-            Set-CopiedFileModes -Source $entry.FullName -Destination (Join-Path $SkillsDest $entry.Name)
-        } else {
-            Set-FileModeFrom -Source $entry.FullName -Destination (Join-Path $SkillsDest $entry.Name)
+        $installedSkill = Join-Path $SkillsDest $entry.Name
+        Set-CopiedFileModes -Source $entry.FullName -Destination $installedSkill
+        & $pythonCommand.Path @($pythonCommand.Arguments) $RebaseSkillReferencesSrc `
+            --source-dir $entry.FullName `
+            --destination-dir $installedSkill `
+            --references-source $ReferencesSrc `
+            --references-destination $ReferencesDest `
+            --prune | Write-InstallStatus
+        if ($LASTEXITCODE -ne 0) {
+            Fail "Shared reference rebasing exited with code $LASTEXITCODE for skill $($entry.Name)."
         }
     }
 }
@@ -339,12 +449,12 @@ function Copy-FileTo {
 }
 
 function Copy-GeminiGlobalSettings {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider gemini --template $GeminiGlobalSettingsSrc --destination $GeminiSettingsDest --home $HOME
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider gemini --template $GeminiGlobalSettingsSrc --destination $GeminiSettingsDest --home $HOME | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) { Fail "Gemini settings merger exited with code $LASTEXITCODE." }
 }
 
 function Install-CopilotHookConfig {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider copilot --template $CopilotHookTemplateSrc --destination $CopilotHookConfigDest --home $HOME
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider copilot --template $CopilotHookTemplateSrc --destination $CopilotHookConfigDest --home $HOME | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) { Fail "Copilot hooks merger exited with code $LASTEXITCODE." }
 }
 
@@ -362,7 +472,7 @@ function Install-CodexHook {
         [string[]]$PythonArguments
     )
 
-    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check
+    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) {
         Fail "Codex hook configuration preflight exited with code $LASTEXITCODE."
     }
@@ -395,7 +505,7 @@ function Install-CodexHook {
         }
     }
 
-    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest
+    & $PythonPath @PythonArguments $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) {
         Fail "Codex hook configuration merger exited with code $LASTEXITCODE."
     }
@@ -406,19 +516,16 @@ function Install-CodexInstructions {
     Copy-FileTo -Source $CodexInstructionsSrc -Destination $CodexInstructionsDest
 }
 
-foreach ($src in @($SkillsSrc, $AgentsSrc, $GeminiSrc, $CanonicalHooksSrc)) {
+foreach ($src in @((Join-Path $SkillsSrc 'default'), (Join-Path $SkillsSrc 'forest-service'), $AgentsSrc, $GeminiSrc, $CanonicalHooksSrc)) {
     if (-not (Test-Path -LiteralPath $src -PathType Container)) {
         Fail "Missing source directory: $src"
     }
 }
 
-foreach ($src in @($CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc)) {
-    if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
-        Fail "Missing source file: $src"
-    }
-}
-
-foreach ($src in @($CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $GenerateHooksSrc, $ConfigureRtkSrc)) {
+foreach ($src in @(
+    $CopilotInstructionsSrc, $CopilotLspSrc, $GeminiGlobalSettingsSrc, $CopilotHookTemplateSrc, $ProviderHookMergerSrc,
+    $CodexInstructionsSrc, $CodexHookTemplateSrc, $CodexHookMergerSrc, $CodexAgentInstallerSrc, $RebaseSkillReferencesSrc, $ValidateSkillSourcesSrc, $GenerateHooksSrc, $ConfigureRtkSrc, $InstallScanSecretsSrc
+)) {
     if (-not (Test-Path -LiteralPath $src -PathType Leaf)) {
         Fail "Missing source file: $src"
     }
@@ -431,9 +538,26 @@ foreach ($relative in $CodexHookFiles) {
 }
 
 $pythonCommand = Get-PythonCommand
-& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check
+# Python uses the Windows ANSI codepage for redirected stderr by default.
+# Pair its stream encoding with PowerShell's native-output decoder so original
+# Unicode source paths survive the validation boundary without replacement.
+$previousPythonIoEncoding = [Environment]::GetEnvironmentVariable('PYTHONIOENCODING', 'Process')
+$previousConsoleOutputEncoding = [Console]::OutputEncoding
+try {
+    [Environment]::SetEnvironmentVariable('PYTHONIOENCODING', 'utf-8', 'Process')
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ValidateSkillSourcesSrc $SkillsSrc | Write-InstallStatus
+}
+finally {
+    [Console]::OutputEncoding = $previousConsoleOutputEncoding
+    [Environment]::SetEnvironmentVariable('PYTHONIOENCODING', $previousPythonIoEncoding, 'Process')
+}
+if ($LASTEXITCODE -ne 0) { Fail "Skill source validation exited with code $LASTEXITCODE." }
+& $pythonCommand.Path @($pythonCommand.Arguments) -I -S -B $InstallScanSecretsSrc install --no-input --dry-run | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Standalone scanner preflight exited with code $LASTEXITCODE." }
+& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME --check | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK preflight exited with code $LASTEXITCODE." }
-& $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check
+& $pythonCommand.Path @($pythonCommand.Arguments) $GenerateHooksSrc --check | Write-InstallStatus
 $preflightExitCode = $LASTEXITCODE
 if ($preflightExitCode -ne 0) {
     if ($preflightExitCode -eq 1) {
@@ -441,23 +565,25 @@ if ($preflightExitCode -ne 0) {
         exit 1
     }
     [Console]::Error.WriteLine('Generated hook freshness preflight failed.')
-    if ($preflightExitCode -eq 2) {
-        exit 2
-    }
-    exit $preflightExitCode
+    exit 1
 }
 
 foreach ($config in @(
     @{ Provider = 'copilot'; Template = $CopilotHookTemplateSrc; Destination = $CopilotHookConfigDest },
     @{ Provider = 'gemini'; Template = $GeminiGlobalSettingsSrc; Destination = $GeminiSettingsDest }
 )) {
-    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --home $HOME --check
+    & $pythonCommand.Path @($pythonCommand.Arguments) $ProviderHookMergerSrc --provider $config.Provider --template $config.Template --destination $config.Destination --home $HOME --check | Write-InstallStatus
     if ($LASTEXITCODE -ne 0) { Fail "$($config.Provider) configuration preflight exited with code $LASTEXITCODE." }
 }
 
-& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME
+& $pythonCommand.Path @($pythonCommand.Arguments) $CodexHookMergerSrc --template $CodexHookTemplateSrc --destination $CodexHookConfigDest --check | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Codex hook configuration preflight exited with code $LASTEXITCODE." }
+
+& $pythonCommand.Path @($pythonCommand.Arguments) -I -S -B $InstallScanSecretsSrc install --no-input | Write-InstallStatus
+if ($LASTEXITCODE -ne 0) { Fail "Standalone scanner installation exited with code $LASTEXITCODE." }
+& $pythonCommand.Path @($pythonCommand.Arguments) $ConfigureRtkSrc --home $HOME | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) { Fail "RTK configuration exited with code $LASTEXITCODE." }
-& $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest
+& $pythonCommand.Path @($pythonCommand.Arguments) $CodexAgentInstallerSrc --source-dir $AgentsSrc --destination-dir $CodexAgentsDest | Write-InstallStatus
 if ($LASTEXITCODE -ne 0) {
     Fail "Codex agent converter exited with code $LASTEXITCODE."
 }
@@ -466,7 +592,10 @@ foreach ($dest in @($SkillsDest, $CopilotDest, $GeminiDest, $AgentsDest, $Copilo
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
 }
 
-Copy-Skills
+Copy-Skills -Category 'default'
+if ($forestService) {
+    Copy-Skills -Category 'forest-service'
+}
 Copy-Agents
 if (Test-Path -LiteralPath $ReferencesSrc) {
     New-Item -ItemType Directory -Path $ReferencesDest -Force | Out-Null
@@ -484,19 +613,20 @@ Copy-CopilotLsp
 Install-CodexInstructions
 Install-CodexHook -PythonPath $pythonCommand.Path -PythonArguments $pythonCommand.Arguments
 
-Write-Output "Installed skills to $SkillsDest"
-Write-Output "Installed agents to $AgentsDest and $CopilotAgentsDest"
-Write-Output "Installed Codex agents to $CodexAgentsDest"
+[Console]::Error.WriteLine("Installed skills to $SkillsDest")
+[Console]::Error.WriteLine("Installed agents to $AgentsDest and $CopilotAgentsDest")
+[Console]::Error.WriteLine("Installed Codex agents to $CodexAgentsDest")
 if (Test-Path -LiteralPath $ReferencesSrc) {
-    Write-Output "Installed references to $ReferencesDest"
+    [Console]::Error.WriteLine("Installed references to $ReferencesDest")
 }
 if (Test-Path -LiteralPath $HooksSrc) {
-    Write-Output "Installed hooks to $HooksDest"
+    [Console]::Error.WriteLine("Installed hooks to $HooksDest")
 }
-Write-Output "Installed Gemini instructions to $GeminiDest"
-Write-Output "Installed Gemini settings to $(Join-Path $GeminiDest 'settings.json')"
-Write-Output "Installed Copilot instructions to $(Join-Path $CopilotDest 'copilot-instructions.md')"
-Write-Output "Installed Copilot LSP config to $(Join-Path $CopilotDest 'lsp-config.json')"
-Write-Output "Installed Codex instructions to $CodexInstructionsDest"
-Write-Output "Installed Codex hook to $(Join-Path $CodexHooksDest 'load-required-skills.py')"
-Write-Output "Installed Codex hook configuration to $CodexHookConfigDest"
+[Console]::Error.WriteLine("Installed Gemini instructions to $GeminiDest")
+[Console]::Error.WriteLine("Installed Gemini settings to $(Join-Path $GeminiDest 'settings.json')")
+[Console]::Error.WriteLine("Installed Copilot instructions to $(Join-Path $CopilotDest 'copilot-instructions.md')")
+[Console]::Error.WriteLine("Installed Copilot LSP config to $(Join-Path $CopilotDest 'lsp-config.json')")
+[Console]::Error.WriteLine("Installed Codex instructions to $CodexInstructionsDest")
+[Console]::Error.WriteLine("Installed Codex hook to $(Join-Path $CodexHooksDest 'load-required-skills.py')")
+[Console]::Error.WriteLine("Installed Codex hook configuration to $CodexHookConfigDest")
+exit 0

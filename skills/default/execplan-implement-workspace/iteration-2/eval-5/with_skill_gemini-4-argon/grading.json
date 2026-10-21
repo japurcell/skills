@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Selects local execution rather than mandatory delegation.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Chooses local coordinator work, compares transfer/startup/review overhead, and retains checks, evidence, and plan reconciliation."
+    },
+    {
+      "text": "Includes dispatch/context/review overhead, not merely model price.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Chooses local coordinator work, compares transfer/startup/review overhead, and retains checks, evidence, and plan reconciliation."
+    },
+    {
+      "text": "Retains verification and plan reconciliation.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Chooses local coordinator work, compares transfer/startup/review overhead, and retains checks, evidence, and plan reconciliation."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

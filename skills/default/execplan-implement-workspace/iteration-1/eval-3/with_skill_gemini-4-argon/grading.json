@@ -1,0 +1,21 @@
+{
+  "expectations": [
+    {
+      "text": "Shared canonical documents have one integration owner or explicit serialization before dispatch.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 3."
+    },
+    {
+      "text": "Workers retain scoped findings and integration occurs serially, followed by one coordinated documentation pass.",
+      "passed": false,
+      "evidence": "Serial integration and scoped findings are present, but the final coordinated documentation pass is omitted."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 1,
+    "total": 2,
+    "pass_rate": 0.5
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

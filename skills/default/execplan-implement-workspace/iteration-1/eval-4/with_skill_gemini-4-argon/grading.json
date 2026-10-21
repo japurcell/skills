@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Optional improvements stay outside the execution frontier.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 4."
+    },
+    {
+      "text": "Completed authorized work finishes without invented tasks or another approval question.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 4."
+    },
+    {
+      "text": "A reproduced in-scope failure still requires a bounded repair before completion.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 4."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

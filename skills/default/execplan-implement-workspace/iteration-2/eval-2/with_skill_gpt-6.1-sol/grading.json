@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "The selected task's current plan context and prerequisite evidence are preserved.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Preserves active contract and prerequisite evidence for eventual dispatch; blocks device verification on owner approval; reports acceptance unmet."
+    },
+    {
+      "text": "Readiness does not grant owner approval or make unresolved verification pass.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Preserves active contract and prerequisite evidence for eventual dispatch; blocks device verification on owner approval; reports acceptance unmet."
+    },
+    {
+      "text": "Pending owner/external work stays visible instead of a false whole-plan completion claim.",
+      "passed": true,
+      "evidence": "Manual semantic review of outputs/response.md: Preserves active contract and prerequisite evidence for eventual dispatch; blocks device verification on owner approval; reports acceptance unmet."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic review; paper scenarios batched in one session, not execution tests."
+}

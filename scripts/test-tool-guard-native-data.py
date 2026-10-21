@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import tempfile
 import unittest
 
+from fixtures.tool_guard_vectors import RECENT_NATIVE_PATCH_SIZES, full_capacity_native_patch, sized_native_patch
 from tool_guard_test_support import invoke_guard, native_decision
+from tool_guard_corpus import full_shell_envelope
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -36,10 +39,118 @@ class NativeDataTests(unittest.TestCase):
         if expected == 'allow':
             self.assertNotIn('systemMessage', response)
 
+    def test_codex_output_metadata_preserves_literal_search_decision(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        for tool in ('exec_command', 'functions.exec_command'):
+            for metadata in ({}, {'max_output_tokens': 1000}, {'yield_time_ms': 1000},
+                             {'max_output_tokens': 1000, 'yield_time_ms': 1000}):
+                with self.subTest(tool=tool, metadata=metadata):
+                    self.assert_decision(self.invoke('codex', tool, {'cmd': command, **metadata}), 'allow')
+                    self.assert_decision(self.invoke('codex', tool, {'cmd': FORCE_PUSH, **metadata}), 'deny')
+
+    def test_complete_shell_profiles_preserve_inert_metadata_and_execution_checks(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        profiles = (
+            ('codex', 'exec_command', 'cmd', {'workdir': '.', 'shell': '/bin/zsh', 'login': False,
+             'tty': False, 'max_output_tokens': 1000, 'yield_time_ms': 1000,
+             'sandbox_permissions': 'require_escalated', 'justification': FORCE_PUSH, 'prefix_rule': ['rg']}),
+            ('copilot', 'bash', 'command', {'description': FORCE_PUSH, 'initial_wait': 30,
+             'mode': 'sync', 'detach': False}),
+            ('gemini', 'run_shell_command', 'command', {'description': FORCE_PUSH, 'dir_path': '.',
+             'is_background': False, 'delay_ms': 1000, 'additional_permissions': {
+                 'network': True, 'fileSystem': {'read': ['/tmp'], 'write': ['/tmp']}}}),
+        )
+        for provider, tool, key, options in profiles:
+            for metadata in ({field: value} for field, value in options.items()):
+                with self.subTest(provider=provider, metadata=metadata):
+                    self.assert_decision(self.invoke(provider, tool, {key: command, **metadata}), 'allow')
+                    self.assert_decision(self.invoke(provider, tool, {key: FORCE_PUSH, **metadata}), 'deny')
+            self.assert_decision(self.invoke(provider, tool, {key: command, **options}), 'allow')
+            self.assert_decision(self.invoke(provider, tool, {key: FORCE_PUSH, **options}), 'deny')
+
+    def test_shell_profiles_leave_unknown_and_malformed_options_strict(self) -> None:
+        command = "rg '" + 'example;' * 130 + "' docs"
+        profiles = (
+            ('codex', 'exec_command', 'cmd', ({'max_output_tokens': True}, {'max_output_tokens': -1},
+             {'yield_time_ms': 1.5}, {'yield_time_ms': 2147483648}, {'login': 'false'}, {'tty': 1},
+             {'sandbox_permissions': 'override'}, {'prefix_rule': ['rg', 1]}, {'workdir': []},
+             {'shell': '/tmp/custom-shell'}, {'shell': '/bin/bash -c'}, {'env': {'BASH_ENV': FORCE_PUSH}})),
+            ('copilot', 'bash', 'command', ({'description': []}, {'initial_wait': True},
+             {'initial_wait': -1}, {'mode': 'invalid'}, {'detach': 'false'})),
+            ('gemini', 'run_shell_command', 'command', ({'description': 1}, {'dir_path': []},
+             {'is_background': 1}, {'delay_ms': -1}, {'additional_permissions': {'network': 'true'}},
+             {'additional_permissions': {'fileSystem': {'write': [1]}}},
+             {'additional_permissions': {'unknown': True}})),
+        )
+        for provider, tool, key, options in profiles:
+            for metadata in (*options, {'unknown_option': 'safe'}):
+                with self.subTest(provider=provider, metadata=metadata):
+                    self.assert_decision(self.invoke(provider, tool, {key: command, **metadata}), 'deny')
+            context = 'workdir' if provider == 'codex' else 'dir_path' if provider == 'gemini' else 'unknown'
+            self.assert_decision(self.invoke(provider, tool, {key: 'echo safe', context: FORCE_PUSH}), 'deny')
+        self.assert_decision(self.invoke('codex', 'exec_command', {'cmd': 'echo safe', 'prefix_rule': [FORCE_PUSH]}), 'deny')
+
+
+    def test_full_provider_envelopes_and_metadata_budgets(self) -> None:
+        for provider in ('codex', 'copilot', 'gemini'):
+            for command, extra, expected in (("rg '" + 'example;' * 130 + "' docs", {}, 'allow'),
+                                             (FORCE_PUSH, {}, 'deny'),
+                                             ("rg '" + 'example;' * 130 + "' docs", {'unknown': True}, 'deny')):
+                payload = full_shell_envelope(provider, command, extra)
+                result = invoke_guard(ROOT, provider, json.dumps(payload))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assert_decision(json.loads(result.stdout), expected)
+            field = 'justification' if provider == 'codex' else 'description'
+            payload = full_shell_envelope(provider, 'echo safe', {field: 'x' * 32768})
+            result = invoke_guard(ROOT, provider, json.dumps(payload), mode='warn')
+            response = json.loads(result.stdout)
+            self.assert_decision(response, 'deny')
+            self.assertIn('structured_bytes', json.dumps(response))
+
     def test_codex_patch_body_is_data_and_shell_counterpart_is_denied(self) -> None:
         patch = '*** Begin Patch\n*** Add File: example.sh\n+Example: ' + FORCE_PUSH + '\n*** End Patch'
         self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'allow')
         self.assert_decision(self.invoke('codex', 'Bash', {'command': FORCE_PUSH}), 'deny')
+
+    def test_copilot_raw_patch_body_is_native_data(self) -> None:
+        patch = sized_native_patch(6194, line_count=134)
+        self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
+
+    def test_copilot_raw_patch_aggregate_maximum_and_first_overflow(self) -> None:
+        for utf8 in (False, True):
+            patch = full_capacity_native_patch(utf8=utf8)
+            self.assertEqual(len(patch.encode('utf-8')), 262144)
+            self.assert_decision(self.invoke('copilot', 'apply_patch', patch), 'allow')
+            for mode in ('block', 'warn'):
+                response = self.invoke('copilot', 'apply_patch', patch.replace('\n*** End Patch', 'x\n*** End Patch'), mode=mode)
+                self.assert_decision(response, 'deny')
+                self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
+                self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
+
+    def test_copilot_raw_patch_envelope_aliases_and_object_shapes_remain_strict(self) -> None:
+        patch = sized_native_patch(6194, line_count=134)
+        for value in ({'command': patch}, {'input': patch}, {'patch': patch}, json.dumps({'command': patch})):
+            self.assert_decision(self.invoke('copilot', 'apply_patch', value), 'deny')
+        for provider in ('codex', 'gemini'):
+            self.assert_decision(self.invoke(provider, 'apply_patch', patch), 'deny')
+        for tool in ('APPLY_PATCH', 'functions.apply_patch', 'apply-patch'):
+            self.assert_decision(self.invoke('copilot', tool, patch), 'deny')
+        for payload in ({'tool_name': 'apply_patch', 'toolArgs': patch},
+                        {'toolName': 'apply_patch', 'toolInput': patch},
+                        {'toolName': 'apply_patch', 'tool_input': patch}):
+            result = invoke_guard(ROOT, 'copilot', json.dumps(payload))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assert_decision(json.loads(result.stdout), 'deny')
+
+    def test_copilot_raw_patch_protected_sources_are_inspected(self) -> None:
+        for source, rule in (('.env', 'remove_env_file'), ('.git/config', 'remove_git_metadata')):
+            patches = ('*** Begin Patch\n*** Delete File: ' + source + '\n*** End Patch',
+                       '*** Begin Patch\n*** Update File: ' + source + '\n*** Move to: ordinary.txt\n@@\n-old\n+new\n*** End Patch')
+            for patch in patches:
+                with self.subTest(source=source, operation=patch.splitlines()[1]):
+                    response = self.invoke('copilot', 'apply_patch', patch)
+                    self.assert_decision(response, 'deny')
+                    self.assertIn(rule, json.dumps(response))
 
     def test_native_write_edit_search_schemas_accept_examples(self) -> None:
         cases = (
@@ -113,14 +224,16 @@ class NativeDataTests(unittest.TestCase):
         self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'deny')
 
     def test_patch_native_aggregate_maximum_and_first_overflow(self) -> None:
-        prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
-        suffix = '\n*** End Patch'
-        patch = prefix + 'x' * (65536 - len('command') - len(prefix + suffix)) + suffix
-        for provider in ('codex',):
-            self.assert_decision(self.invoke(provider, 'apply_patch', {'command': patch}), 'allow')
-            response = self.invoke(provider, 'apply_patch', {'command': patch.replace('+x', '+xx', 1)}, mode='warn', allowlist=True)
-            self.assert_decision(response, 'deny')
-            self.assertIn('65537 bytes', json.dumps(response))
+        for utf8 in (False, True):
+            patch = full_capacity_native_patch(key_bytes=7, utf8=utf8)
+            self.assertEqual(len(patch.encode('utf-8')) + 7, 262144)
+            self.assert_decision(self.invoke('codex', 'apply_patch', {'command': patch}), 'allow')
+            for mode in ('block', 'warn'):
+                with self.subTest(utf8=utf8, mode=mode):
+                    response = self.invoke('codex', 'apply_patch', {'command': patch.replace('\n*** End Patch', 'x\n*** End Patch')}, mode=mode)
+                    self.assert_decision(response, 'deny')
+                    self.assertIn('tool input: 262145 bytes exceeds limit 262144 bytes', json.dumps(response))
+                    self.assertNotIn('TOOL_GUARD_ALLOWLIST', json.dumps(response))
 
     def test_unknown_shape_keeps_original_executable_byte_limit(self) -> None:
         for provider in ('codex', 'copilot', 'gemini'):
@@ -135,6 +248,111 @@ class NativeDataTests(unittest.TestCase):
         for provider in ('codex',):
             with self.subTest(provider=provider):
                 self.assert_decision(self.invoke(provider, 'apply_patch', {'command': patch}), 'allow')
+
+    def test_historical_segment_dimensions_and_recent_byte_sizes_are_native_data(self) -> None:
+        historical = ((22025, 161, 1), (22259, 330, 15), (10903, 228, 5), (11288, 189, 2),
+                      (7271, 124, 1), (11022, 209, 1), (20937, 237, 10), (9436, 177, 1),
+                      (24727, 523, 1), (9198, 153, 1), (14199, 234, 1), (6194, 134, 1))
+        for size, lines, files in historical:
+            with self.subTest(size=size, lines=lines, files=files):
+                patch = sized_native_patch(size, line_count=lines, files=files)
+                self.assertEqual(len(patch.encode('utf-8')), size)
+                self.assertEqual(len(patch.splitlines()), lines)
+                for provider in ('codex', 'copilot'):
+                    value = patch if provider == 'copilot' else {'command': patch}
+                    self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')
+        for size in RECENT_NATIVE_PATCH_SIZES:
+            for files in (1, 3):
+                with self.subTest(size=size, files=files):
+                    patch = sized_native_patch(size, files=files)
+                    self.assertEqual(len(patch.encode('utf-8')), size)
+                    for provider in ('codex', 'copilot'):
+                        value = patch if provider == 'copilot' else {'command': patch}
+                        self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')
+
+    def test_patch_capacity_only_applies_to_exact_codex_schema(self) -> None:
+        patch = sized_native_patch(6194, line_count=134)
+        unsupported = (patch, {'input': patch}, {'patch': patch}, {'command': patch, 'extra': True},
+                       {'command': [patch]}, {'command': {'body': patch}}, {'command': 7, 'body': FORCE_PUSH})
+        for value in unsupported:
+            with self.subTest(shape=type(value).__name__, keys=tuple(value) if isinstance(value, dict) else ()):
+                self.assert_decision(self.invoke('codex', 'apply_patch', value), 'deny')
+        for provider in ('copilot', 'gemini'):
+            self.assert_decision(self.invoke(provider, 'apply_patch', {'command': patch}), 'deny')
+        large = sized_native_patch(77089)
+        for provider in ('codex', 'copilot', 'gemini'):
+            for value in ({'patch': large}, {'command': large, 'extra': True}):
+                response = self.invoke(provider, 'apply_patch', value, mode='warn')
+                self.assert_decision(response, 'deny')
+                self.assertIn('32768 bytes', json.dumps(response))
+
+    def test_malformed_full_size_patch_and_trailing_input_remain_strict(self) -> None:
+        patch = sized_native_patch(262137)
+        malformed = (patch.replace('*** Begin Patch', '*** Badly Patch', 1),
+                     patch.replace('+Documentation', ' Documentation', 1),
+                     patch.replace('*** End Patch', '*** Bad Patch'),
+                     patch[:-1] + '!', patch + '\n' + FORCE_PUSH)
+        for value in malformed:
+            for mode in ('block', 'warn'):
+                with self.subTest(mode=mode, size=len(value)):
+                    for provider in ('codex', 'copilot'):
+                        arguments = value if provider == 'copilot' else {'command': value}
+                        response = self.invoke(provider, 'apply_patch', arguments, mode=mode)
+                        self.assert_decision(response, 'deny')
+                        self.assertIn('input_limits', json.dumps(response))
+        small = '*** Begin Patch\n*** Add File: x\n+safe\n*** End Patch\n' + FORCE_PUSH
+        for provider in ('codex', 'copilot'):
+            arguments = small if provider == 'copilot' else {'command': small}
+            response = self.invoke(provider, 'apply_patch', arguments)
+            self.assert_decision(response, 'deny')
+            self.assertIn('force_push_protected_branch', json.dumps(response))
+        result = invoke_guard(ROOT, 'codex', json.dumps({'tool_name': 'apply_patch', 'tool_input': {'command': 'safe'}}) + ' trailing')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assert_decision(json.loads(result.stdout), 'deny')
+
+    def test_large_multifile_patch_checks_late_protected_operations_without_touching_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            env_file = directory / '.env'
+            git_config = directory / '.git' / 'config'
+            git_config.parent.mkdir()
+            safe = directory / 'safe.txt'
+            for path in (env_file, git_config, safe):
+                path.write_text('sentinel fixture\n')
+            original = {path: path.read_bytes() for path in (env_file, git_config, safe)}
+            base = sized_native_patch(99186, files=3).removesuffix('*** End Patch')
+            for source, rule in ((env_file, 'remove_env_file'), (git_config, 'remove_git_metadata')):
+                operations = ('*** Delete File: ' + str(source),
+                              '*** Update File: ' + str(source) + '\n*** Move to: ' + str(safe) + '\n@@\n-old\n+new')
+                for operation in operations:
+                    for provider in ('codex', 'copilot'):
+                        for mode in ('block', 'warn'):
+                            with self.subTest(provider=provider, source=source.name, operation=operation.splitlines()[0], mode=mode):
+                                patch = base + operation + '\n*** End Patch'
+                                response = self.invoke(provider, 'apply_patch', patch if provider == 'copilot' else {'command': patch}, mode=mode)
+                                if mode == 'block':
+                                    self.assert_decision(response, 'deny')
+                                else:
+                                    self.assertIn('Tool Guardian warning apply_patch', response['systemMessage'])
+                                    self.assertNotEqual(native_decision(response), 'deny')
+                                self.assertIn(rule, json.dumps(response))
+                                self.assertNotIn('input_limits', json.dumps(response))
+                                # Prehook rejection leaves fixtures untouched; this is not executor atomicity.
+                                self.assertEqual({path: path.read_bytes() for path in original}, original)
+
+    def test_full_capacity_high_line_count_patch_requires_complete_grammar(self) -> None:
+        for provider, key_bytes in (('codex', 7), ('copilot', 0)):
+            patch = full_capacity_native_patch(key_bytes=key_bytes, high_lines=130000)
+            self.assertEqual(len(patch.encode('utf-8')) + key_bytes, 262144)
+            value = patch if provider == 'copilot' else {'command': patch}
+            self.assert_decision(self.invoke(provider, 'apply_patch', value), 'allow')
+            for mode in ('block', 'warn'):
+                malformed = patch[:-1] + '!'
+                value = malformed if provider == 'copilot' else {'command': malformed}
+                response = self.invoke(provider, 'apply_patch', value, mode=mode)
+                self.assert_decision(response, 'deny')
+                self.assertIn('32768', json.dumps(response))
+                self.assertIn('scan_text_characters' if provider == 'copilot' else 'structured_bytes', json.dumps(response))
 
     def test_native_aggregate_byte_maximum_and_first_overflow(self) -> None:
         for provider, tool, path_key, content_key in (('gemini', 'write_file', 'file_path', 'content'),

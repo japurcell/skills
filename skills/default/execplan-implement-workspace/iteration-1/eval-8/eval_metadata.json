@@ -1,0 +1,10 @@
+{
+  "eval_id": 8,
+  "eval_name": "no-commit-boundary",
+  "prompt": "Give an execution decision only. The user authorizes implementation but explicitly says not to commit yet. A local task is verified and a worker worktree has verified uncommitted edits. Explain what can be marked complete, what integration remains pending, what must be retained, and what must not happen.",
+  "assertions": [
+    "Does not create commits, force a merge, or remove unintegrated worktrees.",
+    "Separates task verification from pending branch integration and milestone proof.",
+    "Retains changes and evidence and reports the actual state."
+  ]
+}

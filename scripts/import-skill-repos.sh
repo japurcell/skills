@@ -14,42 +14,42 @@ fi
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/JuliusBrussee/caveman.git" \
-  "skills/caveman" "skills"
+  "skills/caveman" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/anthropics/claude-plugins-official.git" \
-  "plugins/frontend-design/skills/frontend-design/SKILL.md" "skills/frontend-design/SKILL.md" \
-  "plugins/skill-creator/skills/skill-creator" "skills"
+  "plugins/frontend-design/skills/frontend-design/SKILL.md" "skills/default/frontend-design/SKILL.md" \
+  "plugins/skill-creator/skills/skill-creator" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/mattpocock/skills.git" \
-  "skills/engineering/code-review/" "skills/code-review-biaxis/" \
-  "skills/engineering/codebase-design" "skills" \
-  "skills/engineering/improve-codebase-architecture" "skills" \
-  "skills/engineering/prototype" "skills" \
-  "skills/engineering/research" "skills" \
-  "skills/engineering/resolving-merge-conflicts" "skills" \
-  "skills/engineering/tdd" "skills" \
-  "skills/engineering/wayfinder" "skills" \
-  "skills/in-progress/retro" "skills" \
-  "skills/productivity/grilling" "skills" \
-  "skills/productivity/teach" "skills" \
-  "skills/productivity/writing-for-agents" "skills"
+  "skills/engineering/code-review/" "skills/default/code-review-biaxis/" \
+  "skills/engineering/codebase-design" "skills/default" \
+  "skills/engineering/improve-codebase-architecture" "skills/default" \
+  "skills/engineering/prototype" "skills/default" \
+  "skills/engineering/research" "skills/default" \
+  "skills/engineering/resolving-merge-conflicts" "skills/default" \
+  "skills/engineering/tdd" "skills/default" \
+  "skills/engineering/wayfinder" "skills/default" \
+  "skills/in-progress/retro" "skills/default" \
+  "skills/productivity/grilling" "skills/default" \
+  "skills/productivity/teach" "skills/default" \
+  "skills/productivity/writing-for-agents" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/addyosmani/web-quality-skills.git" \
-  "skills/accessibility/" "skills/web-accessibility" \
-  "skills/best-practices/" "skills/web-best-practices" \
-  "skills/performance/" "skills/web-performance" \
+  "skills/accessibility/" "skills/default/web-accessibility" \
+  "skills/best-practices/" "skills/default/web-best-practices" \
+  "skills/performance/" "skills/default/web-performance" \
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/humanlayer/skills.git" \
-  "plugins/show-me/skills/show-me" "skills"
+  "plugins/show-me/skills/show-me" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/kunchenguid/lavish-axi.git" \
-  "skills/lavish" "skills"
+  "skills/lavish" "skills/default"
 
 "$SCRIPT_DIR/copy-from-git.sh" \
   "https://github.com/JoelQ/skills.git" \
-  "retro/" "skills/retro-automate/"
+  "retro/" "skills/default/retro-automate/"

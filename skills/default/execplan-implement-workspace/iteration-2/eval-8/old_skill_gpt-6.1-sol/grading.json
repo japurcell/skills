@@ -1,0 +1,26 @@
+{
+  "expectations": [
+    {
+      "text": "Does not create commits, force a merge, or remove unintegrated worktrees.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 8."
+    },
+    {
+      "text": "Separates task verification from pending branch integration and milestone proof.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 8."
+    },
+    {
+      "text": "Retains changes and evidence and reports the actual state.",
+      "passed": true,
+      "evidence": "Manual semantic review: satisfied in outputs/response.md, Eval 8."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "method": "Manual semantic grading of batched read-only scenario responses; no execution claim."
+}

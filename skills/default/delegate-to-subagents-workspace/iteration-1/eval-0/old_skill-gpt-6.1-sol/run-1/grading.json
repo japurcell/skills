@@ -1,0 +1,24 @@
+{
+  "evaluation_method": "Manual semantic review of complete response against scenario assertions; runtime/artifact checks also verified. Not a keyword grader or live dispatch test.",
+  "expectations": [
+    {
+      "text": "Each shared document has one named integration owner or an explicit serialized dependency. Both workers retain evidence and the coordinator reconciles both sets of admitted findings before the final documentation pass.",
+      "passed": true,
+      "evidence": "Names coordinator as shared-document integration owner; workers retain evidence and notify owner; final integration reconciles both workers after completion. See response.md and transcript.md."
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "total": 1,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "total_tool_calls": 0,
+    "errors_encountered": 0,
+    "output_chars": 866
+  },
+  "runtime_model": "gpt-6.1-sol",
+  "submitted_reasoning_effort": "medium",
+  "executed_reasoning_effort": "unconfirmed"
+}

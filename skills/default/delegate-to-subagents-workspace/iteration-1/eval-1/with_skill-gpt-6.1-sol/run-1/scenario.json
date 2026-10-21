@@ -1,0 +1,6 @@
+{
+  "id": 1,
+  "prompt": "Describe coordination only; do not dispatch agents. Two independent workers own separate source directories and separate area documentation. Neither touches a shared canonical document. Decide whether documentation work must be serialized or transferred to the coordinator.",
+  "expected_output": "Disjoint documentation remains worker-owned and parallel; the coordinator still performs the final session documentation pass.",
+  "files": []
+}
