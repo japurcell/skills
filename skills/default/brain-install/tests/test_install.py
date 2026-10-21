@@ -432,9 +432,9 @@ class PayloadTests(unittest.TestCase):
                              "[ASSISTANT]: Claude assistant first visible text.\n\n"
                              "[ASSISTANT]: Claude assistant second visible text.\n")
             self.assertEqual((output / "batches/batch_0.txt").read_text(encoding="utf-8"),
-                             f"{codex_output}\n")
+                             f"{output}/000_codex_codex-session.txt\n")
             self.assertEqual((output / "batches/batch_1.txt").read_text(encoding="utf-8"),
-                             f"{claude_output}\n")
+                             f"{output}/001_claude_claude-session.txt\n")
 
     def test_relocated_snapshot_preserves_format_and_filters_directories(self):
         with tempfile.TemporaryDirectory() as temporary:
