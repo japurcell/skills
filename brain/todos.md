@@ -11,7 +11,7 @@
 
 ## Forest Service skills
 
-10. [ ] Create `skills/forest-service/accomplishment-report`, triggered whenever an implementation or ExecPlan is created or modified. Produce a concise executive-level report describing the repository, the work accomplished or planned, and how it aligns with agency strategic goals and priorities by activating `agency-priorities`. Estimate AI-assisted versus human-only implementation time and cost, including AI spend and human oversight, with explicit assumptions and evidence. Show estimated net savings to justify spending on AI coding assistants.
+10. [ ] Create `skills/forest-service/accomplishment-report`, invoked when all work in an ExecPlan is completed. Save the report as `accomplishment-report.md` in the same directory as that plan. Produce a concise executive-level report describing the repository, completed work, and alignment with Forest Service strategic goals and priorities by activating `agency-priorities`. Estimate AI-assisted versus human-only implementation time and cost, including AI spend and human oversight, with explicit assumptions and evidence. Show estimated net savings to support decisions about spending on AI coding assistants.
 
 ## Investigations
 
@@ -21,4 +21,4 @@
 5. [ ] Investigate whether nested AGENTS.md maps complement the root brain index for local context; evaluate [harness-engineering](https://github.com/lopopolo/harness-engineering).
 6. [ ] Audit skills against compatible [official skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), focusing on OpenAI usage, progressive disclosure, reference navigation, and feedback loops.
 7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [[codebase/secret-scanner]]
-11. [ ] Build an interface for assigning and monitoring agentic work across multiple repositories.
+11. [ ] Research interface options for assigning and monitoring agentic work across multiple repositories before choosing a UI or implementing it. Compare a web app, a CLI, and integration with the existing Codex UI against the workflow of assigning work to a repository, following progress, and identifying work that needs attention. Document supported integration capabilities, constraints, tradeoffs, and supporting sources; recommend an initial interface and a bounded first version. Leave #4 unchanged; its workflow prototype is already in progress in another session.
