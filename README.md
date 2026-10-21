@@ -80,10 +80,18 @@ The Codex merge preserves unrelated hooks. A real configuration change keeps the
 
 ### Explicit secret checks and Git gates
 
-Tool Guardian checks dangerous tool actions, including native Copilot and Codex
-patches within its 256 KiB input budget. Secret scanning runs only when explicitly
-requested or when an explicitly installed Git gate runs. Reads, repairs and ending
-a turn do not trigger a secret scan.
+Tool Guardian checks dangerous tool actions when enabled. Its registration is
+currently disabled; source validation does not re-enable an installed hook. Native
+file contents and complete patches have a 1 MiB aggregate decoded UTF-8 budget.
+Recognized quoted shell heredocs and narrow literal Python file writers use that
+content budget after proving the body is inert in its execution context. Unknown
+shapes and unproved executable input retain strict inspection and a 32 KiB
+normalized executable budget. Limits remain finite; incomplete inspection denies
+in both block and warn modes. Limit messages identify the measured quantity,
+threshold and unit.
+
+Secret scanning runs only when explicitly requested or when an explicitly installed
+Git gate runs. Reads, repairs and ending a turn do not trigger a secret scan.
 
 End Turn displays the last saved scan result, its time and scope. Missing, stale,
 corrupt or unavailable status does not block completion. Status never scans,
