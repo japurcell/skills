@@ -435,6 +435,11 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
                 'missing-or-other'
             }
             $diagnostic = "response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
+            if ($auditState -eq 'incomplete') {
+                # ScanFailure emits only scanner-owned vocabulary and bounded numbers.
+                $record = $log.Trim() | ConvertFrom-Json -AsHashtable
+                $diagnostic += ' failure=' + ($record.diagnostic | ConvertTo-Json -Compress)
+            }
             $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
                 $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
             } else {
