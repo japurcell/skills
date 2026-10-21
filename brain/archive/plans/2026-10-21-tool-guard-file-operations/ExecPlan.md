@@ -1,6 +1,6 @@
 # Make Tool Guardian file operations reliable and its policy easier to understand
 
-This is the current ExecPlan for `docs/tool-guard-file-operations/`. Source implementation and acceptance measurements are complete on runtime commit `aa4a7976`. Final documentation verification and the coordinated knowledge pass are complete. The retained [validation summary](validation-summary.json) records report hashes, failed observations, exact repeats and all 76 candidate runtime fingerprints. Superseded task instructions and detailed experiments are preserved in [historical evidence](ExecPlan.history-2026-10-21.md); they do not control current work.
+This is the completed source-delivery ExecPlan, archived at `brain/archive/plans/2026-10-21-tool-guard-file-operations/`. Source implementation and acceptance measurements are complete on runtime commit `aa4a7976`. Final documentation verification and the coordinated knowledge pass are complete. The retained [validation summary](validation-summary.json) records report hashes, failed observations, exact repeats and all 76 candidate runtime fingerprints. Superseded task instructions and detailed experiments are preserved in [historical evidence](ExecPlan.history-2026-10-21.md); they do not control current work.
 
 ## Purpose / Big Picture
 
@@ -120,7 +120,7 @@ Extraction passed63 cases/189 gates and12 resource cases per condition. Diagnost
 Status: done
 Acceptance: met
 
-T9 required accepted T7/T8. Integrated correctness, packaging, security/code-quality review and material repairs are complete. Final runtime `aa4a7976` exactly matches its reviewed/measured prototype across76 runtime fingerprints. Full source timing/resource acceptance is met as recorded below. Documentation lint/link/diff verification and the coordinated knowledge pass. The existing hooks-security guidance now points to ordinary canonical policy, distinguishes pre-decode reader bounds and uses trusted summaries while preserving the owner-disabled state. No new memory or index change is warranted. Installation and re-enablement are explicitly excluded.
+T9 required accepted T7/T8. Integrated correctness, packaging, security/code-quality review and material repairs are complete. Final runtime `aa4a7976` exactly matches its reviewed/measured prototype across76 runtime fingerprints. Full source timing/resource acceptance is met as recorded below. Documentation lint/link/diff verification and the coordinated knowledge pass. The maintained [security guidance](../../../codebase/security-hooks.md) points to ordinary canonical policy, distinguishes pre-decode reader bounds and uses trusted summaries while preserving the owner-disabled state. Migration into brain preserves the two historical documents and validation summary together; the completed-plans index provides navigation. Installation and re-enablement are explicitly excluded.
 
 ### Task graph and shared invariants
 
@@ -130,7 +130,7 @@ All accepted tasks preserve whole-input inspection, exact schemas, finite admiss
 
 ## Concrete Steps
 
-All authorized implementation and source-acceptance work is complete. Final `rtk proxy python3 scripts/lint-okf.py` exits 0, `rtk proxy python3 scripts/generate-hooks.py --check` reports 68 current files, local links resolve, and `rtk git diff --check` passes. All76 current runtime fingerprints still match accepted commit `aa4a7976` and the validation summary. Final documentation is included in the source-delivery record; no benchmark or reviewer remains active. Do not rerun passing suites without changed runtime or an unresolved concern. Do not install or enable anything.
+All authorized implementation and source-acceptance work is complete. At source delivery before the main merge, the then-existing OKF linter exited 0, generator freshness reported 68 files, local links resolved, and the diff check passed. The 76 runtime fingerprints at that checkpoint matched accepted commit `aa4a7976` and the validation summary. These are historical results, not current-tree checks. The subsequent main merge `2194935e` retired OKF and some generated assets; its targeted checks passed with 60 generated files. Guardian canonical policy and reader source remained unchanged by that merge. Final documentation is included in the source-delivery record; no benchmark or reviewer remains active. Do not rerun passing suites without changed runtime or an unresolved concern. Do not install or enable anything.
 
 After source delivery, no authorized implementation task remains. Native Windows proof and any installation/re-enablement are separate owner actions. A Windows owner can run `pwsh -NoProfile -File scripts/test-codex-hooks-windows.ps1` and `pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1` on native Windows; macOS PowerShell tests do not substitute for them.
 
