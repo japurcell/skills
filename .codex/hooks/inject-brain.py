@@ -177,8 +177,8 @@ INJECT = True
 
 import argparse
 import stat
-import tempfile
-from contextlib import contextmanager
+import secrets
+from contextlib import contextmanager, ExitStack
 from urllib.parse import quote
 
 
@@ -190,14 +190,128 @@ def linked(info):
     return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)
 
 
-def regular(path):
+def windows_handle(path, access, sharing, creation, directory=False):
+    """Open the entry itself; directory handles deny rename and reparse edits."""
+    import ctypes
+    from ctypes import wintypes
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.CreateFileW.argtypes = (wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE)
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.GetFileInformationByHandleEx.argtypes = (wintypes.HANDLE, ctypes.c_int,
+                                                   wintypes.LPVOID, wintypes.DWORD)
+    kernel.GetFileInformationByHandleEx.restype = wintypes.BOOL
+    kernel.CloseHandle.argtypes = (wintypes.HANDLE,)
+    kernel.CloseHandle.restype = wintypes.BOOL
+    # OPEN_REPARSE_POINT inspects the entry rather than its target.
+    flags = 0x00200000 | (0x02000000 if directory else 0)
+    handle = kernel.CreateFileW(str(path), access, sharing, None, creation, flags, None)
+    if handle == wintypes.HANDLE(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
     try:
-        info = path.lstat()
-    except FileNotFoundError:
-        return False
-    if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
-        raise BrainError("unsafe index destination")
-    return True
+        attributes = (wintypes.DWORD * 2)()  # FILE_ATTRIBUTE_TAG_INFO, class 9
+        if not kernel.GetFileInformationByHandleEx(handle, 9, attributes, ctypes.sizeof(attributes)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        if attributes[0] & 0x400 or bool(attributes[0] & 0x10) != directory:
+            raise BrainError("unsafe filesystem entry")
+    except BaseException:
+        kernel.CloseHandle(handle)
+        raise
+    return handle, kernel.CloseHandle
+
+
+class Directory:
+    """Pin a directory for descriptor-relative POSIX or replacement-denying Windows access."""
+
+    def __init__(self, path, expected=None, parent=None):
+        self.path = path
+        self.stack = ExitStack()
+        try:
+            if os.name == "nt":
+                paths = [path] if parent else [*reversed(path.parents), path]
+                for item in paths:
+                    # READ sharing only: other writers cannot rename or turn
+                    # this directory into a junction while the handle is open.
+                    handle, close = windows_handle(item, 0, 1, 3, directory=True)
+                    self.stack.callback(close, handle)
+                self.fd = None
+                info = path.lstat()
+            else:
+                flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+                if parent:
+                    self.fd = os.open(path.name, flags, dir_fd=parent.fd)
+                else:
+                    descriptor = os.open(path.anchor, flags)
+                    try:
+                        for part in path.parts[1:]:
+                            child = os.open(part, flags, dir_fd=descriptor)
+                            os.close(descriptor)
+                            descriptor = child
+                        self.fd = descriptor
+                    except BaseException:
+                        os.close(descriptor)
+                        raise
+                self.stack.callback(os.close, self.fd)
+                info = os.fstat(self.fd)
+            if linked(info) or not stat.S_ISDIR(info.st_mode):
+                raise BrainError("unsafe directory")
+            if expected is not None and not os.path.samestat(expected, info):
+                raise BrainError("directory changed")
+        except BaseException:
+            self.stack.close()
+            raise
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exception):
+        return self.stack.__exit__(*exception)
+
+    def stat(self, name):
+        return (self.path / name).lstat() if self.fd is None else os.stat(name, dir_fd=self.fd, follow_symlinks=False)
+
+    def regular(self, name):
+        try:
+            info = self.stat(name)
+        except FileNotFoundError:
+            return False
+        if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise BrainError("unsafe index destination")
+        return True
+
+    def open_file(self, name, flags):
+        if self.fd is None:
+            import msvcrt
+            access = 0x80000000 | (0x40000000 if flags & os.O_RDWR or flags & os.O_WRONLY else 0)
+            creation = 1 if flags & os.O_EXCL else 4 if flags & os.O_CREAT else 3
+            handle, close = windows_handle(self.path / name, access, 3, creation)
+            try:
+                descriptor = msvcrt.open_osfhandle(handle, flags & (os.O_RDONLY | os.O_RDWR | os.O_WRONLY) | os.O_BINARY)
+            except BaseException:
+                close(handle)
+                raise
+        else:
+            descriptor = os.open(name, flags | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600, dir_fd=self.fd)
+        info = os.fstat(descriptor)
+        if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            os.close(descriptor)
+            raise BrainError("unsafe file")
+        return descriptor
+
+    def replace(self, source, destination):
+        if self.fd is None:
+            os.replace(self.path / source, self.path / destination)
+        else:
+            os.replace(source, destination, src_dir_fd=self.fd, dst_dir_fd=self.fd)
+
+    def unlink(self, name):
+        try:
+            if self.fd is None:
+                (self.path / name).unlink()
+            else:
+                os.unlink(name, dir_fd=self.fd)
+        except FileNotFoundError:
+            pass
 
 
 def vault_for(payload):
@@ -209,8 +323,12 @@ def vault_for(payload):
         return None
     for directory in (current, *current.parents):
         vault = directory / "brain"
-        if vault.is_dir() and not linked(vault.lstat()):
-            return vault
+        try:
+            info = vault.lstat()
+        except FileNotFoundError:
+            info = None
+        if info is not None and stat.S_ISDIR(info.st_mode) and not linked(info):
+            return vault, info
         if (directory / ".git").exists():
             return None
     return None
@@ -218,9 +336,8 @@ def vault_for(payload):
 
 @contextmanager
 def writer_lock(vault):
-    path = vault / ".brain-index.lock"
-    regular(path)
-    descriptor = os.open(path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    vault.regular(".brain-index.lock")
+    descriptor = vault.open_file(".brain-index.lock", os.O_CREAT | os.O_RDWR)
     locked = False
     try:
         info = os.fstat(descriptor)
@@ -258,24 +375,32 @@ def writer_lock(vault):
 def inventory(vault):
     deadline = time.monotonic() + 2
     groups = {}
-    pending = [vault]
+    pending = [((), ())]
     paths = []
     count = 0
     while pending:
-        with os.scandir(pending.pop()) as entries:
-            for entry in entries:
-                count += 1
-                if count > 20000 or time.monotonic() > deadline:
+        if time.monotonic() > deadline:
+            raise BrainError("inventory budget exceeded")
+        parts, identities = pending.pop()
+        with ExitStack() as stack:
+            directory = vault
+            for part, identity in zip(parts, identities):
+                if time.monotonic() > deadline:
                     raise BrainError("inventory budget exceeded")
-                info = entry.stat(follow_symlinks=False)
-                if linked(info):
-                    continue
-                if stat.S_ISDIR(info.st_mode):
-                    pending.append(Path(entry.path))
-                elif stat.S_ISREG(info.st_mode) and entry.name.lower().endswith(".md"):
-                    paths.append(Path(entry.path))
-    for path in sorted(paths):
-        relative = path.relative_to(vault)
+                directory = stack.enter_context(Directory(directory.path / part, identity, directory))
+            with os.scandir(directory.fd if directory.fd is not None else directory.path) as entries:
+                for entry in entries:
+                    count += 1
+                    if count > 20000 or time.monotonic() > deadline:
+                        raise BrainError("inventory budget exceeded")
+                    info = entry.stat(follow_symlinks=False)
+                    if linked(info):
+                        continue
+                    if stat.S_ISDIR(info.st_mode):
+                        pending.append(((*parts, entry.name), (*identities, info)))
+                    elif stat.S_ISREG(info.st_mode) and entry.name.lower().endswith(".md"):
+                        paths.append(Path(*parts, entry.name))
+    for relative in sorted(paths):
         if relative.as_posix() == "index.md":
             continue
         groups.setdefault(relative.parent.as_posix(), []).append(relative.as_posix())
@@ -292,25 +417,25 @@ def inventory(vault):
     content = ("\n".join(lines) + "\n").encode("utf-8")
     if len(content) > 512 * 1024 or time.monotonic() > deadline:
         raise BrainError("inventory budget exceeded")
-    index = vault / "index.md"
-    exists = regular(index)
+    exists = vault.regular("index.md")
     previous = None
     if exists:
-        with index.open("rb") as stream:
+        with os.fdopen(vault.open_file("index.md", os.O_RDONLY), "rb") as stream:
             previous = stream.read(512 * 1024 + 1)
         if len(previous) > 512 * 1024:
             raise BrainError("existing index too large")
     if previous != content:
-        descriptor, name = tempfile.mkstemp(prefix=".brain-index-", dir=vault)
+        name = ".brain-index-" + secrets.token_hex(12)
+        descriptor = vault.open_file(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
         try:
             with os.fdopen(descriptor, "wb") as stream:
                 stream.write(content)
                 stream.flush()
                 os.fsync(stream.fileno())
-            regular(index)
-            os.replace(name, index)
+            vault.regular("index.md")
+            vault.replace(name, "index.md")
         finally:
-            Path(name).unlink(missing_ok=True)
+            vault.unlink(name)
     return content
 
 
@@ -348,8 +473,8 @@ def main():
                             and not response.get("error"))
         vault = vault_for(payload) if admitted else None
         if vault is not None:
-            with writer_lock(vault):
-                content = inventory(vault).decode("utf-8")
+            with Directory(*vault) as directory, writer_lock(directory):
+                content = inventory(directory).decode("utf-8")
             if INJECT:
                 if len(content.encode("utf-8")) > 24000:
                     content = "Brain index is too large for startup context. Read brain/index.md to find relevant notes.\n"

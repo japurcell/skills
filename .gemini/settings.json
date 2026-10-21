@@ -6,7 +6,7 @@
           {
             "name": "inject-brain",
             "type": "command",
-            "command": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
+            "command": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
             "timeout": 5000
           }
         ]
@@ -18,7 +18,7 @@
           {
             "name": "auto-index-brain",
             "type": "command",
-            "command": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
+            "command": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.gemini/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.gemini/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','gemini']; runpy.run_path(str(p),run_name='__main__')\"",
             "timeout": 5000
           }
         ]

@@ -4,16 +4,16 @@
     "sessionStart": [
       {
         "type": "command",
-        "bash": "python3 -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
-        "powershell": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "bash": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "powershell": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/inject-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/inject-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
         "timeoutSec": 5
       }
     ],
     "postToolUse": [
       {
         "type": "command",
-        "bash": "python3 -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
-        "powershell": "python -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "bash": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
+        "powershell": "python -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next(d for d in ds if (d/'.github/hooks/scripts/auto-index-brain.py').is_file() or (d/'.git').exists()); p=d/'.github/hooks/scripts/auto-index-brain.py'; sys.argv=[str(p),'--provider','copilot']; runpy.run_path(str(p),run_name='__main__')\"",
         "timeoutSec": 5
       }
     ]

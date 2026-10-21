@@ -40,6 +40,7 @@ class BrainHooksTests(unittest.TestCase):
         (self.vault / "note.md").touch()
         nested = self.directory / "nested"
         nested.mkdir()
+        (nested / "pathlib.py").write_text("raise RuntimeError('cwd module imported')\n")
         for provider, config, start, field, relative in (
             ("copilot", ".github/hooks/hooks.json", "sessionStart", "bash", ".github/hooks/scripts"),
             ("codex", ".codex/hooks.json", "SessionStart", "command", ".codex/hooks"),
@@ -55,7 +56,6 @@ class BrainHooksTests(unittest.TestCase):
                 assets.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT / relative / "inject-brain.py", assets / "inject-brain.py")
                 arguments = shlex.split(matches[0][field])
-                self.assertEqual(arguments[1], "-c")
                 result = subprocess.run([sys.executable, *arguments[1:]], cwd=nested,
                                         input=json.dumps({"cwd": str(nested), "source": "startup",
                                                           "hook_event_name": start}).encode(),
@@ -86,6 +86,7 @@ class BrainHooksTests(unittest.TestCase):
                     self.assertIn("[[private-name]]", context)
 
     def test_project_registrations_run_startup_and_completion(self):
+        (self.directory / "pathlib.py").write_text("raise RuntimeError('cwd module imported')\n")
         for provider, relative, start, completed, field in (
             ("codex", ".codex/hooks.json", "SessionStart", "PostToolUse", "command"),
             ("copilot", ".github/hooks/hooks.json", "sessionStart", "postToolUse", "bash"),
@@ -158,6 +159,87 @@ class BrainHooksTests(unittest.TestCase):
         result = self.invoke("auto-index-brain", self.successful_tool())
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"), "# Brain\n\n## Root\n\n- [[safe]]\n")
+
+    def test_directory_replacement_during_scan_cannot_escape_vault(self):
+        self.check_directory_replacement(use_symlink=True)
+
+    def test_plain_directory_replacement_during_scan_cannot_redirect_writes(self):
+        # This case also runs on Windows hosts without symlink privileges.
+        self.check_directory_replacement(use_symlink=False)
+
+    def check_directory_replacement(self, use_symlink):
+        # Python's filesystem audit event coordinates another writer exactly
+        # at the OS boundary, without mocking hook functions or timing sleeps.
+        harness = r'''import json, os, pathlib, runpy, sys
+script, target, outside, marker = map(pathlib.Path, sys.argv[1:5])
+use_symlink = sys.argv[5] == 'symlink'
+expected = target.stat()
+attempted = False
+def replace_directory(event, args):
+    global attempted
+    if event != 'os.scandir' or attempted:
+        return
+    candidate = args[0]
+    actual = os.fstat(candidate) if isinstance(candidate, int) else os.stat(candidate)
+    if not os.path.samestat(expected, actual):
+        return
+    attempted = True
+    try:
+        target.rename(target.with_name(target.name + '-saved'))
+        if use_symlink:
+            target.symlink_to(outside, target_is_directory=True)
+        else:
+            outside.rename(target)
+    except PermissionError:
+        # Windows directory handles deny replacement while in use.
+        pass
+sys.addaudithook(replace_directory)
+sys.argv = [str(script), '--provider', 'copilot']
+try:
+    runpy.run_path(str(script), run_name='__main__')
+finally:
+    marker.write_text(json.dumps({'attempted': attempted}))
+'''
+        for relative in (".", "queued"):
+            with self.subTest(directory=relative), tempfile.TemporaryDirectory() as temporary:
+                project = Path(temporary).resolve()
+                vault = project / "brain"
+                vault.mkdir()
+                target = vault if relative == "." else vault / relative
+                target.mkdir(exist_ok=True)
+                (target / "safe.md").touch()
+                outside = project / "outside"
+                outside.mkdir()
+                (outside / "private-leak.md").touch()
+                (outside / "index.md").write_text("outside index unchanged")
+                probe = project / "symlink-probe"
+                if use_symlink:
+                    try:
+                        probe.symlink_to(outside, target_is_directory=True)
+                        probe.unlink()
+                    except OSError as error:
+                        if sys.platform == "win32":
+                            self.skipTest("Windows symlink privilege unavailable: " + str(error))
+                        raise
+                script = project / "auto-index-brain.py"
+                shutil.copyfile(ROOT / ".github/hooks/scripts/auto-index-brain.py", script)
+                marker = project / "attempt.json"
+                payload = {"cwd": str(project), "toolResult": {"resultType": "success"}}
+                result = subprocess.run(
+                    [sys.executable, "-I", "-S", "-B", "-c", harness,
+                     str(script), str(target), str(outside), str(marker),
+                     "symlink" if use_symlink else "directory"],
+                    input=json.dumps(payload).encode(), capture_output=True, timeout=5,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(json.loads(marker.read_text())["attempted"])
+                self.assertEqual(json.loads(result.stdout), {})
+                victim = outside if outside.exists() else target
+                self.assertEqual((victim / "index.md").read_text(), "outside index unchanged")
+                for directory in (vault, project / "brain-saved"):
+                    index = directory / "index.md"
+                    if index.exists() and not directory.is_symlink() and directory != victim:
+                        self.assertNotIn("private-leak", index.read_text())
 
     def test_linked_index_is_preserved_without_touching_its_target(self):
         outside = self.directory / "outside.md"
