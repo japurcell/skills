@@ -2,7 +2,7 @@ name: Standalone brain hooks
 
 on:
   push:
-    paths:
+    paths: &brain_hook_paths
       - '.codex/hooks.json'
       - '.gemini/settings.json'
       - 'hooks/**'
@@ -14,17 +14,7 @@ on:
       - 'scripts/generate-hooks.py'
       - '.github/workflows/brain-hooks.yml'
   pull_request:
-    paths:
-      - '.codex/hooks.json'
-      - '.gemini/settings.json'
-      - 'hooks/**'
-      - '.github/hooks/**'
-      - '.copilot/hooks/**'
-      - '.gemini/hooks/**'
-      - '.codex/hooks/**'
-      - 'scripts/test-brain-hooks.py'
-      - 'scripts/generate-hooks.py'
-      - '.github/workflows/brain-hooks.yml'
+    paths: *brain_hook_paths
   workflow_dispatch:
 
 permissions:

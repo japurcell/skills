@@ -61,24 +61,25 @@ class RecoveryTests(unittest.TestCase):
             # Scanners and guards remain explicit installed invocations.
             # End Turn registrations select status.
             manual_scanners = {}
-            for provider in PROVIDERS:
-                legacy = json.loads((ROOT / "scripts/fixtures/provider-hooks-pre-status" / (provider + ".json")).read_bytes())
-                handler = registered_handler(legacy, provider, "scan-secrets.py").copy()
-                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B", str(home / entry(provider))]
-                handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
-                if provider == "copilot":
-                    handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
-                manual_scanners[provider] = handler
 
-            def selected_handler(config, provider, filename):
-                if filename == "scan-secrets.py":
-                    return manual_scanners[provider]
-                handler = manual_scanners[provider].copy()
-                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B", str(home / entry(provider).with_name(filename))]
+            def configured_handler(provider, filename, source):
+                handler = source.copy()
+                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B",
+                            str(home / entry(provider).with_name(filename))]
                 handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
                 if provider == "copilot":
                     handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
                 return handler
+
+            for provider in PROVIDERS:
+                legacy = json.loads((ROOT / "scripts/fixtures/provider-hooks-pre-status" / (provider + ".json")).read_bytes())
+                legacy_handler = registered_handler(legacy, provider, "scan-secrets.py")
+                manual_scanners[provider] = configured_handler(provider, "scan-secrets.py", legacy_handler)
+
+            def selected_handler(config, provider, filename):
+                if filename == "scan-secrets.py":
+                    return manual_scanners[provider]
+                return configured_handler(provider, filename, manual_scanners[provider])
             for provider in PROVIDERS:
                 for helper in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
                                "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine"):

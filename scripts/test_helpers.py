@@ -151,8 +151,8 @@ class TestHookHelpers(unittest.TestCase):
             self.assertEqual(convert("foo\\bar"), "foo/bar")
 
 
-    def test_gemini_unicode_emit_json_no_crash(self):
-        common = self._get_common_module(gemini_helpers_path)
+    def _assert_unicode_emit_json(self, helper_path, test_payload):
+        common = self._get_common_module(helper_path)
         emit_json = common.emit_json
         import io
 
@@ -161,7 +161,6 @@ class TestHookHelpers(unittest.TestCase):
         sys.stdout = io.TextIOWrapper(bytes_io, encoding="cp1252")
         try:
             # Test payload containing non-ASCII unicode arrow character '→'
-            test_payload = {"message": "D:/Projects/personal/skills/.gemini/global-settings.json → ~/.gemini/settings.json"}
             emit_json(test_payload)
             sys.stdout.flush()
             written_bytes = bytes_io.getvalue()
@@ -169,25 +168,18 @@ class TestHookHelpers(unittest.TestCase):
             self.assertIn("→", decoded_output)
         finally:
             sys.stdout = old_stdout
+
+    def test_gemini_unicode_emit_json_no_crash(self):
+        self._assert_unicode_emit_json(
+            gemini_helpers_path,
+            {"message": "D:/Projects/personal/skills/.gemini/global-settings.json → ~/.gemini/settings.json"},
+        )
 
     def test_copilot_unicode_emit_json_no_crash(self):
-        common = self._get_common_module(copilot_helpers_path)
-        emit_json = common.emit_json
-        import io
-
-        bytes_io = io.BytesIO()
-        old_stdout = sys.stdout
-        sys.stdout = io.TextIOWrapper(bytes_io, encoding="cp1252")
-        try:
-            # Test payload containing non-ASCII unicode arrow character '→'
-            test_payload = {"message": "D:/Projects/personal/skills/.copilot/global-settings.json → ~/.copilot/settings.json"}
-            emit_json(test_payload)
-            sys.stdout.flush()
-            written_bytes = bytes_io.getvalue()
-            decoded_output = written_bytes.decode("utf-8")
-            self.assertIn("→", decoded_output)
-        finally:
-            sys.stdout = old_stdout
+        self._assert_unicode_emit_json(
+            copilot_helpers_path,
+            {"message": "D:/Projects/personal/skills/.copilot/global-settings.json → ~/.copilot/settings.json"},
+        )
 
     def test_common_utility_functions(self):
         # We can use the gemini variant to test general utility functions

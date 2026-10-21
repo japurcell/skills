@@ -215,13 +215,15 @@ class GenerateHooksTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.restore_checked_in_outputs()
 
+    def rendered_text_outputs(self) -> dict[str, str]:
+        return {
+            output.target.output_path.as_posix(): output.content.decode("utf-8")
+            for output in load_generator().render_all(ROOT)
+        }
+
 
     def test_rtk_targets_share_runtime_body_outside_explicit_provider_adapters(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
+        rendered = self.rendered_text_outputs()
         self.assertTrue(set(RTK_TARGETS).issubset(rendered))
 
         shared_sections = []
@@ -403,11 +405,7 @@ class GenerateHooksTests(unittest.TestCase):
 
 
     def test_observability_renderings_have_only_named_provider_differences(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
+        rendered = self.rendered_text_outputs()
         copilot = rendered[OBSERVABILITY_TARGETS[0]]
         gemini = rendered[OBSERVABILITY_TARGETS[1]]
         self.assertTrue(copilot.startswith("#!/usr/bin/env python3\n"))
@@ -420,11 +418,7 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(normalized, gemini, "Observability outputs diverged outside their named provider differences.")
 
     def test_tool_guard_renderings_share_one_policy_outside_provider_adapters(self) -> None:
-        generator = load_generator()
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
+        rendered = self.rendered_text_outputs()
         self.assertTrue(set(TOOL_GUARD_TARGETS).issubset(rendered))
         self.assertEqual(len({rendered[target] for target in TOOL_GUARD_POLICY_TARGETS}), 1,
                          "Provider-local policy helpers must be byte-identical and context neutral.")
@@ -582,13 +576,9 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(provider_outcomes[0], provider_outcomes[1])
 
     def test_secret_scanner_renderings_share_policy_outside_provider_adapters(self) -> None:
-        generator = load_generator()
         from hooks.families.allowlist import ALLOWLIST_SOURCE
 
-        rendered = {
-            output.target.output_path.as_posix(): output.content.decode("utf-8")
-            for output in generator.render_all(ROOT)
-        }
+        rendered = self.rendered_text_outputs()
         self.assertTrue(set(SECRET_SCANNER_TARGETS).issubset(rendered))
 
         shared_sections = []

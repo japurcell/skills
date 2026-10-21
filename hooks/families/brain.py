@@ -21,6 +21,18 @@ def linked(info):
     return stat.S_ISLNK(info.st_mode) or bool(getattr(info, "st_file_attributes", 0) & 0x400)
 
 
+def _unsafe_regular_file(info):
+    return linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+
+
+def _windows_attributes(query, handle):
+    import ctypes
+    attributes = (ctypes.c_uint32 * 2)()  # FILE_ATTRIBUTE_TAG_INFO, class 9
+    if not query(handle, 9, attributes, ctypes.sizeof(attributes)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    return attributes[0]
+
+
 def windows_handle(path, access, sharing, creation, directory=False, parent=None):
     """Open the entry itself; directory handles deny replacement."""
     import ctypes
@@ -77,10 +89,8 @@ def windows_handle(path, access, sharing, creation, directory=False, parent=None
             raise ctypes.WinError(native.RtlNtStatusToDosError(result))
         handle = opened.value
     try:
-        attributes = (wintypes.DWORD * 2)()  # FILE_ATTRIBUTE_TAG_INFO, class 9
-        if not kernel.GetFileInformationByHandleEx(handle, 9, attributes, ctypes.sizeof(attributes)):
-            raise ctypes.WinError(ctypes.get_last_error())
-        if attributes[0] & 0x400 or bool(attributes[0] & 0x10) != directory:
+        attributes = _windows_attributes(kernel.GetFileInformationByHandleEx, handle)
+        if attributes & 0x400 or bool(attributes & 0x10) != directory:
             raise BrainError("unsafe filesystem entry")
     except BaseException:
         kernel.CloseHandle(handle)
@@ -192,7 +202,7 @@ class Directory:
             info = self.stat(name)
         except FileNotFoundError:
             return False
-        if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        if _unsafe_regular_file(info):
             raise BrainError("unsafe index destination")
         return True
 
@@ -205,11 +215,8 @@ class Directory:
             try:
                 # Once the lock exists the vault is nonempty. Reject an in-place
                 # conversion that preceded creation before any path operations.
-                import ctypes
-                attributes = (ctypes.c_uint32 * 2)()
-                if not self.query(self.handle, 9, attributes, ctypes.sizeof(attributes)):
-                    raise ctypes.WinError(ctypes.get_last_error())
-                if attributes[0] & 0x400:
+                attributes = _windows_attributes(self.query, self.handle)
+                if attributes & 0x400:
                     raise BrainError("unsafe directory")
                 descriptor = msvcrt.open_osfhandle(handle, flags & (os.O_RDONLY | os.O_RDWR | os.O_WRONLY) | os.O_BINARY)
             except BaseException:
@@ -218,7 +225,7 @@ class Directory:
         else:
             descriptor = os.open(name, flags | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600, dir_fd=self.fd)
         info = os.fstat(descriptor)
-        if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        if _unsafe_regular_file(info):
             os.close(descriptor)
             raise BrainError("unsafe file")
         return descriptor
@@ -266,7 +273,7 @@ def writer_lock(vault):
     locked = False
     try:
         info = os.fstat(descriptor)
-        if linked(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        if _unsafe_regular_file(info):
             raise BrainError("unsafe lock")
         if info.st_size == 0:
             os.write(descriptor, b"0")

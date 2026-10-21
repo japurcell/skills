@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from file_io import atomic_write_bytes
-from trusted_hook_launch import PINNED_HOOK_FILES, trusted_command, template_commands, hook_arguments
+from trusted_hook_launch import _pin_hook_commands, template_commands
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from hooks.registrations import (
@@ -31,13 +31,12 @@ from hooks.registrations import (
 
 
 MAINTAINED_HOOK_FILES = tuple(sorted({name for names in DESIRED["codex"].values() for name in names}))
-RETIRED_RTK_HOOK_FILES = ("rtk-explicit-codex.py", "rtk-agent-launcher.py")
-MAINTAINED_POSIX_COMMANDS = {template_commands("codex", name)["command"] for name in MAINTAINED_HOOK_FILES}
-OWNED_HOOK_FILES = MAINTAINED_HOOK_FILES + RETIRED_RTK_HOOK_FILES + ("scan-secrets.py",)
-OWNED_POSIX_COMMANDS = {f"python3 ~/.codex/hooks/{name}" for name in OWNED_HOOK_FILES}
-OWNED_WINDOWS_COMMANDS = {
-    f'py -3 "%USERPROFILE%\\.codex\\hooks\\{name}"'.casefold() for name in OWNED_HOOK_FILES
+_MAINTAINED_COMMANDS = {
+    commands["command"]: commands
+    for filename in MAINTAINED_HOOK_FILES
+    for commands in (template_commands("codex", filename),)
 }
+MAINTAINED_POSIX_COMMANDS = set(_MAINTAINED_COMMANDS)
 MAINTAINED_EVENTS = ("SessionStart", "PreToolUse", "PostToolUse", "Stop")
 
 
@@ -102,10 +101,10 @@ def template_groups(template: dict[str, Any]) -> dict[str, list[dict[str, Any]]]
             for handler in group["hooks"]:
                 posix = handler.get("command")
                 windows = handler.get("commandWindows")
-                if not isinstance(posix, str) or posix not in MAINTAINED_POSIX_COMMANDS:
+                maintained = _MAINTAINED_COMMANDS.get(posix) if isinstance(posix, str) else None
+                if maintained is None:
                     raise ValueError(f"Template hooks.{event} contains an unowned command")
-                filename = next(name for name in MAINTAINED_HOOK_FILES if template_commands("codex", name)["command"] == posix)
-                if windows != template_commands("codex", filename)["commandWindows"]:
+                if windows != maintained["commandWindows"]:
                     raise ValueError(f"Template hooks.{event} has mismatched hook commands")
                 if posix in seen:
                     raise ValueError(f"Template repeats maintained handler: {posix}")
@@ -144,13 +143,10 @@ def main() -> int:
         template, _ = load_json_object(arguments.template, "template")
         maintained = template_groups(template)
         hook_directory = arguments.destination.absolute().parent / "hooks"
-        for groups in maintained.values():
-            for group in groups:
-                for handler in group["hooks"]:
-                    for filename in PINNED_HOOK_FILES:
-                        if handler["command"] == template_commands("codex", filename)["command"]:
-                            handler["command"] = trusted_command(hook_directory / filename, "posix", extra=hook_arguments(filename, "codex"))
-                            handler["commandWindows"] = trusted_command(hook_directory / filename, "windows", extra=hook_arguments(filename, "codex"))
+        _pin_hook_commands(
+            (group for groups in maintained.values() for group in groups), "codex", hook_directory,
+            (("command", "posix"), ("commandWindows", "windows")),
+        )
         check_parent_directories(arguments.destination.absolute().parent, arguments.destination.absolute())
         if arguments.destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {arguments.destination}")
@@ -168,22 +164,19 @@ def main() -> int:
                 info = arguments.destination.stat()
                 if not arguments.check and (info.st_nlink > 1 or (os.name != "nt" and stat.S_IMODE(info.st_mode) != 0o600)):
                     atomic_write(arguments.destination, existing_bytes)
+            else:
+                if destination_exists:
+                    backup = arguments.destination.with_name("hooks.json.bak")
+                    if backup.is_symlink():
+                        raise ValueError(f"Backup must not be a symbolic link: {backup}")
                 if not arguments.check:
-                    retire_assets("codex", hook_directory)
-                return 0
-
-            if destination_exists:
-                backup = arguments.destination.with_name("hooks.json.bak")
-                if backup.is_symlink():
-                    raise ValueError(f"Backup must not be a symbolic link: {backup}")
-            if arguments.check:
-                return 0
-            serialized = (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
-            verify_unchanged(arguments.destination, destination_exists, existing_bytes)
-            if destination_exists:
-                atomic_write(backup, existing_bytes)
-            atomic_write(arguments.destination, serialized)
-            retire_assets("codex", hook_directory)
+                    serialized = (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+                    verify_unchanged(arguments.destination, destination_exists, existing_bytes)
+                    if destination_exists:
+                        atomic_write(backup, existing_bytes)
+                    atomic_write(arguments.destination, serialized)
+            if not arguments.check:
+                retire_assets("codex", hook_directory)
             return 0
     except (OSError, ValueError) as exc:
         print(f"Codex hook install failed: {exc}", file=sys.stderr)

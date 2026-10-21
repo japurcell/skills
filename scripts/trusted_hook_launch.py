@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import os
 from pathlib import Path
 import sys
@@ -16,7 +17,8 @@ def hook_arguments(filename: str, provider: str) -> tuple[str, ...]:
 
 
 def template_commands(provider: str, filename: str) -> dict[str, str]:
-    suffix = " --provider " + provider if filename in BRAIN_HOOK_FILES else ""
+    extra = hook_arguments(filename, provider)
+    suffix = " " + " ".join(extra) if extra else ""
     if provider == "codex":
         return {"command": f"python3 ~/.codex/hooks/{filename}" + suffix,
                 "commandWindows": f'py -3 "%USERPROFILE%\\.codex\\hooks\\{filename}"' + suffix}
@@ -79,21 +81,29 @@ def is_trusted_pair(handler: dict, script: Path) -> bool:
         return False
 
 
+def _pin_hook_commands(
+    entries: Iterable[dict], provider: str, hook_directory: Path, fields: tuple[tuple[str, str], ...]
+) -> None:
+    for entry in entries:
+        for handler in ([entry] if provider == "copilot" else entry["hooks"]):
+            for filename in PINNED_HOOK_FILES:
+                legacy = template_commands(provider, filename)
+                if provider == "copilot":
+                    matches = handler.get("bash") == legacy["bash"] and ("powershell" not in handler or handler["powershell"] == legacy["powershell"])
+                else:
+                    matches = handler.get("command") == legacy["command"]
+                if not matches:
+                    continue
+                script = hook_directory / filename
+                for key, shell in fields:
+                    handler[key] = trusted_command(script, shell, extra=hook_arguments(filename, provider))
+
+
 def pin_provider_commands(template: dict, provider: str, home: Path) -> None:
-    for event, entries in template.get("hooks", {}).items():
-        if provider == "gemini" and event == "disabled":
-            continue
-        for entry in entries:
-            for handler in ([entry] if provider == "copilot" else entry["hooks"]):
-                for filename in PINNED_HOOK_FILES:
-                    keys = ("bash", "powershell") if provider == "copilot" else ("command",)
-                    legacy = template_commands(provider, filename)
-                    if provider == "copilot":
-                        matches = handler.get("bash") == legacy["bash"] and ("powershell" not in handler or handler["powershell"] == legacy["powershell"])
-                    else:
-                        matches = handler.get("command") == legacy["command"]
-                    if not matches:
-                        continue
-                    script = home / f".{provider}/hooks/scripts" / filename
-                    for key in keys:
-                        handler[key] = trusted_command(script, "powershell" if key == "powershell" else ("posix" if key == "bash" else "native"), extra=hook_arguments(filename, provider))
+    fields = (("bash", "posix"), ("powershell", "powershell")) if provider == "copilot" else (("command", "native"),)
+    entries = (
+        entry for event, groups in template.get("hooks", {}).items()
+        if not (provider == "gemini" and event == "disabled")
+        for entry in groups
+    )
+    _pin_hook_commands(entries, provider, home / f".{provider}/hooks/scripts", fields)

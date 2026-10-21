@@ -14,6 +14,18 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def event_handlers(provider, event_entries):
+    if provider == "copilot":
+        return event_entries
+    return [handler for group in event_entries for handler in group["hooks"]]
+
+
+def run_registered_hook(command, cwd, payload):
+    arguments = shlex.split(command)
+    return subprocess.run([sys.executable, *arguments[1:]], cwd=cwd,
+                          input=json.dumps(payload).encode(), capture_output=True, timeout=5)
+
+
 class BrainHooksTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="brain hooks ")
@@ -49,17 +61,15 @@ class BrainHooksTests(unittest.TestCase):
             with self.subTest(provider=provider):
                 hooks = json.loads((ROOT / config).read_text(encoding="utf-8"))["hooks"]
                 entries = hooks.get(start, [])
-                handlers = entries if provider == "copilot" else [h for g in entries for h in g["hooks"]]
+                handlers = event_handlers(provider, entries)
                 matches = [h for h in handlers if "inject-brain.py" in h.get(field, "")]
                 self.assertEqual(len(matches), 1)
                 assets = self.directory / relative
                 assets.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(ROOT / relative / "inject-brain.py", assets / "inject-brain.py")
-                arguments = shlex.split(matches[0][field])
-                result = subprocess.run([sys.executable, *arguments[1:]], cwd=nested,
-                                        input=json.dumps({"cwd": str(nested), "source": "startup",
-                                                          "hook_event_name": start}).encode(),
-                                        capture_output=True, timeout=5)
+                result = run_registered_hook(matches[0][field], nested,
+                                             {"cwd": str(nested), "source": "startup",
+                                              "hook_event_name": start})
                 self.assertEqual(result.returncode, 0, result.stderr)
                 output = json.loads(result.stdout.splitlines()[-1])
                 context = output.get("additionalContext") or output["hookSpecificOutput"]["additionalContext"]
@@ -78,7 +88,7 @@ class BrainHooksTests(unittest.TestCase):
         ):
             hooks = json.loads((ROOT / config).read_text())["hooks"]
             for event, entries in hooks.items():
-                handlers = entries if provider == "copilot" else [h for g in entries for h in g["hooks"]]
+                handlers = event_handlers(provider, entries)
                 for handler in handlers:
                     command = handler.get(field, "")
                     for name in ("inject-brain.py", "auto-index-brain.py"):
@@ -92,9 +102,7 @@ class BrainHooksTests(unittest.TestCase):
                             (self.vault / "index.md").unlink(missing_ok=True)
                             payload = {"cwd": str(nested), "source": "startup", "hook_event_name": event,
                                        "toolResult": {"resultType": "success"}, "tool_response": {"output": "done"}}
-                            arguments = shlex.split(command)
-                            result = subprocess.run([sys.executable, *arguments[1:]], cwd=nested,
-                                                    input=json.dumps(payload).encode(), capture_output=True, timeout=5)
+                            result = run_registered_hook(command, nested, payload)
                             self.assertEqual(result.returncode, 0, result.stderr)
                             self.assertIn("[trusted](<trusted.md>)", (self.vault / "index.md").read_text())
 
@@ -128,7 +136,7 @@ class BrainHooksTests(unittest.TestCase):
             hooks = json.loads((ROOT / relative).read_text(encoding="utf-8"))["hooks"]
             for event, name in ((start, "inject-brain.py"), (completed, "auto-index-brain.py")):
                 entries = hooks.get(event, [])
-                handlers = entries if provider == "copilot" else [h for g in entries for h in g["hooks"]]
+                handlers = event_handlers(provider, entries)
                 owned = [h for h in handlers if name in h.get(field, "")]
                 self.assertEqual(len(owned), 1, (provider, event))
                 relative = {"copilot": ".github/hooks/scripts", "codex": ".codex/hooks",
@@ -140,9 +148,7 @@ class BrainHooksTests(unittest.TestCase):
                 (self.vault / "index.md").unlink(missing_ok=True)
                 payload = {"cwd": str(self.directory), "source": "startup", "hook_event_name": event,
                            "toolResult": {"resultType": "success"}, "tool_response": {"output": "done"}}
-                arguments = shlex.split(owned[0][field])
-                result = subprocess.run([sys.executable, *arguments[1:]], cwd=self.directory,
-                                        input=json.dumps(payload).encode(), capture_output=True, timeout=5)
+                result = run_registered_hook(owned[0][field], self.directory, payload)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn("[registered-note](<registered-note.md>)", (self.vault / "index.md").read_text())
 

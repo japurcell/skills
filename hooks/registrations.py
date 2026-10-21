@@ -108,8 +108,10 @@ def classify(handler, provider, event, directory):
         arguments = trusted_posix_arguments(command)
         python = arguments[0] if arguments and arguments[4] == script else None
         if provider == "gemini" and os.name == "nt":
-            prefix, separator, suffix = command.partition(" -I -S -B ")
-            if separator and suffix == f'"{script}"' + (" " + " ".join(hook_arguments(filename, provider)) if hook_arguments(filename, provider) else "") and prefix.startswith('"') and prefix.endswith('"'):
+            prefix, separator, _ = command.partition(" -I -S -B ")
+            if (separator and prefix.startswith('"') and prefix.endswith('"')
+                    and command == serialize_trusted_launch(prefix[1:-1], script, "native", windows=True,
+                                                            extra=hook_arguments(filename, provider))):
                 python = prefix[1:-1]
         if python:
             shells = ("posix", "windows") if provider == "codex" else ("posix", "powershell") if provider == "copilot" else ("native",)
@@ -185,6 +187,20 @@ def validate_status_asset(provider, maintained, directory):
         raise ValueError("Replacement status asset is missing, linked or invalid; deploy assets before activation")
 
 
+def _check_ancestor_links(ancestor: Path, message: str) -> None:
+    while ancestor != ancestor.parent:
+        system_alias = os.name == "posix" and str(ancestor) in {"/var", "/tmp"} and str(ancestor.resolve()) == "/private" + str(ancestor)
+        try:
+            info = ancestor.lstat()
+        except FileNotFoundError:
+            ancestor = ancestor.parent
+            continue
+        reparse = getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+        if (stat.S_ISLNK(info.st_mode) and not system_alias) or reparse:
+            raise ValueError(message)
+        ancestor = ancestor.parent
+
+
 def check_parent_directories(home: Path, destination: Path) -> None:
     home = Path(os.path.abspath(home))
     destination = Path(os.path.abspath(destination))
@@ -195,18 +211,7 @@ def check_parent_directories(home: Path, destination: Path) -> None:
     if not relative.parts:
         raise ValueError(f"Destination must be a file below the install home: {destination}")
 
-    ancestor = home
-    while ancestor != ancestor.parent:
-        system_alias = os.name == "posix" and str(ancestor) in {"/var", "/tmp"} and str(ancestor.resolve()) == "/private" + str(ancestor)
-        try:
-            info = ancestor.lstat()
-        except FileNotFoundError:
-            ancestor = ancestor.parent
-            continue
-        reparse = getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-        if (stat.S_ISLNK(info.st_mode) and not system_alias) or reparse:
-            raise ValueError("Refusing linked configuration ancestor")
-        ancestor = ancestor.parent
+    _check_ancestor_links(home, "Refusing linked configuration ancestor")
 
     current = home
     for part in ("", *relative.parts[:-1]):
@@ -229,18 +234,7 @@ def check_parent_directories(home: Path, destination: Path) -> None:
 def preflight_status_path(provider, maintained, directory):
     if not has_status_registration(provider, maintained, directory):
         return
-    current = directory
-    while current != current.parent:
-        system_alias = os.name == "posix" and str(current) in {"/var", "/tmp"} and str(current.resolve()) == "/private" + str(current)
-        try:
-            info = current.lstat()
-        except FileNotFoundError:
-            current = current.parent
-            continue
-        reparse = getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
-        if (stat.S_ISLNK(info.st_mode) and not system_alias) or reparse:
-            raise ValueError("Refusing linked status asset directory")
-        current = current.parent
+    _check_ancestor_links(directory, "Refusing linked status asset directory")
     target = directory / "scan-status.py"
     try:
         info = target.lstat()
