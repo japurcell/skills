@@ -251,7 +251,7 @@ def stop_process(process, known):
     force_at = deadline - PROCESS_SECONDS - 2 * REAP_SECONDS
     try:
         leader_stopped = process.poll() is not None
-        snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+        snapshot = process_snapshot(deadline=deadline - (REAP_SECONDS if process.returncode is None else 0))
         remember_descendants(process, known, snapshot)
         process.poll()
         if leader_stopped and not living_descendants(known, snapshot):
@@ -264,7 +264,7 @@ def stop_process(process, known):
         graceful = min(force_at, time.monotonic() + 0.6)
         while True:
             process.poll()
-            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+            snapshot = process_snapshot(deadline=deadline - (REAP_SECONDS if process.returncode is None else 0))
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
             # The leader can exit while metadata is collected; reap it before
@@ -286,7 +286,12 @@ def stop_process(process, known):
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(process.pid, signal.SIGKILL)
             process.poll()
-            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+            # Spend the reserved exact-child reap now. Once reaped, its unused
+            # reservation belongs to the final observation, within the same deadline.
+            if process.returncode is None:
+                with contextlib.suppress(subprocess.TimeoutExpired):
+                    wait_process(process, max(0, min(REAP_SECONDS, deadline - time.monotonic())))
+            snapshot = process_snapshot(deadline=deadline - (REAP_SECONDS if process.returncode is None else 0))
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
             # The leader can exit while metadata is collected; reap it before
