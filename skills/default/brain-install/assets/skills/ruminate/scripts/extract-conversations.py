@@ -30,7 +30,7 @@ import json
 import os
 import sys
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Callable
 
 
 def file_mod_date(fpath: str) -> date:
@@ -38,7 +38,7 @@ def file_mod_date(fpath: str) -> date:
     return datetime.fromtimestamp(os.path.getmtime(fpath)).date()
 
 
-def extract_claude_texts(content: Any) -> list[str]:
+def _extract_texts(content: Any, accepts_type: Callable[[Any], bool]) -> list[str]:
     texts: list[str] = []
     if isinstance(content, str):
         texts.append(content)
@@ -49,26 +49,17 @@ def extract_claude_texts(content: Any) -> list[str]:
     for item in content:
         if not isinstance(item, dict):
             continue
-        if item.get("type") == "text" and isinstance(item.get("text"), str):
+        if accepts_type(item.get("type")) and isinstance(item.get("text"), str):
             texts.append(item["text"])
     return texts
+
+
+def extract_claude_texts(content: Any) -> list[str]:
+    return _extract_texts(content, lambda item_type: item_type == "text")
 
 
 def extract_codex_texts(content: Any) -> list[str]:
-    texts: list[str] = []
-    if isinstance(content, str):
-        texts.append(content)
-        return texts
-    if not isinstance(content, list):
-        return texts
-
-    for item in content:
-        if not isinstance(item, dict):
-            continue
-        item_type = item.get("type")
-        if item_type in {"input_text", "output_text", "text"} and isinstance(item.get("text"), str):
-            texts.append(item["text"])
-    return texts
+    return _extract_texts(content, lambda item_type: item_type in {"input_text", "output_text", "text"})
 
 
 def append_message(messages: list[str], role: str, text: str, max_len: int) -> None:

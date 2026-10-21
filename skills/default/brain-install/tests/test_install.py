@@ -14,13 +14,19 @@ from pathlib import Path
 BUNDLE = Path(__file__).resolve().parents[1]
 
 
+def copy_bundle(root, *, ignore=None):
+    relocated = root / "relocated bundle"
+    shutil.copytree(BUNDLE, relocated, ignore=ignore)
+    return relocated
+
+
 class InstallerTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name).resolve()
-        self.bundle = self.root / "relocated bundle"
-        shutil.copytree(BUNDLE, self.bundle, ignore=shutil.ignore_patterns("__pycache__"))
+        self.bundle = copy_bundle(
+            self.root, ignore=shutil.ignore_patterns("__pycache__"))
         self.target = self.root / "target café with spaces"
         self.target.mkdir()
         self.home = self.root / "home"
@@ -333,8 +339,7 @@ class PayloadTests(unittest.TestCase):
     def test_relocated_extractor_uses_utf8_for_unicode_output_paths(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            relocated = root / "relocated bundle"
-            shutil.copytree(BUNDLE, relocated)
+            relocated = copy_bundle(root)
             conversations = root / "conversations"
             conversations.mkdir()
             message = "Preserve this conversation guidance."
@@ -353,11 +358,88 @@ class PayloadTests(unittest.TestCase):
             self.assertEqual((output / "batches/batch_0.txt").read_text(encoding="utf-8"),
                              f"{output}/000_claude_session.txt\n")
 
+    def test_relocated_extractor_preserves_claude_and_codex_cli_messages(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            relocated = copy_bundle(root)
+            claude_dir = root / "claude projects"
+            claude_dir.mkdir()
+            codex_dir = root / "codex sessions"
+            codex_file = codex_dir / "2026" / "10" / "21" / "codex-session.jsonl"
+            codex_file.parent.mkdir(parents=True)
+            claude_file = claude_dir / "claude-session.jsonl"
+
+            claude_entries = [
+                {"type": "user", "message": {"content": "Claude user string has enough detail."}},
+                {"type": "assistant", "message": {"content": [
+                    None,
+                    {"type": "image", "text": "Claude image content is ignored."},
+                    {"type": "input_text", "text": "Claude input_text content stays excluded."},
+                    {"type": "output_text", "text": "Claude output_text content stays excluded."},
+                    {"type": "text", "text": "Claude assistant first visible text."},
+                    {"type": "text", "text": 12},
+                    {"type": "text", "text": "Claude assistant second visible text."},
+                ]}},
+                {"type": "user", "message": {"content": 42}},
+            ]
+            codex_entries = [
+                {"type": "session_meta", "payload": {"cwd": str(root)}},
+                {"type": "response_item", "payload": {"type": "message", "role": "user",
+                                                            "content": "Codex user string supports several words."}},
+                {"type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [
+                    None,
+                    {"type": "image", "text": "Codex image content is ignored."},
+                    {"type": "input_text", "text": "Codex input text is accepted."},
+                    {"type": "output_text", "text": "Codex output text appears after input."},
+                    {"type": "text", "text": "Codex generic text appears last."},
+                    {"type": "unsupported", "text": "Codex unsupported content is ignored."},
+                    {"type": "text", "text": False},
+                ]}},
+                {"type": "response_item", "payload": {"type": "message", "role": "user",
+                                                            "content": {"type": "input_text", "text": "Not a list."}}},
+            ]
+            claude_file.write_text(
+                "\n".join(json.dumps(entry) for entry in claude_entries)
+                + "\n[]\n", encoding="utf-8")
+            codex_file.write_text(
+                "\n".join(json.dumps(entry) for entry in codex_entries) + "\nnull\n", encoding="utf-8")
+            os.utime(claude_file, (1_800_000_000, 1_800_000_000))
+            os.utime(codex_file, (1_800_000_100, 1_800_000_100))
+
+            output = root / "extract café"
+            result = subprocess.run(
+                [sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
+                 str(output), "--claude-dir", str(claude_dir), "--codex-dir", str(codex_dir), "--min-size", "0"],
+                cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+            self.assertEqual(result.stdout.decode("utf-8").strip(), str(output))
+            self.assertIn(b"Found 2 candidate conversations", result.stderr)
+            self.assertIn(b"Extracted 2 conversations with content (claude=1, codex=1, unknown=0)", result.stderr)
+
+            codex_output = output / "000_codex_codex-session.txt"
+            claude_output = output / "001_claude_claude-session.txt"
+            self.assertEqual(codex_output.read_text(encoding="utf-8"),
+                             f"[PROVIDER]: codex\n[CWD]: {root}\n[SOURCE_FILE]: {codex_file.resolve()}\n\n"
+                             "[USER]: Codex user string supports several words.\n\n"
+                             "[ASSISTANT]: Codex input text is accepted.\n\n"
+                             "[ASSISTANT]: Codex output text appears after input.\n\n"
+                             "[ASSISTANT]: Codex generic text appears last.\n")
+            self.assertEqual(claude_output.read_text(encoding="utf-8"),
+                             f"[PROVIDER]: claude\n[SOURCE_FILE]: {claude_file.resolve()}\n\n"
+                             "[USER]: Claude user string has enough detail.\n\n"
+                             "[ASSISTANT]: Claude assistant first visible text.\n\n"
+                             "[ASSISTANT]: Claude assistant second visible text.\n")
+            self.assertEqual((output / "batches/batch_0.txt").read_text(encoding="utf-8"),
+                             f"{codex_output}\n")
+            self.assertEqual((output / "batches/batch_1.txt").read_text(encoding="utf-8"),
+                             f"{claude_output}\n")
+
     def test_relocated_snapshot_preserves_format_and_filters_directories(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            relocated = root / "relocated bundle"
-            shutil.copytree(BUNDLE, relocated)
+            relocated = copy_bundle(root)
             vault = root / "brain space café"
             vault.mkdir()
             (vault / "z.md").write_text("Last", encoding="utf-8")
