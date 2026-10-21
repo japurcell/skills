@@ -207,6 +207,23 @@ test_skip_mode_returns_explicit_allow_json() {
     "Expected skip mode to return an explicit allow decision."
 }
 
+test_gemini_settings_register_observability() {
+  python3 - "$REPO_ROOT/.gemini/global-settings.json" <<'PYTEST'
+import json
+from pathlib import Path
+import sys
+
+settings = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+commands = [
+    hook["command"]
+    for group in settings["hooks"]["BeforeTool"] if group.get("matcher") == "*"
+    for hook in group["hooks"]
+]
+observability = 'python "$HOME/.gemini/hooks/scripts/send-event.py"'
+assert commands.count(observability) == 1, "Expected one Gemini observability handler."
+PYTEST
+}
+
 test_tool_guard_denies_invalid_payload() {
   local log_dir
   local output
@@ -280,6 +297,7 @@ main() {
   test_block_mode_parses_gemini_tool_input_objects
   test_nested_structured_tool_input_scans_decoded_string_values
   test_skip_mode_returns_explicit_allow_json
+  test_gemini_settings_register_observability
   test_tool_guard_denies_invalid_payload
   test_tool_guard_denies_unexpected_input_exception
   test_tool_guard_rm_env_and_rm_git

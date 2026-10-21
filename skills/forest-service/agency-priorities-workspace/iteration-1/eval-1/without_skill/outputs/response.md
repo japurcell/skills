@@ -1,0 +1,11 @@
+# USDA and Forest Service priorities briefing
+
+**As of October 20, 2026.** This briefing uses only the supplied source packet, which reports retrievals on that date; it is not a fresh check of the cited sites.
+
+The available USDA strategic document is the **FY 2026-2030 Strategic Plan Framework**, not a completed full plan. The packet says the USDA performance page reports that the full FY26-30 plan is still being developed and lists FY22-26 under past plans. The framework's page 1 summarizes six goals: producers first; rural communities and economies; agricultural resilience; health and food; agricultural heritage; and customer service and taxpayer protection. It includes natural resources and wildfire treatment/response under Goal 2, and efficient operations and service delivery using AI and advanced technology under Goal 6. The packet says it contains no dashboard mandate, project funding guarantee, or 50% processing-time target. [USDA performance page](https://www.usda.gov/about-usda/general-information/our-performance); [FY 2026-2030 framework, p. 1](https://usda.azureedge.us/sites/default/files/documents/usda-fy-2026-2030-strategic-plan-framework.pdf).
+
+For the Forest Service, the agency priorities page covers safety, wildfire, timber/grazing/forest health, minerals and energy, disaster recovery, recreation access, organizational efficiency, and shared stewardship. Its recreation section discusses trails, campgrounds, facilities, roads, and visitor service; its efficiency section discusses reducing burdens and administrative layers to deliver results. [Forest Service agency priorities](https://www.fs.usda.gov/about-agency/priorities).
+
+The FY26 leadership article by Chief Tom Schultz, published January 16, 2026, reinforces those topics, including campground and facility modernization, visitor service, and simpler processes. It is specifically an FY26 article, so it provides FY26 direction and context for the agency priorities page, not verified FY27 direction. [FY26 leadership article](https://www.fs.usda.gov/inside-fs/leadership/focus-fundamentals-fy26-agency-priorities).
+
+The packet does not establish the contents of a final USDA FY26-30 plan, any later revisions to the cited pages, or Forest Service FY27 leadership priorities. Those points cannot be confirmed from this supplied evidence.

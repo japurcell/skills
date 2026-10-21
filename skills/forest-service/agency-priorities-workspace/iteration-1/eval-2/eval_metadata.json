@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "repair-alignment",
+  "prompt": "Revise this FY26 project justification using only the supplied source packet: 'Our campground maintenance dashboard meets every USDA goal. USDA requires AI in every dashboard, guarantees our funding, and mandates a 50% reduction in processing time.' The project tracks broken facilities and repair status; it has no AI feature. Give a defensible replacement and an alignment table.",
+  "assertions": [
+    "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+    "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+    "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution."
+  ]
+}

@@ -1,0 +1,12 @@
+# Revised FY26 project justification
+
+The campground maintenance dashboard records broken facilities and repair status. This function can support Forest Service recreation access and infrastructure work by helping staff track maintenance needs at campgrounds and facilities. It may also help service delivery if project results show that the tracking process improves coordination or repair follow-through. This is a project-level alignment analysis, not an official determination that the project meets every agency goal. The project has no AI feature, and the supplied sources establish no requirement for AI in dashboards, funding guarantee, or official 50% processing-time target.
+
+| Project function or proposed measure | Evidence and relationship | Status |
+|---|---|---|
+| Record broken campground facilities and repair status | The Forest Service agency priorities page describes improving campgrounds and facilities as part of recreation access. | Directly supported functional alignment; not proof of agency-wide goal achievement. |
+| Track whether repairs are assigned and completed | The FY26 leadership article discusses modernizing campgrounds and facilities and improving visitor service. Tracking may support that work. | Project analysis; the source does not prescribe this dashboard or certify its effect. |
+| Measure repair follow-through | Suggested measures include the share of reported issues with current status, time from report to assignment, and time to repair completion. | Proposed project measures, not official targets. Set targets only after collecting a baseline. |
+| Assess service or efficiency effects | Compare baseline and later repair timelines, status completeness, and visitor-service outcomes; document methods and relevant context. | Evidence needed to demonstrate contribution. The cited sources provide no project-specific performance target or funding commitment. |
+
+Sources: [Forest Service agency priorities](https://www.fs.usda.gov/about-agency/priorities) and [FY26 leadership article](https://www.fs.usda.gov/inside-fs/leadership/focus-fundamentals-fy26-agency-priorities). The article is scoped to FY26. The USDA framework also describes efficient operations and service delivery in Goal 6, but does not specify this dashboard, require its use of AI, or set the stated 50% target. [USDA FY 2026-2030 framework, p. 1](https://usda.azureedge.us/sites/default/files/documents/usda-fy-2026-2030-strategic-plan-framework.pdf).

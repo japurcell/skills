@@ -1,3 +1,5 @@
 # Runtime-local auto-ingest hooks share one repo manifest
 
+Status: superseded by the brain migration on 2026-10-20. The text below records the historical system; current behavior is documented in [brain hooks](../../brain/codebase/brain-hooks.md).
+
 Source auto-ingest now runs through dedicated startup hook entrypoints in `.github/hooks/scripts/` for Copilot and `.gemini/hooks/scripts/` for Gemini, not through the existing required-skill injectors. Copilot keeps both its prompt-time steer and final-response backstop in `.github/hooks/scripts/inject-auto-ingest-context.py`, while Gemini keeps the same split in `.gemini/hooks/scripts/inject-auto-ingest-context.py`. Each runtime keeps its executable logic local to its active hook surface, while both write the same committed manifest at `.agents/memory/sources/source-ingest-manifest.json` so source changes, stale summaries, and orphan cleanup stay consistent across tools without introducing cross-runtime shared hook code.

@@ -109,9 +109,8 @@ for script in ("send-event.py", "rtk-hook-gemini.py"):
         assert handler["timeout"] == 5000
     else:
         assert group["matcher"] == "*"
-        if script == "send-event.py":
-            assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
-            assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "BeforeTool"
+        assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
+        assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "BeforeTool"
 assert positions[0] < positions[1], "Expected observability before RTK"
 PY
 }

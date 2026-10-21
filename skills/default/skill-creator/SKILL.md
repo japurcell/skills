@@ -93,9 +93,9 @@ Skills use a three-level loading system:
 These word counts are approximate and you can feel free to go longer if needed.
 
 **Key patterns:**
-- Keep SKILL.md under 500 lines; if you're approaching this limit, add an additional layer of hierarchy along with clear pointers about where the model using the skill should go next to follow up.
-- Reference files clearly from SKILL.md with guidance on when to read them
-- For large reference files (>300 lines), include a table of contents
+- Keep the SKILL.md body under 500 lines. Move branch-specific detail into reference files as the body approaches this limit.
+- Keep references one level deep from SKILL.md. Link every reference directly from SKILL.md, state when to read it, and read the complete file when needed.
+- Reference files longer than 100 lines MUST include a table of contents at the top so a partial preview reveals the full scope.
 
 **Domain organization**: When a skill supports multiple domains/frameworks, organize by variant:
 ```
@@ -114,7 +114,7 @@ This goes without saying, but skills must not contain malware, exploit code, or 
 
 #### Writing Patterns
 
-Prefer using the imperative form in instructions.
+Use the imperative form in instructions.
 
 **Defining output formats** - You can do it like this:
 ```markdown

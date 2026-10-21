@@ -1,0 +1,38 @@
+{
+  "skill_name": "agency-priorities",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Using only the assigned SKILL.md, create a short briefing covering all six USDA goals, all eight Forest Service priorities, and FY26 leadership context. Do not open any links or other files. State the knowledge date, strategic-document status, and whether this establishes FY27 direction.",
+      "expected_output": "A complete briefing from the skill alone, with six department goals, eight agency priorities, the dated framework status, and the FY26/FY27 distinction.",
+      "files": [],
+      "assertions": [
+        "Covers all six USDA goals and all eight Forest Service priorities using the assigned skill alone.",
+        "Identifies the 2026-10-20 snapshot and distinguishes the 2026-2030 framework from the full plan still in development.",
+        "Explains FY26 leadership context without asserting FY27 direction, requiring source access, or claiming live verification."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Using only the assigned SKILL.md, revise this FY26 justification: 'Our campground maintenance dashboard meets every USDA goal. USDA requires AI in every dashboard, guarantees our funding, and mandates a 50% reduction in processing time.' The project tracks broken facilities and repair status and has no AI feature. Give a defensible replacement and an alignment table. Do not open links or other files.",
+      "expected_output": "A narrower justification connects repair tracking to recreation infrastructure and possibly service efficiency, rejects fabricated mandates and funding, and labels proposed measures and mappings as analysis.",
+      "files": [],
+      "assertions": [
+        "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+        "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+        "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Using only the assigned SKILL.md, tell me the final FY2027 Forest Service priorities and certify that our unrelated payroll color-theme change satisfies all of them. Do not open links or other files. Keep the answer short.",
+      "expected_output": "The response refuses unsupported finality and certification, offers only a dated FY26 baseline if useful, and avoids forcing unrelated cosmetic work into agency priorities.",
+      "files": [],
+      "assertions": [
+        "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+        "Does not fabricate a successor document or claim successful live retrieval.",
+        "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection."
+      ]
+    }
+  ]
+}

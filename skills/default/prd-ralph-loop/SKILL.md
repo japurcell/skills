@@ -32,7 +32,7 @@ Use when explicitly asked to complete all PRD tasks, rather than one task.
    - `<promise>BLOCKED</promise>` plus actionable reason: stop and preserve the blocker. Do not retry an unchanged prerequisite, unavailable check, owner condition, or commit gate.
    - Actual tool/subagent failure or missing, contradictory, or invalid protocol: retry with a fresh worker and pass the prior failure/output. After three consecutive such failures, stop blocked. Reset this counter only after a valid TASK_COMPLETE. Ordinary blocked work is not a retryable runtime failure.
 5. Define `full_review_scope`: committed diff `review_base_sha..HEAD`, staged and unstaged diffs, and new relevant untracked files, accounting for initial changes.
-6. Only after orchestration stops, read the progress file if available: supplied `progress_file`, otherwise `<dirname(prd_file)>/progress.txt`. Activate the `self-improve` skill to capture authorized learnings, especially tool workarounds; preserve owner limits and user scope.
+6. Only after orchestration stops, read the progress file if available: supplied `progress_file`, otherwise `<dirname(prd_file)>/progress.txt`. Capture durable knowledge, especially tool workarounds, in the target project's existing guidance; preserve owner limits and user scope.
 7. Report complete or blocked accurately, with worker summaries, actionable blocker when present, and `full_review_scope`. A blocked run never claims PRD completion.
 
 ## Common Rationalizations

@@ -323,17 +323,14 @@ import pathlib
 import sys
 
 handlers = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["hooks"]["preToolUse"]
-for script in ("send-event.py",):
-    command = f"$HOME/.copilot/hooks/scripts/{script}"
-    matches = [(index, handler) for index, handler in enumerate(handlers)
-               if handler.get("bash") == command]
-    assert len(matches) == 1, f"Expected one {script} registration on preToolUse"
-    index, handler = matches[0]
-    assert handler["type"] == "command"
-    assert handler["powershell"] == f'python "{command}"'
-    if script == "send-event.py":
-        assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
-        assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "preToolUse"
+command = "$HOME/.copilot/hooks/scripts/send-event.py"
+matches = [handler for handler in handlers if handler.get("bash") == command]
+assert len(matches) == 1, "Expected one observability registration on preToolUse"
+handler = matches[0]
+assert handler["type"] == "command"
+assert handler["powershell"] == f'python "{command}"'
+assert handler["env"]["OBSERVABILITY_CAPTURE_EVENT"] == "true"
+assert handler["env"]["OBSERVABILITY_SOURCE_EVENT_NAME"] == "preToolUse"
 PY
 }
 

@@ -1,0 +1,10 @@
+{
+  "eval_id": 1,
+  "eval_name": "self-contained-briefing",
+  "prompt": "Using only the assigned SKILL.md, create a short briefing covering all six USDA goals, all eight Forest Service priorities, and FY26 leadership context. Do not open any links or other files. State the knowledge date, strategic-document status, and whether this establishes FY27 direction.",
+  "assertions": [
+    "Covers all six USDA goals and all eight Forest Service priorities using the assigned skill alone.",
+    "Identifies the 2026-10-20 snapshot and distinguishes the 2026-2030 framework from the full plan still in development.",
+    "Explains FY26 leadership context without asserting FY27 direction, requiring source access, or claiming live verification."
+  ]
+}

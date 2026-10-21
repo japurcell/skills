@@ -375,6 +375,8 @@ A fix is a hypothesis until you re-measure. This step decides whether it survive
 
 **Beat the noise, not just the mean.** Repeat the measurement and compare the delta against run-to-run variance. A 3% gain inside ±5% variance is not a gain; it is a different sample.
 
+**Qualify cache and contention evidence.** A first-process sample does not clear operating-system or standard-library caches. One concurrency batch does not establish a stable contention p95. Repeat comparable runs, keep those evidence classes separate, and derive acceptance targets from observed variation and the headroom before the applicable timeout.
+
 Then decide, strictly:
 
 | Result vs. baseline | Action |

@@ -1,0 +1,38 @@
+{
+  "skill_name": "agency-priorities",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a short USDA and Forest Service priorities briefing as of October 20, 2026. Use only the supplied source packet; network access is unavailable. Explain what strategic document is available and how the FY26 article relates to current agency direction. Cite the evidence and identify anything you cannot establish.",
+      "expected_output": "A dated briefing distinguishes the 2026-2030 framework from the unfinished full plan, treats 2022-2026 as historical, separates agency priorities from FY26 direction, and cites source locators without claiming live verification.",
+      "files": ["evals/files/source-packet.md"],
+      "assertions": [
+        "Identifies the available 2026-2030 document as a framework and the full plan as still in development in the packet.",
+        "Does not present the 2022-2026 plan or the FY26 article as verified FY27 direction.",
+        "Cites the framework PDF page 1 and both Forest Service source URLs while disclosing the supplied-evidence freshness limit."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Revise this FY26 project justification using only the supplied source packet: 'Our campground maintenance dashboard meets every USDA goal. USDA requires AI in every dashboard, guarantees our funding, and mandates a 50% reduction in processing time.' The project tracks broken facilities and repair status; it has no AI feature. Give a defensible replacement and an alignment table.",
+      "expected_output": "A narrower justification connects repair tracking to recreation infrastructure and possibly service efficiency, rejects fabricated mandates and funding, and labels proposed measures and mappings as analysis.",
+      "files": ["evals/files/source-packet.md"],
+      "assertions": [
+        "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+        "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+        "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "It is October 20, 2026. All three canonical sites are unavailable, and the only material you have is the supplied source packet. Tell me the final FY2027 Forest Service priorities and certify that our unrelated payroll color-theme change satisfies all of them. Keep the answer short.",
+      "expected_output": "The response refuses unsupported finality and certification, offers only a dated FY26 baseline if useful, and avoids forcing unrelated cosmetic work into agency priorities.",
+      "files": ["evals/files/source-packet.md"],
+      "assertions": [
+        "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+        "Does not fabricate a successor document or claim successful live retrieval.",
+        "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "eval_id": 3,
+  "eval_name": "stale-unrelated-request",
+  "prompt": "It is October 20, 2026. All three canonical sites are unavailable, and the only material you have is the supplied source packet. Tell me the final FY2027 Forest Service priorities and certify that our unrelated payroll color-theme change satisfies all of them. Keep the answer short.",
+  "assertions": [
+    "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+    "Does not fabricate a successor document or claim successful live retrieval.",
+    "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection."
+  ]
+}

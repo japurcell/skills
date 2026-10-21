@@ -1,2 +1,0 @@
-class SyncClient:
-    pass

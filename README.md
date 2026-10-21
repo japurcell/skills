@@ -72,7 +72,7 @@ The installer copies:
 - `.copilot/hooks/` entries are copied to `~/.copilot/hooks` when that directory exists
 - `.gemini/` contents into `~/.gemini`, then `.gemini/global-settings.json` into `~/.gemini/settings.json`
 - `.copilot/copilot-instructions.md` into `~/.copilot/copilot-instructions.md`
-- maintained `.codex/hooks/` scripts for startup and security into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
+- maintained `.codex/hooks/` scripts for startup and security into `~/.codex/hooks`, then safely merges their `SessionStart`, `PreToolUse`, `PostToolUse`, and `Stop` registrations from `.codex/global-hooks.json` into `~/.codex/hooks.json`
 
 Both installers require stable Rust Token Killer (RTK) 0.50.0 or newer on `PATH` before changing installed files. They set only `[hooks] suppress_hook_warning = true` in the user's RTK config (`~/Library/Application Support/rtk/config.toml` on macOS, `~/.config/rtk/config.toml` on Linux, or `%APPDATA%\rtk\config.toml` on Windows). An existing config is backed up as `config.toml.bak` before a change; a correct config stays byte-identical. An existing backup or ambiguous TOML stops the install for manual review. This account-wide setting suppresses the false missing-hook advisory for explicit commands while leaving other RTK diagnostics visible. The installers do not download RTK. They remove old prerelease files only when ownership and content or receipt hashes match, and report modified files for manual review. Copilot and Gemini still use automatic RTK forwarding.
 
@@ -255,7 +255,11 @@ For the session-end hook to work, add these lines to your vscode settings.json f
 
 1. Edit published skill sources in `skills/<category>/`, custom agents in `agents/`, and hook/config sources in `hooks/`, `.codex/`, `.copilot/`, or `.gemini/`.
 2. Rerun `./scripts/install.sh` to refresh the installed local copies.
-3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](.agents/instructions/testing.md).
+3. Run `./scripts/test-all.py` for all maintained test suites, or use targeted checks from [testing guidance](brain/codebase/testing.md).
+
+### Brain hooks
+
+The standalone brain hooks maintain the root index and load it at supported session starts and resets. See [portable brain hook setup, limits, and verification](brain/codebase/brain-hooks.md). Existing user installations require an explicit reinstall.
 
 ### Generated provider hooks
 
@@ -281,7 +285,7 @@ Ignore `skills/*/*-workspace/**/outputs/` and `.agents/skills/*-workspace/**/out
 
 ## Authoring notes
 
-Canonical agent-facing authoring rules live in `.agents/instructions/`.
+Current agent-facing guidance lives in `brain/codebase/`; begin at `brain/index.md`. After code changes, run `reflect` and persist only durable findings.
 
 ### Skill format
 
@@ -331,9 +335,9 @@ runner, and model-router grader tests. It excludes lint-only checks, formatting,
 live model evaluations, archived tests, and generated fixtures. Native Windows is
 not supported by this aggregate command; individual PowerShell tests remain usable.
 
-Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in [testing guidance](.agents/instructions/testing.md).
+Run the narrowest command that covers your change. Canonical agent-facing validation routing lives in [testing guidance](brain/codebase/testing.md).
 
-For hook changes, use the targeted [source checks](.agents/instructions/testing/hooks.md). Before authorized live validation, refresh installed copies and follow [live-hook testing](.agents/instructions/testing/hooks-live.md); honor task-specific installation ownership.
+For hook changes, use the targeted [source checks](brain/codebase/hook-testing.md). Before authorized live validation, refresh installed copies and follow [live-hook testing](brain/codebase/live-hook-testing.md); honor task-specific installation ownership.
 
 For the Codex required-skills hook and installer, run:
 
@@ -359,7 +363,7 @@ The installer output identifies the resolved Codex agent destination. Parse an i
 
 ## Additional docs
 
-- [Instruction routes](.agents/instructions/INDEX.md) - select guidance by task.
-- [Knowledge admission](.agents/instructions/knowledge-base.md) - what earns a place in instructions or memory.
-- [Testing guidance](.agents/instructions/testing.md) - focused validation routes.
-- [Memory index](.agents/memory/INDEX.md) - optional limitations and source references.
+- [Instruction routes](brain/codebase/index.md) - select guidance by task.
+- Activate the `brain` and `reflect` skills to maintain persistent knowledge.
+- [Testing guidance](brain/codebase/testing.md) - focused validation routes.
+- [Codebase index](brain/codebase/index.md) - optional limitations and source references.

@@ -21,6 +21,7 @@ from hooks.registrations import (
     configuration_lock,
     preflight_status_path,
     reconcile,
+    retire_assets,
     validate_status_asset,
     verify_unchanged,
 )
@@ -130,18 +131,19 @@ def main() -> int:
         template, _ = load_object(arguments.template, "template")
         validate_hooks(template, arguments.provider, "Template")
         home = Path(os.path.abspath(arguments.home))
+        hook_directory = home / f".{arguments.provider}/hooks/scripts"
         pin_provider_commands(template, arguments.provider, home)
         destination = Path(os.path.abspath(arguments.destination))
         check_parent_directories(home, destination)
         if destination.is_symlink():
             raise ValueError(f"Destination must not be a symbolic link: {destination}")
-        preflight_status_path(arguments.provider, template.get("hooks", {}), home / f".{arguments.provider}/hooks/scripts")
+        preflight_status_path(arguments.provider, template.get("hooks", {}), hook_directory)
         with configuration_lock(destination, arguments.check):
             exists = destination.exists()
             existing, old_bytes = load_object(destination, "existing") if exists else ({}, b"")
             merged = merge_hooks(existing, template, arguments.provider, home)
             if not arguments.check:
-                validate_status_asset(arguments.provider, template.get("hooks", {}), home / f".{arguments.provider}/hooks/scripts")
+                validate_status_asset(arguments.provider, template.get("hooks", {}), hook_directory)
             if exists and merged == existing:
                 info = destination.stat()
                 needs_private_copy = info.st_nlink > 1 or (
@@ -149,16 +151,17 @@ def main() -> int:
                 )
                 if needs_private_copy and not arguments.check:
                     atomic_write(destination, old_bytes, home)
-                return 0
-            backup = destination.with_name(destination.name + ".bak")
-            if exists and backup.is_symlink():
-                raise ValueError(f"Backup must not be a symbolic link: {backup}")
-            if arguments.check:
-                return 0
-            verify_unchanged(destination, exists, old_bytes)
-            if exists:
-                atomic_write(backup, old_bytes, home)
-            atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
+            else:
+                backup = destination.with_name(destination.name + ".bak")
+                if exists and backup.is_symlink():
+                    raise ValueError(f"Backup must not be a symbolic link: {backup}")
+                if not arguments.check:
+                    verify_unchanged(destination, exists, old_bytes)
+                    if exists:
+                        atomic_write(backup, old_bytes, home)
+                    atomic_write(destination, (json.dumps(merged, indent=2, ensure_ascii=False) + "\n").encode("utf-8"), home)
+            if not arguments.check:
+                retire_assets(arguments.provider, hook_directory)
             return 0
     except (OSError, ValueError) as exc:
         print(f"{arguments.provider.capitalize()} install failed: {exc}", file=sys.stderr)

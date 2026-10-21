@@ -41,15 +41,20 @@ def credential_label(text):
     """Recognize credentials in caller-normalized labels before display clipping."""
     return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
 SECURITY_HOOK_FILES = ('scan-secrets.py', 'tool-guard.py', 'scan-status.py')
-def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False) -> str:
-    """Quote an already validated five-operand security-hook launch."""
+BRAIN_HOOK_FILES = ('auto-index-brain.py', 'inject-brain.py')
+PINNED_HOOK_FILES = ('scan-secrets.py', 'tool-guard.py', 'scan-status.py', 'auto-index-brain.py', 'inject-brain.py')
+def hook_arguments(filename: str, provider: str) -> tuple[str, ...]:
+    return ("--provider", provider) if filename in BRAIN_HOOK_FILES else ()
+
+def serialize_trusted_launch(python: str, script: str, shell: str, *, windows: bool = False, extra: tuple[str, ...] = ()) -> str:
+    """Quote a validated isolated-interpreter launch and constant hook arguments."""
     import shlex
 
-    arguments = [python, "-I", "-S", "-B", script]
+    arguments = [python, "-I", "-S", "-B", script, *extra]
     if shell == "powershell":
         return "& " + " ".join("'" + item.replace("'", "''") + "'" for item in arguments)
     if shell == "windows" or (shell == "native" and windows):
-        return f'"{arguments[0]}" -I -S -B "{arguments[-1]}"'
+        return f'"{python}" -I -S -B "{script}"' + (" " + " ".join(extra) if extra else "")
     return shlex.join(arguments)
 
 def trusted_posix_arguments(command: str) -> list[str] | None:
@@ -61,7 +66,7 @@ def trusted_posix_arguments(command: str) -> list[str] | None:
         arguments = shlex.split(command)
     except ValueError:
         return None
-    if (len(arguments) != 5 or arguments[1:4] != ["-I", "-S", "-B"]
+    if ((len(arguments) != 5 and not (len(arguments) == 7 and arguments[5] == "--provider" and arguments[6] in {"codex", "copilot", "gemini"})) or arguments[1:4] != ["-I", "-S", "-B"]
             or not Path(arguments[0]).is_absolute()):
         return None
     return arguments
@@ -328,14 +333,14 @@ def _diag_installed_expected(script, registrations=None, executable=None):
     for serialized in registrations:
         event, matcher, handler = _diag_json.loads(serialized)
         keys = ("bash", "powershell") if DIAG_PROVIDER == "copilot" else ("command", "commandWindows") if DIAG_PROVIDER == "codex" else ("command",)
-        for filename in SECURITY_HOOK_FILES:
+        for filename in PINNED_HOOK_FILES:
             if not any(filename in handler.get(key, "") for key in keys):
                 continue
             python = executable or _diag_sys.executable
             path = str(_DiagPath(script).absolute().parent / filename)
             for key in keys:
                 shell = "powershell" if key == "powershell" else "windows" if key == "commandWindows" else "native" if key == "command" else "posix"
-                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt")
+                handler[key] = serialize_trusted_launch(python, path, shell, windows=_diag_os.name == "nt", extra=hook_arguments(filename, DIAG_PROVIDER))
             expected.discard(serialized)
             expected.add(_diag_fingerprint(event, matcher, handler))
     return expected
@@ -482,7 +487,7 @@ def diagnostics_encode(report, *, wrap=None):
 # BEGIN PROVIDER ADAPTER
 DIAG_PROVIDER = 'gemini'
 DIAG_LIMITS = {'directories': 1024, 'entries': 4096, 'records': 256, 'unsafe_records': 16, 'depth': 32, 'label_bytes': 160, 'seconds': 1.0, 'response_bytes': 16384, 'assets': 64, 'hash_bytes': 1048576, 'settings_bytes': 262144}
-DIAG_BUILD = '6f0583590629f58bedba2da0472f667e1f7466afc2a6267dc5e46c3e21bab719'
+DIAG_BUILD = '793ca51d96d207afedf9e580c6f501e6031285c874bcc7e88beb00968785cc6a'
 DIAG_ASSETS = [('helpers/common.py', '1a1e208285c1618bd8e7ddb84c09571ee3b9a3f82685946da255f259076f695f'), ('helpers/audit.py', '0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661'), ('tool-guard.py', None), ('helpers/tool_guard_policy.py', 'c49ce24e7fad3ae619929eea4e0bdcde0735ccc3a6c9c24c8f6275e7d1cd8197'), ('helpers/scan_types.py', '19f69ccb6d3268d9c43c353b86c0898d75994c1bf1279a544eed52dbac2bfe59'), ('helpers/scan_reporting.py', '0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28'), ('helpers/scan_allowlist.py', '370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43'), ('helpers/scan_stream.py', '631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31'), ('helpers/scan_git.py', '5f40f7158fb649f23056da9a20d2c7239786f6b82493403fb9e0f31d4ebd7809'), ('helpers/scan_audit.py', '501f7dc6d5705538672642061835f9d1b95a35b2c69f1b73ba29d9934bc15450'), ('helpers/scan_native_file.py', '1c07697a5020bed461b41f3c0015c7dc798fc8f5c62941af60947c003ea4adf8'), ('helpers/scan_native_process.py', 'ed68b76b0021e2514ffd0822eba2a463e1bfb459ab707d47a4161c42e909bbc1'), ('helpers/scan_engine.py', '2f75e639211905e25650af46959512e49ac2abb338aa248ffeb74b81d43570d1'), ('scan-status.py', None), ('scan-secrets.py', None), ('hooks-diagnostics.py', None)]
 DIAG_POLICY_LIMITS = {'scope': 'canonical scanner constants and Guardian input-bound subset', 'scanner': {'MAX_FILES': 256, 'MAX_FILE_BYTES': 'not_defined', 'MAX_TOTAL_BYTES': 8388608, 'MAX_SCAN_SECONDS': 8.0}, 'guardian': {'MAX_SCAN_TEXT': 32768, 'MAX_NATIVE_DATA_BYTES': 1048576, 'MAX_NATIVE_PATCH_BYTES': 1048576, 'MAX_COMMAND_SEGMENTS': 128, 'MAX_COMMAND_TOKENS': 256, 'MAX_STRUCTURED_DEPTH': 32, 'MAX_STRUCTURED_NODES': 256, 'MAX_STRUCTURED_STRINGS': 128}}
 DIAG_EVENTS = ['AfterAgent', 'AfterModel', 'AfterTool', 'BeforeAgent', 'BeforeModel', 'BeforeTool', 'BeforeToolSelection', 'Notification', 'PreCompress', 'SessionEnd', 'SessionStart']
@@ -591,7 +596,7 @@ INCOMPLETE_LOG = None
 SCAN_ACTION = "scan"
 SCAN_RESULT = None
 SCAN_SECURITY_OUTCOME = "incomplete"
-REPORT_BUILD = "5688b550aada829a"
+REPORT_BUILD = "59cf10114d115e95"
 REPORT_PROVIDER = DIAG_PROVIDER
 
 # Optional detector assets load only after exact diagnostics recovery routing.
@@ -666,7 +671,9 @@ def handle_unexpected_exception(exc):
     processed = result.counts["processed_findings"] if result else 0
     security = "findings" if processed else SCAN_SECURITY_OUTCOME
     audit = "failed"
-    if INCOMPLETE_LOG is not None:
+    # A failed log write already exhausted its attempt. Reporting that failure
+    # must not retry the same destination or spend its lock deadline twice.
+    if INCOMPLETE_LOG is not None and failure.operation != "scan_log":
         try:
             append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=result.env_files if result else [],
                             findings=result.findings if result else [],

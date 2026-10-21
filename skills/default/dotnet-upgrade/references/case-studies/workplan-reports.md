@@ -164,4 +164,4 @@ Checklists are [bundled in the playbook](../playbook.md#local-versus-deployment-
 
 ## Document extraction review
 
-The October 1, 2026 note records Milestone 2 source-extraction acceptance, not the final integrated review. Milestone 4 document acceptance and destination knowledge-base reconciliation are recorded in the [document review](../document-review.md). No .NET commands, historical runner, trial project, model, benchmark, packaging, installer, migration or live deployment was executed. This case study remains historical WorkPlanReports evidence and does not prove another project's migration or live client behavior.
+The October 1, 2026 note records Milestone 2 source-extraction acceptance, not the final integrated review. A subsequent historical maintainer review recorded document acceptance and destination knowledge-base reconciliation. No .NET commands, historical runner, trial project, model, benchmark, packaging, installer, migration or live deployment was executed. This case study remains historical WorkPlanReports evidence and does not prove another project's migration or live client behavior.

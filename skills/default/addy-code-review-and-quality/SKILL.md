@@ -357,6 +357,10 @@ For triaging `npm audit` findings and supply-chain risk (typosquatting, compromi
 - [ ] **Request changes** — Issues must be addressed
 ```
 
+## Review Completeness
+
+A timed-out, interrupted, or incomplete review supplies partial findings. State the unreviewed scope and missing checks; never report it as approval or security clearance. Give an approval verdict only after completing the review scope and required verification.
+
 ## See Also
 
 - For detailed security review guidance, see `../../../references/security-checklist.md`

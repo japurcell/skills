@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+      "passed": true,
+      "evidence": "Replacement rejects all-goals, AI mandate, funding guarantee, and 50% official target."
+    },
+    {
+      "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+      "passed": true,
+      "evidence": "Maps facility and repair tracking to recreation access and visitor experience without inventing AI functionality."
+    },
+    {
+      "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+      "passed": true,
+      "evidence": "Labels alignment as analysis, identifies staff-use and repair outcome evidence, and treats repair time as a proposed project measure."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

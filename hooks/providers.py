@@ -14,12 +14,11 @@ class Provider:
     hook_root: PurePosixPath
     runtime_home_name: str
     observability_environment_prefix: str
-    auto_ingest_helper_name: str
 
 
 PROVIDERS = {
-    "codex": Provider("codex", PurePosixPath(".codex/hooks"), ".codex", "CODEX", "source_ingest"),
-    "copilot": Provider("copilot", PurePosixPath(".copilot/hooks"), ".copilot", "COPILOT", "auto_ingest"),
-    "gemini": Provider("gemini", PurePosixPath(".gemini/hooks"), ".gemini", "GEMINI", "source_ingest"),
-    "github": Provider("github", PurePosixPath(".github/hooks"), ".copilot", "COPILOT", "auto_ingest"),
+    "codex": Provider("codex", PurePosixPath(".codex/hooks"), ".codex", "CODEX"),
+    "copilot": Provider("copilot", PurePosixPath(".copilot/hooks"), ".copilot", "COPILOT"),
+    "gemini": Provider("gemini", PurePosixPath(".gemini/hooks"), ".gemini", "GEMINI"),
+    "github": Provider("github", PurePosixPath(".github/hooks"), ".copilot", "COPILOT"),
 }

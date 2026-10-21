@@ -27,7 +27,7 @@ def envelope(provider, command="hooks-diagnostics-v1", **extra):
 
 
 def registered_handlers(config, provider):
-    groups = [group for event in config["hooks"].values() for group in event]
+    groups = [group for entries in config["hooks"].values() for group in entries]
     return groups if provider == "copilot" else [handler for group in groups for handler in group["hooks"]]
 
 
@@ -58,21 +58,28 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(installed.returncode, 0, installed.stderr)
             paths = {"codex": ".codex/hooks.json", "copilot": ".copilot/hooks/hooks.json", "gemini": ".gemini/settings.json"}
             configs = {provider: json.loads((home / path).read_bytes()) for provider, path in paths.items()}
-            # Scanner and disabled Guardian remain explicit installed invocations.
-            # Active registrations still exercise the installed status handler.
-            manual_handlers = {}
+            # Scanners and guards remain explicit installed invocations.
+            # End Turn registrations select status.
+            manual_scanners = {}
+
+            def configured_handler(provider, filename, source):
+                handler = source.copy()
+                operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B",
+                            str(home / entry(provider).with_name(filename))]
+                handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
+                if provider == "copilot":
+                    handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
+                return handler
+
             for provider in PROVIDERS:
                 legacy = json.loads((ROOT / "scripts/fixtures/provider-hooks-pre-status" / (provider + ".json")).read_bytes())
-                for filename in ("scan-secrets.py", "tool-guard.py"):
-                    handler = registered_handler(legacy, provider, "scan-secrets.py").copy()
-                    operands = [str(Path(sys.executable).resolve()), "-I", "-S", "-B", str(home / entry(provider).with_name(filename))]
-                    handler["bash" if provider == "copilot" else "command"] = shlex.join(operands)
-                    if provider == "copilot":
-                        handler["powershell"] = "& " + " ".join("'" + item.replace("'", "''") + "'" for item in operands)
-                    manual_handlers[provider, filename] = handler
+                legacy_handler = registered_handler(legacy, provider, "scan-secrets.py")
+                manual_scanners[provider] = configured_handler(provider, "scan-secrets.py", legacy_handler)
 
             def selected_handler(config, provider, filename):
-                return manual_handlers[provider, filename]
+                if filename == "scan-secrets.py":
+                    return manual_scanners[provider]
+                return configured_handler(provider, filename, manual_scanners[provider])
             for provider in PROVIDERS:
                 for helper in ("scan_types", "scan_reporting", "scan_allowlist", "scan_stream",
                                "scan_git", "scan_native_file", "scan_native_process", "scan_audit", "scan_engine"):

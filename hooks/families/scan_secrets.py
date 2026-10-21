@@ -173,7 +173,9 @@ def handle_unexpected_exception(exc):
     processed = result.counts["processed_findings"] if result else 0
     security = "findings" if processed else SCAN_SECURITY_OUTCOME
     audit = "failed"
-    if INCOMPLETE_LOG is not None:
+    # A failed log write already exhausted its attempt. Reporting that failure
+    # must not retry the same destination or spend its lock deadline twice.
+    if INCOMPLETE_LOG is not None and failure.operation != "scan_log":
         try:
             append_scan_log(**INCOMPLETE_LOG, status="incomplete", env_files=result.env_files if result else [],
                             findings=result.findings if result else [],

@@ -1,0 +1,209 @@
+{
+  "metadata": {
+    "skill_name": "agency-priorities",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1,
+    "executor_model": "gpt-6-luna requested; runtime execution settings unconfirmed"
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "self-contained-briefing",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Covers all six USDA goals and all eight Forest Service priorities using the assigned skill alone.",
+          "passed": true,
+          "evidence": "Enumerates all six USDA goals and all eight Forest Service priorities from embedded content; worker access log reports reading only SKILL.md."
+        },
+        {
+          "text": "Identifies the 2026-10-20 snapshot and distinguishes the 2026-2030 framework from the full plan still in development.",
+          "passed": true,
+          "evidence": "States snapshot checked 2026-10-20 and framework available while full plan remained in development."
+        },
+        {
+          "text": "Explains FY26 leadership context without asserting FY27 direction, requiring source access, or claiming live verification.",
+          "passed": true,
+          "evidence": "Explains January 16, 2026 FY26 context and explicitly says this cannot establish final FY2027 priorities."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "project-alignment",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+          "passed": true,
+          "evidence": "Replacement rejects all-goals, AI mandate, funding guarantee, and 50% official target."
+        },
+        {
+          "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+          "passed": true,
+          "evidence": "Maps facility and repair tracking to recreation access and visitor experience without inventing AI functionality."
+        },
+        {
+          "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+          "passed": true,
+          "evidence": "Labels alignment as analysis, identifies staff-use and repair outcome evidence, and treats repair time as a proposed project measure."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "unsupported-claims",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+          "passed": true,
+          "evidence": "States the snapshot does not establish final FY2027 priorities."
+        },
+        {
+          "text": "Does not fabricate a successor document or claim successful live retrieval.",
+          "passed": true,
+          "evidence": "Claims neither a successor nor live verification."
+        },
+        {
+          "text": "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection.",
+          "passed": true,
+          "evidence": "Declines certification and states no connection is established for unrelated payroll color theme."
+        }
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "self-contained-briefing",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 1,
+        "failed": 2,
+        "total": 3,
+        "pass_rate": 0.3333333333333333
+      },
+      "expectations": [
+        {
+          "text": "Covers all six USDA goals and all eight Forest Service priorities using the assigned skill alone.",
+          "passed": false,
+          "evidence": "Explicitly says the baseline cannot name or summarize the six goals or eight priorities."
+        },
+        {
+          "text": "Identifies the 2026-10-20 snapshot and distinguishes the 2026-2030 framework from the full plan still in development.",
+          "passed": false,
+          "evidence": "Knowledge date and strategic-document status are both reported as absent."
+        },
+        {
+          "text": "Explains FY26 leadership context without asserting FY27 direction, requiring source access, or claiming live verification.",
+          "passed": true,
+          "evidence": "Distinguishes FY26 from unestablished FY27 direction without inventing annual content."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "project-alignment",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "pass_rate": 0.6666666666666666
+      },
+      "expectations": [
+        {
+          "text": "Removes unsupported all-goals, mandatory-AI, guaranteed-funding, and official 50% target claims.",
+          "passed": true,
+          "evidence": "Rejects unsupported all-goals, AI mandate, guaranteed funding, and 50% target claims."
+        },
+        {
+          "text": "Connects actual repair-tracking behavior to sourced recreation infrastructure priorities without inventing AI functionality.",
+          "passed": false,
+          "evidence": "Cannot connect the dashboard to a named recreation priority because the baseline has no embedded priorities."
+        },
+        {
+          "text": "Distinguishes project analysis and suggested measures from official commitments and identifies evidence needed to prove contribution.",
+          "passed": true,
+          "evidence": "Calls assessment provisional and identifies required activity-to-goal and outcome evidence."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "unsupported-claims",
+      "configuration": "old_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "States that final FY2027 direction cannot be established from the available FY26 evidence.",
+          "passed": true,
+          "evidence": "States baseline establishes no final FY2027 priorities."
+        },
+        {
+          "text": "Does not fabricate a successor document or claim successful live retrieval.",
+          "passed": true,
+          "evidence": "No successor or live retrieval is claimed."
+        },
+        {
+          "text": "Does not certify the color-theme change as satisfying all priorities and explains the missing substantive connection.",
+          "passed": true,
+          "evidence": "Declines certifying an unrelated payroll color theme."
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0
+      }
+    },
+    "old_skill": {
+      "pass_rate": {
+        "mean": 0.6666666666666666
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.33"
+    }
+  },
+  "notes": [
+    "Manual semantic review: revised skill 9/9; previous skill 6/9. Previous skill lacked embedded agency content.",
+    "Each configuration used one worker for three cases; this is not a repeated-run or independent-case benchmark.",
+    "Worker-authored access logs report only the assigned SKILL.md was read; full runtime traces and timing/token metrics are unavailable.",
+    "The revised alignment response is more exhaustive than necessary, but the mappings retain unsupported-claim boundaries."
+  ]
+}
