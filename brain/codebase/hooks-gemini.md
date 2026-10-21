@@ -9,4 +9,11 @@
 - Changed project hook name/command combinations require trust review. Avoid recording environment values or assuming redaction is enabled.
 - Confirm the deployed CLI's event entry, completion, and visible outcome before claiming enforcement.
 
-Sources: [reference](https://geminicli.com/docs/hooks/reference/), [overview](https://geminicli.com/docs/hooks/), checked 2026-10-20. Gemini is absent on this host; live behavior remains unverified. Recheck after CLI/schema changes.
+## Configuration and failure changes
+
+- Hook configurations merge across layers; documented priority is project, user, system, then extension. Priority does not mean the higher layer replaces every lower-layer hook.
+- `BeforeToolSelection` unions `allowedFunctionNames` across hooks; `toolConfig.mode: "NONE"` disables all tools and wins. It does not support `decision`, `continue`, or `systemMessage`.
+- For required-context setup failure on events that honor flow control, emit `continue: false` with `stopReason`. For validation denial, use the event's `decision: "deny"` and `reason` fields; `AfterAgent` denial requests a retry, while `continue: false` stops without retry.
+- Current reference says `SessionStart` ignores `continue` and `decision`. A loader fixture returning a setup-abort envelope does not prove native startup blocking. Preserve this limitation when evaluating missing-context behavior.
+
+Sources: [reference](https://geminicli.com/docs/hooks/reference/), [overview](https://geminicli.com/docs/hooks/), configuration and flow-control fields rechecked 2026-10-21. Gemini is absent on this host; live behavior remains unverified. Recheck after CLI/schema changes.

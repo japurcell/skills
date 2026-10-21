@@ -1,5 +1,7 @@
 # Replace the legacy agent knowledge system with brain
 
+Follow-up (2026-10-21): the original file-level disposition did not prove obligation preservation. The [completed obligation audit](../2026-10-21-legacy-guidance-audit/ExecPlan.md) records restored guidance and traceable verification. This follow-up does not reopen T7 or alter its live-provider waiver.
+
 This living ExecPlan is `brain/archive/plans/01-brain-migration/ExecPlan.md`, associated with todo 1. Follow the `exec-plans`, `brain`, and `todo` skills. Keep the required living sections and milestone evidence current. The execution-plan contract requires a self-contained document, so this file intentionally exceeds the brain skill's usual note-length guideline.
 
 ## Purpose / Big Picture

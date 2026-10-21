@@ -356,6 +356,6 @@ The installer output identifies the resolved Codex agent destination. Parse an i
 ## Additional docs
 
 - [Instruction routes](brain/codebase/index.md) - select guidance by task.
-- [Knowledge admission](brain/codebase/knowledge-maintenance.md) - what earns a place in instructions or memory.
+- Activate the `brain` and `reflect` skills to maintain persistent knowledge.
 - [Testing guidance](brain/codebase/testing.md) - focused validation routes.
 - [Codebase index](brain/codebase/index.md) - optional limitations and source references.

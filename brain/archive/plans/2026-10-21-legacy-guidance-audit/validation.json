@@ -1,0 +1,374 @@
+{
+  "authoring-task-tests": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "env",
+        "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
+        "python3",
+        "skills/default/create-skill/evals/test_grade_benchmark.py"
+      ],
+      "exit_code": 0,
+      "output": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.123s\n\nOK\n"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "env",
+        "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
+        "python3",
+        "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"
+      ],
+      "exit_code": 0,
+      "output": "......................................\n----------------------------------------------------------------------\nRan 38 tests in 4.736s\n\nOK\n"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "env",
+        "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
+        "python3",
+        "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"
+      ],
+      "exit_code": 0,
+      "output": ".............\n----------------------------------------------------------------------\nRan 13 tests in 0.692s\n\nOK\n"
+    }
+  ],
+  "authoring-doc-tests": [
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "env",
+        "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "skills/default/handoff/evals",
+        "-p",
+        "test_grade_benchmark.py"
+      ],
+      "exit_code": 0,
+      "output": "....................\n----------------------------------------------------------------------\nRan 20 tests in 0.775s\n\nOK\n"
+    },
+    {
+      "command": [
+        "rtk",
+        "proxy",
+        "env",
+        "PYTHONPYCACHEPREFIX=/private/tmp/authoring-audit-pycache",
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        ".agents/skills/exec-plans/evals",
+        "-p",
+        "test_grade_benchmark.py"
+      ],
+      "exit_code": 0,
+      "output": "...................................\n----------------------------------------------------------------------\nRan 35 tests in 5.627s\n\nOK\n"
+    }
+  ],
+  "authoring-structure-checks": [
+    {
+      "check": "owned Markdown file and links",
+      "path": ".agents/skills/exec-plans/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": ".agents/skills/exec-plans/evals/authoring-scenarios.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "brain/codebase/agents-installation.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "brain/codebase/skills-and-installation.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/create-skill/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/create-skill/references/validation.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/dotnet-upgrade/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/dotnet-upgrade/references/authoring-validation.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/execplan-implement/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/execplan-implement/evals/README.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/handoff/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/handoff/evals/README.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/prd-ralph-loop/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/prd-ralph-loop/evals/README.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/prd-ralph/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/prd-ralph/references/verification.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/self-improve/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/skill-creator/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/spec-to-tasks/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/spec-to-tasks/evals/README.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/subagent-model-router/reference/maintenance.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/writing-for-agents/SKILL-MECHANICS.md",
+      "result": "pass"
+    },
+    {
+      "check": "owned Markdown file and links",
+      "path": "skills/default/writing-for-agents/SKILL.md",
+      "result": "pass"
+    },
+    {
+      "check": "handoff/ExecPlan independent bundles and planner/consumer/schema boundaries",
+      "result": "pass"
+    },
+    {
+      "check": "dotnet document-only JSON parse",
+      "command": [
+        "rtk",
+        "proxy",
+        "python3",
+        "-m",
+        "json.tool",
+        "skills/default/dotnet-upgrade/references/provenance/source-map.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "check": "dotnet document-only JSON parse",
+      "command": [
+        "rtk",
+        "proxy",
+        "python3",
+        "-m",
+        "json.tool",
+        "skills/default/dotnet-upgrade/evals/evals.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "check": "owned diff whitespace",
+      "exit_code": 0
+    },
+    {
+      "check": "101-line reference requires top TOC; references are direct from SKILL.md; body below 500",
+      "result": "pass",
+      "scope": "manual rule inspection, not live-model behavior"
+    },
+    {
+      "check": "existing invocation-control removal requires explicit human approval, including validator incompatibility",
+      "result": "pass",
+      "scope": "manual rule inspection"
+    },
+    {
+      "check": "metadata-only edits preserve unrelated body, paths, and files; archive baseline needs explicit task scope",
+      "result": "pass",
+      "scope": "manual rule inspection"
+    },
+    {
+      "check": "dotnet document-only exception loads before generic eval/packaging/validator gates; paper review does not prove execution",
+      "result": "pass",
+      "scope": "manual rule inspection"
+    },
+    {
+      "check": "rubric unstated restrictions preserve original failed output, clarify prompt, rerun; absent required inputs fail assertions",
+      "result": "pass",
+      "scope": "manual rule inspection"
+    },
+    {
+      "check": "no note frontmatter/wiki links; notes stay below ~50 lines; newly added guidance contains no em dash",
+      "result": "pass",
+      "scope": "owned note and diff inspection"
+    }
+  ],
+  "skill_definition_validation": [
+    {
+      "path": ".agents/skills/brain/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": ".agents/skills/exec-plans/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": ".agents/skills/reflect/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/addy-code-review-and-quality/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/addy-performance-optimization/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/commit/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/create-skill/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/execplan-implement/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/handoff/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/prd-ralph-loop/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/prd-ralph/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/self-improve/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/skill-creator/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/spec-to-tasks/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    },
+    {
+      "path": "skills/default/writing-for-agents/SKILL.md",
+      "exit": 0,
+      "output": "Skill is valid!\n"
+    }
+  ],
+  "published_skill_source_validation": {
+    "command": "rtk proxy python3 scripts/validate-skill-sources.py skills",
+    "exit_code": 0
+  },
+  "limits": [
+    "Documentation and instructions changed; runtime files, fixtures and tests unchanged.",
+    "Existing public CLI tests establish grader behavior for exercised cases, not sampled instruction performance.",
+    "No provider/live/native/install or benchmark run is claimed.",
+    "dotnet-upgrade prose follows its scoped document-review exception; no .NET CLI or upgrade execution."
+  ],
+  "final_integrated_checks": {
+    "local_links_checked": 275,
+    "heading_fragments_checked": 19,
+    "link_errors": [],
+    "unchanged_head": false,
+    "staged_files": [],
+    "non_document_changes": [],
+    "retired_roots_present": [],
+    "unchanged_todos": {
+      "4": true,
+      "10": true,
+      "11": true
+    },
+    "missing_codebase_index_entries": [],
+    "root_expands_archived_plans": false,
+    "changed_files": 59,
+    "observed_head": "a57b4ff5f1d02fd9fc60d979e63beeb0e7f52f7c",
+    "external_head_advances": [
+      "a57b4ff5f1d02fd9fc60d979e63beeb0e7f52f7c feat(todos): add new skill for installing and updating AGENTS.md files with progressive disclosure documentation",
+      "bc1e65968a1b7a80575d3cb421cdff060c2078b9 refactor(todos): enhance investigation tasks for pre-commit checks and skill audits",
+      "bb47762852cafced873091e1866099cb8d14db54 feat(todos): add skill for installing nested AGENTS.md files and update todos structure"
+    ],
+    "head_advance_paths": [
+      "brain/archive/todos.md",
+      "brain/todos.md"
+    ],
+    "head_advance_assessment": "Three concurrent todo-only commits observed; this task ran no staging or commit commands and preserved external changes. Initial-head equality is not an acceptance claim.",
+    "head_advance_scope_verified": true,
+    "pass": true
+  }
+}

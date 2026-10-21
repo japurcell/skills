@@ -9,6 +9,10 @@
 
 - [archive/index](<archive/index.md>)
 
+## audits
+
+- [audits/index](<audits/index.md>)
+
 ## codebase
 
 - [codebase/agents-installation](<codebase/agents-installation.md>)
@@ -21,11 +25,13 @@
 - [codebase/hooks-vscode](<codebase/hooks-vscode.md>)
 - [codebase/hooks](<codebase/hooks.md>)
 - [codebase/index](<codebase/index.md>)
-- [codebase/knowledge-maintenance](<codebase/knowledge-maintenance.md>)
+- [codebase/installer-testing](<codebase/installer-testing.md>)
 - [codebase/live-hook-testing](<codebase/live-hook-testing.md>)
 - [codebase/powershell-installers](<codebase/powershell-installers.md>)
 - [codebase/repository-workflow](<codebase/repository-workflow.md>)
+- [codebase/script-testing](<codebase/script-testing.md>)
 - [codebase/scripts-and-installers](<codebase/scripts-and-installers.md>)
+- [codebase/secret-scanner-recovery](<codebase/secret-scanner-recovery.md>)
 - [codebase/secret-scanner](<codebase/secret-scanner.md>)
 - [codebase/security-hooks](<codebase/security-hooks.md>)
 - [codebase/security-testing](<codebase/security-testing.md>)

@@ -1,5 +1,7 @@
 # Brain Migration Content Inventory (T1 Evidence)
 
+Follow-up (2026-10-21): the original file-level disposition did not prove obligation preservation. The [completed obligation audit](../2026-10-21-legacy-guidance-audit/ExecPlan.md) records restored guidance and traceable verification. This follow-up does not reopen T7 or alter its live-provider waiver.
+
 Inventory date: 2026-10-20. This is a read-only evidence report for `brain/archive/plans/01-brain-migration/ExecPlan.md`, retained beside the active plan. The read-only inventory agent made no repository edits. RTK 1.0.1 is available. The initial repository status was clean; a later shared-tree check found the plan modified by the coordinator. I did not touch that edit.
 
 ## Scope, counts, and disposition vocabulary

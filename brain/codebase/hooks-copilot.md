@@ -9,4 +9,13 @@
 - Command pre-tool errors deny tools, but timeouts fail open; do not treat all command failures as equivalent.
 - Preserve stop-loop guards in validators. Keep diagnostic stdout separate from protocol output.
 
-Source: [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference), checked 2026-10-20. CLI 1.0.100 is installed; no live brain delivery is proven. Recheck after provider changes. See [hooks-vscode](hooks-vscode.md) for cross-client limits.
+## Decision and lifecycle changes
+
+- `userPromptTransformed` changes model-facing content via `modifiedTransformedPrompt`; it cannot block a turn.
+- Intentional `preToolUse` denial returns `permissionDecision: "deny"` and `permissionDecisionReason` at exit 0. `allow` can execute without approval; `modifiedArgs` rewrites arguments. `ask` requests approval only where prompting is available; cloud/autopilot deny it.
+- Main-response validation uses `agentStop`; `agentStop`/`subagentStop` return `decision: "allow"|"block"`, with a nonempty `reason` for block. This is separate from this repository's informational End Turn status.
+- Post-tool formatters return `{}` for no change or `additionalContext` for actionable failure guidance. Use exit 0 for expected JSON decisions. Exit 2 is generally a warning, with event-specific exceptions documented in the reference; timeouts always fail open.
+- `subagentStart` has an agent-name matcher; `subagentStop` has no documented matcher. The checked reference excludes built-in `general-purpose` from both lifecycle events. Recheck coverage for the deployed version before relying on either event.
+- The required-skill loader's direct legacy-envelope tests do not prove registration or delivery. Its Copilot subagent registrations were already absent before the brain migration; commit `711c1797` removed PascalCase registration intentionally.
+
+Source: [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference), decision/lifecycle fields rechecked 2026-10-21. CLI 1.0.100 was observed installed on 2026-10-20; no live brain delivery is proven. Recheck after provider changes. See [hooks-vscode](hooks-vscode.md) for harness selection.

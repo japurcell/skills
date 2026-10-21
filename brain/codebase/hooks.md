@@ -6,8 +6,8 @@
 - Read one complete bounded JSON object without waiting for EOF. Reject buffered non-whitespace trailing data; bound idle and total input time.
 - Windows pipe readiness before Python 3.12 needs `PeekNamedPipe`; do not assume POSIX nonblocking flags work.
 - Python entrypoints use standard-library operations and argument-list subprocesses, never `shell=True`.
-- For local startup and turn-end operational hooks, emit one concise hook-name/outcome and safe count where useful. Report every Stop attempt, including repair retries.
-- Ordinary pass messages must contain no path, command, document content, or secret. Keep high-rate tool passes, observability-only hooks, SessionEnd success, and the completion bell silent. Put blocks in native denial fields without duplicate display messages.
+- For local startup and turn-end operational hooks, emit one concise hook-name/outcome and safe count where useful. Report every Stop attempt. Independent validator retries follow their own bounded contract; informational End Turn status never requests one.
+- Ordinary pass messages must contain no path, command, document content, or secret. Keep high-rate tool passes, observability-only hooks, SessionEnd success, and the completion bell silent; do not add per-call RTK audit records merely to prove a pass. Put blocks in native denial fields without duplicate display messages.
 - Normalize Windows drive-letter payload paths before absolute-path checks. Resolve extensionless commands with `shutil.which()` on Windows; keep provider helper copies synchronized with canonical sources.
 - Installers check generated freshness without write mode. Preserve destination runtime logs and unrelated configuration.
 - Brain hooks register at repository scope. Copilot uses `.github/hooks`, not user-level `.copilot/hooks`. Global templates intentionally omit brain and tool-guard registrations. Retirement ownership must match the complete launch, including arguments. See [brain hook contracts](brain-hooks.md).
@@ -15,3 +15,5 @@
 - Run same-named provider modules separately when type checking.
 
 Evidence: [generator](../../scripts/generate-hooks.py), [common renderer](../../hooks/families/common.py), checked 2026-10-20. Recheck input, generation, or deployment changes. Provider contracts: [hooks-codex](hooks-codex.md), [hooks-copilot](hooks-copilot.md), [hooks-gemini](hooks-gemini.md).
+
+For runtime or registration changes, read [hook testing](hook-testing.md). For Guardian/scanner policy or capture changes, read [security hooks](security-hooks.md); for event emitters or trace lifecycle changes, read [observability](hook-observability.md).

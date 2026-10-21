@@ -16,7 +16,7 @@ Read [the general playbook](references/playbook.md) for the selected phase. For 
 
 Load [official sources](references/official-sources.md) when researching or refreshing evidence, [practical lessons](references/lessons.md) when selecting checks or investigating failures, and [the case study](references/case-studies/workplan-reports.md) only for historical context. Original paths are provenance, not required checkouts. Reassess historical not-applicable conclusions, package choices and accepted risks for this target.
 
-Use compatible `dotnet` and `official-sources` skills when available. Their absence does not block this bundled procedure or its templates. Do not automatically invoke `code-modernization`. Client discovery and invocation caveats belong in [client usage](references/client-usage.md); load it only for client or optional installation questions. No root README or `evals/` file is required at runtime.
+Use compatible `dotnet` and `official-sources` skills when available. Their absence does not block this bundled procedure or its templates. Do not automatically invoke `code-modernization`. Client discovery and invocation caveats belong in [client usage](references/client-usage.md); load it only for client or optional installation questions. Upgrade execution does not require this bundle's README or evaluation assets.
 
 ## Follow the requested phase
 
@@ -30,3 +30,7 @@ Use compatible `dotnet` and `official-sources` skills when available. Their abse
 ## Report the next gate honestly
 
 State the requested phase, route, evidence freshness, concrete-plan approval status, observed results, unresolved gates and owners. Label offline drafts and unverified claims. Historical versions and security decisions are not defaults. Local completion is not deployment completion, document review is not runtime testing, and invocation metadata is not universal client enforcement.
+
+## Evaluation and authoring checks
+
+For changes to this bundle's documents, provenance, or evaluation scenarios, read [authoring validation](references/authoring-validation.md). It defines document-only acceptance, evidence limits, and separate authorization for live evaluations, benchmarks, or trial upgrades.

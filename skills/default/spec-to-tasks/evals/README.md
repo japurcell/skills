@@ -63,3 +63,7 @@ missing runtime metrics are unavailable, not measured zero.
 Missing, invalid JSON or nonobject timing files leave duration unavailable;
 object timing retains its supplied total_duration_seconds. The grader does not
 validate every timing value or check whether a supplied duration was measured.
+
+## Grader changes
+
+Run `rtk proxy python3 skills/default/spec-to-tasks/evals/test_grade_benchmark.py` from the repository root after relevant changes. Preserve domain coverage, complete task fixtures, supported required check kinds and meaningful partial credit only for inspectable inputs. Retain controls for backend database vocabulary versus browser UI, malformed references including NUL paths, and unavailable timing metrics. Synthetic command strings test grading logic, not real command provenance. Review completion reconciliation scenarios whenever completion semantics change.

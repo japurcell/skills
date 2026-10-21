@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 13 -->
+<!-- next-id: 14 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -11,6 +11,7 @@
 ## Repository maintenance
 
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
+13. [ ] Reproduce and fix stale observability cleanup deleting sessions SQLite still reports as running, finalizing, or sealing after seven days. Follow [the restored cleanup policy](codebase/hook-observability.md): require age over 24 hours and terminal/absent database state. Change the canonical helper, regenerate provider copies, and verify active-session retention, terminal/absent cleanup, and database-failure behavior through the existing disposable observability fixtures. Preserve unrelated logs and session state; do not test against real installed logs.
 
 ## Forest Service skills
 
@@ -19,7 +20,7 @@
 ## Investigations
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
-3. [ ] Evaluate correction capture, deduplication, provenance, staleness, and replay for agent memory; distinguish measured improvements from the [source video's proposals](https://youtu.be/mAKUL12h1n8?si=jo_E1lSoFM9btLqY). Retain the [original investigation context](plans/2026-10-21-legacy-guidance-audit/idea-context.md#investigation-3-agent-memory) when framing the research.
+3. [ ] Evaluate correction capture, deduplication, provenance, staleness, and replay for agent memory; distinguish measured improvements from the [source video's proposals](https://youtu.be/mAKUL12h1n8?si=jo_E1lSoFM9btLqY). Retain the [original investigation context](archive/plans/2026-10-21-legacy-guidance-audit/idea-context.md#investigation-3-agent-memory) when framing the research.
 4. [ ] Define one bounded prototype for configurable agent workflows, multi-harness routing, live/history inspection, and evidence-based self-improvement. References: [Shopify process](https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd), [validation pipeline](https://github.com/kunchenguid/no-mistakes), [software factory UI](https://github.com/disler/super-simple-software-factory), [Noodle](https://github.com/poteto/noodle).
 6. [ ] Audit all repository-local `.agents/skills/` and published `skills/` against [official skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), applying guidance compatible with Codex, Copilot, and Gemini. Cover long-reference tables of contents, direct reference navigation, workflows and feedback loops, conditional workflows, concise content, appropriate degrees of freedom, effective descriptions, and progressive disclosure. Test with every intended OpenAI model; model testing for this audit remains scoped to OpenAI. Apply compatible practices and document any incompatible exceptions.
 7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [codebase/secret-scanner](codebase/secret-scanner.md)

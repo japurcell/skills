@@ -19,3 +19,7 @@ These facts belong to the **2026-10-19** snapshot, not a fresh availability chec
 - Claude Sonnet 4 retired on **2026-05-01** and is excluded from routing candidates, though retained in the price table.
 - Qwen2.5 lacks both a supported-models entry and a published Copilot rate in the cited snapshot.
 - Gemini 4 Argon's GA status and task fit came from the [supported-models table](https://docs.github.com/en/copilot/reference/ai-models/supported-models#supported-ai-models-in-copilot) and [task comparison](https://docs.github.com/en/copilot/reference/ai-models/model-comparison#recommended-models-by-task). Its model ID and candidate efforts remain local routing shorthand until confirmed by the runtime.
+
+## Catalog ownership
+
+`model-catalog.md` owns tier membership and the task-default model table. Other routing references use the named defaults instead of copying preferred model IDs. Refresh the canonical owner when these choices change.
