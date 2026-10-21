@@ -1,6 +1,6 @@
 # Create a portable brain-install skill
 
-This living plan is `brain/plans/brain-install/ExecPlan.md`. Follow the repository's `exec-plans` skill and keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. Implementation is authorized by the user's execplan-implement invocation on 2026-10-21.
+This completed plan is archived at `brain/archive/plans/brain-install/ExecPlan.md`. Follow the repository's `exec-plans` skill and keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current. Implementation is authorized by the user's execplan-implement invocation on 2026-10-21.
 
 ## Purpose / Big Picture
 
@@ -22,7 +22,7 @@ Current authorization covers implementation and verification of this plan. Prese
 - [x] (2026-10-21) [milestone-4] T4: Author the brain-install workflow and obligation-level migration reference; evaluate fresh, legacy, and conflicting targets.
 - [x] (2026-10-21) [milestone-5] T5a: Wire the verified installer tests into the existing native workflow.
 - [x] (2026-10-21) [milestone-5] T5: Verify the final integrated bundle locally and retain evaluation/parity evidence.
-- [ ] [milestone-5] T5: Obtain actual Windows/Linux/macOS Python 3.12/3.14 CI results after separately authorized publication; native acceptance remains unmet.
+- [x] (2026-10-21) [milestone-5] T5: Verify all six Windows/Linux/macOS Python 3.12/3.14 native CI jobs and required steps; acceptance is met.
 
 ## Surprises & Discoveries
 
@@ -56,7 +56,9 @@ T1-T4 and T5a are complete. The self-contained skill includes deterministic star
 
 T5 local integration passes: fifteen installer/helper tests, twenty-six existing standalone hook tests (one platform-specific skip), eight skill validators, exact principle/AGENTS/hook parity, Python syntax, runtime resource/link checks, negative validator input, YAML matrix checks, and whitespace checks. Selected evaluations pass 14/14 per arm; the original semantic failure and all limitations remain in [evaluation results](evaluation-results.md). No performance improvement or live-provider delivery is claimed.
 
-T5 acceptance remains unmet because the changed implementation has not run on the six native CI cells. Python 3.12, Windows, and Linux are unavailable on this host. The user authorized commit/push and native CI repairs on 2026-10-21. The executing agent is publishing this implementation, then inspecting `.github/workflows/brain-hooks.yml` and fixing any failures. No publication has occurred yet for these changes; no real target migration or global installation occurred. All delegated tasks are complete. Reflection found the durable lessons already encoded in trigger-equivalence guidance, UTF-8 entrypoints, validation metadata support, and maintenance instructions; no additional brain topic note is needed.
+T5 acceptance is met. Implementation commit `3951c8e682c265a47e11fdec5b222c3138f97d91` was pushed to `codex/brain-system-migration`. [Native CI run 39654261107](https://github.com/japurcell/skills/actions/runs/39654261107) completed successfully on all six Windows/Linux/macOS Python 3.12/3.14 cells. Each cell passed generated-output verification, standalone hook tests, and portable installation tests. No CI repair was necessary. Local Python 3.12/Windows/Linux remain unavailable, but those platforms were verified by native CI. Live-provider delivery remains separate and was not a completion requirement. No real target migration or global installation occurred.
+
+All implementation, evaluation, native verification, and delegated work is complete. The completed plan is archived under `brain/archive/plans/brain-install/`, with curated indexes updated in the completion record. Reflection found no new durable topic note: the reusable lessons are already encoded in trigger-equivalence guidance, UTF-8 entrypoints, validation metadata support, and maintenance instructions.
 
 ## Context and Orientation
 
@@ -194,8 +196,8 @@ Observed 2026-10-21: all seven skill validators passed (brain-install plus six i
 
 ### Milestone 5: Integrated and native verification
 
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T5a: Prepare native CI while evaluations complete
 
@@ -211,13 +213,15 @@ Run the installer from a relocated copy into disposable targets, with disposable
 
 Extend the existing six-cell native matrix for Python 3.12/3.14 on Windows/Linux/macOS. Keep its ten-minute job budget; do not move these tests into the slow general workflow or remove existing coverage. Native success is required to claim cross-platform installer verification. If dispatch needs a push not yet authorized, leave native acceptance open and report that exact owner action. Live-provider delivery is separate from process/config testing: report any live checks actually performed, but do not inherit historical delivery claims or add a mandatory Gemini live session to this installer scope.
 
-Observed 2026-10-21 on macOS/Python 3.14.6: `python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'` passed 15 tests in 4.505 seconds; `python3 scripts/test-brain-hooks.py` passed 26 tests with one platform-specific skip in 4.541 seconds. `generate-hooks.py --check` reports 60 current outputs. All eight validators and the unknown-field negative case passed; principle/index/AGENTS/hook parity, syntax, resource links, final metadata, new-bundle whitespace, and `git diff --check` passed. The workflow YAML preserves six native cells and the ten-minute budget. No native matrix was dispatched for these uncommitted changes.
+Observed 2026-10-21 on macOS/Python 3.14.6: `python3 -m unittest discover -s skills/default/brain-install/tests -p 'test_*.py'` passed 15 tests in 4.505 seconds; `python3 scripts/test-brain-hooks.py` passed 26 tests with one platform-specific skip in 4.541 seconds. `generate-hooks.py --check` reports 60 current outputs. All eight validators and the unknown-field negative case passed; principle/index/AGENTS/hook parity, syntax, resource links, final metadata, new-bundle whitespace, and `git diff --check` passed. The workflow YAML preserves six native cells and the ten-minute budget. Native CI subsequently ran the published implementation: all six cells passed on commit `3951c8e682c265a47e11fdec5b222c3138f97d91`; see the native evidence below.
+
+Native evidence, observed 2026-10-21: [run 39654261107](https://github.com/japurcell/skills/actions/runs/39654261107) reports `success` and head SHA `3951c8e682c265a47e11fdec5b222c3138f97d91`. Job durations were Ubuntu 3.12: 20 seconds, Ubuntu 3.14: 27 seconds, macOS 3.12: 32 seconds, macOS 3.14: 37 seconds, Windows 3.12: 46 seconds, Windows 3.14: 51 seconds. Every generated-output, standalone-script, and portable-installer step reports `success`. All jobs stayed below the ten-minute budget. Runner-image migration/capacity notices were informational; no test or workflow failures occurred.
 
 Completion requires passing integrated tests, skill validation/evaluations, and native checks with evidence. At the end of a code-changing implementation session activate reflect; persist only new durable findings. Do not mark completion from a clean diff alone. Stop without committing or pushing unless the user separately authorizes those actions.
 
 ## Concrete Steps
 
-The next action is to commit and push the reviewed brain-install implementation, then inspect its native six-cell matrix and repair failures; the user explicitly authorized this on 2026-10-21. T1-T4, independent semantic grading, T5a CI wiring, and T5 local integration are verified. After publication, inspect the actual six-cell native run and repair failures before marking T5 acceptance met. Do not treat older workflow runs as evidence for these unpublished changes. Evidence is retained in [evaluation results](evaluation-results.md) and `/private/tmp/brain-install-evals-g5zwusni/`.
+All authorized implementation and verification is complete. T5 is closed on the published implementation SHA and its successful six-cell native run. The completion record includes the required plan archive/index updates; these documentation changes do not alter the tested implementation. No deployment or live-provider delivery is claimed.
 
 Run commands from the repository root. The following are the implementation verification commands; actual observed results are recorded per milestone and in the final integration evidence:
 
