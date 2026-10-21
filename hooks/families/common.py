@@ -151,7 +151,13 @@ def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int 
         # json.loads remains the full syntax authority after bounded collection.
         cursor = 1 if in_string and escaped else 0
         escaped = False
-        for match in re.compile(rb'(?:\\\\[\\s\\S])+|["\\\\\\[\\]{},:]').finditer(chunk, cursor):
+        marker_pattern = re.compile(rb'(?:\\\\[\\s\\S])+|["\\\\\\[\\]{},:]')
+        # Expose a literal backslash first so ordinary data rejects quickly in C.
+        string_pattern = re.compile(
+            rb'\\\\(?:u[0-9a-fA-F]{4}(?:\\\\u[0-9a-fA-F]{4})*'
+            rb'|[\\s\\S](?:\\\\[\\s\\S])*)|["\\\\]'
+        )
+        while (match := (string_pattern if in_string else marker_pattern).search(chunk, cursor)) is not None:
             position = match.start()
             byte = chunk[position]
             if not started:

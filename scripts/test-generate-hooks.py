@@ -141,9 +141,9 @@ OBSERVABILITY_ALLOWED_DIFFERENCES = (
      'os.environ.get("GEMINI_OBSERVABILITY_SOURCE_EVENT_NAME")'),
 )
 COMMON_AUDIT_TARGETS = {
-    ".copilot/hooks/scripts/helpers/common.py": "0a1945ca79f4f67107de25059862e4e3d23dae34458ccc61aa5bbe61752caccc",
-    ".gemini/hooks/scripts/helpers/common.py": "f75369b7f2b3189c10803df5f877292e455b2f95dfcb3f2b1a950491e29503ca",
-    ".github/hooks/scripts/helpers/common.py": "73da0c486fa05748b4b3097a816fd35a6266aac46deb8640fa63f6c56c5afa66",
+    ".copilot/hooks/scripts/helpers/common.py": "abe2660fa61cde86eef35f4b99e1498b31c805798e563dfedfbd9b4e483838bc",
+    ".gemini/hooks/scripts/helpers/common.py": "6d4e7e3cb7683ed975efedb016defbf8aea0fcbd47d1edfae4ca69675fb36d3d",
+    ".github/hooks/scripts/helpers/common.py": "eb6c2f963181fa364d8d360c9ff441c30687d25063c93bf46b30f6d524b166dc",
     ".copilot/hooks/scripts/helpers/audit.py": "042d556890bea3596780d8e6f0ec162d71d242fdd2be32604123534961e7dc6b",
     ".gemini/hooks/scripts/helpers/audit.py": "a423db01bbf25bc7434299f3062a3e6ee40daac82e7a17f64e53e89036ab01fc",
     ".github/hooks/scripts/helpers/audit.py": "4e4a18539d107c2358d0976adffa6faf602c9421b5b99da52c944cfee87b60f4",
