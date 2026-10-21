@@ -171,6 +171,7 @@ class BrainHooksTests(unittest.TestCase):
         (self.vault / "codebase/café.md").write_text("another private body")
         result = self.invoke("auto-index-brain", self.successful_tool())
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, b"")
         self.assertEqual(json.loads(result.stdout), {})
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"),
                          "# Brain\n\n## Root\n\n- [[principles]]\n\n## codebase\n\n"

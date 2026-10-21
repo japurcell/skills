@@ -253,11 +253,15 @@ T10 depends on T9 and fixes only the confirmed launcher trust boundary, Windows 
 
 ## Concrete Steps
 
-Next action: commit and push the owner-reviewed T10 fixes on `codex/brain-system-migration`, then inspect the native matrix and related Windows installer/macOS security workflows for that exact runtime commit. Reproduce and repair any failures without weakening tests or adding machinery outside the spec, publish scoped fixes, and recheck affected native jobs. Record actual results below. Keep T7 and todo 1 open until live-provider verification passes; do not start live-provider work, merge, or change existing user-global installations in this CI task.
+Next action: repair the native Windows matrix failure at published runtime `53fb774c529420f8a65ac04e61d68630a012fb92`, publish the scoped correction on `codex/brain-system-migration`, and inspect the fresh exact-head matrix and related Windows installer/macOS security workflows. The first publication is complete; the low-level Windows failure is under diagnosis. Reproduce and repair any failures without weakening tests or adding machinery outside the spec, publish scoped fixes, and recheck affected native jobs. Record actual results below. Keep T7 and todo 1 open until live-provider verification passes; do not start live-provider work, merge, or change existing user-global installations in this CI task.
 
 From the repository root, focused verification uses `rtk python3 scripts/test-brain-hooks.py`, `rtk python3 scripts/test-generate-hooks.py`, `rtk python3 scripts/test-install-codex-hooks.py`, and `rtk python3 scripts/test-hook-diagnostics.py`. Serialize generator and installer fixtures. Final checks are `rtk python3 scripts/generate-hooks.py --check` and `rtk git diff --check`. The full 55-suite registry is not a required local rerun for this bounded correction. The current request now requires native CI verification of the published T10 runtime; do not present earlier native results as proof of T10.
 
 ## Validation and Acceptance
+
+### Current native CI checkpoint (2026-10-20)
+
+Published runtime `53fb774c529420f8a65ac04e61d68630a012fb92` includes the reviewed T9/T10 fixes. Matrix [39534838839](https://github.com/japurcell/skills/actions/runs/39534838839) passed both Linux and both macOS jobs, but both Windows jobs failed normal successful-hook behavior: no index or startup context was produced. Each Windows job reported 26 tests with 8 failures, 33 subtest errors and 2 skips. The E2E failure log is `/tmp/brain-ci-39534838839-failed.log`. The actual low-level cause is not yet established; source review did not prove native correctness. Astra is diagnosing the native failure without weakening tests or adding unrelated machinery. Related Windows installer/security run `39534838809` and macOS security run `39534838854` are still pending. T7 and todo 1 remain open.
 
 ### T10 strict-review correction evidence (2026-10-20)
 

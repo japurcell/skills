@@ -583,7 +583,11 @@ def main():
                         result["systemMessage"] = message
     except BrainError as error:
         print("brain: " + str(error) + "; previous index preserved", file=sys.stderr)
-    except (OSError, ValueError):
+    except OSError as error:
+        print("brain: filesystem error (errno=" + str(error.errno)
+              + ", winerror=" + str(getattr(error, "winerror", None))
+              + "); previous index preserved", file=sys.stderr)
+    except ValueError:
         print("brain: invalid input or inaccessible vault; previous index preserved", file=sys.stderr)
     sys.stdout.buffer.write((json.dumps(result, ensure_ascii=False) + "\n").encode("utf-8"))
     return 0
