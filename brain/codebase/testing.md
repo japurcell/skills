@@ -2,7 +2,7 @@
 
 - Choose the narrowest existing maintained suite via `rtk proxy python3 scripts/test-all.py --list` and `--help`. Run `rtk proxy python3 scripts/test-all.py` for aggregate integration when warranted and prerequisites exist; formatting and live model evaluation remain separate checks.
 - Missing prerequisites are errors, never passing skips. Record command, OS, interpreter/provider version, exit status, and decisive result. The aggregate runner supports macOS/Linux; native Windows uses dedicated workflows.
-- Source tests, disposable installations, actual provider delivery, and native Windows execution prove different things. Check [installation ownership](repository-workflow.md#retention-and-installed-evidence); platform skips are not platform evidence.
+- Source tests, disposable installations, actual provider delivery, and native Windows execution prove different things. Check [installation ownership](repository-workflow.md); platform skips are not platform evidence.
 - Label hypotheses as candidates until an artifact supports them. When stronger certainty is requested, obtain a new relevant file view, search, or validation result. Verify a removed branch with one targeted search; repeat tests only for changed source, failures, or unresolved concerns.
 - Preserve failing cases and evidence; never weaken surviving tests to claim success.
 
