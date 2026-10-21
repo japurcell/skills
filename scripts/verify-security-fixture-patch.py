@@ -31,6 +31,7 @@ MAX_TARGETS = 64
 TIMEOUT = 12
 DEADLINE = None
 CANCEL_REQUESTS = 0
+OUTPUT_POLL = None
 PROCESS_BYTES = 1024 * 1024
 CLEANUP_SECONDS = 2.0
 # Observation may use half the cleanup envelope; escalation and reaping share
@@ -119,6 +120,8 @@ def read_file(path, bound=LIMIT, *, phase="capture"):
 def check_cancelled():
     if CANCEL_REQUESTS:
         raise KeyboardInterrupt
+    if OUTPUT_POLL is not None and OUTPUT_POLL.poll(0):
+        raise BrokenPipeError
 
 
 def wait_process(process, timeout):
@@ -150,6 +153,7 @@ def wait_process(process, timeout):
 
 def process_snapshot(*, deadline=None):
     """Read bounded PID/parent/group/start/state metadata, never command text."""
+    interruptible = deadline is None
     with tempfile.TemporaryFile() as output:
         started = time.monotonic()
         # Observation includes process startup. Cleanup supplies its own absolute
@@ -166,7 +170,17 @@ def process_snapshot(*, deadline=None):
             raise Failure("process_observation_unavailable", 2, "cleanup") from None
         try:
             try:
-                wait_process(observer, max(0, allowance - (time.monotonic() - started)))
+                observation_end = started + allowance
+                while True:
+                    if interruptible:
+                        check_cancelled()
+                    remaining = max(0, observation_end - time.monotonic())
+                    try:
+                        wait_process(observer, min(0.02, remaining) if interruptible else remaining)
+                        break
+                    except subprocess.TimeoutExpired:
+                        if time.monotonic() >= observation_end:
+                            raise
             except subprocess.TimeoutExpired:
                 raise Failure("process_observation_timeout", 2, "cleanup", limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds") from None
             if observer.returncode:
@@ -900,6 +914,7 @@ def failure_action(reason):
 
 
 def main():
+    global OUTPUT_POLL
     command = parser()
     if len(sys.argv) == 1 or sys.argv[1:] in (["help"], ["help", "check"]):
         command.print_help()
@@ -908,6 +923,12 @@ def main():
     code = 0
     try:
         args = command.parse_args()
+        if (args.json or not args.quiet) and hasattr(select, "poll"):
+            output_fd = sys.stdout.fileno()
+            if stat.S_ISFIFO(os.fstat(output_fd).st_mode):
+                OUTPUT_POLL = select.poll()
+                OUTPUT_POLL.register(output_fd, select.POLLERR | select.POLLHUP | select.POLLNVAL)
+        check_cancelled()
         def interrupted(signum, frame):
             global CANCEL_REQUESTS
             CANCEL_REQUESTS += 1

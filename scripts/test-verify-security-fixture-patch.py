@@ -488,6 +488,25 @@ class PreflightTests(unittest.TestCase):
                 self.assertNotEqual(process.returncode, 0)
         self.assertEqual(self.fingerprint(), before)
 
+    @unittest.skipIf(os.name == "nt", "POSIX output-pipe observation")
+    def test_closed_output_does_not_wait_for_retained_patch_input(self):
+        before = self.fingerprint()
+        with subprocess.Popen([sys.executable, str(CLI), "--patch", "-", "--path", "fixture.py",
+                "--active-hook-root", str(ROOT), "--check", "--json"], cwd=self.repo, env=self.env,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            process.stdout.close()
+            try:
+                process.wait(timeout=1)
+                self.assertNotEqual(process.returncode, 0)
+                stderr = process.stderr.read()
+                self.assertNotIn(b"Traceback", stderr)
+                self.assertNotIn(b"Exception ignored", stderr)
+            finally:
+                if process.poll() is None:
+                    process.send_signal(signal.SIGINT)
+                    process.wait(timeout=4)
+        self.assertEqual(self.fingerprint(), before)
+
     def test_source_filter_commands_are_never_executed(self):
         self.target.write_text("value = 'dirt'\n")
         patch = self.patch("value = 'repaired'\n")
@@ -677,6 +696,31 @@ class PreflightTests(unittest.TestCase):
                 print(json.dumps({'fixture_observer': 'ordinary' if not expected else 'stalled',
                     'delay_seconds': delay, 'elapsed_seconds': round(elapsed, 6),
                     'observed_processes_stopped': len(pids)}), flush=True)
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_interrupts_stalled_metadata_observation(self):
+        before = self.fingerprint()
+        patch = self.patch("value = 'repaired'\n")
+        wrapper, observers, git_started = self.observation_wrapper(60, first=1)
+        with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                '--patch', str(patch), '--path', 'fixture.py', '--active-hook-root', str(ROOT),
+                '--check', '--json'], cwd=self.repo, env=self.env,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            deadline = time.monotonic() + 3
+            while not observers.exists() and process.poll() is None and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertTrue(observers.exists(), 'metadata observer did not start')
+            started = time.monotonic()
+            process.send_signal(signal.SIGINT)
+            stdout, stderr = process.communicate(timeout=3)
+            elapsed = time.monotonic() - started
+            self.assertEqual(process.returncode, 130, stdout + stderr)
+            self.assertEqual(json.loads(stdout)['reason'], 'interrupted')
+            self.assertLess(elapsed, 0.5)
+            self.assertNotIn(b'Traceback', stderr)
+            self.assertFalse(git_started.exists())
+        self.assert_stopped([int(pid) for pid in observers.read_text().splitlines()])
+        self.assertEqual(self.fingerprint(), before)
 
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_delayed_metadata_cleanup_stops_resistant_separate_session(self):
