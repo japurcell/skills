@@ -584,7 +584,11 @@ def main():
     except BrainError as error:
         print("brain: " + str(error) + "; previous index preserved", file=sys.stderr)
     except OSError as error:
-        print("brain: filesystem error (errno=" + str(error.errno)
+        origin = error.__traceback__
+        while origin.tb_next is not None:
+            origin = origin.tb_next
+        location = origin.tb_frame.f_code.co_name + ":" + str(origin.tb_lineno)
+        print("brain: filesystem error at " + location + " (errno=" + str(error.errno)
               + ", winerror=" + str(getattr(error, "winerror", None))
               + "); previous index preserved", file=sys.stderr)
     except ValueError:
