@@ -63,7 +63,7 @@ class BrainHooksTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 output = json.loads(result.stdout.splitlines()[-1])
                 context = output.get("additionalContext") or output["hookSpecificOutput"]["additionalContext"]
-                self.assertIn("[[note]]", context)
+                self.assertIn("[note](<note.md>)", context)
 
     def test_project_launches_ignore_nested_scripts_inside_git_root(self):
         (self.directory / ".git").write_text("gitdir: elsewhere")
@@ -96,7 +96,7 @@ class BrainHooksTests(unittest.TestCase):
                             result = subprocess.run([sys.executable, *arguments[1:]], cwd=nested,
                                                     input=json.dumps(payload).encode(), capture_output=True, timeout=5)
                             self.assertEqual(result.returncode, 0, result.stderr)
-                            self.assertIn("[[trusted]]", (self.vault / "index.md").read_text())
+                            self.assertIn("[trusted](<trusted.md>)", (self.vault / "index.md").read_text())
 
     def test_supported_resets_load_index_with_safe_startup_status(self):
         (self.vault / "private-name.md").touch()
@@ -116,7 +116,7 @@ class BrainHooksTests(unittest.TestCase):
                     else:
                         self.assertEqual(documents[-1]["systemMessage"], "inject-brain: pass; index loaded")
                         context = documents[-1]["hookSpecificOutput"]["additionalContext"]
-                    self.assertIn("[[private-name]]", context)
+                    self.assertIn("[private-name](<private-name.md>)", context)
 
     def test_project_registrations_run_startup_and_completion(self):
         (self.directory / "pathlib.py").write_text("raise RuntimeError('cwd module imported')\n")
@@ -144,7 +144,7 @@ class BrainHooksTests(unittest.TestCase):
                 result = subprocess.run([sys.executable, *arguments[1:]], cwd=self.directory,
                                         input=json.dumps(payload).encode(), capture_output=True, timeout=5)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn("[[registered-note]]", (self.vault / "index.md").read_text())
+                self.assertIn("[registered-note](<registered-note.md>)", (self.vault / "index.md").read_text())
 
     def test_completion_policy_respects_each_provider_result(self):
         (self.vault / "note.md").touch()
@@ -182,12 +182,12 @@ class BrainHooksTests(unittest.TestCase):
         self.assertEqual(result.stderr, b"")
         self.assertEqual(json.loads(result.stdout), {})
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"),
-                         "# Brain\n\n## Root\n\n- [[principles]]\n\n## archive\n\n"
-                         "- [[archive/index]]\n\n## codebase\n\n"
-                         "- [[codebase/café]]\n- [[codebase/index]]\n\n## codebase/plans\n\n"
-                         "- [[codebase/plans/index]]\n\n## codebase/plans/completed\n\n"
-                         "- [[codebase/plans/completed/plan]]\n\n## unindexed/nested\n\n"
-                         "- [[unindexed/nested/café]]\n")
+                         "# Brain\n\n## Root\n\n- [principles](<principles.md>)\n\n## archive\n\n"
+                         "- [archive/index](<archive/index.md>)\n\n## codebase\n\n"
+                         "- [codebase/café](<codebase/caf%C3%A9.md>)\n- [codebase/index](<codebase/index.md>)\n\n## codebase/plans\n\n"
+                         "- [codebase/plans/index](<codebase/plans/index.md>)\n\n## codebase/plans/completed\n\n"
+                         "- [codebase/plans/completed/plan](<codebase/plans/completed/plan.md>)\n\n## unindexed/nested\n\n"
+                         "- [unindexed/nested/café](<unindexed/nested/caf%C3%A9.md>)\n")
         self.assertEqual((self.vault / "codebase/index.md").read_text(encoding="utf-8"), "curated subindex")
 
     def test_linked_notes_and_directories_never_enter_inventory(self):
@@ -204,7 +204,7 @@ class BrainHooksTests(unittest.TestCase):
         (self.vault / "safe.md").write_text("safe")
         result = self.invoke("auto-index-brain", self.successful_tool())
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"), "# Brain\n\n## Root\n\n- [[safe]]\n")
+        self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"), "# Brain\n\n## Root\n\n- [safe](<safe.md>)\n")
 
     def test_directory_replacement_during_scan_cannot_escape_vault(self):
         self.check_directory_replacement(use_symlink=True)
@@ -448,7 +448,7 @@ sys.stdin.read()
         index = (self.vault / "index.md").read_text(encoding="utf-8")
         self.assertIn("(<question%23answer.md>)", index)
         self.assertIn("(<%5Bdraft%5D.md>)", index)
-        self.assertNotIn("[[question#answer]]", index)
+        self.assertIn("[question#answer](<question%23answer.md>)", index)
 
     def test_startup_reconciles_before_returning_only_index_context(self):
         (self.vault / "note.md").write_text("never inject this note body")
@@ -476,7 +476,7 @@ sys.stdin.read()
         self.assertLess(len(context.encode()), 24000)
         self.assertIn("brain/index.md", context)
         self.assertIn("too large", context)
-        self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8").count("- [["), 200)
+        self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8").count("- ["), 200)
 
     def test_oversized_inventory_preserves_previous_index(self):
         for number in range(3000):
@@ -512,7 +512,7 @@ sys.stdin.read()
                                             input=json.dumps(payload).encode(), capture_output=True, timeout=5)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertIsInstance(json.loads(result.stdout), dict)
-                    self.assertIn("[[note]]", (self.vault / "index.md").read_text(encoding="utf-8"))
+                    self.assertIn("[note](<note.md>)", (self.vault / "index.md").read_text(encoding="utf-8"))
 
     def test_add_rename_delete_and_unchanged_runs_converge(self):
         note = self.vault / "first.md"
@@ -524,7 +524,7 @@ sys.stdin.read()
         self.assertEqual(index.stat().st_mtime_ns, before)
         note.rename(self.vault / "second.md")
         self.invoke("auto-index-brain", self.successful_tool())
-        self.assertEqual(index.read_text(encoding="utf-8"), "# Brain\n\n## Root\n\n- [[second]]\n")
+        self.assertEqual(index.read_text(encoding="utf-8"), "# Brain\n\n## Root\n\n- [second](<second.md>)\n")
         (self.vault / "second.md").unlink()
         self.invoke("auto-index-brain", self.successful_tool())
         self.assertEqual(index.read_text(encoding="utf-8"), "# Brain\n")
@@ -622,7 +622,7 @@ sys.stdin.read()
                     process.kill()
                 process.communicate(timeout=2)
         self.assertEqual((self.vault / "index.md").read_text(encoding="utf-8"),
-                         "# Brain\n\n## Root\n\n- [[a]]\n- [[b]]\n")
+                         "# Brain\n\n## Root\n\n- [a](<a.md>)\n- [b](<b.md>)\n")
 
     def test_linked_lock_never_changes_outside_content(self):
         outside = self.directory / "outside"

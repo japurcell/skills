@@ -30,6 +30,6 @@ When you catch yourself writing the same instruction a second time:
 
 ## Relationship to Other Principles
 
-[[principles/never-block-on-the-human]] says agents should proceed autonomously. This defines what happens when autonomy goes wrong: the system learns and hardens.
+[principles/never-block-on-the-human](never-block-on-the-human.md) says agents should proceed autonomously. This defines what happens when autonomy goes wrong: the system learns and hardens.
 
-See also [[principles/never-block-on-the-human]]
+See also [principles/never-block-on-the-human](never-block-on-the-human.md)

@@ -30,7 +30,7 @@ Files are delimited with `=== path/to/file.md ===` headers.
 
 ### 2. Auditor (blocking - its report feeds step 3)
 
-Use an available general analysis subagent, or perform a bounded local review when delegation is unavailable. See `references/agents.md § Auditor` for the full prompt spec. Inputs: brain snapshot, auto-memory path, AGENTS.md path.
+Use an available general analysis subagent, or perform a bounded local review when delegation is unavailable. See `references/agent-prompts.md § Auditor` for the full prompt spec. Inputs: brain snapshot, auto-memory path, AGENTS.md path.
 
 Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-value content, verbosity, and orphans. Returns a categorized report.
 
@@ -38,17 +38,17 @@ Audits brain notes, AGENTS.md, and auto-memory for staleness, redundancy, low-va
 
 ### 3. Reviewer (after auditor completes)
 
-Use one available general analysis subagent, or continue locally when delegation is unavailable. See `references/agents.md § Reviewer` for the full prompt spec. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
+Use one available general analysis subagent, or continue locally when delegation is unavailable. See `references/agent-prompts.md § Reviewer` for the full prompt spec. Inputs: brain snapshot, skills snapshot, auditor report, `brain/principles.md`.
 
 Combines three concerns in a single pass:
 
-- **Synthesis**: Proposes missing wikilinks, flags principle tensions, suggests clarifications.
+- **Synthesis**: Proposes missing Markdown links, flags principle tensions, suggests clarifications.
 - **Distillation**: Identifies recurring patterns that reveal unstated principles. New principles must be (1) independent, (2) evidenced by 2+ notes, (3) actionable.
 - **Skill review**: Cross-references skills against brain principles. Finds contradictions, missed structural enforcement, redundant instructions. Audits description frontmatters for context bloat.
 
 ### 4. Review reports
 
-Present the user with a consolidated summary. See `references/agents.md § Report Template` for the format.
+Present the user with a consolidated summary. See `references/agent-prompts.md § Report Template` for the format.
 
 ### 5. Route skill-specific learnings
 
@@ -62,7 +62,7 @@ Apply all changes directly. The user reviews the diff.
 - **Redundant notes**: Merge into the stronger note, delete the weaker
 - **Low-value notes**: Delete
 - **Verbose notes**: Condense in place
-- **New connections**: Add `[[wikilinks]]`
+- **New connections**: Add file-relative Markdown links
 - **Tensions**: Reword to clarify boundaries
 - **New principles**: Only from the distillation section, only if genuinely independent. Write brain files and update `brain/principles.md`
 - **Merge principles**: Look for principles that are subsets or specific applications of each other - merge the narrower into the broader and pick a name that captures the combined insight

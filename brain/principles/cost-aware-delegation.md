@@ -16,6 +16,6 @@ Agent turns, CI minutes, and API dollars are finite. Without explicit budgets, w
 
 ## Relationship to Other Principles
 
-This is not about *what* to build ([[principles/foundational-thinking]]) or *how* to structure it ([[principles/boundary-discipline]]). It's about the economics of having someone else build it - treating attention as a finite currency.
+This is not about *what* to build ([principles/foundational-thinking](foundational-thinking.md)) or *how* to structure it ([principles/boundary-discipline](boundary-discipline.md)). It's about the economics of having someone else build it - treating attention as a finite currency.
 
-See also [[principles/guard-the-context-window]]
+See also [principles/guard-the-context-window](guard-the-context-window.md)

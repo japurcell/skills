@@ -7,7 +7,6 @@
 ## Repository maintenance
 
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
-9. [ ] Convert all `[[<filename>]]` wikilinks to standard Markdown links with valid relative file destinations; update link-generation code and authoring guidance so files remain compatible with standard Markdown tools.
 
 ## Forest Service skills
 
@@ -20,5 +19,5 @@
 4. [ ] Define one bounded prototype for configurable agent workflows, multi-harness routing, live/history inspection, and evidence-based self-improvement. References: [Shopify process](https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd), [validation pipeline](https://github.com/kunchenguid/no-mistakes), [software factory UI](https://github.com/disler/super-simple-software-factory), [Noodle](https://github.com/poteto/noodle).
 5. [ ] Investigate whether nested AGENTS.md maps complement the root brain index for local context; evaluate [harness-engineering](https://github.com/lopopolo/harness-engineering).
 6. [ ] Audit skills against compatible [official skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), focusing on OpenAI usage, progressive disclosure, reference navigation, and feedback loops.
-7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [[codebase/secret-scanner]]
+7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [codebase/secret-scanner](codebase/secret-scanner.md)
 11. [ ] Research interface options for assigning and monitoring agentic work across multiple repositories before choosing a UI or implementing it. Compare a web app, a CLI, and integration with the existing Codex UI against the workflow of assigning work to a repository, following progress, and identifying work that needs attention. Document supported integration capabilities, constraints, tradeoffs, and supporting sources; recommend an initial interface and a bounded first version. Leave #4 unchanged; its workflow prototype is already in progress in another session.

@@ -21,7 +21,7 @@ At the code level, simplicity preserves options:
 - **DRY at the structural level** (types, data models) - but three similar lines of code is better than a premature abstraction
 - **Explicit over clever** - cleverness obscures intent = closing doors
 - **No placeholder source files** - create files only when there's real code
-- **Well-tested** - test behavior and edge cases, not line coverage. See [[principles/prove-it-works]].
+- **Well-tested** - test behavior and edge cases, not line coverage. See [principles/prove-it-works](prove-it-works.md).
 
 **Concurrency corollary:** Before sharing state between actors, ask: "What happens if another actor modifies this concurrently?" If the answer isn't "nothing", isolate.
 
@@ -38,8 +38,8 @@ Applies to commits too - sequence for maximum option value:
 - Keep commits small and single-purpose
 - Prefer commits that are easy to review, revert, and cherry-pick independently
 
-Subtraction ([[principles/subtract-before-you-add]]) comes before scaffolding - remove dead weight first, then lay foundations.
+Subtraction ([principles/subtract-before-you-add](subtract-before-you-add.md)) comes before scaffolding - remove dead weight first, then lay foundations.
 
 Ask: "does this decision reduce my future options, or preserve them?"
 
-See also [[principles/redesign-from-first-principles]], [[principles/prove-it-works]]
+See also [principles/redesign-from-first-principles](redesign-from-first-principles.md), [principles/prove-it-works](prove-it-works.md)

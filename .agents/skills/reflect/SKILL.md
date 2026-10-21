@@ -37,7 +37,7 @@ Before routing a learning to `brain/`, ask: can this be a lint rule, script, met
 Codebase knowledge, delegation principles, gotchas - anything that informs future sessions. This is the default destination. Use the `brain` skill for writing conventions.
 
 - One topic per file. File name = topic slug.
-- Group in directories with index files using `[[wikilinks]]`.
+- Group in directories with index files using standard Markdown links.
 - No inlined content in index files.
 
 ### Skill improvements (`.agents/skills/<skill>/`)

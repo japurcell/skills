@@ -7,6 +7,6 @@ When integrating a change, don't bolt it onto the existing design. Instead, rede
 - Propagate the change through every reference - types, docs, examples, rationale sections - so nothing reads as a patch
 - The redesign should be thought of holistically but delivered incrementally
 
-This is the method for preserving [[principles/foundational-thinking|option value]] when integrating changes into an existing design.
+This is the method for preserving [option value](foundational-thinking.md) when integrating changes into an existing design.
 
-See also [[principles/prove-it-works]]
+See also [principles/prove-it-works](prove-it-works.md)

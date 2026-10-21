@@ -8,4 +8,4 @@
 - Historical incidents on 2026-10-15 measured 8,403,665 and 9,264,664 bytes against the 8,388,608-byte cap. Exact candidate inventories and installed versions were not retained, so these are not current reproductions.
 - Investigate recovery and capacity before changing budgets; preserve failed observations and capture limits.
 
-Evidence checked 2026-10-20: [limits](../../hooks/runtime/scan_types.py), [merge fixtures](../../scripts/test-scan-secrets-merge.py), [diagnostic recovery](../../scripts/test-hook-diagnostic-recovery.py). Recheck when enumeration, capture, locking, or limits change. Follow-up: [[todos]].
+Evidence checked 2026-10-20: [limits](../../hooks/runtime/scan_types.py), [merge fixtures](../../scripts/test-scan-secrets-merge.py), [diagnostic recovery](../../scripts/test-hook-diagnostic-recovery.py). Recheck when enumeration, capture, locking, or limits change. Follow-up: [todos](../todos.md).

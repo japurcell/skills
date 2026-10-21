@@ -29,7 +29,7 @@ On 2026-10-21 the user explicitly waived live Gemini CLI verification and author
 
 - [x] (2026-10-20) [milestone-0] Record the accepted decisions, current repository evidence, task graph, and validation contract.
 - [x] (2026-10-20) [milestone-0] Create the plan and link it from the brain backlog and plans index.
-- [x] (2026-10-20) [milestone-1] T1: Read all 62 legacy content files, 15 retired-skill files, and four ADRs; retain exact coverage in [[migration-map]].
+- [x] (2026-10-20) [milestone-1] T1: Read all 62 legacy content files, 15 retired-skill files, and four ADRs; retain exact coverage in [migration-map](migration-map.md).
 - [x] (2026-10-20) [milestone-1] T1: Verify provider contracts and record user approval to index after every completed Codex tool call.
 - [x] (2026-10-20) [milestone-2] T2: Add 19 topic notes and six investigation todos; verify wikilinks and permanent IDs.
 - [x] (2026-10-20) [milestone-2] T2: Complete claim-to-destination review, preserve admission rules and missing lifecycle/Windows/loader contracts, and verify navigation. Active skill routing was completed in T6.

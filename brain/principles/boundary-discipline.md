@@ -34,4 +34,4 @@ Before adding a validation check, ask: **"Is this data crossing a system boundar
 
 Before putting logic in a hook, event listener, or framework integration point, ask: **"Can this be a pure function that the shell just calls?"** If yes, extract it.
 
-See also [[principles/foundational-thinking]]
+See also [principles/foundational-thinking](foundational-thinking.md)

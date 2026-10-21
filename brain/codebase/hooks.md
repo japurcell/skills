@@ -14,4 +14,4 @@
 - Hook `.py` and `.sh` files use executable mode 755; Bash installation reapplies it.
 - Run same-named provider modules separately when type checking.
 
-Evidence: [generator](../../scripts/generate-hooks.py), [common renderer](../../hooks/families/common.py), checked 2026-10-20. Recheck input, generation, or deployment changes. Provider contracts: [[hooks-codex]], [[hooks-copilot]], [[hooks-gemini]].
+Evidence: [generator](../../scripts/generate-hooks.py), [common renderer](../../hooks/families/common.py), checked 2026-10-20. Recheck input, generation, or deployment changes. Provider contracts: [hooks-codex](hooks-codex.md), [hooks-copilot](hooks-copilot.md), [hooks-gemini](hooks-gemini.md).

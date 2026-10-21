@@ -17,7 +17,7 @@ Manage the project backlog at `brain/todos.md`. Edit the file directly with avai
 ## Section Name
 
 1. [x] Completed item description
-2. [ ] Open item description [[plans/02-some-plan/overview]]
+2. [ ] Open item description [Plan](plans/02-some-plan/overview.md)
 ```
 
 - Items are numbered markdown checkboxes: `N. [ ] description` or `N. [x] description`
@@ -44,7 +44,7 @@ Then move the done item from `brain/todos.md` to `brain/archive/todos.md` (creat
 
 ### Edit description
 
-Replace the description text. Preserve any `[[wikilinks]]` unless intentionally removing them.
+Replace the description text. Preserve existing Markdown links unless intentionally removing them.
 
 ## Rules
 

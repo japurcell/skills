@@ -18,10 +18,10 @@ For decisions where the right answer isn't obvious, build 2-3 competing prototyp
 - Bug fixes or refactors with a clear target state
 - Changes where constraints dictate a single viable approach
 
-After a direction is chosen, see [[principles/subtract-before-you-add]] for implementation discipline.
+After a direction is chosen, see [principles/subtract-before-you-add](subtract-before-you-add.md) for implementation discipline.
 
 ## Distinction from Existing Principles
 
-[[principles/redesign-from-first-principles]] governs how to *integrate* a change. This governs how to *discover which change to make* when the answer isn't obvious. [[principles/experience-first]] mentions prototyping as one tactic; this elevates design-space exploration to a decision-making principle.
+[principles/redesign-from-first-principles](redesign-from-first-principles.md) governs how to *integrate* a change. This governs how to *discover which change to make* when the answer isn't obvious. [principles/experience-first](experience-first.md) mentions prototyping as one tactic; this elevates design-space exploration to a decision-making principle.
 
-See also [[principles/experience-first]], [[principles/redesign-from-first-principles]]
+See also [principles/experience-first](experience-first.md), [principles/redesign-from-first-principles](redesign-from-first-principles.md)

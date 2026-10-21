@@ -25,6 +25,6 @@ This does not mean agents should ignore the human. It means:
 
 ## Relationship to Other Principles
 
-[[principles/cost-aware-delegation]] treats delegation as an economic problem. This principle extends that thinking to the human-agent boundary: the human's attention is the scarcest resource in the system, so minimize demands on it.
+[principles/cost-aware-delegation](cost-aware-delegation.md) treats delegation as an economic problem. This principle extends that thinking to the human-agent boundary: the human's attention is the scarcest resource in the system, so minimize demands on it.
 
-See also [[principles/encode-lessons-in-structure]], [[principles/cost-aware-delegation]]
+See also [principles/encode-lessons-in-structure](encode-lessons-in-structure.md), [principles/cost-aware-delegation](cost-aware-delegation.md)

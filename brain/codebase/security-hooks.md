@@ -8,4 +8,4 @@
 - RTK forwarding errors record status without copying unbounded subprocess diagnostics. Empty successful RTK output is a valid no-op.
 - Codex uses explicit RTK commands; automatic forwarders remain Copilot/Gemini-specific.
 
-Evidence: `hooks/families/tool_guard.py`, `hooks/runtime/`, and [[security-testing]], checked 2026-10-20. Recheck policy, process isolation, or capture changes.
+Evidence: `hooks/families/tool_guard.py`, `hooks/runtime/`, and [security-testing](security-testing.md), checked 2026-10-20. Recheck policy, process isolation, or capture changes.

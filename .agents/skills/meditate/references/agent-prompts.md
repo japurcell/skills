@@ -17,7 +17,7 @@ Every agent prompt should include:
 
 Prompt spec:
 
-- Read `/tmp/brain-snapshot.md` and parse it to build a wikilink map - no individual brain file reads needed
+- Read `/tmp/brain-snapshot.md` and parse it to build a map of Markdown links resolved relative to each source-file header - no individual brain file reads needed
 - Use the file headers (`=== path ===`) as the on-disk file list for orphan detection
 - Cross-reference each note against the current codebase state (check if referenced files, patterns, tools, or decisions still exist) - the only part that requires Read/Grep/Glob calls
 - Flag notes as:
@@ -44,7 +44,7 @@ Prompt spec:
 
 **Section 1 - Synthesis:**
 
-- Propose missing `[[wikilinks]]` between notes that reference the same concepts
+- Propose missing file-relative Markdown links between notes that reference the same concepts
 - Flag principles that appear to conflict; propose how to resolve or clarify the boundary
 - Propose rewording where a note's relationship to a principle is unclear
 - Do NOT propose merging principles - they are intentionally independent

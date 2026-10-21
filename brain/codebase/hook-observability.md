@@ -8,4 +8,4 @@
 - Test copied provider-local scripts, retained stdin, trailing data, and UTF-8 output under Windows codepages.
 - Rotation tests that exclude maintenance need the existing stale-maintenance sentinel fixture; avoid accidental maintenance changing their premise.
 
-Evidence: [observability ADR](../../docs/adr/0003-sqlite-backed-hook-observability.md), `hooks/families/observability.py`, checked 2026-10-20. Recheck log lifecycle or maintenance changes. See [[hook-testing]].
+Evidence: [observability ADR](../../docs/adr/0003-sqlite-backed-hook-observability.md), `hooks/families/observability.py`, checked 2026-10-20. Recheck log lifecycle or maintenance changes. See [hook-testing](hook-testing.md).

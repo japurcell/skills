@@ -42,9 +42,9 @@ brain/
 - File names: lowercase, hyphenated. `worktree-gotchas.md`.
 - Plan directories: prefixed with the todo ID from `brain/todos.md`. `02-arrow-bindings/` with `overview.md` and `phase-N-*.md` inside.
 
-## Wikilinks
+## Links
 
-Format: `[[section/file-name]]`. Resolution order: same directory, then relative path, then vault root. Heading anchors (`[[file#heading]]`) are stripped during resolution.
+Use standard Markdown links with destinations relative to the file containing the link, including the file extension: `[Topic](relative/topic.md)`. Use `../` for parent directories, preserve heading fragments such as `#section-heading`, and percent-encode spaces or special destination characters. Keep explicit link labels when converting existing references. Do not use Obsidian note-link syntax.
 
 ## Writing Style
 

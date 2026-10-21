@@ -16,6 +16,6 @@ Adding to a complex system compounds complexity. Removing first reduces the surf
 
 ## Relationship to Other Principles
 
-This is not about *what* to build ([[principles/foundational-thinking]]) or *how* to redesign it ([[principles/redesign-from-first-principles]]). It's about *when* to act - an ordering principle that says subtraction comes before addition.
+This is not about *what* to build ([principles/foundational-thinking](foundational-thinking.md)) or *how* to redesign it ([principles/redesign-from-first-principles](redesign-from-first-principles.md)). It's about *when* to act - an ordering principle that says subtraction comes before addition.
 
-See also [[todos]]
+See also [todos](../todos.md)

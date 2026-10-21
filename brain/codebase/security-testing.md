@@ -7,4 +7,4 @@
 - Preserve failed warm/cold benchmark observations and compare equivalent workloads before claiming improved performance.
 - Use the current scanner and guardian suites as the detailed behavioral contract rather than copying thresholds into many notes.
 
-Evidence: `scripts/test-scan-secrets-*.py`, `scripts/test-tool-guard-*.py`, and [[hook-testing]], checked 2026-10-20. Recheck after policy or capture changes.
+Evidence: `scripts/test-scan-secrets-*.py`, `scripts/test-tool-guard-*.py`, and [hook-testing](hook-testing.md), checked 2026-10-20. Recheck after policy or capture changes.

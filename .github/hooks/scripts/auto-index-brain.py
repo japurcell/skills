@@ -507,11 +507,8 @@ def inventory(vault):
         lines.extend(["", "## " + ("Root" if group == "." else group), ""])
         for note in notes:
             stem = note[:-3]
-            if any(character in stem for character in "[]#|^\\\r\n"):
-                label = re.sub(r"([\\\[\]])", r"\\\1", stem).replace("\n", " ").replace("\r", " ")
-                lines.append("- [" + label + "](<" + quote(note, safe="/") + ">)")
-            else:
-                lines.append("- [[" + stem + "]]")
+            label = re.sub(r"([\\\[\]])", r"\\\1", stem).replace("\n", " ").replace("\r", " ")
+            lines.append("- [" + label + "](<" + quote(note, safe="/") + ">)")
     content = ("\n".join(lines) + "\n").encode("utf-8")
     if len(content) > 512 * 1024 or time.monotonic() > deadline:
         raise BrainError("inventory budget exceeded")

@@ -24,8 +24,8 @@ Never label an issue "pre-existing" to justify skipping it. If you touch a file,
 
 ## Relationship to Other Principles
 
-[[principles/prove-it-works]] says to check real state, not proxies. This extends that to debugging: check the real cause, not the proxied symptom.
+[principles/prove-it-works](prove-it-works.md) says to check real state, not proxies. This extends that to debugging: check the real cause, not the proxied symptom.
 
-[[principles/encode-lessons-in-structure]] provides the encoding mechanism once a root cause is understood - make it structurally impossible to recur.
+[principles/encode-lessons-in-structure](encode-lessons-in-structure.md) provides the encoding mechanism once a root cause is understood - make it structurally impossible to recur.
 
-See also [[principles/prove-it-works]], [[principles/encode-lessons-in-structure]]
+See also [principles/prove-it-works](prove-it-works.md), [principles/encode-lessons-in-structure](encode-lessons-in-structure.md)

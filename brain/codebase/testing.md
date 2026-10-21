@@ -6,6 +6,6 @@
 - Skips and missing dependencies are not passes. The aggregate runner supports macOS/Linux; dedicated Windows workflows cover native behavior.
 - Preserve failing cases and evidence. Do not weaken surviving tests to claim success.
 
-Routes: [[hook-testing]], [[live-hook-testing]], [[security-testing]], [[powershell-installers]], [[skill-evaluation]].
+Routes: [hook-testing](hook-testing.md), [live-hook-testing](live-hook-testing.md), [security-testing](security-testing.md), [powershell-installers](powershell-installers.md), [skill-evaluation](skill-evaluation.md).
 
 Evidence: [maintained runner](../../scripts/test-all.py), checked 2026-10-20. Recheck suite ownership and platform assumptions when changing tests.

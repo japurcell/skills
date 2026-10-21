@@ -10,6 +10,6 @@ The user experience is the product. Every technical decision either serves or hi
 
 ## Relationship to Other Principles
 
-This does not mean skip foundations - it means foundations should serve the experience, not the other way around. [[principles/foundational-thinking]] governs the *sequence* of work (get the data model right before the UI). This principle governs the *target* (the data model exists to serve the experience).
+This does not mean skip foundations - it means foundations should serve the experience, not the other way around. [principles/foundational-thinking](foundational-thinking.md) governs the *sequence* of work (get the data model right before the UI). This principle governs the *target* (the data model exists to serve the experience).
 
-See also [[principles/subtract-before-you-add]], [[principles/foundational-thinking]]
+See also [principles/subtract-before-you-add](subtract-before-you-add.md), [principles/foundational-thinking](foundational-thinking.md)

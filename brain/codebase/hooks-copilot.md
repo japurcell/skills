@@ -9,4 +9,4 @@
 - Command pre-tool errors deny tools, but timeouts fail open; do not treat all command failures as equivalent.
 - Preserve stop-loop guards in validators. Keep diagnostic stdout separate from protocol output.
 
-Source: [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference), checked 2026-10-20. CLI 1.0.100 is installed; no live brain delivery is proven. Recheck after provider changes. See [[hooks-vscode]] for cross-client limits.
+Source: [official hooks reference](https://docs.github.com/en/copilot/reference/hooks-reference), checked 2026-10-20. CLI 1.0.100 is installed; no live brain delivery is proven. Recheck after provider changes. See [hooks-vscode](hooks-vscode.md) for cross-client limits.

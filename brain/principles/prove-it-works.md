@@ -40,6 +40,6 @@ When verifying delegated work, inspect the actual output artifact (`git diff --s
 
 ## Relationship to Other Principles
 
-[[principles/fix-root-causes]] extends this to debugging - check the real cause, not the proxied symptom.
+[principles/fix-root-causes](fix-root-causes.md) extends this to debugging - check the real cause, not the proxied symptom.
 
-See also [[principles/foundational-thinking]]
+See also [principles/foundational-thinking](foundational-thinking.md)

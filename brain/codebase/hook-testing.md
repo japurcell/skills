@@ -7,4 +7,4 @@
 - Installer tests must resolve registered commands to installed scripts in disposable destinations.
 - Keep live event/context delivery separate from fixture proof. Native Windows tests must actually execute on Windows.
 
-Evidence: [generator suite](../../scripts/test-generate-hooks.py), [stdin suite](../../scripts/test-hook-input-bounds.py), checked 2026-10-20. Recheck runtime and registration changes. See [[live-hook-testing]].
+Evidence: [generator suite](../../scripts/test-generate-hooks.py), [stdin suite](../../scripts/test-hook-input-bounds.py), checked 2026-10-20. Recheck runtime and registration changes. See [live-hook-testing](live-hook-testing.md).

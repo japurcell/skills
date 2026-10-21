@@ -89,7 +89,7 @@ Present findings to the user in a table with columns: finding, frequency/evidenc
 Apply only the changes the user approves. Follow brain writing conventions:
 
 - One topic per file, organized in directories
-- Use `[[wikilinks]]` to connect related notes
+- Use file-relative Markdown links to connect related notes
 - Maintain curated indexes through the brain skill and let hooks reconcile the root inventory
 - Default to updating existing notes over creating new ones
 
