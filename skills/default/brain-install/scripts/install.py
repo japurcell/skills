@@ -63,13 +63,15 @@ def payload():
 
 
 def sections(text):
-    """Locate real ATX headings outside fenced code, retaining original bytes."""
+    """Locate ATX and setext headings outside fenced code, retaining original bytes."""
     headings = []
     fence = None
     offset = 0
+    previous = None
     for line in text.splitlines(keepends=True):
         marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line.rstrip("\r\n"))
         if marker:
+            previous = None
             run, suffix = marker.groups()
             if fence is None:
                 fence = run
@@ -79,12 +81,23 @@ def sections(text):
             heading = re.match(r"^ {0,3}(#{1,2})[ \t]+(.+?)[ \t]*#*[ \t]*(?:\r?\n)?$", line)
             if heading:
                 headings.append((offset, len(heading[1]), heading[2]))
+                previous = None
+            elif re.fullmatch(r" {0,3}(=+|-+)[ \t]*(?:\r?\n)?", line) and previous:
+                start, title = previous
+                headings.append((start, 1 if line.lstrip().startswith("=") else 2, title))
+                previous = None
+            else:
+                previous = (offset, line.strip()) if line.strip() else None
         offset += len(line)
+    if fence is not None:
+        raise Conflict("unclosed fenced code block in AGENTS.md; close it before retrying")
     result = {}
     for index, (start, level, title) in enumerate(headings):
         end = next((position for position, following, _ in headings[index + 1:]
                     if following <= level), len(text))
-        if level == 2 and title in ("Brain", "End of Work Session Defined"):
+        if title in ("Brain", "End of Work Session Defined"):
+            if level != 2:
+                raise Conflict(f"AGENTS.md section must use level 2: {title}")
             if title in result:
                 raise Conflict(f"duplicate AGENTS.md section: {title}")
             result[title] = text[start:end]
@@ -258,6 +271,11 @@ def main():
         changes = []
         for relative, content in files.items():
             path = safe_path(target, relative)
+            if (relative in {f"brain/{directory}/index.md" for directory in
+                             ("codebase", "plans", "audits", "archive")}
+                    and not path.exists() and path.parent.exists() and any(path.parent.iterdir())):
+                raise Conflict(f"missing curated index: {relative}; link existing content before retrying "
+                               "with --keep-existing")
             if relative in kept:
                 print(f"KEEP {relative}: verify retained content compatibility")
                 continue

@@ -169,6 +169,8 @@ def discover_files(claude_dirs: list[str], codex_dirs: list[str]) -> list[str]:
 
 
 def main() -> None:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(
         description="Extract messages from Claude and Codex conversation JSONL files."
     )

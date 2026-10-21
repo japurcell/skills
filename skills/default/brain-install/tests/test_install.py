@@ -118,12 +118,61 @@ class InstallerTests(unittest.TestCase):
         self.assertIn("migrated-guidance.md", (self.target / "brain/index.md").read_text())
         self.assertIn("deployment approval", (self.target / "brain/migrated-guidance.md").read_text())
 
+    def test_populated_subtrees_require_curated_indexes_before_installation(self):
+        options = []
+        for directory in ("plans", "audits", "archive", "codebase"):
+            subtree = self.target / "brain" / directory
+            subtree.mkdir(parents=True)
+            note = subtree / "current.md"
+            note.write_bytes(b"# Current knowledge\nKeep this guidance.\n")
+            before = self.fingerprints()
+            for arguments in ((), ("--apply",)):
+                result = self.run_install(*arguments, *options, expected=2)
+                self.assertIn(f"brain/{directory}/index.md", result.stderr)
+                self.assertEqual(self.fingerprints(), before)
+            index = subtree / "index.md"
+            index.write_bytes(b"# Index\n\n- [Current](current.md)\n")
+            options.extend(("--keep-existing", f"brain/{directory}/index.md"))
+        preserved = self.fingerprints()
+        self.run_install("--apply", *options)
+        for relative, fingerprint in preserved.items():
+            self.assertEqual(self.fingerprints()[relative], fingerprint)
+        inventory = (self.target / "brain/index.md").read_text(encoding="utf-8")
+        for directory in ("plans", "audits", "archive", "codebase"):
+            self.assertIn(f"{directory}/index.md", inventory)
+
     def test_ambiguous_or_conflicting_agents_sections_are_read_only_conflicts(self):
         for content in ("## Brain\nCustom policy.\n", "## Brain\nOne\n## Brain\nTwo\n"):
             (self.target / "AGENTS.md").write_text(content)
             before = self.fingerprints()
             self.run_install("--apply", expected=2)
             self.assertEqual(self.fingerprints(), before)
+
+    def test_unclosed_agents_fences_are_read_only_conflicts_on_retries(self):
+        for fence in ("```text", "~~~text"):
+            (self.target / "AGENTS.md").write_bytes(f"{fence}\nExample\n".encode())
+            before = self.fingerprints()
+            for _ in range(2):
+                result = self.run_install("--apply", "--index-reviewed", expected=2)
+                self.assertIn("unclosed", result.stderr)
+                self.assertEqual(self.fingerprints(), before)
+
+    def test_setext_agents_sections_conflict_and_bound_other_sections(self):
+        for content in ("Brain\n-----\nCustom policy.\n",
+                        "Brain\n=====\nCustom policy.\n",
+                        "## Brain\nOne\nBrain\n-----\nTwo\n"):
+            (self.target / "AGENTS.md").write_bytes(content.encode())
+            before = self.fingerprints()
+            self.run_install("--apply", expected=2)
+            self.assertEqual(self.fingerprints(), before)
+        template = (self.bundle / "assets/AGENTS-brain.md").read_bytes()
+        original = template + b"\nBuilds\n------\nKeep build policy.\n\n```text\nBrain\n-----\n```\n"
+        (self.target / "AGENTS.md").write_bytes(original)
+        self.run_install("--apply")
+        self.assertEqual((self.target / "AGENTS.md").read_bytes(), original)
+        before = self.fingerprints()
+        self.run_install("--apply", "--index-reviewed")
+        self.assertEqual(self.fingerprints(), before)
 
     def test_linked_destination_does_not_change_target_or_external_files(self):
         outside = self.root / "outside"
@@ -281,6 +330,29 @@ class InstallerTests(unittest.TestCase):
 
 
 class PayloadTests(unittest.TestCase):
+    def test_relocated_extractor_uses_utf8_for_unicode_output_paths(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            relocated = root / "relocated bundle"
+            shutil.copytree(BUNDLE, relocated)
+            conversations = root / "conversations"
+            conversations.mkdir()
+            message = "Preserve this conversation guidance."
+            (conversations / "session.jsonl").write_text(json.dumps(
+                {"type": "user", "message": {"content": message}}) + "\n", encoding="utf-8")
+            output = root / "output-漢字"
+            result = subprocess.run(
+                [sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
+                 str(output), "--claude-dir", str(conversations), "--min-size", "0"],
+                cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
+            self.assertEqual(result.stdout.decode("utf-8").strip(), str(output))
+            extracted = output / "000_claude_session.txt"
+            self.assertIn(f"[USER]: {message}", extracted.read_text(encoding="utf-8"))
+            self.assertEqual((output / "batches/batch_0.txt").read_text(encoding="utf-8"),
+                             f"{output}/000_claude_session.txt\n")
+
     def test_relocated_snapshot_preserves_format_and_filters_directories(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

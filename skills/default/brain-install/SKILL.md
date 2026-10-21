@@ -32,6 +32,8 @@ An existing root index is a preservation checkpoint before **any** installer wri
 
 Resolve each reported content conflict concretely. Preserve existing todos, principles, notes, skills, and unrelated settings. For an eligible seed note, curated index, or skill file that should remain unchanged, repeat `--keep-existing repository/relative/path`. Verify retained skill files remain compatible with their callers. Keep choices are per invocation; repeat them on retry. Required AGENTS sections, selected provider registrations, and generated `brain/index.md` cannot be skipped this way.
 
+For a populated codebase, plans, audits, or archive directory without an index, create a curated `index.md` linking its existing content, then retain it with `--keep-existing`. Empty starter indexes are only for empty directories.
+
 For differing AGENTS sections or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
 
 ## 3. Install
