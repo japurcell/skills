@@ -1,0 +1,9 @@
+{
+  "name": "orchard-documentation-fixture",
+  "private": true,
+  "scripts": {
+    "verify:web": "node tools/check-web.mjs",
+    "verify:all": "node tools/check-all.mjs",
+    "generate:client": "node tools/generate-client.mjs"
+  }
+}

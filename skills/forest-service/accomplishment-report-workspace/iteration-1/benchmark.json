@@ -1,0 +1,237 @@
+{
+  "metadata": {
+    "skill_name": "accomplishment-report",
+    "executor_model": "gpt-6-luna",
+    "reasoning_effort": "max",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "completed-measured",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Correct sibling report and plan identity",
+          "passed": true,
+          "evidence": "outputs/plans/recreation/accomplishment-report.md identifies the plan."
+        },
+        {
+          "text": "Base costs and savings arithmetic correct",
+          "passed": true,
+          "evidence": "Base costs are 2400 and 640; savings 1760 and 73.33%; calculator verified."
+        },
+        {
+          "text": "Human hours and runtime separated",
+          "passed": true,
+          "evidence": "Separates 6 human hours, 10 agent-hours and 4 elapsed hours."
+        },
+        {
+          "text": "Agency skill activated; alignment supported and dated",
+          "passed": true,
+          "evidence": "Transcript activates agency-priorities; report dates snapshot and limits recreation alignment."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "update-uncertain",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 4,
+        "failed": 0,
+        "total": 4,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "Existing file updated without duplicate; owner note preserved",
+          "passed": true,
+          "evidence": "Correct plans/internal path; exact owner note preserved."
+        },
+        {
+          "text": "Unsupported measured savings corrected",
+          "passed": true,
+          "evidence": "Withdraws unsupported 10000 measured claim."
+        },
+        {
+          "text": "Unknown usage not zero; assumptions and oversight explicit",
+          "passed": true,
+          "evidence": "Actual costs unknown, illustrative inputs labeled; oversight included in evidence requirements."
+        },
+        {
+          "text": "Negative savings retained; alignment not forced",
+          "passed": true,
+          "evidence": "Conservative result is -900; indirect alignment explicitly unverified."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "incomplete-stale",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "No report created",
+          "passed": true,
+          "evidence": "Explicit non-generation response exists; no report."
+        },
+        {
+          "text": "Identifies acceptance failure and pending signoff",
+          "passed": true,
+          "evidence": "Names failing export E2E test and pending signoff."
+        },
+        {
+          "text": "Does not change plan or implementation",
+          "passed": true,
+          "evidence": "Transcript and response record no plan or implementation changes."
+        }
+      ]
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "completed-measured",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "pass_rate": 0.5
+      },
+      "expectations": [
+        {
+          "text": "Correct sibling report and plan identity",
+          "passed": false,
+          "evidence": "Saved under outputs/recreation instead of outputs/plans/recreation and lacks exact plan identity."
+        },
+        {
+          "text": "Base costs and savings arithmetic correct",
+          "passed": true,
+          "evidence": "2400 minus 640 equals 1760; percentage rounds to 73.3."
+        },
+        {
+          "text": "Human hours and runtime separated",
+          "passed": true,
+          "evidence": "Human effort, aggregate agent runtime and elapsed time distinguished."
+        },
+        {
+          "text": "Agency skill activated; alignment supported and dated",
+          "passed": false,
+          "evidence": "Transcript reads agency-priorities, but report omits agency alignment and snapshot date."
+        }
+      ]
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "update-uncertain",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 2,
+        "failed": 2,
+        "total": 4,
+        "pass_rate": 0.5
+      },
+      "expectations": [
+        {
+          "text": "Existing file updated without duplicate; owner note preserved",
+          "passed": false,
+          "evidence": "Owner note preserved, but output path omits plans directory."
+        },
+        {
+          "text": "Unsupported measured savings corrected",
+          "passed": true,
+          "evidence": "Unsupported measured claim disavowed."
+        },
+        {
+          "text": "Unknown usage not zero; assumptions and oversight explicit",
+          "passed": false,
+          "evidence": "Assumed costs labeled, but 18 assisted hours have no explicit oversight/review inclusion."
+        },
+        {
+          "text": "Negative savings retained; alignment not forced",
+          "passed": true,
+          "evidence": "Shows 2300 higher cost and does not invent agency alignment."
+        }
+      ]
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "incomplete-stale",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "pass_rate": 1.0
+      },
+      "expectations": [
+        {
+          "text": "No report created",
+          "passed": true,
+          "evidence": "Explicit response refuses report; no accomplishment report exists."
+        },
+        {
+          "text": "Identifies acceptance failure and pending signoff",
+          "passed": true,
+          "evidence": "Failing export test and pending owner signoff named."
+        },
+        {
+          "text": "Does not change plan or implementation",
+          "passed": true,
+          "evidence": "No plan or implementation edits recorded."
+        }
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.6666666666666666,
+        "stddev": 0.28867513459481287,
+        "min": 0.5,
+        "max": 1.0
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.3333"
+    }
+  },
+  "notes": [
+    "Three synthetic prompts batched per agent; one sample each. Not a trigger or filesystem-integration test.",
+    "With-skill 11/11 assertions; baseline 7/11. Scores include exact output-path checks.",
+    "Timing and token usage unavailable; omitted rather than substituted. Standard deviation is across scenarios, not repeated-run variance.",
+    "Initial baseline accidentally read rubric and was interrupted before writing outputs. Selected baseline is fresh baseline_clean using prompts-only input.",
+    "Both prompts offered nonexistent skills/default/exec-plans path; with-skill resolved .agents/skills/exec-plans; baseline reported dependency unavailable. This asymmetry limits causal comparison."
+  ]
+}

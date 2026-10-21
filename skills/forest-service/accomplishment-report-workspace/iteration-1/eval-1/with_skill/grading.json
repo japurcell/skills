@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Correct sibling report and plan identity",
+      "passed": true,
+      "evidence": "outputs/plans/recreation/accomplishment-report.md identifies the plan."
+    },
+    {
+      "text": "Base costs and savings arithmetic correct",
+      "passed": true,
+      "evidence": "Base costs are 2400 and 640; savings 1760 and 73.33%; calculator verified."
+    },
+    {
+      "text": "Human hours and runtime separated",
+      "passed": true,
+      "evidence": "Separates 6 human hours, 10 agent-hours and 4 elapsed hours."
+    },
+    {
+      "text": "Agency skill activated; alignment supported and dated",
+      "passed": true,
+      "evidence": "Transcript activates agency-priorities; report dates snapshot and limits recreation alignment."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "eval_id": 2,
+  "eval_name": "update-uncertain",
+  "prompt": "Update the existing plans/internal/ accomplishment report for its completed ExecPlan.md. Preserve the human-written note: \"Owner note: adoption review scheduled for November.\" Repository maintains internal developer tooling; all tests and plan acceptance passed. Existing report claims USD 10000 measured savings but supplies no cost evidence. There are no labor logs, token records, billing allocations, or deployment metrics. Git timestamps span two days; do not treat them as work hours. Produce a useful executive report using explicit assumptions, including a scenario where AI costs exceed human-only work.",
+  "assertions": [
+    "Existing file updated without duplicate; owner note preserved",
+    "Unsupported measured savings corrected",
+    "Unknown usage not zero; assumptions and oversight explicit",
+    "Negative savings retained; alignment not forced"
+  ]
+}

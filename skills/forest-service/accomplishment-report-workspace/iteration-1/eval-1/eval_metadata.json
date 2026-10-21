@@ -1,0 +1,11 @@
+{
+  "eval_id": 1,
+  "eval_name": "completed-measured",
+  "prompt": "Create the accomplishment report for plans/recreation/ExecPlan.md. This repository provides a campground repair dashboard. All plan tasks and acceptance checks are complete: repair queues and status export shipped, 18 acceptance tests passed, deployment and adoption are outside scope. Human-only work-package estimates: design 4h, implementation 12h, verification 6h, documentation 2h. Assisted human effort is 6h total including prompting, review, testing and corrections. Fully burdened labor is USD 100/h for both. Scoped AI billing including all agents and retries is USD 40. Agent runtimes total 10h, overlapping within 4h elapsed delivery. No other costs. Treat these as base-case inputs and explain sensitivity assumptions.",
+  "assertions": [
+    "Correct sibling report and plan identity",
+    "Base costs and savings arithmetic correct",
+    "Human hours and runtime separated",
+    "Agency skill activated; alignment supported and dated"
+  ]
+}

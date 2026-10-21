@@ -609,6 +609,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/macos,linux,windows,python,vs
 
 # Retained synthetic evaluation inputs.
+!skills/default/brain-install/evals/fixtures/legacy/.agents/skills/release/
 !skills/default/handoff/evals/files/root-create-fixture/logs/
 skills/default/handoff/evals/files/root-create-fixture/logs/*
 !skills/default/handoff/evals/files/root-create-fixture/logs/test-failure.txt
@@ -621,3 +622,6 @@ skills/default/handoff/evals/files/history-resume-fixture/logs/*
 !skills/default/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/
 skills/default/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/*
 !skills/default/handoff/evals/files/owner-action-fixture/.agents/scratchpad/releases/handoff.md
+
+# Local benchmark artifacts for the AGENTS.md installer skill.
+/skills/default/agents-md-install-workspace/

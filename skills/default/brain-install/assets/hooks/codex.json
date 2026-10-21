@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.codex/hooks/inject-brain.py').is_file()); p=d/'.codex/hooks/inject-brain.py'; sys.argv=[str(p),'--provider','codex']; runpy.run_path(str(p),run_name='__main__')\"",
+            "commandWindows": "py -3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.codex/hooks/inject-brain.py').is_file()); p=d/'.codex/hooks/inject-brain.py'; sys.argv=[str(p),'--provider','codex']; runpy.run_path(str(p),run_name='__main__')\"",
+            "timeout": 5,
+            "additionalContextLimit": 0
+          }
+        ],
+        "matcher": "startup|resume|clear|compact|fork"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.codex/hooks/auto-index-brain.py').is_file()); p=d/'.codex/hooks/auto-index-brain.py'; sys.argv=[str(p),'--provider','codex']; runpy.run_path(str(p),run_name='__main__')\"",
+            "commandWindows": "py -3 -I -S -B -c \"import pathlib,runpy,sys; ds=(pathlib.Path.cwd(),*pathlib.Path.cwd().parents); d=next((d for d in ds if (d/'.git').exists()),None); d=d if d is not None else next(d for d in ds if (d/'.codex/hooks/auto-index-brain.py').is_file()); p=d/'.codex/hooks/auto-index-brain.py'; sys.argv=[str(p),'--provider','codex']; runpy.run_path(str(p),run_name='__main__')\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

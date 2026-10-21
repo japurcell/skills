@@ -1,0 +1,18 @@
+{
+  "custom": {
+    "keep": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo keep-existing-handler"
+          }
+        ]
+      }
+    ]
+  }
+}

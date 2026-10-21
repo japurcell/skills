@@ -1,0 +1,50 @@
+{
+  "skill_name": "agents-md-install",
+  "evals": [
+    {
+      "id": 1,
+      "name": "create-scoped-guidance",
+      "prompt": "Install AGENTS.md guidance for this project. Create root and appropriate nested files and reference docs only where needed. Use the existing project documents as evidence. Do not change compatibility files or application/configuration files. Complete authorized edits without asking for confirmation, and report verification limits.",
+      "expected_output": "Small root, nested web and service guidance, explicit conditional links to existing API and migration docs, no duplicated policy or excluded edits.",
+      "files": ["evals/fixtures/create"],
+      "assertions": [
+        "Creates root AGENTS.md, apps/web/AGENTS.md, and services/api/AGENTS.md.",
+        "Routes public API consumer changes to docs/api-contract.md and schema changes to docs/database-changes.md with explicit task conditions.",
+        "Keeps migration detail out of root and web guidance while preserving the shared consumer contract route.",
+        "Leaves CLAUDE.md, .github/copilot-instructions.md, and all non-guidance input files unchanged.",
+        "Preserves the existing no-production-access and applied-migration policies without inventing thresholds or new approval rules.",
+        "Completes edits and distinguishes executed checks from unavailable toolchain verification."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "reconcile-existing-guidance",
+      "prompt": "Update the AGENTS.md hierarchy for this project. Fix stale command references, remove duplication, and use progressive disclosure. Preserve valid requirements and local exceptions. Reuse existing docs and leave tool-specific compatibility files untouched. Apply the changes; no extra approval round is needed.",
+      "expected_output": "Root is slimmed while retaining the default full completion check and its presentation-only web exception. Web behavior, service, and shared contract changes still require the full check. API guidance is scoped, stale spelling is repaired from evidence, existing docs are reused, and bridge files remain unchanged.",
+      "files": ["evals/fixtures/update"],
+      "assertions": [
+        "Preserves npm run verify:all from the root as the default completion requirement for every change, subject only to the presentation-only exception.",
+        "Preserves npm run verify:web as sufficient only for changes confined to web presentation, such as CSS spacing or colors; never broadens the exception to all web-only changes.",
+        "Requires npm run verify:all for web behavior, service, and shared API contract changes, including behavior or contract changes whose edited files are all under apps/web.",
+        "Replaces the obsolete npm run check-web spelling with npm run verify:web from package.json.",
+        "Preserves the release approval requirement and source-first generated-client workflow.",
+        "Creates or updates services/api/AGENTS.md with an explicit schema-or-migration condition and a direct relative link to the existing docs/database-changes.md; a link only through the service README does not pass.",
+        "Reuses docs/api-contract.md and docs/database-changes.md without creating competing copies or losing existing policy.",
+        "Leaves CLAUDE.md and .github/copilot-instructions.md byte-for-byte unchanged and does not seek redundant approval."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "audit-with-policy-conflict",
+      "prompt": "Audit this project's AGENTS.md guidance only. Identify contradictions and recommend the smallest useful changes. Do not edit any files. Do not choose a new release policy on my behalf.",
+      "expected_output": "Read-only findings identify conflicting release policies and ask a targeted policy question without executing releases or editing guidance.",
+      "files": ["evals/fixtures/audit"],
+      "assertions": [
+        "Leaves every input file byte-for-byte unchanged and creates no new project files.",
+        "Identifies the incompatible release approval rules in AGENTS.md and docs/release-policy.md.",
+        "Asks for a policy decision instead of silently resolving the conflict or running release commands.",
+        "Recommends reusing the existing release policy document rather than duplicating it."
+      ]
+    }
+  ]
+}

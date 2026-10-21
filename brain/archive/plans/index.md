@@ -6,3 +6,5 @@
 - [Legacy guidance obligation audit and restoration](2026-10-21-legacy-guidance-audit/ExecPlan.md)
 - [Tool Guardian file operations](2026-10-21-tool-guard-file-operations/ExecPlan.md)
 - [Tool Guardian duplication cleanup](2026-10-21-tool-guard-techdebt/ExecPlan.md)
+- [Brain install](brain-install/ExecPlan.md)
+- [AGENTS.md installer skill](01-agents-md-install/ExecPlan.md)

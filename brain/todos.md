@@ -4,18 +4,10 @@
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
-## Skills
-
-12. [ ] Create `skills/default/agents-md-install` to install or update root and nested `AGENTS.md` files plus progressive-disclosure reference docs in a target project (excluding tool-specific compatibility bridges like `CLAUDE.md` or `.github/copilot-instructions.md`). While authoring the skill, research these sources in priority order and use `grilling` to resolve conflicting guidance before baking the rules into the skill: (1) [harness-engineering](https://github.com/lopopolo/harness-engineering), (2) [A Complete Guide to AGENTS.md](https://www.aihero.dev/a-complete-guide-to-agents-md), (3) `~/.agents/skill/agents-md-improver/SKILL.md`, (4) [agents.md](https://agents.md/), (5) [Addy Osmani - AGENTS.md](https://addyosmani.com/agents/15-agents-md/), (6) [GitHub Blog - How to write a great agents.md](https://github.blog/ai-and-ml/github-copilot/how-to-write-a-great-agents-md-lessons-from-over-2500-repositories/), and (7) [AAIF - Writing an effective AGENTS.md](https://aaif.io/blog/writing-an-effective-agents-md). Require nested `AGENTS.md` files when appropriate for per-scope progressive disclosure, and progressive disclosure for conditional content so agents read only what a task requires.
-
 ## Repository maintenance
 
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
 13. [ ] Reproduce and fix stale observability cleanup deleting sessions SQLite still reports as running, finalizing, or sealing after seven days. Follow [the restored cleanup policy](codebase/hook-observability.md): require age over 24 hours and terminal/absent database state. Change the canonical helper, regenerate provider copies, and verify active-session retention, terminal/absent cleanup, and database-failure behavior through the existing disposable observability fixtures. Preserve unrelated logs and session state; do not test against real installed logs.
-
-## Forest Service skills
-
-10. [ ] Create `skills/forest-service/accomplishment-report`, invoked when all work in an ExecPlan is completed. Save the report as `accomplishment-report.md` in the same directory as that plan. Produce a concise executive-level report describing the repository, completed work, and alignment with Forest Service strategic goals and priorities by activating `agency-priorities`. Estimate AI-assisted versus human-only implementation time and cost, including AI spend and human oversight, with explicit assumptions and evidence. Show estimated net savings to support decisions about spending on AI coding assistants.
 
 ## Investigations
 

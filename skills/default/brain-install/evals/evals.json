@@ -1,0 +1,52 @@
+{
+  "skill_name": "brain-install",
+  "evals": [
+    {
+      "id": 1,
+      "name": "fresh-no-hooks",
+      "prompt": "Install the supplied brain system into TARGET with no hooks. Use the supplied payload and installer when useful. Preserve unrelated content, install the six local skills and starter principles, and verify a repeated installation leaves files unchanged. Do not commit or push. Save a concise report of actual checks and any limits to OUTPUT/report.md.",
+      "expected_output": "A complete navigable vault, six local skills, exact AGENTS sections, no provider configuration, and verified unchanged rerun.",
+      "files": [
+        "evals/fixtures/fresh"
+      ],
+      "assertions": [
+        "Starter brain files and fourteen principle notes exist with valid navigation.",
+        "All six local skills and both exact AGENTS sections are present.",
+        "No provider hook configurations or global files were created.",
+        "Report records a verified unchanged rerun and does not claim unrun live/native checks."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "legacy-scoped-migration",
+      "prompt": "Install the supplied brain system into TARGET with Codex hooks only. Replace the legacy knowledge system while preserving every current obligation, condition, scope, exclusion, and approval requirement. Prefer matching skills for reusable procedures. Preserve unrelated hooks and manual content. Migrate meaningful existing root-index content safely before it can be regenerated. Repair references before retiring legacy files, and retain recoverable exact originals. Do not execute release/deployment actions, commit, or push. Use the supplied payload and installer when useful. Save an obligation audit in the target brain and a concise verification report to OUTPUT/report.md.",
+      "expected_output": "Safe legacy migration preserving scoped and conditional obligations, effective policy loading, matching release procedure, original recovery bytes, unrelated Codex hook and repaired navigation.",
+      "files": [
+        "evals/fixtures/legacy"
+      ],
+      "assertions": [
+        "Existing root-index backup bytes are recoverable and its backup-removal approval rule remains effective.",
+        "Deployment approval condition and documentation-only exclusion remain effective.",
+        "Services interface checks retain their nested scope and documentation exclusion.",
+        "Release skill retains its version rule and gains test-before-publish and failed-check constraints.",
+        "Queue retry fact, migration audit and repaired references are reachable; no live references target retired files.",
+        "Codex brain hooks and existing unrelated handler/settings coexist; other providers and globals remain untouched."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "retain-custom-content-and-repeat",
+      "prompt": "Install the supplied brain system into TARGET with Gemini hooks only, then verify a repeated installation. Keep the existing todo IDs/content and locally adapted principle unchanged. Leave all unselected provider files untouched, including malformed ones. Preserve meaningful existing root-index content and exact recovery bytes before regeneration. Resolve routine keep-existing choices without asking again; preserve any genuinely unresolved policy. Do not commit or push. Use the supplied payload and installer when useful. Save a concise verification report to OUTPUT/report.md.",
+      "expected_output": "Custom backlog and principle bytes preserved, root-index rollback guidance reachable and recoverable, Gemini installed, malformed unselected Copilot configuration unchanged, and unchanged rerun.",
+      "files": [
+        "evals/fixtures/repeated"
+      ],
+      "assertions": [
+        "Existing todo and principle bytes remain unchanged, including next-id 42.",
+        "Original root index is recoverable and rollback-note guidance remains reachable.",
+        "Gemini hooks are installed and malformed unselected Copilot bytes are unchanged.",
+        "Six skills and AGENTS sections are present; repeated install is verified unchanged; no global writes or unsupported live/native claims."
+      ]
+    }
+  ]
+}

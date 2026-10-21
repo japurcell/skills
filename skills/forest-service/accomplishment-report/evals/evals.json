@@ -1,0 +1,43 @@
+{
+  "skill_name": "accomplishment-report",
+  "evals": [
+    {
+      "id": 1,
+      "name": "completed-measured",
+      "prompt": "Create the accomplishment report for plans/recreation/ExecPlan.md. This repository provides a campground repair dashboard. All plan tasks and acceptance checks are complete: repair queues and status export shipped, 18 acceptance tests passed, deployment and adoption are outside scope. Human-only work-package estimates: design 4h, implementation 12h, verification 6h, documentation 2h. Assisted human effort is 6h total including prompting, review, testing and corrections. Fully burdened labor is USD 100/h for both. Scoped AI billing including all agents and retries is USD 40. Agent runtimes total 10h, overlapping within 4h elapsed delivery. No other costs. Treat these as base-case inputs and explain sensitivity assumptions.",
+      "expected_output": "Save one sibling report; base costs 2400 and 640 USD, savings 1760 USD (73.33%), 18 human hours saved. Separate 10 agent-hours from 4 elapsed hours. Include supported alignment and no deployment claims.",
+      "files": [],
+      "assertions": [
+        "Correct sibling report and plan identity",
+        "Base costs and savings arithmetic correct",
+        "Human hours and runtime separated",
+        "Agency skill activated; alignment supported and dated"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "update-uncertain",
+      "prompt": "Update the existing plans/internal/ accomplishment report for its completed ExecPlan.md. Preserve the human-written note: \"Owner note: adoption review scheduled for November.\" Repository maintains internal developer tooling; all tests and plan acceptance passed. Existing report claims USD 10000 measured savings but supplies no cost evidence. There are no labor logs, token records, billing allocations, or deployment metrics. Git timestamps span two days; do not treat them as work hours. Produce a useful executive report using explicit assumptions, including a scenario where AI costs exceed human-only work.",
+      "expected_output": "Update the same file, preserve owner note, replace unsupported measured claim with labeled estimates or unknowns; include negative savings, oversight and AI costs, and honest indirect alignment.",
+      "files": [],
+      "assertions": [
+        "Existing file updated without duplicate; owner note preserved",
+        "Unsupported measured savings corrected",
+        "Unknown usage not zero; assumptions and oversight explicit",
+        "Negative savings retained; alignment not forced"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "incomplete-stale",
+      "prompt": "Close out plans/incomplete/ExecPlan.md and create an accomplishment report. Its progress checkboxes are all checked, but milestone acceptance says not met: the end-to-end export test is failing and owner signoff is pending. Do not fix implementation or edit the plan during this reporting task.",
+      "expected_output": "Do not create an accomplishment report or mark the plan done. Explain unresolved test and signoff despite checked boxes.",
+      "files": [],
+      "assertions": [
+        "No report created",
+        "Identifies acceptance failure and pending signoff",
+        "Does not change plan or implementation"
+      ]
+    }
+  ]
+}
