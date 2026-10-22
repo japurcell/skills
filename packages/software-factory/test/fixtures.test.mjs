@@ -72,6 +72,67 @@ test('repository fixture keeps committed, staged, unstaged, untracked and ignore
   }
 });
 
+test('launch report becomes visible only after its complete JSON is available', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'factory-launch-publication-'));
+  const launch = join(directory, 'launch.json');
+  const writing = join(directory, 'writing');
+  const permit = join(directory, 'permit');
+  const release = join(directory, 'release');
+  const preload = join(directory, 'pause-write.mjs');
+  // Pause a real filesystem write after file creation. An existence-based
+  // consumer must never discover a partially published launch report.
+  writeFileSync(preload, `import fs from 'node:fs';
+import {syncBuiltinESMExports} from 'node:module';
+const write=fs.writeFileSync;
+const open=fs.openSync;
+const pause=()=>{
+  write(${JSON.stringify(writing)},'ready');
+  const until=Date.now()+5000;
+  while(!fs.existsSync(${JSON.stringify(permit)})&&Date.now()<until)Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,10);
+};
+fs.openSync=function(path,...options){
+  const descriptor=open(path,...options);
+  if(typeof path==='string'&&path.startsWith(${JSON.stringify(launch)}))pause();
+  return descriptor;
+};
+fs.writeFileSync=function(path,data,...options){
+  if(typeof path==='string'&&path.startsWith(${JSON.stringify(launch)})){
+    const descriptor=open(path,options[0]?.flag??'w',options[0]?.mode??0o666);
+    try{
+      pause();
+      return write(descriptor,data,...options);
+    }finally{fs.closeSync(descriptor);}
+  }
+  return write(path,data,...options);
+};
+syncBuiltinESMExports();
+`);
+  const child = spawn(process.execPath, ['--import', preload, harness, '--mode', 'success',
+    '--result', join(directory, 'result.json'), '--launch-log', launch, '--pause-until', release],
+    { stdio: ['ignore', 'ignore', 'pipe'] });
+  let stderr = '';
+  child.stderr.on('data', chunk => { stderr += chunk; });
+  const closed = once(child, 'close');
+  try {
+    const deadline = Date.now() + 5000;
+    while (!existsSync(writing) && Date.now() < deadline && child.exitCode === null) await delay(10);
+    assert.ok(existsSync(writing), stderr);
+    assert.equal(existsSync(launch), false, 'a consumer discovered an incomplete launch report');
+    writeFileSync(permit, 'continue');
+    while (!existsSync(launch) && Date.now() < deadline && child.exitCode === null) await delay(10);
+    assert.ok(existsSync(launch), stderr);
+    assert.deepEqual(JSON.parse(readFileSync(launch, 'utf8')), { pid: child.pid });
+    writeFileSync(release, 'release');
+    const [status] = await closed;
+    assert.equal(status, 0, stderr);
+  } finally {
+    writeFileSync(permit, 'continue');
+    if (child.exitCode === null) child.kill('SIGTERM');
+    await closed;
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('fixture harness exposes needs-input, permission denial, malformed and crash outcomes', () => {
   const directory = mkdtempSync(join(tmpdir(), 'factory-outcomes-'));
   try {
@@ -91,6 +152,27 @@ test('fixture harness exposes needs-input, permission denial, malformed and cras
         assert.throws(() => JSON.parse(readFileSync(resultPath, 'utf8')));
       }
     }
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('launch report collision preserves a pre-existing temporary file', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'factory-launch-collision-'));
+  const launch = join(directory, 'launch.json');
+  const preload = join(directory, 'seed-collision.mjs');
+  writeFileSync(preload, `import {writeFileSync} from 'node:fs';writeFileSync(${JSON.stringify(launch)}+'.'+process.pid+'.tmp','existing caller file');`);
+  try {
+    const child = spawnSync(process.execPath, ['--import', preload, harness, '--mode', 'success',
+      '--result', join(directory, 'result.json'), '--launch-log', launch], { encoding: 'utf8', timeout: 5000 });
+    assert.equal(child.error, undefined, 'a timeout is not evidence of collision refusal');
+    assert.equal(child.signal, null);
+    assert.equal(child.status, 1, 'a colliding temporary path must be refused');
+    assert.match(child.stderr, /\bEEXIST\b/);
+    const temporary = join(directory, 'launch.json.' + child.pid + '.tmp');
+    assert.equal(existsSync(temporary), true, 'failed exclusive creation deleted an unowned file');
+    assert.equal(readFileSync(temporary, 'utf8'), 'existing caller file');
+    assert.equal(existsSync(launch), false);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

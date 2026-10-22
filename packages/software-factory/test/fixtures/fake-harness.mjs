@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Test-only executable. Never imports or launches a provider.
-import { existsSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, openSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -20,7 +20,22 @@ if (values.child) {
   descendantClosed = once(descendant, 'close');
   await once(descendant, 'spawn');
 }
-if (values['launch-log']) writeFileSync(values['launch-log'], JSON.stringify({ pid: process.pid, childPid: descendant?.pid }));
+if (values['launch-log']) {
+  const temporary = `${values['launch-log']}.${process.pid}.tmp`;
+  let owned = false;
+  try {
+    const descriptor = openSync(temporary, 'wx', 0o600);
+    owned = true;
+    try {
+      writeFileSync(descriptor, JSON.stringify({ pid: process.pid, childPid: descendant?.pid }));
+    } finally {
+      closeSync(descriptor);
+    }
+    renameSync(temporary, values['launch-log']);
+  } finally {
+    if (owned) rmSync(temporary, { force: true });
+  }
+}
 while (!stopping && (values.mode === 'hold' || (values['pause-until'] && !existsSync(values['pause-until'])))) await delay(10);
 if (descendant) {
   descendant.kill('SIGTERM');
