@@ -41,3 +41,13 @@ test('learning extraction selection executes public proposal and source checks',
   assert.match(result.stdout, /explicit extraction saves examined ended sources/);
   assert.match(result.stdout, /extraction rejects diff paths that disagree/);
 });
+
+
+test('Copilot provider selection executes deterministic adapter conformance only', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [dispatch, 'adapters', '--provider', 'copilot'], { encoding: 'utf8', timeout: 30000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /Copilot public invocation accepts only a final answer/);
+  assert.match(result.stdout, /Copilot package closure rejects drift/);
+});
