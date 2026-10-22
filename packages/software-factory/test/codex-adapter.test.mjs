@@ -134,3 +134,26 @@ test('Codex genuine assistant question is saved without treating native denial a
  const repo=await fixture(`return context.agent('question',{prompt:'question'});`);
  try{const r=repo.invoke();assert.equal(r.status,2,r.stdout+r.stderr);const saved=JSON.parse(r.stdout),{history:h}=repo.history(saved.invocationId);assert.equal(agents(h)[0].outcome,'needs_input');assert.equal(h.captures.filter(c=>c.channel==='request').length,1);assert.equal(h.accounting.additionalUsed,0);}finally{repo.dispose();}
 });
+
+
+test('Codex malformed native JSON stays in raw capture without entering workflow diagnostics',async()=>{
+ const repo=await fixture(`const result=await context.agent('report',{});if(result.status==='invalid')await context.progress(result.diagnostic);return result;`,'malformed');
+ try{
+  const result=repo.invoke();assert.equal(result.status,1,result.stdout+result.stderr);
+  const saved=JSON.parse(result.stdout),{history}=repo.history(saved.invocationId);
+  const report=history.captures.find(capture=>capture.channel==='event');
+  assert.ok(report,'workflow-visible diagnostic capture is required');
+  assert.doesNotMatch(report.chunks.map(chunk=>chunk.text).join(''),/malformed assistant/);
+  assert.match(JSON.stringify(history.captures.filter(capture=>capture.attemptId===agents(history)[0].id)),/malformed assistant/);
+  assert.equal(agents(history).length,1);
+ }finally{repo.dispose();}
+});
+
+test('Codex parser errors do not echo malformed assistant or JSONL bytes',()=>{
+ const native=adapter();
+ for(const [run,expected] of [
+  [()=>native.decodeFinal('PRIVATE_NATIVE_JSONL_BYTES'),'invalid Codex JSONL record'],
+  [()=>native.decodeFinal(stream([thread,start,message('PRIVATE_FINAL_BYTES'),end])),'invalid Codex final assistant JSON'],
+  [()=>native.start({attemptId:'a',invocationId:'i',worktree:'/tmp/fixture',inputs,context:''}).mapEvent('PRIVATE_NATIVE_JSONL_BYTES','stdout'),'invalid Codex JSONL record'],
+ ]) assert.throws(run,error=>error instanceof Error&&error.message===expected);
+});

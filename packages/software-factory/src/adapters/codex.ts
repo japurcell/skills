@@ -15,8 +15,12 @@ function record(value: unknown): NativeRecord {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid Codex JSONL record');
   return value as NativeRecord;
 }
+function parseJson(text: string, diagnostic: string): unknown {
+  try { return JSON.parse(text); }
+  catch { throw new Error(diagnostic); }
+}
 function parse(line: string): NativeRecord {
-  const value = record(JSON.parse(line));
+  const value = record(parseJson(line, 'invalid Codex JSONL record'));
   if (typeof value['type'] !== 'string') throw new Error('missing Codex event type');
   return value;
 }
@@ -48,7 +52,7 @@ function decoder(text: string): unknown {
     }
   }
   if (!completed || final === undefined) throw new Error('missing completed Codex final assistant message');
-  return JSON.parse(final);
+  return parseJson(final, 'invalid Codex final assistant JSON');
 }
 function sessionParser(): (line: string, channel: 'stdout' | 'stderr') => SessionEvent | undefined {
   let thread: string | undefined, started = false, terminal = false, failed = false;
