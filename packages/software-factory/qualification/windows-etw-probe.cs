@@ -323,10 +323,17 @@ public static class WindowsEtwProbe
             Line("API", label, code);
             if (code != 0) throw new Win32Exception((int)code, label);
             var result = (EventTraceProperties)Marshal.PtrToStructure(address, typeof(EventTraceProperties));
-            if (result.Wnode.Guid != guid || result.LogFileMode != (SystemLoggerMode | SequentialMode) ||
-                result.EnableFlags != (ProcessFlag | ImageFlag) || result.MaximumFileSize != 64)
+            bool guidMatches = result.Wnode.Guid == guid;
+            bool modeMatches = result.LogFileMode == (SystemLoggerMode | SequentialMode);
+            bool flagsMatch = result.EnableFlags == (ProcessFlag | ImageFlag);
+            bool fileCapMatches = result.MaximumFileSize == 64;
+            bool lossZero = result.EventsLost == 0 && result.LogBuffersLost == 0 &&
+                result.RealTimeBuffersLost == 0;
+            Line("QUERY", label, guidMatches ? 1 : 0, modeMatches ? 1 : 0,
+                flagsMatch ? 1 : 0, fileCapMatches ? 1 : 0, lossZero ? 1 : 0);
+            if (!guidMatches || !modeMatches || !flagsMatch || !fileCapMatches)
                 throw new InvalidOperationException("owned session properties differ from requested trace");
-            if (result.EventsLost != 0 || result.LogBuffersLost != 0 || result.RealTimeBuffersLost != 0)
+            if (!lossZero)
                 throw new InvalidOperationException("session loss before stop");
             return result;
         }

@@ -32,6 +32,11 @@ export function validateProbeReceipt(receipt, expectedNode) {
       reasons.push(`${name} API incomplete`);
   }
   if (apis.length !== requiredApis.length) reasons.push('unexpected API receipt');
+  const queries = selected('QUERY');
+  if (queries.length !== 2 || ['readyQuery', 'beforeStopQuery'].some((name) => {
+    const rows = queries.filter((row) => row[1] === name);
+    return rows.length !== 1 || rows[0].length !== 7 || rows[0].slice(2).some((bit) => bit !== '1');
+  })) reasons.push('query evidence invalid');
   const session = one('SESSION');
   if (session.length !== 4 || session[1] !== '33554433' || session[2] !== '5' || session[3] !== '64')
     reasons.push('session mode, flags or cap mismatch');
@@ -127,7 +132,7 @@ export function validateProbeReceipt(receipt, expectedNode) {
       BigInt(event[4]) >= BigInt(startTime) - 10_000_000n && BigInt(event[4]) <= BigInt(endTime)))
       reasons.push(`image load missing for ${target}`);
   }
-  const known = new Set(['API', 'ABI', 'TOKEN', 'OS', 'OWNERSHIP', 'SCHEMA', 'RUNDOWN', 'COUNTS',
+  const known = new Set(['API', 'QUERY', 'ABI', 'TOKEN', 'OS', 'OWNERSHIP', 'SCHEMA', 'RUNDOWN', 'COUNTS',
     'SESSION', 'ROOT', 'CHILD', 'EVENT', 'STATS', 'HEADER', 'FILE', 'COMPLETE']);
   if (rows.some((row) => !known.has(row[0]))) reasons.push('unknown receipt row');
   return { ok: reasons.length === 0, reasons, rootPid, childPid,
@@ -154,6 +159,7 @@ function safeNativeLine(line) {
     TOKEN: /^TOKEN\t(system|administrator|other)$/,
     OS: /^OS\t(?:Microsoft )?Windows NT [\d.]{1,64}$/,
     API: new RegExp(`^API\\t(start|readyQuery|beforeStopQuery|stop|open|process|close)\\t${decimal}$`),
+    QUERY: /^QUERY\t(readyQuery|beforeStopQuery)(\t[01]){5}$/,
     SESSION: /^SESSION\t33554433\t5\t64$/,
     ROOT: new RegExp(`^ROOT\\t${decimal}\\t${tickValue}\\tpinned-node$`),
     CHILD: new RegExp(`^CHILD\\t${decimal}$`),
