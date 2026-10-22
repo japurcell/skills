@@ -1,30 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
-import { invoke } from '../dist/lifecycle.js';
 import { sendInitialNotification } from '../dist/notifications.js';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { createRepository } from './fixtures/repository.mjs';
-
-async function fixture(source) {
-  const repo = createRepository();
-  mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
-  writeFileSync(join(repo.path, '.factory/package.json'), '{"type":"module"}');
-  writeFileSync(join(repo.path, '.factory/workflows/notice.ts'), source);
-  repo.git(['add', '.factory']); repo.git(['commit', '-m', 'Commit notification fixture', '--only', '.factory']);
-  const common = join(repo.path, '.git');
-  const store = await initializeRepositoryStore(common, { release: 'fixture' }); store.close();
-  const toolchain = join(common, 'factory/toolchain'); mkdirSync(toolchain);
-  cpSync(new URL('../node_modules', import.meta.url), join(toolchain, 'node_modules'), { recursive: true });
-  writeFileSync(join(toolchain, 'manifest.json'), JSON.stringify({ schema: 1, node: '24.22.1', typescript: '7.0.2', dependencies: { '@types/node': '24.19.2' } }));
-  const input = join(common, 'input.json'); writeFileSync(input, '{}');
-  const run = (extra = {}) => invoke({ repository: repo.path, workflow: '.factory/workflows/notice.ts', input, newWorktree: true, ...extra });
-  return { ...repo, common, input, run };
-}
+import { createNotificationFixture as fixture } from './notification-repository-fixture.mjs';
 
 test('one initial combined issue is saved after finalization and submitted only once', async () => {
   const repo = await fixture(`export async function run(context) { await context.needsInput('Choose target', 'A target is required'); }`);
@@ -64,35 +48,6 @@ test('one initial combined issue is saved after finalization and submitted only 
       const maintenance = await store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } });
       await store.releaseClaim({ claimId: maintenance.id, token: maintenance.token, basis: 'quiescent' });
     } finally { store.close(); }
-  } finally { repo.dispose(); }
-});
-
-test('a sender that never settles is bounded and remains unknown without changing exit status', async () => {
-  const repo = await fixture(`export async function run(context) { await context.needsInput('Choose', 'A choice is required'); }`);
-  try {
-    let settleSender;
-    const started = performance.now();
-    const result = await repo.run({ notificationSender: () => new Promise(resolve => { settleSender = resolve; }) });
-    const elapsed = performance.now() - started;
-    assert.equal(result.exitCode, 2);
-    assert.equal(result.notification.state, 'unknown');
-    assert.equal(result.notification.reason, 'cleanup_unconfirmed');
-    assert.equal(result.notification.cleanup, 'unknown');
-    assert.ok(elapsed >= 5000 && elapsed < 9000, `sender bound took ${elapsed}ms`);
-    const store = openRepositoryStore(repo.common);
-    try {
-      assert.deepEqual(store.readHistory(result.invocationId).notifications, [result.notification]);
-      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1);
-      await assert.rejects(store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } }), /active or uncertain owner blocks maintenance/);
-      settleSender({ state: 'submitted', cleanup: 'complete' });
-      await new Promise(resolve => setImmediate(resolve));
-      assert.deepEqual(store.readHistory(result.invocationId).notifications, [result.notification], 'late sender completion must not rewrite the record');
-      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1, 'late sender completion must not release ownership');
-      let duplicateSends = 0;
-      assert.deepEqual(await sendInitialNotification(store, result.invocationId, async () => { duplicateSends++; return { state: 'submitted', cleanup: 'complete' }; }), result.notification);
-      assert.equal(duplicateSends, 0, 'reading an uncertain reservation must not replay it');
-    }
-    finally { store.close(); }
   } finally { repo.dispose(); }
 });
 
@@ -164,28 +119,6 @@ test('opted-in successful invocation saves one bounded notice without changing i
     } finally { quietStore.close(); }
     const submitted = await repo.run({ notificationSender: async () => { sends++; return { state: 'submitted', cleanup: 'complete' }; } });
     assert.equal(submitted.outcome, 'succeeded'); assert.equal(submitted.notification.state, 'submitted'); assert.equal(sends, 2);
-  } finally { repo.dispose(); }
-});
-
-test('uncertain opt-in success notice retains its original owner and saved success', async () => {
-  const repo = await fixture(`export async function run(context) { await context.progress('complete'); }`);
-  try {
-    const store = openRepositoryStore(repo.common);
-    await store.saveNotificationPreferences({ successNotices: true, reminders: false }); store.close();
-    let settleSender;
-    const result = await repo.run({ notificationSender: () => new Promise(resolve => { settleSender = resolve; }) });
-    assert.equal(result.outcome, 'succeeded'); assert.equal(result.exitCode, 0);
-    assert.equal(result.notification.state, 'unknown'); assert.equal(result.notification.cleanup, 'unknown');
-    const saved = openRepositoryStore(repo.common);
-    try {
-      assert.equal(saved.readInvocation(result.invocationId).outcome, 'succeeded');
-      assert.equal(saved.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1);
-      await saved.saveNotificationPreferences({ successNotices: false, reminders: false });
-      assert.deepEqual(await sendInitialNotification(saved, result.invocationId, async () => { throw new Error('resent'); }), result.notification);
-      settleSender({ state: 'submitted', cleanup: 'complete' });
-      await new Promise(resolve => setImmediate(resolve));
-      assert.deepEqual(saved.readHistory(result.invocationId).notifications, [result.notification]);
-    } finally { saved.close(); }
   } finally { repo.dispose(); }
 });
 

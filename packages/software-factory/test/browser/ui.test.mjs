@@ -483,6 +483,37 @@ test('saved question is visible before finalization and a failed explanation ope
   } finally {await browser.close();await f.dispose();}
 });
 
+test('Back preserves a user scroll made while saved reader content restores', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:860,height:650}});
+  let release;const held=new Promise(resolve=>{release=resolve});let entered;const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    const initial=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,300);
+    await page.waitForFunction(y=>window.scrollY>y,initial,{timeout:2000});
+    const savedTop=await page.evaluate(()=>window.scrollY);
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}/events`&&url.searchParams.has('before'),async route=>{entered();await held;await route.continue();});
+    await page.goBack();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await intercepted;
+    const beforeUserScroll=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,600);
+    await page.waitForFunction(y=>window.scrollY>y,beforeUserScroll,{timeout:2000});
+    const userTop=await page.evaluate(()=>window.scrollY);
+    assert.ok(userTop>savedTop,`user scroll ${userTop} should advance beyond saved reader position ${savedTop}`);
+    release();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    assert.equal(await page.evaluate(()=>window.scrollY),userTop,'saved reader restoration must not replace a newer user scroll');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
 test('nested native identities, instant timing, and Back reading position survive navigation', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:860,height:650}});
@@ -494,6 +525,7 @@ test('nested native identities, instant timing, and Back reading position surviv
     await page.goto(f.host.createUiHandoff());
     await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
     await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
     assert.ok(await page.locator('.phase-bar[data-instant="true"]').count()>0);
     await page.locator(`[data-action="collapse"][data-id="${parent.id}"]`).click();
     assert.equal(await page.locator(`[data-session="${child.id}"]`).first().isVisible(),false);
@@ -504,15 +536,26 @@ test('nested native identities, instant timing, and Back reading position surviv
     assert.match(await page.getByText('Native session evidence').locator('..').innerText(),/child-native/);
     await page.goBack();
     await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
     await page.waitForFunction(id=>document.activeElement?.getAttribute('href')?.includes(id),child.id);
     await page.goForward();
     await page.getByRole('heading',{name:'Native session child-native'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
     await page.goBack();
     await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
-    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
-    await page.waitForTimeout(100);
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    await page.evaluate(()=>new Promise(resolve=>{
+      const previous=window.scrollY;
+      const settled=()=>{window.removeEventListener('scroll',settled);resolve();};
+      window.addEventListener('scroll',settled,{once:true});
+      window.scrollTo(0,document.body.scrollHeight);
+      if(window.scrollY===previous)settled();
+    }));
     const before=await page.evaluate(()=>window.scrollY);
+    assert.ok(before>0);
     await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
     await page.goBack();
     await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
     await page.waitForFunction(top=>window.scrollY===top,before,{timeout:2000});

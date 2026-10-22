@@ -4,7 +4,14 @@ import { parseArgs } from 'node:util';
 // Explicit registration excludes fixtures, historical experiments and native calls from discovery.
 const groups = {
   fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
-  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }, { path: 'test/browser/ui.test.mjs', suite: 'browser' }, { path: 'test/browser/scale.test.mjs', suite: 'browser' }], notifications: [{ path: 'test/notification-records.test.mjs' }, { path: 'test/notification-senders.test.mjs' }, { path: 'test/notification-preflight.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }, { path: 'test/notification-pipe.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }],
+  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }, { path: 'test/browser/ui.test.mjs', suite: 'browser' }, { path: 'test/browser/scale.test.mjs', suite: 'browser' }], notifications: [
+    { path: 'test/notification-records.test.mjs' },
+    { path: 'test/notification-senders.test.mjs' },
+    { path: 'test/notification-sender-uncertain.test.mjs' },
+    { path: 'test/notification-success-uncertain.test.mjs' },
+    { path: 'test/notification-preflight.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] },
+    { path: 'test/notification-pipe.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] },
+  ],
   learning: [
     { path: 'test/learning.test.mjs', operation: 'extract', testConcurrency: 2 },
     { path: 'test/learning-extraction-sources.test.mjs', operation: 'extract', testConcurrency: 2 },
@@ -68,7 +75,10 @@ try {
   });
   try {
     let exitCode = 0;
-    if (files.size > 0 && !interruptedBy) exitCode = await run([...nodeOptions, '--test', ...files]);
+    if (files.size > 0 && !interruptedBy) {
+      const fileOptions = group === 'notifications' ? ['--test-concurrency=4'] : [];
+      exitCode = await run([...nodeOptions, ...fileOptions, '--test', ...files]);
+    }
     if (!interruptedBy && exitCode !== 130 && exitCode !== 143 && extractionFiles.size > 0) {
       const extractionExitCode = await run([`--test-concurrency=${extractionConcurrency}`, '--test', ...extractionFiles]);
       if (exitCode === 0) exitCode = extractionExitCode;

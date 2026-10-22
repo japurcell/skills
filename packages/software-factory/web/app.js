@@ -465,6 +465,7 @@ async function resumeView(snapshot) {
 }
 async function loadRoute(reader = null, baseline = null, resume = true) {
   if (!state.token) return;
+  if(reader&&!Number.isSafeInteger(reader.userScrollGeneration))reader.userScrollGeneration=userScrollGeneration;
   const snapshot=beginViewIntent();
   const generation=++state.routeGeneration, target=route();
   state.validatedParent=null;
@@ -507,7 +508,7 @@ function readerSnapshot() {
   const active=document.activeElement;
   const selection=window.getSelection(),selectedText=selection?.toString()||'';
   const path=node=>{if(!node||!app.contains(node))return null;const parts=[];while(node!==app){const parent=node.parentNode;if(!parent)return null;parts.unshift([...parent.childNodes].indexOf(node));node=parent;}return parts;};
-  return {top:window.scrollY,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
+  return {top:window.scrollY,userScrollGeneration,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
     route:route(),pages:{runs:state.runPage.slice(-128),invocations:state.invocationPage.slice(-128),attempts:state.attemptPage.slice(-128),captures:state.captureSummaryPage.slice(-128),sessions:state.sessionPage.slice(-128),lane:state.lanePage},
     eventWindowEnd:state.events.at(-1)?.cursor||null,capture:state.selectedCapture?{id:state.selectedCapture,after:state.captureAfter}:null,
     disclosures:[...app.querySelectorAll('details')].map(item=>({name:item.querySelector('summary')?.textContent?.trim(),open:item.open})),
@@ -548,7 +549,7 @@ async function restoreReader(reader, generation=state.routeGeneration) {
     const anchor=resolve(selection.anchor),end=resolve(selection.focus);
     if(anchor&&end) {const current=window.getSelection();try{current.setBaseAndExtent(anchor,selection.anchorOffset,end,selection.focusOffset);if(current.toString()!==selection.text)current.removeAllRanges();}catch {current.removeAllRanges();}}
   }
-  window.scrollTo(0,reader.top||0);
+  if(reader.userScrollGeneration===userScrollGeneration)window.scrollTo(0,reader.top||0);
 }
 async function redeem(ticket) {
   if (!ticket) throw new Error('This browser link has no active owner handoff. Start the dashboard from its owner process and open the new link.');
@@ -925,8 +926,8 @@ app.addEventListener('input',event=>{if(event.target.id==='run-search'){state.qu
 app.addEventListener('scroll',event=>{if(event.target.id==='capture-text'&&state.capturePending)void followCapture();},true);
 history.scrollRestoration='manual';
 let lastNavigatedHref=location.href;
-let recentReading={top:0},userScrollUntil=0;
-const noteUserScroll=()=>{userScrollUntil=performance.now()+1000;};
+let recentReading={top:0},userScrollUntil=0,userScrollGeneration=0;
+const noteUserScroll=()=>{userScrollGeneration++;userScrollUntil=performance.now()+1000;};
 window.addEventListener('wheel',noteUserScroll,{passive:true});
 window.addEventListener('touchmove',noteUserScroll,{passive:true});
 window.addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))noteUserScroll();});
@@ -939,6 +940,7 @@ app.addEventListener('click',async event=>{
   if(!anchor || event.defaultPrevented || event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
   event.preventDefault();
   const current=route(),before=readerSnapshot(),oldRun=current.run;
+  const scrollGeneration=userScrollGeneration;
   const returning=anchor.dataset.action==='return-timeline';
   const selected=state.displayTarget;
   const fallbackOrigin=selected?link({run:selected.run,invocation:state.invocation?.id,phase:selected.phase,attempt:selected.attempt,session:selected.session}):null;
@@ -955,8 +957,10 @@ app.addEventListener('click',async event=>{
   const loading=navigateRoute(returning||sameInvocation?before:null),snapshot=state.snapshotGeneration;
   await loading;
   if(snapshot!==state.snapshotGeneration)return;
-  if(route().run===oldRun) {window.scrollTo(0,before.top);}
-  else window.scrollTo(0,0);
+  if(userScrollGeneration===scrollGeneration) {
+    if(route().run===oldRun)window.scrollTo(0,before.top);
+    else window.scrollTo(0,0);
+  }
   if(returning) {
     const phase=[...document.querySelectorAll('.phase-bar, .timeline-text a')].find(item=>item.getAttribute('href')===originHref);
     (phase||document.querySelector('.timeline-scroll'))?.focus({preventScroll:true});
