@@ -20,15 +20,15 @@ function parse(line: string): NativeRecord {
   if (typeof value['type'] !== 'string') throw new Error('missing Codex event type');
   return value;
 }
-function nativeFailure(value: NativeRecord): never {
-  throw new Error(`Codex native failure: ${JSON.stringify(value)}`);
+function nativeFailure(): never {
+  throw new Error('Codex native failure');
 }
 function decoder(text: string): unknown {
   let thread: string | undefined, started = false, completed = false, final: string | undefined;
   for (const line of text.split('\n').filter(line => line.trim())) {
     const event = parse(line);
     if (completed) throw new Error('Codex events after terminal turn');
-    if (event['type'] === 'error' || event['type'] === 'turn.failed') nativeFailure(event);
+    if (event['type'] === 'error' || event['type'] === 'turn.failed') nativeFailure();
     if (event['type'] === 'thread.started') {
       if (thread || started || typeof event['thread_id'] !== 'string' || !event['thread_id']) throw new Error('invalid Codex thread start');
       thread = event['thread_id'];
@@ -51,12 +51,12 @@ function decoder(text: string): unknown {
   return JSON.parse(final);
 }
 function sessionParser(): (line: string, channel: 'stdout' | 'stderr') => SessionEvent | undefined {
-  let thread: string | undefined, started = false, terminal = false;
+  let thread: string | undefined, started = false, terminal = false, failed = false;
   return (line, channel) => {
     if (channel === 'stderr') {
       // Exact 0.163.0 native sandbox diagnostic; warnings and tool text never become questions.
       if (/\bcodex_sandboxing::violation: recorded sandbox violation:/.test(line))
-        throw new Error(`Codex native permission denial: ${line}`);
+        throw new Error('Codex native permission denial');
       return undefined;
     }
     const event = parse(line);
@@ -71,12 +71,14 @@ function sessionParser(): (line: string, channel: 'stdout' | 'stderr') => Sessio
       started = true;
     }
     if (event['type'] === 'error' || event['type'] === 'turn.failed') {
-      if (!thread || !started) nativeFailure(event);
+      if (!thread || !started) nativeFailure();
+      failed = true;
       if (event['type'] === 'turn.failed') terminal = true;
       return { nativeId: thread, parentNativeId: null, lifecycle: 'failed' };
     }
     if (event['type'] === 'turn.completed') {
       if (!thread || !started) throw new Error('Codex terminal turn without thread');
+      if (failed) throw new Error('Codex native error before completed turn');
       terminal = true;
       // The native usage aggregate does not prove whether child usage is included.
       return { nativeId: thread, parentNativeId: null, lifecycle: 'succeeded' };
@@ -91,13 +93,13 @@ export function createCodexAdapter(options: CodexAdapterOptions): AgentAdapter {
   function validateProfile(inputs: EffectiveInputs): void {
     if (inputs.harness !== 'codex') throw new Error('Codex harness required');
     if (inputs.model !== 'gpt-6-luna' || inputs.reasoning !== 'low') throw new Error('unqualified Codex model/reasoning; requires gpt-6-luna/low');
-    if (inputs.permissions !== 'read-only') throw new Error('unsupported Codex permissions');
+    if (inputs.permissions !== 'read-only' && inputs.permissions !== 'workspace-write') throw new Error('unsupported Codex permissions');
     if (inputs.skillDelivery !== 'instructions') throw new Error('Codex native skill delivery is unqualified');
     for (const capability of inputs.requiredCapabilities) if (!capabilities.includes(capability)) throw new Error(`unsupported Codex capability: ${capability}`);
     if (!isAbsolute(executable) || !/^[a-f0-9]{64}$/.test(sha256)) throw new Error('Codex requires absolute executable and SHA256');
     if (createHash('sha256').update(readFileSync(executable)).digest('hex') !== sha256) throw new Error('Codex executable SHA256 mismatch');
   }
-  const capabilities = ['live-output', 'lifecycle', 'final-output', 'stop', 'instructions', 'model', 'reasoning', 'read-only'];
+  const capabilities = ['live-output', 'lifecycle', 'final-output', 'stop', 'instructions', 'model', 'reasoning', 'read-only', 'workspace-write'];
   return {
     id: 'codex', capabilities, finalChannel: 'stdout', eventChannel: 'stdout', questionExitCodes: [],
     validateProfile, canReuse: () => false,

@@ -45,6 +45,7 @@ test('Codex final parser rejects missing terminal, malformed JSON and native err
  const a=adapter();
  for(const events of [[thread,start,message('{"kind":"result","payload":1}')],[thread,start,{type:'item.completed',item:{type:'command_execution',aggregated_output:'{"kind":"result","payload":1}'}},end],[thread,start,message('malformed'),end],[thread,start,message('{"kind":"result","payload":1}'),{type:'turn.failed',error:{message:'permission denied'}}],[thread,start,message('{"kind":"result","payload":1}'),end,message('{"kind":"result","payload":2}')]]) assert.throws(()=>a.decodeFinal(stream(events)));
  assert.throws(()=>a.decodeFinal('not json'),/JSON/);
+ assert.throws(()=>a.decodeFinal(stream([thread,start,{type:'error',message:'private-token-value'}])),error=>error.message.includes('Codex native failure')&&!error.message.includes('private-token-value'));
  assert.equal(a.decodeFinal(stream([thread,start,message('old'),message('{"kind":"result","payload":7}'),end])).payload,7);
 });
 test('Codex launch is fresh, pinned, explicit, noninteractive and preserves supplied instruction bytes',()=>{
@@ -57,7 +58,10 @@ test('Codex launch is fresh, pinned, explicit, noninteractive and preserves supp
  assert.equal(a.canReuse(inputs,inputs),false);assert.throws(()=>a.start({...request,reuseNativeId:'native-a'}),/reuse/);
  assert.throws(()=>a.validateProfile({...inputs,skillDelivery:'native'}),/native skill/);
  assert.throws(()=>a.validateProfile({...inputs,model:'other'}),/unqualified/);
- assert.throws(()=>a.validateProfile({...inputs,permissions:'workspace-write'}),/unsupported Codex permissions/);
+ const writable={...inputs,permissions:'workspace-write',requiredCapabilities:['workspace-write']};
+ a.validateProfile(writable);
+ const writableLaunch=a.start({...request,inputs:writable});
+ assert.equal(writableLaunch.argv[writableLaunch.argv.indexOf('--sandbox')+1],'workspace-write');
  assert.throws(()=>a.validateProfile({...inputs,requiredCapabilities:['universal-child-control']}),/unsupported/);
  const bad=createCodexAdapter({executable:nativeExecutable,sha256:'0'.repeat(64),environment:{}});assert.throws(()=>bad.validateProfile(inputs),/SHA256 mismatch/);
 });
@@ -77,6 +81,7 @@ test('Codex per-launch parser rejects exact native sandbox denial on stderr',()=
  assert.deepEqual(launch.eventChannels,['stdout','stderr']);
  assert.equal(launch.mapEvent('native informational warning','stderr'),undefined);
  assert.throws(()=>launch.mapEvent('2026-10-22T06:20:31Z WARN codex_sandboxing::violation: recorded sandbox violation: resource=filesystem backend=seatbelt reason=operation_not_permitted path=unknown','stderr'),/native permission denial/);
+ assert.throws(()=>launch.mapEvent('WARN codex_sandboxing::violation: recorded sandbox violation: private-token-value','stderr'),error=>error.message.includes('native permission denial')&&!error.message.includes('private-token-value'));
 });
 
 for(const mode of ['malformed','native-error','denied']) test(`Codex ${mode} preserves raw failure without a question or retry`,async()=>{
@@ -100,6 +105,13 @@ test('Codex native failed turn maps to its own failed session without invented u
  const launch=adapter().start({attemptId:'a',invocationId:'i',worktree:'/tmp/fixture',inputs,context:''});
  launch.mapEvent(JSON.stringify(thread),'stdout');launch.mapEvent(JSON.stringify(start),'stdout');
  assert.deepEqual(launch.mapEvent(JSON.stringify({type:'turn.failed',error:{message:'native provider failure'}}),'stdout'),{nativeId:'native-a',parentNativeId:null,lifecycle:'failed'});
+});
+
+test('Codex native error cannot later turn a failed session into success',()=>{
+ const launch=adapter().start({attemptId:'a',invocationId:'i',worktree:'/tmp/fixture',inputs,context:''});
+ launch.mapEvent(JSON.stringify(thread),'stdout');launch.mapEvent(JSON.stringify(start),'stdout');
+ assert.equal(launch.mapEvent(JSON.stringify({type:'error',message:'native provider failure'}),'stdout').lifecycle,'failed');
+ assert.throws(()=>launch.mapEvent(JSON.stringify(end),'stdout'),/native error/);
 });
 
 test('Codex genuine assistant question is saved without treating native denial as interaction',async()=>{
