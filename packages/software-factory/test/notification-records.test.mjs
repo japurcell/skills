@@ -70,8 +70,9 @@ test('one initial combined issue is saved after finalization and submitted only 
 test('a sender that never settles is bounded and remains unknown without changing exit status', async () => {
   const repo = await fixture(`export async function run(context) { await context.needsInput('Choose', 'A choice is required'); }`);
   try {
+    let settleSender;
     const started = performance.now();
-    const result = await repo.run({ notificationSender: () => new Promise(() => {}) });
+    const result = await repo.run({ notificationSender: () => new Promise(resolve => { settleSender = resolve; }) });
     const elapsed = performance.now() - started;
     assert.equal(result.exitCode, 2);
     assert.equal(result.notification.state, 'unknown');
@@ -79,7 +80,18 @@ test('a sender that never settles is bounded and remains unknown without changin
     assert.equal(result.notification.cleanup, 'unknown');
     assert.ok(elapsed >= 5000 && elapsed < 9000, `sender bound took ${elapsed}ms`);
     const store = openRepositoryStore(repo.common);
-    try { assert.deepEqual(store.readHistory(result.invocationId).notifications, [result.notification]); }
+    try {
+      assert.deepEqual(store.readHistory(result.invocationId).notifications, [result.notification]);
+      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1);
+      await assert.rejects(store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } }), /active or uncertain owner blocks maintenance/);
+      settleSender({ state: 'submitted', cleanup: 'complete' });
+      await new Promise(resolve => setImmediate(resolve));
+      assert.deepEqual(store.readHistory(result.invocationId).notifications, [result.notification], 'late sender completion must not rewrite the record');
+      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1, 'late sender completion must not release ownership');
+      let duplicateSends = 0;
+      assert.deepEqual(await sendInitialNotification(store, result.invocationId, async () => { duplicateSends++; return { state: 'submitted', cleanup: 'complete' }; }), result.notification);
+      assert.equal(duplicateSends, 0, 'reading an uncertain reservation must not replay it');
+    }
     finally { store.close(); }
   } finally { repo.dispose(); }
 });
@@ -98,7 +110,11 @@ test('ordinary success stays quiet and an unbound development sender is explicit
     assert.equal(unavailable.notification.state, 'failed');
     assert.equal(unavailable.notification.reason, 'unbound_sender');
     const reopened = openRepositoryStore(issue.common);
-    try { assert.deepEqual(reopened.readHistory(unavailable.invocationId).notifications, [unavailable.notification]); }
+    try {
+      assert.deepEqual(reopened.readHistory(unavailable.invocationId).notifications, [unavailable.notification]);
+      const maintenance = await reopened.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } });
+      await reopened.releaseClaim({ claimId: maintenance.id, token: maintenance.token, basis: 'quiescent' });
+    }
     finally { reopened.close(); }
     const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
     const cliResult = spawnSync(process.execPath, [cli, 'invoke', '--repository', issue.path, '--workflow', '.factory/workflows/notice.ts', '--input', issue.input, '--new-worktree', '--json'], { encoding: 'utf8', timeout: 10000 });
@@ -119,19 +135,62 @@ test('sender rejection and bounded uncertainty keep the workflow result and save
     assert.equal(rejected.exitCode, 2);
     assert.equal(rejected.notification.state, 'unknown');
     assert.equal(rejected.notification.cleanup, 'unknown');
+    const uncertain = openRepositoryStore(repo.common);
+    try {
+      assert.equal(uncertain.inspectOwners().filter(claim => claim.invocationId === rejected.invocationId).length, 1);
+      await assert.rejects(uncertain.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } }), /active or uncertain owner blocks maintenance/);
+    } finally { uncertain.close(); }
     const timeout = await repo.run({ notificationSender: async () => ({ state: 'timed_out', reason: 'deadline_exceeded', cleanup: 'complete' }) });
     assert.equal(timeout.exitCode, 2);
     assert.equal(timeout.notification.state, 'timed_out');
     assert.equal(timeout.notification.reason, 'deadline_exceeded');
+    const reportedUnknown = await repo.run({ notificationSender: async () => ({ state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' }) });
+    assert.equal(reportedUnknown.exitCode, 2);
+    assert.equal(reportedUnknown.notification.cleanup, 'unknown');
     const store = openRepositoryStore(repo.common);
     try {
-      for (const result of [rejected, timeout]) {
+      for (const result of [rejected, timeout, reportedUnknown]) {
         const history = store.readHistory(result.invocationId);
         assert.equal(history.invocation.outcome, 'needs_input');
         assert.equal(history.captures.filter(capture => capture.channel === 'request').length, 1);
         assert.deepEqual(history.notifications, [result.notification]);
       }
       assert.equal(store.readNotificationDeliveries(rejected.invocationId)[0].id, `${rejected.invocationId}:initial`);
+      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === reportedUnknown.invocationId).length, 1);
+      assert.equal(store.inspectOwners().filter(claim => claim.invocationId === timeout.invocationId).length, 0, 'a known-clean sender releases its claim');
+      await assert.rejects(store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } }), /active or uncertain owner blocks maintenance/);
+    } finally { store.close(); }
+  } finally { repo.dispose(); }
+});
+
+test('a failed result write preserves the reservation and owner for explicit recovery', async () => {
+  const repo = await fixture(`export async function run(context) { await context.needsInput('Choose', 'A choice is required'); }`);
+  try {
+    const result = await repo.run({ notificationSender: async () => {
+      const database = new DatabaseSync(join(repo.common, 'factory/history.sqlite'));
+      try { database.exec("CREATE TRIGGER refuse_notification_result BEFORE UPDATE ON notification_deliveries BEGIN SELECT RAISE(FAIL, 'result write refused'); END"); }
+      finally { database.close(); }
+      return { state: 'submitted', cleanup: 'complete' };
+    } });
+    assert.equal(result.outcome, 'needs_input');
+    assert.equal(result.cleanup, 'complete');
+    assert.equal(result.exitCode, 2);
+    assert.equal(result.notification.state, 'unknown');
+    assert.equal(result.notification.reason, 'submission_unconfirmed');
+    const store = openRepositoryStore(repo.common);
+    try {
+      const history = store.readHistory(result.invocationId);
+      assert.equal(history.captures.filter(capture => capture.channel === 'request').length, 1);
+      assert.deepEqual(history.notifications, [result.notification]);
+      const [claim] = store.inspectOwners().filter(owner => owner.invocationId === result.invocationId);
+      assert.ok(claim);
+      await assert.rejects(store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } }), /active or uncertain owner blocks maintenance/);
+      let duplicateSends = 0;
+      assert.deepEqual(await sendInitialNotification(store, result.invocationId, async () => { duplicateSends++; return { state: 'submitted', cleanup: 'complete' }; }), result.notification);
+      assert.equal(duplicateSends, 0);
+      await store.clearOwner({ claimId: claim.id, token: claim.token, operatorConfirmed: true, note: 'Fixture inspected sender and result write', inspection: 'not_live' });
+      const maintenance = await store.claimResource({ kind: 'maintenance', owner: { host: 'fixture', pid: process.pid, start: null } });
+      await store.releaseClaim({ claimId: maintenance.id, token: maintenance.token, basis: 'quiescent' });
     } finally { store.close(); }
   } finally { repo.dispose(); }
 });

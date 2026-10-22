@@ -21,14 +21,18 @@ export interface InvokeOptions extends AgentConfiguration {
 }
 async function savedNotification(store: RepositoryStore, invocationId: string, claim: Claim, cleanup: 'complete' | 'unknown', sender?: NotificationSender) {
   let notification;
-  try { notification = await sendInitialNotification(store, invocationId, sender); }
+  let recordingSettled = false;
+  try {
+    notification = await sendInitialNotification(store, invocationId, sender);
+    recordingSettled = true;
+  }
   catch {
     // Attention delivery cannot change execution or cleanup facts. A reserved unknown remains visible.
     try { notification = store.readNotificationDeliveries(invocationId)[0] ?? null; }
     catch { notification = null; }
   } finally {
-    // The existing worktree claim excludes maintenance until every notice write has settled.
-    if (cleanup === 'complete') try { await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' }); }
+    // Retain the owner when submission cleanup or result recording is uncertain.
+    if (cleanup === 'complete' && recordingSettled && notification?.cleanup === 'complete') try { await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' }); }
     catch { /* Preserve the exact claim for explicit recovery if release is uncertain. */ }
   }
   return notification;
