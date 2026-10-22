@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -15,7 +15,7 @@ const officialNode = {
   sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628',
 };
 const requiredTemplates = [
-  'agents.json', 'prompts/audit.md', 'prompts/implementation.md', 'prompts/planning.md',
+  'agents.json', 'package.json', 'prompts/audit.md', 'prompts/implementation.md', 'prompts/planning.md',
   'prompts/recipe.md', 'prompts/review.md', 'workflows/audit.ts', 'workflows/change.ts',
   'workflows/evaluate.ts', 'workflows/learn.ts',
 ];
@@ -47,7 +47,8 @@ function fixture() {
     put(source, `web/${file}`, `web:${file}\n`);
     put(source, `dist/web/${file}`, `web:${file}\n`);
   }
-  for (const file of requiredTemplates) put(source, `templates/${file}`, `template:${file}\n`);
+  for (const file of requiredTemplates) put(source, `templates/${file}`, readFileSync(join(packageRoot, 'templates', file)));
+  for (const file of ['package.json', 'package-lock.json']) put(source, `toolchain/${file}`, readFileSync(join(packageRoot, 'toolchain', file)));
   for (const file of [
     'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
     'node_modules/typescript/package.json',
@@ -73,6 +74,7 @@ test('explicit release command owns a deterministic complete payload and safe re
     const first = readFileSync(join(f.destination, 'release-manifest.json'), 'utf8');
     const manifest = JSON.parse(first);
     assert.equal(manifest.version, '1.2.3');
+    assert.equal(manifest.schema, 2);
     assert.equal(manifest.platform, 'darwin-arm64');
     assert.deepEqual(manifest.node, officialNode);
     assert.ok(manifest.files.some(file => file.path === 'dist/learning.js'));
@@ -81,6 +83,9 @@ test('explicit release command owns a deterministic complete payload and safe re
     }
     assert.ok(manifest.files.some(file => file.path === 'dist/web/index.html'));
     assert.ok(manifest.files.some(file => file.path === 'templates/workflows/learn.ts'));
+    assert.ok(manifest.files.some(file => file.path === 'templates/package.json'));
+    assert.ok(manifest.files.some(file => file.path === 'toolchain/package.json'));
+    assert.ok(manifest.files.some(file => file.path === 'toolchain/package-lock.json'));
     assert.ok(manifest.files.some(file => file.path === 'package.json'));
     assert.equal(existsSync(join(f.destination, 'node_modules')), false);
     assert.deepEqual(manifest.files.map(file => file.path), [...manifest.files.map(file => file.path)].sort());
@@ -93,6 +98,77 @@ test('explicit release command owns a deterministic complete payload and safe re
     assert.equal(result.status, 0, result.stderr);
     assert.equal(readFileSync(join(f.destination, 'release-manifest.json'), 'utf8'), first);
     assert.deepEqual(readdirSync(f.root).filter(name => name.startsWith('.release-')), []);
+  } finally { f.dispose(); }
+});
+
+test('externally selected digest binds the complete authoring and toolchain contract', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  for (const path of ['templates/package.json', 'toolchain/package.json', 'toolchain/package-lock.json']) {
+    const f = fixture();
+    try {
+      const packaged = f.run();
+      assert.equal(packaged.status, 0, packaged.stderr);
+      const manifestPath = join(f.destination, 'release-manifest.json');
+      const manifestBytes = readFileSync(manifestPath);
+      const selectedDigest = createHash('sha256').update(manifestBytes).digest('hex');
+      assert.equal(validateReleaseBundle(f.destination, selectedDigest).schema, 2);
+      put(f.destination, path, 'changed\n');
+      assert.throws(() => validateReleaseBundle(f.destination, selectedDigest), /changed file hash/i);
+      rmSync(join(f.destination, path));
+      assert.throws(() => validateReleaseBundle(f.destination, selectedDigest));
+      const manifest = JSON.parse(manifestBytes.toString('utf8'));
+      manifest.files = manifest.files.filter(file => file.path !== path);
+      const rewritten = Buffer.from(`${JSON.stringify(manifest)}\n`);
+      writeFileSync(manifestPath, rewritten);
+      assert.throws(() => validateReleaseBundle(f.destination, createHash('sha256').update(rewritten).digest('hex')), /incomplete release payload/i);
+    } finally { f.dispose(); }
+  }
+});
+
+test('consumer refuses a self-consistent manifest with altered authoring or dependency semantics', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  for (const [path, change] of [
+    ['templates/package.json', value => { value.type = 'commonjs'; }],
+    ['toolchain/package.json', value => { value.dependencies.typescript = '7.0.3'; }],
+    ['toolchain/package-lock.json', value => { delete value.packages['node_modules/undici-types']; }],
+    ['toolchain/package-lock.json', value => { value.packages['node_modules/playwright'] = value.packages['node_modules/typescript']; }],
+  ]) {
+    const f = fixture();
+    try {
+      const packaged = f.run();
+      assert.equal(packaged.status, 0, packaged.stderr);
+      const changed = JSON.parse(readFileSync(join(f.destination, path), 'utf8'));
+      change(changed);
+      const fileBytes = Buffer.from(`${JSON.stringify(changed)}\n`);
+      writeFileSync(join(f.destination, path), fileBytes);
+      const manifestPath = join(f.destination, 'release-manifest.json');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      const entry = manifest.files.find(file => file.path === path);
+      entry.bytes = fileBytes.length;
+      entry.sha256 = createHash('sha256').update(fileBytes).digest('hex');
+      const manifestBytes = Buffer.from(`${JSON.stringify(manifest)}\n`);
+      writeFileSync(manifestPath, manifestBytes);
+      const selectedDigest = createHash('sha256').update(manifestBytes).digest('hex');
+      assert.throws(() => validateReleaseBundle(f.destination, selectedDigest), /authoring|toolchain|dependency/i, path);
+    } finally { f.dispose(); }
+  }
+});
+
+test('dedicated release toolchain lock installs only pinned compiler and Node types offline', () => {
+  const f = fixture();
+  const installation = join(f.root, 'installation');
+  try {
+    const packaged = f.run();
+    assert.equal(packaged.status, 0, packaged.stderr);
+    mkdirSync(installation);
+    for (const file of ['package.json', 'package-lock.json']) cpSync(join(f.destination, 'toolchain', file), join(installation, file));
+    const result = spawnSync('npm', ['ci', '--ignore-scripts', '--offline', '--cache', '/tmp/software-factory-npm-cache', '--audit=false', '--fund=false'], { cwd: installation, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(readFileSync(join(installation, 'node_modules/typescript/package.json'), 'utf8')).version, '7.0.2');
+    assert.equal(JSON.parse(readFileSync(join(installation, 'node_modules/@types/node/package.json'), 'utf8')).version, '24.19.2');
+    assert.equal(JSON.parse(readFileSync(join(installation, 'node_modules/undici-types/package.json'), 'utf8')).version, '7.24.6');
+    assert.equal(existsSync(join(installation, 'node_modules/playwright')), false);
+    assert.equal(existsSync(join(installation, 'node_modules/@playwright')), false);
   } finally { f.dispose(); }
 });
 
@@ -252,6 +328,7 @@ test('missing receipt, changed toolchain and changed output all refuse packaging
     source => rmSync(join(source, 'node_modules/.factory-build-receipt.json')),
     source => put(source, 'node_modules/typescript/package.json', 'changed compiler metadata\n'),
     source => put(source, 'dist/learning.js', 'stale output\n'),
+    source => put(source, 'toolchain/package-lock.json', `${readFileSync(join(source, 'toolchain/package-lock.json'), 'utf8')}\n`),
   ]) {
     const f = fixture();
     try {

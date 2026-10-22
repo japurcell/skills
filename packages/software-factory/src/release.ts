@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, posix, resolve, sep } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 export type ReleasePlatform = 'darwin-arm64' | 'linux-x64' | 'win32-x64';
 export interface NodeAsset { readonly version: 'v24.22.1'; readonly url: string; readonly sha256: string }
@@ -17,7 +18,7 @@ export interface ReleaseSelection {
 }
 export interface ReleaseFile { readonly path: string; readonly bytes: number; readonly sha256: string }
 export interface ReleaseManifest {
-  readonly schema: 1;
+  readonly schema: 2;
   readonly version: string;
   readonly platform: ReleasePlatform;
   readonly node: NodeAsset;
@@ -33,11 +34,12 @@ const NODE_ASSETS: Readonly<Record<ReleasePlatform, NodeAsset>> = {
 const QUALIFIED_WINDOWS_HELPER_SHA256 = 'f46ba4a408f8618d5e186ce29cf47bdac3411b67356136d79da4a0ed0c35ec44';
 const WEB_FILES = ['app.js', 'index.html', 'style.css'] as const;
 const TEMPLATE_FILES = [
-  'agents.json', 'prompts/audit.md', 'prompts/implementation.md', 'prompts/planning.md',
+  'agents.json', 'package.json', 'prompts/audit.md', 'prompts/implementation.md', 'prompts/planning.md',
   'prompts/recipe.md', 'prompts/review.md', 'workflows/audit.ts', 'workflows/change.ts',
   'workflows/evaluate.ts', 'workflows/learn.ts',
 ] as const;
-// Schema 1 names every compiled module, including maps and declarations. Changing
+const TOOLCHAIN_FILES = ['package.json', 'package-lock.json'] as const;
+// Schema 2 names every compiled module, including maps and declarations. Changing
 // this list is a release-contract change, not an inference from a proposed bundle.
 const RUNTIME_MODULES = [
   'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
@@ -163,6 +165,7 @@ function sourceFiles(sourceRoot: string): Map<string, Buffer> {
   sameInventory(tree(join(sourceRoot, 'src')), RUNTIME_MODULES.map(stem => `${stem}.ts`), 'source modules');
   sameInventory(tree(join(sourceRoot, 'web')), WEB_FILES, 'web source');
   sameInventory(tree(join(sourceRoot, 'templates')), TEMPLATE_FILES, 'templates');
+  sameInventory(tree(join(sourceRoot, 'toolchain')), TOOLCHAIN_FILES, 'toolchain');
   sameInventory(tree(join(sourceRoot, 'dist')), [...COMPILED_FILES, ...WEB_FILES.map(path => `web/${path}`)], 'built runtime');
   const result = new Map<string, Buffer>();
   for (const path of COMPILED_FILES) result.set(`dist/${path}`, checkedFile(join(sourceRoot, 'dist', path)));
@@ -172,7 +175,51 @@ function sourceFiles(sourceRoot: string): Map<string, Buffer> {
     result.set(`dist/web/${path}`, built);
   }
   for (const path of TEMPLATE_FILES) result.set(`templates/${path}`, checkedFile(join(sourceRoot, 'templates', path)));
+  for (const path of TOOLCHAIN_FILES) result.set(`toolchain/${path}`, checkedFile(join(sourceRoot, 'toolchain', path)));
+  validateInstallTemplates(result);
   return result;
+}
+
+const TYPESCRIPT_OPTIONAL_PLATFORMS = [
+  'aix-ppc64', 'darwin-arm64', 'darwin-x64', 'freebsd-arm64', 'freebsd-x64',
+  'linux-arm', 'linux-arm64', 'linux-loong64', 'linux-mips64el', 'linux-ppc64',
+  'linux-riscv64', 'linux-s390x', 'linux-x64', 'netbsd-arm64', 'netbsd-x64',
+  'openbsd-arm64', 'openbsd-x64', 'sunos-x64', 'win32-arm64', 'win32-x64',
+] as const;
+const TYPESCRIPT_OPTIONAL_PACKAGES = TYPESCRIPT_OPTIONAL_PLATFORMS.map(platform => `@typescript/typescript-${platform}`);
+const TOOLCHAIN_DEPENDENCIES = { '@types/node': '24.19.2', typescript: '7.0.2' };
+
+function sameFields(value: Record<string, unknown>, expected: Record<string, unknown>, context: string): void {
+  if (!isDeepStrictEqual(value, expected)) fail(`invalid ${context}`);
+}
+
+function validateInstallTemplates(files: ReadonlyMap<string, Buffer>): void {
+  const authoring = object(JSON.parse(files.get('templates/package.json')!.toString('utf8')));
+  sameFields(authoring, { name: '@local/software-factory-authoring', version: '0.0.0', private: true, type: 'module' }, 'authoring package');
+  const toolchain = object(JSON.parse(files.get('toolchain/package.json')!.toString('utf8')));
+  sameFields(toolchain, { name: '@local/software-factory-toolchain', version: '0.0.0', private: true, type: 'module', dependencies: TOOLCHAIN_DEPENDENCIES }, 'factory toolchain package');
+  const lock = object(JSON.parse(files.get('toolchain/package-lock.json')!.toString('utf8')));
+  keys(lock, ['name', 'version', 'lockfileVersion', 'requires', 'packages']);
+  if (lock.name !== toolchain.name || lock.version !== toolchain.version || lock.lockfileVersion !== 3 || lock.requires !== true) fail('invalid factory toolchain lock');
+  const packages = object(lock.packages);
+  sameInventory(Object.keys(packages), ['', 'node_modules/@types/node', 'node_modules/typescript', 'node_modules/undici-types',
+    ...TYPESCRIPT_OPTIONAL_PACKAGES.map(name => `node_modules/${name}`)], 'factory toolchain lock');
+  sameFields(object(packages['']), { name: toolchain.name, version: toolchain.version, dependencies: TOOLCHAIN_DEPENDENCIES }, 'factory toolchain lock root');
+  const types = object(packages['node_modules/@types/node']);
+  const compiler = object(packages['node_modules/typescript']);
+  const undici = object(packages['node_modules/undici-types']);
+  if (types.version !== '24.19.2' || compiler.version !== '7.0.2' || undici.version !== '7.24.6') fail('unpinned factory toolchain dependency');
+  sameFields(object(types.dependencies), { 'undici-types': '>=7.24.0 <7.24.7' }, 'Node types dependency closure');
+  sameFields(object(compiler.optionalDependencies), Object.fromEntries(TYPESCRIPT_OPTIONAL_PACKAGES.map(name => [name, '7.0.2'])), 'TypeScript optional dependency closure');
+  for (const [path, value] of Object.entries(packages)) {
+    if (!path) continue;
+    const entry = object(value);
+    const name = path.slice('node_modules/'.length);
+    const version = entry.version;
+    const expectedUrl = `https://registry.npmjs.org/${name}/-/${name.split('/').at(-1)}-${version}.tgz`;
+    if (entry.resolved !== expectedUrl || typeof entry.integrity !== 'string' || !/^sha512-[A-Za-z0-9+/]+={0,2}$/.test(entry.integrity) ||
+        ('dev' in entry && entry.dev !== false) || (TYPESCRIPT_OPTIONAL_PACKAGES.includes(name) && (version !== '7.0.2' || entry.optional !== true))) fail(`invalid factory toolchain lock entry: ${path}`);
+  }
 }
 
 function fileEntries(root: string, paths: readonly string[]): ReleaseFile[] {
@@ -187,6 +234,7 @@ function buildInputPaths(root: string): string[] {
   const groups = ['src', 'web', 'templates', 'node_modules/typescript', platformCompiler, 'node_modules/@types/node', 'node_modules/undici-types'];
   return [
     'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
+    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`),
     ...groups.flatMap(group => tree(join(root, group)).map(path => `${group}/${path}`)),
   ];
 }
@@ -225,7 +273,7 @@ function releasePackageJson(version: string): Buffer {
 function expectedManifest(selection: ReleaseSelection, files: Map<string, Buffer>): ReleaseManifest {
   const entries: ReleaseFile[] = [...files].map(([path, bytes]) => ({ path, bytes: bytes.length, sha256: hash(bytes) })).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
   return {
-    schema: 1, version: selection.version, platform: selection.platform, node: NODE_ASSETS[selection.platform],
+    schema: 2, version: selection.version, platform: selection.platform, node: NODE_ASSETS[selection.platform],
     ...(selection.platform === 'win32-x64' ? { windowsHelper: { path: 'native/windows-notify.exe' as const, sha256: QUALIFIED_WINDOWS_HELPER_SHA256, qualificationRun: '39808257041' as const } } : {}),
     files: entries,
   };
@@ -239,7 +287,7 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
   if (!/^[a-f0-9]{64}$/.test(expectedManifestSha256) || hash(manifestBytes) !== expectedManifestSha256) fail('changed release manifest hash');
   const parsed = object(JSON.parse(manifestBytes.toString('utf8')));
   keys(parsed, ['schema', 'version', 'platform', 'node', 'files'], ['windowsHelper']);
-  if (parsed.schema !== 1 || !Array.isArray(parsed.files) || parsed.files.length > 4096) fail('unsupported release manifest');
+  if (parsed.schema !== 2 || !Array.isArray(parsed.files) || parsed.files.length > 4096) fail('unsupported release manifest');
   if (parsed.platform === 'win32-x64') {
     keys(object(parsed.windowsHelper), ['path', 'sha256', 'qualificationRun']);
     checkedRelativeFile(root, 'native/windows-notify.exe');
@@ -261,7 +309,8 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
     foldedPaths.add(path.toLowerCase());
     totalBytes += entry.bytes;
     if (entry.bytes > MAX_FILE_BYTES || totalBytes > 256 * 1024 * 1024) fail('release payload exceeds size limit');
-    if (path !== 'package.json' && path !== 'native/windows-notify.exe' && !path.startsWith('dist/') && !TEMPLATE_FILES.some(file => path === `templates/${file}`)) fail(`unowned release content: ${path}`);
+    if (path !== 'package.json' && path !== 'native/windows-notify.exe' && !path.startsWith('dist/') &&
+        !TEMPLATE_FILES.some(file => path === `templates/${file}`) && !TOOLCHAIN_FILES.some(file => path === `toolchain/${file}`)) fail(`unowned release content: ${path}`);
     files.set(path, checkedRelativeFile(root, path));
     if (files.get(path)!.length !== entry.bytes || hash(files.get(path)!) !== entry.sha256) fail(`changed file hash: ${path}`);
   }
@@ -276,8 +325,10 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
   const sortedPaths = [...listedPaths].sort();
   if (listedPaths.some((path, index) => path !== sortedPaths[index])) fail('manifest files are not sorted');
   const required = ['package.json', ...COMPILED_FILES.map(path => `dist/${path}`), ...WEB_FILES.map(path => `dist/web/${path}`), ...TEMPLATE_FILES.map(path => `templates/${path}`),
+    ...TOOLCHAIN_FILES.map(path => `toolchain/${path}`),
     ...(selection.platform === 'win32-x64' ? ['native/windows-notify.exe'] : [])];
   sameInventory([...files.keys()], required, 'incomplete release payload');
+  validateInstallTemplates(files);
   if (!files.get('package.json')!.equals(releasePackageJson(selection.version))) fail('invalid runtime package metadata');
   if (selection.platform === 'win32-x64' && !files.has('native/windows-notify.exe')) fail('missing Windows helper');
   if (selection.platform !== 'win32-x64' && files.has('native/windows-notify.exe')) fail('unexpected Windows helper');
