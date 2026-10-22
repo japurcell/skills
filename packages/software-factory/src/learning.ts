@@ -3,7 +3,7 @@ import type { RepositoryStore } from './store.js';
 /** Read-only, deliberately small view of retained history for explicit workflows. */
 export interface SourceHistoryGateway {
   read(invocationId: string, afterAttempt?: number, afterCapture?: number): Promise<{
-    invocation: { id: string; outcome: string | null; stage: string };
+    invocation: { id: string; outcome: string | null; stage: string; workflow: string | null };
     attempts: { id: string; invocationId: string; outcome: string | null; operationKey: string }[];
     captures: { id: string; attemptId: string | null; channel: string | null; state: string }[];
     attemptsNextCursor: number; hasMoreAttempts: boolean;
@@ -14,6 +14,10 @@ export interface SourceHistoryGateway {
     nextSequence: number; hasMore: boolean;
   }>;
   event(cursor: string): Promise<{ cursor: string; kind: string; data: object } | null>;
+  attempt(attemptId: string): Promise<{
+    id: string; invocationId: string; operationKey: string; kind: string; outcome: string | null;
+    agent: { inputsCaptureId: string; resultCaptureId: string; validator: string | null } | null;
+  }>;
 }
 
 const id = (value: string) => {
@@ -27,7 +31,10 @@ export function sourceHistoryGateway(store: RepositoryStore, track: <T>(action: 
     read: (invocationId: string, afterAttempt = 0, afterCapture = 0) => track(async () => {
       const page = store.readHistory(id(invocationId), { afterAttempt, afterCapture, limit: 20 });
       return {
-        invocation: { id: page.invocation.id, outcome: page.invocation.outcome, stage: page.invocation.stage },
+        invocation: { id: page.invocation.id, outcome: page.invocation.outcome, stage: page.invocation.stage,
+          workflow: typeof (page.invocation.metadata as { workflow?: unknown } | undefined)?.workflow === 'string'
+            && Buffer.byteLength((page.invocation.metadata as { workflow: string }).workflow) <= 512
+            ? (page.invocation.metadata as { workflow: string }).workflow : null },
         attempts: page.attempts.map(({ id, invocationId, outcome, operationKey }) => ({ id, invocationId, outcome, operationKey })),
         captures: page.captures.map(({ id, attemptId, channel, state }) => ({ id, attemptId, channel, state })),
         attemptsNextCursor: page.attemptsNextCursor, hasMoreAttempts: page.hasMoreAttempts,
@@ -43,6 +50,13 @@ export function sourceHistoryGateway(store: RepositoryStore, track: <T>(action: 
       if (typeof cursor !== 'string' || !/^[1-9]\d{0,18}$/.test(cursor) || BigInt(cursor) > 9223372036854775807n) throw new Error('invalid source event cursor');
       const page = store.readEvents({ after: String(BigInt(cursor) - 1n), limit: 1 });
       return page.events[0]?.cursor === cursor ? page.events[0] : null;
+    }),
+    attempt: (attemptId: string) => track(async () => {
+      const attempt = store.readAttempt(id(attemptId));
+      return { id: attempt.id, invocationId: attempt.invocationId, operationKey: attempt.operationKey,
+        kind: attempt.kind, outcome: attempt.outcome,
+        agent: attempt.agent ? { inputsCaptureId: attempt.agent.inputsCaptureId,
+          resultCaptureId: attempt.agent.resultCaptureId, validator: attempt.agent.validator } : null };
     }),
   });
 }

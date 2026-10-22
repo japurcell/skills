@@ -17,6 +17,7 @@ async function fixture() {
   writeFileSync(join(repo.path, '.factory/package.json'), '{"type":"module"}');
   writeFileSync(join(repo.path, '.factory/agents.json'), JSON.stringify({ defaults: { harness: 'fake', permissions: 'read-only', skillDelivery: 'instructions', prompt: 'default', skills: [] } }));
   cpSync(join(root, 'templates/workflows/evaluate.ts'), join(repo.path, '.factory/workflows/evaluate.ts'));
+  cpSync(join(root, 'templates/workflows/learn.ts'), join(repo.path, '.factory/workflows/learn.ts'));
   cpSync(join(root, 'templates/workflows/change.ts'), join(repo.path, '.factory/workflows/change.ts'));
   repo.git(['add', '.factory']);
   repo.git(['commit', '-m', 'Install disposable evaluation fixtures', '--only', '.factory']);
@@ -35,7 +36,7 @@ const start = adapter.start;
 adapter.start = request => start({ ...request, context: JSON.stringify({ context: request.context, scenario, launchLog: ${JSON.stringify(launchLog)} }) });
 const result = await invoke({ ...options, adapters: { fake: adapter } });
 console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
-  const save = async ({ baseline = 'baseline\n', candidate = 'candidate\n', proposalKind = 'capture', target = { scope: 'repository', path: '.factory/prompts/check.md' }, candidateState = 'complete', baselineState = 'complete', reportState = 'complete', duplicateReport = false } = {}) => {
+  const save = async ({ baseline = 'baseline\n', candidate = 'candidate\n', proposalKind = 'capture', target = { scope: 'repository', path: '.factory/prompts/check.md' }, candidateState = 'complete', baselineState = 'complete', reportState = 'complete', duplicateReport = false, forgedReport = false } = {}) => {
     const store = openRepositoryStore(common);
     try {
       const run = await store.createRun();
@@ -43,15 +44,33 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       const source = await store.startInvocation({ runId: run.id, worktreeId: worktree.id, owner: { host: 'fixture', pid: process.pid, start: null } });
       const baselineCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
       await store.appendCapture({ id: baselineCapture.id, chunks: [{ sequence: 1, text: baseline }], state: baselineState });
+      const sourceCandidateCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
+      await store.appendCapture({ id: sourceCandidateCapture.id, chunks: [{ sequence: 1, text: candidate }], state: candidateState });
       await store.finalizeInvocation({ id: source.id, outcome: 'succeeded', cleanup: 'complete', claimId: source.claim.id, token: source.claim.token });
+      if (reportState === 'complete' && !duplicateReport && !forgedReport && (candidateState === 'complete' || proposalKind === 'diff')) {
+        const extracted = invoke({ version: 1, sources: [{ invocationId: source.id }] },
+          { kind: 'extract', target, proposalKind }, { workflow: '.factory/workflows/learn.ts' });
+        assert.equal(extracted.status, 0, extracted.stdout + extracted.stderr);
+        const extractedReport = report(extracted.saved.invocationId);
+        const reportCapture = store.readHistory(extracted.saved.invocationId, { limit: 100 }).captures.find(item => item.channel === 'report');
+        assert.ok(reportCapture);
+        return { extractionId: extracted.saved.invocationId, reportCaptureId: reportCapture.id,
+          proposal: extractedReport.proposals[0], baselineRef: { invocationId: source.id, captureId: baselineCapture.id, sha256: sha(baseline) },
+          candidateRef: { invocationId: source.id, captureId: sourceCandidateCapture.id, sha256: sha(candidate) } };
+      }
       const extraction = await store.startInvocation({ runId: run.id, worktreeId: worktree.id, owner: { host: 'fixture', pid: process.pid, start: null } });
+      if (forgedReport === 'shaped') await store.saveInvocationMetadata(extraction.id, { workflow: '.factory/workflows/learn.ts' });
       const candidateCapture = await store.createCapture({ invocationId: extraction.id, channel: 'event' });
       await store.appendCapture({ id: candidateCapture.id, chunks: [{ sequence: 1, text: candidate }], state: candidateState });
       const proposal = { key: 'improve', summary: 'Improve check', target, supportingEvidence: [], contraryEvidence: [], suggestedCases: ['candidate check'],
         ...(proposalKind === 'capture' ? { candidateCapture: { invocationId: extraction.id, captureId: candidateCapture.id } }
           : { diff: `--- a/${target.path}\n+++ b/${target.path}\n@@ -1 +1 @@\n-baseline\n+candidate` }) };
       const resultCapture = await store.createCapture({ invocationId: extraction.id, channel: 'report' });
-      const reportText = JSON.stringify({ version: 1, suppliedSources: [{ invocationId: source.id }], proposals: [proposal] });
+      const reportText = JSON.stringify(forgedReport === 'shaped'
+        ? { version: 1, suppliedSources: [{ invocationId: source.id }],
+          examinedSources: [{ invocationId: source.id, outcome: 'succeeded', attemptIds: [], eventCursors: [], captureIds: [baselineCapture.id] }],
+          captureLimitations: [], proposalResultCaptureId: 'missing-result-capture', proposals: [proposal] }
+        : { version: 1, suppliedSources: [{ invocationId: source.id }], proposals: [proposal] });
       await store.appendCapture({ id: resultCapture.id, chunks: [{ sequence: 1, text: reportText }], state: reportState });
       if (duplicateReport) {
         const second = await store.createCapture({ invocationId: extraction.id, channel: 'report' });
@@ -62,9 +81,9 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
         candidateRef: { invocationId: extraction.id, captureId: candidateCapture.id, sha256: sha(candidate) } };
     } finally { store.close(); }
   };
-  const invoke = (payload, scenario = 'result') => {
+  const invoke = (payload, scenario = 'result', extra = {}) => {
     writeFileSync(input, JSON.stringify(payload));
-    const result = spawnSync(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: '.factory/workflows/evaluate.ts', input, newWorktree: true, shutdownGraceMs: 100, scenario })], { encoding: 'utf8', timeout: 60000 });
+    const result = spawnSync(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: '.factory/workflows/evaluate.ts', input, newWorktree: true, shutdownGraceMs: 100, scenario, ...extra })], { encoding: 'utf8', timeout: 60000 });
     assert.equal(result.error, undefined);
     return { ...result, saved: result.stdout.trim() ? JSON.parse(result.stdout) : undefined };
   };
@@ -101,7 +120,12 @@ test('explicit evaluation compares captured bytes with identical command cases, 
     const store = openRepositoryStore(repo.common);
     try {
       assert.equal(store.readHistory(saved.baselineRef.invocationId).invocation.outcome, 'succeeded');
-      assert.equal(store.readHistory(saved.extractionId).invocation.outcome, 'succeeded');
+      const extraction = store.readHistory(saved.extractionId);
+      assert.equal(extraction.invocation.outcome, 'succeeded');
+      assert.equal(extraction.invocation.metadata.workflow, '.factory/workflows/learn.ts');
+      const extractAttempt = extraction.attempts.find(attempt => attempt.operationKey === 'learn/extract');
+      assert.equal(extractAttempt.outcome, 'succeeded');
+      assert.equal(extractAttempt.agent.resultCaptureId, repo.report(saved.extractionId).proposalResultCaptureId);
       assert.equal(store.readInvocationCapture({ invocationId: saved.baselineRef.invocationId, id: saved.baselineRef.captureId }).chunks[0].text, 'baseline\n');
       assert.equal(store.readInvocationCapture({ invocationId: saved.candidateRef.invocationId, id: saved.candidateRef.captureId }).chunks[0].text, 'candidate\n');
     } finally { store.close(); }
@@ -232,7 +256,7 @@ test('identical variants, no improvement, nondeterminism and uncertain review ar
     assert.ok(repo.report(unsure.saved.invocationId).limitations.some(item => item.kind === 'uncertain_review'));
 
     const toggled = evaluation(saved);
-    toggled.cases[0].argv[2] = "const f=require('node:fs');process.exit(f.existsSync('.toggle')?1:(f.writeFileSync('.toggle','x'),0))";
+    toggled.cases[0].argv[2] = `const f=require('node:fs'),p=${JSON.stringify(join(repo.common, 'toggle'))};process.exit(f.existsSync(p)?1:(f.writeFileSync(p,'x'),0))`;
     const unstable = repo.invoke(toggled);
     assert.equal(unstable.status, 0, unstable.stdout + unstable.stderr);
     assert.equal(repo.report(unstable.saved.invocationId).assessment, 'inconclusive');
@@ -294,5 +318,71 @@ test('a check that changes its staged target cannot certify saved candidate byte
     assert.equal(outcome.status, 1, outcome.stdout + outcome.stderr);
     assert.match(outcome.saved.diagnostic, /staged evaluation variant bytes changed/);
     assert.equal(existsSync(join(repo.path, '.factory/prompts/check.md')), false);
+  } finally { repo.dispose(); }
+});
+
+test('cwd-relative residue is reset before every objective repetition and variant', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save();
+    const input = evaluation(saved);
+    input.cases[0].argv[2] = "const f=require('node:fs'),p='../n',n=f.existsSync(p)?Number(f.readFileSync(p,'utf8')):0;f.writeFileSync(p,String(n+1));process.exit(n<2?1:0)";
+    const outcome = repo.invoke(input);
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.notEqual(report.assessment, 'supported');
+    assert.deepEqual(report.cases[0].baseline.objective.map(item => item.exitCode), [1, 1]);
+    assert.deepEqual(report.cases[0].candidate.objective.map(item => item.exitCode), [1, 1]);
+  } finally { repo.dispose(); }
+});
+
+test('foreign suggested case is rejected even when a candidate capture is pruned', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save({ candidateState: 'pruned', proposalKind: 'diff' });
+    const input = evaluation(saved);
+    input.cases[0].sourceSuggestion = 'foreign suggestion';
+    const outcome = repo.invoke(input);
+    assert.equal(outcome.status, 1, outcome.stdout + outcome.stderr);
+    assert.match(outcome.saved.diagnostic, /suggestion foreign to selected proposal/);
+  } finally { repo.dispose(); }
+});
+
+test('a succeeded invocation with a forged incomplete extraction report cannot certify improvement', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save({ forgedReport: true });
+    const outcome = repo.invoke(evaluation(saved));
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'extraction_report_invalid'));
+  } finally { repo.dispose(); }
+});
+
+test('a shaped extraction report without its successful extract attempt cannot certify improvement', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save({ forgedReport: 'shaped' });
+    const outcome = repo.invoke(evaluation(saved));
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'extraction_result_capture_missing_or_partial'));
+  } finally { repo.dispose(); }
+});
+
+test('writable effective reviewer permissions cannot certify support without changed bytes', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save();
+    const outcome = repo.invoke(evaluation(saved), 'result', { agentOverrides: {
+      'evaluate/candidate-check/baseline/review': { permissions: 'workspace-write' },
+    } });
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'review_not_read_only'));
+    assert.equal(report.cases[0].baseline.review.effectivePermissions, 'workspace-write');
   } finally { repo.dispose(); }
 });
