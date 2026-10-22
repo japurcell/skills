@@ -46,6 +46,12 @@ test('timeout over five seconds is rejected without touching the desktop', async
   });
 });
 
+test('missing notification request fails with a fixed result', async () => {
+  assert.deepEqual(await sendDesktopNotification(null), {
+    state: 'failed', reason: 'invalid_request', cleanup: 'complete',
+  });
+});
+
 test('real child submission waits for clean exit and closed pipes', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'factory-notify-'));
   try {

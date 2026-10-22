@@ -219,6 +219,23 @@ std::wstring new_install_directory(const std::wstring& path) {
   throw hresult_error(HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS));
 }
 
+bool name_matches_handle(const std::wstring& path, const BY_HANDLE_FILE_INFORMATION& expected) {
+  // The creator still has write access, so this reader must share write access with it.
+  // The creator's own share mode denies any other writer.
+  auto named = open_file(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
+  return named.valid() && same_file(identity(named.get()), expected);
+}
+
+bool publish_handle(HANDLE file, const std::wstring& path) {
+  std::vector<char> storage(sizeof(FILE_RENAME_INFO) + (path.size() + 1) * sizeof(wchar_t));
+  auto* rename = reinterpret_cast<FILE_RENAME_INFO*>(storage.data());
+  rename->ReplaceIfExists = FALSE;
+  rename->RootDirectory = nullptr;
+  rename->FileNameLength = static_cast<DWORD>(path.size() * sizeof(wchar_t));
+  std::wmemcpy(rename->FileName, path.c_str(), path.size() + 1);
+  return SetFileInformationByHandle(file, FileRenameInfo, rename, static_cast<DWORD>(storage.size())) != 0;
+}
+
 enum class RegistrationStage { temporary_saved, temporary_held, published_held, before_remove_reopen };
 using RegistrationBarrier = std::function<void(RegistrationStage, const std::wstring&)>;
 
@@ -243,51 +260,64 @@ int install_shortcut_at(const std::wstring& path, const std::wstring& app_id,
   PropVariantClear(&value);
   check_hresult(set_value);
   check_hresult(properties->Commit());
-  ComPtr<IPersistFile> file;
-  check_hresult(link.As(&file));
+  ComPtr<IPersistStream> persist;
+  check_hresult(link.As(&persist));
+  ComPtr<IStream> serialized;
+  check_hresult(CreateStreamOnHGlobal(nullptr, TRUE, serialized.GetAddressOf()));
+  check_hresult(persist->Save(serialized.Get(), TRUE));
+  STATSTG stream_info{};
+  check_hresult(serialized->Stat(&stream_info, STATFLAG_NONAME));
+  if (stream_info.cbSize.HighPart != 0 || stream_info.cbSize.LowPart == 0 ||
+      stream_info.cbSize.LowPart > 1024 * 1024) throw hresult_error(E_FAIL);
+  HGLOBAL memory = nullptr;
+  check_hresult(GetHGlobalFromStream(serialized.Get(), &memory));
   const auto directory = new_install_directory(path);
   const auto temporary = directory + L"\\shortcut.lnk";
-  check_hresult(file->Save(temporary.c_str(), TRUE));
-  file.Reset();
+  FileHandle source(CreateFileW(temporary.c_str(), GENERIC_READ | GENERIC_WRITE | DELETE,
+                                FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, CREATE_NEW,
+                                FILE_ATTRIBUTE_NORMAL, nullptr));
+  if (!source.valid()) {
+    const DWORD error = GetLastError();
+    throw hresult_error(HRESULT_FROM_WIN32(error));
+  }
+  const auto source_identity = identity(source.get());
+  const void* bytes = GlobalLock(memory);
+  if (!bytes) throw hresult_error(E_OUTOFMEMORY);
+  DWORD saved_bytes = 0;
+  const BOOL saved = WriteFile(source.get(), bytes, stream_info.cbSize.LowPart, &saved_bytes, nullptr);
+  const DWORD save_error = GetLastError();
+  GlobalUnlock(memory);
+  if (!saved || saved_bytes != stream_info.cbSize.LowPart || !FlushFileBuffers(source.get())) {
+    const DWORD error = !saved ? save_error : (saved_bytes != stream_info.cbSize.LowPart ? ERROR_WRITE_FAULT : GetLastError());
+    delete_owned_handle(source.get());
+    source.close();
+    RemoveDirectoryW(directory.c_str());
+    throw hresult_error(HRESULT_FROM_WIN32(error));
+  }
+  serialized.Reset();
+  persist.Reset();
   properties.Reset();
   link.Reset();
   if (barrier) barrier(RegistrationStage::temporary_saved, temporary);
-  auto source = open_file(temporary, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE);
-  if (!source.valid()) throw hresult_error(HRESULT_FROM_WIN32(GetLastError()));
-  const auto source_identity = identity(source.get());
-  if (!shortcut_matches(source.get(), app_id)) {
-    source.close();
-    auto cleanup = open_file(temporary, GENERIC_READ | DELETE, FILE_SHARE_READ);
-    if (cleanup.valid() && same_file(identity(cleanup.get()), source_identity)) delete_owned_handle(cleanup.get());
-    cleanup.close();
-    RemoveDirectoryW(directory.c_str());
-    return 4;
-  }
+  if (!name_matches_handle(temporary, source_identity) || !shortcut_matches(source.get(), app_id)) return 4;
   if (barrier) barrier(RegistrationStage::temporary_held, temporary);
-  if (!shortcut_matches(source.get(), app_id)) return 4;
-  if (!MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_WRITE_THROUGH)) {
+  if (!name_matches_handle(temporary, source_identity) || !shortcut_matches(source.get(), app_id)) return 4;
+  if (!publish_handle(source.get(), path)) {
     const DWORD error = GetLastError();
-    source.close();
-    auto cleanup = open_file(temporary, GENERIC_READ | DELETE, FILE_SHARE_READ);
-    if (cleanup.valid() && same_file(identity(cleanup.get()), source_identity)) delete_owned_handle(cleanup.get());
-    cleanup.close();
-    RemoveDirectoryW(directory.c_str());
-    if (error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS) return 4;
+    if (error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS ||
+        GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) return 4;
     throw hresult_error(HRESULT_FROM_WIN32(error));
   }
-  auto published = open_file(path, GENERIC_READ | DELETE, FILE_SHARE_READ);
-  if (!published.valid()) throw hresult_error(HRESULT_FROM_WIN32(GetLastError()));
-  const auto info = identity(published.get());
-  if (!same_file(info, source_identity) || !shortcut_matches(published.get(), app_id)) return 4;
+  const auto info = identity(source.get());
+  if (!name_matches_handle(path, source_identity) || !shortcut_matches(source.get(), app_id)) return 4;
   if (barrier) barrier(RegistrationStage::published_held, path);
-  if (!same_file(identity(published.get()), source_identity) || !shortcut_matches(published.get(), app_id)) return 4;
-  source.close();
+  if (!name_matches_handle(path, source_identity) || !shortcut_matches(source.get(), app_id)) return 4;
   RemoveDirectoryW(directory.c_str());
   FileHandle record(CreateFileW(owner_path(path).c_str(), GENERIC_WRITE | DELETE, 0, nullptr,
                                 CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr));
   if (!record.valid()) {
     const DWORD error = GetLastError();
-    delete_owned_handle(published.get());
+    delete_owned_handle(source.get());
     if (error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS) return 4;
     throw hresult_error(HRESULT_FROM_WIN32(error));
   }
@@ -305,7 +335,7 @@ int install_shortcut_at(const std::wstring& path, const std::wstring& app_id,
       !FlushFileBuffers(record.get())) {
     const DWORD error = GetLastError() == ERROR_SUCCESS ? ERROR_WRITE_FAULT : GetLastError();
     delete_owned_handle(record.get());
-    delete_owned_handle(published.get());
+    delete_owned_handle(source.get());
     throw hresult_error(HRESULT_FROM_WIN32(error));
   }
   return 0;

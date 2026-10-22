@@ -89,6 +89,9 @@ async function installedWindowsCommand(input: DesktopNotification, descriptor: W
 /** A submitted result means native API/command acceptance, never visible delivery. */
 async function send(input: DesktopNotification, installation?: WindowsNotificationInstallation): Promise<NotificationResult> {
   const startedAt = performance.now();
+  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
+    return { state: 'failed', reason: 'invalid_request', cleanup: 'complete' };
+  }
   const timeoutMs = input.timeoutMs ?? MAX_LIFETIME_MS;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > MAX_LIFETIME_MS) {
     return { state: 'failed', reason: 'invalid_request', cleanup: 'complete' };
@@ -98,9 +101,13 @@ async function send(input: DesktopNotification, installation?: WindowsNotificati
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), timeoutMs);
   try {
-    const command = process.platform === 'win32'
-      ? await installedWindowsCommand(input, installation!, abort.signal)
-      : notificationCommand(input, process.platform);
+    const deadline = new Promise<never>((_, reject) => {
+      abort.signal.addEventListener('abort', () => reject(new Error('notification deadline exceeded')), { once: true });
+    });
+    const preflight = process.platform === 'win32'
+      ? installedWindowsCommand(input, installation!, abort.signal)
+      : Promise.resolve(notificationCommand(input, process.platform));
+    const command = await Promise.race([preflight, deadline]);
     const remainingMs = Math.floor(timeoutMs - (performance.now() - startedAt));
     if (abort.signal.aborted || remainingMs < 1) return { state: 'timed_out', reason: 'deadline_exceeded', cleanup: 'complete' };
     return await executeNotificationProcess(command, remainingMs);

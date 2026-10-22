@@ -32,6 +32,25 @@ void put_foreign(const std::wstring& path, DWORD disposition = CREATE_NEW) {
          "foreign file write failed");
 }
 
+void copy_saved_shortcut(const std::wstring& source_path, const std::wstring& copy_path) {
+  auto source = open_file(source_path, GENERIC_READ,
+                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
+  expect(source.valid(), "saved shortcut could not be read");
+  LARGE_INTEGER length{};
+  expect(GetFileSizeEx(source.get(), &length) && length.QuadPart > 0 && length.QuadPart <= 1024 * 1024,
+         "saved shortcut has invalid size");
+  std::vector<char> bytes(static_cast<size_t>(length.QuadPart));
+  DWORD read = 0;
+  expect(ReadFile(source.get(), bytes.data(), static_cast<DWORD>(bytes.size()), &read, nullptr) &&
+         read == static_cast<DWORD>(bytes.size()), "saved shortcut copy read failed");
+  FileHandle copy(CreateFileW(copy_path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW,
+                              FILE_ATTRIBUTE_NORMAL, nullptr));
+  expect(copy.valid(), "saved shortcut copy creation failed");
+  DWORD written = 0;
+  expect(WriteFile(copy.get(), bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr) &&
+         written == static_cast<DWORD>(bytes.size()), "saved shortcut copy write failed");
+}
+
 void expect_write_blocked(const std::wstring& path) {
   FileHandle writer(CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
@@ -64,11 +83,37 @@ void run(const std::wstring& root) {
          "missing registration did not return 3");
 
   const auto tampered_link = test_path(root, L"tampered-save");
+  std::wstring tampered_temp;
+  const auto tampered_original = root + L"\\tampered-original.lnk";
   expect(install_shortcut_at(tampered_link, kAppId, kToken,
-      [](RegistrationStage stage, const std::wstring& path) {
-        if (stage == RegistrationStage::temporary_saved) put_foreign(path, CREATE_ALWAYS);
+      [&](RegistrationStage stage, const std::wstring& path) {
+        if (stage == RegistrationStage::temporary_saved) {
+          tampered_temp = path;
+          expect(MoveFileExW(path.c_str(), tampered_original.c_str(), 0), "saved shortcut rename failed");
+          put_foreign(path);
+        }
       }) == 4, "modified saved shortcut was accepted");
   expect(!exists(owner_path(tampered_link)), "tampered shortcut got an owner record");
+  expect(exists(tampered_temp) && exists(tampered_original),
+         "foreign replacement or original saved shortcut was deleted");
+
+  const auto copied_link = test_path(root, L"copied-save");
+  const auto copied_original = root + L"\\copied-original.lnk";
+  std::wstring copied_temp;
+  expect(install_shortcut_at(copied_link, kAppId, kToken,
+      [&](RegistrationStage stage, const std::wstring& path) {
+        if (stage == RegistrationStage::temporary_saved) {
+          copied_temp = path;
+          const auto replacement = root + L"\\copied-replacement.lnk";
+          copy_saved_shortcut(path, replacement);
+          expect(MoveFileExW(path.c_str(), copied_original.c_str(), 0), "original shortcut rename failed");
+          expect(MoveFileExW(replacement.c_str(), path.c_str(), 0), "valid replacement rename failed");
+        }
+      }) == 4, "valid copied replacement was adopted");
+  expect(!exists(copied_link) && !exists(owner_path(copied_link)),
+         "valid copied replacement acquired ownership");
+  expect(exists(copied_temp) && exists(copied_original),
+         "valid copied replacement or original shortcut was deleted");
 
   const auto owned_link = test_path(root, L"owned");
   bool temp_held = false, published_held = false;
@@ -105,15 +150,19 @@ void run(const std::wstring& root) {
 
   const auto renamed_source_link = test_path(root, L"renamed-source");
   const auto renamed_temp = root + L"\\renamed-temp.lnk";
+  std::wstring renamed_replacement;
   expect(install_shortcut_at(renamed_source_link, kAppId, kToken,
       [&](RegistrationStage stage, const std::wstring& path) {
         if (stage == RegistrationStage::temporary_held) {
+          renamed_replacement = path;
           expect(MoveFileExW(path.c_str(), renamed_temp.c_str(), 0), "temporary rename failed");
           put_foreign(path);
         }
       }) == 4, "renamed temporary shortcut acquired ownership");
-  expect(exists(renamed_source_link) && !exists(owner_path(renamed_source_link)),
+  expect(!exists(renamed_source_link) && !exists(owner_path(renamed_source_link)),
          "renamed temporary shortcut acquired an owner record");
+  expect(exists(renamed_temp) && exists(renamed_replacement),
+         "renamed original or foreign replacement was deleted");
 
   const auto remove_race_link = test_path(root, L"remove-race");
   expect(install_shortcut_at(remove_race_link, kAppId, kToken) == 0,
