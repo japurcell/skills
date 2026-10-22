@@ -601,7 +601,7 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
@@ -623,7 +623,8 @@ class PreflightTests(unittest.TestCase):
             " if command[0] == '/bin/ps':\n"
             "  observations += 1\n"
             "  if observations <= " + repr(first) + " or (" + repr(str(after)) +
-            " != 'None' and Path(" + repr(str(after)) + ").exists()):\n"
+            " != 'None' and Path(" + repr(str(after)) + ").exists() and (" + repr(str(until)) +
+            " == 'None' or not Path(" + repr(str(until)) + ").exists())):\n"
             "   command = [sys.executable, '-I', '-S', '-B', '-c', " + repr(child) + ", *command[1:]]\n"
             "  process = real(command,*args,**kwargs)\n"
             "  with Path(" + repr(str(observers)) + ").open('a') as stream: stream.write(str(process.pid)+'\\n')\n"
@@ -744,6 +745,64 @@ class PreflightTests(unittest.TestCase):
                     os.kill(child, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_discovers_child_spawned_after_inflight_snapshot(self):
+        active = self.active_copy("spawn-after-snapshot")
+        marker = self.base / 'parent-pid'
+        observed = self.base / 'parent-observed'
+        ready = self.base / 'new-child-pid'
+        child_code = ('import signal,time\n'
+            'signal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'signal.signal(signal.SIGTERM,signal.SIG_IGN)\ntime.sleep(60)\n')
+        injection = ('import subprocess\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'Path(' + repr(str(marker)) + ').write_text(str(os.getpid()))\n'
+            'while not Path(' + repr(str(observed)) + ').exists(): time.sleep(0.005)\n'
+            'child=subprocess.Popen([sys.executable,"-c",' + repr(child_code) + '],start_new_session=True)\n'
+            'Path(' + repr(str(ready)) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
+        scanner = active / '.codex/hooks/scan-secrets.py'
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        wrapper, observers, _ = self.observation_wrapper(0.3, after=marker,
+            seen=observed, settle=0.55, until=observed)
+        before = self.fingerprint()
+        child = None
+        identity = None
+        try:
+            with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(active), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                deadline = time.monotonic() + 6
+                while not ready.exists() and time.monotonic() < deadline and process.poll() is None:
+                    time.sleep(0.01)
+                self.assertTrue(ready.exists(), 'scanner did not spawn child after metadata capture')
+                child = int(ready.read_text())
+                identity = subprocess.check_output(['/bin/ps', '-o', 'lstart=', '-p', str(child)])
+                started = time.monotonic()
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=4)
+                elapsed = time.monotonic() - started
+                self.assertEqual(process.returncode, 130, stdout + stderr)
+                self.assertEqual(json.loads(stdout)['reason'], 'interrupted')
+                self.assertLess(elapsed, 2)
+                self.assertNotIn(b'Traceback', stderr)
+                self.assertNotIn(TOKEN.encode(), stdout + stderr)
+            pids = [int(pid) for pid in observers.read_text().splitlines()]
+            self.assert_stopped([child, *pids])
+            self.assertEqual(self.fingerprint(), before)
+            print(json.dumps({'fixture_observer': 'child-spawned-after-snapshot',
+                'cleanup_seconds': round(elapsed, 6),
+                'observed_processes_stopped': len(pids) + 1}), flush=True)
+        finally:
+            # Check the leak first; emergency fixture cleanup verifies identity.
+            if child is not None and identity:
+                current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(child)],
+                    capture_output=True, timeout=2).stdout
+                if current == identity:
+                    try:
+                        os.kill(child, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
 
     def test_unavailable_process_observation_stops_before_git_or_scanners(self):
         before = self.fingerprint()

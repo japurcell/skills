@@ -149,7 +149,7 @@ def wait_process(process, timeout):
         return process.wait(timeout=max(0, deadline - time.monotonic()))
 
 
-def process_snapshot(*, deadline=None):
+def process_snapshot(*, deadline=None, interruptible=True):
     """Read bounded PID/parent/group/start/state metadata, never command text."""
     with tempfile.TemporaryFile() as output:
         started = time.monotonic()
@@ -167,7 +167,19 @@ def process_snapshot(*, deadline=None):
             raise Failure("process_observation_unavailable", 2, "cleanup") from None
         try:
             try:
-                wait_process(observer, max(0, allowance - (time.monotonic() - started)))
+                observation_deadline = started + allowance
+                while True:
+                    if interruptible:
+                        check_cancelled()
+                    remaining = max(0, observation_deadline - time.monotonic())
+                    try:
+                        wait_process(observer, min(0.02, remaining) if interruptible else remaining)
+                        if interruptible:
+                            check_cancelled()
+                        break
+                    except subprocess.TimeoutExpired:
+                        if time.monotonic() >= observation_deadline:
+                            raise
             except subprocess.TimeoutExpired:
                 raise Failure("process_observation_timeout", 2, "cleanup", limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds") from None
             if observer.returncode:
@@ -231,15 +243,22 @@ def signal_observed(living, signum):
             pass
 
 
-def stop_process(process, known, snapshot=None):
+def stop_process(process, known):
     # Cancellation includes any observation already in flight. Do not restart
     # its envelope when control finally reaches this cleanup.
     started = time.monotonic()
     deadline = min(started, CANCELLED_AT if CANCELLED_AT is not None else started) + CLEANUP_SECONDS
     try:
         leader_stopped = process.poll() is not None
-        if snapshot is None:
-            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+        # Our exact unreaped child cannot have its PID reused. Stop its spawning
+        # before collecting a fresh graph, including children created while an
+        # interrupted metadata observer was still returning an older capture.
+        if not leader_stopped:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.kill(process.pid, signal.SIGSTOP)
+        # Observation reserves its own observer reap; the leader reap below
+        # shares only the time left in this same absolute deadline.
+        snapshot = process_snapshot(deadline=deadline, interruptible=False)
         remember_descendants(process, known, snapshot)
         living = living_descendants(known, snapshot)
         process.poll()
@@ -261,7 +280,7 @@ def stop_process(process, known, snapshot=None):
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(process.pid, signal.SIGKILL)
             process.poll()
-            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+            snapshot = process_snapshot(deadline=deadline, interruptible=False)
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
             # The leader can exit while metadata is collected; reap it before
@@ -304,19 +323,13 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
                                    stdout=out, stderr=err, start_new_session=os.name != "nt")
         known = {}
         observed_at = time.monotonic()
-        cleanup_snapshot = None
         try:
             started = time.monotonic()
             request = data or b""
             while True:
                 check_cancelled()
                 if process.poll() is None and time.monotonic() - observed_at >= 0.05:
-                    cleanup_snapshot = process_snapshot()
-                    remember_descendants(process, known, cleanup_snapshot)
-                    # If cancellation arrived during observation, cleanup uses
-                    # this just-returned identity check before any blocking work.
-                    check_cancelled()
-                    cleanup_snapshot = None
+                    remember_descendants(process, known, process_snapshot())
                     observed_at = time.monotonic()
                 if time.monotonic() - started > timeout:
                     raise Failure("subprocess_timeout", 2, "subprocess", limit=timeout, measured=round(time.monotonic() - started, 3), unit="seconds")
@@ -333,7 +346,7 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
                 raise Failure("git_or_hook_failed", 2, "subprocess")
             return process.returncode, output
         finally:
-            stop_process(process, known, cleanup_snapshot)
+            stop_process(process, known)
 
 
 def environment(home, git):
