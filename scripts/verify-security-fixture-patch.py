@@ -289,9 +289,9 @@ def process_query_helper():
         if len(boot) > PROCESS_BYTES or match is None or ticks_per_second <= 0:
             raise SystemExit(2)
         boot_seconds = int(match[1])
-        def native(pid):
+        def native(pid, path=None):
             try:
-                with open("/proc/" + str(pid) + "/stat", "rb") as stream:
+                with open(path or "/proc/" + str(pid) + "/stat", "rb") as stream:
                     raw = stream.read(16385)
             except (FileNotFoundError, ProcessLookupError):
                 # Linux proc_single_show returns ESRCH when an opened proc
@@ -306,6 +306,49 @@ def process_query_helper():
             ticks = int(fields[19])
             state = "stopped" if fields[0] in (b"T", b"t") else "zombie" if fields[0] in (b"Z", b"X", b"x") else "live"
             return [pid, int(fields[1]), int(fields[2]), boot_seconds + ticks // ticks_per_second, ticks, state]
+        def thread_ids(pid):
+            with os.scandir("/proc/" + str(pid) + "/task") as threads:
+                tids = []
+                for entry in threads:
+                    if not entry.name.isascii() or not entry.name.isdecimal():
+                        raise ValueError("thread query")
+                    tid = int(entry.name)
+                    if not 0 < tid < 2 ** 31 or len(tids) >= 256:
+                        raise OverflowError("thread limit")
+                    tids.append(tid)
+            if not tids or len(set(tids)) != len(tids):
+                raise ValueError("thread query")
+            return set(tids)
+        def direct_children(pid):
+            # Children belong to the thread that forked them. A leader-only
+            # query misses children created by another thread in this process.
+            result = []
+            tids = thread_ids(pid)
+            for tid in tids:
+                row = native(tid, "/proc/" + str(pid) + "/task/" + str(tid) + "/stat")
+                if row is None or row[5] != "stopped":
+                    raise ValueError("thread not frozen")
+            for tid in tids:
+                with open("/proc/" + str(pid) + "/task/" + str(tid) + "/children", "rb") as stream:
+                    raw = stream.read(16385)
+                if len(raw) > 16384:
+                    raise OverflowError("child limit")
+                for token in raw.split():
+                    if not token.isascii() or not token.isdigit():
+                        raise ValueError("child query")
+                    child = int(token)
+                    if not 0 < child < 2 ** 31 or len(result) >= 256:
+                        raise OverflowError("child limit")
+                    result.append(child)
+            if len(set(result)) != len(result):
+                raise ValueError("child query")
+            if thread_ids(pid) != tids:
+                raise ValueError("thread query changed")
+            for tid in tids:
+                row = native(tid, "/proc/" + str(pid) + "/task/" + str(tid) + "/stat")
+                if row is None or row[5] != "stopped":
+                    raise ValueError("thread not frozen")
+            return result
     else:
         raise SystemExit(2)
     while True:
@@ -323,14 +366,15 @@ def process_query_helper():
                 for row in result.values():
                     if row is not None:
                         row.append(time.localtime(row[3]).tm_gmtoff)
-            elif (sys.platform == "darwin" and isinstance(request, dict)
+            elif ((sys.platform == "darwin" or sys.platform.startswith("linux")) and isinstance(request, dict)
                     and set(request) == {"children"} and isinstance(request["children"], list)
                     and len(request["children"]) <= 256):
                 parents = request["children"]
                 if (any(not isinstance(item, list) or len(item) != 3
                         or any(type(value) is not int for value in item)
                         or not 0 < item[0] < 2 ** 31 or not 0 < item[1] < 2 ** 63
-                        or not 0 <= item[2] < 1000000 for item in parents)
+                        or not 0 <= item[2] < (1000000 if sys.platform == "darwin" else 2 ** 63)
+                        for item in parents)
                         or len({item[0] for item in parents}) != len(parents)):
                     raise ValueError("request")
                 result = {}
@@ -470,7 +514,7 @@ class ProcessInspector:
                             or any(type(value) is not int for value in row[:5])
                             or not 0 < row[0] < 2 ** 31 or row[1] != int(parent)
                             or not 0 < row[2] < 2 ** 31 or not 0 < row[3] < 2 ** 63
-                            or not 0 <= row[4] < 1000000
+                            or not 0 <= row[4] < (1000000 if sys.platform == "darwin" else 2 ** 63)
                             or row[5] not in ("live", "stopped", "zombie")
                             or type(row[6]) is not int or not -86400 < row[6] < 86400
                             or row[0] in all_children):
@@ -541,7 +585,7 @@ def remember_descendants(process, known, snapshot):
 
 
 def remember_native_children(known, identities, frozen, deadline):
-    """Close only direct children of identity-verified stopped Mac ancestors."""
+    """Close direct children of identity-verified stopped ancestors."""
     children = INSPECTOR.query_children({pid: identities[pid] for pid in frozen}, deadline)
     discovered = set()
     for parent, rows in children.items():
@@ -601,7 +645,7 @@ def stop_process(process, known):
                 # An exact owned child still alive in the kernel cannot also be
                 # absent from native observation. Do not treat unknown as exit.
                 raise Failure("process_observation_native_unavailable", 2, "cleanup")
-            if sys.platform == "darwin":
+            if sys.platform == "darwin" or sys.platform.startswith("linux"):
                 if any(pid not in frozen for pid in acknowledged):
                     # Losing an already stopped ancestor before closure can
                     # reparent a child that no longer has a known parent.
@@ -615,13 +659,6 @@ def stop_process(process, known):
                     next_living = native_living({pid: known[pid] for pid in discovered}, identities, deadline)
                     if any(pid not in next_living and known[pid][3] != b"Z" for pid in discovered):
                         raise Failure("process_observation_native_unavailable", 2, "cleanup")
-                    continue
-            else:
-                # Linux retains the fresh graph after every stop acknowledgment.
-                snapshot = process_snapshot(deadline=deadline, interruptible=False)
-                remember_descendants(process, known, snapshot)
-                living = living_descendants(known, snapshot)
-                if any(pid not in frozen for pid in living):
                     continue
             current = native_living(known, identities, deadline)
             if any(row[5] != "stopped" for row in current.values()):

@@ -709,6 +709,44 @@ class PreflightTests(unittest.TestCase):
             self.assertTrue(not result.stdout.strip() or result.stdout.lstrip().startswith(b'Z'),
                             'verifier-owned process survived: ' + str(pid) + ' ' + repr(result.stdout))
 
+    def linux_proc_simulation(self):
+        # Real process relationships, synthetic numeric procfs records. The
+        # helper and verifier both select the Linux branch.
+        return ("import builtins,contextlib,io,os,subprocess,sys,time,types,errno\n"
+            "sys.platform='linux'\n"
+            "real_open=builtins.open;real_scandir=os.scandir;real_sysconf=os.sysconf\n"
+            "def numeric(pid):\n"
+            " raw=subprocess.run(['/bin/ps','-o','pid=,ppid=,pgid=,lstart=,stat=','-p',str(pid)],capture_output=True).stdout\n"
+            " if not raw.strip(): raise FileNotFoundError(errno.ENOENT,'fixture process exited')\n"
+            " row=raw.split();seconds=int(time.mktime(time.strptime(b' '.join(row[3:8]).decode(),'%a %b %d %H:%M:%S %Y')));ticks=(seconds-1700000000)*100\n"
+            " fields=[row[8][:1],row[1],row[2],*([b'0']*16),str(ticks).encode()]\n"
+            " return str(pid).encode()+b' (fixture) '+b' '.join(fields)+b'\\n'\n"
+            "def opened(name,*args,**kwargs):\n"
+            " if name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
+            " if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/stat'):\n"
+            "  pid=int(name.split('/')[2]);tid=int(name.split('/')[4]) if '/task/' in name else pid\n"
+            "  if tid!=pid: raise ValueError('fixture thread')\n"
+            "  return io.BytesIO(numeric(pid))\n"
+            " if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/children'):\n"
+            "  parent=int(name.split('/')[2]);tid=int(name.split('/')[4])\n"
+            "  if tid!=parent: raise ValueError('fixture thread')\n"
+            "  raw=subprocess.run(['/bin/ps','-axo','pid=,ppid='],capture_output=True,check=True).stdout\n"
+            "  children=[row.split()[0] for row in raw.splitlines() if len(row.split())==2 and row.split()[1]==str(parent).encode()]\n"
+            "  return io.BytesIO(b' '.join(children)+b'\\n')\n"
+            " return real_open(name,*args,**kwargs)\n"
+            "def scanned(name):\n"
+            " if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/task'):\n"
+            "  pid=int(name.split('/')[2]);numeric(pid)\n"
+            "  return contextlib.nullcontext([types.SimpleNamespace(name=str(pid))])\n"
+            " return real_scandir(name)\n"
+            "builtins.open=opened;os.scandir=scanned\n"
+            "os.sysconf=lambda name:100 if name=='SC_CLK_TCK' else real_sysconf(name)\n")
+
+    def force_linux_wrapper(self, wrapper):
+        wrapper.write_text(wrapper.read_text().replace(
+            "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')",
+            "sys.platform='linux'\nrunpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')"))
+
     @unittest.skipIf(os.name == "nt", "POSIX real metadata observation")
     def test_real_metadata_observation_allows_ordinary_host_latency_and_bounds_stalls(self):
         before = self.fingerprint()
@@ -847,14 +885,24 @@ class PreflightTests(unittest.TestCase):
         # The CLI launches its unchanged Linux helper/protocol. On other POSIX
         # hosts, numeric /proc fixtures come from real targeted ps records.
         # ESRCH is injected at read only after the real observed child was reaped.
-        fault = ("import builtins,io,errno,os,sys,time,subprocess\nfrom pathlib import Path\n"
-            "host=sys.platform;sys.platform='linux'\nreal_open=builtins.open;real_sysconf=os.sysconf\n"
+        fault = ("import builtins,contextlib,io,errno,os,sys,time,subprocess,types\nfrom pathlib import Path\n"
+            "host=sys.platform;sys.platform='linux'\nreal_open=builtins.open;real_sysconf=os.sysconf;real_scandir=os.scandir\n"
             "class Gone(io.BytesIO):\n"
             " def read(self,*args):\n"
             "  Path(" + repr(str(injected)) + ").touch()\n"
             "  if " + repr(mode) + "=='empty': return b''\n"
             "  raise OSError(" + {'esrch': 'errno.ESRCH', 'denied': 'errno.EACCES', 'io_error': 'errno.EIO', 'empty': '0'}[mode] + ", 'injected proc read result')\n"
             "def opened(name,*args,**kwargs):\n"
+            " if host!='linux' and isinstance(name,str) and name.startswith('/proc/') and '/task/' in name and name.endswith('/stat'):\n"
+            "  pid=int(name.split('/')[2]);tid=int(name.split('/')[4])\n"
+            "  if pid!=tid: raise ValueError('fixture thread')\n"
+            "  return opened('/proc/'+str(pid)+'/stat',*args,**kwargs)\n"
+            " if host!='linux' and isinstance(name,str) and name.startswith('/proc/') and name.endswith('/children'):\n"
+            "  parent=int(name.split('/')[2]);tid=int(name.split('/')[4])\n"
+            "  if parent!=tid: raise ValueError('fixture thread')\n"
+            "  raw=subprocess.run(['/bin/ps','-axo','pid=,ppid='],capture_output=True,check=True).stdout\n"
+            "  children=[row.split()[0] for row in raw.splitlines() if len(row.split())==2 and row.split()[1]==str(parent).encode()]\n"
+            "  return io.BytesIO(b' '.join(children)+b'\\n')\n"
             " if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/stat') and name.split('/')[2].isdigit():\n"
             "  pid=int(name.split('/')[2])\n"
             "  raw=subprocess.run(['/bin/ps','-o','pid=,ppid=,pgid=,lstart=,stat=','-p',str(pid)],capture_output=True,check=False).stdout\n"
@@ -867,7 +915,15 @@ class PreflightTests(unittest.TestCase):
             "  return io.BytesIO(str(pid).encode()+b' (fixture) '+b' '.join(fields)+b'\\n')\n"
             " if host!='linux' and name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
             " return real_open(name,*args,**kwargs)\n"
+            "def scanned(name):\n"
+            " if host!='linux' and isinstance(name,str) and name.startswith('/proc/') and name.endswith('/task'):\n"
+            "  pid=int(name.split('/')[2])\n"
+            "  raw=subprocess.run(['/bin/ps','-o','pid=','-p',str(pid)],capture_output=True,check=False).stdout\n"
+            "  if not raw.strip(): raise FileNotFoundError(errno.ENOENT,'absent fixture process')\n"
+            "  return contextlib.nullcontext([types.SimpleNamespace(name=str(pid))])\n"
+            " return real_scandir(name)\n"
             "builtins.open=opened\n"
+            "os.scandir=scanned\n"
             "os.sysconf=lambda name:100 if name=='SC_CLK_TCK' and not host.startswith('linux') else real_sysconf(name)\n")
         source = wrapper.read_text().replace(" if command[0] == '/bin/ps':\n",
             " if any('fixture_process_helper' in str(part) for part in command): command=[*command[:-1]," + repr(fault) + "+command[-1]]\n"
@@ -923,6 +979,10 @@ class PreflightTests(unittest.TestCase):
     def test_cancellation_closes_two_delayed_snapshots_with_host_scheduling_cost(self):
         self.assert_resistant_session_cleanup(0.3, settle=0.55, schedule_overhead=0.12)
 
+    def test_linux_cancellation_closes_delayed_snapshot_with_simulated_procfs(self):
+        self.assert_resistant_session_cleanup(0.3, settle=0.55,
+            schedule_overhead=0.12, simulate_linux=True)
+
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_cleanup_observation_uses_remaining_shared_shutdown_budget(self):
         # The next ordinary observer launch acknowledges that the earlier
@@ -931,7 +991,7 @@ class PreflightTests(unittest.TestCase):
         self.assert_resistant_session_cleanup(0.3, settle=0.7, delayed_cleanup=True)
 
     def assert_resistant_session_cleanup(self, delay, *, settle=0, delayed_cleanup=False,
-                                         schedule_overhead=0):
+                                         schedule_overhead=0, simulate_linux=False):
         active = self.active_copy("slow-observer-cancel")
         marker = self.base / 'slow-observer-child'
         observed = self.base / 'child-observed-before-setsid'
@@ -953,7 +1013,10 @@ class PreflightTests(unittest.TestCase):
         next_observation = self.base / 'child-snapshot-consumed' if delayed_cleanup else None
         wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed,
             settle=settle, timings=timings, trigger=trigger, trigger_delay=delayed_cleanup,
-            next_observation=next_observation, schedule_overhead=schedule_overhead)
+            next_observation=next_observation, schedule_overhead=schedule_overhead,
+            native_before=self.linux_proc_simulation() if simulate_linux else None)
+        if simulate_linux:
+            self.force_linux_wrapper(wrapper)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -986,7 +1049,8 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(self.fingerprint(), before)
             print(json.dumps({'fixture_observer': 'resistant-child-cancellation',
                 'delay_seconds': delay, 'return_delay_seconds': settle, 'cleanup_seconds': round(elapsed, 6),
-                'observed_processes_stopped': len(pids) + 1}), flush=True)
+                'observed_processes_stopped': len(pids) + 1,
+                'simulated_linux': simulate_linux}), flush=True)
         finally:
             # Cleanup follows leak assertions, so it cannot turn a leak into a pass.
             if child is not None:
@@ -1122,6 +1186,12 @@ class PreflightTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_cancellation_discovers_descendants_created_during_successive_scans(self):
+        self.assert_successive_descendant_discovery(simulate_linux=False)
+
+    def test_linux_cancellation_discovers_successive_descendants_in_simulated_procfs(self):
+        self.assert_successive_descendant_discovery(simulate_linux=True)
+
+    def assert_successive_descendant_discovery(self, *, simulate_linux):
         active = self.active_copy("successive-descendants")
         root_marker = self.base / 'cascade-root'
         root_seen = self.base / 'cascade-root-seen'
@@ -1145,30 +1215,59 @@ class PreflightTests(unittest.TestCase):
         # The first query sees child 0 and lets it spawn child 1 before it is
         # frozen; querying child 0 then lets child 1 spawn child 2. Each event
         # waits at most the existing 0.2-second fixture settlement interval.
-        native_events = ("import ctypes,time\nfrom pathlib import Path\n"
-            "real_cdll=ctypes.CDLL\n"
-            "class ChildCall:\n"
-            " def __init__(self,real): object.__setattr__(self,'real',real)\n"
-            " def __setattr__(self,name,value): setattr(self.real,name,value)\n"
-            " def __call__(self,pid,buffer,size):\n"
-            "  count=self.real(pid,buffer,size)\n"
-            "  for parent_file,release_file,next_file in " + repr([
-                (str(root_marker), str(seen[0]), str(markers[1])),
-                (str(markers[0]), str(seen[1]), str(markers[2]))]) + ":\n"
-            "   parent=Path(parent_file)\n"
-            "   if parent.exists() and pid==int(parent.read_text()):\n"
-            "    Path(release_file).touch()\n"
-            "    deadline=time.monotonic()+0.2\n"
-            "    while not Path(next_file).exists() and time.monotonic()<deadline: time.sleep(0.001)\n"
-            "  return count\n"
-            "class Library:\n"
-            " def __init__(self,real): self.real=real\n"
-            " def __getattr__(self,name):\n"
-            "  member=getattr(self.real,name)\n"
-            "  return ChildCall(member) if name=='proc_listchildpids' else member\n"
-            "ctypes.CDLL=lambda *args,**kwargs:Library(real_cdll(*args,**kwargs))\n")
+        release_pairs = [
+            (str(root_marker), str(seen[0]), str(markers[1])),
+            (str(markers[0]), str(seen[1]), str(markers[2]))]
+        native_events = ("import sys,time\nfrom pathlib import Path\n"
+            "pairs=" + repr(release_pairs) + "\n"
+            "def release(pid):\n"
+            " for parent_file,release_file,next_file in pairs:\n"
+            "  parent=Path(parent_file)\n"
+            "  if parent.exists() and pid==int(parent.read_text()) and not Path(release_file).exists():\n"
+            "   Path(release_file).touch()\n"
+            "   deadline=time.monotonic()+0.2\n"
+            "   while not Path(next_file).exists() and time.monotonic()<deadline: time.sleep(0.001)\n"
+            "if sys.platform.startswith('linux'):\n"
+            " import builtins\n"
+            " real_open=builtins.open\n"
+            " class ChildStream:\n"
+            "  def __init__(self,stream,pid): self.stream=stream;self.pid=pid\n"
+            "  def __enter__(self): self.stream.__enter__();return self\n"
+            "  def __exit__(self,*args): return self.stream.__exit__(*args)\n"
+            "  def read(self,*args):\n"
+            "   raw=self.stream.read(*args)\n"
+            "   release(self.pid)\n"
+            "   return raw\n"
+            " def opened(name,*args,**kwargs):\n"
+            "  stream=real_open(name,*args,**kwargs)\n"
+            "  if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/children'):\n"
+            "   return ChildStream(stream,int(name.split('/')[2]))\n"
+            "  return stream\n"
+            " builtins.open=opened\n"
+            "else:\n"
+            " import ctypes\n"
+            " real_cdll=ctypes.CDLL\n"
+            " class ChildCall:\n"
+            "  def __init__(self,real): object.__setattr__(self,'real',real)\n"
+            "  def __setattr__(self,name,value): setattr(self.real,name,value)\n"
+            "  def __call__(self,pid,buffer,size):\n"
+            "   count=self.real(pid,buffer,size)\n"
+            "   release(pid)\n"
+            "   return count\n"
+            " class Library:\n"
+            "  def __init__(self,real): self.real=real\n"
+            "  def __getattr__(self,name):\n"
+            "   member=getattr(self.real,name)\n"
+            "   return ChildCall(member) if name=='proc_listchildpids' else member\n"
+            " ctypes.CDLL=lambda *args,**kwargs:Library(real_cdll(*args,**kwargs))\n")
+        if simulate_linux:
+            # Both verifier and helper must select Linux. The Mac host supplies
+            # numeric /proc records from live ps solely for this simulation.
+            native_events = self.linux_proc_simulation() + native_events
         wrapper, observers, _ = self.observation_wrapper(0, after=root_marker,
             seen=root_seen, settle=0.2, until=seen[1], native_before=native_events)
+        if simulate_linux:
+            self.force_linux_wrapper(wrapper)
         before = self.fingerprint()
         identities = {}
         try:
@@ -1210,7 +1309,7 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(self.fingerprint(), before)
             print(json.dumps({'fixture_observer': 'successive-descendant-discovery',
                 'cleanup_seconds': round(elapsed, 6), 'generations': len(children),
-                'result': report['reason']}), flush=True)
+                'result': report['reason'], 'simulated_linux': simulate_linux}), flush=True)
         finally:
             for pid, identity in identities.items():
                 current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(pid)],
@@ -1423,6 +1522,69 @@ class PreflightTests(unittest.TestCase):
                     self.assertEqual(report, {'4321': None})
                 else:
                     cause = 'denied' if mode in ('denied', 'read_denied') else 'read_error' if mode == 'read_error' else 'invalid_record'
+                    self.assertEqual(report, {'error': 'native_query_unavailable', 'cause': cause})
+
+    def test_linux_direct_child_protocol_covers_all_threads_and_fails_closed(self):
+        for mode in ('valid', 'empty', 'denied', 'saturated', 'duplicate',
+                     'wrong_parent', 'absent_child', 'parent_disappears',
+                     'parent_reused', 'missing_thread', 'denied_child_read',
+                     'live_thread', 'thread_changed', 'thread_saturated'):
+            with self.subTest(mode=mode):
+                code = ("import runpy,sys,os,time,io,builtins,errno,contextlib,types,json\n"
+                    "scope=runpy.run_path(" + repr(str(CLI)) + ",run_name='fixture_process_helper')\n"
+                    "os.environ['TZ']='UTC';time.tzset();sys.platform='linux'\n"
+                    "real_open=builtins.open;real_scandir=os.scandir;real_sysconf=os.sysconf\n"
+                    "parent_calls=0;thread_scans=0\n"
+                    "def record(pid,ppid,group,state,ticks):\n"
+                    " fields=[state,str(ppid),str(group),*(['0']*16),str(ticks)]\n"
+                    " return (str(pid)+' (fixture) '+' '.join(fields)+'\\n').encode()\n"
+                    "def scanned(name):\n"
+                    " global thread_scans\n"
+                    " if name=='/proc/4321/task':\n"
+                    "  if " + repr(mode) + "=='denied': raise PermissionError(errno.EACCES,'denied')\n"
+                    "  if " + repr(mode) + "=='thread_saturated': return contextlib.nullcontext([types.SimpleNamespace(name=str(4321+n)) for n in range(257)])\n"
+                    "  thread_scans+=1\n"
+                    "  if " + repr(mode) + "=='thread_changed' and thread_scans>1: return contextlib.nullcontext([types.SimpleNamespace(name='4321')])\n"
+                    "  return contextlib.nullcontext([types.SimpleNamespace(name=str(tid)) for tid in (4321,4322)])\n"
+                    " return real_scandir(name)\n"
+                    "def opened(name,*args,**kwargs):\n"
+                    " global parent_calls\n"
+                    " if name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
+                    " if name=='/proc/4321/stat':\n"
+                    "  parent_calls+=1\n"
+                    "  if " + repr(mode) + "=='parent_disappears' and parent_calls>1: raise FileNotFoundError\n"
+                    "  return io.BytesIO(record(4321,100,4321,'T',123457 if " + repr(mode) + "=='parent_reused' and parent_calls>1 else 123456))\n"
+                    " if name=='/proc/5432/stat':\n"
+                    "  if " + repr(mode) + "=='absent_child': raise FileNotFoundError\n"
+                    "  return io.BytesIO(record(5432,100 if " + repr(mode) + "=='wrong_parent' else 4321,5432,'S',123556))\n"
+                    " if name.startswith('/proc/4321/task/') and name.endswith('/stat'):\n"
+                    "  tid=int(name.split('/')[4])\n"
+                    "  return io.BytesIO(record(tid,100,4321,'R' if " + repr(mode) + "=='live_thread' and tid==4322 else 'T',123456))\n"
+                    " if name.startswith('/proc/4321/task/') and name.endswith('/children'):\n"
+                    "  tid=int(name.split('/')[4])\n"
+                    "  if " + repr(mode) + "=='denied_child_read' and tid==4322: raise PermissionError(errno.EACCES,'denied')\n"
+                    "  if " + repr(mode) + "=='missing_thread' and tid==4322: raise FileNotFoundError\n"
+                    "  if tid==4321: return io.BytesIO(b'5432 5432' if " + repr(mode) + "=='duplicate' else b'')\n"
+                    "  if " + repr(mode) + "=='empty': return io.BytesIO(b'')\n"
+                    "  return io.BytesIO(b' '.join(str(5432+n).encode() for n in range(257)) if " + repr(mode) + "=='saturated' else b'5432')\n"
+                    " return real_open(name,*args,**kwargs)\n"
+                    "os.scandir=scanned;builtins.open=opened\n"
+                    "os.sysconf=lambda name:100 if name=='SC_CLK_TCK' else real_sysconf(name)\n"
+                    "scope['process_query_helper']()\n")
+                request = {'children': [[4321, 1700001234, 123456]]}
+                result = subprocess.run([sys.executable, '-I', '-S', '-B', '-c', code],
+                    input=(json.dumps(request) + '\n').encode(), capture_output=True, timeout=2)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                if mode == 'valid':
+                    self.assertEqual(report, {'children': {'4321': [
+                        [5432, 4321, 5432, 1700001235, 123556, 'live', 0]]}})
+                elif mode == 'empty':
+                    self.assertEqual(report, {'children': {'4321': []}})
+                elif mode in ('saturated', 'thread_saturated'):
+                    self.assertEqual(report, {'error': 'descendant_limit', 'cause': 'limit'})
+                else:
+                    cause = 'denied' if mode in ('denied', 'denied_child_read') else 'read_error' if mode == 'missing_thread' else 'invalid_record'
                     self.assertEqual(report, {'error': 'native_query_unavailable', 'cause': cause})
 
     def test_darwin_native_process_protocol_rejects_partial_or_denied_records(self):
