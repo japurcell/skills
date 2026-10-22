@@ -34,7 +34,10 @@ $filesystem = New-Object System.Text.StringBuilder 256
 if (-not [FactoryVolume]::GetVolumeInformationW($volume.ToString(), $null, 0, [ref]$serial, [ref]$component, [ref]$flags, $filesystem, $filesystem.Capacity)) { throw 'volume information unavailable' }
 [Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:volume_information')
 [Console]::Error.Flush()
-$result = @{ driveType = [FactoryVolume]::GetDriveTypeW($volume.ToString()); filesystem = $filesystem.ToString() } | ConvertTo-Json -Compress
+$driveType = [FactoryVolume]::GetDriveTypeW($volume.ToString())
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:drive_type')
+[Console]::Error.Flush()
+$result = @{ driveType = $driveType; filesystem = $filesystem.ToString() } | ConvertTo-Json -Compress
 [Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:complete')
 [Console]::Error.Flush()
 $result
@@ -66,7 +69,7 @@ export function assertLocalPlacement(path: string): LocalPlacement {
       if (!['none', 'SIGTERM', 'SIGKILL', 'SIGINT', 'SIGBREAK', 'SIGABRT'].includes(signal)) signal = 'other';
       let stage = 'none';
       if (typeof probe.stderr === 'string') {
-        for (const marker of probe.stderr.slice(0, 8192).matchAll(/^FACTORY_PLACEMENT_STAGE:(entered|interop_ready|volume_path|volume_information|complete)\r?$/gm)) {
+        for (const marker of probe.stderr.slice(0, 8192).matchAll(/^FACTORY_PLACEMENT_STAGE:(entered|interop_ready|volume_path|volume_information|drive_type|complete)\r?$/gm)) {
           if (marker[1]) stage = marker[1];
         }
       }

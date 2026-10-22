@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, ftruncateSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
@@ -291,14 +291,21 @@ async function main() {
   // An altered linked registration is a negative identity case, not a replacement for a valid worktree.
   const registration = join(fixture.linked, '.git');
   const originalRegistration = readFileSync(registration);
+  // Git marks this existing Windows file hidden. Open without CREATE_ALWAYS,
+  // which Windows refuses for hidden files, and preserve its native attributes.
+  function replaceRegistration(contents) {
+    const handle = openSync(registration, 'r+');
+    try { ftruncateSync(handle, 0); writeFileSync(handle, contents); }
+    finally { closeSync(handle); }
+  }
   try {
     const missing = join(work, 'missing-registration');
     assert.ok(!existsSync(missing));
-    writeFileSync(registration, `gitdir: ${missing.replaceAll('\\', '/')}\n`);
+    replaceRegistration(`gitdir: ${missing.replaceAll('\\', '/')}\n`);
     launchCase('git-wrong-registration', git, fixture.linked, gitModes[2], env, gitArchive,
       { expectedNonzero: true, expectedGitDlls: gitImportedDlls });
   } finally {
-    writeFileSync(registration, originalRegistration);
+    replaceRegistration(originalRegistration);
   }
 
   // This authored config is an unselected decoy: every compiler case uses its generated -p path.

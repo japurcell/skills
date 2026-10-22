@@ -1,6 +1,12 @@
 # Exact Windows startup helper qualification spike
 
-Status: **native positive control still unqualified; pretrace diagnostics prepared for a reviewed rerun**. This directory is qualification-only. It neither admits a production helper nor changes the factory runtime, public CLI, checkout behavior, configuration semantics, or process tracker.
+Status: **debugger controls pass natively; fixed Git modes fail the no-child contract**. This directory is qualification-only. It neither admits a production helper nor changes the factory runtime, public CLI, checkout behavior, configuration semantics, or process tracker.
+
+## Current native result and fixture repair
+
+Native run [39827161834](https://github.com/japurcell/skills/actions/runs/39827161834) at `c9fff2ad` passes Windows PowerShell 5.1 compilation, the intended nested-cmd child control, direct stop, and output-limit stop. Its baseline completes in 2.207 seconds. All sixteen fixed Git cases then fail because each raw trace records a distinct `C:\Windows\System32\conhost.exe` creation and exit. The native child is real evidence, even though its origin is not yet isolated. The tracer already uses `DEBUG_PROCESS | CREATE_NO_WINDOW`; adding that existing flag cannot fix this observation. Do not ignore console-host events, relax the no-child assertion, or promote these helpers. Root Git and console-host exits are observed, but this does not meet the accepted child-free helper contract.
+
+The same run stops before compiler cases while changing the disposable linked worktree's `.git` file: default `writeFileSync` fails with `EPERM`. Git for Windows marks that file hidden, and [Node 24 documents](https://nodejs.org/docs/latest-v24.x/api/fs.html#file-system-flags) that opening an existing hidden file with `w` fails on Windows. The fixture repair opens the existing file with `r+`, explicitly truncates it, and closes the handle after each replacement and restoration. It preserves native attributes, original bytes, all negative assertions, and every deadline. Native rerun is required to prove this repair and reach the compiler matrix. The retained artifact is `/tmp/factory-windows-startup-39827161834/factory-windows-startup-spike-39827161834-1/`. Earlier failures below are historical evidence, not current qualification status.
 
 ## Trigger and evidence boundary
 
