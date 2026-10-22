@@ -70,20 +70,28 @@ async function loadNotificationPreferences() {
   }
   catch (error) { state.preferencesStatus = error.message; state.preferencesError = true; }
 }
-function preferencesControls() {
-  const preferences=state.notificationPreferences;
+function latestReminderStatus() {
   const latest=state.reminderGroups?.[0];
-  const status=latest ? latest.state==='submitted' ? 'Latest reminder submitted to the notification service. Desktop visibility is unverified.'
+  return latest ? latest.state==='submitted' ? 'Latest reminder submitted to the notification service. Desktop visibility is unverified.'
     : latest.reason==='unbound_sender' ? 'Latest reminder could not be sent because no installed sender is available.'
     : latest.cleanup==='unknown' ? 'Latest reminder submission or cleanup is unknown. The host retains its claim.'
     : `Latest reminder status: ${latest.state}. Desktop visibility is unverified.` : 'No reminder group saved yet.';
+}
+async function refreshReminderGroups() {
+  const reminders=await api('/api/notifications/reminders?limit=1');
+  state.reminderGroups=reminders.groups;
+  const label=document.getElementById('latest-reminder-status');
+  if(label)label.textContent=latestReminderStatus();
+}
+function preferencesControls() {
+  const preferences=state.notificationPreferences;
   return `<details class="surface"><summary class="section-body">Notification preferences</summary><div class="section-body">
     <p class="muted">Repository-wide settings. Success notices and reminders start off. Reminders wait 15 minutes after this host starts or you enable them.</p>
     <form id="notification-preferences" class="notification-form"><label><input type="checkbox" name="successNotices" ${preferences?.successNotices?'checked':''}> Success notices</label>
     <label><input type="checkbox" name="reminders" ${preferences?.reminders?'checked':''}> Reminders</label>
     <button type="submit" ${preferences?'':'disabled'}>Save notification preferences</button></form>
     <p id="preferences-status" class="notification-status" role="${state.preferencesError?'alert':'status'}">${escapeHtml(state.preferencesStatus || (preferences?'Saved settings are shown above.':'Preferences unavailable.'))}</p>
-    <p class="muted">${escapeHtml(status)}</p></div></details>`;
+    <p id="latest-reminder-status" class="muted">${escapeHtml(latestReminderStatus())}</p></div></details>`;
 }
 function acknowledgmentControls(invocation) {
   if (!invocation || invocation.stage !== 'finalized') return '';
@@ -583,6 +591,8 @@ async function connect(generation,targetCursor) {
       const response=await fetch('/api/stream?after='+encodeURIComponent(state.cursor),{headers:{Authorization:'Bearer '+state.token},cache:'no-store',signal:abort.signal});
       if (!response.ok || !response.body) throw new Error('Observation stream unavailable');
       if(generation!==state.streamGeneration)return;
+      await refreshReminderGroups();
+      if(generation!==state.streamGeneration)return;
       state.connected=true;
       if(state.frozen)showConnection('frozen','Frozen at saved cursor '+state.cursor);
       else if(targetCursor&&BigInt(state.cursor)<BigInt(targetCursor))showConnection('connecting','Catching up from saved cursor '+state.cursor);
@@ -629,6 +639,7 @@ async function connect(generation,targetCursor) {
       }
       throw new Error('Observation stream disconnected');
     } catch(error) {
+      abort.abort();
       if(generation!==state.streamGeneration||(error.name==='AbortError'&&!projectionFailure))return;
       state.connected=false;
       await state.projection?.catch(()=>{});
@@ -649,6 +660,10 @@ async function applyEvent(event) {
   const snapshot=state.snapshotGeneration,current=()=>!state.snapshotting&&snapshot===state.snapshotGeneration;
   if(!current())return;
   if(state.frozen) { deferEvent(event);return; }
+  if(event.kind==='notification.reminder_reserved'||event.kind==='notification.reminder_recorded') {
+    await refreshReminderGroups();
+    if(!current())return;
+  }
   if(event.kind==='run.created' && !state.runs.some(run=>run.id===event.data?.runId)) {
     state.newRuns++;
     if(!route().run) {

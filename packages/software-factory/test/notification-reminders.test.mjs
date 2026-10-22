@@ -37,6 +37,35 @@ async function write(host, body) {
   return response.json();
 }
 
+test('overlapping preference saves follow request order and leave the final timer consistent', async () => {
+  for (const [heldValue, followingValue] of [[true, false], [false, true]]) {
+    const f = await fixture(); const scheduler = clock(); let host, entered, release;
+    const started = new Promise(resolve => { entered = resolve; });
+    const gate = new Promise(resolve => { release = resolve; });
+    let holdNext = false;
+    try {
+      host = await startObservationHost({ store: f.store, reminderScheduler: scheduler,
+        notificationWrite: async (operation, body) => {
+          if (operation !== 'preferences') return f.store.acknowledgeNotification(body);
+          if (holdNext && body.reminders === heldValue) { holdNext = false; entered(); await gate; }
+          return f.store.saveNotificationPreferences(body);
+        },
+      });
+      await write(host, { successNotices: false, reminders: true });
+      holdNext = true;
+      const first = write(host, { successNotices: false, reminders: heldValue });
+      await started;
+      const second = write(host, { successNotices: false, reminders: followingValue });
+      await Promise.race([second, new Promise(resolve => setTimeout(resolve, 100))]);
+      release();
+      await Promise.all([first, second]);
+      assert.equal(f.store.readNotificationPreferences().reminders, followingValue);
+      assert.equal(scheduler.jobs.size, followingValue ? 1 : 0);
+      if (followingValue) assert.equal([...scheduler.jobs.values()][0].milliseconds, 15 * 60 * 1000);
+    } finally { release?.(); await host?.close(); f.dispose(); }
+  }
+});
+
 test('reminders stay off until enabled and wait a full host interval before one grouped send', async () => {
   const f = await fixture(); const scheduler = clock(); const sent = []; let host;
   try {

@@ -79,6 +79,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   let claim = await store.claimResource({ kind: 'dashboard', owner: currentOwner() });
   const sessionToken = randomUUID() + randomUUID();
   let url = '', closing = false, notificationWrites = 0;
+  let preferenceWrite = Promise.resolve();
   const reminderScheduler = options.reminderScheduler ?? { setTimeout: (callback: () => Promise<void>, milliseconds: number) => setTimeout(() => { void callback(); }, milliseconds),
     clearTimeout: (handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>) };
   let reminderTimer: unknown, reminderTask: Promise<void> | undefined, reminderUncertain = false, reminderGeneration = 0;
@@ -182,14 +183,21 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         if (notificationWrites >= 4) throw new RequestError(429, 'notification write limit reached');
         notificationWrites++;
         try {
-          const wasEnabled = operation === 'preferences' && store.readNotificationPreferences().reminders;
-          const saved = options.notificationWrite ? await options.notificationWrite(operation, input) :
-            operation === 'preferences' ? await store.saveNotificationPreferences(input) : await store.acknowledgeNotification(input);
+          let saved: unknown;
           if (operation === 'preferences') {
-            const enabled = store.readNotificationPreferences().reminders;
-            if (!enabled) cancelReminder();
-            else if (!wasEnabled) scheduleReminder();
-          }
+            const previous = preferenceWrite;
+            let release!: () => void;
+            preferenceWrite = new Promise<void>(resolve => { release = resolve; });
+            await previous;
+            try {
+              if (closing || !sameClaim(store.readDashboardClaim(), claim)) throw new RequestError(503, 'host claim unavailable');
+              const wasEnabled = store.readNotificationPreferences().reminders;
+              saved = options.notificationWrite ? await options.notificationWrite(operation, input) : await store.saveNotificationPreferences(input);
+              const enabled = store.readNotificationPreferences().reminders;
+              if (!enabled) cancelReminder();
+              else if (!wasEnabled) scheduleReminder();
+            } finally { release(); }
+          } else saved = options.notificationWrite ? await options.notificationWrite(operation, input) : await store.acknowledgeNotification(input);
           if (!closing && !response.destroyed) json(response, 200, saved);
         } finally { notificationWrites--; }
         return;
