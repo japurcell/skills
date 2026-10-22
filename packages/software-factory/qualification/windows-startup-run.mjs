@@ -346,9 +346,15 @@ async function main() {
     assertPackage(tsArchive);
     launchCase(name, compiler, work, ['-p', input.config], env, tsArchive, options);
   }
+  const detachedSuccess = generatedConfig(join(work, 'typescript-success-detached'),
+    readFileSync(success.source, 'utf8'), {});
+  assert.ok(!existsSync(detachedSuccess.output), 'detached compiler output must not preexist');
   assertPackage(tsArchive);
-  launchCase('typescript-one-build-detached', compiler, work, ['-p', success.config], env, tsArchive,
+  launchCase('typescript-one-build-detached', compiler, work, ['-p', detachedSuccess.config], env, tsArchive,
     { launchMode: detached, expectedExit: 0 });
+  assert.ok(existsSync(detachedSuccess.output), 'detached one-build case did not emit JavaScript');
+  assert.equal(readdirSync(join(work, 'typescript-success-detached', 'out')).length, 1,
+    'detached one-build case emitted unexpected files');
   assert.ok(existsSync(success.output), 'one-build case did not emit JavaScript');
   assert.equal(readdirSync(join(work, 'typescript-success', 'out')).length, 1, 'one-build case emitted unexpected files');
   assert.ok(!existsSync(error.output), 'error compiler case emitted JavaScript');
