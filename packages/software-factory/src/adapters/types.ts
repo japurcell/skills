@@ -18,6 +18,8 @@ export interface AdapterLaunch {
   argv: string[];
   env: Record<string, string>;
   childScope: 'process-group' | 'unknown';
+  /** Optional UTF-8 text sent exactly to a managed child stdin pipe, then closed. Maximum 1 MiB. */
+  stdin?: string;
   /** Per-launch decoder state; called only after this stream's raw bytes are saved. */
   mapEvent?(line: string, channel: 'stdout' | 'stderr'): SessionEvent | undefined;
   /** Nonempty unique stream selection; defaults to the adapter's eventChannel. */

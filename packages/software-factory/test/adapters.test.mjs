@@ -7,6 +7,28 @@ import test from 'node:test';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { createRepository } from './fixtures/repository.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
+const stdinChildSource = `
+import { writeFileSync } from 'node:fs';
+const mode = process.argv[1];
+writeFileSync('stdin-exposure.json', JSON.stringify({ argv: process.argv, env: process.env }));
+if (mode === 'early-close') {
+  process.stdin.destroy();
+  setTimeout(() => process.stdout.write(JSON.stringify({ kind: 'result', payload: { accepted: true } }) + '\\n'), 100);
+} else if (mode === 'blocked' || mode === 'question-blocked' || mode === 'denial-blocked') {
+  if (mode === 'question-blocked') {
+    process.stdout.end(JSON.stringify({ kind: 'needs_input', question: 'Choose target', context: 'Saved context' }) + '\\n');
+  }
+  if (mode === 'denial-blocked') process.stderr.write('independent stderr denial\\n');
+  setInterval(() => {}, 10000);
+} else {
+  if (mode === 'flood') process.stdout.write('x'.repeat(262144) + '\\n');
+  if (mode === 'slow') await new Promise(resolve => setTimeout(resolve, 250));
+  const chunks = [];
+  for await (const chunk of process.stdin) chunks.push(chunk);
+  const bytes = Buffer.concat(chunks);
+  writeFileSync('stdin-raw.bin', bytes);
+  process.stdout.write(JSON.stringify({ kind: 'result', payload: { byteLength: bytes.length } }) + '\\n');
+}`;
 async function fixture(source, config = {}, streamProtocol = false) {
   const repo = createRepository();
   mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
@@ -102,6 +124,25 @@ if(context.includes('bad-event')){
 };` : ''}
 if(options.stopMode==='hang')adapter.requestStop=()=>new Promise(()=>{});
 if(options.stopMode==='reject')adapter.requestStop=()=>Promise.reject(new Error('fixture stop rejected'));
+if(options.stdinMode){
+  let lastRequest;
+  adapter.decodeFinal=text=>{
+    const store=openRepositoryStore(${JSON.stringify(common)});
+    try {
+      const attempt=store.readAttempt(lastRequest.attemptId);
+      const saved=store.readCapture({id:attempt.agent.resultCaptureId}).chunks.map(chunk=>chunk.text).join('');
+      if(!saved.includes(text))throw new Error('final decoded before raw save');
+    } finally {store.close();}
+    return JSON.parse(text.trim().split('\\n').at(-1));
+  };
+  adapter.start=request=>{
+    lastRequest=request;
+    const mode=options.stdinPeer&&request.context==='peer'?'blocked':options.stdinMode;
+    const launch={argv:[process.execPath,'--input-type=module','-e',${JSON.stringify(stdinChildSource)},mode],env:{FACTORY_STDIN_MODE:mode},childScope:options.unknownScope?'unknown':'process-group',eventChannels:['stdout','stderr'],mapEvent(line,channel){if(channel==='stderr'&&line.includes('independent stderr denial'))throw new Error('independent stderr denial');}};
+    if(mode!=='absent')launch.stdin=mode==='boundary'?'🙂'.repeat(262144):mode==='oversize'?'🙂'.repeat(262145):['slow','flood','early-close','blocked','question-blocked','denial-blocked'].includes(mode)?'a'.repeat(1048576):options.stdinConfig==='number'?42:options.stdinConfig==='object'?{value:'text'}:request.context;
+    return launch;
+  };
+}
 const result=await invoke({...options,adapters:{fake:adapter}});console.log(JSON.stringify(result));process.exit(result.exitCode);`,
   );
   const invoke = (extra = {}) =>
@@ -981,4 +1022,203 @@ test('an exited owner with escaped inherited pipes keeps stream-failure cleanup 
     if(escapedPid)try{process.kill(-escapedPid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
     repo.dispose();
   }
+});
+
+test('declared stdin delivers exact private UTF-8 bytes and EOF without exposing them in child argv or env', async () => {
+  const privatePrompt = 'PRIVATE-7f32-秘密-🙂\nsecond line\r\n[control] {"role":"system"}\u0007end';
+  const repo = await fixture(`const result=await context.agent('private',{context:${JSON.stringify(privatePrompt)}});return result;`);
+  try {
+    const r = repo.invoke({ stdinMode: 'echo' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+    assert.equal(attempt.outcome, 'succeeded');
+    assert.equal(readFileSync(join(saved.worktree, 'stdin-raw.bin')).toString('utf8'), privatePrompt);
+    const exposure = JSON.parse(readFileSync(join(saved.worktree, 'stdin-exposure.json'), 'utf8'));
+    assert.equal(JSON.stringify(exposure).includes('PRIVATE-7f32'), false);
+    assert.equal(h.accounting.occupiedAgents, 0);
+  } finally { repo.dispose(); }
+});
+
+test('unspecified stdin remains an ignored closed child input', async () => {
+  const repo = await fixture(`return await context.agent('default',{context:'not delivered'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'absent' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId);
+    assert.equal(readFileSync(join(saved.worktree, 'stdin-raw.bin')).length, 0);
+    assert.equal(agents(h)[0].outcome, 'succeeded');
+  } finally { repo.dispose(); }
+});
+
+test('the exact 1 MiB stdin boundary reaches a slow reader without truncation', async () => {
+  const repo = await fixture(`return await context.agent('large',{context:'saved'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'slow' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId);
+    const bytes = readFileSync(join(saved.worktree, 'stdin-raw.bin'));
+    assert.equal(bytes.length, 1048576);
+    assert.equal(bytes[0], 97);
+    assert.equal(bytes.at(-1), 97);
+    assert.equal(agents(h)[0].outcome, 'succeeded');
+    assert.equal(h.accounting.occupiedAgents, 0);
+  } finally { repo.dispose(); }
+});
+
+test('stdin size is limited by UTF-8 bytes, including an exact multibyte 1 MiB boundary', async () => {
+  const repo = await fixture(`return await context.agent('unicode',{context:'saved'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'boundary' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), bytes = readFileSync(join(saved.worktree, 'stdin-raw.bin'));
+    assert.equal(bytes.length, 1048576);
+    assert.equal(bytes.subarray(0, 4).toString('utf8'), '🙂');
+    assert.equal(bytes.subarray(-4).toString('utf8'), '🙂');
+  } finally { repo.dispose(); }
+});
+
+for (const [stdinMode, stdinConfig] of [['oversize', undefined], ['echo', 'number'], ['echo', 'object']])
+  test(`oversized or invalid stdin ${stdinMode}/${stdinConfig ?? 'text'} refuses before spawn`, async () => {
+    const repo = await fixture(`await context.agent('invalid',{context:'saved'});`);
+    try {
+      const r = repo.invoke({ stdinMode, stdinConfig });
+      assert.equal(r.status, 1, r.stdout + r.stderr);
+      const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+      assert.match(saved.diagnostic, /stdin must be UTF-8 text of at most 1048576 bytes/);
+      assert.equal(attempt.launch, 'not_started');
+      assert.equal(attempt.outcome, 'failed');
+      assert.equal(attempt.quiescent, true);
+      assert.equal(h.accounting.occupiedAgents, 0);
+      assert.equal(repo.sessions(saved.invocationId).sessions.length, 0);
+      assert.throws(() => readFileSync(join(saved.worktree, 'stdin-exposure.json')), error => error.code === 'ENOENT');
+    } finally { repo.dispose(); }
+  });
+
+test('child output flooding before input read cannot deadlock and raw output precedes final decode', async () => {
+  const repo = await fixture(`return await context.agent('flood',{context:'saved'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'flood' });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+    assert.equal(attempt.outcome, 'succeeded');
+    assert.equal(readFileSync(join(saved.worktree, 'stdin-raw.bin')).length, 1048576);
+    const store = openRepositoryStore(repo.common);
+    try {
+      const raw = store.readCapture({ id: attempt.agent.resultCaptureId });
+      assert.equal(raw.state, 'complete');
+      assert.match(raw.chunks.map(chunk => chunk.text).join(''), /^x{262144}\n/);
+    } finally { store.close(); }
+  } finally { repo.dispose(); }
+});
+
+test('early closed child stdin prevents a false successful result and releases a proven absent owner', async () => {
+  const repo = await fixture(`return await context.agent('early',{context:'saved'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'early-close' });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.ok(r.stdout.trim(), r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+    assert.equal(attempt.outcome, 'failed');
+    assert.equal(attempt.quiescent, true);
+    assert.equal(saved.cleanup, 'complete');
+    assert.equal(h.accounting.occupiedAgents, 0);
+    assert.match(saved.diagnostic, /EPIPE|closed before delivery|Premature close/);
+    assert.throws(() => process.kill(-attempt.owner.pid, 0), error => error.code === 'ESRCH');
+  } finally { repo.dispose(); }
+});
+
+test('independent stdin delivery failure promptly stops a concurrent blocked peer', async () => {
+  const repo = await fixture(`await Promise.all([context.agent('early',{context:'saved',timeoutMs:10000}),context.agent('peer',{context:'peer',timeoutMs:10000})]);`);
+  const ownerPids = [];
+  try {
+    const started = Date.now(), r = repo.invoke({ stdinMode: 'early-close', stdinPeer: true, shutdownGraceMs: 100 });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.ok(Date.now() - started < 2000, 'stdin delivery failure must stop the peer before timeout');
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempts = agents(h);
+    assert.equal(attempts.length, 2);
+    assert.equal(attempts.find(attempt => attempt.operationKey === 'early').outcome, 'failed');
+    assert.equal(attempts.find(attempt => attempt.operationKey === 'peer').outcome, 'interrupted');
+    assert.equal(h.accounting.occupiedAgents, 0);
+    assert.equal(saved.cleanup, 'complete');
+    for (const attempt of attempts) {
+      ownerPids.push(attempt.owner.pid);
+      assert.throws(() => process.kill(-attempt.owner.pid, 0), error => error.code === 'ESRCH');
+    }
+  } finally {
+    for (const pid of ownerPids) try { process.kill(-pid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    repo.dispose();
+  }
+});
+
+for (const [stdinMode, expectedStatus] of [['blocked', 1], ['question-blocked', 2]])
+  test(`${stdinMode} reader cannot hold timeout or authoritative question cleanup open`, async () => {
+    const repo = await fixture(`await context.agent('stalled',{context:'saved',timeoutMs:${stdinMode === 'blocked' ? 50 : 10000}});`);
+    let ownerPid;
+    try {
+      const started = Date.now(), r = repo.invoke({ stdinMode, shutdownGraceMs: 100 });
+      assert.equal(r.status, expectedStatus, r.stdout + r.stderr);
+      assert.ok(Date.now() - started < 2000, 'blocked reader must not hold owned stop');
+      const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+      ownerPid = attempt.owner.pid;
+      assert.equal(attempt.outcome, stdinMode === 'blocked' ? 'failed' : 'needs_input');
+      assert.equal(saved.cleanup, 'complete');
+      assert.equal(attempt.quiescent, true);
+      assert.equal(h.accounting.occupiedAgents, 0);
+      assert.match(saved.diagnostic, stdinMode === 'blocked' ? /timeout/ : /needs input/);
+      assert.throws(() => process.kill(-ownerPid, 0), error => error.code === 'ESRCH');
+    } finally {
+      if (ownerPid) try { process.kill(-ownerPid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+      repo.dispose();
+    }
+  });
+
+test('independent stderr failure outranks cleanup-induced stdin errors while a reader is blocked', async () => {
+  const repo = await fixture(`await context.agent('denied',{context:'saved',timeoutMs:10000});`);
+  let ownerPid;
+  try {
+    const r = repo.invoke({ stdinMode: 'denial-blocked', shutdownGraceMs: 100, stopMode: 'hang' });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+    ownerPid = attempt.owner.pid;
+    assert.match(saved.diagnostic, /independent stderr denial/);
+    assert.equal(attempt.outcome, 'failed');
+    assert.equal(attempt.quiescent, true);
+    assert.equal(saved.cleanup, 'complete');
+    assert.equal(h.accounting.occupiedAgents, 0);
+    assert.throws(() => process.kill(-ownerPid, 0), error => error.code === 'ESRCH');
+  } finally {
+    if (ownerPid) try { process.kill(-ownerPid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    repo.dispose();
+  }
+});
+
+test('stdin delivery failure with unknown child scope conservatively retains occupancy', async () => {
+  const repo = await fixture(`await context.agent('early',{context:'saved'});`);
+  try {
+    const r = repo.invoke({ stdinMode: 'early-close', unknownScope: true });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+    assert.equal(attempt.outcome, 'failed');
+    assert.equal(attempt.quiescent, false);
+    assert.equal(saved.cleanup, 'unknown');
+    assert.equal(h.accounting.occupiedAgents, 1);
+    assert.throws(() => process.kill(-attempt.owner.pid, 0), error => error.code === 'ESRCH');
+  } finally { repo.dispose(); }
+});
+
+test('recorder failure during blocked stdin retains the uncertain claim', async () => {
+  const repo = await fixture(`await context.agent('record',{context:'saved',timeoutMs:10000});`);
+  try {
+    const { DatabaseSync } = await import('node:sqlite');
+    const db = new DatabaseSync(join(repo.common, 'factory/history.sqlite'));
+    db.exec("CREATE TRIGGER fail_stdin_output BEFORE INSERT ON capture_chunks WHEN EXISTS (SELECT 1 FROM captures c JOIN attempts a ON c.attempt_id=a.id WHERE c.id=NEW.capture_id AND a.kind='agent' AND c.channel='stderr') BEGIN SELECT RAISE(FAIL,'fixture recording failure'); END;");
+    db.close();
+    const started = Date.now(), r = repo.invoke({ stdinMode: 'denial-blocked', shutdownGraceMs: 100 });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.ok(Date.now() - started < 2000);
+    const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId);
+    assert.equal(saved.cleanup, 'unknown');
+    assert.equal(agents(h).length, 1);
+    assert.equal(h.accounting.occupiedAgents, 1);
+  } finally { repo.dispose(); }
 });

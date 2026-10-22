@@ -345,3 +345,48 @@ re-review is still required. This repair changes only `src/agents.ts`, the
 public adapter tests and this scoped evidence. The native process module,
 provider code, store/lifecycle/workspace sources, registry, canonical docs and CI
 remain unchanged.
+
+## T8 common stdin seam candidate
+
+The optional `AdapterLaunch.stdin` field accepts only a string whose UTF-8
+encoding is at most 1048576 bytes. Invalid types and oversized text refuse
+before spawn with a failed, quiescent `not_started` attempt. Omitting the field
+keeps the previous ignored, closed child stdin. Supplying it selects a managed
+pipe; the runner starts both saved, backpressured output readers before sending
+fixed 65536-byte chunks and EOF. It waits for write and end callbacks, so an
+early closed pipe is a terminal delivery failure even if the child emits a valid
+result and exits zero. A stop cancels pending input without making its induced
+pipe error outrank the already owned timeout or complete question. An
+independent input failure stops admission and peers, while the first
+independent output failure retains precedence over induced input errors.
+Native closed-pipe and group evidence still determine complete versus unknown
+cleanup; the existing deadline, stop grace, store schema and output limits are
+unchanged.
+
+The public `WorkflowContext.agent` real-subprocess fixture verifies exact
+literal Unicode, newline and control-looking bytes on stdin and EOF, and
+checks the child argv and environment for the private marker. Other cases
+cover the default ignored stdin; an exact multibyte 1 MiB boundary; oversize
+and nonstring prelaunch refusal; slow reading and output flooding before input
+reading, with raw output saved before decode; early stdin closure on a child
+programmed to return a valid result; a concurrent peer stopped by independent
+input failure; blocked readers under timeout and authoritative question;
+independent stderr failure with a hanging stop callback; and unknown-scope
+and recorder-failure occupancy retention. The first red run showed the private fixture receiving
+zero bytes through its ignored stdin. During the early-close cycle, the test
+also exposed an unhandled EPIPE after the write callback reported failure;
+the input stream now retains its error listener through close. All 15 new
+cases passed after the repair without weakening the 166 existing checks.
+
+Final local verification on 2026-10-22, macOS arm64, uses the pinned Node
+v24.22.1 binary identified above. `rtk proxy npm run typecheck` passes strict
+source and qualification consumers; `rtk proxy npm run build` passes fresh
+runtime and declaration generation. From `packages/software-factory`, the
+12-file command documented in the previous section passes 181/181 in 62.811
+seconds: 73 adapter checks and 108 other registered checks, with zero failures,
+skips or cancellations. This candidate does not change a real provider's prompt
+format or qualify any provider. Independent review remains required.
+
+UNVERIFIED: The Node v24 online child-process and writable-stream pages were
+inaccessible through the available web tool. The pinned runtime subprocess
+tests prove the observed pipe, callback and stop behavior used here.

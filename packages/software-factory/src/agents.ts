@@ -174,6 +174,8 @@ export class AgentCalls {
         context,
         ...(compatible ? { reuseNativeId: prior!.nativeId! } : {}),
       });
+      if (launch.stdin !== undefined && (typeof launch.stdin !== 'string' || Buffer.byteLength(launch.stdin, 'utf8') > 1048576))
+        throw new Error('invalid adapter launch: stdin must be UTF-8 text of at most 1048576 bytes');
       if (
         !launch.argv.length ||
         launch.argv.some((v) => typeof v !== 'string' || v.includes('\0')) ||
@@ -222,7 +224,7 @@ export class AgentCalls {
         env: launch.env,
         shell: false,
         detached: process.platform !== 'win32',
-        stdio: ['ignore', 'pipe', 'pipe'],
+        stdio: [launch.stdin === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       });
     } catch (error) {
       await stdout.finish();
@@ -238,11 +240,20 @@ export class AgentCalls {
     }
     const scope = new LiveProcessScope(child, launch.childScope === 'unknown');
     let receivedQuestion = false;
+    let inputCancelled = false;
+    let inputComplete = launch.stdin === undefined;
+    const cancelInput = () => {
+      if (!inputComplete && !inputCancelled) {
+        inputCancelled = true;
+        child.stdin?.destroy();
+      }
+    };
     let streamFailureDeadline: number | undefined;
     let streamFailureStop: Promise<void> | undefined;
     const remainingGrace = () =>
       streamFailureDeadline === undefined ? host.grace : Math.max(0, Math.floor(streamFailureDeadline - performance.now()));
     const stopAgent = () => {
+      cancelInput();
       if (streamFailureDeadline !== undefined)
         return (streamFailureStop ??= (async () => {
           // Spend existing grace observing a natural exit before probing/signaling its transient native group.
@@ -318,6 +329,49 @@ export class AgentCalls {
         host.requestShutdown(host.recorder.failed ? 'recording' : 'failure', 'agent stream failed');
         throw error;
       });
+    const sendInput = async () => {
+      if (launch.stdin === undefined) return;
+      const bytes = Buffer.from(launch.stdin, 'utf8');
+      const input = child.stdin!;
+      try {
+        await new Promise<void>((resolve, reject) => {
+          let offset = 0;
+          let done = false;
+          const fail = (error: Error) => {
+            if (done) return;
+            done = true;
+            reject(error);
+          };
+          const closed = () => {
+            input.off('error', fail);
+            fail(new Error('adapter stdin closed before delivery'));
+          };
+          const writeNext = () => {
+            if (done) return;
+            if (offset === bytes.length) {
+              input.end(() => {
+                if (done) return;
+                done = true;
+                resolve();
+              });
+              return;
+            }
+            const end = Math.min(offset + 65536, bytes.length);
+            const chunk = bytes.subarray(offset, end);
+            offset = end;
+            input.write(chunk, (error) => {
+              if (error) fail(error);
+              else writeNext();
+            });
+          };
+          input.on('error', fail);
+          input.once('close', closed);
+          writeNext();
+        });
+      } finally {
+        inputComplete = true;
+      }
+    };
     const finalCapture = adapter.finalChannel === 'stdout' ? stdout : stderr;
     let envelope: Record<string, unknown> | undefined;
     let invalid: string | undefined;
@@ -367,14 +421,22 @@ export class AgentCalls {
       if (streamFailure) throw streamFailure.error;
     });
     void outputStreams.catch(() => {});
+    // Output readers are active before input can block on a child that writes first.
+    const inputStream = stopOnStreamFailure(sendInput().catch((error) => {
+      if (inputCancelled && host.dispatchStopped) return;
+      throw error;
+    }));
+    void inputStream.catch(() => {});
+    void host.stopped.then(cancelInput);
     try {
       if (launched) await host.store.markStarted({ id: attempt.id, owner: currentOwner(child.pid!) });
       // Let native exit/pipe-close observations arrive after authoritative-channel recording.
       // The same scope still requires actual group absence and preserves inherited-pipe uncertainty.
-      await Promise.race([outputStreams, scope.exited]);
+      await Promise.race([outputStreams, scope.exited, inputStream.then(() => new Promise<never>(() => {}))]);
       await nextTurn();
       const processResult = await scope.result(host.grace);
       await outputStreams;
+      await inputStream;
       await host.recorder.barrier();
       const interrupted = scope.interrupted && (processResult.signal !== null || processResult.code !== 0);
       if (
@@ -463,6 +525,7 @@ export class AgentCalls {
       await streamFailureStop?.catch(() => {});
       await scope.stop(remainingGrace());
       await outputStreams.catch(() => {});
+      await inputStream.catch(() => {});
       if (!host.recorder.failed) {
         const pending = host.store.readAttempt(attempt.id);
         if (pending.launch === 'started' && pending.outcome === null) {
