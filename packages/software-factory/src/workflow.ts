@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { realpathSync } from 'node:fs';
-import { hostname } from 'node:os';
+import { setTimeout as delay } from 'node:timers/promises';
+import { currentOwner, duration, LiveProcessScope } from './native/process.js';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import type { Admission } from './accounting.js';
 import type { RepositoryStore } from './store.js';
@@ -10,7 +11,7 @@ import type { InvocationRecorder } from './capture.js';
 export interface CommandOptions {
   argv: string[]; cwd?: string; env?: Record<string, string>; shell?: string;
   /** False returns ordinary nonzero exits for explicit workflow handling. Infrastructure failures still throw. */
-  required?: boolean;
+  required?: boolean; timeoutMs?: number; childScope?: 'process-group' | 'unknown';
   intent?: Admission['intent']; priorAttemptId?: string; loopKey?: string;
 }
 export interface CommandResult { attemptId: string; exitCode: number | null; cleanup: 'complete' | 'unknown' }
@@ -21,74 +22,153 @@ export interface WorkflowContext {
   progress(message: string): Promise<void>;
   needsInput(question: string, context: string): Promise<never>;
   agent(name: string, options: unknown): Promise<never>;
+  cancel(reason: string): Promise<never>;
 }
 export class NeedsInput extends Error {}
+export class ShutdownInterrupted extends Error {}
+export type StopCause = 'needs_input' | 'signal' | 'timeout' | 'recording' | 'failure' | 'manual';
 export class CommandRunner {
-  constructor(readonly store: RepositoryStore, readonly recorder: InvocationRecorder, readonly invocationId: string, readonly worktree: string) {}
+  constructor(readonly store: RepositoryStore, readonly recorder: InvocationRecorder, readonly invocationId: string, readonly worktree: string,
+    readonly settings: {commandTimeoutMs?:number; agentTimeoutMs?:number; shutdownGraceMs?:number} = {}) {
+    this.agentTimeoutMs = duration(settings.agentTimeoutMs,3600000);
+    this.commandTimeoutMs = duration(settings.commandTimeoutMs, 1800000);
+    this.grace = duration(settings.shutdownGraceMs, 30000, 300000);
+    this.stopped = new Promise(resolve => { this.stopResolve = resolve; });
+  }
+  readonly commandTimeoutMs: number;
+  readonly agentTimeoutMs: number;
+  readonly grace: number;
   private readonly pending = new Set<Promise<unknown>>();
-  private failed = false;
+  private readonly active = new Map<string, LiveProcessScope>();
   private failure: unknown;
+  private failed = false;
   private question: NeedsInput | undefined;
-  /** Every context call belongs to this invocation even if workflow code omits await. */
+  private closed = false;
+  private admissionStopped = false;
+  private stopAt: number | undefined;
+  private stopResolve!: () => void;
+  readonly stopped: Promise<void>;
+  readonly reasons: {cause:StopCause;message:string}[] = [];
+  signal: 'SIGINT' | 'SIGTERM' | undefined;
+  unresolved = false;
+  private stopRecord: Promise<unknown> | undefined;
+  get stopping() { return this.stopAt !== undefined; }
+  block() {
+    this.admissionStopped = true; this.store.blockAdmissions(this.invocationId);
+    return this.stopRecord ??= this.store.stopAdmissions(this.invocationId).catch(error => { this.unresolved = true; this.failed = true; this.failure ??= error; throw error; });
+  }
+  requestShutdown(cause: StopCause, message: string, signal?: 'SIGINT' | 'SIGTERM') {
+    if (this.closed) return;
+    if (signal) this.signal ??= signal;
+    this.reasons.push({cause,message});
+    void this.block().catch(()=>{});
+    if (!this.stopping) {
+      this.stopAt = performance.now();
+      this.stopResolve();
+    }
+    for (const scope of this.active.values()) void scope.stop(this.grace);
+  }
   track<T>(action: () => Promise<T>): Promise<T> {
-    const operation = Promise.resolve().then(action);
+    const operation = Promise.resolve().then(() => {
+      if (this.closed) throw new ShutdownInterrupted('invocation already closed');
+      return action();
+    });
     this.pending.add(operation);
     void operation.then(() => { this.pending.delete(operation); }, error => {
-      if (error instanceof NeedsInput) this.question ??= error;
-      else if (!this.failed) { this.failed = true; this.failure = error; }
+      if (!this.closed) {
+        if (error instanceof NeedsInput) this.question ??= error;
+        else if (!(error instanceof ShutdownInterrupted)) {
+          this.failed = true; this.failure ??= error;
+          this.requestShutdown('failure', error instanceof Error ? error.message : 'workflow action failed');
+        }
+      }
       this.pending.delete(operation);
     });
     return operation;
   }
-  execute(key: string, options: CommandOptions, startup = false): Promise<CommandResult> {
-    return this.track(() => this.perform(key, options, startup));
+  async waitFor<T>(operation: Promise<T>): Promise<T> {
+    return Promise.race([operation, this.stopped.then(() => { throw new ShutdownInterrupted('shutdown requested'); })]);
   }
+  execute(key: string, options: CommandOptions, startup = false): Promise<CommandResult> { return this.track(() => this.perform(key, options, startup)); }
   async drain() {
-    while (this.pending.size) await Promise.allSettled([...this.pending]);
+    while (this.pending.size) {
+      if (!this.stopping) await Promise.race([Promise.allSettled([...this.pending]), this.stopped]);
+      else {
+        const remaining = Math.max(0, this.stopAt! + this.grace + 1000 - performance.now());
+        const settled = await Promise.race([Promise.allSettled([...this.pending]).then(()=>true), delay(remaining,undefined,{ref:false}).then(()=>false)]);
+        if (!settled) { this.unresolved = true; break; }
+      }
+    }
+    if (this.stopping) await this.stopRecord;
     if (this.failed) throw this.failure;
     if (this.question) throw this.question;
+    if (this.stopping) throw new ShutdownInterrupted(this.reasons[0]?.message ?? 'shutdown requested');
   }
+  close() { this.closed = true; if (this.pending.size || this.active.size) this.unresolved = true; }
   private async perform(key: string, options: CommandOptions, startup: boolean): Promise<CommandResult> {
+    if (this.admissionStopped) throw new ShutdownInterrupted('shutdown stopped dispatch');
     if (!Array.isArray(options.argv) || !options.argv.length || options.argv.some(value => typeof value !== 'string' || value.includes('\0')) || !options.argv[0]) throw new Error('command requires nonempty argv without NUL');
     if (options.required !== undefined && typeof options.required !== 'boolean') throw new Error('command required must be a boolean');
+    if (options.childScope !== undefined && !['process-group','unknown'].includes(options.childScope)) throw new Error('invalid command child scope');
+    const timeout = duration(options.timeoutMs, this.commandTimeoutMs);
     if (options.shell !== undefined && (typeof options.shell !== 'string' || !isAbsolute(options.shell))) throw new Error('explicit shell must be an absolute executable path');
     const cwd = realpathSync(resolve(this.worktree, options.cwd ?? '.'));
     const outside = relative(realpathSync(this.worktree), cwd);
     if (outside === '..' || outside.startsWith(`..${sep}`) || isAbsolute(outside)) throw new Error('command cwd must be inside selected worktree');
     const env = options.env ?? { PATH: process.env.PATH ?? '' };
     if (!env || typeof env !== 'object' || Array.isArray(env) || Object.entries(env).some(([key, value]) => !key || key.includes('=') || key.includes('\0') || typeof value !== 'string' || value.includes('\0'))) throw new Error('invalid command environment');
-    const attempt = await this.store.admitAttempt({ id: randomUUID(), invocationId: this.invocationId, operationKey: key, kind: 'command', intent: options.intent ?? 'initial',
-      ...(options.priorAttemptId ? { priorAttemptId: options.priorAttemptId } : {}), ...(options.loopKey ? { loopKey: options.loopKey } : {}) }, startup);
-    const request = await this.recorder.openCapture({ channel: 'context', attemptId: attempt.id });
-    await request.write(JSON.stringify({ argv: options.argv, cwd, env, shell: options.shell ?? false, required: options.required ?? true })); await request.finish();
-    const stdout = await this.recorder.openCapture({ channel: 'stdout', attemptId: attempt.id });
-    const stderr = await this.recorder.openCapture({ channel: 'stderr', attemptId: attempt.id });
+    const admission = {id:randomUUID(),invocationId:this.invocationId,operationKey:key,kind:'command' as const,intent:options.intent ?? 'initial' as const,
+      ...(options.priorAttemptId ? {priorAttemptId:options.priorAttemptId} : {}),...(options.loopKey ? {loopKey:options.loopKey} : {})};
+    let attempt;
+    while (!attempt) {
+      if (this.admissionStopped) throw new ShutdownInterrupted('shutdown cancelled capacity wait');
+      try { attempt = await this.store.admitAttempt(admission,startup); }
+      catch (error) {
+        if (error instanceof Error && /command capacity exhausted/.test(error.message)) { await Promise.race([delay(100),this.stopped]); continue; }
+        if (this.admissionStopped) throw new ShutdownInterrupted('shutdown stopped admission');
+        throw error;
+      }
+    }
+    const request = await this.recorder.openCapture({channel:'context',attemptId:attempt.id});
+    await request.write(JSON.stringify({argv:options.argv,cwd,env,shell:options.shell ?? false,required:options.required ?? true,timeoutMs:timeout,
+      childScope:options.childScope ?? (process.platform === 'win32' ? 'unknown' : 'process-group'),limitation:'process group members only; escaped/remote activity is not controlled'})); await request.finish();
+    const stdout = await this.recorder.openCapture({channel:'stdout',attemptId:attempt.id});
+    const stderr = await this.recorder.openCapture({channel:'stderr',attemptId:attempt.id});
+    if (this.admissionStopped) {
+      await stdout.finish(); await stderr.finish();
+      await this.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'interrupted',quiescent:true,evidence:'shutdown after admission before spawn'});
+      throw new ShutdownInterrupted('shutdown stopped launch');
+    }
     let child;
-    try { child = spawn(options.argv[0]!, options.argv.slice(1), { cwd, env, shell: options.shell ?? false, detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'] }); }
+    try { child = spawn(options.argv[0]!,options.argv.slice(1),{cwd,env,shell:options.shell ?? false,detached:process.platform !== 'win32',stdio:['ignore','pipe','pipe']}); }
     catch (error) {
       await stdout.finish(); await stderr.finish();
-      await this.store.settleAttempt({ id: attempt.id, launch: 'not_started', outcome: 'failed', quiescent: true, evidence: 'spawn rejected before process creation' });
-      throw error;
+      await this.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'failed',quiescent:true,evidence:'spawn rejected before process creation'}); throw error;
     }
-    const close = new Promise<{ code: number | null; error?: Error }>(resolve => {
-      let error: Error | undefined;
-      child.once('error', value => { error = value; });
-      child.once('close', code => resolve({ code, ...(error ? { error } : {}) }));
-    });
-    const output = Promise.all([stdout.consume(child.stdout!), stderr.consume(child.stderr!)]);
+    const scope = new LiveProcessScope(child, options.childScope === 'unknown'); this.active.set(attempt.id,scope);
+    const output = Promise.allSettled([stdout.consume(child.stdout!),stderr.consume(child.stderr!)]);
     const launched = child.pid !== undefined;
-    if (launched) await this.store.markStarted({ id: attempt.id, owner: { host: hostname(), pid: child.pid!, start: null } });
-    const result = await close; await output; await this.recorder.barrier();
-    let quiescent = !launched;
-    if (launched && process.platform !== 'win32') {
-      try { process.kill(-child.pid!, 0); } catch (error) { quiescent = (error as NodeJS.ErrnoException).code === 'ESRCH'; }
-    }
-    await this.store.settleAttempt({ id: attempt.id, launch: launched ? 'started' : 'not_started', outcome: result.code === 0 && !result.error ? 'succeeded' : 'failed', quiescent,
-      evidence: launched ? (quiescent ? `process exited ${result.code}; owned process group absent` : `process exited ${result.code}; descendant cleanup unknown`) : 'spawn error before process creation' });
-    if (result.error) throw result.error;
-    if (!quiescent) throw new Error(`command descendant cleanup unknown: ${key}`);
-    if (result.code === null || (result.code !== 0 && options.required !== false)) throw new Error(`command failed: ${key} (exit ${result.code})`);
-    return { attemptId: attempt.id, exitCode: result.code, cleanup: 'complete' };
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; this.requestShutdown('timeout',`command timeout: ${key}`); },timeout);
+    try {
+      if (launched) await this.store.markStarted({id:attempt.id,owner:currentOwner(child.pid!)});
+      const result = await scope.result(this.grace); await output; await this.recorder.barrier();
+      const interrupted = scope.interrupted && (result.signal !== null || result.code !== 0);
+      const outcome = timedOut ? 'failed' : interrupted ? 'interrupted' : result.code === 0 && !result.error ? 'succeeded' : 'failed';
+      await this.store.settleAttempt({id:attempt.id,launch:launched ? 'started' : 'not_started',outcome,quiescent:result.quiescent || !launched,
+        evidence:!launched ? 'spawn error before process creation' : `exit=${result.code}; signal=${result.signal}; ${timedOut ? 'timeout' : interrupted ? 'shutdown requested' : 'ordinary exit'}; ${result.quiescent ? 'qualified owned group absent' : 'child scope cleanup unknown'}`});
+      if (result.error) throw result.error;
+      if (timedOut) throw new Error(`command timeout: ${key}`);
+      if (interrupted) throw new ShutdownInterrupted(`command interrupted by shutdown: ${key}`);
+      if (!result.quiescent) throw new Error(`command descendant cleanup unknown: ${key}`);
+      if (result.code === null || (result.code !== 0 && options.required !== false)) throw new Error(`command failed: ${key} (exit ${result.code})`);
+      return {attemptId:attempt.id,exitCode:result.code,cleanup:'complete'};
+    } catch (error) {
+      // Keep the live reference registered until a failed launch/settlement save has stopped it.
+      this.requestShutdown(this.recorder.failed ? 'recording' : 'failure',error instanceof Error ? error.message : 'command recording failed');
+      await scope.stop(this.grace); await output;
+      throw error;
+    } finally { clearTimeout(timer); this.active.delete(attempt.id); }
   }
 }
 export function workflowContext(runner: CommandRunner, prefix = ''): WorkflowContext {
@@ -106,10 +186,13 @@ export function workflowContext(runner: CommandRunner, prefix = ''): WorkflowCon
     }),
     needsInput: (question, context) => runner.track(async () => {
       if (typeof question !== 'string' || !question.trim() || typeof context !== 'string' || !context.trim()) throw new Error('needsInput requires nonempty question and context');
+      await runner.block();
       const writer = await runner.recorder.openCapture({ channel: 'request' });
       await writer.write(JSON.stringify({ question, context })); await writer.finish();
+      runner.requestShutdown('needs_input','workflow needs input');
       throw new NeedsInput('workflow needs input');
     }),
+    cancel: reason => runner.track(async () => { if (typeof reason !== 'string' || !reason.trim()) throw new Error('cancel requires a nonempty reason'); runner.requestShutdown('manual',reason); throw new ShutdownInterrupted(reason); }),
     agent: () => runner.track(async () => { throw new Error('agent adapters unavailable; no agent attempt launched'); }),
   };
 }

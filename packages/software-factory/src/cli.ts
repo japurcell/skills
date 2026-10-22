@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { clearClaim, inspectClaim } from './clearance.js';
 import { invoke } from './lifecycle.js';
 import { openRepositoryStore } from './store.js';
 import { repositoryIdentity } from './workspace.js';
@@ -6,22 +7,25 @@ const args = process.argv.slice(2);
 const help = `software-factory (development)
 invoke --repository PATH --workflow .factory/workflows/FILE.ts --input JSON_FILE
        (--new-worktree [--ref COMMIT] | --worktree ID_OR_PATH) [--run ID]
-       [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--json]
+       [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--command-timeout-ms N] [--agent-timeout-ms N] [--shutdown-grace-ms N] [--json]
 history --repository PATH --invocation ID [--after-attempt CURSOR] [--after-capture CURSOR] [--limit N] [--json]
         [--capture ID --after-sequence N]
+inspect-owner --repository PATH [--claim ID] [--json]
+clear-owner --repository PATH --claim ID --token TOKEN --operator-confirmed --note NOTE [--json]
 Startup validates the explicitly installed toolchain; no automatic installation or resume.
 `;
 async function main() {
   if (args.includes('--help')) { process.stdout.write(help); return; }
   const command = args.shift();
-  if (command !== 'invoke' && command !== 'history') throw new Error('command not implemented; startup refused');
+  if (!command || !['invoke','history','inspect-owner','clear-owner'].includes(command)) throw new Error('command not implemented; startup refused');
   const values = new Map<string, string[]>();
-  let json = false, newWorktree = false;
+  let json = false, newWorktree = false, operatorConfirmed = false;
   while (args.length) {
     const key = args.shift()!;
     if (key === '--json') { if (json) throw new Error('duplicate --json'); json = true; continue; }
+    if (key === '--operator-confirmed' && command === 'clear-owner') { if (operatorConfirmed) throw new Error('duplicate --operator-confirmed'); operatorConfirmed = true; continue; }
     if (key === '--new-worktree') { if (newWorktree) throw new Error('duplicate --new-worktree'); newWorktree = true; continue; }
-    const allowed = command === 'invoke' ? ['--repository','--workflow','--input','--ref','--worktree','--run','--question','--context'] : ['--repository','--invocation','--capture','--after-sequence','--after-attempt','--after-capture','--limit'];
+    const allowed = command === 'invoke' ? ['--repository','--workflow','--input','--ref','--worktree','--run','--question','--context','--command-timeout-ms','--agent-timeout-ms','--shutdown-grace-ms'] : command === 'history' ? ['--repository','--invocation','--capture','--after-sequence','--after-attempt','--after-capture','--limit'] : command === 'inspect-owner' ? ['--repository','--claim'] : ['--repository','--claim','--token','--note'];
     if (!allowed.includes(key) || !args[0] || args[0].startsWith('--')) throw new Error(`invalid or missing option: ${key}`);
     if (values.has(key) && key !== '--context') throw new Error(`duplicate option: ${key}`);
     values.set(key, [...values.get(key) ?? [], args.shift()!]);
@@ -33,8 +37,19 @@ async function main() {
   if (command === 'invoke') {
     const workflow = get('--workflow'), input = get('--input');
     if (!workflow || !input) throw new Error('--workflow and --input are required');
-    result = await invoke({ repository, workflow, input, newWorktree, ...(get('--ref') ? { ref: get('--ref')! } : {}), ...(get('--worktree') ? { worktreeId: get('--worktree')! } : {}), ...(get('--run') ? { runId: get('--run')! } : {}), ...(get('--question') ? { question: get('--question')! } : {}), contexts: values.get('--context') ?? [] });
+    result = await invoke({ repository, workflow, input, newWorktree, ...(get('--ref') ? { ref: get('--ref')! } : {}), ...(get('--worktree') ? { worktreeId: get('--worktree')! } : {}), ...(get('--run') ? { runId: get('--run')! } : {}), ...(get('--question') ? { question: get('--question')! } : {}), contexts: values.get('--context') ?? [], ...(get('--command-timeout-ms') ? {commandTimeoutMs:Number(get('--command-timeout-ms'))} : {}), ...(get('--agent-timeout-ms') ? {agentTimeoutMs:Number(get('--agent-timeout-ms'))} : {}), ...(get('--shutdown-grace-ms') ? {shutdownGraceMs:Number(get('--shutdown-grace-ms'))} : {}) });
     process.exitCode = result.exitCode;
+  } else if (command === 'inspect-owner' || command === 'clear-owner') {
+    if (newWorktree) throw new Error('worktree selection is not valid for owner commands');
+    const store = openRepositoryStore(repositoryIdentity(repository).common);
+    try {
+      if (command === 'inspect-owner') result = (get('--claim') ? [store.readClaim(get('--claim')!)] : store.inspectOwners()).map(claim=>inspectClaim(store,claim));
+      else {
+        const claimId=get('--claim'),token=get('--token'),note=get('--note');
+        if (!claimId || !token || !note?.trim() || !operatorConfirmed) throw new Error('clear-owner requires --claim, --token, --operator-confirmed and nonempty --note');
+        result = await clearClaim(store,{claimId,token,operatorConfirmed,note});
+      }
+    } finally { store.close(); }
   } else {
     const id = get('--invocation'); if (!id || newWorktree) throw new Error('history requires --invocation');
     const store = openRepositoryStore(repositoryIdentity(repository).common);
@@ -55,6 +70,6 @@ async function main() {
       }
     } finally { store.close(); }
   }
-  process.stdout.write(JSON.stringify(result, null, json ? 0 : 2) + '\n');
+  process.stdout.write(JSON.stringify(result, null, json ? 0 : 2) + '\n', () => { if (command === 'invoke') process.exit(process.exitCode ?? 0); });
 }
 main().catch(error => { process.stderr.write(`software-factory: ${error instanceof Error ? error.message : 'startup refused'}\n`); process.exitCode = 3; });

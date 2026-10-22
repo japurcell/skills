@@ -24,7 +24,7 @@ interface Attempt extends Admission {
 }
 export type CaptureState = 'open' | 'complete' | 'partial' | 'unknown' | 'pruned';
 export interface CaptureChunk { sequence: number; text: string }
-interface Clearance { id: string; claimId: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown' }
+export interface Clearance { id: string; claimId: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown'; details?: object }
 
 function text(value: string, label: string) {
   if (typeof value !== 'string' || Buffer.byteLength(value) < 1 || Buffer.byteLength(value) > 256 || value.includes('\0')) {
@@ -257,6 +257,25 @@ export class RepositoryStore {
     });
   }
 
+  async finalizeInvocation(input: {id:string;outcome:string;cleanup:'complete'|'unknown';claimId:string;token:string}) {
+    if (!['succeeded','failed','needs_input','interrupted','cancelled'].includes(input.outcome) || !['complete','unknown'].includes(input.cleanup)) throw new Error('invalid finalization facts');
+    return this.transaction(() => {
+      const claim = this.database.prepare('SELECT id FROM owner_claims WHERE id=? AND token=? AND invocation_id=?').get(input.claimId,input.token,input.id);
+      if (!claim) throw new Error('claim/token no longer matches invocation');
+      const invocation = this.readInvocation(input.id);
+      if (invocation.stage === 'finalized') throw new Error('invocation already finalized');
+      if (input.cleanup === 'complete' && this.hasOccupiedActivity(input.id)) throw new Error('activity is not quiescent');
+      if (input.outcome === 'succeeded' && input.cleanup !== 'complete') throw new Error('success requires complete cleanup');
+      invocation.stage = 'finalized'; invocation.outcome = input.outcome; invocation.cleanup = input.cleanup;
+      this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation),input.id);
+      this.event('invocation.finalized',{invocationId:input.id,outcome:input.outcome,cleanup:input.cleanup});
+      if (input.cleanup === 'complete') {
+        this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(input.claimId,input.token);
+        this.event('owner.released',{claimId:input.claimId,basis:'quiescent'});
+      }
+    });
+  }
+
   async startInvocation(input: { runId: string; worktreeId: string; owner: Owner }): Promise<Invocation & { claim: Claim }> {
     validateOwner(input.owner);
     return this.transaction(() => {
@@ -439,6 +458,17 @@ export class RepositoryStore {
     });
   }
 
+  readClaim(id: string): Claim {
+    const row = this.database.prepare('SELECT data FROM owner_claims WHERE id=?').get(id);
+    if (!row) throw new Error('claim not found');
+    return JSON.parse(String(row['data'])) as Claim;
+  }
+
+  inspectActivity(invocationId: string) {
+    const rows = this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? AND occupied=1 ORDER BY rowid LIMIT 201').all(invocationId);
+    return {attempts:rows.slice(0,200).map(row => JSON.parse(String(row['data'])) as Attempt),hasMore:rows.length > 200};
+  }
+
   inspectOwners(): Claim[] {
     return this.database.prepare('SELECT data FROM owner_claims ORDER BY id LIMIT 200').all().map((row) => JSON.parse(String(row['data'])) as Claim);
   }
@@ -464,16 +494,18 @@ export class RepositoryStore {
       .map((row) => JSON.parse(String(row['data'])) as Clearance);
   }
 
-  async clearOwner(input: { claimId: string; token: string; operatorConfirmed: boolean; note: string; inspection: 'known_live' | 'not_live' | 'unknown' }) {
+  async clearOwner(input: { claimId: string; token: string; operatorConfirmed: boolean; note: string; inspection: 'known_live' | 'not_live' | 'unknown'; details?: object }) {
     if (input.inspection === 'known_live') throw new Error('known-live owner cannot be cleared');
     if (!['not_live', 'unknown'].includes(input.inspection)) throw new Error('invalid owner inspection');
     if (input.operatorConfirmed !== true) throw new Error('explicit operator confirmation required');
     text(input.note, 'clearance note');
+    if (!input.note.trim()) throw new Error('nonempty clearance note required');
+    if (input.details !== undefined && Buffer.byteLength(JSON.stringify(input.details)) > 8192) throw new Error('clearance inspection details exceed limit');
     return this.transaction(() => {
       const row = this.database.prepare('SELECT data FROM owner_claims WHERE id=? AND token=?').get(input.claimId, input.token);
       if (!row) throw new Error('claim/token no longer matches');
       const claim = JSON.parse(String(row['data'])) as Claim;
-      const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection as 'not_live' | 'unknown' };
+      const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection as 'not_live' | 'unknown', ...(input.details ? {details:input.details} : {}) };
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)').run(clearance.id, claim.id, JSON.stringify(clearance));
       for (const row of this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? AND occupied=1').all(claim.invocationId)) {
         const attempt = JSON.parse(String(row['data'])) as Attempt;

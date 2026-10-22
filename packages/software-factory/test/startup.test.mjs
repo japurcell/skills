@@ -300,7 +300,7 @@ test('large saved output remains paged in history under a bounded CLI heap', asy
 });
 
 test('failed command peer outranks an awaited question and retains both saved facts', async () => {
-  const repo = await fixture(`export async function run(context) { void context.command('failed-peer', {argv: [process.execPath, '-e', 'setTimeout(()=>process.exit(1),50)'], env: {}}); await context.needsInput('Choose target', 'Need a choice'); }`);
+  const repo = await fixture(`export async function run(context) { try { await context.command('failed-peer', {argv: [process.execPath, '-e', 'process.exit(1)'], env: {}}); } catch {} await context.needsInput('Choose target', 'Need a choice'); }`);
   try {
     const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
     const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete');
