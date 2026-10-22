@@ -435,7 +435,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             } else {
                 'missing-or-other'
             }
-            $diagnostic = "response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
+            $diagnostic = "scenario=$Scenario attempt=$Attempt response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
             if ($auditState -eq 'incomplete') {
                 # ScanFailure emits only scanner-owned vocabulary and bounded numbers.
                 $record = $log.Trim() | ConvertFrom-Json -AsHashtable
