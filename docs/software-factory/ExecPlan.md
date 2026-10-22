@@ -18,7 +18,8 @@ Implementation is underway on `codex/research-agentic-workflow-prototypes`, init
 - [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
 - [x] (2026-10-21) [milestone-1] T2-CI: Integrated reviewed Linux/Windows/macOS Actions and failure reports at `764f559b`; actionlint and local integrated foundation checks pass.
 - [x] (2026-10-21) [milestone-1] T2-CI: User authorized push and qualification; hosted run `39718601088` passed Linux x64 and macOS arm64 foundation jobs.
-- [ ] [milestone-1] T2-CI-repair: Fix native Windows Git fixture config and bounded SQLite writer contention, re-review, push and rerun all three jobs.
+- [x] (2026-10-21) [milestone-1] T2-CI-repair: Integrated independently reviewed Git fixture isolation and bounded qualifier contention fixes at `7ae5f2da`; typecheck/build and 41 registered foundation checks pass locally.
+- [ ] [milestone-1] T2-CI-repair: Push the reviewed repair and obtain passing native Windows evidence, retaining all three target results.
 - [x] (2026-10-21) [milestone-1] T2: Native Linux x64 pinned-runtime storage and foundation checks pass in hosted run `39718601088`.
 - [ ] [milestone-1] T2: Complete Windows qualification; direct storage probe passed but fixture/cancellation failures prevent acceptance.
 - [x] (2026-10-21) [milestone-1] Verified local build, six fixture checks and two storage/cancellation probes against v24.22.1.
@@ -53,7 +54,7 @@ Implementation is underway on `codex/research-agentic-workflow-prototypes`, init
 
 T1 exposed the root NuGet ignore rule `**/[Pp]ackages/*`; an explicit authored-package exception now keeps factory source visible while package-local ignores exclude dependencies and generated output. The referenced `.agents/instructions/INDEX.md` is absent, so current brain testing routes supply repository guidance.
 
-T5 independent review reproduced premature success when a workflow does not await `needsInput`, `progress`, `agent` or a delayed `scope` callback. Command-only promise tracking is insufficient: every asynchronous context operation must participate in invocation lifetime before final history or claim release. Review also reproduced wrong-repository selection from trimming opaque Git path whitespace and unbounded history capture materialization. T5 owns public E2E repairs for all three findings; the initial 45 passing checks do not establish T5 acceptance.
+T5 independent review reproduced premature success when a workflow does not await `needsInput`, `progress`, `agent` or a delayed `scope` callback. Command-only promise tracking is insufficient: every asynchronous context operation must participate in invocation lifetime before final history or claim release. Review also reproduced wrong-repository selection from trimming opaque Git path whitespace and unbounded history capture materialization. The original four review findings now pass their public E2E reproductions in the worker tree (57 tests). Re-review found that sticky required failures also blocked intended advisory-check corrections. T5 must add the explicit advisory result path and retain required/infrastructure failure precedence before acceptance.
 
 Independent T1/T2 review reproduced SIGTERM leaving a SQLite qualification worker alive. Signal cleanup and worker IPC-disconnect handling now stop owned workers; public subprocess checks verify exits 130/143, dead workers and removed disposable directories. The reviewer approved the bounded foundation after repair.
 
@@ -273,7 +274,7 @@ Run the complete local deterministic suite, browser suite, native qualification,
 
 ## Concrete Steps
 
-**Current next action: finish the independently reproduced T5 asynchronous-context repair, review and integrate invocation startup, then implement T6 shutdown/manual clearance.** T2-CI workflows are integrated and pushed with user authorization; hosted Linux/macOS passed and Windows has an isolated repair. Continue T5 repairs and native CI repairs concurrently, then integrate and rerun their proofs. Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
+**Current next action: finish T5 explicit advisory-check results, re-review and integrate invocation startup, then implement T6 shutdown/manual clearance.** T2-CI workflows are integrated and pushed with user authorization; hosted Linux/macOS passed and Windows repair is integrated at `7ae5f2da` and locally verified. Push that repair for a native rerun while T5 advisory-result repair continues, then integrate and run its composed proof. Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
 
 Completed T1 setup: the package and lockfile exist, with development dependencies explicitly installed using `npm ci --ignore-scripts`. Repeat setup only when needed with `rtk proxy npm --prefix packages/software-factory ci --ignore-scripts`; startup never installs. Typecheck/build commands now produce `packages/software-factory/dist/cli.js`. Exact dependency versions are in the lockfile.
 
