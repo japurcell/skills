@@ -142,7 +142,7 @@ public static class WindowsStartupTrace
             new UTF8Encoding(false));
     }
 
-    public static int Main(string[] args, string stagePath)
+    public static int Trace(string[] args, string stagePath)
     {
         Stage(stagePath, "native-entry");
         if (IntPtr.Size != 8 || args.Length < 6)

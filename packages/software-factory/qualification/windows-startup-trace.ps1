@@ -26,7 +26,7 @@ try {
         [string]$spec.timeoutMs
     ) + [string[]]@($spec.args)
     Write-Stage 'native-call'
-    $result = [WindowsStartupTrace]::Main($launch, $StagePath)
+    $result = [WindowsStartupTrace]::Trace($launch, $StagePath)
     Write-Stage 'native-return'
     exit $result
 } catch {
