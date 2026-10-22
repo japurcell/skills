@@ -313,3 +313,81 @@ test('validator refuses inherited descendant pipes and preserves uncertain stage
     assert.equal(result.stdout.trim(), 'refused and owned cleanup completed');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('validator preserves its stage if either drain thread fails to start', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-thread-fault-')));
+  try {
+    const driver = `import importlib.util,subprocess,sys,threading\n` +
+      `from unittest.mock import patch\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `for fault_at in (1,2):\n` +
+      ` owned=[]; real_popen=subprocess.Popen; real_start=threading.Thread.start; starts=[0]; stage=None\n` +
+      ` def capture(*args,**kwargs):\n` +
+      `  process=real_popen(*args,**kwargs); owned.append(process); return process\n` +
+      ` def fault(self):\n` +
+      `  if self.name.startswith('factory-install-drain'):\n` +
+      `   starts[0]+=1\n` +
+      `   if starts[0]==fault_at: raise RuntimeError('controlled thread start failure')\n` +
+      `  return real_start(self)\n` +
+      ` try:\n` +
+      `  with m.private_stage() as stage:\n` +
+      `   with patch.object(m.subprocess,'Popen',capture),patch.object(threading.Thread,'start',fault):\n` +
+      `    try: m.bounded_child([sys.executable,'-c','import time; time.sleep(5)'],stage,1)\n` +
+      `    except RuntimeError: pass\n` +
+      `    else: raise AssertionError('thread fault produced a receipt')\n` +
+      `  assert stage.preserved and stage.root.exists() and owned[0].poll() is not None\n` +
+      ` finally:\n` +
+      `  for process in owned:\n` +
+      `   if process.poll() is None: process.kill()\n` +
+      `   process.wait(timeout=5); process.stdout.close(); process.stderr.close()\n` +
+      `  if stage is not None and stage.root.exists(): stage.cleanup()\n` +
+      `print('both startup faults refused without a surviving child')\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'both startup faults refused without a surviving child');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('validator preserves its stage if waiting or joining raises unexpectedly', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-wait-fault-')));
+  try {
+    const driver = `import importlib.util,subprocess,sys,threading\n` +
+      `from unittest.mock import patch\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `for mode in ('wait','join'):\n` +
+      ` owned=[]; real_popen=subprocess.Popen; real_wait=subprocess.Popen.wait; real_join=threading.Thread.join; calls=[0]; stage=None\n` +
+      ` def capture(*args,**kwargs):\n` +
+      `  process=real_popen(*args,**kwargs); owned.append(process); return process\n` +
+      ` def fault_wait(self,*args,**kwargs):\n` +
+      `  if self in owned and calls[0]==0:\n` +
+      `   calls[0]+=1; raise RuntimeError('controlled wait failure')\n` +
+      `  return real_wait(self,*args,**kwargs)\n` +
+      ` def fault_join(self,*args,**kwargs):\n` +
+      `  if self.name.startswith('factory-install-drain'): raise ValueError('controlled join failure')\n` +
+      `  return real_join(self,*args,**kwargs)\n` +
+      ` try:\n` +
+      `  with m.private_stage() as stage:\n` +
+      `   with patch.object(m.subprocess,'Popen',capture):\n` +
+      `    target=real_popen if mode=='wait' else threading.Thread\n` +
+      `    attribute='wait' if mode=='wait' else 'join'\n` +
+      `    replacement=fault_wait if mode=='wait' else fault_join\n` +
+      `    with patch.object(target,attribute,replacement):\n` +
+      `     try: m.bounded_child([sys.executable,'-c','print("{}")'],stage,1)\n` +
+      `     except RuntimeError: pass\n` +
+      `     else: raise AssertionError('unexpected lifecycle fault produced a receipt')\n` +
+      `  assert stage.preserved and stage.root.exists() and owned[0].poll() is not None\n` +
+      ` finally:\n` +
+      `  for process in owned:\n` +
+      `   if process.poll() is None: process.kill()\n` +
+      `   process.wait(timeout=5); process.stdout.close(); process.stderr.close()\n` +
+      `  if stage is not None and stage.root.exists(): stage.cleanup()\n` +
+      `print('wait and join faults preserved owned stages')\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'wait and join faults preserved owned stages');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

@@ -497,24 +497,19 @@ def extract_file(data, stage, name, size, executable):
             refuse("archive member exceeds declared size")
 
 
-def refuse_uncertain(stage, message):
-    if stage is not None:
-        stage.preserved = True
-        refuse(f"{message}; private stage preserved at {stage.root}")
-    refuse(message)
-
-
 def bounded_child(command, stage=None, timeout_seconds=30):
     """Require direct exit, both pipe EOFs and original POSIX group absence."""
     deadline = time.monotonic() + timeout_seconds
     cleanup_window = min(2, max(0.1, timeout_seconds / 4))
     run_deadline = deadline - cleanup_window
-    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               env={"PATH": os.defpath, "HOME": tempfile.gettempdir()}, start_new_session=os.name == "posix")
     outputs = [bytearray(), bytearray()]
     overflow = threading.Event()
     errors = threading.Event()
     done = [threading.Event(), threading.Event()]
+    threads = []
+    closure_confirmed = False
+    expected_refusal = False
+
     def drain(stream, output, finished):
         try:
             while chunk := stream.read(4096):
@@ -526,61 +521,92 @@ def bounded_child(command, stage=None, timeout_seconds=30):
             errors.set()
         finally:
             finished.set()
-    threads = [threading.Thread(target=drain, args=(stream, outputs[i], done[i]), name=f"factory-install-drain-{i}", daemon=True) for i, stream in enumerate((process.stdout, process.stderr))]
-    for thread in threads:
-        thread.start()
-    while not all(finished.is_set() for finished in done) and not overflow.is_set() and not errors.is_set() and time.monotonic() < run_deadline:
-        done[0].wait(min(0.02, max(0, run_deadline - time.monotonic())))
-    closed = all(finished.is_set() for finished in done) and not errors.is_set()
-    timed_out = not closed or overflow.is_set()
-    if not timed_out:
+
+    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               env={"PATH": os.defpath, "HOME": tempfile.gettempdir()}, start_new_session=os.name == "posix")
+    try:
+        for i, stream in enumerate((process.stdout, process.stderr)):
+            thread = threading.Thread(target=drain, args=(stream, outputs[i], done[i]), name=f"factory-install-drain-{i}", daemon=True)
+            threads.append(thread)
+            thread.start()
+        while not all(finished.is_set() for finished in done) and not overflow.is_set() and not errors.is_set() and time.monotonic() < run_deadline:
+            next(finished for finished in done if not finished.is_set()).wait(min(0.02, max(0, run_deadline - time.monotonic())))
+        if not all(finished.is_set() for finished in done) or overflow.is_set() or errors.is_set():
+            expected_refusal = True
+            refuse("validator pipe closure or output limit refused")
         try:
             process.wait(timeout=max(0, run_deadline - time.monotonic()))
         except subprocess.TimeoutExpired:
-            timed_out = True
-    if timed_out:
-        # The direct child remains unreaped, so its PID cannot be reused while
-        # signaling only the session that this invocation created.
-        if os.name == "posix":
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except OSError:
-                pass
-        else:
-            try:
-                process.kill()
-            except OSError:
-                pass
-        try:
-            process.wait(timeout=max(0, deadline - time.monotonic()))
-        except subprocess.TimeoutExpired:
-            pass
-        for thread in threads:
-            thread.join(timeout=max(0, deadline - time.monotonic()))
-        refuse_uncertain(stage, "validator process closure uncertain")
-    try:
+            expected_refusal = True
+            raise
         for thread in threads:
             thread.join(timeout=max(0, deadline - time.monotonic()))
         if any(thread.is_alive() for thread in threads):
-            refuse_uncertain(stage, "validator pipe closure uncertain")
+            expected_refusal = True
+            refuse("validator drain thread closure uncertain")
         if os.name == "posix":
             try:
                 os.killpg(process.pid, 0)
             except ProcessLookupError:
                 pass
-            except OSError:
-                refuse_uncertain(stage, "validator session closure uncertain")
             else:
-                refuse_uncertain(stage, "validator session closure uncertain")
+                expected_refusal = True
+                refuse("validator original process group remains")
         else:
-            refuse_uncertain(stage, "validator descendant closure unsupported")
+            expected_refusal = True
+            refuse("validator descendant closure unsupported")
+        closure_confirmed = True
+        if process.returncode or outputs[1] or len(outputs[0]) > 2048:
+            refuse("semantic selection validation refused")
+        return bytes(outputs[0])
+    except BaseException as error:
+        if closure_confirmed:
+            raise
+        if stage is not None:
+            stage.preserved = True
+        # Keep the leader unreaped until signaling this invocation's own group.
+        # A blocked group signal falls back only to the directly owned PID.
+        shutdown_deadline = min(deadline, time.monotonic() + cleanup_window)
+        if process.returncode is None:
+            if os.name == "posix":
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except BaseException:
+                    try:
+                        os.kill(process.pid, signal.SIGKILL)
+                    except BaseException:
+                        pass
+            else:
+                try:
+                    process.kill()
+                except BaseException:
+                    pass
+            try:
+                process.wait(timeout=max(0, shutdown_deadline - time.monotonic()))
+            except BaseException:
+                pass
+        for thread in threads:
+            try:
+                thread.join(timeout=max(0, shutdown_deadline - time.monotonic()))
+            except BaseException:
+                pass
+        for i, stream in enumerate((process.stdout, process.stderr)):
+            if i >= len(threads) or not threads[i].is_alive():
+                try:
+                    stream.close()
+                except BaseException:
+                    pass
+        if stage is not None:
+            message = f"validator closure uncertain; private stage preserved at {stage.root}"
+        else:
+            message = "validator closure uncertain"
+        if expected_refusal:
+            raise ValueError(message) from error
+        raise RuntimeError(message) from error
     finally:
-        if all(finished.is_set() for finished in done):
+        if closure_confirmed:
             process.stdout.close()
             process.stderr.close()
-    if process.returncode or outputs[1] or len(outputs[0]) > 2048:
-        refuse("semantic selection validation refused")
-    return bytes(outputs[0])
 
 
 def authenticate_snapshot(bundle, selected_sha):
