@@ -39,12 +39,23 @@ export function assertLocalPlacement(path: string): LocalPlacement {
     if (!/^[A-Za-z]:\\/.test(directory)) throw new Error('unsupported storage placement: network or unknown path');
     const systemRoot = process.env['SystemRoot'];
     if (!systemRoot || !/^[A-Za-z]:\\/.test(systemRoot)) throw new Error('native Windows placement prerequisite missing: SystemRoot');
+    const started = performance.now();
     const probe = spawnSync(join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
       ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', windowsProbe], {
         encoding: 'utf8', timeout: 10_000, maxBuffer: 8192, windowsHide: true,
         env: { ...process.env, FACTORY_PLACEMENT_PATH: directory },
       });
-    if (probe.error || probe.status !== 0) throw new Error('native Windows placement probe failed; storage refused');
+    if (probe.error || probe.status !== 0) {
+      // Native output and Error messages can contain paths or environment values.
+      // Keep only bounded process facts so a timeout is distinguishable from an exit.
+      const code = (probe.error as NodeJS.ErrnoException | undefined)?.code;
+      let error = 'none';
+      if (probe.error) error = ['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES', 'EPERM', 'EAGAIN', 'ENOMEM', 'EMFILE', 'ENFILE'].includes(code ?? '') ? String(code) : 'other';
+      let signal: string = probe.signal ?? 'none';
+      if (!['none', 'SIGTERM', 'SIGKILL', 'SIGINT', 'SIGBREAK', 'SIGABRT'].includes(signal)) signal = 'other';
+      const elapsedMs = Math.round(performance.now() - started);
+      throw new Error(`native Windows placement probe failed; storage refused (error=${error}; status=${probe.status ?? 'none'}; signal=${signal}; elapsedMs=${elapsedMs})`);
+    }
     const result: unknown = JSON.parse(probe.stdout.replace(/^\uFEFF/, ''));
     if (typeof result !== 'object' || result === null || !('driveType' in result) || result.driveType !== 3
       || !('filesystem' in result) || !['NTFS', 'ReFS'].includes(String(result.filesystem))) {
