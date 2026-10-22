@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gitModes, parseTrace, validateTrace } from './windows-startup.mjs';
+import { gitModes, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_STARTUP_EVIDENCE ?? join(process.cwd(), 'windows-startup-evidence'));
@@ -15,6 +15,9 @@ const report = { scope: 'exact-windows-startup-helper-qualification-spike', stat
 mkdirSync(evidence, { recursive: true });
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const save = () => writeFileSync(join(evidence, 'qualification.json'), `${JSON.stringify(report, null, 2)}\n`);
+const gitImportedDlls = Object.freeze([
+  'libiconv-2.dll', 'libintl-8.dll', 'libpcre2-8-0.dll', 'libwinpthread-1.dll', 'zlib1.dll',
+]);
 
 function privateEnvironment(home, wrappers, config) {
   const windows = process.env.SystemRoot ?? process.env.WINDIR;
@@ -40,28 +43,6 @@ function assertPackage(archive) {
     const actual = join(archive.root, ...member.split('/'));
     assert.ok(existsSync(actual), `missing pinned package member: ${member}`);
     assert.equal(sha256(actual), expected, `pinned package member changed: ${member}`);
-  }
-}
-
-function normalized(path) {
-  return resolve(path.replace(/^\\\\\?\\/, '')).toLowerCase();
-}
-
-function validateModules(records, executable, archive, windows) {
-  const actualRoot = records.find((record) => record.kind === 'CREATE')?.value;
-  assert.ok(actualRoot && normalized(actualRoot) === normalized(executable), 'debugged root image differs from exact executable');
-  const packageRoot = normalized(archive.root) + sep;
-  const systemRoot = normalized(windows) + sep;
-  for (const record of records.filter((item) => item.kind === 'DLL')) {
-    assert.ok(record.value, 'unresolved loaded module path');
-    const path = normalized(record.value);
-    if (path.startsWith(packageRoot)) {
-      const member = relative(archive.root, path).replaceAll('\\', '/');
-      assert.ok(archive.files[member], `loaded module absent from pinned archive: ${record.value}`);
-      assert.equal(sha256(path), archive.files[member], `loaded module bytes changed: ${member}`);
-    } else {
-      assert.ok(path.startsWith(systemRoot), `loaded module outside pinned archive and Windows root: ${record.value}`);
-    }
   }
 }
 
@@ -100,7 +81,7 @@ function launchCase(name, executable, cwd, args, env, archive, options = {}) {
     } else {
       const checked = validateTrace(records, roots[0].pid, options.expectChild ?? false);
       assert.ok(checked.ok, checked.reasons.join('; '));
-      if (archive) validateModules(records, executable, archive, env.SystemRoot);
+      if (archive) validateModules(records, executable, archive, env.SystemRoot, options.expectedGitDlls);
     }
     result.exitCode = Number(exits[0].value);
     const stdout = readFileSync(spec.stdout);
@@ -243,8 +224,8 @@ async function main() {
   writeHostileConfig(home, marker);
   assert.ok(fixture.gitCall(fixture.repo, ['config', '--global', '--get', 'core.fsmonitor'])
     .includes(marker.replaceAll('\\', '/')), 'hostile include configuration was not active');
-  report.cases.push({ name: 'hostile-config-active', status: 'passed',
-    evidence: 'Pinned Git read the canary command through private global include without executing it.' });
+  report.cases.push({ name: 'hostile-include-read', status: 'passed',
+    evidence: 'Pinned Git queried core.fsmonitor through the private global include without executing its value; other config canaries are unexercised decoys.' });
   save();
 
   const positive = launchCase('positive-child-control', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
@@ -269,7 +250,7 @@ async function main() {
     for (let index = 0; index < gitModes.length; index++) {
       assertPackage(gitArchive);
       const name = `git-${fixtureName}-${index}`;
-      const options = { expectedExit: 0 };
+      const options = { expectedExit: 0, expectedGitDlls: gitImportedDlls };
       if (index === 0) options.stdoutPath = cwd;
       if (index === 1) options.stdoutPath = fixtureName === 'linked' ? join(fixture.repo, '.git') : join(cwd, '.git');
       if (index === 2) {
@@ -281,12 +262,7 @@ async function main() {
       launchCase(name, git, cwd, gitModes[index], env, gitArchive, options);
     }
   }
-  const loadedGitModules = new Set(report.cases.filter((item) => /^git-(normal|linked|unborn|reftable)-/.test(item.name))
-    .flatMap((item) => item.trace.filter((record) => record.kind === 'DLL').map((record) => normalized(record.value))));
-  for (const member of ['libiconv-2.dll', 'libintl-8.dll', 'libpcre2-8-0.dll', 'libwinpthread-1.dll', 'zlib1.dll'])
-    assert.ok(loadedGitModules.has(normalized(join(gitArchive.root, 'mingw64', 'bin', member))),
-      `expected pinned Git dependency was not observed: ${member}`);
-  assert.ok(!existsSync(marker), 'hostile Git config or PATH wrapper canary executed');
+  assert.ok(!existsSync(marker), 'Git helper or PATH wrapper created canary');
 
   // An altered linked registration is a negative identity case, not a replacement for a valid worktree.
   const registration = join(fixture.linked, '.git');
@@ -295,11 +271,13 @@ async function main() {
     const missing = join(work, 'missing-registration');
     assert.ok(!existsSync(missing));
     writeFileSync(registration, `gitdir: ${missing.replaceAll('\\', '/')}\n`);
-    launchCase('git-wrong-registration', git, fixture.linked, gitModes[2], env, gitArchive, { expectedNonzero: true });
+    launchCase('git-wrong-registration', git, fixture.linked, gitModes[2], env, gitArchive,
+      { expectedNonzero: true, expectedGitDlls: gitImportedDlls });
   } finally {
     writeFileSync(registration, originalRegistration);
   }
 
+  // This authored config is an unselected decoy: every compiler case uses its generated -p path.
   const authored = join(work, 'authored-tsconfig.json');
   writeFileSync(authored, JSON.stringify({ extends: 'cmd.exe', compilerOptions: { plugins: [{ name: 'child' }], watch: true } }));
   const success = generatedConfig(join(work, 'typescript-success'),
@@ -320,7 +298,7 @@ async function main() {
   assert.equal(readdirSync(join(work, 'typescript-success', 'out')).length, 1, 'one-build case emitted unexpected files');
   assert.ok(!existsSync(error.output), 'error compiler case emitted JavaScript');
   assert.ok(!existsSync(noOutput.output), 'no-output compiler case emitted JavaScript');
-  assert.ok(!existsSync(marker), 'compiler text, authored config, or PATH wrapper canary executed');
+  assert.ok(!existsSync(marker), 'compiler source text or PATH wrapper created canary');
   tamperRefusal(gitArchive, 'mingw64/bin/git.exe');
   tamperRefusal(gitArchive, 'mingw64/bin/zlib1.dll');
   tamperRefusal(tsArchive, 'package/lib/tsc.exe');

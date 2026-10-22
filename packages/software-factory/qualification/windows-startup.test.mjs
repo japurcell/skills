@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
-import { gitModes, parseTrace, validateTrace } from './windows-startup.mjs';
+import { gitModes, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
 
 test('closed Git modes have exact native argv and no caller flags', () => {
   assert.deepEqual(gitModes, [
@@ -22,4 +26,49 @@ test('trace requires a positive child control and complete direct exit', () => {
   assert.equal(validateTrace(parseTrace([root, created, child, exit, done].join('\n')), 10, false).ok, false);
   assert.equal(validateTrace(parseTrace([root, created, child, `EXIT\t11\t${b64('0')}`, exit, done].join('\n')), 10, true).ok, true);
   assert.equal(validateTrace(parseTrace([root, created, exit].join('\n')), 10, false).ok, false);
+});
+
+test('each fixed helper needs resolved module evidence and each Git case needs its imported DLLs', (t) => {
+  const base = mkdtempSync(join(tmpdir(), 'windows-startup-modules-'));
+  t.after(() => rmSync(base, { recursive: true, force: true }));
+  const packageRoot = join(base, 'package');
+  const systemRoot = join(base, 'windows');
+  const executable = join(packageRoot, 'mingw64', 'bin', 'git.exe');
+  const systemDll = join(systemRoot, 'System32', 'kernel32.dll');
+  mkdirSync(join(packageRoot, 'mingw64', 'bin'), { recursive: true });
+  mkdirSync(join(systemRoot, 'System32'), { recursive: true });
+  writeFileSync(executable, 'pinned executable');
+  writeFileSync(systemDll, 'system module');
+  const imported = ['libiconv-2.dll', 'libintl-8.dll', 'libpcre2-8-0.dll',
+    'libwinpthread-1.dll', 'zlib1.dll'];
+  const files = {};
+  const modulePaths = imported.map((name) => {
+    const member = `mingw64/bin/${name}`;
+    const path = join(packageRoot, 'mingw64', 'bin', name);
+    writeFileSync(path, name);
+    files[member] = createHash('sha256').update(name).digest('hex');
+    return path;
+  });
+  const archive = { root: packageRoot, files };
+  const created = [{ kind: 'CREATE', pid: 10, value: executable }];
+  const dll = (path) => ({ kind: 'DLL', pid: 10, value: path });
+
+  assert.throws(() => validateModules(created, executable, archive, systemRoot),
+    /no loaded module events/);
+  assert.throws(() => validateModules([...created, { kind: 'DLL', pid: 99, value: systemDll }],
+    executable, archive, systemRoot), /loaded module event belongs to unknown process/);
+  assert.throws(() => validateModules([...created, dll(systemDll)], executable, archive, systemRoot, imported),
+    /expected pinned Git dependency was not observed: libiconv-2\.dll/);
+  assert.doesNotThrow(() => validateModules([...created, dll(systemDll), ...modulePaths.map(dll)],
+    executable, archive, systemRoot, imported));
+  assert.throws(() => validateModules([...created, dll('')], executable, archive, systemRoot),
+    /unresolved loaded module path/);
+  const unlisted = join(packageRoot, 'mingw64', 'bin', 'unlisted.dll');
+  writeFileSync(unlisted, 'unlisted module');
+  assert.throws(() => validateModules([...created, dll(unlisted)], executable, archive, systemRoot),
+    /loaded module absent from pinned archive/);
+  const unknown = join(base, 'unknown.dll');
+  writeFileSync(unknown, 'unknown module');
+  assert.throws(() => validateModules([...created, dll(unknown)],
+    executable, archive, systemRoot), /loaded module outside pinned archive and Windows root/);
 });

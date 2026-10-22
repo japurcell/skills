@@ -1,5 +1,8 @@
 // Qualification protocol only. This file is not imported by the factory runtime.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join, resolve, sep } from 'node:path';
 
 export const gitModes = Object.freeze([
   ['--no-pager', '--no-lazy-fetch', 'rev-parse', '--show-toplevel'],
@@ -43,4 +46,36 @@ export function validateTrace(records, rootPid, expectChild) {
   if (children.some((child) => exits.filter((record) => record.pid === child.pid).length !== 1))
     reasons.push('child exit unobserved');
   return { ok: reasons.length === 0, reasons, children };
+}
+
+const absolutePath = (path) => resolve(path.replace(/^\\\\\?\\/, ''));
+const normalized = (path) => absolutePath(path).toLowerCase();
+
+export function validateModules(records, executable, archive, windows, expectedGitDlls = []) {
+  const root = records.find((record) => record.kind === 'CREATE');
+  assert.ok(root?.value && normalized(root.value) === normalized(executable), 'debugged root image differs from exact executable');
+  const modules = records.filter((record) => record.kind === 'DLL');
+  assert.ok(modules.length > 0, 'no loaded module events for fixed helper');
+  const packageRoot = normalized(archive.root) + sep;
+  const systemRoot = normalized(windows) + sep;
+  const loaded = new Set();
+  for (const record of modules) {
+    assert.equal(record.pid, root.pid, 'loaded module event belongs to unknown process');
+    assert.ok(record.value, 'unresolved loaded module path');
+    const actualPath = absolutePath(record.value);
+    const path = normalized(record.value);
+    assert.ok(existsSync(actualPath), `loaded module path does not exist: ${record.value}`);
+    loaded.add(path);
+    if (path.startsWith(packageRoot)) {
+      const member = path.slice(packageRoot.length).replaceAll('\\', '/');
+      assert.ok(archive.files[member], `loaded module absent from pinned archive: ${record.value}`);
+      assert.equal(createHash('sha256').update(readFileSync(actualPath)).digest('hex'), archive.files[member],
+        `loaded module bytes changed: ${member}`);
+    } else {
+      assert.ok(path.startsWith(systemRoot), `loaded module outside pinned archive and Windows root: ${record.value}`);
+    }
+  }
+  for (const member of expectedGitDlls)
+    assert.ok(loaded.has(normalized(join(archive.root, 'mingw64', 'bin', member))),
+      `expected pinned Git dependency was not observed: ${member}`);
 }

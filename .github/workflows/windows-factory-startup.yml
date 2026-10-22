@@ -2,6 +2,12 @@ name: Windows factory startup helper qualification spike
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/windows-factory-startup.yml
+      - packages/software-factory/qualification/windows-startup*
 
 permissions:
   contents: read
