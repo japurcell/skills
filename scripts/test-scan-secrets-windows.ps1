@@ -158,6 +158,7 @@ finally:
         'capture-error' { "@echo off`r`n`"$realGit`" %*" }
         'success' { "@echo off`r`n`"$realGit`" %*" }
         'native-success' { "@echo off`r`n`"$realGit`" %*" }
+        'completion-accounting' { "@echo off`r`n`"$realGit`" %*" }
     }
     [System.IO.File]::WriteAllText((Join-Path $bin 'git.cmd'), $shim)
     if ($Scenario -eq 'hardlinked-batch') {
@@ -201,7 +202,7 @@ finally:
     $savedTemp = $env:TEMP
     $savedTmp = $env:TMP
     try {
-        $env:PATH = if ($Scenario -eq 'native-success') { $savedPath } else { "$bin;$savedPath" }
+        $env:PATH = if ($Scenario -in @('native-success', 'completion-accounting')) { $savedPath } else { "$bin;$savedPath" }
         $env:SCAN_MODE = $Mode
         if ($Scenario -eq 'hostile-comspec') {
             $hostileComspec = Join-Path $caseDir 'hostile-comspec.cmd'
@@ -410,6 +411,55 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 '@
             $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('OBSERVATION_LITERAL', $observationLiteral)
             [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'completion-accounting') {
+            # Inject one conservative stale count only after the real job is empty.
+            # Every process still launches and terminates through the real kernel.
+            $runner = Join-Path $caseDir 'completion-accounting.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $observationLiteral = (Join-Path $caseDir 'completion.json') | ConvertTo-Json -Compress
+            $fixture = @'
+import ctypes, pathlib, runpy
+original_library = ctypes.WinDLL
+injected = False
+class QueryBoundary:
+    def __init__(self, function):
+        self.function = function
+    @property
+    def argtypes(self):
+        return self.function.argtypes
+    @argtypes.setter
+    def argtypes(self, value):
+        self.function.argtypes = value
+    @property
+    def restype(self):
+        return self.function.restype
+    @restype.setter
+    def restype(self, value):
+        self.function.restype = value
+    def __call__(self, job, kind, buffer, length, returned):
+        global injected
+        result = self.function(job, kind, buffer, length, returned)
+        if result and kind == 1 and length == 48 and not injected:
+            words = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_uint32))
+            if words[10] == 0:
+                words[10] = 1
+                injected = True
+                pathlib.Path(OBSERVATION_LITERAL).write_text('injected-after-real-job-zero', encoding='ascii')
+        return result
+class Library:
+    def __init__(self, library):
+        self.library = library
+        self.query = QueryBoundary(library.QueryInformationJobObject)
+    def __getattr__(self, name):
+        return self.query if name == 'QueryInformationJobObject' else getattr(self.library, name)
+def library(name, *arguments, **keywords):
+    result = original_library(name, *arguments, **keywords)
+    return Library(result) if name.casefold() == 'kernel32' else result
+ctypes.WinDLL = library
+runpy.run_path(HOOK_LITERAL, run_name='__main__')
+'@
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('OBSERVATION_LITERAL', $observationLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
         } elseif ($Scenario -eq 'capture-error') {
             $runner = Join-Path $caseDir 'capture-error.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
@@ -465,7 +515,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         }
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
-        if ($Scenario -in @('success', 'native-success', 'hostile-comspec')) {
+        if ($Scenario -in @('success', 'native-success', 'hostile-comspec', 'completion-accounting')) {
             $responseType = if ($response -is [System.Collections.IDictionary]) {
                 'object'
             } elseif ($response -is [array]) {
@@ -501,6 +551,11 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             $completionPath = Join-Path $caseDir 'completion.json'
             if (Test-Path -LiteralPath $completionPath) {
                 $diagnostic += ' completion=' + (Get-Content -LiteralPath $completionPath -Raw)
+            }
+            if ($Scenario -eq 'completion-accounting' -and
+                (-not (Test-Path -LiteralPath $completionPath) -or
+                 (Get-Content -LiteralPath $completionPath -Raw) -cne 'injected-after-real-job-zero')) {
+                throw "$Provider $Mode completion fault was not exercised"
             }
             $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
                 $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
@@ -573,6 +628,12 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 
 try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
+    foreach ($provider in @('copilot', 'gemini', 'codex')) {
+        foreach ($mode in @('block', 'warn')) {
+            Invoke-Case -Provider $provider -Mode $mode -Scenario 'completion-accounting'
+        }
+    }
+    Write-Output 'PASS: transient native completion accounting requires confirmed job zero'
     # Repeated clean launches expose intermittent capture failures without
     # accepting incomplete results or relaxing descendant and file checks.
     for ($attempt = 1; $attempt -le 20; $attempt++) {
