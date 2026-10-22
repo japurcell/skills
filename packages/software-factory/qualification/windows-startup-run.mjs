@@ -10,7 +10,7 @@ import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTra
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_STARTUP_EVIDENCE ?? join(process.cwd(), 'windows-startup-evidence'));
 const report = { scope: 'exact-windows-startup-helper-qualification-spike', status: 'failed',
-  platform: process.platform, arch: process.arch, node: process.version, cases: [],
+  platform: process.platform, arch: process.arch, node: process.version, cases: [], diagnostics: {},
   disclaimer: 'Native trace evidence is a qualification candidate, not production admission or source-binary equivalence.' };
 mkdirSync(evidence, { recursive: true });
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
@@ -46,19 +46,43 @@ function assertPackage(archive) {
   }
 }
 
+function powerShellBaseline(env) {
+  const directory = join(evidence, 'cases', 'positive-child-control');
+  mkdirSync(directory, { recursive: true });
+  const powershell = join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const startedAt = new Date();
+  report.diagnostics.powerShellBaseline = { executable: powershell, startedAt: startedAt.toISOString(), state: 'running' };
+  save();
+  const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-Command',
+    "[Console]::Out.Write('baseline-ready')"],
+  { env, cwd: directory, encoding: 'utf8', timeout: 75000, maxBuffer: 1_048_576 });
+  writeFileSync(join(directory, 'baseline-stdout.txt'), invocation.stdout ?? '');
+  writeFileSync(join(directory, 'baseline-stderr.txt'), invocation.stderr ?? '');
+  report.diagnostics.powerShellBaseline = {
+    executable: powershell, startedAt: startedAt.toISOString(), endedAt: new Date().toISOString(),
+    elapsedMs: Date.now() - startedAt.getTime(), status: invocation.status,
+    error: invocation.error?.message ?? null,
+    outputMatched: invocation.status === 0 && invocation.stdout === 'baseline-ready',
+  };
+  save();
+}
+
 function launchCase(name, executable, cwd, args, env, archive, options = {}) {
   const directory = join(evidence, 'cases', name);
   mkdirSync(directory, { recursive: true });
+  const stagePath = join(directory, 'launcher-stages.tsv');
   const spec = { executable, cwd, args, stdout: join(directory, 'stdout.bin'),
     stderr: join(directory, 'stderr.bin'), trace: join(directory, 'debug.tsv'),
     timeoutMs: options.timeoutMs ?? 15000 };
   writeFileSync(join(directory, 'spec.json'), `${JSON.stringify(spec, null, 2)}\n`);
   const powershell = join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-File',
-    join(root, 'windows-startup-trace.ps1'), '-SpecPath', join(directory, 'spec.json')],
+    join(root, 'windows-startup-trace.ps1'), '-SpecPath', join(directory, 'spec.json'), '-StagePath', stagePath],
   { env, cwd: directory, encoding: 'utf8', timeout: 75000, maxBuffer: 1_048_576 });
-  const result = { name, executable, cwd, args, spec: spec.trace, tracerStatus: invocation.status,
-    tracerError: invocation.error?.message ?? null, trace: [], reasons: [] };
+  const result = { name, executable, cwd, args, spec: spec.trace, stagePath,
+    tracerStatus: invocation.status, tracerError: invocation.error?.message ?? null,
+    stages: existsSync(stagePath) ? readFileSync(stagePath, 'utf8').slice(0, 8192) : null,
+    trace: [], reasons: [] };
   writeFileSync(join(directory, 'launcher-stdout.txt'), invocation.stdout ?? '');
   writeFileSync(join(directory, 'launcher-stderr.txt'), invocation.stderr ?? '');
   try {
@@ -228,6 +252,7 @@ async function main() {
     evidence: 'Pinned Git queried core.fsmonitor through the private global include without executing its value; other config canaries are unexercised decoys.' });
   save();
 
+  powerShellBaseline(env);
   const positive = launchCase('positive-child-control', env.ComSpec, work,
     ['/d', '/c', env.ComSpec, '/d', '/c', 'exit', '0'],
     env, null, { expectChild: true, expectedChildImage: env.ComSpec, expectedExit: 0, expectedNoOutput: true });
@@ -303,7 +328,8 @@ async function main() {
   tamperRefusal(tsArchive, 'package/lib/tsc.exe');
   tamperRefusal(tsArchive, 'package/lib/lib.es5.d.ts');
   assertPackage(gitArchive); assertPackage(tsArchive);
-  report.status = report.cases.every((item) => item.status === 'passed') ? 'native-spike-passed-review-required' : 'failed';
+  report.status = report.diagnostics.powerShellBaseline.outputMatched &&
+    report.cases.every((item) => item.status === 'passed') ? 'native-spike-passed-review-required' : 'failed';
   save();
   if (report.status === 'failed') process.exitCode = 1;
 }

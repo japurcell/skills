@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -135,8 +136,15 @@ public static class WindowsStartupTrace
         File.AppendAllText(trace, kind + "\t" + pid + "\t" + encoded + "\n", Encoding.UTF8);
     }
 
-    public static int Main(string[] args)
+    private static void Stage(string path, string label)
     {
+        File.AppendAllText(path, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture) + "\t" + label + "\n",
+            new UTF8Encoding(false));
+    }
+
+    public static int Main(string[] args, string stagePath)
+    {
+        Stage(stagePath, "native-entry");
         if (IntPtr.Size != 8 || args.Length < 6)
         {
             Console.Error.WriteLine("x64 and six fixed launcher arguments required");
@@ -151,7 +159,9 @@ public static class WindowsStartupTrace
         if (!int.TryParse(args[5], out timeoutMs) || timeoutMs < 100 || timeoutMs > 60000) return 2;
         var commandLine = new StringBuilder(Quote(executable));
         for (int i = 6; i < args.Length; i++) commandLine.Append(' ').Append(Quote(args[i]));
+        Stage(stagePath, "trace-create-start");
         File.WriteAllText(tracePath, "", Encoding.UTF8);
+        Stage(stagePath, "trace-create-end");
         IntPtr input = IntPtr.Zero;
         ProcessInformation process = new ProcessInformation();
         var live = new Dictionary<int, IntPtr>();
