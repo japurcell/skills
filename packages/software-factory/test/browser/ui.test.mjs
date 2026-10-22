@@ -127,6 +127,56 @@ test('Follow refreshes frozen run cards before reporting Connected', async () =>
   } finally {await browser.close();await f.dispose();}
 });
 
+test('route replay remains catching up until its saved card projection completes', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let releaseIndex,enteredIndex,releaseCard,enteredCard;
+  const heldIndex=new Promise(resolve=>{releaseIndex=resolve}),interceptedIndex=new Promise(resolve=>{enteredIndex=resolve});
+  const heldCard=new Promise(resolve=>{releaseCard=resolve}),interceptedCard=new Promise(resolve=>{enteredCard=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const stale=f.store.readRuns({after:0,limit:30});
+    await page.route(url=>url.pathname==='/api/runs'&&url.searchParams.get('after')==='0',async route=>{enteredIndex();await heldIndex;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});});
+    await page.route(url=>url.pathname===`/api/runs/${f.run.id}`,async route=>{enteredCard();await heldCard;await route.continue();});
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click({noWaitAfter:true});
+    await interceptedIndex;
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    releaseIndex();
+    await interceptedCard;
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'connecting');
+    assert.equal(await page.locator('.run-card .status').innerText(),'Running');
+    releaseCard();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    assert.equal(await page.locator('.run-card .status').innerText(),'Failed');
+  } finally {releaseIndex?.();releaseCard?.();await browser.close();await f.dispose();}
+});
+
+test('Freeze owns a card projection already waiting on saved data', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve}),intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const pinned=await page.locator('#connection').innerText();
+    await page.route(url=>url.pathname===`/api/runs/${f.run.id}`,async route=>{entered();await held;await route.continue();});
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    await intercepted;
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    release();
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator('.run-card .status').innerText(),'Running');
+    const pinnedCursor=pinned.match(/cursor (\d+)/)?.[1];assert.ok(pinnedCursor);
+    assert.equal(await page.locator('#connection').innerText(),'Frozen at saved cursor '+pinnedCursor);
+    assert.equal(await page.getByRole('button',{name:'Follow latest events'}).getAttribute('aria-pressed'),'true');
+    await page.getByRole('button',{name:'Follow latest events'}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    assert.equal(await page.locator('.run-card .status').innerText(),'Failed');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
 test('Connected waits for an index event committed during a held Follow snapshot', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
   let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
@@ -191,6 +241,42 @@ test('a slower same-route reload cannot replace a newer committed projection', a
     assert.equal(await page.locator(`.capture-list [data-id="${capture.id}"]`).count(),1);
     assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),1);
   } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('an older Back reader restore cannot resume SSE during a newer same-route snapshot', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let releaseRestore,enteredRestore,releaseSnapshot,enteredSnapshot;
+  const heldRestore=new Promise(resolve=>{releaseRestore=resolve}),interceptedRestore=new Promise(resolve=>{enteredRestore=resolve});
+  const heldSnapshot=new Promise(resolve=>{releaseSnapshot=resolve}),interceptedSnapshot=new Promise(resolve=>{enteredSnapshot=resolve});
+  try {
+    const first=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.locator(`.capture-list [data-id="${first.id}"]`).click();
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.route(url=>url.pathname.endsWith(`/captures/${first.id}`)&&url.searchParams.get('after')==='0',async route=>{enteredRestore();await heldRestore;await route.continue();});
+    await page.goBack();
+    await interceptedRestore;
+    assert.equal(await page.getByText('Saved outputs and traces',{exact:true}).locator('..').getAttribute('open'),'');
+    const staleDetail=f.store.readHistory(f.invocation.id,{limit:50});
+    const staleEvents=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:200});
+    let requests=0;
+    const stall=async(route,body)=>{if(++requests===2)enteredSnapshot();await heldSnapshot;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});};
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}`&&url.searchParams.has('afterAttempt'),route=>stall(route,staleDetail));
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}/events`&&url.searchParams.get('tail')==='1',route=>stall(route,staleEvents));
+    await page.locator('.controls a.chip').first().click({noWaitAfter:true});
+    await interceptedSnapshot;
+    assert.equal(await page.getByText('Saved outputs and traces',{exact:true}).locator('..').getAttribute('open'),'');
+    releaseRestore();
+    await page.waitForTimeout(150);
+    const second=await f.store.createCapture({invocationId:f.invocation.id,channel:'stderr'});
+    await page.waitForTimeout(100);
+    releaseSnapshot();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.locator(`.capture-list [data-id="${second.id}"]`).waitFor({timeout:3000});
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),2);
+  } finally {releaseRestore?.();releaseSnapshot?.();await browser.close();await f.dispose();}
 });
 
 test('failed run and invocation page requests leave the previous page selected', async () => {
@@ -401,6 +487,24 @@ test('nested native identities, instant timing, and Back reading position surviv
   } finally {await browser.close();await f.dispose();}
 });
 
+test('Back restores a reading position after a long pause before breadcrumb navigation', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:860,height:500}});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+    await page.waitForTimeout(1700);
+    const before=await page.evaluate(()=>window.scrollY);
+    assert.ok(before>0);
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.goBack();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(top=>window.scrollY===top,before,{timeout:2000});
+    assert.equal(await page.evaluate(()=>window.scrollY),before);
+  } finally {await browser.close();await f.dispose();}
+});
+
 test('a collapsed ancestor continues hiding descendants on later session pages', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:860,height:650}});
@@ -535,6 +639,75 @@ test('open stdout follows committed text without replacing focused controls or e
     assert.equal(await page.locator('#capture-text').innerText(),'first line\nsecond line\nthird line\n');
     await page.locator('#capture-text').evaluate(element=>{window.getSelection()?.removeAllRanges();element.scrollTop=element.scrollHeight;element.dispatchEvent(new Event('scroll',{bubbles:true}))});
     await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('fourth line'));
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('connected cursor waits for an open capture text projection', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve}),intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const output=await recorder.openCapture({channel:'stdout'});
+    await output.write('first line\n');await recorder.barrier();
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.getByRole('button',{name:/stdout/}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.route(url=>url.pathname.endsWith('/captures/'+output.id)&&url.searchParams.get('after')==='1',async route=>{entered();await held;await route.continue();});
+    await output.write('second line\n');await recorder.barrier();
+    const appended=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await intercepted;
+    assert.equal(await page.locator('#capture-text').innerText(),'first line\n');
+    assert.equal((await page.locator('#connection').innerText()).includes('cursor '+appended.cursor),false);
+    release();
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent?.includes('cursor '+cursor),appended.cursor);
+    assert.match(await page.locator('#capture-text').innerText(),/second line/);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('a failed open capture read disconnects until replay projects its text', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release;const held=new Promise(resolve=>{release=resolve});
+  try {
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const output=await recorder.openCapture({channel:'stdout'});
+    await output.write('first line\n');await recorder.barrier();
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.getByRole('button',{name:/stdout/}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    let reads=0;
+    await page.route(url=>url.pathname.endsWith('/captures/'+output.id)&&url.searchParams.get('after')==='1',async route=>{
+      if(++reads===1)await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'temporary read failure'})});
+      else {await held;await route.continue();}
+    });
+    await output.write('second line\n');await recorder.barrier();
+    const appended=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Disconnected'));
+    assert.equal(await page.locator('#capture-text').innerText(),'first line\n');
+    release();
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent?.includes('cursor '+cursor),appended.cursor);
+    assert.match(await page.locator('#capture-text').innerText(),/second line/);
+    assert.ok(reads>=2);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('live capture filling a summary page advances its Next anchor', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    for(let index=0;index<49;index++)await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const fiftieth=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.locator(`.capture-list [data-id="${fiftieth.id}"]`).waitFor();
+    const fiftyFirst=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.getByRole('button',{name:'Next captures'}).click();
+    await page.locator(`.capture-list [data-id="${fiftyFirst.id}"]`).waitFor();
+    assert.equal(await page.locator(`.capture-list [data-id="${fiftieth.id}"]`).count(),0);
   } finally {await browser.close();await f.dispose();}
 });
 
