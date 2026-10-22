@@ -49,7 +49,10 @@ try {
     ]);
   }
   run('store', ['scripts/test.mjs', 'store']);
-  run('placement', ['--test', 'test/placement.test.mjs']);
+  const placementPassed = run('placement', ['--test', 'test/placement.test.mjs']);
+  if (process.platform === 'darwin' && !placementPassed) {
+    run('filesystem-diagnostic', ['scripts/qualification-filesystem.mjs']);
+  }
   run('ci-contract', ['--test', 'qualification/ci.test.mjs']);
   run('runtime-tests', ['scripts/test.mjs', 'qualification', '--area', 'runtime']);
   // Keep direct structured native storage proof separate from test-runner output.
