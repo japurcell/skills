@@ -35,8 +35,9 @@ CANCELLED_AT = None
 INSPECTOR = None
 PROCESS_BYTES = 1024 * 1024
 CLEANUP_SECONDS = 2.0
-# Observation may use half the cleanup envelope; escalation and reaping share
-# its remaining absolute deadline rather than multiplying independent waits.
+# Ordinary observation uses half the cleanup envelope. During shutdown, a
+# frozen graph query shares the remaining absolute cleanup deadline instead
+# of failing an otherwise feasible shutdown at an independent stage cutoff.
 PROCESS_SECONDS = CLEANUP_SECONDS / 2
 REAP_SECONDS = 0.1
 # Native confirmation, exact-child reaps and ordinary temporary teardown share
@@ -184,7 +185,7 @@ def process_snapshot(*, deadline=None, interruptible=True):
         # Observation includes process startup. Cleanup supplies its own absolute
         # deadline; ordinary observations share the invocation's remaining time.
         deadline = DEADLINE if deadline is None else deadline
-        allowance = PROCESS_SECONDS
+        allowance = PROCESS_SECONDS if interruptible else CLEANUP_SECONDS
         if deadline is not None:
             allowance = max(0, min(allowance, deadline - started - (REAP_SECONDS if interruptible else FINALIZE_SECONDS)))
         try:
@@ -1086,7 +1087,7 @@ def failure_action(reason):
     if reason == "bounded_descendant_cleanup_unavailable":
         return "Run verification on a supported POSIX host with process-observation access."
     if reason.startswith("process_observation_"):
-        return "Restore /bin/ps and supported native identity access with responsive numeric metadata within the 1-second observation allowance, then rerun --check."
+        return "Restore /bin/ps and supported native identity access with responsive numeric metadata within the reported observation allowance, then rerun --check."
     if reason == "process_cleanup_incomplete":
         return "Stop remaining verifier-owned children and restore process-observation access before retrying --check."
     if reason == "descendant_limit":

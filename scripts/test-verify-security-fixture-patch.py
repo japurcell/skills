@@ -601,22 +601,29 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=(), timings=None):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=(), timings=None, trigger_delay=False, next_observation=None):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
         git_started = self.base / "observer-git-started"
         child = ("import os,sys,time\ntime.sleep(" + repr(delay) + ")\n"
                  "os.execv('/bin/ps', ['/bin/ps', *sys.argv[1:]])\n")
+        pause_delay = "time.sleep(" + repr(delay) + ")\n"
+        pause_settle = "time.sleep(" + repr(settle) + ")\n"
         if seen is not None:
+            if trigger_delay:
+                self.assertIsNotNone(trigger)
+                pause_delay = "time.sleep(" + repr(delay) + " if delayed else 0)\n"
+                pause_settle = "time.sleep(" + repr(settle) + " if delayed else 0)\n"
             child = ("import os,sys,time,subprocess\nfrom pathlib import Path\n"
-                "time.sleep(" + repr(delay) + ")\n"
+                "delayed = " + ("Path(" + repr(str(trigger)) + ").exists()" if trigger_delay else "True") + "\n"
+                + pause_delay +
                 "raw = subprocess.check_output(['/bin/ps', *sys.argv[1:]])\n"
                 "for marker_name, seen_name in " + repr([(str(after), str(seen)), *[(str(a), str(s)) for a, s in descendants]]) + ":\n"
                 " marker = Path(marker_name)\n"
                 " if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
                 "  Path(seen_name).touch()\n"
-                "time.sleep(" + repr(settle) + ")\nos.write(1, raw)\n")
+                + pause_settle + "os.write(1, raw)\n")
         timing_source = ""
         if timings is not None:
             # Fixed numeric events only. Each write is short and the diagnostic
@@ -626,12 +633,12 @@ class PreflightTests(unittest.TestCase):
                 "def timing(stage,pid=None,at=None):\n"
                 " if os.fstat(timing_fd).st_size<16000:\n"
                 "  os.write(timing_fd,(json.dumps({'pid':os.getpid() if pid is None else pid,'stage':stage,'at':time.monotonic() if at is None else at})+'\\n').encode())\n")
-            child = child.replace("time.sleep(" + repr(delay) + ")\n",
-                "timing('delay_started')\ntime.sleep(" + repr(delay) + ")\ntiming('delay_finished')\n", 1)
+            child = child.replace(pause_delay,
+                "timing('delay_started')\n" + pause_delay + "timing('delay_finished')\n", 1)
             child = child.replace("raw = subprocess.check_output(", "timing('snapshot_started')\nraw = subprocess.check_output(")
             child = child.replace("for marker_name, seen_name in ", "timing('snapshot_finished')\nfor marker_name, seen_name in ")
-            child = child.replace("time.sleep(" + repr(settle) + ")\n",
-                "timing('return_delay_started')\ntime.sleep(" + repr(settle) + ")\ntiming('return_delay_finished')\n", 1)
+            child = child.replace(pause_settle,
+                "timing('return_delay_started')\n" + pause_settle + "timing('return_delay_finished')\n", 1)
             child = child.replace("os.write(1, raw)", "timing('delivery_started')\nos.write(1, raw)\ntiming('delivery_finished')")
             child = timing_source + "timing('child_entered')\n" + child
         wrapper.write_text(timing_source + "import subprocess,runpy,sys\nfrom pathlib import Path\n"
@@ -642,12 +649,14 @@ class PreflightTests(unittest.TestCase):
             "  observations += 1\n"
             "  if observations <= " + repr(first) + " or (" + repr(str(after)) +
             " != 'None' and Path(" + repr(str(after)) + ").exists() and (" + repr(str(trigger)) +
-            " == 'None' or Path(" + repr(str(trigger)) + ").exists()) and (" + repr(str(until)) +
+            " == 'None' or " + repr(trigger_delay) + " or Path(" + repr(str(trigger)) + ").exists()) and (" + repr(str(until)) +
             " == 'None' or not Path(" + repr(str(until)) + ").exists())):\n"
             "   command = [sys.executable, '-I', '-S', '-B', '-c', " + repr(child) + ", *command[1:]]\n"
             + ("  launch_started=time.monotonic()\n" if timings is not None else "") +
             "  process = real(command,*args,**kwargs)\n"
-            + ("  timing('parent_launch_started',process.pid,launch_started)\n"
+            + ("  if Path(" + repr(str(seen)) + ").exists(): Path(" + repr(str(next_observation)) + ").touch()\n"
+               if next_observation is not None else "") +
+            ("  timing('parent_launch_started',process.pid,launch_started)\n"
                "  timing('parent_launch_completed',process.pid)\n"
                "  real_poll=process.poll;real_wait=process.wait;acknowledged=[False]\n"
                "  def received(code):\n"
@@ -894,7 +903,14 @@ class PreflightTests(unittest.TestCase):
     def test_cancellation_during_metadata_return_shares_cleanup_deadline(self):
         self.assert_resistant_session_cleanup(0.3, settle=0.55)
 
-    def assert_resistant_session_cleanup(self, delay, *, settle=0):
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cleanup_observation_uses_remaining_shared_shutdown_budget(self):
+        # The next ordinary observer launch acknowledges that the earlier
+        # snapshot containing the child was consumed before cancellation.
+        # Only the required fresh cleanup graph carries the 1.0-second delay.
+        self.assert_resistant_session_cleanup(0.3, settle=0.7, delayed_cleanup=True)
+
+    def assert_resistant_session_cleanup(self, delay, *, settle=0, delayed_cleanup=False):
         active = self.active_copy("slow-observer-cancel")
         marker = self.base / 'slow-observer-child'
         observed = self.base / 'child-observed-before-setsid'
@@ -912,7 +928,11 @@ class PreflightTests(unittest.TestCase):
             "time.sleep(60)\n")
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
         timings = self.base / 'delayed-return-observer-timings.jsonl' if settle else None
-        wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed, settle=settle, timings=timings)
+        trigger = self.base / 'delay-cleanup-observer' if delayed_cleanup else None
+        next_observation = self.base / 'child-snapshot-consumed' if delayed_cleanup else None
+        wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed,
+            settle=settle, timings=timings, trigger=trigger, trigger_delay=delayed_cleanup,
+            next_observation=next_observation)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -922,11 +942,14 @@ class PreflightTests(unittest.TestCase):
                     '--check', '--json', '--no-input'], cwd=self.repo, env=self.env,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
                 deadline = time.monotonic() + 6
-                while not ready.exists() and time.monotonic() < deadline and process.poll() is None:
+                while (not ready.exists() or next_observation is not None and not next_observation.exists()) and time.monotonic() < deadline and process.poll() is None:
                     time.sleep(0.02)
                 if marker.exists():
                     child = int(marker.read_text())
                 self.assertTrue(ready.exists(), 'real scanner child did not change session after metadata observation')
+                if next_observation is not None:
+                    self.assertTrue(next_observation.exists(), 'normal observer did not acknowledge the known child')
+                    trigger.touch()
                 started = time.monotonic()
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)
