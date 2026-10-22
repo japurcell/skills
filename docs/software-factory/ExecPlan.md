@@ -12,22 +12,22 @@ No durable workflow engine, checkpoint replay, factory task scheduler, per-task/
 
 ## Progress
 
-Implementation is underway on `codex/research-agentic-workflow-prototypes`, initially clean. T1 is verified. T2 local macOS and hosted Linux/macOS foundation probes pass; Windows has recorded native failures under repair. T3 and T4 are verified locally, including their composed failure proof. T2-CI automation is integrated and was pushed with explicit user approval; hosted Linux/macOS passed while Windows repair remains open. T5 foreground invocation is in independent-review repair before integration. Milestone acceptance requires actual recorded evidence.
+Implementation is underway on `codex/research-agentic-workflow-prototypes`. Milestones 1 and 2 are verified. Hosted run `39719540444` passes Linux/Windows/macOS foundation qualification. T5 current-script command invocation is reviewed and integrated at `defbb099`; 69 registered local checks pass after CLI/registry integration. T6 shutdown/manual clearance is the current frontier. A separately observed macOS hook cleanup regression has isolated repair ownership. Remaining milestone acceptance requires actual recorded evidence.
 
 - [x] (2026-10-21) [milestone-1] T1: Established isolated package, fake harness/Git fixtures, explicit test dispatch and development CLI contract; six fixture tests pass.
 - [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
 - [x] (2026-10-21) [milestone-1] T2-CI: Integrated reviewed Linux/Windows/macOS Actions and failure reports at `764f559b`; actionlint and local integrated foundation checks pass.
 - [x] (2026-10-21) [milestone-1] T2-CI: User authorized push and qualification; hosted run `39718601088` passed Linux x64 and macOS arm64 foundation jobs.
 - [x] (2026-10-21) [milestone-1] T2-CI-repair: Integrated independently reviewed Git fixture isolation and bounded qualifier contention fixes at `7ae5f2da`; typecheck/build and 41 registered foundation checks pass locally.
-- [ ] [milestone-1] T2-CI-repair: Push the reviewed repair and obtain passing native Windows evidence, retaining all three target results.
+- [x] (2026-10-21) [milestone-1] T2-CI-repair: Pushed reviewed repair; hosted run `39719540444` passes Linux x64, Windows x64 and macOS arm64 foundation jobs at `5464dfd8`.
 - [x] (2026-10-21) [milestone-1] T2: Native Linux x64 pinned-runtime storage and foundation checks pass in hosted run `39718601088`.
-- [ ] [milestone-1] T2: Complete Windows qualification; direct storage probe passed but fixture/cancellation failures prevent acceptance.
+- [x] (2026-10-21) [milestone-1] T2: Windows pinned-runtime foundation checks pass, including native placement, write-failure and cooperative qualifier cleanup; product lifecycle remains T6/T17.
 - [x] (2026-10-21) [milestone-1] Verified local build, six fixture checks and two storage/cancellation probes against v24.22.1.
-- [ ] [milestone-1] Verify combined build/probes on remaining native targets.
+- [x] (2026-10-21) [milestone-1] Combined build, storage/capture and qualifier probes pass on all three hosted targets; exact evidence is retained in `qualification/native-results-2026-10-21.md`.
 - [x] (2026-10-21) [milestone-2] T3: Implemented transactional history, ownership and accounting. Eleven public store tests pass, including separate-process races and crash recovery; independent review repairs are verified.
 - [x] (2026-10-21) [milestone-2] T4: Integrated reviewed bounded capture at `676ba5f1`; fifteen capture tests and adversarial escaped-secret probes pass.
 - [x] (2026-10-21) [milestone-2] Combined proof on base: recorder failure under a competing SQLite write lock stops pending admission, retains one charged correction/occupied scope, and preserves committed filtered streams. All 27 store/capture/integration tests pass.
-- [ ] [milestone-3] T5: Deliver worktree preparation, one build, and command-only workflow execution.
+- [x] (2026-10-21) [milestone-3] T5: Reviewed and integrated claimed worktree preparation, one build, command workflows and bounded history at `defbb099`; all 28 public startup cases and 69 registered integrated checks pass.
 - [ ] [milestone-3] T6: Deliver finalization, interruption, and exact-claim manual clearance.
 - [ ] [milestone-3] Verify interrupted work, retained allowances, and explicit fresh follow-up together.
 - [ ] [milestone-4] T7: Deliver profile resolution and adapter conformance fixtures.
@@ -46,6 +46,7 @@ Implementation is underway on `codex/research-agentic-workflow-prototypes`, init
 - [ ] [milestone-9] T15: Deliver skill installation and shared dependency environment.
 - [ ] [milestone-9] T16: Deliver forward maintenance, uninstall, and selected cleanup in bounded operation tasks.
 - [ ] [milestone-9] Verify installed startup/maintenance exclusion and interrupted operations together.
+- [ ] [milestone-10] T17-regression: Repair observed macOS hook cleanup overrun from run `39718600966` without weakening its two-second deadline or identity/leak assertions; independent private worker owns the bounded repair.
 - [ ] [milestone-10] T17: Complete native support matrix and integrated release acceptance.
 - [ ] [milestone-10] T17-desktop: Run the deferred live desktop notification qualification after all implementation tasks.
 - [ ] [milestone-10] Verify packaged behavior and repository regressions; record remaining unsupported combinations.
@@ -54,7 +55,7 @@ Implementation is underway on `codex/research-agentic-workflow-prototypes`, init
 
 T1 exposed the root NuGet ignore rule `**/[Pp]ackages/*`; an explicit authored-package exception now keeps factory source visible while package-local ignores exclude dependencies and generated output. The referenced `.agents/instructions/INDEX.md` is absent, so current brain testing routes supply repository guidance.
 
-T5 independent review reproduced premature success when a workflow does not await `needsInput`, `progress`, `agent` or a delayed `scope` callback. Command-only promise tracking is insufficient: every asynchronous context operation must participate in invocation lifetime before final history or claim release. Review also reproduced wrong-repository selection from trimming opaque Git path whitespace and unbounded history capture materialization. The original four review findings now pass their public E2E reproductions in the worker tree (57 tests). Re-review found that sticky required failures also blocked intended advisory-check corrections. T5 must add the explicit advisory result path and retain required/infrastructure failure precedence before acceptance.
+T5 independent review reproduced premature success when a workflow does not await `needsInput`, `progress`, `agent` or a delayed `scope` callback. Command-only promise tracking is insufficient: every asynchronous context operation must participate in invocation lifetime before final history or claim release. Review also reproduced wrong-repository selection from trimming opaque Git path whitespace and unbounded history capture materialization. All five findings are now repaired and independently re-reviewed: explicit advisory results preserve actual failed attempts while required and infrastructure failures remain terminal. The integrated 28 startup cases cover these regressions; the complete registered local set passes 69 checks.
 
 Independent T1/T2 review reproduced SIGTERM leaving a SQLite qualification worker alive. Signal cleanup and worker IPC-disconnect handling now stop owned workers; public subprocess checks verify exits 130/143, dead workers and removed disposable directories. The reviewer approved the bounded foundation after repair.
 
@@ -85,7 +86,7 @@ No native adapter, notification helper, large SQLite stress, SSE performance, or
 
 The accepted baseline has been translated into this self-contained delivery plan. Routine paths, module responsibilities, command shapes, dependencies, qualification gates, and task boundaries are specified. Authoring created no runtime artifacts. Implementation now adds the development package and dependencies; a verified runtime archive was extracted only into a temporary directory. No release or native registration was created. No new consequential product choice was needed during authoring. Native feasibility may later require a decision if an accepted requirement cannot be honored without expanding scope.
 
-Execution is authorized. T1 is complete and T2 local storage prerequisites are verified. T3 storage and T4 capture are verified with a combined base proof. Reviewed CI automation is integrated; hosted Linux/macOS passed and Windows recorded fixture/cancellation failures. T5 invocation remains in review repair; Windows and integrated release qualification remain pending. Development acceptance remains unmet until verification. Missing native targets remain visible qualification gates.
+Execution is authorized. Milestones 1 and 2 are verified, including native foundation qualification on all three targets. T5 is reviewed and integrated with 69 local checks passing. Worktree isolation, one current build, explicit advisory results and bounded history now work in disposable command-only fixtures. T6 still owns shutdown, signals, peer interruption and exact-claim manual clearance; no milestone-3 or release acceptance is claimed. Provider, dashboard, desktop and installed-product work remain ahead.
 
 ## Context and Orientation
 
@@ -143,8 +144,8 @@ Workflow result payload schemas remain workflow-specific. Shared needs-input env
 Tasks below form the development dependency graph. Each task consumes the inline behavioral contract and named predecessor artifacts. Stop at its stated outcome; passing component tests alone does not meet milestone acceptance. Shared store/schema, CLI/package files, test registry and release manifest edits must be serialized even for otherwise independent tasks. No agents or tasks are dispatched by creating this plan.
 
 ### Milestone 1: Reproducible development and runtime feasibility
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### T1: Package and fixture boundary
 
@@ -274,13 +275,13 @@ Run the complete local deterministic suite, browser suite, native qualification,
 
 ## Concrete Steps
 
-**Current next action: finish T5 explicit advisory-check results, re-review and integrate invocation startup, then implement T6 shutdown/manual clearance.** T2-CI workflows are integrated and pushed with user authorization; hosted Linux/macOS passed and Windows repair is integrated at `7ae5f2da` and locally verified. Push that repair for a native rerun while T5 advisory-result repair continues, then integrate and run its composed proof. Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
+**Current next action: implement T6 bounded shutdown, native identity limits and exact-claim manual clearance after verified T5.** Native foundation run `39719540444` passes all three targets. A separate private worker repairs the observed macOS hook cleanup regression from run `39718600966`, where resistant-child cancellation took 2.213 seconds against its unchanged two-second limit. The user's repository instructions require repairing observed test failures even when unrelated; this repair does not block independent T6 work. Commands below remain expected instructions unless evidence is recorded.
 
 Completed T1 setup: the package and lockfile exist, with development dependencies explicitly installed using `npm ci --ignore-scripts`. Repeat setup only when needed with `rtk proxy npm --prefix packages/software-factory ci --ignore-scripts`; startup never installs. Typecheck/build commands now produce `packages/software-factory/dist/cli.js`. Exact dependency versions are in the lockfile.
 
-Observed T1/T2 evidence (2026-10-21): `rtk proxy python3 scripts/test-software-factory.py --suite fixtures` passed typecheck, build and six fixture/CLI checks. `rtk proxy python3 scripts/test_test_all.py` passed 14 checks. The official darwin-arm64 archive SHA256 matched the downloaded release checksum list; extracted v24.22.1 reports SQLite 3.53.4. Pinned-runtime `run test:qualification -- --area runtime` passed. See `packages/software-factory/qualification/runtime.md` for exact commands, metrics and native limitations. `run test:all` fails at the first unimplemented suite (now `lifecycle`); aggregate acceptance remains unmet. T3 verification: pinned-runtime `rtk proxy python3 scripts/test-software-factory.py --suite store` passed typecheck/build and eleven store tests. Public cross-process tests cover final slot/allowance, worktree/dashboard/maintenance exclusion, and process loss before/after admission. Independent review reproduced two post-clearance recovery bugs; fresh follow-up now accepts cleared unknown outcomes, and stale settlement cannot resurrect occupancy. Both repairs passed independent re-review. Native process inspection remains T6, not a claim of T3.
+Observed T1/T2 evidence (2026-10-21): `rtk proxy python3 scripts/test-software-factory.py --suite fixtures` passed typecheck, build and six fixture/CLI checks. `rtk proxy python3 scripts/test_test_all.py` passed 14 checks. The official darwin-arm64 archive SHA256 matched the downloaded release checksum list; extracted v24.22.1 reports SQLite 3.53.4. Pinned-runtime `run test:qualification -- --area runtime` passed. See `packages/software-factory/qualification/runtime.md` for exact commands, metrics and native limitations. `run test:all` fails at the first unimplemented suite (now `adapters`); aggregate acceptance remains unmet. T3 verification: pinned-runtime `rtk proxy python3 scripts/test-software-factory.py --suite store` passed typecheck/build and eleven store tests. Public cross-process tests cover final slot/allowance, worktree/dashboard/maintenance exclusion, and process loss before/after admission. Independent review reproduced two post-clearance recovery bugs; fresh follow-up now accepts cleared unknown outcomes, and stale settlement cannot resurrect occupancy. Both repairs passed independent re-review. Native process inspection remains T6, not a claim of T3.
 
-Observed T4 integration evidence: clean worker branch `codex/factory-capture` rebased without changes and fast-forwarded onto base at `676ba5f1`. Pinned-runtime `rtk proxy python3 scripts/test-software-factory.py --suite store` passed typecheck/build and all 27 registered storage/capture/composed tests. Capture documentation is `packages/software-factory/qualification/capture.md`; schema is now version 2 and older stores require explicit future maintenance. No automatic migration ran. Local milestone-2 acceptance is met; Linux/Windows and final native release acceptance remain unmet.
+Observed T4 integration evidence: clean worker branch `codex/factory-capture` rebased without changes and fast-forwarded onto base at `676ba5f1`. Pinned-runtime `rtk proxy python3 scripts/test-software-factory.py --suite store` passed typecheck/build and all 27 registered storage/capture/composed tests. Capture documentation is `packages/software-factory/qualification/capture.md`; schema is now version 2 and older stores require explicit future maintenance. No automatic migration ran. Milestone-2 acceptance is met; its foundation suite also passes on all three hosted targets at `5464dfd8`. Final native product/release acceptance remains unmet.
 
 For each verification shorthand `run NAME` above, execute `rtk proxy npm --prefix packages/software-factory run NAME` from repository root, appending supplied `--` options. T1's test dispatch must forward filters consistently and fail when a selected suite/provider/operation has no tests. `test:all` runs deterministic and browser tests; `test:qualification` is explicitly separate because it requires native machines, credentials/desktop access and potentially paid harmless calls. Do not run live qualification without its prerequisites and authorization.
 
@@ -319,4 +320,4 @@ For this plan, the historical research snapshot is retained unchanged except its
 - Accepted baseline: [final specification acceptance](tickets/specification-readiness-and-acceptance.md#resolution), [decision map](map.md), [lifecycle mechanisms](lifecycle-specification.md), [detailed UI](observability-ui-specification.md).
 - Visual reference only: [accepted prototype](prototypes/observability-prototype.html). Synthetic browser checks do not establish runtime performance, native behavior, accessibility certification or SSE correctness.
 - Historical records: [research plan snapshot](ExecPlan.history-2026-10-20.md) retains completed research/prototype evidence and superseded recommendations. It is not an execution dependency.
-- Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2, T3 and T4 are verified; CI automation is integrated and T5 is in review repair; Windows/native release acceptance remains unmet.
+- Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2, T3 and T4 are verified; CI and T5 are integrated; T6 and the isolated hook regression repair are current. Native product/release acceptance remains unmet.

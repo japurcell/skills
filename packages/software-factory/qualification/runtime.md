@@ -4,7 +4,7 @@
 
 On 2026-10-21, selected Node v24.22.1 LTS from its [official release](https://nodejs.org/en/blog/release/v24.22.1). `runtime-manifest.json` records exact platform URLs and SHA256 values from the [versioned checksum list](https://nodejs.org/download/release/v24.22.1/SHASUMS256.txt). Downloaded and hashed the darwin-arm64 archive before extraction into a private temporary directory. No global runtime was replaced. The extracted binary reports SQLite 3.53.4.
 
-Native evidence covers darwin-arm64, Darwin 25.6.0, APFS (`statfs` type 26). Linux and Windows artifacts have published hashes only; neither binary nor native storage behavior is qualified. The qualifier fails on unreviewed filesystems/platforms. Shared native placement detection is implemented for all three targets; Windows APIs and Linux placement still require hosted execution before qualification can pass. This is a development storage probe, not installed-product or release acceptance.
+Local evidence covers darwin-arm64, Darwin 25.6.0, APFS (`statfs` type 26). Hosted run `39719540444` at commit `5464dfd8` passed pinned runtime, storage and foundation checks on Linux x64/ext, Windows x64/NTFS and macOS arm64/APFS. Windows native volume detection, WAL write-denial and cooperative qualifier cleanup ran successfully. The qualifier fails on unknown or volatile placement. These are exact foundation claims, not installed-product or release acceptance; other accepted placement types still require their own native evidence. See [hosted results](native-results-2026-10-21.md).
 
 The [Node SQLite API](https://nodejs.org/download/release/latest-v24.x/docs/api/sqlite.html) documents synchronous database methods, busy timeout, and asynchronous page-batched backup. Its release-candidate stability classification remains a dependency limitation. [SQLite WAL](https://sqlite.org/wal.html) requires same-host storage and documents the WAL-reset race fixed before the bundled 3.53.4. No alternate backend or addon is substituted.
 
@@ -23,7 +23,7 @@ Observed probe result: WAL, FULL synchronous (`2`), foreign keys enforced, expli
 
 Process-loss probes terminate only child handles created by the qualifier in its disposable directory. They do not simulate machine power loss. Backup under concurrent mutation, native packaging/process control, other local filesystems and all installed behavior remain later qualification. Never infer platform support from the published hashes.
 
-## Native CI definition, pending hosted evidence
+## Native CI definition and hosted evidence
 
 The [foundation workflow](../../../.github/workflows/software-factory-qualification.yml) selects explicit Ubuntu24.04 x64, Windows2025 x64 and macOS15 arm64 runners. These labels are documented in the [GitHub runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners). The workflow downloads only the exact manifest URL, bounds download size/time, verifies SHA256 before extraction, and verifies the extracted Node/SQLite/platform/architecture. The official archive also integrity-pins its bundled npm. Runner images and bootstrap Node are GitHub-managed prerequisites, recorded with the evidence rather than presented as immutable images.
 
@@ -31,4 +31,4 @@ The [foundation workflow](../../../.github/workflows/software-factory-qualificat
 
 Handled cancellation remains SIGINT/SIGTERM on POSIX. On Windows, the private qualifier controller requests the same cleanup through IPC because Node's Windows kill behavior can terminate immediately. Assertions still require status130/143, stopped owned worker and removed disposable directory. The separate process-loss transaction probe uses actual native worker termination on every platform. These checks do not establish Windows console control delivery or T6 product lifecycle semantics.
 
-See [CI evidence and remaining gates](ci.md). No hosted job has run from this unpushed branch. Creating this workflow does not qualify Linux or Windows, and does not qualify installed product behavior.
+See [CI evidence and remaining gates](ci.md). Hosted run `39719540444` passed all three foundation targets after the first Windows failures were repaired. Installed product, provider, descendant-control and live desktop qualification remain later gates.

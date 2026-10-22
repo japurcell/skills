@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 // Explicit registration excludes fixtures, historical experiments and native calls from discovery.
 const groups = {
   fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
-  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [], adapters: [], workflows: [], web: [], notifications: [],
+  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }], adapters: [], workflows: [], web: [], notifications: [],
   learning: [], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
