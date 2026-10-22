@@ -1,14 +1,14 @@
 # Software factory handoff
 
-Updated: 2026-10-20. Scope: software-factory.
+Updated: 2026-10-21. Scope: software-factory.
 
 ## Goal and current status
 
-The implementation-ready specification is complete and explicitly accepted on 2026-10-20 through the [Customizable software factory map](map.md). All twenty-six tickets are closed. [Specification readiness and acceptance](tickets/specification-readiness-and-acceptance.md#resolution) records final human acceptance, scope, and remaining qualification obligations. The simpler SSSF-inspired direction remains intact. No implementation is authorized.
+The implementation-ready specification is complete and explicitly accepted on 2026-10-20 through the [Customizable software factory map](map.md). All twenty-six tickets are closed. [Specification readiness and acceptance](tickets/specification-readiness-and-acceptance.md#resolution) records final human acceptance, scope, and remaining qualification obligations. The simpler SSSF-inspired direction remains intact. Implementation is authorized by the 2026-10-21 execplan-implement invocation.
 
 ## Resume here
 
-The user authorized ExecPlan authoring on 2026-10-20. The active [ExecPlan](ExecPlan.md) now contains the self-contained accepted contract, ten open delivery milestones, bounded development tasks, dependency edges, exact proposed verification commands, and native qualification gates. No delivery task has started. Wait for a separate request before execution, installation, native experiments, or authenticated harness calls. On authorization, start with T1/T2 in that plan. Do not reopen settled decisions without a concrete conflict or explicit scope change.
+The user authorized ExecPlan authoring on 2026-10-20. The active [ExecPlan](ExecPlan.md) now contains the self-contained accepted contract, ten open delivery milestones, bounded development tasks, dependency edges, exact proposed verification commands, and native qualification gates. T1 is verified on `codex/research-agentic-workflow-prototypes`. T2 passes local macOS storage probes against hash-verified Node v24.22.1/SQLite 3.53.4; Linux/Windows remain unqualified. T3 now passes eleven public store tests, including separate-process races and crash points. Independent review repairs are verified. T4 bounded capture is next. Disposable development experiments are authorized. Plan-defined harmless provider qualification is authorized in disposable fixtures when credentials and native prerequisites are available. Real repository installation, release publication and applying learning changes remain outside implementation scope; destructive native tests require disposable machines. Do not reopen settled decisions without a concrete conflict or explicit scope change.
 
 The [detailed UI contract](observability-ui-specification.md) and [refined prototype](prototypes/observability-prototype.html) are accepted. The final review added routine learning input/result/adoption shapes in the owning [learning ticket](tickets/skill-and-prompt-improvement.md#derived-record-and-invocation-shapes-2026-10-20). No new product policy, subsystem, or support guarantee is proposed.
 

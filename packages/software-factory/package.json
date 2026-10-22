@@ -1,0 +1,27 @@
+{
+  "name": "@local/software-factory",
+  "version": "0.1.0-dev.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "24.22.1" },
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc -p qualification/tsconfig.json",
+    "build": "node scripts/build.mjs",
+    "test:fixtures": "node scripts/test.mjs fixtures",
+    "test:store": "node scripts/test.mjs store",
+    "test:lifecycle": "node scripts/test.mjs lifecycle",
+    "test:adapters": "node scripts/test.mjs adapters",
+    "test:workflows": "node scripts/test.mjs workflows",
+    "test:web": "node scripts/test.mjs web",
+    "test:notifications": "node scripts/test.mjs notifications",
+    "test:learning": "node scripts/test.mjs learning",
+    "test:maintenance": "node scripts/test.mjs maintenance",
+    "test:qualification": "node scripts/test.mjs qualification",
+    "test:all": "node scripts/test.mjs all"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

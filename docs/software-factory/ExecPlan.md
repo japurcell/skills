@@ -1,6 +1,6 @@
 # Build the accepted foreground software factory
 
-This living ExecPlan is `docs/software-factory/ExecPlan.md`, governed by `.agents/skills/exec-plans/SKILL.md`. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current together. Created 2026-10-20 from the explicitly accepted specification. **Only plan authoring is authorized now. Do not execute any implementation, experiment, installation, authenticated harness call, or release step until separately requested.**
+This living ExecPlan is `docs/software-factory/ExecPlan.md`, governed by `.agents/skills/exec-plans/SKILL.md`. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current together. Created 2026-10-20 from the explicitly accepted specification. **The user's 2026-10-21 execplan-implement invocation authorizes implementation and disposable development verification. This includes the plan-defined harmless provider qualification in disposable repositories when credentials and native prerequisites are available. Release publication, installation into real user repositories, and applying learning changes are outside this implementation authorization. Destructive native qualification requires disposable machines and must never run on this workspace.**
 
 ## Purpose / Big Picture
 
@@ -12,12 +12,14 @@ No durable workflow engine, checkpoint replay, factory task scheduler, per-task/
 
 ## Progress
 
-Plan authoring and document checks are complete; no delivery task has started. Every milestone below remains open with acceptance not met. Future workers must date and record actual evidence before checking entries.
+Implementation is underway on `codex/research-agentic-workflow-prototypes`, initially clean. T1 is verified. T2 local macOS storage probes pass; Linux/Windows native evidence remains pending. T3 is verified locally; T4 bounded capture is the current frontier. Milestone acceptance requires actual recorded evidence.
 
-- [ ] [milestone-1] T1: Establish isolated package, test fixtures, and command contract.
-- [ ] [milestone-1] T2: Qualify Node/SQLite mechanisms and record exact runtime pin.
-- [ ] [milestone-1] Verify combined build and storage probe against that pin.
-- [ ] [milestone-2] T3: Implement transactional history, claims, and accounting.
+- [x] (2026-10-21) [milestone-1] T1: Established isolated package, fake harness/Git fixtures, explicit test dispatch and development CLI contract; six fixture tests pass.
+- [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
+- [ ] [milestone-1] T2: Qualify pinned runtime on native Linux/Windows; no support is claimed for unrun targets.
+- [x] (2026-10-21) [milestone-1] Verified local build, six fixture checks and two storage/cancellation probes against v24.22.1.
+- [ ] [milestone-1] Verify combined build/probes on remaining native targets.
+- [x] (2026-10-21) [milestone-2] T3: Implemented transactional history, ownership and accounting. Eleven public store tests pass, including separate-process races and crash recovery; independent review repairs are verified.
 - [ ] [milestone-2] T4: Implement bounded capture and saved observation events.
 - [ ] [milestone-2] Verify concurrent admission and capture failures together.
 - [ ] [milestone-3] T5: Deliver worktree preparation, one build, and command-only workflow execution.
@@ -44,17 +46,23 @@ Plan authoring and document checks are complete; no delivery task has started. E
 
 ## Surprises & Discoveries
 
+T1 exposed the root NuGet ignore rule `**/[Pp]ackages/*`; an explicit authored-package exception now keeps factory source visible while package-local ignores exclude dependencies and generated output. The referenced `.agents/instructions/INDEX.md` is absent, so current brain testing routes supply repository guidance.
+
+Independent T1/T2 review reproduced SIGTERM leaving a SQLite qualification worker alive. Signal cleanup and worker IPC-disconnect handling now stop owned workers; public subprocess checks verify exits 130/143, dead workers and removed disposable directories. The reviewer approved the bounded foundation after repair.
+
 The existing `docs/software-factory/ExecPlan.md` planned completed research prototypes, not a runtime. Its unique findings and verification were preserved in `docs/software-factory/ExecPlan.history-2026-10-20.md` before replacement. Its durable-graph recommendation is historical and must not influence current requirements.
 
 Inspection on 2026-10-20 found no existing software-factory runtime package. The root publishes `skills/`, `agents/`, hooks, and installers. `scripts/install.sh:copy_skills` copies skill trees and removes evals/README/license files; the PowerShell installer documents matching behavior. Putting node_modules or development dependencies in a published skill would copy unnecessary state. Keep development source outside that bundle and package explicit release assets.
 
 `scripts/test-all.py` uses an explicit suite registry and rejects native Windows as its coordinator platform. A new focused suite must be registered; Windows requires its own direct test commands. A guessed `scripts/test-install-skills.sh` does not exist; actual installer suites are `scripts/test-install.sh` and `scripts/test-install.ps1`.
 
-No native adapter, notification helper, SQLite stress, SSE performance, or full accessibility qualification has run. Prototype browser evidence is design evidence only. The secret-scan incident remains documented in `docs/software-factory/hook-scan-limit-incident.md`; no scanner repair or clean security scan is claimed.
+No native adapter, notification helper, large SQLite stress, SSE performance, or full accessibility qualification has run. The T2 local storage probe and T3 transaction tests now exercise bounded contention and process loss; see current evidence below. Prototype browser evidence is design evidence only. The secret-scan incident remains documented in `docs/software-factory/hook-scan-limit-incident.md`; no scanner repair or clean security scan is claimed.
 
 ## Decision Log
 
-- 2026-10-20, human: accepted the full specification, then authorized this plan only. Keep implementation blocked pending a separate request.
+- 2026-10-21, human: invoked execplan-implement for this plan, superseding the authoring-only gate. Execute ready tasks and commit verified implementation when permitted. The plan's existing public CLI/store/host test boundaries are the accepted TDD seams.
+
+- 2026-10-20, human: accepted the full specification and authorized plan authoring. The 2026-10-21 implementation invocation supersedes that earlier execution gate.
 - 2026-10-20, human baseline: use SSSF-inspired foreground scripts, committed-only worktree creation, implementer-owned children, non-interactive steps, saved history, and explicit learning. Added machinery must solve an accepted requirement, not hypothetical future extensibility.
 - 2026-10-20, plan author: place development code in `packages/software-factory/` and the published entry skill in `skills/software-factory/`. This separates test/dependency trees from generic skill copying. Release packaging assembles versioned runtime assets; the skill installs a pinned release explicitly into each target repository.
 - 2026-10-20, plan author: use TypeScript, Node built-ins for processes/HTTP/files/SQLite, native ES modules, and plain browser modules/CSS. Use TypeScript and browser test tooling as development dependencies. No server framework, UI framework, broker, ORM, plugin SDK, or workflow-engine dependency is justified by this contract. Pin actual compatible versions during T1/T2 rather than fabricate current API facts.
@@ -63,13 +71,13 @@ No native adapter, notification helper, SQLite stress, SSE performance, or full 
 
 ## Outcomes & Retrospective
 
-The accepted baseline has been translated into this self-contained delivery plan. Routine paths, module responsibilities, command shapes, dependencies, qualification gates, and task boundaries are specified. No runtime files, dependencies, binaries, releases, or native registrations were created. No new consequential product choice was needed during authoring. Native feasibility may later require a decision if an accepted requirement cannot be honored without expanding scope.
+The accepted baseline has been translated into this self-contained delivery plan. Routine paths, module responsibilities, command shapes, dependencies, qualification gates, and task boundaries are specified. Authoring created no runtime artifacts. Implementation now adds the development package and dependencies; a verified runtime archive was extracted only into a temporary directory. No release or native registration was created. No new consequential product choice was needed during authoring. Native feasibility may later require a decision if an accepted requirement cannot be honored without expanding scope.
 
-The next action belongs to the user: authorize execution or request a plan change. A future execution session begins with T1 and T2, not with the historical prototype plan. Development acceptance remains entirely unmet.
+Execution is authorized. T1 is complete and T2 local storage prerequisites are verified. T3 transaction-level functionality is verified; T4 capture is next; Linux/Windows and integrated release qualification remain pending. Development acceptance remains unmet until verification. Missing native targets remain visible qualification gates.
 
 ## Context and Orientation
 
-Work from repository root `/Users/adam/.codex/worktrees/ea58/skills` (or the equivalent cloned checkout). Follow `AGENTS.md`, `.agents/instructions/INDEX.md`, and applicable source/testing routes before edits. Activate tdd for source design/implementation, skill-creator/create-skill for the published skill, dotnet if a Windows helper uses C#/.NET, and the relevant native-platform guidance. These instructions do not authorize dispatching agents. If work is later delegated, assign only bounded tasks with explicit file ownership and shared-state constraints.
+Work from repository root `/Users/adam/.codex/worktrees/ea58/skills` (or the equivalent cloned checkout). Follow `AGENTS.md` and applicable source/testing routes before edits. `.agents/instructions/INDEX.md` is absent here; current routes are retained in `brain/codebase/testing.md` and `brain/codebase/script-testing.md`. Activate tdd for source design/implementation, skill-creator/create-skill for the published skill, dotnet if a Windows helper uses C#/.NET, and the relevant native-platform guidance. These instructions do not authorize dispatching agents. If work is later delegated, assign only bounded tasks with explicit file ownership and shared-state constraints.
 
 The authoritative design is retained under `docs/software-factory/`: `map.md` indexes owning decisions, `lifecycle-specification.md` defines runtime mechanisms, `observability-ui-specification.md` defines presentation, and `tickets/specification-readiness-and-acceptance.md` traces requirements and qualification. The plan carries the current contract below so a worker need not reconstruct historical amendments. Resolve any actual conflict in favor of explicit accepted policy and reconcile this plan before coding.
 
@@ -101,7 +109,7 @@ Installation is explicit and repository-local, pinned Node LTS with built-in SQL
 
 ## Interfaces and Dependencies
 
-All paths in this section are planned, not existing. Create `packages/software-factory/package.json`, lockfile, `tsconfig.json`, `src/`, `web/`, `test/`, `qualification/`, and `scripts/`. The development package produces `dist/cli.js`, library modules and web assets; generated `dist/`, dependency trees and test runs are ignored. Keep release artifacts outside installed skills until explicitly assembled. Add `skills/software-factory/SKILL.md`, `references/operations.md`, and a small `scripts/install.py` bootstrap for explicit release installation. Do not change provider hooks to drive the factory.
+The development package, fixture/build infrastructure, runtime qualification and T3 store modules now exist. Remaining module paths in this section are planned. Create `packages/software-factory/package.json`, lockfile, `tsconfig.json`, `src/`, `web/`, `test/`, `qualification/`, and `scripts/`. The development package produces `dist/cli.js`, library modules and web assets; generated `dist/`, dependency trees and test runs are ignored. Keep release artifacts outside installed skills until explicitly assembled. Add `skills/software-factory/SKILL.md`, `references/operations.md`, and a small `scripts/install.py` bootstrap for explicit release installation. Do not change provider hooks to drive the factory.
 
 Use these internal module interfaces; they are not a public plugin SDK. Names may be refined without changing behavior, but reconcile callers and tests in the same task:
 
@@ -121,7 +129,7 @@ Workflow result payload schemas remain workflow-specific. Shared needs-input env
 Tasks below form the development dependency graph. Each task consumes the inline behavioral contract and named predecessor artifacts. Stop at its stated outcome; passing component tests alone does not meet milestone acceptance. Shared store/schema, CLI/package files, test registry and release manifest edits must be serialized even for otherwise independent tasks. No agents or tasks are dispatched by creating this plan.
 
 ### Milestone 1: Reproducible development and runtime feasibility
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### T1: Package and fixture boundary
@@ -133,7 +141,7 @@ Prerequisites: separate execution authorization. Own `packages/software-factory/
 Prerequisites: T1. Own `qualification/runtime.ts`, `qualification/runtime-manifest.json`, `qualification/runtime.md`, and storage probe tests. Read current official Node/SQLite source/docs during execution; select an exact LTS patch/artifacts and integrity hashes. Exercise built-in SQLite transactions, backup API, WAL fixes, contention, foreign keys, local placement, process-loss persistence, and bounded synchronous latency on native macOS/Linux/Windows targets. Do not silently substitute an addon, alternate backend or network filesystem. Promote the runtime pin only with recorded native evidence for declared targets. A missing target remains unqualified; independent portable work can proceed, but native release claims cannot. If the chosen approach cannot satisfy required semantics, stop dependent deployment work and present the concrete tradeoff. Verify `run test:qualification -- --area runtime`; this command must fail on missing prerequisites. Combined milestone proof: build plus pinned-runtime storage probes, preserving platform-specific results and limits.
 
 ### Milestone 2: Durable facts without durable execution
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### T3: Store, ownership and accounting
@@ -244,9 +252,11 @@ Run the complete local deterministic suite, browser suite, native qualification,
 
 ## Concrete Steps
 
-**Current next action: wait for user authorization to execute this plan.** All commands below are future instructions and have not run. Paths and npm script names are task deliverables, not already available commands.
+**Current next action: coordinator implements T4 bounded saved capture using verified T3 transactions.** Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
 
-After authorization, from repository root, T1 creates the package and lockfile, then explicitly installs development dependencies with `rtk proxy npm --prefix packages/software-factory ci` once a lockfile exists. Initial lock creation is an explicit development setup operation, not runtime startup behavior. Record the chosen Node/compiler/test versions. Run `rtk proxy npm --prefix packages/software-factory run typecheck` and `rtk proxy npm --prefix packages/software-factory run build`. Expect exit 0 and generated `packages/software-factory/dist/cli.js`; missing prerequisites fail with a named diagnostic, not success.
+Completed T1 setup: the package and lockfile exist, with development dependencies explicitly installed using `npm ci --ignore-scripts`. Repeat setup only when needed with `rtk proxy npm --prefix packages/software-factory ci --ignore-scripts`; startup never installs. Typecheck/build commands now produce `packages/software-factory/dist/cli.js`. Exact dependency versions are in the lockfile.
+
+Observed T1/T2 evidence (2026-10-21): `rtk proxy python3 scripts/test-software-factory.py --suite fixtures` passed typecheck, build and six fixture/CLI checks. `rtk proxy python3 scripts/test_test_all.py` passed 14 checks. The official darwin-arm64 archive SHA256 matched the downloaded release checksum list; extracted v24.22.1 reports SQLite 3.53.4. Pinned-runtime `run test:qualification -- --area runtime` passed. See `packages/software-factory/qualification/runtime.md` for exact commands, metrics and native limitations. `run test:all` fails at the first unimplemented suite (now `lifecycle`); aggregate acceptance remains unmet. T3 verification: pinned-runtime `rtk proxy python3 scripts/test-software-factory.py --suite store` passed typecheck/build and eleven store tests. Public cross-process tests cover final slot/allowance, worktree/dashboard/maintenance exclusion, and process loss before/after admission. Independent review reproduced two post-clearance recovery bugs; fresh follow-up now accepts cleared unknown outcomes, and stale settlement cannot resurrect occupancy. Both repairs passed independent re-review. Native process inspection remains T6, not a claim of T3.
 
 For each verification shorthand `run NAME` above, execute `rtk proxy npm --prefix packages/software-factory run NAME` from repository root, appending supplied `--` options. T1's test dispatch must forward filters consistently and fail when a selected suite/provider/operation has no tests. `test:all` runs deterministic and browser tests; `test:qualification` is explicitly separate because it requires native machines, credentials/desktop access and potentially paid harmless calls. Do not run live qualification without its prerequisites and authorization.
 
@@ -268,7 +278,7 @@ The final end-to-end scenario begins from a dirty source checkout with a committ
 
 Repository regression commands after affected code exists: `rtk proxy python3 scripts/test-software-factory.py` (T1 adds it), `rtk proxy bash scripts/test-install.sh`, and `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1` for installer impacts. Run `rtk proxy python3 scripts/test-all.py` on supported macOS/Linux coordinator hosts after integration. On native Windows run the focused package and PowerShell suites directly. Missing Python, PowerShell, Node, browser or native desktop prerequisite is an environmental block, not an ignored test. Activate required source/skill validation routes when those files are actually changed. Complete one coordinated update-agent-docs pass at the end of implementation; canonical KB edits require their OKF/link checks.
 
-Plan-authoring evidence on 2026-10-20: inspected the accepted baseline, lifecycle/UI contracts, profile/review/learning requirements, existing research ExecPlan and installer/test-registry entry points. No implementation test has run. Structural task-dependency, required-section, status/progress, local-document link and whitespace checks validate this document only.
+Historical plan-authoring evidence on 2026-10-20: inspected the accepted baseline, lifecycle/UI contracts, profile/review/learning requirements, existing research ExecPlan and installer/test-registry entry points. At authoring time no implementation test had run. Structural task-dependency, required-section, status/progress, local-document link and whitespace checks validate this document only.
 
 ## Idempotence and Recovery
 
@@ -285,4 +295,4 @@ For this plan, the historical research snapshot is retained unchanged except its
 - Accepted baseline: [final specification acceptance](tickets/specification-readiness-and-acceptance.md#resolution), [decision map](map.md), [lifecycle mechanisms](lifecycle-specification.md), [detailed UI](observability-ui-specification.md).
 - Visual reference only: [accepted prototype](prototypes/observability-prototype.html). Synthetic browser checks do not establish runtime performance, native behavior, accessibility certification or SSE correctness.
 - Historical records: [research plan snapshot](ExecPlan.history-2026-10-20.md) retains completed research/prototype evidence and superseded recommendations. It is not an execution dependency.
-- Resume state: [feature handoff](handoff.md). The current implementation authorization is absent; all milestones remain open.
+- Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2 and T3 are verified, T4 is next, and milestone acceptance remains unmet.
