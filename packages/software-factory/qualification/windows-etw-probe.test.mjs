@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -125,5 +125,35 @@ test('artifact preparation removes oversized and path-bearing native receipts', 
     });
     assert.equal(retained.status, 0);
     assert.equal(readFileSync(native, 'utf8'), good);
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
+});
+
+test('artifact preparation excludes raw bootstrap paths and free-text errors', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-bootstrap-artifacts-'));
+  const marker = 'ambient-secret-marker';
+  try {
+    writeFileSync(join(evidence, 'bootstrap.json'), JSON.stringify({
+      status: 'failed', directory: `C:\\ambient\\${marker}`,
+      error: `arbitrary failure ${marker}`
+    }));
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
+      status: 'failed', failure: { stage: 'bootstrap', code: 'operation-failed' },
+      error: `arbitrary qualification error ${marker}`
+    }));
+    writeFileSync(join(evidence, 'native.tsv'), good);
+    const result = spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+      encoding: 'utf8', timeout: 5000,
+      env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+    });
+    assert.equal(result.status, 0);
+    assert.equal(existsSync(join(evidence, 'bootstrap.json')), true);
+    const upload = join(evidence, 'upload');
+    assert.deepEqual(readdirSync(upload).sort(), ['native.tsv', 'qualification.json']);
+    for (const name of ['qualification.json', 'native.tsv']) {
+      const contents = readFileSync(join(upload, name), 'utf8');
+      assert.equal(contents.includes(marker), false);
+    }
+    assert.equal(result.stderr.includes(marker), false);
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });

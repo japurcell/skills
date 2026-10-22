@@ -175,17 +175,87 @@ function safeNativeLine(line) {
   return Boolean(patterns[line.split('\t', 1)[0]]?.test(line));
 }
 
+function qualificationSummary(bytes, nativeReady) {
+  const source = JSON.parse(bytes.toString('utf8'));
+  const claimedPass = source.status === 'native-feasibility-passed-review-required';
+  const status = claimedPass && nativeReady && source.receipt?.ok === true &&
+    source.rawEtl === 'removed-after-offline-parse' && !source.failure ? source.status : 'failed';
+  const summary = { scope: 'T17-Windows-ETW-native-feasibility-only', status,
+    limitation: 'Known Node/child positive control only; no Git/TypeScript comparator or no-child claim.' };
+  const stages = new Set(['bootstrap', 'host', 'pin', 'bridge', 'receipt', 'native', 'cleanup']);
+  const codes = new Set(['operation-failed', 'unsupported-platform', 'node-version', 'bootstrap-identity',
+    'archive-hash', 'executable-hash', 'powershell-unavailable', 'oversize', 'bridge-launch',
+    'bridge-exit', 'bridge-output', 'receipt-invalid', 'etl-removal-failed']);
+  if (source.failure) summary.failure = {
+    stage: stages.has(source.failure.stage) ? source.failure.stage : 'receipt',
+    code: codes.has(source.failure.code) ? source.failure.code : 'receipt-invalid'
+  };
+  else if (claimedPass && status === 'failed')
+    summary.failure = { stage: 'receipt', code: 'receipt-invalid' };
+  if (['removed-after-offline-parse', 'cleanup-failed'].includes(source.rawEtl))
+    summary.rawEtl = source.rawEtl;
+  if (source.node && source.node.version === 'v24.22.1' &&
+    /^[a-f0-9]{64}$/.test(source.node.archiveSha256) &&
+    /^[a-f0-9]{64}$/.test(source.node.executableSha256)) summary.node = {
+      version: 'v24.22.1', archiveSha256: source.node.archiveSha256,
+      executableSha256: source.node.executableSha256
+    };
+  if (source.bridge) summary.bridge = {
+    exitCode: Number.isInteger(source.bridge.exitCode) && source.bridge.exitCode >= 0 &&
+      source.bridge.exitCode <= 255 ? source.bridge.exitCode : null,
+    launchFailed: source.bridge.launchFailed === true,
+    timedOut: source.bridge.timedOut === true,
+    stderrCode: ['operation-failed', 'unexpected-output'].includes(source.bridge.stderrCode) ?
+      source.bridge.stderrCode : null,
+    stdoutPresent: source.bridge.stdoutPresent === true
+  };
+  if (source.receipt) summary.receipt = {
+    ok: source.receipt.ok === true,
+    rootPid: pid(String(source.receipt.rootPid)) ? source.receipt.rootPid : null,
+    childPid: pid(String(source.receipt.childPid)) ? source.receipt.childPid : null,
+    processStarts: Number.isInteger(source.receipt.processStarts) && source.receipt.processStarts >= 0 ?
+      source.receipt.processStarts : null,
+    processEnds: Number.isInteger(source.receipt.processEnds) && source.receipt.processEnds >= 0 ?
+      source.receipt.processEnds : null,
+    imageLoads: Number.isInteger(source.receipt.imageLoads) && source.receipt.imageLoads >= 0 ?
+      source.receipt.imageLoads : null
+  };
+  if (source.nativeFailure && ['run', 'root-stop', 'stop', 'decode', 'receipt'].includes(source.nativeFailure.stage) &&
+    /^(native-api|timeout|invalid-data|invalid-state|operation-failed|unobserved|overflow|missing-etl|etl-cap-or-empty|loss)$/.test(source.nativeFailure.code) &&
+    Number.isInteger(source.nativeFailure.win32Code) && source.nativeFailure.win32Code >= 0 &&
+    source.nativeFailure.win32Code <= 0xffffffff) summary.nativeFailure = {
+      stage: source.nativeFailure.stage, code: source.nativeFailure.code,
+      win32Code: source.nativeFailure.win32Code
+    };
+  if (Number.isInteger(source.etlBytes) && source.etlBytes >= 0 && source.etlBytes <= maxEtlBytes)
+    summary.etlBytes = source.etlBytes;
+  return Buffer.from(`${JSON.stringify(summary, null, 2)}\n`);
+}
+
 function prepareArtifactsForUpload() {
   const evidence = resolve(process.env.WINDOWS_ETW_PROBE_EVIDENCE ?? 'windows-etw-probe-evidence');
   try {
+    const upload = join(evidence, 'upload');
+    mkdirSync(upload, { recursive: true });
     let removed = false;
-    for (const name of ['bootstrap.json', 'qualification.json', 'native.tsv']) {
+    let nativeReady = false;
+    for (const name of ['native.tsv', 'qualification.json']) {
+      const uploadPath = join(upload, name);
+      if (existsSync(uploadPath)) unlinkSync(uploadPath);
       const path = join(evidence, name);
       if (!existsSync(path)) continue;
-      const oversized = statSync(path).size > maxReceiptBytes;
+      let oversized = statSync(path).size > maxReceiptBytes;
+      const bytes = oversized ? null : readFileSync(path);
+      oversized ||= bytes.length > maxReceiptBytes;
       const unsafe = name === 'native.tsv' && !oversized &&
-        !readFileSync(path, 'utf8').trimEnd().split(/\r?\n/).every(safeNativeLine);
+        !bytes.toString('utf8').trimEnd().split(/\r?\n/).every(safeNativeLine);
       if (oversized || unsafe) { unlinkSync(path); removed = true; }
+      else {
+        const output = name === 'qualification.json' ? qualificationSummary(bytes, nativeReady) : bytes;
+        if (output.length > maxReceiptBytes) throw new Error('qualification summary over cap');
+        writeFileSync(uploadPath, output, { flag: 'wx' });
+        if (name === 'native.tsv') nativeReady = validateProbeReceipt(bytes.toString('utf8'), 'pinned-node').ok;
+      }
     }
     if (removed) process.stderr.write('ETW artifact receipt removed: invalid\n');
   } catch {
