@@ -12,6 +12,7 @@ using System.Text;
 public static class WindowsStartupTrace
 {
     private const uint DebugProcess = 0x00000001;
+    private const uint DetachedProcess = 0x00000008;
     private const uint CreateNoWindow = 0x08000000;
     private const uint StartfUseStdHandles = 0x00000100;
     private const uint GenericRead = 0x80000000;
@@ -99,6 +100,12 @@ public static class WindowsStartupTrace
     private static extern uint GetFinalPathNameByHandle(IntPtr file, StringBuilder path, uint length, uint flags);
 
     [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern uint GetProcessId(IntPtr process);
+
+    [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path, ref uint length);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool TerminateProcess(IntPtr process, uint exitCode);
 
     private static string Quote(string value)
@@ -130,6 +137,37 @@ public static class WindowsStartupTrace
         return length > 0 && length < path.Capacity ? path.ToString() : "";
     }
 
+    private static string NormalizeWindowsPath(string path)
+    {
+        if (path.StartsWith(@"\\?\UNC\", StringComparison.OrdinalIgnoreCase))
+            path = @"\\" + path.Substring(8);
+        else if (path.StartsWith(@"\\?\", StringComparison.OrdinalIgnoreCase))
+            path = path.Substring(4);
+        return Path.GetFullPath(path);
+    }
+
+    private static string VerifiedCreateImage(DebugEvent debugEvent)
+    {
+        if (debugEvent.process == IntPtr.Zero || debugEvent.process == new IntPtr(-1))
+            throw new InvalidOperationException("create event has no process handle");
+        uint processId = GetProcessId(debugEvent.process);
+        if (processId == 0) throw new Win32Exception(Marshal.GetLastWin32Error(), "query create process ID");
+        if (processId != (uint)debugEvent.processId)
+            throw new InvalidOperationException("create event process ID differs from process handle");
+        string fileImage = FilePath(debugEvent.file);
+        if (fileImage.Length == 0) throw new InvalidOperationException("create event image file unresolved");
+        var processImage = new StringBuilder(32768);
+        uint length = (uint)processImage.Capacity;
+        if (!QueryFullProcessImageName(debugEvent.process, 0, processImage, ref length))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "query create process image");
+        if (length == 0 || length >= processImage.Capacity)
+            throw new InvalidOperationException("create process image unresolved");
+        if (!String.Equals(NormalizeWindowsPath(fileImage), NormalizeWindowsPath(processImage.ToString()),
+            StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("create event image differs from process handle image");
+        return fileImage;
+    }
+
     private static void Record(string trace, string kind, int pid, string value)
     {
         string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
@@ -142,9 +180,14 @@ public static class WindowsStartupTrace
             new UTF8Encoding(false));
     }
 
-    public static int Trace(string[] args, string stagePath)
+    public static int Trace(string[] args, string stagePath, string launchMode)
     {
         Stage(stagePath, "native-entry");
+        if (launchMode != "no-window" && launchMode != "detached-process")
+        {
+            Console.Error.WriteLine("unsupported qualification launch mode");
+            return 2;
+        }
         if (IntPtr.Size != 8 || args.Length < 6)
         {
             Console.Error.WriteLine("x64 and six fixed launcher arguments required");
@@ -187,8 +230,9 @@ public static class WindowsStartupTrace
                 startup.hStdInput = input;
                 startup.hStdOutput = outputHandle;
                 startup.hStdError = errorHandle;
+                uint creationFlags = DebugProcess | (launchMode == "no-window" ? CreateNoWindow : DetachedProcess);
                 if (!CreateProcess(executable, commandLine, IntPtr.Zero, IntPtr.Zero, true,
-                    DebugProcess | CreateNoWindow, IntPtr.Zero, cwd, ref startup, out process))
+                    creationFlags, IntPtr.Zero, cwd, ref startup, out process))
                     throw new Win32Exception(Marshal.GetLastWin32Error(), "debug launch");
                 started = true;
                 Record(tracePath, "ROOT", process.dwProcessId, executable);
@@ -221,9 +265,18 @@ public static class WindowsStartupTrace
                     {
                         if (debugEvent.code == CreateProcessEvent)
                         {
+                            // Retain the event handle for bounded termination even if verification fails.
                             live[debugEvent.processId] = debugEvent.process;
-                            Record(tracePath, "CREATE", debugEvent.processId, FilePath(debugEvent.file));
-                            if (debugEvent.file != IntPtr.Zero) CloseHandle(debugEvent.file);
+                            try
+                            {
+                                string image = VerifiedCreateImage(debugEvent);
+                                Record(tracePath, "CREATE", debugEvent.processId, image);
+                            }
+                            finally
+                            {
+                                if (debugEvent.file != IntPtr.Zero && debugEvent.file != new IntPtr(-1))
+                                    CloseHandle(debugEvent.file);
+                            }
                         }
                         else if (debugEvent.code == LoadDllEvent)
                         {

@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { closeSync, existsSync, ftruncateSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateTrace } from './windows-startup.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_STARTUP_EVIDENCE ?? join(process.cwd(), 'windows-startup-evidence'));
@@ -68,10 +68,13 @@ function powerShellBaseline(env) {
 }
 
 function launchCase(name, executable, cwd, args, env, archive, options = {}) {
+  const launchMode = selectLaunchMode(options.launchMode);
+  const diagnosticOnly = launchMode === 'detached-process';
   const directory = join(evidence, 'cases', name);
   mkdirSync(directory, { recursive: true });
   const stagePath = join(directory, 'launcher-stages.tsv');
-  const spec = { executable, cwd, args, stdout: join(directory, 'stdout.bin'),
+  const spec = { executable, cwd, args, launchMode, diagnosticOnly,
+    stdout: join(directory, 'stdout.bin'),
     stderr: join(directory, 'stderr.bin'), trace: join(directory, 'debug.tsv'),
     timeoutMs: options.timeoutMs ?? 15000 };
   writeFileSync(join(directory, 'spec.json'), `${JSON.stringify(spec, null, 2)}\n`);
@@ -79,7 +82,7 @@ function launchCase(name, executable, cwd, args, env, archive, options = {}) {
   const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-File',
     join(root, 'windows-startup-trace.ps1'), '-SpecPath', join(directory, 'spec.json'), '-StagePath', stagePath],
   { env, cwd: directory, encoding: 'utf8', timeout: 75000, maxBuffer: 1_048_576 });
-  const result = { name, executable, cwd, args, spec: spec.trace, stagePath,
+  const result = { name, executable, cwd, args, launchMode, diagnosticOnly, spec: spec.trace, stagePath,
     tracerStatus: invocation.status, tracerError: invocation.error?.message ?? null,
     stages: existsSync(stagePath) ? readFileSync(stagePath, 'utf8').slice(0, 8192) : null,
     trace: [], reasons: [] };
@@ -286,6 +289,24 @@ async function main() {
       launchCase(name, git, cwd, gitModes[index], env, gitArchive, options);
     }
   }
+
+  // These four cases compare one exact Git mode and the original controls under a detached launch.
+  // They are diagnostic evidence only; the complete no-window matrix still determines the report status.
+  const detached = 'detached-process';
+  assertPackage(gitArchive);
+  launchCase('git-normal-0-detached', git, fixture.repo, gitModes[0], env, gitArchive,
+    { launchMode: detached, expectedExit: 0, expectedGitDlls: gitImportedDlls, stdoutPath: fixture.repo });
+  launchCase('positive-child-control-detached', env.ComSpec, work,
+    ['/d', '/c', env.ComSpec, '/d', '/c', 'exit', '0'], env, null,
+    { launchMode: detached, expectChild: true, expectedChildImage: env.ComSpec,
+      expectedExit: 0, expectedNoOutput: true });
+  launchCase('direct-stop-control-detached', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+    work, ['-NoProfile', '-NonInteractive', '-Command', 'Start-Sleep -Seconds 30'], env, null,
+    { launchMode: detached, expectedStop: true, expectedStopReason: 'deadline', timeoutMs: 500 });
+  launchCase('bounded-output-control-detached', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
+    work, ['-NoProfile', '-NonInteractive', '-Command',
+      "for ($i=0; $i -lt 10000; $i++) { [Console]::WriteLine('x' * 1000) }; Start-Sleep -Seconds 30"],
+    env, null, { launchMode: detached, expectedStop: true, expectedStopReason: 'output-limit', timeoutMs: 10000 });
   assert.ok(!existsSync(marker), 'Git helper or PATH wrapper created canary');
 
   // An altered linked registration is a negative identity case, not a replacement for a valid worktree.
@@ -325,6 +346,9 @@ async function main() {
     assertPackage(tsArchive);
     launchCase(name, compiler, work, ['-p', input.config], env, tsArchive, options);
   }
+  assertPackage(tsArchive);
+  launchCase('typescript-one-build-detached', compiler, work, ['-p', success.config], env, tsArchive,
+    { launchMode: detached, expectedExit: 0 });
   assert.ok(existsSync(success.output), 'one-build case did not emit JavaScript');
   assert.equal(readdirSync(join(work, 'typescript-success', 'out')).length, 1, 'one-build case emitted unexpected files');
   assert.ok(!existsSync(error.output), 'error compiler case emitted JavaScript');

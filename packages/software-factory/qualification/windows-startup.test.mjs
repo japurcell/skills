@@ -6,7 +6,41 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateTrace } from './windows-startup.mjs';
+
+test('qualification accepts only the two fixed native launch modes', () => {
+  assert.equal(selectLaunchMode(), 'no-window');
+  assert.equal(selectLaunchMode('no-window'), 'no-window');
+  assert.equal(selectLaunchMode('detached-process'), 'detached-process');
+  for (const value of ['', 'debug-only-this-process', 'detached-process+no-window', 'DETACHED_PROCESS'])
+    assert.throws(() => selectLaunchMode(value), /unsupported qualification launch mode/);
+});
+
+test('PowerShell bridge refuses an unknown launch mode before native interop', (t) => {
+  const base = mkdtempSync(join(tmpdir(), 'windows-startup-mode-'));
+  t.after(() => rmSync(base, { recursive: true, force: true }));
+  const powershell = process.platform === 'win32'
+    ? join(process.env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+    : 'pwsh';
+  const specPath = join(base, 'spec.json');
+  const script = fileURLToPath(new URL('./windows-startup-trace.ps1', import.meta.url));
+  for (const [index, launchMode] of ['debug-only-this-process', 'NO-WINDOW'].entries()) {
+    const stagePath = join(base, `stages-${index}.tsv`);
+    writeFileSync(specPath, JSON.stringify({ launchMode }));
+    const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-File', script,
+      '-SpecPath', specPath, '-StagePath', stagePath],
+    { encoding: 'utf8', timeout: 15000, maxBuffer: 8192 });
+    if (process.platform !== 'win32' && invocation.error?.code === 'ENOENT') {
+      t.skip('PowerShell is unavailable on this non-Windows host');
+      return;
+    }
+    assert.ifError(invocation.error);
+    assert.equal(invocation.status, 4);
+    assert.deepEqual(readFileSync(stagePath, 'utf8').trim().split('\n').map((row) => row.split('\t')[1]),
+      ['ps-entry', 'spec-read', 'ps-error']);
+    assert.match(invocation.stderr, /unsupported qualification launch mode/);
+  }
+});
 
 test('PowerShell launcher retains an entry marker and bounded failure when spec loading fails', (t) => {
   const base = mkdtempSync(join(tmpdir(), 'windows-startup-entry-'));

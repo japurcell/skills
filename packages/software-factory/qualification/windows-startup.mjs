@@ -14,6 +14,12 @@ export const gitModes = Object.freeze([
 // A scoped config query does not follow includes unless explicitly requested.
 export const includedConfigQuery = Object.freeze(['config', '--global', '--includes', '--get', 'core.fsmonitor']);
 
+export function selectLaunchMode(value = 'no-window') {
+  assert.ok(value === 'no-window' || value === 'detached-process',
+    `unsupported qualification launch mode: ${String(value)}`);
+  return value;
+}
+
 const traceKinds = new Set(['ROOT', 'CREATE', 'DLL', 'EXIT', 'STOP_REQUESTED', 'STOP_OBSERVED', 'DONE', 'ERROR']);
 
 export function parseTrace(contents) {

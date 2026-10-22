@@ -13,6 +13,10 @@ try {
     Write-Stage 'ps-entry'
     $spec = Get-Content -LiteralPath $SpecPath -Raw | ConvertFrom-Json
     Write-Stage 'spec-read'
+    $launchMode = [string]$spec.launchMode
+    if ($launchMode -cne 'no-window' -and $launchMode -cne 'detached-process') {
+        throw "unsupported qualification launch mode: $launchMode"
+    }
     $source = Join-Path $PSScriptRoot 'windows-startup-trace.cs'
     Write-Stage 'add-type-start'
     Add-Type -Path $source
@@ -26,7 +30,7 @@ try {
         [string]$spec.timeoutMs
     ) + [string[]]@($spec.args)
     Write-Stage 'native-call'
-    $result = [WindowsStartupTrace]::Trace($launch, $StagePath)
+    $result = [WindowsStartupTrace]::Trace($launch, $StagePath, $launchMode)
     Write-Stage 'native-return'
     exit $result
 } catch {
