@@ -523,4 +523,3 @@ The intermittent Windows placement timeout remains separate: the last observed m
 ### Preserved pre-integration checkpoint
 
 [Metadata integration history](ExecPlan.history-2026-10-22-metadata-integration.md) preserves superseded native run details and previous active ownership. Current instructions and blockers are inline above.
-
