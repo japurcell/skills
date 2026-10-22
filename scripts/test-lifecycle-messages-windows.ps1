@@ -55,7 +55,14 @@ with tempfile.TemporaryDirectory(prefix="lifecycle-windows-") as temporary:
     )
     for provider, script, payload in scanners:
         scan_env = {**env, "SCAN_MODE": "block", "SECRETS_LOG_DIR": str(base / (provider + "-logs"))}
-        assert invoke(script, payload, cwd=scan_root, environment=scan_env)[-1] == {}, provider
+        clean = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
+        record = {}
+        if clean != {}:
+            audit = pathlib.Path(scan_env["SECRETS_LOG_DIR"]) / "scan.log"
+            if audit.is_file():
+                record = json.loads(audit.read_text().splitlines()[-1])
+        # ScanFailure diagnostics contain only owned vocabulary and bounded numbers.
+        assert clean == {}, (provider, record.get("status"), record.get("diagnostic"))
         credential = scan_root / "credential.txt"
         credential.write_text("sk_live_1234567890abcdefghij\n")
         warning = invoke(script, payload, cwd=scan_root, environment={**scan_env, "SCAN_MODE": "warn"})[-1]

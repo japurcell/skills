@@ -157,6 +157,7 @@ finally:
         'malformed' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (echo true & exit /b 0)' + "`r`n" + 'if "%1 %2"=="rev-parse --show-toplevel" (echo %CD% & exit /b 0)' + "`r`n" + 'if "%1"=="diff" (echo partial-path & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'capture-error' { "@echo off`r`n`"$realGit`" %*" }
         'success' { "@echo off`r`n`"$realGit`" %*" }
+        'native-success' { "@echo off`r`n`"$realGit`" %*" }
     }
     [System.IO.File]::WriteAllText((Join-Path $bin 'git.cmd'), $shim)
     if ($Scenario -eq 'hardlinked-batch') {
@@ -200,7 +201,7 @@ finally:
     $savedTemp = $env:TEMP
     $savedTmp = $env:TMP
     try {
-        $env:PATH = "$bin;$savedPath"
+        $env:PATH = if ($Scenario -eq 'native-success') { $savedPath } else { "$bin;$savedPath" }
         $env:SCAN_MODE = $Mode
         if ($Scenario -eq 'hostile-comspec') {
             $hostileComspec = Join-Path $caseDir 'hostile-comspec.cmd'
@@ -407,7 +408,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         }
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
-        if ($Scenario -in @('success', 'hostile-comspec')) {
+        if ($Scenario -in @('success', 'native-success', 'hostile-comspec')) {
             $responseType = if ($response -is [System.Collections.IDictionary]) {
                 'object'
             } elseif ($response -is [array]) {
@@ -516,11 +517,13 @@ try {
     for ($attempt = 1; $attempt -le 20; $attempt++) {
         foreach ($provider in @('copilot', 'gemini', 'codex')) {
             foreach ($mode in @('block', 'warn')) {
-                Invoke-Case -Provider $provider -Mode $mode -Scenario success -Attempt $attempt
+                foreach ($scenario in @('success', 'native-success')) {
+                    Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario -Attempt $attempt
+                }
             }
         }
     }
-    Write-Output 'PASS: 120 repeated native Windows clean no-HEAD captures'
+    Write-Output 'PASS: 240 repeated native Windows clean no-HEAD captures (batch and executable)'
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
