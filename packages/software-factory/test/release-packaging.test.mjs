@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { buildInputSnapshot, recordBuildReceipt } from '../src/release.ts';
 
 const command = fileURLToPath(new URL('../scripts/package-release.mjs', import.meta.url));
 const officialNode = {
@@ -18,6 +19,14 @@ const requiredTemplates = [
   'prompts/recipe.md', 'prompts/review.md', 'workflows/audit.ts', 'workflows/change.ts',
   'workflows/evaluate.ts', 'workflows/learn.ts',
 ];
+const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
+
+function sourceModules(root = join(packageRoot, 'src'), prefix = '') {
+  return readdirSync(root, { withFileTypes: true }).flatMap(entry => {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    return entry.isDirectory() ? sourceModules(join(root, entry.name), relative) : [relative.slice(0, -3)];
+  });
+}
 
 function put(root, relative, content) {
   const path = join(root, relative);
@@ -28,18 +37,25 @@ function put(root, relative, content) {
 function fixture() {
   const root = mkdtempSync(join(tmpdir(), 'factory-release-test-'));
   const source = join(root, 'source');
-  for (const module of ['cli', 'learning', 'release']) {
-    put(source, `src/${module}.ts`, `export const ${module} = true;\n`);
-    put(source, `dist/${module}.js`, `export const ${module} = true;\n`);
+  for (const module of sourceModules()) {
+    put(source, `src/${module}.ts`, 'export const fixture = true;\n');
+    put(source, `dist/${module}.js`, 'export const fixture = true;\n');
     put(source, `dist/${module}.js.map`, '{}\n');
-    put(source, `dist/${module}.d.ts`, `export declare const ${module} = true;\n`);
+    put(source, `dist/${module}.d.ts`, 'export declare const fixture = true;\n');
   }
   for (const file of ['index.html', 'style.css', 'app.js']) {
     put(source, `web/${file}`, `web:${file}\n`);
     put(source, `dist/web/${file}`, `web:${file}\n`);
   }
   for (const file of requiredTemplates) put(source, `templates/${file}`, `template:${file}\n`);
+  for (const file of [
+    'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
+    'node_modules/typescript/package.json',
+    `node_modules/@typescript/typescript-${process.platform}-${process.arch}/lib/tsc`,
+    'node_modules/@types/node/index.d.ts', 'node_modules/undici-types/index.d.ts',
+  ]) put(source, file, `build input:${file}\n`);
   put(source, 'node_modules/dev-only.js', 'secret development dependency\n');
+  recordBuildReceipt(source, buildInputSnapshot(source));
   const descriptorPath = join(root, 'selection.json');
   const destination = join(root, 'release');
   const selection = { version: '1.2.3', platform: 'darwin-arm64', node: officialNode };
@@ -86,7 +102,7 @@ test('existing changed or unowned payload refuses repeat without deleting eviden
     assert.equal(result.status, 1);
     assert.match(result.stderr, /hash|changed|integrity/i);
     assert.equal(readFileSync(join(f.destination, 'dist/learning.js'), 'utf8'), 'tampered\n');
-    put(f.destination, 'dist/learning.js', 'export const learning = true;\n');
+    put(f.destination, 'dist/learning.js', 'export const fixture = true;\n');
     put(f.destination, 'unowned.txt', 'keep me\n');
     const unowned = f.run();
     assert.equal(unowned.status, 1);
@@ -144,6 +160,93 @@ test('public bundle validator requires an external manifest hash and refuses tra
     writeFileSync(manifestPath, bytes);
     assert.throws(() => validateReleaseBundle(f.destination, createHash('sha256').update(bytes).digest('hex')), /duplicate manifest file/i);
   } finally { f.dispose(); }
+});
+
+test('consumer rejects a self-consistent manifest with a missing runtime import or declaration', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  for (const missing of ['dist/redaction.js', 'dist/workflow.d.ts']) {
+    const f = fixture();
+    try {
+      assert.equal(f.run().status, 0);
+      const manifestPath = join(f.destination, 'release-manifest.json');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      manifest.files = manifest.files.filter(file => file.path !== missing);
+      rmSync(join(f.destination, missing));
+      const bytes = Buffer.from(`${JSON.stringify(manifest)}\n`);
+      writeFileSync(manifestPath, bytes);
+      const digest = createHash('sha256').update(bytes).digest('hex');
+      assert.throws(() => validateReleaseBundle(f.destination, digest), /incomplete release payload/i);
+    } finally { f.dispose(); }
+  }
+});
+
+test('portable Windows names are refused before destination creation', () => {
+  for (const unsafe of ['bad?.ts', 'bad*.ts', 'bad<.ts', 'bad>.ts', 'bad".ts', 'bad|.ts', 'COM¹.ts', 'COM².ts', 'COM³.ts', 'LPT¹.ts', 'LPT².ts', 'LPT³.ts']) {
+    const f = fixture();
+    try {
+      put(f.source, `src/${unsafe}`, 'export const fixture = true;\n');
+      for (const ext of ['.js', '.js.map', '.d.ts']) put(f.source, `dist/${unsafe.slice(0, -3)}${ext}`, 'fixture\n');
+      const result = f.run();
+      assert.equal(result.status, 1, `${unsafe}: ${result.stderr}`);
+      assert.match(result.stderr, /unsafe manifest path/i);
+      assert.equal(existsSync(f.destination), false);
+    } finally { f.dispose(); }
+  }
+});
+
+test('changed source with unchanged compiled output cannot be packaged', () => {
+  const f = fixture();
+  try {
+    put(f.source, 'src/learning.ts', 'export const fixture = false;\n');
+    const result = f.run();
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /stale|build|source|receipt/i);
+    assert.equal(existsSync(f.destination), false);
+  } finally { f.dispose(); }
+});
+
+test('missing receipt, changed toolchain and changed output all refuse packaging', () => {
+  for (const change of [
+    source => rmSync(join(source, 'node_modules/.factory-build-receipt.json')),
+    source => put(source, 'node_modules/typescript/package.json', 'changed compiler metadata\n'),
+    source => put(source, 'dist/learning.js', 'stale output\n'),
+  ]) {
+    const f = fixture();
+    try {
+      change(f.source);
+      const result = f.run();
+      assert.equal(result.status, 1, result.stderr);
+      assert.equal(existsSync(f.destination), false);
+    } finally { f.dispose(); }
+  }
+});
+
+test('build receipt refuses source mutation between snapshots', () => {
+  const f = fixture();
+  try {
+    const before = buildInputSnapshot(f.source);
+    rmSync(join(f.source, 'node_modules/.factory-build-receipt.json'));
+    put(f.source, 'src/learning.ts', 'export const fixture = false;\n');
+    assert.throws(() => recordBuildReceipt(f.source, before), /changed during build/i);
+    assert.equal(existsSync(join(f.source, 'node_modules/.factory-build-receipt.json')), false);
+  } finally { f.dispose(); }
+});
+
+test('consumer runs the actual built release CLI help from a selected bundle', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  const root = mkdtempSync(join(tmpdir(), 'factory-release-consumer-'));
+  try {
+    const descriptorPath = join(root, 'selection.json');
+    const destination = join(root, 'bundle');
+    writeFileSync(descriptorPath, `${JSON.stringify({ version: '1.2.3', platform: 'darwin-arm64', node: officialNode })}\n`);
+    const result = spawnSync(process.execPath, [command, '--descriptor', descriptorPath, '--source-root', packageRoot, '--destination', destination], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    const digest = JSON.parse(result.stdout).manifestSha256;
+    assert.equal(validateReleaseBundle(destination, digest).version, '1.2.3');
+    const help = spawnSync(process.execPath, [join(destination, 'dist/cli.js'), '--help'], { encoding: 'utf8' });
+    assert.equal(help.status, 0, help.stderr);
+    assert.match(help.stdout, /software-factory/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test('source symlink and stale built web refuse packaging', () => {

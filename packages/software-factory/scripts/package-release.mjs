@@ -2,7 +2,7 @@ import { lstatSync, readFileSync } from 'node:fs';
 import { isAbsolute, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { packageRelease } from '../dist/release.js';
+import { packageRelease } from '../src/release.ts';
 
 try {
   const { values, positionals } = parseArgs({ options: {

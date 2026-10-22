@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync, readSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, posix, resolve, sep } from 'node:path';
 
 export type ReleasePlatform = 'darwin-arm64' | 'linux-x64' | 'win32-x64';
@@ -37,6 +37,17 @@ const TEMPLATE_FILES = [
   'prompts/recipe.md', 'prompts/review.md', 'workflows/audit.ts', 'workflows/change.ts',
   'workflows/evaluate.ts', 'workflows/learn.ts',
 ] as const;
+// Schema 1 names every compiled module, including maps and declarations. Changing
+// this list is a release-contract change, not an inference from a proposed bundle.
+const RUNTIME_MODULES = [
+  'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
+  'agents', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control',
+  'learning', 'lifecycle', 'native/notification-transport', 'native/notifications',
+  'native/process', 'placement', 'profiles', 'redaction', 'release', 'schema', 'store',
+  'workflow', 'workspace',
+] as const;
+const COMPILED_FILES = RUNTIME_MODULES.flatMap(stem => [`${stem}.js`, `${stem}.js.map`, `${stem}.d.ts`]);
+const BUILD_RECEIPT = 'node_modules/.factory-build-receipt.json';
 
 function fail(message: string): never { throw new Error(`release package: ${message}`); }
 function object(value: unknown): Record<string, unknown> {
@@ -47,11 +58,22 @@ function keys(value: Record<string, unknown>, required: readonly string[], optio
   if (required.some(key => !Object.hasOwn(value, key)) || Object.keys(value).some(key => !required.includes(key) && !optional.includes(key))) fail('unknown or missing descriptor field');
 }
 function hash(bytes: Buffer) { return createHash('sha256').update(bytes).digest('hex'); }
+function hashLargeFile(path: string): string {
+  const digest = createHash('sha256');
+  const bytes = Buffer.allocUnsafe(1024 * 1024);
+  const descriptor = openSync(path, 'r');
+  try {
+    for (let length = readSync(descriptor, bytes, 0, bytes.length, null); length; length = readSync(descriptor, bytes, 0, bytes.length, null)) {
+      digest.update(bytes.subarray(0, length));
+    }
+  } finally { closeSync(descriptor); }
+  return digest.digest('hex');
+}
 const MAX_FILE_BYTES = 32 * 1024 * 1024;
 function checkedPath(value: unknown): string {
-  if (typeof value !== 'string' || !value || value.includes('\\') || /[\x00-\x1f:]/.test(value) || posix.isAbsolute(value) ||
+  if (typeof value !== 'string' || !value || value.includes('\\') || /[\x00-\x1f<>:"|?*]/.test(value) || posix.isAbsolute(value) ||
       value.split('/').some(part => !part || part === '.' || part === '..' || part.toLowerCase() === 'node_modules' || /[. ]$/.test(part) ||
-        /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(part)) || posix.normalize(value) !== value) fail('unsafe manifest path');
+        /^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)/i.test(part)) || posix.normalize(value) !== value) fail('unsafe manifest path');
   return value;
 }
 function checkedFile(path: string): Buffer {
@@ -61,9 +83,10 @@ function checkedFile(path: string): Buffer {
   if (info.size > MAX_FILE_BYTES) fail(`file exceeds release size limit: ${path}`);
   return readFileSync(path);
 }
-function checkedRelativeFile(root: string, relative: string): Buffer {
+function checkedRelativeFile(root: string, relative: string, buildInput = false): Buffer {
   let parent = root;
-  const parts = checkedPath(relative).split('/');
+  checkedPath(buildInput ? relative.replace(/^node_modules\//, 'toolchain/') : relative);
+  const parts = relative.split('/');
   for (const part of parts.slice(0, -1)) {
     parent = join(parent, part);
     const info = lstatSync(parent);
@@ -137,17 +160,12 @@ export function validateReleaseSelection(value: unknown): ReleaseSelection {
 
 function sourceFiles(sourceRoot: string): Map<string, Buffer> {
   assertCanonicalDirectory(sourceRoot);
-  const source = tree(join(sourceRoot, 'src'));
-  if (source.some(path => !path.endsWith('.ts')) || !source.includes('cli.ts') || !source.includes('learning.ts') || !source.includes('release.ts')) fail('missing or unexpected source module');
-  const compiled = source.flatMap(path => {
-    const stem = path.slice(0, -3);
-    return [`${stem}.js`, `${stem}.js.map`, `${stem}.d.ts`];
-  });
+  sameInventory(tree(join(sourceRoot, 'src')), RUNTIME_MODULES.map(stem => `${stem}.ts`), 'source modules');
   sameInventory(tree(join(sourceRoot, 'web')), WEB_FILES, 'web source');
   sameInventory(tree(join(sourceRoot, 'templates')), TEMPLATE_FILES, 'templates');
-  sameInventory(tree(join(sourceRoot, 'dist')), [...compiled, ...WEB_FILES.map(path => `web/${path}`)], 'built runtime');
+  sameInventory(tree(join(sourceRoot, 'dist')), [...COMPILED_FILES, ...WEB_FILES.map(path => `web/${path}`)], 'built runtime');
   const result = new Map<string, Buffer>();
-  for (const path of compiled) result.set(`dist/${path}`, checkedFile(join(sourceRoot, 'dist', path)));
+  for (const path of COMPILED_FILES) result.set(`dist/${path}`, checkedFile(join(sourceRoot, 'dist', path)));
   for (const path of WEB_FILES) {
     const built = checkedFile(join(sourceRoot, 'dist/web', path));
     if (!built.equals(checkedFile(join(sourceRoot, 'web', path)))) fail(`stale built web: ${path}`);
@@ -155,6 +173,50 @@ function sourceFiles(sourceRoot: string): Map<string, Buffer> {
   }
   for (const path of TEMPLATE_FILES) result.set(`templates/${path}`, checkedFile(join(sourceRoot, 'templates', path)));
   return result;
+}
+
+function fileEntries(root: string, paths: readonly string[]): ReleaseFile[] {
+  return paths.map(path => {
+    const bytes = checkedRelativeFile(root, path, true);
+    return { path, bytes: bytes.length, sha256: hash(bytes) };
+  }).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+}
+
+function buildInputPaths(root: string): string[] {
+  const platformCompiler = `node_modules/@typescript/typescript-${process.platform}-${process.arch}`;
+  const groups = ['src', 'web', 'templates', 'node_modules/typescript', platformCompiler, 'node_modules/@types/node', 'node_modules/undici-types'];
+  return [
+    'package.json', 'package-lock.json', 'tsconfig.json', 'scripts/build.mjs', 'scripts/package-release.mjs',
+    ...groups.flatMap(group => tree(join(root, group)).map(path => `${group}/${path}`)),
+  ];
+}
+
+/** Exact source, build configuration, installed compiler and type inputs seen by a build. */
+export function buildInputSnapshot(root: string): string {
+  assertCanonicalDirectory(root);
+  return JSON.stringify({ schema: 1, node: process.version, nodeSha256: hashLargeFile(process.execPath), platform: process.platform, arch: process.arch,
+    inputs: fileEntries(root, buildInputPaths(root)) });
+}
+
+function outputEntries(files: Map<string, Buffer>): ReleaseFile[] {
+  return [...files].filter(([path]) => path.startsWith('dist/'))
+    .map(([path, bytes]) => ({ path, bytes: bytes.length, sha256: hash(bytes) }))
+    .sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+}
+
+/** Write only after the compiler succeeds and its input snapshot still matches. */
+export function recordBuildReceipt(root: string, before: string): void {
+  const after = buildInputSnapshot(root);
+  if (before !== after) fail('source or toolchain changed during build');
+  const outputs = outputEntries(sourceFiles(root));
+  if (before !== buildInputSnapshot(root)) fail('source or toolchain changed during build');
+  writeFileSync(join(root, BUILD_RECEIPT), `${JSON.stringify({ ...JSON.parse(before), outputs }, null, 2)}\n`, { flag: 'wx' });
+}
+
+function validateBuildReceipt(root: string, inputs: string, files: Map<string, Buffer>): void {
+  const receipt = object(JSON.parse(checkedRelativeFile(root, BUILD_RECEIPT, true).toString('utf8')));
+  const expected = { ...JSON.parse(inputs), outputs: outputEntries(files) };
+  if (JSON.stringify(receipt) !== JSON.stringify(expected)) fail('stale or invalid build receipt');
 }
 
 function releasePackageJson(version: string): Buffer {
@@ -213,8 +275,9 @@ export function validateReleaseBundle(root: string, expectedManifestSha256: stri
   const listedPaths = [...files.keys()];
   const sortedPaths = [...listedPaths].sort();
   if (listedPaths.some((path, index) => path !== sortedPaths[index])) fail('manifest files are not sorted');
-  const required = ['package.json', 'dist/cli.js', 'dist/learning.js', ...WEB_FILES.map(path => `dist/web/${path}`), ...TEMPLATE_FILES.map(path => `templates/${path}`)];
-  if (required.some(path => !files.has(path))) fail('incomplete release payload');
+  const required = ['package.json', ...COMPILED_FILES.map(path => `dist/${path}`), ...WEB_FILES.map(path => `dist/web/${path}`), ...TEMPLATE_FILES.map(path => `templates/${path}`),
+    ...(selection.platform === 'win32-x64' ? ['native/windows-notify.exe'] : [])];
+  sameInventory([...files.keys()], required, 'incomplete release payload');
   if (!files.get('package.json')!.equals(releasePackageJson(selection.version))) fail('invalid runtime package metadata');
   if (selection.platform === 'win32-x64' && !files.has('native/windows-notify.exe')) fail('missing Windows helper');
   if (selection.platform !== 'win32-x64' && files.has('native/windows-notify.exe')) fail('unexpected Windows helper');
@@ -229,7 +292,10 @@ export function packageRelease(value: unknown, sourceRoot: string, destination: 
   const sourcePath = realpathSync(sourceRoot).toLowerCase();
   const destinationPath = join(realpathSync(dirname(destination)), basename(destination)).toLowerCase();
   if (destinationPath === sourcePath || destinationPath.startsWith(`${sourcePath}${sep}`)) fail('destination must be outside source tree');
+  const inputs = buildInputSnapshot(sourceRoot);
   const files = sourceFiles(sourceRoot);
+  validateBuildReceipt(sourceRoot, inputs, files);
+  if (inputs !== buildInputSnapshot(sourceRoot)) fail('source or toolchain changed during packaging');
   files.set('package.json', releasePackageJson(selection.version));
   if (selection.platform === 'win32-x64') files.set('native/windows-notify.exe', checkedFile(selection.windowsHelper!.path));
   const manifest = expectedManifest(selection, files);
