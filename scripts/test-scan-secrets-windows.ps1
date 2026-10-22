@@ -353,6 +353,63 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 '@
             $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('ROOT_LITERAL', $rootLiteral)
             [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'native-success') {
+            # Observe real kernel accounting after a clean executable root exits.
+            # Return the original result so instrumentation cannot hide the failure.
+            $runner = Join-Path $caseDir 'observe-completion.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $observationLiteral = (Join-Path $caseDir 'completion.json') | ConvertTo-Json -Compress
+            $fixture = @'
+import ctypes, json, pathlib, runpy, time
+original_library = ctypes.WinDLL
+observations = []
+class QueryBoundary:
+    def __init__(self, function):
+        self.function = function
+    @property
+    def argtypes(self):
+        return self.function.argtypes
+    @argtypes.setter
+    def argtypes(self, value):
+        self.function.argtypes = value
+    @property
+    def restype(self):
+        return self.function.restype
+    @restype.setter
+    def restype(self, value):
+        self.function.restype = value
+    def __call__(self, job, kind, buffer, length, returned):
+        result = self.function(job, kind, buffer, length, returned)
+        if result and kind == 1 and length == 48 and len(observations) < 8:
+            words = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_uint32))
+            if words[10]:
+                initial = {'total': int(words[9]), 'active': int(words[10])}
+                scratch = ctypes.create_string_buffer(length)
+                started = time.monotonic()
+                active = initial['active']
+                while active and time.monotonic() - started < 0.1:
+                    time.sleep(0.001)
+                    if not self.function(job, kind, scratch, length, None):
+                        raise ctypes.WinError(ctypes.get_last_error())
+                    active = ctypes.cast(scratch, ctypes.POINTER(ctypes.c_uint32))[10]
+                observations.append({**initial, 'final_active': int(active),
+                                     'elapsed_ms': round((time.monotonic() - started) * 1000, 3)})
+                pathlib.Path(OBSERVATION_LITERAL).write_text(json.dumps(observations), encoding='ascii')
+        return result
+class Library:
+    def __init__(self, library):
+        self.library = library
+        self.query = QueryBoundary(library.QueryInformationJobObject)
+    def __getattr__(self, name):
+        return self.query if name == 'QueryInformationJobObject' else getattr(self.library, name)
+def library(name, *arguments, **keywords):
+    result = original_library(name, *arguments, **keywords)
+    return Library(result) if name.casefold() == 'kernel32' else result
+ctypes.WinDLL = library
+runpy.run_path(HOOK_LITERAL, run_name='__main__')
+'@
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('OBSERVATION_LITERAL', $observationLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
         } elseif ($Scenario -eq 'capture-error') {
             $runner = Join-Path $caseDir 'capture-error.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
@@ -440,6 +497,10 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
                 # ScanFailure emits only scanner-owned vocabulary and bounded numbers.
                 $record = $log.Trim() | ConvertFrom-Json -AsHashtable
                 $diagnostic += ' failure=' + ($record.diagnostic | ConvertTo-Json -Compress)
+            }
+            $completionPath = Join-Path $caseDir 'completion.json'
+            if (Test-Path -LiteralPath $completionPath) {
+                $diagnostic += ' completion=' + (Get-Content -LiteralPath $completionPath -Raw)
             }
             $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
                 $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
