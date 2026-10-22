@@ -10,7 +10,9 @@ import { validateProbeReceipt } from './windows-etw-probe.mjs';
 const good = [
   'ABI\t120\t280\t112\t448', 'TOKEN\tadministrator', 'OS\tWindows NT 10.0.26100',
   'API\tstart\t0', 'API\treadyQuery\t0', 'QUERY\treadyQuery\t1\t1\t1\t1\t1',
+  'MODE\treadyQuery\t1\t1\t0\tnone\t0',
   'API\tbeforeStopQuery\t0', 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1',
+  'MODE\tbeforeStopQuery\t1\t1\t0\tnone\t0',
   'API\tstop\t0', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
   'OWNERSHIP\t11111111-2222-4333-8444-555555555555\tCodex factory ETW feasibility 11111111222243338444555555555555',
   'SESSION\t33554433\t5\t64', 'ROOT\t100\t134000000000000000\tpinned-node',
@@ -53,6 +55,47 @@ test('public receipt requires unique, exact, all-true query evidence', () => {
   }
   for (const receipt of changed)
     assert.ok(validateProbeReceipt(receipt, 'C:\\node\\node.exe').reasons.includes('query evidence invalid'));
+});
+
+test('public receipt requires unique expected closed mode categories for both queries', () => {
+  const ready = 'MODE\treadyQuery\t1\t1\t0\tnone\t0';
+  const beforeStop = 'MODE\tbeforeStopQuery\t1\t1\t0\tnone\t0';
+  for (const changed of [
+    good.replace(`${ready}\n`, ''),
+    good.replace(`${beforeStop}\n`, ''),
+    good.replace(ready, `${ready}\n${ready}`),
+    good.replace(beforeStop, `${beforeStop}\n${beforeStop}`),
+    good.replace(ready, `${ready}\tC:\\ambient\\node.exe`),
+    good.replace(beforeStop, 'MODE\tunknown\t1\t1\t0\tnone\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t0\t1\t0\tnone\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t0\t0\tnone\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t1\tnone\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tstop\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tpersist\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tboth\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tnone\t1'),
+    good.replace(beforeStop, 'MODE\tbeforeStopQuery\t1\t1\t0\tunknown\t0')
+  ]) assert.ok(validateProbeReceipt(changed, 'C:\\node\\node.exe').reasons.includes('mode evidence invalid'));
+});
+
+test('forged qualification cannot pass artifact preparation without both verified mode rows', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-mode-forgery-'));
+  try {
+    writeFileSync(join(evidence, 'native.tsv'), good.split('\n').filter((row) => !row.startsWith('MODE\t')).join('\n'));
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
+      status: 'native-feasibility-passed-review-required', receipt: { ok: true },
+      rawEtl: 'removed-after-offline-parse'
+    }));
+    const result = spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+      encoding: 'utf8', timeout: 5000,
+      env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+    });
+    assert.equal(result.status, 0);
+    const staged = JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8'));
+    assert.equal(staged.status, 'failed');
+    assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
 test('public receipt fails closed on health, schema and missing positive controls', () => {
@@ -151,11 +194,11 @@ test('artifact preparation removes oversized and path-bearing native receipts', 
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
-test('artifact preparation retains fixed failed-query evidence but removes untrusted query data', () => {
+test('artifact preparation retains fixed failed-query and mode evidence but removes untrusted data', () => {
   const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
   const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-query-artifacts-'));
   const native = join(evidence, 'native.tsv');
-  const failed = 'API\tstart\t0\nAPI\treadyQuery\t0\nQUERY\treadyQuery\t1\t0\t1\t1\t1\nFAIL\trun\tinvalid-state\t0\n';
+  const failed = 'API\tstart\t0\nAPI\treadyQuery\t0\nQUERY\treadyQuery\t1\t0\t1\t1\t1\nMODE\treadyQuery\t1\t1\t0\tstop\t0\nFAIL\trun\tinvalid-state\t0\n';
   const prepare = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
     encoding: 'utf8', timeout: 5000,
     env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
@@ -165,6 +208,10 @@ test('artifact preparation retains fixed failed-query evidence but removes untru
     assert.equal(prepare().status, 0);
     assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), failed);
     writeFileSync(native, `${failed}QUERY\treadyQuery\tC:\\ambient\\node.exe\t1\t1\t1\t1\n`);
+    assert.equal(prepare().status, 0);
+    assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+    assert.equal(existsSync(native), false);
+    writeFileSync(native, `${failed}MODE\treadyQuery\t1\t1\t0\tC:\\ambient\\node.exe\t0\n`);
     assert.equal(prepare().status, 0);
     assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
     assert.equal(existsSync(native), false);

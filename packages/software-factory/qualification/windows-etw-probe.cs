@@ -14,6 +14,9 @@ public static class WindowsEtwProbe
 {
     private const uint SystemLoggerMode = 0x02000000;
     private const uint SequentialMode = 0x00000001;
+    private const uint AlternateStorageMask = 0x00000C0E; // circular, append, new-file, buffering, private
+    private const uint HybridStopMode = 0x00400000;
+    private const uint HybridPersistMode = 0x00800000;
     private const uint ProcessFlag = 0x00000001;
     private const uint ImageFlag = 0x00000004;
     private const uint WnodeTracedGuid = 0x00020000;
@@ -270,6 +273,8 @@ public static class WindowsEtwProbe
     {
         // x64 sizes and offsets from the public Windows SDK declarations listed above.
         if (Marshal.SizeOf(typeof(EventTraceProperties)) != 120 ||
+            Marshal.OffsetOf(typeof(EventTraceProperties), "LogFileMode").ToInt32() != 64 ||
+            Marshal.OffsetOf(typeof(EventTraceProperties), "EnableFlags").ToInt32() != 72 ||
             Marshal.SizeOf(typeof(TraceLogfileHeader)) != 280 ||
             Marshal.SizeOf(typeof(EventRecord)) != 112 ||
             Marshal.SizeOf(typeof(EventTraceLogfile)) != 448 ||
@@ -331,6 +336,16 @@ public static class WindowsEtwProbe
                 result.RealTimeBuffersLost == 0;
             Line("QUERY", label, guidMatches ? 1 : 0, modeMatches ? 1 : 0,
                 flagsMatch ? 1 : 0, fileCapMatches ? 1 : 0, lossZero ? 1 : 0);
+            uint mode = result.LogFileMode;
+            uint coveredMode = SystemLoggerMode | SequentialMode | AlternateStorageMask |
+                HybridStopMode | HybridPersistMode;
+            string hybrid = (mode & HybridStopMode) != 0
+                ? (mode & HybridPersistMode) != 0 ? "both" : "stop"
+                : (mode & HybridPersistMode) != 0 ? "persist" : "none";
+            Line("MODE", label, (mode & SystemLoggerMode) != 0 ? 1 : 0,
+                (mode & SequentialMode) != 0 ? 1 : 0,
+                (mode & AlternateStorageMask) != 0 ? 1 : 0,
+                hybrid, (mode & ~coveredMode) != 0 ? 1 : 0);
             if (!guidMatches || !modeMatches || !flagsMatch || !fileCapMatches)
                 throw new InvalidOperationException("owned session properties differ from requested trace");
             if (!lossZero)
