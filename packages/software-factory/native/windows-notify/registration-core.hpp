@@ -19,7 +19,7 @@
 
 using Microsoft::WRL::ComPtr;
 using namespace winrt;
-using namespace Windows::UI::Notifications;
+using namespace winrt::Windows::UI::Notifications;
 
 namespace {
 constexpr wchar_t kActivationArgument[] = L"activated";

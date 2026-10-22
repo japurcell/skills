@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { copyFileSync, linkSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -53,6 +53,61 @@ test('inherited pipe beyond the deadline is unknown, never submitted', async (t)
       assert.equal(inspectOwner(holder).state, 'not_live', 'fixture holder must finish after its bounded timer');
       assert.equal(readFileSync(join(directory, 'holder-exited'), 'utf8'), 'exited');
     }
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('Windows helper exit codes take priority over diagnostic wording after real child readiness', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'factory-notification-exit-'));
+  const helper = join(directory, 'windows-notify.exe');
+  const script = [
+    'process.send({ ready: true });',
+    'process.once("message", () => {',
+    '  process.stderr.write(process.argv[2], () => process.exit(Number(process.argv[1])));',
+    '});',
+  ].join('\n');
+  const cases = [
+    { code: 3, stderr: 'Access denied', reason: 'registration_missing' },
+    { code: 5, stderr: 'notification daemon unavailable', reason: 'sender_exit_nonzero' },
+    { code: 4, stderr: 'notification daemon unavailable', reason: 'denied' },
+  ];
+  const prepared = [];
+  try {
+    try { linkSync(process.execPath, helper); }
+    catch { copyFileSync(process.execPath, helper); }
+    for (const item of cases) {
+      const args = ['-e', script, String(item.code), item.stderr];
+      const child = spawn(helper, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+      const ready = new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Windows exit fixture did not become ready')), 3000);
+        child.once('message', message => {
+          if (message?.ready === true) { clearTimeout(timer); resolve(); }
+        });
+        child.once('error', error => { clearTimeout(timer); reject(error); });
+        child.once('exit', () => { clearTimeout(timer); reject(new Error('Windows exit fixture exited before readiness')); });
+      });
+      prepared.push({ ...item, args, child, ready });
+    }
+    await Promise.all(prepared.map(item => item.ready));
+    let next = 0;
+    t.mock.module('node:child_process', { exports: {
+      spawn: (file, args) => {
+        const item = prepared[next++];
+        assert.equal(file, helper);
+        assert.deepEqual(args, item.args);
+        queueMicrotask(() => item.child.send('release'));
+        return item.child;
+      },
+    } });
+    const { executeNotificationProcess } = await import('../dist/native/notification-transport.js?windows-exit-priority');
+    for (const item of prepared) {
+      assert.deepEqual(await executeNotificationProcess({ file: helper, args: item.args }, 1000), {
+        state: 'failed', reason: item.reason, cleanup: 'complete',
+      });
+    }
+    assert.equal(next, prepared.length);
+  } finally {
+    for (const { child } of prepared) child.kill('SIGKILL');
     rmSync(directory, { recursive: true, force: true });
   }
 });
