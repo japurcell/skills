@@ -17,6 +17,7 @@ public static class WindowsEtwProbe
     private const uint AlternateStorageMask = 0x00000C0E; // circular, append, new-file, buffering, private
     private const uint HybridStopMode = 0x00400000;
     private const uint HybridPersistMode = 0x00800000;
+    private const uint RequestedMode = SystemLoggerMode | SequentialMode | HybridStopMode;
     private const uint ProcessFlag = 0x00000001;
     private const uint ImageFlag = 0x00000004;
     private const uint WnodeTracedGuid = 0x00020000;
@@ -310,7 +311,7 @@ public static class WindowsEtwProbe
             properties.MinimumBuffers = 4;
             properties.MaximumBuffers = 16;
             properties.MaximumFileSize = 64;
-            properties.LogFileMode = SystemLoggerMode | SequentialMode;
+            properties.LogFileMode = RequestedMode;
             properties.EnableFlags = ProcessFlag | ImageFlag;
         }
         Marshal.StructureToPtr(properties, address, false);
@@ -329,7 +330,7 @@ public static class WindowsEtwProbe
             if (code != 0) throw new Win32Exception((int)code, label);
             var result = (EventTraceProperties)Marshal.PtrToStructure(address, typeof(EventTraceProperties));
             bool guidMatches = result.Wnode.Guid == guid;
-            bool modeMatches = result.LogFileMode == (SystemLoggerMode | SequentialMode);
+            bool modeMatches = result.LogFileMode == RequestedMode;
             bool flagsMatch = result.EnableFlags == (ProcessFlag | ImageFlag);
             bool fileCapMatches = result.MaximumFileSize == 64;
             bool lossZero = result.EventsLost == 0 && result.LogBuffersLost == 0 &&
@@ -597,7 +598,7 @@ public static class WindowsEtwProbe
             finally { Marshal.FreeHGlobal(properties); }
             Query(handle, guid, name, etl, "readyQuery");
             Line("OWNERSHIP", guid.ToString("D"), name);
-            Line("SESSION", SystemLoggerMode | SequentialMode, ProcessFlag | ImageFlag, 64);
+            Line("SESSION", RequestedMode, ProcessFlag | ImageFlag, 64);
             RunFixture(node, evidence);
             if (watch.ElapsedMilliseconds > MaxObservationMs)
                 throw new TimeoutException("observation exceeded thirty seconds");

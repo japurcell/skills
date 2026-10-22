@@ -10,12 +10,12 @@ import { validateProbeReceipt } from './windows-etw-probe.mjs';
 const good = [
   'ABI\t120\t280\t112\t448', 'TOKEN\tadministrator', 'OS\tWindows NT 10.0.26100',
   'API\tstart\t0', 'API\treadyQuery\t0', 'QUERY\treadyQuery\t1\t1\t1\t1\t1',
-  'MODE\treadyQuery\t1\t1\t0\tnone\t0',
+  'MODE\treadyQuery\t1\t1\t0\tstop\t0',
   'API\tbeforeStopQuery\t0', 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1',
-  'MODE\tbeforeStopQuery\t1\t1\t0\tnone\t0',
+  'MODE\tbeforeStopQuery\t1\t1\t0\tstop\t0',
   'API\tstop\t0', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
   'OWNERSHIP\t11111111-2222-4333-8444-555555555555\tCodex factory ETW feasibility 11111111222243338444555555555555',
-  'SESSION\t33554433\t5\t64', 'ROOT\t100\t134000000000000000\tpinned-node',
+  'SESSION\t37748737\t5\t64', 'ROOT\t100\t134000000000000000\tpinned-node',
   'CHILD\t101', 'EVENT\tprocess-start\t100\t50\troot\tpinned-node\t134000000000000000',
   'EVENT\tprocess-start\t101\t100\tchild\tpinned-node\t134000000000100000',
   'EVENT\timage-load\t100\tpinned-node\t134000000000200000',
@@ -58,43 +58,54 @@ test('public receipt requires unique, exact, all-true query evidence', () => {
 });
 
 test('public receipt requires unique expected closed mode categories for both queries', () => {
-  const ready = 'MODE\treadyQuery\t1\t1\t0\tnone\t0';
-  const beforeStop = 'MODE\tbeforeStopQuery\t1\t1\t0\tnone\t0';
+  const ready = 'MODE\treadyQuery\t1\t1\t0\tstop\t0';
+  const beforeStop = 'MODE\tbeforeStopQuery\t1\t1\t0\tstop\t0';
   for (const changed of [
     good.replace(`${ready}\n`, ''),
     good.replace(`${beforeStop}\n`, ''),
     good.replace(ready, `${ready}\n${ready}`),
     good.replace(beforeStop, `${beforeStop}\n${beforeStop}`),
     good.replace(ready, `${ready}\tC:\\ambient\\node.exe`),
-    good.replace(beforeStop, 'MODE\tunknown\t1\t1\t0\tnone\t0'),
-    good.replace(ready, 'MODE\treadyQuery\t0\t1\t0\tnone\t0'),
-    good.replace(ready, 'MODE\treadyQuery\t1\t0\t0\tnone\t0'),
-    good.replace(ready, 'MODE\treadyQuery\t1\t1\t1\tnone\t0'),
-    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tstop\t0'),
+    good.replace(beforeStop, 'MODE\tunknown\t1\t1\t0\tstop\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t0\t1\t0\tstop\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t0\t0\tstop\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t1\tstop\t0'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tnone\t0'),
     good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tpersist\t0'),
     good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tboth\t0'),
-    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tnone\t1'),
+    good.replace(ready, 'MODE\treadyQuery\t1\t1\t0\tstop\t1'),
     good.replace(beforeStop, 'MODE\tbeforeStopQuery\t1\t1\t0\tunknown\t0')
   ]) assert.ok(validateProbeReceipt(changed, 'C:\\node\\node.exe').reasons.includes('mode evidence invalid'));
 });
 
-test('forged qualification cannot pass artifact preparation without both verified mode rows', () => {
+test('public receipt requires the single explicit stop-on-hybrid session profile', () => {
+  const oldProfile = good.replace('SESSION\t37748737\t5\t64', 'SESSION\t33554433\t5\t64');
+  assert.ok(validateProbeReceipt(oldProfile, 'C:\\node\\node.exe').reasons.includes('session mode, flags or cap mismatch'));
+});
+
+test('forged qualification cannot pass artifact preparation with missing or old mode policy', () => {
   const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
   const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-mode-forgery-'));
   try {
-    writeFileSync(join(evidence, 'native.tsv'), good.split('\n').filter((row) => !row.startsWith('MODE\t')).join('\n'));
     writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
       status: 'native-feasibility-passed-review-required', receipt: { ok: true },
       rawEtl: 'removed-after-offline-parse'
     }));
-    const result = spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
-      encoding: 'utf8', timeout: 5000,
-      env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
-    });
-    assert.equal(result.status, 0);
-    const staged = JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8'));
-    assert.equal(staged.status, 'failed');
-    assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
+    for (const receipt of [
+      good.split('\n').filter((row) => !row.startsWith('MODE\t')).join('\n'),
+      good.replace('SESSION\t37748737\t5\t64', 'SESSION\t33554433\t5\t64'),
+      good.replace('MODE\treadyQuery\t1\t1\t0\tstop\t0', 'MODE\treadyQuery\t1\t1\t0\tnone\t0')
+    ]) {
+      writeFileSync(join(evidence, 'native.tsv'), receipt);
+      const result = spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+        encoding: 'utf8', timeout: 5000,
+        env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+      });
+      assert.equal(result.status, 0);
+      const staged = JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8'));
+      assert.equal(staged.status, 'failed');
+      assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
+    }
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 

@@ -41,10 +41,10 @@ export function validateProbeReceipt(receipt, expectedNode) {
   if (modes.length !== 2 || ['readyQuery', 'beforeStopQuery'].some((name) => {
     const rows = modes.filter((row) => row[1] === name);
     return rows.length !== 1 || rows[0].length !== 7 ||
-      rows[0].slice(2).join(',') !== '1,1,0,none,0';
+      rows[0].slice(2).join(',') !== '1,1,0,stop,0';
   })) reasons.push('mode evidence invalid');
   const session = one('SESSION');
-  if (session.length !== 4 || session[1] !== '33554433' || session[2] !== '5' || session[3] !== '64')
+  if (session.length !== 4 || session[1] !== '37748737' || session[2] !== '5' || session[3] !== '64')
     reasons.push('session mode, flags or cap mismatch');
   const ownership = one('OWNERSHIP');
   if (ownership.length !== 3 || !/^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/.test(ownership[1]) ||
@@ -167,7 +167,7 @@ function safeNativeLine(line) {
     API: new RegExp(`^API\\t(start|readyQuery|beforeStopQuery|stop|open|process|close)\\t${decimal}$`),
     QUERY: /^QUERY\t(readyQuery|beforeStopQuery)(\t[01]){5}$/,
     MODE: /^MODE\t(readyQuery|beforeStopQuery)\t[01]\t[01]\t[01]\t(none|stop|persist|both)\t[01]$/,
-    SESSION: /^SESSION\t33554433\t5\t64$/,
+    SESSION: /^SESSION\t37748737\t5\t64$/,
     ROOT: new RegExp(`^ROOT\\t${decimal}\\t${tickValue}\\tpinned-node$`),
     CHILD: new RegExp(`^CHILD\\t${decimal}$`),
     EVENT: new RegExp(`^EVENT\\t(process-start|process-end)\\t${decimal}\\t${decimal}\\t(root|child)\\t(pinned-node|${decimal})\\t${tickValue}$|^EVENT\\timage-load\\t${decimal}\\tpinned-node\\t${tickValue}$`),
