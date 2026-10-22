@@ -5,6 +5,7 @@ import { currentOwner, inspectOwner } from './native/process.js';
 import type { Claim, RepositoryStore } from './store.js';
 
 const MAX_PAGE = 1048576;
+const liveHosts = new Map<string, { claim: Claim; sessionToken: string; available: () => boolean }>();
 class RequestError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 function parameters(route: URL, allowed: string[]) {
   for (const key of route.searchParams.keys()) if (!allowed.includes(key) || route.searchParams.getAll(key).length !== 1) throw new RequestError(400, 'invalid query');
@@ -26,6 +27,11 @@ function proof(claim: Claim, challenge: string) {
 function sameClaim(a: Claim | undefined, b: Claim) {
   return a?.id === b.id && a.token === b.token && a.kind === 'dashboard' && a.resourceKey === b.resourceKey
     && JSON.stringify(a.owner) === JSON.stringify(b.owner) && JSON.stringify(a.endpoint) === JSON.stringify(b.endpoint);
+}
+function bearerMatches(request: IncomingMessage, token: string) {
+  const credential = Buffer.from(request.headers.authorization ?? '');
+  const expected = Buffer.from('Bearer ' + token);
+  return credential.length === expected.length && timingSafeEqual(credential, expected);
 }
 function json(response: ServerResponse, status: number, value: unknown) {
   const body = JSON.stringify(value);
@@ -53,7 +59,9 @@ async function verifyExisting(store: RepositoryStore, claim: Claim) {
     const identity = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { proof?: string };
     if (identity.proof !== proof(claim, challenge) || !sameClaim(store.readDashboardClaim(), claim)) throw new Error('claim changed');
   } catch { throw new Error('dashboard endpoint verification failed; explicit clearance required'); }
-  return { url: endpoint.origin, reused: true as const, close: async () => {} };
+  const local = liveHosts.get(claim.id);
+  const sessionToken = local?.available() && sameClaim(local.claim, claim) ? local.sessionToken : undefined;
+  return { url: endpoint.origin, reused: true as const, sessionToken, readCredentialAvailable: sessionToken !== undefined, close: async () => {} };
 }
 
 /** Owns only observation sockets. It never imports or executes a workflow. */
@@ -91,9 +99,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
       if (request.method !== 'GET') {
         if (request.method !== 'POST' || !['/api/notifications/preferences', '/api/notifications/acknowledgments'].includes(route.pathname)) { json(response, 405, { error: 'read only' }); return; }
         parameters(route, []);
-        const credential = Buffer.from(request.headers.authorization ?? '');
-        const expected = Buffer.from('Bearer ' + sessionToken);
-        if (request.headers.origin !== url || credential.length !== expected.length || !timingSafeEqual(credential, expected)) { json(response, 403, { error: 'host session required' }); return; }
+        if (request.headers.origin !== url || !bearerMatches(request, sessionToken)) { json(response, 403, { error: 'host session required' }); return; }
         if (request.headers['content-type'] !== 'application/json') throw new RequestError(415, 'JSON required');
         if (!options.notificationWrite) { json(response, 501, { error: 'notification writes unavailable' }); return; }
         const chunks: Buffer[] = []; let size = 0;
@@ -113,6 +119,10 @@ export async function startObservationHost(options: { store: RepositoryStore; po
       if (route.pathname === '/api/identity' && /^[0-9a-f-]{36}$/.test(route.searchParams.get('challenge') ?? '')) {
         parameters(route, ['challenge']);
         json(response, 200, { repositoryId: claim.resourceKey, claimId: claim.id, instanceId: claim.endpoint?.instanceId, proof: proof(claim, route.searchParams.get('challenge')!) }); return;
+      }
+      if ((route.pathname === '/api/events' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
+        || route.pathname.startsWith('/api/invocations/')) && !bearerMatches(request, sessionToken)) {
+        json(response, 403, { error: 'host session required' }); return;
       }
       if (route.pathname === '/api/events') {
         parameters(route, ['after', 'limit']);
@@ -195,6 +205,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   server.maxConnections = 32; server.headersTimeout = 5000; server.requestTimeout = 5000; server.keepAliveTimeout = 1000;
   async function stopServer() {
     closing = true;
+    if (liveHosts.get(claim.id)?.sessionToken === sessionToken) liveHosts.delete(claim.id);
     for (const response of streams) response.destroy();
     const stopped = new Promise<void>(resolve => server.close(() => resolve()));
     server.closeAllConnections();
@@ -210,13 +221,14 @@ export async function startObservationHost(options: { store: RepositoryStore; po
     if (!address || typeof address === 'string') throw new Error('loopback bind unavailable');
     url = 'http://127.0.0.1:' + address.port;
     claim = await store.publishDashboardEndpoint({ claimId: claim.id, token: claim.token, url, instanceId: randomUUID() });
+    liveHosts.set(claim.id, { claim, sessionToken, available: () => !closing && server.listening });
   } catch (error) {
     await stopServer();
     if (sameClaim(store.readDashboardClaim(), claim)) await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' });
     throw error;
   }
   let closeTask: Promise<void> | undefined;
-  return { url, reused: false as const, sessionToken, close: () => closeTask ??= (async () => {
+  return { url, reused: false as const, sessionToken, readCredentialAvailable: true as const, close: () => closeTask ??= (async () => {
     await stopServer();
     if (sameClaim(store.readDashboardClaim(), claim)) await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' });
   })().catch(error => { closeTask = undefined; throw error; }) };

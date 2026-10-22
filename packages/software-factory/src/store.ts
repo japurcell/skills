@@ -267,7 +267,7 @@ export class RepositoryStore {
     let textBytes = 0;
     const captures = captureRows.slice(0, limit).map(row => {
       const captureId = String(row['id']);
-      const page = this.readCapture({ id: captureId, limit: 200 });
+      const page = this.readCapture({ id: captureId, limit: 200, byteBudget: 262144 - textBytes });
       const chunks: CaptureChunk[] = [];
       for (const chunk of page.chunks) {
         const size = Buffer.byteLength(JSON.stringify(chunk));
@@ -714,18 +714,23 @@ export class RepositoryStore {
     });
   }
 
-  readCapture(input: { id: string; after?: number; limit?: number }) {
-    const after = input.after ?? 0, limit = input.limit ?? 200;
-    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error('invalid capture page');
+  readCapture(input: { id: string; after?: number; limit?: number; byteBudget?: number }) {
+    const after = input.after ?? 0, limit = input.limit ?? 200, byteBudget = input.byteBudget ?? 1047552;
+    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 200
+      || !Number.isSafeInteger(byteBudget) || byteBudget < 0 || byteBudget > 1047552) throw new Error('invalid capture page');
     const row = this.database.prepare('SELECT state,sequence,channel FROM captures WHERE id=?').get(input.id);
     const state = row ? String(row['state']) as CaptureState : 'missing';
     const chunks: CaptureChunk[] = [];
     let size = 0;
-    if (row && state !== 'pruned') {
-      for (const chunk of this.database.prepare('SELECT sequence,text FROM capture_chunks WHERE capture_id=? AND sequence>? ORDER BY sequence LIMIT ?').iterate(input.id, after, limit)) {
+    if (row && state !== 'pruned' && byteBudget > 0) {
+      // SQLite returns text only while the raw bytes fit this page's remaining budget.
+      // A larger first chunk becomes a continuation, without entering JavaScript memory.
+      const statement = this.database.prepare('SELECT sequence,CASE WHEN octet_length(text)<=? THEN text ELSE NULL END AS text FROM capture_chunks WHERE capture_id=? AND sequence>? ORDER BY sequence LIMIT ?');
+      for (const chunk of statement.iterate(byteBudget, input.id, after, limit)) {
+        if (chunk['text'] === null) break;
         const item = { sequence: Number(chunk['sequence']), text: String(chunk['text']) };
         const bytes = Buffer.byteLength(JSON.stringify(item)) + 1;
-        if (size + bytes > 1047552) break;
+        if (size + bytes > byteBudget) break;
         size += bytes; chunks.push(item);
       }
     }
