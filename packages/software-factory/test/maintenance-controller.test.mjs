@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { mkdirSync, readFileSync, readdirSync, realpathSync, rmdirSync, statSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createRepository } from './fixtures/repository.mjs';
@@ -337,4 +338,45 @@ test('reclaimed handoff keeps its operation and phase but invalidates the old ti
       claimId: recovered.claimId, stageDigest: second.stageDigest, nonce: freshTicket.nonce }), { flag: 'wx', mode: 0o600 });
     assert.equal((await consumeMaintenanceHandoff(second.ticketPath)).phase, 'modifying');
   } finally { store?.close(); repository.dispose(); }
+});
+
+test('a live staged consumer cannot be reclaimed after its preparer exits', async () => {
+  const { consumeMaintenanceHandoff, inspectMaintenance, prepareMaintenanceHandoff, reclaimMaintenance } = await import('../dist/maintenance.js');
+  const { initializeRepositoryStore, openMaintenanceStore } = await import('../dist/store.js');
+  const { currentOwner, inspectOwner } = await import('../dist/native/process.js');
+  const repository = createRepository();
+  try {
+    const store = await initializeRepositoryStore(join(repository.path, '.git'), { release: 'fixture' });
+    store.close();
+    const childScript = `import {beginMaintenance} from ${JSON.stringify(new URL('../dist/maintenance.js', import.meta.url).href)};
+import {currentOwner} from ${JSON.stringify(new URL('../dist/native/process.js', import.meta.url).href)};
+const selection=${JSON.stringify(selection)};
+const claim=await beginMaintenance(process.argv[1], 'upgrade', selection, currentOwner());
+console.log(JSON.stringify(claim));`;
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', childScript, repository.path],
+      { encoding: 'utf8', timeout: 10000 });
+    assert.equal(child.status, 0, child.stderr);
+    const claim = JSON.parse(child.stdout.trim());
+    const recorded = (await inspectMaintenance(repository.path)).intent;
+    mkdirSync(join(recorded.stagePath, 'payload'), { recursive: true, mode: 0o700 });
+    writeFileSync(join(recorded.stagePath, 'payload', 'node'), 'controlled staged runtime');
+    const prepared = await prepareMaintenanceHandoff(repository.path, claim);
+    const beforeHandoff = openMaintenanceStore(claim.commonDir);
+    const inspectedPreparer = beforeHandoff.readMaintenanceClaim(claim.operationId);
+    beforeHandoff.close();
+    const ticket = JSON.parse(readFileSync(prepared.ticketPath, 'utf8'));
+    writeFileSync(ticket.exitReceiptPath, JSON.stringify({ version: 1, operationId: claim.operationId,
+      claimId: claim.claimId, stageDigest: prepared.stageDigest, nonce: ticket.nonce }), { flag: 'wx', mode: 0o600 });
+    assert.equal(inspectOwner(currentOwner()).state, 'known_live');
+    assert.equal((await consumeMaintenanceHandoff(prepared.ticketPath)).phase, 'modifying');
+    const staleRecovery = openMaintenanceStore(claim.commonDir);
+    try {
+      await assert.rejects(staleRecovery.reclaimMaintenance({ operationId: claim.operationId,
+        expectedToken: claim.token, expectedOwner: inspectedPreparer.owner, expectedPhase: 'handoff-ready',
+        owner: currentOwner(), inspection: 'not_live', note: 'Inspection preceded the owner transfer.' }),
+      /owner or phase changed/);
+    } finally { staleRecovery.close(); }
+    await assert.rejects(reclaimMaintenance(repository.path, claim.operationId, currentOwner(),
+      { operatorConfirmed: true, note: 'Preparer exited; staged consumer is live.' }), /known-live/);
+  } finally { repository.dispose(); }
 });

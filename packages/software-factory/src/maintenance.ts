@@ -3,7 +3,7 @@ import { closeSync, constants, fstatSync, fsyncSync, lstatSync, mkdirSync, openS
   realpathSync, renameSync, writeSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { inspectOwner } from './native/process.js';
+import { currentOwner, inspectOwner } from './native/process.js';
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
 import { openMaintenanceStore, openRepositoryStore } from './store.js';
@@ -306,7 +306,8 @@ export async function reclaimMaintenance(repository: string, operationId: string
     }
     const inspection = inspectOwner(claim.owner);
     if (inspection.state === 'known_live') throw new Error('known-live owner cannot be reclaimed');
-    return handle(await store.reclaimMaintenance({ operationId, expectedToken: claim.token, owner,
+    return handle(await store.reclaimMaintenance({ operationId, expectedToken: claim.token,
+      expectedOwner: claim.owner, expectedPhase: claim.maintenance!.phase, owner,
       inspection: inspection.state, note: clearance.note }), common);
   } finally { store.close(); }
 }
@@ -452,9 +453,12 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
     if (claim.maintenance?.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; handoff refused');
     if (!absent(markerPath) && !sameBootstrapOperation(parseMarker(markerPath, root, common), claim))
       throw new Error('handoff bootstrap marker differs');
+    const owner = currentOwner();
+    if (inspectOwner(owner).state !== 'known_live')
+      throw new Error('staged process owner identity unavailable; handoff refused');
     return await store.consumeMaintenanceHandoff({ handle: { operationId: ticket.operationId, claimId: ticket.claimId,
       token: ticket.token, repositoryId: ticket.repositoryId, commonDir: common },
-      nonceHash: hash(ticket.nonce), ...stage });
+      nonceHash: hash(ticket.nonce), ...stage, owner });
   } finally { store.close(); }
 }
 

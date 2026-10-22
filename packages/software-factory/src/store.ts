@@ -831,7 +831,9 @@ export class RepositoryStore {
     });
   }
 
-  async consumeMaintenanceHandoff(input: { handle: MaintenanceHandle; nonceHash: string; stageDigest: string; stageIdentity: string }) {
+  async consumeMaintenanceHandoff(input: { handle: MaintenanceHandle; nonceHash: string; stageDigest: string; stageIdentity: string;
+    owner: Owner }) {
+    validateOwner(input.owner);
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.handle.operationId);
       const intent = claim.maintenance!;
@@ -841,7 +843,7 @@ export class RepositoryStore {
         throw new Error('handoff claim/token/stage/nonce no longer matches');
       if (this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
         throw new Error('another owner blocks maintenance mutation');
-      intent.phase = 'modifying'; intent.ticketConsumed = true;
+      intent.phase = 'modifying'; intent.ticketConsumed = true; claim.owner = input.owner;
       this.database.prepare("UPDATE repository SET state='incomplete' WHERE id=?").run(intent.repositoryId);
       this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?')
         .run(JSON.stringify(claim), claim.id, claim.token);
@@ -864,13 +866,17 @@ export class RepositoryStore {
     });
   }
 
-  async reclaimMaintenance(input: { operationId: string; expectedToken: string; owner: Owner; inspection: 'not_live' | 'unknown'; note: string }) {
+  async reclaimMaintenance(input: { operationId: string; expectedToken: string; expectedOwner: Owner;
+    expectedPhase: MaintenancePhase; owner: Owner; inspection: 'not_live' | 'unknown'; note: string }) {
     validateOwner(input.owner);
     text(input.note, 'maintenance clearance note');
     if (!input.note.trim()) throw new Error('nonempty maintenance clearance note required');
     return this.transaction(() => {
       const claim = this.readMaintenanceClaim(input.operationId);
       if (claim.token !== input.expectedToken) throw new Error('maintenance claim/token no longer matches');
+      if (claim.owner.host !== input.expectedOwner.host || claim.owner.pid !== input.expectedOwner.pid
+        || claim.owner.start !== input.expectedOwner.start || claim.maintenance?.phase !== input.expectedPhase)
+        throw new Error('maintenance owner or phase changed after inspection');
       const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection };
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)')
         .run(clearance.id, claim.id, JSON.stringify(clearance));

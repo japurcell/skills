@@ -10,7 +10,11 @@ export function inspectClaim(store: RepositoryStore, claim: Claim) {
     limitation:'owned process absence does not establish escaped or remote descendant cleanup'}));
   const state = owner.state === 'known_live' || scopes.some(scope => scope.inspection.state === 'known_live') ? 'known_live'
     : owner.state === 'unknown' || scopes.length || activity.hasMore ? 'unknown' : 'not_live';
-  return {claim,inspection:{state,owner,scopes,moreScopes:activity.hasMore,limitation:'inspection never signals stored PIDs; operator confirms unsupported child cleanup'}};
+  const diagnosticClaim = claim.kind === 'maintenance' && claim.maintenance
+    ? { id: claim.id, kind: claim.kind, resourceKey: claim.resourceKey,
+      invocationId: claim.invocationId, owner: claim.owner }
+    : claim;
+  return {claim:diagnosticClaim,inspection:{state,owner,scopes,moreScopes:activity.hasMore,limitation:'inspection never signals stored PIDs; operator confirms unsupported child cleanup'}};
 }
 export async function clearClaim(store: RepositoryStore, input: {claimId:string;token:string;operatorConfirmed:boolean;note:string}) {
   const claim = store.readClaim(input.claimId);

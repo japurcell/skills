@@ -4,11 +4,31 @@ import { join } from 'node:path';
 import { once } from 'node:events';
 import { createRepository } from './fixtures/repository.mjs';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
+import { beginMaintenance } from '../dist/maintenance.js';
 import { startObservationHost } from '../dist/dashboard.js';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
+test('inspect-owner reports typed maintenance without its private claim credential', async () => {
+  const repo = createRepository();
+  try {
+    const seed = await initializeRepositoryStore(join(repo.path, '.git'), { release: 'fixture' }); seed.close();
+    const selection = { release: '1.0.0', selectionDigest: 'a'.repeat(64), targetReleaseSha256: 'b'.repeat(64),
+      artifactDigests: { bundle: 'c'.repeat(64) }, targetSchema: 7 };
+    const claim = await beginMaintenance(repo.path, 'upgrade', selection,
+      { host: 'fixture-host', pid: process.pid, start: 'fixture-process-start' });
+    const inspected = spawnSync(process.execPath, [cli, 'inspect-owner', '--repository', repo.path, '--json'],
+      { encoding: 'utf8', timeout: 10000 });
+    assert.equal(inspected.status, 0, inspected.stderr);
+    assert.ok(!inspected.stdout.includes(claim.token));
+    const [{ claim: publicClaim }] = JSON.parse(inspected.stdout);
+    assert.equal(publicClaim.id, claim.claimId);
+    assert.equal(publicClaim.kind, 'maintenance');
+    assert.equal(publicClaim.token, undefined);
+    assert.equal(publicClaim.maintenance, undefined);
+  } finally { repo.dispose(); }
+});
 test('CLI help lists development invocation and history while incomplete input refuses startup', () => {
   const help = spawnSync(process.execPath, [cli, '--help'], { encoding: 'utf8' });
   assert.equal(help.status, 0, help.stderr);
