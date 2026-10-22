@@ -1035,6 +1035,81 @@ class PreflightTests(unittest.TestCase):
                 self.assert_stopped([int(pid) for pid in pids.read_text().splitlines()])
                 self.assertEqual(self.fingerprint(), before)
 
+    @unittest.skipIf(os.name == "nt", "POSIX native helper shutdown")
+    def test_denied_stopped_native_helper_shutdown_reports_incomplete(self):
+        wrapper, marker, pids = self.native_wrapper('healthy', active=True)
+        helper_marker = self.base / 'denied-helper-pid'
+        source = wrapper.read_text().replace('real=subprocess.Popen\n',
+            'real=subprocess.Popen\nimport os,signal\nhelper_pid=None\nreal_killpg=os.killpg\n'
+            'def guarded_killpg(pid,signum):\n'
+            ' if pid==helper_pid and signum==signal.SIGKILL:\n'
+            '  real_killpg(pid,signal.SIGSTOP)\n'
+            '  raise PermissionError("injected helper signal denial")\n'
+            ' return real_killpg(pid,signum)\n'
+            'os.killpg=guarded_killpg\n')
+        source = source.replace('def launched(command,*args,**kwargs):\n',
+            'def launched(command,*args,**kwargs):\n global helper_pid\n')
+        source = source.replace(' process=real(command,*args,**kwargs)\n',
+            ' process=real(command,*args,**kwargs)\n'
+            ' if any("fixture_process_helper" in str(part) for part in command):\n'
+            '  helper_pid=process.pid\n'
+            '  Path(' + repr(str(helper_marker)) + ').write_text(str(process.pid))\n')
+        wrapper.write_text(source)
+        before = self.fingerprint()
+        helper = None
+        identity = None
+        try:
+            with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(ROOT), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                deadline = time.monotonic() + 3
+                while (not marker.exists() or not helper_marker.exists()) and time.monotonic() < deadline and process.poll() is None:
+                    time.sleep(0.01)
+                self.assertTrue(marker.exists() and helper_marker.exists(), 'native helper and bounded child did not start')
+                helper = int(helper_marker.read_text())
+                identity = subprocess.check_output(['/bin/ps', '-o', 'lstart=', '-p', str(helper)])
+                time.sleep(0.2)
+                started = time.monotonic()
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=4)
+                elapsed = time.monotonic() - started
+            state = subprocess.run(['/bin/ps', '-o', 'stat=', '-p', str(helper)],
+                capture_output=True, timeout=2).stdout.strip()
+            print(json.dumps({'fixture_observer': 'denied-stopped-native-helper',
+                'returncode': process.returncode, 'reason': json.loads(stdout)['reason'],
+                'cleanup_seconds': round(elapsed, 6), 'helper_state_before_emergency_cleanup': state.decode()}), flush=True)
+            self.assertTrue(state.startswith(b'T'), 'injected helper denial did not leave a stopped helper')
+            self.assertEqual(process.returncode, 2, stdout + stderr)
+            report = json.loads(stdout)
+            self.assertEqual(report['result'], 'rejected')
+            self.assertEqual(report['reason'], 'process_cleanup_incomplete')
+            self.assertEqual(report['phase'], 'cleanup')
+            self.assertLess(elapsed, 2)
+            self.assertNotIn(b'Traceback', stderr)
+            self.assertNotIn(TOKEN.encode(), stdout + stderr)
+            self.assert_stopped([int(pid) for pid in pids.read_text().splitlines() if int(pid) != helper])
+            self.assertEqual(self.fingerprint(), before)
+        finally:
+            # The fault and incomplete result are observed before emergency
+            # cleanup; only the same freshly verified helper identity is killed.
+            if helper is not None and identity:
+                current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(helper)],
+                    capture_output=True, timeout=2).stdout
+                if current == identity:
+                    try:
+                        os.killpg(helper, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    deadline = time.monotonic() + 1
+                    while time.monotonic() < deadline:
+                        state = subprocess.run(['/bin/ps', '-o', 'stat=', '-p', str(helper)],
+                            capture_output=True, timeout=2).stdout.strip()
+                        if not state or state.startswith(b'Z'):
+                            break
+                        time.sleep(0.01)
+                    self.assert_stopped([helper])
+
     def test_linux_native_process_protocol_validates_targeted_proc_records(self):
         fields = ['T', '100', '4321', *(['0'] * 16), '123456']
         valid = b'4321 (name with ) spaces) ' + ' '.join(fields).encode() + b'\n'

@@ -361,13 +361,23 @@ class ProcessInspector:
             raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
 
     def close(self, deadline):
-        if self.process.poll() is None:
-            with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.killpg(self.process.pid, signal.SIGKILL)
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            wait_process(self.process, max(0, min(REAP_SECONDS, deadline - time.monotonic())))
-        self.process.stdin.close()
-        self.process.stdout.close()
+        started = time.monotonic()
+        allowance = max(0, min(REAP_SECONDS, deadline - started))
+        try:
+            if self.process.poll() is None:
+                with contextlib.suppress(ProcessLookupError, PermissionError):
+                    os.killpg(self.process.pid, signal.SIGKILL)
+            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+                wait_process(self.process, max(0, min(allowance, deadline - time.monotonic())))
+            if self.process.poll() is None:
+                # Signal delivery is not exit proof. A denied signal or expired
+                # reap must not turn a live helper into successful cancellation.
+                raise Failure("process_cleanup_incomplete", 2, "cleanup",
+                    resource="native_helper", limit=round(allowance, 3),
+                    measured=round(time.monotonic() - started, 3), unit="seconds")
+        finally:
+            self.process.stdin.close()
+            self.process.stdout.close()
 
 
 def native_living(known, identities, deadline):
@@ -1127,8 +1137,17 @@ def main():
         report = {"schema": SCHEMA, "version": VERSION, "result": "rejected", "reason": "unsafe_or_unavailable_state", "phase": "preflight"}
     finally:
         if INSPECTOR is not None:
-            INSPECTOR.close(CANCELLED_AT + CLEANUP_SECONDS if CANCELLED_AT is not None
-                            else time.monotonic() + REAP_SECONDS)
+            try:
+                INSPECTOR.close(CANCELLED_AT + CLEANUP_SECONDS if CANCELLED_AT is not None
+                                else time.monotonic() + REAP_SECONDS)
+            except Exception as failure:
+                # Finalization follows the primary outcome, but its failure is
+                # still terminal. Never expose payload-derived exception text.
+                code = 2
+                report = {"schema": SCHEMA, "version": VERSION, "result": "rejected",
+                          "reason": "process_cleanup_incomplete", "phase": "cleanup",
+                          **(failure.measurements if isinstance(failure, Failure) else {}),
+                          "action": failure_action("process_cleanup_incomplete")}
     # Filesystem teardown is synchronous. Budget its routine work above and
     # report a real overrun honestly; arbitrary filesystem/scheduler stalls do
     # not have a universal real-time guarantee.
