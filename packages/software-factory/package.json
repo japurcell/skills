@@ -16,6 +16,7 @@
     "test:notifications": "node scripts/test.mjs notifications",
     "test:learning": "node scripts/test.mjs learning",
     "test:maintenance": "node scripts/test.mjs maintenance",
+    "test:release": "node scripts/test.mjs release",
     "test:qualification": "node scripts/test.mjs qualification",
     "test:all": "node scripts/test.mjs all"
   },
