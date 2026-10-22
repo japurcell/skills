@@ -151,3 +151,16 @@ build and the full 85-check combination pass. Existing startup assertions now
 separate recorded setup commands from the same workflow operations: exactly one
 build remains required, and startup/build failures still launch no agent or
 workflow phase. No prior required/advisory outcome assertion was removed.
+
+## Integrated base proof
+
+Independent review approved the repaired source at `449c9d69`; source/tests stayed
+identical after rebase to `c794db5c`. Base fast-forwarded through `a27e3f2b`.
+After registering shutdown coverage, both strict typechecks/build and all 93
+registered checks passed: lifecycle 52, store/capture/placement 29, fixture/CLI 6,
+runtime/CI 6. Lifecycle completed in 26.626 seconds with zero failures or skips.
+The registered composed case records operator clearance, current edited entry
+and new inputs, preserved files and retained additional allowance. Independent
+review also verified prompt-only and live-interval SIGTERM exits, filtered secret
+diagnostics, cancellable checkout and Git-free exact-token recovery. Native
+Windows/Linux product qualification remains pending as documented above.

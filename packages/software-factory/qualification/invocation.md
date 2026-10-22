@@ -94,12 +94,15 @@ unknown, ownership/capacity remain occupied and invocation exits 1. Windows
 commands conservatively retain unknown cleanup until native scope support exists.
 No saved PID is used for runtime cleanup or takeover.
 
-T6 still owns bounded timeout/cancellation, signals, peer interruption, inherited
-pipes held open by descendants, process identity qualification and manual
-clearance. All context API promises, including scopes and unawaited calls, drain before finalization, but long
-running activity is not yet bounded by that future shutdown controller. Recorder
-failure preserves uncertainty. No executable resume, automatic retry, live
-harness call, release publication or native cross-platform support claim occurred.
+T6 now supplies bounded timeout/cancellation, signals, peer interruption,
+inherited-pipe handling, native identity limits and exact-claim manual clearance;
+see [lifecycle evidence](lifecycle.md). All context API promises participate in
+finalization, and unresolved authored promises remain foreground until stopped.
+Recorder failure and unsupported descendants preserve uncertainty. Explicit
+`--common-dir` inspection/clearance works without Git against an existing store.
+Windows workflow startup remains unqualified and may be blocked by conservative
+metadata/compiler cleanup. No executable resume, automatic retry, live harness
+call, release publication or native cross-platform product support is claimed.
 
 Official sources used for implementation choices:
 [Git worktree](https://git-scm.com/docs/git-worktree/2.54.0) and
