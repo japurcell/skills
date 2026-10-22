@@ -9,6 +9,7 @@ const sourceRoot = fileURLToPath(new URL('.', import.meta.url));
 const maxEtlBytes = 64 * 1024 * 1024;
 const maxReceiptBytes = 65536;
 const requiredApis = ['start', 'readyQuery', 'beforeStopQuery', 'stop', 'open', 'process', 'close'];
+const diagnosticRow = /^DIAG\t(?:callback\t(?:callback-cap|schema-size|property-size|property-width|text-shape|empty-key|duplicate-event|process-image-mismatch|image-mismatch|other)\t(?:root|child|none)|keys\t(?:missing-start-key|missing-end-key|changed-key)\t(?:root|child)|identity\t(?:missing-event|missing-image|duplicate-image|identity-key|parent-mismatch|exit-status|creation-time|process-order|image-lifetime)\t(?:root|child|none))$/;
 const integer = (value) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));
 const tick = (value) => typeof value === 'string' && /^\d{15,20}$/.test(value) && BigInt(value) > 0n;
 const pid = (value) => integer(value) && Number(value) > 0 && Number(value) <= 0xffffffff;
@@ -19,6 +20,7 @@ export function validateProbeReceipt(receipt, expectedNode) {
     typeof expectedNode !== 'string' || !expectedNode)
     return { ok: false, reasons: ['invalid receipt or expected Node path'] };
   const rows = receipt.trimEnd().split('\n').map((line) => line.replace(/\r$/, '').split('\t'));
+  if (rows.some((row) => row[0] === 'DIAG')) reasons.push('diagnostic receipt cannot qualify');
   const selected = (kind) => rows.filter((row) => row[0] === kind);
   const one = (kind) => {
     const items = selected(kind);
@@ -139,7 +141,7 @@ export function validateProbeReceipt(receipt, expectedNode) {
       reasons.push(`image load missing for ${target}`);
   }
   const known = new Set(['API', 'QUERY', 'MODE', 'ABI', 'TOKEN', 'OS', 'OWNERSHIP', 'SCHEMA', 'RUNDOWN', 'COUNTS',
-    'SESSION', 'ROOT', 'CHILD', 'EVENT', 'STATS', 'HEADER', 'FILE', 'COMPLETE']);
+    'SESSION', 'ROOT', 'CHILD', 'EVENT', 'STATS', 'HEADER', 'FILE', 'COMPLETE', 'DIAG']);
   if (rows.some((row) => !known.has(row[0]))) reasons.push('unknown receipt row');
   return { ok: reasons.length === 0, reasons, rootPid, childPid,
     processStarts: starts.length, processEnds: ends.length, imageLoads: images.length };
@@ -178,6 +180,7 @@ function safeNativeLine(line) {
     HEADER: new RegExp(`^HEADER\\t${tickValue}\\t${decimal}\\t${decimal}$`),
     FILE: new RegExp(`^FILE\\t${decimal}$`),
     COMPLETE: /^COMPLETE$/,
+    DIAG: diagnosticRow,
     FAIL: new RegExp(`^FAIL\\t(run|root-stop|stop|decode|receipt)\\t(native-api|timeout|invalid-data|invalid-state|operation-failed|unobserved|overflow|missing-etl|etl-cap-or-empty|loss)\\t${decimal}$`)
   };
   if (line.startsWith('OWNERSHIP\t')) {
@@ -186,6 +189,18 @@ function safeNativeLine(line) {
       row[2] === `Codex factory ETW feasibility ${row[1].replaceAll('-', '')}`;
   }
   return Boolean(patterns[line.split('\t', 1)[0]]?.test(line));
+}
+
+function safeNativeReceipt(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines.at(-1) === '') lines.pop();
+  if (!lines.every(safeNativeLine)) return false;
+  const diagnosticAt = lines.findIndex((line) => line.startsWith('DIAG\t'));
+  if (diagnosticAt < 0) return true;
+  return lines.filter((line) => line.startsWith('DIAG\t')).length === 1 &&
+    lines[diagnosticAt + 1]?.startsWith('FAIL\tdecode\t') &&
+    lines.filter((line) => line.startsWith('FAIL\tdecode\t')).length === 1 &&
+    !lines.some((line) => /^(?:SCHEMA|RUNDOWN|COUNTS|HEADER|EVENT|COMPLETE)(?:\t|$)/.test(line));
 }
 
 function qualificationSummary(bytes, nativeReady) {
@@ -223,7 +238,7 @@ function qualificationSummary(bytes, nativeReady) {
     stdoutPresent: source.bridge.stdoutPresent === true
   };
   if (source.receipt) summary.receipt = {
-    ok: source.receipt.ok === true,
+    ok: source.receipt.ok === true && nativeReady,
     rootPid: pid(String(source.receipt.rootPid)) ? source.receipt.rootPid : null,
     childPid: pid(String(source.receipt.childPid)) ? source.receipt.childPid : null,
     processStarts: Number.isInteger(source.receipt.processStarts) && source.receipt.processStarts >= 0 ?
@@ -260,8 +275,7 @@ function prepareArtifactsForUpload() {
       let oversized = statSync(path).size > maxReceiptBytes;
       const bytes = oversized ? null : readFileSync(path);
       oversized ||= bytes.length > maxReceiptBytes;
-      const unsafe = name === 'native.tsv' && !oversized &&
-        !bytes.toString('utf8').trimEnd().split(/\r?\n/).every(safeNativeLine);
+      const unsafe = name === 'native.tsv' && !oversized && !safeNativeReceipt(bytes.toString('utf8'));
       if (oversized || unsafe) { unlinkSync(path); removed = true; }
       else {
         const output = name === 'qualification.json' ? qualificationSummary(bytes, nativeReady) : bytes;

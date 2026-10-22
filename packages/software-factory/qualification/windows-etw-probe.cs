@@ -217,6 +217,7 @@ public static class WindowsEtwProbe
 
     private static readonly List<KnownEvent> KnownEvents = new List<KnownEvent>();
     private static Exception DecodeError;
+    private static string DecodeDiagnostic;
     private static string PinnedNode;
     private static long RootCreated;
     private static int RootPid, ChildPid;
@@ -238,6 +239,18 @@ public static class WindowsEtwProbe
         Failure(stage, win32 != null ? "native-api" : error is TimeoutException ? "timeout" :
             error is InvalidDataException ? "invalid-data" : error is InvalidOperationException ? "invalid-state" :
             "operation-failed", win32 != null ? (uint)win32.NativeErrorCode : 0);
+    }
+
+    private static InvalidDataException RejectDecode(string phase, string reason, string target)
+    {
+        if (DecodeDiagnostic == null) DecodeDiagnostic = String.Join("\t", new[] { "DIAG", phase, reason, target });
+        return new InvalidDataException("event decode rejected");
+    }
+
+    private static void RecordDecodeFailure(Exception error)
+    {
+        if (DecodeDiagnostic != null) Receipt.Add(DecodeDiagnostic);
+        Failure("decode", error);
     }
 
     private static bool WriteReceipt(string path)
@@ -356,7 +369,7 @@ public static class WindowsEtwProbe
         finally { Marshal.FreeHGlobal(address); }
     }
 
-    private static byte[] Property(IntPtr record, string name)
+    private static byte[] Property(IntPtr record, string name, string target)
     {
         IntPtr key = Marshal.StringToHGlobalUni(name);
         try
@@ -367,7 +380,7 @@ public static class WindowsEtwProbe
             uint size;
             uint code = TdhGetPropertySize(record, 0, IntPtr.Zero, 1, ref descriptor, out size);
             if (code != 0) throw new Win32Exception((int)code, "TDH size " + name);
-            if (size == 0 || size > 32768) throw new InvalidDataException("TDH property size invalid");
+            if (size == 0 || size > 32768) throw RejectDecode("callback", "property-size", target);
             var bytes = new byte[size];
             code = TdhGetProperty(record, 0, IntPtr.Zero, 1, ref descriptor, size, bytes);
             if (code != 0) throw new Win32Exception((int)code, "TDH value " + name);
@@ -376,36 +389,37 @@ public static class WindowsEtwProbe
         finally { Marshal.FreeHGlobal(key); }
     }
 
-    private static uint Property32(IntPtr record, string name)
+    private static uint Property32(IntPtr record, string name, string target)
     {
-        byte[] bytes = Property(record, name);
-        if (bytes.Length != 4) throw new InvalidDataException("TDH property width " + name);
+        byte[] bytes = Property(record, name, target);
+        if (bytes.Length != 4) throw RejectDecode("callback", "property-width", target);
         return BitConverter.ToUInt32(bytes, 0);
     }
 
-    private static ulong PropertyKey(IntPtr record)
+    private static ulong PropertyKey(IntPtr record, string target)
     {
-        byte[] bytes = Property(record, "UniqueProcessKey");
+        byte[] bytes = Property(record, "UniqueProcessKey", target);
         if (bytes.Length == 8) return BitConverter.ToUInt64(bytes, 0);
         if (bytes.Length == 4) return BitConverter.ToUInt32(bytes, 0);
-        throw new InvalidDataException("TDH UniqueProcessKey width");
+        throw RejectDecode("callback", "property-width", target);
     }
 
-    private static string TextProperty(IntPtr record, string name, bool unicode)
+    private static string TextProperty(IntPtr record, string name, bool unicode, string target)
     {
-        byte[] bytes = Property(record, name);
+        byte[] bytes = Property(record, name, target);
         string value = (unicode ? Encoding.Unicode : Encoding.Default).GetString(bytes).TrimEnd('\0');
         if (value.Length == 0 || value.IndexOf('\t') >= 0 || value.IndexOf('\n') >= 0 || value.Length > 4096)
-            throw new InvalidDataException("TDH text property invalid: " + name);
+            throw RejectDecode("callback", "text-shape", target);
         return value;
     }
 
     private static void OnEvent(IntPtr address)
     {
         if (DecodeError != null) return;
+        string target = "none";
         try
         {
-            if (++CallbackCount > 100000) throw new InvalidDataException("event callback cap reached");
+            if (++CallbackCount > 100000) throw RejectDecode("callback", "callback-cap", target);
             var record = (EventRecord)Marshal.PtrToStructure(address, typeof(EventRecord));
             if (record.Header.ProviderId != SystemTraceGuid && record.Header.ProviderId != ProcessGuid &&
                 record.Header.ProviderId != ImageGuid) return;
@@ -414,7 +428,7 @@ public static class WindowsEtwProbe
             if (code != InsufficientBuffer)
                 throw new Win32Exception((int)code, "TDH event schema size");
             if (size < 32 || size > 65536)
-                throw new InvalidDataException("TDH event schema size invalid");
+                throw RejectDecode("callback", "schema-size", target);
             Guid eventGuid;
             IntPtr info = Marshal.AllocHGlobal((int)size);
             try
@@ -430,37 +444,43 @@ public static class WindowsEtwProbe
             if (eventGuid == ImageGuid && (opcode == 3 || opcode == 4)) ImageRundown++;
             if (eventGuid == ProcessGuid && (opcode == 1 || opcode == 2))
             {
-                uint processId = Property32(address, "ProcessId");
+                uint processId = Property32(address, "ProcessId", target);
                 if (processId != RootPid && processId != ChildPid) return;
-                uint parentId = Property32(address, "ParentId");
-                ulong key = PropertyKey(address);
-                if (key == 0) throw new InvalidDataException("empty process key");
+                target = processId == RootPid ? "root" : "child";
+                uint parentId = Property32(address, "ParentId", target);
+                ulong key = PropertyKey(address, target);
+                if (key == 0) throw RejectDecode("callback", "empty-key", target);
                 var keys = opcode == 1 ? StartKeys : EndKeys;
-                if (keys.ContainsKey((int)processId)) throw new InvalidDataException("duplicate known process event");
+                if (keys.ContainsKey((int)processId)) throw RejectDecode("callback", "duplicate-event", target);
                 keys[(int)processId] = key;
-                if (opcode == 1 && !String.Equals(TextProperty(address, "ImageFileName", false),
+                if (opcode == 1 && !String.Equals(TextProperty(address, "ImageFileName", false, target),
                     PinnedNode, StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("known PID started an unexpected image");
+                    throw RejectDecode("callback", "process-image-mismatch", target);
                 KnownEvents.Add(new KnownEvent { Kind = opcode == 1 ? "process-start" : "process-end",
                     Pid = (int)processId, Parent = parentId, Key = key,
-                    ExitStatus = opcode == 2 ? Property32(address, "ExitStatus") : 0,
+                    ExitStatus = opcode == 2 ? Property32(address, "ExitStatus", target) : 0,
                     Time = record.Header.TimeStamp });
             }
             else if (eventGuid == ImageGuid && opcode == 10)
             {
-                uint processId = Property32(address, "ProcessId");
+                uint processId = Property32(address, "ProcessId", target);
                 if (processId != RootPid && processId != ChildPid) return;
-                string image = TextProperty(address, "FileName", true);
+                target = processId == RootPid ? "root" : "child";
+                string image = TextProperty(address, "FileName", true, target);
                 if (String.Equals(image, PinnedNode, StringComparison.OrdinalIgnoreCase))
                     KnownEvents.Add(new KnownEvent { Kind = "image-load", Pid = (int)processId,
                         Time = record.Header.TimeStamp });
                 // A basename match only rejects a foreign Node image; it never establishes identity.
                 else if (String.Equals(Path.GetFileName(image), "node.exe", StringComparison.OrdinalIgnoreCase))
-                    throw new InvalidDataException("known PID loaded a foreign Node image");
+                    throw RejectDecode("callback", "image-mismatch", target);
             }
             // DCStart/DCEnd are rundown, never a process start/end or a live image load.
         }
-        catch (Exception error) { DecodeError = error; }
+        catch (Exception error)
+        {
+            if (DecodeDiagnostic == null) DecodeDiagnostic = "DIAG\tcallback\tother\t" + target;
+            DecodeError = error;
+        }
     }
 
     private static void CommitKnownEvents()
@@ -476,24 +496,35 @@ public static class WindowsEtwProbe
             if (item.Kind == "image-load" && item.Pid == RootPid) rootImages++;
             if (item.Kind == "image-load" && item.Pid == ChildPid) childImages++;
         }
-        if (rootStart == null || rootEnd == null || childStart == null || childEnd == null ||
-            rootImages != 1 || childImages != 1 ||
-            rootStart.Key == 0 || childStart.Key == 0 || rootStart.Key != rootEnd.Key ||
-            childStart.Key != childEnd.Key || rootStart.Key == childStart.Key ||
-            childStart.Parent != RootPid || childEnd.Parent != RootPid ||
-            rootStart.Parent != rootEnd.Parent || rootStart.ExitStatus != 0 ||
-            rootEnd.ExitStatus != 0 || childEnd.ExitStatus != 0 ||
-            rootStart.Time < RootCreated - 50000000L || rootStart.Time > RootCreated + 50000000L ||
-            !(rootStart.Time < childStart.Time && childStart.Time < childEnd.Time &&
-              childEnd.Time < rootEnd.Time))
-            throw new InvalidDataException("known process identity or lifetime invalid");
+        if (rootStart == null || rootEnd == null) throw RejectDecode("identity", "missing-event", "root");
+        if (childStart == null || childEnd == null) throw RejectDecode("identity", "missing-event", "child");
+        if (rootImages == 0) throw RejectDecode("identity", "missing-image", "root");
+        if (childImages == 0) throw RejectDecode("identity", "missing-image", "child");
+        if (rootImages != 1) throw RejectDecode("identity", "duplicate-image", "root");
+        if (childImages != 1) throw RejectDecode("identity", "duplicate-image", "child");
+        if (rootStart.Key == 0 || rootStart.Key != rootEnd.Key)
+            throw RejectDecode("identity", "identity-key", "root");
+        if (childStart.Key == 0 || childStart.Key != childEnd.Key)
+            throw RejectDecode("identity", "identity-key", "child");
+        if (rootStart.Key == childStart.Key) throw RejectDecode("identity", "identity-key", "none");
+        if (childStart.Parent != RootPid || childEnd.Parent != RootPid)
+            throw RejectDecode("identity", "parent-mismatch", "child");
+        if (rootStart.Parent != rootEnd.Parent)
+            throw RejectDecode("identity", "parent-mismatch", "root");
+        if (rootStart.ExitStatus != 0 || rootEnd.ExitStatus != 0)
+            throw RejectDecode("identity", "exit-status", "root");
+        if (childEnd.ExitStatus != 0) throw RejectDecode("identity", "exit-status", "child");
+        if (rootStart.Time < RootCreated - 50000000L || rootStart.Time > RootCreated + 50000000L)
+            throw RejectDecode("identity", "creation-time", "root");
+        if (!(rootStart.Time < childStart.Time && childStart.Time < childEnd.Time &&
+              childEnd.Time < rootEnd.Time)) throw RejectDecode("identity", "process-order", "none");
         foreach (KnownEvent item in KnownEvents)
         {
             if (item.Kind != "image-load") continue;
             KnownEvent start = item.Pid == RootPid ? rootStart : childStart;
             KnownEvent end = item.Pid == RootPid ? rootEnd : childEnd;
             if (item.Time < start.Time || item.Time > end.Time)
-                throw new InvalidDataException("known image outside process lifetime");
+                throw RejectDecode("identity", "image-lifetime", item.Pid == RootPid ? "root" : "child");
         }
         foreach (KnownEvent item in KnownEvents)
         {
@@ -672,7 +703,7 @@ public static class WindowsEtwProbe
                 {
                     try
                     {
-                        CallbackCount = 0; DecodeError = null;
+                        CallbackCount = 0; DecodeError = null; DecodeDiagnostic = null;
                         CallbackRoot = OnEvent;
                         var logfile = new EventTraceLogfile();
                         logfile.LogFileName = etl;
@@ -692,9 +723,12 @@ public static class WindowsEtwProbe
                             foreach (int pid in new[] { RootPid, ChildPid })
                             {
                                 ulong begin, end;
-                                if (!StartKeys.TryGetValue(pid, out begin) ||
-                                    !EndKeys.TryGetValue(pid, out end) || begin != end)
-                                    throw new InvalidDataException("known process key missing or changed");
+                                string target = pid == RootPid ? "root" : "child";
+                                if (!StartKeys.TryGetValue(pid, out begin))
+                                    throw RejectDecode("keys", "missing-start-key", target);
+                                if (!EndKeys.TryGetValue(pid, out end))
+                                    throw RejectDecode("keys", "missing-end-key", target);
+                                if (begin != end) throw RejectDecode("keys", "changed-key", target);
                             }
                             CommitKnownEvents();
                             Line("SCHEMA", "ProcessId:u32", "ParentId:u32", "UniqueProcessKey:pointer",
@@ -723,7 +757,7 @@ public static class WindowsEtwProbe
                     }
                     catch (Exception error)
                     {
-                        Failure("decode", error);
+                        RecordDecodeFailure(error);
                         result = 4;
                     }
                 }

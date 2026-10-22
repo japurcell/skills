@@ -28,6 +28,19 @@ const good = [
   'FILE\t65536', 'COMPLETE', ''
 ].join('\n');
 
+// Shape captured by native Windows run 39863447738, before SCHEMA was emitted.
+const failedDecode = [
+  'ABI\t120\t280\t112\t448', 'TOKEN\tadministrator', 'OS\tMicrosoft Windows NT 10.0.26100.0',
+  'API\tstart\t0', 'API\treadyQuery\t0', 'QUERY\treadyQuery\t1\t1\t1\t1\t1',
+  'MODE\treadyQuery\t1\t1\t0\tstop\t0',
+  'OWNERSHIP\t01254f99-5e02-4390-be83-afe786d9dfc6\tCodex factory ETW feasibility 01254f995e024390be83afe786d9dfc6',
+  'SESSION\t37748737\t5\t64', 'ROOT\t7364\t134371808985697898\tpinned-node',
+  'CHILD\t8816', 'API\tbeforeStopQuery\t0', 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1',
+  'MODE\tbeforeStopQuery\t1\t1\t0\tstop\t0', 'API\tstop\t0', 'STATS\t0\t0\t0',
+  'FILE\t3014656', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
+  'FAIL\tdecode\tinvalid-data\t0', ''
+].join('\n');
+
 test('public receipt accepts a complete known root and child, pending native proof', () => {
   assert.deepEqual(validateProbeReceipt(good, 'C:\\node\\node.exe'), {
     ok: true, reasons: [], rootPid: 100, childPid: 101,
@@ -106,6 +119,57 @@ test('forged qualification cannot pass artifact preparation with missing or old 
       assert.equal(staged.status, 'failed');
       assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
     }
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
+});
+
+test('failed native decode retains one bounded fixed diagnostic without qualifying', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-decode-diag-'));
+  const native = join(evidence, 'native.tsv');
+  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\tchild';
+  const failed = failedDecode.replace('FAIL\tdecode', `${diagnostic}\nFAIL\tdecode`);
+  const prepare = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+    encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+  });
+  try {
+    const summary = { status: 'native-feasibility-passed-review-required', receipt: { ok: true },
+      rawEtl: 'removed-after-offline-parse' };
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify(summary));
+    writeFileSync(native, failed);
+    assert.equal(prepare().status, 0);
+    assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), failed);
+    const staged = JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8'));
+    assert.equal(staged.status, 'failed');
+    assert.equal(staged.receipt.ok, false);
+    assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
+    assert.equal(validateProbeReceipt(failed, 'C:\\node\\node.exe').ok, false);
+    for (const invalid of [
+      `${diagnostic}\n${diagnostic}\n`,
+      'DIAG\tcallback\tunknown\tchild\n',
+      'DIAG\tkeys\tprocess-image-mismatch\tchild\n',
+      'DIAG\tkeys\tchanged-key\tnone\n',
+      'DIAG\tcallback\tprocess-image-mismatch\tchild\textra\n',
+      'DIAG\tcallback\tprocess-image-mismatch\tC:\\ambient\\node.exe\n',
+      'DIAG\tcallback\tprocess-image-mismatch\tchild\npath\n',
+      `DIAG\tcallback\tprocess-image-mismatch\tchild${'X'.repeat(65537)}\n`,
+      `${diagnostic}\nFAIL\tdecode\tinvalid-data\t0\n`
+    ]) {
+      writeFileSync(native, failed.replace(`${diagnostic}\n`, invalid));
+      assert.equal(prepare().status, 0);
+      assert.equal(existsSync(native), false);
+      assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+    }
+    writeFileSync(native, failed.replace(`${diagnostic}\nFAIL\tdecode`, `FAIL\tdecode`)
+      .replace('FAIL\tdecode\tinvalid-data\t0\n', `FAIL\tdecode\tinvalid-data\t0\n${diagnostic}\n`));
+    assert.equal(prepare().status, 0);
+    assert.equal(existsSync(native), false);
+    writeFileSync(native, good.replace('COMPLETE\n', `${diagnostic}\nCOMPLETE\n`));
+    assert.equal(prepare().status, 0);
+    assert.equal(existsSync(native), false);
+    assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+    assert.equal(validateProbeReceipt(good.replace('COMPLETE\n', `${diagnostic}\nCOMPLETE\n`),
+      'C:\\node\\node.exe').ok, false);
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
