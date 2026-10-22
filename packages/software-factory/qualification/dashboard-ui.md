@@ -4,7 +4,27 @@ Status: private repair candidate on macOS arm64, 2026-10-22. This note supplemen
 
 The public seam is the loopback observation host in real Playwright Chromium, backed by disposable Git repositories and committed SQLite history. Tests use pinned Node 24.22.1 and Playwright Chromium 1248 from `/tmp/software-factory-playwright-browsers`.
 
-## Reproduced failures and repairs
+## Ownership and committed cursor
+
+The existing snapshot generation now owns a complete view intent: navigation, Follow, Freeze, event/history/capture paging, capture selection, and lane/collapse controls. Starting an intent aborts its predecessor's read controller and stream, invalidates its queued projections, and immediately proceeds. It never awaits obsolete I/O. All JSON reads use that controller plus a 10-second timeout and check cancellation after body decoding. Route and tuple checks remain where they describe the displayed identity. Independent index/run/event/reader/outcome/card request counters and the Follow lock were removed.
+
+SSE projections remain serial. The applied cursor advances only when the current stream's complete essential projection succeeds; index card, invocation outcome, saved question, capture summary and followed output failures reject into disconnect/replay. Catch-up heads are read through the same owned resume path before Connected. New intents replay from the last fully applied cursor. Frozen replay deduplicates against the bounded deferred window's highest cursor, including events already evicted from its 200-row buffer.
+
+Capture identity, page and origin commit together after successful reads. Optional reader restoration errors remain visible as alerts without corrupting the capture identity or stopping live history. Output following rechecks scroll/selection intent after reading saved bytes. An old route's buttons are disabled during navigation to a different route, while links remain usable to supersede that navigation.
+
+## Current red/green evidence
+
+The public seam is unchanged: real Chromium against the real authenticated loopback host and committed disposable SQLite history. Required projections use intercepted public HTTP responses to reproduce failures; assertions observe rendered output and connection status.
+
+- Before source edits, all three review reproducers failed: a failed card read was accepted without replay, navigation still showed the old Run heading after 750ms of a held output read, and an earlier page replaced Freeze's cursor 212 with cursor 13. Their public regressions now pass without longer deadlines.
+- Persistent outcome/question failures leave Running visible and observation disconnected until replay succeeds; the finalized cursor then accompanies Failed. A transient card failure likewise retries before Connected advances.
+- Failed capture selection retained a new identity with the old page, so later bytes could not follow the displayed capture. Its public test timed out at the original two-second deadline before the atomic commit fix and now passes.
+- Scrolling away during a held append read still appended the deferred tail. The new test failed on that visible tail before the post-read pause check and now passes; explicit Load new saved text still follows it.
+- Follow silently stopped after its catch-up head failed. The new test failed to reach Disconnected within two seconds and now passes, including recovery after another Freeze/Follow.
+- Reconnecting a frozen reader after 205 deferred events doubled its pending count to 410. The new test observed that exact failure before high-water deduplication and now retains 205, with at most 200 event rows.
+- Additional public tests prove Freeze supersedes a held next-output page and optional Back capture restoration fails visibly while outcome updates remain usable.
+
+## Earlier retained regression evidence
 
 - A Back restore of open capture A held its capture GET. A newer same-invocation snapshot held stale detail and event pages. Releasing A, committing capture B, then releasing the newer reads left B absent on committed source `f8ea2e6f` even after the page reported Connected. The older restore now checks snapshot and route ownership after every wait, and a same-invocation navigation carries the reader's disclosure and capture selection into the newer snapshot. The public test is `an older Back reader restore cannot resume SSE during a newer same-route snapshot`.
 - An index route read held a stale Running card while a finalized event committed. The stream reported Connected before its card refresh completed. Every route, initial, page and gap resnapshot now samples an event head and keeps the stream in Catching up until all events through that head have been projected. The held-card route test was red before this change and green afterward.
@@ -15,14 +35,16 @@ The public seam is the loopback observation host in real Playwright Chromium, ba
 
 ## Verification
 
-From `packages/software-factory`, with pinned Node on `PATH` and `PLAYWRIGHT_BROWSERS_PATH=/tmp/software-factory-playwright-browsers`:
+From `packages/software-factory`, with pinned Node 24.22.1 on `PATH` and `PLAYWRIGHT_BROWSERS_PATH=/tmp/software-factory-playwright-browsers`:
 
-- `npm run typecheck`: passed strict source and qualification checks.
-- `npm run build`: passed and copied the repaired authored UI into ignored `dist/web` for the browser host.
-- `node --test test/browser/ui.test.mjs test/browser/scale.test.mjs`: 43 passed. Index display was 631.9ms and committed-event p95 was 115.7ms over 20 samples; DOM bounds remained 30 cards, 50 lanes and 200 events.
-- `npm run test:web -- --suite server`: 22 passed.
-- `npm run test:store`: 30 passed.
-- `npm run test:lifecycle`: 65 passed.
-- Ten repeated focused Chromium runs of four Back, scroll and output timing cases passed after the scroll reset. Three consecutive full 42-check browser/scale runs passed before the final transient-read test was added; the final 43-check run passed.
+- `npm run typecheck`: passed strict source and qualification checks after the final source edits.
+- `npm run build`: passed and copied authored UI into ignored `dist/web`.
+- `node --test test/browser/ui.test.mjs test/browser/scale.test.mjs`: all 54 passed in 29.152 seconds on the final source. Index display was 583.8ms and committed-event p95 was 114.2ms over 20 samples; unchanged DOM assertions retained 30 cards, at most 50 lanes and at most 200 events. Log: `/tmp/factory-ui-ownership-final-browser.log`.
+- `npm run test:web -- --suite server`: all 22 passed in 5.114 seconds. Host/security source is unchanged.
+- `npm run test:store`: all 30 passed in 2.296 seconds. Log: `/tmp/factory-ui-ownership-store.log`.
+- `npm run test:lifecycle`: all 65 passed in 50.308 seconds. Log: `/tmp/factory-ui-ownership-lifecycle.log`.
+- The preceding full 52-case and 53-case browser/scale runs also passed before the final added error-path/buffer cases. The original exact scroll, focus, selection, tuple, 49/50/51 capture paging, rapid-append and catch-up assertions were retained.
+- Inspected rendered 390px index and run screenshots in `/tmp/factory-ui-ownership-screenshots`. Controls, wrapped identities, disclosures and recorded event text remain contained and legible; automated 200% CSS zoom and narrow overflow assertions pass. These screenshots are temporary evidence, not repository artifacts.
+- `git diff --check`: passed. Reflection found the durable async ownership lessons encoded in runtime boundaries and public tests; no additional brain or skill write is needed.
 
-The browser checks use a real local host and Chromium but do not establish native Windows/Linux UI timing or desktop assistive-technology acceptance. Integration, canonical plan updates and final release qualification remain outside this private candidate.
+This is an unpushed private repair candidate, not T11 acceptance. Independent review, maintained registration and composed integration remain with the parent owner. Native Windows/Linux UI timing, real browser/native zoom, manual assistive technology and schema-4 forward maintenance remain later gates. No host/security, schema, registry, execution control or canonical plan files changed.

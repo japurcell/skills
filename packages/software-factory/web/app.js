@@ -9,9 +9,9 @@ const state = {
   attemptPage: [0], captureSummaryPage: [0], sessionPage: [0],
   sessions: [], sessionsNext: 0, sessionsMore: false, lanePage: 0, collapsed: new Set(), sessionParents: new Map(), question: null,
   events: [], earlier: false, deferredEvents: [], selectedCapture: null, capturePage: null, captureAfter: 0, capturePending: false, captureVersion: 0, captureRefreshing: false, streamAbort: null,
-  routeGeneration: 0, indexLoadGeneration: 0, runLoadGeneration: 0, eventPageGeneration: 0, readerRestoreGeneration: 0,
-  snapshotGeneration: 0, streamGeneration: 0, snapshotting: false, projection: null, projecting: false, receivedCursor: '0',
-  outcomeGeneration: 0, cardRefreshSequence: 0, cardGenerations: new Map(), error: null, connectionKind: null, validatedParent: null,
+  routeGeneration: 0,
+  snapshotGeneration: 0, readAbort: new AbortController(), streamGeneration: 0, snapshotting: false, projection: null, projecting: false, receivedCursor: '0',
+  error: null, connectionKind: null, validatedParent: null,
 };
 const idPattern = /^[0-9a-f-]{36}$/;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -43,27 +43,33 @@ function showConnection(kind, text) {
   if (changed) announcement.textContent = kind==='disconnected'?text:kind==='connected'?'Observation connected.':kind==='connecting'?'Catching up with saved observations.':'Observation frozen.';
 }
 async function api(path, options = {}) {
-  const response = await fetch(path, { ...options, cache:'no-store', headers: { Authorization:'Bearer ' + state.token, ...options.headers } });
+  const owner=state.readAbort;
+  const signal=AbortSignal.any([owner.signal,AbortSignal.timeout(10000)]);
+  const response = await fetch(path, { ...options, signal, cache:'no-store', headers: { Authorization:'Bearer ' + state.token, ...options.headers } });
   if (!response.ok) {
     let message = `History request failed (${response.status}).`;
     try { message = (await response.json()).error || message; } catch {}
     const error = new Error(message); error.status = response.status; throw error;
   }
-  return response.json();
+  const result=await response.json();
+  signal.throwIfAborted();
+  return result;
 }
 function errorView(message, parent) {
   app.removeAttribute('aria-busy');
   app.innerHTML = `<div class="error-message" role="alert"><h1>History unavailable</h1><p>${escapeHtml(message)}</p><p><a href="${parent || '#'}">${parent ? 'Return to saved parent' : 'Return to runs'}</a></p></div>`;
 }
+function readFailure(message) {
+  const box=document.createElement('div');box.className='error-message';box.setAttribute('role','alert');box.textContent=message;app.prepend(box);
+}
 function routeError(message, parent) { state.error = message; errorView(message, parent); }
 async function loadIndex(generation = state.routeGeneration, pages = state.runPage) {
-  const anchor=pages.at(-1)??0,request=++state.indexLoadGeneration,href=location.href,snapshot=state.snapshotGeneration;
+  const anchor=pages.at(-1)??0,href=location.href,snapshot=state.snapshotGeneration;
   const page = await api(`/api/runs?after=${anchor}&limit=30`);
-  if (generation !== state.routeGeneration||request!==state.indexLoadGeneration||href!==location.href||snapshot!==state.snapshotGeneration) return;
+  if (generation !== state.routeGeneration||href!==location.href||snapshot!==state.snapshotGeneration) return;
   state.runPage=pages;
   state.runs = page.runs; state.runPageNext = page.nextCursor; state.runsHaveMore = page.hasMore;
   state.pending=0;state.deferredEvents=[];
-  state.cardGenerations.clear();
   state.run = null; state.invocation = null; state.error = null;
   renderIndex();
   return true;
@@ -107,8 +113,8 @@ function renderIndex() {
   renderCards();
 }
 async function loadRun(target, generation = state.routeGeneration, reader = null) {
-  const request=++state.runLoadGeneration,href=location.href,snapshot=state.snapshotGeneration;
-  const current=()=>generation===state.routeGeneration&&request===state.runLoadGeneration&&href===location.href&&snapshot===state.snapshotGeneration;
+  const href=location.href,snapshot=state.snapshotGeneration;
+  const current=()=>generation===state.routeGeneration&&href===location.href&&snapshot===state.snapshotGeneration;
   const run = await api(`/api/runs/${target.run}`);
   if(!current())return;
   state.validatedParent=link({run:target.run});
@@ -393,18 +399,45 @@ function updateCollapsedRows() {
     const textLink=document.querySelector(`.timeline-text [data-session="${CSS.escape(id)}"]`);if(textLink)textLink.hidden=hidden;
   }
 }
-async function loadRoute(reader = null, baseline = null, resume = true) {
-  if (!state.token) return;
+// A view intent owns its reads and all continuations. Superseding it never waits
+// for obsolete I/O. The cursor remains the last fully applied SSE projection;
+// restarting the stream replays anything interrupted by navigation or a reader action.
+function beginViewIntent() {
+  state.readAbort.abort();
+  state.readAbort=new AbortController();
   const snapshot=++state.snapshotGeneration;
-  state.snapshotting=true;
   state.streamGeneration++;
   state.streamAbort?.abort();
-  state.connected=false;
+  state.projection=null;state.projecting=false;state.captureRefreshing=false;
+  state.connected=false;state.snapshotting=true;
+  state.receivedCursor=state.cursor;
+  document.querySelectorAll('.event-row[data-pending="true"]').forEach(row=>row.remove());
   if(!state.frozen)showConnection('connecting','Catching up from saved cursor '+state.cursor);
-  await state.projection?.catch(()=>{});
+  return snapshot;
+}
+async function resumeView(snapshot) {
   if(snapshot!==state.snapshotGeneration)return;
+  try {
+    const head=await api('/api/events/head');
+    if(snapshot!==state.snapshotGeneration)return;
+    state.snapshotting=false;
+    startStream(head.cursor);
+  } catch {
+    if(snapshot!==state.snapshotGeneration)return;
+    state.snapshotting=false;
+    showConnection('disconnected','History unavailable');
+  }
+}
+async function loadRoute(reader = null, baseline = null, resume = true) {
+  if (!state.token) return;
+  const snapshot=beginViewIntent();
   const generation=++state.routeGeneration, target=route();
   state.validatedParent=null;
+  // Controls from a different displayed route cannot act on the new URL.
+  // Links stay available so another navigation can supersede this read.
+  if((target.run||null)!==(state.run?.id||null)||(target.invocation&&target.invocation!==state.invocation?.id)) {
+    app.querySelectorAll('button').forEach(button=>{button.disabled=true;});
+  }
   app.setAttribute('aria-busy','true');
   let committed=false;
   try {
@@ -423,12 +456,7 @@ async function loadRoute(reader = null, baseline = null, resume = true) {
       state.receivedCursor=state.cursor;
       if(resume){
         if(committed) {
-          try {
-            const head=await api('/api/events/head');
-            if(snapshot===state.snapshotGeneration&&generation===state.routeGeneration)startStream(head.cursor);
-          } catch {
-            if(snapshot===state.snapshotGeneration&&generation===state.routeGeneration)showConnection('disconnected','History unavailable');
-          }
+          await resumeView(snapshot);
         } else showConnection('disconnected','History unavailable');
       }
     }
@@ -447,27 +475,25 @@ function readerSnapshot() {
 }
 async function restoreReader(reader, generation=state.routeGeneration) {
   if(!reader||state.error)return;
-  const request=++state.readerRestoreGeneration,href=location.href,invocationId=state.invocation?.id,snapshot=state.snapshotGeneration;
-  const current=()=>generation===state.routeGeneration&&request===state.readerRestoreGeneration&&href===location.href&&state.invocation?.id===invocationId&&snapshot===state.snapshotGeneration;
+  const href=location.href,invocationId=state.invocation?.id,snapshot=state.snapshotGeneration;
+  const current=()=>generation===state.routeGeneration&&href===location.href&&state.invocation?.id===invocationId&&snapshot===state.snapshotGeneration;
   if(!current())return;
   for(const detail of app.querySelectorAll('details')) {
     const saved=reader.disclosures?.find(item=>item.name===detail.querySelector('summary')?.textContent?.trim());
     if(saved)detail.open=saved.open;
   }
   if(state.invocation && reader.eventWindowEnd && !route().cursor && state.events.at(-1)?.cursor!==reader.eventWindowEnd) {
-    const eventRequest=++state.eventPageGeneration;
     try {const page=await api(`/api/invocations/${invocationId}/events?before=${BigInt(reader.eventWindowEnd)+1n}&limit=200`);
-      if(current()&&eventRequest===state.eventPageGeneration){state.events=page.events;state.earlier=page.hasEarlier;renderEventList();}}
-    catch { /* Keep the current saved window when older evidence cannot be read. */ }
+      if(current()){state.events=page.events;state.earlier=page.hasEarlier;renderEventList();}}
+    catch(error) {if(current())readFailure('Earlier event restoration failed: '+error.message);}
   }
   if(!current())return;
   if(state.invocation && reader.capture?.id) {
-    state.selectedCapture=reader.capture.id;state.captureAfter=reader.capture.after;
     try {
       const captureVersion=++state.captureVersion;
       const page=await api(`/api/invocations/${invocationId}/captures/${reader.capture.id}?after=${reader.capture.after}&limit=50`);
       if(current()&&state.captureVersion===captureVersion){state.selectedCapture=reader.capture.id;state.captureAfter=reader.capture.after;state.capturePending=false;state.capturePage=page;renderCapture();}}
-    catch { /* Keep other saved details available. */ }
+    catch(error) {if(current())readFailure('Saved output restoration failed: '+error.message);}
   }
   if(!current())return;
   const timeline=document.querySelector('.timeline-scroll');if(timeline)timeline.scrollLeft=reader.timeline||0;
@@ -502,7 +528,8 @@ async function connect(generation,targetCursor) {
     const abort=new AbortController(); state.streamAbort=abort;
     let projectionFailure=null;
     try {
-      showConnection('connecting','Catching up from saved cursor '+state.cursor);
+      if(state.frozen)showConnection('frozen','Frozen at saved cursor '+state.cursor);
+      else showConnection('connecting','Catching up from saved cursor '+state.cursor);
       const response=await fetch('/api/stream?after='+encodeURIComponent(state.cursor),{headers:{Authorization:'Bearer '+state.token},cache:'no-store',signal:abort.signal});
       if (!response.ok || !response.body) throw new Error('Observation stream unavailable');
       if(generation!==state.streamGeneration)return;
@@ -532,7 +559,10 @@ async function connect(generation,targetCursor) {
             if(state.projecting&&event.kind==='capture.appended')showPendingCaptureEvent(event);
             if(!state.frozen)showConnection('connecting','Applying saved observations after cursor '+state.cursor);
             const previous=state.projection;
-            const projection=Promise.resolve(previous).then(()=>applyEvent(event)).then(()=>{
+            const projection=Promise.resolve(previous).then(()=>{
+              if(generation!==state.streamGeneration||state.snapshotting)return;
+              return applyEvent(event);
+            }).then(()=>{
               if(generation!==state.streamGeneration||state.snapshotting)return;
               if(!state.frozen){state.cursor=event.cursor;state.lastUpdate=new Date();}
               if(state.connected&&!state.frozen&&BigInt(state.cursor)>=BigInt(state.receivedCursor)&&(!targetCursor||BigInt(state.cursor)>=BigInt(targetCursor)))showConnection('connected','Connected - saved cursor '+state.cursor);
@@ -612,17 +642,19 @@ async function applyEvent(event) {
   }
 }
 function deferEvent(event) {
-  if(state.deferredEvents.some(item=>item.cursor===event.cursor))return;
+  // SSE is ordered. The last deferred cursor also covers rows evicted from
+  // the bounded window when an owned reader action reconnects while frozen.
+  const last=state.deferredEvents.at(-1)?.cursor;
+  if(last&&BigInt(event.cursor)<=BigInt(last))return;
   state.pending++;state.deferredEvents.push(event);
   if(state.deferredEvents.length>200)state.deferredEvents.shift();
   updatePending();
 }
 async function refreshQuestion() {
   const id=state.invocation?.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;if(!id)return;
-  try {const question=await api(`/api/invocations/${id}/question`);if(state.frozen||generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id)return;state.question=question;
-    updateAttention();
-    updateOutcomeExplanation();
-  } catch { /* Keep the saved view until a successful snapshot. */ }
+  const question=await api(`/api/invocations/${id}/question`);if(state.frozen||generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id)return;state.question=question;
+  updateAttention();
+  updateOutcomeExplanation();
 }
 function updateAttention() {
   const slot=document.getElementById('attention-slot');if(!slot||!state.invocation)return;
@@ -646,29 +678,27 @@ function updateOutcomeExplanation() {
 async function refreshIndexCard(event) {
   const run=state.runs.find(item=>item.id===event.data?.runId || item.latestInvocation?.id===event.data?.invocationId);
   if(!run)return;
-  const generation=++state.cardRefreshSequence,snapshot=state.snapshotGeneration;state.cardGenerations.set(run.id,generation);
-  try {
-    const latest=await api(`/api/runs/${run.id}`);
-    if(state.frozen||route().run||snapshot!==state.snapshotGeneration||state.cardGenerations.get(run.id)!==generation)return;
-    const index=state.runs.findIndex(item=>item.id===run.id);if(index<0)return;
-    state.runs[index]=latest;
-    const cards=document.getElementById('cards');
-    const existing=cards?.querySelector(`[data-run="${CSS.escape(run.id)}"]`);
-    if(!existing)return;
-    const replacement=document.createElement('div');replacement.innerHTML=card(latest);
-    const fresh=replacement.firstElementChild;
-    existing.dataset.outcome=fresh.dataset.outcome;
-    existing.dataset.cardSearch=fresh.dataset.cardSearch;
-    const oldHead=existing.querySelector('.card-head'),newHead=fresh.querySelector('.card-head');
-    const oldLink=oldHead?.querySelector('a'),newLink=newHead?.querySelector('a');
-    if(oldLink&&newLink){oldLink.textContent=newLink.textContent;oldLink.setAttribute('aria-label',newLink.getAttribute('aria-label'));}
-    for(const selector of ['.workflow','p']) {
-      const old=oldHead?.querySelector(selector),next=newHead?.querySelector(selector);if(old&&next)old.textContent=next.textContent;
-    }
-    for(const selector of ['.mini-activity','.card-foot']) {
-      const old=existing.querySelector(selector),next=fresh.querySelector(selector);if(old&&next)old.replaceWith(next);
-    }
-  } catch { /* Keep the last saved card until the next saved snapshot. */ }
+  const snapshot=state.snapshotGeneration;
+  const latest=await api(`/api/runs/${run.id}`);
+  if(state.frozen||route().run||snapshot!==state.snapshotGeneration)return;
+  const index=state.runs.findIndex(item=>item.id===run.id);if(index<0)return;
+  state.runs[index]=latest;
+  const cards=document.getElementById('cards');
+  const existing=cards?.querySelector(`[data-run="${CSS.escape(run.id)}"]`);
+  if(!existing)return;
+  const replacement=document.createElement('div');replacement.innerHTML=card(latest);
+  const fresh=replacement.firstElementChild;
+  existing.dataset.outcome=fresh.dataset.outcome;
+  existing.dataset.cardSearch=fresh.dataset.cardSearch;
+  const oldHead=existing.querySelector('.card-head'),newHead=fresh.querySelector('.card-head');
+  const oldLink=oldHead?.querySelector('a'),newLink=newHead?.querySelector('a');
+  if(oldLink&&newLink){oldLink.textContent=newLink.textContent;oldLink.setAttribute('aria-label',newLink.getAttribute('aria-label'));}
+  for(const selector of ['.workflow','p']) {
+    const old=oldHead?.querySelector(selector),next=newHead?.querySelector(selector);if(old&&next)old.textContent=next.textContent;
+  }
+  for(const selector of ['.mini-activity','.card-foot']) {
+    const old=existing.querySelector(selector),next=fresh.querySelector(selector);if(old&&next)old.replaceWith(next);
+  }
 }
 function updateCaptureButtons() {
   const container=document.querySelector('.capture-list');if(!container)return;
@@ -691,56 +721,49 @@ async function refreshCaptureSummaries() {
 }
 async function refreshCurrentOutcome() {
   if(!state.invocation)return;
-  const id=state.invocation.id,generation=++state.outcomeGeneration,routeGeneration=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
-  const current=()=>!state.frozen&&routeGeneration===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href&&state.invocation?.id===id&&generation===state.outcomeGeneration;
-  try {
-    const page=await api(`/api/invocations/${id}?limit=1`);
-    if(!current())return;
-    const previous=outcome(state.invocation)[0],previousCleanup=state.invocation.cleanup,previousClearance=state.clearance?.id;
-    let question=state.question;
-    if(page.invocation.outcome==='needs_input'||page.invocation.outcome==='failed') {
-      try {question=await api(`/api/invocations/${id}/question`);} catch {question=null;}
-    }
-    if(!current())return;
-    state.invocation=page.invocation;state.clearance=page.clearance;state.question=question;
-    const [label,tone]=outcome(state.invocation);
-    const execution=document.getElementById('execution-state');if(execution)execution.innerHTML=chip(label,tone);
-    const cleanup=document.getElementById('cleanup-state');if(cleanup)cleanup.innerHTML=chip(state.clearance?'Operator confirmed':state.invocation.cleanup==='complete'?'Automatically checked':state.invocation.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||state.invocation.cleanup==='complete'?'success':'attention');
-    updateAttention();
-    const inspectorOutcome=document.getElementById('inspector-outcome');if(inspectorOutcome&&!state.displayTarget?.attempt)inspectorOutcome.textContent=label;
-    updateOutcomeExplanation();
-    if(previous!==label||previousCleanup!==state.invocation.cleanup||previousClearance!==state.clearance?.id)announcement.textContent='Selected invocation updated: '+label+(state.invocation.cleanup==='unknown'?'; manual cleanup required':'');
-  } catch { /* Keep the last saved display until a successful snapshot. */ }
+  const id=state.invocation.id,routeGeneration=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
+  const current=()=>!state.frozen&&routeGeneration===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href&&state.invocation?.id===id;
+  const page=await api(`/api/invocations/${id}?limit=1`);
+  if(!current())return;
+  const previous=outcome(state.invocation)[0],previousCleanup=state.invocation.cleanup,previousClearance=state.clearance?.id;
+  let question=state.question;
+  if(page.invocation.outcome==='needs_input'||page.invocation.outcome==='failed') {
+    question=await api(`/api/invocations/${id}/question`);
+  }
+  if(!current())return;
+  state.invocation=page.invocation;state.clearance=page.clearance;state.question=question;
+  const [label,tone]=outcome(state.invocation);
+  const execution=document.getElementById('execution-state');if(execution)execution.innerHTML=chip(label,tone);
+  const cleanup=document.getElementById('cleanup-state');if(cleanup)cleanup.innerHTML=chip(state.clearance?'Operator confirmed':state.invocation.cleanup==='complete'?'Automatically checked':state.invocation.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||state.invocation.cleanup==='complete'?'success':'attention');
+  updateAttention();
+  const inspectorOutcome=document.getElementById('inspector-outcome');if(inspectorOutcome&&!state.displayTarget?.attempt)inspectorOutcome.textContent=label;
+  updateOutcomeExplanation();
+  if(previous!==label||previousCleanup!==state.invocation.cleanup||previousClearance!==state.clearance?.id)announcement.textContent='Selected invocation updated: '+label+(state.invocation.cleanup==='unknown'?'; manual cleanup required':'');
 }
 function updatePending() {
   const button=document.getElementById('pending-events');
   if(button) { button.hidden=false; button.textContent=state.pending+' new events - return to latest'; }
 }
 async function latestEvents() {
-  if((!state.frozen&&!state.pending)||state.following)return;
-  state.following=true;
+  if(!state.frozen&&!state.pending)return;
   const reader=readerSnapshot();reader.eventWindowEnd=null;
   const selected=route();
   if(selected.cursor){history.replaceState({...history.state},'',link({run:selected.run,invocation:selected.invocation,phase:selected.phase,attempt:selected.attempt,session:selected.session}));lastNavigatedHref=location.href;}
-  try {
-    const loading=loadRoute(reader,null,false),snapshot=state.snapshotGeneration;
-    await loading;
-    if(snapshot!==state.snapshotGeneration)return;
-    if(state.error||reader.route.run!==route().run||reader.route.invocation!==route().invocation)return;
-    const head=await api('/api/events/head');
-    if(snapshot!==state.snapshotGeneration)return;
-    state.frozen=false;state.pending=0;state.deferredEvents=[];state.selectedEventCursor=null;
-    document.getElementById('event-list')?.scrollTo({top:10000000});
-    document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Freeze this view';button.setAttribute('aria-pressed','false')});
-    showConnection('connecting','Catching up from saved cursor '+state.cursor);
-    startStream(head.cursor);
-  } finally {state.following=false;}
+  const loading=loadRoute(reader,null,false),snapshot=state.snapshotGeneration;
+  await loading;
+  if(snapshot!==state.snapshotGeneration)return;
+  if(state.error||reader.route.run!==route().run||reader.route.invocation!==route().invocation)return;
+  state.frozen=false;state.pending=0;state.deferredEvents=[];state.selectedEventCursor=null;
+  document.getElementById('event-list')?.scrollTo({top:10000000});
+  document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Freeze this view';button.setAttribute('aria-pressed','false')});
+  showConnection('connecting','Catching up from saved cursor '+state.cursor);
+  await resumeView(snapshot);
 }
 async function olderEvents() {
   if(!state.invocation||!state.events.length)return;
-  const before=state.events[0].cursor,id=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href,request=++state.eventPageGeneration;
+  const before=state.events[0].cursor,id=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
   const page=await api(`/api/invocations/${id}/events?before=${before}&limit=200`);
-  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id||request!==state.eventPageGeneration||state.events[0]?.cursor!==before)return;
+  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id||state.events[0]?.cursor!==before)return;
   state.events=page.events; state.earlier=page.hasEarlier; state.frozen=true;
   renderEventList(); document.getElementById('event-list')?.scrollTo({top:0});
   document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Follow latest events';button.setAttribute('aria-pressed','true')});
@@ -749,9 +772,9 @@ async function olderEvents() {
 async function openCapture(id) {
   if(!state.invocation)return;
   const invocationId=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
-  state.selectedCapture=id;state.captureAfter=0;state.capturePending=false;state.captureVersion++;
   const page=await api(`/api/invocations/${invocationId}/captures/${id}?limit=50`);
-  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==invocationId||state.selectedCapture!==id)return;
+  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==invocationId)return;
+  state.selectedCapture=id;state.captureAfter=0;state.capturePending=false;state.captureVersion++;
   state.capturePage=page;
   renderCapture();
 }
@@ -789,6 +812,9 @@ async function followCapture(force=false) {
   try {
     const next=await api(`/api/invocations/${invocationId}/captures/${id}?after=${page.nextSequence}&limit=${50-page.chunks.length}`);
     if(!current())return false;
+    // Reading intent can change while saved bytes are in flight. Leave them
+    // pending when the reader has since scrolled away or selected text.
+    if(!force&&!captureAtBottom()){renderCapture();return true;}
     const encoder=new TextEncoder();let bytes=page.chunks.reduce((total,chunk)=>total+encoder.encode(chunk.text).length,0),accepted=0;
     for(const chunk of next.chunks) {
       const size=encoder.encode(chunk.text).length;
@@ -887,7 +913,10 @@ app.addEventListener('change',event=>{if(event.target.id==='outcome-filter'){sta
 app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');if(!button)return;
   const action=button.dataset.action;
-  const generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
+  const routes=['next-runs','previous-runs','refresh-index','next-invocations','previous-invocations','latest-events'];
+  const ownsView=!routes.includes(action)&&!(action==='freeze'&&state.frozen)&&action!=='return-timeline';
+  const snapshot=ownsView?beginViewIntent():state.snapshotGeneration;
+  const generation=state.routeGeneration,href=location.href;
   try {
     if(action==='clear-filter'){state.query='';state.filter='all';renderIndex();document.getElementById('run-search')?.focus();}
     else if(action==='next-runs'||action==='previous-runs'||action==='refresh-index'){
@@ -895,15 +924,16 @@ app.addEventListener('click',async event=>{
       if(action==='next-runs')pages.push(state.runPageNext);
       else if(action==='previous-runs')pages.pop();
       else pages.splice(0,pages.length,0);
-      await loadRoute(reader);
-      if(action==='refresh-index'&&!state.error)state.newRuns=0;
+      const loading=loadRoute(reader),owner=state.snapshotGeneration;
+      await loading;
+      if(owner===state.snapshotGeneration&&action==='refresh-index'&&!state.error)state.newRuns=0;
     }
     else if(action==='next-invocations'||action==='previous-invocations'){
       const reader=readerSnapshot(),pages=reader.pages.invocations;
       if(action==='next-invocations')pages.push(state.invocationNext);else pages.pop();
       await loadRoute(reader);
     }
-    else if(action==='next-lanes'||action==='previous-lanes'){const reader=readerSnapshot();state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());await restoreReader(reader,generation);if(generation===state.routeGeneration&&href===location.href)document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
+    else if(action==='next-lanes'||action==='previous-lanes'){const reader=readerSnapshot();state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());await restoreReader(reader,generation);if(generation===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href)document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
     else if(action==='more-attempts')await moreHistory('attempts');
     else if(action==='more-sessions')await moreHistory('sessions');
     else if(action==='more-captures')await moreHistory('captures');
@@ -925,19 +955,20 @@ app.addEventListener('click',async event=>{
     else if(action==='freeze'){
       if(state.frozen)await latestEvents();else{state.frozen=true;document.querySelectorAll('.event-row[data-pending="true"]').forEach(row=>row.remove());showConnection('frozen','Frozen at saved cursor '+state.cursor);document.querySelectorAll('[data-action="freeze"]').forEach(item=>{item.setAttribute('aria-pressed','true');item.textContent='Follow latest events'})}
     }
-  } catch(error){if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||!button.isConnected||
-    (action==='open-capture'&&state.selectedCapture!==button.dataset.id))return;
-    announcement.textContent=error.message;const box=document.createElement('div');box.className='error-message';box.setAttribute('role','alert');box.textContent=error.message;app.prepend(box);}
+  } catch(error){if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||!button.isConnected)return;
+    readFailure(error.message);}
+  finally {if(ownsView)await resumeView(snapshot);}
 });
 function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;recentReading={top:0};userScrollUntil=0;void loadRoute(history.state?.reader);}
 window.addEventListener('hashchange',browserRouteChanged);
 window.addEventListener('popstate',browserRouteChanged);
 
 export async function start(ticket) {
+  const snapshot=state.snapshotGeneration;
   try {
     await redeem(ticket);
     // The head is sampled before the first snapshot, so later committed events are replayed by SSE.
     const head=await api('/api/events/head');
     await loadRoute(null,head.cursor);
-  } catch(error) {showConnection('disconnected','History unavailable');errorView(error.message);}
+  } catch(error) {if(snapshot!==state.snapshotGeneration)return;showConnection('disconnected','History unavailable');errorView(error.message);}
 }
