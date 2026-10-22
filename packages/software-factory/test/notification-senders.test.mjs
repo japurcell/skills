@@ -121,10 +121,3 @@ test('deadline kills an owned child and does not report submission', async () =>
   assert.deepEqual(result, { state: 'timed_out', reason: 'deadline_exceeded', cleanup: 'complete' });
   assert.ok(performance.now() - start < 500, 'deadline includes termination and pipe cleanup');
 });
-
-test('inherited pipe beyond the deadline is unknown, never submitted', async () => {
-  const start = performance.now();
-  const result = await executeNotificationProcess(fake('hold-pipe'), 200);
-  assert.deepEqual(result, { state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' });
-  assert.ok(performance.now() - start < 450);
-});

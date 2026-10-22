@@ -28,5 +28,6 @@ test('notification group runs sender and bounded preflight checks without a desk
   const result = spawnSync(process.execPath, [dispatch, 'notifications'], { encoding: 'utf8', timeout: 15000, env });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.match(result.stdout, /unresolved Windows preflight/);
+  assert.match(result.stdout, /inherited pipe beyond the deadline/);
   assert.match(result.stdout, /missing notification request fails with a fixed result/);
 });
