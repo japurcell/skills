@@ -5,7 +5,7 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
 
 const harness = fileURLToPath(new URL('./fixtures/fake-harness.mjs', import.meta.url));
@@ -107,7 +107,7 @@ fs.writeFileSync=function(path,data,...options){
 };
 syncBuiltinESMExports();
 `);
-  const child = spawn(process.execPath, ['--import', preload, harness, '--mode', 'success',
+  const child = spawn(process.execPath, ['--import', pathToFileURL(preload).href, harness, '--mode', 'success',
     '--result', join(directory, 'result.json'), '--launch-log', launch, '--pause-until', release],
     { stdio: ['ignore', 'ignore', 'pipe'] });
   let stderr = '';
@@ -163,7 +163,7 @@ test('launch report collision preserves a pre-existing temporary file', () => {
   const preload = join(directory, 'seed-collision.mjs');
   writeFileSync(preload, `import {writeFileSync} from 'node:fs';writeFileSync(${JSON.stringify(launch)}+'.'+process.pid+'.tmp','existing caller file');`);
   try {
-    const child = spawnSync(process.execPath, ['--import', preload, harness, '--mode', 'success',
+    const child = spawnSync(process.execPath, ['--import', pathToFileURL(preload).href, harness, '--mode', 'success',
       '--result', join(directory, 'result.json'), '--launch-log', launch], { encoding: 'utf8', timeout: 5000 });
     assert.equal(child.error, undefined, 'a timeout is not evidence of collision refusal');
     assert.equal(child.signal, null);
