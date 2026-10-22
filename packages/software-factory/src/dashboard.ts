@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { currentOwner, inspectOwner } from './native/process.js';
 import type { Claim, RepositoryStore } from './store.js';
+import { NotificationMetadataError } from './store.js';
 
 const MAX_PAGE = 1048576;
 const liveHosts = new Map<string, { claim: Claim; sessionToken: string; available: () => boolean; handoff: () => string }>();
@@ -141,7 +142,6 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         parameters(route, []);
         if (request.headers.origin !== url || !bearerMatches(request, sessionToken)) { json(response, 403, { error: 'host session required' }); return; }
         if (request.headers['content-type'] !== 'application/json') throw new RequestError(415, 'JSON required');
-        if (!options.notificationWrite) { json(response, 501, { error: 'notification writes unavailable' }); return; }
         const chunks: Buffer[] = []; let size = 0;
         for await (const chunk of request) { const bytes = Buffer.from(chunk as Uint8Array); size += bytes.length; if (size > 8192) throw new RequestError(413, 'notification request exceeds limit'); chunks.push(bytes); }
         let input: unknown;
@@ -151,7 +151,8 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         if (notificationWrites >= 4) throw new RequestError(429, 'notification write limit reached');
         notificationWrites++;
         try {
-          const saved = await options.notificationWrite(operation, input);
+          const saved = options.notificationWrite ? await options.notificationWrite(operation, input) :
+            operation === 'preferences' ? await store.saveNotificationPreferences(input) : await store.acknowledgeNotification(input);
           if (!closing && !response.destroyed) json(response, 200, saved);
         } finally { notificationWrites--; }
         return;
@@ -173,7 +174,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         } else response.setHeader('content-security-policy', "default-src 'none'; frame-ancestors 'none'");
         response.writeHead(200, { 'content-type': asset.type }); response.end(body); return;
       }
-      if ((route.pathname === '/api/events' || route.pathname === '/api/events/head' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
+      if ((route.pathname === '/api/notifications/preferences' || route.pathname === '/api/events' || route.pathname === '/api/events/head' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
         || route.pathname.startsWith('/api/invocations/') || route.pathname === '/api/runs' || route.pathname.startsWith('/api/runs/')) && !bearerMatches(request, sessionToken)) {
         json(response, 403, { error: 'host session required' }); return;
       }
@@ -182,6 +183,11 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         const after = cursor(route.searchParams.get('after') ?? '0'), limit = integer(route, 'limit', 200, 200);
         if (limit < 1) throw new RequestError(400, 'invalid event limit');
         json(response, 200, store.readEvents({ after, limit })); return;
+      }
+      if (route.pathname === '/api/notifications/preferences') {
+        parameters(route, []);
+        if (!bearerMatches(request, sessionToken)) throw new RequestError(403, 'host session required');
+        json(response, 200, store.readNotificationPreferences()); return;
       }
       if (route.pathname === '/api/events/head') {
         parameters(route, []); json(response, 200, store.readEventHead()); return;
@@ -269,7 +275,8 @@ export async function startObservationHost(options: { store: RepositoryStore; po
       json(response, 404, { error: 'not found' });
     } catch (error) {
       if (response.headersSent) response.destroy();
-      else json(response, error instanceof RequestError ? error.status : 503, { error: error instanceof RequestError ? error.message : 'observation unavailable' });
+      else json(response, error instanceof RequestError || error instanceof NotificationMetadataError ? error.status : 503,
+        { error: error instanceof RequestError || error instanceof NotificationMetadataError ? error.message : 'observation unavailable' });
     }
   }
   function stream(response: ServerResponse, initial: string) {

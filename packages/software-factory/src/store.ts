@@ -19,7 +19,7 @@ export interface Claim {
 }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
 interface Worktree { id: string; path: string; registration: string; preparation?: { identity: PreparationIdentity; invocationId: string; claimId: string } }
-export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object }
+export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object; successNoticePlanned?: boolean }
 export interface Attempt extends Admission {
   runId: string; operationId: string; fingerprint: string;
   launch: 'admitted' | 'started' | 'not_started' | 'unknown'; outcome: 'succeeded' | 'failed' | 'needs_input' | 'interrupted' | null;
@@ -43,6 +43,13 @@ export interface NotificationDelivery {
   reason?: string; cleanup: 'complete' | 'unknown'; visibleDelivery: false;
   issues: { outcome: string; cleanup: 'complete' | 'unknown'; questions: number };
   createdAt: string; updatedAt: string;
+}
+export interface NotificationPreferences { successNotices: boolean; reminders: boolean; updatedAt: string | null }
+export interface NotificationAcknowledgment { id: string; invocationId: string; acknowledgedAt: string }
+export class NotificationMetadataError extends Error { constructor(readonly status: 400 | 404, message: string) { super(message); } }
+function exactObject(value: unknown, keys: string[]): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key));
 }
 
 function text(value: string, label: string) {
@@ -286,7 +293,7 @@ export class RepositoryStore {
         hasMore: page.state !== 'pruned' && nextSequence < Number(row['sequence']) };
     });
     const clearanceRow = this.database.prepare("SELECT data FROM clearances WHERE json_extract(data,'$.invocationId')=? ORDER BY rowid DESC LIMIT 1").get(id);
-    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, notifications: this.readNotificationDeliveries(id), accounting: this.readAccounting(invocation.runId),
+    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, notifications: this.readNotificationDeliveries(id), acknowledgment: this.readNotificationAcknowledgment(id), accounting: this.readAccounting(invocation.runId),
       clearance: clearanceRow ? JSON.parse(String(clearanceRow['data'])) as Clearance : null,
       attemptsNextCursor: Number(attemptRows.slice(0, limit).at(-1)?.['cursor'] ?? afterAttempt), hasMoreAttempts: attemptRows.length > limit,
       capturesNextCursor: Number(captureRows.slice(0, limit).at(-1)?.['cursor'] ?? afterCapture), hasMoreCaptures: captureRows.length > limit };
@@ -317,7 +324,7 @@ export class RepositoryStore {
     });
   }
 
-  async finalizeInvocation(input: {id:string;outcome:string;cleanup:'complete'|'unknown';claimId:string;token:string;retainClaim?:boolean}) {
+  async finalizeInvocation(input: {id:string;outcome:string;cleanup:'complete'|'unknown';claimId:string;token:string;retainClaim?:boolean | 'successPreference'}) {
     if (!['succeeded','failed','needs_input','interrupted','cancelled'].includes(input.outcome) || !['complete','unknown'].includes(input.cleanup)) throw new Error('invalid finalization facts');
     return this.transaction(() => {
       const claim = this.database.prepare('SELECT id FROM owner_claims WHERE id=? AND token=? AND invocation_id=?').get(input.claimId,input.token,input.id);
@@ -326,13 +333,16 @@ export class RepositoryStore {
       if (invocation.stage === 'finalized') throw new Error('invocation already finalized');
       if (input.cleanup === 'complete' && this.hasOccupiedActivity(input.id)) throw new Error('activity is not quiescent');
       if (input.outcome === 'succeeded' && input.cleanup !== 'complete') throw new Error('success requires complete cleanup');
+      const successNoticePlanned = input.outcome === 'succeeded' && input.retainClaim === 'successPreference' && this.readNotificationPreferences().successNotices;
       invocation.stage = 'finalized'; invocation.outcome = input.outcome; invocation.cleanup = input.cleanup;
+      if (successNoticePlanned) invocation.successNoticePlanned = true;
       this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation),input.id);
       this.event('invocation.finalized',{invocationId:input.id,outcome:input.outcome,cleanup:input.cleanup});
-      if (input.cleanup === 'complete' && !input.retainClaim) {
+      if (input.cleanup === 'complete' && input.retainClaim !== true && !successNoticePlanned) {
         this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(input.claimId,input.token);
         this.event('owner.released',{claimId:input.claimId,basis:'quiescent'});
       }
+      return { successNoticePlanned };
     });
   }
 
@@ -364,13 +374,60 @@ export class RepositoryStore {
       .map(row => JSON.parse(String(row['data'])) as NotificationDelivery);
   }
 
+  readNotificationPreferences(): NotificationPreferences {
+    const row = this.database.prepare('SELECT success_notices,reminders,updated_at FROM notification_preferences WHERE id=1').get();
+    return row ? { successNotices: row['success_notices'] === 1, reminders: row['reminders'] === 1, updatedAt: String(row['updated_at']) }
+      : { successNotices: false, reminders: false, updatedAt: null };
+  }
+
+  async saveNotificationPreferences(input: unknown): Promise<NotificationPreferences> {
+    if (!exactObject(input, ['successNotices', 'reminders']) || typeof input['successNotices'] !== 'boolean' || typeof input['reminders'] !== 'boolean')
+      throw new NotificationMetadataError(400, 'invalid notification preferences');
+    return this.transaction(() => {
+      this.ready();
+      const updatedAt = new Date().toISOString();
+      this.database.prepare('INSERT INTO notification_preferences(id,success_notices,reminders,updated_at) VALUES (1,?,?,?) ON CONFLICT(id) DO UPDATE SET success_notices=excluded.success_notices,reminders=excluded.reminders,updated_at=excluded.updated_at')
+        .run(input['successNotices'] ? 1 : 0, input['reminders'] ? 1 : 0, updatedAt);
+      this.event('notification.preferences_saved', {});
+      return this.readNotificationPreferences();
+    });
+  }
+
+  readNotificationAcknowledgment(invocationId: string): NotificationAcknowledgment | null {
+    this.readInvocation(invocationId);
+    const row = this.database.prepare('SELECT acknowledged_at FROM notification_acknowledgments WHERE invocation_id=?').get(invocationId);
+    return row ? { id: `${invocationId}:acknowledgment`, invocationId, acknowledgedAt: String(row['acknowledged_at']) } : null;
+  }
+
+  async acknowledgeNotification(input: unknown): Promise<NotificationAcknowledgment> {
+    if (!exactObject(input, ['invocationId']) || typeof input['invocationId'] !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(input['invocationId']))
+      throw new NotificationMetadataError(400, 'invalid acknowledgment target');
+    const invocationId = input['invocationId'];
+    return this.transaction(() => {
+      this.ready();
+      let invocation: Invocation;
+      try { invocation = this.readInvocation(invocationId); }
+      catch (error) {
+        if (error instanceof Error && error.message === 'invocation not found') throw new NotificationMetadataError(404, error.message);
+        throw error;
+      }
+      if (invocation.stage !== 'finalized') throw new NotificationMetadataError(400, 'acknowledgment requires a finalized invocation');
+      const existing = this.readNotificationAcknowledgment(invocationId);
+      if (existing) return existing;
+      const acknowledgedAt = new Date().toISOString();
+      this.database.prepare('INSERT INTO notification_acknowledgments(invocation_id,acknowledged_at) VALUES (?,?)').run(invocationId, acknowledgedAt);
+      this.event('notification.acknowledged', { invocationId });
+      return { id: `${invocationId}:acknowledgment`, invocationId, acknowledgedAt };
+    });
+  }
+
   /** Reserve once after finalization. Unknown is durable before any external submission. */
   async reserveInitialNotification(invocationId: string): Promise<NotificationDelivery | null> {
     return this.transaction(() => {
       const invocation = this.readInvocation(invocationId);
       if (invocation.stage !== 'finalized' || !invocation.cleanup) throw new Error('notification requires a saved final summary');
       const questions = Number(this.database.prepare("SELECT count(*) AS count FROM captures WHERE invocation_id=? AND channel='request' AND state='complete'").get(invocationId)?.['count'] ?? 0);
-      if (invocation.outcome === 'succeeded' && invocation.cleanup === 'complete' && questions === 0) return null;
+      if (invocation.outcome === 'succeeded' && !invocation.successNoticePlanned) return null;
       const id = `${invocationId}:initial`;
       if (this.database.prepare('SELECT id FROM notification_deliveries WHERE id=?').get(id)) return null;
       const at = new Date().toISOString();

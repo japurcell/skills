@@ -32,6 +32,47 @@ test('host publishes only a bound loopback endpoint and reuses its current repos
   } finally { await host?.close(); store.close(); repo.dispose(); }
 });
 
+test('notification preferences and one selected acknowledgment persist through authenticated metadata routes', async () => {
+  const f = await fixture(); let host;
+  try {
+    host = await startObservationHost({ store: f.store });
+    const preferences = host.url + '/api/notifications/preferences';
+    assert.deepEqual(await (await authorizedFetch(host, preferences)).json(), { successNotices: false, reminders: false, updatedAt: null });
+    assert.equal((await fetch(preferences)).status, 403);
+    const write = (path, body) => authorizedFetch(host, host.url + path, { method: 'POST', headers: { Origin: host.url, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const body = JSON.stringify({ successNotices: true, reminders: false });
+    const authorizedHeaders = { Origin: host.url, Authorization: 'Bearer ' + host.sessionToken, 'Content-Type': 'application/json' };
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body, headers: { Origin: host.url, 'Content-Type': 'application/json' } })).status, 403);
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body, headers: { ...authorizedHeaders, Origin: 'https://foreign.invalid' } })).status, 403);
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body, headers: { Authorization: authorizedHeaders.Authorization, 'Content-Type': 'application/json' } })).status, 403);
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body, headers: { ...authorizedHeaders, 'Content-Type': 'text/plain' } })).status, 415);
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body: 'x'.repeat(8193), headers: authorizedHeaders })).status, 413);
+    assert.equal((await http(host.url, { path: '/api/notifications/preferences', method: 'POST', body, headers: ['Origin', host.url, 'Authorization', authorizedHeaders.Authorization, 'Authorization', authorizedHeaders.Authorization, 'Content-Type', 'application/json'] })).status, 400);
+    assert.equal(f.store.readNotificationPreferences().successNotices, false);
+    assert.equal((await write('/api/notifications/acknowledgments', { invocationId: f.invocation.id })).status, 400);
+    const saved = await write('/api/notifications/preferences', { successNotices: true, reminders: false });
+    assert.equal(saved.status, 200);
+    assert.equal((await saved.json()).successNotices, true);
+    for (const body of [{ successNotices: true }, { successNotices: true, reminders: false, extra: 1 }, { successNotices: 'yes', reminders: false }])
+      assert.equal((await write('/api/notifications/preferences', body)).status, 400);
+    assert.equal((await authorizedFetch(host, preferences)).status, 200);
+    await f.store.finalizeInvocation({ id: f.invocation.id, outcome: 'failed', cleanup: 'complete', claimId: f.invocation.claim.id, token: f.invocation.claim.token });
+    const ack = await write('/api/notifications/acknowledgments', { invocationId: f.invocation.id });
+    assert.equal(ack.status, 200);
+    const original = await ack.json();
+    assert.equal(original.invocationId, f.invocation.id);
+    assert.deepEqual(await (await write('/api/notifications/acknowledgments', { invocationId: f.invocation.id })).json(), original);
+    assert.deepEqual((await (await authorizedFetch(host, host.url + '/api/invocations/' + f.invocation.id)).json()).acknowledgment, original);
+    assert.equal((await write('/api/notifications/acknowledgments', { invocationId: f.invocation.id, answer: 'yes' })).status, 400);
+    assert.equal((await write('/api/notifications/acknowledgments', { invocationId: '-'.repeat(36) })).status, 400);
+    assert.equal((await write('/api/notifications/acknowledgments', { invocationId: '00000000-0000-0000-0000-000000000000' })).status, 404);
+    await host.close(); host = undefined; f.store.close();
+    const reopened = openRepositoryStore(join(f.repo.path, '.git'));
+    try { assert.equal(reopened.readNotificationPreferences().successNotices, true); assert.deepEqual(reopened.readNotificationAcknowledgment(f.invocation.id), original); }
+    finally { reopened.close(); }
+  } finally { await host?.close(); if (host) f.store.close(); f.repo.dispose(); }
+});
+
 async function fixture() {
   const repo = createRepository();
   const store = await initializeRepositoryStore(join(repo.path, '.git'), { release: 'fixture' });
@@ -475,6 +516,24 @@ test('older schema is refused without mutation until explicit forward maintenanc
     const retained = new DatabaseSync(path);
     try { assert.equal(retained.prepare('PRAGMA user_version').get().user_version, 3); assert.equal(retained.prepare('SELECT id FROM runs').get().id, run.id); }
     finally { retained.close(); }
+  } finally { repo.dispose(); }
+});
+
+test('version 5 notification store is refused without creating metadata tables', async () => {
+  const repo = createRepository();
+  const common = join(repo.path, '.git'), path = join(common, 'factory', 'history.sqlite');
+  const store = await initializeRepositoryStore(common, { release: 'fixture' });
+  const run = await store.createRun(); store.close();
+  const database = new DatabaseSync(path);
+  database.exec('DROP TABLE notification_acknowledgments; DROP TABLE notification_preferences; PRAGMA user_version=5'); database.close();
+  try {
+    assert.throws(() => openRepositoryStore(common), /incompatible schema/);
+    const retained = new DatabaseSync(path);
+    try {
+      assert.equal(retained.prepare('PRAGMA user_version').get().user_version, 5);
+      assert.equal(retained.prepare('SELECT id FROM runs').get().id, run.id);
+      assert.equal(retained.prepare("SELECT count(*) AS count FROM sqlite_schema WHERE name LIKE 'notification_%' AND type='table'").get().count, 1);
+    } finally { retained.close(); }
   } finally { repo.dispose(); }
 });
 

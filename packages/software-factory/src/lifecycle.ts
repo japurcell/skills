@@ -125,8 +125,9 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     runner.close();
     // drain() would throw for any saved question, so a successful run has no initial issue.
     attemptedSuccessFinalization = true;
-    await store.finalizeInvocation({id:invocation.id,outcome:'succeeded',cleanup:'complete',claimId:invocation.claim.id,token:invocation.claim.token});
-    return { runId, invocationId: invocation.id, worktreeId: worktree.id, worktree: worktree.path, outcome: 'succeeded', cleanup: 'complete', notification: null, exitCode: 0 };
+    const finalization = await store.finalizeInvocation({id:invocation.id,outcome:'succeeded',cleanup:'complete',claimId:invocation.claim.id,token:invocation.claim.token,retainClaim:'successPreference'});
+    const notification = finalization.successNoticePlanned ? await savedNotification(store, invocation.id, invocation.claim, 'complete', options.notificationSender) : null;
+    return { runId, invocationId: invocation.id, worktreeId: worktree.id, worktree: worktree.path, outcome: 'succeeded', cleanup: 'complete', notification, exitCode: 0 };
   } catch (error) {
     if (!invocation) throw error;
     let failure = error;

@@ -4,6 +4,7 @@ import type { NotificationDelivery, RepositoryStore } from './store.js';
 export type NotificationSender = (message: DesktopNotification) => Promise<NotificationResult>;
 
 function messageFor(record: NotificationDelivery): DesktopNotification {
+  if (record.issues.outcome === 'succeeded') return { title: 'Software Factory completed', body: '1 run succeeded' };
   const parts: string[] = [];
   if (record.issues.questions) parts.push(`${record.issues.questions} question${record.issues.questions === 1 ? ' needs' : 's need'} input`);
   const outcomeLabels: Record<string, string> = { failed: 'run failed', needs_input: 'run needs input', interrupted: 'run interrupted', cancelled: 'run cancelled' };

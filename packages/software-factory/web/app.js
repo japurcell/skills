@@ -12,6 +12,7 @@ const state = {
   routeGeneration: 0,
   snapshotGeneration: 0, readAbort: new AbortController(), streamGeneration: 0, snapshotting: false, projection: null, projecting: false, receivedCursor: '0',
   error: null, connectionKind: null, validatedParent: null,
+  notificationPreferences: null, preferencesStatus: '', preferencesError: false, acknowledgment: null, acknowledgmentStatus: '', acknowledgmentError: false,
 };
 const idPattern = /^[0-9a-f-]{36}$/;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -54,6 +55,33 @@ async function api(path, options = {}) {
   const result=await response.json();
   signal.throwIfAborted();
   return result;
+}
+async function writeNotification(path, body) {
+  const response = await fetch(path, { method:'POST', cache:'no-store', signal:AbortSignal.timeout(10000),
+    headers:{ Authorization:'Bearer '+state.token, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || `Save failed (${response.status}).`);
+  return result;
+}
+async function loadNotificationPreferences() {
+  try { state.notificationPreferences = await api('/api/notifications/preferences'); state.preferencesError = false; }
+  catch (error) { state.preferencesStatus = error.message; state.preferencesError = true; }
+}
+function preferencesControls() {
+  const preferences=state.notificationPreferences;
+  return `<details class="surface"><summary class="section-body">Notification preferences</summary><div class="section-body">
+    <p class="muted">Repository-wide settings. Success notices and reminders start off. Reminder delivery is not available yet.</p>
+    <form id="notification-preferences" class="notification-form"><label><input type="checkbox" name="successNotices" ${preferences?.successNotices?'checked':''}> Success notices</label>
+    <label><input type="checkbox" name="reminders" ${preferences?.reminders?'checked':''}> Reminders</label>
+    <button type="submit" ${preferences?'':'disabled'}>Save notification preferences</button></form>
+    <p id="preferences-status" class="notification-status" role="${state.preferencesError?'alert':'status'}">${escapeHtml(state.preferencesStatus || (preferences?'Saved settings are shown above.':'Preferences unavailable.'))}</p></div></details>`;
+}
+function acknowledgmentControls(invocation) {
+  if (!invocation || invocation.stage !== 'finalized') return '';
+  return `<section class="surface"><div class="section-heading"><h2>Selected invocation acknowledgment</h2></div><div class="section-body">
+    <p>Acknowledgment records that you saw this finalized invocation. It does not answer a saved question or change the run result or cleanup.</p>
+    <div class="controls"><button type="button" data-action="acknowledge-invocation" aria-describedby="acknowledgment-status">${state.acknowledgment?'Acknowledged':'Acknowledge selected invocation'}</button>
+    <span id="acknowledgment-status" class="notification-status" role="${state.acknowledgmentError?'alert':'status'}">${escapeHtml(state.acknowledgmentStatus || (state.acknowledgment?'Acknowledged on '+readableTime(state.acknowledgment.acknowledgedAt):'No acknowledgment saved.'))}</span></div></div></section>`;
 }
 function errorView(message, parent) {
   app.removeAttribute('aria-busy');
@@ -109,6 +137,7 @@ function renderIndex() {
     <label for="outcome-filter">Latest invocation <select id="outcome-filter">${[['all','All outcomes'],['running','Running'],['starting','Preparing'],['shutting_down','Stopping'],['succeeded','Succeeded'],['failed','Failed'],['needs_input','Ended: needs input'],['interrupted','Interrupted'],['cancelled','Cancelled'],['unknown','Unknown']].map(([value,label])=>`<option value="${value}"${state.filter===value?' selected':''}>${label}</option>`).join('')}</select></label></div><small>Search and filter apply to this page.</small></div>
     <div id="cards" class="cards" aria-live="off"></div>
     <div class="page-controls"><button type="button" data-action="previous-runs" ${state.runPage.length < 2 ? 'disabled' : ''}>Previous runs</button><small>Page ${state.runPage.length}</small><button type="button" data-action="next-runs" ${state.runsHaveMore ? '' : 'disabled'}>Next runs</button></div>
+    ${preferencesControls()}
     <details class="surface"><summary class="section-body">Repository storage and maintenance</summary><div class="section-body"><p>Saved history and backup sizes have not been measured by this host. No growth estimate is available.</p><p>Stop the dashboard process before exceptional idle maintenance. Closing this browser tab does not stop the host. After uninstall, a compatible installation is needed to read saved history.</p></div></details>`;
   renderCards();
 }
@@ -197,6 +226,7 @@ async function loadRun(target, generation = state.routeGeneration, reader = null
   state.attemptsNext=attemptsNext;state.capturesNext=detail?.capturesNextCursor||0;
   state.attemptsMore=attemptsMore;state.capturesMore=detail?.hasMoreCaptures||false;
   state.accounting=detail?.accounting||null;state.worktree=detail?.worktree||null;state.clearance=detail?.clearance||null;
+  state.acknowledgment=detail?.acknowledgment||null;state.acknowledgmentStatus='';state.acknowledgmentError=false;
   state.sessions=sessionList;rememberSessionParents(sessionList);state.sessionsNext=sessions?.nextCursor||0;state.sessionsMore=sessions?.hasMore||false;
   state.events=events?.events||[];state.earlier=events?.hasEarlier||false;
   state.question=question;state.selectedEventCursor=selectedEvent?.cursor||null;state.selectedCaptureTarget=selectedCaptureTarget;
@@ -362,6 +392,7 @@ function renderRun(target) {
     <div class="heading-row" style="margin-top:18px"><div><h1>${escapeHtml(run.requestPreview?.trim() || 'Run '+short(run.id))}</h1><p class="muted">${escapeHtml(run.workflow || 'Workflow unavailable')} - run ${escapeHtml(run.id)}</p>
     <div class="chip-list"><span id="execution-state">${chip(label,tone)}</span><span id="cleanup-state">${chip(state.clearance?'Operator confirmed':invocation?.cleanup==='complete'?'Automatically checked':invocation?.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||invocation?.cleanup==='complete'?'success':'attention')}</span>${chip('Capture: inspect saved records')}<span id="observation-state"></span></div></div></div>
     <div id="attention-slot">${invocation ? attention(invocation) : '<div class="state-message">This run has no saved invocation.</div>'}</div>
+    ${acknowledgmentControls(invocation)}
     ${state.gap?'<div class="attention" role="status">A saved event gap was detected. Details were rebuilt from a new saved snapshot; continuity is unknown.</div>':''}
     <section class="surface"><div class="section-heading"><h2>Invocation history</h2><small>Each invocation starts at the current workflow entry</small></div><div class="section-body">${invocationLinks(target)}</div></section>
     ${invocation ? `${timeline(target)}${inspector(target)}` : ''}
@@ -933,9 +964,35 @@ app.addEventListener('click',async event=>{
 });
 document.querySelector('.skip')?.addEventListener('click',event=>{event.preventDefault();app.focus({preventScroll:true});app.scrollIntoView({block:'start'});});
 app.addEventListener('change',event=>{if(event.target.id==='outcome-filter'){state.filter=event.target.value;renderCards();}});
+app.addEventListener('submit',async event=>{
+  if(event.target.id!=='notification-preferences')return;
+  event.preventDefault();
+  const form=event.target,button=form.querySelector('button[type="submit"]'),status=document.getElementById('preferences-status');
+  button.disabled=true;status.textContent='Saving notification preferences';status.setAttribute('role','status');
+  try {
+    state.notificationPreferences=await writeNotification('/api/notifications/preferences',{
+      successNotices:form.elements.successNotices.checked,reminders:form.elements.reminders.checked });
+    state.preferencesStatus='Notification preferences saved.';state.preferencesError=false;
+  } catch(error) {
+    state.preferencesStatus=error.message;state.preferencesError=true;
+    form.elements.successNotices.checked=!!state.notificationPreferences?.successNotices;
+    form.elements.reminders.checked=!!state.notificationPreferences?.reminders;
+  }
+  if(status.isConnected){status.textContent=state.preferencesStatus;status.setAttribute('role',state.preferencesError?'alert':'status');button.disabled=false;button.focus({preventScroll:true});}
+});
 app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');if(!button)return;
   const action=button.dataset.action;
+  if(action==='acknowledge-invocation') {
+    const invocationId=state.invocation?.id,status=document.getElementById('acknowledgment-status');
+    if(!invocationId||!status)return;
+    button.disabled=true;status.textContent='Saving acknowledgment';status.setAttribute('role','status');
+    try { const saved=await writeNotification('/api/notifications/acknowledgments',{invocationId});
+      if(state.invocation?.id===invocationId){state.acknowledgment=saved;state.acknowledgmentStatus='Acknowledged on '+readableTime(saved.acknowledgedAt);state.acknowledgmentError=false;}
+    } catch(error) {if(state.invocation?.id===invocationId){state.acknowledgmentStatus=error.message;state.acknowledgmentError=true;}}
+    if(status.isConnected){status.textContent=state.acknowledgmentStatus;status.setAttribute('role',state.acknowledgmentError?'alert':'status');button.textContent=state.acknowledgment?'Acknowledged':'Acknowledge selected invocation';button.disabled=false;button.focus({preventScroll:true});}
+    return;
+  }
   const routes=['next-runs','previous-runs','refresh-index','next-invocations','previous-invocations','latest-events'];
   const ownsView=!routes.includes(action)&&!(action==='freeze'&&state.frozen)&&action!=='return-timeline';
   const snapshot=ownsView?beginViewIntent():state.snapshotGeneration;
@@ -990,6 +1047,7 @@ export async function start(ticket) {
   const snapshot=state.snapshotGeneration;
   try {
     await redeem(ticket);
+    await loadNotificationPreferences();
     // The head is sampled before the first snapshot, so later committed events are replayed by SSE.
     const head=await api('/api/events/head');
     await loadRoute(null,head.cursor);

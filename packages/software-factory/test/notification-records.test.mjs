@@ -128,6 +128,67 @@ test('ordinary success stays quiet and an unbound development sender is explicit
   } finally { success.dispose(); issue.dispose(); }
 });
 
+test('opted-in successful invocation saves one bounded notice without changing its outcome', async () => {
+  const repo = await fixture(`export async function run(context) { await context.progress('complete'); }`);
+  try {
+    const store = openRepositoryStore(repo.common);
+    await store.saveNotificationPreferences({ successNotices: true, reminders: false }); store.close();
+    let sends = 0;
+    const result = await repo.run({ notificationSender: async message => {
+      sends++;
+      assert.deepEqual(message, { title: 'Software Factory completed', body: '1 run succeeded' });
+      const saved = openRepositoryStore(repo.common);
+      try {
+        const invocationId = saved.readInvocations().invocations[0].id;
+        assert.equal(saved.readInvocation(invocationId).outcome, 'succeeded');
+        assert.equal(saved.inspectOwners().filter(claim => claim.invocationId === invocationId).length, 1);
+        await saved.saveNotificationPreferences({ successNotices: false, reminders: false });
+      } finally { saved.close(); }
+      return { state: 'failed', reason: 'delivery_refused', cleanup: 'complete' };
+    } });
+    assert.equal(result.outcome, 'succeeded'); assert.equal(result.exitCode, 0);
+    assert.equal(result.notification.state, 'failed'); assert.equal(sends, 1);
+    const reopened = openRepositoryStore(repo.common);
+    try {
+      assert.deepEqual(reopened.readHistory(result.invocationId).notifications, [result.notification]);
+      assert.equal(reopened.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 0);
+      assert.deepEqual(await sendInitialNotification(reopened, result.invocationId, async () => { sends++; return { state: 'submitted', cleanup: 'complete' }; }), result.notification);
+      assert.equal(sends, 1);
+    } finally { reopened.close(); }
+    const quiet = await repo.run({ notificationSender: async () => { sends++; return { state: 'submitted', cleanup: 'complete' }; } });
+    assert.equal(quiet.outcome, 'succeeded'); assert.equal(quiet.notification, null); assert.equal(sends, 1);
+    const quietStore = openRepositoryStore(repo.common);
+    try {
+      assert.equal(quietStore.inspectOwners().filter(claim => claim.invocationId === quiet.invocationId).length, 0);
+      await quietStore.saveNotificationPreferences({ successNotices: true, reminders: false });
+    } finally { quietStore.close(); }
+    const submitted = await repo.run({ notificationSender: async () => { sends++; return { state: 'submitted', cleanup: 'complete' }; } });
+    assert.equal(submitted.outcome, 'succeeded'); assert.equal(submitted.notification.state, 'submitted'); assert.equal(sends, 2);
+  } finally { repo.dispose(); }
+});
+
+test('uncertain opt-in success notice retains its original owner and saved success', async () => {
+  const repo = await fixture(`export async function run(context) { await context.progress('complete'); }`);
+  try {
+    const store = openRepositoryStore(repo.common);
+    await store.saveNotificationPreferences({ successNotices: true, reminders: false }); store.close();
+    let settleSender;
+    const result = await repo.run({ notificationSender: () => new Promise(resolve => { settleSender = resolve; }) });
+    assert.equal(result.outcome, 'succeeded'); assert.equal(result.exitCode, 0);
+    assert.equal(result.notification.state, 'unknown'); assert.equal(result.notification.cleanup, 'unknown');
+    const saved = openRepositoryStore(repo.common);
+    try {
+      assert.equal(saved.readInvocation(result.invocationId).outcome, 'succeeded');
+      assert.equal(saved.inspectOwners().filter(claim => claim.invocationId === result.invocationId).length, 1);
+      await saved.saveNotificationPreferences({ successNotices: false, reminders: false });
+      assert.deepEqual(await sendInitialNotification(saved, result.invocationId, async () => { throw new Error('resent'); }), result.notification);
+      settleSender({ state: 'submitted', cleanup: 'complete' });
+      await new Promise(resolve => setImmediate(resolve));
+      assert.deepEqual(saved.readHistory(result.invocationId).notifications, [result.notification]);
+    } finally { saved.close(); }
+  } finally { repo.dispose(); }
+});
+
 test('sender rejection and bounded uncertainty keep the workflow result and saved question', async () => {
   const repo = await fixture(`export async function run(context) { await context.needsInput('Choose', 'A choice is required'); }`);
   try {

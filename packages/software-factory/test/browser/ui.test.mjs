@@ -34,6 +34,41 @@ test('owner link opens grouped run card and saved invocation without exposing be
   } finally { await browser.close(); await f.dispose(); }
 });
 
+test('notification preferences and selected acknowledgment are accessible at narrow width', async () => {
+  const f = await fixture(); const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await f.store.finalizeInvocation({ id: f.invocation.id, outcome: 'needs_input', cleanup: 'complete', claimId: f.invocation.claim.id, token: f.invocation.claim.token });
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading', { name: 'Repository runs' }).waitFor();
+    await page.getByText('Notification preferences', { exact: true }).click();
+    const success = page.getByRole('checkbox', { name: 'Success notices' });
+    const reminders = page.getByRole('checkbox', { name: 'Reminders' });
+    assert.equal(await success.isChecked(), false); assert.equal(await reminders.isChecked(), false);
+    let failSave = true;
+    await page.route('**/api/notifications/preferences', route => {
+      if (route.request().method() === 'POST' && failSave) { failSave = false; return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"temporary save failure"}' }); }
+      return route.continue();
+    });
+    await success.check(); await page.getByRole('button', { name: 'Save notification preferences' }).click();
+    await page.getByRole('alert').getByText('temporary save failure').waitFor();
+    assert.equal(await success.isChecked(), false);
+    assert.equal(await page.getByRole('button', { name: 'Save notification preferences' }).evaluate(button => document.activeElement === button), true);
+    await success.check(); await page.getByRole('button', { name: 'Save notification preferences' }).click();
+    await page.getByText('Notification preferences saved.').waitFor();
+    if (process.env.FACTORY_SCREENSHOT_DIR) await page.screenshot({ path: join(process.env.FACTORY_SCREENSHOT_DIR, 'notification-preferences-390.png'), fullPage: true });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.getByRole('link', { name: new RegExp(f.run.id.slice(0, 8)) }).click();
+    await page.getByRole('button', { name: 'Acknowledge selected invocation' }).click();
+    await page.getByText('Acknowledged on', { exact: false }).waitFor();
+    if (process.env.FACTORY_SCREENSHOT_DIR) await page.screenshot({ path: join(process.env.FACTORY_SCREENSHOT_DIR, 'notification-acknowledgment-390.png'), fullPage: true });
+    assert.equal(await page.getByText('Saved question needs input.', { exact: false }).count(), 1);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await page.goto(f.host.createUiHandoff() + '&run=' + f.run.id + '&invocation=' + f.invocation.id);
+    await page.getByText('Acknowledged on', { exact: false }).waitFor();
+  } finally { await browser.close(); await f.dispose(); }
+});
+
 test('real recorder output is available as inert text and saved events arrive while following', async () => {
   const f = await fixture(); const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });

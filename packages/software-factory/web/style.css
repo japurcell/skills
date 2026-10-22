@@ -32,6 +32,10 @@ small { font-size:12px; }
 .toolbar label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .toolbar input { width:min(280px,100%); }
 .controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.notification-form { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:12px; }
+.notification-form label { display:inline-flex; align-items:center; gap:7px; }
+.notification-form input { min-height:auto; }
+.notification-status { display:block; margin-top:10px; overflow-wrap:anywhere; }
 .status { color:var(--muted); border-color:var(--edge); }
 .status[data-tone="success"] { color:var(--success); border-color:#3b735b; }
 .status[data-tone="attention"] { color:var(--attention); border-color:#927b4e; }
