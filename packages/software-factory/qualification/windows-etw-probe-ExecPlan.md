@@ -11,8 +11,12 @@ Run one short, ordinary pinned Node process with a known transient Node child on
 - [x] (2026-10-22) [milestone-1] Read the differential, exact plan scope, existing bootstrap/trace workflow and Microsoft ETW/TDH contracts.
 - [x] (2026-10-22) [milestone-1] Public CLI/protocol checks fail before implementation and now pass for malformed health, unsupported host and valid fixture shape.
 - [x] (2026-10-22) [milestone-1] Implement the bounded native ETW session, known Node child and finalized offline decode; local PowerShell 7 compilation and 64-bit managed layout check pass.
-- [x] (2026-10-22) [milestone-1] Add isolated Windows workflow; Node syntax, three protocol tests and actionlint pass locally.
+- [x] (2026-10-22) [milestone-1] Add isolated Windows workflow; initial Node syntax, protocol and actionlint checks pass locally.
 - [ ] [milestone-1] Run native Windows proof at the exact candidate commit; parent owns push and native run.
+- [x] (2026-10-22) [milestone-1] T1: Reproduced foreign same-basename acceptance; fixed labels now follow exact pinned path and process lifetime checks. Public negative is green.
+- [x] (2026-10-22) [milestone-1] T2: Reproduced missing unsupported-host JSON; fixed stage/code reports and native numeric error rows are in place. Public CLI negative is green.
+- [x] (2026-10-22) [milestone-1] T3: Reproduced oversized/path-bearing artifact exposure; producer byte cap and upload scrub are in place. Public negatives and direct C# overflow proof are green.
+- [x] (2026-10-22) [milestone-1] Integrated local seven-case protocol, Node syntax, actionlint and PowerShell 7 ABI/producer checks passed after T1-T3.
 
 ## Milestone 1: Native feasibility
 
@@ -29,16 +33,28 @@ The repaired native debug run still records an extra console host for detached n
 
 Automatic approval review rejected uploading raw ETL to GitHub because it can include ambient system process metadata; existing workflow authorization did not cover that disclosure. The safe workflow retains only bounded allowlisted receipts and removes `trace.etl` locally after parsing, with an always-run cleanup step before upload. Native evidence loses independent raw replay; the first hosted run can establish only the selected field/health positive control and should be reviewed with that limit.
 
+An approval review also rejected a draft that would have written the pinned executable path into the uploaded `ROOT` row. The repaired producer writes a fixed label after comparing the held handle's full image with the pin in memory. It emits no TDH path or exception message, even on failure. Microsoft documents process `ImageFileName` as a path and image-load `FileName` as a file name; exact full-path verification may therefore fail on a native runner. That is an unresolved feasibility result, not permission to fall back to a basename.
+
 ## Decision Log
 
 - 2026-10-22: Stop after the smallest native rights/schema/health and known-child positive-control probe. The full comparator is a later task.
 - 2026-10-22: Treat actual Windows API/schema behavior as unverified until the parent runs the workflow. Official docs define the contracts, not runner success.
 - 2026-10-22: Never publish raw ETL under current authorization. Keep its scope to an ephemeral runner file, parse it there, remove it and upload only `bootstrap.json`, `qualification.json` and `native.tsv`.
+- 2026-10-22: The independent review found that selected TDH paths and free-text errors cross the artifact boundary. The native producer must verify the exact pinned module path and known process lifetime before producing fixed event labels. Ambiguous NT paths, PID reuse and missing identity fail closed. The Node validator accepts only controlled labels. C# and Node errors use fixed stage/code values. A 65 KiB byte cap applies before native TSV persistence and again before artifact upload.
+- 2026-10-22: Keep `ROOT` and event image values as fixed `pinned-node` labels. Native exact-path comparison and held root handle establish the label; the public synthetic protocol alone cannot prove native identity. Skip artifact upload unless both ETL cleanup and receipt preparation succeed.
 
 ## Context, validation and recovery
 
-Files are under `packages/software-factory/qualification/windows-etw-probe*` plus `.github/workflows/windows-factory-etw-probe.yml`. Run `node --test packages/software-factory/qualification/windows-etw-probe.test.mjs` locally. On Windows, the separate workflow bootstraps the exact Node archive from `runtime-manifest.json`, invokes the probe, removes the raw ETL and always uploads only bounded JSON/TSV evidence. It does not edit existing qualification or product paths. If native start/query/schema fails, preserve API codes in the receipt, stop only the successfully created session and halt before building the comparator. Retry only in a fresh disposable run after diagnosis. Local checks on 2026-10-22: three public tests pass under the exact local Node v24.22.1, C# compiles under PowerShell 7 on macOS arm64, the 64-bit managed layout check passes, Node syntax and actionlint pass. Windows PowerShell 5.1 compilation and every native ETW result remain unverified.
+Files are under `packages/software-factory/qualification/windows-etw-probe*` plus `.github/workflows/windows-factory-etw-probe.yml`. Run `node --test packages/software-factory/qualification/windows-etw-probe.test.mjs` locally. On Windows, the separate workflow bootstraps the exact Node archive from `runtime-manifest.json`, invokes the probe, removes the raw ETL and uploads only bounded JSON/TSV evidence when cleanup and artifact validation succeed. It does not edit existing qualification or product paths. If native start/query/schema fails, preserve API codes in the receipt, stop only the successfully created session and halt before building the comparator. Retry only in a fresh disposable run after diagnosis. Local checks on 2026-10-22: seven public tests pass under the exact local Node v24.22.1, C# compiles under PowerShell 7 on macOS arm64, the 64-bit managed layout and producer overflow checks pass, Node syntax and actionlint pass. Windows PowerShell 5.1 compilation and every native ETW result remain unverified.
+
+### Repair tasks and local acceptance
+
+T1 prerequisite: the existing positive fixture and review's same-basename foreign image reproducer. Update `windows-etw-probe.test.mjs` first so foreign or missing identity fails and a fixed-label positive succeeds. Then change `windows-etw-probe.cs` event selection to retain only controlled numeric and label data in memory, verify exact pinned module path and root/child start/end lifetime before emitting any event rows, and reject ambiguous reuse. Update the Node parser to reject path-bearing event rows. Preserve the schema, known positive events, final header and loss checks.
+
+T2 prerequisite: unsupported-host CLI repro. Extend the public test to require `qualification.json` with fixed stage/code and no untrusted strings. Make every Node catch, bridge and native `FAIL` row structured and bounded. Keep host and bootstrap pin guards before native calls. Verify cleanup failure changes status and cannot look like a successful stop.
+
+T3 prerequisite: oversized fixture repro. Verify the Node validator refuses more than 65 KiB and the upload gate discards oversized TSV before `upload-artifact`. Add a native producer byte cap that replaces overflow with a small typed failure receipt, never with a pass. Run the three existing tests plus new negatives, Node syntax, actionlint, PowerShell 7 `Add-Type` and 64-bit `CheckAbi`. A local pass is not native Windows proof.
 
 ## Outcomes & Retrospective
 
-Candidate implementation is locally checked; native acceptance remains open. Parent owns candidate review, push, and the first hosted Windows run. Reflection found no separate brain write needed within this worker's scoped ownership: the ETW artifact disclosure decision is preserved in this qualification note, and the ABI, loss and positive-event lessons are encoded in runtime checks and public tests.
+Candidate review repairs are locally checked; native acceptance remains open. Parent owns independent review, push, and the first hosted Windows run. Reflection found no separate brain write needed within this worker's scoped ownership: the artifact boundary and exact-path feasibility risk are preserved in this qualification note, and the ABI, loss, positive-event and byte-bound lessons are encoded in runtime checks and public tests.

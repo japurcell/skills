@@ -39,14 +39,22 @@ jobs:
           WINDOWS_ETW_PROBE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-probe-evidence
         run: node packages/software-factory/qualification/windows-etw-probe.mjs
       - name: Remove raw ETL before artifact upload
+        id: remove_etl
         if: always()
         timeout-minutes: 1
         shell: pwsh
         run: |
           $etl = Join-Path $env:RUNNER_TEMP 'factory-windows-etw-probe-evidence/trace.etl'
           if (Test-Path -LiteralPath $etl) { Remove-Item -LiteralPath $etl -Force -ErrorAction Stop }
-      - name: Retain bounded probe receipts even on failure
+      - name: Bound and validate receipts before upload
+        id: artifact_guard
         if: always()
+        timeout-minutes: 1
+        env:
+          WINDOWS_ETW_PROBE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-probe-evidence
+        run: node packages/software-factory/qualification/windows-etw-probe.mjs --prepare-artifacts
+      - name: Retain bounded probe receipts even on failure
+        if: always() && steps.remove_etl.outcome == 'success' && steps.artifact_guard.outcome == 'success'
         timeout-minutes: 3
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:

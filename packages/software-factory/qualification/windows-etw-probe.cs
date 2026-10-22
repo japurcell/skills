@@ -1,4 +1,4 @@
-// Disposable Windows x64 ETW feasibility probe. The ETL and selected receipt are CI evidence.
+// Disposable Windows x64 ETW feasibility probe. Only a bounded typed receipt is CI evidence.
 // ABI declarations follow Microsoft evntrace.h, evntcons.h, wmistr.h and tdh.h documentation.
 using System;
 using System.Collections.Generic;
@@ -23,6 +23,7 @@ public static class WindowsEtwProbe
     private const uint InsufficientBuffer = 122;
     private const int MaxObservationMs = 30000;
     private const long MaxEtlBytes = 64L * 1024 * 1024;
+    private const int MaxReceiptBytes = 65536;
     private static readonly Guid ProcessGuid = new Guid("3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c");
     private static readonly Guid ImageGuid = new Guid("2cb15d1d-5fc1-11d2-abe1-00a0c911f518");
     private static readonly Guid SystemTraceGuid = new Guid("9e814aad-3204-11d2-9a82-006008a86939");
@@ -200,7 +201,20 @@ public static class WindowsEtwProbe
 
     private static readonly List<string> Receipt = new List<string>();
     private static readonly List<string> SelectedEvents = new List<string>();
-    private static string DecodeError;
+    private sealed class KnownEvent
+    {
+        public string Kind;
+        public int Pid;
+        public uint Parent;
+        public ulong Key;
+        public uint ExitStatus;
+        public long Time;
+    }
+
+    private static readonly List<KnownEvent> KnownEvents = new List<KnownEvent>();
+    private static Exception DecodeError;
+    private static string PinnedNode;
+    private static long RootCreated;
     private static int RootPid, ChildPid;
     private static int CallbackCount;
     private static int ProcessRundown, ImageRundown;
@@ -208,6 +222,42 @@ public static class WindowsEtwProbe
     private static Process RootProcess;
     private static readonly Dictionary<int, ulong> StartKeys = new Dictionary<int, ulong>();
     private static readonly Dictionary<int, ulong> EndKeys = new Dictionary<int, ulong>();
+
+    private static void Failure(string stage, string code, uint nativeCode)
+    {
+        Line("FAIL", stage, code, nativeCode);
+    }
+
+    private static void Failure(string stage, Exception error)
+    {
+        var win32 = error as Win32Exception ?? error.InnerException as Win32Exception;
+        Failure(stage, win32 != null ? "native-api" : error is TimeoutException ? "timeout" :
+            error is InvalidDataException ? "invalid-data" : error is InvalidOperationException ? "invalid-state" :
+            "operation-failed", win32 != null ? (uint)win32.NativeErrorCode : 0);
+    }
+
+    private static bool WriteReceipt(string path)
+    {
+        var text = new StringBuilder();
+        int bytes = 0;
+        bool overflow = false;
+        foreach (string line in Receipt)
+        {
+            bytes += Encoding.UTF8.GetByteCount(line) + 1;
+            if (bytes > MaxReceiptBytes)
+            {
+                text.Clear();
+                text.Append("FAIL\treceipt\toverflow\t0\n");
+                overflow = true;
+                break;
+            }
+            text.Append(line).Append('\n');
+        }
+        using (var output = new StreamWriter(new FileStream(path, FileMode.CreateNew,
+            FileAccess.Write, FileShare.None), new UTF8Encoding(false)))
+            output.Write(text.ToString());
+        return !overflow;
+    }
 
     private static void Line(params object[] parts)
     {
@@ -293,8 +343,8 @@ public static class WindowsEtwProbe
             descriptor.ArrayIndex = uint.MaxValue;
             uint size;
             uint code = TdhGetPropertySize(record, 0, IntPtr.Zero, 1, ref descriptor, out size);
-            if (code != 0 || size == 0 || size > 32768)
-                throw new Win32Exception((int)code, "TDH size " + name);
+            if (code != 0) throw new Win32Exception((int)code, "TDH size " + name);
+            if (size == 0 || size > 32768) throw new InvalidDataException("TDH property size invalid");
             var bytes = new byte[size];
             code = TdhGetProperty(record, 0, IntPtr.Zero, 1, ref descriptor, size, bytes);
             if (code != 0) throw new Win32Exception((int)code, "TDH value " + name);
@@ -338,8 +388,10 @@ public static class WindowsEtwProbe
                 record.Header.ProviderId != ImageGuid) return;
             uint size = 0;
             uint code = TdhGetEventInformation(address, 0, IntPtr.Zero, IntPtr.Zero, ref size);
-            if (code != InsufficientBuffer || size < 32 || size > 65536)
+            if (code != InsufficientBuffer)
                 throw new Win32Exception((int)code, "TDH event schema size");
+            if (size < 32 || size > 65536)
+                throw new InvalidDataException("TDH event schema size invalid");
             Guid eventGuid;
             IntPtr info = Marshal.AllocHGlobal((int)size);
             try
@@ -363,25 +415,76 @@ public static class WindowsEtwProbe
                 var keys = opcode == 1 ? StartKeys : EndKeys;
                 if (keys.ContainsKey((int)processId)) throw new InvalidDataException("duplicate known process event");
                 keys[(int)processId] = key;
-                string value = opcode == 1 ? TextProperty(address, "ImageFileName", false) :
-                    Property32(address, "ExitStatus").ToString(CultureInfo.InvariantCulture);
-                SelectedEvents.Add(String.Join("\t", new[] { "EVENT", opcode == 1 ? "process-start" : "process-end",
-                    processId.ToString(CultureInfo.InvariantCulture), parentId.ToString(CultureInfo.InvariantCulture),
-                    processId == RootPid ? "root" : "child", value,
-                    record.Header.TimeStamp.ToString(CultureInfo.InvariantCulture) }));
+                if (opcode == 1 && !String.Equals(TextProperty(address, "ImageFileName", false),
+                    PinnedNode, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("known PID started an unexpected image");
+                KnownEvents.Add(new KnownEvent { Kind = opcode == 1 ? "process-start" : "process-end",
+                    Pid = (int)processId, Parent = parentId, Key = key,
+                    ExitStatus = opcode == 2 ? Property32(address, "ExitStatus") : 0,
+                    Time = record.Header.TimeStamp });
             }
             else if (eventGuid == ImageGuid && opcode == 10)
             {
                 uint processId = Property32(address, "ProcessId");
                 if (processId != RootPid && processId != ChildPid) return;
                 string image = TextProperty(address, "FileName", true);
-                if (String.Equals(Path.GetFileName(image), "node.exe", StringComparison.OrdinalIgnoreCase))
-                    SelectedEvents.Add("EVENT\timage-load\t" + processId.ToString(CultureInfo.InvariantCulture) +
-                        "\t" + image + "\t" + record.Header.TimeStamp.ToString(CultureInfo.InvariantCulture));
+                if (String.Equals(image, PinnedNode, StringComparison.OrdinalIgnoreCase))
+                    KnownEvents.Add(new KnownEvent { Kind = "image-load", Pid = (int)processId,
+                        Time = record.Header.TimeStamp });
+                // A basename match only rejects a foreign Node image; it never establishes identity.
+                else if (String.Equals(Path.GetFileName(image), "node.exe", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("known PID loaded a foreign Node image");
             }
             // DCStart/DCEnd are rundown, never a process start/end or a live image load.
         }
-        catch (Exception error) { DecodeError = error.GetType().Name + ": " + error.Message; }
+        catch (Exception error) { DecodeError = error; }
+    }
+
+    private static void CommitKnownEvents()
+    {
+        KnownEvent rootStart = null, rootEnd = null, childStart = null, childEnd = null;
+        int rootImages = 0, childImages = 0;
+        foreach (KnownEvent item in KnownEvents)
+        {
+            if (item.Kind == "process-start" && item.Pid == RootPid) rootStart = item;
+            if (item.Kind == "process-end" && item.Pid == RootPid) rootEnd = item;
+            if (item.Kind == "process-start" && item.Pid == ChildPid) childStart = item;
+            if (item.Kind == "process-end" && item.Pid == ChildPid) childEnd = item;
+            if (item.Kind == "image-load" && item.Pid == RootPid) rootImages++;
+            if (item.Kind == "image-load" && item.Pid == ChildPid) childImages++;
+        }
+        if (rootStart == null || rootEnd == null || childStart == null || childEnd == null ||
+            rootImages != 1 || childImages != 1 ||
+            rootStart.Key == 0 || childStart.Key == 0 || rootStart.Key != rootEnd.Key ||
+            childStart.Key != childEnd.Key || rootStart.Key == childStart.Key ||
+            childStart.Parent != RootPid || childEnd.Parent != RootPid ||
+            rootStart.Parent != rootEnd.Parent || rootStart.ExitStatus != 0 ||
+            rootEnd.ExitStatus != 0 || childEnd.ExitStatus != 0 ||
+            rootStart.Time < RootCreated - 50000000L || rootStart.Time > RootCreated + 50000000L ||
+            !(rootStart.Time < childStart.Time && childStart.Time < childEnd.Time &&
+              childEnd.Time < rootEnd.Time))
+            throw new InvalidDataException("known process identity or lifetime invalid");
+        foreach (KnownEvent item in KnownEvents)
+        {
+            if (item.Kind != "image-load") continue;
+            KnownEvent start = item.Pid == RootPid ? rootStart : childStart;
+            KnownEvent end = item.Pid == RootPid ? rootEnd : childEnd;
+            if (item.Time < start.Time || item.Time > end.Time)
+                throw new InvalidDataException("known image outside process lifetime");
+        }
+        foreach (KnownEvent item in KnownEvents)
+        {
+            string process = item.Pid == RootPid ? "root" : "child";
+            if (item.Kind == "image-load")
+                SelectedEvents.Add("EVENT\timage-load\t" + item.Pid.ToString(CultureInfo.InvariantCulture) +
+                    "\tpinned-node\t" + item.Time.ToString(CultureInfo.InvariantCulture));
+            else
+                SelectedEvents.Add(String.Join("\t", new[] { "EVENT", item.Kind,
+                    item.Pid.ToString(CultureInfo.InvariantCulture),
+                    item.Parent.ToString(CultureInfo.InvariantCulture), process,
+                    item.Kind == "process-start" ? "pinned-node" : item.ExitStatus.ToString(CultureInfo.InvariantCulture),
+                    item.Time.ToString(CultureInfo.InvariantCulture) }));
+        }
     }
 
     private static string Quote(string value)
@@ -420,7 +523,8 @@ public static class WindowsEtwProbe
             length >= path.Capacity) throw new Win32Exception(Marshal.GetLastWin32Error(), "root image");
         if (!String.Equals(Path.GetFullPath(path.ToString()), Path.GetFullPath(node),
             StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("root handle image differs from pin");
-        Line("ROOT", RootPid, created.Ticks, path.ToString());
+        RootCreated = created.Ticks;
+        Line("ROOT", RootPid, RootCreated, "pinned-node");
         if (!process.WaitForExit(10000))
         {
             process.Kill();
@@ -440,6 +544,7 @@ public static class WindowsEtwProbe
     {
         if (IntPtr.Size != 8 || Environment.OSVersion.Platform != PlatformID.Win32NT) return 2;
         string node = Path.GetFullPath(nodePath);
+        PinnedNode = node;
         string evidence = Path.GetFullPath(evidenceDir);
         string receipt = Path.Combine(evidence, "native.tsv");
         string etl = Path.Combine(evidence, "trace.etl");
@@ -487,42 +592,59 @@ public static class WindowsEtwProbe
                     {
                         RootProcess.Kill();
                         if (!RootProcess.WaitForExit(2000))
-                            Line("FAIL", "RootStop", "unobserved");
+                            Failure("root-stop", "unobserved", 0);
                     }
                 }
                 catch (Exception stopError)
                 {
-                    Line("FAIL", "RootStop", stopError.GetType().Name);
+                    Failure("root-stop", stopError);
                 }
             }
-            Line("FAIL", error.GetType().Name, error.Message.Length > 512 ? error.Message.Substring(0, 512) : error.Message);
+            Failure("run", error);
             result = 4;
         }
         finally
         {
             if (owned)
             {
-                IntPtr properties = PropertiesBuffer(guid, name, etl, false);
                 try
                 {
-                    uint code = ControlTrace(handle, name, properties, TraceStop);
-                    Line("API", "stop", code);
-                    stopped = code == 0;
-                    if (stopped)
+                    IntPtr properties = PropertiesBuffer(guid, name, etl, false);
+                    try
                     {
-                        var final = (EventTraceProperties)Marshal.PtrToStructure(properties,
-                            typeof(EventTraceProperties));
-                        Line("STATS", final.EventsLost, final.LogBuffersLost, final.RealTimeBuffersLost);
+                        uint code = ControlTrace(handle, name, properties, TraceStop);
+                        Line("API", "stop", code);
+                        stopped = code == 0;
+                        if (stopped)
+                        {
+                            var final = (EventTraceProperties)Marshal.PtrToStructure(properties,
+                                typeof(EventTraceProperties));
+                            Line("STATS", final.EventsLost, final.LogBuffersLost, final.RealTimeBuffersLost);
+                            if (final.EventsLost != 0 || final.LogBuffersLost != 0 || final.RealTimeBuffersLost != 0)
+                            {
+                                Failure("stop", "loss", 0);
+                                result = 4;
+                            }
+                        }
+                        else
+                        {
+                            Failure("stop", "native-api", code);
+                            result = 4;
+                        }
                     }
-                    else result = 4;
+                    finally { Marshal.FreeHGlobal(properties); }
                 }
-                finally { Marshal.FreeHGlobal(properties); }
+                catch (Exception error) { Failure("stop", error); result = 4; }
             }
             if (stopped && File.Exists(etl))
             {
                 long bytes = new FileInfo(etl).Length;
                 Line("FILE", bytes);
-                if (bytes <= 0 || bytes >= MaxEtlBytes) result = 4;
+                if (bytes <= 0 || bytes >= MaxEtlBytes)
+                {
+                    Failure("decode", "etl-cap-or-empty", 0);
+                    result = 4;
+                }
                 else
                 {
                     try
@@ -535,14 +657,15 @@ public static class WindowsEtwProbe
                         logfile.EventRecordCallback = Marshal.GetFunctionPointerForDelegate(CallbackRoot);
                         ulong reader = OpenTrace(ref logfile);
                         bool opened = reader != ulong.MaxValue;
-                        Line("API", "open", opened ? 0 : Marshal.GetLastWin32Error());
-                        if (!opened) throw new InvalidOperationException("OpenTraceW failed");
+                        int openCode = opened ? 0 : Marshal.GetLastWin32Error();
+                        Line("API", "open", openCode);
+                        if (!opened) throw new Win32Exception(openCode, "OpenTraceW failed");
                         try
                         {
                             uint code = ProcessTrace(new[] { reader }, 1, IntPtr.Zero, IntPtr.Zero);
                             Line("API", "process", code);
                             if (code != 0) throw new Win32Exception((int)code, "ProcessTrace");
-                            if (DecodeError != null) throw new InvalidDataException(DecodeError);
+                            if (DecodeError != null) throw new InvalidDataException("event decode failed", DecodeError);
                             foreach (int pid in new[] { RootPid, ChildPid })
                             {
                                 ulong begin, end;
@@ -550,6 +673,7 @@ public static class WindowsEtwProbe
                                     !EndKeys.TryGetValue(pid, out end) || begin != end)
                                     throw new InvalidDataException("known process key missing or changed");
                             }
+                            CommitKnownEvents();
                             Line("SCHEMA", "ProcessId:u32", "ParentId:u32", "UniqueProcessKey:pointer",
                                 "ImageFileName:string", "ExitStatus:u32", "Image.ProcessId:u32",
                                 "Image.FileName:string");
@@ -558,29 +682,43 @@ public static class WindowsEtwProbe
                             // OpenTrace and ProcessTrace populate this documented final-file header.
                             Line("HEADER", logfile.LogfileHeader.EndTime, logfile.LogfileHeader.EventsLost,
                                 logfile.LogfileHeader.BuffersLost);
+                            if (logfile.LogfileHeader.EndTime <= 0 || logfile.LogfileHeader.EventsLost != 0 ||
+                                logfile.LogfileHeader.BuffersLost != 0)
+                                throw new InvalidDataException("final ETL header incomplete or lost events");
                         }
                         finally
                         {
                             uint close = CloseTrace(reader);
                             Line("API", "close", close);
-                            if (close != 0) result = 4;
+                            if (close != 0)
+                            {
+                                Failure("decode", "native-api", close);
+                                result = 4;
+                            }
                         }
                         Receipt.AddRange(SelectedEvents);
                     }
                     catch (Exception error)
                     {
-                        Line("FAIL", error.GetType().Name, error.Message.Length > 512 ? error.Message.Substring(0, 512) : error.Message);
+                        Failure("decode", error);
                         result = 4;
                     }
                 }
             }
-            if (watch.ElapsedMilliseconds > MaxObservationMs) result = 4;
+            if (stopped && !File.Exists(etl))
+            {
+                Failure("decode", "missing-etl", 0);
+                result = 4;
+            }
+            if (watch.ElapsedMilliseconds > MaxObservationMs)
+            {
+                Failure("run", "timeout", 0);
+                result = 4;
+            }
             if (result == 0) Line("COMPLETE");
             try
             {
-                using (var output = new StreamWriter(new FileStream(receipt, FileMode.CreateNew,
-                    FileAccess.Write, FileShare.None), new UTF8Encoding(false)))
-                    foreach (string line in Receipt) output.WriteLine(line);
+                if (!WriteReceipt(receipt)) result = 4;
             }
             finally { if (RootProcess != null) RootProcess.Dispose(); }
         }
