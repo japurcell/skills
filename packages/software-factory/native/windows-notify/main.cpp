@@ -1,4 +1,5 @@
 #include "registration-core.hpp"
+#include <winrt/Windows.Foundation.h>
 
 namespace {
 constexpr wchar_t kPrefix[] = L"SoftwareFactory.Repository.";
