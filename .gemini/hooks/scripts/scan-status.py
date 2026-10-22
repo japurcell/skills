@@ -120,13 +120,41 @@ def child_status(repo):
         finally:
             if process is not None:
                 # A finished root may leave live descendants and held handles.
-                # Kill the whole private process group before waiting on root.
+                # Kill the private group, then observe its members before return.
+                # Waiting for the root alone does not prove descendants exited.
+                cleanup_deadline = min(STARTED + CHILD_SECONDS + CLEANUP_SECONDS,
+                                       time.monotonic() + CLEANUP_SECONDS)
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
                 try:
-                    process.wait(timeout=CLEANUP_SECONDS)
+                    process.wait(timeout=min(0.01, max(0, cleanup_deadline - time.monotonic())))
+                except subprocess.TimeoutExpired:
+                    pass
+                while time.monotonic() < cleanup_deadline:
+                    try:
+                        os.killpg(process.pid, 0)
+                    except ProcessLookupError:
+                        break
+                    try:
+                        # -g selects the private process group on macOS and its
+                        # private session on Linux. Status alone exposes no args.
+                        remaining = cleanup_deadline - time.monotonic()
+                        if remaining <= 0:
+                            break
+                        observed = subprocess.run(["/bin/ps", "-g", str(process.pid), "-o", "stat="],
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                            timeout=remaining)
+                    except (OSError, subprocess.TimeoutExpired):
+                        break
+                    statuses = observed.stdout.split()
+                    if observed.returncode == 0 and statuses and all(
+                            status.startswith(b"Z") for status in statuses):
+                        break
+                    time.sleep(min(0.002, max(0, cleanup_deadline - time.monotonic())))
+                try:
+                    process.wait(timeout=max(0, cleanup_deadline - time.monotonic()))
                 except subprocess.TimeoutExpired:
                     pass
 
