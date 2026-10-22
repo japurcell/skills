@@ -6,7 +6,7 @@ if (process.env.GITHUB_ACTIONS !== 'true' || process.platform !== 'darwin') {
   process.stderr.write('filesystem diagnostic requires ephemeral GitHub Actions on macOS\n');
   process.exitCode = 1;
 } else {
-  const locations = [...new Set([process.cwd(), tmpdir(), process.env.RUNNER_TEMP].filter(Boolean))];
+  const locations = [...new Set([process.cwd(), tmpdir(), process.env.RUNNER_TEMP, '/', '/System/Volumes/Data'].filter(Boolean))];
   const filesystems = locations.map(path => {
     try { return { path, nativeType: statfsSync(path).type }; }
     catch { return { path, error: 'statfs unavailable' }; }
