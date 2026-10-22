@@ -5,6 +5,7 @@ import { validateNodeOutput, validateNodeRoute } from './windows-node-route.mjs'
 const node = 'C:\\tools\\node-v24.22.1-win-x64\\node.exe';
 const git = 'C:\\tools\\git\\mingw64\\bin\\git.exe';
 const cmd = 'C:\\Windows\\System32\\cmd.exe';
+const conhost = 'C:\\Windows\\System32\\conhost.exe';
 const row = (kind, pid, value) => ({ kind, pid, value });
 const trace = (children) => [
   row('ROOT', 10, node), row('CREATE', 10, node),
@@ -39,6 +40,15 @@ test('positive nested cmd requires its intended observed descendant and every ex
     ? row('EXIT', 12, '1') : item);
   assert.match(validateNodeRoute(failedNested, result(), { node, helper: cmd, nested: cmd }).reasons.join('; '),
     /nested child exit/);
+});
+
+test('an observed console host remains an unexpected child in both route shapes', () => {
+  const direct = validateNodeRoute(trace([[12, conhost], [11, git]]), result(),
+    { node, helper: git });
+  assert.match(direct.reasons.join('; '), /unexpected process creation/);
+  const nested = validateNodeRoute(trace([[13, conhost], [11, cmd], [12, cmd], [14, conhost]]),
+    result(), { node, helper: cmd, nested: cmd });
+  assert.match(nested.reasons.join('; '), /intended nested child/);
 });
 
 test('complete debug loop and both pipe closures are mandatory', () => {

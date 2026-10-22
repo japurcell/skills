@@ -36,13 +36,32 @@ try {
   const child = spawn(spec.executable, spec.args, options);
   report.childPid = child.pid ?? null;
   const captured = { stdout: [], stderr: [] };
+  let saved = false;
+  let controlTimer;
+  let guard;
+  const persist = () => {
+    if (saved) return;
+    saved = true;
+    clearTimeout(guard); clearTimeout(controlTimer);
+    for (const stream of ['stdout', 'stderr'])
+      report[`${stream}Base64`] = Buffer.concat(captured[stream]).toString('base64');
+    report.elapsedMs = Math.round(performance.now() - started);
+    writeFileSync(resultPath, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+    if (report.error) process.exitCode = 1;
+  };
+  const finishIfClosed = () => {
+    if (report.closeObserved && report.stdoutClosed && report.stderrClosed) persist();
+  };
   const stop = (reason) => {
     if (report.stop || report.closeObserved) return;
     report.stop = { reason, requestedAtMs: Math.round(performance.now() - started),
       killReturned: child.kill('SIGTERM'), signal: 'SIGTERM' };
   };
-  let controlTimer;
-  const guard = setTimeout(() => stop('guard'), 45000);
+  guard = setTimeout(() => {
+    stop('guard');
+    report.error ??= 'child or pipe closure exceeded 45000 ms guard';
+    persist();
+  }, 45000);
   child.on('spawn', () => {
     report.spawnObserved = true;
     if (spec.control === 'deadline') controlTimer = setTimeout(() => stop('deadline'), 500);
@@ -62,20 +81,16 @@ try {
       if (spec.control === 'output-limit' && report.stdoutBytes + report.stderrBytes > captureLimit)
         stop('output-limit');
     });
-    pipe.on('close', () => { report[`${stream}Closed`] = true; });
+    pipe.on('close', () => { report[`${stream}Closed`] = true; finishIfClosed(); });
     pipe.on('error', (error) => { report.error = `${stream}: ${error.message}`.slice(0, 1024); });
   }
   child.on('exit', (code, signal) => {
     report.exitObserved = true; report.exitCode = code; report.exitSignal = signal;
   });
   child.on('close', (code, signal) => {
-    clearTimeout(guard); clearTimeout(controlTimer);
+    clearTimeout(controlTimer);
     report.closeObserved = true; report.closeCode = code; report.closeSignal = signal;
-    for (const stream of ['stdout', 'stderr'])
-      report[`${stream}Base64`] = Buffer.concat(captured[stream]).toString('base64');
-    report.elapsedMs = Math.round(performance.now() - started);
-    writeFileSync(resultPath, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
-    if (report.error) process.exitCode = 1;
+    finishIfClosed();
   });
 } catch (error) {
   report.error = error instanceof Error ? `${error.name}: ${error.message}`.slice(0, 1024) : String(error).slice(0, 1024);

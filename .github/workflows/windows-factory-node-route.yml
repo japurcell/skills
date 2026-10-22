@@ -44,7 +44,7 @@ jobs:
       - name: Check Node route protocol
         timeout-minutes: 1
         run: node --test packages/software-factory/qualification/windows-node-route.test.mjs
-      - name: Trace seven pinned Node spawn cases
+      - name: Trace seven pinned Node spawn cases and detached-root differential
         timeout-minutes: 12
         env:
           WINDOWS_NODE_ROUTE_EVIDENCE: ${{ runner.temp }}/factory-windows-node-route-evidence

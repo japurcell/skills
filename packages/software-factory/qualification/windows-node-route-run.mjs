@@ -1,4 +1,4 @@
-// Seven-case native experiment for the exact pinned Node spawn route. Never imported by product code.
+// Seven-case native experiment plus a separate debug-root differential. Never imported by product code.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -13,6 +13,8 @@ const evidence = resolve(process.env.WINDOWS_NODE_ROUTE_EVIDENCE ?? join(process
 const manifest = JSON.parse(readFileSync(join(sourceRoot, 'runtime-manifest.json'), 'utf8'));
 const report = { scope: 'representative-pinned-node-windows-spawn-route', status: 'failed',
   platform: process.platform, arch: process.arch, node: process.version, cases: [],
+  rootLaunchDifferential: { label: 'DEBUG_PROCESS | DETACHED_PROCESS diagnostic',
+    status: 'pending', cases: [] },
   limits: { childCaptureBytesPerStream: 262144, deadlineStopMs: 500,
     outputStopAfterBytes: 262144, outputDeadlineMs: 10000, outerTraceMs: 60000 },
   limitation: 'DEBUG_PROCESS observer adds its own launch conditions. This report is a representative experiment, not the full helper matrix or product admission.' };
@@ -88,7 +90,8 @@ function buildControl(env, work) {
   return executable;
 }
 
-function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archive, expected = {}) {
+function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archive,
+  expected = {}, outerLaunchMode = 'no-window') {
   const directory = join(evidence, 'cases', name);
   mkdirSync(directory, { recursive: true });
   const launcher = join(sourceRoot, 'windows-node-route-launch.mjs');
@@ -97,7 +100,7 @@ function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archiv
   const nodeResultPath = join(directory, 'node-result.json');
   writeFileSync(nodeSpecPath, `${JSON.stringify(nodeSpec, null, 2)}\n`);
   const traceSpec = { executable: node, cwd: directory, args: [launcher, nodeSpecPath, nodeResultPath],
-    launchMode: 'no-window', diagnosticOnly: false, timeoutMs: 60000,
+    launchMode: outerLaunchMode, diagnosticOnly: false, timeoutMs: 60000,
     stdout: join(directory, 'node-stdout.bin'), stderr: join(directory, 'node-stderr.bin'),
     trace: join(directory, 'debug.tsv') };
   const traceSpecPath = join(directory, 'trace-spec.json');
@@ -109,9 +112,10 @@ function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archiv
   { env, cwd: directory, encoding: 'utf8', timeout: 75000, maxBuffer: 1048576 });
   writeFileSync(join(directory, 'tracer-stdout.txt'), invocation.stdout ?? '');
   writeFileSync(join(directory, 'tracer-stderr.txt'), invocation.stderr ?? '');
-  const item = { name, route, executable, args, cwd, archive: archive?.archive ?? null,
+  const item = { name, route, outerLaunchMode, executable, args, cwd, archive: archive?.archive ?? null,
     outerLaunch: { executable: node, argv: traceSpec.args, cwd: directory, environment: env,
-      flags: ['DEBUG_PROCESS', 'CREATE_NO_WINDOW'], startup: 'STARTF_USESTDHANDLES',
+      flags: ['DEBUG_PROCESS', outerLaunchMode === 'no-window' ? 'CREATE_NO_WINDOW' : 'DETACHED_PROCESS'],
+      startup: 'STARTF_USESTDHANDLES',
       stdin: 'inherited NUL handle', stdout: 'inherited file handle', stderr: 'inherited file handle',
       timeoutMs: traceSpec.timeoutMs, outputLimitBytesPerStream: 262144,
       tracerSourceSha256: sha256(join(sourceRoot, 'windows-startup-trace.cs')),
@@ -194,7 +198,9 @@ function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archiv
   } catch (error) {
     item.reasons.push(error instanceof Error ? error.message : String(error));
   }
-  report.cases.push(item); save();
+  if (outerLaunchMode === 'no-window') report.cases.push(item);
+  else report.rootLaunchDifferential.cases.push(item);
+  save();
   return item;
 }
 
@@ -257,6 +263,7 @@ async function main() {
   };
   const baselineTs = compilerInput('typescript-baseline');
   const candidateTs = compilerInput('typescript-candidate');
+  const detachedRootTs = compilerInput('typescript-detached-root-candidate');
   const control = buildControl(env, work);
   const cases = [
     ['baseline-git', 'baseline', git, gitModes[0], repo, gitArchive, { git: true }],
@@ -275,10 +282,31 @@ async function main() {
     if (archive) assertPackage(archive);
     runCase(name, route, executable, args, cwd, env, node, nodeRoot, archive, expected);
   }
+  const detachedRootCases = [
+    ['detached-root-candidate-git', git, gitModes[0], repo, gitArchive, { git: true }],
+    ['detached-root-candidate-typescript', compiler, ['-p', detachedRootTs.configPath],
+      work, tsArchive, { compilerOutput: detachedRootTs.output }],
+    ['detached-root-candidate-nested-cmd', env.ComSpec,
+      ['/d', '/c', env.ComSpec, '/d', '/c', 'exit', '0'], work, null, { nested: env.ComSpec }],
+    ['detached-root-candidate-deadline-control', control, ['deadline'], work, null,
+      { stop: 'deadline' }],
+    ['detached-root-candidate-output-control', control, ['output-limit'], work, null,
+      { stop: 'output-limit' }],
+  ];
+  for (const [name, executable, args, cwd, archive, expected] of detachedRootCases) {
+    assert.equal(sha256(node), archiveMemberSha256, `pinned node.exe changed before ${name}`);
+    if (archive) assertPackage(archive);
+    runCase(name, 'candidate', executable, args, cwd, env, node, nodeRoot, archive,
+      expected, 'detached-process');
+  }
+  report.rootLaunchDifferential.status = report.rootLaunchDifferential.cases.length === 5 &&
+    report.rootLaunchDifferential.cases.every((item) => item.status === 'passed')
+    ? 'strict-diagnostic-passed' : 'failed';
   const candidates = report.cases.filter((item) => item.route === 'candidate');
   const baselines = report.cases.filter((item) => item.route === 'baseline');
   report.status = candidates.length === 5 && candidates.every((item) => item.status === 'passed') &&
-    baselines.length === 2 && baselines.every((item) => item.status === 'diagnostic-complete')
+    baselines.length === 2 && baselines.every((item) => item.status === 'diagnostic-complete') &&
+    report.rootLaunchDifferential.status === 'strict-diagnostic-passed'
     ? 'representative-native-candidate-passed-review-required' : 'failed';
   save();
   if (report.status === 'failed') process.exitCode = 1;
