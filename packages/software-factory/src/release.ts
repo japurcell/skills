@@ -46,7 +46,7 @@ const TOOLCHAIN_FILES = ['package.json', 'package-lock.json'] as const;
 // this list is a release-contract change, not an inference from a proposed bundle.
 const RUNTIME_MODULES = [
   'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
-  'agents', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control',
+  'agents', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control', 'installation-bindings',
   'learning', 'lifecycle', 'native/notification-transport', 'native/notifications',
   'native/process', 'notifications', 'placement', 'profiles', 'redaction', 'release', 'schema', 'store',
   'workflow', 'workspace',

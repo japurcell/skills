@@ -59,7 +59,8 @@ function validPath(path: unknown): path is string {
   return typeof path === 'string' && path.length > 0 && !path.includes('\\') && !path.includes('\0') &&
     !path.startsWith('/') && posix.normalize(path) === path && path.split('/').every(part => part !== '.' && part !== '..' && part !== '');
 }
-function verifyPackage(options: CopilotAdapterOptions): void {
+/** Validate the complete pinned package closure without launching the provider. */
+export function validateCopilotPackageArtifact(options: Pick<CopilotAdapterOptions, 'packageRoot' | 'manifestFile' | 'manifestSha256'>): void {
   const { packageRoot, manifestFile, manifestSha256 } = options;
   if (!isAbsolute(packageRoot) || !isAbsolute(manifestFile) || resolve(packageRoot) !== packageRoot ||
     resolve(manifestFile) !== manifestFile || !/^[a-f0-9]{64}$/.test(manifestSha256))
@@ -198,7 +199,7 @@ export function createCopilotAdapter(options: CopilotAdapterOptions): AgentAdapt
     for (const capability of inputs.requiredCapabilities) if (!capabilities.includes(capability as typeof capabilities[number]))
       throw new Error(`unsupported Copilot capability: ${capability}`);
     if (options.environment['COPILOT_ALLOW_ALL']) throw new Error('Copilot allow-all native environment is unsupported');
-    verifyPackage(options);
+    validateCopilotPackageArtifact(options);
   }
   return {
     id: 'copilot', capabilities, finalChannel: 'stdout', eventChannel: 'stdout', questionExitCodes: [],
