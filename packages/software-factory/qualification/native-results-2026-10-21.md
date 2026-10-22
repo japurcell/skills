@@ -41,3 +41,23 @@ After retaining attempt 1 evidence, the operator reran only the failed job on an
 | win32-x64 / 1 | win25-vs2026 20261018.275.1 | 10.0.26100 / NTFS | 4.802 ms |
 
 All passing targets again verified WAL/FULL/foreign keys, rollback, 80 concurrent rows, one committed and zero uncommitted rows after process loss, and backup integrity. Failure artifacts are downloaded under `/tmp/factory-foundation-linux-39726180450-attempt1`; passing artifacts under `/tmp/factory-foundation-39726180450/`. Actions retention is 14 days. These remain foundation-only checks; the hosted workflow does not run T6 startup/shutdown, real providers or desktop delivery.
+
+
+## Reviewed diagnostics and three-platform pass
+
+[Run39736090737](https://github.com/japurcell/skills/actions/runs/39736090737) tests `ca450bc9f7e99f97a857578007ffa1115a8c67e2` and passes all three foundation jobs on attempt1. Reviewed placement diagnostics preserve the original ten-second probe limit and concurrency. The prior Windows placement failure in run39729936207 remains unexplained; this pass does not establish its cause or a cure.
+
+| Target | Runner image | OS / filesystem | Small-commit p95 |
+| --- | --- | --- | --- |
+| darwin-arm64 | macos15 20260907.0337.1 |24.6.0 / apfs |0.343125ms |
+| linux-x64 | ubuntu24 20261012.334.1 |6.17.0-1022-azure / ext |0.506312ms |
+| win32-x64 | win25-vs2026 20261018.275.1 |10.0.26100 / NTFS |3.493800ms |
+
+Pinned Node24.22.1/SQLite3.53.4, bootstrap integrity, strict build/typechecks, registered fixture/store groups, explicit placement/CI/runtime checks, WAL/FULL/foreign keys, rollback,80 concurrent rows, one committed and zero uncommitted rows after process loss, and backup integrity all pass. Evidence is downloaded under `/tmp/factory-native-39736090737/`; hosted artifacts expire after14days. This remains foundation-only, excluding lifecycle/provider/UI/desktop qualification.
+
+Separate [fresh-host Windows capture run39736090516](https://github.com/japurcell/skills/actions/runs/39736090516) passes the exact previously failing copilot/warn/partial public-hook scenario with disposable home/audit/observability isolation. The unchanged full-suite workflow runs on a different host. This single focused pass does not establish the original watchdog cause or prove a general timeout cure. Its artifact is `/tmp/factory-windows-diagnostic-39736090516/windows-capture-diagnostic-39736090516-1/partial.log`.
+
+The separate unchanged full-suite [Windows run39736090551](https://github.com/japurcell/skills/actions/runs/39736090551) also passes on its own host, including scanner envelopes/capture, stable RTK configuration and lifecycle messages. The public capture suite completed with original matrix and watchdogs. Full log is `/tmp/factory-windows-hooks-39736090551.log`. This provides native regression evidence while the original timeout stage remains unproved.
+
+
+[POSIX run39736090738](https://github.com/japurcell/skills/actions/runs/39736090738) passes Linux verifier41 checks in93.451seconds, including actual ESRCH and conservative denied/EIO/empty controls. The macOS job fails1 and errors1 of41 in304.336seconds. Maintained stage evidence shows a requested0.3-second delay consumed0.433962seconds; the final observer reached return-delay start at0.505989seconds, then timed out at1.005043seconds before its requested0.55-second return delay completed. Structured rejection is2/process_observation_timeout, limit1.0, measured1.002. A separate broken-output-pipe public invocation exceeded its unchanged15-second test wait; its blocked phase is not known. The log is `/tmp/factory-hook-39736090738-failed.log`. This establishes scheduling delay in the tested observer, not a safe reason to widen budgets or shorten injected delays. A fresh macOS verifier host with bounded timing/load metadata can distinguish host scheduling from preceding full-suite effects while preserving the existing full-suite job and assertions.
