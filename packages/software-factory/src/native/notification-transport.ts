@@ -3,7 +3,7 @@ import type { ChildProcess } from 'node:child_process';
 import { win32 } from 'node:path';
 
 export type NotificationState = 'submitted' | 'failed' | 'timed_out' | 'unknown';
-export type NotificationReason = 'invalid_request' | 'unsupported_platform' | 'missing_executable' | 'service_unavailable' | 'denied' | 'sender_exit_nonzero' | 'spawn_error' | 'deadline_exceeded' | 'cleanup_unconfirmed';
+export type NotificationReason = 'invalid_request' | 'unsupported_platform' | 'missing_executable' | 'registration_missing' | 'service_unavailable' | 'denied' | 'sender_exit_nonzero' | 'spawn_error' | 'deadline_exceeded' | 'cleanup_unconfirmed';
 export type NotificationResult = { state: NotificationState; reason?: NotificationReason; cleanup: 'complete' | 'unknown' };
 export interface NativeNotificationCommand { file: string; args: string[] }
 
@@ -12,7 +12,8 @@ const MAX_LIFETIME_MS = 5000;
 function failureReason(command: NativeNotificationCommand, code: number | null, stderr: string): NotificationReason {
   const windowsHelper = win32.basename(command.file).toLowerCase() === 'windows-notify.exe';
   if ((windowsHelper && code === 4) || /access denied|permission denied|not authorized|not permitted|notifications disabled/i.test(stderr)) return 'denied';
-  if ((windowsHelper && code === 3) || /could not connect|cannot connect|notification daemon|session bus|display not found|name has no owner/i.test(stderr)) return 'service_unavailable';
+  if (windowsHelper && code === 3) return 'registration_missing';
+  if (/could not connect|cannot connect|notification daemon|session bus|display not found|name has no owner/i.test(stderr)) return 'service_unavailable';
   return 'sender_exit_nonzero';
 }
 
