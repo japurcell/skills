@@ -255,7 +255,11 @@ export async function startObservationHost(options: { store: RepositoryStore; po
           } else json(response, 200, store.readSessions({ invocationId: id, after: integer(route, 'after', 0), limit }));
           return;
         }
-        if (detail && kind === 'captures') { json(response, 200, store.readInvocationCapture({ invocationId: id, id: detail, after: integer(route, 'after', 0), limit })); return; }
+        if (detail && kind === 'captures') {
+          try { json(response, 200, store.readInvocationCapture({ invocationId: id, id: detail, after: integer(route, 'after', 0), limit })); }
+          catch (error) { if (error instanceof Error && error.message === 'capture does not belong to selected invocation') throw new RequestError(404, 'saved capture unavailable'); throw error; }
+          return;
+        }
         if (detail && kind === 'attempts') {
           const attempt = store.readAttempt(detail);
           if (attempt.invocationId !== id) throw new RequestError(404, 'attempt not found');

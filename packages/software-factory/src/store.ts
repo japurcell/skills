@@ -252,8 +252,9 @@ export class RepositoryStore {
   }
 
   readInvocationCapture(input: { invocationId: string; id: string; after?: number; limit?: number }) {
-    if (!this.database.prepare('SELECT id FROM captures WHERE id=? AND invocation_id=?').get(input.id, input.invocationId)) throw new Error('capture does not belong to selected invocation');
-    return { id: input.id, ...this.readCapture(input) };
+    const row=this.database.prepare('SELECT attempt_id FROM captures WHERE id=? AND invocation_id=?').get(input.id,input.invocationId);
+    if (!row) throw new Error('capture does not belong to selected invocation');
+    return { id: input.id, attemptId:row['attempt_id']===null?null:String(row['attempt_id']), ...this.readCapture(input) };
   }
 
   /** Bounded detail pages expose independent row and text cursors; never join full captures. */
@@ -808,7 +809,7 @@ export class RepositoryStore {
       const capture = { id: randomUUID(), ...input, state: 'open' as CaptureState };
       this.database.prepare('INSERT INTO captures(id,invocation_id,attempt_id,channel,state) VALUES (?,?,?,?,?)')
         .run(capture.id, input.invocationId, input.attemptId ?? null, input.channel, 'open');
-      this.event('capture.created', { captureId: capture.id, invocationId: input.invocationId, channel: input.channel });
+      this.event('capture.created', { captureId: capture.id, invocationId: input.invocationId, attemptId: input.attemptId ?? null, channel: input.channel });
       return capture;
     });
   }
@@ -825,7 +826,7 @@ export class RepositoryStore {
     }
     if (bytes > 262144) throw new Error('capture batch exceeds 256 KiB');
     return this.transaction(() => {
-      const row = this.database.prepare('SELECT state,sequence,invocation_id FROM captures WHERE id=?').get(input.id);
+      const row = this.database.prepare('SELECT state,sequence,invocation_id,attempt_id FROM captures WHERE id=?').get(input.id);
       if (!row) throw new Error('capture not found');
       let sequence = Number(row['sequence']);
       if ((input.chunks.length && input.chunks[0]!.sequence <= sequence) || (!input.chunks.length && input.state === row['state'] && row['state'] !== 'open')) {
@@ -844,7 +845,7 @@ export class RepositoryStore {
       }
       const state = input.state ?? 'open';
       this.database.prepare('UPDATE captures SET sequence=?,state=? WHERE id=?').run(sequence, state, input.id);
-      this.event('capture.appended', { captureId: input.id, invocationId: row['invocation_id'], sequence, state, bytes });
+      this.event('capture.appended', { captureId: input.id, invocationId: row['invocation_id'], attemptId: row['attempt_id'], sequence, state, bytes });
       return { sequence, state };
     });
   }

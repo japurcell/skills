@@ -57,6 +57,11 @@ test('selected observation routes require bearer and reject foreign or mismatche
       assert.equal((await fetch(target)).status,403);
       assert.equal((await authorizedFetch(host,target)).status,200);
     }
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,attemptId:attempt.id,channel:'stdout'});
+    const captureTarget=base+'/captures/'+capture.id;
+    assert.equal((await fetch(captureTarget)).status,403);
+    assert.equal((await (await authorizedFetch(host,captureTarget)).json()).attemptId,attempt.id);
+    await f.store.appendCapture({id:capture.id,chunks:[],state:'complete'});
     assert.equal((await authorizedFetch(host,base+'/attempt-page?attempt='+attempt.id+'&phase=other-phase')).status,404);
     assert.equal((await authorizedFetch(host,base+'/events/999999999')).status,404);
     await f.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'interrupted',quiescent:true,evidence:'fixture did not launch'});
@@ -64,6 +69,7 @@ test('selected observation routes require bearer and reject foreign or mismatche
     const followup=await f.store.startInvocation({runId:f.invocation.runId,worktreeId:f.invocation.worktreeId,owner:{host:'fixture',pid:process.pid,start:null}});
     assert.equal((await authorizedFetch(host,host.url+'/api/invocations/'+followup.id+'/events/'+event.cursor)).status,404);
     assert.equal((await authorizedFetch(host,host.url+'/api/invocations/'+followup.id+'/attempt-page?attempt='+attempt.id)).status,404);
+    assert.equal((await authorizedFetch(host,host.url+'/api/invocations/'+followup.id+'/captures/'+capture.id)).status,404);
   } finally {await host?.close();f.dispose();}
 });
 async function frame(reader) {

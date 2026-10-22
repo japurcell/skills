@@ -78,6 +78,7 @@ test('keyboard skip link, frozen view, invalid link and narrow zoom remain usabl
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.getByRole('link', { name: new RegExp(f.run.id.slice(0, 8)) }).click();
     await page.getByRole('heading', { name: 'Invocation timeline' }).waitFor();
+    assert.equal(await page.getByText('No managed attempts or reported sessions in this page.').evaluate(element=>element.getBoundingClientRect().right<=element.closest('.timeline-scroll').getBoundingClientRect().right),true);
     if (process.env.FACTORY_SCREENSHOT_DIR) await page.screenshot({ path: join(process.env.FACTORY_SCREENSHOT_DIR, 'run-390.png'), fullPage: true });
     await page.evaluate(() => { document.documentElement.style.zoom = '2'; });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
@@ -261,6 +262,8 @@ test('late phase and exact event cursor open bounded saved targets with invalid 
     await page.getByRole('heading',{name:'phase-54'}).waitFor();
     assert.equal(await page.locator(`.event-row[data-cursor="${selected.cursor}"][data-selected="true"]`).count(),1);
     assert.ok(await page.locator('.timeline-lane').count()<=50);
+    await page.getByRole('link',{name:'Return to timeline'}).click();
+    await page.waitForFunction(id=>document.activeElement?.matches('.phase-bar')&&document.activeElement?.getAttribute('href')?.includes(id),late.id,{timeout:2000});
     await page.evaluate(({run,invocation,cursor})=>{location.hash=new URLSearchParams({run,invocation,cursor}).toString()},
       {run:f.run.id,invocation:f.invocation.id,cursor:selected.cursor});
     await page.getByRole('heading',{name:'phase-54'}).waitFor();
@@ -277,5 +280,268 @@ test('late phase and exact event cursor open bounded saved targets with invalid 
     await page.evaluate(({run,invocation})=>{location.hash=new URLSearchParams({run,invocation,cursor:'999999999'}).toString()},
       {run:f.run.id,invocation:f.invocation.id});
     await page.getByRole('heading',{name:'History unavailable'}).waitFor();
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('head snapshot race displays one copy of a committed event', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage();
+  let unblock,entered;
+  const held=new Promise(resolve=>{unblock=resolve});
+  const blocked=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.route(`**/api/runs/${f.run.id}`,async route=>{entered();await held;await route.continue()});
+    const navigation=page.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}`);
+    await blocked;
+    await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'raced-attempt',kind:'command',intent:'initial'});
+    const event=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    unblock();await navigation;
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.waitForTimeout(150);
+    assert.equal(await page.locator(`.event-row[data-cursor="${event.cursor}"]`).count(),1);
+  } finally {unblock?.();await browser.close();await f.dispose();}
+});
+
+test('open stdout follows committed text without replacing focused controls or event links', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const output=await recorder.openCapture({channel:'stdout'});
+    await output.write('first line\n');await recorder.barrier();
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    const captureButton=page.getByRole('button',{name:/stdout/}).first();
+    await captureButton.click();
+    await page.getByText('first line',{exact:false}).waitFor();
+    await captureButton.focus();
+    await captureButton.evaluate(element=>{window.savedCaptureButton=element});
+    await output.write('second line\n');await recorder.barrier();
+    await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('second line'));
+    assert.equal(await captureButton.evaluate(element=>element===window.savedCaptureButton&&element===document.activeElement),true);
+    assert.equal(await page.getByRole('button',{name:'Load next saved text'}).isDisabled(),true);
+    const eventLink=page.locator('.event-row a').last();await eventLink.focus();
+    const focusedCursor=await eventLink.getAttribute('aria-label');
+    await eventLink.evaluate(element=>{window.savedEventLink=element});
+    await output.write('third line\n');await recorder.barrier();
+    await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('third line'));
+    assert.equal(await page.evaluate(()=>document.activeElement===window.savedEventLink),true);
+    assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('aria-label')),focusedCursor);
+    if(process.env.FACTORY_SCREENSHOT_DIR)await page.screenshot({path:join(process.env.FACTORY_SCREENSHOT_DIR,'live-output.png'),fullPage:true});
+    await page.locator('#capture-text').evaluate(element=>{const selection=window.getSelection(),range=document.createRange();range.setStart(element.firstChild,0);range.setEnd(element.firstChild,5);selection.removeAllRanges();selection.addRange(range)});
+    await output.write('fourth line\n');await recorder.barrier();
+    const fourth=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await page.locator(`.event-row[data-cursor="${fourth.cursor}"]`).waitFor();
+    assert.equal(await page.evaluate(()=>window.getSelection()?.toString()),'first');
+    assert.equal(await page.locator('#capture-text').innerText(),'first line\nsecond line\nthird line\n');
+    await page.locator('#capture-text').evaluate(element=>{window.getSelection()?.removeAllRanges();element.scrollTop=element.scrollHeight;element.dispatchEvent(new Event('scroll',{bubbles:true}))});
+    await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('fourth line'));
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('rapid capture appends catch up after a stale in-flight page response', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release;const held=new Promise(resolve=>{release=resolve});
+  let entered;const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const output=await recorder.openCapture({channel:'stdout'});
+    await output.write('first line\n');await recorder.barrier();
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.getByRole('button',{name:/stdout/}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.route(url=>url.pathname.endsWith('/captures/'+output.id)&&url.searchParams.get('after')==='1',async route=>{
+      entered();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});
+    });
+    await output.write('second line\n');await recorder.barrier();
+    await intercepted;
+    const stale=f.store.readInvocationCapture({invocationId:f.invocation.id,id:output.id,after:1,limit:49});
+    await output.write('third line\n');await recorder.barrier();
+    const third=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await page.locator(`.event-row[data-cursor="${third.cursor}"]`).waitFor({timeout:2000});
+    release();
+    await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('third line'),null,{timeout:2000});
+    assert.equal(await page.getByRole('button',{name:'Load next saved text'}).isDisabled(),true);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('capture event resolves its saved attempt, invalid direct link retains parent, and return focuses the phase', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'capture-phase',kind:'command',intent:'initial'});
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const capture=await recorder.openCapture({channel:'stdout',attemptId:attempt.id});
+    await capture.write('captured bytes');await recorder.barrier();
+    const saved=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:200}).events.find(event=>event.kind==='capture.appended');
+    await page.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}&phase=capture-phase&attempt=${attempt.id}&cursor=${saved.cursor}`);
+    await page.getByRole('heading',{name:'capture-phase'}).waitFor({timeout:2000});
+    assert.equal(await page.locator(`.event-row[data-cursor="${saved.cursor}"]`).count(),1);
+    assert.doesNotMatch(await page.locator('#inspector').innerText(),/No attempt selected/);
+    if(process.env.FACTORY_SCREENSHOT_DIR)await page.screenshot({path:join(process.env.FACTORY_SCREENSHOT_DIR,'capture-target.png'),fullPage:true});
+    const direct=await browser.newPage();
+    await direct.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}&cursor=999999999`);
+    await direct.getByRole('heading',{name:'History unavailable'}).waitFor();
+    assert.equal(await direct.getByRole('link',{name:'Return to saved parent'}).getAttribute('href'),`#run=${f.run.id}&invocation=${f.invocation.id}`);
+    await page.getByRole('link',{name:'Return to timeline'}).click();
+    await page.waitForFunction(id=>document.activeElement?.matches('.phase-bar')&&document.activeElement?.getAttribute('href')?.includes(id),attempt.id,{timeout:2000});
+    assert.equal(await page.evaluate(id=>document.activeElement?.matches('.phase-bar')&&document.activeElement?.getAttribute('href')?.includes(id),attempt.id),true);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('a capture beyond the first history page resolves only its saved attempt', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const first=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'first-phase',kind:'command',intent:'initial'});
+    const late=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'late-phase',kind:'command',intent:'initial'});
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    for(let i=0;i<55;i++) {
+      const capture=await recorder.openCapture({channel:'stdout',attemptId:i===54?late.id:first.id});
+      if(i===54)await capture.write('late saved bytes');
+      await capture.finish();
+    }
+    await recorder.barrier();
+    const saved=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await page.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}&attempt=${late.id}&phase=late-phase&cursor=${saved.cursor}`);
+    await page.getByRole('heading',{name:'late-phase'}).waitFor({timeout:2000});
+    assert.ok(await page.locator('.capture-list button').count()<=50);
+    await page.evaluate(values=>{location.hash=new URLSearchParams(values).toString()},
+      {run:f.run.id,invocation:f.invocation.id,attempt:first.id,phase:'first-phase',cursor:saved.cursor});
+    await page.getByRole('heading',{name:'History unavailable'}).waitFor({timeout:2000});
+    assert.match(await page.locator('.error-message').innerText(),/does not belong to the selected attempt/i);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('loaded run card updates saved workflow and request preview in place', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const card=page.locator('.run-card');
+    await card.evaluate(element=>{window.savedCard=element;window.savedCardLink=element.querySelector('.card-head a')});
+    const link=card.locator('.card-head a');await link.focus();
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const context=await recorder.openCapture({channel:'context'});
+    await context.write(JSON.stringify({inputs:'Unique live preview',question:null,contexts:[]}));
+    await context.finish();await recorder.barrier();
+    await f.store.saveInvocationMetadata(f.invocation.id,{workflow:'new-workflow',inputCaptureId:context.id});
+    await page.waitForFunction(()=>document.querySelector('.card-head')?.textContent?.includes('Unique live preview'),null,{timeout:2000});
+    assert.match(await card.locator('.card-head').innerText(),/new-workflow/);
+    assert.equal(await card.evaluate(element=>element===window.savedCard&&document.activeElement===window.savedCardLink),true);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('Back restores manually selected attempt page and selected reader window', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    for(let i=0;i<55;i++) {
+      const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:`phase-${i}`,kind:'command',intent:'initial'});
+      await f.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'interrupted',quiescent:true,evidence:'not launched'});
+    }
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('button',{name:'Next attempts'}).click();
+    await page.getByText('phase-50',{exact:true}).first().waitFor();
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.goBack();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('app')?.getAttribute('aria-busy')===null);
+    assert.equal(await page.locator('.timeline-lane .lane-label strong').first().innerText(),'phase-50');
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('a closed failure explanation stays closed during later cleanup updates', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    const explanation=page.getByText('Failure explanation').locator('..');
+    await explanation.waitFor();
+    assert.equal(await explanation.getAttribute('open'),'');
+    await explanation.locator('summary').click();
+    assert.equal(await explanation.getAttribute('open'),null);
+    if(process.env.FACTORY_SCREENSHOT_DIR)await page.screenshot({path:join(process.env.FACTORY_SCREENSHOT_DIR,'closed-explanation.png'),fullPage:true});
+    await explanation.evaluate(element=>{window.savedExplanation=element});
+    await f.store.clearOwner({claimId:f.invocation.claim.id,token:f.invocation.claim.token,operatorConfirmed:true,note:'Fixture inspection',inspection:'not_live'});
+    await page.waitForFunction(()=>document.querySelector('#cleanup-state')?.textContent?.includes('Operator confirmed'),null,{timeout:2000});
+    assert.equal(await explanation.evaluate(element=>element===window.savedExplanation&&element.open===false),true);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('scrolling away pauses open capture follow while outcome stays live and output stays bounded', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    const chunk='x'.repeat(65536);
+    for(let start=1;start<=15;start+=4) {
+      const chunks=Array.from({length:Math.min(4,16-start)},(_,index)=>({sequence:start+index,text:chunk}));
+      await f.store.appendCapture({id:capture.id,chunks});
+    }
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.getByRole('button',{name:/stdout/}).click();
+    const text=page.locator('#capture-text');
+    assert.equal(await text.evaluate(element=>element.textContent.length),15*65536);
+    await text.evaluate(element=>{element.scrollTop=0});
+    await f.store.appendCapture({id:capture.id,chunks:[{sequence:16,text:'NEW'+chunk.slice(3)}]});
+    await f.store.finishInvocation(f.invocation.id,'needs_input','unknown');
+    await page.waitForFunction(()=>document.querySelector('#cleanup-state')?.textContent?.includes('Manual cleanup required'),null,{timeout:2000});
+    assert.equal(await text.evaluate(element=>element.scrollTop),0);
+    assert.equal(await text.evaluate(element=>element.textContent.length),15*65536);
+    await text.evaluate(element=>{element.scrollTop=element.scrollHeight;element.dispatchEvent(new Event('scroll',{bubbles:true}));});
+    await page.getByRole('button',{name:'Load next saved text'}).waitFor({state:'visible'});
+    await page.waitForFunction(()=>!document.querySelector('[data-action="more-output"]')?.disabled,null,{timeout:2000});
+    assert.ok(await text.evaluate(element=>element.textContent.length)<=1047552);
+    await page.getByRole('button',{name:'Load next saved text'}).click();
+    await page.getByText('NEW',{exact:false}).waitFor();
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('Back restores session, capture and earlier event pages with the selected capture', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'history-pages',kind:'agent',intent:'initial'});
+    const sessions=[];
+    for(let i=0;i<55;i++)sessions.push(await f.store.saveSession(attempt.id,{nativeId:`session-${i}`,parentNativeId:null,lifecycle:'running'}));
+    const captures=[];
+    for(let i=0;i<180;i++)captures.push(await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'}));
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('button',{name:'Next sessions'}).click();
+    await page.locator(`.timeline-lane[data-session="${sessions[50].id}"]`).waitFor({timeout:2000});
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.getByRole('button',{name:'Next captures'}).click();
+    await page.locator(`.capture-list [data-id="${captures[50].id}"]`).click();
+    await page.getByRole('button',{name:'Load earlier events'}).click();
+    await page.getByRole('button',{name:'Follow latest events'}).first().waitFor({timeout:2000});
+    const firstCursor=await page.locator('.event-row').first().getAttribute('data-cursor');
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.goBack();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(id=>document.querySelector('#capture-view')?.textContent?.includes(id.slice(0,8)),captures[50].id,{timeout:2000});
+    assert.equal(await page.locator(`.timeline-lane[data-session="${sessions[50].id}"]`).count(),1);
+    assert.equal(await page.locator(`.capture-list [data-id="${captures[50].id}"]`).count(),1);
+    assert.equal(await page.locator('.event-row').first().getAttribute('data-cursor'),firstCursor);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('a selected attempt shows newly committed capture events for its saved owner', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'live-capture-owner',kind:'command',intent:'initial'});
+    await page.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}&phase=live-capture-owner&attempt=${attempt.id}`);
+    await page.getByRole('heading',{name:'live-capture-owner'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const capture=await recorder.openCapture({channel:'stdout',attemptId:attempt.id});
+    await capture.write('owner text');await recorder.barrier();
+    const saved=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    await page.locator(`.event-row[data-cursor="${saved.cursor}"]`).waitFor({timeout:2000});
   } finally {await browser.close();await f.dispose();}
 });
