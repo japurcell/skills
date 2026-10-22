@@ -35,13 +35,16 @@ try {
   run('typecheck', [process.env.FACTORY_NPM_CLI, 'run', 'typecheck']);
   run('build', [process.env.FACTORY_NPM_CLI, 'run', 'build']);
   const fixturesPassed = run('fixtures', ['scripts/test.mjs', 'fixtures']);
-  if (process.platform === 'win32' && !fixturesPassed) {
-    // The dispatch fixture has a 30-second outer bound. Re-run one public
-    // learning case directly so its native failure is retained in full even
-    // when that outer bound ends before the nested test runner reports it.
+  if (!fixturesPassed) {
+    // Preserve the original failed fixture step and diagnose one public case
+    // separately. Windows failed before source extraction; the hosted macOS
+    // trace reached the interrupted-source case before its outer bound ended.
+    const diagnosticCase = process.platform === 'win32'
+      ? '^explicit extraction saves examined ended sources and a justified empty result without changing active inputs$'
+      : '^failed, needs-input and interrupted invocations are valid explicit learning sources$';
     run('learning-fixture-diagnostic', [
       '--test', '--test-reporter=spec',
-      '--test-name-pattern=^explicit extraction saves examined ended sources and a justified empty result without changing active inputs$',
+      `--test-name-pattern=${diagnosticCase}`,
       'test/learning.test.mjs',
     ]);
   }
