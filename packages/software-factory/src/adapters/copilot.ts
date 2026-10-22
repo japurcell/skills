@@ -189,8 +189,8 @@ function decodeFinal(text: string): unknown {
 export function createCopilotAdapter(options: CopilotAdapterOptions): AgentAdapter {
   const environment = { ...options.environment, COPILOT_AUTO_UPDATE: 'false' };
   function validateProfile(inputs: EffectiveInputs): void {
-    if (process.versions.node !== '24.22.1' || process.platform !== 'darwin' || process.arch !== 'arm64')
-      throw new Error('Copilot requires qualified Node 24.22.1 on macOS arm64');
+    if (process.versions.node !== '24.22.1')
+      throw new Error('Copilot requires qualified Node 24.22.1');
     if (inputs.harness !== 'copilot') throw new Error('Copilot harness required');
     if (inputs.model !== 'gpt-6-luna' || inputs.reasoning !== 'low') throw new Error('unqualified Copilot model/reasoning; requires gpt-6-luna/low');
     if (inputs.permissions !== 'read-only') throw new Error('Copilot workspace-write mode is unqualified');
