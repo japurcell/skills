@@ -195,16 +195,41 @@ export class RepositoryStore {
     });
   }
 
-  readHistory(id: string) {
+  hasOccupiedActivity(invocationId: string) {
+    this.readInvocation(invocationId);
+    return !!this.database.prepare('SELECT id FROM attempts WHERE invocation_id=? AND occupied=1 LIMIT 1').get(invocationId);
+  }
+
+  readInvocationCapture(input: { invocationId: string; id: string; after?: number; limit?: number }) {
+    if (!this.database.prepare('SELECT id FROM captures WHERE id=? AND invocation_id=?').get(input.id, input.invocationId)) throw new Error('capture does not belong to selected invocation');
+    return { id: input.id, ...this.readCapture(input) };
+  }
+
+  /** Bounded detail pages expose independent row and text cursors; never join full captures. */
+  readHistory(id: string, options: { afterAttempt?: number; afterCapture?: number; limit?: number } = {}) {
+    const afterAttempt = options.afterAttempt ?? 0, afterCapture = options.afterCapture ?? 0, limit = options.limit ?? 50;
+    if (![afterAttempt, afterCapture].every(value => Number.isSafeInteger(value) && value >= 0) || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('invalid history page');
     const invocation = this.readInvocation(id);
-    const attempts = this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? ORDER BY rowid').all(id).map(row => JSON.parse(String(row['data'])) as Attempt);
-    const captures = this.database.prepare('SELECT id FROM captures WHERE invocation_id=? ORDER BY rowid').all(id).map(row => {
-      const captureId = String(row['id']); let after = 0; const chunks: CaptureChunk[] = [];
-      let page;
-      do { page = this.readCapture({ id: captureId, after }); chunks.push(...page.chunks); after = page.nextSequence; } while (page.hasMore);
-      return { id: captureId, state: page.state, channel: page.channel, chunks };
+    const attemptRows = this.database.prepare('SELECT rowid AS cursor,data FROM attempts WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(id, afterAttempt, limit + 1);
+    const attempts = attemptRows.slice(0, limit).map(row => JSON.parse(String(row['data'])) as Attempt);
+    const captureRows = this.database.prepare('SELECT rowid AS cursor,id,state,channel,sequence FROM captures WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(id, afterCapture, limit + 1);
+    let textBytes = 0;
+    const captures = captureRows.slice(0, limit).map(row => {
+      const captureId = String(row['id']);
+      const page = this.readCapture({ id: captureId, limit: 200 });
+      const chunks: CaptureChunk[] = [];
+      for (const chunk of page.chunks) {
+        const size = Buffer.byteLength(JSON.stringify(chunk));
+        if (textBytes + size > 262144) break;
+        textBytes += size; chunks.push(chunk);
+      }
+      const nextSequence = chunks.at(-1)?.sequence ?? 0;
+      return { id: captureId, state: page.state, channel: page.channel, chunks, nextSequence,
+        hasMore: page.state !== 'pruned' && nextSequence < Number(row['sequence']) };
     });
-    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId) };
+    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId),
+      attemptsNextCursor: Number(attemptRows.slice(0, limit).at(-1)?.['cursor'] ?? afterAttempt), hasMoreAttempts: attemptRows.length > limit,
+      capturesNextCursor: Number(captureRows.slice(0, limit).at(-1)?.['cursor'] ?? afterCapture), hasMoreCaptures: captureRows.length > limit };
   }
 
   validateReference(input: { id: string; runId: string; question?: boolean }) {

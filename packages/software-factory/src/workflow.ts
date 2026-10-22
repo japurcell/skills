@@ -23,17 +23,28 @@ export interface WorkflowContext {
 export class NeedsInput extends Error {}
 export class CommandRunner {
   constructor(readonly store: RepositoryStore, readonly recorder: InvocationRecorder, readonly invocationId: string, readonly worktree: string) {}
-  private readonly pending = new Set<Promise<CommandResult>>();
+  private readonly pending = new Set<Promise<unknown>>();
+  private failed = false;
   private failure: unknown;
-  execute(key: string, options: CommandOptions, startup = false): Promise<CommandResult> {
-    const operation = this.perform(key, options, startup);
+  private question: NeedsInput | undefined;
+  /** Every context call belongs to this invocation even if workflow code omits await. */
+  track<T>(action: () => Promise<T>): Promise<T> {
+    const operation = Promise.resolve().then(action);
     this.pending.add(operation);
-    void operation.then(() => { this.pending.delete(operation); }, error => { this.failure ??= error; this.pending.delete(operation); });
+    void operation.then(() => { this.pending.delete(operation); }, error => {
+      if (error instanceof NeedsInput) this.question ??= error;
+      else if (!this.failed) { this.failed = true; this.failure = error; }
+      this.pending.delete(operation);
+    });
     return operation;
+  }
+  execute(key: string, options: CommandOptions, startup = false): Promise<CommandResult> {
+    return this.track(() => this.perform(key, options, startup));
   }
   async drain() {
     while (this.pending.size) await Promise.allSettled([...this.pending]);
-    if (this.failure) throw this.failure;
+    if (this.failed) throw this.failure;
+    if (this.question) throw this.question;
   }
   private async perform(key: string, options: CommandOptions, startup: boolean): Promise<CommandResult> {
     if (!Array.isArray(options.argv) || !options.argv.length || options.argv.some(value => typeof value !== 'string' || value.includes('\0')) || !options.argv[0]) throw new Error('command requires nonempty argv without NUL');
@@ -84,18 +95,18 @@ export function workflowContext(runner: CommandRunner, prefix = ''): WorkflowCon
   };
   return {
     worktree: runner.worktree,
-    scope: (name, action) => action(workflowContext(runner, key(name) + '/')),
+    scope: (name, action) => runner.track(() => action(workflowContext(runner, key(name) + '/'))),
     command: (name, options) => runner.execute(key(name), options),
-    async progress(message) {
+    progress: message => runner.track(async () => {
       const writer = await runner.recorder.openCapture({ channel: 'event' });
       await writer.write(message); await writer.finish();
-    },
-    async needsInput(question, context) {
+    }),
+    needsInput: (question, context) => runner.track(async () => {
       if (typeof question !== 'string' || !question.trim() || typeof context !== 'string' || !context.trim()) throw new Error('needsInput requires nonempty question and context');
       const writer = await runner.recorder.openCapture({ channel: 'request' });
       await writer.write(JSON.stringify({ question, context })); await writer.finish();
       throw new NeedsInput('workflow needs input');
-    },
-    async agent() { throw new Error('agent adapters unavailable; no agent attempt launched'); },
+    }),
+    agent: () => runner.track(async () => { throw new Error('agent adapters unavailable; no agent attempt launched'); }),
   };
 }

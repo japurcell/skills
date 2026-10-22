@@ -1,12 +1,20 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, realpathSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { devNull } from 'node:os';
+import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, realpathSync, rmSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 export function git(repository: string, args: string[]) {
-  return execFileSync('git', ['-c', `core.hooksPath=${devNull}`, ...args], { cwd: repository,
-    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH, SystemRoot: process.env['SystemRoot'], GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: devNull } }).trim();
+  // Git needs a regular configuration file on Windows, not Node's device path.
+  const temporary = mkdtempSync(join(tmpdir(), 'factory-git-config-'));
+  try {
+    const configuration = join(temporary, 'config');
+    closeSync(openSync(configuration, 'wx', 0o600));
+    const hooks = join(temporary, 'hooks'); mkdirSync(hooks);
+    return execFileSync('git', ['-c', `core.hooksPath=${hooks}`, ...args], { cwd: repository,
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH, SystemRoot: process.env['SystemRoot'], GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: configuration } }).replace(/\n$/, '');
+  } finally { rmSync(temporary, { recursive: true, force: true }); }
 }
+
 export function repositoryIdentity(repository: string) {
   const root = realpathSync(git(repository, ['rev-parse', '--show-toplevel']));
   const common = realpathSync(git(root, ['rev-parse', '--path-format=absolute', '--git-common-dir']));

@@ -10,7 +10,11 @@ This is development invocation evidence, not milestone 3 or release acceptance.
 (--new-worktree [--ref COMMIT] | --worktree ID_OR_PATH) [--run RUN_ID]
 [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--json]` starts the current
 workflow from entry. `history --repository PATH --invocation ID [--json]`
-returns invocation, worktree, attempts, captures and accounting. Help retains the
+returns bounded invocation/worktree detail, attempt/capture pages and accounting.
+`--after-attempt` and `--after-capture` select row cursors; `--limit` bounds rows.
+Capture previews share a 256 KiB text budget and expose `nextSequence`/`hasMore`;
+`history --invocation ID --capture CAPTURE_ID --after-sequence N --limit N`
+reads the selected invocation's bounded capture text page. Help retains the
 development label. Missing required CLI arguments exit 3 without starting work.
 
 New worktrees come only from the resolved selected commit. Their absent path is
@@ -65,7 +69,7 @@ In `packages/software-factory`, with the qualified Node directory first on PATH:
 - `node scripts/build.mjs`: runtime plus public declaration build passed.
 - `node --test test/startup.test.mjs test/store.test.mjs test/capture.test.mjs test/recording-integration.test.mjs test/fixtures.test.mjs`: 45 passed, 0 failed/skipped.
 
-Fourteen startup tests cover committed helper imports and dirty source/index
+The initial fourteen startup tests cover committed helper imports and dirty source/index
 preservation, compiler failure before phases/agents, absent and mismatched
 dependencies, malformed inputs, invalid refs, missing/foreign references,
 current-entry reuse, scaffold collision, shared runtime imports, pending command
@@ -88,7 +92,7 @@ No saved PID is used for runtime cleanup or takeover.
 
 T6 still owns bounded timeout/cancellation, signals, peer interruption, inherited
 pipes held open by descendants, process identity qualification and manual
-clearance. Pending command promises drain before normal finalization, but long
+clearance. All context API promises, including scopes and unawaited calls, drain before finalization, but long
 running activity is not yet bounded by that future shutdown controller. Recorder
 failure preserves uncertainty. No executable resume, automatic retry, live
 harness call, release publication or native cross-platform support claim occurred.
@@ -99,3 +103,28 @@ Official sources used for implementation choices:
 
 Reflection: races and shared ESM resolution are encoded in public tests. Remaining
 findings are task-specific and captured here for T6/T15; no brain write was needed.
+
+## Independent review repairs
+
+Public CLI reproductions confirmed four gaps before repair: unawaited context APIs
+could outlive finalization, a failed peer lost precedence to needs-input, trimming
+Git path output selected an adjacent repository differing by trailing whitespace,
+and full-history assembly exhausted a 32 MiB heap on 40 MiB of saved output.
+
+Every context API now participates in invocation lifetime/failure aggregation.
+Saved questions finish before terminal records; independent failures outrank
+questions. Git removes only its terminating LF, preserving opaque path whitespace.
+Each Git call uses a private temporary empty regular configuration and empty hook
+directory, removed in finally, instead of a platform-specific null device path.
+
+History now returns bounded row/text pages with explicit continuation cursors;
+cleanup uses a narrow occupancy query rather than loading captured output.
+Twenty-four startup cases include the exact reviewer reproductions and 40 MiB
+success/history and failure/cleanup proofs under a 32 MiB CLI heap. The combined
+startup/store/capture/composed/fixture/placement check passes 57 tests, with both
+pinned typechecks and the declaration build. Shared placement integration remains
+intact after rebasing onto the reviewed CI base. Native Windows verification of
+the runtime Git change remains separate from this local macOS evidence.
+
+Reflection: the review gaps are structurally covered at public CLI seams; no
+additional brain or skill edit was needed.

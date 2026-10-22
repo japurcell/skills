@@ -66,15 +66,19 @@ export async function invoke(options: InvokeOptions) {
     return { runId, invocationId: invocation.id, worktreeId: worktree.id, worktree: worktree.path, outcome: 'succeeded', cleanup: 'complete', exitCode: 0 };
   } catch (error) {
     if (!invocation) throw error;
-    try { await runner?.drain(); } catch { /* Preserve the workflow failure and all settled command facts. */ }
-    const diagnostic = error instanceof Error ? error.message : 'workflow failed';
+    let failure = error;
+    try { await runner?.drain(); }
+    catch (pendingFailure) {
+      // An independent managed failure outranks a question, regardless of arrival order.
+      if (failure instanceof NeedsInput || !(pendingFailure instanceof NeedsInput)) failure = pendingFailure;
+    }
+    const diagnostic = failure instanceof Error ? failure.message : 'workflow failed';
     let cleanup: 'complete' | 'unknown' = 'unknown';
-    const outcome = error instanceof NeedsInput ? 'needs_input' : 'failed';
+    const outcome = failure instanceof NeedsInput ? 'needs_input' : 'failed';
     try {
       if (recorder && !recorder.failed) { const writer = await recorder.openCapture({ channel: 'event' }); await writer.write(diagnostic); await writer.finish(); await recorder.barrier(); }
       await store.stopAdmissions(invocation.id);
-      const history = store.readHistory(invocation.id);
-      cleanup = history.attempts.every(attempt => attempt.quiescent) && !recorder?.failed ? 'complete' : 'unknown';
+      cleanup = !store.hasOccupiedActivity(invocation.id) && !recorder?.failed ? 'complete' : 'unknown';
       await store.finishInvocation(invocation.id, outcome, cleanup);
       if (cleanup === 'complete') await store.releaseClaim({ claimId: invocation.claim.id, token: invocation.claim.token, basis: 'quiescent' });
     } catch { cleanup = 'unknown'; }

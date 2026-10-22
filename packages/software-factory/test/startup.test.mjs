@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, renameSync, realpathSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -204,5 +204,116 @@ test('mismatched declared shared dependency versions refuse before compiler exec
     const saved = JSON.parse(result.stdout); assert.match(saved.diagnostic, /explicitly install declared dependencies/);
     const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout); assert.equal(history.attempts.length, 0);
     assert.equal(readFileSync(join(repo.path, '.factory/package.json'), 'utf8'), '{"type":"module","dependencies":{"fixture-package":"2.0.0"}}');
+  } finally { repo.dispose(); }
+});
+
+test('unawaited needsInput saves a complete question before needs-input finalization', async () => {
+  const repo = await fixture(`export async function run(context) { void context.needsInput('Choose', 'Need a choice'); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 2, result.stdout + result.stderr);
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'needs_input'); assert.equal(saved.cleanup, 'complete');
+    assert.doesNotMatch(result.stderr, /recording failed|unhandled/i);
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    const question = history.captures.find(capture => capture.channel === 'request');
+    assert.equal(question.state, 'complete'); assert.match(JSON.stringify(question.chunks), /Need a choice/);
+    assert.ok(history.captures.every(capture => capture.state === 'complete'));
+  } finally { repo.dispose(); }
+});
+
+test('unawaited progress completes its capture before successful finalization', async () => {
+  const repo = await fixture(`export async function run(context) { void context.progress('complete progress'); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(result.stderr, '');
+    const saved = JSON.parse(result.stdout);
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    assert.match(JSON.stringify(history.captures), /complete progress/);
+    assert.ok(history.captures.every(capture => capture.state === 'complete'));
+  } finally { repo.dispose(); }
+});
+test('unawaited unavailable agent fails the invocation without an agent attempt', async () => {
+  const repo = await fixture(`export async function run(context) { void context.agent('implement', {}); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(result.stderr, '');
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.match(saved.diagnostic, /agent adapters unavailable/);
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    assert.equal(history.attempts.filter(attempt => attempt.kind === 'agent').length, 0);
+    assert.ok(history.captures.every(capture => capture.state === 'complete'));
+  } finally { repo.dispose(); }
+});
+test('unawaited scope owns its delayed callback and commands until they finish', async () => {
+  const repo = await fixture(`export async function run(context) { void context.scope('delayed', async scope => { await new Promise(resolve => setTimeout(resolve, 100)); await scope.progress('scope entered'); await scope.command('late', {argv: [process.execPath, '-e', 'console.log("late complete")'], env: {}}); }); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(result.stderr, '');
+    const history = JSON.parse(repo.call(['history', '--invocation', JSON.parse(result.stdout).invocationId]).stdout);
+    assert.equal(history.attempts.at(-1).operationKey, 'delayed/late');
+    assert.equal(history.attempts.at(-1).outcome, 'succeeded'); assert.equal(history.accounting.occupiedCommands, 0);
+    assert.match(JSON.stringify(history.captures), /late complete/);
+    assert.ok(history.captures.every(capture => capture.state === 'complete'));
+  } finally { repo.dispose(); }
+});
+for (const mode of ['awaited question', 'unawaited question']) {
+  test(`independent delayed scope failure outranks ${mode} while retaining its complete saved request`, async () => {
+    const question = mode === 'awaited question' ? 'await' : 'void';
+    const repo = await fixture(`export async function run(context) { void context.scope('failure', async () => { await new Promise(resolve => setTimeout(resolve, 100)); throw new Error('independent scope failure'); }); ${question} context.needsInput('Choose', 'Question must survive'); }`);
+    try {
+      const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
+      assert.equal(result.stderr, '');
+      const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete'); assert.match(saved.diagnostic, /independent scope failure/);
+      const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+      const request = history.captures.find(capture => capture.channel === 'request');
+      assert.equal(request.state, 'complete'); assert.match(JSON.stringify(request.chunks), /Question must survive/);
+      assert.ok(history.captures.every(capture => capture.state === 'complete'));
+    } finally { repo.dispose(); }
+  });
+}
+
+test('trailing-space repository paths keep their distinct Git identity', async () => {
+  const selected = await fixture(`export async function run(context) { await context.progress('selected trailing-space repository'); }`);
+  const sibling = await fixture(`export async function run(context) { await context.progress('wrong sibling repository'); }`);
+  const spaced = selected.path + ' ';
+  try {
+    renameSync(selected.path, spaced); renameSync(sibling.path, selected.path);
+    const result = spawnSync(process.execPath, [cli, 'invoke', '--repository', spaced, '--workflow', '.factory/workflows/audit.ts', '--input', join(spaced, '.git/input.json'), '--new-worktree', '--json'], {encoding: 'utf8', timeout: 30000});
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const saved = JSON.parse(result.stdout); assert.ok(saved.worktree.startsWith(realpathSync(spaced) + '/.git/factory/worktrees/'));
+    const history = spawnSync(process.execPath, [cli, 'history', '--repository', spaced, '--invocation', saved.invocationId, '--json'], {encoding: 'utf8'});
+    assert.equal(history.status, 0, history.stderr); assert.match(history.stdout, /selected trailing-space repository/); assert.doesNotMatch(history.stdout, /wrong sibling repository/);
+  } finally { rmSync(spaced, {recursive: true, force: true}); selected.dispose(); sibling.dispose(); }
+});
+
+test('large saved output remains paged in history under a bounded CLI heap', async () => {
+  const repo = await fixture(`export async function run(context) { await context.command('large', {argv: [process.execPath, '-e', 'process.stdout.write("x".repeat(40 * 1024 * 1024))'], env: {}}); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
+    const invocation = JSON.parse(result.stdout).invocationId;
+    const call = extra => spawnSync(process.execPath, ['--max-old-space-size=32', cli, 'history', '--repository', repo.path, '--invocation', invocation, '--json', ...extra], {encoding: 'utf8', timeout: 30000, maxBuffer: 2 * 1024 * 1024});
+    const detail = call([]); assert.equal(detail.status, 0, detail.stderr); assert.ok(Buffer.byteLength(detail.stdout) < 1024 * 1024);
+    const history = JSON.parse(detail.stdout); const output = history.captures.find(capture => capture.channel === 'stdout' && capture.hasMore);
+    assert.ok(output); assert.ok(output.nextSequence > 0); assert.equal(output.state, 'complete');
+    const next = call(['--capture', output.id, '--after-sequence', String(output.nextSequence), '--limit', '1']);
+    assert.equal(next.status, 0, next.stderr); const page = JSON.parse(next.stdout);
+    assert.equal(page.chunks[0].sequence, output.nextSequence + 1); assert.equal(page.hasMore, true); assert.equal(page.state, 'complete');
+  } finally { repo.dispose(); }
+});
+
+test('failed command peer outranks an awaited question and retains both saved facts', async () => {
+  const repo = await fixture(`export async function run(context) { void context.command('failed-peer', {argv: [process.execPath, '-e', 'setTimeout(()=>process.exit(1),50)'], env: {}}); await context.needsInput('Choose target', 'Need a choice'); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete');
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    assert.equal(history.attempts.at(-1).outcome, 'failed'); assert.equal(history.attempts.at(-1).quiescent, true);
+    const question = history.captures.find(capture => capture.channel === 'request'); assert.equal(question.state, 'complete'); assert.match(JSON.stringify(question.chunks), /Need a choice/);
+  } finally { repo.dispose(); }
+});
+test('large failed command finalizes through narrow cleanup checks under a bounded CLI heap', async () => {
+  const repo = await fixture(`export async function run(context) { await context.command('large-failure', {argv: [process.execPath, '-e', 'process.stdout.write("x".repeat(40 * 1024 * 1024), () => process.exit(1))'], env: {}}); }`);
+  try {
+    const result = spawnSync(process.execPath, ['--max-old-space-size=32', cli, 'invoke', '--repository', repo.path, '--workflow', '.factory/workflows/audit.ts', '--input', repo.input, '--new-worktree', '--json'], {encoding: 'utf8', timeout: 30000});
+    assert.equal(result.status, 1, result.stdout + result.stderr); assert.equal(result.stderr, '');
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete');
   } finally { repo.dispose(); }
 });
