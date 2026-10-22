@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
+import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
@@ -53,5 +57,51 @@ test('handled qualification cancellation closes owned workers and removes only i
       if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
       await closed;
     }
+  }
+});
+
+for (const releaseLock of [true, false]) test(releaseLock
+  ? 'qualifier writer survives a real held SQLite lock beyond its initial busy timeout without losing rows'
+  : 'qualifier writer fails within its bounded deadline when another SQLite writer never releases', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'factory-runtime-contention-'));
+  const path = join(directory, 'facts.sqlite');
+  const database = new DatabaseSync(path);
+  let child, closed;
+  try {
+    database.exec('PRAGMA journal_mode=WAL; CREATE TABLE facts(id TEXT PRIMARY KEY); BEGIN IMMEDIATE');
+    const worker = fileURLToPath(new URL('./sqlite-worker.mjs', import.meta.url));
+    child = spawn(process.execPath, [worker, path, 'write', 'held'], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    closed = once(child, 'close');
+    child.stdout.resume();
+    let diagnostic = '';
+    child.stderr.on('data', chunk => { diagnostic += chunk; });
+    const timer = setTimeout(() => child.kill('SIGKILL'), 9000);
+    try {
+      const [ready] = await Promise.race([
+        once(child, 'message'),
+        closed.then(() => { throw new Error(`worker exited before contention handshake: ${diagnostic}`); }),
+      ]);
+      assert.deepEqual(ready, { ready: 'write' });
+      const start = performance.now();
+      await delay(350);
+      assert.equal(child.exitCode, null, `writer did not retry beyond 100ms: ${diagnostic}`);
+      assert.equal(database.prepare('SELECT count(*) AS n FROM facts').get().n, 0);
+      if (releaseLock) database.exec('ROLLBACK');
+      const [status, signal] = await closed;
+      assert.equal(signal, null, diagnostic);
+      assert.equal(status, releaseLock ? 0 : 1, diagnostic);
+      if (!releaseLock) {
+        assert.match(diagnostic, /database is locked/);
+        assert.ok(performance.now() - start >= 4500, diagnostic);
+        assert.ok(performance.now() - start < 8000, diagnostic);
+      }
+      assert.equal(database.prepare('SELECT count(*) AS n FROM facts').get().n, releaseLock ? 40 : 0);
+    } finally { clearTimeout(timer); }
+  } finally {
+    if (child && child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    if (closed) await closed;
+    if (database.isTransaction) database.exec('ROLLBACK');
+    database.close();
+    rmSync(directory, { recursive: true, force: true });
   }
 });

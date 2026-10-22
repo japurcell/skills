@@ -1,6 +1,7 @@
 // Disposable storage probes only. Each worker operates on its parent's fixture DB.
 import { DatabaseSync } from 'node:sqlite';
 import { performance } from 'node:perf_hooks';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const [path, mode, prefix] = process.argv.slice(2);
 const database = new DatabaseSync(path, { timeout: mode === 'busy' ? 40 : 100 });
@@ -17,8 +18,17 @@ if (mode === 'busy') {
   }
   database.close();
 } else if (mode === 'write') {
+  process.send?.({ ready: 'write' });
   for (let index = 0; index < 40; index++) {
-    database.exec('BEGIN IMMEDIATE');
+    const deadline = performance.now() + 5000;
+    while (true) {
+      try { database.exec('BEGIN IMMEDIATE'); break; }
+      catch (error) {
+        // Only retry confirmed contention before acquiring a transaction. Never replay writes or commits.
+        if (error.errcode !== 5 || database.isTransaction || performance.now() >= deadline) throw error;
+        await delay(20);
+      }
+    }
     database.prepare('INSERT INTO facts(id) VALUES (?)').run(`${prefix}-${index}`);
     database.exec('COMMIT');
   }
