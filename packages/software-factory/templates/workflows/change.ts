@@ -49,8 +49,19 @@ export function checkInputs(inputs: RecipeInputs) {
     throw new Error('browserVerification requires an explicit enabled boolean');
   if (inputs.priorAttempts !== undefined && (!object(inputs.priorAttempts) || Object.values(inputs.priorAttempts).some(id => typeof id !== 'string' || !id)))
     throw new Error('priorAttempts must contain explicit attempt IDs');
-  if (inputs.checks !== undefined && (!Array.isArray(inputs.checks) || inputs.checks.some(check => !object(check) || typeof check.name !== 'string' || !check.name.trim() || !Array.isArray(check.argv) || !check.argv.length || check.argv.some(arg => typeof arg !== 'string'))))
-    throw new Error('checks require unique names and argv arrays');
+  if (inputs.checks !== undefined && !Array.isArray(inputs.checks)) throw new Error('checks must be an array');
+  for (const check of inputs.checks ?? []) {
+    if (!object(check)) throw new Error('checks require named argv commands');
+    const unsupported = Object.keys(check).find(key => !['name', 'argv', 'cwd', 'env', 'timeoutMs'].includes(key));
+    if (unsupported) throw new Error(`unsupported check field: ${unsupported}`);
+    if (typeof check.name !== 'string' || !check.name.trim() || !Array.isArray(check.argv) || !check.argv.length || check.argv.some(arg => typeof arg !== 'string'))
+      throw new Error('checks require unique names and argv arrays');
+    if (check.cwd !== undefined && typeof check.cwd !== 'string') throw new Error('check cwd must be a string');
+    if (check.env !== undefined && (!object(check.env) || Object.values(check.env).some(value => typeof value !== 'string')))
+      throw new Error('check env must contain string values');
+    if (check.timeoutMs !== undefined && (typeof check.timeoutMs !== 'number' || !Number.isFinite(check.timeoutMs) || check.timeoutMs <= 0))
+      throw new Error('check timeoutMs must be finite and positive');
+  }
   if (new Set((inputs.checks ?? []).map(check => check.name)).size !== (inputs.checks ?? []).length) throw new Error('check names must be unique');
 }
 export function requestText(inputs: RecipeInputs): string {
@@ -148,7 +159,13 @@ export async function checks(context: WorkflowContext, prefix: string, selected:
   const results: { name: string; attemptId: string; exitCode: number | null; cleanup: string }[] = [];
   for (const check of selected) {
     const key = `${prefix}/check/${check.name}`;
-    const result = await context.command(key, { ...check, ...lineage(key, attempts), required: false });
+    const result = await context.command(key, {
+      argv: check.argv,
+      ...(check.cwd !== undefined ? { cwd: check.cwd } : {}),
+      ...(check.env !== undefined ? { env: check.env } : {}),
+      ...(check.timeoutMs !== undefined ? { timeoutMs: check.timeoutMs } : {}),
+      ...lineage(key, attempts), required: false,
+    });
     attempts[key] = result.attemptId;
     results.push({ name: check.name, ...result });
   }

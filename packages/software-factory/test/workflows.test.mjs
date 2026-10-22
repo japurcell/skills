@@ -102,6 +102,59 @@ test('failed selected check gates review and rechecks after concrete repair',asy
   } finally {repo.dispose();}
 });
 
+for(const recipe of ['change','audit']) test(`${recipe} rejects shell selection in check input before launching work`,async()=>{
+  const repo=await fixture(recipe);
+  try {
+    const input={prompt:'Inspect existing candidate',implement:false,review:false,checks:[{name:'literal-argument',argv:['echo','hello; touch injected.txt'],shell:'/bin/sh'}]};
+    if(recipe==='audit') input.scopes=[{name:'files',target:'tracked.txt',skip:true}];
+    const r=repo.invoke(input);
+    assert.equal(r.status,1,r.stdout+r.stderr);
+    assert.match(r.saved.diagnostic,/unsupported check field: shell/);
+    assert.equal(repo.history(r.saved.invocationId).attempts.filter(attempt=>attempt.operationKey.startsWith(recipe+'/')).length,0);
+    assert.equal(existsSync(join(r.saved.worktree,'injected.txt')),false);
+  } finally {repo.dispose();}
+});
+
+for(const recipe of ['change','audit']) test(`${recipe} rejects every undocumented check option before workflow phases`,async()=>{
+  const repo=await fixture(recipe);
+  try {
+    for(const [field,value] of [['required',true],['intent','initial'],['priorAttemptId','injected'],['loopKey','injected'],['childScope','process-group'],['arbitrary','injected'],['__proto__','injected']]) {
+      const check={name:'selected',argv:['echo','safe'],...Object.fromEntries([[field,value]])};
+      const input={prompt:'Inspect existing candidate',implement:false,review:false,checks:[check]};
+      if(recipe==='audit') input.scopes=[{name:'files',target:'tracked.txt',skip:true}];
+      const r=repo.invoke(input);
+      assert.equal(r.status,1,field+' '+r.stdout+r.stderr);
+      assert.match(r.saved.diagnostic,new RegExp(`unsupported check field: ${field}`));
+      assert.equal(repo.history(r.saved.invocationId).attempts.filter(attempt=>attempt.operationKey.startsWith(recipe+'/')).length,0);
+    }
+  } finally {repo.dispose();}
+});
+
+test('malformed supported check options fail validation before agent or command work',async()=>{
+  const repo=await fixture();
+  try {
+    for(const [extra,diagnostic] of [[{cwd:42},/check cwd must be a string/],[{env:{VALUE:42}},/check env must contain string values/],[{timeoutMs:0},/check timeoutMs must be finite and positive/]]) {
+      const r=repo.invoke({prompt:'Inspect existing candidate',checks:[{name:'selected',argv:['echo','safe'],...extra}]});
+      assert.equal(r.status,1,r.stdout+r.stderr);
+      assert.match(r.saved.diagnostic,diagnostic);
+      assert.equal(repo.history(r.saved.invocationId).attempts.filter(attempt=>attempt.operationKey.startsWith('change/')).length,0);
+    }
+  } finally {repo.dispose();}
+});
+
+test('selected check passes shell metacharacters as literal argv data with supported options',async()=>{
+  const repo=await fixture();
+  try {
+    const r=repo.invoke({prompt:'Inspect existing candidate',implement:false,review:false,checks:[{
+      name:'literal-argument',argv:[process.execPath,'-e',"require('node:fs').writeFileSync('literal.txt',process.argv[1]+'|'+process.env.FACTORY_CHECK_VALUE)",'hello; touch injected.txt'],
+      cwd:'.',env:{FACTORY_CHECK_VALUE:'supported'},timeoutMs:10000,
+    }]});
+    assert.equal(r.status,0,r.stdout+r.stderr);
+    assert.equal(readFileSync(join(r.saved.worktree,'literal.txt'),'utf8'),'hello; touch injected.txt|supported');
+    assert.equal(existsSync(join(r.saved.worktree,'injected.txt')),false);
+  } finally {repo.dispose();}
+});
+
 for(const malformedAlways of [false,true]) test(`invalid output gets exactly one read-only format correction (${malformedAlways?'invalid again':'corrected'})`,async()=>{
   const repo=await fixture('change',{malformed:'implementation',malformedAlways});
   try {
