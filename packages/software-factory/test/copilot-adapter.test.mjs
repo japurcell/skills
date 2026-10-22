@@ -221,14 +221,17 @@ test('Copilot launch parsers isolate terminal identities and keep unknown teleme
 test('Copilot artifact validation is separate from native platform qualification', async () => {
   const repo = await fixture();
   const descriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+  const architecture = Object.getOwnPropertyDescriptor(process, 'arch');
   try {
     const native = adapter(repo);
-    for (const platform of ['darwin', 'linux', 'win32']) {
+    for (const [platform, arch] of [['darwin', 'arm64'], ['darwin', 'x64'], ['linux', 'x64'], ['win32', 'x64']]) {
       Object.defineProperty(process, 'platform', { ...descriptor, value: platform });
+      Object.defineProperty(process, 'arch', { ...architecture, value: arch });
       assert.doesNotThrow(() => native.validateProfile(inputs));
     }
   } finally {
     Object.defineProperty(process, 'platform', descriptor);
+    Object.defineProperty(process, 'arch', architecture);
     repo.dispose();
   }
 });
