@@ -7,6 +7,8 @@ export interface LocalPlacement { directory: string; platform: NodeJS.Platform; 
 // The path travels as an environment value, never executable PowerShell source.
 const windowsProbe = String.raw`
 $ErrorActionPreference = 'Stop'
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:entered')
+[Console]::Error.Flush()
 Add-Type -TypeDefinition @'
 using System;
 using System.Text;
@@ -21,12 +23,21 @@ public static class FactoryVolume {
         out uint serial, out uint maxComponent, out uint flags, StringBuilder filesystem, uint filesystemSize);
 }
 '@
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:interop_ready')
+[Console]::Error.Flush()
 $volume = New-Object System.Text.StringBuilder 32768
 if (-not [FactoryVolume]::GetVolumePathNameW($env:FACTORY_PLACEMENT_PATH, $volume, $volume.Capacity)) { throw 'volume path unavailable' }
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:volume_path')
+[Console]::Error.Flush()
 $filesystem = New-Object System.Text.StringBuilder 256
 [uint32]$serial = 0; [uint32]$component = 0; [uint32]$flags = 0
 if (-not [FactoryVolume]::GetVolumeInformationW($volume.ToString(), $null, 0, [ref]$serial, [ref]$component, [ref]$flags, $filesystem, $filesystem.Capacity)) { throw 'volume information unavailable' }
-@{ driveType = [FactoryVolume]::GetDriveTypeW($volume.ToString()); filesystem = $filesystem.ToString() } | ConvertTo-Json -Compress
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:volume_information')
+[Console]::Error.Flush()
+$result = @{ driveType = [FactoryVolume]::GetDriveTypeW($volume.ToString()); filesystem = $filesystem.ToString() } | ConvertTo-Json -Compress
+[Console]::Error.WriteLine('FACTORY_PLACEMENT_STAGE:complete')
+[Console]::Error.Flush()
+$result
 `;
 
 /** Fail closed on unknown, network or volatile storage. This is placement evidence, not release qualification. */
@@ -53,8 +64,14 @@ export function assertLocalPlacement(path: string): LocalPlacement {
       if (probe.error) error = ['ETIMEDOUT', 'ENOBUFS', 'ENOENT', 'EACCES', 'EPERM', 'EAGAIN', 'ENOMEM', 'EMFILE', 'ENFILE'].includes(code ?? '') ? String(code) : 'other';
       let signal: string = probe.signal ?? 'none';
       if (!['none', 'SIGTERM', 'SIGKILL', 'SIGINT', 'SIGBREAK', 'SIGABRT'].includes(signal)) signal = 'other';
+      let stage = 'none';
+      if (typeof probe.stderr === 'string') {
+        for (const marker of probe.stderr.slice(0, 8192).matchAll(/^FACTORY_PLACEMENT_STAGE:(entered|interop_ready|volume_path|volume_information|complete)\r?$/gm)) {
+          if (marker[1]) stage = marker[1];
+        }
+      }
       const elapsedMs = Math.round(performance.now() - started);
-      throw new Error(`native Windows placement probe failed; storage refused (error=${error}; status=${probe.status ?? 'none'}; signal=${signal}; elapsedMs=${elapsedMs})`);
+      throw new Error(`native Windows placement probe failed; storage refused (error=${error}; status=${probe.status ?? 'none'}; signal=${signal}; stage=${stage}; elapsedMs=${elapsedMs})`);
     }
     const result: unknown = JSON.parse(probe.stdout.replace(/^\uFEFF/, ''));
     if (typeof result !== 'object' || result === null || !('driveType' in result) || result.driveType !== 3

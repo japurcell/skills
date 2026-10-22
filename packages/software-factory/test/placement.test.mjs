@@ -54,10 +54,12 @@ test('Windows placement failures expose bounded process facts without native out
     syncBuiltinESMExports();
     const { assertLocalPlacement } = await import(${JSON.stringify(new URL('../src/placement.ts', import.meta.url).href)});
     const cases = [
-      [{ error: { code: 'ETIMEDOUT', message: privatePath }, status: null, signal: 'SIGTERM' }, 'error=ETIMEDOUT; status=none; signal=SIGTERM'],
-      [{ error: { code: 'ENOENT', message: privatePath }, status: null, signal: null }, 'error=ENOENT; status=none; signal=none'],
+      [{ error: { code: 'ETIMEDOUT', message: privatePath }, status: null, signal: 'SIGTERM', stderr: 'FACTORY_PLACEMENT_STAGE:entered\r\nFACTORY_PLACEMENT_STAGE:interop_ready\r\nFACTORY_PLACEMENT_STAGE:volume_path\r\n' + privatePath }, 'error=ETIMEDOUT; status=none; signal=SIGTERM; stage=volume_path'],
+      [{ error: { code: 'ENOENT', message: privatePath }, status: null, signal: null }, 'error=ENOENT; status=none; signal=none; stage=none'],
       [{ error: { code: 'ENOBUFS', message: privatePath }, status: null, signal: 'SIGTERM' }, 'error=ENOBUFS; status=none; signal=SIGTERM'],
-      [{ status: 1, signal: null }, 'error=none; status=1; signal=none'],
+      [{ status: 1, signal: null, stderr: 'FACTORY_PLACEMENT_STAGE:unknown\n' + privatePath }, 'error=none; status=1; signal=none; stage=none'],
+      [{ status: 1, signal: null, stderr: 'FACTORY_PLACEMENT_STAGE:entered\nFACTORY_PLACEMENT_STAGE:forged_unknown\n' + privatePath }, 'error=none; status=1; signal=none; stage=entered'],
+      [{ status: 1, signal: null, stderr: privatePath.repeat(500) + '\nFACTORY_PLACEMENT_STAGE:complete' }, 'error=none; status=1; signal=none; stage=none'],
       [{ status: null, signal: 'SIGKILL' }, 'error=none; status=none; signal=SIGKILL'],
       [{ error: { code: privatePath, message: privatePath }, status: null, signal: privatePath }, 'error=other; status=none; signal=other'],
     ];
