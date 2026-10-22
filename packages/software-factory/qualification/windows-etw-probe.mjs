@@ -77,6 +77,12 @@ export function validateProbeReceipt(receipt, expectedNode) {
   if (root.length !== 4 || !pid(root[1]) || !tick(root[2]) ||
     root[3] !== 'pinned-node') reasons.push('root identity invalid');
   if (child.length !== 2 || !pid(child[1]) || childPid === rootPid) reasons.push('child identity invalid');
+  const held = selected('HELD');
+  const childAt = rows.findIndex((row) => row[0] === 'CHILD');
+  if (held.length !== 2 || held[0]?.join(',') !== 'HELD,root,1,1,1' ||
+    held[1]?.join(',') !== 'HELD,child,1,1,1' ||
+    rows[childAt + 1] !== held[0] || rows[childAt + 2] !== held[1])
+    reasons.push('held fixture proof incomplete');
   const stats = one('STATS');
   const header = one('HEADER');
   if (stats.length !== 4 || stats.slice(1).some((part) => part !== '0')) reasons.push('session loss');
@@ -141,7 +147,7 @@ export function validateProbeReceipt(receipt, expectedNode) {
       reasons.push(`image load missing for ${target}`);
   }
   const known = new Set(['API', 'QUERY', 'MODE', 'ABI', 'TOKEN', 'OS', 'OWNERSHIP', 'SCHEMA', 'RUNDOWN', 'COUNTS',
-    'SESSION', 'ROOT', 'CHILD', 'EVENT', 'STATS', 'HEADER', 'FILE', 'COMPLETE', 'DIAG']);
+    'SESSION', 'ROOT', 'CHILD', 'HELD', 'EVENT', 'STATS', 'HEADER', 'FILE', 'COMPLETE', 'DIAG']);
   if (rows.some((row) => !known.has(row[0]))) reasons.push('unknown receipt row');
   return { ok: reasons.length === 0, reasons, rootPid, childPid,
     processStarts: starts.length, processEnds: ends.length, imageLoads: images.length };
@@ -172,6 +178,7 @@ function safeNativeLine(line) {
     SESSION: /^SESSION\t37748737\t5\t64$/,
     ROOT: new RegExp(`^ROOT\\t${decimal}\\t${tickValue}\\tpinned-node$`),
     CHILD: new RegExp(`^CHILD\\t${decimal}$`),
+    HELD: /^HELD\t(root|child)\t1\t1\t1$/,
     EVENT: new RegExp(`^EVENT\\t(process-start|process-end)\\t${decimal}\\t${decimal}\\t(root|child)\\t(pinned-node|${decimal})\\t${tickValue}$|^EVENT\\timage-load\\t${decimal}\\tpinned-node\\t${tickValue}$`),
     SCHEMA: /^SCHEMA\tProcessId:u32\tParentId:u32\tUniqueProcessKey:pointer\tImageFileName:string\tExitStatus:u32\tImage.ProcessId:u32\tImage.FileName:string$/,
     RUNDOWN: new RegExp(`^RUNDOWN\\t${decimal}\\t${decimal}$`),
@@ -195,6 +202,12 @@ function safeNativeReceipt(text) {
   const lines = text.split(/\r?\n/);
   if (lines.at(-1) === '') lines.pop();
   if (!lines.every(safeNativeLine)) return false;
+  const held = lines.filter((line) => line.startsWith('HELD\t'));
+  if (held.length !== 0) {
+    const childAt = lines.findIndex((line) => line.startsWith('CHILD\t'));
+    if (held.length !== 2 || childAt < 0 || lines[childAt + 1] !== 'HELD\troot\t1\t1\t1' ||
+      lines[childAt + 2] !== 'HELD\tchild\t1\t1\t1') return false;
+  }
   const diagnosticAt = lines.findIndex((line) => line.startsWith('DIAG\t'));
   if (diagnosticAt < 0) return true;
   return lines.filter((line) => line.startsWith('DIAG\t')).length === 1 &&
@@ -321,15 +334,16 @@ function main() {
     const node = join(bootstrap.directory, 'node-v24.22.1-win-x64', 'node.exe');
     const member = spawnSync('tar', ['-xOf', archive, 'node-v24.22.1-win-x64/node.exe'],
       { encoding: null, timeout: 120000, maxBuffer: 150000000 });
-    if (member.error || member.status !== 0 || !member.stdout?.length ||
-      createHash('sha256').update(member.stdout).digest('hex') !== sha256(node))
+    const memberDigest = member.stdout?.length ? createHash('sha256').update(member.stdout).digest('hex') : null;
+    if (member.error || member.status !== 0 || !memberDigest || memberDigest !== sha256(node))
       stop('pin', 'executable-hash');
     report.node = { version: process.version, archiveSha256: sha256(archive), executableSha256: sha256(node) };
     const powershell = join(process.env.SystemRoot ?? '', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
     if (!existsSync(powershell)) stop('bridge', 'powershell-unavailable');
     stage = 'bridge';
     const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-File',
-      join(sourceRoot, 'windows-etw-probe.ps1'), '-NodePath', node, '-EvidenceDir', evidence],
+      join(sourceRoot, 'windows-etw-probe.ps1'), '-NodePath', node, '-EvidenceDir', evidence,
+      '-ExpectedExecutableSha256', memberDigest],
     { cwd: evidence, encoding: 'utf8', timeout: 75000, maxBuffer: 65536 });
     report.bridge = { exitCode: invocation.status, launchFailed: Boolean(invocation.error),
       timedOut: invocation.error?.code === 'ETIMEDOUT',

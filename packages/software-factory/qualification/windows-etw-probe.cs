@@ -7,8 +7,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
+using System.Threading.Tasks;
 
 public static class WindowsEtwProbe
 {
@@ -28,6 +30,13 @@ public static class WindowsEtwProbe
     private const int MaxObservationMs = 30000;
     private const long MaxEtlBytes = 64L * 1024 * 1024;
     private const int MaxReceiptBytes = 65536;
+    private const uint ProcessQueryLimitedInformation = 0x1000;
+    private const uint ProcessSynchronize = 0x00100000;
+    private const uint ProcessTerminate = 0x0001;
+    private const uint SnapshotProcess = 0x00000002;
+    private const uint WaitObject = 0;
+    private const uint WaitTimeout = 258;
+    private const uint FileIdInfoClass = 18;
     private static readonly Guid ProcessGuid = new Guid("3d6fa8d0-fe05-11d0-9dda-00c04fd7ba7c");
     private static readonly Guid ImageGuid = new Guid("2cb15d1d-5fc1-11d2-abe1-00a0c911f518");
     private static readonly Guid SystemTraceGuid = new Guid("9e814aad-3204-11d2-9a82-006008a86939");
@@ -173,6 +182,24 @@ public static class WindowsEtwProbe
         public long Ticks { get { return ((long)High << 32) | Low; } }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileIdInformation
+    {
+        public ulong VolumeSerialNumber;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)] public byte[] Identifier;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ProcessEntry32
+    {
+        public uint Size, Usage, ProcessId;
+        public IntPtr DefaultHeap;
+        public uint ModuleId, Threads, ParentProcessId;
+        public int BasePriority;
+        public uint Flags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string ExeFile;
+    }
+
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate void EventRecordCallback(IntPtr record);
 
@@ -202,6 +229,27 @@ public static class WindowsEtwProbe
         SetLastError = true)]
     private static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path,
         ref uint length);
+    [DllImport("kernel32.dll", EntryPoint = "OpenProcess", SetLastError = true)]
+    private static extern IntPtr OpenProcess(uint access, bool inherit, uint processId);
+    [DllImport("kernel32.dll", EntryPoint = "GetProcessId", SetLastError = true)]
+    private static extern uint GetProcessId(IntPtr process);
+    [DllImport("kernel32.dll", EntryPoint = "GetExitCodeProcess", SetLastError = true)]
+    private static extern bool GetExitCodeProcess(IntPtr process, out uint code);
+    [DllImport("kernel32.dll", EntryPoint = "WaitForSingleObject", SetLastError = true)]
+    private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
+    [DllImport("kernel32.dll", EntryPoint = "TerminateProcess", SetLastError = true)]
+    private static extern bool TerminateProcess(IntPtr process, uint code);
+    [DllImport("kernel32.dll", EntryPoint = "CloseHandle", SetLastError = true)]
+    private static extern bool CloseHandle(IntPtr handle);
+    [DllImport("kernel32.dll", EntryPoint = "GetFileInformationByHandleEx", SetLastError = true)]
+    private static extern bool GetFileInformationByHandleEx(IntPtr file, uint infoClass,
+        out FileIdInformation info, uint size);
+    [DllImport("kernel32.dll", EntryPoint = "CreateToolhelp32Snapshot", SetLastError = true)]
+    private static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processId);
+    [DllImport("kernel32.dll", EntryPoint = "Process32FirstW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool Process32First(IntPtr snapshot, ref ProcessEntry32 entry);
+    [DllImport("kernel32.dll", EntryPoint = "Process32NextW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool Process32Next(IntPtr snapshot, ref ProcessEntry32 entry);
 
     private static readonly List<string> Receipt = new List<string>();
     private static readonly List<string> SelectedEvents = new List<string>();
@@ -225,6 +273,10 @@ public static class WindowsEtwProbe
     private static int ProcessRundown, ImageRundown;
     private static EventRecordCallback CallbackRoot;
     private static Process RootProcess;
+    private static FileStream PinnedFile;
+    private static FileIdInformation PinnedFileId;
+    private static IntPtr ChildHandle;
+    private static bool ChildOwned;
     private static readonly Dictionary<int, ulong> StartKeys = new Dictionary<int, ulong>();
     private static readonly Dictionary<int, ulong> EndKeys = new Dictionary<int, ulong>();
 
@@ -372,7 +424,10 @@ public static class WindowsEtwProbe
             Marshal.OffsetOf(typeof(EventTraceLogfile), "LogfileHeader").ToInt32() != 120 ||
             Marshal.OffsetOf(typeof(EventTraceLogfile), "EventRecordCallback").ToInt32() != 424 ||
             Marshal.OffsetOf(typeof(EventHeader), "Descriptor").ToInt32() != 40 ||
-            Marshal.OffsetOf(typeof(EventRecord), "UserData").ToInt32() != 96)
+            Marshal.OffsetOf(typeof(EventRecord), "UserData").ToInt32() != 96 ||
+            Marshal.SizeOf(typeof(FileIdInformation)) != 24 ||
+            Marshal.SizeOf(typeof(ProcessEntry32)) != 568 ||
+            Marshal.OffsetOf(typeof(ProcessEntry32), "ParentProcessId").ToInt32() != 32)
             throw new InvalidOperationException("x64 ETW ABI layout differs from SDK");
         Line("ABI", 120, 280, 112, 448);
     }
@@ -618,19 +673,123 @@ public static class WindowsEtwProbe
         }
     }
 
-    private static string Quote(string value)
+    private static FileIdInformation FileIdentity(IntPtr handle)
     {
-        return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        FileIdInformation info;
+        if (!GetFileInformationByHandleEx(handle, FileIdInfoClass, out info,
+            (uint)Marshal.SizeOf(typeof(FileIdInformation))) || info.Identifier == null ||
+            info.Identifier.Length != 16)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "file identity unavailable");
+        return info;
     }
 
-    private static void RunFixture(string node, string evidence)
+    private static bool SameFile(FileIdInformation left, FileIdInformation right)
     {
-        // No external credentials, shell, package load or ambient command-line collection.
-        const string script = "const c=require('node:child_process').spawnSync(process.execPath,['-e','setTimeout(()=>{},250)'],{windowsHide:true,timeout:5000});if(c.error||c.status!==0||!c.pid)process.exit(2);process.stdout.write(String(c.pid));";
-        var start = new ProcessStartInfo(node, "-e " + Quote(script));
+        if (left.VolumeSerialNumber != right.VolumeSerialNumber) return false;
+        for (int i = 0; i < 16; i++) if (left.Identifier[i] != right.Identifier[i]) return false;
+        return true;
+    }
+
+    private static void HoldPinnedFile(string node, string expectedDigest, Stopwatch watch)
+    {
+        if (expectedDigest == null || expectedDigest.Length != 64)
+            throw new InvalidDataException("expected pin digest malformed");
+        foreach (char c in expectedDigest)
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+                throw new InvalidDataException("expected pin digest malformed");
+        // Read sharing denies write and delete replacement until offline decode completes.
+        PinnedFile = new FileStream(node, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (PinnedFile.Length == 0) throw new InvalidDataException("pinned executable empty");
+        using (var hash = SHA256.Create())
+        {
+            string actual = BitConverter.ToString(hash.ComputeHash(PinnedFile)).Replace("-", "").ToLowerInvariant();
+            if (!String.Equals(actual, expectedDigest, StringComparison.Ordinal))
+                throw new InvalidDataException("held executable digest differs from archive member");
+        }
+        PinnedFile.Position = 0;
+        PinnedFileId = FileIdentity(PinnedFile.SafeFileHandle.DangerousGetHandle());
+        Remaining(watch, MaxObservationMs);
+    }
+
+    private static void VerifyProcessImage(IntPtr process, string node)
+    {
+        var path = new StringBuilder(32768);
+        uint length = (uint)path.Capacity;
+        if (!QueryFullProcessImageName(process, 0, path, ref length) || length == 0 ||
+            length >= path.Capacity) throw new Win32Exception(Marshal.GetLastWin32Error(), "process image");
+        string image = Path.GetFullPath(path.ToString());
+        if (!String.Equals(image, node, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("process handle image differs from pin");
+        using (var candidate = new FileStream(image, FileMode.Open, FileAccess.Read, FileShare.Read))
+            if (!SameFile(PinnedFileId, FileIdentity(candidate.SafeFileHandle.DangerousGetHandle())))
+                throw new InvalidDataException("process image file identity differs from pin");
+    }
+
+    private static uint ParentFromSnapshot(uint childPid)
+    {
+        IntPtr snapshot = CreateToolhelp32Snapshot(SnapshotProcess, 0);
+        if (snapshot == new IntPtr(-1))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "process snapshot");
+        try
+        {
+            var entry = new ProcessEntry32();
+            entry.Size = (uint)Marshal.SizeOf(typeof(ProcessEntry32));
+            if (!Process32First(snapshot, ref entry))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "process snapshot first");
+            do
+            {
+                if (entry.ProcessId == childPid) return entry.ParentProcessId;
+                entry.Size = (uint)Marshal.SizeOf(typeof(ProcessEntry32));
+            } while (Process32Next(snapshot, ref entry));
+            throw new InvalidDataException("held child missing from process snapshot");
+        }
+        finally { if (!CloseHandle(snapshot)) throw new Win32Exception(Marshal.GetLastWin32Error(), "snapshot close"); }
+    }
+
+    private static int Remaining(Stopwatch watch, int localMaximum)
+    {
+        int left = MaxObservationMs - (int)watch.ElapsedMilliseconds;
+        if (left <= 0) throw new TimeoutException("observation exceeded thirty seconds");
+        return Math.Min(left, localMaximum);
+    }
+
+    private static int ReadChildPid(Process root, Stopwatch watch)
+    {
+        var digits = new StringBuilder(10);
+        var one = new byte[1];
+        long deadline = watch.ElapsedMilliseconds + 5000;
+        for (int i = 0; i < 11; i++)
+        {
+            int left = (int)(deadline - watch.ElapsedMilliseconds);
+            if (left <= 0) throw new TimeoutException("fixture PID line unavailable");
+            Task<int> read = root.StandardOutput.BaseStream.ReadAsync(one, 0, 1);
+            if (!read.Wait(Remaining(watch, left)) || read.Result != 1)
+                throw new TimeoutException("fixture PID line unavailable");
+            if (one[0] == '\n')
+            {
+                int pid;
+                if (digits.Length == 0 || digits[0] == '0' ||
+                    !Int32.TryParse(digits.ToString(), NumberStyles.None, CultureInfo.InvariantCulture, out pid) ||
+                    pid <= 0) throw new InvalidDataException("fixture PID malformed");
+                return pid;
+            }
+            if (one[0] < '0' || one[0] > '9' || digits.Length == 10)
+                throw new InvalidDataException("fixture PID malformed");
+            digits.Append((char)one[0]);
+        }
+        throw new InvalidDataException("fixture PID over cap");
+    }
+
+    private static void RunFixture(string node, string evidence, string fixture, Stopwatch watch)
+    {
+        // The fixed script reports a live child before receiving the single release byte.
+        if (!File.Exists(fixture) || fixture.IndexOf('"') >= 0)
+            throw new InvalidDataException("fixed fixture unavailable");
+        var start = new ProcessStartInfo(node, "\"" + fixture + "\"");
         start.WorkingDirectory = evidence;
         start.UseShellExecute = false;
         start.CreateNoWindow = true;
+        start.RedirectStandardInput = true;
         start.RedirectStandardOutput = true;
         start.RedirectStandardError = true;
         start.EnvironmentVariables.Clear();
@@ -641,41 +800,88 @@ public static class WindowsEtwProbe
         start.EnvironmentVariables["PATH"] = Path.Combine(windows, "System32") + ";" + windows;
         start.EnvironmentVariables["TEMP"] = evidence;
         start.EnvironmentVariables["TMP"] = evidence;
-        Process process = Process.Start(start);
-        RootProcess = process;
-        if (process == null) throw new InvalidOperationException("Node fixture launch returned no process");
-        RootPid = process.Id;
-        FileTime created, exited, kernel, user;
-        if (!GetProcessTimes(process.Handle, out created, out exited, out kernel, out user))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "GetProcessTimes");
-        var path = new StringBuilder(32768);
-        uint length = (uint)path.Capacity;
-        if (!QueryFullProcessImageName(process.Handle, 0, path, ref length) || length == 0 ||
-            length >= path.Capacity) throw new Win32Exception(Marshal.GetLastWin32Error(), "root image");
-        if (!String.Equals(Path.GetFullPath(path.ToString()), Path.GetFullPath(node),
-            StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("root handle image differs from pin");
-        RootCreated = created.Ticks;
+        RootProcess = Process.Start(start);
+        if (RootProcess == null) throw new InvalidOperationException("Node fixture launch returned no process");
+        RootPid = RootProcess.Id;
+        if (GetProcessId(RootProcess.Handle) != (uint)RootPid || RootProcess.HasExited)
+            throw new InvalidDataException("root process handle changed or exited");
+        FileTime rootCreated, rootExited, kernel, user;
+        if (!GetProcessTimes(RootProcess.Handle, out rootCreated, out rootExited, out kernel, out user) ||
+            rootCreated.Ticks <= 0)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "root process timing");
+        VerifyProcessImage(RootProcess.Handle, node);
+        RootCreated = rootCreated.Ticks;
         Line("ROOT", RootPid, RootCreated, "pinned-node");
-        if (!process.WaitForExit(10000))
-        {
-            process.Kill();
-            if (!process.WaitForExit(2000)) throw new InvalidOperationException("root stop unobserved");
-            throw new TimeoutException("Node fixture exceeded ten seconds");
-        }
-        string output = process.StandardOutput.ReadToEnd();
-        string error = process.StandardError.ReadToEnd();
-        if (process.ExitCode != 0 || error.Length != 0 || output.Length > 10 ||
-            !Int32.TryParse(output, NumberStyles.None, CultureInfo.InvariantCulture, out ChildPid) ||
-            ChildPid <= 0 || ChildPid == RootPid)
-            throw new InvalidDataException("known Node child fixture failed");
+        int printedPid = ReadChildPid(RootProcess, watch);
+        if (printedPid == RootPid || RootProcess.HasExited)
+            throw new InvalidDataException("fixture child PID invalid");
+        ChildHandle = OpenProcess(ProcessQueryLimitedInformation | ProcessSynchronize | ProcessTerminate,
+            false, (uint)printedPid);
+        if (ChildHandle == IntPtr.Zero)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "held child open");
+        if (GetProcessId(ChildHandle) != (uint)printedPid ||
+            WaitForSingleObject(ChildHandle, 0) != WaitTimeout)
+            throw new InvalidDataException("fixture child handle invalid or exited");
+        FileTime childCreated, childExited;
+        if (!GetProcessTimes(ChildHandle, out childCreated, out childExited, out kernel, out user) ||
+            childCreated.Ticks <= RootCreated)
+            throw new InvalidDataException("fixture child timing invalid");
+        VerifyProcessImage(ChildHandle, node);
+        if (RootProcess.HasExited || ParentFromSnapshot((uint)printedPid) != (uint)RootPid ||
+            RootProcess.HasExited ||
+            WaitForSingleObject(ChildHandle, 0) != WaitTimeout)
+            throw new InvalidDataException("fixture child is not live child of held root");
+        ChildPid = printedPid;
+        ChildOwned = true;
+        RootProcess.StandardInput.Write('R');
+        RootProcess.StandardInput.Flush();
+        RootProcess.StandardInput.Close();
+        uint wait = WaitForSingleObject(ChildHandle, (uint)Remaining(watch, 15000));
+        if (wait != WaitObject) throw new TimeoutException("held child exit unobserved");
+        if (!RootProcess.WaitForExit(Remaining(watch, 15000)))
+            throw new TimeoutException("root fixture exit unobserved");
+        uint childCode;
+        if (!GetExitCodeProcess(ChildHandle, out childCode) || childCode != 0 || RootProcess.ExitCode != 0 ||
+            !GetProcessTimes(ChildHandle, out childCreated, out childExited, out kernel, out user) ||
+            childExited.Ticks <= childCreated.Ticks ||
+            !GetProcessTimes(RootProcess.Handle, out rootCreated, out rootExited, out kernel, out user) ||
+            rootExited.Ticks <= rootCreated.Ticks || childExited.Ticks > rootExited.Ticks ||
+            RootProcess.StandardOutput.BaseStream.ReadByte() != -1 ||
+            RootProcess.StandardError.BaseStream.ReadByte() != -1)
+            throw new InvalidDataException("held fixture exit or output invalid");
         Line("CHILD", ChildPid);
+        Line("HELD", "root", 1, 1, 1);
+        Line("HELD", "child", 1, 1, 1);
     }
 
-    public static int Run(string nodePath, string evidenceDir)
+    private static void StopFixture()
+    {
+        // The root was launched by this probe. A printed PID is never a termination authority.
+        if (RootProcess != null && !RootProcess.HasExited)
+        {
+            try { RootProcess.StandardInput.Close(); }
+            catch { }
+            if (!RootProcess.WaitForExit(2000))
+            {
+                RootProcess.Kill();
+                if (!RootProcess.WaitForExit(2000)) Failure("root-stop", "unobserved", 0);
+            }
+        }
+        if (ChildOwned && ChildHandle != IntPtr.Zero &&
+            WaitForSingleObject(ChildHandle, 0) == WaitTimeout)
+        {
+            if (!TerminateProcess(ChildHandle, 2) ||
+                WaitForSingleObject(ChildHandle, 2000) != WaitObject)
+                Failure("run", "unobserved", 0);
+        }
+    }
+
+    public static int Run(string nodePath, string evidenceDir, string expectedDigest, string fixturePath)
     {
         if (IntPtr.Size != 8 || Environment.OSVersion.Platform != PlatformID.Win32NT) return 2;
         string node = Path.GetFullPath(nodePath);
         PinnedNode = node;
+        string fixture = Path.GetFullPath(fixturePath);
         string evidence = Path.GetFullPath(evidenceDir);
         string receipt = Path.Combine(evidence, "native.tsv");
         string etl = Path.Combine(evidence, "trace.etl");
@@ -691,6 +897,7 @@ public static class WindowsEtwProbe
         try
         {
             CheckAbi();
+            HoldPinnedFile(node, expectedDigest, watch);
             var identity = WindowsIdentity.GetCurrent();
             Line("TOKEN", identity.IsSystem ? "system" : new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator)
                 ? "administrator" : "other");
@@ -707,7 +914,7 @@ public static class WindowsEtwProbe
             Query(handle, guid, name, etl, "readyQuery");
             Line("OWNERSHIP", guid.ToString("D"), name);
             Line("SESSION", RequestedMode, ProcessFlag | ImageFlag, 64);
-            RunFixture(node, evidence);
+            RunFixture(node, evidence, fixture, watch);
             if (watch.ElapsedMilliseconds > MaxObservationMs)
                 throw new TimeoutException("observation exceeded thirty seconds");
             Query(handle, guid, name, etl, "beforeStopQuery");
@@ -715,22 +922,8 @@ public static class WindowsEtwProbe
         }
         catch (Exception error)
         {
-            if (RootProcess != null)
-            {
-                try
-                {
-                    if (!RootProcess.HasExited)
-                    {
-                        RootProcess.Kill();
-                        if (!RootProcess.WaitForExit(2000))
-                            Failure("root-stop", "unobserved", 0);
-                    }
-                }
-                catch (Exception stopError)
-                {
-                    Failure("root-stop", stopError);
-                }
-            }
+            try { StopFixture(); }
+            catch (Exception stopError) { Failure("root-stop", stopError); }
             Failure("run", error);
             result = 4;
         }
@@ -843,12 +1036,17 @@ public static class WindowsEtwProbe
                 Failure("run", "timeout", 0);
                 result = 4;
             }
+            bool resourcesClosed = true;
+            try { if (ChildHandle != IntPtr.Zero && !CloseHandle(ChildHandle)) resourcesClosed = false; }
+            catch { resourcesClosed = false; }
+            ChildHandle = IntPtr.Zero;
+            try { if (RootProcess != null) RootProcess.Dispose(); }
+            catch { resourcesClosed = false; }
+            try { if (PinnedFile != null) PinnedFile.Dispose(); }
+            catch { resourcesClosed = false; }
+            if (!resourcesClosed) { Failure("run", "operation-failed", 0); result = 4; }
             if (result == 0) Line("COMPLETE");
-            try
-            {
-                if (!WriteReceipt(receipt)) result = 4;
-            }
-            finally { if (RootProcess != null) RootProcess.Dispose(); }
+            if (!WriteReceipt(receipt)) result = 4;
         }
         return result;
     }

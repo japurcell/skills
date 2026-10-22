@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +16,8 @@ const good = [
   'API\tstop\t0', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
   'OWNERSHIP\t11111111-2222-4333-8444-555555555555\tCodex factory ETW feasibility 11111111222243338444555555555555',
   'SESSION\t37748737\t5\t64', 'ROOT\t100\t134000000000000000\tpinned-node',
-  'CHILD\t101', 'EVENT\tprocess-start\t100\t50\troot\tpinned-node\t134000000000000000',
+  'CHILD\t101', 'HELD\troot\t1\t1\t1', 'HELD\tchild\t1\t1\t1',
+  'EVENT\tprocess-start\t100\t50\troot\tpinned-node\t134000000000000000',
   'EVENT\tprocess-start\t101\t100\tchild\tpinned-node\t134000000000100000',
   'EVENT\timage-load\t100\tpinned-node\t134000000000200000',
   'EVENT\timage-load\t101\tpinned-node\t134000000000300000',
@@ -42,11 +43,103 @@ const failedDecode = [
   'FAIL\tdecode\tinvalid-data\t0', ''
 ].join('\n');
 
+test('fixed fixture reports a live child and exits silently after one release byte', { timeout: 7000 }, async () => {
+  const fixture = fileURLToPath(new URL('./windows-etw-child-fixture.cjs', import.meta.url));
+  const root = spawn(process.execPath, [fixture], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  let output = '', error = '';
+  root.stderr.on('data', (chunk) => { error += chunk; });
+  const line = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('fixture PID line timeout')), 3000);
+    root.once('error', (cause) => { clearTimeout(timer); reject(cause); });
+    root.once('close', (code) => { clearTimeout(timer); reject(new Error(`fixture exited before release: ${code}`)); });
+    root.stdout.on('data', (chunk) => {
+      output += chunk;
+      if (output.includes('\n')) { clearTimeout(timer); resolve(output); }
+    });
+  });
+  try {
+    const pidLine = await line;
+    assert.match(pidLine, /^[1-9]\d{0,9}\n$/);
+    const childPid = Number(pidLine.trim());
+    assert.notEqual(childPid, root.pid);
+    assert.doesNotThrow(() => process.kill(childPid, 0));
+    const closed = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('fixture release timeout')), 3000);
+      root.once('close', (code, signal) => { clearTimeout(timer); resolve({ code, signal }); });
+    });
+    root.stdin.end('R');
+    assert.deepEqual(await closed, { code: 0, signal: null });
+    assert.equal(output, `${childPid}\n`);
+    assert.equal(error, '');
+  } finally { if (root.exitCode === null) root.kill(); }
+});
+
 test('public receipt accepts a complete known root and child, pending native proof', () => {
   assert.deepEqual(validateProbeReceipt(good, 'C:\\node\\node.exe'), {
     ok: true, reasons: [], rootPid: 100, childPid: 101,
     processStarts: 2, processEnds: 2, imageLoads: 2
   });
+});
+
+test('held root and child proof is required in order and exact closed form', () => {
+  const root = 'HELD\troot\t1\t1\t1';
+  const child = 'HELD\tchild\t1\t1\t1';
+  for (const changed of [
+    good.replace(`${root}\n`, ''),
+    good.replace(`${child}\n`, ''),
+    good.replace(`${root}\n${child}\n`, ''),
+    good.replace(root, `${root}\n${root}`),
+    good.replace(`${root}\n${child}`, `${child}\n${root}`),
+    good.replace(root, 'HELD\troot\t1\t0\t1'),
+    good.replace(child, 'HELD\tchild\t1\t1\t0'),
+    good.replace(root, `${root}\tC:\\ambient\\node.exe`),
+    good.replace(root, 'HELD\tunknown\t1\t1\t1'),
+    good.replace(`${root}\n${child}\n`, '').replace('COMPLETE\n', `${root}\n${child}\nCOMPLETE\n`)
+  ]) assert.equal(validateProbeReceipt(changed, 'C:\\node\\node.exe').ok, false);
+});
+
+test('artifact preparation retains only paired held rows and downgrades forged proof', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-held-proof-'));
+  const native = join(evidence, 'native.tsv');
+  const root = 'HELD\troot\t1\t1\t1';
+  const child = 'HELD\tchild\t1\t1\t1';
+  const run = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+    encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+  });
+  try {
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
+      status: 'native-feasibility-passed-review-required', receipt: { ok: true },
+      rawEtl: 'removed-after-offline-parse'
+    }));
+    const failedHeld = failedDecode.replace('CHILD\t2928\n',
+      `CHILD\t2928\n${root}\n${child}\n`).replace('FAIL\tdecode',
+      'DIAG\tcallback\tprocess-image-mismatch\troot\tname-only\tsame\tat-or-after-creation-within-window\nFAIL\tdecode');
+    writeFileSync(native, failedHeld);
+    assert.equal(run().status, 0);
+    assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), failedHeld);
+    assert.equal(JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8')).status, 'failed');
+    for (const malformed of [
+      good.replace(`${root}\n`, ''), good.replace(`${child}\n`, ''),
+      good.replace(root, `${root}\n${root}`),
+      good.replace(`${root}\n${child}`, `${child}\n${root}`),
+      good.replace(root, 'HELD\troot\t1\t0\t1'),
+      good.replace(child, 'HELD\tchild\t1\t1\t0'),
+      good.replace(root, `${root}\tC:\\ambient\\node.exe`),
+      good.replace(root, 'HELD\tunknown\t1\t1\t1'),
+      good.replace(`${root}\n${child}\n`, '').replace('COMPLETE\n', `${root}\n${child}\nCOMPLETE\n`),
+      `${good}${'X'.repeat(65537)}`
+    ]) {
+      writeFileSync(native, malformed);
+      assert.equal(run().status, 0);
+      assert.equal(existsSync(native), false);
+      assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+    }
+    writeFileSync(native, good.replace(`${root}\n${child}\n`, ''));
+    assert.equal(run().status, 0);
+    assert.equal(JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8')).status, 'failed');
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
 test('public receipt requires unique, exact, all-true query evidence', () => {
