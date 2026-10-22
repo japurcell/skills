@@ -170,7 +170,7 @@ python3 -I -S -B scripts/verify-security-fixture-patch.py --patch repair.patch -
 Replace the example patch and fixture paths with your actual files. The verifier
 checks disposable copies against active and candidate scanners and independent
 credential controls. It never applies the patch or changes the live index. Native
-Windows verification is unsupported and refuses before launching children.
+Windows verification is unsupported and refuses before launching children. Cleanup confirms verifier-launched children and observed descendants. A descendant that detaches and loses its ancestry before discovery may remain running. A verified result confirms fixture scans, not universal scanner process containment.
 
 ### Hook diagnostics
 

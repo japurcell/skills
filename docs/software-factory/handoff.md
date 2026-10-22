@@ -1,6 +1,6 @@
 # Software factory handoff
 
-Updated: 2026-10-21, 22:37 PDT. Scope: software-factory.
+Updated: 2026-10-21, 22:44 PDT. Scope: software-factory.
 
 ## Goal and authorization
 
@@ -15,10 +15,11 @@ Base HEAD `8053272b55ea4e8024cd075a45bfed8b890db7fe` is pushed. Milestones 1-2 a
 ## Active tasks and ownership
 
 - `/root/profiles_resume` owns unfinished T7 in `/Users/adam/.codex/worktrees/factory-adapters/skills`, branch `codex/factory-adapters`, HEAD `caf46b425c8b19e871a496dda08edfb96d946b50`. Fresh strict checks/build and118 baseline checks passed (25 adapters+93 existing). Public boundary repairs now have focused red/green proof: invalid control followed by a saved question, oversized terminated machine lines, partial failed streams and forged session ownership. Final full rerun, scoped evidence, commit and independent review remain. Worker owns profile/adapter/agent integration and necessary capture/lifecycle/schema/store/workflow/session changes. Exported NativeSession rows use schema3 and bounded stable paging. Parent owns canonical documents, registry and CI.
-- `/root/observer_repair` stopped writes at clean private hook branch `codex/factory-hook-regression`, candidate `784ee90f833c0a9fe2dfb297dbe7342dfdf9a2b9`, in `/Users/adam/.codex/worktrees/factory-hook-regression/skills`. Shared bounded finalizer now confirms exit/reap at all3 Popen sites. SEC-002 public red returned130/.121535s with live Ts observer; green returns2/process_cleanup_incomplete/.122360s. SEC-001 helper denial remains green/.135119s. Full39 passed132.946s; three unchanged resistant-session repeats passed5.197s, each<.404s. Delayed-return resistance passed1.912727s<2s. No deadline/fixture/identity/leak weakening.
-- `/root/hook_shutdown_review` independently reviews full hook shutdown inventory and public fault paths. Warning threshold25minutes. Candidate is not approved or integrated; native Linux/macOS CI remains pending. Prior important misses require complete inventory, not only last-commit review.
+- Hook source `e987d43e94280590a307a3ea9fd253681bf6e725` is source-identical after rebase from independently approved `784ee90f833c0a9fe2dfb297dbe7342dfdf9a2b9`. Private branch `codex/factory-hook-regression` remains clean in `/Users/adam/.codex/worktrees/factory-hook-regression/skills`; parent owns integration. Shared bounded finalizer confirms exit/reap at all3 Popen sites. Worker39 tests passed132.946s plus3 unchanged repeats; independent39 passed139.170s. Denied helper shutdown on verified/findings/invalid-patch outcomes correctly becomes2/process_cleanup_incomplete. Independent delayed-return resistance1.872953s<2s. No deadline/fixture/identity/leak weakening. Base composed proof and actual Linux/macOS CI remain pending.
+- Scope review confirms inherited unsampled-detached-child limitation. A scanner can spawn a separate-session child immediately before exit and lose ancestry before sampling. complete_clean verifies scans, not universal containment; existing help bounds cleanup to observed processes. Independent reviewer corrected the initial broader failure classification and approved this bounded repair. No tracker expansion; preserve this limit in README/plan. Inline repro exists only in reviewer tool transcript session71071/chunk a33e45, not an on-disk file.
+- `/root/t7_conformance_review` independently reviews stopped candidate `59b1caee13b25a787383aaa2bf3bcdf54b0149ab`. It confirmed a defect: bad machine output stops its group but skips settlement, retaining capacity/claim despite working recorder and clean shutdown. Keep writer stopped until full review/release; then repair and re-review. Other baseline passes do not establish approval.
 
-T10 waits for T7 store/session interfaces and the reserved-preparation repair's shared-store ownership. After T7 integration, run bounded preparation recovery alongside provider-specific tasks, then observation work. No old agents survived the app update; only the two implementers above own their assigned source; the independent reviewer is read-only.
+T10 waits for T7 store/session interfaces and the reserved-preparation repair's shared-store ownership. After T7 integration, run bounded preparation recovery alongside provider-specific tasks, then observation work. No old agents survived the app update; the T7 writer is stopped for review and the parent owns hook integration; reviewers remain read-only.
 
 ## Required recovery and native limits
 
