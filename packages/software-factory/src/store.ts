@@ -15,7 +15,7 @@ import type { Admission } from './accounting.js';
 export interface Owner { host: string; pid: number; start: string | null }
 export interface Claim {
   id: string; token: string; kind: 'worktree' | 'dashboard' | 'maintenance'; resourceKey: string;
-  invocationId: string | null; owner: Owner;
+  invocationId: string | null; owner: Owner; endpoint?: { url: string; instanceId: string };
 }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
 interface Worktree { id: string; path: string; registration: string; preparation?: { identity: PreparationIdentity; invocationId: string; claimId: string } }
@@ -574,6 +574,52 @@ export class RepositoryStore {
       this.database.prepare('INSERT INTO owner_claims(id,token,kind,resource_key,invocation_id,data) VALUES (?,?,?,?,NULL,?)')
         .run(claim.id, claim.token, claim.kind, resourceKey, JSON.stringify(claim));
       this.event('owner.claimed', { claimId: claim.id, kind: claim.kind });
+      return claim;
+    });
+  }
+
+  repositoryId(): string {
+    const row = this.database.prepare('SELECT id FROM repository').get();
+    if (!row) throw new Error('repository identity unavailable');
+    return String(row['id']);
+  }
+
+  readInvocations(input: { after?: number; limit?: number } = {}) {
+    const after = input.after ?? 0, limit = input.limit ?? 30;
+    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('invalid invocation page');
+    // Cards need lifecycle summaries; large supplied inputs stay in selected detail/captures.
+    const rows = this.database.prepare("SELECT rowid AS cursor,json_remove(data,'$.metadata') AS data FROM invocations WHERE rowid>? ORDER BY rowid LIMIT ?").iterate(after, limit + 1);
+    const invocations: Invocation[] = []; let bytes = 0, nextCursor = after, hasMore = false;
+    for (const row of rows) {
+      const data = String(row['data']);
+      if (invocations.length === limit || bytes + Buffer.byteLength(data) > 1047552) { hasMore = true; break; }
+      bytes += Buffer.byteLength(data); invocations.push(JSON.parse(data) as Invocation); nextCursor = Number(row['cursor']);
+    }
+    return { invocations, nextCursor, hasMore };
+  }
+
+  readSession(input: { invocationId: string; id: string }): NativeSession {
+    const row = this.database.prepare('SELECT data FROM sessions WHERE invocation_id=? AND id=?').get(input.invocationId, input.id);
+    if (!row) throw new Error('session not found');
+    return JSON.parse(String(row['data'])) as NativeSession;
+  }
+
+  readDashboardClaim(): Claim | undefined {
+    const row = this.database.prepare("SELECT data FROM owner_claims WHERE kind='dashboard'").get();
+    return row ? JSON.parse(String(row['data'])) as Claim : undefined;
+  }
+
+  async publishDashboardEndpoint(input: { claimId: string; token: string; url: string; instanceId: string }) {
+    const url = new URL(input.url);
+    if (url.origin !== input.url || url.protocol !== 'http:' || url.hostname !== '127.0.0.1' || !url.port) throw new Error('invalid loopback endpoint');
+    text(input.instanceId, 'host instance');
+    return this.transaction(() => {
+      this.ready();
+      const claim = this.readClaim(input.claimId);
+      if (claim.kind !== 'dashboard' || claim.token !== input.token || claim.resourceKey !== this.repositoryId() || claim.endpoint) throw new Error('dashboard claim cannot publish endpoint');
+      claim.endpoint = { url: input.url, instanceId: input.instanceId };
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?').run(JSON.stringify(claim), claim.id, claim.token);
+      this.event('dashboard.published', { claimId: claim.id, ...claim.endpoint });
       return claim;
     });
   }

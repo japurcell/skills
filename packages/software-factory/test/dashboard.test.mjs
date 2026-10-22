@@ -1,0 +1,302 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { request, createServer } from 'node:http';
+import { createConnection } from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
+import { once } from 'node:events';
+import { setTimeout as delay } from 'node:timers/promises';
+import { join } from 'node:path';
+import { createRepository } from './fixtures/repository.mjs';
+import { initializeRepositoryStore } from '../dist/store.js';
+import { startObservationHost } from '../dist/dashboard.js';
+
+test('host publishes only a bound loopback endpoint and reuses its current repository claim', async () => {
+  const repo = createRepository();
+  const store = await initializeRepositoryStore(join(repo.path, '.git'), { release: 'fixture' });
+  let host;
+  try {
+    host = await startObservationHost({ store });
+    assert.match(host.url, /^http:\/\/127\.0\.0\.1:\d+$/);
+    const response = await fetch(host.url + '/api/events?after=0&limit=1');
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).events.length, 1);
+    const reuse = await startObservationHost({ store });
+    assert.equal(reuse.reused, true);
+    assert.equal(reuse.url, host.url);
+    assert.equal(reuse.sessionToken, undefined);
+  } finally { await host?.close(); store.close(); repo.dispose(); }
+});
+
+async function fixture() {
+  const repo = createRepository();
+  const store = await initializeRepositoryStore(join(repo.path, '.git'), { release: 'fixture' });
+  const run = await store.createRun();
+  const worktree = await store.registerWorktree({ path: repo.path, registration: 'fixture' });
+  const invocation = await store.startInvocation({ runId: run.id, worktreeId: worktree.id, owner: { host: 'fixture', pid: process.pid, start: null } });
+  await store.activateInvocation(invocation.id);
+  return { repo, store, invocation, dispose: () => { store.close(); repo.dispose(); } };
+}
+async function frame(reader) {
+  let text = '';
+  while (!text.includes('\n\n')) {
+    const result = await Promise.race([reader.read(), new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('SSE timeout')), 2000); timer.unref(); })]);
+    if (result.done) throw new Error('stream ended before event');
+    text += new TextDecoder().decode(result.value);
+  }
+  return text;
+}
+
+test('real recorder bytes are committed before SSE references, with saved capture reads and duplicate-free reconnect', async () => {
+  const { InvocationRecorder } = await import('../dist/capture.js');
+  const f = await fixture(); let host, reader;
+  try {
+    host = await startObservationHost({ store: f.store });
+    const recorder = new InvocationRecorder({ store: f.store, invocationId: f.invocation.id, requestShutdown: () => {} });
+    const writer = await recorder.openCapture({ channel: 'stdout' });
+    const before = (await (await fetch(host.url + '/api/events')).json()).nextCursor;
+    await writer.write('saved fixture output');
+    const response = await fetch(host.url + '/api/stream?after=' + before);
+    assert.equal(response.status, 200); reader = response.body.getReader();
+    await recorder.barrier();
+    const text = await frame(reader);
+    assert.match(text, /capture.appended/);
+    const data = JSON.parse(text.split('data: ')[1].split('\n')[0]);
+    const capture = await (await fetch(host.url + '/api/invocations/' + f.invocation.id + '/captures/' + writer.id)).json();
+    assert.equal(capture.chunks.map(chunk => chunk.text).join(''), 'saved fixture output');
+    const cursor = data.cursor;
+    await reader.cancel(); reader = undefined;
+    const reconnect = await fetch(host.url + '/api/stream', { headers: { 'Last-Event-ID': cursor } });
+    reader = reconnect.body.getReader();
+    await writer.finish();
+    const next = await frame(reader);
+    assert.ok(BigInt(next.match(/id: (\d+)/)[1]) > BigInt(cursor));
+    const detail = await (await fetch(host.url + '/api/invocations/' + f.invocation.id)).json();
+    assert.equal(detail.invocation.id, f.invocation.id);
+    assert.equal((await (await fetch(host.url + '/api/invocations')).json()).invocations.length, 1);
+    assert.equal((await (await fetch(host.url + '/api/invocations/' + f.invocation.id + '/sessions')).json()).sessions.length, 0);
+  } finally { await reader?.cancel(); await host?.close(); f.dispose(); }
+});
+
+function http(url, { path = '/api/events', method = 'GET', headers = {}, body } = {}) {
+  return new Promise((resolve, reject) => {
+    const req = request(url, { path, method, headers, agent: false }, response => {
+      let text = ''; response.on('data', chunk => { text += chunk; });
+      response.on('end', () => resolve({ status: response.statusCode, text, headers: response.headers }));
+      response.on('error', reject);
+    });
+    req.on('error', reject); if (body) req.write(body); req.end();
+  });
+}
+
+test('host rejects hostile authority, origins, paths, cursors and credentials without read-side mutations', async () => {
+  const f = await fixture(); let host; const writes = [];
+  try {
+    host = await startObservationHost({ store: f.store, notificationWrite: async (kind, body) => { writes.push({ kind, body }); return { saved: true }; } });
+    const saved = (await (await fetch(host.url + '/api/events')).json()).nextCursor;
+    for (const headers of [{ Host: 'evil.invalid' }, { Origin: 'https://evil.invalid' }, { Referer: 'https://evil.invalid/' }, { Referer: 'malformed' }, { 'Sec-Fetch-Site': 'cross-site' }]) {
+      assert.equal((await http(host.url, { headers })).status, 403);
+    }
+    for (const path of ['//evil.invalid/api/events', '/api/../events', '/api/%2e%2e/events', 'http://evil.invalid/api/events', '/api/events?after=-1', '/api/events?after=1.1', '/api/events?after=9223372036854775808', '/api/events?after=0&after=1', '/api/events?limit=201', '/api/stream?after=garbage', '/api/events?limit=0', '/api/invocations?limit=101', '/api/invocations?after=9007199254740992']) {
+      assert.equal((await http(host.url, { path })).status, 400, path);
+    }
+    for (const path of ['/api/execute', '/api/clearance', '/api/install', '/api/notifications/acknowledgments']) {
+      const response = await http(host.url, { path }); assert.equal(response.status, 404);
+    }
+    const base = { path: '/api/notifications/preferences', method: 'POST', body: '{}', headers: { Origin: host.url, 'Content-Type': 'application/json' } };
+    assert.equal((await http(host.url, base)).status, 403);
+    assert.equal((await http(host.url, { ...base, headers: { ...base.headers, Authorization: 'Bearer wrong' } })).status, 403);
+    assert.equal((await http(host.url, { ...base, headers: { ...base.headers, Origin: 'https://evil.invalid', Authorization: 'Bearer ' + host.sessionToken } })).status, 403);
+    assert.equal((await http(host.url, { path: '/api/execute', method: 'POST' })).status, 405);
+    const authorized = { ...base, headers: { ...base.headers, Authorization: 'Bearer ' + host.sessionToken } };
+    assert.equal((await http(host.url, { ...authorized, body: 'x'.repeat(8193) })).status, 413);
+    assert.equal((await http(host.url, { ...authorized, body: '{' })).status, 400);
+    assert.equal(writes.length, 0);
+    assert.equal((await http(host.url, { ...authorized, body: JSON.stringify({ label: 'λ' }) })).status, 200); assert.equal(writes.length, 1); assert.equal(writes[0].body.label, 'λ');
+    assert.equal((await (await fetch(host.url + '/api/events')).json()).nextCursor, saved);
+    assert.equal(f.store.readInvocation(f.invocation.id).stage, 'running');
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('cursor pagination is bounded, gap is explicit and stream limit is reclaimed on disconnect', async () => {
+  const f = await fixture(); let host; const readers = [];
+  try {
+    host = await startObservationHost({ store: f.store });
+    let after = '0'; const ids = [];
+    while (true) {
+      const page = await (await fetch(host.url + '/api/events?limit=1&after=' + after)).json();
+      assert.ok(Buffer.byteLength(JSON.stringify(page)) <= 1048576);
+      if (!page.events.length) break;
+      ids.push(page.events[0].cursor); after = page.nextCursor;
+    }
+    assert.equal(new Set(ids).size, ids.length); assert.ok(ids.length >= 5);
+    let response = await fetch(host.url + '/api/stream?after=9223372036854775807');
+    assert.match(await response.text(), /event: gap/);
+    assert.equal((await fetch(host.url + '/api/stream?after=0', { headers: { 'Last-Event-ID': '1' } })).status, 400);
+    for (let i = 0; i < 16; i++) { response = await fetch(host.url + '/api/stream?after=' + after); readers.push(response.body.getReader()); }
+    assert.equal((await fetch(host.url + '/api/stream?after=' + after)).status, 429);
+    await readers.pop().cancel(); await delay(50);
+    response = await fetch(host.url + '/api/stream?after=' + after); assert.equal(response.status, 200); await response.body.cancel();
+  } finally { await Promise.all(readers.map(reader => reader.cancel())); await host?.close(); f.dispose(); }
+});
+
+test('bind conflict releases only the failed start claim; stale and wrong-repository endpoints never cause takeover', async () => {
+  const f = await fixture(), other = await fixture(); let host;
+  const occupied = createServer(); occupied.listen(0, '127.0.0.1'); await once(occupied, 'listening');
+  try {
+    await assert.rejects(startObservationHost({ store: f.store, port: occupied.address().port }), /EADDRINUSE/);
+    assert.equal(f.store.readDashboardClaim(), undefined);
+    host = await startObservationHost({ store: f.store });
+    const claim = await other.store.claimResource({ kind: 'dashboard', owner: f.store.readDashboardClaim().owner });
+    await other.store.publishDashboardEndpoint({ claimId: claim.id, token: claim.token, url: host.url, instanceId: 'wrong-repository' });
+    await assert.rejects(startObservationHost({ store: other.store }), /verification failed/);
+    assert.equal(other.store.readDashboardClaim().id, claim.id);
+    const saved = f.store.readDashboardClaim();
+    await f.store.releaseClaim({ claimId: saved.id, token: saved.token, basis: 'quiescent' });
+    const replacement = await f.store.claimResource({ kind: 'dashboard', owner: saved.owner });
+    await f.store.publishDashboardEndpoint({ claimId: replacement.id, token: replacement.token, url: host.url, instanceId: 'stale-host' });
+    assert.equal((await fetch(host.url + '/api/events')).status, 503);
+    await assert.rejects(startObservationHost({ store: f.store }), /verification failed/);
+    await host.close(); host = undefined;
+    assert.equal(f.store.readDashboardClaim().id, replacement.id);
+  } finally { await host?.close(); occupied.closeAllConnections(); await new Promise(resolve => occupied.close(resolve)); f.dispose(); other.dispose(); }
+});
+
+test('recorder failure never displays uncommitted bytes and unavailable storage closes SSE', async () => {
+  const { InvocationRecorder } = await import('../dist/capture.js');
+  const f = await fixture(); let host, reader, database;
+  try {
+    host = await startObservationHost({ store: f.store });
+    let shutdown = false;
+    const recorder = new InvocationRecorder({ store: f.store, invocationId: f.invocation.id, requestShutdown: () => { shutdown = true; }, fallback: () => {} });
+    const writer = await recorder.openCapture({ channel: 'stdout' });
+    const after = f.store.readEvents({ after: '0' }).nextCursor;
+    const response = await fetch(host.url + '/api/stream?after=' + after); reader = response.body.getReader();
+    database = new DatabaseSync(join(f.repo.path, '.git', 'factory', 'history.sqlite'));
+    database.exec("CREATE TRIGGER fail_capture BEFORE INSERT ON capture_chunks BEGIN SELECT RAISE(ABORT, 'fixture failure'); END");
+    await writer.write('must never be displayed'); await assert.rejects(recorder.barrier(), /recording failed/); assert.equal(shutdown, true);
+    const text = await frame(reader); assert.doesNotMatch(text, /must never be displayed/);
+    const capture = await (await fetch(host.url + '/api/invocations/' + f.invocation.id + '/captures/' + writer.id)).json(); assert.deepEqual(capture.chunks, []);
+    await reader.cancel(); reader = undefined;
+    const current = f.store.readEvents({ after: '0' }).nextCursor;
+    const stream = await fetch(host.url + '/api/stream?after=' + current); reader = stream.body.getReader();
+    f.store.close();
+    assert.match(await frame(reader), /event: unavailable/);
+    assert.equal((await fetch(host.url + '/api/events')).status, 503);
+    await reader.cancel(); reader = undefined;
+    await assert.rejects(host.close()); host = undefined;
+  } finally { await reader?.cancel(); await host?.close(); database?.close(); try { f.dispose(); } catch { f.repo.dispose(); } }
+});
+
+test('shutdown destroys slow streams without a held SQLite read transaction and permits a replacement host', async () => {
+  const f = await fixture(); let host, socket, database;
+  try {
+    // Populate committed bounded metadata directly as fixture setup, never as the tested read seam.
+    database = new DatabaseSync(join(f.repo.path, '.git', 'factory', 'history.sqlite'));
+    const insert = database.prepare('INSERT INTO observation_events(kind,data) VALUES (?,?)');
+    database.exec('BEGIN'); for (let i = 0; i < 1500; i++) insert.run('fixture.bulk', JSON.stringify({ text: 'x'.repeat(8000) })); database.exec('COMMIT');
+    host = await startObservationHost({ store: f.store });
+    socket = createConnection(new URL(host.url).port, '127.0.0.1'); await once(socket, 'connect');
+    socket.write('GET /api/stream HTTP/1.1\r\nHost: ' + new URL(host.url).host + '\r\n\r\n'); socket.pause();
+    await delay(150);
+    database.exec('PRAGMA busy_timeout=100; BEGIN IMMEDIATE; COMMIT');
+    const checkpoint = database.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get(); assert.equal(checkpoint.busy, 0);
+    const start = performance.now(); await host.close(); host = undefined;
+    assert.ok(performance.now() - start < 2000);
+    host = await startObservationHost({ store: f.store });
+    assert.equal((await fetch(host.url + '/api/events?limit=1')).status, 200);
+  } finally { socket?.destroy(); await host?.close(); database?.close(); f.dispose(); }
+});
+
+test('paused viewer is disconnected after bounded backpressure while ordinary reads remain responsive', async () => {
+  const f = await fixture(); let host, socket, database;
+  try {
+    database = new DatabaseSync(join(f.repo.path, '.git', 'factory', 'history.sqlite'));
+    const insert = database.prepare('INSERT INTO observation_events(kind,data) VALUES (?,?)');
+    database.exec('BEGIN'); for (let i = 0; i < 2000; i++) insert.run('fixture.bulk', JSON.stringify({ text: 'y'.repeat(8000) })); database.exec('COMMIT');
+    host = await startObservationHost({ store: f.store });
+    socket = createConnection(new URL(host.url).port, '127.0.0.1'); await once(socket, 'connect');
+    socket.write('GET /api/stream HTTP/1.1\r\nHost: ' + new URL(host.url).host + '\r\n\r\n'); socket.pause();
+    await delay(1500);
+    assert.equal((await fetch(host.url + '/api/events?limit=1')).status, 200);
+    const ended = once(socket, 'end'); socket.resume();
+    await Promise.race([ended, delay(2000).then(() => { throw new Error('slow stream was not disconnected'); })]);
+  } finally { socket?.destroy(); await host?.close(); database?.close(); f.dispose(); }
+});
+
+test('invocation, native session and attempt detail routes remain scoped saved reads', async () => {
+  const f = await fixture(); let host;
+  try {
+    const attempt = await f.store.admitAttempt({ id: crypto.randomUUID(), invocationId: f.invocation.id, operationKey: 'fixture-agent', kind: 'agent', intent: 'initial' });
+    const session = await f.store.saveSession(attempt.id, { nativeId: 'native-fixture', parentNativeId: null, lifecycle: 'running', usage: { tokens: 12, scope: 'self' }, loadedSkills: ['fixture-skill'] });
+    host = await startObservationHost({ store: f.store });
+    const saved = f.store.readEvents({ after: '0' }).nextCursor;
+    const prefix = host.url + '/api/invocations/' + f.invocation.id;
+    assert.equal((await (await fetch(prefix + '/attempts/' + attempt.id)).json()).operationKey, 'fixture-agent');
+    assert.equal((await (await fetch(prefix + '/sessions/' + session.id)).json()).nativeId, 'native-fixture');
+    const sessions = await (await fetch(prefix + '/sessions?limit=1')).json(); assert.equal(sessions.sessions.length, 1);
+    assert.equal((await (await fetch(prefix + '/sessions?after=' + sessions.nextCursor)).json()).sessions.length, 0);
+    const absent = crypto.randomUUID();
+    assert.equal((await fetch(host.url + '/api/invocations/' + absent + '/sessions/' + session.id)).status, 503);
+    assert.equal((await fetch(host.url + '/api/invocations/' + absent + '/attempts/' + attempt.id)).status, 404);
+    const page = await (await fetch(host.url + '/api/invocations?limit=1')).json(); assert.equal(page.invocations[0].id, f.invocation.id);
+    assert.equal((await (await fetch(host.url + '/api/invocations?after=' + page.nextCursor)).json()).invocations.length, 0);
+    assert.equal(f.store.readEvents({ after: '0' }).nextCursor, saved);
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('unpublished and unverifiable native claims remain for explicit clearance', async () => {
+  const f = await fixture();
+  try {
+    const claim = await f.store.claimResource({ kind: 'dashboard', owner: { host: 'unknown-host', pid: process.pid, start: null } });
+    await assert.rejects(startObservationHost({ store: f.store }), /unverified/);
+    assert.equal(f.store.readDashboardClaim().id, claim.id);
+    assert.equal(f.store.readDashboardClaim().endpoint, undefined);
+  } finally { f.dispose(); }
+});
+
+test('untrusted identity responses are bounded and receive no claim or host credentials', async () => {
+  const f = await fixture(); let host, saved;
+  const requests = [];
+  const fake = createServer((request, response) => { requests.push({ url: request.url, headers: request.headers }); response.end('z'.repeat(100000)); });
+  fake.listen(0, '127.0.0.1'); await once(fake, 'listening');
+  try {
+    host = await startObservationHost({ store: f.store }); saved = f.store.readDashboardClaim(); await host.close(); host = undefined;
+    const claim = await f.store.claimResource({ kind: 'dashboard', owner: saved.owner });
+    await f.store.publishDashboardEndpoint({ claimId: claim.id, token: claim.token, url: 'http://127.0.0.1:' + fake.address().port, instanceId: 'untrusted-server' });
+    const start = performance.now(); await assert.rejects(startObservationHost({ store: f.store }), /verification failed/); assert.ok(performance.now() - start < 2000);
+    assert.equal(requests.length, 1); assert.equal(requests[0].headers.authorization, undefined);
+    assert.ok(!JSON.stringify(requests).includes(claim.token)); assert.ok(!JSON.stringify(requests).includes(saved.token));
+    assert.equal(f.store.readDashboardClaim().id, claim.id);
+  } finally { await host?.close(); fake.closeAllConnections(); await new Promise(resolve => fake.close(resolve)); f.dispose(); }
+});
+
+test('shutdown retains the exact claim while an authorized notification write remains unsettled', async () => {
+  const f = await fixture(); let host, release;
+  let entered; const started = new Promise(resolve => { entered = resolve; });
+  const pending = new Promise(resolve => { release = resolve; });
+  try {
+    host = await startObservationHost({ store: f.store, notificationWrite: async () => { entered(); await pending; return { saved: true }; } });
+    const saved = f.store.readDashboardClaim();
+    const writing = http(host.url, { path: '/api/notifications/preferences', method: 'POST', headers: { Origin: host.url, Authorization: 'Bearer ' + host.sessionToken, 'Content-Type': 'application/json' }, body: '{}' }).catch(() => {});
+    await started;
+    await assert.rejects(host.close(), /notification write/);
+    assert.equal(f.store.readDashboardClaim().id, saved.id);
+    release(); await writing; await delay(10);
+    assert.equal(f.store.readDashboardClaim().id, saved.id);
+    await host.close(); host = undefined;
+    assert.equal(f.store.readDashboardClaim(), undefined);
+  } finally { release?.(); await host?.close(); f.dispose(); }
+});
+
+test('large saved invocation inputs cannot block summary pagination or exceed detail response bounds', async () => {
+  const f = await fixture(); let host;
+  try {
+    await f.store.saveInvocationMetadata(f.invocation.id, { fixtureInput: 'x'.repeat(1100000) });
+    host = await startObservationHost({ store: f.store });
+    const response = await fetch(host.url + '/api/invocations?limit=1'); const text = await response.text();
+    assert.equal(response.status, 200); assert.ok(Buffer.byteLength(text) < 1048576);
+    const page = JSON.parse(text); assert.equal(page.invocations[0]?.id, f.invocation.id); assert.equal(page.invocations[0].metadata, undefined);
+    assert.ok(page.nextCursor > 0); assert.equal(page.hasMore, false);
+    assert.equal((await fetch(host.url + '/api/invocations/' + f.invocation.id)).status, 413);
+  } finally { await host?.close(); f.dispose(); }
+});
