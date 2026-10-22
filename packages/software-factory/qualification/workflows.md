@@ -1,6 +1,6 @@
 # Change and audit recipe qualification
 
-Status: fake-mode behavior qualified on 2026-10-22 against the T7 public workflow seam from base `974bfef4`. Milestone 5 live acceptance remains pending a qualified T8 provider. No live provider, publication, install, adoption or learning operation ran for this task.
+Status: deterministic recipes and bounded live change/audit acceptance are verified on 2026-10-22. Source is integrated with the qualified Codex provider at `4a97fe1d`; the later documentation/native-verifier commits do not change factory code. No publication, real installation, adoption or learning action occurred.
 
 ## Authoring and input contract
 
@@ -61,7 +61,7 @@ Working directory: `packages/software-factory` in this worktree. Locked dependen
 /var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/factory-qualified-node-i2fv29e3/node-v24.22.1-darwin-arm64/bin/node
 ```
 
-Prepend that runtime's `bin` directory to `/opt/homebrew/bin:/usr/bin:/bin` for npm. Run commands through RTK. Native process inspection is required; sandbox `ps`/`sysctl` rejection is invalid environment evidence.
+Prepend that runtime's `bin` directory to `/Users/adam/homebrew/bin:/usr/bin:/bin` for npm. Run commands through RTK. Native process inspection is required; sandbox `ps`/`sysctl` rejection is invalid environment evidence.
 
 ```sh
 rtk npm run typecheck
@@ -70,7 +70,7 @@ rtk proxy node --test test/workflows.test.mjs
 rtk proxy node --test test/adapters.test.mjs test/startup.test.mjs
 ```
 
-The workflow suite is intentionally not registered by this task. The integration owner registers `test:workflows` after independent review; use the explicit test path above until then.
+The integration owner registered `test:workflows` after independent review. Both the group command and the explicit path run the maintained workflow cases.
 
 Observed workflow result: 24/24 public subprocess E2Es passed in 27.73 seconds. They cover useful change/audit, passing/failing selected checks and gating, two corrections then pass/exhaustion, rechecks, fresh reviews, format correction/read-only rights and invalid-again termination, valid needs-input, permission/unknown-cleanup/spawn failures, no-op charges, optional selected work, independent phase inputs, explicit browser verification, twenty additional attempts across joined history, retained exhausted quality loops audit mutation rejection, bounded snapshot entry/byte/time policies, generated candidate growth beyond policy and invalid-policy rejection. An independent review found an ambiguous fingerprint serialization; its public reproducer failed before the digest/length fix and passed afterward. The explicit effective-review override mutation scenario also passed separately after its final test update.
 
@@ -82,6 +82,12 @@ Security repair proof on 2026-10-22: public change and audit invocation tests we
 
 Official API references checked against the documented Node v24.22.1 pages: [filesystem and no-follow/descriptor APIs](https://nodejs.org/docs/latest-v24.x/api/fs.html), [incremental hash APIs](https://nodejs.org/docs/latest-v24.x/api/crypto.html). No dependency, shared runtime API, scheduler, database, package script or build configuration was added.
 
-## Remaining acceptance
+## Combined live acceptance
 
-The owner must integrate/register this suite and run the combined milestone proof. A harmless live change plus read-only audit using a qualified T8 mode remains pending. No live provider support or milestone completion is claimed by the fake harness. Stop before learning workflows.
+The reviewed recipes are registered and integrated. Fresh pinned strict checks/build and 250 composed checks pass in 72.559 seconds (`/tmp/factory-base-codex-integrated-tests.log`), including 30 workflow cases. A separate bounded batch then used four native calls, with a six-call cap and 60-second per-call timeout, using exact Codex 0.163.0 / gpt-6-luna low on local macOS arm64. Native configuration, hook trust and permissions remain respected.
+
+Change invocation `c1936848-806c-4494-b255-ab5b77a3b58b` uses workspace-write implementation to create only `recipe-proof.txt` with exact `RECIPE_PROOF_7E2D` plus newline. Its selected Node check succeeds, followed by a fresh read-only review with no findings and no candidate mutation. Audit invocation `16fb0c1e-60d0-4dd2-97be-0c019fbee894` uses a separate fresh worktree, read-only investigation of committed `tracked.txt` and HEAD, selected content/absence check, and a distinct fresh read-only review. Synthesis and browser verification are explicitly off. Both reports are complete with zero corrections; deterministic tests separately cover corrections, exhaustion and optional selected work.
+
+All four native sessions and corresponding agent attempts succeed with quiescence established. Both invocations exit 0 with complete cleanup. Source fixture staged/unstaged bytes, index, untracked/ignored files remain intact. Native usage inclusion and loaded skills remain unknown. This bounded proof establishes these two recipes with the already-qualified local provider mode; other providers/platforms and installed product acceptance remain separate.
+
+Full saved evidence: `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/factory-repository-8em5i1/live-recipes-result.json`. Drivers/logs: `/tmp/factory-live-recipes-proof.mjs`, `/tmp/factory-live-recipes-proof.log`, `/tmp/factory-live-audit-resume-proof.mjs`, `/tmp/factory-live-audit-resume-proof.log`. The first driver completed change but mishandled the paginated sessions return in its evidence assertion. The corrected continuation ran only audit, retained change evidence and kept the cumulative four-call count. No provider retry was needed. No additional calls are planned for this batch.
