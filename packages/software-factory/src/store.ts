@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, unlinkSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { setTimeout as delay } from 'node:timers/promises';
 import { initializeSchema, schemaVersion } from './schema.js';
@@ -15,7 +15,7 @@ export interface Claim {
 }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
 interface Worktree { id: string; path: string; registration: string }
-interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null }
+export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object }
 interface Attempt extends Admission {
   runId: string; operationId: string; fingerprint: string;
   launch: 'admitted' | 'started' | 'not_started' | 'unknown'; outcome: 'succeeded' | 'failed' | 'needs_input' | 'interrupted' | null;
@@ -162,6 +162,76 @@ export class RepositoryStore {
     });
   }
 
+  /** Reserve an absent destination without creating it. Ownership must precede Git mutation. */
+  async reserveWorktree(destination: string): Promise<Worktree> {
+    const path = join(realpathSync(dirname(destination)), basename(destination));
+    if (existsSync(path)) throw new Error('worktree destination already exists');
+    return this.transaction(() => {
+      this.ready();
+      const worktree = { id: randomUUID(), path, registration: 'reserved' };
+      this.database.prepare('INSERT INTO worktrees(id,path,data) VALUES (?,?,?)').run(worktree.id, path, JSON.stringify(worktree));
+      this.event('worktree.reserved', { worktreeId: worktree.id });
+      return worktree;
+    });
+  }
+
+  readWorktree(id: string): Worktree {
+    const row = this.database.prepare('SELECT data FROM worktrees WHERE id=?').get(id);
+    if (!row) throw new Error('worktree not found');
+    return JSON.parse(String(row['data'])) as Worktree;
+  }
+
+  async finalizeWorktree(input: { id: string; claimId: string; token: string; registration: string }) {
+    text(input.registration, 'Git registration');
+    return this.transaction(() => {
+      const claim = this.database.prepare('SELECT resource_key FROM owner_claims WHERE id=? AND token=? AND kind=?').get(input.claimId, input.token, 'worktree');
+      if (!claim || claim['resource_key'] !== input.id) throw new Error('claim/token no longer matches worktree');
+      const worktree = this.readWorktree(input.id);
+      if (worktree.registration !== 'reserved') throw new Error('worktree is not reserved');
+      if (realpathSync(worktree.path) !== worktree.path) throw new Error('worktree destination changed');
+      worktree.registration = input.registration;
+      this.database.prepare('UPDATE worktrees SET data=? WHERE id=?').run(JSON.stringify(worktree), input.id);
+      this.event('worktree.registered', { worktreeId: input.id });
+    });
+  }
+
+  readHistory(id: string) {
+    const invocation = this.readInvocation(id);
+    const attempts = this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? ORDER BY rowid').all(id).map(row => JSON.parse(String(row['data'])) as Attempt);
+    const captures = this.database.prepare('SELECT id FROM captures WHERE invocation_id=? ORDER BY rowid').all(id).map(row => {
+      const captureId = String(row['id']); let after = 0; const chunks: CaptureChunk[] = [];
+      let page;
+      do { page = this.readCapture({ id: captureId, after }); chunks.push(...page.chunks); after = page.nextSequence; } while (page.hasMore);
+      return { id: captureId, state: page.state, channel: page.channel, chunks };
+    });
+    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId) };
+  }
+
+  validateReference(input: { id: string; runId: string; question?: boolean }) {
+    const row = this.database.prepare('SELECT c.channel,c.state,i.run_id FROM captures c JOIN invocations i ON c.invocation_id=i.id WHERE c.id=?').get(input.id);
+    if (!row || row['run_id'] !== input.runId || row['state'] !== 'complete' || (input.question && row['channel'] !== 'request')) throw new Error('missing, incomplete or foreign-run context reference');
+  }
+
+  async saveInvocationMetadata(id: string, metadata: object) {
+    return this.transaction(() => {
+      const invocation = this.readInvocation(id);
+      invocation.metadata = metadata;
+      this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation), id);
+      this.event('invocation.inputs', { invocationId: id });
+    });
+  }
+
+  async finishInvocation(id: string, outcome: string, cleanup: 'complete' | 'unknown') {
+    return this.transaction(() => {
+      const invocation = this.readInvocation(id);
+      if (invocation.stage === 'finalized') throw new Error('invocation already finalized');
+      if (cleanup === 'complete' && this.database.prepare('SELECT id FROM attempts WHERE invocation_id=? AND occupied=1').get(id)) throw new Error('activity is not quiescent');
+      invocation.stage = 'finalized'; invocation.outcome = outcome; invocation.cleanup = cleanup;
+      this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation), id);
+      this.event('invocation.finalized', { invocationId: id, outcome, cleanup });
+    });
+  }
+
   async startInvocation(input: { runId: string; worktreeId: string; owner: Owner }): Promise<Invocation & { claim: Claim }> {
     validateOwner(input.owner);
     return this.transaction(() => {
@@ -254,7 +324,7 @@ export class RepositoryStore {
     return Number(this.database.prepare('SELECT coalesce(sum(delta),0) AS n FROM allowance_ledger WHERE run_id=? AND category=? AND scope=?').get(runId, category, scope)?.['n']);
   }
 
-  async admitAttempt(input: Admission): Promise<Attempt> {
+  async admitAttempt(input: Admission, startup = false): Promise<Attempt> {
     validateAdmission(input);
     const fingerprint = JSON.stringify([input.id, input.invocationId, input.operationKey, input.kind, input.intent, input.priorAttemptId ?? null, input.loopKey ?? null]);
     return this.transaction(() => {
@@ -267,7 +337,7 @@ export class RepositoryStore {
       }
       this.ready();
       const invocation = this.readInvocation(input.invocationId);
-      if (invocation.stage !== 'running' || !this.database.prepare('SELECT id FROM owner_claims WHERE invocation_id=?').get(invocation.id)) throw new Error('invocation not eligible for admission');
+      if ((invocation.stage !== 'running' && !(startup && invocation.stage === 'starting' && input.kind === 'command' && input.operationKey === `startup/build/${invocation.id}`)) || !this.database.prepare('SELECT id FROM owner_claims WHERE invocation_id=?').get(invocation.id)) throw new Error('invocation not eligible for admission');
       const limits = this.database.prepare('SELECT agent_limit,command_limit FROM repository').get()!;
       const capacity = Number(limits[input.kind === 'agent' ? 'agent_limit' : 'command_limit']);
       if (Number(this.database.prepare('SELECT count(*) AS n FROM attempts WHERE kind=? AND occupied=1').get(input.kind)?.['n']) >= capacity) throw new Error(`${input.kind} capacity exhausted`);
