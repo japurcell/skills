@@ -153,6 +153,30 @@ def wait_process(process, timeout):
         return process.wait(timeout=max(0, deadline - time.monotonic()))
 
 
+
+def finalize_owned_process(process, deadline, *, resource):
+    """Kill and confirm exit of one exact unreaped child within shared time."""
+    started = time.monotonic()
+    deadline = min(deadline, started + REAP_SECONDS) if deadline is not None else started + REAP_SECONDS
+    if CANCELLED_AT is not None:
+        deadline = min(deadline, CANCELLED_AT + CLEANUP_SECONDS)
+    allowance = max(0, deadline - started)
+    try:
+        if process.poll() is None:
+            with contextlib.suppress(OSError):
+                os.killpg(process.pid, signal.SIGKILL)
+        with contextlib.suppress(OSError, subprocess.TimeoutExpired):
+            wait_process(process, max(0, deadline - time.monotonic()))
+        if process.poll() is not None:
+            return
+    except OSError:
+        pass
+    # Signal submission and an expired/failed wait are not exit proof. This
+    # failure overrides any nominal success, findings, or cancellation result.
+    raise Failure("process_cleanup_incomplete", 2, "cleanup", resource=resource,
+        limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds")
+
+
 def process_snapshot(*, deadline=None, interruptible=True):
     """Read bounded PID/parent/group/start/state metadata, never command text."""
     with tempfile.TemporaryFile() as output:
@@ -202,15 +226,7 @@ def process_snapshot(*, deadline=None, interruptible=True):
                 result[pid] = (parent, group, tuple(fields[3:8]), fields[8])
             return result
         finally:
-            if observer.poll() is None:
-                with contextlib.suppress(ProcessLookupError, PermissionError):
-                    os.killpg(observer.pid, signal.SIGKILL)
-            reap_deadline = deadline
-            if CANCELLED_AT is not None:
-                reap_deadline = min(reap_deadline, CANCELLED_AT + CLEANUP_SECONDS) if reap_deadline is not None else CANCELLED_AT + CLEANUP_SECONDS
-            allowance = REAP_SECONDS if reap_deadline is None else max(0, min(REAP_SECONDS, reap_deadline - time.monotonic()))
-            with contextlib.suppress(subprocess.TimeoutExpired):
-                wait_process(observer, allowance)
+            finalize_owned_process(observer, deadline, resource="metadata_observer")
 
 
 def process_query_helper():
@@ -361,20 +377,8 @@ class ProcessInspector:
             raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
 
     def close(self, deadline):
-        started = time.monotonic()
-        allowance = max(0, min(REAP_SECONDS, deadline - started))
         try:
-            if self.process.poll() is None:
-                with contextlib.suppress(ProcessLookupError, PermissionError):
-                    os.killpg(self.process.pid, signal.SIGKILL)
-            with contextlib.suppress(OSError, subprocess.TimeoutExpired):
-                wait_process(self.process, max(0, min(allowance, deadline - time.monotonic())))
-            if self.process.poll() is None:
-                # Signal delivery is not exit proof. A denied signal or expired
-                # reap must not turn a live helper into successful cancellation.
-                raise Failure("process_cleanup_incomplete", 2, "cleanup",
-                    resource="native_helper", limit=round(allowance, 3),
-                    measured=round(time.monotonic() - started, 3), unit="seconds")
+            finalize_owned_process(self.process, deadline, resource="native_helper")
         finally:
             self.process.stdin.close()
             self.process.stdout.close()
@@ -487,11 +491,7 @@ def stop_process(process, known):
             process.poll()
             return
     finally:
-        if process.poll() is None:
-            with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.killpg(process.pid, signal.SIGKILL)
-        with contextlib.suppress(subprocess.TimeoutExpired):
-            wait_process(process, max(0, min(REAP_SECONDS, deadline - time.monotonic())))
+        finalize_owned_process(process, deadline, resource="managed_child")
 
 
 

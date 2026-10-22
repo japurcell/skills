@@ -681,6 +681,76 @@ class PreflightTests(unittest.TestCase):
                     'delay_seconds': delay, 'elapsed_seconds': round(elapsed, 6),
                     'observed_processes_stopped': len(pids)}), flush=True)
 
+    @unittest.skipIf(os.name == "nt", "POSIX metadata observer shutdown")
+    def test_denied_stopped_metadata_observer_shutdown_reports_incomplete(self):
+        wrapper, observers, git_started = self.observation_wrapper(60, first=1)
+        source = wrapper.read_text().replace('real = subprocess.Popen\nobservations = 0\n',
+            'real = subprocess.Popen\nobservations = 0\nimport os,signal\nobserver_pid=None\nreal_killpg=os.killpg\n'
+            'def guarded_killpg(pid,signum):\n'
+            ' if pid==observer_pid and signum==signal.SIGKILL:\n'
+            '  real_killpg(pid,signal.SIGSTOP)\n'
+            '  raise PermissionError("injected observer signal denial")\n'
+            ' return real_killpg(pid,signum)\n'
+            'os.killpg=guarded_killpg\n')
+        source = source.replace(' global observations\n', ' global observations,observer_pid\n')
+        source = source.replace('  process = real(command,*args,**kwargs)\n',
+            '  process = real(command,*args,**kwargs)\n'
+            '  if observations==1: observer_pid=process.pid\n')
+        wrapper.write_text(source)
+        before = self.fingerprint()
+        observer = None
+        identity = None
+        try:
+            with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(ROOT), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                deadline = time.monotonic() + 3
+                while not observers.exists() and time.monotonic() < deadline and process.poll() is None:
+                    time.sleep(0.01)
+                self.assertTrue(observers.exists(), 'metadata observer did not start')
+                observer = int(observers.read_text().splitlines()[0])
+                identity = subprocess.check_output(['/bin/ps', '-o', 'lstart=', '-p', str(observer)])
+                started = time.monotonic()
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=4)
+                elapsed = time.monotonic() - started
+            state = subprocess.run(['/bin/ps', '-o', 'stat=', '-p', str(observer)],
+                capture_output=True, timeout=2).stdout.strip()
+            print(json.dumps({'fixture_observer': 'denied-stopped-metadata-observer',
+                'returncode': process.returncode, 'reason': json.loads(stdout)['reason'],
+                'cleanup_seconds': round(elapsed, 6), 'observer_state_before_emergency_cleanup': state.decode()}), flush=True)
+            self.assertTrue(state.startswith(b'T'), 'injected observer denial did not leave a stopped observer')
+            self.assertEqual(process.returncode, 2, stdout + stderr)
+            report = json.loads(stdout)
+            self.assertEqual(report['result'], 'rejected')
+            self.assertEqual(report['reason'], 'process_cleanup_incomplete')
+            self.assertEqual(report['phase'], 'cleanup')
+            self.assertFalse(git_started.exists())
+            self.assertLess(elapsed, 2)
+            self.assertNotIn(b'Traceback', stderr)
+            self.assertNotIn(TOKEN.encode(), stdout + stderr)
+            self.assertEqual(self.fingerprint(), before)
+        finally:
+            # Observe the survivor before emergency cleanup. The fresh start
+            # identity and unique fixture marker authorize only this child.
+            if observer is not None and identity and observers.exists():
+                current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(observer)],
+                    capture_output=True, timeout=2).stdout
+                if current == identity and observers.read_text().splitlines() == [str(observer)]:
+                    try:
+                        os.killpg(observer, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    deadline = time.monotonic() + 1
+                    while time.monotonic() < deadline:
+                        state = subprocess.run(['/bin/ps', '-o', 'stat=', '-p', str(observer)],
+                            capture_output=True, timeout=2).stdout.strip()
+                        if not state or state.startswith(b'Z'):
+                            break
+                        time.sleep(0.01)
+                    self.assert_stopped([observer])
+
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_delayed_metadata_cleanup_stops_resistant_separate_session(self):
         self.assert_resistant_session_cleanup(0.3)
