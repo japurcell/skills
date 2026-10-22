@@ -141,7 +141,7 @@ function renderIndex() {
     <details class="surface"><summary class="section-body">Repository storage and maintenance</summary><div class="section-body"><p>Saved history and backup sizes have not been measured by this host. No growth estimate is available.</p><p>Stop the dashboard process before exceptional idle maintenance. Closing this browser tab does not stop the host. After uninstall, a compatible installation is needed to read saved history.</p></div></details>`;
   renderCards();
 }
-async function loadRun(target, generation = state.routeGeneration, reader = null) {
+async function loadRun(target, generation = state.routeGeneration, reader = null, restoreWindow) {
   const href=location.href,snapshot=state.snapshotGeneration;
   const current=()=>generation===state.routeGeneration&&href===location.href&&snapshot===state.snapshotGeneration;
   const run = await api(`/api/runs/${target.run}`);
@@ -243,7 +243,7 @@ async function loadRun(target, generation = state.routeGeneration, reader = null
     if(index>=0)state.lanePage=Math.floor(index/50);
   }
   renderRun(displayTarget);
-  if(reader)window.scrollTo(0,reader.top||0);
+  if(reader)restoreWindow(reader.top);
   return true;
 }
 function attention(invocation) {
@@ -463,9 +463,8 @@ async function resumeView(snapshot) {
     }
   }
 }
-async function loadRoute(reader = null, baseline = null, resume = true) {
+async function loadRoute(reader = null, baseline = null, resume = true, restoreWindow = windowRestoreIntent()) {
   if (!state.token) return;
-  if(reader&&!Number.isSafeInteger(reader.userScrollGeneration))reader.userScrollGeneration=userScrollGeneration;
   const snapshot=beginViewIntent();
   const generation=++state.routeGeneration, target=route();
   state.validatedParent=null;
@@ -479,13 +478,13 @@ async function loadRoute(reader = null, baseline = null, resume = true) {
   try {
     if (!target.run) {committed=await loadIndex(generation,reader?.pages?.runs??state.runPage)===true;if(committed)state.lastUpdate=new Date();return;}
     if (!idPattern.test(target.run)) { routeError('Invalid run link. The saved record was not selected.'); return; }
-    committed=await loadRun(target,generation,reader)===true;
+    committed=await loadRun(target,generation,reader,restoreWindow)===true;
     if (generation!==state.routeGeneration||snapshot!==state.snapshotGeneration) return;
     if(committed)state.lastUpdate=new Date();
   } catch(error) { if (generation===state.routeGeneration&&snapshot===state.snapshotGeneration) routeError(error.message,state.validatedParent); }
   finally {
     if(snapshot===state.snapshotGeneration) {
-      if(reader)await restoreReader(reader,generation);
+      if(reader)await restoreReader(reader,generation,restoreWindow);
       if(snapshot!==state.snapshotGeneration||generation!==state.routeGeneration)return;
       if(baseline!==null&&committed)state.cursor=baseline;
       state.snapshotting=false;
@@ -498,24 +497,24 @@ async function loadRoute(reader = null, baseline = null, resume = true) {
     }
   }
 }
-function navigateRoute(reader = null) {
+function navigateRoute(reader = null, restoreWindow = windowRestoreIntent()) {
   // Explicit navigation reads current projections. End the old view's Freeze
   // before rendering them, then replay through the new catch-up head.
   state.frozen=false;
-  return loadRoute(reader);
+  return loadRoute(reader,null,true,restoreWindow);
 }
 function readerSnapshot() {
   const active=document.activeElement;
   const selection=window.getSelection(),selectedText=selection?.toString()||'';
   const path=node=>{if(!node||!app.contains(node))return null;const parts=[];while(node!==app){const parent=node.parentNode;if(!parent)return null;parts.unshift([...parent.childNodes].indexOf(node));node=parent;}return parts;};
-  return {top:window.scrollY,userScrollGeneration,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
+  return {top:window.scrollY,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
     route:route(),pages:{runs:state.runPage.slice(-128),invocations:state.invocationPage.slice(-128),attempts:state.attemptPage.slice(-128),captures:state.captureSummaryPage.slice(-128),sessions:state.sessionPage.slice(-128),lane:state.lanePage},
     eventWindowEnd:state.events.at(-1)?.cursor||null,capture:state.selectedCapture?{id:state.selectedCapture,after:state.captureAfter}:null,
     disclosures:[...app.querySelectorAll('details')].map(item=>({name:item.querySelector('summary')?.textContent?.trim(),open:item.open})),
     selection:selection&&!selection.isCollapsed&&selectedText.length<=2048?{anchor:path(selection.anchorNode),anchorOffset:selection.anchorOffset,focus:path(selection.focusNode),focusOffset:selection.focusOffset,text:selectedText}:null,
     focus:{id:active?.id,href:active?.getAttribute('href'),action:active?.getAttribute('data-action'),item:active?.getAttribute('data-id'),start:active?.selectionStart,end:active?.selectionEnd}};
 }
-async function restoreReader(reader, generation=state.routeGeneration) {
+async function restoreReader(reader, generation=state.routeGeneration, restoreWindow=windowRestoreIntent()) {
   if(!reader||state.error)return;
   const href=location.href,invocationId=state.invocation?.id,snapshot=state.snapshotGeneration;
   const current=()=>generation===state.routeGeneration&&href===location.href&&state.invocation?.id===invocationId&&snapshot===state.snapshotGeneration;
@@ -549,7 +548,7 @@ async function restoreReader(reader, generation=state.routeGeneration) {
     const anchor=resolve(selection.anchor),end=resolve(selection.focus);
     if(anchor&&end) {const current=window.getSelection();try{current.setBaseAndExtent(anchor,selection.anchorOffset,end,selection.focusOffset);if(current.toString()!==selection.text)current.removeAllRanges();}catch {current.removeAllRanges();}}
   }
-  if(reader.userScrollGeneration===userScrollGeneration)window.scrollTo(0,reader.top||0);
+  restoreWindow(reader.top);
 }
 async function redeem(ticket) {
   if (!ticket) throw new Error('This browser link has no active owner handoff. Start the dashboard from its owner process and open the new link.');
@@ -927,6 +926,10 @@ app.addEventListener('scroll',event=>{if(event.target.id==='capture-text'&&state
 history.scrollRestoration='manual';
 let lastNavigatedHref=location.href;
 let recentReading={top:0},userScrollUntil=0,userScrollGeneration=0;
+function windowRestoreIntent() {
+  const inputAtStart=userScrollGeneration;
+  return top=>{if(inputAtStart===userScrollGeneration)window.scrollTo(0,top||0);};
+}
 const noteUserScroll=()=>{userScrollGeneration++;userScrollUntil=performance.now()+1000;};
 window.addEventListener('wheel',noteUserScroll,{passive:true});
 window.addEventListener('touchmove',noteUserScroll,{passive:true});
@@ -940,7 +943,7 @@ app.addEventListener('click',async event=>{
   if(!anchor || event.defaultPrevented || event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
   event.preventDefault();
   const current=route(),before=readerSnapshot(),oldRun=current.run;
-  const scrollGeneration=userScrollGeneration;
+  const restoreWindow=windowRestoreIntent();
   const returning=anchor.dataset.action==='return-timeline';
   const selected=state.displayTarget;
   const fallbackOrigin=selected?link({run:selected.run,invocation:state.invocation?.id,phase:selected.phase,attempt:selected.attempt,session:selected.session}):null;
@@ -954,13 +957,10 @@ app.addEventListener('click',async event=>{
   if(returning)[...document.querySelectorAll('.phase-bar, .timeline-text a')].find(item=>item.getAttribute('href')===originHref)?.focus({preventScroll:true});
   const destination=new URLSearchParams(anchor.getAttribute('href').slice(1));
   const sameInvocation=destination.get('run')===state.run?.id&&(!destination.get('invocation')||destination.get('invocation')===state.invocation?.id);
-  const loading=navigateRoute(returning||sameInvocation?before:null),snapshot=state.snapshotGeneration;
+  const loading=navigateRoute(returning||sameInvocation?before:null,restoreWindow),snapshot=state.snapshotGeneration;
   await loading;
   if(snapshot!==state.snapshotGeneration)return;
-  if(userScrollGeneration===scrollGeneration) {
-    if(route().run===oldRun)window.scrollTo(0,before.top);
-    else window.scrollTo(0,0);
-  }
+  restoreWindow(route().run===oldRun?before.top:0);
   if(returning) {
     const phase=[...document.querySelectorAll('.phase-bar, .timeline-text a')].find(item=>item.getAttribute('href')===originHref);
     (phase||document.querySelector('.timeline-scroll'))?.focus({preventScroll:true});

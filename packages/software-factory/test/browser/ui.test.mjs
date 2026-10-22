@@ -483,6 +483,60 @@ test('saved question is visible before finalization and a failed explanation ope
   } finally {await browser.close();await f.dispose();}
 });
 
+test('Back restores Repository runs after scrolling the intervening timeline', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:860,height:400}});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    const indexStart=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,180);
+    await page.waitForFunction(top=>window.scrollY>top,indexStart,{timeout:2000});
+    const indexTop=await page.evaluate(()=>window.scrollY);
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    const runStart=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,550);
+    await page.waitForFunction(top=>window.scrollY>top,runStart,{timeout:2000});
+    await page.goBack();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    assert.equal(await page.evaluate(()=>window.scrollY),indexTop);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('Back keeps a wheel scroll made while its run request is held', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});
+  const page=await browser.newPage({viewport:{width:860,height:400}});
+  let release;const held=new Promise(resolve=>{release=resolve});let entered;const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    const initial=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,180);
+    await page.waitForFunction(top=>window.scrollY>top,initial,{timeout:2000});
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    await page.route(url=>url.pathname==='/api/runs/'+f.run.id,async route=>{entered();await held;await route.continue();});
+    const back=page.goBack();
+    await intercepted;
+    const beforeWheel=await page.evaluate(()=>window.scrollY);
+    await page.mouse.wheel(0,300);
+    await page.waitForFunction(top=>window.scrollY>top,beforeWheel,{timeout:2000});
+    const userTop=await page.evaluate(()=>window.scrollY);
+    release();
+    await back;
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    assert.equal(await page.evaluate(()=>window.scrollY),userTop);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
 test('Back preserves a user scroll made while saved reader content restores', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:860,height:650}});
