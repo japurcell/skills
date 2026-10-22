@@ -12,7 +12,7 @@ import { createRepository } from './fixtures/repository.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sha = value => createHash('sha256').update(value).digest('hex');
 
-async function fixture({ alteredReport = false } = {}) {
+async function fixture({ alteredReport = false, alteredSources = false } = {}) {
   const repo = createRepository();
   mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
   writeFileSync(join(repo.path, '.factory/package.json'), '{"type":"module"}');
@@ -25,6 +25,23 @@ async function fixture({ alteredReport = false } = {}) {
     assert.ok(original.includes('proposals: answer.value.proposals,'));
     writeFileSync(path, original.replace('proposals: answer.value.proposals,',
       'proposals: answer.value.proposals.map(proposal => ({ ...proposal, candidateCapture: { ...proposal.candidateCapture!, captureId: examinedSources[0]!.captureIds.at(-2)! } })), '));
+  }
+  if (alteredSources) {
+    const path = join(repo.path, '.factory/workflows/learn.ts');
+    const original = readFileSync(path, 'utf8');
+    const sourceLine = 'suppliedSources: input.sources, examinedSources, captureLimitations,';
+    assert.ok(original.includes(sourceLine));
+    const sourceReports = {
+      true: "suppliedSources: [...input.sources, { invocationId: 'not-a-real-source' }], examinedSources: [...examinedSources, { ...examinedSources[0]!, invocationId: 'not-a-real-source' }], captureLimitations,",
+      outcome: "suppliedSources: input.sources, examinedSources: examinedSources.map(source => ({ ...source, outcome: 'failed' })), captureLimitations,",
+      attempts: "suppliedSources: input.sources, examinedSources: examinedSources.map(source => ({ ...source, attemptIds: ['not-a-real-attempt'] })), captureLimitations,",
+      events: "suppliedSources: input.sources, examinedSources: examinedSources.map(source => ({ ...source, eventCursors: ['922'] })), captureLimitations,",
+      captures: "suppliedSources: input.sources, examinedSources: examinedSources.map(source => ({ ...source, captureIds: [...source.captureIds, 'not-a-real-capture'] })), captureLimitations,",
+      limitations: "suppliedSources: input.sources, examinedSources, captureLimitations: [{ invocationId: input.sources[0]!.invocationId, kind: 'capture_pruned' }],",
+      selected: "suppliedSources: input.sources.map(source => ({ ...source, attemptIds: ['not-a-real-attempt'] })), examinedSources, captureLimitations,",
+    };
+    assert.ok(sourceReports[alteredSources], alteredSources);
+    writeFileSync(path, original.replace(sourceLine, sourceReports[alteredSources]));
   }
   cpSync(join(root, 'templates/workflows/change.ts'), join(repo.path, '.factory/workflows/change.ts'));
   repo.git(['add', '.factory']);
@@ -44,7 +61,7 @@ const start = adapter.start;
 adapter.start = request => start({ ...request, context: JSON.stringify({ context: request.context, scenario, launchLog: ${JSON.stringify(launchLog)} }) });
 const result = await invoke({ ...options, adapters: { fake: adapter } });
 console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
-  const save = async ({ baseline = 'baseline\n', candidate = 'candidate\n', proposalKind = 'capture', target = { scope: 'repository', path: '.factory/prompts/check.md' }, candidateState = 'complete', baselineState = 'complete', reportState = 'complete', duplicateReport = false, forgedReport = false } = {}) => {
+  const save = async ({ baseline = 'baseline\n', candidate = 'candidate\n', proposalKind = 'capture', target = { scope: 'repository', path: '.factory/prompts/check.md' }, candidateState = 'complete', baselineState = 'complete', extraPartialSourceCapture = false, reportState = 'complete', duplicateReport = false, forgedReport = false } = {}) => {
     const store = openRepositoryStore(common);
     try {
       const run = await store.createRun();
@@ -52,6 +69,10 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       const source = await store.startInvocation({ runId: run.id, worktreeId: worktree.id, owner: { host: 'fixture', pid: process.pid, start: null } });
       const baselineCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
       await store.appendCapture({ id: baselineCapture.id, chunks: [{ sequence: 1, text: baseline }], state: baselineState });
+      if (extraPartialSourceCapture) {
+        const partial = await store.createCapture({ invocationId: source.id, channel: 'event' });
+        await store.appendCapture({ id: partial.id, chunks: [{ sequence: 1, text: 'unrelated partial source' }], state: 'partial' });
+      }
       const sourceCandidateCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
       await store.appendCapture({ id: sourceCandidateCapture.id, chunks: [{ sequence: 1, text: candidate }], state: candidateState });
       if (alteredReport) {
@@ -122,7 +143,44 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       }
     } finally { database.close(); }
   };
-  return { ...repo, save, invoke, report, damageValidated, launchLog, common };
+  const damageInputs = (saved, damage) => {
+    const store = openRepositoryStore(common);
+    let captureId;
+    try {
+      captureId = store.readHistory(saved.extractionId, { limit: 100 }).attempts
+        .find(attempt => attempt.operationKey === 'learn/extract').agent.inputsCaptureId;
+    } finally { store.close(); }
+    const database = new DatabaseSync(join(common, 'factory/history.sqlite'));
+    try {
+      if (damage === 'missing') {
+        database.prepare('DELETE FROM capture_chunks WHERE capture_id=?').run(captureId);
+        database.prepare('DELETE FROM captures WHERE id=?').run(captureId);
+      } else if (damage === 'partial' || damage === 'pruned') {
+        database.prepare('UPDATE captures SET state=? WHERE id=?').run(damage, captureId);
+      } else if (damage === 'foreign-attempt') {
+        database.prepare('UPDATE captures SET attempt_id=NULL WHERE id=?').run(captureId);
+      } else {
+        const original = database.prepare('SELECT text FROM capture_chunks WHERE capture_id=? ORDER BY sequence').all(captureId)
+          .map(row => row.text).join('');
+        database.prepare('DELETE FROM capture_chunks WHERE capture_id=?').run(captureId);
+        let chunks;
+        if (damage === 'oversize') chunks = Array.from({ length: 14 }, () => 'x'.repeat(32700));
+        else if (damage === 'unreadable') chunks = ['x'.repeat(32768)];
+        else if (damage === 'invalid') chunks = ['{invalid'];
+        else {
+          const supplied = JSON.parse(original);
+          const context = JSON.parse(supplied.context);
+          context.evidence[0].outcome = 'failed';
+          supplied.context = JSON.stringify(context);
+          chunks = [JSON.stringify(supplied)];
+        }
+        for (const [index, text] of chunks.entries())
+          database.prepare('INSERT INTO capture_chunks(capture_id,sequence,text) VALUES (?,?,?)').run(captureId, index + 1, text);
+        database.prepare('UPDATE captures SET sequence=? WHERE id=?').run(chunks.length, captureId);
+      }
+    } finally { database.close(); }
+  };
+  return { ...repo, save, invoke, report, damageValidated, damageInputs, launchLog, common };
 }
 
 function evaluation(saved, overrides = {}) {
@@ -194,6 +252,36 @@ test('genuine extraction followed by an altered candidate in its workflow report
   } finally { repo.dispose(); }
 });
 
+test('genuine extraction with fabricated supplied and examined source cannot certify improvement', async () => {
+  const repo = await fixture({ alteredSources: true });
+  try {
+    const saved = await repo.save();
+    const outcome = repo.invoke(evaluation(saved));
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'extraction_sources_mismatch'));
+    assert.deepEqual(report.cases, []);
+    assert.equal(existsSync(repo.launchLog), false);
+  } finally { repo.dispose(); }
+});
+
+test('changed source outcomes, selections, references, and limitations cannot certify improvement', async () => {
+  for (const alteredSources of ['outcome', 'attempts', 'events', 'captures', 'limitations', 'selected']) {
+    const repo = await fixture({ alteredSources });
+    try {
+      const saved = await repo.save();
+      const outcome = repo.invoke(evaluation(saved));
+      assert.equal(outcome.status, 0, `${alteredSources}: ${outcome.stdout}${outcome.stderr}`);
+      const report = repo.report(outcome.saved.invocationId);
+      assert.equal(report.assessment, 'inconclusive', alteredSources);
+      assert.deepEqual(report.cases, [], alteredSources);
+      assert.ok(report.limitations.some(item => item.kind === 'extraction_sources_mismatch'), alteredSources);
+      assert.equal(existsSync(repo.launchLog), false);
+    } finally { repo.dispose(); }
+  }
+});
+
 test('missing, pruned, partial, oversized, unreadable, invalid and foreign normalized evidence cannot certify improvement', async () => {
   const repo = await fixture();
   try {
@@ -214,6 +302,47 @@ test('missing, pruned, partial, oversized, unreadable, invalid and foreign norma
       assert.equal(result.assessment, 'inconclusive', damage);
       assert.deepEqual(result.cases, [], damage);
       assert.ok(result.limitations.some(item => item.kind === expected), `${damage}: ${JSON.stringify(result.limitations)}`);
+    }
+    assert.equal(existsSync(repo.launchLog), false);
+  } finally { repo.dispose(); }
+});
+
+test('authentic extract context limitations prevent supported assessment', async () => {
+  const repo = await fixture();
+  try {
+    const saved = await repo.save({ extraPartialSourceCapture: true });
+    assert.ok(repo.report(saved.extractionId).captureLimitations.some(item => item.kind === 'capture_partial'));
+    const outcome = repo.invoke(evaluation(saved));
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'extraction_source_limitations'));
+    assert.deepEqual(report.cases, []);
+    assert.equal(existsSync(repo.launchLog), false);
+  } finally { repo.dispose(); }
+});
+
+test('missing, damaged, unreadable, and mismatched extract inputs cannot certify improvement', async () => {
+  const repo = await fixture();
+  try {
+    for (const [damage, expected] of [
+      ['missing', 'extraction_inputs_missing_or_partial'],
+      ['partial', 'extraction_inputs_missing_or_partial'],
+      ['pruned', 'extraction_inputs_missing_or_partial'],
+      ['oversize', 'extraction_inputs_byte_limit'],
+      ['unreadable', 'extraction_inputs_unexamined'],
+      ['invalid', 'extraction_inputs_invalid'],
+      ['foreign-attempt', 'extraction_inputs_unverified'],
+      ['mismatch', 'extraction_sources_mismatch'],
+    ]) {
+      const saved = await repo.save();
+      repo.damageInputs(saved, damage);
+      const outcome = repo.invoke(evaluation(saved));
+      assert.equal(outcome.status, 0, `${damage}: ${outcome.stdout}${outcome.stderr}`);
+      const report = repo.report(outcome.saved.invocationId);
+      assert.equal(report.assessment, 'inconclusive', damage);
+      assert.deepEqual(report.cases, [], damage);
+      assert.ok(report.limitations.some(item => item.kind === expected), `${damage}: ${JSON.stringify(report.limitations)}`);
     }
     assert.equal(existsSync(repo.launchLog), false);
   } finally { repo.dispose(); }

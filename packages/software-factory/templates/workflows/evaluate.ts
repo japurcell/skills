@@ -18,7 +18,7 @@ type CaseResult = { key: string; criteria: string; sourceSuggestion?: string; se
 type ResultEvidence = { attemptId: string; rawCaptureId: string; validatedCaptureId: string };
 type Limitation = { kind: string; reference?: string; reportCaptureId?: string; reportSha256?: string; resultEvidence?: ResultEvidence };
 
-const MAX_CASES = 3, MAX_CAPTURE_BYTES = 131072, MAX_REPORT_BYTES = 131072;
+const MAX_CASES = 3, MAX_CAPTURE_BYTES = 131072, MAX_REPORT_BYTES = 131072, MAX_INPUT_BYTES = 393216;
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const keys = (value: Record<string, unknown>, allowed: string[]) => Object.keys(value).every(key => allowed.includes(key));
 const named = (value: unknown, max = 256): value is string => typeof value === 'string' && !!value.trim() && !value.includes('\0') && Buffer.byteLength(value) <= max;
@@ -176,7 +176,7 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
   const validatedId = parsed.proposalValidatedResultCaptureId as string;
   const reportSha256 = hash(report);
   const resultEvidence = { attemptId: attempt.id, rawCaptureId: parsed.proposalResultCaptureId as string, validatedCaptureId: validatedId };
-  const inconclusive = (kind: string): Limitation => ({ kind, reference: `${extraction.invocationId}:${validatedId}`,
+  const inconclusive = (kind: string, captureId = validatedId): Limitation => ({ kind, reference: `${extraction.invocationId}:${captureId}`,
     reportCaptureId: reportId, reportSha256, resultEvidence });
   const validatedCapture = captures.get(validatedId);
   if (!validatedCapture || validatedCapture.state !== 'complete')
@@ -213,6 +213,75 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
     return inconclusive('extraction_validated_result_invalid');
   if (!isDeepStrictEqual(result.payload.proposals, parsed.proposals))
     return inconclusive('extraction_proposals_mismatch');
+
+  const inputsId = attempt.agent.inputsCaptureId;
+  const inputsHeader = captures.get(inputsId);
+  if (!inputsHeader || inputsHeader.state !== 'complete')
+    return inconclusive('extraction_inputs_missing_or_partial', inputsId);
+  if (inputsHeader.channel !== 'context' || inputsHeader.attemptId !== attempt.id)
+    return inconclusive('extraction_inputs_unverified', inputsId);
+  let inputsText = '', inputsAfter = 0, inputsMore = true;
+  for (let pageIndex = 0; pageIndex < 16 && inputsMore; pageIndex++) {
+    let detail;
+    try { detail = await context.sourceHistory.capture(extraction.invocationId, inputsId, inputsAfter, 32768); }
+    catch (error) {
+      if (error instanceof Error && error.message === 'capture does not belong to selected invocation')
+        return inconclusive('extraction_inputs_missing_or_partial', inputsId);
+      throw error;
+    }
+    if (detail.state !== 'complete')
+      return inconclusive('extraction_inputs_missing_or_partial', inputsId);
+    if (detail.channel !== 'context') return inconclusive('extraction_inputs_unverified', inputsId);
+    for (const chunk of detail.chunks) inputsText += chunk.text;
+    if (Buffer.byteLength(inputsText) > MAX_INPUT_BYTES)
+      return inconclusive('extraction_inputs_byte_limit', inputsId);
+    if (detail.hasMore && detail.nextSequence === inputsAfter)
+      return inconclusive('extraction_inputs_unexamined', inputsId);
+    inputsAfter = detail.nextSequence; inputsMore = detail.hasMore;
+  }
+  if (inputsMore) return inconclusive('extraction_inputs_unexamined', inputsId);
+  let inputs: unknown, captured: unknown;
+  try {
+    inputs = JSON.parse(inputsText);
+    captured = object(inputs) && typeof inputs.context === 'string' ? JSON.parse(inputs.context) : null;
+  } catch { return inconclusive('extraction_inputs_invalid', inputsId); }
+  if (!object(inputs) || !object(inputs.inputs) || inputs.purpose !== 'report'
+    || !object(captured) || captured.version !== 1 || !Array.isArray(captured.evidence)
+    || captured.evidence.length < 1 || captured.evidence.length > 6 || !Array.isArray(captured.captureLimitations))
+    return inconclusive('extraction_inputs_invalid', inputsId);
+  const capturedSources: { invocationId: string; outcome: string; attemptIds: string[]; eventCursors: string[]; captureIds: string[] }[] = [];
+  for (const source of captured.evidence) {
+    if (!object(source) || !named(source.invocationId)
+      || !['succeeded', 'failed', 'interrupted', 'needs_input'].includes(String(source.outcome))
+      || !Array.isArray(source.attempts) || !Array.isArray(source.events) || !Array.isArray(source.captures)
+      || !source.attempts.every((entry: unknown) => object(entry) && named(entry.id) && named(entry.operationKey)
+        && (entry.outcome === null || typeof entry.outcome === 'string'))
+      || !source.events.every((entry: unknown) => object(entry) && named(entry.cursor) && named(entry.kind) && object(entry.data))
+      || !source.captures.every((entry: unknown) => object(entry) && named(entry.id)
+        && (entry.channel === null || typeof entry.channel === 'string') && named(entry.state)
+        && Array.isArray(entry.chunks) && entry.chunks.every((chunk: unknown) =>
+          object(chunk) && Number.isSafeInteger(chunk.sequence) && typeof chunk.text === 'string')))
+      return inconclusive('extraction_inputs_invalid', inputsId);
+    capturedSources.push({ invocationId: source.invocationId, outcome: source.outcome as string,
+      attemptIds: source.attempts.map((entry: { id: string }) => entry.id),
+      eventCursors: source.events.map((entry: { cursor: string }) => entry.cursor),
+      captureIds: source.captures.filter((entry: { chunks: unknown[] }) => entry.chunks.length > 0)
+        .map((entry: { id: string }) => entry.id) });
+  }
+  if (!captured.captureLimitations.every((item: unknown) => object(item) && named(item.invocationId)
+    && named(item.kind) && (item.reference === undefined || named(item.reference))))
+    return inconclusive('extraction_inputs_invalid', inputsId);
+  if (parsed.suppliedSources.length !== capturedSources.length
+    || !parsed.suppliedSources.every((source, index) => {
+      const actual = capturedSources[index]!;
+      return object(source) && keys(source, ['invocationId', 'attemptIds', 'eventCursors'])
+        && source.invocationId === actual.invocationId
+        && (source.attemptIds === undefined || isDeepStrictEqual(source.attemptIds, actual.attemptIds))
+        && (source.eventCursors === undefined || isDeepStrictEqual(source.eventCursors, actual.eventCursors));
+    })
+    || !isDeepStrictEqual(parsed.examinedSources, capturedSources)
+    || !isDeepStrictEqual(parsed.captureLimitations, captured.captureLimitations))
+    return inconclusive('extraction_sources_mismatch', inputsId);
   const selected = parsed.proposals.filter(item => object(item) && item.key === extraction.proposalKey);
   if (selected.length !== 1) throw new Error('evaluation proposal key is missing or ambiguous in selected extraction');
   const item = selected[0] as Record<string, unknown>;
@@ -236,6 +305,9 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
   if (!Array.isArray(item.suggestedCases) || item.suggestedCases.length < 1 || item.suggestedCases.length > 12
     || !item.suggestedCases.every(value => named(value, 1024)))
     throw new Error('evaluation proposal suggested cases are invalid');
+  if (captured.captureLimitations.length)
+    return { ...inconclusive('extraction_source_limitations', inputsId),
+      suggestedCases: item.suggestedCases as string[] };
   return { reportCaptureId: reportId, reportSha256, resultEvidence,
     target: item.target as { scope: string; path: string },
     ...(capture ? { candidateCapture: capture as { invocationId: string; captureId: string } } : {}),
