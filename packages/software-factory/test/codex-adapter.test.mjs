@@ -30,7 +30,7 @@ async function fixture(source, mode='success') {
 const agents=h=>h.attempts.filter(a=>a.kind==='agent');
 test('Codex JSONL selects completed assistant payload after native turn completion',async()=>{
  const repo=await fixture(`return context.agent('report',{});`);
- try{const r=repo.invoke();assert.equal(r.status,0,r.stdout+r.stderr);const saved=JSON.parse(r.stdout),{history:h,sessions}=repo.history(saved.invocationId);assert.equal(agents(h).length,1);assert.equal(agents(h)[0].outcome,'succeeded');assert.equal(sessions.sessions.length,1);assert.match(sessions.sessions[0].nativeId,/^thread-/);assert.deepEqual(sessions.sessions[0].usage,{state:'unknown'});assert.deepEqual(sessions.sessions[0].loadedSkills,{state:'unknown'});assert.match(JSON.stringify(h.captures),/tool decoy/);}finally{repo.dispose();}
+ try{const r=repo.invoke();assert.equal(r.status,0,r.stdout+r.stderr);const saved=JSON.parse(r.stdout),{history:h,sessions}=repo.history(saved.invocationId);assert.equal(agents(h).length,1);assert.equal(agents(h)[0].outcome,'succeeded');assert.equal(sessions.sessions.length,1);assert.match(sessions.sessions[0].nativeId,/^thread-/);assert.deepEqual(sessions.sessions[0].usage,{state:'unknown'});assert.deepEqual(sessions.sessions[0].loadedSkills,{state:'unknown'});assert.match(JSON.stringify(h.captures),/tool decoy/);const launch=JSON.parse(readFileSync(join(saved.worktree,'codex-launches.jsonl'),'utf8'));assert.equal(launch.args.at(-1),'-');assert.ok(launch.stdin.startsWith('Active task:\nsuccess\n'));assert.ok(!launch.args.some(arg=>arg.includes('Active task:')));}finally{repo.dispose();}
 });
 
 import {createCodexAdapter} from '../dist/adapters/codex.js';
@@ -54,7 +54,12 @@ test('Codex launch is fresh, pinned, explicit, noninteractive and preserves supp
  assert.deepEqual(launch.argv.slice(0,6),[nativeExecutable,'--no-daemon','exec','--json','--color','never']);
  assert.equal(launch.argv[launch.argv.indexOf('--sandbox')+1],'read-only');assert.ok(launch.argv.includes('approval_policy="never"'));
  assert.ok(!launch.argv.some(v=>['resume','fork','--last','--full-auto','--ignore-user-config','--ignore-rules','--dangerously-bypass-hook-trust','--dangerously-bypass-approvals-and-sandbox'].includes(v)));
- const delivered=JSON.parse(launch.argv.at(-1));assert.equal(delivered.instructions,request.inputs.prompt);assert.deepEqual(delivered.skills,request.inputs.skills);assert.equal(delivered.context,'saved findings');
+ assert.equal(launch.argv.at(-1),'-');
+ assert.ok(!launch.argv.some(arg=>arg.includes(request.inputs.prompt)||arg.includes('resource bytes')||arg.includes('saved findings')));
+ assert.ok(launch.stdin.startsWith(`Active task:\n${request.inputs.prompt}\n`));
+ assert.match(launch.stdin,/Saved context:[\s\S]*saved findings/);
+ assert.match(launch.stdin,/Supplied skill: fixture[\s\S]*bytes\nunchanged/);
+ assert.match(launch.stdin,/Resource data: guide\.md[\s\S]*resource bytes/);
  assert.equal(a.canReuse(inputs,inputs),false);assert.throws(()=>a.start({...request,reuseNativeId:'native-a'}),/reuse/);
  assert.throws(()=>a.validateProfile({...inputs,skillDelivery:'native'}),/native skill/);
  assert.throws(()=>a.validateProfile({...inputs,model:'other'}),/unqualified/);
@@ -64,6 +69,17 @@ test('Codex launch is fresh, pinned, explicit, noninteractive and preserves supp
  assert.equal(writableLaunch.argv[writableLaunch.argv.indexOf('--sandbox')+1],'workspace-write');
  assert.throws(()=>a.validateProfile({...inputs,requiredCapabilities:['universal-child-control']}),/unsupported/);
  const bad=createCodexAdapter({executable:nativeExecutable,sha256:'0'.repeat(64),environment:{}});assert.throws(()=>bad.validateProfile(inputs),/SHA256 mismatch/);
+});
+test('Codex correction delivers the new task first and the supplied resource as data',()=>{
+ const a=adapter();
+ const previous=a.start({attemptId:'a',invocationId:'i',worktree:'/tmp/fixture',inputs:{...inputs,prompt:'Return draft DRAFT_A'},context:''});
+ const correction='Return JSON with payload.marker equal to the exact content of guide.md';
+ const launch=a.start({attemptId:'b',invocationId:'i',worktree:'/tmp/fixture',inputs:{...inputs,prompt:correction,skills:[{name:'literal',file:'SKILL.md',instructions:'Use supplied resource',resources:[{file:'guide.md',content:'RESOURCE_C7B2'}]}]},context:'Prior draft DRAFT_A failed validation'});
+ assert.ok(previous.stdin.startsWith('Active task:\nReturn draft DRAFT_A\n'));
+ assert.ok(launch.stdin.startsWith(`Active task:\n${correction}\n`));
+ assert.match(launch.stdin,/Saved context:[\s\S]*Prior draft DRAFT_A failed validation/);
+ assert.match(launch.stdin,/Resource data: guide\.md[\s\S]*RESOURCE_C7B2/);
+ assert.ok(!launch.argv.some(arg=>arg.includes(correction)||arg.includes('RESOURCE_C7B2')));
 });
 test('Codex launch parsers isolate concurrent thread state and keep unproven telemetry unknown',()=>{
  const a=adapter(),request={attemptId:'a',invocationId:'i',worktree:'/tmp/fixture',inputs,context:''};
