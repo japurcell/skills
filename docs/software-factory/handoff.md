@@ -30,6 +30,8 @@ Runtime source is `packages/software-factory/src/`; explicit test dispatch is `s
 
 From repository root, put the qualified Node directory first on PATH, then run `rtk proxy python3 scripts/test-software-factory.py --suite lifecycle`, or focused npm suites `test:store`, `test:fixtures`, `test:qualification`. Current pinned binary: `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/factory-qualified-node-i2fv29e3/node-v24.22.1-darwin-arm64/bin/node`. It was downloaded from the official release and SHA-verified. Development deps are locked; offline cache is `/tmp/software-factory-npm-cache`. Startup never downloads or installs.
 
+Later browser tests can use `PLAYWRIGHT_BROWSERS_PATH=/tmp/software-factory-playwright-browsers`. Pinned Playwright 1.64.1 installed Chromium/headless revision 1248 (156.0.8078.4) plus FFmpeg 1013 there; headless launch/page-read/close passed on 2026-10-22. This is prerequisite readiness, not UI acceptance. `qualification/runtime.md` retains the setup command.
+
 ## Constraints and recovery
 
 Use `login:false`, explicit workdir and `rtk`. Private managed worktrees and shared Git metadata may need narrow sandbox escalation, including generated builds outside base writable roots. Inspect build status before dependent tests; do not count stale output as verification. Integrate only clean stopped branches by rebase and fast-forward, verify tips and composed behavior on base, then archive only clean integrated managed worktrees and delete their branches.

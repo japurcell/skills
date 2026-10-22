@@ -32,3 +32,9 @@ The [foundation workflow](../../../.github/workflows/software-factory-qualificat
 Handled cancellation remains SIGINT/SIGTERM on POSIX. On Windows, the private qualifier controller requests the same cleanup through IPC because Node's Windows kill behavior can terminate immediately. Assertions still require status130/143, stopped owned worker and removed disposable directory. The separate process-loss transaction probe uses actual native worker termination on every platform. These checks do not establish Windows console control delivery or T6 product lifecycle semantics.
 
 See [CI evidence and remaining gates](ci.md). Hosted run `39719540444` passed all three foundation targets after the first Windows failures were repaired. Installed product, provider, descendant-control and live desktop qualification remain later gates.
+
+## Browser development prerequisite
+
+On 2026-10-22, the pinned Playwright 1.64.1 CLI downloaded Chromium revision 1248 / Chrome for Testing 156.0.8078.4, matching headless shell and FFmpeg revision 1013 into `/tmp/software-factory-playwright-browsers`. From `packages/software-factory`, setup used qualified Node with `PLAYWRIGHT_BROWSERS_PATH=/tmp/software-factory-playwright-browsers node node_modules/playwright/cli.js install chromium --no-progress --no-remove`. Restricted DNS required network escalation; no system dependency installation or user-cache replacement occurred.
+
+A headless launch, disposable page title/heading read and browser close passed with browser version 156.0.8078.4. Set the same `PLAYWRIGHT_BROWSERS_PATH` for later browser tests. This is environment readiness only; no factory dashboard, UI, accessibility or load acceptance is established.
