@@ -601,7 +601,7 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=()):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=(), timings=None):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
@@ -617,7 +617,24 @@ class PreflightTests(unittest.TestCase):
                 " if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
                 "  Path(seen_name).touch()\n"
                 "time.sleep(" + repr(settle) + ")\nos.write(1, raw)\n")
-        wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
+        timing_source = ""
+        if timings is not None:
+            # Fixed numeric events only. Each write is short and the diagnostic
+            # file is capped; telemetry never alters waits or cleanup policy.
+            timing_source = ("import os,json,time\n"
+                "timing_fd=os.open(" + repr(str(timings)) + ",os.O_WRONLY|os.O_CREAT|os.O_APPEND,0o600)\n"
+                "def timing(stage,pid=None,at=None):\n"
+                " if os.fstat(timing_fd).st_size<16000:\n"
+                "  os.write(timing_fd,(json.dumps({'pid':os.getpid() if pid is None else pid,'stage':stage,'at':time.monotonic() if at is None else at})+'\\n').encode())\n")
+            child = child.replace("time.sleep(" + repr(delay) + ")\n",
+                "timing('delay_started')\ntime.sleep(" + repr(delay) + ")\ntiming('delay_finished')\n", 1)
+            child = child.replace("raw = subprocess.check_output(", "timing('snapshot_started')\nraw = subprocess.check_output(")
+            child = child.replace("for marker_name, seen_name in ", "timing('snapshot_finished')\nfor marker_name, seen_name in ")
+            child = child.replace("time.sleep(" + repr(settle) + ")\n",
+                "timing('return_delay_started')\ntime.sleep(" + repr(settle) + ")\ntiming('return_delay_finished')\n", 1)
+            child = child.replace("os.write(1, raw)", "timing('delivery_started')\nos.write(1, raw)\ntiming('delivery_finished')")
+            child = timing_source + "timing('child_entered')\n" + child
+        wrapper.write_text(timing_source + "import subprocess,runpy,sys\nfrom pathlib import Path\n"
             "real = subprocess.Popen\nobservations = 0\n"
             "def launched(command,*args,**kwargs):\n"
             " global observations\n"
@@ -628,7 +645,17 @@ class PreflightTests(unittest.TestCase):
             " == 'None' or Path(" + repr(str(trigger)) + ").exists()) and (" + repr(str(until)) +
             " == 'None' or not Path(" + repr(str(until)) + ").exists())):\n"
             "   command = [sys.executable, '-I', '-S', '-B', '-c', " + repr(child) + ", *command[1:]]\n"
+            + ("  launch_started=time.monotonic()\n" if timings is not None else "") +
             "  process = real(command,*args,**kwargs)\n"
+            + ("  timing('parent_launch_started',process.pid,launch_started)\n"
+               "  timing('parent_launch_completed',process.pid)\n"
+               "  real_poll=process.poll;real_wait=process.wait;acknowledged=[False]\n"
+               "  def received(code):\n"
+               "   if code is not None and not acknowledged[0]:\n"
+               "    acknowledged[0]=True;timing('parent_exit_received',process.pid)\n"
+               "   return code\n"
+               "  process.poll=lambda:received(real_poll())\n"
+               "  process.wait=lambda *args,**kwargs:received(real_wait(*args,**kwargs))\n" if timings is not None else "") +
             "  with Path(" + repr(str(observers)) + ").open('a') as stream: stream.write(str(process.pid)+'\\n')\n"
             "  return process\n"
             " if Path(command[0]).name == 'git': Path(" + repr(str(git_started)) + ").touch()\n"
@@ -637,6 +664,26 @@ class PreflightTests(unittest.TestCase):
             "sys.argv = [" + repr(str(CLI)) + "] + sys.argv[1:]\n"
             "runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')\n")
         return wrapper, observers, git_started
+
+    def report_observer_timings(self, path):
+        if path is None or not path.exists():
+            return
+        # Keep failure output bounded to the last four observers. All fields
+        # are fixture-owned enums and numbers; no process command is recorded.
+        events = {}
+        with path.open('rb') as stream:
+            for raw in stream.read(16384).splitlines():
+                try:
+                    row = json.loads(raw)
+                    events.setdefault(row['pid'], []).append(row)
+                except (ValueError, KeyError):
+                    continue
+        for pid, rows in list(events.items())[-4:]:
+            rows.sort(key=lambda row: row['at'])
+            origin = rows[0]['at']
+            print(json.dumps({'fixture_observer': 'stage-timing', 'observer_pid': pid,
+                'stages': [{'stage': row['stage'], 'seconds_from_launch': round(row['at'] - origin, 6)}
+                           for row in rows]}), flush=True)
 
     def assert_stopped(self, pids):
         for pid in pids:
@@ -751,6 +798,90 @@ class PreflightTests(unittest.TestCase):
                         time.sleep(0.01)
                     self.assert_stopped([observer])
 
+    @unittest.skipIf(os.name == "nt", "POSIX Linux proc disappearance protocol")
+    def test_linux_proc_read_disappearance_preserves_observed_child_cancellation(self):
+        self.assert_linux_proc_read_cleanup('esrch')
+
+    @unittest.skipIf(os.name == "nt", "POSIX Linux proc failure protocol")
+    def test_linux_proc_read_failures_remain_incomplete_with_safe_categories(self):
+        for mode in ('denied', 'io_error', 'empty'):
+            with self.subTest(mode=mode):
+                self.assert_linux_proc_read_cleanup(mode)
+
+    def assert_linux_proc_read_cleanup(self, mode):
+        active = self.active_copy('linux-proc-read-' + mode)
+        marker = self.base / ('proc-child-pid-' + mode)
+        sampled = self.base / ('proc-child-sampled-' + mode)
+        reaped = self.base / ('proc-child-reaped-' + mode)
+        injected = self.base / ('proc-read-injected-' + mode)
+        parent_marker = self.base / ('proc-parent-pid-' + mode)
+        child_code = ('import time\nfrom pathlib import Path\n'
+            'while not Path(' + repr(str(sampled)) + ').exists(): time.sleep(0.005)\n')
+        scanner = active / '.codex/hooks/scan-secrets.py'
+        injection = ('import subprocess\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'Path(' + repr(str(parent_marker)) + ').write_text(str(os.getpid()))\n'
+            'child=subprocess.Popen([sys.executable,"-c",' + repr(child_code) + '])\n'
+            'Path(' + repr(str(marker)) + ').write_text(str(child.pid))\n'
+            'child.wait()\nPath(' + repr(str(reaped)) + ').touch()\ntime.sleep(60)\n')
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        wrapper, observers, _ = self.observation_wrapper(0, after=marker, seen=sampled, until=sampled)
+        # The CLI launches its unchanged Linux helper/protocol. On other POSIX
+        # hosts, numeric /proc fixtures come from real targeted ps records.
+        # ESRCH is injected at read only after the real observed child was reaped.
+        fault = ("import builtins,io,errno,os,sys,time,subprocess\nfrom pathlib import Path\n"
+            "host=sys.platform;sys.platform='linux'\nreal_open=builtins.open;real_sysconf=os.sysconf\n"
+            "class Gone(io.BytesIO):\n"
+            " def read(self,*args):\n"
+            "  Path(" + repr(str(injected)) + ").touch()\n"
+            "  if " + repr(mode) + "=='empty': return b''\n"
+            "  raise OSError(" + {'esrch': 'errno.ESRCH', 'denied': 'errno.EACCES', 'io_error': 'errno.EIO', 'empty': '0'}[mode] + ", 'injected proc read result')\n"
+            "def opened(name,*args,**kwargs):\n"
+            " if isinstance(name,str) and name.startswith('/proc/') and name.endswith('/stat') and name.split('/')[2].isdigit():\n"
+            "  pid=int(name.split('/')[2])\n"
+            "  raw=subprocess.run(['/bin/ps','-o','pid=,ppid=,pgid=,lstart=,stat=','-p',str(pid)],capture_output=True,check=False).stdout\n"
+            "  if not raw.strip():\n"
+            "   if Path(" + repr(str(reaped)) + ").exists() and pid==int(Path(" + repr(str(marker)) + ").read_text()): return Gone()\n"
+            "   raise FileNotFoundError(errno.ENOENT,'absent fixture process')\n"
+            "  if host.startswith('linux'): return real_open(name,*args,**kwargs)\n"
+            "  row=raw.split();seconds=int(time.mktime(time.strptime(b' '.join(row[3:8]).decode(),'%a %b %d %H:%M:%S %Y')))\n"
+            "  fields=[row[8][:1],row[1],row[2],*([b'0']*16),str((seconds-1700000000)*100).encode()]\n"
+            "  return io.BytesIO(str(pid).encode()+b' (fixture) '+b' '.join(fields)+b'\\n')\n"
+            " if host!='linux' and name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
+            " return real_open(name,*args,**kwargs)\n"
+            "builtins.open=opened\n"
+            "os.sysconf=lambda name:100 if name=='SC_CLK_TCK' and not host.startswith('linux') else real_sysconf(name)\n")
+        source = wrapper.read_text().replace(" if command[0] == '/bin/ps':\n",
+            " if any('fixture_process_helper' in str(part) for part in command): command=[*command[:-1]," + repr(fault) + "+command[-1]]\n"
+            " if command[0] == '/bin/ps':\n")
+        wrapper.write_text(source)
+        before = self.fingerprint()
+        with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                '--active-hook-root', str(active), '--check', '--json', '--no-input'],
+                cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+            deadline = time.monotonic() + 6
+            while not reaped.exists() and time.monotonic() < deadline and process.poll() is None:
+                time.sleep(0.01)
+            self.assertTrue(reaped.exists(), 'observed scanner child was not reaped: ' + repr(process.communicate(timeout=1) if process.poll() is not None else process.returncode))
+            started = time.monotonic()
+            process.send_signal(signal.SIGINT)
+            stdout, stderr = process.communicate(timeout=4)
+            elapsed = time.monotonic() - started
+        self.assertTrue(injected.exists(), 'Linux descriptor read result was not exercised')
+        self.assert_stopped([int(parent_marker.read_text()), int(marker.read_text()), *map(int, observers.read_text().splitlines())])
+        self.assertEqual(self.fingerprint(), before)
+        print(json.dumps({'fixture_observer': 'linux-proc-read-' + mode, 'returncode': process.returncode,
+            'reason': json.loads(stdout)['reason'], 'native_cause': json.loads(stdout).get('native_cause'),
+            'cleanup_seconds': round(elapsed, 6)}), flush=True)
+        self.assertEqual(process.returncode, 130 if mode == 'esrch' else 2, stdout + stderr)
+        report = json.loads(stdout)
+        self.assertEqual(report['reason'], 'interrupted' if mode == 'esrch' else 'process_observation_native_unavailable')
+        if mode != 'esrch':
+            self.assertEqual(report.get('native_cause'), {'denied': 'denied', 'io_error': 'read_error', 'empty': 'invalid_record'}[mode])
+        self.assertLess(elapsed, 2)
+        self.assertNotIn(b'Traceback', stderr)
+        self.assertNotIn(TOKEN.encode(), stdout + stderr)
+
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_delayed_metadata_cleanup_stops_resistant_separate_session(self):
         self.assert_resistant_session_cleanup(0.3)
@@ -780,7 +911,8 @@ class PreflightTests(unittest.TestCase):
             "Path(" + repr(str(marker)) + ").write_text(str(child.pid))\n"
             "time.sleep(60)\n")
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
-        wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed, settle=settle)
+        timings = self.base / 'delayed-return-observer-timings.jsonl' if settle else None
+        wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed, settle=settle, timings=timings)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -799,6 +931,7 @@ class PreflightTests(unittest.TestCase):
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)
                 elapsed = time.monotonic() - started
+                self.report_observer_timings(timings)
                 self.assertEqual(process.returncode, 130, stdout + stderr)
                 self.assertEqual(json.loads(stdout)['reason'], 'interrupted')
                 self.assertLess(elapsed, 2)
@@ -1183,20 +1316,26 @@ class PreflightTests(unittest.TestCase):
     def test_linux_native_process_protocol_validates_targeted_proc_records(self):
         fields = ['T', '100', '4321', *(['0'] * 16), '123456']
         valid = b'4321 (name with ) spaces) ' + ' '.join(fields).encode() + b'\n'
-        for mode in ('valid', 'absent', 'denied', 'short', 'wrong_pid', 'unknown_state'):
+        for mode in ('valid', 'absent', 'open_esrch', 'read_esrch', 'denied', 'read_denied', 'read_error', 'empty', 'short', 'wrong_pid', 'unknown_state', 'invalid_group'):
             with self.subTest(mode=mode):
                 raw = (b'4322' + valid[4:] if mode == 'wrong_pid' else
                     valid.replace(b') T ', b') Q ') if mode == 'unknown_state' else
-                    b'4321 (short) T 100' if mode == 'short' else valid)
-                code = ("import runpy,sys,os,time,io,builtins\n"
+                    b'4321 (short) T 100' if mode == 'short' else
+                    b'' if mode == 'empty' else
+                    valid.replace(b') T 100 4321 ', b') T 100 -1 ') if mode == 'invalid_group' else valid)
+                code = ("import runpy,sys,os,time,io,builtins,errno\n"
                     "scope=runpy.run_path(" + repr(str(CLI)) + ",run_name='fixture_process_helper')\n"
                     "os.environ['TZ']='UTC';time.tzset();sys.platform='linux'\n"
                     "real_open=builtins.open;real_sysconf=os.sysconf\n"
+                    "class FailedRead(io.BytesIO):\n"
+                    " def read(self,*args): raise OSError({'read_esrch':errno.ESRCH,'read_denied':errno.EACCES,'read_error':errno.EIO}[" + repr(mode) + "],'injected proc read failure')\n"
                     "def opened(name,*args,**kwargs):\n"
                     " if name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
                     " if name=='/proc/4321/stat':\n"
                     "  if " + repr(mode) + " == 'absent': raise FileNotFoundError\n"
-                    "  if " + repr(mode) + " == 'denied': raise PermissionError\n"
+                    "  if " + repr(mode) + " == 'open_esrch': raise ProcessLookupError(errno.ESRCH,'injected proc open absence')\n"
+                    "  if " + repr(mode) + " == 'denied': raise PermissionError(errno.EACCES,'injected proc denial')\n"
+                    "  if " + repr(mode) + " in ('read_esrch','read_denied','read_error'): return FailedRead()\n"
                     "  return io.BytesIO(" + repr(raw) + ")\n"
                     " return real_open(name,*args,**kwargs)\n"
                     "builtins.open=opened\n"
@@ -1208,10 +1347,11 @@ class PreflightTests(unittest.TestCase):
                 report = json.loads(result.stdout)
                 if mode == 'valid':
                     self.assertEqual(report, {'4321': [4321, 100, 4321, 1700001234, 123456, 'stopped', 0]})
-                elif mode == 'absent':
+                elif mode in ('absent', 'open_esrch', 'read_esrch'):
                     self.assertEqual(report, {'4321': None})
                 else:
-                    self.assertEqual(report, {'error': 'native_query_unavailable'})
+                    cause = 'denied' if mode in ('denied', 'read_denied') else 'read_error' if mode == 'read_error' else 'invalid_record'
+                    self.assertEqual(report, {'error': 'native_query_unavailable', 'cause': cause})
 
     def test_darwin_native_process_protocol_rejects_partial_or_denied_records(self):
         for mode in ('valid', 'absent', 'denied', 'partial', 'wrong_pid', 'unknown_state'):
@@ -1241,7 +1381,7 @@ class PreflightTests(unittest.TestCase):
                 elif mode == 'absent':
                     self.assertEqual(report, {'4321': None})
                 else:
-                    self.assertEqual(report, {'error': 'native_query_unavailable'})
+                    self.assertEqual(report, {'error': 'native_query_unavailable', 'cause': 'denied' if mode == 'denied' else 'read_error' if mode == 'partial' else 'invalid_record'})
 
     def test_unavailable_process_observation_stops_before_git_or_scanners(self):
         before = self.fingerprint()

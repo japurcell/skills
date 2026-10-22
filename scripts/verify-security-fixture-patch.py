@@ -275,7 +275,9 @@ def process_query_helper():
             try:
                 with open("/proc/" + str(pid) + "/stat", "rb") as stream:
                     raw = stream.read(16385)
-            except FileNotFoundError:
+            except (FileNotFoundError, ProcessLookupError):
+                # Linux proc_single_show returns ESRCH when an opened proc
+                # descriptor outlives its task; open can also race with exit.
                 return None
             prefix, separator, suffix = raw.rpartition(b") ")
             fields = suffix.split()
@@ -304,10 +306,16 @@ def process_query_helper():
             for row in result.values():
                 if row is not None:
                     row.append(time.localtime(row[3]).tm_gmtoff)
+        except OSError as failure:
+            # Only fixed categories cross IPC, never exception text or records.
+            cause = "denied" if failure.errno in (errno.EPERM, errno.EACCES) else "read_error"
+            result = {"error": "native_query_unavailable", "cause": cause}
+        except (ValueError, TypeError):
+            result = {"error": "native_query_unavailable", "cause": "invalid_record"}
         except Exception:
             # Absence is represented only by native ESRCH/ENOENT, never denial,
             # partial structures, malformed records, or another native failure.
-            result = {"error": "native_query_unavailable"}
+            result = {"error": "native_query_unavailable", "cause": "unavailable"}
         print(json.dumps(result, separators=(",", ":")), flush=True)
 
 
@@ -359,6 +367,10 @@ class ProcessInspector:
                     if len(received) > 65536:
                         raise ValueError("native result bound")
             result = json.loads(received)
+            if (isinstance(result, dict) and set(result) == {"error", "cause"}
+                    and result["error"] == "native_query_unavailable"
+                    and result["cause"] in ("denied", "read_error", "invalid_record", "unavailable")):
+                raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause=result["cause"])
             if not isinstance(result, dict) or set(result) != {str(pid) for pid in pids}:
                 raise ValueError("incomplete native result")
             for pid in pids:
@@ -373,8 +385,10 @@ class ProcessInspector:
                         or type(row[6]) is not int or not -86400 < row[6] < 86400):
                     raise ValueError("invalid native result")
             return {int(pid): row for pid, row in result.items()}
-        except (OSError, ValueError, TypeError):
-            raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
+        except OSError:
+            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="ipc_unavailable") from None
+        except (ValueError, TypeError):
+            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="invalid_protocol") from None
 
     def close(self, deadline):
         try:
