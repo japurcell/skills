@@ -31,6 +31,7 @@ MAX_TARGETS = 64
 TIMEOUT = 12
 DEADLINE = None
 CANCEL_REQUESTS = 0
+CANCELLED_AT = None
 PROCESS_BYTES = 1024 * 1024
 CLEANUP_SECONDS = 2.0
 # Observation may use half the cleanup envelope; escalation and reaping share
@@ -230,38 +231,26 @@ def signal_observed(living, signum):
             pass
 
 
-def stop_process(process, known):
-    # One absolute cleanup deadline covers observation, escalation and reaping.
-    # Start forced cleanup while a full observation and both reaps still fit.
-    deadline = time.monotonic() + CLEANUP_SECONDS
-    force_at = deadline - PROCESS_SECONDS - 2 * REAP_SECONDS
+def stop_process(process, known, snapshot=None):
+    # Cancellation includes any observation already in flight. Do not restart
+    # its envelope when control finally reaches this cleanup.
+    started = time.monotonic()
+    deadline = min(started, CANCELLED_AT if CANCELLED_AT is not None else started) + CLEANUP_SECONDS
     try:
         leader_stopped = process.poll() is not None
-        snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
+        if snapshot is None:
+            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
         remember_descendants(process, known, snapshot)
+        living = living_descendants(known, snapshot)
         process.poll()
-        if leader_stopped and not living_descendants(known, snapshot):
+        if leader_stopped and not living:
             return
-        # SIGINT lets canonical capture_git catch BaseException and stop its own
-        # independently created Git session before the scanner itself exits.
+        # Observe descendants before interruption can reparent them. A second
+        # graceful observation would consume the full final-observation reserve,
+        # so escalate from these freshly verified identities without another scan.
         if process.returncode is None:
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(process.pid, signal.SIGINT)
-        graceful = min(force_at, time.monotonic() + 0.6)
-        while True:
-            process.poll()
-            snapshot = process_snapshot(deadline=deadline - REAP_SECONDS)
-            remember_descendants(process, known, snapshot)
-            living = living_descendants(known, snapshot)
-            # The leader can exit while metadata is collected; reap it before
-            # deciding whether another observation is necessary.
-            process.poll()
-            if process.returncode is not None and not living:
-                return
-            if (time.monotonic() >= graceful
-                    or time.monotonic() + PROCESS_SECONDS + REAP_SECONDS >= force_at):
-                break
-            time.sleep(0.01)
         # A scanner ignoring interruption must not strand capture_git's separate
         # process group. Verify remembered identities, kill all observed groups,
         # and rescan retained ancestors within the same finite cleanup window.
@@ -315,13 +304,19 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
                                    stdout=out, stderr=err, start_new_session=os.name != "nt")
         known = {}
         observed_at = time.monotonic()
+        cleanup_snapshot = None
         try:
             started = time.monotonic()
             request = data or b""
             while True:
                 check_cancelled()
                 if process.poll() is None and time.monotonic() - observed_at >= 0.05:
-                    remember_descendants(process, known, process_snapshot())
+                    cleanup_snapshot = process_snapshot()
+                    remember_descendants(process, known, cleanup_snapshot)
+                    # If cancellation arrived during observation, cleanup uses
+                    # this just-returned identity check before any blocking work.
+                    check_cancelled()
+                    cleanup_snapshot = None
                     observed_at = time.monotonic()
                 if time.monotonic() - started > timeout:
                     raise Failure("subprocess_timeout", 2, "subprocess", limit=timeout, measured=round(time.monotonic() - started, 3), unit="seconds")
@@ -338,7 +333,7 @@ def run(command, *, cwd, env, data=None, check=True, timeout=TIMEOUT):
                 raise Failure("git_or_hook_failed", 2, "subprocess")
             return process.returncode, output
         finally:
-            stop_process(process, known)
+            stop_process(process, known, cleanup_snapshot)
 
 
 def environment(home, git):
@@ -909,7 +904,9 @@ def main():
     try:
         args = command.parse_args()
         def interrupted(signum, frame):
-            global CANCEL_REQUESTS
+            global CANCEL_REQUESTS, CANCELLED_AT
+            if CANCELLED_AT is None:
+                CANCELLED_AT = time.monotonic()
             CANCEL_REQUESTS += 1
         for signum in (signal.SIGINT, signal.SIGTERM):
             signal.signal(signum, interrupted)

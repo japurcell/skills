@@ -601,7 +601,7 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
@@ -615,7 +615,7 @@ class PreflightTests(unittest.TestCase):
                 "marker = Path(" + repr(str(after)) + ")\n"
                 "if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
                 " Path(" + repr(str(seen)) + ").touch()\n"
-                "os.write(1, raw)\n")
+                "time.sleep(" + repr(settle) + ")\nos.write(1, raw)\n")
         wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
             "real = subprocess.Popen\nobservations = 0\n"
             "def launched(command,*args,**kwargs):\n"
@@ -680,6 +680,17 @@ class PreflightTests(unittest.TestCase):
 
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_delayed_metadata_cleanup_stops_resistant_separate_session(self):
+        self.assert_resistant_session_cleanup(0.3)
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_slower_metadata_cleanup_preserves_cancellation_deadline(self):
+        self.assert_resistant_session_cleanup(0.65)
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_during_metadata_return_shares_cleanup_deadline(self):
+        self.assert_resistant_session_cleanup(0.3, settle=0.55)
+
+    def assert_resistant_session_cleanup(self, delay, *, settle=0):
         active = self.active_copy("slow-observer-cancel")
         marker = self.base / 'slow-observer-child'
         observed = self.base / 'child-observed-before-setsid'
@@ -696,7 +707,7 @@ class PreflightTests(unittest.TestCase):
             "Path(" + repr(str(marker)) + ").write_text(str(child.pid))\n"
             "time.sleep(60)\n")
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
-        wrapper, observers, _ = self.observation_wrapper(0.3, after=marker, seen=observed)
+        wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed, settle=settle)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -724,7 +735,7 @@ class PreflightTests(unittest.TestCase):
             self.assert_stopped([child, *pids])
             self.assertEqual(self.fingerprint(), before)
             print(json.dumps({'fixture_observer': 'resistant-child-cancellation',
-                'delay_seconds': 0.3, 'cleanup_seconds': round(elapsed, 6),
+                'delay_seconds': delay, 'return_delay_seconds': settle, 'cleanup_seconds': round(elapsed, 6),
                 'observed_processes_stopped': len(pids) + 1}), flush=True)
         finally:
             # Cleanup follows leak assertions, so it cannot turn a leak into a pass.
