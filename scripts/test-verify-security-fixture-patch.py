@@ -1285,7 +1285,10 @@ class PreflightTests(unittest.TestCase):
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)
                 elapsed = time.monotonic() - started
-                self.assertIn(process.returncode, (130, 2), stdout + stderr)
+                if simulate_linux:
+                    self.assertEqual(process.returncode, 130, stdout + stderr)
+                else:
+                    self.assertIn(process.returncode, (130, 2), stdout + stderr)
                 report = json.loads(stdout)
                 if process.returncode == 130:
                     self.assertEqual(report['reason'], 'interrupted')

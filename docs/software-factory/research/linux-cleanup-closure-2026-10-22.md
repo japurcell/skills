@@ -77,9 +77,13 @@ finalization reserve remains 50 ms and the known-process cap remains 256.
 Implementation and local checks are complete. The three owned files are
 prepared for one scoped commit; Git records the resulting commit. The parent
 owns independent review and fresh hosted Linux qualification; a Mac
-simulation cannot establish native Linux correctness. A child never discovered
-because it exits and re-parents descendants before an enumerated read remains
-outside the proof boundary, as it does for Mac's targeted child interface.
+simulation cannot establish native Linux correctness. An exiting child can make procfs omit a different, still-live child, even
+when all parent threads are stopped. Unknown children cannot be frozen before
+discovery, so this method establishes closure of known/discovered processes,
+not a universal whole-tree proof. Never-observed descendants, including a live
+sibling omitted during another child's exit or an escaped/re-parented child,
+remain outside that bounded claim. This Linux-specific caveat is stronger
+than merely saying the omitted child itself exited.
 
 ## Context and Orientation
 
@@ -173,3 +177,7 @@ those files are outside this scoped branch's ownership.
 - [Linux kernel procfs documentation](https://www.kernel.org/doc/html/v6.14/filesystems/proc.html)
 - [Linux proc_tid_children manual](https://man7.org/linux/man-pages/man5/proc_tid_children.5.html)
 - [Linux proc_pid_task manual](https://man7.org/linux/man-pages/man5/proc_tid.5.html)
+
+## Independent review and normal-path assertion
+
+Independent complete review passes all47 cases in113.019 seconds and finds no blocking production-code issue, while identifying the new simulated-Linux cascade assertion as too permissive: it accepted safe refusal2 as well as normal interruption130. The simulated Linux normal-path case now requires exactly130; the existing Mac assertion and separate safe-refusal fixtures remain unchanged. Parent runs the focused strengthened public case before integration and all47 composed cases afterward. Native Linux remains pending Actions.
