@@ -87,7 +87,9 @@ function fixture() {
   };
   const approval = { reference: 'human-approval-1', extraction, evaluation, candidate,
     target: { repository: repo.path, scope: 'repository', path, expectedRevision: revision, expectedSha256: sha(originalText) } };
-  return { repo, sourceHistory, approval, report, addEvaluation, captures };
+  let record = 0;
+  const retain = value => ({ invocationId: 'approval-records', ...put(`record-${++record}`, 'approval-records', 'report', value) });
+  return { repo, sourceHistory, approval, report, addEvaluation, captures, retain };
 }
 
 test('explicit approved action records actual committed candidate and actual revert', async () => {
@@ -95,24 +97,24 @@ test('explicit approved action records actual committed candidate and actual rev
   try {
     const prepared = await prepareAdoption(f.sourceHistory, f.approval);
     assert.equal(prepared.approval.reference, 'human-approval-1');
-    const unacted = await confirmAdoption(prepared, { reference: 'action-1', status: 'succeeded' });
+    const unacted = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'action-1', status: 'succeeded' });
     assert.equal(unacted.status, 'not_applied');
     assert.equal('applied' in unacted, false);
 
     writeFileSync(join(f.repo.path, path), candidateText);
     f.repo.git(['add', path]);
     f.repo.git(['commit', '-m', 'Adopt candidate']);
-    const adopted = await confirmAdoption(prepared, { reference: 'action-2', status: 'succeeded' });
+    const adopted = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'action-2', status: 'succeeded' });
     assert.equal(adopted.status, 'applied');
     assert.equal(adopted.applied.revision, f.repo.git(['rev-parse', 'HEAD']).trim());
     assert.equal(adopted.applied.sha256, f.approval.candidate.sha256);
     assert.deepEqual(adopted.approval.evaluation, f.approval.evaluation);
 
-    const reverting = await prepareRevert(adopted, { reference: 'human-revert-1' });
+    const reverting = await prepareRevert(f.sourceHistory, f.retain(adopted), { reference: 'human-revert-1' });
     writeFileSync(join(f.repo.path, path), originalText);
     f.repo.git(['add', path]);
     f.repo.git(['commit', '-m', 'Revert candidate']);
-    const reverted = await confirmRevert(reverting, { reference: 'revert-action-1', status: 'succeeded' });
+    const reverted = await confirmRevert(f.sourceHistory, f.retain(reverting), { reference: 'revert-action-1', status: 'succeeded' });
     assert.equal(reverted.status, 'reverted');
     assert.equal(reverted.reverted.revision, f.repo.git(['rev-parse', 'HEAD']).trim());
     assert.equal(reverted.originalAdoption.applied.revision, adopted.applied.revision);
@@ -161,13 +163,13 @@ test('failed and uncertain action never claim applied even if candidate bytes ap
   const f = fixture();
   try {
     const prepared = await prepareAdoption(f.sourceHistory, f.approval);
-    assert.equal((await confirmAdoption(prepared, { reference: 'failure-1', status: 'failed' })).status, 'not_applied');
-    assert.equal((await confirmAdoption(prepared, { reference: 'unknown-1', status: 'uncertain' })).status, 'not_applied');
+    assert.equal((await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'failure-1', status: 'failed' })).status, 'not_applied');
+    assert.equal((await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'unknown-1', status: 'uncertain' })).status, 'not_applied');
     writeFileSync(join(f.repo.path, path), candidateText);
     f.repo.git(['add', path]);
     f.repo.git(['commit', '-m', 'Candidate after failed action']);
     for (const status of ['failed', 'uncertain']) {
-      const result = await confirmAdoption(prepared, { reference: `action-${status}`, status });
+      const result = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: `action-${status}`, status });
       assert.equal(result.status, 'uncertain');
       assert.equal('applied' in result, false);
     }
@@ -178,21 +180,21 @@ test('revert needs an applied record and fresh approval; failed or changed rever
   const f = fixture();
   try {
     const prepared = await prepareAdoption(f.sourceHistory, f.approval);
-    const unacted = await confirmAdoption(prepared, { reference: 'unacted', status: 'succeeded' });
-    await assert.rejects(prepareRevert(unacted, { reference: 'revert' }), /applied adoption/);
+    const unacted = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'unacted', status: 'succeeded' });
+    await assert.rejects(prepareRevert(f.sourceHistory, f.retain(unacted), { reference: 'revert' }), /applied adoption/);
     writeFileSync(join(f.repo.path, path), candidateText);
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Apply candidate']);
-    const adopted = await confirmAdoption(prepared, { reference: 'adopted', status: 'succeeded' });
+    const adopted = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'adopted', status: 'succeeded' });
     assert.equal(adopted.status, 'applied');
-    await assert.rejects(prepareRevert(adopted, { reference: '' }), /explicit approval/);
-    const reverting = await prepareRevert(adopted, { reference: 'revert-approval' });
-    assert.equal((await confirmRevert(reverting, { reference: 'failed-revert', status: 'failed' })).status, 'not_reverted');
+    await assert.rejects(prepareRevert(f.sourceHistory, f.retain(adopted), { reference: '' }), /explicit approval/);
+    const reverting = await prepareRevert(f.sourceHistory, f.retain(adopted), { reference: 'revert-approval' });
+    assert.equal((await confirmRevert(f.sourceHistory, f.retain(reverting), { reference: 'failed-revert', status: 'failed' })).status, 'not_reverted');
     writeFileSync(join(f.repo.path, path), 'another target\n');
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Change post-adoption target']);
-    await assert.rejects(prepareRevert(adopted, { reference: 'stale-revert' }), /renewed review/);
+    await assert.rejects(prepareRevert(f.sourceHistory, f.retain(adopted), { reference: 'stale-revert' }), /renewed review/);
     writeFileSync(join(f.repo.path, path), originalText);
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Restore after intervening change']);
-    const result = await confirmRevert(reverting, { reference: 'late-revert', status: 'succeeded' });
+    const result = await confirmRevert(f.sourceHistory, f.retain(reverting), { reference: 'late-revert', status: 'succeeded' });
     assert.equal(result.status, 'uncertain');
     assert.equal('reverted' in result, false);
   } finally { f.repo.dispose(); }
@@ -205,7 +207,7 @@ test('success claim with changed content or broader commit scope remains uncerta
     writeFileSync(join(f.repo.path, path), 'wrong candidate\n');
     f.repo.git(['add', path]);
     f.repo.git(['commit', '-m', 'Wrong candidate']);
-    const wrong = await confirmAdoption(prepared, { reference: 'wrong-1', status: 'succeeded' });
+    const wrong = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'wrong-1', status: 'succeeded' });
     assert.equal(wrong.status, 'uncertain');
     assert.equal('applied' in wrong, false);
   } finally { f.repo.dispose(); }
@@ -216,7 +218,7 @@ test('success claim with changed content or broader commit scope remains uncerta
     writeFileSync(join(broader.repo.path, 'tracked.txt'), 'unapproved scope\n');
     broader.repo.git(['add', path, 'tracked.txt']);
     broader.repo.git(['commit', '-m', 'Broader scope']);
-    const result = await confirmAdoption(prepared, { reference: 'scope-1', status: 'succeeded' });
+    const result = await confirmAdoption(broader.sourceHistory, broader.retain(prepared), { reference: 'scope-1', status: 'succeeded' });
     assert.equal(result.status, 'uncertain');
     assert.equal('applied' in result, false);
   } finally { broader.repo.dispose(); }
@@ -229,7 +231,7 @@ test('success claim with changed content or broader commit scope remains uncerta
     writeFileSync(join(intervening.repo.path, path), candidateText);
     intervening.repo.git(['add', path]);
     intervening.repo.git(['commit', '-m', 'Apply after changed target']);
-    const result = await confirmAdoption(prepared, { reference: 'intervening-1', status: 'succeeded' });
+    const result = await confirmAdoption(intervening.sourceHistory, intervening.retain(prepared), { reference: 'intervening-1', status: 'succeeded' });
     assert.equal(result.status, 'uncertain');
     assert.equal('applied' in result, false);
   } finally { intervening.repo.dispose(); }
@@ -244,10 +246,10 @@ test('saved preparations cannot replace approved adoption or revert parents', as
     prepared.expected = { revision: f.repo.git(['rev-parse', 'HEAD']).trim(), sha256: sha('intervening\n') };
     writeFileSync(join(f.repo.path, path), candidateText);
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Candidate']);
-    await assert.rejects(confirmAdoption(prepared, { reference: 'action', status: 'succeeded' }), /preparation/);
+    await assert.rejects(confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'action', status: 'succeeded' }), /preparation/);
     const forged = { kind: 'adoption', status: 'applied', approval: f.approval, evidence: prepared.evidence,
       action: { reference: 'action', status: 'succeeded' }, applied: { revision: f.repo.git(['rev-parse', 'HEAD']).trim(), sha256: sha(candidateText) } };
-    await assert.rejects(prepareRevert(forged, { reference: 'revert' }), /observed adoption/);
+    await assert.rejects(prepareRevert(f.sourceHistory, f.retain(forged), { reference: 'revert' }), /retained report reference/);
   } finally { f.repo.dispose(); }
 });
 
@@ -283,12 +285,12 @@ test('saved revert preparation and claimed historical adoption are revalidated',
     const prepared = await prepareAdoption(f.sourceHistory, f.approval);
     writeFileSync(join(f.repo.path, path), candidateText);
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Candidate']);
-    const applied = await confirmAdoption(prepared, { reference: 'apply', status: 'succeeded' });
+    const applied = await confirmAdoption(f.sourceHistory, f.retain(prepared), { reference: 'apply', status: 'succeeded' });
     assert.equal(applied.status, 'applied');
     const invalidBaseline = structuredClone(applied); invalidBaseline.approval.target.expectedSha256 = sha('invented baseline');
-    await assert.rejects(prepareRevert(invalidBaseline, { reference: 'revert' }), /observed adoption/);
+    await assert.rejects(prepareRevert(f.sourceHistory, f.retain(invalidBaseline), { reference: 'revert' }), /retained evidence/);
     const revertApproval = { reference: 'revert' };
-    const pending = prepareRevert(applied, revertApproval);
+    const pending = prepareRevert(f.sourceHistory, f.retain(applied), revertApproval);
     revertApproval.reference = 'changed after call';
     const reverting = JSON.parse(JSON.stringify(await pending));
     assert.equal(reverting.approvalReference, 'revert');
@@ -297,9 +299,112 @@ test('saved revert preparation and claimed historical adoption are revalidated',
     reverting.expected.revision = f.repo.git(['rev-parse', 'HEAD']).trim();
     writeFileSync(join(f.repo.path, path), originalText);
     f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Restore']);
-    await assert.rejects(confirmRevert(reverting, { reference: 'restore', status: 'succeeded' }), /revert preparation/);
+    await assert.rejects(confirmRevert(f.sourceHistory, f.retain(reverting), { reference: 'restore', status: 'succeeded' }), /revert preparation/);
     for (const malformed of [null, {}, { ...prepared, kind: 'revert-preparation' }, { ...prepared, evidence: {} }])
-      await assert.rejects(confirmAdoption(malformed, { reference: 'action', status: 'succeeded' }));
+      await assert.rejects(confirmAdoption(f.sourceHistory, f.retain(malformed), { reference: 'action', status: 'succeeded' }));
+  } finally { f.repo.dispose(); }
+});
+
+test('retained references anchor approval fields and reject forged or unavailable saved records at every boundary', async () => {
+  const f = fixture();
+  try {
+    const prepared = await prepareAdoption(f.sourceHistory, f.approval);
+    const reference = f.retain(prepared);
+    const saved = JSON.parse(JSON.stringify(prepared));
+    const mutations = [
+      value => { value.approval.reference = 'different-human'; },
+      value => { value.approval.candidate.sha256 = sha('unapproved'); },
+      value => { value.approval.candidate.captureId = 'baseline-1'; },
+      value => { value.approval.evaluation.reportCaptureId = 'different-evaluation'; },
+      value => { value.approval.extraction.proposalKey = 'different-proposal'; },
+      value => { value.approval.target.path = 'tracked.txt'; },
+      value => { value.approval.target.repository = '/different-repository'; },
+      value => { value.approval.target.expectedRevision = '1'.repeat(40); },
+      value => { value.evidence.extractionReport.captureId = 'different-report'; },
+    ];
+    for (const mutate of mutations) {
+      const changed = structuredClone(saved); mutate(changed);
+      await assert.rejects(confirmAdoption(f.sourceHistory, changed, { reference: 'action', status: 'succeeded' }), /retained report reference/);
+      await assert.rejects(confirmAdoption(f.sourceHistory, { ...reference, sha256: sha(JSON.stringify(changed)) },
+        { reference: 'action', status: 'succeeded' }), /digest/);
+    }
+    const original = f.captures.get(reference.captureId);
+    for (const replacement of [{ ...original, state: 'partial' }, { ...original, state: 'pruned' },
+      { ...original, invocationId: 'foreign' }, { ...original, text: JSON.stringify({ ...saved, approval: { ...saved.approval, reference: 'edited' } }) }]) {
+      f.captures.set(reference.captureId, replacement);
+      await assert.rejects(confirmAdoption(f.sourceHistory, reference, { reference: 'action', status: 'succeeded' }));
+    }
+    f.captures.set(reference.captureId, original);
+    writeFileSync(join(f.repo.path, path), candidateText);
+    f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Approved target']);
+    const applied = await confirmAdoption(f.sourceHistory, reference, { reference: 'apply', status: 'succeeded' });
+    assert.equal(applied.status, 'applied');
+    assert.deepEqual(applied.preparationReference, reference);
+    const appliedRef = f.retain(applied);
+    for (const mutate of mutations) {
+      const forged = structuredClone(applied); mutate(forged);
+      await assert.rejects(prepareRevert(f.sourceHistory, f.retain(forged), { reference: 'revert' }));
+    }
+    for (const status of ['failed', 'uncertain']) {
+      await assert.rejects(prepareRevert(f.sourceHistory, f.retain({ ...applied, action: { reference: 'bad', status } }),
+        { reference: 'revert' }), /observed adoption/);
+    }
+    for (const status of ['not_applied', 'uncertain'])
+      await assert.rejects(prepareRevert(f.sourceHistory, f.retain({ ...applied, status }), { reference: 'revert' }), /applied adoption/);
+    const reverting = await prepareRevert(f.sourceHistory, appliedRef, { reference: 'human-revert' });
+    const revertRef = f.retain(reverting);
+    const editedRevert = structuredClone(reverting); editedRevert.approvalReference = 'different-human';
+    await assert.rejects(confirmRevert(f.sourceHistory, editedRevert, { reference: 'action', status: 'succeeded' }), /retained report reference/);
+    await assert.rejects(confirmRevert(f.sourceHistory, { ...revertRef, sha256: sha(JSON.stringify(editedRevert)) },
+      { reference: 'action', status: 'succeeded' }), /digest/);
+    const forgedRevert = structuredClone(reverting);
+    forgedRevert.originalAdoption.action.reference = 'forged-confirmation';
+    await assert.rejects(confirmRevert(f.sourceHistory, f.retain(forgedRevert), { reference: 'action', status: 'succeeded' }), /retained evidence/);
+    // Pruning previously accepted evaluation evidence invalidates both later saved-object boundaries.
+    const review = f.captures.get('review-candidate-validated');
+    f.captures.set('review-candidate-validated', { ...review, state: 'pruned' });
+    await assert.rejects(confirmAdoption(f.sourceHistory, reference, { reference: 'action', status: 'succeeded' }));
+    await assert.rejects(prepareRevert(f.sourceHistory, appliedRef, { reference: 'revert' }));
+    await assert.rejects(confirmRevert(f.sourceHistory, revertRef, { reference: 'action', status: 'succeeded' }));
+  } finally { f.repo.dispose(); }
+});
+
+test('extraction event ownership is resolved from retained history, including pages outside selected evidence', async () => {
+  const f = fixture();
+  try {
+    const setEvent = event => {
+      f.sourceHistory.event = async () => event;
+      const input = f.captures.get('extract-attempt-1-inputs');
+      const outer = JSON.parse(input.text), context = JSON.parse(outer.context);
+      context.evidence[0].events = [event];
+      outer.context = JSON.stringify(context);
+      input.text = JSON.stringify(outer);
+      const capture = f.captures.get('extraction-report-1'), report = JSON.parse(capture.text);
+      report.examinedSources[0].eventCursors = [event.cursor];
+      report.suppliedSources[0].eventCursors = [event.cursor];
+      capture.text = JSON.stringify(report);
+      f.report.extractionReport.sha256 = sha(capture.text);
+      return { ...f.approval, evaluation: f.addEvaluation(f.report, 'events') };
+    };
+    for (const data of [{ invocationId: 'foreign-source' }, { invocationId: 'foreign-source', captureId: 'candidate-1' },
+      { attemptId: 'extract-attempt-1' }, { captureId: 'extraction-report-1' }, {}]) {
+      await assert.rejects(prepareAdoption(f.sourceHistory, setEvent({ cursor: '1', kind: 'event', data })), /retained evidence/);
+    }
+    for (const data of [{ invocationId: 'source-1' }, { captureId: 'candidate-1' }])
+      assert.equal((await prepareAdoption(f.sourceHistory, setEvent({ cursor: '1', kind: 'event', data }))).kind, 'adoption-preparation');
+    const read = f.sourceHistory.read;
+    f.sourceHistory.read = async (id, afterAttempt = 0, afterCapture = 0) => {
+      const page = await read(id);
+      if (id !== 'source-1') return page;
+      return { ...page, attempts: afterAttempt ? [{ id: 'owned-later', invocationId: id }] : [],
+        attemptsNextCursor: afterAttempt ? 2 : 1, hasMoreAttempts: !afterAttempt };
+    };
+    assert.equal((await prepareAdoption(f.sourceHistory, setEvent({ cursor: '1', kind: 'event', data: { attemptId: 'owned-later' } }))).kind, 'adoption-preparation');
+    f.sourceHistory.read = async (id, afterAttempt = 0) => {
+      const page = await read(id);
+      return id === 'source-1' ? { ...page, attempts: [], attemptsNextCursor: afterAttempt + 1, hasMoreAttempts: true } : page;
+    };
+    await assert.rejects(prepareAdoption(f.sourceHistory, setEvent({ cursor: '1', kind: 'event', data: { attemptId: 'owned-later' } })), /retained evidence/);
   } finally { f.repo.dispose(); }
 });
 
@@ -379,7 +484,7 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
         await recorder.appendCapture({ id: capture.id, chunks: [{ sequence: 1, text: JSON.stringify(value) }], state: 'complete' });
         await recorder.finalizeInvocation({ id: invocation.id, outcome: 'succeeded', cleanup: 'complete',
           claimId: invocation.claim.id, token: invocation.claim.token });
-        return { invocationId: invocation.id, captureId: capture.id };
+        return { invocationId: invocation.id, captureId: capture.id, sha256: sha(JSON.stringify(value)) };
       } finally { recorder.close(); }
     };
     const extraction = invoke('learn', { version: 1, sources: [{ invocationId: sourceId }] },
@@ -425,19 +530,31 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       assert.deepEqual(prepared.evidence.extractionResult, revised.value.extractionResult);
       const approvalRecord = await saveOperation('adoption-approval', prepared);
       assert.equal(retained(approvalRecord.invocationId).value.kind, 'adoption-preparation');
+      const editedPreparation = JSON.parse(JSON.stringify(prepared));
+      editedPreparation.approval.candidate.sha256 = sha('unauthorized candidate\n');
+      writeFileSync(join(repo.path, path), 'unauthorized candidate\n');
+      repo.git(['add', path]); repo.git(['commit', '-m', 'Unapproved saved candidate']);
+      await assert.rejects(confirmAdoption(history, editedPreparation, { reference: 'unapproved-action', status: 'succeeded' }));
+      const rejectedCandidate = await confirmAdoption(history, approvalRecord, { reference: 'unapproved-action', status: 'succeeded' });
+      assert.equal(rejectedCandidate.status, 'uncertain');
+      assert.equal(rejectedCandidate.approval.candidate.sha256, sha(candidateText));
+      await assert.rejects(prepareRevert(history, await saveOperation('unapproved-result', rejectedCandidate), { reference: 'revert' }));
+      await assert.rejects(confirmAdoption(history, { ...approvalRecord, sha256: sha(JSON.stringify(editedPreparation)) },
+        { reference: 'unapproved-action', status: 'succeeded' }), /digest/);
+      repo.git(['reset', '--hard', originalRevision]);
       writeFileSync(join(repo.path, path), candidateText);
       repo.git(['add', path]); repo.git(['commit', '-m', 'Apply approved candidate']);
-      const adopted = await confirmAdoption(prepared, { reference: 'fixture-action', status: 'succeeded' });
+      const adopted = await confirmAdoption(history, approvalRecord, { reference: 'fixture-action', status: 'succeeded' });
       assert.equal(adopted.status, 'applied');
       const adoptedRecord = await saveOperation('adoption-result', adopted);
       const savedAdoption = retained(adoptedRecord.invocationId).value;
       assert.equal(savedAdoption.applied.revision, adopted.applied.revision);
-      const preparedRevert = await prepareRevert(savedAdoption, { reference: 'fixture-revert-approval' });
+      const preparedRevert = await prepareRevert(history, adoptedRecord, { reference: 'fixture-revert-approval' });
       const revertApprovalRecord = await saveOperation('revert-approval', preparedRevert);
       assert.equal(retained(revertApprovalRecord.invocationId).value.kind, 'revert-preparation');
       writeFileSync(join(repo.path, path), originalText);
       repo.git(['add', path]); repo.git(['commit', '-m', 'Revert approved candidate']);
-      const reverted = await confirmRevert(preparedRevert, { reference: 'fixture-revert-action', status: 'succeeded' });
+      const reverted = await confirmRevert(history, revertApprovalRecord, { reference: 'fixture-revert-action', status: 'succeeded' });
       assert.equal(reverted.status, 'reverted');
       const revertRecord = await saveOperation('revert-result', reverted);
       assert.equal(retained(revertRecord.invocationId).value.reverted.revision, reverted.reverted.revision);

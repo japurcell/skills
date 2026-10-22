@@ -105,15 +105,15 @@ export interface AdoptionPreparation {
 }
 export interface ActionEvidence { reference: string; status: 'succeeded' | 'failed' | 'uncertain' }
 export type AdoptionOutcome = { kind: 'adoption'; status: 'not_applied' | 'uncertain'; approval: AdoptionApproval;
-  evidence: AdoptionPreparation['evidence']; action: ActionEvidence; observed: TargetObservation | null; reason: string }
+  preparationReference: LearningReference; evidence: AdoptionPreparation['evidence']; action: ActionEvidence; observed: TargetObservation | null; reason: string }
   | { kind: 'adoption'; status: 'applied'; approval: AdoptionApproval; evidence: AdoptionPreparation['evidence'];
-    action: ActionEvidence; applied: TargetObservation };
+    preparationReference: LearningReference; action: ActionEvidence; applied: TargetObservation };
 export interface RevertPreparation { kind: 'revert-preparation'; originalAdoption: Extract<AdoptionOutcome, { status: 'applied' }>;
-  approvalReference: string; expected: TargetObservation }
+  originalAdoptionReference: LearningReference; approvalReference: string; expected: TargetObservation }
 export type RevertOutcome = { kind: 'revert'; status: 'not_reverted' | 'uncertain'; originalAdoption: RevertPreparation['originalAdoption'];
-  approvalReference: string; action: ActionEvidence; observed: TargetObservation | null; reason: string }
+  preparationReference: LearningReference; approvalReference: string; action: ActionEvidence; observed: TargetObservation | null; reason: string }
   | { kind: 'revert'; status: 'reverted'; originalAdoption: RevertPreparation['originalAdoption'];
-    approvalReference: string; action: ActionEvidence; reverted: TargetObservation };
+    preparationReference: LearningReference; approvalReference: string; action: ActionEvidence; reverted: TargetObservation };
 
 function validReference(value: unknown): value is LearningReference {
   return object(value) && named(value.invocationId) && named(value.captureId) && hex(value.sha256);
@@ -137,7 +137,7 @@ async function retainedText(history: SourceHistoryGateway, invocationId: string,
   let cursor = 0, found = false, more = false;
   for (let page = 0; page < 8; page++) {
     const result = await history.read(invocationId, 0, cursor);
-    if (result.invocation.stage !== 'finalized' || (requireSuccess && result.invocation.outcome !== 'succeeded'))
+    if (result.invocation.id !== invocationId || result.invocation.stage !== 'finalized' || (requireSuccess && result.invocation.outcome !== 'succeeded'))
       throw new Error('adoption reference invocation is not successfully finalized');
     const header = result.captures.find(item => item.id === captureId);
     if (header) {
@@ -152,7 +152,7 @@ async function retainedText(history: SourceHistoryGateway, invocationId: string,
   let after = 0, text = '', hasMore = true;
   for (let page = 0; page < Math.ceil(limit / 32768) + 4 && hasMore; page++) {
     const capture = await history.capture(invocationId, captureId, after, 32768);
-    if (capture.channel !== channel || capture.state !== 'complete') throw new Error('adoption capture became unavailable');
+    if (capture.id !== captureId || capture.channel !== channel || capture.state !== 'complete') throw new Error('adoption capture became unavailable');
     for (const chunk of capture.chunks) text += chunk.text;
     if (Buffer.byteLength(text) > limit) throw new Error('adoption capture exceeds bounded evidence limit');
     if (capture.hasMore && capture.nextSequence === after) throw new Error('adoption capture has unexamined text');
@@ -208,6 +208,22 @@ async function agentEvidence(history: SourceHistoryGateway, invocationId: string
   return { agent, payload: result.payload, inputs, context: parseEvidence(inputs.context) };
 }
 
+/** Match learn.ts ownership: explicit invocation wins; otherwise resolve retained attempt/capture membership. */
+async function eventOwnedBy(history: SourceHistoryGateway, invocationId: string, data: Record<string, unknown>): Promise<boolean> {
+  if (data.invocationId !== undefined) return data.invocationId === invocationId;
+  let afterAttempt = 0, afterCapture = 0;
+  for (let page = 0; page < 3; page++) {
+    const result = await history.read(invocationId, afterAttempt, afterCapture);
+    requireEvidence(result.invocation.id === invocationId && result.invocation.stage === 'finalized');
+    if ((named(data.attemptId) && result.attempts.some(item => item.id === data.attemptId && item.invocationId === invocationId))
+      || (named(data.captureId) && result.captures.some(item => item.id === data.captureId))) return true;
+    if (!result.hasMoreAttempts && !result.hasMoreCaptures) return false;
+    if (result.attemptsNextCursor === afterAttempt && result.capturesNextCursor === afterCapture) return false;
+    afterAttempt = result.attemptsNextCursor; afterCapture = result.capturesNextCursor;
+  }
+  return false;
+}
+
 async function verifyProvenance(history: SourceHistoryGateway, approval: AdoptionApproval, report: Record<string, unknown>): Promise<void> {
   const evaluationHeaders = await producerCaptures(history, approval.evaluation.invocationId, '.factory/workflows/evaluate.ts');
   requireEvidence(evaluationHeaders.get(approval.evaluation.reportCaptureId)?.attemptId === null);
@@ -246,7 +262,8 @@ async function verifyProvenance(history: SourceHistoryGateway, approval: Adoptio
     for (const entry of source.events) {
       requireEvidence(object(entry) && named(entry.cursor));
       const actual = await history.event(entry.cursor);
-      requireEvidence(actual && actual.kind === entry.kind && isDeepStrictEqual(actual.data, entry.data));
+      requireEvidence(actual && actual.cursor === entry.cursor && actual.kind === entry.kind && isDeepStrictEqual(actual.data, entry.data)
+        && object(actual.data) && await eventOwnedBy(history, source.invocationId, actual.data));
     }
     for (const entry of source.captures) {
       requireEvidence(object(entry) && named(entry.id) && typeof entry.channel === 'string' && Array.isArray(entry.chunks));
@@ -376,9 +393,8 @@ async function scopedRevision(repository: string, before: string, after: string,
   return changed.length === 1 && changed[0] === path;
 }
 
-/** Approval is supplied separately from the action; this step only prepares exact, observed evidence. */
-export async function prepareAdoption(history: SourceHistoryGateway, approval: AdoptionApproval): Promise<AdoptionPreparation> {
-  approval = structuredClone(approval);
+/** Retained evidence validation does not depend on the current target revision. */
+async function approvedEvidence(history: SourceHistoryGateway, approval: AdoptionApproval): Promise<AdoptionPreparation['evidence']> {
   validateApproval(approval);
   const evaluationText = await retainedText(history, approval.evaluation.invocationId, approval.evaluation.reportCaptureId, 'report');
   if (digest(evaluationText) !== approval.evaluation.sha256) throw new Error('approved evaluation report bytes changed');
@@ -405,14 +421,36 @@ export async function prepareAdoption(history: SourceHistoryGateway, approval: A
   await verifyProvenance(history, approval, report);
   const candidate = await retainedText(history, approval.candidate.invocationId, approval.candidate.captureId, 'event');
   if (digest(candidate) !== approval.candidate.sha256) throw new Error('approved candidate bytes changed');
-  const observed = await observeTarget(approval.target.repository, approval.target.path);
-  if (observed.revision !== approval.target.expectedRevision || observed.sha256 !== approval.target.expectedSha256)
-    throw new Error('approved target revision or content changed; renewed review required');
-  return immutable({ kind: 'adoption-preparation', approval: structuredClone(approval), evidence: {
+  return {
     extractionReport: { captureId: report.extractionReport.captureId as string, sha256: report.extractionReport.sha256 as string },
     extractionResult: { attemptId: report.extractionResult.attemptId as string,
       rawCaptureId: report.extractionResult.rawCaptureId as string, validatedCaptureId: report.extractionResult.validatedCaptureId as string },
-  }, expected: observed });
+  };
+}
+
+/** The caller must retain this preparation as a complete report before authoring the target. */
+export async function prepareAdoption(history: SourceHistoryGateway, approval: AdoptionApproval): Promise<AdoptionPreparation> {
+  approval = structuredClone(approval);
+  const evidence = await approvedEvidence(history, approval);
+  const observed = await observeTarget(approval.target.repository, approval.target.path);
+  if (observed.revision !== approval.target.expectedRevision || observed.sha256 !== approval.target.expectedSha256)
+    throw new Error('approved target revision or content changed; renewed review required');
+  return immutable({ kind: 'adoption-preparation', approval, evidence, expected: observed });
+}
+
+/** JSON supplied by the caller is a locator, never the authority for saved approval fields. */
+async function retainedReport(history: SourceHistoryGateway, reference: LearningReference): Promise<Record<string, unknown>> {
+  if (!validReference(reference)) throw new Error('invalid retained report reference');
+  const text = await retainedText(history, reference.invocationId, reference.captureId, 'report');
+  if (digest(text) !== reference.sha256) throw new Error('retained report digest differs from reference');
+  return parseEvidence(text);
+}
+
+async function retainedPreparation(history: SourceHistoryGateway, reference: LearningReference): Promise<AdoptionPreparation> {
+  const prepared = await retainedReport(history, reference) as unknown as AdoptionPreparation;
+  validatePreparation(prepared);
+  requireEvidence(isDeepStrictEqual(prepared.evidence, await approvedEvidence(history, prepared.approval)));
+  return prepared;
 }
 
 function validateEvidence(value: AdoptionPreparation['evidence']): void {
@@ -435,9 +473,9 @@ async function historicalTarget(repository: string, commit: string, path: string
   return digest(await git(repository, ['show', `${commit}:${path}`])) === sha256;
 }
 
-async function validateApplied(original: Extract<AdoptionOutcome, { status: 'applied' }>): Promise<void> {
-  validateApproval(original.approval);
-  validateEvidence(original.evidence);
+async function validateApplied(history: SourceHistoryGateway, original: Extract<AdoptionOutcome, { status: 'applied' }>): Promise<void> {
+  const prepared = await retainedPreparation(history, original.preparationReference);
+  requireEvidence(isDeepStrictEqual(original.approval, prepared.approval) && isDeepStrictEqual(original.evidence, prepared.evidence));
   const target = original.approval.target;
   if (original.kind !== 'adoption' || original.status !== 'applied'
     || !revision(original.applied?.revision) || original.applied.sha256 !== original.approval.candidate.sha256
@@ -449,11 +487,11 @@ async function validateApplied(original: Extract<AdoptionOutcome, { status: 'app
 }
 
 /** A successful action result alone cannot claim application; the target commit and bytes must agree. */
-export async function confirmAdoption(prepared: AdoptionPreparation, action: ActionEvidence): Promise<AdoptionOutcome> {
-  prepared = structuredClone(prepared); action = structuredClone(action);
-  validatePreparation(prepared);
+export async function confirmAdoption(history: SourceHistoryGateway, preparationReference: LearningReference, action: ActionEvidence): Promise<AdoptionOutcome> {
+  preparationReference = structuredClone(preparationReference); action = structuredClone(action);
+  const prepared = await retainedPreparation(history, preparationReference);
   if (!named(action?.reference) || !['succeeded', 'failed', 'uncertain'].includes(action.status)) throw new Error('invalid adoption action evidence');
-  const common = { kind: 'adoption' as const, approval: prepared.approval, evidence: prepared.evidence, action };
+  const common = { kind: 'adoption' as const, preparationReference, approval: prepared.approval, evidence: prepared.evidence, action };
   let observed: TargetObservation | null = null;
   try { observed = await observeTarget(prepared.approval.target.repository, prepared.approval.target.path); }
   catch { return { ...common, status: 'uncertain', observed, reason: 'target observation unavailable' }; }
@@ -471,27 +509,30 @@ export async function confirmAdoption(prepared: AdoptionPreparation, action: Act
   return { ...common, status: 'applied', applied: observed };
 }
 
-export async function prepareRevert(originalAdoption: AdoptionOutcome, approval: { reference: string }): Promise<RevertPreparation> {
-  if (!originalAdoption || originalAdoption.status !== 'applied' || !named(approval?.reference))
+export async function prepareRevert(history: SourceHistoryGateway, originalAdoptionReference: LearningReference, approval: { reference: string }): Promise<RevertPreparation> {
+  originalAdoptionReference = structuredClone(originalAdoptionReference); approval = structuredClone(approval);
+  const originalAdoption = await retainedReport(history, originalAdoptionReference) as unknown as AdoptionOutcome;
+  if (originalAdoption.status !== 'applied' || !named(approval?.reference))
     throw new Error('revert requires applied adoption and explicit approval');
-  originalAdoption = structuredClone(originalAdoption); approval = structuredClone(approval);
-  await validateApplied(originalAdoption);
+  await validateApplied(history, originalAdoption);
   const observed = await observeTarget(originalAdoption.approval.target.repository, originalAdoption.approval.target.path);
   if (observed.revision !== originalAdoption.applied.revision || observed.sha256 !== originalAdoption.applied.sha256)
     throw new Error('revert target changed; renewed review required');
-  return immutable({ kind: 'revert-preparation', originalAdoption: structuredClone(originalAdoption),
+  return immutable({ kind: 'revert-preparation', originalAdoptionReference, originalAdoption: structuredClone(originalAdoption),
     approvalReference: approval.reference, expected: observed });
 }
 
-export async function confirmRevert(prepared: RevertPreparation, action: ActionEvidence): Promise<RevertOutcome> {
-  prepared = structuredClone(prepared); action = structuredClone(action);
+export async function confirmRevert(history: SourceHistoryGateway, preparationReference: LearningReference, action: ActionEvidence): Promise<RevertOutcome> {
+  preparationReference = structuredClone(preparationReference); action = structuredClone(action);
+  const prepared = await retainedReport(history, preparationReference) as unknown as RevertPreparation;
   if (!object(prepared) || prepared.kind !== 'revert-preparation' || !named(prepared.approvalReference)
     || !object(prepared.originalAdoption) || !object(prepared.expected)
     || !isDeepStrictEqual(prepared.expected, prepared.originalAdoption.applied))
     throw new Error('invalid revert preparation');
-  await validateApplied(prepared.originalAdoption);
+  requireEvidence(isDeepStrictEqual(prepared.originalAdoption, await retainedReport(history, prepared.originalAdoptionReference)));
+  await validateApplied(history, prepared.originalAdoption);
   if (!named(action?.reference) || !['succeeded', 'failed', 'uncertain'].includes(action.status)) throw new Error('invalid revert action evidence');
-  const common = { kind: 'revert' as const, originalAdoption: prepared.originalAdoption,
+  const common = { kind: 'revert' as const, preparationReference, originalAdoption: prepared.originalAdoption,
     approvalReference: prepared.approvalReference, action };
   const target = prepared.originalAdoption.approval.target;
   let observed: TargetObservation | null = null;
