@@ -13,6 +13,8 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import type { Admission } from './accounting.js';
 import type { RepositoryStore } from './store.js';
 import type { InvocationRecorder } from './capture.js';
+import { sourceHistoryGateway } from './learning.js';
+import type { SourceHistoryGateway } from './learning.js';
 
 export interface CommandOptions {
   argv: string[]; cwd?: string; env?: Record<string, string>; shell?: string;
@@ -23,6 +25,7 @@ export interface CommandOptions {
 export interface CommandResult { attemptId: string; exitCode: number | null; cleanup: 'complete' | 'unknown' }
 export interface WorkflowContext {
   readonly worktree: string;
+  readonly sourceHistory: SourceHistoryGateway;
   scope<T>(name: string, action: (context: WorkflowContext) => Promise<T>): Promise<T>;
   command(name: string, options: CommandOptions): Promise<CommandResult>;
   progress(message: string): Promise<void>;
@@ -200,6 +203,7 @@ export function workflowContext(runner: CommandRunner, prefix = ''): WorkflowCon
   };
   return {
     worktree: runner.worktree,
+    sourceHistory: sourceHistoryGateway(runner.store, action => runner.track(action)),
     scope: (name, action) => runner.track(() => action(workflowContext(runner, key(name) + '/'))),
     command: (name, options) => runner.execute(key(name), options),
     progress: message => runner.track(async () => {
