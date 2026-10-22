@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 from dataclasses import dataclass
+import errno
 import hashlib
 import json
 import lzma
@@ -56,6 +57,11 @@ BAD_PART = re.compile(r"^(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|
 
 def refuse(message: str):
     raise ValueError(message)
+
+
+def require_private_file_mode():
+    if not callable(getattr(os, "fchmod", None)):
+        refuse("private stage requires os.fchmod")
 
 
 def fields(value, required, optional=frozenset()):
@@ -131,6 +137,7 @@ def inventory(root: Path):
 class PrivateStage:
     """Records exact new inodes and removes only those same regular files/directories."""
     def __init__(self):
+        require_private_file_mode()
         temp_root = Path(tempfile.gettempdir()).resolve()
         if "factory" in temp_root.parts or len(str(temp_root)) > 160:
             refuse("temporary stage root refused")
@@ -165,13 +172,29 @@ class PrivateStage:
         return path
 
     def create(self, name, executable=False):
+        require_private_file_mode()
         safe_name(name, allow_node_modules=True)
         self.mkdir(Path(name).parent.as_posix())
         path = self.root / name
         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o700 if executable else 0o600)
-        os.fchmod(fd, 0o700 if executable else 0o600)
-        self.owned[name] = self._id(path)
-        return os.fdopen(fd, "wb")
+        try:
+            info = os.fstat(fd)
+            self.owned[name] = info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode)
+            os.fchmod(fd, 0o700 if executable else 0o600)
+            return os.fdopen(fd, "wb")
+        except BaseException as error:
+            try:
+                os.close(fd)
+            except OSError as close_error:
+                if close_error.errno != errno.EBADF:
+                    self.preserved = True
+                    refuse("private stage descriptor closure uncertain")
+            if name not in self.owned:
+                self.preserved = True
+                refuse("private stage file identity uncertain")
+            if isinstance(error, (OSError, AttributeError)):
+                refuse("private stage file setup refused")
+            raise
 
     def cleanup(self):
         errors = []

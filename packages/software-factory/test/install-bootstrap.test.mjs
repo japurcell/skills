@@ -395,7 +395,7 @@ test('validator preserves its stage if waiting or joining raises unexpectedly', 
 test('validator accepts pipe completion between event checks', () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-event-race-')));
   try {
-    const driver = `import builtins,importlib.util,sys,threading\n` +
+    const driver = `import builtins,importlib.util,os,sys,threading\n` +
       `from unittest.mock import patch\n` +
       `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
       `started=[]; real_start=threading.Thread.start; absent=object()\n` +
@@ -409,18 +409,104 @@ test('validator accepts pipe completion between event checks', () => {
       ` assert all(not thread.is_alive() for thread in started)\n` +
       ` if default is absent: return builtins.next(iterator)\n` +
       ` return builtins.next(iterator,default)\n` +
-      `stage=m.PrivateStage()\n` +
-      `try:\n` +
+      `def run(stage):\n` +
+      ` started.clear()\n` +
       ` with patch.object(threading.Thread,'start',capture_start):\n` +
       `  m.next=complete_before_next\n` +
-      `  receipt=m.bounded_child([sys.executable,'-c','print("{}")'],stage,3)\n` +
-      ` assert receipt==b'{}\\n' and not stage.preserved\n` +
-      ` print('completed event race accepted')\n` +
+      `  return m.bounded_child([sys.executable,'-c','print("{}")'],stage,3)\n` +
+      `if os.name=='posix':\n` +
+      ` stage=m.PrivateStage()\n` +
+      ` try:\n` +
+      `  receipt=run(stage)\n` +
+      `  assert receipt==b'{}\\n' and not stage.preserved\n` +
+      ` finally: stage.cleanup()\n` +
+      `stage=m.PrivateStage()\n` +
+      `try:\n` +
+      ` with patch.object(m.os,'name','nt'):\n` +
+      `  try: run(stage)\n` +
+      `  except ValueError as error:\n` +
+      `   assert str(error).startswith('validator closure uncertain')\n` +
+      `   assert isinstance(error.__cause__,ValueError) and str(error.__cause__)=='validator descendant closure unsupported'\n` +
+      `  else: raise AssertionError('Windows branch returned a receipt')\n` +
+      ` assert stage.preserved and stage.root.exists()\n` +
+      ` print('platform-specific event race behavior accepted')\n` +
       `finally: stage.cleanup()\n`;
     const path = join(root, 'driver.py');
     writeFileSync(path, driver);
     const result = spawnSync(python, [path, script], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(result.stdout.trim(), 'completed event race accepted');
+    assert.equal(result.stdout.trim(), 'platform-specific event race behavior accepted');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('private stage refuses unavailable file-mode capability before creation', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-capability-')));
+  try {
+    const driver = `import importlib.util,sys\n` +
+      `from unittest.mock import patch\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `with patch.object(m.os,'fchmod',None),patch.object(m.tempfile,'mkdtemp',side_effect=AssertionError('stage was created')):\n` +
+      ` try: m.PrivateStage()\n` +
+      ` except ValueError as error: assert str(error)=='private stage requires os.fchmod'\n` +
+      ` else: raise AssertionError('missing fchmod accepted')\n` +
+      `stage=m.PrivateStage()\n` +
+      `try:\n` +
+      ` with patch.object(m.os,'fchmod',None),patch.object(m.os,'open',side_effect=AssertionError('file was created')):\n` +
+      `  try: stage.create('sample')\n` +
+      `  except ValueError as error: assert str(error)=='private stage requires os.fchmod'\n` +
+      `  else: raise AssertionError('missing fchmod accepted for new file')\n` +
+      ` assert not (stage.root/'sample').exists()\n` +
+      `finally: stage.cleanup()\n` +
+      `print('missing capability refused before stage and file creation')\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'missing capability refused before stage and file creation');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('private stage closes and owns files after setup faults', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-create-fault-')));
+  try {
+    const driver = `import errno,importlib.util,os,sys\n` +
+      `from unittest.mock import patch\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `for mode in ('fchmod','fdopen'):\n` +
+      ` stage=m.PrivateStage(); opened=[]; real_open=m.os.open\n` +
+      ` def capture_open(*args,**kwargs):\n` +
+      `  fd=real_open(*args,**kwargs); opened.append(fd); return fd\n` +
+      ` try:\n` +
+      `  with patch.object(m.os,'open',capture_open),patch.object(m.os,mode,side_effect=OSError('controlled setup fault')):\n` +
+      `   try: stage.create('sample')\n` +
+      `   except ValueError as error: assert str(error)=='private stage file setup refused'\n` +
+      `   else: raise AssertionError(mode+' fault accepted')\n` +
+      `  assert len(opened)==1 and 'sample' in stage.owned\n` +
+      `  try: os.fstat(opened[0])\n` +
+      `  except OSError as error: assert error.errno==errno.EBADF\n` +
+      `  else: raise AssertionError(mode+' descriptor leaked')\n` +
+      `  stage.cleanup()\n` +
+      `  assert not stage.root.exists()\n` +
+      ` finally:\n` +
+      `  if stage.root.exists():\n` +
+      `   if 'sample' not in stage.owned: (stage.root/'sample').unlink(missing_ok=True)\n` +
+      `   stage.cleanup()\n` +
+      `stage=m.PrivateStage()\n` +
+      `try:\n` +
+      ` stage.create('sample').close()\n` +
+      ` foreign=stage.root/'foreign'; foreign.write_text('keep')\n` +
+      ` (stage.root/'sample').unlink(); foreign.rename(stage.root/'sample')\n` +
+      ` try: stage.cleanup()\n` +
+      ` except ValueError: pass\n` +
+      ` else: raise AssertionError('foreign replacement was removed')\n` +
+      ` assert (stage.root/'sample').read_text()=='keep'\n` +
+      `finally:\n` +
+      ` (stage.root/'sample').unlink(missing_ok=True); stage.root.rmdir()\n` +
+      `print('setup fault descriptors closed and exact stage cleaned')\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'setup fault descriptors closed and exact stage cleaned');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
