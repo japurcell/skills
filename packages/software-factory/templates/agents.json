@@ -1,0 +1,36 @@
+{
+  "defaults": {
+    "harness": "SELECT_QUALIFIED_HARNESS",
+    "permissions": "read-only",
+    "skillDelivery": "instructions",
+    "skills": [],
+    "prompt": {
+      "file": ".factory/prompts/recipe.md"
+    }
+  },
+  "profiles": {
+    "planner": {
+      "prompt": {
+        "file": ".factory/prompts/planning.md"
+      }
+    },
+    "implementer": {
+      "permissions": "workspace-write",
+      "prompt": {
+        "file": ".factory/prompts/implementation.md"
+      }
+    },
+    "reviewer": {
+      "permissions": "read-only",
+      "prompt": {
+        "file": ".factory/prompts/review.md"
+      }
+    },
+    "auditor": {
+      "permissions": "read-only",
+      "prompt": {
+        "file": ".factory/prompts/audit.md"
+      }
+    }
+  }
+}
