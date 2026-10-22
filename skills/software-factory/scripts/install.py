@@ -530,7 +530,12 @@ def bounded_child(command, stage=None, timeout_seconds=30):
             threads.append(thread)
             thread.start()
         while not all(finished.is_set() for finished in done) and not overflow.is_set() and not errors.is_set() and time.monotonic() < run_deadline:
-            next(finished for finished in done if not finished.is_set()).wait(min(0.02, max(0, run_deadline - time.monotonic())))
+            try:
+                unfinished = next(finished for finished in done if not finished.is_set())
+            except StopIteration:
+                # Both pipes completed after the loop condition was checked.
+                break
+            unfinished.wait(min(0.02, max(0, run_deadline - time.monotonic())))
         if not all(finished.is_set() for finished in done) or overflow.is_set() or errors.is_set():
             expected_refusal = True
             refuse("validator pipe closure or output limit refused")

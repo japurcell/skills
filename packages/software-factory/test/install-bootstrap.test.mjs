@@ -391,3 +391,36 @@ test('validator preserves its stage if waiting or joining raises unexpectedly', 
     assert.equal(result.stdout.trim(), 'wait and join faults preserved owned stages');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('validator accepts pipe completion between event checks', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-event-race-')));
+  try {
+    const driver = `import builtins,importlib.util,sys,threading\n` +
+      `from unittest.mock import patch\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `started=[]; real_start=threading.Thread.start; absent=object()\n` +
+      `def capture_start(self):\n` +
+      ` result=real_start(self)\n` +
+      ` if self.name.startswith('factory-install-drain'): started.append(self)\n` +
+      ` return result\n` +
+      `def complete_before_next(iterator,default=absent):\n` +
+      ` assert len(started)==2\n` +
+      ` for thread in started: thread.join(timeout=3)\n` +
+      ` assert all(not thread.is_alive() for thread in started)\n` +
+      ` if default is absent: return builtins.next(iterator)\n` +
+      ` return builtins.next(iterator,default)\n` +
+      `stage=m.PrivateStage()\n` +
+      `try:\n` +
+      ` with patch.object(threading.Thread,'start',capture_start):\n` +
+      `  m.next=complete_before_next\n` +
+      `  receipt=m.bounded_child([sys.executable,'-c','print("{}")'],stage,3)\n` +
+      ` assert receipt==b'{}\\n' and not stage.preserved\n` +
+      ` print('completed event race accepted')\n` +
+      `finally: stage.cleanup()\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'completed event race accepted');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
