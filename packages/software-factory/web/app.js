@@ -7,9 +7,9 @@ const state = {
   run: null, invocation: null, invocationPage: [0], invocationList: [], invocationNext: 0, invocationMore: false,
   attempts: [], captures: [], attemptsNext: 0, capturesNext: 0, attemptsMore: false, capturesMore: false,
   attemptPage: [0], captureSummaryPage: [0], sessionPage: [0],
-  sessions: [], sessionsNext: 0, sessionsMore: false, lanePage: 0, collapsed: new Set(),
+  sessions: [], sessionsNext: 0, sessionsMore: false, lanePage: 0, collapsed: new Set(), sessionParents: new Map(), question: null,
   events: [], earlier: false, selectedCapture: null, capturePage: null, captureAfter: 0, streamAbort: null,
-  routeGeneration: 0, error: null,
+  routeGeneration: 0, outcomeGeneration: 0, cardRefreshSequence: 0, cardGenerations: new Map(), error: null, connectionKind: null,
 };
 const idPattern = /^[0-9a-f-]{36}$/;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -24,17 +24,21 @@ function outcome(invocation) {
 const chip = (label, tone = '') => `<span class="chip status"${tone ? ` data-tone="${tone}"` : ''}>${escapeHtml(label)}</span>`;
 function route() {
   const params = new URLSearchParams(location.hash.slice(1));
-  return { run:params.get('run'), invocation:params.get('invocation'), phase:params.get('phase'), attempt:params.get('attempt'), cursor:params.get('cursor') };
+  return { run:params.get('run'), invocation:params.get('invocation'), phase:params.get('phase'), attempt:params.get('attempt'), session:params.get('session'), cursor:params.get('cursor') };
 }
 function link(values = {}) {
   const params = new URLSearchParams();
-  for (const key of ['run','invocation','phase','attempt','cursor']) if (values[key]) params.set(key, values[key]);
+  for (const key of ['run','invocation','phase','attempt','session','cursor']) if (values[key]) params.set(key, values[key]);
   return '#' + params.toString();
 }
 function showConnection(kind, text) {
+  const changed = state.connectionKind !== kind;
+  state.connectionKind = kind;
   connection.dataset.state = kind;
   connection.textContent = text;
-  if (kind === 'disconnected') announcement.textContent = text;
+  const chipSlot=document.getElementById('observation-state');
+  if(chipSlot) chipSlot.innerHTML=chip(kind==='disconnected'?`Disconnected - last update ${state.lastUpdate?state.lastUpdate.toLocaleTimeString():'unknown'}`:kind==='frozen'?'Frozen at saved cursor '+state.cursor:kind==='connecting'?'Catching up':'Connected',kind==='connected'?'success':'attention');
+  if (changed) announcement.textContent = kind==='disconnected'?text:kind==='connected'?'Observation connected.':kind==='connecting'?'Catching up with saved observations.':'Observation frozen.';
 }
 async function api(path, options = {}) {
   const response = await fetch(path, { ...options, cache:'no-store', headers: { Authorization:'Bearer ' + state.token, ...options.headers } });
@@ -47,7 +51,7 @@ async function api(path, options = {}) {
 }
 function errorView(message, parent) {
   app.removeAttribute('aria-busy');
-  app.innerHTML = `<div class="error-message" role="alert"><h1>History unavailable</h1><p>${escapeHtml(message)}</p><p><a href="${parent || '#'}">${parent ? 'Return to run' : 'Return to runs'}</a></p></div>`;
+  app.innerHTML = `<div class="error-message" role="alert"><h1>History unavailable</h1><p>${escapeHtml(message)}</p><p><a href="${parent || '#'}">${parent ? 'Return to saved parent' : 'Return to runs'}</a></p></div>`;
 }
 function routeError(message, parent) { state.error = message; errorView(message, parent); }
 function pageAnchor() { return state.runPage.at(-1) ?? 0; }
@@ -55,6 +59,7 @@ async function loadIndex(generation = state.routeGeneration) {
   const page = await api(`/api/runs?after=${pageAnchor()}&limit=30`);
   if (generation !== state.routeGeneration) return;
   state.runs = page.runs; state.runPageNext = page.nextCursor; state.runsHaveMore = page.hasMore;
+  state.cardGenerations.clear();
   state.run = null; state.invocation = null; state.error = null;
   renderIndex();
 }
@@ -66,7 +71,7 @@ function card(run) {
   const cleanup = run.clearance ? 'Operator confirmed' : invocation?.cleanup === 'complete' ? 'Automatically checked' : invocation?.cleanup === 'unknown' ? 'Manual cleanup required' : 'Cleanup not recorded';
   const capture = run.latestCaptureState ? 'Latest capture: '+run.latestCaptureState : 'No capture recorded';
   const elapsed = run.startedAt ? Math.max(0,Math.round((Date.parse(run.endedAt || new Date().toISOString())-Date.parse(run.startedAt))/1000))+'s as of this view' : 'Elapsed unknown';
-  return `<article class="run-card" data-card-search="${escapeHtml(`${name} ${workflow} ${run.id} ${invocation?.id || ''}`.toLowerCase())}" data-outcome="${escapeHtml(invocation?.outcome || invocation?.stage || 'unknown')}">
+  return `<article class="run-card" data-run="${escapeHtml(run.id)}" data-card-search="${escapeHtml(`${name} ${workflow} ${run.id} ${invocation?.id || ''}`.toLowerCase())}" data-outcome="${escapeHtml(invocation?.outcome || invocation?.stage || 'unknown')}">
     <div class="card-head"><a href="${link({ run:run.id })}" aria-label="Open run ${escapeHtml(short(run.id))}: ${escapeHtml(name)}">${escapeHtml(name)}</a>
     <div class="workflow">${escapeHtml(workflow)} - ${escapeHtml(short(run.id))}</div><p class="muted">${escapeHtml(run.requestPreview || 'Request preview unavailable. Open the saved invocation to inspect evidence.')}</p></div>
     <div class="mini-activity" aria-label="Observed activity summary"><span data-kind="${run.startedAt?'active':''}"></span><span data-kind="${run.latestCaptureState?'active':''}"></span><span data-kind="${run.endedAt?'active':''}"></span><small>${invocation ? 'Latest invocation ' + escapeHtml(short(invocation.id)) : 'No invocation yet'}</small></div>
@@ -102,7 +107,7 @@ async function loadRun(target, generation = state.routeGeneration) {
   const selectedId = target.invocation || run.latestInvocation?.id;
   if (selectedId && !idPattern.test(selectedId)) throw new Error('Invalid invocation link.');
   const selector = await api(`/api/runs/${target.run}/invocations?after=${state.invocationPage.at(-1) ?? 0}&limit=30`);
-  let detail = null, sessions = null, events = null;
+  let detail = null, sessions = null, events = null, selectedEvent = null, selectedSession = null, question = null;
   if (selectedId) {
     [detail,sessions,events] = await Promise.all([
       api(`/api/invocations/${selectedId}?limit=50`),
@@ -110,6 +115,20 @@ async function loadRun(target, generation = state.routeGeneration) {
       api(`/api/invocations/${selectedId}/events?tail=1&limit=200`),
     ]);
     if (detail.invocation.runId !== target.run) throw new Error('Invocation does not belong to this run.');
+    if (target.cursor) {
+      if (!/^\d{1,19}$/.test(target.cursor)) throw new Error('Invalid saved event cursor.');
+      selectedEvent=await api(`/api/invocations/${selectedId}/events/${target.cursor}`);
+      events=await api(`/api/invocations/${selectedId}/events?before=${BigInt(target.cursor)+1n}&limit=200`);
+    }
+    if (target.session) {
+      if (!idPattern.test(target.session)) throw new Error('Invalid native session link.');
+      selectedSession=await api(`/api/invocations/${selectedId}/sessions/${target.session}`);
+    }
+    if(!selectedSession && selectedEvent?.data?.sessionId) {
+      if(!idPattern.test(selectedEvent.data.sessionId))throw new Error('Saved event has an invalid native session identity.');
+      selectedSession=await api(`/api/invocations/${selectedId}/sessions/${selectedEvent.data.sessionId}`);
+    }
+    question=await api(`/api/invocations/${selectedId}/question`);
   }
   if (generation !== state.routeGeneration) return;
   state.run = run; state.invocation = detail?.invocation || null;
@@ -118,22 +137,49 @@ async function loadRun(target, generation = state.routeGeneration) {
   state.attemptsNext = detail?.attemptsNextCursor || 0; state.capturesNext = detail?.capturesNextCursor || 0;
   state.attemptsMore = detail?.hasMoreAttempts || false; state.capturesMore = detail?.hasMoreCaptures || false;
   state.accounting = detail?.accounting || null; state.worktree = detail?.worktree || null; state.clearance = detail?.clearance || null;
-  state.sessions = sessions?.sessions || []; state.sessionsNext = sessions?.nextCursor || 0; state.sessionsMore = sessions?.hasMore || false;
+  state.sessions = sessions?.sessions || []; rememberSessionParents(state.sessions); state.sessionsNext = sessions?.nextCursor || 0; state.sessionsMore = sessions?.hasMore || false;
   state.events = events?.events || []; state.earlier = events?.hasEarlier || false;
+  state.question=question; state.selectedEventCursor=selectedEvent?.cursor || null;
   state.selectedCapture = null; state.capturePage = null; state.pending = 0; state.error = null;
-  const attempt = target.attempt && state.attempts.find(item => item.id === target.attempt);
-  if (target.attempt && !attempt) {
-    try {
-      const specific = await api(`/api/invocations/${selectedId}/attempts/${target.attempt}`);
-      state.attempts.push(specific);
-    } catch { throw new Error('Attempt link is unavailable or belongs to another invocation.'); }
+  if (selectedSession && !state.sessions.some(item=>item.id===selectedSession.id)) state.sessions.push(selectedSession);
+  if (selectedSession) rememberSessionParents([selectedSession]);
+  if (selectedSession) {
+    let parent=state.sessions.find(item=>item.attemptId===selectedSession.attemptId && item.nativeId===selectedSession.parentNativeId);
+    const seen=new Set();
+    while(parent && !seen.has(parent.id)) { seen.add(parent.id);state.collapsed.delete(parent.id);parent=state.sessions.find(item=>item.attemptId===parent.attemptId && item.nativeId===parent.parentNativeId); }
   }
-  if (target.phase && !state.attempts.some(item => item.operationKey === target.phase)) throw new Error('Phase link is unavailable in this saved page. Open an earlier attempt page.');
-  renderRun(target);
+  if (selectedSession && target.attempt && selectedSession.attemptId!==target.attempt) throw new Error('Native session does not belong to the selected attempt.');
+  if (selectedEvent && target.attempt && selectedEvent.data?.attemptId!==target.attempt) throw new Error('Saved event does not belong to the selected attempt.');
+  const selectedAttemptId=target.attempt || selectedSession?.attemptId || selectedEvent?.data?.attemptId;
+  if (selectedAttemptId && !idPattern.test(selectedAttemptId)) throw new Error('Invalid saved attempt link.');
+  if ((selectedAttemptId && !state.attempts.some(item=>item.id===selectedAttemptId)) || (target.phase && !state.attempts.some(item=>item.operationKey===target.phase))) {
+    try {
+      const params=new URLSearchParams();if(selectedAttemptId)params.set('attempt',selectedAttemptId);if(target.phase)params.set('phase',target.phase);
+      const page=await api(`/api/invocations/${selectedId}/attempt-page?${params}`);
+      state.attempts=page.attempts;state.attemptsNext=page.nextCursor;state.attemptsMore=page.hasMore;
+      state.attemptPage=page.targetCursor>1?[0,page.targetCursor-1]:[0];
+    } catch { throw new Error('Saved phase or attempt is unavailable or belongs to another invocation.'); }
+  }
+  const attempt=selectedAttemptId && state.attempts.find(item=>item.id===selectedAttemptId);
+  if (target.phase && attempt && attempt.operationKey!==target.phase) throw new Error('Attempt does not belong to this phase.');
+  if (target.phase && !state.attempts.some(item=>item.operationKey===target.phase)) throw new Error('Saved phase is unavailable.');
+  if (selectedEvent?.data?.sessionId && target.session && selectedEvent.data.sessionId!==target.session) throw new Error('Saved event does not belong to the selected native session.');
+  const displayTarget={...target,attempt:target.attempt||selectedAttemptId||null,phase:target.phase||attempt?.operationKey||null,session:target.session||selectedSession?.id||null};
+  state.displayTarget=displayTarget;
+  if(displayTarget.session || selectedAttemptId || displayTarget.phase) {
+    const rows=laneRows();
+    const index=rows.findIndex(row=>displayTarget.session?row.type==='session'&&row.item.id===displayTarget.session:row.type==='attempt'&&(selectedAttemptId?row.item.id===selectedAttemptId:row.item.operationKey===displayTarget.phase));
+    if(index>=0)state.lanePage=Math.floor(index/50);
+  }
+  renderRun(displayTarget);
 }
 function attention(invocation) {
   const entries = [];
-  if (invocation.outcome === 'needs_input') entries.push('<strong>Saved question needs input.</strong> This invocation has ended. Use its saved question with a fresh CLI invocation from the current workflow entry.');
+  if (invocation.outcome === 'needs_input' || state.question?.available) {
+    const question=state.question;
+    entries.push(`<strong>${invocation.outcome==='needs_input'?'Saved question needs input.':'Saved question.'}</strong> ${question?.available?`<span class="question-text">${escapeHtml(question.question)}</span><span>${escapeHtml(question.context)}</span>${question.suggestions?.length?`<span>Suggested answers: ${question.suggestions.map(escapeHtml).join('; ')}</span>`:''}`:'Question text is unavailable in the current saved capture.'} ${!invocation.outcome?'<span>No final result has been saved yet; outcome is unknown.</span>':''}<span>To answer, start a fresh CLI invocation with run ${escapeHtml(state.run.id)}, worktree ${escapeHtml(state.worktree?.id || 'unknown')}, and saved question ${escapeHtml(question?.captureId || 'unknown')}. The new invocation starts at the current workflow entry.</span>`);
+  }
+  if (invocation.outcome === 'failed') entries.push('<strong>Failed invocation.</strong> Open the saved result and attempt evidence below to inspect the failure.');
   if (state.clearance) entries.push(`<strong>Operator confirmed cleanup.</strong> ${escapeHtml(state.clearance.note)} The original ${escapeHtml(invocation.outcome || 'unknown')} outcome and cleanup uncertainty remain saved.`);
   else if (invocation.cleanup === 'unknown') entries.push('<strong>Manual cleanup required.</strong> Inspect reported children and the worktree with the CLI before recording clearance. A browser cannot release ownership.');
   if (!invocation.outcome && invocation.stage === 'finalized') entries.push('<strong>Outcome unknown.</strong> No final result was saved.');
@@ -147,16 +193,16 @@ function laneRows() {
   const attempts = state.attempts.map(item => ({ type:'attempt', key:item.id, item, depth:0 }));
   const sessionsByParent = new Map();
   for (const session of state.sessions) {
-    const key = session.parentNativeId || '';
+    const key = session.attemptId+':'+(session.parentNativeId || '');
     sessionsByParent.set(key,[...(sessionsByParent.get(key) || []),session]);
   }
   const rows = [...attempts]; const seen = new Set();
   function add(session, depth) {
     if (seen.has(session.id)) return;
     seen.add(session.id); rows.push({type:'session',key:session.id,item:session,depth:Math.min(depth,8)});
-    for (const child of sessionsByParent.get(session.nativeId) || []) add(child,depth+1);
+    for (const child of sessionsByParent.get(session.attemptId+':'+session.nativeId) || []) add(child,depth+1);
   }
-  for (const session of state.sessions) if (!session.parentNativeId || !state.sessions.some(candidate=>candidate.nativeId===session.parentNativeId)) add(session,1);
+  for (const session of state.sessions) if (!session.parentNativeId || !state.sessions.some(candidate=>candidate.attemptId===session.attemptId && candidate.nativeId===session.parentNativeId)) add(session,1);
   for (const session of state.sessions) add(session,1);
   return rows;
 }
@@ -175,22 +221,24 @@ function timeline(target) {
   const min = Math.min(...times.map(time=>time.first)), max = Math.max(...times.map(time=>time.last));
   const span = Number.isFinite(min) && Number.isFinite(max) ? Math.max(1000,max-min) : 0;
   const lane = row => {
-    const item = row.item, selected = target.attempt === (row.type==='attempt' ? item.id : item.attemptId);
+    const item = row.item, selected = row.type==='attempt' ? target.attempt===item.id : target.session===item.id;
     const title = row.type==='attempt' ? item.operationKey : `Native session ${short(item.nativeId)}`;
     const status = row.type==='attempt' ? item.outcome || (item.launch==='started'?'Running':'Admitted') : item.lifecycle;
     const detail = row.type==='attempt' ? `Attempt ${short(item.id)} - ${item.kind}` : `Reported ${item.parentNativeId?'child':'parent'} - ${asText(item.usage?.state || 'usage reported')}`;
     const time = timing(row.key,row.type);
-    const bar = time && span ? `<a class="phase-bar" href="${link({run:target.run,invocation:state.invocation.id,phase:row.type==='attempt'?item.operationKey:null,attempt:row.type==='attempt'?item.id:item.attemptId})}" data-left="${Math.max(0,(time.first-min)/span*94)}" data-width="${Math.max(4,(time.last-time.first)/span*94)}" data-selected="${selected}" data-tone="${status==='failed'?'error':status==='needs_input'?'attention':''}" aria-label="${escapeHtml(title)}, ${escapeHtml(status)}, inspect details">${escapeHtml(title)}</a>` : `<span class="declared-work">${escapeHtml(status)} - timing unavailable in loaded events</span>`;
+    const destination=link({run:target.run,invocation:state.invocation.id,phase:row.type==='attempt'?item.operationKey:null,attempt:row.type==='attempt'?item.id:item.attemptId,session:row.type==='session'?item.id:null});
+    const width=time && time.last>time.first?Math.max(4,(time.last-time.first)/span*94):0;
+    const compact=width<12;
+    const bar = time && span ? `<a class="phase-bar" href="${destination}" data-left="${Math.max(0,(time.first-min)/span*94)}" data-width="${width}" data-compact="${compact}" data-instant="${time.last===time.first}" data-selected="${selected}" data-tone="${status==='failed'?'error':status==='needs_input'?'attention':''}" aria-label="${escapeHtml(title)}, ${escapeHtml(status)}, ${time.last===time.first?'one observed instant; duration unknown':'observed interval'}, inspect details">${compact?'':escapeHtml(title)}</a>` : `<span class="declared-work">${escapeHtml(status)} - timing unavailable in loaded events</span>`;
     const isChild = row.type==='session' && !!item.parentNativeId;
-    const parent = row.type==='session' ? state.sessions.find(candidate=>candidate.nativeId===item.parentNativeId) : null;
-    const hidden = !!parent && state.collapsed.has(parent.id);
-    return `<div class="timeline-lane" data-parent="${escapeHtml(parent?.id||'')}" ${hidden?'hidden':''}><div class="lane-label depth-${row.depth}"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small><small>${escapeHtml(status)}</small>${row.type==='session' && state.sessions.some(candidate=>candidate.parentNativeId===item.nativeId) ? `<button type="button" data-action="collapse" data-id="${escapeHtml(item.id)}" aria-expanded="${!state.collapsed.has(item.id)}">${state.collapsed.has(item.id)?'Show':'Hide'} reported children</button>`:''}</div><div class="lane-track">${bar}</div></div>`;
+    const parent = row.type==='session' ? state.sessions.find(candidate=>candidate.attemptId===item.attemptId && candidate.nativeId===item.parentNativeId) : null;
+    return `<div class="timeline-lane" data-session="${row.type==='session'?escapeHtml(item.id):''}" data-parent="${escapeHtml(parent?.id||'')}"><div class="lane-label depth-${row.depth}"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small><small>${escapeHtml(status)}</small>${row.type==='session' && state.sessions.some(candidate=>candidate.attemptId===item.attemptId && candidate.parentNativeId===item.nativeId) ? `<button type="button" data-action="collapse" data-id="${escapeHtml(item.id)}" aria-expanded="${!state.collapsed.has(item.id)}">${state.collapsed.has(item.id)?'Show':'Hide'} reported children</button>`:''}</div><div class="lane-track">${bar}</div></div>`;
   };
   return `<section class="surface" aria-labelledby="timeline-heading"><div class="section-heading"><h2 id="timeline-heading">Invocation timeline</h2><div class="controls"><button type="button" data-action="freeze" aria-pressed="${state.frozen}">${state.frozen?'Follow latest events':'Freeze this view'}</button></div></div>
     <p class="section-body muted">Recorded phases and reported native sessions. Bars represent observed time only. Native IDs are historical evidence, not resume links.</p>
     <div class="timeline-scroll" tabindex="0" role="region" aria-label="Scrollable invocation timeline"><div class="timeline"><div class="timeline-axis"><span>Owner / phase</span><span>Observed time, relative to loaded events</span></div>${page.map(lane).join('') || '<div class="state-message">No managed attempts or reported sessions in this page.</div>'}</div></div>
     <div class="page-controls section-body"><button type="button" data-action="previous-lanes" ${state.lanePage?'':'disabled'}>Previous lanes</button><small>At most 50 rows per page</small><button type="button" data-action="next-lanes" ${(state.lanePage+1)*50<all.length?'':'disabled'}>Next lanes</button></div>
-    <div class="timeline-text"><details><summary>All visible phases and attempts (text navigation)</summary><ul>${page.map(row=>{const item=row.item;const label=row.type==='attempt'?`${item.operationKey}, attempt ${short(item.id)}, ${item.outcome||item.launch}`:`Native ${short(item.nativeId)}, ${item.lifecycle}, ${item.parentNativeId?'reported child of '+short(item.parentNativeId):'parent session'}`;return `<li><a href="${link({run:target.run,invocation:state.invocation.id,phase:row.type==='attempt'?item.operationKey:null,attempt:row.type==='attempt'?item.id:item.attemptId})}">${escapeHtml(label)}</a></li>`}).join('') || '<li>No recorded rows.</li>'}</ul></details></div>
+    <div class="timeline-text"><details><summary>All visible phases and attempts (text navigation)</summary><ul>${page.map(row=>{const item=row.item;const label=row.type==='attempt'?`${item.operationKey}, attempt ${short(item.id)}, ${item.outcome||item.launch}`:`Native ${item.nativeId}, ${item.lifecycle}, ${item.parentNativeId?'reported child of '+item.parentNativeId:'parent session'}`;return `<li data-session="${row.type==='session'?escapeHtml(item.id):''}"><a href="${link({run:target.run,invocation:state.invocation.id,phase:row.type==='attempt'?item.operationKey:null,attempt:row.type==='attempt'?item.id:item.attemptId,session:row.type==='session'?item.id:null})}">${escapeHtml(label)}</a></li>`}).join('') || '<li>No recorded rows.</li>'}</ul></details></div>
     <div class="page-controls section-body"><button type="button" data-action="previous-attempts" ${state.attemptPage.length>1?'':'disabled'}>Previous attempts</button><button type="button" data-action="more-attempts" ${state.attemptsMore?'':'disabled'}>Next attempts</button><button type="button" data-action="previous-sessions" ${state.sessionPage.length>1?'':'disabled'}>Previous sessions</button><button type="button" data-action="more-sessions" ${state.sessionsMore?'':'disabled'}>Next sessions</button></div></section>`;
 }
 function eventSummary(event) {
@@ -202,18 +250,21 @@ function renderEventList() {
   const selected = route().attempt;
   const captured = new Map(state.captures.map(item=>[item.id,item.attemptId]));
   const events = selected ? state.events.filter(event => event.data.attemptId===selected || captured.get(event.data.captureId)===selected) : state.events;
-  list.innerHTML = events.length ? events.map(event=>`<article class="event-row" data-cursor="${event.cursor}"><time>${escapeHtml(readableTime(event.data.at))}</time><span class="monospace">${escapeHtml(event.kind)}</span><span>${escapeHtml(eventSummary(event))} <small>#${escapeHtml(event.cursor)}</small></span></article>`).join('') : '<p class="state-message">No saved events in this window.</p>';
+  list.innerHTML = events.length ? events.map(event=>`<article class="event-row" data-cursor="${event.cursor}" data-selected="${state.selectedEventCursor===event.cursor}"><time>${escapeHtml(readableTime(event.data.at))}</time><span class="monospace">${escapeHtml(event.kind)}</span><span>${escapeHtml(eventSummary(event))} <a href="${link({run:state.run.id,invocation:state.invocation.id,cursor:event.cursor})}" aria-label="Inspect saved event ${event.cursor}">#${escapeHtml(event.cursor)}</a></span></article>`).join('') : '<p class="state-message">No saved events in this window.</p>';
   const earlier = document.getElementById('earlier-events'); if (earlier) earlier.disabled=!state.earlier;
   const pending = document.getElementById('pending-events'); if (pending) { pending.textContent=state.pending ? `${state.pending} new events - return to latest` : ''; pending.hidden=!state.pending; }
 }
 function inspector(target) {
   const invocation = state.invocation;
-  const selected = target.attempt ? state.attempts.find(item=>item.id===target.attempt) : null;
-  const title = selected?.operationKey || 'Invocation evidence';
+  const session=target.session ? state.sessions.find(item=>item.id===target.session) : null;
+  const selected = (target.attempt || session?.attemptId) ? state.attempts.find(item=>item.id===(target.attempt||session?.attemptId)) : target.phase ? state.attempts.find(item=>item.operationKey===target.phase) : null;
+  const title = session ? `Native session ${session.nativeId}` : selected?.operationKey || 'Invocation evidence';
   const captureButtons = state.captures.map(item=>`<button type="button" data-action="open-capture" data-id="${escapeHtml(item.id)}">${escapeHtml(item.channel)} - ${escapeHtml(item.state)} - ${escapeHtml(short(item.id))}</button>`).join('') || '<p>No saved captures in this page.</p>';
   const agent = selected?.agent;
-  return `<section class="surface" id="inspector" aria-labelledby="inspector-heading"><div class="section-heading"><div><h2 id="inspector-heading" tabindex="-1">${escapeHtml(title)}</h2><small>${escapeHtml(state.run.id)} / ${escapeHtml(invocation.id)}${selected?' / '+escapeHtml(selected.id):''}</small></div><a href="${link({run:state.run.id,invocation:invocation.id})}" data-action="return-timeline">Return to timeline</a></div>
-    <div class="detail-grid"><div><details open><summary>Request and result</summary><p>${escapeHtml(state.run.requestPreview || 'Request preview unavailable. Open the saved request capture if present.')}</p><dl class="facts"><dt>Outcome</dt><dd>${escapeHtml(selected?.outcome || outcome(invocation)[0])}</dd><dt>Launch</dt><dd>${escapeHtml(selected?.launch || 'Not applicable')}</dd><dt>Evidence</dt><dd>${escapeHtml(selected?.evidence || 'No attempt selected')}</dd></dl></details>
+  return `<section class="surface" id="inspector" aria-labelledby="inspector-heading"><div class="section-heading"><div><h2 id="inspector-heading" tabindex="-1">${escapeHtml(title)}</h2><small>${escapeHtml(state.run.id)} / ${escapeHtml(invocation.id)}${selected?' / '+escapeHtml(selected.operationKey)+' / '+escapeHtml(selected.id):''}${session?' / '+escapeHtml(session.id):''}</small></div><a href="${link({run:state.run.id,invocation:invocation.id})}" data-action="return-timeline">Return to timeline</a></div>
+    <div class="detail-grid"><div><details open><summary>Request and result</summary><p>${escapeHtml(state.run.requestPreview || 'Request preview unavailable. Open the saved request capture if present.')}</p><dl class="facts"><dt>Outcome</dt><dd id="inspector-outcome">${escapeHtml(selected?.outcome || outcome(invocation)[0])}</dd><dt>Launch</dt><dd>${escapeHtml(selected?.launch || 'Not applicable')}</dd><dt>Evidence</dt><dd>${escapeHtml(selected?.evidence || 'No attempt selected')}</dd></dl></details>
+    ${session?`<details open><summary>Native session evidence</summary><dl class="facts"><dt>Native identity</dt><dd>${escapeHtml(session.nativeId)}</dd><dt>Reported parent</dt><dd>${escapeHtml(session.parentNativeId || 'Parent session')}</dd><dt>Lifecycle</dt><dd>${escapeHtml(session.lifecycle)}</dd><dt>Shared managed attempt</dt><dd>${escapeHtml(session.attemptId)}</dd><dt>Usage</dt><dd>${escapeHtml(session.usage?.state==='unknown'?'Unknown':`${session.usage.tokens} tokens (${session.usage.scope==='includes-children'?'includes children; do not add to child usage':'this session only'})`)}</dd><dt>Loaded skills</dt><dd>${escapeHtml(Array.isArray(session.loadedSkills)?session.loadedSkills.join(', '):'Unknown')}</dd></dl><p>Reported native sessions share a managed attempt. Their usage is evidence, not additional managed allowance.</p></details>`:''}
+    <div id="outcome-explanation">${(invocation.outcome==='failed'||invocation.outcome==='needs_input')?`<details open><summary>${invocation.outcome==='failed'?'Failure explanation':'Question and next input'}</summary><p>${escapeHtml(selected?.evidence || (invocation.outcome==='failed'?'The saved invocation failed. Inspect recorded events and captures for the cause.':state.question?.available?state.question.question:'The saved question text is unavailable.'))}</p>${state.question?.available?`<p>${escapeHtml(state.question.context)}</p>`:''}</details>`:''}</div>
     <details><summary>Workspace and ownership</summary><dl class="facts"><dt>Worktree</dt><dd>${escapeHtml(state.worktree?.path || 'Unknown')}</dd><dt>Registration</dt><dd>${escapeHtml(state.worktree?.registration || 'Unknown')}</dd><dt>Saved cleanup</dt><dd>${escapeHtml(invocation.cleanup==='complete'?'Automatically checked':invocation.cleanup==='unknown'?'Uncertain':'Not recorded')}</dd><dt>Latest clearance</dt><dd>${escapeHtml(state.clearance?'Operator confirmed: '+state.clearance.note:invocation.cleanup==='unknown'?'Manual cleanup required':'No operator clearance recorded')}</dd></dl></details>
     <details><summary>Configuration and inputs</summary><dl class="facts"><dt>Workflow</dt><dd>${escapeHtml(state.run.workflow || 'Unknown')}</dd><dt>Provider</dt><dd>${escapeHtml(agent?.adapter || 'Unknown')}</dd><dt>Requested profile</dt><dd>Not separately recorded</dd><dt>Effective profile</dt><dd>Not separately recorded</dd><dt>Input capture</dt><dd>${escapeHtml(agent?.inputsCaptureId || 'Unknown')}</dd><dt>Result capture</dt><dd>${escapeHtml(agent?.resultCaptureId || 'Unknown')}</dd></dl></details>
     <details><summary>Accounting and usage</summary><pre>${escapeHtml(JSON.stringify(state.accounting || {},null,2))}</pre><p>Native child usage is reported separately. Unknown usage is not zero.</p></details>
@@ -230,39 +281,99 @@ function renderRun(target) {
   const [label,tone]=outcome(invocation);
   app.innerHTML=`<nav aria-label="Breadcrumb"><a href="#">Repository runs</a> / <span>Run ${escapeHtml(short(run.id))}</span></nav>
     <div class="heading-row" style="margin-top:18px"><div><h1>${escapeHtml(run.requestPreview?.trim() || 'Run '+short(run.id))}</h1><p class="muted">${escapeHtml(run.workflow || 'Workflow unavailable')} - run ${escapeHtml(run.id)}</p>
-    <div class="chip-list"><span id="execution-state">${chip(label,tone)}</span><span id="cleanup-state">${chip(state.clearance?'Operator confirmed':invocation?.cleanup==='complete'?'Automatically checked':invocation?.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||invocation?.cleanup==='complete'?'success':'attention')}</span>${chip('Capture: inspect saved records')}<span id="observation-state">${chip(state.connected?'Connected':'Disconnected',state.connected?'success':'attention')}</span></div></div></div>
+    <div class="chip-list"><span id="execution-state">${chip(label,tone)}</span><span id="cleanup-state">${chip(state.clearance?'Operator confirmed':invocation?.cleanup==='complete'?'Automatically checked':invocation?.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||invocation?.cleanup==='complete'?'success':'attention')}</span>${chip('Capture: inspect saved records')}<span id="observation-state"></span></div></div></div>
     <div id="attention-slot">${invocation ? attention(invocation) : '<div class="state-message">This run has no saved invocation.</div>'}</div>
     ${state.gap?'<div class="attention" role="status">A saved event gap was detected. Details were rebuilt from a new saved snapshot; continuity is unknown.</div>':''}
     <section class="surface"><div class="section-heading"><h2>Invocation history</h2><small>Each invocation starts at the current workflow entry</small></div><div class="section-body">${invocationLinks(target)}</div></section>
     ${invocation ? `${timeline(target)}${inspector(target)}` : ''}
     <details class="surface"><summary class="section-body">Repository storage and maintenance</summary><div class="section-body"><p>History size, backups, measurement time, and growth have not been measured by this host.</p><p>Stop the dashboard process before exceptional idle maintenance. Closing this tab leaves the host running.</p></div></details>`;
   renderEventList();
-  const eventList=document.getElementById('event-list');if(eventList)eventList.scrollTop=eventList.scrollHeight;
+  showConnection(state.connectionKind||'connecting',connection.textContent||'Catching up');
+  updateCollapsedRows();
+  const eventList=document.getElementById('event-list');
+  if(eventList) {
+    if(target.cursor) {const selected=eventList.querySelector(`[data-cursor="${CSS.escape(target.cursor)}"]`);if(selected)eventList.scrollTop=selected.offsetTop-eventList.offsetTop;}
+    else eventList.scrollTop=eventList.scrollHeight;
+  }
   document.querySelectorAll('.phase-bar').forEach(bar=>{bar.style.setProperty('--bar-left',bar.dataset.left+'%');bar.style.setProperty('--bar-width',bar.dataset.width+'%')});
-  if (target.phase || target.attempt) document.getElementById('inspector-heading')?.focus({preventScroll:true});
+  if (target.phase || target.attempt || target.session) document.getElementById('inspector-heading')?.focus({preventScroll:true});
+}
+
+function rememberSessionParents(sessions) {
+  for(const session of sessions)state.sessionParents.set(session.attemptId+':'+session.nativeId,{
+    id:session.id,attemptId:session.attemptId,parentNativeId:session.parentNativeId,
+  });
+}
+
+function updateCollapsedRows() {
+  const byId=new Map(state.sessions.map(item=>[item.id,item]));
+  for(const row of document.querySelectorAll('.timeline-lane[data-session]')) {
+    const id=row.dataset.session;if(!id)continue;
+    let session=byId.get(id),hidden=false;const seen=new Set();
+    while(session?.parentNativeId) {
+      const parent=state.sessionParents.get(session.attemptId+':'+session.parentNativeId);
+      if(!parent || seen.has(parent.id))break;
+      seen.add(parent.id);if(state.collapsed.has(parent.id))hidden=true;session=parent;
+    }
+    row.hidden=hidden;
+    const textLink=document.querySelector(`.timeline-text [data-session="${CSS.escape(id)}"]`);if(textLink)textLink.hidden=hidden;
+  }
 }
 async function loadRoute() {
   if (!state.token) return;
   const generation=++state.routeGeneration, target=route();
   app.setAttribute('aria-busy','true');
   try {
-    if (!target.run) { await loadIndex(generation); return; }
+    if (!target.run) { await loadIndex(generation);if(generation===state.routeGeneration)state.lastUpdate=new Date(); return; }
     if (!idPattern.test(target.run)) { routeError('Invalid run link. The saved record was not selected.'); return; }
     if (state.run?.id!==target.run) state.invocationPage=[0];
     await loadRun(target,generation);
     if (generation!==state.routeGeneration) return;
-  } catch(error) { if (generation===state.routeGeneration) routeError(error.message, target.run ? link({run:target.run}) : null); }
+    state.lastUpdate=new Date();
+  } catch(error) { if (generation===state.routeGeneration) routeError(error.message, target.run ? link({run:target.run,...(state.invocation?.runId===target.run&&state.invocation?.id===target.invocation?{invocation:target.invocation}:{})}) : null); }
+}
+function readerSnapshot() {
+  const active=document.activeElement;
+  const selection=window.getSelection(),selectedText=selection?.toString()||'';
+  const path=node=>{if(!node||!app.contains(node))return null;const parts=[];while(node!==app){const parent=node.parentNode;if(!parent)return null;parts.unshift([...parent.childNodes].indexOf(node));node=parent;}return parts;};
+  return {top:window.scrollY,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
+    eventWindowEnd:state.events.at(-1)?.cursor||null,capture:state.selectedCapture?{id:state.selectedCapture,after:state.captureAfter}:null,
+    disclosures:[...app.querySelectorAll('details')].map(item=>({name:item.querySelector('summary')?.textContent?.trim(),open:item.open})),
+    selection:selection&&!selection.isCollapsed&&selectedText.length<=2048?{anchor:path(selection.anchorNode),anchorOffset:selection.anchorOffset,focus:path(selection.focusNode),focusOffset:selection.focusOffset,text:selectedText}:null,
+    focus:{id:active?.id,href:active?.getAttribute('href'),action:active?.getAttribute('data-action'),item:active?.getAttribute('data-id'),start:active?.selectionStart,end:active?.selectionEnd}};
+}
+async function restoreReader(reader) {
+  if(!reader)return;
+  if(state.invocation && reader.eventWindowEnd && !route().cursor && state.events.at(-1)?.cursor!==reader.eventWindowEnd) {
+    try {const page=await api(`/api/invocations/${state.invocation.id}/events?before=${BigInt(reader.eventWindowEnd)+1n}&limit=200`);state.events=page.events;state.earlier=page.hasEarlier;renderEventList();}
+    catch { /* Keep the current saved window when older evidence cannot be read. */ }
+  }
+  if(state.invocation && reader.capture?.id) {
+    try {state.selectedCapture=reader.capture.id;state.captureAfter=reader.capture.after;
+      state.capturePage=await api(`/api/invocations/${state.invocation.id}/captures/${reader.capture.id}?after=${reader.capture.after}&limit=50`);renderCapture();}
+    catch { /* Keep other saved details available. */ }
+  }
+  for(const detail of app.querySelectorAll('details')) {
+    const saved=reader.disclosures?.find(item=>item.name===detail.querySelector('summary')?.textContent?.trim());
+    if(saved)detail.open=saved.open;
+  }
+  const timeline=document.querySelector('.timeline-scroll');if(timeline)timeline.scrollLeft=reader.timeline||0;
+  const events=document.getElementById('event-list');if(events)events.scrollTop=reader.events||0;
+  const identity=reader.focus||{};
+  const focus=identity.id?document.getElementById(identity.id):identity.href?[...app.querySelectorAll('a[href]')].find(item=>item.getAttribute('href')===identity.href):identity.action?[...document.querySelectorAll('[data-action]')].find(item=>item.getAttribute('data-action')===identity.action&&item.getAttribute('data-id')===identity.item):null;
+  if(focus){focus.focus({preventScroll:true});if(typeof identity.start==='number'&&typeof focus.setSelectionRange==='function')focus.setSelectionRange(identity.start,identity.end);}
+  const selection=reader.selection;
+  if(selection?.anchor&&selection.focus) {
+    const resolve=parts=>parts.reduce((node,index)=>node?.childNodes[index],app);
+    const anchor=resolve(selection.anchor),end=resolve(selection.focus);
+    if(anchor&&end) {const current=window.getSelection();try{current.setBaseAndExtent(anchor,selection.anchorOffset,end,selection.focusOffset);if(current.toString()!==selection.text)current.removeAllRanges();}catch {current.removeAllRanges();}}
+  }
+  window.scrollTo(0,reader.top||0);
 }
 async function resnapshotPreservingReader() {
-  const active=document.activeElement;
-  const identity={id:active?.id,action:active?.getAttribute('data-action'),item:active?.getAttribute('data-id'),start:active?.selectionStart,end:active?.selectionEnd};
-  const top=window.scrollY, timeline=document.querySelector('.timeline-scroll')?.scrollLeft || 0, events=document.getElementById('event-list')?.scrollTop || 0;
+  const reader=readerSnapshot();
   await loadRoute();
-  const focus=identity.id ? document.getElementById(identity.id) : identity.action ? [...document.querySelectorAll('[data-action]')].find(item=>item.getAttribute('data-action')===identity.action && item.getAttribute('data-id')===identity.item) : null;
-  if(focus){focus.focus({preventScroll:true});if(typeof identity.start==='number'&&typeof focus.setSelectionRange==='function')focus.setSelectionRange(identity.start,identity.end);}
-  const timelineNow=document.querySelector('.timeline-scroll');if(timelineNow)timelineNow.scrollLeft=timeline;
-  const eventNow=document.getElementById('event-list');if(eventNow)eventNow.scrollTop=events;
-  window.scrollTo(0,top);
+  await restoreReader(reader);
 }
 async function redeem(ticket) {
   if (!ticket) throw new Error('This browser link has no active owner handoff. Start the dashboard from its owner process and open the new link.');
@@ -299,6 +410,7 @@ async function connect() {
             let event; try {event=JSON.parse(fields.data);} catch {continue;}
             if(!/^\d+$/.test(event.cursor||'') || BigInt(event.cursor)<=BigInt(state.cursor))continue;
             applyEvent(event); state.cursor=event.cursor; state.lastUpdate=new Date();
+            if(state.connected && !state.frozen)showConnection('connected','Connected - saved cursor '+state.cursor);
           } else if(fields.event==='gap'||fields.event==='unavailable') {
             state.gap=true; throw new Error(fields.event==='gap'?'Saved event gap':'Observation unavailable');
           }
@@ -327,6 +439,7 @@ function applyEvent(event) {
     }
   }
   if(state.frozen) { if(state.invocation && event.data?.invocationId===state.invocation.id){state.pending++;updatePending();} return; }
+  if(!route().run && state.runs.some(run=>run.id===event.data?.runId || run.latestInvocation?.id===event.data?.invocationId)) void refreshIndexCard(event);
   if(state.invocation && event.data?.invocationId===state.invocation.id) {
     if(event.kind==='capture.created' && !state.captures.some(item=>item.id===event.data.captureId)) {
       state.captures.push({id:event.data.captureId,channel:event.data.channel,state:'open',attemptId:null});
@@ -336,17 +449,44 @@ function applyEvent(event) {
     if(event.kind==='capture.appended') {
       const capture=state.captures.find(item=>item.id===event.data.captureId);
       if(capture) {capture.state=event.data.state;updateCaptureButtons();}
+      if(capture?.channel==='request' && event.data.state==='complete')void refreshQuestion();
     }
     const list=document.getElementById('event-list');
     const selection=window.getSelection();
     const readingText=selection && !selection.isCollapsed && list?.contains(selection.anchorNode);
     const away=list && list.scrollHeight-list.scrollTop-list.clientHeight>48;
-    if(readingText || away) { state.pending++; updatePending(); return; }
-      state.events.push(event); if(state.events.length>200) {state.events.shift(); state.earlier=true;}
-    renderEventList(); if(list)list.scrollTop=list.scrollHeight;
     if(['invocation.finalized','invocation.running','invocation.shutting_down','owner.cleared'].includes(event.kind)) void refreshCurrentOutcome();
+    if(readingText || away || state.selectedEventCursor) { state.pending++; updatePending(); return; }
+    state.events.push(event); if(state.events.length>200) {state.events.shift(); state.earlier=true;}
+    renderEventList(); if(list)list.scrollTop=list.scrollHeight;
   }
-  showConnection('connected','Connected - saved cursor '+state.cursor);
+}
+async function refreshQuestion() {
+  const id=state.invocation?.id;if(!id)return;
+  try {const question=await api(`/api/invocations/${id}/question`);if(state.invocation?.id!==id)return;state.question=question;
+    const slot=document.getElementById('attention-slot');if(slot)slot.innerHTML=attention(state.invocation);
+  } catch { /* Keep the saved view until a successful snapshot. */ }
+}
+async function refreshIndexCard(event) {
+  const run=state.runs.find(item=>item.id===event.data?.runId || item.latestInvocation?.id===event.data?.invocationId);
+  if(!run)return;
+  const generation=++state.cardRefreshSequence;state.cardGenerations.set(run.id,generation);
+  try {
+    const latest=await api(`/api/runs/${run.id}`);
+    if(route().run||state.cardGenerations.get(run.id)!==generation)return;
+    const index=state.runs.findIndex(item=>item.id===run.id);if(index<0)return;
+    state.runs[index]=latest;
+    const cards=document.getElementById('cards');
+    const existing=cards?.querySelector(`[data-run="${CSS.escape(run.id)}"]`);
+    if(!existing)return;
+    const replacement=document.createElement('div');replacement.innerHTML=card(latest);
+    const fresh=replacement.firstElementChild;
+    existing.dataset.outcome=fresh.dataset.outcome;
+    existing.dataset.cardSearch=fresh.dataset.cardSearch;
+    for(const selector of ['.mini-activity','.card-foot']) {
+      const old=existing.querySelector(selector),next=fresh.querySelector(selector);if(old&&next)old.replaceWith(next);
+    }
+  } catch { /* Keep the last saved card until the next saved snapshot. */ }
 }
 function updateCaptureButtons() {
   const container=document.querySelector('.capture-list');if(!container)return;
@@ -354,16 +494,24 @@ function updateCaptureButtons() {
 }
 async function refreshCurrentOutcome() {
   if(!state.invocation)return;
-  const id=state.invocation.id;
+  const id=state.invocation.id,generation=++state.outcomeGeneration;
   try {
     const page=await api(`/api/invocations/${id}?limit=1`);
-    if(state.invocation?.id!==id)return;
+    if(state.invocation?.id!==id||generation!==state.outcomeGeneration)return;
+    const previous=outcome(state.invocation)[0],previousCleanup=state.invocation.cleanup,previousClearance=state.clearance?.id;
     state.invocation=page.invocation;state.clearance=page.clearance;
+    if(state.invocation.outcome==='needs_input'||state.invocation.outcome==='failed') {
+      try {state.question=await api(`/api/invocations/${id}/question`);} catch {state.question=null;}
+    }
+    if(state.invocation?.id!==id||generation!==state.outcomeGeneration)return;
     const [label,tone]=outcome(state.invocation);
     const execution=document.getElementById('execution-state');if(execution)execution.innerHTML=chip(label,tone);
     const cleanup=document.getElementById('cleanup-state');if(cleanup)cleanup.innerHTML=chip(state.clearance?'Operator confirmed':state.invocation.cleanup==='complete'?'Automatically checked':state.invocation.cleanup==='unknown'?'Manual cleanup required':'Cleanup unknown',state.clearance||state.invocation.cleanup==='complete'?'success':'attention');
     const slot=document.getElementById('attention-slot');if(slot)slot.innerHTML=attention(state.invocation);
-    announcement.textContent='Selected invocation outcome or cleanup changed: '+label;
+    const inspectorOutcome=document.getElementById('inspector-outcome');if(inspectorOutcome&&!state.displayTarget?.attempt)inspectorOutcome.textContent=label;
+    const explanation=document.getElementById('outcome-explanation');
+    if(explanation && (state.invocation.outcome==='failed'||state.invocation.outcome==='needs_input'))explanation.innerHTML=`<details open><summary>${state.invocation.outcome==='failed'?'Failure explanation':'Question and next input'}</summary><p>${escapeHtml(state.invocation.outcome==='failed'?'The saved invocation failed. Inspect recorded events and captures for the cause.':state.question?.available?state.question.question:'The saved question text is unavailable.')}</p></details>`;
+    if(previous!==label||previousCleanup!==state.invocation.cleanup||previousClearance!==state.clearance?.id)announcement.textContent='Selected invocation updated: '+label+(state.invocation.cleanup==='unknown'?'; manual cleanup required':'');
   } catch { /* Keep the last saved display until a successful snapshot. */ }
 }
 function updatePending() {
@@ -373,7 +521,8 @@ function updatePending() {
 async function latestEvents() {
   if(!state.invocation)return;
   const page=await api(`/api/invocations/${state.invocation.id}/events?tail=1&limit=200`);
-  state.events=page.events; state.earlier=page.hasEarlier; state.pending=0; state.frozen=false;
+  state.events=page.events; state.earlier=page.hasEarlier; state.pending=0; state.frozen=false;state.selectedEventCursor=null;
+  if(route().cursor){history.replaceState({...history.state},'',link({run:state.run.id,invocation:state.invocation.id}));lastNavigatedHref=location.href;}
   await refreshCurrentOutcome();
   renderEventList(); document.getElementById('event-list')?.scrollTo({top:10000000});
   document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Freeze this view';button.setAttribute('aria-pressed','false')});
@@ -417,8 +566,7 @@ async function moreHistory(kind, direction='next') {
   try {
     if(kind==='sessions') {
       const page=await api(`/api/invocations/${id}/sessions?after=${cursor}&limit=50`);
-      state.sessions=page.sessions;state.sessionsNext=page.nextCursor;state.sessionsMore=page.hasMore;
-      state.collapsed.clear();
+      state.sessions=page.sessions;rememberSessionParents(page.sessions);state.sessionsNext=page.nextCursor;state.sessionsMore=page.hasMore;
     } else {
       const key=kind==='attempts'?'afterAttempt':'afterCapture';
       const page=await api(`/api/invocations/${id}?${key}=${cursor}&limit=50`);
@@ -427,10 +575,32 @@ async function moreHistory(kind, direction='next') {
     }
   } catch(error) { stack.splice(0,stack.length,...previousStack);throw error; }
   state.lanePage=0;
-  const focus=document.activeElement?.getAttribute('data-action');renderRun(route());
-  if(focus)document.querySelector(`[data-action="${focus}"]`)?.focus({preventScroll:true});
+  const reader=readerSnapshot();renderRun(route());await restoreReader(reader);
 }
 app.addEventListener('input',event=>{if(event.target.id==='run-search'){state.query=event.target.value;renderCards();}});
+history.scrollRestoration='manual';
+let lastNavigatedHref=location.href;
+let recentReading={top:0,at:0};
+window.addEventListener('scroll',()=>{
+  const now=performance.now();
+  if(now-recentReading.at>1500 || window.scrollY>recentReading.top)recentReading={top:window.scrollY,at:now};
+},{passive:true});
+app.addEventListener('click',async event=>{
+  const anchor=event.target.closest('a[href^="#"]');
+  if(!anchor || event.defaultPrevented || event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
+  event.preventDefault();
+  const before=readerSnapshot(), oldRun=route().run;
+  before.focus={href:anchor.getAttribute('href')};
+  if(performance.now()-recentReading.at<1500 && recentReading.top>before.top)before.top=recentReading.top;
+  recentReading={top:0,at:0};
+  history.replaceState({...history.state,reader:before},'');
+  history.pushState({},'',anchor.getAttribute('href'));
+  lastNavigatedHref=location.href;
+  await loadRoute();
+  if(route().run===oldRun) {window.scrollTo(0,before.top);}
+  else window.scrollTo(0,0);
+  if(anchor.dataset.action==='return-timeline')document.querySelector('.timeline-scroll')?.focus({preventScroll:true});
+});
 document.querySelector('.skip')?.addEventListener('click',event=>{event.preventDefault();app.focus({preventScroll:true});app.scrollIntoView({block:'start'});});
 app.addEventListener('change',event=>{if(event.target.id==='outcome-filter'){state.filter=event.target.value;renderCards();}});
 app.addEventListener('click',async event=>{
@@ -443,7 +613,7 @@ app.addEventListener('click',async event=>{
     else if(action==='refresh-index'){state.runPage=[0];state.newRuns=0;await loadIndex();}
     else if(action==='next-invocations'){state.invocationPage.push(state.invocationNext);await loadRun(route());}
     else if(action==='previous-invocations'){state.invocationPage.pop();await loadRun(route());}
-    else if(action==='next-lanes'||action==='previous-lanes'){state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
+    else if(action==='next-lanes'||action==='previous-lanes'){const reader=readerSnapshot();state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());await restoreReader(reader);document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
     else if(action==='more-attempts')await moreHistory('attempts');
     else if(action==='more-sessions')await moreHistory('sessions');
     else if(action==='more-captures')await moreHistory('captures');
@@ -460,7 +630,7 @@ app.addEventListener('click',async event=>{
       if(state.collapsed.has(id))state.collapsed.delete(id);else state.collapsed.add(id);
       button.setAttribute('aria-expanded',String(!state.collapsed.has(id)));
       button.textContent=state.collapsed.has(id)?'Show reported children':'Hide reported children';
-      document.querySelectorAll(`[data-parent="${CSS.escape(id)}"]`).forEach(row=>{row.hidden=state.collapsed.has(id)});
+      updateCollapsedRows();
     }
     else if(action==='freeze'){
       if(state.frozen)await latestEvents();else{state.frozen=true;showConnection('frozen','Frozen at saved cursor '+state.cursor);document.querySelectorAll('[data-action="freeze"]').forEach(item=>{item.setAttribute('aria-pressed','true');item.textContent='Follow latest events'})}
@@ -468,7 +638,9 @@ app.addEventListener('click',async event=>{
     else if(action==='return-timeline')document.querySelector('.timeline-scroll')?.focus({preventScroll:true});
   } catch(error){announcement.textContent=error.message;const box=document.createElement('div');box.className='error-message';box.setAttribute('role','alert');box.textContent=error.message;app.prepend(box);}
 });
-window.addEventListener('hashchange',()=>{void loadRoute()});
+function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;void loadRoute().then(()=>restoreReader(history.state?.reader));}
+window.addEventListener('hashchange',browserRouteChanged);
+window.addEventListener('popstate',browserRouteChanged);
 
 export async function start(ticket) {
   try {

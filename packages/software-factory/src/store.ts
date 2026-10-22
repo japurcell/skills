@@ -694,6 +694,51 @@ export class RepositoryStore {
     return JSON.parse(String(row['data'])) as NativeSession;
   }
 
+  /** Select one saved target by its primary key, then return only the page containing it. */
+  readAttemptPage(input: { invocationId: string; attemptId?: string; phase?: string; limit?: number }) {
+    const invocation = this.readInvocation(input.invocationId);
+    const limit = input.limit ?? 50;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) throw new Error('invalid attempt page');
+    const operation=input.attemptId?null:this.database.prepare('SELECT id FROM operations WHERE run_id=? AND operation_key=?')
+      .get(invocation.runId, input.phase ?? '');
+    const row = input.attemptId
+      ? this.database.prepare('SELECT rowid AS cursor,data FROM attempts WHERE id=? AND invocation_id=?').get(input.attemptId, input.invocationId)
+      : operation ? this.database.prepare('SELECT rowid AS cursor,data FROM attempts WHERE operation_id=? AND invocation_id=? ORDER BY rowid LIMIT 1')
+          .get(String(operation['id']), input.invocationId) : undefined;
+    if (!row) throw new Error('saved attempt or phase not found');
+    const attempt = JSON.parse(String(row['data'])) as Attempt;
+    if (input.phase && attempt.operationKey !== input.phase) throw new Error('attempt does not belong to phase');
+    const targetCursor = Number(row['cursor']);
+    const page = this.database.prepare('SELECT rowid AS cursor,data FROM attempts WHERE invocation_id=? AND rowid>=? ORDER BY rowid LIMIT ?')
+      .all(input.invocationId, targetCursor, limit + 1);
+    const attempts = page.slice(0, limit).map(item => JSON.parse(String(item['data'])) as Attempt);
+    return { attempts, targetCursor, nextCursor: Number(page[Math.min(limit, page.length)-1]?.['cursor'] ?? targetCursor), hasMore: page.length > limit };
+  }
+
+  readSelectedEvent(input: { invocationId: string; cursor: string }) {
+    this.readInvocation(input.invocationId);
+    if (!/^\d+$/.test(input.cursor) || input.cursor.length > 19 || BigInt(input.cursor) > 9223372036854775807n) throw new Error('invalid event cursor');
+    const row = this.database.prepare("SELECT kind,data FROM observation_events WHERE cursor=? AND json_extract(data,'$.invocationId')=?")
+      .get(BigInt(input.cursor), input.invocationId);
+    if (!row) throw new Error('saved event not found');
+    return { cursor: input.cursor, kind: String(row['kind']), data: JSON.parse(String(row['data'])) as Record<string, unknown> };
+  }
+
+  readSavedQuestion(invocationId: string) {
+    this.readInvocation(invocationId);
+    const row = this.database.prepare("SELECT id FROM captures WHERE invocation_id=? AND channel='request' ORDER BY rowid DESC LIMIT 1").get(invocationId);
+    if (!row) return null;
+    const id = String(row['id']);
+    const capture = this.readCapture({ id, limit: 50, byteBudget: 16384 });
+    if (capture.state !== 'complete' || capture.hasMore) return { captureId: id, available: false };
+    try {
+      const value = JSON.parse(capture.chunks.map(chunk => chunk.text).join('')) as Record<string, unknown>;
+      if (typeof value.question !== 'string' || typeof value.context !== 'string') return { captureId: id, available: false };
+      return { captureId: id, available: true, question: value.question, context: value.context,
+        suggestions: Array.isArray(value.suggestions) ? value.suggestions.filter((item): item is string => typeof item === 'string').slice(0, 20) : [] };
+    } catch { return { captureId: id, available: false }; }
+  }
+
   readDashboardClaim(): Claim | undefined {
     const row = this.database.prepare("SELECT data FROM owner_claims WHERE kind='dashboard'").get();
     return row ? JSON.parse(String(row['data'])) as Claim : undefined;

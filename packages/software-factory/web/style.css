@@ -65,6 +65,7 @@ small { font-size:12px; }
 .timeline-axis { padding:10px 0; background:#1b293c; font-size:12px; color:var(--muted); }
 .timeline-axis>span { padding-left:18px; }
 .timeline-lane { min-height:76px; border-top:1px solid #2d3d52; }
+.timeline-lane[hidden],.timeline-text li[hidden] { display:none; }
 .lane-label { padding:12px 18px; border-right:1px solid var(--edge); overflow-wrap:anywhere; }
 .lane-label.depth-1 { padding-left:34px; }
 .lane-label.depth-2 { padding-left:50px; }
@@ -77,6 +78,9 @@ small { font-size:12px; }
 .phase-bar[data-tone="attention"] { border-color:#aa925c; background:#413b2b; }
 .phase-bar[data-selected="true"] { outline:2px solid var(--link); outline-offset:2px; }
 .phase-bar { left:var(--bar-left,0%); width:var(--bar-width,12%); }
+.phase-bar[data-compact="true"] { width:30px; min-width:30px; max-width:30px; }
+.phase-bar[data-compact="true"]::after { content:""; display:block; width:10px; height:10px; margin:10px auto; border-radius:50%; background:currentColor; }
+.phase-bar[data-instant="true"] { width:30px; min-width:30px; max-width:30px; overflow:visible; font-size:0; border-style:dashed; }
 .declared-work { padding:18px; color:var(--muted); }
 .timeline-text { padding:14px 18px; border-top:1px solid var(--edge); }
 .timeline-text ul { margin:10px 0 0; padding-left:20px; }
@@ -91,7 +95,10 @@ small { font-size:12px; }
 .facts dt { color:var(--muted); }
 .facts dd { margin:0; overflow-wrap:anywhere; }
 .event-list { max-height:420px; overflow:auto; margin-top:12px; }
-.event-row { display:grid; grid-template-columns:88px 130px minmax(0,1fr); gap:8px; border-bottom:1px solid var(--edge); padding:8px 0; font-size:12px; }
+.event-row { display:grid; grid-template-columns:88px 160px minmax(0,1fr); gap:8px; border-bottom:1px solid var(--edge); padding:8px 0; font-size:12px; }
+.event-row[data-selected="true"] { outline:2px solid var(--link); outline-offset:-2px; }
+.question-text { display:block; margin-top:8px; font-size:1.12em; }
+.attention span:not(.chip) { display:block; margin-top:8px; }
 .event-row span:last-child { overflow-wrap:anywhere; }
 .capture-text { max-height:340px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; padding:12px; margin:12px 0; background:#0d1724; border:1px solid var(--edge); font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; user-select:text; }
 .capture-list { display:grid; gap:8px; margin-top:12px; }

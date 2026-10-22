@@ -220,6 +220,24 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         json(response, 200, store.readInvocationEvents({ invocationId: invocationEvents[1]!, ...(after === null ? {} : { after: cursor(after) }),
           ...(before === null ? {} : { before: cursor(before) }), ...(tail === null ? {} : { tail: true }), limit })); return;
       }
+      const selectedEvent = /^\/api\/invocations\/([0-9a-f-]{36})\/events\/([0-9]+)$/.exec(route.pathname);
+      if (selectedEvent) {
+        parameters(route, []);
+        try { json(response, 200, store.readSelectedEvent({ invocationId: selectedEvent[1]!, cursor: cursor(selectedEvent[2]!) })); }
+        catch (error) { if (error instanceof Error && error.message === 'saved event not found') throw new RequestError(404, 'saved event unavailable or pruned'); throw error; }
+        return;
+      }
+      const selectedAttempts = /^\/api\/invocations\/([0-9a-f-]{36})\/attempt-page$/.exec(route.pathname);
+      if (selectedAttempts) {
+        parameters(route, ['attempt', 'phase']);
+        const attemptId=route.searchParams.get('attempt'), phase=route.searchParams.get('phase');
+        if ((!attemptId && !phase) || (attemptId !== null && !/^[0-9a-f-]{36}$/.test(attemptId)) || (phase !== null && (phase.length < 1 || phase.length > 256))) throw new RequestError(400, 'invalid saved target');
+        try { json(response, 200, store.readAttemptPage({ invocationId: selectedAttempts[1]!, ...(attemptId === null ? {} : { attemptId }), ...(phase === null ? {} : { phase }) })); }
+        catch (error) { if (error instanceof Error && ['saved attempt or phase not found','attempt does not belong to phase'].includes(error.message)) throw new RequestError(404, error.message); throw error; }
+        return;
+      }
+      const savedQuestion = /^\/api\/invocations\/([0-9a-f-]{36})\/question$/.exec(route.pathname);
+      if (savedQuestion) { parameters(route, []); json(response, 200, store.readSavedQuestion(savedQuestion[1]!)); return; }
       const match = /^\/api\/invocations\/([0-9a-f-]{36})(?:\/(sessions|attempts|captures)(?:\/([0-9a-f-]{36}))?)?$/.exec(route.pathname);
       if (match) {
         const id = match[1]!, kind = match[2], detail = match[3];
@@ -230,7 +248,13 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         }
         parameters(route, detail && kind !== 'captures' ? [] : ['after', 'limit']);
         const limit = integer(route, 'limit', 50, 200); if (limit < 1) throw new RequestError(400, 'invalid page');
-        if (kind === 'sessions') { json(response, 200, detail ? store.readSession({ invocationId: id, id: detail }) : store.readSessions({ invocationId: id, after: integer(route, 'after', 0), limit })); return; }
+        if (kind === 'sessions') {
+          if (detail) {
+            try { json(response, 200, store.readSession({ invocationId: id, id: detail })); }
+            catch (error) { if (error instanceof Error && error.message === 'session not found') throw new RequestError(404, 'native session unavailable'); throw error; }
+          } else json(response, 200, store.readSessions({ invocationId: id, after: integer(route, 'after', 0), limit }));
+          return;
+        }
         if (detail && kind === 'captures') { json(response, 200, store.readInvocationCapture({ invocationId: id, id: detail, after: integer(route, 'after', 0), limit })); return; }
         if (detail && kind === 'attempts') {
           const attempt = store.readAttempt(detail);

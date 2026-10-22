@@ -16,6 +16,7 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE attempts(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), operation_id TEXT NOT NULL REFERENCES operations(id), kind TEXT NOT NULL CHECK(kind IN ('agent','command')),
       occupied INTEGER NOT NULL CHECK(occupied IN (0,1)), data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE INDEX attempt_capacity ON attempts(kind,occupied);
+    CREATE INDEX attempt_operation_target ON attempts(operation_id,invocation_id);
     CREATE TABLE allowance_ledger(id TEXT PRIMARY KEY, attempt_id TEXT NOT NULL REFERENCES attempts(id), run_id TEXT NOT NULL REFERENCES runs(id), scope TEXT NOT NULL, category TEXT NOT NULL, delta INTEGER NOT NULL CHECK(delta IN (-1,1)), UNIQUE(attempt_id,category,delta));
     CREATE TABLE owner_claims(id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('worktree','dashboard','maintenance')),
       resource_key TEXT NOT NULL, invocation_id TEXT REFERENCES invocations(id), data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(kind, resource_key));
@@ -27,6 +28,7 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE captures(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT REFERENCES attempts(id),
       channel TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('open','complete','partial','unknown','pruned')), sequence INTEGER NOT NULL DEFAULT 0);
     CREATE INDEX capture_history ON captures(invocation_id,id);
+    CREATE INDEX capture_question_target ON captures(invocation_id,channel);
     CREATE TABLE capture_chunks(capture_id TEXT NOT NULL REFERENCES captures(id), sequence INTEGER NOT NULL CHECK(sequence>0), text TEXT NOT NULL,
       PRIMARY KEY(capture_id,sequence), CHECK(length(CAST(text AS BLOB))<=65536));
     CREATE TABLE sessions(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT NOT NULL REFERENCES attempts(id), native_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(attempt_id,native_id));

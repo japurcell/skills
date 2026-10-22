@@ -8,6 +8,7 @@ import { once } from 'node:events';
 import { setTimeout as delay } from 'node:timers/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { randomUUID } from 'node:crypto';
 import { createRepository } from './fixtures/repository.mjs';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { startObservationHost } from '../dist/dashboard.js';
@@ -43,6 +44,28 @@ async function fixture() {
 function authorizedFetch(host, url, options = {}) {
   return fetch(url, { ...options, headers: { ...options.headers, Authorization: 'Bearer ' + host.sessionToken } });
 }
+
+test('selected observation routes require bearer and reject foreign or mismatched saved targets', async () => {
+  const f=await fixture();let host;
+  try {
+    const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'selected-phase',kind:'command',intent:'initial'});
+    const event=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:1}).events[0];
+    host=await startObservationHost({store:f.store});
+    const base=host.url+'/api/invocations/'+f.invocation.id;
+    const targets=[base+'/events/'+event.cursor,base+'/attempt-page?attempt='+attempt.id+'&phase=selected-phase',base+'/question'];
+    for(const target of targets) {
+      assert.equal((await fetch(target)).status,403);
+      assert.equal((await authorizedFetch(host,target)).status,200);
+    }
+    assert.equal((await authorizedFetch(host,base+'/attempt-page?attempt='+attempt.id+'&phase=other-phase')).status,404);
+    assert.equal((await authorizedFetch(host,base+'/events/999999999')).status,404);
+    await f.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'interrupted',quiescent:true,evidence:'fixture did not launch'});
+    await f.store.finalizeInvocation({id:f.invocation.id,outcome:'succeeded',cleanup:'complete',claimId:f.invocation.claim.id,token:f.invocation.claim.token});
+    const followup=await f.store.startInvocation({runId:f.invocation.runId,worktreeId:f.invocation.worktreeId,owner:{host:'fixture',pid:process.pid,start:null}});
+    assert.equal((await authorizedFetch(host,host.url+'/api/invocations/'+followup.id+'/events/'+event.cursor)).status,404);
+    assert.equal((await authorizedFetch(host,host.url+'/api/invocations/'+followup.id+'/attempt-page?attempt='+attempt.id)).status,404);
+  } finally {await host?.close();f.dispose();}
+});
 async function frame(reader) {
   let text = '';
   while (!text.includes('\n\n')) {
@@ -282,7 +305,7 @@ test('invocation, native session and attempt detail routes remain scoped saved r
     const sessions = await (await authorizedFetch(host, prefix + '/sessions?limit=1')).json(); assert.equal(sessions.sessions.length, 1);
     assert.equal((await (await authorizedFetch(host, prefix + '/sessions?after=' + sessions.nextCursor)).json()).sessions.length, 0);
     const absent = crypto.randomUUID();
-    assert.equal((await authorizedFetch(host, host.url + '/api/invocations/' + absent + '/sessions/' + session.id)).status, 503);
+    assert.equal((await authorizedFetch(host, host.url + '/api/invocations/' + absent + '/sessions/' + session.id)).status, 404);
     assert.equal((await authorizedFetch(host, host.url + '/api/invocations/' + absent + '/attempts/' + attempt.id)).status, 404);
     const page = await (await authorizedFetch(host, host.url + '/api/invocations?limit=1')).json(); assert.equal(page.invocations[0].id, f.invocation.id);
     assert.equal((await (await authorizedFetch(host, host.url + '/api/invocations?after=' + page.nextCursor)).json()).invocations.length, 0);
