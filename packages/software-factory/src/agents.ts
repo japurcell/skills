@@ -27,6 +27,7 @@ export interface AgentConfiguration {
 export class AgentCalls {
   private readonly sessions = new Map<string, { nativeId?: string; inputs: EffectiveInputs; adapter: AgentAdapter }>();
   private readonly invalid = new Map<string, string>();
+  private readonly outputContracts = new Map<string, PayloadValidator>();
   private readonly correctionParents = new Map<string, string>();
   constructor(
     private readonly runner: CommandRunner,
@@ -60,9 +61,10 @@ export class AgentCalls {
       throw new Error('invalid agent request');
     if (output && (typeof output.name !== 'string' || !output.name.trim() || typeof output.validate !== 'function'))
       throw new Error('structured output requires a named explicit validator');
+    let effectiveOutput: PayloadValidator | undefined = output ? { name: output.name, validate: output.validate } : undefined;
     const inputs = resolveStepInputs(host.worktree, profile, fields, this.config.agentOverrides?.[key]);
     const inputCapture = await host.recorder.openCapture({ channel: 'context' });
-    await inputCapture.write(JSON.stringify({ step: key, inputs, purpose, context, validator: output?.name ?? null }));
+    await inputCapture.write(JSON.stringify({ step: key, inputs, purpose, context, validator: effectiveOutput?.name ?? null }));
     await inputCapture.finish();
     const adapter = this.config.adapters?.[inputs.harness];
     if (!adapter || adapter.id !== inputs.harness)
@@ -94,6 +96,12 @@ export class AgentCalls {
           !prior.agent)
       )
         throw new Error('correction requires a completed agent result');
+      if (correction && prior.agent?.validator) {
+        if (effectiveOutput?.name !== prior.agent.validator)
+          throw new Error(`correction must preserve output validator: ${prior.agent.validator}`);
+        // A same-name replacement function cannot weaken the original contract.
+        effectiveOutput = this.outputContracts.get(priorAttemptId) ?? effectiveOutput;
+      }
       if (intent === 'format_correction' && !this.invalid.has(priorAttemptId))
         throw new Error('format correction requires invalid output in this invocation');
     }
@@ -151,9 +159,10 @@ export class AgentCalls {
       sessionMode: compatible ? 'reuse' : 'fresh',
       context: compatible ? 'same-invocation correction' : 'explicit supplied context',
       ...(compatible ? { reusedAttemptId: priorAttemptId! } : {}),
-      validator: output?.name ?? null,
+      validator: effectiveOutput?.name ?? null,
     });
     this.sessions.set(attempt.id, { inputs, adapter });
+    if (effectiveOutput) this.outputContracts.set(attempt.id, effectiveOutput);
     if (correction && priorAttemptId) this.correctionParents.set(attempt.id, priorAttemptId);
     let launch;
     try {
@@ -386,11 +395,11 @@ export class AgentCalls {
           (envelope!['artifacts'] as unknown[]).some((v) => typeof v !== 'string' || !v))
       )
         invalid = 'invalid artifact references';
-      if (!invalid && output) {
+      if (!invalid && effectiveOutput) {
         try {
-          if (!output.validate(envelope!['payload'])) invalid = `payload rejected by validator: ${output.name}`;
+          if (!effectiveOutput.validate(envelope!['payload'])) invalid = `payload rejected by validator: ${effectiveOutput.name}`;
         } catch {
-          invalid = `payload validator failed: ${output.name}`;
+          invalid = `payload validator failed: ${effectiveOutput.name}`;
         }
       }
       await host.store.settleAttempt({
@@ -426,6 +435,19 @@ export class AgentCalls {
         );
       await scope.stop(host.grace);
       await outputStreams.catch(() => {});
+      if (!host.recorder.failed) {
+        const pending = host.store.readAttempt(attempt.id);
+        if (pending.launch === 'started' && pending.outcome === null) {
+          const cleanup = await scope.result(host.grace);
+          await host.store.settleAttempt({
+            id: attempt.id,
+            launch: 'started',
+            outcome: 'failed',
+            quiescent: cleanup.quiescent,
+            evidence: `agent processing failed; exit=${cleanup.code}; signal=${cleanup.signal}; ${cleanup.quiescent ? 'owned group absent' : 'cleanup unknown'}`,
+          });
+        }
+      }
       throw error;
     } finally {
       clearTimeout(timer);

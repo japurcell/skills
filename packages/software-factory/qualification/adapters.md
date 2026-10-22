@@ -83,7 +83,7 @@ are stable across updates. `session.changed` events identify session, attempt,
 invocation and lifecycle; observers refresh changed detail rather than treating
 an update as a new paged row. Existing capture/event paging remains unchanged.
 
-## Verification
+## Initial candidate verification before independent review
 
 All Node checks used the qualified v24.22.1 darwin-arm64 binary, with SQLite
 3.53.4, TypeScript 7.0.2 and Node types 24.19.2. The qualified binary is at
@@ -138,3 +138,64 @@ Reflection: failure precedence, input/observation separation, protocol completio
 and ownership validation are encoded in maintained public tests and runtime
 checks. Task-specific state belongs in the parent-owned active plan/handoff;
 no separate durable brain or skill edit is warranted.
+
+
+## Independent review repairs
+
+Independent review requested changes on the first candidate. Its passing 31+93
+cases did not establish acceptance of the uncovered behaviors. The unchanged
+public probes reproduced all three findings: dropping a required-number validator
+let an object succeed; recursively correcting malformed format-correction output
+spent two additional attempts under the default one-format-correction policy;
+and malformed machine events stopped the process group but left an unsettled
+occupied attempt, despite ESRCH and a functioning partial recorder.
+
+Corrections now retain the selected named validator and, within the same
+invocation, reapply the original callable contract. Omitting or renaming a required
+contract rejects before admission. A same-name always-true replacement cannot
+relax it. The initial callable/name are copied before asynchronous work, so
+mutating the caller's validator object also cannot weaken the saved contract.
+A genuine number correction passes the preserved callable and resolves the
+invalid ancestor while retaining both original attempt outcomes.
+
+The persistent admission boundary rejects a format correction derived from any
+prior format-correction ancestor. This deliberately rejects recursive format
+correction instead of granting it a fresh budget. Renamed operation IDs,
+intervening code corrections and a reopened store cannot erase that ancestry.
+The rejected work creates no attempt/debit; existing correction and additional
+limits remain in force. No schema or observation API change is needed.
+
+After a protocol decode or session-save failure, the runner stops its live owned
+scope, drains the streams and obtains actual cleanup evidence. If the recorder
+still works and a started attempt remains unsettled, it records a failed terminal
+outcome with that measured quiescence. Proven absent groups release occupancy
+and the invocation claim; declared unknown scope retains both, even when the
+local group is absent. Recorder failure and missing saved spawn identity still
+retain conservative unresolved ownership. Existing terminal outcomes are never
+rewritten.
+
+Eleven maintained public regressions were added: validator omission, renaming,
+same-name replacement, caller-object mutation and valid preserved-contract repair;
+renamed, indirect and reopened-history recursive-format rejection; and real
+subprocess decode/session-save/unknown-scope failure settlement. The review's
+three scenarios, validator replacement/mutation and renamed/reopened-history
+failures were observed before their corresponding source repairs. The positive
+number correction and indirect-lineage case then verify permitted success and
+the ancestry defense.
+The working-recorder cases verify partial raw evidence, terminal failure, zero
+occupied capacity, exact claim release and native group ESRCH. The unknown-scope
+and unchanged recorder-failure cases verify retained ownership instead.
+
+Final repaired-candidate proof: strict source and qualification typechecks and
+fresh runtime/declaration build pass. The complete command listed above passes
+135/135 cases (42 adapter plus all existing 93) in 39.285 seconds, with zero
+failures/skips/cancellations. Both unchanged reviewer probe scripts then confirm:
+validator removal rejects with one launch/additionalUsed 0; recursive format
+correction rejects with two launches/additionalUsed 1; bad-event records failed,
+quiescent true, occupiedAgents 0, cleanup complete, partial capture and ESRCH.
+`test:all` still intentionally exits 1 at unregistered adapters.
+Re-review remains required before integration. Parent owns active plan/handoff, adapter
+registration and integrated suite proof. No live provider or installation ran.
+
+Reflection: the review findings are enforced by public tests and runtime
+invariants. No durable brain/skill edit is needed beyond these structural checks.

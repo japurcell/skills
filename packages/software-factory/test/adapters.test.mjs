@@ -671,3 +671,109 @@ test('unsupported selected harness and model fail before launch without substitu
     } finally {repo.dispose();}
   }
 });
+
+
+for(const [change, expectedAttempts] of [['omit',1],['rename',1],['weaken',2]])
+  test(`format correction cannot ${change} the original required payload validator`, async () => {
+    const correctionOutput=change==='omit'?'':change==='rename'?",output:{name:'replacement',validate:(value):value is unknown=>true}":",output:{name:'required-number',validate:(value):value is unknown=>true}";
+    const repo=await fixture(`const first=await context.agent('write',{output:{name:'required-number',validate:(value):value is number=>typeof value==='number'}});return await context.agent('write',{intent:'format_correction',priorAttemptId:first.attemptId,context:'correct invalid result'${correctionOutput}});`);
+    try {
+      const r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+      const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId);
+      assert.equal(saved.outcome,'failed');
+      assert.equal(agents(h).length,expectedAttempts);
+      assert.ok(agents(h).every(a=>a.outcome==='failed'));
+      assert.equal(h.accounting.additionalUsed,expectedAttempts-1);
+      assert.match(saved.diagnostic,change==='weaken'?/unresolved invalid/:/preserve output validator/);
+    } finally {repo.dispose();}
+  });
+
+
+test('renaming an operation cannot give a failed format correction another format budget', async () => {
+  const repo=await fixture(`const first=await context.agent('write',{prompt:'malformed'});const second=await context.agent('write',{prompt:'malformed',intent:'format_correction',priorAttemptId:first.attemptId,context:'still malformed'});return context.agent('renamed',{loopKey:'write',prompt:'malformed',intent:'format_correction',priorAttemptId:second.attemptId,context:'correct now'});`);
+  try {
+    const r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId);
+    assert.match(saved.diagnostic,/format correction cannot correct a format correction/);
+    assert.equal(agents(h).length,2);
+    assert.deepEqual(agents(h).map(a=>a.outcome),['failed','failed']);
+    assert.equal(h.accounting.additionalUsed,1);
+  } finally {repo.dispose();}
+});
+
+test('reopened store retains the prohibition on recursive format corrections', async () => {
+  const repo=await fixture(`const first=await context.agent('write',{prompt:'malformed'});return context.agent('write',{prompt:'malformed',intent:'format_correction',priorAttemptId:first.attemptId,context:'still malformed'});`);
+  try {
+    const r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId), prior=agents(h)[1];
+    const store=openRepositoryStore(repo.common);
+    try {
+      const next=await store.startInvocation({runId:saved.runId,worktreeId:saved.worktreeId,owner:{host:'fixture',pid:process.pid,start:'fixture'}});
+      await store.activateInvocation(next.id);
+      await assert.rejects(store.admitAttempt({id:'recursive-format',invocationId:next.id,operationKey:'renamed',loopKey:'write',kind:'agent',intent:'format_correction',priorAttemptId:prior.id}),/format correction cannot correct a format correction/);
+      assert.equal(store.readAccounting(saved.runId).additionalUsed,1);
+      assert.equal(store.readAccounting(saved.runId).occupiedAgents,0);
+      await store.finalizeInvocation({id:next.id,outcome:'failed',cleanup:'complete',claimId:next.claim.id,token:next.claim.token});
+    } finally {store.close();}
+  } finally {repo.dispose();}
+});
+
+
+for(const prompt of ['bad-event','bad-session','bad-event-unknown'])
+  test(`protocol failure ${prompt} settles from actual cleanup evidence`, async () => {
+    const repo=await fixture(`await context.agent('bad',{prompt:'${prompt}',timeoutMs:2500});`);
+    try {
+      const start=Date.now(),r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+      assert.ok(Date.now()-start<1800);
+      const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId),attempt=agents(h)[0];
+      assert.equal(agents(h).length,1);
+      assert.equal(attempt.outcome,'failed');
+      assert.equal(attempt.quiescent,prompt!=='bad-event-unknown');
+      assert.equal(saved.cleanup,prompt==='bad-event-unknown'?'unknown':'complete');
+      assert.equal(h.accounting.occupiedAgents,prompt==='bad-event-unknown'?1:0);
+      assert.throws(()=>process.kill(-attempt.owner.pid,0),error=>error.code==='ESRCH');
+      const store=openRepositoryStore(repo.common);
+      try {
+        const capture=store.readCapture({id:attempt.agent.outputCaptureId});
+        assert.equal(capture.state,'partial');
+        assert.match(capture.chunks.map(c=>c.text).join(''),prompt==='bad-session'?/"tokens":-1/:/invalid event bytes/);
+        assert.equal(store.inspectOwners().length,prompt==='bad-event-unknown'?1:0);
+      } finally {store.close();}
+    } finally {repo.dispose();}
+  });
+
+
+test('an explicit correction satisfying the original callable validator resolves its invalid result', async () => {
+  const repo=await fixture(`const output={name:'required-number',validate:(value):value is number=>typeof value==='number'};const first=await context.agent('write',{output});return context.agent('write',{output,intent:'format_correction',priorAttemptId:first.attemptId,context:'correct-number'});`);
+  try {
+    const r=repo.invoke();assert.equal(r.status,0,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId);
+    assert.deepEqual(agents(h).map(a=>a.outcome),['failed','succeeded']);
+    assert.ok(agents(h).every(a=>a.agent.validator==='required-number'));
+    assert.equal(h.accounting.additionalUsed,1);
+  } finally {repo.dispose();}
+});
+
+test('an intervening code correction cannot renew an ancestral format budget', async () => {
+  const repo=await fixture(`const a=await context.agent('write',{prompt:'malformed'});const b=await context.agent('write',{prompt:'malformed',intent:'format_correction',priorAttemptId:a.attemptId,context:'still malformed'});const c=await context.agent('write',{prompt:'malformed',intent:'code_correction',priorAttemptId:b.attemptId,context:'still malformed'});return context.agent('renamed',{loopKey:'write',prompt:'malformed',intent:'format_correction',priorAttemptId:c.attemptId,context:'correct now'});`);
+  try {
+    const r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId);
+    assert.match(saved.diagnostic,/format correction cannot correct a format correction/);
+    assert.equal(agents(h).length,3);
+    assert.ok(agents(h).every(a=>a.outcome==='failed'));
+    assert.equal(h.accounting.additionalUsed,2);
+  } finally {repo.dispose();}
+});
+
+
+test('mutating the caller validator object cannot weaken the saved correction contract', async () => {
+  const repo=await fixture(`const output={name:'required-number',validate:(value):value is number=>typeof value==='number'};const first=await context.agent('write',{output});output.validate=(value):value is number=>true;return context.agent('write',{output,intent:'format_correction',priorAttemptId:first.attemptId,context:'correct invalid result'});`);
+  try {
+    const r=repo.invoke();assert.equal(r.status,1,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId);
+    assert.match(saved.diagnostic,/unresolved invalid/);
+    assert.deepEqual(agents(h).map(a=>a.outcome),['failed','failed']);
+    assert.equal(h.accounting.additionalUsed,1);
+  } finally {repo.dispose();}
+});

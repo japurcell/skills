@@ -46,7 +46,11 @@ if (prompt === 'interaction') {
   process.exit(1);
 }
 if (prompt === 'hold') await delay(30000);
-if (prompt === 'bad-event') {
+if (prompt === 'bad-session') {
+  process.stderr.write(JSON.stringify({kind:'session',nativeId,parentNativeId:null,lifecycle:'running',usage:{tokens:-1,scope:'self'}})+'\n');
+  await delay(30000);
+}
+if (['bad-event','bad-event-unknown'].includes(prompt)) {
   process.stderr.write('invalid event bytes\n');
   await delay(30000);
 }
@@ -66,7 +70,7 @@ else if (prompt === 'missing') {
   }
 } else
   process.stdout.write(
-    JSON.stringify({ kind: 'result', payload: { summary: 'complete', nativeId, prompt, model: request.inputs.model } }),
+    JSON.stringify({ kind: 'result', payload: request.context==='correct-number'?7:{ summary: 'complete', nativeId, prompt, model: request.inputs.model } }),
   );
 process.stderr.write(
   JSON.stringify({

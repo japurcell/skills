@@ -26,7 +26,7 @@ export function createFakeAdapter(options: { executable: string; script: string;
     start: (request) => ({
       argv: [options.executable, options.script, JSON.stringify(request)],
       env: {},
-      childScope: ['unknown-cleanup', 'question-unknown'].includes(request.inputs.prompt) ? 'unknown' : 'process-group',
+      childScope: ['unknown-cleanup', 'question-unknown', 'bad-event-unknown'].includes(request.inputs.prompt) ? 'unknown' : 'process-group',
     }),
     mapEvent(line) {
       const raw: unknown = JSON.parse(line);

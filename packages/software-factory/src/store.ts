@@ -405,6 +405,13 @@ export class RepositoryStore {
         if (!input.priorAttemptId) throw new Error('additional work requires prior attempt lineage');
         const prior = this.readAttempt(input.priorAttemptId);
         if (prior.runId !== invocation.runId) throw new Error('prior attempt belongs to another run');
+        if (input.intent === 'format_correction') {
+          let ancestor: Attempt | undefined = prior;
+          while (ancestor) {
+            if (ancestor.intent === 'format_correction') throw new Error('format correction cannot correct a format correction lineage');
+            ancestor = ancestor.priorAttemptId ? this.readAttempt(ancestor.priorAttemptId) : undefined;
+          }
+        }
         const clearedFollowup = input.intent === 'followup' && prior.invocationId !== invocation.id && prior.cleanupBasis === 'operator_confirmed';
         if (!prior.quiescent || (prior.outcome === null && !clearedFollowup)) throw new Error('prior activity is not quiescent');
         const previousOperation = this.database.prepare('SELECT data FROM operations WHERE id=?').get(prior.operationId);
