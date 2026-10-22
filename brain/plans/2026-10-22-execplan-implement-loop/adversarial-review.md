@@ -1,0 +1,17 @@
+# ExecPlan implementation loop adversarial review
+
+Reviewed 2026-10-22 by an independent read-only subagent using a fresh context. Scope: the [ExecPlan](ExecPlan.md), not implemented code. The reviewer changed no files and found no additional user decision necessary. The coordinator reconciled all seven findings in the active contract; runtime correctness remains unverified.
+
+## Findings and dispositions
+
+1. **P1: Runner death can orphan a worker and allow overlapping resume.** A released kernel lock does not establish child termination. Added durable execution-in-flight intent, explicit unclean-resume blocking, operator reconciliation, and a SIGKILL/still-writing-child fixture. Automatic killing of unverified PIDs is prohibited; the recovery acknowledgement is explicitly an operator assertion. See State, verification, and commit transactions.
+2. **P1: Commit preparation mutates state before recording recovery intent.** The draft staged files and changed the plan before writing `commit_pending`. Added a durable `commit_preparing` transaction before mutations, exact before/after artifacts, intermediate-state recovery, directory sync, and fault injection across every mutation/persistence boundary.
+3. **P2: Final success can reuse obsolete acceptance evidence.** A later task can break an earlier milestone. Bind evidence to candidate content and rerun all milestone and final checks before success. Changes during repair invalidate the whole final sweep. Test a later task breaking an earlier passed milestone.
+4. **P2: Immutable hashing conflicts with mutable Markdown.** Added exact generated-region markers, typed mutable control fields, a canonical hashing rule, renderer-only ownership, a complete format example requirement, and round-trip tests. Generated notes cannot authorize changes to requirements.
+5. **P2: Integrity checks occur too late for timeout/failure retries.** Require HEAD/index/plan/path checks after every subprocess outcome and before any replacement call. Define `changed_files` as the cumulative task delta, including preserved earlier attempts. Test prohibited mutations followed by timeout or malformed output.
+6. **P2: Verification repair requires an undefined semantic classifier.** Added explicit per-command exit-code failure policies and per-task writable scope. Unknown causes block without paid calls. Verification nodes own their permitted integration repairs. Commands that conflate infrastructure and assertion failures require a distinct-code adapter or remain blocked.
+7. **P2: Portable installation omits required skill dependencies.** Declare Gemini-visible `exec-plans` and `tdd` prerequisites, resolve them using the pinned provider discovery contract, and fail before invoking Gemini when unavailable. Add isolated-installation coverage.
+
+## Evidence limits
+
+The initial review was completed against the first draft. The focused recheck caught one additional hash-composition error: raw mutable JSON remained in the Markdown hash input. The coordinator corrected this by replacing the entire control block with a sentinel and hashing length-prefixed immutable canonical JSON separately. The reviewer then confirmed all seven findings addressed at design level, with no remaining concrete design blockers. No source code, provider behavior, or crash-recovery implementation has been tested in this planning session. Plan structure, local navigation, and whitespace checks are separate document checks, not runtime proof.

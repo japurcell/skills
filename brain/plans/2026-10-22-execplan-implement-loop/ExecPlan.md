@@ -1,0 +1,195 @@
+# Build a deterministic ExecPlan implementation loop
+
+This is the living implementation contract at `brain/plans/2026-10-22-execplan-implement-loop/ExecPlan.md`. Maintain Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective according to `.agents/skills/exec-plans/SKILL.md`. This document plans the work; it is not itself an input to the future runner until explicitly converted to that runner's v1 format.
+
+## Purpose / Big Picture
+
+Publish `execplan-implement-loop`, an explicitly invoked skill accepting an ExecPlan path. Its portable Python runner repeatedly selects one ready task, invokes a fresh Gemini CLI headless session when reasoning is needed, verifies the proposed changes, and commits them. The outer agent starts the script and explains its structured report. Scheduling, validation, retries, timing, verification, commits, and statistics consume no model calls.
+
+The default total execution budget is 3,600 seconds and the Gemini iteration limit is 1,200 seconds; both are configurable. A timeout preserves partial work and starts another iteration while the total budget allows. Success requires all tasks and milestone/final acceptance checks to pass, with commit evidence. Blockers, exhausted failure limits, cancellation, and deadlines are explicit non-success outcomes.
+
+Current authorization: create this plan and obtain an independent adversarial review only. Do not implement the skill or run paid Gemini sessions in this planning session. Future implementation starts when the user authorizes execution of this plan.
+
+## Progress
+
+- [x] (2026-10-22) [design] Agree responsibilities, deadlines, recovery, verification, and runner-owned commits with the user.
+- [x] (2026-10-22) [design] Create the implementation contract and repository navigation link.
+- [x] (2026-10-22) [design] Obtain and reconcile seven independent adversarial findings; see [review](adversarial-review.md).
+- [ ] [milestone-1] T1: Define and validate the supported plan and result protocols.
+- [ ] [milestone-2] T2: Deliver the bounded Gemini process adapter and reporting.
+- [ ] [milestone-3] T3: Deliver verification, commit transactions, and restart recovery.
+- [ ] [milestone-4] T4: Integrate deterministic scheduling, repair, and termination policy.
+- [ ] [milestone-5] T5: Publish the portable skill, references, and evaluation fixtures.
+- [ ] [milestone-5] T6: Prove integrated behavior and installation independence.
+
+## Surprises & Discoveries
+
+- Gemini's `--output-format json` wraps model text rather than enforcing our result schema. `stream-json` supplies live provider events; local parsing and validation remain necessary. Prior research identified `--prompt`, `--output-format stream-json`, optional `--model`, and `--approval-mode`; T2 must pin a tested CLI version and verify its actual event shapes.
+- The requested commit reference normally adds a Copilot co-author trailer. The user explicitly declined that trailer for Gemini work while requiring a byte-for-byte copy of the reference.
+- Existing `execplan-implement` is an instruction workflow; `prd-ralph-loop` uses subagents and a different task contract. Neither provides this deterministic Gemini process loop. Do not change their behavior or the shared exec-plans skill.
+- Provider session logs already hold detailed Gemini transcripts. Consume provider events in memory, retain session identifiers, and persist only runner-owned state, bounded diagnostics, and verification logs. Missing provider logs must not prevent an accurate report.
+
+## Decision Log
+
+- 2026-10-22, user: Require initially clean Git state and exclusive worktree use; preserve interrupted edits; never reset, stash, discard, or push automatically.
+- 2026-10-22, user: Use a strict documented plan structure with stable IDs and prerequisites. Preserve requirements and acceptance checks; invalid plans and required scope changes block execution.
+- 2026-10-22, user: Select the interrupted task first, otherwise the first ready task in document order. Use fresh Gemini sessions with no nested agents. Inherit the configured model unless `--model` is supplied.
+- 2026-10-22, user: Inherit Gemini approval policy unless explicitly configured. Never enable `yolo` silently. Permission/authentication/configuration failures are blockers.
+- 2026-10-22, user: Use Python's standard library on macOS/Linux, final JSON on stdout, progress on stderr, atomic per-run summaries, and no duplicate raw provider JSONL transcript.
+- 2026-10-22, user: Declared verification commands are deterministic acceptance gates. Gemini develops with TDD and proposes a commit message; the runner verifies, records completion, stages, and commits. Commit failure must not trigger implementation again.
+- 2026-10-22, user: Explicit resume permits recognized partial state, gives the invocation a new time budget, and preserves historical statistics. Stop after three consecutive same-class failures without verified progress; Gemini iteration timeouts are exempt.
+- 2026-10-22, design detail: Keep runner code inside the published skill bundle so copied installations work without this checkout. Keep the maintained test entrypoint in root `scripts/`. This portability requirement is the reason for the bundle-local helper rather than a repository-only runtime script.
+- 2026-10-22, design detail: Use a fenced JSON control block within Markdown to avoid ambiguous natural-language parsing. Immutable task requirements and command declarations are distinct from runner-owned mutable completion fields.
+
+## Outcomes & Retrospective
+
+Design is agreed; implementation has not started. No runtime, live Gemini, or installation claim has been verified. Independent review identified seven gaps; the contracts below now address them. A focused reviewer recheck found no remaining concrete design blockers. This is design review, not runtime proof. The key refinement from the interview was moving all commits and acceptance decisions from Gemini to the deterministic runner.
+
+## Context and Orientation
+
+Published skill bundles live in `skills/default/`. The source commit reference is `skills/default/execplan-implement/references/message.md`. Read it and copy its bytes without alteration into the new bundle during T5. `skills/default/execplan-implement/SKILL.md` supplies task execution precedent, not a dependency to invoke recursively. `scripts/test-all.py` registers maintained test suites explicitly; `scripts/test_test_all.py` checks its behavior. `brain/codebase/script-testing.md` describes isolated Git fixtures, process-boundary tests, and descendant-cleanup checks.
+
+New runtime files belong under `skills/default/execplan-implement-loop/`: `SKILL.md`, `scripts/run.py`, small sibling Python modules only where responsibilities justify them, `references/plan-format.md`, `references/protocol.md`, `references/worker-prompt.md`, and `references/message.md`. Maintenance guidance belongs in `README.md`; scenarios belong in `evals/`. Generated evaluation artifacts belong in sibling `skills/default/execplan-implement-loop-workspace/`. Add `scripts/test-execplan-implement-loop.py` as the maintained process-boundary suite.
+
+## Interfaces and Dependencies
+
+### CLI contract
+
+Use Python 3.12+ standard library, Git, a compatible authenticated Gemini CLI, and Gemini-visible `exec-plans` and `tdd` skills. Declare these as installation prerequisites. Before any paid call, resolve their discoverable skill files using the pinned Gemini CLI discovery rules, check required files are readable, and record their paths/digests. Do not equate another host's skill catalog with Gemini availability. Missing skills block before invocation. A copied bundle is portable with these declared dependencies, not a dependency-free installation. Reject native Windows with a diagnostic; no implicit dependency installation. The public command is:
+
+    python3 /installed/execplan-implement-loop/scripts/run.py PLAN \
+      --max-runtime 3600 --iteration-timeout 1200
+
+Accept positive finite seconds, including fractional values for tests. Options: `--resume RUN_DIRECTORY`, `--run-dir PATH`, `--model MODEL`, `--approval-mode {default,auto_edit,yolo}`, `--gemini PATH`, `--validate-only`, and `--help`. `--resume` and `--run-dir` are mutually exclusive. The plan positional argument remains required on resume and must match the recorded identity. `--validate-only` parses the plan and validates static contracts without launching Gemini, verification commands, or Git mutation. Disable abbreviated options and interactive prompts. Child stdin is EOF.
+
+On ordinary execution emit one JSON summary to stdout, including preflight failures. Help is human-readable stdout and exit 0; syntax/usage errors use stderr and exit 2. Progress goes to stderr, flushed promptly, without color or spinners. Exit codes: 0 completed/valid, 1 failed, 2 invalid input/configuration, 3 blocked, 124 total deadline, 130 SIGINT, 143 SIGTERM, 141 broken output pipe. Summary `reason_code` provides finer distinctions. Broken pipes trigger child cleanup; do not promise stdout delivery to a closed consumer.
+
+### Plan v1
+
+Document one Markdown dialect with exactly one `execplan-loop-v1` fenced JSON block, task headings `#### Task ID: Title`, milestone headings `### Milestone ID: Title`, and uniquely mapped Progress entries. The block has `schema_version: 1`, `plan_id`, ordered `tasks`, `milestones`, and `final_task_id`. Task records contain `id`, `milestone_id`, `kind` (`implementation` or `verification`), `depends_on`, `verification`, `writable_paths` (normalized repository-relative files or directory prefixes), and mutable `state`/`evidence`. Each verification node owns any repair within its explicitly declared writable paths; it does not reopen or silently broaden a completed task. Task requirements and stopping boundaries live beneath the corresponding heading. Verification records contain `id`, `argv` (nonempty string array), `cwd` (repository-relative), `timeout_seconds`, and `expected_exit_code` (normally 0), and `failure_policy` mapping specific non-success exit codes to `repair` or `blocked`. Unmapped codes block as unknown causes. A `repair` mapping is the plan author's explicit assertion that this exit identifies a repairable failure within the owning task's declared scope; it is not inferred from output text. Commands that conflate infrastructure and assertion failures must use an adapter returning distinct codes or leave them blocked.
+
+Each task must have at least one declared command. Commands are executed directly without a shell; an explicitly declared shell executable is a visible user-authorized command, not implicit interpolation. Resolve working directories beneath the repository and reject traversal and symlink escape. The plan must be tracked, inside the worktree, and present at initial HEAD. A new run starts from all-open state; existing completed execution is continued only through explicit resume with its evidence.
+
+Reject duplicate IDs/JSON keys, unknown control fields, cycles, dangling prerequisites, empty plans, missing/duplicate headings, inconsistent state/Progress, missing acceptance checks, and malformed UTF-8. Each milestone has a verification task depending transitively on all its implementation tasks. The final verification task depends transitively on every other task. This makes combined acceptance a schedulable node and prevents checklist-only success.
+
+The runner snapshots the initial full contract and hashes requirements, graph, command declarations, and non-status prose. Gemini returns proposed notes/evidence rather than editing the plan. The runner owns all plan edits. Changes to the frozen requirements, task graph, or verification commands block execution rather than triggering automatic conversion. The only mutable control fields are task `state` and `evidence`, plus milestone `state` and `evidence`. Evidence is an array of typed records containing command ID, invocation ID, timestamp, exit code, candidate digest, and log reference. The canonical immutable hash is SHA-256 of JSON serialized with sorted keys and fixed separators after removing only those exact fields, followed by Markdown bytes with the entire control-block fence and body replaced by one fixed sentinel and the dedicated generated regions removed. Hash these two components with length prefixes so their concatenation is unambiguous. The control block is included exactly once, as immutable canonical JSON; its raw mutable bytes must not reappear through the Markdown component. Require exactly one explicitly marked `<!-- execplan-loop:generated NAME:start -->` / `<!-- execplan-loop:generated NAME:end -->` region for Progress, each milestone status, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective. Region names are fixed by the grammar (milestone names include their ID); reject duplicate, nested, unmatched, or unknown markers. Human requirements live outside generated regions. Render these regions solely from validated runner data and proposed bounded note strings, escaping delimiter-like text; never parse their prose as authorization. Proposed notes cannot change requirements or command policy. Preserve all remaining Markdown bytes exactly. Mutable task state, milestone `Status`/`Acceptance`, Progress entries, and evidence update together. The runner's run journal is recovery/telemetry, not an alternative requirements source.
+
+### Worker protocol and prompt
+
+Invoke Gemini directly as an argument list: `gemini --prompt PROMPT --output-format stream-json`, adding explicit model/approval options only when requested. Never pass `--resume`. Include the selected task ID, invocation/iteration nonce, plan path, relevant failure diagnostics, absolute bundled reference paths, required typed result, and the remaining time. Instruct Gemini to activate `exec-plans` and, for source changes, `tdd`; load project instructions; implement exactly the assigned task; preserve existing partial work; stop for scope/permission blockers; return proposed plan notes and commit message. Explicitly decline the Copilot trailer. Gemini must not commit, stage, reset, push, alter the plan, weaken tests, spawn agents, or change another task's scope.
+
+Require one final assistant JSON object with `schema_version`, `iteration_id`, `task_id`, `status` (`ready_for_verification`, `blocked`, `failed`), `summary`, `changed_files`, `commit_message` (nullable outside ready status), `plan_notes`, and `reason_code`. IDs must match the current invocation. Validate types, enum values, length bounds, unknown fields, relative paths, and commit-message structural rules locally. Require a successful provider terminal result and exit 0 in addition to the validated assistant payload. A provider success is not task completion. Reject trailing garbage, multiple final payloads, stale IDs, and missing terminal events. Unknown harmless provider event types may be ignored, but missing required semantics must fail explicitly.
+
+Consume streaming events concurrently with stderr so neither pipe blocks. Accumulate only bounded response text and diagnostic tails; never persist raw provider tool/message events. Set and document bounds (initial targets: 1 MiB per provider event line and 1 MiB final assistant payload). Continue draining or terminate with a protocol failure when a bound is exceeded. Store available provider session ID/model/usage as observations; unavailable usage is null, never zero or an invented dollar cost. Do not scrape provider session logs to decide completion.
+
+### State, verification, and commit transactions
+
+Use a kernel lock keyed to the physical worktree Git directory. Persist `execution_in_flight` intent before every child spawn, then record PID/process-group identity when available. Clear it only after confirmed child cleanup and the post-process integrity gate. A runner crash can occur between spawn and PID persistence: missing PID is not proof that nothing started. On unclean resume, block all execution unless prior-child termination and partial-state ownership can be positively established. Portable v1 does not automatically kill unverified PIDs or reclaim arbitrary orphan descendants. Emit `unclean_execution_requires_reconciliation` with a documented operator recovery procedure: stop the prior child tree, inspect the recorded task/delta and expected Git state, then explicitly acknowledge reconciliation through `--resume RUN_DIRECTORY --acknowledge-unclean-stop`. This flag is meaningful only for an unclean stopped run and never bypasses Git/contract checks. Document that it is an operator assertion, not an automatic proof. Test runner SIGKILL with a child still writing; ordinary resume must launch zero replacement workers. A held lock rejects other loop instances even if they choose another run directory. Detect Git merge/rebase/cherry-pick operations, staged/untracked changes, submodule changes, and dirty tracked files at fresh preflight. Do not change user Git configuration. Require no other process to edit this worktree; the lock coordinates runner instances, not arbitrary editors or agents.
+
+Default persistent state lives under the worktree-specific Git directory in `execplan-implement-loop/runs/RUN_ID/`, outside versioned files. An explicit run directory must not contaminate the tracked worktree. Use owner-only directories/files and reject unsafe linked state paths. Atomically replace `summary.json` using same-directory temporary files, flushing data before replacement and syncing the parent directory after replacement; classify unsupported or failed durability operations explicitly. Retain invocation and iteration histories, validated results, verification logs, commit preparation state, and session references. Keep per-task terminal evidence in the plan and detailed logs outside Git.
+
+Task states are `open`, `in_progress`, `verification_pending`, `commit_preparing`, `commit_pending`, and `done`. Only runner-owned verification and commit evidence unlock prerequisites. A verification-only node runs without Gemini; use a deterministic message following the same commit format for its plan/evidence commit. Invoke Gemini for repair only when the declared failure policy maps the observed exit to `repair`; the verification node owns that repair and its declared writable paths bound it. Missing executables, denied permissions, and unmapped exit codes block without Gemini calls. Changed files outside that scope block. Recheck acceptance after repairs as described below.
+
+After every subprocess outcome and before any retry or scheduling decision, run an integrity gate over expected HEAD, index, frozen plan, and allowed paths. This includes timeouts, malformed protocol, nonzero exit, and cancellation; record integrity failures even when a terminal deadline/cancellation remains the primary reason. Block replacement calls on prohibited mutations. Before accepting a worker result, compare actual Git changes with its declared paths, the frozen plan, and expected HEAD. `changed_files` means the complete cumulative uncommitted task delta, including edits preserved from earlier attempts; the runner supplies that baseline to each fresh session. Unexpected commits, index changes, or plan mutation block the run. Collect paths with NUL-delimited Git output, preserve deletions/renames, and stage explicit pathspecs safely after verification. Never use blanket `git add .`. Check repository hooks normally; never bypass hooks or signing settings to force a commit.
+
+Run declared verification in plan order with individual and total deadlines. Save exit code, duration, and bounded output logs; a wrong exit code is a verification failure. Spawn/permission/missing-executable failures block. On failed verification preserve edits, keep the task pending, and block dependents. Pass diagnostics to another Gemini iteration only when the declared failure policy authorizes repair; otherwise emit a blocker. Tests that modify deliverable files invalidate the verified snapshot; require revalidation or block rather than silently committing different bytes.
+
+After successful verification, validate the proposed message: type/scope syntax, first-line length <=72, no trailing period, and Summary/Rationale/Tests sections with bullets. Subject mood and factual truth cannot be perfectly inferred by string checks; prompt requirements and actual recorded verification evidence remain explicit. Before changing the plan or index, durably persist `commit_preparing` intent containing expected parent, pre-mutation worktree/index fingerprints, exact before/after plan bytes, verified content digest, changed paths, message bytes/digest, and task ID. Then atomically replace the plan with its generated evidence/completion rendering and stage exactly the verified task changes and plan update. Persist phase transitions after each step, but recover a crash between mutation and phase persistence by comparing the actual state with the recorded before/after artifacts. Record the candidate tree OID and durably transition to `commit_pending` before invoking `git commit --file MESSAGE_FILE`. On recovery, only known before/after states may advance; unexpected states block without rollback. Both plan replacement and journal replacement require durable same-directory writes. No commit SHA is embedded into its own commit; the journal stores that SHA after success.
+
+After commit, verify the resulting commit's parent and tree against the prepared transaction and ensure no unexpected worktree/index changes remain. Mark done in the journal only then. The committed plan may contain completion state prepared before the commit; on any commit error the journal remains `commit_pending` and is authoritative for whether scheduling can continue. Never let an uncommitted checked box unlock another task.
+
+Resume validates physical repository/worktree identity, branch, plan identity/frozen contract, expected HEAD, and saved working/index fingerprints. Recover `commit_preparing` using its write-ahead before/after artifacts without invoking Gemini. After a crash between commit and journal finalization, recognize exactly the expected parent/tree/message transaction rather than committing twice. If the candidate changed, reverify it before retrying a commit. A commit failure stops with a recoverable reason; explicit resume retries verification/commit as needed without launching Gemini implementation again. Unrecognized edits or unrelated HEAD changes block; never guess ownership or roll back.
+
+Acceptance evidence records the exact verified candidate content digest and Git base. Later deliverable changes make earlier evidence historical, not proof of the final candidate. Before overall success, rerun every milestone acceptance command plus final acceptance commands against the final candidate, even if their nodes passed earlier. Verification commands must leave the candidate unchanged. Only deterministic generated plan metadata may differ between verified content and the resulting commit; exclude exactly those generated fields/regions when computing the acceptance digest, then verify the committed digest matches. The plan contract itself remains included. If a command depends on generated metadata, require the final rendered plan to be its input and verify that rendering before committing. A failed earlier-milestone recheck is owned by the final verification node, requires that node's explicit repair policy/scope, invalidates the final sweep, and causes the entire sweep to rerun after any repair. Never claim final acceptance from obsolete command evidence.
+
+### Deadlines, failure limits, and reporting
+
+Measure elapsed budgets with a monotonic clock; wall-clock timestamps are for reports. Start the total budget at runner entry, including preflight, startup, backoff, verification, commits, and shutdown. Clip every child deadline to the remaining total budget. Reserve up to five seconds for graceful shutdown within that budget, then signal the entire child process group with SIGKILL. Reap the leader and check surviving descendants even after the leader exits. Never start a replacement while prior owned children remain active. Report cleanup failure instead of overlapping workers. Final local report persistence may finish after execution ends; do not claim a hard real-time guarantee under uninterruptible OS I/O.
+
+SIGINT/SIGTERM stop the whole loop; a second signal forces escalation. Track timeout separately from cancellation. Gemini timeouts preserve partial work, retain the same task, and retry while time remains. Verification-command timeouts count as verification failures, not exempt Gemini timeouts. Cancellation and total deadline never start another task.
+
+Maintain same-class consecutive counters for `protocol`, `transient_infrastructure`, and `verification` failures. A committed verified task resets counters. Changing a reason string, producing edits, or timing out is not verified progress and does not reset counters. Different failure classes start their own streaks; repeated task repair failures of the verification class reach the limit at three failed verification attempts. Gemini timeouts neither increment nor clear those counters. Stop at three for the applicable class. Backoff is 1, 2, then at most 30 seconds, clipped to remaining time. Retry only positively classified transient provider errors; unknown nonzero failures stop with diagnostics. No extra model calls classify errors or write reports.
+
+The versioned summary contains run/invocation IDs, status and reason, plan/worktree identity, timestamps and elapsed/remaining budgets, current task and phase, task/milestone counts, completed task IDs and commit SHAs, pending tasks, iteration records, retries by class, timeout counts, command outcomes, available token observations with completeness flags, and evidence/session references. Keep invocation totals and historical cumulative totals distinct. Progress emits task start, verification start/pass/fail, commit success/failure, retry, timeout, blocked, interrupted, and final status. Do not echo secrets, full prompts, or arbitrary provider output to progress. Missing provider session logs only limit transcript retrieval.
+
+## Plan of Work
+
+### Milestone 1: Validate the contract without model usage
+Status: open
+Acceptance: not met
+
+#### Task T1: Implement plan and result contracts
+
+Prerequisites: none. Inputs: Interfaces and Dependencies above, repository script conventions, and source commit reference. Activate `tdd` before source changes. Add the bundle-local CLI and focused parser/protocol modules if needed, reference specifications, and `scripts/test-execplan-implement-loop.py`. Implement `--help`, static `--validate-only`, strict parsing, graph checks, command/path and failure-policy validation, result/message validation, and machine-readable errors. Keep immutable scope and mutable plan state separate. Do not add process execution yet.
+
+Verification: from repository root run `rtk proxy python3 scripts/test-execplan-implement-loop.py --group contract`. Create this suite option. Expect exit 0 for fixtures covering valid dependency ordering and precise rejection of every malformed/ambiguous contract case above, with no Gemini calls. Include one complete v1 example and round-trip fixtures proving generated updates preserve the immutable hash while requirements edited inside or adjacent to generated regions cannot gain authority. The milestone is met when validation works through the public CLI in a copied bundle outside this checkout.
+
+### Milestone 2: Bound provider execution and report it honestly
+Status: open
+Acceptance: not met
+
+#### Task T2: Implement process supervision and the Gemini adapter
+
+Prerequisites: T1. Inputs: protocol reference and pinned official Gemini event fixtures. Implement concurrent stream draining, typed response assembly, stderr tails, deadlines, process-group cleanup, signal handling, provider observations, and atomic summary writes. Verify flags and event fields against a pinned Gemini release, recording version/source links in README. Do not assume current-main documentation proves installed behavior. Use fake executables in disposable PATH fixtures for routine checks; no paid calls are necessary for deterministic tests.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group process`. Expect exit 0 for interleaved streams, oversized/malformed data, missing/duplicate terminal events, huge stderr, timeout, both signals, broken pipes, and descendants retaining pipes after their leader exits. Tests must assert cleanup before fixture cleanup can mask leaked descendants.
+
+### Milestone 3: Commit only verified changes and recover safely
+Status: open
+Acceptance: not met
+
+#### Task T3: Implement Git ownership, verification, and commit recovery
+
+Prerequisites: T1 and T2. Inputs: state/transaction contract above. Implement locking, clean preflight, command execution, frozen-contract checks, change-set comparison, plan rendering, exact staging, commit preparation/finalization, and explicit resume. Tests use disposable Git repositories with fixture identity and signing disabled only in fixture configuration. Cover hooks without modifying real user configuration.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group git`. Expect exit 0 for failed verification producing no commit; successful verification producing one exact commit; dirty preflight rejection; concurrent lock rejection; commit hook failure; paths with spaces/leading dashes; deletion/rename handling; and fault injection before, during, and after plan replacement, staging, every journal write, commit creation, and finalization. Include runner SIGKILL with a still-writing child, blocked ordinary resume, and acknowledged recovery only after operator reconciliation. An already-created matching commit must be finalized without a duplicate or Gemini rerun.
+
+### Milestone 4: Complete the deterministic loop
+Status: open
+Acceptance: not met
+
+#### Task T4: Integrate scheduling, repair, and terminal outcomes
+
+Prerequisites: T2 and T3. Inputs: task graph and failure/deadline rules. Implement interrupted-task priority, ready-task ordering, verification-only nodes, repair prompts, capped failure counters, model/approval options, and complete summaries. Ensure final acceptance is an explicit deterministic node. Resume must retain statistics while giving only the new invocation a fresh budget.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group loop`. Expect exit 0 for a multi-milestone fake-Gemini run, failed-check repair, timeout followed by success, repeated timeout to total deadline, same-class cutoff, mixed failure accounting, precompleted invalid input, permission blocker, modified plan, commit recovery, and final acceptance failure. Include a later task breaking an earlier milestone, timeout/protocol failure after unauthorized HEAD/index/plan mutation with zero replacement calls, and unmapped infrastructure/out-of-scope verification failures with zero repair calls. Assert exact Gemini call counts, command order, commit counts, stdout schema, and stderr events.
+
+### Milestone 5: Publish and prove the installed workflow
+Status: open
+Acceptance: not met
+
+#### Task T5: Author the skill and maintenance fixtures
+
+Prerequisites: T4. Activate `create-skill`, its required authoring skills, and `writing-for-agents` before writing skill content. Add `SKILL.md` named `execplan-implement-loop`, explicit invocation metadata, concise launching/reporting instructions, and directly linked reference files. Copy `message.md` exactly. Skill instructions must keep the outer agent out of the iteration loop and explain blocked/deadline/resume reports. Add at least three realistic eval scenarios covering fresh execution, interrupted recovery, and invalid/blocked input; keep generated artifacts outside the bundle. Do not change existing executor/PRD contracts.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group packaging`. Expect exit 0 for exact source-reference byte parity, all runtime references resolving within a copied bundle, installed execution from another working directory, missing Gemini-visible skill dependencies stopping before any paid call, and prompt assertions requiring TDD, scope limits, no Gemini commits, and declined Copilot attribution.
+
+#### Task T6: Prove integrated acceptance and register the suite
+
+Prerequisites: T5. Register the maintained suite in `scripts/test-all.py`; update README validation guidance if needed. Exercise a disposable Git project containing two implementation tasks, a milestone check, and final acceptance. Fake Gemini performs actual file edits and returns protocol events; real Git and real verification commands prove orchestration. Record tests, timing, and evidence paths in this plan. A separately authorized live Gemini smoke test must validate the pinned CLI adapter, policy behavior, skill activation, and real terminal event parsing before claiming live-provider acceptance. Mocked coverage alone is not that proof.
+
+Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk proxy python3 scripts/test_test_all.py`, and `rtk proxy python3 scripts/test-all.py --list`. Expect exit 0 and the new suite listed exactly once. Compile the new Python sources with `rtk proxy python3 -m py_compile` using their final explicit paths. Run the full aggregate suite when its documented dependencies are available and report any unmet prerequisite rather than skipping failures. Live-provider evidence remains explicitly pending until run; final milestone acceptance requires it or a user-recorded waiver of that acceptance scope.
+
+## Concrete Steps
+
+Next authorized action: obtain a read-only adversarial review of this plan and reconcile findings. Implementation is not authorized by this planning request. After implementation authorization, start T1 with failing public CLI tests, then follow task prerequisites. Do not attempt to run this Markdown plan through the new runner before the runner exists and the plan has been explicitly converted to its supported dialect.
+
+All proposed verification commands above run from `/Users/adam/dev/skills`. Their test entrypoint and group switches do not exist yet; creating them is part of the assigned tasks. Expected results are not observed evidence.
+
+## Validation and Acceptance
+
+Success means a copied installed skill can run an authorized canonical plan to verified, committed completion, or stop with an accurate typed non-success outcome and recoverable state. It must not incur model calls for parsing, scheduling, progress, acceptance commands, commits, retries, or summaries. Prove the core behavior at the process boundary with a fake Gemini and real Git, then separately qualify the provider adapter with a live smoke test.
+
+Tests must cover malformed input, failure and recovery, command mutation, changing HEAD, hooks, concurrency, partial stream output, provider version incompatibility, timeout clipping, no leaked descendants, and correct handling of final acceptance. No tests may be disabled or weakened to get a pass. No regression tests are required for feature deletions; this work adds a feature. Record actual results in this section as milestones complete.
+
+## Idempotence and Recovery
+
+Repeat validation and fixture tests freely. Never run operational fixtures against the author's real home, Git configuration, or active repository changes. New runs do not adopt dirty worktrees; explicit resume verifies saved ownership and commit transaction evidence. Atomic journal writes and prepared commit identities make a crash recoverable without duplicate commits. Unrecognized external changes require human reconciliation. Keep all failed checks and unresolved blockers visible.
+
+The lock is advisory and prompt instructions are not a security sandbox. Gemini and declared commands run with the user's selected permissions. This feature does not claim to contain malicious repository code or prevent arbitrary external edits. A timeout must not overlap surviving workers. Report cleanup, filesystem, and persistence errors explicitly; do not fabricate final success when reporting fails.
+
+## Artifacts and Notes
+
+Primary research references: [Gemini CLI flags](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md), [headless automation](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/tutorials/automation.md), [policy engine](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/policy-engine.md), [noninteractive implementation](https://github.com/google-gemini/gemini-cli/blob/main/packages/cli/src/nonInteractiveCli.ts), and [Ralph prior art](https://github.com/ghuntley/how-to-ralph-wiggum). Research informed fresh contexts, durable plan state, tests as gates, and loop bounds; it did not establish live-provider acceptance.
+
+Independent review: [findings and dispositions](adversarial-review.md). Reflection: recovery lessons are encoded in the planned state machine and fault-injection tests rather than a separate generic brain note. No existing skill changes are needed.
