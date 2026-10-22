@@ -8,6 +8,8 @@ The [official non-interactive reference](https://learn.chatgpt.com/docs/non-inte
 
 Local Codex 0.163.0 `exec --help` confirms `--json`, `--output-schema`, `--output-last-message`, explicit sandbox selection and optional `--ignore-user-config`. Ignoring user configuration still uses CODEX_HOME authentication. The adapter must explicitly control effective configuration and native permissions without bypassing hook trust or sandboxing. Help establishes options, not denied-operation, result or stop proof. Fresh calls must not select resume/fork/implicit-last sessions; only compatible corrections may reuse a native conversation within one invocation.
 
+After the desktop update, read-only inventory on 2026-10-21 PDT still finds CLI 0.163.0 at `/Users/adam/homebrew/Caskroom/codex/0.163.0/bin/codex`, SHA256 `8813367285524ac798dd96d1b071aea30d58708c7226fd236cd275cf1cfdee31`. Version/help succeeded while warning that PATH aliases could not be created under the sandbox. No escalation, installation or live call was made. Desktop update does not establish that the separately installed CLI changed.
+
 ## Copilot CLI
 
 The [official programmatic reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference) documents prompt mode, JSONL output, explicit tool permissions and suppression of user questions. Its separate `workflow run` result protocol does not establish the protocol of ordinary prompt mode. Qualify prompt-mode terminal events directly rather than borrowing workflow-result fields.
