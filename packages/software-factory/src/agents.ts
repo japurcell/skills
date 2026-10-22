@@ -248,31 +248,26 @@ export class AgentCalls {
         child.stdin?.destroy();
       }
     };
-    let streamFailureDeadline: number | undefined;
-    let streamFailureStop: Promise<void> | undefined;
+    let stopDeadline: number | undefined;
+    let stopTask: Promise<void> | undefined;
     const remainingGrace = () =>
-      streamFailureDeadline === undefined ? host.grace : Math.max(0, Math.floor(streamFailureDeadline - performance.now()));
+      stopDeadline === undefined ? host.grace : Math.max(0, Math.floor(stopDeadline - performance.now()));
     const stopAgent = () => {
       cancelInput();
-      if (streamFailureDeadline !== undefined)
-        return (streamFailureStop ??= (async () => {
-          // Spend existing grace observing a natural exit before probing/signaling its transient native group.
-          await Promise.race([scope.exited, delay(Math.min(10, host.grace))]);
-          const adapterStop = Promise.resolve().then(() => adapter.requestStop(() => scope.stop(remainingGrace())));
-          // Adapter cooperation cannot gate the runner's owned native cleanup or keep another pipe open.
-          await Promise.all([
-            scope.stop(remainingGrace()),
-            Promise.race([adapterStop.catch(() => {}), delay(remainingGrace(), undefined, { ref: false })]),
-          ]);
-        })());
-      // A completed authoritative question need not signal its already-exited owner.
-      // Descendant absence still comes from the unchanged native scope checks.
-      if (receivedQuestion)
-        return Promise.race([scope.exited, delay(Math.min(10, host.grace))]).then(() => {
-          if (child.exitCode !== null || child.signalCode !== null) return;
-          return adapter.requestStop(() => scope.stop(host.grace));
-        });
-      return adapter.requestStop(() => scope.stop(host.grace));
+      stopDeadline ??= performance.now() + host.grace;
+      return (stopTask ??= (async () => {
+        // Spend the existing grace observing natural exit before probing a transient native group.
+        await Promise.race([scope.exited, delay(Math.min(10, remainingGrace()))]);
+        // A completed question needs no adapter callback after its owner has exited.
+        const adapterStop = receivedQuestion && (child.exitCode !== null || child.signalCode !== null)
+          ? Promise.resolve()
+          : Promise.resolve().then(() => adapter.requestStop(() => scope.stop(remainingGrace())));
+        // Every stop owns native cleanup independently of adapter cooperation.
+        await Promise.all([
+          scope.stop(remainingGrace()),
+          Promise.race([adapterStop.catch(() => {}), delay(remainingGrace(), undefined, { ref: false })]),
+        ]);
+      })());
     };
     host.registerAgent(attempt.id, scope, stopAgent);
     const launched = child.pid !== undefined;
@@ -324,7 +319,7 @@ export class AgentCalls {
       promise.catch((error) => {
         streamFailure ??= { error };
         if (!host.recorder.failed) {
-          streamFailureDeadline ??= performance.now() + host.grace;
+          stopDeadline ??= performance.now() + host.grace;
         }
         host.requestShutdown(host.recorder.failed ? 'recording' : 'failure', 'agent stream failed');
         throw error;
@@ -522,7 +517,7 @@ export class AgentCalls {
           host.recorder.failed ? 'recording' : 'failure',
           error instanceof Error ? error.message : 'agent failed',
         );
-      await streamFailureStop?.catch(() => {});
+      await stopTask?.catch(() => {});
       await scope.stop(remainingGrace());
       await outputStreams.catch(() => {});
       await inputStream.catch(() => {});

@@ -1172,6 +1172,30 @@ for (const [stdinMode, expectedStatus] of [['blocked', 1], ['question-blocked', 
     }
   });
 
+for (const stopMode of ['hang', 'reject'])
+  for (const [stdinMode, expectedStatus] of [['blocked', 1], ['question-blocked', 2]])
+    test(`${stdinMode} reader reaches a terminal ${expectedStatus === 1 ? 'timeout' : 'question'} when adapter stop ${stopMode}s`, async () => {
+      const repo = await fixture(`await context.agent('stalled',{context:'saved',timeoutMs:${stdinMode === 'blocked' ? 50 : 10000}});`);
+      let ownerPid;
+      try {
+        const started = Date.now(), r = repo.invoke({ stdinMode, stopMode, shutdownGraceMs: 100 });
+        assert.equal(r.status, expectedStatus, r.stdout + r.stderr);
+        assert.ok(Date.now() - started < 2000, 'adapter cooperation must not hold native stop');
+        const saved = JSON.parse(r.stdout), h = repo.history(saved.invocationId), attempt = agents(h)[0];
+        ownerPid = attempt.owner.pid;
+        assert.equal(saved.cleanup, 'complete');
+        assert.equal(attempt.outcome, expectedStatus === 1 ? 'failed' : 'needs_input');
+        assert.equal(attempt.quiescent, true);
+        assert.equal(h.accounting.occupiedAgents, 0);
+        assert.equal(h.captures.filter(capture => capture.channel === 'request').length, expectedStatus === 2 ? 1 : 0);
+        assert.match(saved.diagnostic, expectedStatus === 1 ? /timeout/ : /needs input/);
+        assert.throws(() => process.kill(-ownerPid, 0), error => error.code === 'ESRCH');
+      } finally {
+        if (ownerPid) try { process.kill(-ownerPid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+        repo.dispose();
+      }
+    });
+
 test('independent stderr failure outranks cleanup-induced stdin errors while a reader is blocked', async () => {
   const repo = await fixture(`await context.agent('denied',{context:'saved',timeoutMs:10000});`);
   let ownerPid;

@@ -390,3 +390,36 @@ format or qualify any provider. Independent review remains required.
 UNVERIFIED: The Node v24 online child-process and writable-stream pages were
 inaccessible through the available web tool. The pinned runtime subprocess
 tests prove the observed pipe, callback and stop behavior used here.
+
+## Independent stop review repair
+
+Independent review of candidate `b3e6c03e` found that timeout and saved-question
+stops still depended on `adapter.requestStop` calling the owned native stop
+callback. With a blocked stdin reader and a hanging adapter callback, each
+review probe returned after about 1.7 seconds with cancelled/unknown cleanup,
+an unsettled attempt, an occupied slot and a live owned process group. The
+reviewer's disposable fixture finalizers killed only those exact groups. The
+same maintained red cases also failed when the adapter callback rejected.
+
+The runner now uses one cached stop task and an immutable deadline for every
+stop cause. It spends at most 10 ms of the existing grace observing natural
+exit, then starts `scope.stop(remainingGrace())` independently of adapter
+cooperation. The adapter callback is awaited only within the same remaining
+grace; a hanging or rejecting callback cannot delay native cleanup. An
+already-exited owner with a saved complete question needs no adapter callback,
+but the owned scope still determines descendant and pipe absence. The first
+independent failure remains saved, and output/input cancellation cannot replace
+the timeout or saved question. Existing native process policy and grace bounds
+are unchanged.
+
+Four new maintained real-subprocess cases cover hanging and rejecting adapter
+stop callbacks for both blocked-reader timeout and saved-question paths. They
+assert terminal attempt outcome, complete cleanup, zero occupied capacity,
+actual process-group absence, and the saved request only for the question.
+The independent `/private/tmp/stdin-review-probe.test.mjs` timeout and question
+reproductions both pass after the repair, in 1.881 seconds combined. Final
+pinned Node v24.22.1 verification passes strict source/qualification typecheck
+and fresh build; the same complete 12-file local matrix passes 185/185 in
+73.204 seconds: 77 adapter cases and 108 other checks, zero failures, skips or
+cancellations. `rtk git diff --check` passes. This supersedes the 181-case
+candidate proof; independent re-review remains required.
