@@ -75,6 +75,19 @@ test('Windows placement failures expose bounded process facts without native out
         return true;
       });
     }
+    response = { status: 0, signal: null, stdout: privatePath + ' invalid JSON', stderr: '' };
+    assert.throws(() => assertLocalPlacement(privatePath), (error) => {
+      assert.equal(error.message, 'native Windows placement probe returned invalid JSON; storage refused');
+      assert.ok(!error.message.includes(privatePath));
+      assert.equal(error.cause, undefined);
+      return true;
+    });
+    response = { status: 0, signal: null, stdout: JSON.stringify({ driveType: 3, filesystem: 'FAT32' }), stderr: '' };
+    assert.throws(() => assertLocalPlacement(privatePath), /unsupported storage placement: requires fixed local NTFS or ReFS/);
+    for (const filesystem of ['NTFS', 'ReFS']) {
+      response = { status: 0, signal: null, stdout: '\uFEFF' + JSON.stringify({ driveType: 3, filesystem }), stderr: '' };
+      assert.deepEqual(assertLocalPlacement(privatePath), { directory: privatePath, platform: 'win32', filesystem });
+    }
   `;
   const child = spawnSync(process.execPath, ['--input-type=module', '-e', program], {
     encoding: 'utf8', timeout: 5000, maxBuffer: 8192,

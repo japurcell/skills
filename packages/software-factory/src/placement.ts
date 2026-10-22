@@ -73,7 +73,13 @@ export function assertLocalPlacement(path: string): LocalPlacement {
       const elapsedMs = Math.round(performance.now() - started);
       throw new Error(`native Windows placement probe failed; storage refused (error=${error}; status=${probe.status ?? 'none'}; signal=${signal}; stage=${stage}; elapsedMs=${elapsedMs})`);
     }
-    const result: unknown = JSON.parse(probe.stdout.replace(/^\uFEFF/, ''));
+    let result: unknown;
+    try {
+      result = JSON.parse(probe.stdout.replace(/^\uFEFF/, ''));
+    } catch {
+      // A SyntaxError may quote native stdout, including the private placement path.
+      throw new Error('native Windows placement probe returned invalid JSON; storage refused');
+    }
     if (typeof result !== 'object' || result === null || !('driveType' in result) || result.driveType !== 3
       || !('filesystem' in result) || !['NTFS', 'ReFS'].includes(String(result.filesystem))) {
       throw new Error('unsupported storage placement: requires fixed local NTFS or ReFS');
