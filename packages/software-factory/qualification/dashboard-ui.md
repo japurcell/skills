@@ -56,3 +56,7 @@ From `packages/software-factory`, with pinned Node 24.22.1 on `PATH` and `PLAYWR
 - `git diff --check`: passed. Reflection found the durable async ownership lessons encoded in runtime boundaries and public tests; no additional brain or skill write is needed.
 
 This is an unpushed private repair candidate, not T11 acceptance. Independent review, maintained registration and composed integration remain with the parent owner. Native Windows/Linux UI timing, real browser/native zoom, manual assistive technology and schema-4 forward maintenance remain later gates. No host/security, schema, registry, execution control or canonical plan files changed.
+
+## Integration preparation
+
+Independent full follow-up approved `7d438f38`; the UI source rebases identically to `9bca3dfb`. Existing store changes from the current base retain the already verified normalized-result settlement contract alongside the UI read indexes. The public `web --suite browser` selector refused before registration. Two fixed UI/scale entries now select all 58 browser cases, which pass in 33.335 seconds on the rebased source (`/tmp/factory-ui-rebased-browser-selector.log`). Fresh strict typechecks and build pass. Base integration and the combined runtime/store/evaluation/browser proof remain pending.
