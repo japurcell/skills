@@ -1,15 +1,28 @@
 """Generate standalone brain hooks; sharing occurs only at build time."""
 from __future__ import annotations
 
-from hooks.families.common import INPUT_READER, STANDARD_IMPORTS
+from hooks.families.common import INPUT_PREAMBLE, INPUT_READER
+
+
+IMPORTS = """from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+
+
+"""
 
 
 RUNTIME = r'''
 import argparse
-import stat
 import secrets
+import stat
 import struct
-from contextlib import contextmanager, ExitStack
+from contextlib import ExitStack, contextmanager
 from urllib.parse import quote
 
 
@@ -127,11 +140,12 @@ class Directory:
                 if isinstance(expected, bytes):
                     if expected != self.identity:
                         raise BrainError("directory changed")
-                elif expected is not None:
+                elif expected is not None and (
                     # Python 3.12+ uses the volume serial and full 128-bit ID.
-                    if (expected.st_dev != int.from_bytes(self.identity[:8], "little")
-                            or expected.st_ino != int.from_bytes(self.identity[8:], "little")):
-                        raise BrainError("directory changed")
+                    expected.st_dev != int.from_bytes(self.identity[:8], "little")
+                    or expected.st_ino != int.from_bytes(self.identity[8:], "little")
+                ):
+                    raise BrainError("directory changed")
             else:
                 flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
                 if parent:
@@ -383,7 +397,7 @@ def main():
     try:
         payload = json.loads(_read_json_input_text())
         if not isinstance(payload, dict):
-            raise ValueError("expected object")
+            raise BrainError("invalid input or inaccessible vault")
         event = payload.get("hook_event_name", payload.get("hookEventName"))
         source = payload.get("source")
         allowed_sources = {"startup", "resume", "new"} if arguments.provider == "copilot" else {"startup", "resume", "clear"}
@@ -447,6 +461,6 @@ if __name__ == "__main__":
 def render(provider, target):
     return ("#!/usr/bin/env python3\n"
             "# Generated from hooks/families/brain.py by scripts/generate-hooks.py. Do not edit.\n"
-            + STANDARD_IMPORTS + INPUT_READER
+            + IMPORTS + INPUT_PREAMBLE + INPUT_READER
             + "INJECT = " + repr(target.output_path.name == "inject-brain.py") + "\n"
             + RUNTIME)

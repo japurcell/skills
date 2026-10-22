@@ -8,7 +8,7 @@ Usage:
 Options:
   --claude-dir DIR   Claude project conversation directory (repeatable)
   --codex-dir DIR    Codex sessions root directory (repeatable, recursive)
-  --cwd PATH         Include only conversations from this working directory
+  --cwd PATH         Require matching working-directory metadata; skip missing cwd
   --batches N        Number of batch manifests to create (default: 5)
   --from YYYY-MM-DD  Include conversations modified on or after this date
   --to YYYY-MM-DD    Include conversations modified on or before this date
@@ -29,13 +29,14 @@ import glob
 import json
 import os
 import sys
+from collections.abc import Callable
 from datetime import date, datetime
-from typing import Any, Callable
+from typing import Any
 
 
 def file_mod_date(fpath: str) -> date:
     """Return the modification date of a file."""
-    return datetime.fromtimestamp(os.path.getmtime(fpath)).date()
+    return datetime.fromtimestamp(os.path.getmtime(fpath)).astimezone().date()
 
 
 def _extract_texts(content: Any, accepts_type: Callable[[Any], bool]) -> list[str]:
@@ -168,7 +169,7 @@ def main() -> None:
     parser.add_argument("output_dir", help="Directory to write extracted conversations")
     parser.add_argument("--claude-dir", action="append", default=[], help="Claude project dir containing .jsonl files")
     parser.add_argument("--codex-dir", action="append", default=[], help="Codex sessions root (searched recursively)")
-    parser.add_argument("--cwd", help="Only include conversations where detected cwd matches this path")
+    parser.add_argument("--cwd", help="Require matching cwd metadata; skip missing or different cwd")
     parser.add_argument("--batches", type=int, default=5, help="Number of batch manifests (default: 5)")
     parser.add_argument(
         "--from",
@@ -218,7 +219,7 @@ def main() -> None:
 
     for idx, fpath in enumerate(files):
         provider, cwd, messages = extract_messages(fpath)
-        if args.cwd and cwd and os.path.realpath(cwd) != os.path.realpath(args.cwd):
+        if args.cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
             continue
         if not messages:
             continue

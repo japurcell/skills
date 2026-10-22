@@ -7,12 +7,7 @@ import os
 import re
 import sys
 import time
-from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NoReturn, Sequence
-
-if TYPE_CHECKING:
-    import subprocess
 
 
 INPUT_COMPLETION_IDLE_SECONDS = 0.5
@@ -191,10 +186,10 @@ def _read_json_input_text(*, max_bytes: int = INPUT_MAX_BYTES, max_markers: int 
 INJECT = False
 
 import argparse
-import stat
 import secrets
+import stat
 import struct
-from contextlib import contextmanager, ExitStack
+from contextlib import ExitStack, contextmanager
 from urllib.parse import quote
 
 
@@ -312,11 +307,12 @@ class Directory:
                 if isinstance(expected, bytes):
                     if expected != self.identity:
                         raise BrainError("directory changed")
-                elif expected is not None:
+                elif expected is not None and (
                     # Python 3.12+ uses the volume serial and full 128-bit ID.
-                    if (expected.st_dev != int.from_bytes(self.identity[:8], "little")
-                            or expected.st_ino != int.from_bytes(self.identity[8:], "little")):
-                        raise BrainError("directory changed")
+                    expected.st_dev != int.from_bytes(self.identity[:8], "little")
+                    or expected.st_ino != int.from_bytes(self.identity[8:], "little")
+                ):
+                    raise BrainError("directory changed")
             else:
                 flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
                 if parent:
@@ -568,7 +564,7 @@ def main():
     try:
         payload = json.loads(_read_json_input_text())
         if not isinstance(payload, dict):
-            raise ValueError("expected object")
+            raise BrainError("invalid input or inaccessible vault")
         event = payload.get("hook_event_name", payload.get("hookEventName"))
         source = payload.get("source")
         allowed_sources = {"startup", "resume", "new"} if arguments.provider == "copilot" else {"startup", "resume", "clear"}

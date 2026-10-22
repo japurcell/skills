@@ -2,8 +2,8 @@
 """Concatenate Markdown files with the snapshot.sh delimiter format."""
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     )
     with arguments.output.open("wb") as output:
         for path in paths:
-            output.write(f"=== {path} ===\n".encode("utf-8"))
+            output.write(f"=== {path} ===\n".encode())
             output.write(path.read_bytes())
             output.write(b"\n\n")
     print(arguments.output)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render and check the checked-in provider-local hook scripts.
+"""Render and check the checked-in provider and bundled hook scripts.
 
 Examples:
   python3 scripts/generate-hooks.py --check  Verify checked-in hooks are current.
@@ -42,6 +42,8 @@ ALLOWED_HOOK_ROOTS = (
     PurePosixPath(".gemini/hooks"),
     PurePosixPath(".github/hooks"),
     PurePosixPath(".codex/hooks"),
+    PurePosixPath("skills/default/brain-install/assets/hooks"),
+    PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts"),
 )
 
 
@@ -105,9 +107,9 @@ def _assert_safe_component(path: Path, label: str) -> None:
 
 def _contained_path(repo_root: Path, output_path: PurePosixPath) -> Path:
     if output_path.is_absolute() or ".." in output_path.parts:
-        raise GenerateError(f"Output path must be contained in a provider hook tree: {output_path}")
+        raise GenerateError(f"Output path must be contained in a generated hook tree: {output_path}")
     if not any(output_path.is_relative_to(root) for root in ALLOWED_HOOK_ROOTS):
-        raise GenerateError(f"Output path must be contained in a provider hook tree: {output_path}")
+        raise GenerateError(f"Output path must be contained in a generated hook tree: {output_path}")
     return repo_root.joinpath(*output_path.parts)
 
 

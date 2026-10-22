@@ -40,7 +40,7 @@ def emit_deny_response(reason: str) -> None:
     raise SystemExit(0)
 # END PROVIDER ADAPTER
 
-REPORT_BUILD = "4bbfaf9592ac2054"
+REPORT_BUILD = "f19cfb7dde67921f"
 
 
 def guard_attribution(*, security, audit, enforcement, profile, route, cause):
