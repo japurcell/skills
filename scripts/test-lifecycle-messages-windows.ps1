@@ -23,6 +23,10 @@ def invoke(script, payload, *, cwd=None, environment=None):
     assert len(completed.stdout.encode()) < 8192, (script, len(completed.stdout.encode()))
     return lines
 
+def scanner_audit(environment):
+    audit = pathlib.Path(environment["SECRETS_LOG_DIR"]) / "scan.log"
+    return json.loads(audit.read_text(encoding="utf-8").splitlines()[-1])
+
 with tempfile.TemporaryDirectory(prefix="lifecycle-windows-") as temporary:
     base = pathlib.Path(temporary)
     env = {**os.environ, "AUDIT_LOG": str(base / "audit.log")}
@@ -53,24 +57,26 @@ with tempfile.TemporaryDirectory(prefix="lifecycle-windows-") as temporary:
         ("gemini", source / ".gemini/hooks/scripts/scan-secrets.py", {"hook_event_name": "BeforeTool", "cwd": str(scan_root)}),
         ("codex", source / ".codex/hooks/scan-secrets.py", {"hook_event_name": "PreToolUse", "cwd": str(scan_root)}),
     )
-    for provider, script, payload in scanners:
-        scan_env = {**env, "SCAN_MODE": "block", "SECRETS_LOG_DIR": str(base / (provider + "-logs"))}
-        clean = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
-        record = {}
-        if clean != {}:
-            audit = pathlib.Path(scan_env["SECRETS_LOG_DIR"]) / "scan.log"
-            if audit.is_file():
-                record = json.loads(audit.read_text().splitlines()[-1])
-        # ScanFailure diagnostics contain only owned vocabulary and bounded numbers.
-        assert clean == {}, (provider, record.get("status"), record.get("diagnostic"))
-        credential = scan_root / "credential.txt"
-        credential.write_text("sk_live_1234567890abcdefghij\n")
-        warning = invoke(script, payload, cwd=scan_root, environment={**scan_env, "SCAN_MODE": "warn"})[-1]
-        assert "scan-secrets warning" in warning["systemMessage"], (provider, warning)
-        denied = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
-        assert denied.get("decision") in {"deny", "block"} or denied.get("permissionDecision") == "deny" or denied.get("hookSpecificOutput", {}).get("permissionDecision") == "deny", (provider, denied)
-        assert "sk_live_" not in json.dumps(denied), (provider, denied)
-        credential.unlink()
+    for iteration in range(20):
+        for provider, script, payload in scanners:
+            scan_env = {**env, "SCAN_MODE": "block", "SECRETS_LOG_DIR": str(base / (provider + "-logs"))}
+            clean = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
+            record = scanner_audit(scan_env)
+            # ScanFailure diagnostics contain only owned vocabulary and bounded numbers.
+            details = (provider, iteration, record.get("status"), record.get("diagnostic"))
+            assert clean == {} and record.get("status") == "clean", details
+            credential = scan_root / "credential.txt"
+            credential.write_text("sk_live_1234567890abcdefghij\n")
+            warning = invoke(script, payload, cwd=scan_root, environment={**scan_env, "SCAN_MODE": "warn"})[-1]
+            record = scanner_audit(scan_env)
+            assert record.get("status") == "findings" and record.get("findings"), (provider, iteration, record.get("status"), record.get("diagnostic"))
+            assert "scan-secrets warning" in warning["systemMessage"], (provider, warning)
+            denied = invoke(script, payload, cwd=scan_root, environment=scan_env)[-1]
+            record = scanner_audit(scan_env)
+            assert record.get("status") == "findings" and record.get("findings"), (provider, iteration, record.get("status"), record.get("diagnostic"))
+            assert denied.get("decision") in {"deny", "block"} or denied.get("permissionDecision") == "deny" or denied.get("hookSpecificOutput", {}).get("permissionDecision") == "deny", (provider, denied)
+            assert "sk_live_" not in json.dumps(denied), (provider, denied)
+            credential.unlink()
 
 print("PASSED: native Windows lifecycle envelopes")
 '@
