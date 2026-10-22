@@ -1,6 +1,6 @@
 import type { Claim, RepositoryStore } from './store.js';
 import { inspectOwner } from './native/process.js';
-import { RedactionPolicy } from './redaction.js';
+import { environmentRedactionPolicy, redactText } from './redaction.js';
 
 export function inspectClaim(store: RepositoryStore, claim: Claim) {
   const owner = inspectOwner(claim.owner);
@@ -17,7 +17,6 @@ export async function clearClaim(store: RepositoryStore, input: {claimId:string;
   if (claim.token !== input.token) throw new Error('claim/token no longer matches');
   const inspected = inspectClaim(store,claim);
   if (inspected.inspection.state === 'known_live') throw new Error('known-live owner or scope cannot be cleared');
-  const policy = new RedactionPolicy(Object.entries(process.env).filter(([key])=>/SECRET|TOKEN|PASSWORD|API_KEY/.test(key)).map(([,value])=>value!).filter(value=>value.length>=4));
-  const note = policy.stream().push(input.note,true);
+  const note = redactText(input.note,environmentRedactionPolicy());
   return store.clearOwner({...input,note,inspection:inspected.inspection.state as 'not_live'|'unknown',details:inspected.inspection});
 }

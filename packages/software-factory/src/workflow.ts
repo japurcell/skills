@@ -90,6 +90,11 @@ export class CommandRunner {
     return Promise.race([operation, this.stopped.then(() => { throw new ShutdownInterrupted('shutdown requested'); })]);
   }
   execute(key: string, options: CommandOptions, startup = false): Promise<CommandResult> { return this.track(() => this.perform(key, options, startup)); }
+  async startupGit(argv:string[],cwd:string,env:Record<string,string>):Promise<string> {
+    const parts:Buffer[]=[];let bytes=0;
+    await this.track(()=>this.perform(`startup/git/${randomUUID()}/${this.invocationId}`,{argv,env},true,{cwd,stdout:chunk=>{bytes+=chunk.length;if(bytes>1048576)throw new Error('startup Git output exceeds bounded limit');parts.push(Buffer.from(chunk));}}));
+    return Buffer.concat(parts).toString('utf8');
+  }
   async drain() {
     while (this.pending.size) {
       if (!this.stopping) await Promise.race([Promise.allSettled([...this.pending]), this.stopped]);
@@ -105,15 +110,15 @@ export class CommandRunner {
     if (this.stopping) throw new ShutdownInterrupted(this.reasons[0]?.message ?? 'shutdown requested');
   }
   close() { this.closed = true; if (this.pending.size || this.active.size) this.unresolved = true; }
-  private async perform(key: string, options: CommandOptions, startup: boolean): Promise<CommandResult> {
+  private async perform(key: string, options: CommandOptions, startup: boolean, setup?:{cwd:string;stdout:(chunk:Buffer)=>void}): Promise<CommandResult> {
     if (this.admissionStopped) throw new ShutdownInterrupted('shutdown stopped dispatch');
     if (!Array.isArray(options.argv) || !options.argv.length || options.argv.some(value => typeof value !== 'string' || value.includes('\0')) || !options.argv[0]) throw new Error('command requires nonempty argv without NUL');
     if (options.required !== undefined && typeof options.required !== 'boolean') throw new Error('command required must be a boolean');
     if (options.childScope !== undefined && !['process-group','unknown'].includes(options.childScope)) throw new Error('invalid command child scope');
     const timeout = duration(options.timeoutMs, this.commandTimeoutMs);
     if (options.shell !== undefined && (typeof options.shell !== 'string' || !isAbsolute(options.shell))) throw new Error('explicit shell must be an absolute executable path');
-    const cwd = realpathSync(resolve(this.worktree, options.cwd ?? '.'));
-    const outside = relative(realpathSync(this.worktree), cwd);
+    const cwd = realpathSync(setup?.cwd ?? resolve(this.worktree, options.cwd ?? '.'));
+    const outside = setup ? '' : relative(realpathSync(this.worktree), cwd);
     if (outside === '..' || outside.startsWith(`..${sep}`) || isAbsolute(outside)) throw new Error('command cwd must be inside selected worktree');
     const env = options.env ?? { PATH: process.env.PATH ?? '' };
     if (!env || typeof env !== 'object' || Array.isArray(env) || Object.entries(env).some(([key, value]) => !key || key.includes('=') || key.includes('\0') || typeof value !== 'string' || value.includes('\0'))) throw new Error('invalid command environment');
@@ -146,13 +151,15 @@ export class CommandRunner {
       await this.store.settleAttempt({id:attempt.id,launch:'not_started',outcome:'failed',quiescent:true,evidence:'spawn rejected before process creation'}); throw error;
     }
     const scope = new LiveProcessScope(child, options.childScope === 'unknown'); this.active.set(attempt.id,scope);
-    const output = Promise.allSettled([stdout.consume(child.stdout!),stderr.consume(child.stderr!)]);
+    const source = setup ? (async function*(){for await(const chunk of child.stdout!){setup.stdout(chunk as Buffer);yield chunk;}})() : child.stdout!;
+    const output = Promise.allSettled([stdout.consume(source).catch(error=>{this.requestShutdown(this.recorder.failed?'recording':'failure','command output unavailable');throw error;}),stderr.consume(child.stderr!)]);
     const launched = child.pid !== undefined;
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; this.requestShutdown('timeout',`command timeout: ${key}`); },timeout);
     try {
       if (launched) await this.store.markStarted({id:attempt.id,owner:currentOwner(child.pid!)});
-      const result = await scope.result(this.grace); await output; await this.recorder.barrier();
+      const result = await scope.result(this.grace); const streams = await output; await this.recorder.barrier();
+      const rejected=streams.find(item=>item.status==='rejected');if(rejected?.status==='rejected')throw rejected.reason;
       const interrupted = scope.interrupted && (result.signal !== null || result.code !== 0);
       const outcome = timedOut ? 'failed' : interrupted ? 'interrupted' : result.code === 0 && !result.error ? 'succeeded' : 'failed';
       await this.store.settleAttempt({id:attempt.id,launch:launched ? 'started' : 'not_started',outcome,quiescent:result.quiescent || !launched,
@@ -165,7 +172,7 @@ export class CommandRunner {
       return {attemptId:attempt.id,exitCode:result.code,cleanup:'complete'};
     } catch (error) {
       // Keep the live reference registered until a failed launch/settlement save has stopped it.
-      this.requestShutdown(this.recorder.failed ? 'recording' : 'failure',error instanceof Error ? error.message : 'command recording failed');
+      if(!(error instanceof ShutdownInterrupted))this.requestShutdown(this.recorder.failed ? 'recording' : 'failure',error instanceof Error ? error.message : 'command recording failed');
       await scope.stop(this.grace); await output;
       throw error;
     } finally { clearTimeout(timer); this.active.delete(attempt.id); }

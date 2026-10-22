@@ -59,7 +59,7 @@ test('build failure launches no workflow command or agent and retains compiler d
     const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 3, result.stderr);
     const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed');
     const record = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
-    assert.equal(record.attempts.length, 1); assert.equal(record.attempts[0].kind, 'command');
+    assert.equal(record.attempts.filter(attempt=>attempt.operationKey.startsWith('startup/build/')).length,1); assert.ok(record.attempts.every(attempt=>attempt.kind==='command'&&attempt.operationKey.startsWith('startup/')));
     assert.match(JSON.stringify(record.captures), /not assignable/);
     assert.equal(record.invocation.cleanup, 'complete');
   } finally { repo.dispose(); }
@@ -72,7 +72,7 @@ test('missing shared dependencies refuse without installation or source changes'
     const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 3);
     const saved = JSON.parse(result.stdout); assert.match(saved.diagnostic, /explicitly install/);
     const record = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
-    assert.equal(record.attempts.length, 0); assert.equal(repo.git(['status', '--porcelain=v1']), before);
+    assert.ok(record.attempts.every(attempt=>attempt.kind==='command'&&attempt.operationKey.startsWith('startup/git/'))); assert.equal(repo.git(['status', '--porcelain=v1']), before);
   } finally { repo.dispose(); }
 });
 test('invalid refs, malformed input and missing same-run context refuse before workflow work', async () => {
@@ -132,7 +132,7 @@ test('workflow completion drains commands already requested by current entry', a
   try {
     const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
     const record = JSON.parse(repo.call(['history', '--invocation', JSON.parse(result.stdout).invocationId]).stdout);
-    assert.equal(record.attempts.length, 2); assert.match(JSON.stringify(record.captures), /drained/);
+    assert.equal(record.attempts.filter(attempt=>!attempt.operationKey.startsWith('startup/')).length,1); assert.equal(record.attempts.at(-1).operationKey,'pending'); assert.match(JSON.stringify(record.captures), /drained/);
     assert.equal(record.accounting.occupiedCommands, 0);
   } finally { repo.dispose(); }
 });
@@ -330,7 +330,7 @@ test('explicit advisory check can fail before correction and a required fresh ch
     const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
     const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'succeeded'); assert.equal(saved.cleanup, 'complete');
     const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
-    const commands = history.attempts.filter(attempt => !attempt.operationKey.startsWith('startup/build/'));
+    const commands = history.attempts.filter(attempt => !attempt.operationKey.startsWith('startup/'));
     assert.deepEqual(commands.map(attempt => [attempt.operationKey, attempt.outcome]), [['expected-check', 'failed'], ['correction', 'succeeded'], ['fresh-check', 'succeeded']]);
     assert.ok(commands.every(attempt => attempt.quiescent));
     assert.match(JSON.stringify(history.captures), /required.*false/);

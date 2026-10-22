@@ -161,3 +161,13 @@ export class StreamingRedactor {
     return output;
   }
 }
+
+/** One canonical policy for runtime diagnostics, recorder configuration and operator notes. */
+export function environmentRedactionPolicy() {
+  return new RedactionPolicy(Object.entries(process.env).filter(([key])=>/SECRET|TOKEN|PASSWORD|API_KEY/.test(key)).map(([,value])=>value!).filter(value=>value.length>=4));
+}
+export function redactText(value: string, policy = environmentRedactionPolicy()) {
+  const stream = policy.stream(); const parts: string[] = [];
+  for (let offset=0; offset<value.length; offset+=4096) parts.push(stream.push(value.slice(offset,offset+4096)));
+  parts.push(stream.push('',true)); return parts.join('');
+}

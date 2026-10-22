@@ -51,7 +51,7 @@ and Linux product cleanup acceptance remain pending.
 
 ## Owner inspection and exact clearance
 
-`inspect-owner --repository PATH [--claim ID] --json` shows exact claims, owner and
+`inspect-owner (--repository PATH | --common-dir PATH) [--claim ID] --json` shows exact claims, owner and
 occupied scopes, and native inspection limits. Linux uses boot ID plus process
 start ticks; macOS uses boot time plus available process-start metadata. macOS
 start metadata has second resolution; equal metadata is conservatively treated as
@@ -60,7 +60,7 @@ metadata stays unknown. Local PID absence or differing valid boot/start identity
 establishes only that saved owner is absent, not that hidden descendants stopped.
 A positively identified live owner or direct scope refuses manual clearance.
 
-`clear-owner --repository PATH --claim ID --token TOKEN --operator-confirmed
+`clear-owner (--repository PATH | --common-dir PATH) --claim ID --token TOKEN --operator-confirmed
 --note NOTE --json` requires every explicit flag and a nonempty note. Native
 inspection is computed by the controller, not supplied by the caller. One store
 transaction saves the filtered note, operator basis and inspection limitations,
@@ -105,3 +105,49 @@ No cross-platform release or real harness child-control support is inferred.
 Reflection: controller/finalization boundaries and failure preconditions are
 encoded in public tests. Remaining native/adaptor limitations belong to the
 active plan and this evidence; no separate brain note was needed.
+
+## Independent review repairs
+
+Three public reproductions failed against the immutable first T6 candidate before
+repair: a harmless configured API-key fixture value escaped the returned missing-
+executable diagnostic; a three-second checkout smudge filter blocked SIGTERM; and
+a workflow awaiting only an unresolved promise exited 0 with no final record.
+All three unchanged temporary reproductions then passed against the repair and
+now have maintained CLI tests.
+
+Runtime diagnostics, recorder configuration and operator notes share the canonical
+bounded filter and environment policy. Filtering applies to free-text diagnostic
+boundaries, including pre-admission failures, rather than rewriting operational
+claim/token JSON. Claim tokens remain usable and operator notes remain filtered.
+
+Startup Git is asynchronous and uses live references with bounded process control.
+Read-only identity/ref probes run before a repository can be identified/admitted;
+if they cannot finish, report startup/cleanup uncertainty without creating a new
+store. After reservation and exact worktree claim, checkout and Git registration
+queries use recorded `startup/git/...` command attempts through the same runner.
+Checkout filters remain within the declared group-only control limit; escaped or
+unproved child activity cannot be claimed universally absent. Setup commands use
+the recorded command deadline, and no automatic retry or dirty-source snapshot is
+introduced. Small raw metadata reads have a 1 MiB semantic-output bound; persisted
+output still uses the canonical recorder. Interrupted checkout creates no compiler,
+agent or workflow phase, and retains whatever partial files Git leaves behind.
+
+A ref'ed foreground liveness guard holds the invocation while authored code awaits
+an unresolved promise. Explicit signals still route through shared shutdown. This
+is not an overall workflow timeout. The guard is removed after the invocation ends.
+
+For actionable recovery without Git, `--common-dir` opens only an existing store
+through the normal canonical path, local placement, schema and repository checks.
+It never bootstraps or substitutes history. Exact claim/token and inspection plus
+operator confirmation are still required. Tests remove Git from PATH, verify both
+owner commands work and notes are filtered, and reject wrong/incompatible/corrupt
+storage without creating/replacing a database. This is the manual fallback when
+Windows cannot qualify metadata Git descendant cleanup. Windows workflow entry
+remains unqualified and can be blocked by metadata probes as well as the compiler;
+no arbitrary caller declaration supplies the missing native proof.
+
+The repair adds seven maintained public cases. Both pinned typechecks/declaration
+build and the full 85-check combination pass. Existing startup assertions now
+separate recorded setup commands from the same workflow operations: exactly one
+build remains required, and startup/build failures still launch no agent or
+workflow phase. No prior required/advisory outcome assertion was removed.

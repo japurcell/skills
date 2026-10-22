@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, existsSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -179,7 +179,7 @@ test('operator clearance permits fresh current-entry followup without resetting 
     const next=repo.call(['invoke','--workflow','.factory/workflows/run.ts','--input',repo.input,'--worktree',saved.worktreeId,'--run',run.id]);assert.equal(next.status,0,next.stdout+next.stderr);
     const fresh=JSON.parse(next.stdout);assert.notEqual(fresh.invocationId,saved.invocationId);assert.equal(fresh.runId,run.id);assert.equal(readFileSync(join(fresh.worktree,'candidate.txt'),'utf8'),'keep candidate');
     const history=JSON.parse(repo.call(['history','--invocation',fresh.invocationId]).stdout);assert.match(JSON.stringify(history.captures),/fresh current entry:explicit answer/);assert.equal(history.accounting.additionalUsed,1);
-    store=openRepositoryStore(repo.common);assert.equal(store.readInvocation(saved.invocationId).cleanup,'unknown');assert.equal(store.readAccounting(run.id).additionalUsed,1);assert.equal(store.readEvents({after:'0'}).events.filter(event=>event.kind==='invocation.started').length,3);
+    store=openRepositoryStore(repo.common);assert.equal(store.readInvocation(saved.invocationId).cleanup,'unknown');assert.equal(store.readAccounting(run.id).additionalUsed,1);let cursor='0',starts=0;while(true){const page=store.readEvents({after:cursor});starts+=page.events.filter(event=>event.kind==='invocation.started').length;if(page.events.length<200)break;cursor=page.nextCursor;}assert.equal(starts,3);
   }finally{store?.close();repo.dispose();}
 });
 
@@ -208,4 +208,46 @@ test('failed spawn-identity save keeps live control until the actual process is 
   const repo=await fixture(`export async function run(c){await c.command('launch-record',{argv:[process.execPath,'-e','setTimeout(()=>require("node:fs").writeFileSync("continued-after-save-failure","unsafe continuation"),200);setInterval(()=>{},1000)'],env:{}});}`);let db;
   try{db=new DatabaseSync(join(repo.common,'factory/history.sqlite'));db.exec("CREATE TRIGGER fixture_refuse_spawn_identity BEFORE UPDATE ON attempts WHEN json_extract(NEW.data,'$.operationKey')='launch-record' AND json_extract(NEW.data,'$.launch')='started' BEGIN SELECT RAISE(ABORT,'fixture spawn identity denied'); END");db.close();db=undefined;const result=repo.invoke(['--shutdown-grace-ms','100']);assert.equal(result.status,1,result.stdout+result.stderr);const saved=JSON.parse(result.stdout);assert.equal(saved.cleanup,'unknown');await delay(300);assert.equal(existsSync(join(saved.worktree,'continued-after-save-failure')),false);const history=JSON.parse(repo.call(['history','--invocation',saved.invocationId]).stdout);assert.equal(history.attempts.at(-1).launch,'admitted');assert.equal(history.accounting.occupiedCommands,1);assert.equal(JSON.parse(repo.call(['inspect-owner']).stdout).length,1);}
   finally{db?.close();repo.dispose();}
+});
+
+test('review diagnostic boundary filters harmless configured fixture key',async()=>{
+ const repo=await fixture(`export async function run(c){await c.command('missing',{argv:[process.env.REVIEW_API_KEY],env:{}});}`);
+ try{const value='fixture-review-diagnostic-only';const result=spawnSync(process.execPath,repo.args([]),{encoding:'utf8',env:{...process.env,REVIEW_API_KEY:value},timeout:10000});assert.equal(result.status,1);assert.ok(!result.stdout.includes(value),'raw configured fixture key escaped returned diagnostic');}finally{repo.dispose();}
+});
+test('promise-only workflow remains foreground until explicit signal',async()=>{
+ const repo=await fixture(`export async function run(c){await c.progress('entered current workflow');await new Promise(()=>{});}`);let child;
+ try{child=spawn(process.execPath,repo.args(['--shutdown-grace-ms','100']),{stdio:['ignore','pipe','pipe']});const closed=new Promise(resolve=>child.once('close',resolve));await waitFor(()=>{const store=openRepositoryStore(repo.common);try{return store.inspectOwners().some(claim=>claim.invocationId && JSON.stringify(store.readHistory(claim.invocationId).captures).includes('entered current workflow'));}finally{store.close();}});await delay(100);assert.equal(child.exitCode,null,'promise-only workflow exited without final history');child.kill('SIGTERM');assert.equal(await closed,143);}finally{child?.kill('SIGKILL');repo.dispose();}
+});
+
+test('worktree checkout filter remains interruptible within grace',async()=>{
+ const repo=await fixture(`export async function run(c){await c.progress('not entered after checkout interruption');}`);let child;
+ try{
+ const script=join(repo.common,'checkout-filter.mjs'),marker=join(repo.common,'checkout-filter-started');writeFileSync(script,`import{writeFileSync}from'node:fs';writeFileSync(${JSON.stringify(marker)},'started');process.stdin.resume();setTimeout(()=>process.stdout.write('filtered payload'),3000);`);
+ writeFileSync(join(repo.path,'.gitattributes'),'payload.txt filter=review\n');writeFileSync(join(repo.path,'payload.txt'),'payload');repo.git(['add','.gitattributes','payload.txt']);repo.git(['commit','-m','Commit smudge fixture','--only','.gitattributes','payload.txt']);repo.git(['config','filter.review.smudge',JSON.stringify(process.execPath)+' '+JSON.stringify(script)]);repo.git(['config','filter.review.required','true']);
+ child=spawn(process.execPath,repo.args(['--shutdown-grace-ms','100']),{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',v=>stdout+=v);child.stderr.on('data',v=>stderr+=v);const done=new Promise(resolve=>child.once('close',status=>resolve({status,stdout,stderr})));
+ const until=performance.now()+8000;while(!existsSync(marker)&&performance.now()<until)await delay(25);assert.ok(existsSync(marker));const before=performance.now();child.kill('SIGTERM');const result=await done;assert.equal(result.status,143,result.stdout+result.stderr);assert.ok(performance.now()-before<2000,'checkout smudge filter blocked signal processing');const saved=JSON.parse(result.stdout);const history=JSON.parse(repo.call(['history','--invocation',saved.invocationId]).stdout);assert.ok(history.attempts.every(attempt=>attempt.kind==='command'&&attempt.operationKey.startsWith('startup/git/')));assert.equal(history.attempts.at(-1).outcome,'interrupted');assert.ok(history.captures.every(capture=>capture.channel!=='report'));assert.doesNotMatch(JSON.stringify(history.captures),/\\"cause\\":\\"failure\\"/);
+ }finally{child?.kill('SIGKILL');repo.dispose();}
+});
+
+test('common-dir manual recovery works without Git and filters operator notes',async()=>{
+ const repo=await fixture(`export async function run(c){await c.progress('entry');}`);let store;
+ try{store=openRepositoryStore(repo.common);const run=await store.createRun(),worktree=await store.registerWorktree({path:repo.path,registration:'fixture'});const invocation=await store.startInvocation({runId:run.id,worktreeId:worktree.id,owner:{host:hostname(),pid:process.pid,start:null}});store.close();store=undefined;
+ const key='fixture-common-dir-note-only';const call=args=>spawnSync(process.execPath,[cli,...args,'--common-dir',repo.common,'--json'],{encoding:'utf8',env:{...process.env,PATH:'/fixture-no-git-available',REVIEW_API_KEY:key},timeout:10000});
+ const inspection=call(['inspect-owner','--claim',invocation.claim.id]);assert.equal(inspection.status,0,inspection.stderr);assert.equal(JSON.parse(inspection.stdout)[0].claim.token,invocation.claim.token);
+ const cleared=call(['clear-owner','--claim',invocation.claim.id,'--token',invocation.claim.token,'--operator-confirmed','--note','Operator removed '+key]);assert.equal(cleared.status,0,cleared.stderr);assert.ok(!cleared.stdout.includes(key));assert.match(cleared.stdout,/REDACTED/);
+ store=openRepositoryStore(repo.common);assert.ok(!JSON.stringify(store.readClearances({claimId:invocation.claim.id})).includes(key));
+ }finally{store?.close();repo.dispose();}
+});
+test('common-dir recovery rejects wrong or incompatible storage without creating history',async()=>{
+ const repo=await fixture(`export async function run(c){}`);let db;
+ try{const wrong=join(repo.path,'wrong-common');mkdirSync(wrong);const call=path=>spawnSync(process.execPath,[cli,'inspect-owner','--common-dir',path,'--json'],{encoding:'utf8',env:{...process.env,PATH:'/fixture-no-git-available'}});const missing=call(wrong);assert.equal(missing.status,3);assert.equal(existsSync(join(wrong,'factory')),false);
+ db=new DatabaseSync(join(repo.common,'factory/history.sqlite'));db.exec('PRAGMA user_version=999');db.close();db=undefined;const incompatible=call(repo.common);assert.equal(incompatible.status,3);assert.match(incompatible.stderr,/incompatible schema/);
+ writeFileSync(join(repo.common,'factory/history.sqlite'),'fixture corrupt essential store');const corrupt=call(repo.common);assert.equal(corrupt.status,3);assert.equal(readFileSync(join(repo.common,'factory/history.sqlite'),'utf8'),'fixture corrupt essential store');
+ }finally{db?.close();repo.dispose();}
+});
+for(const mode of ['signal','timeout']) test(`read-only startup Git probe has live bounded ${mode} control before repository admission`,async()=>{
+ const repo=await fixture(`export async function run(c){}`);let child;
+ try{const bin=join(repo.path,'probe-bin');mkdirSync(bin);const marker=join(repo.common,'probe-started'),script=join(repo.common,'probe.mjs');writeFileSync(script,`import{writeFileSync}from'node:fs';writeFileSync(${JSON.stringify(marker)},'started');setInterval(()=>{},1000);`);writeFileSync(join(bin,'git'),'#!/bin/sh\nexec '+JSON.stringify(process.execPath)+' '+JSON.stringify(script)+'\n');chmodSync(join(bin,'git'),0o755);
+ child=spawn(process.execPath,repo.args(['--shutdown-grace-ms','100',...(mode==='timeout'?['--command-timeout-ms','150']:[])]),{env:{...process.env,PATH:bin},stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',v=>stdout+=v);child.stderr.on('data',v=>stderr+=v);const done=new Promise(resolve=>child.once('close',resolve));if(mode==='signal'){await waitFor(()=>existsSync(marker));child.kill('SIGTERM');}const status=await done;assert.equal(status,mode==='signal'?143:3,stdout+stderr);assert.equal(stdout,'');assert.match(stderr,mode==='signal'?/interrupted/:/timed out/);const store=openRepositoryStore(repo.common);try{assert.deepEqual(store.inspectOwners(),[]);}finally{store.close();}
+ }finally{child?.kill('SIGKILL');repo.dispose();}
 });

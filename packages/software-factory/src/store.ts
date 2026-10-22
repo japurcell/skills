@@ -381,7 +381,7 @@ export class RepositoryStore {
       }
       this.ready();
       const invocation = this.readInvocation(input.invocationId);
-      if ((invocation.stage !== 'running' && !(startup && invocation.stage === 'starting' && input.kind === 'command' && input.operationKey === `startup/build/${invocation.id}`)) || !this.database.prepare('SELECT id FROM owner_claims WHERE invocation_id=?').get(invocation.id)) throw new Error('invocation not eligible for admission');
+      if ((invocation.stage !== 'running' && !(startup && invocation.stage === 'starting' && input.kind === 'command' && (input.operationKey === `startup/build/${invocation.id}` || (input.operationKey.startsWith('startup/git/') && input.operationKey.endsWith(`/${invocation.id}`))))) || !this.database.prepare('SELECT id FROM owner_claims WHERE invocation_id=?').get(invocation.id)) throw new Error('invocation not eligible for admission');
       const limits = this.database.prepare('SELECT agent_limit,command_limit FROM repository').get()!;
       const capacity = Number(limits[input.kind === 'agent' ? 'agent_limit' : 'command_limit']);
       if (Number(this.database.prepare('SELECT count(*) AS n FROM attempts WHERE kind=? AND occupied=1').get(input.kind)?.['n']) >= capacity) throw new Error(`${input.kind} capacity exhausted`);
