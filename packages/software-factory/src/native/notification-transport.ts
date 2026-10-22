@@ -11,8 +11,12 @@ const MAX_LIFETIME_MS = 5000;
 
 function failureReason(command: NativeNotificationCommand, code: number | null, stderr: string): NotificationReason {
   const windowsHelper = win32.basename(command.file).toLowerCase() === 'windows-notify.exe';
-  if ((windowsHelper && code === 4) || /access denied|permission denied|not authorized|not permitted|notifications disabled/i.test(stderr)) return 'denied';
-  if (windowsHelper && code === 3) return 'registration_missing';
+  if (windowsHelper) {
+    if (code === 3) return 'registration_missing';
+    if (code === 4) return 'denied';
+    return 'sender_exit_nonzero';
+  }
+  if (/access denied|permission denied|not authorized|not permitted|notifications disabled/i.test(stderr)) return 'denied';
   if (/could not connect|cannot connect|notification daemon|session bus|display not found|name has no owner/i.test(stderr)) return 'service_unavailable';
   return 'sender_exit_nonzero';
 }

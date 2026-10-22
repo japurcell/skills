@@ -62,6 +62,26 @@ test('recorder reconstructs split UTF-8 and filters split secrets and sensitive 
   assert.doesNotMatch(captureText(store, result.id), /unknown-private-value|nested|private/);
 }));
 
+test('shared environment policy filters lowercase credential names across saved capture chunks', async () => fixture(async ({ store, invocation }) => {
+  const { InvocationRecorder } = await import('../dist/capture.js');
+  const { environmentRedactionPolicy } = await import('../dist/redaction.js');
+  const key = 'factory_password';
+  const before = process.env[key];
+  process.env[key] = 'fixture-lowercase-password';
+  try {
+    const recorder = new InvocationRecorder({ store, invocationId: invocation.id,
+      secrets: environmentRedactionPolicy().secrets, requestShutdown() {} });
+    const output = await recorder.openCapture({ channel: 'stdout' });
+    await output.write('Value: fixture-lowercase-');
+    await output.write('password; safe');
+    await output.finish();
+    assert.equal(captureText(store, output.id), 'Value: [REDACTED]; safe');
+  } finally {
+    if (before === undefined) delete process.env[key];
+    else process.env[key] = before;
+  }
+}));
+
 
 test('large lines and oversized control JSON stay complete, paged and filtered across emitted boundaries', async () => fixture(async ({ store, invocation }) => {
   const { InvocationRecorder } = await import('../dist/capture.js');

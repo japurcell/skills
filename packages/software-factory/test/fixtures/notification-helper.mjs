@@ -22,6 +22,9 @@ if (mode === 'record') {
   process.exitCode = 1;
 } else if (mode === 'exit-code') {
   process.exitCode = Number(args[0]);
+} else if (mode === 'exit-code-stderr') {
+  process.stderr.write(args[1]);
+  process.exitCode = Number(args[0]);
 } else {
   process.exitCode = 2;
 }

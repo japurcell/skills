@@ -83,6 +83,32 @@ test('missing owned Windows registration has its own fixed reason', async () => 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('Windows helper exit codes take priority over diagnostic wording', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'factory-notify-'));
+  try {
+    const helper = join(dir, 'windows-notify.exe');
+    try { linkSync(process.execPath, helper); }
+    catch { copyFileSync(process.execPath, helper); }
+    const run = (code, stderr) => executeNotificationProcess({ file: helper, args: [fixture, 'exit-code-stderr', String(code), stderr] }, 1000);
+    assert.deepEqual(await run(3, 'Access denied'), { state: 'failed', reason: 'registration_missing', cleanup: 'complete' });
+    assert.deepEqual(await run(5, 'notification daemon unavailable'), { state: 'failed', reason: 'sender_exit_nonzero', cleanup: 'complete' });
+    assert.deepEqual(await run(4, 'notification daemon unavailable'), { state: 'failed', reason: 'denied', cleanup: 'complete' });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('lowercase environment password is filtered from public notification command', () => {
+  const key = 'factory_password';
+  const before = process.env[key];
+  process.env[key] = 'fixture-lowercase-password';
+  try {
+    const command = notificationCommand({ title: 'Factory', body: `Value: ${process.env[key]}` }, 'linux');
+    assert.equal(command.args.at(-1), 'Value: [REDACTED]');
+  } finally {
+    if (before === undefined) delete process.env[key];
+    else process.env[key] = before;
+  }
+});
+
 test('deadline kills an owned child and does not report submission', async () => {
   const start = performance.now();
   const result = await executeNotificationProcess(fake('wait'), 250);
