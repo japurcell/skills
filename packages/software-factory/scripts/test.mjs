@@ -5,7 +5,12 @@ import { parseArgs } from 'node:util';
 const groups = {
   fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
   store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }], notifications: [{ path: 'test/notification-senders.test.mjs' }, { path: 'test/notification-preflight.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }, { path: 'test/notification-pipe.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }],
-  learning: [{ path: 'test/learning.test.mjs', operation: 'extract' }], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
+  learning: [
+    { path: 'test/learning.test.mjs', operation: 'extract', testConcurrency: 2 },
+    { path: 'test/learning-extraction-sources.test.mjs', operation: 'extract', testConcurrency: 2 },
+    { path: 'test/learning-extraction-evidence.test.mjs', operation: 'extract', testConcurrency: 2 },
+    { path: 'test/learning-extraction-paths.test.mjs', operation: 'extract', testConcurrency: 2 },
+  ], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
 try {
@@ -16,7 +21,9 @@ try {
   const group = positionals[0];
   const names = group === 'all' ? Object.keys(groups).filter((name) => name !== 'qualification') : [group];
   const files = new Set();
+  const extractionFiles = new Set();
   const nodeOptions = new Set();
+  let extractionConcurrency;
   for (const name of names) {
     if (!(name in groups)) throw new Error(`unknown test group: ${name}`);
     const entries = groups[name];
@@ -24,14 +31,51 @@ try {
     const selected = entries.filter((entry) => Object.entries(values).every(([key, value]) => entry[key] === value));
     if (selected.length === 0) throw new Error(`${name}: no tests match supplied filters`);
     for (const entry of selected) {
-      files.add(entry.path);
-      for (const option of entry.nodeOptions ?? []) nodeOptions.add(option);
+      if (entry.testConcurrency !== undefined) {
+        extractionFiles.add(entry.path);
+        extractionConcurrency = entry.testConcurrency;
+      } else {
+        files.add(entry.path);
+        for (const option of entry.nodeOptions ?? []) nodeOptions.add(option);
+      }
     }
   }
-  const child = spawn(process.execPath, [...nodeOptions, '--test', ...files], { cwd: new URL('../', import.meta.url), stdio: 'inherit' });
-  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
-  child.on('error', (error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });
-  child.on('exit', (code, signal) => { process.exitCode = signal === 'SIGINT' ? 130 : signal === 'SIGTERM' ? 143 : code ?? 1; });
+
+  let child;
+  let interruptedBy;
+  const signalHandlers = new Map();
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    const handler = () => { interruptedBy = signal; child?.kill(signal); };
+    signalHandlers.set(signal, handler);
+    process.on(signal, handler);
+  }
+  const run = args => new Promise((resolve) => {
+    const running = spawn(process.execPath, args, { cwd: new URL('../', import.meta.url), stdio: 'inherit' });
+    child = running;
+    let settled = false;
+    const finish = code => {
+      if (settled) return;
+      settled = true;
+      if (child === running) child = undefined;
+      resolve(code);
+    };
+    running.on('error', (error) => { process.stderr.write(`${error.message}\n`); finish(1); });
+    running.on('exit', (code, signal) => {
+      finish(signal === 'SIGINT' ? 130 : signal === 'SIGTERM' ? 143 : code ?? 1);
+    });
+  });
+  try {
+    let exitCode = 0;
+    if (files.size > 0 && !interruptedBy) exitCode = await run([...nodeOptions, '--test', ...files]);
+    if (!interruptedBy && exitCode !== 130 && exitCode !== 143 && extractionFiles.size > 0) {
+      const extractionExitCode = await run([`--test-concurrency=${extractionConcurrency}`, '--test', ...extractionFiles]);
+      if (exitCode === 0) exitCode = extractionExitCode;
+    }
+    if (interruptedBy) exitCode = interruptedBy === 'SIGINT' ? 130 : 143;
+    process.exitCode = exitCode;
+  } finally {
+    for (const [signal, handler] of signalHandlers) process.off(signal, handler);
+  }
 } catch (error) {
   process.stderr.write(`factory tests: ${error.message}\n`);
   process.exitCode = 1;
