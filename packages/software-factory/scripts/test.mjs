@@ -11,6 +11,7 @@ const groups = {
     { path: 'test/learning-extraction-evidence.test.mjs', operation: 'extract', testConcurrency: 2 },
     { path: 'test/learning-extraction-paths.test.mjs', operation: 'extract', testConcurrency: 2 },
     { path: 'test/learning-evaluation.test.mjs', operation: 'evaluate' },
+    { path: 'test/learning-adoption.test.mjs', operation: 'adopt' },
   ], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
