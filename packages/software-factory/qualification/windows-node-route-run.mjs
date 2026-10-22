@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync
 import { basename, join, relative, resolve, win32 } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gitModes, parseTrace, validateModules } from './windows-startup.mjs';
-import { validateNodeRoute } from './windows-node-route.mjs';
+import { validateNodeOutput, validateNodeRoute } from './windows-node-route.mjs';
 
 const sourceRoot = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_NODE_ROUTE_EVIDENCE ?? join(process.cwd(), 'windows-node-route-evidence'));
@@ -18,10 +18,12 @@ const report = { scope: 'representative-pinned-node-windows-spawn-route', status
   limitation: 'DEBUG_PROCESS observer adds its own launch conditions. This report is a representative experiment, not the full helper matrix or product admission.' };
 mkdirSync(evidence, { recursive: true });
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
+const sha256Bytes = (bytes) => createHash('sha256').update(bytes).digest('hex');
 const save = () => writeFileSync(join(evidence, 'qualification.json'), `${JSON.stringify(report, null, 2)}\n`);
 const normalized = (path) => win32.normalize(path.replace(/^\\\\\?\\/, '')).toLowerCase();
 const within = (path, root) => normalized(path).startsWith(normalized(root) + win32.sep);
 const gitDlls = ['libiconv-2.dll', 'libintl-8.dll', 'libpcre2-8-0.dll', 'libwinpthread-1.dll', 'zlib1.dll'];
+const expectedCompilerBytes = Buffer.from('const result = 42;\nexport { result };\n');
 
 function assertPackage(archive) {
   for (const [member, expected] of Object.entries(archive.files)) {
@@ -150,20 +152,33 @@ function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archiv
     verifyModules(records, result.nodePid, result.childPid, nodeRoot, executable, archive, env.SystemRoot);
     assert.equal(statSync(traceSpec.stdout).size, 0, 'Node root wrote unexpected stdout');
     assert.equal(statSync(traceSpec.stderr).size, 0, 'Node root wrote unexpected stderr');
+    const stdout = Buffer.from(result.stdoutBase64, 'base64');
     for (const stream of ['stdout', 'stderr']) {
       const bytes = Buffer.from(result[`${stream}Base64`], 'base64');
       assert.equal(bytes.length, result[`${stream}CapturedBytes`], `${stream} capture differs from count`);
     }
-    const stdout = Buffer.from(result.stdoutBase64, 'base64');
-    if (expected.git) assert.equal(stdout.toString('utf8').trim().replaceAll('\\', '/').toLowerCase(),
-      cwd.replaceAll('\\', '/').toLowerCase(), 'Git top-level output mismatch');
+    if (expected.git) {
+      item.expectedOutput = { gitPath: cwd, lineEnding: 'LF',
+        stdoutSha256: sha256Bytes(Buffer.from(`${cwd.replaceAll('\\', '/')}\n`)) };
+      const checkedOutput = validateNodeOutput(result, { kind: 'git', path: cwd, lineEnding: '\n' });
+      assert.ok(checkedOutput.ok, checkedOutput.reasons.join('; '));
+    }
     if (expected.compilerOutput) {
-      assert.equal(result.stdoutBytes + result.stderrBytes, 0, 'compiler wrote unexpected output');
       assert.ok(existsSync(expected.compilerOutput), 'fresh compiler output absent');
       assert.equal(readdirSync(join(expected.compilerOutput, '..')).length, 1,
         'compiler emitted unexpected files');
+      assert.ok(statSync(expected.compilerOutput).size <= 262144, 'compiler output exceeds 256 KiB evidence bound');
+      const emitted = readFileSync(expected.compilerOutput);
+      item.expectedOutput = { compilerOutput: expected.compilerOutput,
+        expectedBytes: expectedCompilerBytes.length, expectedSha256: sha256Bytes(expectedCompilerBytes),
+        actualBytes: emitted.length, actualSha256: sha256Bytes(emitted) };
+      const checkedOutput = validateNodeOutput(result, { kind: 'typescript', emitted: expectedCompilerBytes }, emitted);
+      assert.ok(checkedOutput.ok, checkedOutput.reasons.join('; '));
     }
-    if (expected.nested) assert.equal(result.stdoutBytes + result.stderrBytes, 0);
+    if (expected.nested) {
+      const checkedOutput = validateNodeOutput(result, { kind: 'silent' });
+      assert.ok(checkedOutput.ok, checkedOutput.reasons.join('; '));
+    }
     if (expected.stop === 'deadline') {
       assert.ok(stdout.includes(Buffer.from('deadline-ready\n')), 'deadline marker absent before kill');
       assert.equal(result.stdoutBytes, 15, 'deadline marker byte count differs');
@@ -195,8 +210,23 @@ async function main() {
   const nodeRoot = join(bootstrap.directory, 'node-v24.22.1-win-x64');
   const node = join(nodeRoot, 'node.exe');
   assert.ok(existsSync(node));
+  const member = 'node-v24.22.1-win-x64/node.exe';
+  const independent = spawnSync('tar', ['-xOf', nodeArchive, member],
+    { encoding: null, timeout: 120000, maxBuffer: 150000000 });
+  assert.ifError(independent.error);
+  assert.equal(independent.status, 0, `pinned Node archive member extraction failed: ${independent.stderr}`);
+  assert.ok(independent.stdout.length > 0, 'pinned Node archive member was empty');
+  const archiveMemberSha256 = sha256Bytes(independent.stdout);
+  const extractedNodeSha256 = sha256(node);
+  const extractedNodeBytes = statSync(node).size;
   report.nodeArtifact = { archive: nodeArchive, archiveSha256: sha256(nodeArchive),
-    executable: node, executableSha256: sha256(node), bytes: statSync(node).size };
+    member, archiveMemberSha256, archiveMemberBytes: independent.stdout.length,
+    executable: node, executableSha256: extractedNodeSha256, bytes: extractedNodeBytes,
+    memberMatchesExecutable: archiveMemberSha256 === extractedNodeSha256 &&
+      independent.stdout.length === extractedNodeBytes };
+  save();
+  assert.equal(extractedNodeSha256, archiveMemberSha256, 'extracted node.exe differs from pinned archive member');
+  assert.equal(extractedNodeBytes, independent.stdout.length, 'extracted node.exe size differs from archive member');
   const artifacts = JSON.parse(readFileSync(join(evidence, 'artifacts.json'), 'utf8'));
   assert.equal(artifacts.status, 'prepared-not-natively-qualified');
   const gitArchive = artifacts.archives.git;
@@ -241,6 +271,7 @@ async function main() {
     ['candidate-output-control', 'candidate', control, ['output-limit'], work, null, { stop: 'output-limit' }],
   ];
   for (const [name, route, executable, args, cwd, archive, expected] of cases) {
+    assert.equal(sha256(node), archiveMemberSha256, `pinned node.exe changed before ${name}`);
     if (archive) assertPackage(archive);
     runCase(name, route, executable, args, cwd, env, node, nodeRoot, archive, expected);
   }

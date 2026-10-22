@@ -75,3 +75,32 @@ export function validateNodeRoute(records, result, expected) {
   }
   return { ok: reasons.length === 0, reasons, children };
 }
+
+export function validateNodeOutput(result, expected, emitted) {
+  const reasons = [];
+  const output = {};
+  for (const stream of ['stdout', 'stderr']) {
+    const encoded = result?.[`${stream}Base64`];
+    const decoded = typeof encoded === 'string' ? Buffer.from(encoded, 'base64') : Buffer.alloc(0);
+    output[stream] = decoded;
+    if (typeof encoded !== 'string' || decoded.toString('base64') !== encoded ||
+        result?.[`${stream}Bytes`] !== decoded.length ||
+        result?.[`${stream}CapturedBytes`] !== decoded.length || decoded.length > 262144)
+      reasons.push(`incomplete ${stream} capture`);
+  }
+  if (expected.kind === 'git') {
+    const exact = Buffer.from(`${expected.path.replaceAll('\\', '/')}${expected.lineEnding}`, 'utf8');
+    if (!output.stdout.equals(exact)) reasons.push('Git stdout differs from expected path and line ending');
+    if (output.stderr.length) reasons.push('Git stderr was not empty');
+  } else if (expected.kind === 'typescript') {
+    if (output.stdout.length) reasons.push('TypeScript stdout was not empty');
+    if (output.stderr.length) reasons.push('TypeScript stderr was not empty');
+    if (!Buffer.isBuffer(emitted) || !emitted.equals(expected.emitted))
+      reasons.push('TypeScript emitted bytes differ from independent expectation');
+  } else if (expected.kind === 'silent') {
+    if (output.stdout.length || output.stderr.length) reasons.push('silent control produced output');
+  } else {
+    reasons.push('unknown output contract');
+  }
+  return { ok: reasons.length === 0, reasons };
+}

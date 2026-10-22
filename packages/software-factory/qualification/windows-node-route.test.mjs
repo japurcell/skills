@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { validateNodeRoute } from './windows-node-route.mjs';
+import { validateNodeOutput, validateNodeRoute } from './windows-node-route.mjs';
 
 const node = 'C:\\tools\\node-v24.22.1-win-x64\\node.exe';
 const git = 'C:\\tools\\git\\mingw64\\bin\\git.exe';
@@ -72,4 +72,38 @@ test('stop controls require a requested direct kill and independently observed t
   assert.equal(validateNodeRoute(stoppedTrace, stopped, { node, helper: git, stop: 'deadline' }).ok, true);
   assert.match(validateNodeRoute(stoppedTrace, { ...stopped, stop: { ...stopped.stop, killReturned: false } },
     { node, helper: git, stop: 'deadline' }).reasons.join('; '), /direct stop outcome/);
+});
+
+test('Git accepts only the complete expected path and qualified LF', () => {
+  const path = 'C:\\fixture\\repo';
+  const output = Buffer.from('C:/fixture/repo\n');
+  const captured = (stdout, bytes = stdout.length, stderr = Buffer.alloc(0)) => ({
+    stdoutBytes: bytes, stdoutCapturedBytes: stdout.length, stdoutBase64: stdout.toString('base64'),
+    stderrBytes: stderr.length, stderrCapturedBytes: stderr.length, stderrBase64: stderr.toString('base64'),
+  });
+  const expected = { kind: 'git', path, lineEnding: '\n' };
+  assert.equal(validateNodeOutput(captured(output), expected).ok, true);
+  assert.match(validateNodeOutput(captured(Buffer.from('C:/fixture/repo\n \n')), expected).reasons.join('; '),
+    /Git stdout differs/);
+  assert.match(validateNodeOutput(captured(output, 300000), expected).reasons.join('; '),
+    /complete stdout capture/);
+  assert.match(validateNodeOutput(captured(Buffer.from('C:/fixture/repo')), expected).reasons.join('; '),
+    /Git stdout differs/);
+  assert.match(validateNodeOutput(captured(output, output.length, Buffer.from('warning\n')), expected).reasons.join('; '),
+    /Git stderr/);
+});
+
+test('TypeScript requires independently expected emitted bytes and exact quiet pipes', () => {
+  const emitted = Buffer.from('const result = 42;\nexport { result };\n');
+  const quiet = { stdoutBytes: 0, stdoutCapturedBytes: 0, stdoutBase64: '',
+    stderrBytes: 0, stderrCapturedBytes: 0, stderrBase64: '' };
+  const expected = { kind: 'typescript', emitted };
+  assert.equal(validateNodeOutput(quiet, expected, emitted).ok, true);
+  assert.match(validateNodeOutput(quiet, expected, Buffer.alloc(0)).reasons.join('; '),
+    /TypeScript emitted bytes/);
+  assert.match(validateNodeOutput(quiet, expected, Buffer.from('const result = 0;\n')).reasons.join('; '),
+    /TypeScript emitted bytes/);
+  assert.match(validateNodeOutput({ ...quiet, stdoutBytes: 1, stdoutCapturedBytes: 1,
+    stdoutBase64: Buffer.from('x').toString('base64') }, expected, emitted).reasons.join('; '),
+    /TypeScript stdout/);
 });

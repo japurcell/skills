@@ -2,6 +2,18 @@ name: Windows factory pinned Node route experiment
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/windows-factory-node-route.yml
+      - packages/software-factory/qualification/windows-node-route*
+      - packages/software-factory/qualification/windows-startup-artifacts.mjs
+      - packages/software-factory/qualification/windows-startup-trace.*
+      - packages/software-factory/qualification/windows-startup-control*
+      - packages/software-factory/qualification/windows-startup.mjs
+      - packages/software-factory/qualification/runtime-manifest.json
+      - packages/software-factory/scripts/qualification-bootstrap.mjs
 
 permissions:
   contents: read
