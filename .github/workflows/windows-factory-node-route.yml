@@ -1,0 +1,48 @@
+name: Windows factory pinned Node route experiment
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  representative-node-route:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      FACTORY_TARGET: win32-x64
+      CI: 'true'
+    steps:
+      - name: Checkout source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact Node 24.22.1 bootstrap
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-windows-node-route-evidence
+        run: node packages/software-factory/scripts/qualification-bootstrap.mjs
+      - name: Fetch and verify exact official Git and TypeScript archives
+        timeout-minutes: 5
+        env:
+          WINDOWS_STARTUP_EVIDENCE: ${{ runner.temp }}/factory-windows-node-route-evidence
+        run: node packages/software-factory/qualification/windows-startup-artifacts.mjs
+      - name: Check Node route protocol
+        timeout-minutes: 1
+        run: node --test packages/software-factory/qualification/windows-node-route.test.mjs
+      - name: Trace seven pinned Node spawn cases
+        timeout-minutes: 12
+        env:
+          WINDOWS_NODE_ROUTE_EVIDENCE: ${{ runner.temp }}/factory-windows-node-route-evidence
+        run: node packages/software-factory/qualification/windows-node-route-run.mjs
+      - name: Retain complete experiment evidence
+        if: always()
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: factory-windows-node-route-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/factory-windows-node-route-evidence/
+          if-no-files-found: error
+          retention-days: 14
