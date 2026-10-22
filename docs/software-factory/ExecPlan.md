@@ -12,7 +12,7 @@ No durable workflow engine, checkpoint replay, factory task scheduler, per-task/
 
 ## Progress
 
-Implementation is underway on `codex/research-agentic-workflow-prototypes`. Milestones 1 and 2 are verified. Hosted run `39719540444` passes Linux/Windows/macOS foundation qualification. T5 current-script command invocation is reviewed and integrated at `defbb099`; 69 registered local checks pass after CLI/registry integration. T6 shutdown/manual clearance is the current frontier. A separately observed macOS hook cleanup regression has isolated repair ownership. Remaining milestone acceptance requires actual recorded evidence.
+Implementation is underway on `codex/research-agentic-workflow-prototypes`. Milestones 1 and 2 are verified. Hosted run `39719540444` passes Linux/Windows/macOS foundation qualification. T5 current-script command invocation is reviewed and integrated at `defbb099`; 69 registered local checks pass after CLI/registry integration. T6 shutdown/manual clearance is active in private branch `codex/factory-lifecycle` from base `816a9a1a`. A separately observed macOS hook cleanup regression has isolated repair ownership; immutable `19a211e5` passes 30 tests and awaits independent security review. Remaining milestone acceptance requires actual recorded evidence.
 
 - [x] (2026-10-21) [milestone-1] T1: Established isolated package, fake harness/Git fixtures, explicit test dispatch and development CLI contract; six fixture tests pass.
 - [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
@@ -191,6 +191,8 @@ Observed T5 evidence: independently reviewed commits fast-forwarded onto base at
 
 #### T6: One shutdown path and manual clearance
 
+Current execution: private branch `codex/factory-lifecycle` from `816a9a1a`. Explicit command child-scope metadata distinguishes a supported POSIX process group from unknown control; known escaped activity, inherited pipes or failed identity checks override a requested supported declaration. Windows descendants remain unknown. This records the accepted group-only limitation, not a universal process-control claim.
+
 Prerequisites: T5. Own finalization in `src/lifecycle.ts`, `src/native/process.ts`, `src/clearance.ts`, `test/shutdown.test.ts`. Serialize stop/admission; save questions before cleanup; retain peer results and distinguish independent failure from requested interruption. Bound grace and stop only verified live owned scopes. Finalize uncertainty with blocked ownership/capacity rather than waiting indefinitely. Add explicit `inspect-owner` and `clear-owner` CLI paths requiring exact claim and operator note/confirmation, with machine versus operator basis retained. Verify `run test:lifecycle` through separate-process kill points, escaped children, PID reuse/inaccessible identity, manual release races, failed save/release, SIGINT/SIGTERM statuses and preserved files. Stop after command/fake-harness lifecycle proofs. Combined proof starts a fresh invocation after explicit safe clearance, verifies current script entry and retained additional allowance, and proves no automatic restart.
 
 ### Milestone 4: Honest non-interactive harness adapters
@@ -287,7 +289,7 @@ Run the complete local deterministic suite, browser suite, native qualification,
 
 ## Concrete Steps
 
-**Current next action: implement T6 bounded shutdown, native identity limits and exact-claim manual clearance after verified T5.** Native foundation run `39719540444` passes all three targets. A separate private worker repairs the observed macOS hook cleanup regression from run `39718600966`, where resistant-child cancellation took 2.213 seconds against its unchanged two-second limit. The user's repository instructions require repairing observed test failures even when unrelated; this repair does not block independent T6 work. Commands below remain expected instructions unless evidence is recorded.
+**Current next action: finish T6 bounded shutdown, native identity limits and exact-claim manual clearance in `/Users/adam/.codex/worktrees/factory-lifecycle/skills`, then review and integrate its public proof.** Native foundation run `39719540444` passes all three targets. A separate private worker repairs the observed macOS hook cleanup regression from run `39718600966`, where resistant-child cancellation took 2.213 seconds against its unchanged two-second limit. The user's repository instructions require repairing observed test failures even when unrelated; this repair does not block independent T6 work. Commands below remain expected instructions unless evidence is recorded.
 
 Completed T1 setup: the package and lockfile exist, with development dependencies explicitly installed using `npm ci --ignore-scripts`. Repeat setup only when needed with `rtk proxy npm --prefix packages/software-factory ci --ignore-scripts`; startup never installs. Typecheck/build commands now produce `packages/software-factory/dist/cli.js`. Exact dependency versions are in the lockfile.
 
@@ -332,4 +334,5 @@ For this plan, the historical research snapshot is retained unchanged except its
 - Accepted baseline: [final specification acceptance](tickets/specification-readiness-and-acceptance.md#resolution), [decision map](map.md), [lifecycle mechanisms](lifecycle-specification.md), [detailed UI](observability-ui-specification.md).
 - Visual reference only: [accepted prototype](prototypes/observability-prototype.html). Synthetic browser checks do not establish runtime performance, native behavior, accessibility certification or SSE correctness.
 - Historical records: [research plan snapshot](ExecPlan.history-2026-10-20.md) retains completed research/prototype evidence and superseded recommendations. It is not an execution dependency.
+- Provider preparation: [primary-source preflight](research/provider-preflight-2026-10-21.md) retains Gemini, OpenCode V2 and canonical Pi protocol entry points for T7/T8, without selecting or qualifying a provider version.
 - Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2, T3 and T4 are verified; CI and T5 are integrated; T6 and the isolated hook regression repair are current. Native product/release acceptance remains unmet.
