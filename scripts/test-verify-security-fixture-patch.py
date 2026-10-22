@@ -653,8 +653,10 @@ class PreflightTests(unittest.TestCase):
             " == 'None' or not Path(" + repr(str(until)) + ").exists())):\n"
             "   command = [sys.executable, '-I', '-S', '-B', '-c', " + repr(child) + ", *command[1:]]\n"
             + ("  launch_started=time.monotonic()\n" if timings is not None else "") +
+            ("  seen_before_launch = Path(" + repr(str(seen)) + ").exists()\n"
+               if next_observation is not None else "") +
             "  process = real(command,*args,**kwargs)\n"
-            + ("  if Path(" + repr(str(seen)) + ").exists(): Path(" + repr(str(next_observation)) + ").touch()\n"
+            + ("  if seen_before_launch: Path(" + repr(str(next_observation)) + ").touch()\n"
                if next_observation is not None else "") +
             ("  timing('parent_launch_started',process.pid,launch_started)\n"
                "  timing('parent_launch_completed',process.pid)\n"
