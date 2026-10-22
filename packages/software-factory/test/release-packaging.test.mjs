@@ -76,6 +76,9 @@ test('explicit release command owns a deterministic complete payload and safe re
     assert.equal(manifest.platform, 'darwin-arm64');
     assert.deepEqual(manifest.node, officialNode);
     assert.ok(manifest.files.some(file => file.path === 'dist/learning.js'));
+    for (const path of ['dist/notifications.js', 'dist/notifications.js.map', 'dist/notifications.d.ts']) {
+      assert.ok(manifest.files.some(file => file.path === path), path);
+    }
     assert.ok(manifest.files.some(file => file.path === 'dist/web/index.html'));
     assert.ok(manifest.files.some(file => file.path === 'templates/workflows/learn.ts'));
     assert.ok(manifest.files.some(file => file.path === 'package.json'));
@@ -180,17 +183,56 @@ test('consumer rejects a self-consistent manifest with a missing runtime import 
   }
 });
 
-test('portable Windows names are refused before destination creation', () => {
+test('portable Windows names are refused at consumer and packaging seams', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  const reservedNames = [
+    'CON', 'PRN', 'AUX', 'NUL',
+    ...Array.from({ length: 9 }, (_, index) => 'COM' + (index + 1)),
+    ...Array.from({ length: 9 }, (_, index) => 'LPT' + (index + 1)),
+    'COM¹', 'COM²', 'COM³', 'LPT¹', 'LPT²', 'LPT³',
+  ];
+  const invalidPaths = [
+    ...['<', '>', ':', '"', '|', '?', '*'].map(character => 'dist/bad' + character + '.ts'),
+    'dist/bad\\name.ts',
+    ...Array.from({ length: 32 }, (_, code) => 'dist/bad' + String.fromCharCode(code) + '.ts'),
+    ...reservedNames.flatMap(name => ['dist/' + name, 'dist/' + name + '.txt']),
+    'dist/trailing.',
+    'dist/trailing ',
+  ];
+  const f = fixture();
+  try {
+    const result = f.run();
+    assert.equal(result.status, 0, result.stderr);
+    const manifestPath = join(f.destination, 'release-manifest.json');
+    const original = readFileSync(manifestPath);
+    const originalPayloadPath = JSON.parse(original.toString('utf8')).files[0].path;
+    assert.equal(existsSync(join(f.destination, originalPayloadPath)), true);
+    for (const invalidPath of invalidPaths) {
+      const manifest = JSON.parse(original.toString('utf8'));
+      manifest.files[0].path = invalidPath;
+      const bytes = Buffer.from(JSON.stringify(manifest) + '\n');
+      writeFileSync(manifestPath, bytes);
+      const digest = createHash('sha256').update(bytes).digest('hex');
+      assert.throws(
+        () => validateReleaseBundle(f.destination, digest),
+        /unsafe manifest path/i,
+        invalidPath,
+      );
+    }
+  } finally { f.dispose(); }
+
+  // The consumer checks above run on Windows without creating invalid files.
+  if (process.platform === 'win32') return;
   for (const unsafe of ['bad?.ts', 'bad*.ts', 'bad<.ts', 'bad>.ts', 'bad".ts', 'bad|.ts', 'COM¹.ts', 'COM².ts', 'COM³.ts', 'LPT¹.ts', 'LPT².ts', 'LPT³.ts']) {
-    const f = fixture();
+    const sourceFixture = fixture();
     try {
-      put(f.source, `src/${unsafe}`, 'export const fixture = true;\n');
-      for (const ext of ['.js', '.js.map', '.d.ts']) put(f.source, `dist/${unsafe.slice(0, -3)}${ext}`, 'fixture\n');
-      const result = f.run();
-      assert.equal(result.status, 1, `${unsafe}: ${result.stderr}`);
-      assert.match(result.stderr, /unsafe manifest path/i);
-      assert.equal(existsSync(f.destination), false);
-    } finally { f.dispose(); }
+      put(sourceFixture.source, 'src/' + unsafe, 'export const fixture = true;\n');
+      for (const ext of ['.js', '.js.map', '.d.ts']) put(sourceFixture.source, 'dist/' + unsafe.slice(0, -3) + ext, 'fixture\n');
+      const packaging = sourceFixture.run();
+      assert.equal(packaging.status, 1, unsafe + ': ' + packaging.stderr);
+      assert.match(packaging.stderr, /unsafe manifest path/i);
+      assert.equal(existsSync(sourceFixture.destination), false);
+    } finally { sourceFixture.dispose(); }
   }
 });
 
