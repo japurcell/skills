@@ -59,6 +59,49 @@ export function validateTrace(records, rootPid, expectChild, expectedChildImage)
   return { ok: reasons.length === 0, reasons, children };
 }
 
+export function validateStopTrace(records, rootPid, reason, expectedRootImage) {
+  const reasons = [];
+  const rows = (kind) => records.filter((record) => record.kind === kind);
+  const roots = rows('ROOT');
+  const created = rows('CREATE');
+  const exits = rows('EXIT');
+  const requests = rows('STOP_REQUESTED');
+  const observed = rows('STOP_OBSERVED');
+  const done = rows('DONE');
+  const rootExit = exits.find((record) => record.pid === rootPid);
+  if (roots.length !== 1 || roots[0].pid !== rootPid) reasons.push('missing or ambiguous root');
+  if (created.filter((record) => record.pid === rootPid).length !== 1)
+    reasons.push('missing or ambiguous root creation');
+  if (created.some((record) => created.filter((other) => other.pid === record.pid).length !== 1))
+    reasons.push('ambiguous process creation');
+  if (expectedRootImage && [roots[0]?.value, created.find((record) => record.pid === rootPid)?.value]
+    .some((image) => !image || normalized(image) !== normalized(expectedRootImage)))
+    reasons.push('root image differs from control executable');
+  if (exits.filter((record) => record.pid === rootPid).length !== 1)
+    reasons.push('stopped root exit unobserved');
+  if (rootExit?.value !== '124') reasons.push('root was not terminated with code 124');
+  if (created.some((record) => record.pid !== rootPid &&
+      exits.filter((exit) => exit.pid === record.pid).length !== 1))
+    reasons.push('child exit unobserved');
+  if (exits.some((record) => !created.some((createdRecord) => createdRecord.pid === record.pid)))
+    reasons.push('exit without creation');
+  if (requests.length !== 1 || requests[0].pid !== rootPid) reasons.push('missing stop request');
+  else if (requests[0].value !== reason) reasons.push('wrong stop reason');
+  if (observed.length !== 1 || observed[0].pid !== rootPid || observed[0].value !== rootExit?.value)
+    reasons.push('stop completion unobserved');
+  if (done.length !== 1 || done[0].pid !== rootPid || done[0].value !== `stopped:${rootExit?.value}` ||
+      records.at(-1) !== done[0])
+    reasons.push('missing or inconsistent completed debug loop');
+  if (records.some((record) => record.kind === 'ERROR')) reasons.push('stop trace reported error');
+  const requestIndex = records.indexOf(requests[0]);
+  const rootExitIndex = records.indexOf(rootExit);
+  const observedIndex = records.indexOf(observed[0]);
+  if (requestIndex < 0 || rootExitIndex < requestIndex || observedIndex < rootExitIndex ||
+      exits.some((record) => records.indexOf(record) > observedIndex))
+    reasons.push('stop event order inconsistent');
+  return { ok: reasons.length === 0, reasons };
+}
+
 const absolutePath = (path) => resolve(path.replace(/^\\\\\?\\/, ''));
 const normalized = (path) => absolutePath(path).toLowerCase();
 

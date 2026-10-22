@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { closeSync, existsSync, ftruncateSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateStopTrace, validateTrace } from './windows-startup.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_STARTUP_EVIDENCE ?? join(process.cwd(), 'windows-startup-evidence'));
@@ -67,6 +67,27 @@ function powerShellBaseline(env) {
   save();
 }
 
+function buildDetachedControl(env, cwd) {
+  const directory = join(evidence, 'cases', 'detached-control-build');
+  mkdirSync(directory, { recursive: true });
+  const source = join(root, 'windows-startup-control.cs');
+  const executable = join(cwd, 'windows-startup-control.exe');
+  const powershell = join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const invocation = spawnSync(powershell, ['-NoProfile', '-NonInteractive', '-File',
+    join(root, 'windows-startup-control-build.ps1'), '-SourcePath', source, '-OutputPath', executable],
+  { env, cwd: directory, encoding: 'utf8', timeout: 75000, maxBuffer: 65536 });
+  writeFileSync(join(directory, 'stdout.txt'), invocation.stdout ?? '');
+  writeFileSync(join(directory, 'stderr.txt'), invocation.stderr ?? '');
+  assert.ifError(invocation.error);
+  assert.equal(invocation.status, 0, `detached control build failed: ${invocation.stderr}`);
+  assert.equal(invocation.stdout, 'control-built', 'detached control build returned unexpected output');
+  assert.ok(existsSync(executable), 'detached control executable absent');
+  report.diagnostics.detachedControl = { source, sourceSha256: sha256(source), executable,
+    executableSha256: sha256(executable), compiler: 'Windows PowerShell 5.1 Add-Type ConsoleApplication' };
+  save();
+  return executable;
+}
+
 function launchCase(name, executable, cwd, args, env, archive, options = {}) {
   const launchMode = selectLaunchMode(options.launchMode);
   const diagnosticOnly = launchMode === 'detached-process';
@@ -97,14 +118,8 @@ function launchCase(name, executable, cwd, args, env, archive, options = {}) {
     assert.equal(roots.length, 1, 'missing unique root process ID');
     const exits = records.filter((record) => record.kind === 'EXIT' && record.pid === roots[0].pid);
     if (options.expectedStop) {
-      assert.equal(records.filter((record) => record.kind === 'CREATE' && record.pid === roots[0].pid).length, 1);
-      assert.equal(exits.length, 1, 'stopped root exit was not observed');
-      assert.equal(records.filter((record) => record.kind === 'STOP_REQUESTED').length, 1);
-      if (options.expectedStopReason)
-        assert.equal(records.find((record) => record.kind === 'STOP_REQUESTED')?.value, options.expectedStopReason);
-      assert.equal(records.filter((record) => record.kind === 'STOP_OBSERVED').length, 1);
-      assert.equal(records.find((record) => record.kind === 'DONE')?.value, `stopped:${exits[0].value}`);
-      assert.ok(!records.some((record) => record.kind === 'ERROR'), 'stop trace reported error');
+      const checked = validateStopTrace(records, roots[0].pid, options.expectedStopReason, executable);
+      assert.ok(checked.ok, checked.reasons.join('; '));
     } else {
       const checked = validateTrace(records, roots[0].pid, options.expectChild ?? false, options.expectedChildImage);
       assert.ok(checked.ok, checked.reasons.join('; '));
@@ -290,8 +305,8 @@ async function main() {
     }
   }
 
-  // These four cases compare one exact Git mode and the original controls under a detached launch.
-  // They are diagnostic evidence only; the complete no-window matrix still determines the report status.
+  // These diagnostic cases retain the exact Git mode and intended cmd child under a detached launch.
+  // The complete no-window matrix still determines the report status.
   const detached = 'detached-process';
   assertPackage(gitArchive);
   launchCase('git-normal-0-detached', git, fixture.repo, gitModes[0], env, gitArchive,
@@ -300,13 +315,6 @@ async function main() {
     ['/d', '/c', env.ComSpec, '/d', '/c', 'exit', '0'], env, null,
     { launchMode: detached, expectChild: true, expectedChildImage: env.ComSpec,
       expectedExit: 0, expectedNoOutput: true });
-  launchCase('direct-stop-control-detached', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-    work, ['-NoProfile', '-NonInteractive', '-Command', 'Start-Sleep -Seconds 30'], env, null,
-    { launchMode: detached, expectedStop: true, expectedStopReason: 'deadline', timeoutMs: 500 });
-  launchCase('bounded-output-control-detached', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-    work, ['-NoProfile', '-NonInteractive', '-Command',
-      "for ($i=0; $i -lt 10000; $i++) { [Console]::WriteLine('x' * 1000) }; Start-Sleep -Seconds 30"],
-    env, null, { launchMode: detached, expectedStop: true, expectedStopReason: 'output-limit', timeoutMs: 10000 });
   assert.ok(!existsSync(marker), 'Git helper or PATH wrapper created canary');
 
   // An altered linked registration is a negative identity case, not a replacement for a valid worktree.
@@ -365,6 +373,16 @@ async function main() {
   tamperRefusal(tsArchive, 'package/lib/tsc.exe');
   tamperRefusal(tsArchive, 'package/lib/lib.es5.d.ts');
   assertPackage(gitArchive); assertPackage(tsArchive);
+
+  // A compiled fixture proves both detached stop boundaries through observable output.
+  // Build it after the original Git, TypeScript, and tamper matrix so a build failure cannot mask them.
+  const detachedControl = buildDetachedControl(env, work);
+  launchCase('direct-stop-control-detached', detachedControl, work, ['deadline'], env, null,
+    { launchMode: detached, expectedStop: true, expectedStopReason: 'deadline', timeoutMs: 500,
+      stdoutIncludes: 'deadline-ready\n' });
+  launchCase('bounded-output-control-detached', detachedControl, work, ['output-limit'], env, null,
+    { launchMode: detached, expectedStop: true, expectedStopReason: 'output-limit', timeoutMs: 10000 });
+
   report.status = report.diagnostics.powerShellBaseline.outputMatched &&
     report.cases.every((item) => item.status === 'passed') ? 'native-spike-passed-review-required' : 'failed';
   save();

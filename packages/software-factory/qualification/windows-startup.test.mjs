@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, selectLaunchMode, validateModules, validateStopTrace, validateTrace } from './windows-startup.mjs';
 
 test('qualification accepts only the two fixed native launch modes', () => {
   assert.equal(selectLaunchMode(), 'no-window');
@@ -100,6 +100,37 @@ test('positive control requires the intended child image, not an incidental cons
   const intended = 'C:\\Windows\\System32\\cmd.exe';
   assert.equal(validateTrace(rows('\\\\?\\C:\\Windows\\System32\\conhost.exe'), 10, true, intended).ok, false);
   assert.equal(validateTrace(rows('\\\\?\\C:\\Windows\\System32\\cmd.exe'), 10, true, intended).ok, true);
+});
+
+test('stop control requires a complete termination sequence for every observed process', () => {
+  const b64 = (value) => Buffer.from(value).toString('base64');
+  const row = (kind, pid, value) => `${kind}\t${pid}\t${b64(value)}`;
+  const records = [
+    row('ROOT', 10, 'C:\\control.exe'),
+    row('CREATE', 10, 'C:\\control.exe'),
+    row('CREATE', 11, 'C:\\Windows\\System32\\conhost.exe'),
+    row('STOP_REQUESTED', 10, 'deadline'),
+    row('EXIT', 11, '124'),
+    row('EXIT', 10, '124'),
+    row('STOP_OBSERVED', 10, '124'),
+    row('DONE', 10, 'stopped:124'),
+  ];
+  const check = (rows) => validateStopTrace(parseTrace(rows.join('\n')), 10, 'deadline');
+  assert.equal(check(records).ok, true);
+  assert.match(check(records.filter((record) => !record.startsWith('EXIT\t11\t'))).reasons.join('; '),
+    /child exit unobserved/);
+  assert.match(check(records.filter((record) => !record.startsWith('STOP_OBSERVED\t'))).reasons.join('; '),
+    /stop completion unobserved/);
+  assert.match(check(records.filter((record) => !record.startsWith('STOP_REQUESTED\t'))).reasons.join('; '),
+    /missing stop request/);
+  assert.match(check(records.slice(0, -1).concat(row('DONE', 10, '0'))).reasons.join('; '),
+    /inconsistent completed debug loop/);
+  assert.match(validateStopTrace(parseTrace(records.join('\n')), 10, 'output-limit').reasons.join('; '),
+    /wrong stop reason/);
+  assert.match(check(records.map((record) => record.startsWith('EXIT\t10\t')
+    ? row('EXIT', 10, '0') : record)).reasons.join('; '), /root was not terminated with code 124/);
+  assert.match(validateStopTrace(parseTrace(records.join('\n')), 10, 'deadline', 'C:\\other.exe').reasons.join('; '),
+    /root image differs from control executable/);
 });
 
 test('each fixed helper needs resolved module evidence and each Git case needs its imported DLLs', (t) => {
