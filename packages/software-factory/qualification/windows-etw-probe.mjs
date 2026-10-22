@@ -188,7 +188,7 @@ function safeNativeLine(line) {
     FILE: new RegExp(`^FILE\\t${decimal}$`),
     COMPLETE: /^COMPLETE$/,
     DIAG: diagnosticRow,
-    FAIL: new RegExp(`^FAIL\\t(run|root-stop|stop|decode|receipt)\\t(native-api|timeout|invalid-data|invalid-state|operation-failed|unobserved|overflow|missing-etl|etl-cap-or-empty|loss)\\t${decimal}$`)
+    FAIL: new RegExp(`^FAIL\\t(run|root-stop|child-stop|stop|decode|receipt)\\t(native-api|timeout|invalid-data|invalid-state|operation-failed|unobserved|overflow|missing-etl|etl-cap-or-empty|loss)\\t${decimal}$`)
   };
   if (line.startsWith('OWNERSHIP\t')) {
     const row = line.split('\t');
@@ -261,7 +261,7 @@ function qualificationSummary(bytes, nativeReady) {
     imageLoads: Number.isInteger(source.receipt.imageLoads) && source.receipt.imageLoads >= 0 ?
       source.receipt.imageLoads : null
   };
-  if (source.nativeFailure && ['run', 'root-stop', 'stop', 'decode', 'receipt'].includes(source.nativeFailure.stage) &&
+  if (source.nativeFailure && ['run', 'root-stop', 'child-stop', 'stop', 'decode', 'receipt'].includes(source.nativeFailure.stage) &&
     /^(native-api|timeout|invalid-data|invalid-state|operation-failed|unobserved|overflow|missing-etl|etl-cap-or-empty|loss)$/.test(source.nativeFailure.code) &&
     Number.isInteger(source.nativeFailure.win32Code) && source.nativeFailure.win32Code >= 0 &&
     source.nativeFailure.win32Code <= 0xffffffff) summary.nativeFailure = {

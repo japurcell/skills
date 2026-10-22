@@ -142,6 +142,33 @@ test('artifact preparation retains only paired held rows and downgrades forged p
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
+test('artifact preparation retains fixed child-stop failure without promoting it', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-child-stop-'));
+  const native = join(evidence, 'native.tsv');
+  try {
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
+      status: 'native-feasibility-passed-review-required', receipt: { ok: true },
+      rawEtl: 'removed-after-offline-parse'
+    }));
+    const failed = failedDecode.replace('FAIL\tdecode\tinvalid-data\t0',
+      'FAIL\tchild-stop\toperation-failed\t0\nFAIL\tdecode\tinvalid-data\t0');
+    writeFileSync(native, failed);
+    const run = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+      encoding: 'utf8', timeout: 5000,
+      env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+    });
+    assert.equal(run().status, 0);
+    assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), failed);
+    assert.equal(JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8')).status,
+      'failed');
+    writeFileSync(native, failed.replace('FAIL\tchild-stop\toperation-failed\t0',
+      'FAIL\tchild-stop\tC:\\ambient\\node.exe\t0'));
+    assert.equal(run().status, 0);
+    assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
+});
+
 test('public receipt requires unique, exact, all-true query evidence', () => {
   const ready = 'QUERY\treadyQuery\t1\t1\t1\t1\t1';
   const beforeStop = 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1';

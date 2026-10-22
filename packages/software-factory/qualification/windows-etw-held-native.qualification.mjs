@@ -52,11 +52,12 @@ try {
 } finally {
   $type.GetMethod('StopFixture',$flags).Invoke($null,@()) | Out-Null
   $pin=$type.GetField('PinnedFile',$flags).GetValue($null)
-  if($pin){$pin.Dispose()}
   $root=$type.GetField('RootProcess',$flags).GetValue($null)
-  if($root){$root.Dispose()}
-  $child=$type.GetField('ChildHandle',$flags).GetValue($null)
-  if($child -ne [IntPtr]::Zero){$type.GetMethod('CloseHandle',$flags).Invoke($null,@($child)) | Out-Null}
+  $pinHandle=$pin.SafeFileHandle
+  $rootHandle=$root.SafeHandle
+  $closed=$type.GetMethod('CloseOwnedResources',$flags).Invoke($null,@())
+  if(-not $closed -or -not $pinHandle.IsClosed -or -not $rootHandle.IsClosed -or
+     $type.GetField('ChildHandle',$flags).GetValue($null) -ne [IntPtr]::Zero){throw 'owned handles not closed'}
 }
 `);
     bridge = spawn(powershell, ['-NoProfile', '-NonInteractive', '-File', driver,

@@ -854,7 +854,7 @@ public static class WindowsEtwProbe
         Line("HELD", "child", 1, 1, 1);
     }
 
-    private static void StopFixture()
+    private static void StopRootFixture()
     {
         // The root was launched by this probe. A printed PID is never a termination authority.
         if (RootProcess != null && !RootProcess.HasExited)
@@ -864,16 +864,73 @@ public static class WindowsEtwProbe
             if (!RootProcess.WaitForExit(2000))
             {
                 RootProcess.Kill();
-                if (!RootProcess.WaitForExit(2000)) Failure("root-stop", "unobserved", 0);
+                if (!RootProcess.WaitForExit(2000))
+                    throw new TimeoutException("root stop unobserved");
             }
         }
-        if (ChildOwned && ChildHandle != IntPtr.Zero &&
-            WaitForSingleObject(ChildHandle, 0) == WaitTimeout)
+    }
+
+    private static void StopHeldChild()
+    {
+        // ChildOwned is granted only after live handle, pinned file and Toolhelp parent checks.
+        if (!ChildOwned || ChildHandle == IntPtr.Zero) return;
+        uint state = WaitForSingleObject(ChildHandle, 0);
+        if (state == WaitObject) return;
+        if (state != WaitTimeout)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "held child wait");
+        if (!TerminateProcess(ChildHandle, 2) ||
+            WaitForSingleObject(ChildHandle, 2000) != WaitObject)
+            throw new InvalidOperationException("held child stop unobserved");
+    }
+
+    private static bool AttemptBothStops(Action stopRoot, Action stopChild)
+    {
+        bool stopped = true;
+        try { stopRoot(); }
+        catch (Exception error) { Failure("root-stop", error); stopped = false; }
+        try { stopChild(); }
+        catch (Exception error) { Failure("child-stop", error); stopped = false; }
+        return stopped;
+    }
+
+    private static bool StopFixture()
+    {
+        return AttemptBothStops(StopRootFixture, StopHeldChild);
+    }
+
+    private static bool CloseOwnedResources()
+    {
+        bool closed = true;
+        try
         {
-            if (!TerminateProcess(ChildHandle, 2) ||
-                WaitForSingleObject(ChildHandle, 2000) != WaitObject)
-                Failure("run", "unobserved", 0);
+            if (ChildHandle != IntPtr.Zero)
+            {
+                if (CloseHandle(ChildHandle)) ChildHandle = IntPtr.Zero;
+                else closed = false;
+            }
         }
+        catch { closed = false; }
+        try { if (RootProcess != null) { RootProcess.Dispose(); RootProcess = null; } }
+        catch { closed = false; }
+        try { if (PinnedFile != null) { PinnedFile.Dispose(); PinnedFile = null; } }
+        catch { closed = false; }
+        return closed;
+    }
+
+    private static int FinishWithOwnedResources(Func<int> finish, string receipt)
+    {
+        int result = 4;
+        try
+        {
+            try { result = finish(); }
+            catch (Exception error) { Failure("decode", error); }
+            if (!CloseOwnedResources()) { Failure("run", "operation-failed", 0); result = 4; }
+            if (result == 0) Line("COMPLETE");
+            try { if (!WriteReceipt(receipt)) result = 4; }
+            catch { result = 4; }
+            return result;
+        }
+        finally { CloseOwnedResources(); }
     }
 
     public static int Run(string nodePath, string evidenceDir, string expectedDigest, string fixturePath)
@@ -922,131 +979,123 @@ public static class WindowsEtwProbe
         }
         catch (Exception error)
         {
-            try { StopFixture(); }
-            catch (Exception stopError) { Failure("root-stop", stopError); }
             Failure("run", error);
+            StopFixture();
             result = 4;
         }
         finally
         {
-            if (owned)
+            result = FinishWithOwnedResources(() =>
             {
-                try
+                if (owned)
                 {
-                    IntPtr properties = PropertiesBuffer(guid, name, etl, false);
                     try
                     {
-                        uint code = ControlTrace(handle, name, properties, TraceStop);
-                        Line("API", "stop", code);
-                        stopped = code == 0;
-                        if (stopped)
+                        IntPtr properties = PropertiesBuffer(guid, name, etl, false);
+                        try
                         {
-                            var final = (EventTraceProperties)Marshal.PtrToStructure(properties,
-                                typeof(EventTraceProperties));
-                            Line("STATS", final.EventsLost, final.LogBuffersLost, final.RealTimeBuffersLost);
-                            if (final.EventsLost != 0 || final.LogBuffersLost != 0 || final.RealTimeBuffersLost != 0)
+                            uint code = ControlTrace(handle, name, properties, TraceStop);
+                            Line("API", "stop", code);
+                            stopped = code == 0;
+                            if (stopped)
                             {
-                                Failure("stop", "loss", 0);
+                                var final = (EventTraceProperties)Marshal.PtrToStructure(properties,
+                                    typeof(EventTraceProperties));
+                                Line("STATS", final.EventsLost, final.LogBuffersLost, final.RealTimeBuffersLost);
+                                if (final.EventsLost != 0 || final.LogBuffersLost != 0 || final.RealTimeBuffersLost != 0)
+                                {
+                                    Failure("stop", "loss", 0);
+                                    result = 4;
+                                }
+                            }
+                            else
+                            {
+                                Failure("stop", "native-api", code);
                                 result = 4;
                             }
                         }
-                        else
-                        {
-                            Failure("stop", "native-api", code);
-                            result = 4;
-                        }
+                        finally { Marshal.FreeHGlobal(properties); }
                     }
-                    finally { Marshal.FreeHGlobal(properties); }
+                    catch (Exception error) { Failure("stop", error); result = 4; }
                 }
-                catch (Exception error) { Failure("stop", error); result = 4; }
-            }
-            if (stopped && File.Exists(etl))
-            {
-                long bytes = new FileInfo(etl).Length;
-                Line("FILE", bytes);
-                if (bytes <= 0 || bytes >= MaxEtlBytes)
+                if (stopped && File.Exists(etl))
                 {
-                    Failure("decode", "etl-cap-or-empty", 0);
-                    result = 4;
-                }
-                else
-                {
-                    Exception decodeFailure = null;
-                    uint closeCode = 0;
-                    try
+                    long bytes = new FileInfo(etl).Length;
+                    Line("FILE", bytes);
+                    if (bytes <= 0 || bytes >= MaxEtlBytes)
                     {
-                        CallbackCount = 0; DecodeError = null; DecodeDiagnostic = null;
-                        CallbackRoot = OnEvent;
-                        var logfile = new EventTraceLogfile();
-                        logfile.LogFileName = etl;
-                        logfile.ProcessTraceMode = EventRecordMode;
-                        logfile.EventRecordCallback = Marshal.GetFunctionPointerForDelegate(CallbackRoot);
-                        ulong reader = OpenTrace(ref logfile);
-                        bool opened = reader != ulong.MaxValue;
-                        int openCode = opened ? 0 : Marshal.GetLastWin32Error();
-                        Line("API", "open", openCode);
-                        if (!opened) throw new Win32Exception(openCode, "OpenTraceW failed");
+                        Failure("decode", "etl-cap-or-empty", 0);
+                        result = 4;
+                    }
+                    else
+                    {
+                        Exception decodeFailure = null;
+                        uint closeCode = 0;
                         try
                         {
-                            uint code = ProcessTrace(new[] { reader }, 1, IntPtr.Zero, IntPtr.Zero);
-                            Line("API", "process", code);
-                            if (code != 0) throw new Win32Exception((int)code, "ProcessTrace");
-                            if (DecodeError != null) throw new InvalidDataException("event decode failed", DecodeError);
-                            foreach (int pid in new[] { RootPid, ChildPid })
+                            CallbackCount = 0; DecodeError = null; DecodeDiagnostic = null;
+                            CallbackRoot = OnEvent;
+                            var logfile = new EventTraceLogfile();
+                            logfile.LogFileName = etl;
+                            logfile.ProcessTraceMode = EventRecordMode;
+                            logfile.EventRecordCallback = Marshal.GetFunctionPointerForDelegate(CallbackRoot);
+                            ulong reader = OpenTrace(ref logfile);
+                            bool opened = reader != ulong.MaxValue;
+                            int openCode = opened ? 0 : Marshal.GetLastWin32Error();
+                            Line("API", "open", openCode);
+                            if (!opened) throw new Win32Exception(openCode, "OpenTraceW failed");
+                            try
                             {
-                                ulong begin, end;
-                                string target = pid == RootPid ? "root" : "child";
-                                if (!StartKeys.TryGetValue(pid, out begin))
-                                    throw RejectDecode("keys", "missing-start-key", target);
-                                if (!EndKeys.TryGetValue(pid, out end))
-                                    throw RejectDecode("keys", "missing-end-key", target);
-                                if (begin != end) throw RejectDecode("keys", "changed-key", target);
+                                uint code = ProcessTrace(new[] { reader }, 1, IntPtr.Zero, IntPtr.Zero);
+                                Line("API", "process", code);
+                                if (code != 0) throw new Win32Exception((int)code, "ProcessTrace");
+                                if (DecodeError != null) throw new InvalidDataException("event decode failed", DecodeError);
+                                foreach (int pid in new[] { RootPid, ChildPid })
+                                {
+                                    ulong begin, end;
+                                    string target = pid == RootPid ? "root" : "child";
+                                    if (!StartKeys.TryGetValue(pid, out begin))
+                                        throw RejectDecode("keys", "missing-start-key", target);
+                                    if (!EndKeys.TryGetValue(pid, out end))
+                                        throw RejectDecode("keys", "missing-end-key", target);
+                                    if (begin != end) throw RejectDecode("keys", "changed-key", target);
+                                }
+                                CommitKnownEvents();
+                                Line("SCHEMA", "ProcessId:u32", "ParentId:u32", "UniqueProcessKey:pointer",
+                                    "ImageFileName:string", "ExitStatus:u32", "Image.ProcessId:u32",
+                                    "Image.FileName:string");
+                                Line("RUNDOWN", ProcessRundown, ImageRundown);
+                                Line("COUNTS", CallbackCount, SelectedEvents.Count);
+                                // OpenTrace and ProcessTrace populate this documented final-file header.
+                                Line("HEADER", logfile.LogfileHeader.EndTime, logfile.LogfileHeader.EventsLost,
+                                    logfile.LogfileHeader.BuffersLost);
+                                if (logfile.LogfileHeader.EndTime <= 0 || logfile.LogfileHeader.EventsLost != 0 ||
+                                    logfile.LogfileHeader.BuffersLost != 0)
+                                    throw new InvalidDataException("final ETL header incomplete or lost events");
                             }
-                            CommitKnownEvents();
-                            Line("SCHEMA", "ProcessId:u32", "ParentId:u32", "UniqueProcessKey:pointer",
-                                "ImageFileName:string", "ExitStatus:u32", "Image.ProcessId:u32",
-                                "Image.FileName:string");
-                            Line("RUNDOWN", ProcessRundown, ImageRundown);
-                            Line("COUNTS", CallbackCount, SelectedEvents.Count);
-                            // OpenTrace and ProcessTrace populate this documented final-file header.
-                            Line("HEADER", logfile.LogfileHeader.EndTime, logfile.LogfileHeader.EventsLost,
-                                logfile.LogfileHeader.BuffersLost);
-                            if (logfile.LogfileHeader.EndTime <= 0 || logfile.LogfileHeader.EventsLost != 0 ||
-                                logfile.LogfileHeader.BuffersLost != 0)
-                                throw new InvalidDataException("final ETL header incomplete or lost events");
+                            finally
+                            {
+                                closeCode = CloseTrace(reader);
+                                Line("API", "close", closeCode);
+                            }
                         }
-                        finally
-                        {
-                            closeCode = CloseTrace(reader);
-                            Line("API", "close", closeCode);
-                        }
+                        catch (Exception error) { decodeFailure = error; }
+                        if (RecordDecodeOutcome(decodeFailure, closeCode)) Receipt.AddRange(SelectedEvents);
+                        else result = 4;
                     }
-                    catch (Exception error) { decodeFailure = error; }
-                    if (RecordDecodeOutcome(decodeFailure, closeCode)) Receipt.AddRange(SelectedEvents);
-                    else result = 4;
                 }
-            }
-            if (stopped && !File.Exists(etl))
-            {
-                Failure("decode", "missing-etl", 0);
-                result = 4;
-            }
-            if (watch.ElapsedMilliseconds > MaxObservationMs)
-            {
-                Failure("run", "timeout", 0);
-                result = 4;
-            }
-            bool resourcesClosed = true;
-            try { if (ChildHandle != IntPtr.Zero && !CloseHandle(ChildHandle)) resourcesClosed = false; }
-            catch { resourcesClosed = false; }
-            ChildHandle = IntPtr.Zero;
-            try { if (RootProcess != null) RootProcess.Dispose(); }
-            catch { resourcesClosed = false; }
-            try { if (PinnedFile != null) PinnedFile.Dispose(); }
-            catch { resourcesClosed = false; }
-            if (!resourcesClosed) { Failure("run", "operation-failed", 0); result = 4; }
-            if (result == 0) Line("COMPLETE");
-            if (!WriteReceipt(receipt)) result = 4;
+                if (stopped && !File.Exists(etl))
+                {
+                    Failure("decode", "missing-etl", 0);
+                    result = 4;
+                }
+                if (watch.ElapsedMilliseconds > MaxObservationMs)
+                {
+                    Failure("run", "timeout", 0);
+                    result = 4;
+                }
+                return result;
+            }, receipt);
         }
         return result;
     }
