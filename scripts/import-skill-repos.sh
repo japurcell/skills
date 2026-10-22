@@ -26,6 +26,7 @@ fi
   "skills/engineering/code-review/" "skills/default/code-review-biaxis/" \
   "skills/engineering/codebase-design" "skills/default" \
   "skills/engineering/improve-codebase-architecture" "skills/default" \
+  "skills/engineering/pr" "skills/default" \
   "skills/engineering/prototype" "skills/default" \
   "skills/engineering/research" "skills/default" \
   "skills/engineering/resolving-merge-conflicts" "skills/default" \
@@ -46,10 +47,10 @@ fi
   "https://github.com/humanlayer/skills.git" \
   "plugins/show-me/skills/show-me" "skills/default"
 
-"$SCRIPT_DIR/copy-from-git.sh" \
-  "https://github.com/kunchenguid/lavish-axi.git" \
-  "skills/lavish" "skills/default"
+# "$SCRIPT_DIR/copy-from-git.sh" \
+#   "https://github.com/kunchenguid/lavish-axi.git" \
+#   "skills/lavish" "skills/default"
 
-"$SCRIPT_DIR/copy-from-git.sh" \
-  "https://github.com/JoelQ/skills.git" \
-  "retro/" "skills/default/retro-automate/"
+# "$SCRIPT_DIR/copy-from-git.sh" \
+#   "https://github.com/JoelQ/skills.git" \
+#   "retro/" "skills/default/retro-automate/"
