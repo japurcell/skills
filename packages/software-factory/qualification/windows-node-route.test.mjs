@@ -46,6 +46,11 @@ test('an observed console host remains an unexpected child in both route shapes'
   const direct = validateNodeRoute(trace([[12, conhost], [11, git]]), result(),
     { node, helper: git });
   assert.match(direct.reasons.join('; '), /unexpected process creation/);
+  assert.deepEqual(direct.extraProcesses, [row('CREATE', 12, conhost)]);
+  const diagnostic = validateNodeRoute(trace([[12, conhost], [11, git]]), result(),
+    { node, helper: git, allowAdditional: true });
+  assert.equal(diagnostic.ok, true);
+  assert.deepEqual(diagnostic.extraProcesses, [row('CREATE', 12, conhost)]);
   const nested = validateNodeRoute(trace([[13, conhost], [11, cmd], [12, cmd], [14, conhost]]),
     result(), { node, helper: cmd, nested: cmd });
   assert.match(nested.reasons.join('; '), /intended nested child/);

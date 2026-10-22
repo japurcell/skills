@@ -73,7 +73,7 @@ export function validateNodeRoute(records, result, expected) {
         captured < 0 || captured > 262144 || captured !== Math.min(bytes, 262144))
       reasons.push(`${stream} byte count or 256 KiB capture bound invalid`);
   }
-  return { ok: reasons.length === 0, reasons, children };
+  return { ok: reasons.length === 0, reasons, extraProcesses: nested };
 }
 
 export function validateNodeOutput(result, expected, emitted) {

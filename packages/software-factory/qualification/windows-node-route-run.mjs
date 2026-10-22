@@ -151,7 +151,7 @@ function runCase(name, route, executable, args, cwd, env, node, nodeRoot, archiv
     if (route === 'baseline') {
       const strict = validateNodeRoute(records, result, { ...expectation, allowAdditional: false });
       item.strictNoExtra = { status: strict.ok ? 'passed' : 'failed', reasons: strict.reasons,
-        extraProcesses: strict.children.slice(1) };
+        extraProcesses: strict.extraProcesses };
     }
     verifyModules(records, result.nodePid, result.childPid, nodeRoot, executable, archive, env.SystemRoot);
     assert.equal(statSync(traceSpec.stdout).size, 0, 'Node root wrote unexpected stdout');
