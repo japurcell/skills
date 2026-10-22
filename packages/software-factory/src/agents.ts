@@ -5,7 +5,7 @@ import { setTimeout as delay, setImmediate as nextTurn } from 'node:timers/promi
 import { currentOwner, duration, LiveProcessScope } from './native/process.js';
 import { resolveStepInputs } from './profiles.js';
 import type { ProfileFields, EffectiveInputs } from './profiles.js';
-import type { AgentAdapter, AgentResult, PayloadValidator } from './adapters/types.js';
+import type { AdapterLaunch, AgentAdapter, AgentResult, PayloadValidator } from './adapters/types.js';
 import type { Admission } from './accounting.js';
 import type { CommandRunner } from './workflow.js';
 import { NeedsInput, ShutdownInterrupted } from './execution-control.js';
@@ -164,7 +164,7 @@ export class AgentCalls {
     this.sessions.set(attempt.id, { inputs, adapter });
     if (effectiveOutput) this.outputContracts.set(attempt.id, effectiveOutput);
     if (correction && priorAttemptId) this.correctionParents.set(attempt.id, priorAttemptId);
-    let launch;
+    let launch: AdapterLaunch;
     try {
       launch = adapter.start({
         attemptId: attempt.id,
@@ -179,6 +179,12 @@ export class AgentCalls {
         launch.argv.some((v) => typeof v !== 'string' || v.includes('\0')) ||
         !launch.argv[0] ||
         !['process-group', 'unknown'].includes(launch.childScope) ||
+        (launch.mapEvent !== undefined && typeof launch.mapEvent !== 'function') ||
+        (launch.eventChannels !== undefined &&
+          (!Array.isArray(launch.eventChannels) ||
+            launch.eventChannels.length === 0 ||
+            new Set(launch.eventChannels).size !== launch.eventChannels.length ||
+            [...launch.eventChannels].some((channel) => !['stdout', 'stderr'].includes(channel)))) ||
         !launch.env ||
         Object.entries(launch.env).some(
           ([k, v]) => !k || k.includes('=') || k.includes('\0') || typeof v !== 'string' || v.includes('\0'),
@@ -232,7 +238,17 @@ export class AgentCalls {
     }
     const scope = new LiveProcessScope(child, launch.childScope === 'unknown');
     let receivedQuestion = false;
-    host.registerAgent(attempt.id, scope, () => {
+    let streamFailureDeadline: number | undefined;
+    let streamFailureStop: Promise<void> | undefined;
+    const remainingGrace = () =>
+      streamFailureDeadline === undefined ? host.grace : Math.max(0, Math.floor(streamFailureDeadline - performance.now()));
+    const stopAgent = () => {
+      if (streamFailureDeadline !== undefined)
+        return (streamFailureStop ??= (async () => {
+          // Spend existing grace observing a natural exit before probing/signaling its transient native group.
+          await Promise.race([scope.exited, delay(Math.min(10, host.grace))]);
+          await adapter.requestStop(() => scope.stop(remainingGrace()));
+        })());
       // A completed authoritative question need not signal its already-exited owner.
       // Descendant absence still comes from the unchanged native scope checks.
       if (receivedQuestion)
@@ -241,14 +257,16 @@ export class AgentCalls {
           return adapter.requestStop(() => scope.stop(host.grace));
         });
       return adapter.requestStop(() => scope.stop(host.grace));
-    });
+    };
+    host.registerAgent(attempt.id, scope, stopAgent);
     const launched = child.pid !== undefined;
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
       host.requestShutdown('timeout', `agent timeout: ${key}`);
     }, timeout);
-    const machine = async (source: AsyncIterable<Buffer>, writer: typeof stdout) => {
+    const eventChannels = launch.eventChannels ?? [adapter.eventChannel];
+    const machine = async (source: AsyncIterable<Buffer>, writer: typeof stdout, channel: 'stdout' | 'stderr') => {
       const decoder = new StringDecoder('utf8');
       let pending = '';
       try {
@@ -274,7 +292,7 @@ export class AgentCalls {
         throw error;
       }
       async function event(line: string) {
-        const value = adapter!.mapEvent(line);
+        const value = launch.mapEvent ? launch.mapEvent(line, channel) : adapter!.mapEvent(line);
         if (value) {
           const saved = await host.store.saveSession(attempt!.id, value);
           if (saved.parentNativeId === null) {
@@ -287,6 +305,9 @@ export class AgentCalls {
     const thisInfo = () => this.sessions.get(attempt.id)!;
     const stopOnStreamFailure = (promise: Promise<void>) =>
       promise.catch((error) => {
+        if (!host.recorder.failed) {
+          streamFailureDeadline ??= performance.now() + host.grace;
+        }
         host.requestShutdown(host.recorder.failed ? 'recording' : 'failure', 'agent stream failed');
         throw error;
       });
@@ -329,9 +350,9 @@ export class AgentCalls {
       }
     };
     const stdoutStream =
-      adapter.eventChannel === 'stdout' ? machine(child.stdout!, stdout) : stdout.consume(child.stdout!);
+      eventChannels.includes('stdout') ? machine(child.stdout!, stdout, 'stdout') : stdout.consume(child.stdout!);
     const stderrStream =
-      adapter.eventChannel === 'stderr' ? machine(child.stderr!, stderr) : stderr.consume(child.stderr!);
+      eventChannels.includes('stderr') ? machine(child.stderr!, stderr, 'stderr') : stderr.consume(child.stderr!);
     const outputStreams = Promise.allSettled([
       stopOnStreamFailure(adapter.finalChannel === 'stdout' ? stdoutStream.then(receiveFinal) : stdoutStream),
       stopOnStreamFailure(adapter.finalChannel === 'stderr' ? stderrStream.then(receiveFinal) : stderrStream),
@@ -433,12 +454,13 @@ export class AgentCalls {
           host.recorder.failed ? 'recording' : 'failure',
           error instanceof Error ? error.message : 'agent failed',
         );
-      await scope.stop(host.grace);
+      await streamFailureStop?.catch(() => {});
+      await scope.stop(remainingGrace());
       await outputStreams.catch(() => {});
       if (!host.recorder.failed) {
         const pending = host.store.readAttempt(attempt.id);
         if (pending.launch === 'started' && pending.outcome === null) {
-          const cleanup = await scope.result(host.grace);
+          const cleanup = await scope.result(remainingGrace());
           await host.store.settleAttempt({
             id: attempt.id,
             launch: 'started',

@@ -199,3 +199,87 @@ registration and integrated suite proof. No live provider or installation ran.
 
 Reflection: the review findings are enforced by public tests and runtime
 invariants. No durable brain/skill edit is needed beyond these structural checks.
+
+
+## T7 stream context extension
+
+Scoped candidate evidence, 2026-10-22 UTC, starting from `04df882b` on
+`codex/factory-adapter-streams`. This extends common adapter conformance through
+`context.agent` with a local real Node subprocess protocol. It does not qualify
+a provider or make live-provider calls. Independent review remains required.
+
+`AdapterLaunch` may provide a per-launch
+`mapEvent(line, channel: 'stdout' | 'stderr')` closure and a nonempty, unique
+`eventChannels` subset. Omitted fields preserve `adapter.mapEvent` and
+`adapter.eventChannel`. The selected authoritative final channel is unchanged.
+Both selected streams use the existing bounded, backpressured raw recorder and
+recorder barrier before decoding. The existing 1 MiB machine-frame and 8192-byte
+session limits remain in force. Invalid channel arrays (including sparse arrays)
+and noncallable launch mappers reject before spawn with a clean failed,
+`not_started` attempt. No session/store schema or observation API changes occur.
+
+The fixture emits a native identity once, then terminal lifecycle and usage
+without identities. Two concurrent attempts now retain their distinct native
+identities and explicit token totals through separate launch closures. Its mapper
+opens public saved captures for the exact attempt and channel before accepting
+each line, checking that decoding cannot outrun durable raw evidence.
+
+The native subprocess can also emit valid stdout final output and exit zero
+while only stderr contains a sandbox denial. That mapper exception stays an
+independent terminal failure, with partial raw stderr preserved. The result case
+creates no question; the authoritative question/EOF case retains its complete
+question and context while the attempt and invocation remain failed. Both prove
+actual native exit zero, final group absence, released occupancy and claims, and
+one managed attempt without correction, retry or permission changes.
+
+During this proof, immediate shutdown after decoding stderr sometimes probed the
+already exiting macOS process group before Node delivered exit/close. The native
+probe and signal returned EPERM while the child exit hook had saved code zero;
+that real uncertainty correctly remained sticky. The repair leaves
+`native/process.ts` unchanged. For independent stream-processing failure, the
+runner stops admissions and peers immediately, then spends at most
+`min(10ms, existing grace)` observing the owner's exit before its normal stop
+callback. An immutable first-failure deadline charges that observation against
+the existing grace; stop and failure-settlement checks receive only its remaining
+budget. A cached stop promise prevents repeated callbacks from restarting this
+window. The catch path retains direct live-scope cleanup if the adapter stop
+callback rejects. Exit observation alone never proves quiescence: unchanged
+closed-pipe and native group checks still decide it, and no observed EPERM is
+cleared. No shutdown deadline or descendant-control scope is widened.
+
+Eleven new public regressions cover concurrent contextual mapping; stdout result
+and question precedence against stderr denial; empty, duplicate, unknown,
+nonarray and sparse stream selections and a noncallable mapper; and live
+SIGTERM-resistant owners at existing grace budgets of 1 ms and 100 ms. The live
+cases require SIGKILL, group ESRCH, zero occupied capacity and no natural-exit
+marker. The 1 ms case exercises an exhausted observation budget, and both remain
+bounded despite a 10-second live timer. Existing unknown-scope, failed recorder,
+inherited-pipe, missing identity and owner-clearance cases retain conservative
+behavior.
+
+Red evidence against the unchanged baseline runner: concurrent unkeyed events
+persisted zero sessions; stderr-only denial plus valid stdout result incorrectly
+succeeded with exit zero; the corresponding authoritative question incorrectly
+returned needs-input/exit two; and invalid optional stream configurations reached
+native spawn. Sparse-array acceptance was separately reproduced before the
+validation repair. All old assertions remain intact.
+
+Final qualified Node v24.22.1 darwin-arm64 verification:
+
+- From `packages/software-factory`, `rtk proxy npm run typecheck` and
+  `rtk proxy npm run build` pass against the final source.
+- From that directory, `rtk proxy node --test test/adapters.test.mjs
+  test/fixtures.test.mjs test/cli.test.mjs test/dispatch.test.mjs
+  test/store.test.mjs test/capture.test.mjs test/recording-integration.test.mjs
+  test/placement.test.mjs test/startup.test.mjs test/shutdown.test.mjs
+  qualification/runtime.test.mjs qualification/ci.test.mjs` passes 148/148 in
+  46.897 seconds: 53 adapter cases plus all 95 existing cases, with zero
+  failures, skips or cancellations.
+- `rtk git diff --check` passes. Generated build output and diagnostic backups
+  are excluded from the commit. Registry, canonical docs, CI, providers,
+  store/lifecycle/workspace sources and native process policy remain unchanged.
+
+Reflection: per-attempt parser ownership, channel selection validation, saved
+raw evidence and bounded failure cleanup are enforced in runtime checks and
+maintained public subprocess tests. No separate durable brain or skill edit is
+needed. The parent owns task status, integration and independent review.

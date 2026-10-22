@@ -18,6 +18,10 @@ export interface AdapterLaunch {
   argv: string[];
   env: Record<string, string>;
   childScope: 'process-group' | 'unknown';
+  /** Per-launch decoder state; called only after this stream's raw bytes are saved. */
+  mapEvent?(line: string, channel: 'stdout' | 'stderr'): SessionEvent | undefined;
+  /** Nonempty unique stream selection; defaults to the adapter's eventChannel. */
+  eventChannels?: readonly ('stdout' | 'stderr')[];
 }
 /** Trusted adapters implement an exact qualified mode. Never launch inside validation or start. */
 export interface AgentAdapter {

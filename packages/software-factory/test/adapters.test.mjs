@@ -7,7 +7,7 @@ import test from 'node:test';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { createRepository } from './fixtures/repository.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
-async function fixture(source, config = {}) {
+async function fixture(source, config = {}, streamProtocol = false) {
   const repo = createRepository();
   mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
   writeFileSync(join(repo.path, '.factory/package.json'), ' {"type":"module"}');
@@ -55,6 +55,42 @@ const adapter=createFakeAdapter({executable:process.execPath,script:${JSON.strin
 const requests=[];const start=adapter.start, mapEvent=adapter.mapEvent;
 adapter.start=request=>{const store=openRepositoryStore(${JSON.stringify(common)});try{const attempt=store.readAttempt(request.attemptId);if(!attempt.agent||store.readCapture({id:attempt.agent.inputsCaptureId}).state!=='complete')throw new Error('inputs exposed before save');}finally{store.close();}requests.push(request);appendFileSync(request.worktree+'/saved-before-exposure.jsonl','inputs\\n');return start(request);};
 adapter.mapEvent=line=>{const store=openRepositoryStore(${JSON.stringify(common)});try{if(!requests.some(request=>{const attempt=store.readAttempt(request.attemptId);return store.readCapture({id:attempt.agent.outputCaptureId}).chunks.map(c=>c.text).join('').includes(line);}))throw new Error('machine event exposed before raw save');}finally{store.close();}appendFileSync(requests[0].worktree+'/saved-before-exposure.jsonl','stream\\n');return mapEvent(line);};
+${streamProtocol ? `
+adapter.decodeFinal=text=>JSON.parse(text.trim().split('\\n').at(-1));
+adapter.mapEvent=()=>undefined;
+adapter.start=request=>{
+  const script=\`import {appendFileSync} from 'node:fs';
+const context=process.argv[1], nativeId='thread-'+context;
+appendFileSync('agent-launches.jsonl',context+'\\\\n');
+process.on('exit',code=>appendFileSync('native-exits.jsonl',JSON.stringify({context,code})+'\\\\n'));
+if(context.includes('live')){process.on('SIGTERM',()=>appendFileSync('native-signals.jsonl','SIGTERM\\\\n'));setInterval(()=>{},10000);}
+process.stdout.write(JSON.stringify({type:'thread.started',nativeId})+'\\\\n');
+setTimeout(()=>{
+  process.stdout.write(JSON.stringify({type:'turn.completed',tokens:context==='alpha'?7:13})+'\\\\n');
+  process.stdout.write(JSON.stringify(context.includes('question')?{kind:'needs_input',question:'Which target?',context:'authoritative saved context'}:{kind:'result',payload:{context}})+'\\\\n');
+  if(context.includes('denial')){process.stderr.write('native sandbox violation: denied write\\\\n');if(context.includes('question'))process.stdout.end();process.stderr.end();}
+},context==='alpha'?120:80);\`;
+  let nativeId;
+  const launch={argv:[process.execPath,'--input-type=module','-e',script,request.context],env:{},childScope:'process-group',eventChannels:['stdout','stderr'],mapEvent(line,channel){
+    const store=openRepositoryStore(${JSON.stringify(common)});
+    try {
+      const history=store.readHistory(request.invocationId,{limit:100});
+      const capture=history.captures.find(c=>c.attemptId===request.attemptId&&c.channel===(channel==='stdout'?'result':'stderr'));
+      if(!capture||!store.readCapture({id:capture.id}).chunks.map(c=>c.text).join('').includes(line))throw new Error('launch event exposed before raw save');
+    } finally {store.close();}
+    if(channel==='stderr'){if(line.includes('denied write'))throw new Error('native sandbox violation');return;}
+    const event=JSON.parse(line);
+    if(event.type==='thread.started'){nativeId=event.nativeId;return {nativeId,parentNativeId:null,lifecycle:'running'};}
+    if(event.type==='turn.completed')return {nativeId,parentNativeId:null,lifecycle:'succeeded',usage:{tokens:event.tokens,scope:'self'}};
+  }};
+  if(options.streamConfig==='empty')launch.eventChannels=[];
+  if(options.streamConfig==='duplicate')launch.eventChannels=['stdout','stdout'];
+  if(options.streamConfig==='unknown')launch.eventChannels=['stdin'];
+  if(options.streamConfig==='scalar')launch.eventChannels='stdout';
+  if(options.streamConfig==='sparse')launch.eventChannels=new Array(1);
+  if(options.streamConfig==='mapper')launch.mapEvent=17;
+  return launch;
+};` : ''}
 const result=await invoke({...options,adapters:{fake:adapter}});console.log(JSON.stringify(result));process.exit(result.exitCode);`,
   );
   const invoke = (extra = {}) =>
@@ -777,3 +813,102 @@ test('mutating the caller validator object cannot weaken the saved correction co
     assert.equal(h.accounting.additionalUsed,1);
   } finally {repo.dispose();}
 });
+
+
+test('launch-scoped stream context keeps concurrent unkeyed lifecycle and usage on their own native sessions', async () => {
+  const repo = await fixture(`await Promise.all(['alpha','beta'].map(contextValue=>context.agent(contextValue,{context:contextValue})));`, {}, true);
+  try {
+    const r=repo.invoke();
+    assert.equal(r.status,0,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout), h=repo.history(saved.invocationId), sessions=repo.sessions(saved.invocationId).sessions;
+    assert.equal(agents(h).length,2);
+    assert.equal(sessions.length,2);
+    for(const [name,tokens] of [['alpha',7],['beta',13]]) {
+      const attempt=agents(h).find(a=>a.operationKey===name), session=sessions.find(s=>s.attemptId===attempt.id);
+      assert.equal(session.nativeId,'thread-'+name);
+      assert.equal(session.lifecycle,'succeeded');
+      assert.deepEqual(session.usage,{tokens,scope:'self'});
+    }
+    assert.equal(h.accounting.occupiedAgents,0);
+  } finally {repo.dispose();}
+});
+
+
+for(const contextValue of ['denial','denial-question'])
+  test(`stderr-only denial outranks valid stdout ${contextValue.includes('question')?'question and EOF':'result and exit zero'}`, async () => {
+    const repo=await fixture(`await context.agent('denied',{context:'${contextValue}'});`,{},true);
+    try {
+      const r=repo.invoke();
+      assert.equal(r.status,1,r.stdout+r.stderr);
+      const saved=JSON.parse(r.stdout), h=repo.history(saved.invocationId), attempt=agents(h)[0];
+      assert.equal(saved.outcome,'failed');
+      assert.match(saved.diagnostic,/native sandbox violation/);
+      assert.equal(saved.cleanup,'complete',JSON.stringify({saved,attempt}));
+      assert.equal(agents(h).length,1);
+      assert.equal(attempt.outcome,'failed');
+      assert.equal(attempt.quiescent,true);
+      assert.equal(h.accounting.occupiedAgents,0);
+      assert.equal(h.accounting.additionalUsed,0);
+      assert.deepEqual(JSON.parse(readFileSync(join(saved.worktree,'native-exits.jsonl'),'utf8').trim()),{context:contextValue,code:0});
+      assert.throws(()=>process.kill(-attempt.owner.pid,0),error=>error.code==='ESRCH');
+      const store=openRepositoryStore(repo.common);
+      try {
+        const denial=h.captures.find(c=>c.attemptId===attempt.id&&c.channel==='stderr'), raw=store.readCapture({id:denial.id});
+        assert.equal(raw.state,'partial');
+        assert.match(raw.chunks.map(c=>c.text).join(''),/native sandbox violation: denied write/);
+        assert.equal(store.inspectOwners().length,0);
+      } finally {store.close();}
+      const requests=h.captures.filter(c=>c.channel==='request');
+      assert.equal(requests.length,contextValue.includes('question')?1:0);
+      if(requests.length){assert.match(text(h),/Which target/);assert.match(text(h),/authoritative saved context/);}
+    } finally {repo.dispose();}
+  });
+
+
+for(const streamConfig of ['empty','duplicate','unknown','scalar','sparse','mapper'])
+  test(`invalid launch stream configuration ${streamConfig} settles cleanly before spawn`, async () => {
+    const repo=await fixture(`await context.agent('invalid',{context:'alpha'});`,{},true);
+    try {
+      const r=repo.invoke({streamConfig});
+      assert.equal(r.status,1,r.stdout+r.stderr);
+      const saved=JSON.parse(r.stdout), h=repo.history(saved.invocationId), attempt=agents(h)[0];
+      assert.match(saved.diagnostic,/invalid adapter launch/);
+      assert.equal(saved.cleanup,'complete',JSON.stringify({saved,attempt}));
+      assert.equal(agents(h).length,1);
+      assert.equal(attempt.launch,'not_started');
+      assert.equal(attempt.outcome,'failed');
+      assert.equal(attempt.quiescent,true);
+      assert.equal(h.accounting.occupiedAgents,0);
+      assert.equal(h.accounting.additionalUsed,0);
+      assert.equal(repo.sessions(saved.invocationId).sessions.length,0);
+      assert.throws(()=>readFileSync(join(saved.worktree,'agent-launches.jsonl')),error=>error.code==='ENOENT');
+      const store=openRepositoryStore(repo.common);
+      try {
+        for(const capture of h.captures.filter(c=>c.attemptId===attempt.id))assert.equal(store.readCapture({id:capture.id}).state,'complete');
+        assert.equal(store.inspectOwners().length,0);
+      } finally {store.close();}
+    } finally {repo.dispose();}
+  });
+
+
+for(const shutdownGraceMs of [1,100])
+  test(`stream failure stops a still-live resistant owner within its existing ${shutdownGraceMs}ms grace`, async () => {
+    const repo=await fixture(`await context.agent('denied',{context:'denial-live',timeoutMs:10000});`,{},true);
+    try {
+      const started=Date.now(), r=repo.invoke({shutdownGraceMs});
+      assert.equal(r.status,1,r.stdout+r.stderr);
+      assert.ok(Date.now()-started<2000,'resistant owner must be killed without waiting for its live timer');
+      const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId),attempt=agents(h)[0];
+      assert.equal(saved.outcome,'failed');
+      assert.equal(saved.cleanup,'complete');
+      assert.equal(attempt.outcome,'failed');
+      assert.equal(attempt.quiescent,true);
+      assert.match(attempt.evidence,/signal=SIGKILL/);
+      assert.equal(h.accounting.occupiedAgents,0);
+      assert.equal(agents(h).length,1);
+      assert.throws(()=>readFileSync(join(saved.worktree,'native-exits.jsonl')),error=>error.code==='ENOENT');
+      assert.throws(()=>process.kill(-attempt.owner.pid,0),error=>error.code==='ESRCH');
+      const store=openRepositoryStore(repo.common);
+      try {assert.equal(store.inspectOwners().length,0);} finally {store.close();}
+    } finally {repo.dispose();}
+  });
