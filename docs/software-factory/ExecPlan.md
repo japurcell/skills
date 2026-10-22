@@ -12,7 +12,7 @@ No durable workflow engine, checkpoint replay, factory task scheduler, per-task/
 
 ## Progress
 
-Implementation is underway on `codex/research-agentic-workflow-prototypes`. Milestones 1 and 2 are verified. Hosted run `39719540444` passes Linux/Windows/macOS foundation qualification. T5 current-script command invocation is reviewed and integrated at `defbb099`; 69 registered local checks pass after CLI/registry integration. T6 shutdown/manual clearance is active in private branch `codex/factory-lifecycle` from base `816a9a1a`. A separately observed macOS hook cleanup regression has isolated repair ownership; immutable `19a211e5` passes 30 tests and awaits independent security review. Remaining milestone acceptance requires actual recorded evidence.
+Implementation is underway on `codex/research-agentic-workflow-prototypes`. Milestones 1 and 2 are verified. Hosted run `39719540444` passes Linux/Windows/macOS foundation qualification. T5 current-script command invocation is reviewed and integrated at `defbb099`; 69 registered local checks pass after CLI/registry integration. T6 shutdown/manual clearance is active in private branch `codex/factory-lifecycle` from base `816a9a1a`. A separately observed macOS hook cleanup regression has isolated repair ownership; initial repair `19a211e5` passes 30 tests but independent security review reproduced a new descendant-discovery race; the worker owns its public E2E repair before integration. Remaining milestone acceptance requires actual recorded evidence.
 
 - [x] (2026-10-21) [milestone-1] T1: Established isolated package, fake harness/Git fixtures, explicit test dispatch and development CLI contract; six fixture tests pass.
 - [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
@@ -276,6 +276,8 @@ Status: open
 Acceptance: not met
 
 #### T17-regression: Repair observed macOS hook cleanup deadline
+
+Current review: the first repair `19a211e5` is not accepted. A public baseline comparison proves that a child spawned after a sampled process graph can survive if the owner is killed before a fresh descendant observation. Preserve ancestry until discovery or retain uncertainty; the initial 30 passing tests are insufficient. The private worker owns a stronger public regression and repair, with independent security re-review required.
 
 Prerequisites: the observed failure in hosted run `39718600966`, independent of factory product tasks. The user's repository instructions explicitly require repairing observed test failures even when unrelated. Own only `scripts/verify-security-fixture-patch.py`, its existing test and scoped evidence. Preserve fresh process identity checks, the two-second cleanup bound, secret policy and all leak assertions. The original resistant separate-session case measured 2.213 seconds. Reproduce through the public CLI with real delayed metadata, repair redundant observation/deadline accounting, run the complete verifier suite and independent security review, then rerun the macOS hook workflow. No deadline increase, test skip or hook policy change is authorized by this repair.
 
