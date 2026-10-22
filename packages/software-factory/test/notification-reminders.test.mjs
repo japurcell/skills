@@ -66,6 +66,40 @@ test('overlapping preference saves follow request order and leave the final time
   }
 });
 
+test('disable and reenable during reservation cancel the old tick and wait a fresh interval', async () => {
+  const f = await fixture(); const scheduler = clock(); let host, entered, release, sent = 0;
+  const started = new Promise(resolve => { entered = resolve; });
+  const gate = new Promise(resolve => { release = resolve; });
+  try {
+    await f.finalize('failed');
+    const reserve = f.store.reserveReminderGroup.bind(f.store);
+    let holdNext = true;
+    f.store.reserveReminderGroup = async claim => {
+      if (holdNext) { holdNext = false; entered(); await gate; }
+      return reserve(claim);
+    };
+    host = await startObservationHost({ store: f.store, reminderScheduler: scheduler,
+      reminderSender: async () => { sent++; return { state: 'submitted', cleanup: 'complete' }; } });
+    await write(host, { successNotices: false, reminders: true });
+    const oldTick = scheduler.tick();
+    await started;
+    await write(host, { successNotices: false, reminders: false });
+    await write(host, { successNotices: false, reminders: true });
+    release(); await oldTick;
+    assert.equal(sent, 0, 'a reserved tick from the previous enabled period must not submit');
+    const cancelled = f.store.readReminderGroups().groups[0];
+    assert.equal(cancelled.reason, 'stopped_before_submit');
+    assert.equal(cancelled.cleanup, 'complete');
+    assert.equal(scheduler.jobs.size, 1);
+    assert.equal([...scheduler.jobs.values()][0].milliseconds, 15 * 60 * 1000);
+    await scheduler.tick();
+    assert.equal(sent, 1);
+    const submitted = f.store.readReminderGroups().groups[0];
+    assert.equal(submitted.state, 'submitted');
+    assert.notEqual(submitted.id, cancelled.id);
+  } finally { release?.(); await host?.close(); f.dispose(); }
+});
+
 test('reminders stay off until enabled and wait a full host interval before one grouped send', async () => {
   const f = await fixture(); const scheduler = clock(); const sent = []; let host;
   try {

@@ -97,11 +97,12 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   }
   async function runReminder() {
     if (closing || reminderTask || !store.readNotificationPreferences().reminders || !sameClaim(store.readDashboardClaim(), claim)) return;
+    const generation = reminderGeneration;
     notificationWrites++;
     reminderTask = (async () => {
       try {
         const group = await sendReminderNotification(store, claim, options.reminderSender,
-          () => !closing && store.readNotificationPreferences().reminders && sameClaim(store.readDashboardClaim(), claim));
+          () => generation === reminderGeneration && !closing && store.readNotificationPreferences().reminders && sameClaim(store.readDashboardClaim(), claim));
         if (group && group.cleanup === 'unknown') reminderUncertain = true;
       } catch { reminderUncertain = true; }
       finally { notificationWrites--; reminderTask = undefined; scheduleReminder(); }
