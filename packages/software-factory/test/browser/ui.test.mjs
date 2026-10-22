@@ -98,6 +98,20 @@ test('keyboard skip link, frozen view, invalid link and narrow zoom remain usabl
   } finally { await browser.close(); await f.dispose(); }
 });
 
+test('repository runs can resume following after Freeze', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    await page.getByRole('button',{name:'Follow latest events'}).click();
+    const freeze=page.getByRole('button',{name:'Freeze this view'});
+    await freeze.waitFor();
+    assert.equal(await freeze.getAttribute('aria-pressed'),'false');
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'connected');
+  } finally {await browser.close();await f.dispose();}
+});
+
 test('saved event gap is disclosed and a disconnected tab retains its last display', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:860,height:650}});let database;
@@ -219,6 +233,7 @@ test('nested native identities, instant timing, and Back reading position surviv
     await page.getByRole('link',{name:'Repository runs',exact:true}).click();
     await page.goBack();
     await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.waitForFunction(top=>window.scrollY===top,before,{timeout:2000});
     assert.equal(await page.evaluate(()=>window.scrollY),before);
     await page.goForward();
     await page.getByRole('heading',{name:'Repository runs'}).waitFor();
@@ -303,6 +318,28 @@ test('head snapshot race displays one copy of a committed event', async () => {
   } finally {unblock?.();await browser.close();await f.dispose();}
 });
 
+test('event replay repairs a capture list that was read before the event snapshot', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    const stale=f.store.readHistory(f.invocation.id,{limit:50});
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}`&&url.searchParams.has('afterAttempt'),async route=>{
+      await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});
+    });
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}/events`&&url.searchParams.get('tail')==='1',async route=>{entered();await held;await route.continue()});
+    const navigation=page.goto(f.host.createUiHandoff()+`&run=${f.run.id}&invocation=${f.invocation.id}`);
+    await intercepted;
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    release();await navigation;
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    await page.getByText('capture.created',{exact:false}).first().waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.locator(`.capture-list [data-id="${capture.id}"]`).waitFor({timeout:2000});
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),1);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
 test('open stdout follows committed text without replacing focused controls or event links', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
   try {
@@ -365,6 +402,109 @@ test('rapid capture appends catch up after a stale in-flight page response', asy
     release();
     await page.waitForFunction(()=>document.querySelector('#capture-text')?.textContent?.includes('third line'),null,{timeout:2000});
     assert.equal(await page.getByRole('button',{name:'Load next saved text'}).isDisabled(),true);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('delayed output page cannot replace a newly selected capture', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    const first=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    for(let start=1;start<=51;start+=4)await f.store.appendCapture({id:first.id,chunks:Array.from({length:Math.min(4,52-start)},(_,index)=>({sequence:start+index,text:`A-${start+index}\n`}))});
+    const second=await f.store.createCapture({invocationId:f.invocation.id,channel:'stderr'});
+    await f.store.appendCapture({id:second.id,chunks:[{sequence:1,text:'B-only\n'}]});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.locator(`[data-action="open-capture"][data-id="${first.id}"]`).click();
+    await page.getByText('A-50',{exact:false}).waitFor();
+    await page.route(url=>url.pathname.endsWith('/captures/'+first.id)&&url.searchParams.get('after')==='50',async route=>{entered();await held;await route.continue()});
+    const pending=page.locator('[data-action="more-output"]').click({noWaitAfter:true});
+    await intercepted;
+    const secondButton=page.locator(`[data-action="open-capture"][data-id="${second.id}"]`);
+    await secondButton.click();
+    await page.getByText('B-only',{exact:false}).waitFor();
+    await secondButton.focus();
+    release();await pending;
+    assert.match(await page.locator('#capture-view').innerText(),/B-only/);
+    assert.doesNotMatch(await page.locator('#capture-view').innerText(),/A-51/);
+    assert.equal(await secondButton.evaluate(element=>element===document.activeElement),true);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('delayed history page cannot alter a different reader', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    const attempt=await f.store.admitAttempt({id:randomUUID(),invocationId:f.invocation.id,operationKey:'history-race',kind:'agent',intent:'initial'});
+    for(let i=0;i<55;i++)await f.store.saveSession(attempt.id,{nativeId:`session-${i}`,parentNativeId:null,lifecycle:'running'});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.route(url=>url.pathname.endsWith(`/invocations/${f.invocation.id}/sessions`)&&url.searchParams.get('after')!=='0',async route=>{entered();await held;await route.continue()});
+    const pending=page.getByRole('button',{name:'Next sessions'}).click({noWaitAfter:true});
+    await intercepted;
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    release();await pending;
+    assert.equal(await page.locator('h1').first().innerText(),'Repository runs');
+    assert.deepEqual(await page.locator('.error-message').allInnerTexts(),[]);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('delayed earlier event page cannot freeze Repository runs', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    for(let i=0;i<205;i++)await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.route(url=>url.pathname.endsWith(`/invocations/${f.invocation.id}/events`)&&url.searchParams.has('before'),async route=>{entered();await held;await route.continue()});
+    const pending=page.getByRole('button',{name:'Load earlier events'}).click({noWaitAfter:true});
+    await intercepted;
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    release();await pending;
+    assert.equal(await page.getByRole('button',{name:'Freeze this view'}).getAttribute('aria-pressed'),'false');
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'connected');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('delayed latest event page cannot unfreeze Repository runs', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    await page.route(url=>url.pathname.endsWith(`/invocations/${f.invocation.id}/events`)&&url.searchParams.get('tail')==='1',async route=>{entered();await held;await route.continue()});
+    const pending=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
+    await intercepted;
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    release();await pending;
+    assert.equal(await page.getByRole('button',{name:'Follow latest events'}).getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'frozen');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('Follow replays an event committed while its tail page was in flight', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    const stale=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:200});
+    await page.route(url=>url.pathname.endsWith(`/invocations/${f.invocation.id}/events`)&&url.searchParams.get('tail')==='1',async route=>{entered();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)})});
+    const pending=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
+    await intercepted;
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.locator('#pending-events').getByText(/new events/).waitFor();
+    release();await pending;
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    await page.locator(`.capture-list [data-id="${capture.id}"]`).waitFor({timeout:2000});
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),1);
   } finally {release?.();await browser.close();await f.dispose();}
 });
 
