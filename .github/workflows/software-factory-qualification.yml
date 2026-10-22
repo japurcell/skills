@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - 'packages/software-factory/**'
+      - 'skills/software-factory/**'
       - '.github/workflows/software-factory-qualification.yml'
       - 'scripts/test-software-factory.py'
   push:
     paths:
       - 'packages/software-factory/**'
+      - 'skills/software-factory/**'
       - '.github/workflows/software-factory-qualification.yml'
       - 'scripts/test-software-factory.py'
   workflow_dispatch:
@@ -41,6 +43,11 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+      - name: Select exact qualification Python
+        id: python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13.14'
       - name: Verify and extract exact official native runtime
         timeout-minutes: 5
         env:
@@ -50,6 +57,7 @@ jobs:
         timeout-minutes: 12
         env:
           FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-qualification-evidence
+          FACTORY_TEST_PYTHON: ${{ steps.python.outputs.python-path }}
         run: node packages/software-factory/scripts/qualification-foundation.mjs
       - name: Upload native evidence including failures
         if: always()
