@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,6 +58,7 @@ try {
   assert.equal(npmVersion.status, 0, npmVersion.stderr);
   appendFileSync(process.env.GITHUB_PATH, `${bin}\n`);
   appendFileSync(process.env.GITHUB_ENV, `FACTORY_NPM_CLI=${npm}\n`);
+  appendFileSync(process.env.GITHUB_ENV, `FACTORY_TEST_NODE_ARCHIVE=${realpathSync(archivePath)}\n`);
   Object.assign(report, { status: 'passed', native, npm: npmVersion.stdout.trim() });
 } catch (error) {
   report.error = error instanceof Error ? error.message : String(error);

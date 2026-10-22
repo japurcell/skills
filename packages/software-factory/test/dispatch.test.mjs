@@ -22,6 +22,17 @@ test('aggregate selection reports maintenance after learning registration', () =
   assert.equal(result.stdout, '', 'aggregate refusal must precede launching registered suites');
 });
 
+test('release bootstrap selection runs deterministic verification without a native archive', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'bootstrap'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /default Node discovery excludes explicit native bootstrap qualification/);
+  assert.match(result.stdout, /validator accepts pipe completion between event checks/);
+  assert.doesNotMatch(result.stdout, /native public verifier executes authenticated snapshot/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

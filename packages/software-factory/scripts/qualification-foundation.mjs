@@ -39,6 +39,12 @@ try {
   assert.ok(run('install', installArgs), 'locked dependency installation failed');
   run('typecheck', [process.env.FACTORY_NPM_CLI, 'run', 'typecheck']);
   run('build', [process.env.FACTORY_NPM_CLI, 'run', 'build']);
+  run('install-bootstrap', ['scripts/test.mjs', 'release', '--area', 'bootstrap']);
+  // This explicit suite qualifies only its declared macOS arm64 target.
+  // Linux/Windows native execution and Windows lifetime remain separate gates.
+  if (process.platform === 'darwin' && process.arch === 'arm64') {
+    run('install-bootstrap-native-darwin-arm64', ['--test', 'qualification/install-bootstrap-native.qualification.mjs']);
+  }
   const fixturesPassed = run('fixtures', ['scripts/test.mjs', 'fixtures']);
   if (!fixturesPassed) {
     // Preserve the original failed fixture step and diagnose one public case
