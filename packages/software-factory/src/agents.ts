@@ -486,12 +486,24 @@ export class AgentCalls {
           invalid = `payload validator failed: ${effectiveOutput.name}`;
         }
       }
+      let validatedResultCaptureId: string | undefined;
+      if (!invalid) {
+        const normalized = JSON.stringify({ kind: 'result', payload: envelope!['payload'] });
+        if (Buffer.byteLength(normalized) > 1048576) throw new Error('validated result exceeds capture size limit');
+        const validated = await host.recorder.openCapture({ channel: 'validated-result', attemptId: attempt.id });
+        await validated.write(normalized);
+        await validated.finish();
+        // Redaction can expand text, so enforce the bound on saved bytes too.
+        await validated.readText();
+        validatedResultCaptureId = validated.id;
+      }
       await host.store.settleAttempt({
         id: attempt.id,
         launch: 'started',
         outcome: invalid ? 'failed' : 'succeeded',
         quiescent: true,
         evidence: invalid ? 'invalid authoritative result; raw capture retained' : 'validated authoritative result',
+        ...(validatedResultCaptureId ? { validatedResultCaptureId } : {}),
       });
       if (invalid) {
         this.invalid.set(attempt.id, invalid);
@@ -510,6 +522,7 @@ export class AgentCalls {
         value: envelope!['payload'] as T,
         artifacts: (envelope!['artifacts'] as string[]) ?? { state: 'unknown' },
         resultCaptureId: finalCapture.id,
+        validatedResultCaptureId: validatedResultCaptureId!,
       };
     } catch (error) {
       if (!(error instanceof NeedsInput) && !(error instanceof ShutdownInterrupted))

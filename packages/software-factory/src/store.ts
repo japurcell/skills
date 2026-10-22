@@ -25,7 +25,7 @@ export interface Attempt extends Admission {
   launch: 'admitted' | 'started' | 'not_started' | 'unknown'; outcome: 'succeeded' | 'failed' | 'needs_input' | 'interrupted' | null;
   quiescent: boolean; owner: Owner | null; evidence: string | null;
   cleanupBasis?: 'operator_confirmed';
-  agent?: { inputsCaptureId:string; resultCaptureId:string; outputCaptureId:string; adapter:string; sessionMode:'fresh'|'reuse'; context:string; reusedAttemptId?:string; validator:string|null };
+  agent?: { inputsCaptureId:string; resultCaptureId:string; outputCaptureId:string; adapter:string; sessionMode:'fresh'|'reuse'; context:string; reusedAttemptId?:string; validator:string|null; validatedResultCaptureId?:string };
 }
 /** Optional observations remain unknown until the adapter reports actual evidence. */
 export interface NativeSession {
@@ -489,7 +489,7 @@ export class RepositoryStore {
     });
   }
 
-  async settleAttempt(input: { id: string; launch: 'started' | 'not_started' | 'unknown'; outcome: Exclude<Attempt['outcome'], null>; quiescent: boolean; evidence: string }) {
+  async settleAttempt(input: { id: string; launch: 'started' | 'not_started' | 'unknown'; outcome: Exclude<Attempt['outcome'], null>; quiescent: boolean; evidence: string; validatedResultCaptureId?: string }) {
     text(input.evidence, 'settlement evidence');
     if (!['started', 'not_started', 'unknown'].includes(input.launch)
       || !['succeeded', 'failed', 'needs_input', 'interrupted'].includes(input.outcome)
@@ -498,12 +498,22 @@ export class RepositoryStore {
       const attempt = this.readAttempt(input.id);
       if (attempt.cleanupBasis === 'operator_confirmed' && !input.quiescent) throw new Error('settlement cannot undo explicit clearance');
       if (attempt.outcome !== null) {
-        if (attempt.launch === input.launch && attempt.outcome === input.outcome && attempt.quiescent === input.quiescent && attempt.evidence === input.evidence) return attempt;
+        if (attempt.launch === input.launch && attempt.outcome === input.outcome && attempt.quiescent === input.quiescent && attempt.evidence === input.evidence
+          && (input.validatedResultCaptureId === undefined || input.validatedResultCaptureId === attempt.agent?.validatedResultCaptureId)) return attempt;
         throw new Error('attempt already settled; preserve terminal outcome');
       }
       if (attempt.launch === 'started' && input.launch !== 'started') throw new Error('confirmed launch cannot be erased or refunded');
       if (input.launch === 'started' && attempt.launch !== 'started') throw new Error('record confirmed spawn identity before settlement');
       if (input.launch === 'not_started' && (!input.quiescent || input.outcome === 'succeeded')) throw new Error('non-launch requires quiescence and cannot succeed');
+      if (attempt.kind === 'agent' && attempt.agent && input.outcome === 'succeeded' && input.validatedResultCaptureId === undefined)
+        throw new Error('successful agent settlement requires a validated result capture');
+      if (input.validatedResultCaptureId !== undefined) {
+        if (attempt.kind !== 'agent' || !attempt.agent || input.launch !== 'started' || input.outcome !== 'succeeded' || !input.quiescent
+          || typeof input.validatedResultCaptureId !== 'string'
+          || !this.database.prepare("SELECT id FROM captures WHERE id=? AND attempt_id=? AND invocation_id=? AND channel='validated-result' AND state='complete'")
+            .get(input.validatedResultCaptureId, attempt.id, attempt.invocationId)) throw new Error('validated result capture must be complete and owned by the successful agent attempt');
+        attempt.agent.validatedResultCaptureId = input.validatedResultCaptureId;
+      }
       attempt.launch = input.launch; attempt.outcome = input.outcome; attempt.quiescent = input.quiescent; attempt.evidence = input.evidence;
       this.database.prepare('UPDATE attempts SET data=?,occupied=? WHERE id=?').run(JSON.stringify(attempt), input.quiescent ? 0 : 1, attempt.id);
       if (input.launch === 'not_started') {
@@ -517,6 +527,7 @@ export class RepositoryStore {
   }
 
   async saveAgentMetadata(id:string, metadata:NonNullable<Attempt['agent']>) {
+    if (Object.hasOwn(metadata, 'validatedResultCaptureId')) throw new Error('validated result metadata can only be linked during successful settlement');
     if(Buffer.byteLength(JSON.stringify(metadata))>8192)throw new Error('agent metadata exceeds limit');
     return this.transaction(()=>{ const attempt=this.readAttempt(id); if(attempt.kind!=='agent'||attempt.launch!=='admitted')throw new Error('agent inputs must be saved before launch');
       for(const captureId of [metadata.inputsCaptureId,metadata.resultCaptureId,metadata.outputCaptureId])if(!this.database.prepare('SELECT id FROM captures WHERE id=? AND attempt_id=?').get(captureId,id))throw new Error('agent capture mismatch');
@@ -665,7 +676,7 @@ export class RepositoryStore {
   }
 
   async createCapture(input: { invocationId: string; attemptId?: string; channel: string }) {
-    if (!['stdout', 'stderr', 'result', 'request', 'report', 'event', 'context'].includes(input.channel)) throw new Error('unsupported capture channel');
+    if (!['stdout', 'stderr', 'result', 'validated-result', 'request', 'report', 'event', 'context'].includes(input.channel)) throw new Error('unsupported capture channel');
     return this.transaction(() => {
       const invocation = this.readInvocation(input.invocationId);
       if (invocation.stage === 'finalized') throw new Error('invocation finalized');

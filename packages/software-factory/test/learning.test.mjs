@@ -104,6 +104,10 @@ test('explicit extraction saves examined ended sources and a justified empty res
     assert.equal(result.version, 1);
     assert.deepEqual(result.proposals, []);
     assert.equal(result.noProposalReason, 'No justified change.');
+    const extractionAttempt = repo.history(extraction.saved.invocationId).attempts.find(attempt => attempt.kind === 'agent');
+    assert.equal(result.proposalResultCaptureId, extractionAttempt.agent.resultCaptureId);
+    assert.equal(result.proposalValidatedResultCaptureId, extractionAttempt.agent.validatedResultCaptureId);
+    assert.notEqual(result.proposalValidatedResultCaptureId, result.proposalResultCaptureId);
     assert.deepEqual(result.examinedSources.map(s => s.invocationId), [source.saved.invocationId]);
     assert.deepEqual(result.captureLimitations, []);
     assert.equal(repo.history(source.saved.invocationId).invocation.outcome, 'succeeded');

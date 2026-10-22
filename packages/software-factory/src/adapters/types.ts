@@ -51,5 +51,6 @@ export type AgentResult<T = unknown> =
       value: T;
       artifacts: string[] | { state: 'unknown' };
       resultCaptureId: string;
+      validatedResultCaptureId?: string;
     }
   | { attemptId: string; status: 'invalid'; diagnostic: string; resultCaptureId: string };

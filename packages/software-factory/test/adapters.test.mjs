@@ -249,6 +249,7 @@ for (const prompt of ['denied', 'interaction'])
       assert.equal(agents(h).length, 1);
       assert.equal(agents(h)[0].outcome, 'failed');
       assert.equal(h.captures.filter((c) => c.channel === 'request').length, 0);
+      assert.equal(h.captures.filter((c) => c.channel === 'validated-result').length, 0);
       const logs = readFileSync(join(JSON.parse(r.stdout).worktree, 'agent-launches.jsonl'), 'utf8')
         .trim()
         .split('\n');

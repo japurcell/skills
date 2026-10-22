@@ -195,5 +195,6 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
   if (answer.status !== 'succeeded') throw new Error(`learning extraction result invalid: ${answer.diagnostic}`);
   return { version: 1, suppliedSources: input.sources, examinedSources, captureLimitations,
     proposals: answer.value.proposals, ...(answer.value.noProposalReason ? { noProposalReason: answer.value.noProposalReason } : {}),
-    proposalResultCaptureId: answer.resultCaptureId };
+    proposalResultCaptureId: answer.resultCaptureId,
+    ...(answer.validatedResultCaptureId ? { proposalValidatedResultCaptureId: answer.validatedResultCaptureId } : {}) };
 }
