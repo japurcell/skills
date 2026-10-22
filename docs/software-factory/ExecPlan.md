@@ -12,11 +12,12 @@ No durable workflow engine, checkpoint replay, factory task scheduler, per-task/
 
 ## Progress
 
-Implementation is underway on `codex/research-agentic-workflow-prototypes`, initially clean. T1 is verified. T2 local macOS storage probes pass; Linux/Windows native evidence remains pending. T3 and T4 are verified locally, including their composed failure proof. T2-CI qualification automation and T5 foreground invocation are the current frontier. Milestone acceptance requires actual recorded evidence.
+Implementation is underway on `codex/research-agentic-workflow-prototypes`, initially clean. T1 is verified. T2 local macOS storage probes pass; Linux/Windows native evidence remains pending. T3 and T4 are verified locally, including their composed failure proof. T2-CI automation is integrated; actual hosted runs remain pending. T5 foreground invocation is in independent-review repair before integration. Milestone acceptance requires actual recorded evidence.
 
 - [x] (2026-10-21) [milestone-1] T1: Established isolated package, fake harness/Git fixtures, explicit test dispatch and development CLI contract; six fixture tests pass.
 - [x] (2026-10-21) [milestone-1] T2: Pinned official Node v24.22.1 artifacts/hashes and verified local darwin-arm64/APFS storage mechanisms.
-- [ ] [milestone-1] T2-CI: Add Linux/Windows/macOS GitHub Actions qualification and retained reports, then obtain actual native run evidence.
+- [x] (2026-10-21) [milestone-1] T2-CI: Integrated reviewed Linux/Windows/macOS Actions and failure reports at `764f559b`; actionlint and local integrated foundation checks pass.
+- [ ] [milestone-1] T2-CI: Obtain actual hosted native evidence; no push or hosted execution has occurred.
 - [ ] [milestone-1] T2: Qualify pinned runtime on native Linux/Windows; no support is claimed for unrun targets.
 - [x] (2026-10-21) [milestone-1] Verified local build, six fixture checks and two storage/cancellation probes against v24.22.1.
 - [ ] [milestone-1] Verify combined build/probes on remaining native targets.
@@ -50,6 +51,8 @@ Implementation is underway on `codex/research-agentic-workflow-prototypes`, init
 
 T1 exposed the root NuGet ignore rule `**/[Pp]ackages/*`; an explicit authored-package exception now keeps factory source visible while package-local ignores exclude dependencies and generated output. The referenced `.agents/instructions/INDEX.md` is absent, so current brain testing routes supply repository guidance.
 
+T5 independent review reproduced premature success when a workflow does not await `needsInput`, `progress`, `agent` or a delayed `scope` callback. Command-only promise tracking is insufficient: every asynchronous context operation must participate in invocation lifetime before final history or claim release. Review also reproduced wrong-repository selection from trimming opaque Git path whitespace and unbounded history capture materialization. T5 owns public E2E repairs for all three findings; the initial 45 passing checks do not establish T5 acceptance.
+
 Independent T1/T2 review reproduced SIGTERM leaving a SQLite qualification worker alive. Signal cleanup and worker IPC-disconnect handling now stop owned workers; public subprocess checks verify exits 130/143, dead workers and removed disposable directories. The reviewer approved the bounded foundation after repair.
 
 The existing `docs/software-factory/ExecPlan.md` planned completed research prototypes, not a runtime. Its unique findings and verification were preserved in `docs/software-factory/ExecPlan.history-2026-10-20.md` before replacement. Its durable-graph recommendation is historical and must not influence current requirements.
@@ -77,7 +80,7 @@ No native adapter, notification helper, large SQLite stress, SSE performance, or
 
 The accepted baseline has been translated into this self-contained delivery plan. Routine paths, module responsibilities, command shapes, dependencies, qualification gates, and task boundaries are specified. Authoring created no runtime artifacts. Implementation now adds the development package and dependencies; a verified runtime archive was extracted only into a temporary directory. No release or native registration was created. No new consequential product choice was needed during authoring. Native feasibility may later require a decision if an accepted requirement cannot be honored without expanding scope.
 
-Execution is authorized. T1 is complete and T2 local storage prerequisites are verified. T3 storage and T4 capture are verified with a combined base proof; CI automation and T5 invocation are next; Linux/Windows and integrated release qualification remain pending. Development acceptance remains unmet until verification. Missing native targets remain visible qualification gates.
+Execution is authorized. T1 is complete and T2 local storage prerequisites are verified. T3 storage and T4 capture are verified with a combined base proof. Reviewed CI automation is integrated and locally verified; T5 invocation remains in review repair; Linux/Windows and integrated release qualification remain pending. Development acceptance remains unmet until verification. Missing native targets remain visible qualification gates.
 
 ## Context and Orientation
 
@@ -148,7 +151,7 @@ Prerequisites: T1. Own `qualification/runtime.ts`, `qualification/runtime-manife
 
 Prerequisites: T1 and verified local T2. Authorized 2026-10-21. Add `.github/workflows/software-factory-qualification.yml` and qualification helpers/evidence for native Linux, Windows and macOS. Pin the reviewed Node/artifact/tool versions, use disposable repositories, preserve logs and JSON evidence even on failure, fail on missing prerequisites, and keep untrusted pull requests credential-free. Current foundation checks must remain explicit about unfinished product suites. Extend the workflow as later tasks land; final T17 requires the complete supported suite, not only foundation smoke tests. Add separately triggered authenticated-provider qualification only with explicit configured CI credentials and bounded harmless cases; never expose credentials to fork code or run live desktop notices early.
 
-Native filesystem detection and signal semantics must be qualified honestly on each host; update portable mechanisms from evidence instead of excluding a failing platform or weakening tests. Windows/POSIX-specific resource tests require equivalent native evidence or visible pending qualification. Creating workflows does not establish a hosted pass. Hosted execution requires these commits on a remote branch; no push has yet been requested or performed.
+Native filesystem detection and signal semantics must be qualified honestly on each host; update portable mechanisms from evidence instead of excluding a failing platform or weakening tests. Windows/POSIX-specific resource tests require equivalent native evidence or visible pending qualification. Creating workflows does not establish a hosted pass. Hosted execution requires these commits on a remote branch; no push has yet been requested or performed. Implementation evidence: reviewed commits `3c86993d` and `764f559b` fast-forwarded onto base. Actionlint 1.7.12 passed. After shared placement/store and registry integration, pinned Node 24.22.1 typecheck/build, 29 store/capture/placement/composed checks, six fixtures and four runtime/CI contract checks passed. Windows WAL byte-lock write denial remains a candidate native fixture until hosted execution proves it; POSIX file-size failure coverage remains intact. Details are in `packages/software-factory/qualification/ci.md`.
 
 ### Milestone 2: Durable facts without durable execution
 Status: done
@@ -264,7 +267,7 @@ Run the complete local deterministic suite, browser suite, native qualification,
 
 ## Concrete Steps
 
-**Current next action: implement T2-CI native qualification workflows and T5 command-only invocation in isolated ownership scopes.** Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
+**Current next action: finish the independently reproduced T5 asynchronous-context repair, review and integrate invocation startup, then implement T6 shutdown/manual clearance.** T2-CI workflows are integrated; hosted execution remains pending, with no push performed. Commands below remain expected instructions until evidence is recorded. Paths and npm script names are task deliverables.
 
 Completed T1 setup: the package and lockfile exist, with development dependencies explicitly installed using `npm ci --ignore-scripts`. Repeat setup only when needed with `rtk proxy npm --prefix packages/software-factory ci --ignore-scripts`; startup never installs. Typecheck/build commands now produce `packages/software-factory/dist/cli.js`. Exact dependency versions are in the lockfile.
 
@@ -309,4 +312,4 @@ For this plan, the historical research snapshot is retained unchanged except its
 - Accepted baseline: [final specification acceptance](tickets/specification-readiness-and-acceptance.md#resolution), [decision map](map.md), [lifecycle mechanisms](lifecycle-specification.md), [detailed UI](observability-ui-specification.md).
 - Visual reference only: [accepted prototype](prototypes/observability-prototype.html). Synthetic browser checks do not establish runtime performance, native behavior, accessibility certification or SSE correctness.
 - Historical records: [research plan snapshot](ExecPlan.history-2026-10-20.md) retains completed research/prototype evidence and superseded recommendations. It is not an execution dependency.
-- Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2, T3 and T4 are verified; CI automation and T5 are next, and milestone acceptance remains unmet.
+- Resume state: [feature handoff](handoff.md). Implementation is authorized; T1, local T2, T3 and T4 are verified; CI automation is integrated and T5 is in review repair; native milestone acceptance remains unmet.

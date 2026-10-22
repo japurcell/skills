@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, statfsSync, unlinkSync } from 'node:fs';
+import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { setTimeout as delay } from 'node:timers/promises';
 import { initializeSchema, schemaVersion } from './schema.js';
 import { validateAdmission } from './accounting.js';
+import { assertLocalPlacement } from './placement.js';
 import type { Admission } from './accounting.js';
 
 export interface Owner { host: string; pid: number; start: string | null }
@@ -49,8 +50,8 @@ function paths(commonDir: string, create: boolean) {
   const directory = join(common, 'factory');
   if (create && !existsSync(directory)) mkdirSync(directory, { mode: 0o700 });
   if (lstatSync(directory).isSymbolicLink() || !lstatSync(directory).isDirectory()) throw new Error('factory storage must be an owned directory, not a symlink');
-  // Only the native placement already qualified in T2 is currently enabled.
-  if (process.platform !== 'darwin' || statfsSync(directory).type !== 26) throw new Error('unqualified storage placement; native filesystem qualification required');
+  // Native qualification records support; placement checks reject unsupported storage before opening it.
+  assertLocalPlacement(directory);
   return { directory, database: join(directory, 'history.sqlite'), marker: join(directory, 'bootstrap-incomplete') };
 }
 
