@@ -1,6 +1,6 @@
 # Software factory development package
 
-This package implements `docs/software-factory/ExecPlan.md`. Development source stays outside published skills. It currently provides build/test infrastructure and local runtime qualification. Runtime CLI commands refuse startup until implemented.
+This package implements `docs/software-factory/ExecPlan.md`. Development source stays outside published skills. It currently provides build/test infrastructure, local runtime qualification, transactional ownership/accounting, and bounded filtered capture. Runtime CLI commands refuse startup until implemented.
 
 Explicit setup from repository root:
 
