@@ -11,9 +11,11 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
+import lzma
 import os
 from pathlib import Path
 import re
+import signal
 import stat
 import struct
 import subprocess
@@ -21,6 +23,7 @@ import sys
 import tarfile
 import tempfile
 import threading
+import time
 import zipfile
 
 
@@ -75,15 +78,17 @@ def json_bytes(data: bytes):
 
 
 def safe_name(value, allow_node_modules=False):
-    if not isinstance(value, str) or not value or value.startswith("/") or "\\" in value or any(ord(c) < 32 or c in '<>:"|?*' for c in value):
+    if not isinstance(value, str) or not value or len(value.encode("utf-8", "surrogatepass")) > 4096 or value.count("/") > 63 or value.startswith("/") or "\\" in value or any(ord(c) < 32 or c in '<>:"|?*' for c in value):
         refuse("unsafe path")
     for part in value.split("/"):
-        if not part or part in (".", "..") or (part.lower() == "node_modules" and not allow_node_modules) or part.endswith((".", " ")) or BAD_PART.match(part):
+        if not part or len(part.encode("utf-8", "surrogatepass")) > 255 or part in (".", "..") or (part.lower() == "node_modules" and not allow_node_modules) or part.endswith((".", " ")) or BAD_PART.match(part):
             refuse("unsafe path")
     return value
 
 
 def canonical(path: str, directory: bool):
+    if not isinstance(path, str) or len(path.encode("utf-8", "surrogatepass")) > 4096 or path.count("/") > 64 or any(len(part.encode("utf-8", "surrogatepass")) > 255 for part in path.split("/")):
+        refuse("source path length or depth limit exceeded")
     value = Path(path)
     if not value.is_absolute() or os.path.normpath(path) != path:
         refuse("canonical absolute source path required")
@@ -127,10 +132,11 @@ class PrivateStage:
     """Records exact new inodes and removes only those same regular files/directories."""
     def __init__(self):
         temp_root = Path(tempfile.gettempdir()).resolve()
-        if "factory" in temp_root.parts:
-            refuse("temporary stage must be outside factory")
+        if "factory" in temp_root.parts or len(str(temp_root)) > 160:
+            refuse("temporary stage root refused")
         self.root = Path(tempfile.mkdtemp(prefix="factory-install-verify-", dir=temp_root))
         self.owned = {"": self._id(self.root)}
+        self.preserved = False
 
     @staticmethod
     def _id(path):
@@ -189,7 +195,8 @@ def private_stage():
     try:
         yield stage
     finally:
-        stage.cleanup()
+        if not stage.preserved:
+            stage.cleanup()
 
 
 def copy_checked(source, stage, destination, maximum, size=None, sha=None, executable=False):
@@ -307,6 +314,48 @@ def archive_name(raw, platform):
     return safe_name(raw[len(top) + 1:].removesuffix("/"), allow_node_modules=True)
 
 
+def preflight_tar_headers(archive):
+    """Bound physical TAR extensions before tarfile's recursive PAX parser runs."""
+    physical = extension_run = expanded = metadata = 0
+    with lzma.open(archive, "rb") as source:
+        while True:
+            header = source.read(512)
+            if len(header) != 512:
+                refuse("truncated TAR header")
+            if header == bytes(512):
+                break
+            physical += 1
+            if physical > 16384:
+                refuse("TAR physical header limit exceeded")
+            size_field = header[124:136]
+            try:
+                if size_field[0] & 0x80:
+                    size = int.from_bytes(bytes([size_field[0] & 0x7f]) + size_field[1:], "big")
+                else:
+                    size = int(size_field.strip(b" \0") or b"0", 8)
+            except ValueError:
+                refuse("invalid TAR physical header")
+            if size > 256 * MIB:
+                refuse("TAR physical payload limit exceeded")
+            kind = header[156:157]
+            if kind in (b"g", b"x", b"L", b"K"):
+                extension_run += 1
+                metadata += size
+                if extension_run > 64 or metadata > 16 * MIB:
+                    refuse("TAR extension limit exceeded")
+            else:
+                extension_run = 0
+            expanded += (size + 511) // 512 * 512
+            if expanded > 272 * MIB:
+                refuse("TAR physical expansion limit exceeded")
+            remaining = (size + 511) // 512 * 512
+            while remaining:
+                chunk = source.read(min(64 * 1024, remaining))
+                if not chunk:
+                    refuse("truncated TAR physical payload")
+                remaining -= len(chunk)
+
+
 def archive_rows(archive, platform):
     rows = []
     expanded = 0
@@ -341,6 +390,7 @@ def archive_rows(archive, platform):
                         refuse("archive expanded size limit exceeded")
                 rows.append((name, "dir" if directory else "file", item.file_size, item))
     else:
+        preflight_tar_headers(archive)
         with tarfile.open(archive, "r:xz") as source:
             for item in source:
                 if len(rows) >= 8192:
@@ -372,7 +422,10 @@ def extract_node_archive(archive: str | Path, platform: str, stage: PrivateStage
     info = archive.lstat()
     if not stat.S_ISREG(info.st_mode) or info.st_size > 128 * MIB:
         refuse("archive type or size limit exceeded")
-    rows = archive_rows(archive, platform)
+    try:
+        rows = archive_rows(archive, platform)
+    except (RecursionError, lzma.LZMAError):
+        refuse("TAR parser limit or corruption refused")
     seen, folded, kinds, omitted, total = set(), set(), {}, set(), 0
     root_seen = False
     for name, kind, size, _ in rows:
@@ -420,11 +473,14 @@ def extract_node_archive(archive: str | Path, platform: str, stage: PrivateStage
                     with source.open(item) as data:
                         extract_file(data, stage, f"node/{name}", size, name == "node.exe")
     else:
-        with tarfile.open(archive, "r:xz") as source:
-            for name, kind, size, item in rows:
-                if name and kind == "file":
-                    with source.extractfile(item) as data:
-                        extract_file(data, stage, f"node/{name}", size, name == "bin/node")
+        try:
+            with tarfile.open(archive, "r:xz") as source:
+                for name, kind, size, item in rows:
+                    if name and kind == "file":
+                        with source.extractfile(item) as data:
+                            extract_file(data, stage, f"node/{name}", size, name == "bin/node")
+        except (RecursionError, lzma.LZMAError):
+            refuse("TAR parser limit or corruption refused")
     return {"members": len(rows), "expandedBytes": total, "omittedLinks": sorted(omitted)}
 
 
@@ -441,30 +497,87 @@ def extract_file(data, stage, name, size, executable):
             refuse("archive member exceeds declared size")
 
 
-def bounded_child(command):
-    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={"PATH": os.defpath, "HOME": tempfile.gettempdir()})
+def refuse_uncertain(stage, message):
+    if stage is not None:
+        stage.preserved = True
+        refuse(f"{message}; private stage preserved at {stage.root}")
+    refuse(message)
+
+
+def bounded_child(command, stage=None, timeout_seconds=30):
+    """Require direct exit, both pipe EOFs and original POSIX group absence."""
+    deadline = time.monotonic() + timeout_seconds
+    cleanup_window = min(2, max(0.1, timeout_seconds / 4))
+    run_deadline = deadline - cleanup_window
+    process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               env={"PATH": os.defpath, "HOME": tempfile.gettempdir()}, start_new_session=os.name == "posix")
     outputs = [bytearray(), bytearray()]
     overflow = threading.Event()
-    def drain(stream, output):
-        while chunk := stream.read(4096):
-            if len(output) + len(chunk) > 16 * 1024:
-                overflow.set()
-                process.kill()
-                return
-            output.extend(chunk)
-    threads = [threading.Thread(target=drain, args=(stream, outputs[i]), daemon=True) for i, stream in enumerate((process.stdout, process.stderr))]
+    errors = threading.Event()
+    done = [threading.Event(), threading.Event()]
+    def drain(stream, output, finished):
+        try:
+            while chunk := stream.read(4096):
+                if len(output) + len(chunk) > 16 * 1024:
+                    overflow.set()
+                elif not overflow.is_set():
+                    output.extend(chunk)
+        except OSError:
+            errors.set()
+        finally:
+            finished.set()
+    threads = [threading.Thread(target=drain, args=(stream, outputs[i], done[i]), name=f"factory-install-drain-{i}", daemon=True) for i, stream in enumerate((process.stdout, process.stderr))]
     for thread in threads:
         thread.start()
+    while not all(finished.is_set() for finished in done) and not overflow.is_set() and not errors.is_set() and time.monotonic() < run_deadline:
+        done[0].wait(min(0.02, max(0, run_deadline - time.monotonic())))
+    closed = all(finished.is_set() for finished in done) and not errors.is_set()
+    timed_out = not closed or overflow.is_set()
+    if not timed_out:
+        try:
+            process.wait(timeout=max(0, run_deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            timed_out = True
+    if timed_out:
+        # The direct child remains unreaped, so its PID cannot be reused while
+        # signaling only the session that this invocation created.
+        if os.name == "posix":
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except OSError:
+                pass
+        else:
+            try:
+                process.kill()
+            except OSError:
+                pass
+        try:
+            process.wait(timeout=max(0, deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            pass
+        for thread in threads:
+            thread.join(timeout=max(0, deadline - time.monotonic()))
+        refuse_uncertain(stage, "validator process closure uncertain")
     try:
-        process.wait(timeout=30)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait()
-        refuse("semantic validator timeout")
-    for thread in threads:
-        thread.join(timeout=2)
-    if overflow.is_set():
-        refuse("semantic validator output limit exceeded")
+        for thread in threads:
+            thread.join(timeout=max(0, deadline - time.monotonic()))
+        if any(thread.is_alive() for thread in threads):
+            refuse_uncertain(stage, "validator pipe closure uncertain")
+        if os.name == "posix":
+            try:
+                os.killpg(process.pid, 0)
+            except ProcessLookupError:
+                pass
+            except OSError:
+                refuse_uncertain(stage, "validator session closure uncertain")
+            else:
+                refuse_uncertain(stage, "validator session closure uncertain")
+        else:
+            refuse_uncertain(stage, "validator descendant closure unsupported")
+    finally:
+        if all(finished.is_set() for finished in done):
+            process.stdout.close()
+            process.stderr.close()
     if process.returncode or outputs[1] or len(outputs[0]) > 2048:
         refuse("semantic selection validation refused")
     return bytes(outputs[0])
@@ -532,7 +645,7 @@ def prepare_install_selection(bundle_root: str, manifest_sha256: str, node_archi
         authenticate_snapshot(stage.root / "bundle", manifest_sha256)
         entry = stage.root / "bundle/dist/installation-bindings.js"
         program = "import {validateInstallSelection} from " + json.dumps(entry.as_uri()) + ";const s=validateInstallSelection({bundleRoot:process.argv[1],manifestSha256:process.argv[2],nodeArchivePath:process.argv[3]});process.stdout.write(JSON.stringify({version:s.bundle.version,platform:s.bundle.platform,manifestSha256:s.bundle.manifestSha256,nodeSha256:s.node.sha256}));"
-        output = bounded_child([str(executable), "--input-type=module", "-e", program, str(stage.root / "bundle"), manifest_sha256, str(stage.root / "selected-node-archive")])
+        output = bounded_child([str(executable), "--input-type=module", "-e", program, str(stage.root / "bundle"), manifest_sha256, str(stage.root / "selected-node-archive")], stage)
         semantic = fields(json_bytes(output), {"version", "platform", "manifestSha256", "nodeSha256"})
         if semantic != {"version": manifest["version"], "platform": platform, "manifestSha256": manifest_sha256, "nodeSha256": NODE[platform][1]}:
             refuse("semantic selection receipt mismatch")
@@ -558,5 +671,6 @@ if __name__ == "__main__":
     try:
         main()
     except (OSError, ValueError, RuntimeError, UnicodeError, tarfile.TarError, zipfile.BadZipFile) as error:
-        print(f"install bootstrap: {error}", file=sys.stderr)
+        detail = str(error).replace("\r", " ").replace("\n", " ")[:300]
+        print(f"install bootstrap: {detail}", file=sys.stderr)
         raise SystemExit(1)

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -10,12 +10,31 @@ import { fileURLToPath } from 'node:url';
 const script = resolve(fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url)));
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const packageCommand = join(packageRoot, 'scripts/package-release.mjs');
+const nativeQualification = join(packageRoot, 'qualification/install-bootstrap-native.qualification.mjs');
 const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
 const prerequisite = spawnSync(python, ['-c', 'import sys; assert sys.version_info >= (3, 11), "Python 3.11+ required"'], { encoding: 'utf8' });
 assert.equal(prerequisite.status, 0, `Python 3.11+ prerequisite failed: ${prerequisite.error?.message ?? prerequisite.stderr}`);
 const nodeAsset = { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz', sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628' };
 const sha = data => createHash('sha256').update(data).digest('hex');
 const run = args => spawnSync(python, [script, ...args], { encoding: 'utf8' });
+
+test('default Node discovery excludes explicit native bootstrap qualification', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-discovery-')));
+  try {
+    mkdirSync(join(root, 'qualification'));
+    copyFileSync(nativeQualification, join(root, 'qualification/install-bootstrap-native.qualification.mjs'));
+    const environment = { ...process.env };
+    delete environment.FACTORY_TEST_NODE_ARCHIVE;
+    delete environment.NODE_TEST_CONTEXT;
+    const result = spawnSync(process.execPath, ['--test'], { cwd: root, env: environment, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /tests 0/);
+    assert.doesNotMatch(result.stdout + result.stderr, /FACTORY_TEST_NODE_ARCHIVE is required/);
+    const explicit = spawnSync(process.execPath, ['--test', 'qualification/install-bootstrap-native.qualification.mjs'], { cwd: root, env: environment, encoding: 'utf8' });
+    assert.equal(explicit.status, 1);
+    assert.match(explicit.stdout + explicit.stderr, /FACTORY_TEST_NODE_ARCHIVE is required/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
 
 function fixture() {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-test-')));
@@ -128,6 +147,13 @@ test('public verifier refuses malformed selected inventories before archive or J
   }
 });
 
+test('public verifier bounds a hostile source-path diagnostic', () => {
+  const result = run(['verify', '--bundle-root', `/private/tmp/${'x'.repeat(10_000)}`, '--manifest-sha256', 'a'.repeat(64), '--node-archive', '/private/tmp/node.tar.xz']);
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, '');
+  assert.ok(Buffer.byteLength(result.stderr) <= 512, `stderr was ${Buffer.byteLength(result.stderr)} bytes`);
+});
+
 test('public verifier refuses unowned files, directories and links in a complete bundle', () => {
   const cases = [
     ['extra file', f => writeFileSync(join(f.bundle, 'dist/unowned.js'), 'x'), /unowned/i],
@@ -212,12 +238,29 @@ test('public extraction API refuses hostile TAR and ZIP entries before writing t
       ` with m.private_stage() as stage: m.extract_node_archive(p,'win32-x64',stage)\n` +
       ` checks.append(False)\n` +
       `except ValueError: checks.append(True)\n` +
+      `p=root+'/long-name.tar.xz'\n` +
+      `with tarfile.open(p,'w:xz') as tar:\n` +
+      ` directory=tarfile.TarInfo(top); directory.type=tarfile.DIRTYPE; tar.addfile(directory)\n` +
+      ` item=tarfile.TarInfo(top+'x'*100000); item.size=1; tar.addfile(item,io.BytesIO(b'x'))\n` +
+      `try:\n` +
+      ` with m.private_stage() as stage: m.extract_node_archive(p,'darwin-arm64',stage)\n` +
+      ` checks.append(False)\n` +
+      `except ValueError as error: checks.append(len(str(error))<512)\n` +
+      `p=root+'/pax-chain.tar.xz'\n` +
+      `with tarfile.open(p,'w:xz') as tar:\n` +
+      ` for i in range(8200):\n` +
+      `  item=tarfile.TarInfo('g'); item.type=tarfile.XGLTYPE; tar.addfile(item)\n` +
+      ` directory=tarfile.TarInfo(top); directory.type=tarfile.DIRTYPE; tar.addfile(directory)\n` +
+      `try:\n` +
+      ` with m.private_stage() as stage: m.extract_node_archive(p,'darwin-arm64',stage)\n` +
+      ` checks.append(False)\n` +
+      `except ValueError as error: checks.append(len(str(error))<512)\n` +
       `print(json.dumps(checks))\n`;
     const path = join(root, 'driver.py');
     writeFileSync(path, driver);
     const result = spawnSync(python, [path, script, root], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), Array(10).fill(true));
+    assert.deepEqual(JSON.parse(result.stdout), Array(12).fill(true));
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -237,5 +280,36 @@ test('private stage cleanup preserves an unexpected foreign file', () => {
     const result = spawnSync(python, [path, script], { encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout.trim(), 'preserved');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('validator refuses inherited descendant pipes and preserves uncertain stages', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-process-')));
+  try {
+    const driver = `import importlib.util,os,subprocess,sys,threading,time\n` +
+      `s=importlib.util.spec_from_file_location('factory_install',sys.argv[1]); m=importlib.util.module_from_spec(s); sys.modules[s.name]=m; s.loader.exec_module(m)\n` +
+      `for escaped in (False,True):\n` +
+      ` stage=m.PrivateStage()\n` +
+      ` child='import time; time.sleep(2)'\n` +
+      ` program='import subprocess,sys; subprocess.Popen([sys.executable,"-c",'+repr(child)+'],stdout=subprocess.DEVNULL,start_new_session='+repr(escaped)+'); print("{}")'\n` +
+      ` begin=time.monotonic()\n` +
+      ` try: m.bounded_child([sys.executable,'-c',program],stage,1)\n` +
+      ` except ValueError: pass\n` +
+      ` else: raise AssertionError('receipt returned with inherited pipe open')\n` +
+      ` assert time.monotonic()-begin<2 and stage.preserved and stage.root.exists()\n` +
+      ` if escaped:\n` +
+      `  assert any(t.name.startswith('factory-install-drain') for t in threading.enumerate())\n` +
+      ` if any(t.name.startswith('factory-install-drain') for t in threading.enumerate()): time.sleep(2.2)\n` +
+      ` assert not any(t.name.startswith('factory-install-drain') for t in threading.enumerate())\n` +
+      ` stage.cleanup()\n` +
+      `with m.private_stage() as managed: managed.preserved=True\n` +
+      `assert managed.root.exists()\n` +
+      `managed.cleanup()\n` +
+      `print('refused and owned cleanup completed')\n`;
+    const path = join(root, 'driver.py');
+    writeFileSync(path, driver);
+    const result = spawnSync(python, [path, script], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'refused and owned cleanup completed');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
