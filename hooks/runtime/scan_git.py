@@ -19,6 +19,10 @@ from .scan_types import (
     GitCommandError, ScanContext, ScanLimitExceeded, ScanSecurityError, TEXT_EXTENSIONS,
 )
 
+# A signaled Windows root can precede job-accounting teardown. This bounds
+# completion observation only; an empty job is still required before consumption.
+_WINDOWS_JOB_COMPLETION_SECONDS = 0.25
+
 @contextlib.contextmanager
 def capture_git(context: ScanContext,
     args: list[str],
@@ -194,8 +198,23 @@ def capture_git(context: ScanContext,
                     else:
                         raise GitCommandError("git_descendant_running", operation)
                 elif os.name == "nt":
-                    if process.active_processes():
-                        raise GitCommandError("git_descendant_running", operation)
+                    completion_deadline = min(command_deadline, context.deadline,
+                                              time.monotonic() + _WINDOWS_JOB_COMPLETION_SECONDS)
+                    while process.active_processes():
+                        size = os.fstat(capture.fileno()).st_size
+                        account_output(size)
+                        if size > context.limits.max_capture_bytes:
+                            raise ScanLimitExceeded("git_output_limit", operation, measured=size, limit=context.limits.max_capture_bytes)
+                        context.check_deadline(deadline)
+                        now = time.monotonic()
+                        if now >= command_deadline:
+                            raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
+                        if now >= completion_deadline:
+                            raise GitCommandError("git_descendant_running", operation)
+                        time.sleep(min(GIT_COMPLETION_WAIT_SECONDS, completion_deadline - now))
+                    context.check_deadline(deadline)
+                    if time.monotonic() >= command_deadline:
+                        raise ScanLimitExceeded("git_timeout", operation, seconds=command_seconds)
                 capture_step = "verify_capture"
                 size = os.fstat(capture.fileno()).st_size
                 account_output(size)

@@ -198,6 +198,8 @@ finally:
         'malformed' { '@echo off' + "`r`n" + 'if "%1 %2"=="rev-parse --is-inside-work-tree" (echo true & exit /b 0)' + "`r`n" + 'if "%1 %2"=="rev-parse --show-toplevel" (echo %CD% & exit /b 0)' + "`r`n" + 'if "%1"=="diff" (echo partial-path & exit /b 0)' + "`r`n" + 'exit /b 9' }
         'capture-error' { "@echo off`r`n`"$realGit`" %*" }
         'success' { "@echo off`r`n`"$realGit`" %*" }
+        'native-success' { "@echo off`r`n`"$realGit`" %*" }
+        'completion-accounting' { "@echo off`r`n`"$realGit`" %*" }
     }
     [System.IO.File]::WriteAllText((Join-Path $bin 'git.cmd'), $shim)
     if ($Scenario -eq 'hardlinked-batch') {
@@ -268,7 +270,11 @@ finally:
             & $realGit -C $repo -c user.name=ScannerTest -c user.email=scanner@example.invalid -c commit.gpgsign=false commit -qm fixture
             if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
         }
-        $env:PATH = "$bin;$($savedEnvironment['PATH'])"
+        $env:PATH = if ($Scenario -in @('native-success', 'completion-accounting')) {
+            $savedEnvironment['PATH']
+        } else {
+            "$bin;$($savedEnvironment['PATH'])"
+        }
         $env:SCAN_MODE = $Mode
         if ($Scenario -eq 'hostile-comspec') {
             $hostileComspec = Join-Path $caseDir 'hostile-comspec.cmd'
@@ -420,6 +426,55 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
 '@
             $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('ROOT_LITERAL', $rootLiteral)
             [System.IO.File]::WriteAllText($runner, $fixture)
+        } elseif ($Scenario -eq 'completion-accounting') {
+            # Inject one stale count only after the real Job is empty. The
+            # launched processes and subsequent zero count still come from Windows.
+            $runner = Join-Path $caseDir 'completion-accounting.py'
+            $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
+            $observationLiteral = (Join-Path $caseDir 'completion.json') | ConvertTo-Json -Compress
+            $fixture = @'
+import ctypes, pathlib, runpy
+original_library = ctypes.WinDLL
+injected = False
+class QueryBoundary:
+    def __init__(self, function):
+        self.function = function
+    @property
+    def argtypes(self):
+        return self.function.argtypes
+    @argtypes.setter
+    def argtypes(self, value):
+        self.function.argtypes = value
+    @property
+    def restype(self):
+        return self.function.restype
+    @restype.setter
+    def restype(self, value):
+        self.function.restype = value
+    def __call__(self, job, kind, buffer, length, returned):
+        global injected
+        result = self.function(job, kind, buffer, length, returned)
+        if result and kind == 1 and length == 48 and not injected:
+            words = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_uint32))
+            if words[10] == 0:
+                words[10] = 1
+                injected = True
+                pathlib.Path(OBSERVATION_LITERAL).write_text('injected-after-real-job-zero', encoding='ascii')
+        return result
+class Library:
+    def __init__(self, library):
+        self.library = library
+        self.query = QueryBoundary(library.QueryInformationJobObject)
+    def __getattr__(self, name):
+        return self.query if name == 'QueryInformationJobObject' else getattr(self.library, name)
+def library(name, *arguments, **keywords):
+    result = original_library(name, *arguments, **keywords)
+    return Library(result) if name.casefold() == 'kernel32' else result
+ctypes.WinDLL = library
+runpy.run_path(HOOK_LITERAL, run_name='__main__')
+'@
+            $fixture = $fixture.Replace('HOOK_LITERAL', $hookLiteral).Replace('OBSERVATION_LITERAL', $observationLiteral)
+            [System.IO.File]::WriteAllText($runner, $fixture)
         } elseif ($Scenario -eq 'capture-error') {
             $runner = Join-Path $caseDir 'capture-error.py'
             $hookLiteral = $hooks[$Provider] | ConvertTo-Json -Compress
@@ -485,7 +540,7 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
         }
         $logPath = Join-Path $caseDir 'logs/scan.log'
         $log = if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Raw } else { '' }
-        if ($Scenario -in @('success', 'hostile-comspec')) {
+        if ($Scenario -in @('success', 'native-success', 'hostile-comspec', 'completion-accounting')) {
             $responseType = if ($response -is [System.Collections.IDictionary]) {
                 'object'
             } elseif ($response -is [array]) {
@@ -512,7 +567,21 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
             } else {
                 'missing-or-other'
             }
-            $diagnostic = "response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
+            $diagnostic = "scenario=$Scenario attempt=$Attempt response=$responseType fields=$responseCount has-systemMessage=$hasSystemMessage stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
+            if ($auditState -eq 'incomplete') {
+                # ScanFailure emits scanner-owned vocabulary and bounded numbers.
+                $record = $log.Trim() | ConvertFrom-Json -AsHashtable
+                $diagnostic += ' failure=' + ($record.diagnostic | ConvertTo-Json -Compress)
+            }
+            $completionPath = Join-Path $caseDir 'completion.json'
+            if (Test-Path -LiteralPath $completionPath) {
+                $diagnostic += ' completion=' + (Get-Content -LiteralPath $completionPath -Raw)
+            }
+            if ($Scenario -eq 'completion-accounting' -and
+                (-not (Test-Path -LiteralPath $completionPath) -or
+                 (Get-Content -LiteralPath $completionPath -Raw) -cne 'injected-after-real-job-zero')) {
+                throw "$Provider $Mode completion fault was not exercised"
+            }
             $cleanResponse = if ($Provider -eq 'codex' -and $Mode -eq 'warn') {
                 $response.Count -eq 1 -and $response.systemMessage -ceq 'scan-secrets: pass; 0 modified files'
             } else {
@@ -532,6 +601,12 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
                 if ($record.diagnostic.cause -ne 'git_capture_failed' -or $record.diagnostic.capture_step -ne 'spawn' -or
                     $record.diagnostic.os_errno -ne 10062) {
                     throw "$Provider $Mode hardlinked batch did not retain the original single-link refusal"
+                }
+            }
+            if ($Scenario -in @('descendant', 'grandchild')) {
+                $record = $log.Trim() | ConvertFrom-Json -AsHashtable
+                if ($record.diagnostic.cause -ne 'git_descendant_running') {
+                    throw "$Provider $Mode $Scenario did not retain the live Job refusal: $($record.diagnostic.cause)"
                 }
             }
             $rendered = $response | ConvertTo-Json -Compress
@@ -591,6 +666,22 @@ try {
         Write-Output 'PASS: focused native Windows scanner capture copilot/warn/partial'
         return
     }
+    foreach ($provider in @('copilot', 'gemini', 'codex')) {
+        foreach ($mode in @('block', 'warn')) {
+            Invoke-Case -Provider $provider -Mode $mode -Scenario completion-accounting
+        }
+    }
+    Write-Output 'PASS: transient native completion accounting requires confirmed job zero'
+    for ($attempt = 1; $attempt -le 20; $attempt++) {
+        foreach ($provider in @('copilot', 'gemini', 'codex')) {
+            foreach ($mode in @('block', 'warn')) {
+                foreach ($scenario in @('success', 'native-success')) {
+                    Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario -Attempt $attempt
+                }
+            }
+        }
+    }
+    Write-Output 'PASS: 240 repeated native Windows clean no-HEAD captures (batch and executable)'
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
