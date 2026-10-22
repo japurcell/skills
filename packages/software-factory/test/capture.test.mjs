@@ -126,11 +126,14 @@ test('unsupported bytes stop admission, preserve committed text and expose parti
 }));
 
 
-test('real SQLite write failure under an OS file-size limit stops admission and preserves committed evidence', () => {
+test('real SQLite write failure under a native OS constraint stops admission and preserves committed evidence', () => {
   const script = fileURLToPath(new URL('./fixtures/capture-storage-failure.mjs', import.meta.url));
-  const result = spawnSync('/usr/bin/python3', ['-c',
-    'import resource,os,sys; resource.setrlimit(resource.RLIMIT_FSIZE,(524288,524288)); os.execv(sys.argv[1],sys.argv[1:])', process.execPath, script],
-    { encoding: 'utf8', timeout: 15000 });
+  // Retain POSIX RLIMIT_FSIZE. Windows gets real OS WAL write denial, not a simulated store error.
+  const result = process.platform === 'win32'
+    ? spawnSync(process.execPath, [script], { encoding: 'utf8', timeout: 30000 })
+    : spawnSync('/usr/bin/python3', ['-c',
+      'import resource,os,sys; resource.setrlimit(resource.RLIMIT_FSIZE,(524288,524288)); os.execv(sys.argv[1],sys.argv[1:])', process.execPath, script],
+      { encoding: 'utf8', timeout: 15000 });
   assert.equal(result.status, 0, result.stderr);
   assert.deepEqual(JSON.parse(result.stdout), { failed: true, admissionBlocked: true, shutdown: 1, notices: 1,
     savedPrefix: 'committed-before-failure', eventsReadable: true });
