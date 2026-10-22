@@ -14,9 +14,10 @@ function fixture(t, { concurrency = 1, cancellable = false } = {}) {
   const script = join(directory, 'run.mjs');
   writeFileSync(script, `import { runOrderedTests } from ${JSON.stringify(runnerUrl)};
     const controller = new AbortController();
-    ${cancellable ? "process.on('SIGTERM', () => controller.abort());" : ''}
+    let interruptedBy;
+    ${cancellable ? "for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { interruptedBy = signal; controller.abort(); });" : ''}
     const result = await runOrderedTests(process.argv.slice(2), { concurrency: ${concurrency}, cwd: process.cwd(), signal: controller.signal });
-    process.exitCode = controller.signal.aborted ? 143 : result;\n`);
+    process.exitCode = interruptedBy === 'SIGINT' ? 130 : controller.signal.aborted ? 143 : result;\n`);
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
   return { directory, script, env };
@@ -105,13 +106,13 @@ test('empty, skipped and missing selected files cannot produce a passing run', (
   assert.match(missingResult.stdout, /not ok/);
 });
 
-test('cancellation closes the running child without starting the queued case', { timeout: 5000 }, async (t) => {
+async function checkResistantCancellation(t, signal, expectedCode) {
   const { directory, script, env } = fixture(t, { cancellable: true });
   const started = join(directory, 'started');
   const tailReceipt = join(directory, 'tail');
   const hanging = join(directory, 'z-hanging.test.mjs');
   const tail = join(directory, 'a-tail.test.mjs');
-  writeFileSync(hanging, `import test from 'node:test'; import { writeFileSync } from 'node:fs'; test('hanging', async () => { writeFileSync(process.env.STARTED, String(process.pid)); await new Promise(() => setInterval(() => {}, 1000)); });\n`);
+  writeFileSync(hanging, `import test from 'node:test'; import { writeFileSync } from 'node:fs'; process.on('SIGTERM', () => {}); test('hanging', async () => { writeFileSync(process.env.STARTED, String(process.pid)); await new Promise(() => setInterval(() => {}, 1000)); });\n`);
   writeFileSync(tail, `import test from 'node:test'; import { writeFileSync } from 'node:fs'; test('tail', () => writeFileSync(process.env.TAIL_RECEIPT, 'ran'));\n`);
   env.STARTED = started;
   env.TAIL_RECEIPT = tailReceipt;
@@ -123,12 +124,12 @@ test('cancellation closes the running child without starting the queued case', {
   try {
     for (let attempt = 0; attempt < 100 && !existsSync(started); attempt++) await delay(20);
     assert.ok(existsSync(started), 'the first test child must start before cancellation');
-    child.kill('SIGTERM');
+    child.kill(signal);
     const [code] = await Promise.race([
       new Promise((resolve) => child.once('close', (...args) => resolve(args))),
       new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('runner or test child retained an open pipe')), 2000); }),
     ]);
-    assert.equal(code, 143, Buffer.concat(output).toString());
+    assert.equal(code, expectedCode, Buffer.concat(output).toString());
     assert.equal(existsSync(tailReceipt), false);
     assert.throws(() => process.kill(Number(readFileSync(started, 'utf8')), 0), { code: 'ESRCH' });
   } finally {
@@ -139,4 +140,9 @@ test('cancellation closes the running child without starting the queued case', {
       catch (error) { if (error.code !== 'ESRCH') throw error; }
     }
   }
+}
+
+test('SIGTERM and SIGINT close a signal-resistant worker without starting the queued case', { timeout: 8000 }, async (t) => {
+  await checkResistantCancellation(t, 'SIGTERM', 143);
+  await checkResistantCancellation(t, 'SIGINT', 130);
 });
