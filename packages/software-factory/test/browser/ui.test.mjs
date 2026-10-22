@@ -112,6 +112,167 @@ test('repository runs can resume following after Freeze', async () => {
   } finally {await browser.close();await f.dispose();}
 });
 
+test('Follow refreshes frozen run cards before reporting Connected', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    assert.equal(await page.locator('.run-card .status').innerText(),'Running');
+    await page.getByRole('button',{name:'Follow latest events'}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    assert.equal(await page.locator('.run-card .status').innerText(),'Failed');
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('Connected waits for an index event committed during a held Follow snapshot', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    const stale=f.store.readRuns({after:0,limit:30});
+    await page.route(url=>url.pathname==='/api/runs'&&url.searchParams.get('after')==='0',async route=>{entered();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});});
+    const following=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
+    await intercepted;
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    release();await following;
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    assert.equal(await page.locator('.run-card .status').innerText(),'Failed');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('a same-route snapshot replays observations received while its saved reads are in flight', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered=0,arrived;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{arrived=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const staleDetail=f.store.readHistory(f.invocation.id,{limit:50});
+    const staleEvents=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:200});
+    const stall=async(route,body)=>{if(++entered===2)arrived();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});};
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}`&&url.searchParams.has('afterAttempt'),route=>stall(route,staleDetail));
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}/events`&&url.searchParams.get('tail')==='1',route=>stall(route,staleEvents));
+    const loading=page.locator('.controls a.chip').first().click({noWaitAfter:true});
+    await intercepted;
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    release();await loading;
+    await page.waitForFunction(()=>document.getElementById('app')?.getAttribute('aria-busy')!=='true');
+    await page.locator(`.capture-list [data-id="${capture.id}"]`).waitFor({state:'attached',timeout:3000});
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),1);
+    assert.equal(await page.locator(`.capture-list [data-id="${capture.id}"]`).count(),1);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('a slower same-route reload cannot replace a newer committed projection', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    const stale=f.store.readHistory(f.invocation.id,{limit:50});let requests=0;
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}`&&url.searchParams.has('afterAttempt'),async route=>{
+      if(++requests===1){entered();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});}
+      else await route.continue();
+    });
+    const chip=page.locator('.controls a.chip').first();
+    const first=chip.click({noWaitAfter:true});await intercepted;
+    const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await chip.click({noWaitAfter:true});
+    await page.locator(`.capture-list [data-id="${capture.id}"]`).waitFor({state:'attached'});
+    release();await first;
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator(`.capture-list [data-id="${capture.id}"]`).count(),1);
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),1);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('failed run and invocation page requests leave the previous page selected', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    let selectedRun;
+    for(let i=0;i<31;i++)selectedRun=await f.store.createRun();
+    await f.store.finalizeInvocation({id:f.invocation.id,outcome:'succeeded',cleanup:'complete',claimId:f.invocation.claim.id,token:f.invocation.claim.token});
+    for(let i=0;i<31;i++){
+      const invocation=await f.store.startInvocation({runId:selectedRun.id,worktreeId:f.worktree.id,owner:{host:'fixture',pid:process.pid,start:null}});
+      await f.store.finalizeInvocation({id:invocation.id,outcome:'succeeded',cleanup:'complete',claimId:invocation.claim.id,token:invocation.claim.token});
+    }
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    let failRuns=true;
+    await page.route(url=>url.pathname==='/api/runs'&&Number(url.searchParams.get('after'))>0,async route=>{
+      if(failRuns){failRuns=false;await route.fulfill({status:503,contentType:'application/json',body:'{"error":"temporary read failure"}'});}
+      else await route.continue();
+    });
+    await page.getByRole('button',{name:'Next runs'}).click();
+    await page.getByRole('heading',{name:'History unavailable'}).waitFor();
+    await page.getByRole('link',{name:'Return to runs'}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    assert.match(await page.locator('.page-controls').first().innerText(),/Page 1/);
+    await page.getByRole('link',{name:new RegExp(selectedRun.id.slice(0,8))}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    let failInvocations=true;
+    await page.route(url=>url.pathname===`/api/runs/${selectedRun.id}/invocations`&&Number(url.searchParams.get('after'))>0,async route=>{
+      if(failInvocations){failInvocations=false;await route.fulfill({status:503,contentType:'application/json',body:'{"error":"temporary read failure"}'});}
+      else await route.continue();
+    });
+    await page.getByRole('button',{name:'Later invocations'}).click();
+    await page.getByRole('heading',{name:'History unavailable'}).waitFor();
+    await page.getByRole('link',{name:'Return to saved parent'}).click();
+    await page.getByRole('heading',{name:'Invocation timeline'}).waitFor();
+    assert.match(await page.locator('.page-controls').first().innerText(),/Chronological page 1/);
+  } finally {await browser.close();await f.dispose();}
+});
+
+test('Follow catches up beyond the deferred cap while events continue during its snapshot', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.textContent?.startsWith('Connected'));
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    for(let i=0;i<210;i++)await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.waitForFunction(()=>Number(document.getElementById('pending-events')?.textContent?.match(/^\d+/)?.[0])>=210);
+    const stale=f.store.readInvocationEvents({invocationId:f.invocation.id,tail:true,limit:200});
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}/events`&&url.searchParams.get('tail')==='1',async route=>{entered();await held;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(stale)});});
+    const following=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
+    await intercepted;
+    const last=await f.store.createCapture({invocationId:f.invocation.id,channel:'stderr'});
+    const head=f.store.readEventHead().cursor;
+    release();await following;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent?.includes('saved cursor '+cursor),head);
+    assert.equal(await page.locator('.event-row').filter({hasText:'capture.created'}).count(),200);
+    assert.equal(await page.locator(`.event-row[data-cursor="${head}"]`).count(),1);
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'connected');
+    assert.ok(last.id);
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
+test('Freeze after a delayed Follow keeps both the control and saved view frozen', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  let release,entered;const held=new Promise(resolve=>{release=resolve});const intercepted=new Promise(resolve=>{entered=resolve});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    await page.route(url=>url.pathname===`/api/invocations/${f.invocation.id}`&&url.searchParams.has('afterAttempt'),async route=>{entered();await held;await route.continue();});
+    const following=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
+    await intercepted;
+    assert.equal(await page.getByRole('button',{name:'Follow latest events'}).getAttribute('aria-pressed'),'true');
+    release();await following;
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    assert.equal(await page.getByRole('button',{name:'Follow latest events'}).getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#connection').getAttribute('data-state'),'frozen');
+  } finally {release?.();await browser.close();await f.dispose();}
+});
+
 test('saved event gap is disclosed and a disconnected tab retains its last display', async () => {
   const f=await fixture();const browser=await chromium.launch({headless:true});
   const page=await browser.newPage({viewport:{width:860,height:650}});let database;
@@ -500,7 +661,6 @@ test('Follow replays an event committed while its tail page was in flight', asyn
     const pending=page.getByRole('button',{name:'Follow latest events'}).click({noWaitAfter:true});
     await intercepted;
     const capture=await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
-    await page.locator('#pending-events').getByText(/new events/).waitFor();
     release();await pending;
     await page.getByText('Saved outputs and traces',{exact:true}).click();
     await page.locator(`.capture-list [data-id="${capture.id}"]`).waitFor({timeout:2000});

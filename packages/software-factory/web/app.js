@@ -8,8 +8,9 @@ const state = {
   attempts: [], captures: [], attemptsNext: 0, capturesNext: 0, attemptsMore: false, capturesMore: false,
   attemptPage: [0], captureSummaryPage: [0], sessionPage: [0],
   sessions: [], sessionsNext: 0, sessionsMore: false, lanePage: 0, collapsed: new Set(), sessionParents: new Map(), question: null,
-  events: [], earlier: false, deferredEvents: [], deferredOverflow: false, selectedCapture: null, capturePage: null, captureAfter: 0, capturePending: false, captureVersion: 0, captureRefreshing: false, streamAbort: null,
+  events: [], earlier: false, deferredEvents: [], selectedCapture: null, capturePage: null, captureAfter: 0, capturePending: false, captureVersion: 0, captureRefreshing: false, streamAbort: null,
   routeGeneration: 0, indexLoadGeneration: 0, runLoadGeneration: 0, eventPageGeneration: 0, readerRestoreGeneration: 0,
+  snapshotGeneration: 0, streamGeneration: 0, snapshotting: false, projection: null, receivedCursor: '0',
   outcomeGeneration: 0, cardRefreshSequence: 0, cardGenerations: new Map(), error: null, connectionKind: null, validatedParent: null,
 };
 const idPattern = /^[0-9a-f-]{36}$/;
@@ -55,15 +56,17 @@ function errorView(message, parent) {
   app.innerHTML = `<div class="error-message" role="alert"><h1>History unavailable</h1><p>${escapeHtml(message)}</p><p><a href="${parent || '#'}">${parent ? 'Return to saved parent' : 'Return to runs'}</a></p></div>`;
 }
 function routeError(message, parent) { state.error = message; errorView(message, parent); }
-function pageAnchor() { return state.runPage.at(-1) ?? 0; }
-async function loadIndex(generation = state.routeGeneration) {
-  const anchor=pageAnchor(),request=++state.indexLoadGeneration,href=location.href;
+async function loadIndex(generation = state.routeGeneration, pages = state.runPage) {
+  const anchor=pages.at(-1)??0,request=++state.indexLoadGeneration,href=location.href,snapshot=state.snapshotGeneration;
   const page = await api(`/api/runs?after=${anchor}&limit=30`);
-  if (generation !== state.routeGeneration||request!==state.indexLoadGeneration||href!==location.href||anchor!==pageAnchor()) return;
+  if (generation !== state.routeGeneration||request!==state.indexLoadGeneration||href!==location.href||snapshot!==state.snapshotGeneration) return;
+  state.runPage=pages;
   state.runs = page.runs; state.runPageNext = page.nextCursor; state.runsHaveMore = page.hasMore;
+  state.pending=0;state.deferredEvents=[];
   state.cardGenerations.clear();
   state.run = null; state.invocation = null; state.error = null;
   renderIndex();
+  return true;
 }
 function card(run) {
   const invocation = run.latestInvocation;
@@ -104,8 +107,8 @@ function renderIndex() {
   renderCards();
 }
 async function loadRun(target, generation = state.routeGeneration, reader = null) {
-  const request=++state.runLoadGeneration,href=location.href;
-  const current=()=>generation===state.routeGeneration&&request===state.runLoadGeneration&&href===location.href;
+  const request=++state.runLoadGeneration,href=location.href,snapshot=state.snapshotGeneration;
+  const current=()=>generation===state.routeGeneration&&request===state.runLoadGeneration&&href===location.href&&snapshot===state.snapshotGeneration;
   const run = await api(`/api/runs/${target.run}`);
   if(!current())return;
   state.validatedParent=link({run:target.run});
@@ -114,18 +117,18 @@ async function loadRun(target, generation = state.routeGeneration, reader = null
   const sameReader=reader?.route?.run===target.run && (!reader.route.invocation||reader.route.invocation===selectedId);
   const savedPages=sameReader?reader.pages:null;
   const pageStack=value=>Array.isArray(value)&&value.length&&value.length<=128&&value.every(cursor=>Number.isSafeInteger(cursor)&&cursor>=0)?value.slice():[0];
-  if(savedPages?.invocations)state.invocationPage=pageStack(savedPages.invocations);
-  state.attemptPage=pageStack(savedPages?.attempts);
-  state.captureSummaryPage=pageStack(savedPages?.captures);
-  state.sessionPage=pageStack(savedPages?.sessions);
-  state.lanePage=Number.isSafeInteger(savedPages?.lane)&&savedPages.lane>=0&&savedPages.lane<128?savedPages.lane:0;
-  const selector = await api(`/api/runs/${target.run}/invocations?after=${state.invocationPage.at(-1) ?? 0}&limit=30`);
+  const invocationPage=pageStack(savedPages?.invocations??(state.run?.id===target.run?state.invocationPage:[0]));
+  let attemptPage=pageStack(savedPages?.attempts);
+  const captureSummaryPage=pageStack(savedPages?.captures);
+  const sessionPage=pageStack(savedPages?.sessions);
+  const lanePage=Number.isSafeInteger(savedPages?.lane)&&savedPages.lane>=0&&savedPages.lane<128?savedPages.lane:0;
+  const selector = await api(`/api/runs/${target.run}/invocations?after=${invocationPage.at(-1) ?? 0}&limit=30`);
   if(!current())return;
   let detail = null, sessions = null, events = null, selectedEvent = null, selectedSession = null, selectedCaptureTarget = null, question = null;
   if (selectedId) {
     [detail,sessions,events] = await Promise.all([
-      api(`/api/invocations/${selectedId}?afterAttempt=${state.attemptPage.at(-1)??0}&afterCapture=${state.captureSummaryPage.at(-1)??0}&limit=50`),
-      api(`/api/invocations/${selectedId}/sessions?after=${state.sessionPage.at(-1)??0}&limit=50`),
+      api(`/api/invocations/${selectedId}?afterAttempt=${attemptPage.at(-1)??0}&afterCapture=${captureSummaryPage.at(-1)??0}&limit=50`),
+      api(`/api/invocations/${selectedId}/sessions?after=${sessionPage.at(-1)??0}&limit=50`),
       api(`/api/invocations/${selectedId}/events?tail=1&limit=200`),
     ]);
     if(!current())return;
@@ -157,42 +160,46 @@ async function loadRun(target, generation = state.routeGeneration, reader = null
     question=await api(`/api/invocations/${selectedId}/question`);
   }
   if (!current()) return;
-  state.run = run; state.invocation = detail?.invocation || null;
-  state.invocationList = selector.invocations; state.invocationNext = selector.nextCursor; state.invocationMore = selector.hasMore;
-  state.attempts = detail?.attempts || []; state.captures = detail?.captures || [];
-  state.attemptsNext = detail?.attemptsNextCursor || 0; state.capturesNext = detail?.capturesNextCursor || 0;
-  state.attemptsMore = detail?.hasMoreAttempts || false; state.capturesMore = detail?.hasMoreCaptures || false;
-  state.accounting = detail?.accounting || null; state.worktree = detail?.worktree || null; state.clearance = detail?.clearance || null;
-  state.sessions = sessions?.sessions || []; rememberSessionParents(state.sessions); state.sessionsNext = sessions?.nextCursor || 0; state.sessionsMore = sessions?.hasMore || false;
-  state.events = events?.events || []; state.earlier = events?.hasEarlier || false;
-  state.question=question; state.selectedEventCursor=selectedEvent?.cursor || null;state.selectedCaptureTarget=selectedCaptureTarget;
-  state.selectedCapture = null; state.capturePage = null; state.capturePending=false;state.captureVersion++;state.pending = 0;state.deferredEvents=[];state.deferredOverflow=false;state.error = null;
-  if (selectedSession && !state.sessions.some(item=>item.id===selectedSession.id)) state.sessions.push(selectedSession);
-  if (selectedSession) rememberSessionParents([selectedSession]);
-  if (selectedSession) {
-    let parent=state.sessions.find(item=>item.attemptId===selectedSession.attemptId && item.nativeId===selectedSession.parentNativeId);
-    const seen=new Set();
-    while(parent && !seen.has(parent.id)) { seen.add(parent.id);state.collapsed.delete(parent.id);parent=state.sessions.find(item=>item.attemptId===parent.attemptId && item.nativeId===parent.parentNativeId); }
-  }
+  let attempts=detail?.attempts||[],attemptsNext=detail?.attemptsNextCursor||0,attemptsMore=detail?.hasMoreAttempts||false;
+  const sessionList=sessions?.sessions?.slice()||[];
+  if(selectedSession&&!sessionList.some(item=>item.id===selectedSession.id))sessionList.push(selectedSession);
   if (selectedSession && target.attempt && selectedSession.attemptId!==target.attempt) throw new Error('Native session does not belong to the selected attempt.');
   const eventAttemptId=selectedCaptureTarget?selectedCaptureTarget.attemptId:selectedEvent?.data?.attemptId;
   if (selectedEvent && target.attempt && eventAttemptId!==target.attempt) throw new Error('Saved event does not belong to the selected attempt.');
   const selectedAttemptId=target.attempt || selectedSession?.attemptId || eventAttemptId;
   if (selectedAttemptId && !idPattern.test(selectedAttemptId)) throw new Error('Invalid saved attempt link.');
-  if ((selectedAttemptId && !state.attempts.some(item=>item.id===selectedAttemptId)) || (target.phase && !state.attempts.some(item=>item.operationKey===target.phase))) {
+  if ((selectedAttemptId && !attempts.some(item=>item.id===selectedAttemptId)) || (target.phase && !attempts.some(item=>item.operationKey===target.phase))) {
     try {
       const params=new URLSearchParams();if(selectedAttemptId)params.set('attempt',selectedAttemptId);if(target.phase)params.set('phase',target.phase);
       const page=await api(`/api/invocations/${selectedId}/attempt-page?${params}`);
       if(!current())return;
-      state.attempts=page.attempts;state.attemptsNext=page.nextCursor;state.attemptsMore=page.hasMore;
-      state.attemptPage=page.targetCursor>1?[0,page.targetCursor-1]:[0];
+      attempts=page.attempts;attemptsNext=page.nextCursor;attemptsMore=page.hasMore;
+      attemptPage=page.targetCursor>1?[0,page.targetCursor-1]:[0];
     } catch { if(!current())return;throw new Error('Saved phase or attempt is unavailable or belongs to another invocation.'); }
   }
-  const attempt=selectedAttemptId && state.attempts.find(item=>item.id===selectedAttemptId);
+  const attempt=selectedAttemptId && attempts.find(item=>item.id===selectedAttemptId);
   if (target.phase && attempt && attempt.operationKey!==target.phase) throw new Error('Attempt does not belong to this phase.');
-  if (target.phase && !state.attempts.some(item=>item.operationKey===target.phase)) throw new Error('Saved phase is unavailable.');
+  if (target.phase && !attempts.some(item=>item.operationKey===target.phase)) throw new Error('Saved phase is unavailable.');
   if (selectedEvent?.data?.sessionId && target.session && selectedEvent.data.sessionId!==target.session) throw new Error('Saved event does not belong to the selected native session.');
   const displayTarget={...target,attempt:target.attempt||selectedAttemptId||null,phase:target.phase||attempt?.operationKey||null,session:target.session||selectedSession?.id||null};
+  if(!current())return;
+  state.runPage=pageStack(reader?.pages?.runs??state.runPage);
+  state.invocationPage=invocationPage;state.attemptPage=attemptPage;state.captureSummaryPage=captureSummaryPage;state.sessionPage=sessionPage;state.lanePage=lanePage;
+  state.run=run;state.invocation=detail?.invocation||null;
+  state.invocationList=selector.invocations;state.invocationNext=selector.nextCursor;state.invocationMore=selector.hasMore;
+  state.attempts=attempts;state.captures=detail?.captures||[];
+  state.attemptsNext=attemptsNext;state.capturesNext=detail?.capturesNextCursor||0;
+  state.attemptsMore=attemptsMore;state.capturesMore=detail?.hasMoreCaptures||false;
+  state.accounting=detail?.accounting||null;state.worktree=detail?.worktree||null;state.clearance=detail?.clearance||null;
+  state.sessions=sessionList;rememberSessionParents(sessionList);state.sessionsNext=sessions?.nextCursor||0;state.sessionsMore=sessions?.hasMore||false;
+  state.events=events?.events||[];state.earlier=events?.hasEarlier||false;
+  state.question=question;state.selectedEventCursor=selectedEvent?.cursor||null;state.selectedCaptureTarget=selectedCaptureTarget;
+  state.selectedCapture=null;state.capturePage=null;state.capturePending=false;state.captureRefreshing=false;state.captureVersion++;state.pending=0;state.deferredEvents=[];state.error=null;
+  if(selectedSession){
+    let parent=state.sessions.find(item=>item.attemptId===selectedSession.attemptId&&item.nativeId===selectedSession.parentNativeId);
+    const seen=new Set();
+    while(parent&&!seen.has(parent.id)){seen.add(parent.id);state.collapsed.delete(parent.id);parent=state.sessions.find(item=>item.attemptId===parent.attemptId&&item.nativeId===parent.parentNativeId);}
+  }
   state.displayTarget=displayTarget;
   if(displayTarget.session || selectedAttemptId || displayTarget.phase) {
     const rows=laneRows();
@@ -201,6 +208,7 @@ async function loadRun(target, generation = state.routeGeneration, reader = null
   }
   renderRun(displayTarget);
   if(reader)window.scrollTo(0,reader.top||0);
+  return true;
 }
 function attention(invocation) {
   const entries = [];
@@ -371,26 +379,43 @@ function updateCollapsedRows() {
     const textLink=document.querySelector(`.timeline-text [data-session="${CSS.escape(id)}"]`);if(textLink)textLink.hidden=hidden;
   }
 }
-async function loadRoute(reader = null) {
+async function loadRoute(reader = null, baseline = null, resume = true) {
   if (!state.token) return;
+  const snapshot=++state.snapshotGeneration;
+  state.snapshotting=true;
+  state.streamGeneration++;
+  state.streamAbort?.abort();
+  state.connected=false;
+  if(!state.frozen)showConnection('connecting','Catching up from saved cursor '+state.cursor);
+  await state.projection?.catch(()=>{});
+  if(snapshot!==state.snapshotGeneration)return;
   const generation=++state.routeGeneration, target=route();
   state.validatedParent=null;
   app.setAttribute('aria-busy','true');
+  let committed=false;
   try {
-    if (!target.run) { await loadIndex(generation);if(generation===state.routeGeneration)state.lastUpdate=new Date(); return; }
+    if (!target.run) {committed=await loadIndex(generation,reader?.pages?.runs??state.runPage)===true;if(committed)state.lastUpdate=new Date();return;}
     if (!idPattern.test(target.run)) { routeError('Invalid run link. The saved record was not selected.'); return; }
-    if (state.run?.id!==target.run) state.invocationPage=[0];
-    await loadRun(target,generation,reader);
-    if (generation!==state.routeGeneration) return;
-    state.lastUpdate=new Date();
-  } catch(error) { if (generation===state.routeGeneration) routeError(error.message,state.validatedParent); }
+    committed=await loadRun(target,generation,reader)===true;
+    if (generation!==state.routeGeneration||snapshot!==state.snapshotGeneration) return;
+    if(committed)state.lastUpdate=new Date();
+  } catch(error) { if (generation===state.routeGeneration&&snapshot===state.snapshotGeneration) routeError(error.message,state.validatedParent); }
+  finally {
+    if(snapshot===state.snapshotGeneration) {
+      if(reader)await restoreReader(reader,generation);
+      if(baseline!==null&&committed)state.cursor=baseline;
+      state.snapshotting=false;
+      state.receivedCursor=state.cursor;
+      if(resume){if(committed)startStream();else showConnection('disconnected','History unavailable');}
+    }
+  }
 }
 function readerSnapshot() {
   const active=document.activeElement;
   const selection=window.getSelection(),selectedText=selection?.toString()||'';
   const path=node=>{if(!node||!app.contains(node))return null;const parts=[];while(node!==app){const parent=node.parentNode;if(!parent)return null;parts.unshift([...parent.childNodes].indexOf(node));node=parent;}return parts;};
   return {top:window.scrollY,timeline:document.querySelector('.timeline-scroll')?.scrollLeft||0,events:document.getElementById('event-list')?.scrollTop||0,
-    route:route(),pages:{invocations:state.invocationPage.slice(-128),attempts:state.attemptPage.slice(-128),captures:state.captureSummaryPage.slice(-128),sessions:state.sessionPage.slice(-128),lane:state.lanePage},
+    route:route(),pages:{runs:state.runPage.slice(-128),invocations:state.invocationPage.slice(-128),attempts:state.attemptPage.slice(-128),captures:state.captureSummaryPage.slice(-128),sessions:state.sessionPage.slice(-128),lane:state.lanePage},
     eventWindowEnd:state.events.at(-1)?.cursor||null,capture:state.selectedCapture?{id:state.selectedCapture,after:state.captureAfter}:null,
     disclosures:[...app.querySelectorAll('details')].map(item=>({name:item.querySelector('summary')?.textContent?.trim(),open:item.open})),
     selection:selection&&!selection.isCollapsed&&selectedText.length<=2048?{anchor:path(selection.anchorNode),anchorOffset:selection.anchorOffset,focus:path(selection.focusNode),focusOffset:selection.focusOffset,text:selectedText}:null,
@@ -398,23 +423,21 @@ function readerSnapshot() {
 }
 async function restoreReader(reader, generation=state.routeGeneration) {
   if(!reader||state.error)return;
-  const request=++state.readerRestoreGeneration,href=location.href,invocationId=state.invocation?.id;
-  const current=()=>generation===state.routeGeneration&&request===state.readerRestoreGeneration&&href===location.href&&state.invocation?.id===invocationId;
+  const request=++state.readerRestoreGeneration,href=location.href,invocationId=state.invocation?.id,snapshot=state.snapshotGeneration;
+  const current=()=>generation===state.routeGeneration&&request===state.readerRestoreGeneration&&href===location.href&&state.invocation?.id===invocationId&&snapshot===state.snapshotGeneration;
   if(!current())return;
   if(state.invocation && reader.eventWindowEnd && !route().cursor && state.events.at(-1)?.cursor!==reader.eventWindowEnd) {
     const eventRequest=++state.eventPageGeneration;
     try {const page=await api(`/api/invocations/${invocationId}/events?before=${BigInt(reader.eventWindowEnd)+1n}&limit=200`);
-      if(!current()||eventRequest!==state.eventPageGeneration)return;
-      state.events=page.events;state.earlier=page.hasEarlier;renderEventList();}
+      if(current()&&eventRequest===state.eventPageGeneration){state.events=page.events;state.earlier=page.hasEarlier;renderEventList();}}
     catch { /* Keep the current saved window when older evidence cannot be read. */ }
   }
   if(!current())return;
   if(state.invocation && reader.capture?.id) {
-    try {state.selectedCapture=reader.capture.id;state.captureAfter=reader.capture.after;state.capturePending=false;
+    try {
       const captureVersion=++state.captureVersion;
       const page=await api(`/api/invocations/${invocationId}/captures/${reader.capture.id}?after=${reader.capture.after}&limit=50`);
-      if(!current()||state.captureVersion!==captureVersion||state.selectedCapture!==reader.capture.id)return;
-      state.capturePage=page;renderCapture();}
+      if(current()&&state.captureVersion===captureVersion){state.selectedCapture=reader.capture.id;state.captureAfter=reader.capture.after;state.capturePending=false;state.capturePage=page;renderCapture();}}
     catch { /* Keep other saved details available. */ }
   }
   if(!current())return;
@@ -435,12 +458,6 @@ async function restoreReader(reader, generation=state.routeGeneration) {
   }
   window.scrollTo(0,reader.top||0);
 }
-async function resnapshotPreservingReader() {
-  const reader=readerSnapshot();
-  const loading=loadRoute(reader),generation=state.routeGeneration;
-  await loading;
-  if(generation===state.routeGeneration)await restoreReader(reader,generation);
-}
 async function redeem(ticket) {
   if (!ticket) throw new Error('This browser link has no active owner handoff. Start the dashboard from its owner process and open the new link.');
   const response=await fetch('/api/ui-session',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket})});
@@ -449,19 +466,28 @@ async function redeem(ticket) {
   if (typeof result.sessionToken!=='string' || !result.sessionToken) throw new Error('Owner handoff returned no credential.');
   state.token=result.sessionToken;
 }
-async function connect() {
+function startStream(targetCursor = null) {
+  if(!state.token||state.snapshotting)return;
+  const generation=++state.streamGeneration;
+  void connect(generation,targetCursor);
+}
+async function connect(generation,targetCursor) {
   let wait=300;
-  while (state.token) {
+  while (state.token && generation===state.streamGeneration && !state.snapshotting) {
     const abort=new AbortController(); state.streamAbort=abort;
     try {
       showConnection('connecting','Catching up from saved cursor '+state.cursor);
       const response=await fetch('/api/stream?after='+encodeURIComponent(state.cursor),{headers:{Authorization:'Bearer '+state.token},cache:'no-store',signal:abort.signal});
       if (!response.ok || !response.body) throw new Error('Observation stream unavailable');
-      state.connected=true; showConnection(state.frozen?'frozen':'connected',state.frozen?'Frozen at saved cursor '+state.cursor:'Connected - saved cursor '+state.cursor);
+      if(generation!==state.streamGeneration)return;
+      state.connected=true;
+      if(state.frozen)showConnection('frozen','Frozen at saved cursor '+state.cursor);
+      else if(targetCursor&&BigInt(state.cursor)<BigInt(targetCursor))showConnection('connecting','Catching up from saved cursor '+state.cursor);
+      else showConnection('connected','Connected - saved cursor '+state.cursor);
       wait=300;
       const reader=response.body.getReader(),decoder=new TextDecoder(); let buffer='';
       while (true) {
-        const part=await reader.read(); if(part.done) break;
+        const part=await reader.read(); if(generation!==state.streamGeneration)return;if(part.done) break;
         buffer+=decoder.decode(part.value,{stream:true});
         let end;
         while((end=buffer.indexOf('\n\n'))!==-1) {
@@ -473,10 +499,15 @@ async function connect() {
             else if(line.startsWith('id: '))fields.id=line.slice(4);
           }
           if(fields.event==='observation') {
+            if(generation!==state.streamGeneration||state.snapshotting)return;
             let event; try {event=JSON.parse(fields.data);} catch {continue;}
-            if(!/^\d+$/.test(event.cursor||'') || BigInt(event.cursor)<=BigInt(state.cursor))continue;
-            applyEvent(event); state.cursor=event.cursor; state.lastUpdate=new Date();
-            if(state.connected && !state.frozen)showConnection('connected','Connected - saved cursor '+state.cursor);
+            if(!/^\d+$/.test(event.cursor||'') || BigInt(event.cursor)<=BigInt(state.receivedCursor))continue;
+            state.receivedCursor=event.cursor;
+            const projection=applyEvent(event);state.projection=projection;
+            await projection;
+            if(generation!==state.streamGeneration||state.snapshotting)return;
+            if(!state.frozen){state.cursor=event.cursor;state.lastUpdate=new Date();}
+            if(state.connected&&!state.frozen&&(!targetCursor||BigInt(state.cursor)>=BigInt(targetCursor)))showConnection('connected','Connected - saved cursor '+state.cursor);
           } else if(fields.event==='gap'||fields.event==='unavailable') {
             state.gap=true; throw new Error(fields.event==='gap'?'Saved event gap':'Observation unavailable');
           }
@@ -484,18 +515,20 @@ async function connect() {
       }
       throw new Error('Observation stream disconnected');
     } catch(error) {
-      if(error.name==='AbortError')return;
+      if(generation!==state.streamGeneration||error.name==='AbortError')return;
       state.connected=false;
+      state.receivedCursor=state.cursor;
       showConnection('disconnected',`Disconnected - last update ${state.lastUpdate ? state.lastUpdate.toLocaleTimeString() : 'unknown'}`);
       if(state.gap) {
-        try { const head=await api('/api/events/head'); state.cursor=head.cursor; await resnapshotPreservingReader(); }
+        try {const head=await api('/api/events/head');await loadRoute(readerSnapshot(),head.cursor);return; }
         catch { /* Keep the last saved display and retry. */ }
       }
       await new Promise(resolve=>setTimeout(resolve,wait)); wait=Math.min(wait*2,5000);
     }
   }
 }
-function applyEvent(event) {
+async function applyEvent(event) {
+  if(state.frozen) { deferEvent(event);return; }
   if(event.kind==='run.created' && !state.runs.some(run=>run.id===event.data?.runId)) {
     state.newRuns++;
     if(!route().run) {
@@ -504,8 +537,7 @@ function applyEvent(event) {
       notice.innerHTML=`<p>${state.newRuns} new run${state.newRuns===1?'':'s'} recorded while you were reading.</p><button type="button" data-action="refresh-index">Refresh run order</button>`;
     }
   }
-  if(state.frozen) { if(state.invocation && event.data?.invocationId===state.invocation.id)deferEvent(event);return; }
-  if(!route().run && state.runs.some(run=>run.id===event.data?.runId || run.latestInvocation?.id===event.data?.invocationId)) void refreshIndexCard(event);
+  if(!route().run && state.runs.some(run=>run.id===event.data?.runId || run.latestInvocation?.id===event.data?.invocationId)) await refreshIndexCard(event);
   if(state.invocation && event.data?.invocationId===state.invocation.id) {
     const alreadyShown=state.events.length && BigInt(event.cursor)<=BigInt(state.events.at(-1).cursor);
     if(event.kind==='capture.created' && !state.captures.some(item=>item.id===event.data.captureId)) {
@@ -516,13 +548,13 @@ function applyEvent(event) {
     if(event.kind==='capture.appended') {
       const capture=state.captures.find(item=>item.id===event.data.captureId);
       if(capture) {capture.state=event.data.state;updateCaptureButtons();}
-      if(capture?.channel==='request' && event.data.state==='complete')void refreshQuestion();
+      if(capture?.channel==='request' && event.data.state==='complete')await refreshQuestion();
       if(state.selectedCapture===event.data.captureId && state.capturePage) {
         state.capturePending=true;state.captureVersion++;
         void followCapture();
       }
     }
-    if(['invocation.finalized','invocation.running','invocation.shutting_down','owner.cleared'].includes(event.kind)) void refreshCurrentOutcome();
+    if(['invocation.finalized','invocation.running','invocation.shutting_down','owner.cleared'].includes(event.kind)) await refreshCurrentOutcome();
     if(alreadyShown)return;
     const list=document.getElementById('event-list');
     const selection=window.getSelection();
@@ -534,13 +566,14 @@ function applyEvent(event) {
   }
 }
 function deferEvent(event) {
+  if(state.deferredEvents.some(item=>item.cursor===event.cursor))return;
   state.pending++;state.deferredEvents.push(event);
-  if(state.deferredEvents.length>200){state.deferredEvents.shift();state.deferredOverflow=true;}
+  if(state.deferredEvents.length>200)state.deferredEvents.shift();
   updatePending();
 }
 async function refreshQuestion() {
-  const id=state.invocation?.id,generation=state.routeGeneration,href=location.href;if(!id)return;
-  try {const question=await api(`/api/invocations/${id}/question`);if(generation!==state.routeGeneration||href!==location.href||state.invocation?.id!==id)return;state.question=question;
+  const id=state.invocation?.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;if(!id)return;
+  try {const question=await api(`/api/invocations/${id}/question`);if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id)return;state.question=question;
     updateAttention();
     updateOutcomeExplanation();
   } catch { /* Keep the saved view until a successful snapshot. */ }
@@ -567,10 +600,10 @@ function updateOutcomeExplanation() {
 async function refreshIndexCard(event) {
   const run=state.runs.find(item=>item.id===event.data?.runId || item.latestInvocation?.id===event.data?.invocationId);
   if(!run)return;
-  const generation=++state.cardRefreshSequence;state.cardGenerations.set(run.id,generation);
+  const generation=++state.cardRefreshSequence,snapshot=state.snapshotGeneration;state.cardGenerations.set(run.id,generation);
   try {
     const latest=await api(`/api/runs/${run.id}`);
-    if(route().run||state.cardGenerations.get(run.id)!==generation)return;
+    if(route().run||snapshot!==state.snapshotGeneration||state.cardGenerations.get(run.id)!==generation)return;
     const index=state.runs.findIndex(item=>item.id===run.id);if(index<0)return;
     state.runs[index]=latest;
     const cards=document.getElementById('cards');
@@ -601,8 +634,8 @@ function updateCaptureButtons() {
 }
 async function refreshCurrentOutcome() {
   if(!state.invocation)return;
-  const id=state.invocation.id,generation=++state.outcomeGeneration,routeGeneration=state.routeGeneration,href=location.href;
-  const current=()=>routeGeneration===state.routeGeneration&&href===location.href&&state.invocation?.id===id&&generation===state.outcomeGeneration;
+  const id=state.invocation.id,generation=++state.outcomeGeneration,routeGeneration=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
+  const current=()=>routeGeneration===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href&&state.invocation?.id===id&&generation===state.outcomeGeneration;
   try {
     const page=await api(`/api/invocations/${id}?limit=1`);
     if(!current())return;
@@ -626,41 +659,30 @@ function updatePending() {
   if(button) { button.hidden=false; button.textContent=state.pending+' new events - return to latest'; }
 }
 async function latestEvents() {
-  if(!state.invocation) {
-    state.frozen=false;state.pending=0;state.deferredEvents=[];state.deferredOverflow=false;
+  if((!state.frozen&&!state.pending)||state.following)return;
+  state.following=true;
+  const reader=readerSnapshot();reader.eventWindowEnd=null;
+  const selected=route();
+  if(selected.cursor){history.replaceState({...history.state},'',link({run:selected.run,invocation:selected.invocation,phase:selected.phase,attempt:selected.attempt,session:selected.session}));lastNavigatedHref=location.href;}
+  try {
+    const loading=loadRoute(reader,null,false),snapshot=state.snapshotGeneration;
+    await loading;
+    if(snapshot!==state.snapshotGeneration)return;
+    if(state.error||reader.route.run!==route().run||reader.route.invocation!==route().invocation)return;
+    const head=await api('/api/events/head');
+    if(snapshot!==state.snapshotGeneration)return;
+    state.frozen=false;state.pending=0;state.deferredEvents=[];state.selectedEventCursor=null;
+    document.getElementById('event-list')?.scrollTo({top:10000000});
     document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Freeze this view';button.setAttribute('aria-pressed','false')});
-    showConnection(state.connected?'connected':'disconnected',state.connected?'Connected - saved cursor '+state.cursor:'Disconnected - showing last saved view');
-    return;
-  }
-  const id=state.invocation.id,generation=state.routeGeneration,request=++state.eventPageGeneration;
-  let href=location.href;
-  const current=()=>generation===state.routeGeneration&&href===location.href&&state.invocation?.id===id&&request===state.eventPageGeneration;
-  const lastAtRequest=state.events.at(-1)?.cursor||'0';
-  const page=await api(`/api/invocations/${id}/events?tail=1&limit=200`);
-  if(!current())return;
-  const deferred=state.deferredEvents,overflow=state.deferredOverflow;
-  const deferredSet=new Set(deferred);
-  const live=state.events.filter(event=>BigInt(event.cursor)>BigInt(lastAtRequest));
-  state.events=page.events;state.earlier=page.hasEarlier;state.pending=0;state.frozen=false;state.deferredEvents=[];state.deferredOverflow=false;state.selectedEventCursor=null;
-  for(const event of [...deferred,...live].sort((a,b)=>BigInt(a.cursor)<BigInt(b.cursor)?-1:BigInt(a.cursor)>BigInt(b.cursor)?1:0)){
-    if(!state.events.length||BigInt(event.cursor)>BigInt(state.events.at(-1).cursor)){
-      state.events.push(event);if(state.events.length>200){state.events.shift();state.earlier=true;}
-    }
-    if(deferredSet.has(event))applyEvent(event);
-  }
-  if(route().cursor){history.replaceState({...history.state},'',link({run:state.run.id,invocation:state.invocation.id}));lastNavigatedHref=href=location.href;}
-  await refreshCurrentOutcome();
-  if(!current())return;
-  renderEventList(); document.getElementById('event-list')?.scrollTo({top:10000000});
-  document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Freeze this view';button.setAttribute('aria-pressed','false')});
-  showConnection(state.connected?'connected':'disconnected',state.connected?'Connected - saved cursor '+state.cursor:'Disconnected - showing last saved view');
-  if(overflow)await resnapshotPreservingReader();
+    showConnection('connecting','Catching up from saved cursor '+state.cursor);
+    startStream(head.cursor);
+  } finally {state.following=false;}
 }
 async function olderEvents() {
   if(!state.invocation||!state.events.length)return;
-  const before=state.events[0].cursor,id=state.invocation.id,generation=state.routeGeneration,href=location.href,request=++state.eventPageGeneration;
+  const before=state.events[0].cursor,id=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href,request=++state.eventPageGeneration;
   const page=await api(`/api/invocations/${id}/events?before=${before}&limit=200`);
-  if(generation!==state.routeGeneration||href!==location.href||state.invocation?.id!==id||request!==state.eventPageGeneration||state.events[0]?.cursor!==before)return;
+  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==id||request!==state.eventPageGeneration||state.events[0]?.cursor!==before)return;
   state.events=page.events; state.earlier=page.hasEarlier; state.frozen=true;
   renderEventList(); document.getElementById('event-list')?.scrollTo({top:0});
   document.querySelectorAll('[data-action="freeze"]').forEach(button=>{button.textContent='Follow latest events';button.setAttribute('aria-pressed','true')});
@@ -668,10 +690,10 @@ async function olderEvents() {
 }
 async function openCapture(id) {
   if(!state.invocation)return;
-  const invocationId=state.invocation.id,generation=state.routeGeneration,href=location.href;
+  const invocationId=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
   state.selectedCapture=id;state.captureAfter=0;state.capturePending=false;state.captureVersion++;
   const page=await api(`/api/invocations/${invocationId}/captures/${id}?limit=50`);
-  if(generation!==state.routeGeneration||href!==location.href||state.invocation?.id!==invocationId||state.selectedCapture!==id)return;
+  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==invocationId||state.selectedCapture!==id)return;
   state.capturePage=page;
   renderCapture();
 }
@@ -701,8 +723,8 @@ function captureAtBottom() {
 async function followCapture(force=false) {
   if(!state.capturePending||state.captureRefreshing||state.frozen||!state.selectedCapture||!state.capturePage)return;
   if(!force&&!captureAtBottom()){renderCapture();return;}
-  const page=state.capturePage,id=state.selectedCapture,invocationId=state.invocation?.id,generation=state.routeGeneration,href=location.href;
-  const current=()=>generation===state.routeGeneration&&href===location.href&&state.invocation?.id===invocationId&&state.selectedCapture===id&&state.capturePage===page;
+  const page=state.capturePage,id=state.selectedCapture,invocationId=state.invocation?.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
+  const current=()=>generation===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href&&state.invocation?.id===invocationId&&state.selectedCapture===id&&state.capturePage===page;
   if(page.chunks.length>=50){page.hasMore=true;renderCapture();return;}
   const version=state.captureVersion;state.captureRefreshing=true;
   try {
@@ -720,28 +742,28 @@ async function followCapture(force=false) {
     renderCapture();
   } catch { if(current())renderCapture(); }
   finally {
-    state.captureRefreshing=false;
-    if(state.capturePending && (state.selectedCapture!==id || (state.capturePage===page&&!page.hasMore&&captureAtBottom())))void followCapture();
+    if(current())state.captureRefreshing=false;
+    if(current()&&state.capturePending&&!page.hasMore&&captureAtBottom())void followCapture();
   }
 }
 async function moreOutput() {
   const old=state.capturePage; if(!old)return;
   if(!old.hasMore){await followCapture(true);return;}
-  const invocationId=state.invocation?.id,id=state.selectedCapture,generation=state.routeGeneration,href=location.href;
+  const invocationId=state.invocation?.id,id=state.selectedCapture,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
   if(!invocationId||!id)return;
   const next=await api(`/api/invocations/${invocationId}/captures/${id}?after=${old.nextSequence}&limit=50`);
-  if(generation!==state.routeGeneration||href!==location.href||state.invocation?.id!==invocationId||state.selectedCapture!==id||state.capturePage!==old)return;
+  if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||state.invocation?.id!==invocationId||state.selectedCapture!==id||state.capturePage!==old)return;
   state.captureAfter=old.nextSequence;state.capturePage=next;state.capturePending=false;renderCapture();
 }
 async function moreHistory(kind, direction='next') {
   if(!state.invocation)return;
-  const id=state.invocation.id,generation=state.routeGeneration,href=location.href;
+  const id=state.invocation.id,generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
   const stack=kind==='sessions'?state.sessionPage:kind==='attempts'?state.attemptPage:state.captureSummaryPage;
   const nextStack=stack.slice();
   if(direction==='next')nextStack.push(kind==='sessions'?state.sessionsNext:kind==='attempts'?state.attemptsNext:state.capturesNext);
   else if(nextStack.length>1)nextStack.pop();
   const cursor=nextStack.at(-1) ?? 0;
-  const current=()=>generation===state.routeGeneration&&href===location.href&&state.invocation?.id===id&&
+  const current=()=>generation===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href&&state.invocation?.id===id&&
     (kind==='sessions'?state.sessionPage:kind==='attempts'?state.attemptPage:state.captureSummaryPage)===stack;
   if(kind==='sessions') {
     const page=await api(`/api/invocations/${id}/sessions?after=${cursor}&limit=50`);
@@ -783,9 +805,9 @@ app.addEventListener('click',async event=>{
   history.pushState(!returning&&anchor.matches('.phase-bar, .timeline-text a')?{origin:{href:anchor.getAttribute('href')}}:{},'',anchor.getAttribute('href'));
   lastNavigatedHref=location.href;
   if(returning)[...document.querySelectorAll('.phase-bar, .timeline-text a')].find(item=>item.getAttribute('href')===originHref)?.focus({preventScroll:true});
-  const loading=loadRoute(returning?before:null),generation=state.routeGeneration;
+  const loading=loadRoute(returning?before:null),snapshot=state.snapshotGeneration;
   await loading;
-  if(generation!==state.routeGeneration)return;
+  if(snapshot!==state.snapshotGeneration)return;
   if(route().run===oldRun) {window.scrollTo(0,before.top);}
   else window.scrollTo(0,0);
   if(returning) {
@@ -798,14 +820,22 @@ app.addEventListener('change',event=>{if(event.target.id==='outcome-filter'){sta
 app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');if(!button)return;
   const action=button.dataset.action;
-  const generation=state.routeGeneration,href=location.href;
+  const generation=state.routeGeneration,snapshot=state.snapshotGeneration,href=location.href;
   try {
     if(action==='clear-filter'){state.query='';state.filter='all';renderIndex();document.getElementById('run-search')?.focus();}
-    else if(action==='next-runs'){state.runPage.push(state.runPageNext);await loadIndex();}
-    else if(action==='previous-runs'){state.runPage.pop();await loadIndex();}
-    else if(action==='refresh-index'){state.runPage=[0];state.newRuns=0;await loadIndex();}
-    else if(action==='next-invocations'){state.invocationPage.push(state.invocationNext);await loadRun(route());}
-    else if(action==='previous-invocations'){state.invocationPage.pop();await loadRun(route());}
+    else if(action==='next-runs'||action==='previous-runs'||action==='refresh-index'){
+      const reader=readerSnapshot(),pages=reader.pages.runs;
+      if(action==='next-runs')pages.push(state.runPageNext);
+      else if(action==='previous-runs')pages.pop();
+      else pages.splice(0,pages.length,0);
+      await loadRoute(reader);
+      if(action==='refresh-index'&&!state.error)state.newRuns=0;
+    }
+    else if(action==='next-invocations'||action==='previous-invocations'){
+      const reader=readerSnapshot(),pages=reader.pages.invocations;
+      if(action==='next-invocations')pages.push(state.invocationNext);else pages.pop();
+      await loadRoute(reader);
+    }
     else if(action==='next-lanes'||action==='previous-lanes'){const reader=readerSnapshot();state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());await restoreReader(reader,generation);if(generation===state.routeGeneration&&href===location.href)document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
     else if(action==='more-attempts')await moreHistory('attempts');
     else if(action==='more-sessions')await moreHistory('sessions');
@@ -828,11 +858,11 @@ app.addEventListener('click',async event=>{
     else if(action==='freeze'){
       if(state.frozen)await latestEvents();else{state.frozen=true;showConnection('frozen','Frozen at saved cursor '+state.cursor);document.querySelectorAll('[data-action="freeze"]').forEach(item=>{item.setAttribute('aria-pressed','true');item.textContent='Follow latest events'})}
     }
-  } catch(error){if(generation!==state.routeGeneration||href!==location.href||!button.isConnected||
+  } catch(error){if(generation!==state.routeGeneration||snapshot!==state.snapshotGeneration||href!==location.href||!button.isConnected||
     (action==='open-capture'&&state.selectedCapture!==button.dataset.id))return;
     announcement.textContent=error.message;const box=document.createElement('div');box.className='error-message';box.setAttribute('role','alert');box.textContent=error.message;app.prepend(box);}
 });
-function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;const reader=history.state?.reader;const loading=loadRoute(reader),generation=state.routeGeneration;void loading.then(()=>{if(generation===state.routeGeneration)return restoreReader(reader,generation);});}
+function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;void loadRoute(history.state?.reader);}
 window.addEventListener('hashchange',browserRouteChanged);
 window.addEventListener('popstate',browserRouteChanged);
 
@@ -840,8 +870,7 @@ export async function start(ticket) {
   try {
     await redeem(ticket);
     // The head is sampled before the first snapshot, so later committed events are replayed by SSE.
-    const head=await api('/api/events/head');state.cursor=head.cursor;
-    await loadRoute();
-    void connect();
+    const head=await api('/api/events/head');
+    await loadRoute(null,head.cursor);
   } catch(error) {showConnection('disconnected','History unavailable');errorView(error.message);}
 }
