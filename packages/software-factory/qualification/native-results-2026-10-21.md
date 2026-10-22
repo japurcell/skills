@@ -27,3 +27,17 @@ Commit `7ae5f2da` isolates fixture Git config/hooks as regular owned paths and r
 | win32-x64 | win25-vs2026 20261007.264.1 | 10.0.26100 / NTFS | 7.187 ms |
 
 All direct transaction, rollback, 80-row contention, process-loss and backup-integrity assertions passed again. POSIX signal cleanup and Windows cooperative qualifier cleanup passed their distinct assertions. No Windows console-signal, installed runtime, real provider or desktop-delivery claim follows. Passing artifacts were downloaded under `/tmp/factory-native-pass-39719540444/`; their retained Actions copies expire after 14 days.
+
+## Reviewed T6 source, retained latency rejection and fresh-host rerun
+
+[Run 39726180450](https://github.com/japurcell/skills/actions/runs/39726180450) tests `8053272b55ea4e8024cd075a45bfed8b890db7fe`, including reviewed T6 source. macOS and Windows passed attempt 1. Linux passed all earlier foundation steps but its direct storage probe rejected small-commit p95 **121.044151 ms** against the unchanged **100 ms** threshold. The qualifier, placement source and foundation driver are identical to earlier passing `6435ec41`; no source repair or threshold change was made. The exact cause of the different measured latency was not established.
+
+After retaining attempt 1 evidence, the operator reran only the failed job on another hosted runner. Linux attempt 2 passed. This is explicit qualification on that runner, not proof that every runner with the same image meets latency requirements, a flakiness repair, or a factory-managed infrastructure retry. The workflow has no automatic retry.
+
+| Target / passing attempt | Runner image | OS / filesystem | Small-commit p95 |
+| --- | --- | --- | --- |
+| darwin-arm64 / 1 | macos15 20260907.0337.1 | 24.6.0 / apfs | 0.132 ms |
+| linux-x64 / 2 | ubuntu24 20261018.339.1 | 7.0.0-1017-azure / ext | 0.553 ms |
+| win32-x64 / 1 | win25-vs2026 20261018.275.1 | 10.0.26100 / NTFS | 4.802 ms |
+
+All passing targets again verified WAL/FULL/foreign keys, rollback, 80 concurrent rows, one committed and zero uncommitted rows after process loss, and backup integrity. Failure artifacts are downloaded under `/tmp/factory-foundation-linux-39726180450-attempt1`; passing artifacts under `/tmp/factory-foundation-39726180450/`. Actions retention is 14 days. These remain foundation-only checks; the hosted workflow does not run T6 startup/shutdown, real providers or desktop delivery.

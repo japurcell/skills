@@ -1,4 +1,4 @@
-name: Hook security macOS
+name: Hook security POSIX
 
 on:
   push:
@@ -23,6 +23,47 @@ permissions:
   contents: read
 
 jobs:
+  verifier-linux:
+    name: Native verifier cleanup Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.13'
+      - name: Isolate native verifier fixtures
+        run: |
+          umask 077
+          task_root="$RUNNER_TEMP/native verifier"
+          mkdir -p "$task_root/home" "$task_root/tmp" "$task_root/logs"
+          : > "$task_root/gitconfig"
+          {
+            printf 'HOME=%s/home\n' "$task_root"
+            printf 'TMPDIR=%s/tmp\n' "$task_root"
+            printf 'GIT_CONFIG_GLOBAL=%s/gitconfig\n' "$task_root"
+            printf 'GIT_CONFIG_NOSYSTEM=1\n'
+            printf 'GIT_TERMINAL_PROMPT=0\n'
+          } >> "$GITHUB_ENV"
+      - name: Qualify actual Linux process identity and bounded cleanup
+        run: |
+          python3 -c 'import sys; print(sys.version); assert sys.version_info[:2] == (3, 13)'
+          git --version
+          uname -a
+          python3 scripts/test-verify-security-fixture-patch.py 2>&1 | tee "$RUNNER_TEMP/native verifier/logs/verifier.log"
+      - name: Retain Linux verifier evidence including failures
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: native-verifier-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native verifier/logs
+          if-no-files-found: warn
+          retention-days: 14
   security:
     runs-on: macos-latest
     timeout-minutes: 30
