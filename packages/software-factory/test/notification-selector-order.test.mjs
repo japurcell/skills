@@ -12,11 +12,15 @@ function fixture(t, { concurrency = 1, cancellable = false } = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'factory-test-order-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const script = join(directory, 'run.mjs');
-  writeFileSync(script, `import { runOrderedTests } from ${JSON.stringify(runnerUrl)};
+  writeFileSync(script, `import { writeFileSync } from 'node:fs';
+    import { runOrderedTests } from ${JSON.stringify(runnerUrl)};
     const controller = new AbortController();
     let interruptedBy;
     ${cancellable ? "for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { interruptedBy = signal; controller.abort(); });" : ''}
+    ${cancellable ? "process.on('message', (message) => { if (message === 'abort') controller.abort(); });" : ''}
     const result = await runOrderedTests(process.argv.slice(2), { concurrency: ${concurrency}, cwd: process.cwd(), signal: controller.signal });
+    if (process.env.RUN_RESULT) writeFileSync(process.env.RUN_RESULT, String(result));
+    if (process.connected) process.disconnect();
     process.exitCode = interruptedBy === 'SIGINT' ? 130 : controller.signal.aborted ? 143 : result;\n`);
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
@@ -106,17 +110,19 @@ test('empty, skipped and missing selected files cannot produce a passing run', (
   assert.match(missingResult.stdout, /not ok/);
 });
 
-async function checkResistantCancellation(t, signal, expectedCode) {
+async function checkResistantCancellation(t, cancellation, expectedCode) {
   const { directory, script, env } = fixture(t, { cancellable: true });
   const started = join(directory, 'started');
   const tailReceipt = join(directory, 'tail');
+  const resultReceipt = join(directory, 'result');
   const hanging = join(directory, 'z-hanging.test.mjs');
   const tail = join(directory, 'a-tail.test.mjs');
   writeFileSync(hanging, `import test from 'node:test'; import { writeFileSync } from 'node:fs'; process.on('SIGTERM', () => {}); test('hanging', async () => { writeFileSync(process.env.STARTED, String(process.pid)); await new Promise(() => setInterval(() => {}, 1000)); });\n`);
   writeFileSync(tail, `import test from 'node:test'; import { writeFileSync } from 'node:fs'; test('tail', () => writeFileSync(process.env.TAIL_RECEIPT, 'ran'));\n`);
   env.STARTED = started;
   env.TAIL_RECEIPT = tailReceipt;
-  const child = spawn(process.execPath, [script, hanging, tail], { cwd: directory, env, stdio: ['ignore', 'pipe', 'pipe'] });
+  env.RUN_RESULT = resultReceipt;
+  const child = spawn(process.execPath, [script, hanging, tail], { cwd: directory, env, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
   const output = [];
   child.stdout.on('data', (chunk) => output.push(chunk));
   child.stderr.on('data', (chunk) => output.push(chunk));
@@ -124,12 +130,14 @@ async function checkResistantCancellation(t, signal, expectedCode) {
   try {
     for (let attempt = 0; attempt < 100 && !existsSync(started); attempt++) await delay(20);
     assert.ok(existsSync(started), 'the first test child must start before cancellation');
-    child.kill(signal);
+    if (cancellation === 'abort') child.send('abort');
+    else child.kill(cancellation);
     const [code] = await Promise.race([
       new Promise((resolve) => child.once('close', (...args) => resolve(args))),
       new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('runner or test child retained an open pipe')), 2000); }),
     ]);
     assert.equal(code, expectedCode, Buffer.concat(output).toString());
+    assert.equal(readFileSync(resultReceipt, 'utf8'), '1', 'the public runner must return failure on cancellation');
     assert.equal(existsSync(tailReceipt), false);
     assert.throws(() => process.kill(Number(readFileSync(started, 'utf8')), 0), { code: 'ESRCH' });
   } finally {
@@ -142,7 +150,41 @@ async function checkResistantCancellation(t, signal, expectedCode) {
   }
 }
 
-test('SIGTERM and SIGINT close a signal-resistant worker without starting the queued case', { timeout: 8000 }, async (t) => {
+if (process.platform !== 'win32') test('SIGTERM and SIGINT close a signal-resistant worker without starting the queued case', { timeout: 8000 }, async (t) => {
   await checkResistantCancellation(t, 'SIGTERM', 143);
   await checkResistantCancellation(t, 'SIGINT', 130);
+});
+
+test('public AbortSignal closes a signal-resistant worker without starting the queued case', { timeout: 8000 }, async (t) => {
+  const unrelated = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+  try {
+    assert.ok(unrelated.pid, 'unrelated process must start');
+    await checkResistantCancellation(t, 'abort', 143);
+    assert.doesNotThrow(() => process.kill(unrelated.pid, 0), 'an unrelated process must survive the owned-tree shutdown');
+  } finally {
+    if (unrelated.exitCode === null && unrelated.signalCode === null) unrelated.kill('SIGKILL');
+  }
+});
+
+// On Windows, Node's subprocess.kill() cannot deliver a catchable SIGTERM or
+// SIGINT to the harness. This checks native behavior without claiming it tests
+// the cooperative AbortSignal path above.
+if (process.platform === 'win32') test('Windows child.kill signals terminate without invoking the child handler', { timeout: 8000 }, async (t) => {
+  const { directory } = fixture(t);
+  for (const signal of ['SIGTERM', 'SIGINT']) {
+    const ready = join(directory, `ready-${signal}`);
+    const handled = join(directory, `handled-${signal}`);
+    const child = spawn(process.execPath, ['-e', `const { writeFileSync } = require('node:fs'); process.on(${JSON.stringify(signal)}, () => writeFileSync(${JSON.stringify(handled)}, 'handled')); writeFileSync(${JSON.stringify(ready)}, 'ready'); setInterval(() => {}, 1000);`], { stdio: 'ignore' });
+    try {
+      for (let attempt = 0; attempt < 100 && !existsSync(ready); attempt++) await delay(20);
+      assert.ok(existsSync(ready), `${signal} child must be ready`);
+      assert.equal(child.kill(signal), true);
+      const [code, termination] = await new Promise((resolve) => child.once('close', (...args) => resolve(args)));
+      assert.equal(code, null);
+      assert.equal(termination, signal);
+      assert.equal(existsSync(handled), false);
+    } finally {
+      if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    }
+  }
 });
