@@ -154,6 +154,34 @@ test('consumer refuses a self-consistent manifest with altered authoring or depe
   }
 });
 
+test('consumer refuses a reselected manifest with changed toolchain platform or integrity', async () => {
+  const { validateReleaseBundle } = await import('../dist/release.js');
+  for (const change of [
+    lock => { lock.packages['node_modules/typescript'].os = ['win32']; },
+    lock => { lock.packages['node_modules/typescript'].integrity = `sha512-${Buffer.alloc(64).toString('base64')}`; },
+  ]) {
+    const f = fixture();
+    try {
+      const packaged = f.run();
+      assert.equal(packaged.status, 0, packaged.stderr);
+      const lockPath = join(f.destination, 'toolchain/package-lock.json');
+      const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+      change(lock);
+      const lockBytes = Buffer.from(`${JSON.stringify(lock)}\n`);
+      writeFileSync(lockPath, lockBytes);
+      const manifestPath = join(f.destination, 'release-manifest.json');
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      const entry = manifest.files.find(file => file.path === 'toolchain/package-lock.json');
+      entry.bytes = lockBytes.length;
+      entry.sha256 = createHash('sha256').update(lockBytes).digest('hex');
+      const manifestBytes = Buffer.from(`${JSON.stringify(manifest)}\n`);
+      writeFileSync(manifestPath, manifestBytes);
+      const selectedDigest = createHash('sha256').update(manifestBytes).digest('hex');
+      assert.throws(() => validateReleaseBundle(f.destination, selectedDigest), /toolchain lock/i);
+    } finally { f.dispose(); }
+  }
+});
+
 test('dedicated release toolchain lock installs only pinned compiler and Node types offline', () => {
   const f = fixture();
   const installation = join(f.root, 'installation');

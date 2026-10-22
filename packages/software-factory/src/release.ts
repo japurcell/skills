@@ -32,6 +32,9 @@ const NODE_ASSETS: Readonly<Record<ReleasePlatform, NodeAsset>> = {
   'win32-x64': { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-win-x64.zip', sha256: 'd2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5' },
 };
 const QUALIFIED_WINDOWS_HELPER_SHA256 = 'f46ba4a408f8618d5e186ce29cf47bdac3411b67356136d79da4a0ed0c35ec44';
+// Schema 2 approves these complete lock bytes, including every npm platform,
+// executable, engine and package integrity field. A lock change needs a new schema.
+const QUALIFIED_TOOLCHAIN_LOCK_SHA256 = 'bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6';
 const WEB_FILES = ['app.js', 'index.html', 'style.css'] as const;
 const TEMPLATE_FILES = [
   'agents.json', 'package.json', 'prompts/audit.md', 'prompts/implementation.md', 'prompts/planning.md',
@@ -194,6 +197,7 @@ function sameFields(value: Record<string, unknown>, expected: Record<string, unk
 }
 
 function validateInstallTemplates(files: ReadonlyMap<string, Buffer>): void {
+  if (hash(files.get('toolchain/package-lock.json')!) !== QUALIFIED_TOOLCHAIN_LOCK_SHA256) fail('unapproved factory toolchain lock');
   const authoring = object(JSON.parse(files.get('templates/package.json')!.toString('utf8')));
   sameFields(authoring, { name: '@local/software-factory-authoring', version: '0.0.0', private: true, type: 'module' }, 'authoring package');
   const toolchain = object(JSON.parse(files.get('toolchain/package.json')!.toString('utf8')));
