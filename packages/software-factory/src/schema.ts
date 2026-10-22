@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-export const schemaVersion = 4;
+export const schemaVersion = 5;
 
 export function initializeSchema(database: DatabaseSync) {
   database.exec(`
@@ -33,7 +33,9 @@ export function initializeSchema(database: DatabaseSync) {
       PRIMARY KEY(capture_id,sequence), CHECK(length(CAST(text AS BLOB))<=65536));
     CREATE TABLE sessions(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT NOT NULL REFERENCES attempts(id), native_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(attempt_id,native_id));
     CREATE INDEX session_history ON sessions(invocation_id,attempt_id);
-    PRAGMA user_version=4;
+    CREATE TABLE notification_deliveries(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), kind TEXT NOT NULL CHECK(kind='initial'), data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(invocation_id,kind));
+    CREATE INDEX notification_invocation ON notification_deliveries(invocation_id);
+    PRAGMA user_version=5;
     COMMIT;
   `);
 }

@@ -7,12 +7,31 @@ import { join, resolve } from 'node:path';
 import { buildWorkflow } from './build.js';
 import { InvocationRecorder } from './capture.js';
 import { openRepositoryStore } from './store.js';
+import { sendInitialNotification } from './notifications.js';
+import type { NotificationSender } from './notifications.js';
+import type { Claim, RepositoryStore } from './store.js';
 import { CommandRunner, NeedsInput, ShutdownInterrupted, workflowContext } from './workflow.js';
 import { createWorktree, git, repositoryIdentity, selectedCommit, StartupGitControl, StartupInterrupted, worktreeIdentity, assertPreparationIdentity } from './workspace.js';
 
 export interface InvokeOptions extends AgentConfiguration {
   repository: string; workflow: string; input: string; newWorktree: boolean; ref?: string;
   worktreeId?: string; runId?: string; question?: string; contexts?: string[]; commandTimeoutMs?:number; agentTimeoutMs?:number; shutdownGraceMs?:number;
+  /** Trusted installation binding or disposable test sender; absent means explicitly unavailable. */
+  notificationSender?: NotificationSender;
+}
+async function savedNotification(store: RepositoryStore, invocationId: string, claim: Claim, cleanup: 'complete' | 'unknown', sender?: NotificationSender) {
+  let notification;
+  try { notification = await sendInitialNotification(store, invocationId, sender); }
+  catch {
+    // Attention delivery cannot change execution or cleanup facts. A reserved unknown remains visible.
+    try { notification = store.readNotificationDeliveries(invocationId)[0] ?? null; }
+    catch { notification = null; }
+  } finally {
+    // The existing worktree claim excludes maintenance until every notice write has settled.
+    if (cleanup === 'complete') try { await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' }); }
+    catch { /* Preserve the exact claim for explicit recovery if release is uncertain. */ }
+  }
+  return notification;
 }
 export async function invoke(options:InvokeOptions) {
   const settings={agentTimeoutMs:duration(options.agentTimeoutMs,3600000),commandTimeoutMs:duration(options.commandTimeoutMs,1800000),shutdownGraceMs:duration(options.shutdownGraceMs,30000,300000)};
@@ -39,6 +58,7 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
   let recorder: InvocationRecorder | undefined;
   let worktreePath: string | undefined;
   let entered = false;
+  let attemptedSuccessFinalization = false;
   let runner: CommandRunner | undefined;
   try {
     const runId = options.runId ?? (await store.createRun()).id;
@@ -99,8 +119,10 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     if (result !== undefined) { const writer = await recorder.openCapture({ channel: 'report' }); await writer.write(JSON.stringify(result)); await writer.finish(); }
     await recorder.barrier(); await runner.drain(); await store.stopAdmissions(invocation.id);
     runner.close();
+    // drain() would throw for any saved question, so a successful run has no initial issue.
+    attemptedSuccessFinalization = true;
     await store.finalizeInvocation({id:invocation.id,outcome:'succeeded',cleanup:'complete',claimId:invocation.claim.id,token:invocation.claim.token});
-    return { runId, invocationId: invocation.id, worktreeId: worktree.id, worktree: worktree.path, outcome: 'succeeded', cleanup: 'complete', exitCode: 0 };
+    return { runId, invocationId: invocation.id, worktreeId: worktree.id, worktree: worktree.path, outcome: 'succeeded', cleanup: 'complete', notification: null, exitCode: 0 };
   } catch (error) {
     if (!invocation) throw error;
     let failure = error;
@@ -115,12 +137,15 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     let cleanup: 'complete' | 'unknown' = 'unknown';
     runner?.close();
     const outcome = failure instanceof NeedsInput ? 'needs_input' : failure instanceof ShutdownInterrupted ? (runner?.signal ? 'interrupted' : 'cancelled') : 'failed';
+    let finalized = false;
     try {
       if (recorder && !recorder.failed) { const writer = await recorder.openCapture({ channel: 'event' }); await writer.write(JSON.stringify({diagnostic,reasons:runner?.reasons ?? []})); await writer.finish(); await recorder.barrier(); }
       await store.stopAdmissions(invocation.id);
       cleanup = !store.hasOccupiedActivity(invocation.id) && !recorder?.failed && !runner?.unresolved ? 'complete' : 'unknown';
-      await store.finalizeInvocation({id:invocation.id,outcome,cleanup,claimId:invocation.claim.id,token:invocation.claim.token});
+      await store.finalizeInvocation({id:invocation.id,outcome,cleanup,claimId:invocation.claim.id,token:invocation.claim.token,retainClaim:!attemptedSuccessFinalization});
+      finalized = true;
     } catch { cleanup = 'unknown'; }
-    return { runId: invocation.runId, invocationId: invocation.id, worktreeId: invocation.worktreeId, worktree: worktreePath, outcome, cleanup, diagnostic, exitCode: cleanup !== 'complete' ? 1 : outcome === 'interrupted' && runner?.signal ? (runner.signal === 'SIGINT' ? 130 : 143) : !entered ? 3 : outcome === 'needs_input' ? 2 : 1 };
+    const notification = finalized ? await savedNotification(store, invocation.id, invocation.claim, cleanup, options.notificationSender) : null;
+    return { runId: invocation.runId, invocationId: invocation.id, worktreeId: invocation.worktreeId, worktree: worktreePath, outcome, cleanup, diagnostic, notification, exitCode: cleanup !== 'complete' ? 1 : outcome === 'interrupted' && runner?.signal ? (runner.signal === 'SIGINT' ? 130 : 143) : !entered ? 3 : outcome === 'needs_input' ? 2 : 1 };
   } finally { runner?.close(); store.close(); }
 }

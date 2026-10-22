@@ -38,6 +38,12 @@ export interface NativeSession {
 export type CaptureState = 'open' | 'complete' | 'partial' | 'unknown' | 'pruned';
 export interface CaptureChunk { sequence: number; text: string }
 export interface Clearance { id: string; claimId: string; invocationId?: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown'; details?: object }
+export interface NotificationDelivery {
+  id: string; invocationId: string; kind: 'initial'; state: 'submitted' | 'failed' | 'timed_out' | 'unknown';
+  reason?: string; cleanup: 'complete' | 'unknown'; visibleDelivery: false;
+  issues: { outcome: string; cleanup: 'complete' | 'unknown'; questions: number };
+  createdAt: string; updatedAt: string;
+}
 
 function text(value: string, label: string) {
   if (typeof value !== 'string' || Buffer.byteLength(value) < 1 || Buffer.byteLength(value) > 256 || value.includes('\0')) {
@@ -280,7 +286,7 @@ export class RepositoryStore {
         hasMore: page.state !== 'pruned' && nextSequence < Number(row['sequence']) };
     });
     const clearanceRow = this.database.prepare("SELECT data FROM clearances WHERE json_extract(data,'$.invocationId')=? ORDER BY rowid DESC LIMIT 1").get(id);
-    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId),
+    return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, notifications: this.readNotificationDeliveries(id), accounting: this.readAccounting(invocation.runId),
       clearance: clearanceRow ? JSON.parse(String(clearanceRow['data'])) as Clearance : null,
       attemptsNextCursor: Number(attemptRows.slice(0, limit).at(-1)?.['cursor'] ?? afterAttempt), hasMoreAttempts: attemptRows.length > limit,
       capturesNextCursor: Number(captureRows.slice(0, limit).at(-1)?.['cursor'] ?? afterCapture), hasMoreCaptures: captureRows.length > limit };
@@ -311,7 +317,7 @@ export class RepositoryStore {
     });
   }
 
-  async finalizeInvocation(input: {id:string;outcome:string;cleanup:'complete'|'unknown';claimId:string;token:string}) {
+  async finalizeInvocation(input: {id:string;outcome:string;cleanup:'complete'|'unknown';claimId:string;token:string;retainClaim?:boolean}) {
     if (!['succeeded','failed','needs_input','interrupted','cancelled'].includes(input.outcome) || !['complete','unknown'].includes(input.cleanup)) throw new Error('invalid finalization facts');
     return this.transaction(() => {
       const claim = this.database.prepare('SELECT id FROM owner_claims WHERE id=? AND token=? AND invocation_id=?').get(input.claimId,input.token,input.id);
@@ -323,7 +329,7 @@ export class RepositoryStore {
       invocation.stage = 'finalized'; invocation.outcome = input.outcome; invocation.cleanup = input.cleanup;
       this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation),input.id);
       this.event('invocation.finalized',{invocationId:input.id,outcome:input.outcome,cleanup:input.cleanup});
-      if (input.cleanup === 'complete') {
+      if (input.cleanup === 'complete' && !input.retainClaim) {
         this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(input.claimId,input.token);
         this.event('owner.released',{claimId:input.claimId,basis:'quiescent'});
       }
@@ -350,6 +356,46 @@ export class RepositoryStore {
     const row = this.database.prepare('SELECT data FROM invocations WHERE id=?').get(id);
     if (!row) throw new Error('invocation not found');
     return JSON.parse(String(row['data'])) as Invocation;
+  }
+
+  readNotificationDeliveries(invocationId: string): NotificationDelivery[] {
+    this.readInvocation(invocationId);
+    return this.database.prepare('SELECT data FROM notification_deliveries WHERE invocation_id=? ORDER BY rowid LIMIT 1').all(invocationId)
+      .map(row => JSON.parse(String(row['data'])) as NotificationDelivery);
+  }
+
+  /** Reserve once after finalization. Unknown is durable before any external submission. */
+  async reserveInitialNotification(invocationId: string): Promise<NotificationDelivery | null> {
+    return this.transaction(() => {
+      const invocation = this.readInvocation(invocationId);
+      if (invocation.stage !== 'finalized' || !invocation.cleanup) throw new Error('notification requires a saved final summary');
+      const questions = Number(this.database.prepare("SELECT count(*) AS count FROM captures WHERE invocation_id=? AND channel='request' AND state='complete'").get(invocationId)?.['count'] ?? 0);
+      if (invocation.outcome === 'succeeded' && invocation.cleanup === 'complete' && questions === 0) return null;
+      const id = `${invocationId}:initial`;
+      if (this.database.prepare('SELECT id FROM notification_deliveries WHERE id=?').get(id)) return null;
+      const at = new Date().toISOString();
+      const record: NotificationDelivery = { id, invocationId, kind: 'initial', state: 'unknown', reason: 'submission_unconfirmed', cleanup: 'unknown', visibleDelivery: false,
+        issues: { outcome: invocation.outcome ?? 'unknown', cleanup: invocation.cleanup, questions }, createdAt: at, updatedAt: at };
+      this.database.prepare('INSERT INTO notification_deliveries(id,invocation_id,kind,data) VALUES (?,?,?,?)').run(id, invocationId, 'initial', JSON.stringify(record));
+      return record;
+    });
+  }
+
+  async saveInitialNotificationResult(id: string, result: { state: NotificationDelivery['state']; reason?: string; cleanup: NotificationDelivery['cleanup'] }): Promise<NotificationDelivery> {
+    if (!['submitted','failed','timed_out','unknown'].includes(result.state) || !['complete','unknown'].includes(result.cleanup) ||
+      (result.cleanup === 'unknown' && result.state !== 'unknown') ||
+      (result.reason !== undefined && (typeof result.reason !== 'string' || !/^[a-z_]{1,64}$/.test(result.reason)))) throw new Error('invalid notification result');
+    return this.transaction(() => {
+      const row = this.database.prepare('SELECT data FROM notification_deliveries WHERE id=?').get(id);
+      if (!row) throw new Error('notification reservation missing');
+      const saved = JSON.parse(String(row['data'])) as NotificationDelivery;
+      if (saved.reason !== 'submission_unconfirmed') return saved;
+      const record: NotificationDelivery = { ...saved, state: result.state, cleanup: result.cleanup, updatedAt: new Date().toISOString() };
+      if (result.reason === undefined) delete record.reason;
+      else record.reason = result.reason;
+      this.database.prepare('UPDATE notification_deliveries SET data=? WHERE id=?').run(JSON.stringify(record), id);
+      return record;
+    });
   }
 
   async activateInvocation(id: string) {
