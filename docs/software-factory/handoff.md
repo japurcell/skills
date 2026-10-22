@@ -47,3 +47,7 @@ From packages/software-factory run rtk npm run typecheck/build and selected regi
 ## Historical evidence and reflection
 
 [Qualification checkpoint history](handoff.history-2026-10-22-qualification.md) preserves all unique earlier active notes; [integration history](handoff.history-2026-10-22-integration.md) retains earlier commits/probes/native failures. Historical records do not override current gates. Brain/reflect were loaded; lessons currently live in maintained tests/protocols/qualification notes. Run reflect at actual end of the complete work session. Secret scanner remains user-disabled; no clean scan or reenable is claimed.
+
+## Current new prerequisite
+
+T13b final review bbeefd28 passes57/37.216s but report proposals are not compared to actual extractor output. Raw resultCaptureId may be provider JSONL. Add T7-validated-result-evidence as defined in ExecPlan: filtered normalized envelope capture after successful decode/validation, atomic immutable same-attempt link at successful settlement, optional public/report reference, raw captures unchanged. Then T13b bounded-compares that payload; absent/unreadable/pruned/mismatch is inconclusive. Common result/store/types/learn.ts ownership is serialized while private UI writer is stopped. No new registry/database/adapter re-decoder.
