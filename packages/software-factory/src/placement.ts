@@ -85,10 +85,22 @@ export function assertLocalPlacement(path: string): LocalPlacement {
       throw new Error('unsupported storage placement: requires fixed local NTFS or ReFS');
     }
     filesystem = String(result.filesystem);
+  } else if (process.platform === 'darwin') {
+    // Darwin filesystem numbers vary across hosts. df checks the kernel's
+    // filesystem name for this exact directory; native output is never parsed.
+    for (const candidate of ['apfs', 'hfs']) {
+      const probe = spawnSync('/bin/df', ['-n', '-P', '-T', candidate, '--', directory], {
+        stdio: 'ignore', timeout: 1000, env: { LC_ALL: 'C' },
+      });
+      if (probe.error || probe.signal || (probe.status !== 0 && probe.status !== 1)) {
+        throw new Error('native Darwin placement probe failed; storage refused');
+      }
+      if (probe.status === 0) { filesystem = candidate; break; }
+    }
+    if (!filesystem) throw new Error('unsupported storage placement: requires APFS or HFS');
   } else {
     const type = statfsSync(directory).type;
-    const local: Record<number, string> = process.platform === 'darwin' ? { 26: 'apfs', 17: 'hfs' }
-      : process.platform === 'linux' ? { 0xef53: 'ext', 0x9123683e: 'btrfs', 0x58465342: 'xfs' } : {};
+    const local: Record<number, string> = process.platform === 'linux' ? { 0xef53: 'ext', 0x9123683e: 'btrfs', 0x58465342: 'xfs' } : {};
     filesystem = local[type];
     if (!filesystem) throw new Error(`unsupported storage placement: filesystem ${type} (${process.platform})`);
   }

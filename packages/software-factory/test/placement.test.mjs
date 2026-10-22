@@ -29,6 +29,86 @@ test('placement refuses missing, non-directory and network paths without fallbac
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('Darwin placement uses the native filesystem name instead of an unstable numeric identifier', () => {
+  const program = String.raw`
+    import assert from 'node:assert/strict';
+    import childProcess from 'node:child_process';
+    import fs from 'node:fs';
+    import { syncBuiltinESMExports } from 'node:module';
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    const directory = "/private/literal ' $ ; [placement]";
+    fs.realpathSync.native = () => directory;
+    fs.statSync = () => ({ isDirectory: () => true });
+    fs.statfsSync = () => ({ type: 25 });
+    childProcess.spawnSync = (command, args, options) => {
+      assert.equal(command, '/bin/df');
+      assert.deepEqual(args, ['-n', '-P', '-T', 'apfs', '--', directory]);
+      assert.equal(options.shell, undefined);
+      assert.deepEqual(options.env, { LC_ALL: 'C' });
+      assert.equal(options.timeout, 1000);
+      assert.equal(options.stdio, 'ignore');
+      return { status: 0, signal: null };
+    };
+    syncBuiltinESMExports();
+    const { assertLocalPlacement } = await import(${JSON.stringify(new URL('../src/placement.ts', import.meta.url).href)});
+    assert.deepEqual(assertLocalPlacement(directory), { directory, platform: 'darwin', filesystem: 'apfs' });
+  `;
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', program], {
+    encoding: 'utf8', timeout: 5000, maxBuffer: 8192,
+  });
+  assert.ifError(child.error);
+  assert.equal(child.status, 0, child.stderr);
+});
+
+test('Darwin placement refuses unverified names and native probe failures without leaking output', () => {
+  const program = String.raw`
+    import assert from 'node:assert/strict';
+    import childProcess from 'node:child_process';
+    import fs from 'node:fs';
+    import { syncBuiltinESMExports } from 'node:module';
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    const directory = '/private/placement-secret-marker';
+    fs.realpathSync.native = () => directory;
+    fs.statSync = () => ({ isDirectory: () => true });
+    fs.statfsSync = () => ({ type: 26 });
+    let responses, calls;
+    childProcess.spawnSync = (command, args, options) => {
+      calls.push(args[3]);
+      assert.equal(command, '/bin/df');
+      assert.deepEqual(args, ['-n', '-P', '-T', calls.length === 1 ? 'apfs' : 'hfs', '--', directory]);
+      assert.deepEqual(options.env, { LC_ALL: 'C' });
+      assert.equal(options.stdio, 'ignore');
+      assert.equal(options.timeout, 1000);
+      return { stdout: directory, stderr: directory, ...responses.shift() };
+    };
+    syncBuiltinESMExports();
+    const { assertLocalPlacement } = await import(${JSON.stringify(new URL('../src/placement.ts', import.meta.url).href)});
+    calls = []; responses = [{ status: 1 }, { status: 0 }];
+    assert.equal(assertLocalPlacement(directory).filesystem, 'hfs');
+    assert.deepEqual(calls, ['apfs', 'hfs']);
+    calls = []; responses = [{ status: 1 }, { status: 1 }];
+    assert.throws(() => assertLocalPlacement(directory), { message: 'unsupported storage placement: requires APFS or HFS' });
+    assert.deepEqual(calls, ['apfs', 'hfs']);
+    for (const failure of [
+      { status: null, error: { code: 'ETIMEDOUT', message: directory } },
+      { status: null, error: { code: 'ENOENT', message: directory } },
+      { status: 0, signal: 'SIGKILL' }, { status: 2 }, { status: null },
+    ]) {
+      calls = []; responses = [failure, { status: 0 }];
+      assert.throws(() => assertLocalPlacement(directory), { message: 'native Darwin placement probe failed; storage refused' });
+      assert.deepEqual(calls, ['apfs']);
+      calls = []; responses = [{ status: 1 }, failure];
+      assert.throws(() => assertLocalPlacement(directory), { message: 'native Darwin placement probe failed; storage refused' });
+      assert.deepEqual(calls, ['apfs', 'hfs']);
+    }
+  `;
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', program], {
+    encoding: 'utf8', timeout: 5000, maxBuffer: 8192,
+  });
+  assert.ifError(child.error);
+  assert.equal(child.status, 0, child.stderr);
+});
+
 // The native process boundary is substituted only inside this disposable Node child.
 // These cases prove refusal diagnostics on every host, not Windows API execution.
 test('Windows placement failures expose bounded process facts without native output or paths', () => {

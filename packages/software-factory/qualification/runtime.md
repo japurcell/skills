@@ -33,6 +33,12 @@ Handled cancellation remains SIGINT/SIGTERM on POSIX. On Windows, the private qu
 
 See [CI evidence and remaining gates](ci.md). Hosted run `39719540444` passed all three foundation targets after the first Windows failures were repaired. Installed product, provider, descendant-control and live desktop qualification remain later gates.
 
+## Darwin placement repair
+
+Darwin filesystem identifiers are not treated as stable magic numbers. Hosted failure `39810180199` reported numeric25; its actual filesystem name remains unproved. The repair uses absolute `/bin/df -n -P -T apfs -- DIRECTORY`, then the fixed `hfs` filter only after exit1. [Apple's source](https://github.com/apple-oss-distributions/file_cmds/blob/f8c84000d1f02be159053846a3d730b0290f9614/df/df.c) applies the filter to the explicit operand's kernel `f_fstypename` and rejects mismatches. Native output is discarded, the environment contains only `LC_ALL=C`, and each process has a1000ms timeout. No shell or path-output parsing is used. Process errors/signals and other exit statuses refuse placement. The timeout bounds the process request, not every possible kernel/filesystem scheduling delay. The accepted filesystem policy is unchanged.
+
+Local native APFS with literal shell metacharacters passes; HFS remains unqualified. Disposable OS-boundary fixtures prove name-based acceptance with numeric25 and refusal even when numeric26 would previously have authorized it. Strict/build and36 composed placement/store/capture/runtime checks pass in6.086s on2026-10-22. Independent review and changed native CI remain pending.
+
 ## Browser development prerequisite
 
 On 2026-10-22, the pinned Playwright 1.64.1 CLI downloaded Chromium revision 1248 / Chrome for Testing 156.0.8078.4, matching headless shell and FFmpeg revision 1013 into `/tmp/software-factory-playwright-browsers`. From `packages/software-factory`, setup used qualified Node with `PLAYWRIGHT_BROWSERS_PATH=/tmp/software-factory-playwright-browsers node node_modules/playwright/cli.js install chromium --no-progress --no-remove`. Restricted DNS required network escalation; no system dependency installation or user-cache replacement occurred.
