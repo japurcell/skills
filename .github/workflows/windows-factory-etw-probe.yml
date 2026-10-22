@@ -1,0 +1,59 @@
+name: Windows factory ETW feasibility probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/factory-windows-etw-probe
+    paths:
+      - .github/workflows/windows-factory-etw-probe.yml
+      - packages/software-factory/qualification/windows-etw-probe*
+
+permissions:
+  contents: read
+
+jobs:
+  known-node-child-etw:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    env:
+      FACTORY_TARGET: win32-x64
+      CI: 'true'
+    steps:
+      - name: Checkout source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact Node 24.22.1 bootstrap
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-windows-etw-probe-evidence
+        run: node packages/software-factory/scripts/qualification-bootstrap.mjs
+      - name: Check ETW probe protocol
+        timeout-minutes: 1
+        run: node --test packages/software-factory/qualification/windows-etw-probe.test.mjs
+      - name: Probe one owned ETW session and known non-debug Node child
+        timeout-minutes: 12
+        env:
+          WINDOWS_ETW_PROBE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-probe-evidence
+        run: node packages/software-factory/qualification/windows-etw-probe.mjs
+      - name: Remove raw ETL before artifact upload
+        if: always()
+        timeout-minutes: 1
+        shell: pwsh
+        run: |
+          $etl = Join-Path $env:RUNNER_TEMP 'factory-windows-etw-probe-evidence/trace.etl'
+          if (Test-Path -LiteralPath $etl) { Remove-Item -LiteralPath $etl -Force -ErrorAction Stop }
+      - name: Retain bounded probe receipts even on failure
+        if: always()
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: factory-windows-etw-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/factory-windows-etw-probe-evidence/bootstrap.json
+            ${{ runner.temp }}/factory-windows-etw-probe-evidence/qualification.json
+            ${{ runner.temp }}/factory-windows-etw-probe-evidence/native.tsv
+          if-no-files-found: warn
+          retention-days: 14
