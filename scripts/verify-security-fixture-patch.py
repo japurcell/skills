@@ -252,6 +252,9 @@ def process_query_helper():
         query.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
                           ctypes.c_void_p, ctypes.c_int]
         query.restype = ctypes.c_int
+        list_children = library.proc_listchildpids
+        list_children.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_int]
+        list_children.restype = ctypes.c_int
         def native(pid):
             info = BSDInfo()
             ctypes.set_errno(0)
@@ -264,6 +267,20 @@ def process_query_helper():
                 raise ValueError("native result")
             state = "stopped" if info.status == 4 else "zombie" if info.status == 5 else "live"
             return [info.pid, info.ppid, info.pgid, info.seconds, info.microseconds, state]
+        def direct_children(pid):
+            # The 257th entry is a saturation sentinel for the shared 256-PID
+            # closure cap. A full buffer cannot establish complete discovery.
+            entries = (ctypes.c_int * 257)()
+            ctypes.set_errno(0)
+            count = list_children(pid, entries, ctypes.sizeof(entries))
+            if count < 0 or count == 0 and ctypes.get_errno():
+                raise OSError(ctypes.get_errno() or errno.EIO, "child query")
+            if count >= len(entries):
+                raise OverflowError("child limit")
+            result = list(entries[:count])
+            if any(child <= 0 or child >= 2 ** 31 for child in result) or len(set(result)) != count:
+                raise ValueError("child query")
+            return result
     elif sys.platform.startswith("linux"):
         ticks_per_second = os.sysconf("SC_CLK_TCK")
         with open("/proc/stat", "rb") as stream:
@@ -298,21 +315,53 @@ def process_query_helper():
         try:
             if len(raw) > 16384:
                 raise ValueError("request")
-            pids = json.loads(raw)
-            if (not isinstance(pids, list) or len(pids) > 256
-                    or any(type(pid) is not int or not 0 < pid < 2 ** 31 for pid in pids)
-                    or len(set(pids)) != len(pids)):
+            request = json.loads(raw)
+            if (isinstance(request, list) and len(request) <= 256
+                    and all(type(pid) is int and 0 < pid < 2 ** 31 for pid in request)
+                    and len(set(request)) == len(request)):
+                result = {str(pid): native(pid) for pid in request}
+                for row in result.values():
+                    if row is not None:
+                        row.append(time.localtime(row[3]).tm_gmtoff)
+            elif (sys.platform == "darwin" and isinstance(request, dict)
+                    and set(request) == {"children"} and isinstance(request["children"], list)
+                    and len(request["children"]) <= 256):
+                parents = request["children"]
+                if (any(not isinstance(item, list) or len(item) != 3
+                        or any(type(value) is not int for value in item)
+                        or not 0 < item[0] < 2 ** 31 or not 0 < item[1] < 2 ** 63
+                        or not 0 <= item[2] < 1000000 for item in parents)
+                        or len({item[0] for item in parents}) != len(parents)):
+                    raise ValueError("request")
+                result = {}
+                for pid, seconds, microseconds in parents:
+                    parent = native(pid)
+                    if (parent is None or parent[3:5] != [seconds, microseconds]
+                            or parent[5] != "stopped"):
+                        raise ValueError("parent identity")
+                    rows = []
+                    for child in direct_children(pid):
+                        row = native(child)
+                        if row is None or row[1] != pid:
+                            raise ValueError("child identity")
+                        row.append(time.localtime(row[3]).tm_gmtoff)
+                        rows.append(row)
+                    parent_after = native(pid)
+                    if (parent_after is None or parent_after[3:5] != [seconds, microseconds]
+                            or parent_after[5] != "stopped"):
+                        raise ValueError("parent identity")
+                    result[str(pid)] = rows
+                result = {"children": result}
+            else:
                 raise ValueError("request")
-            result = {str(pid): native(pid) for pid in pids}
-            for row in result.values():
-                if row is not None:
-                    row.append(time.localtime(row[3]).tm_gmtoff)
         except OSError as failure:
             # Only fixed categories cross IPC, never exception text or records.
             cause = "denied" if failure.errno in (errno.EPERM, errno.EACCES) else "read_error"
             result = {"error": "native_query_unavailable", "cause": cause}
         except (ValueError, TypeError):
             result = {"error": "native_query_unavailable", "cause": "invalid_record"}
+        except OverflowError:
+            result = {"error": "descendant_limit", "cause": "limit"}
         except Exception:
             # Absence is represented only by native ESRCH/ENOENT, never denial,
             # partial structures, malformed records, or another native failure.
@@ -337,16 +386,13 @@ class ProcessInspector:
             self.close(time.monotonic() + REAP_SECONDS)
             raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
 
-    def query(self, pids, deadline, *, interruptible=False):
-        pids = sorted(pids)
-        if not pids:
-            return {}
+    def _exchange(self, request, deadline, *, interruptible=False):
         started = time.monotonic()
         if not interruptible:
             deadline -= FINALIZE_SECONDS
         allowance = max(0, min(PROCESS_SECONDS, deadline - started))
         deadline = started + allowance
-        request = json.dumps(pids, separators=(",", ":")).encode() + b"\n"
+        request = json.dumps(request, separators=(",", ":")).encode() + b"\n"
         received = bytearray()
         try:
             while request or b"\n" not in received:
@@ -372,6 +418,20 @@ class ProcessInspector:
                     and result["error"] == "native_query_unavailable"
                     and result["cause"] in ("denied", "read_error", "invalid_record", "unavailable")):
                 raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause=result["cause"])
+            if (isinstance(result, dict) and result == {"error": "descendant_limit", "cause": "limit"}):
+                raise Failure("descendant_limit", 2, "cleanup", limit=256, unit="processes")
+            return result
+        except OSError:
+            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="ipc_unavailable") from None
+        except (ValueError, TypeError):
+            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="invalid_protocol") from None
+
+    def query(self, pids, deadline, *, interruptible=False):
+        pids = sorted(pids)
+        if not pids:
+            return {}
+        result = self._exchange(pids, deadline, interruptible=interruptible)
+        try:
             if not isinstance(result, dict) or set(result) != {str(pid) for pid in pids}:
                 raise ValueError("incomplete native result")
             for pid in pids:
@@ -386,8 +446,40 @@ class ProcessInspector:
                         or type(row[6]) is not int or not -86400 < row[6] < 86400):
                     raise ValueError("invalid native result")
             return {int(pid): row for pid, row in result.items()}
-        except OSError:
-            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="ipc_unavailable") from None
+        except (ValueError, TypeError):
+            raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="invalid_protocol") from None
+
+    def query_children(self, parents, deadline):
+        if not parents:
+            return {}
+        request = {"children": [[pid, *identity] for pid, identity in sorted(parents.items())]}
+        result = self._exchange(request, deadline)
+        try:
+            if (not isinstance(result, dict) or set(result) != {"children"}
+                    or not isinstance(result["children"], dict)
+                    or set(result["children"]) != {str(pid) for pid in parents}):
+                raise ValueError("incomplete child result")
+            children = {}
+            all_children = set()
+            for parent, rows in result["children"].items():
+                if not isinstance(rows, list) or len(rows) > 256:
+                    raise ValueError("child result bound")
+                children[int(parent)] = rows
+                for row in rows:
+                    if (not isinstance(row, list) or len(row) != 7
+                            or any(type(value) is not int for value in row[:5])
+                            or not 0 < row[0] < 2 ** 31 or row[1] != int(parent)
+                            or not 0 < row[2] < 2 ** 31 or not 0 < row[3] < 2 ** 63
+                            or not 0 <= row[4] < 1000000
+                            or row[5] not in ("live", "stopped", "zombie")
+                            or type(row[6]) is not int or not -86400 < row[6] < 86400
+                            or row[0] in all_children):
+                        raise ValueError("invalid child row")
+                    all_children.add(row[0])
+            if len(all_children | set(parents)) > 256:
+                raise Failure("descendant_limit", 2, "cleanup", limit=256,
+                              measured=len(all_children | set(parents)), unit="processes")
+            return children
         except (ValueError, TypeError):
             raise Failure("process_observation_native_unavailable", 2, "cleanup", native_cause="invalid_protocol") from None
 
@@ -448,6 +540,28 @@ def remember_descendants(process, known, snapshot):
         raise Failure("descendant_limit", 2, "cleanup", limit=256, measured=len(known), unit="processes")
 
 
+def remember_native_children(known, identities, frozen, deadline):
+    """Close only direct children of identity-verified stopped Mac ancestors."""
+    children = INSPECTOR.query_children({pid: identities[pid] for pid in frozen}, deadline)
+    discovered = set()
+    for parent, rows in children.items():
+        for row in rows:
+            pid = row[0]
+            identity = (row[3], row[4])
+            stamp = tuple(time.asctime(time.gmtime(row[3] + row[6])).encode("ascii").split())
+            if pid in known:
+                if known[pid][2] != stamp or identities.get(pid) != identity:
+                    raise Failure("process_observation_identity_mismatch", 2, "cleanup")
+                continue
+            known[pid] = (parent, row[2], stamp, b"T" if row[5] == "stopped" else b"Z" if row[5] == "zombie" else b"R")
+            identities[pid] = identity
+            discovered.add(pid)
+    if len(known) > 256:
+        raise Failure("descendant_limit", 2, "cleanup", limit=256,
+                      measured=len(known), unit="processes")
+    return discovered
+
+
 def living_descendants(known, snapshot):
     return {pid: current for pid, previous in known.items()
             if (current := snapshot.get(pid)) is not None
@@ -471,6 +585,7 @@ def stop_process(process, known):
     started = time.monotonic()
     deadline = min(started, CANCELLED_AT if CANCELLED_AT is not None else started) + CLEANUP_SECONDS
     identities = {}
+    acknowledged = set()
     try:
         if process.poll() is None:
             # This exact unreaped child cannot have its PID recycled.
@@ -486,13 +601,28 @@ def stop_process(process, known):
                 # An exact owned child still alive in the kernel cannot also be
                 # absent from native observation. Do not treat unknown as exit.
                 raise Failure("process_observation_native_unavailable", 2, "cleanup")
-            # Acknowledged stopped ancestors remain alive while this fresh graph
-            # discovers children born during an earlier metadata capture/return.
-            snapshot = process_snapshot(deadline=deadline, interruptible=False)
-            remember_descendants(process, known, snapshot)
-            living = living_descendants(known, snapshot)
-            if any(pid not in frozen for pid in living):
-                continue
+            if sys.platform == "darwin":
+                if any(pid not in frozen for pid in acknowledged):
+                    # Losing an already stopped ancestor before closure can
+                    # reparent a child that no longer has a known parent.
+                    raise Failure("process_observation_native_unavailable", 2, "cleanup")
+                acknowledged.update(frozen)
+                # A stopped parent cannot fork while its direct children are
+                # enumerated. Newly found children must themselves be frozen
+                # and acknowledged before their children can be queried.
+                discovered = remember_native_children(known, identities, frozen, deadline)
+                if discovered:
+                    next_living = native_living({pid: known[pid] for pid in discovered}, identities, deadline)
+                    if any(pid not in next_living and known[pid][3] != b"Z" for pid in discovered):
+                        raise Failure("process_observation_native_unavailable", 2, "cleanup")
+                    continue
+            else:
+                # Linux retains the fresh graph after every stop acknowledgment.
+                snapshot = process_snapshot(deadline=deadline, interruptible=False)
+                remember_descendants(process, known, snapshot)
+                living = living_descendants(known, snapshot)
+                if any(pid not in frozen for pid in living):
+                    continue
             current = native_living(known, identities, deadline)
             if any(row[5] != "stopped" for row in current.values()):
                 continue

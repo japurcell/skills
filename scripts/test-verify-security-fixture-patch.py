@@ -601,7 +601,7 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=(), timings=None, trigger_delay=False, next_observation=None):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, schedule_overhead=0, until=None, trigger=None, descendants=(), timings=None, trigger_delay=False, next_observation=None, native_before=None):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
@@ -609,7 +609,11 @@ class PreflightTests(unittest.TestCase):
         child = ("import os,sys,time\ntime.sleep(" + repr(delay) + ")\n"
                  "os.execv('/bin/ps', ['/bin/ps', *sys.argv[1:]])\n")
         pause_delay = "time.sleep(" + repr(delay) + ")\n"
-        pause_settle = "time.sleep(" + repr(settle) + ")\n"
+        # Controlled host scheduling cost after the requested fixture delay.
+        # This exercises the two-snapshot cleanup path without changing the
+        # original 0.3/0.55-second timing contract.
+        pause_settle = ("time.sleep(" + repr(settle) + ")\n"
+            + ("time.sleep(" + repr(schedule_overhead) + ")\n" if schedule_overhead else ""))
         if seen is not None:
             if trigger_delay:
                 self.assertIsNotNone(trigger)
@@ -645,6 +649,8 @@ class PreflightTests(unittest.TestCase):
             "real = subprocess.Popen\nobservations = 0\n"
             "def launched(command,*args,**kwargs):\n"
             " global observations\n"
+            + (" if any('fixture_process_helper' in str(part) for part in command): command=[*command[:-1]," + repr(native_before) + "+command[-1]]\n"
+               if native_before is not None else "") +
             " if command[0] == '/bin/ps':\n"
             "  observations += 1\n"
             "  if observations <= " + repr(first) + " or (" + repr(str(after)) +
@@ -825,6 +831,7 @@ class PreflightTests(unittest.TestCase):
         sampled = self.base / ('proc-child-sampled-' + mode)
         reaped = self.base / ('proc-child-reaped-' + mode)
         injected = self.base / ('proc-read-injected-' + mode)
+        consumed = self.base / ('proc-child-snapshot-consumed-' + mode)
         parent_marker = self.base / ('proc-parent-pid-' + mode)
         child_code = ('import time\nfrom pathlib import Path\n'
             'while not Path(' + repr(str(sampled)) + ').exists(): time.sleep(0.005)\n')
@@ -835,7 +842,8 @@ class PreflightTests(unittest.TestCase):
             'Path(' + repr(str(marker)) + ').write_text(str(child.pid))\n'
             'child.wait()\nPath(' + repr(str(reaped)) + ').touch()\ntime.sleep(60)\n')
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
-        wrapper, observers, _ = self.observation_wrapper(0, after=marker, seen=sampled, until=sampled)
+        wrapper, observers, _ = self.observation_wrapper(0, after=marker, seen=sampled,
+            until=sampled, next_observation=consumed)
         # The CLI launches its unchanged Linux helper/protocol. On other POSIX
         # hosts, numeric /proc fixtures come from real targeted ps records.
         # ESRCH is injected at read only after the real observed child was reaped.
@@ -864,6 +872,11 @@ class PreflightTests(unittest.TestCase):
         source = wrapper.read_text().replace(" if command[0] == '/bin/ps':\n",
             " if any('fixture_process_helper' in str(part) for part in command): command=[*command[:-1]," + repr(fault) + "+command[-1]]\n"
             " if command[0] == '/bin/ps':\n")
+        # On macOS, emulate Linux in both the verifier and its native helper.
+        # Otherwise the verifier sends the Mac-only child request to a helper
+        # deliberately exercising Linux /proc and the request is invalid.
+        source = source.replace("runpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')",
+            "sys.platform='linux'\nrunpy.run_path(" + repr(str(CLI)) + ", run_name='__main__')")
         wrapper.write_text(source)
         before = self.fingerprint()
         with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
@@ -871,9 +884,10 @@ class PreflightTests(unittest.TestCase):
                 '--active-hook-root', str(active), '--check', '--json', '--no-input'],
                 cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
             deadline = time.monotonic() + 6
-            while not reaped.exists() and time.monotonic() < deadline and process.poll() is None:
+            while (not reaped.exists() or not consumed.exists()) and time.monotonic() < deadline and process.poll() is None:
                 time.sleep(0.01)
             self.assertTrue(reaped.exists(), 'observed scanner child was not reaped: ' + repr(process.communicate(timeout=1) if process.poll() is not None else process.returncode))
+            self.assertTrue(consumed.exists(), 'a later ordinary observation did not acknowledge the child snapshot')
             started = time.monotonic()
             process.send_signal(signal.SIGINT)
             stdout, stderr = process.communicate(timeout=4)
@@ -906,13 +920,18 @@ class PreflightTests(unittest.TestCase):
         self.assert_resistant_session_cleanup(0.3, settle=0.55)
 
     @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_closes_two_delayed_snapshots_with_host_scheduling_cost(self):
+        self.assert_resistant_session_cleanup(0.3, settle=0.55, schedule_overhead=0.12)
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
     def test_cleanup_observation_uses_remaining_shared_shutdown_budget(self):
         # The next ordinary observer launch acknowledges that the earlier
         # snapshot containing the child was consumed before cancellation.
         # Only the required fresh cleanup graph carries the 1.0-second delay.
         self.assert_resistant_session_cleanup(0.3, settle=0.7, delayed_cleanup=True)
 
-    def assert_resistant_session_cleanup(self, delay, *, settle=0, delayed_cleanup=False):
+    def assert_resistant_session_cleanup(self, delay, *, settle=0, delayed_cleanup=False,
+                                         schedule_overhead=0):
         active = self.active_copy("slow-observer-cancel")
         marker = self.base / 'slow-observer-child'
         observed = self.base / 'child-observed-before-setsid'
@@ -934,7 +953,7 @@ class PreflightTests(unittest.TestCase):
         next_observation = self.base / 'child-snapshot-consumed' if delayed_cleanup else None
         wrapper, observers, _ = self.observation_wrapper(delay, after=marker, seen=observed,
             settle=settle, timings=timings, trigger=trigger, trigger_delay=delayed_cleanup,
-            next_observation=next_observation)
+            next_observation=next_observation, schedule_overhead=schedule_overhead)
         before = self.fingerprint()
         patch = self.patch("value = 'repaired'\n")
         child = None
@@ -1122,8 +1141,34 @@ class PreflightTests(unittest.TestCase):
             'Path(' + repr(str(markers[0])) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
         scanner = active / '.codex/hooks/scan-secrets.py'
         scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        # Route the two release markers through actual direct-child queries.
+        # The first query sees child 0 and lets it spawn child 1 before it is
+        # frozen; querying child 0 then lets child 1 spawn child 2. Each event
+        # waits at most the existing 0.2-second fixture settlement interval.
+        native_events = ("import ctypes,time\nfrom pathlib import Path\n"
+            "real_cdll=ctypes.CDLL\n"
+            "class ChildCall:\n"
+            " def __init__(self,real): object.__setattr__(self,'real',real)\n"
+            " def __setattr__(self,name,value): setattr(self.real,name,value)\n"
+            " def __call__(self,pid,buffer,size):\n"
+            "  count=self.real(pid,buffer,size)\n"
+            "  for parent_file,release_file,next_file in " + repr([
+                (str(root_marker), str(seen[0]), str(markers[1])),
+                (str(markers[0]), str(seen[1]), str(markers[2]))]) + ":\n"
+            "   parent=Path(parent_file)\n"
+            "   if parent.exists() and pid==int(parent.read_text()):\n"
+            "    Path(release_file).touch()\n"
+            "    deadline=time.monotonic()+0.2\n"
+            "    while not Path(next_file).exists() and time.monotonic()<deadline: time.sleep(0.001)\n"
+            "  return count\n"
+            "class Library:\n"
+            " def __init__(self,real): self.real=real\n"
+            " def __getattr__(self,name):\n"
+            "  member=getattr(self.real,name)\n"
+            "  return ChildCall(member) if name=='proc_listchildpids' else member\n"
+            "ctypes.CDLL=lambda *args,**kwargs:Library(real_cdll(*args,**kwargs))\n")
         wrapper, observers, _ = self.observation_wrapper(0, after=root_marker,
-            seen=root_seen, settle=0.2, until=seen[1], descendants=tuple(zip(markers, seen)))
+            seen=root_seen, settle=0.2, until=seen[1], native_before=native_events)
         before = self.fingerprint()
         identities = {}
         try:
@@ -1135,6 +1180,8 @@ class PreflightTests(unittest.TestCase):
                 while not markers[0].exists() and time.monotonic() < deadline and process.poll() is None:
                     time.sleep(0.005)
                 self.assertTrue(markers[0].exists(), 'first separate ancestor did not start')
+                self.assertFalse(seen[0].exists(), 'first targeted query ran before cancellation')
+                self.assertFalse(markers[1].exists(), 'second generation spawned before cancellation')
                 started = time.monotonic()
                 process.send_signal(signal.SIGINT)
                 stdout, stderr = process.communicate(timeout=4)
@@ -1394,7 +1441,9 @@ class PreflightTests(unittest.TestCase):
                     "  if " + repr(mode) + "=='wrong_pid': info.pid+=1\n"
                     "  if " + repr(mode) + "=='unknown_state': info.status=99\n"
                     "  return 135 if " + repr(mode) + "=='partial' else size\n"
-                    "class Library: proc_pidinfo=Query()\n"
+                    "class Children:\n"
+                    " def __call__(self,pid,buffer,size): return 0\n"
+                    "class Library: proc_pidinfo=Query();proc_listchildpids=Children()\n"
                     "ctypes.CDLL=lambda *args,**kwargs:Library()\n"
                     "scope['process_query_helper']()\n")
                 result = subprocess.run([sys.executable, '-I', '-S', '-B', '-c', code],
@@ -1407,6 +1456,55 @@ class PreflightTests(unittest.TestCase):
                     self.assertEqual(report, {'4321': None})
                 else:
                     self.assertEqual(report, {'error': 'native_query_unavailable', 'cause': 'denied' if mode == 'denied' else 'read_error' if mode == 'partial' else 'invalid_record'})
+
+    def test_darwin_direct_child_protocol_rejects_incomplete_closure(self):
+        for mode in ('valid', 'empty', 'denied', 'saturated', 'duplicate',
+                     'wrong_parent', 'absent_child', 'parent_disappears'):
+            with self.subTest(mode=mode):
+                code = ("import runpy,sys,os,time,ctypes,errno\n"
+                    "scope=runpy.run_path(" + repr(str(CLI)) + ",run_name='fixture_process_helper')\n"
+                    "os.environ['TZ']='UTC';time.tzset();sys.platform='darwin'\n"
+                    "class Query:\n"
+                    " def __call__(self,pid,flavor,arg,buffer,size):\n"
+                    "  assert flavor==3 and size==136\n"
+                    "  if pid==4321:\n"
+                    "   self.parent_calls=getattr(self,'parent_calls',0)+1\n"
+                    "   if " + repr(mode) + "=='parent_disappears' and self.parent_calls>1: ctypes.set_errno(errno.ESRCH);return 0\n"
+                    "  if pid==5432 and " + repr(mode) + "=='absent_child': ctypes.set_errno(errno.ESRCH);return 0\n"
+                    "  info=buffer._obj;info.pid=pid;info.ppid=100 if pid==4321 or " + repr(mode) + "=='wrong_parent' else 4321\n"
+                    "  info.pgid=pid;info.status=4 if pid==4321 else 2\n"
+                    "  info.seconds=1700001234 if pid==4321 else 1700001235\n"
+                    "  info.microseconds=123456 if pid==4321 else 654321\n"
+                    "  return size\n"
+                    "class Children:\n"
+                    " def __call__(self,pid,buffer,size):\n"
+                    "  assert pid==4321 and size==ctypes.sizeof(ctypes.c_int)*257\n"
+                    "  if " + repr(mode) + "=='denied': ctypes.set_errno(errno.EACCES);return 0\n"
+                    "  if " + repr(mode) + "=='empty': return 0\n"
+                    "  if " + repr(mode) + "=='saturated':\n"
+                    "   for index in range(257): buffer[index]=5432+index\n"
+                    "   return 257\n"
+                    "  buffer[0]=5432\n"
+                    "  if " + repr(mode) + "=='duplicate': buffer[1]=5432;return 2\n"
+                    "  return 1\n"
+                    "class Library: proc_pidinfo=Query();proc_listchildpids=Children()\n"
+                    "ctypes.CDLL=lambda *args,**kwargs:Library()\n"
+                    "scope['process_query_helper']()\n")
+                request = {'children': [[4321, 1700001234, 123456]]}
+                result = subprocess.run([sys.executable, '-I', '-S', '-B', '-c', code],
+                    input=(json.dumps(request) + '\n').encode(), capture_output=True, timeout=2)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                if mode == 'valid':
+                    self.assertEqual(report, {'children': {'4321': [
+                        [5432, 4321, 5432, 1700001235, 654321, 'live', 0]]}})
+                elif mode == 'empty':
+                    self.assertEqual(report, {'children': {'4321': []}})
+                elif mode == 'saturated':
+                    self.assertEqual(report, {'error': 'descendant_limit', 'cause': 'limit'})
+                else:
+                    self.assertEqual(report, {'error': 'native_query_unavailable',
+                        'cause': 'denied' if mode == 'denied' else 'invalid_record'})
 
     def test_unavailable_process_observation_stops_before_git_or_scanners(self):
         before = self.fingerprint()
