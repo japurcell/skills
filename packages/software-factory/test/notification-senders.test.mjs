@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { copyFileSync, linkSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -75,18 +75,6 @@ test('missing executable, unavailable service, denied setting and nonzero exit h
   assert.deepEqual(await executeNotificationProcess(fake('exit-code', '9'), 1000), {
     state: 'failed', reason: 'sender_exit_nonzero', cleanup: 'complete',
   });
-});
-
-test('missing owned Windows registration has its own fixed reason', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'factory-notify-'));
-  try {
-    const helper = join(dir, 'windows-notify.exe');
-    try { linkSync(process.execPath, helper); }
-    catch { copyFileSync(process.execPath, helper); }
-    assert.deepEqual(await executeNotificationProcess({ file: helper, args: ['-e', 'process.exit(3)'] }, 1000), {
-      state: 'failed', reason: 'registration_missing', cleanup: 'complete',
-    });
-  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('lowercase environment password is filtered from public notification command', () => {

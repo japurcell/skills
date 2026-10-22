@@ -113,3 +113,41 @@ test('Windows helper exit codes take priority over diagnostic wording after real
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('missing owned Windows registration has its own fixed reason', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'factory-notification-registration-'));
+  const helper = join(directory, 'windows-notify.exe');
+  const args = ['-e', 'process.send({ ready: true }); process.once("message", () => process.exit(3));'];
+  let child;
+  let closed;
+  try {
+    try { linkSync(process.execPath, helper); }
+    catch { copyFileSync(process.execPath, helper); }
+    child = spawn(helper, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+    closed = new Promise(resolve => child.once('close', resolve));
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Windows registration fixture did not become ready')), 3000);
+      child.once('message', message => {
+        if (message?.ready === true) { clearTimeout(timer); resolve(); }
+      });
+      child.once('error', error => { clearTimeout(timer); reject(error); });
+      child.once('exit', () => { clearTimeout(timer); reject(new Error('Windows registration fixture exited before readiness')); });
+    });
+    t.mock.module('node:child_process', { exports: {
+      spawn: (file, requestedArgs) => {
+        assert.equal(file, helper);
+        assert.deepEqual(requestedArgs, args);
+        queueMicrotask(() => child.send('release'));
+        return child;
+      },
+    } });
+    const { executeNotificationProcess } = await import('../dist/native/notification-transport.js?windows-registration');
+    assert.deepEqual(await executeNotificationProcess({ file: helper, args }, 1000), {
+      state: 'failed', reason: 'registration_missing', cleanup: 'complete',
+    });
+  } finally {
+    child?.kill('SIGKILL');
+    if (closed) await closed;
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

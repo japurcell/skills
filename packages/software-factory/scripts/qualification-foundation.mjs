@@ -34,7 +34,17 @@ try {
   assert.ok(run('install', installArgs), 'locked dependency installation failed');
   run('typecheck', [process.env.FACTORY_NPM_CLI, 'run', 'typecheck']);
   run('build', [process.env.FACTORY_NPM_CLI, 'run', 'build']);
-  run('fixtures', ['scripts/test.mjs', 'fixtures']);
+  const fixturesPassed = run('fixtures', ['scripts/test.mjs', 'fixtures']);
+  if (process.platform === 'win32' && !fixturesPassed) {
+    // The dispatch fixture has a 30-second outer bound. Re-run one public
+    // learning case directly so its native failure is retained in full even
+    // when that outer bound ends before the nested test runner reports it.
+    run('learning-fixture-diagnostic', [
+      '--test', '--test-reporter=spec',
+      '--test-name-pattern=^explicit extraction saves examined ended sources and a justified empty result without changing active inputs$',
+      'test/learning.test.mjs',
+    ]);
+  }
   run('store', ['scripts/test.mjs', 'store']);
   run('placement', ['--test', 'test/placement.test.mjs']);
   run('ci-contract', ['--test', 'qualification/ci.test.mjs']);
