@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, truncateSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gitModes, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const evidence = resolve(process.env.WINDOWS_STARTUP_EVIDENCE ?? join(process.cwd(), 'windows-startup-evidence'));
@@ -222,7 +222,7 @@ async function main() {
   save();
   const fixture = prepareFixture(git, env, work);
   writeHostileConfig(home, marker);
-  assert.ok(fixture.gitCall(fixture.repo, ['config', '--global', '--get', 'core.fsmonitor'])
+  assert.ok(fixture.gitCall(fixture.repo, includedConfigQuery)
     .includes(marker.replaceAll('\\', '/')), 'hostile include configuration was not active');
   report.cases.push({ name: 'hostile-include-read', status: 'passed',
     evidence: 'Pinned Git queried core.fsmonitor through the private global include without executing its value; other config canaries are unexercised decoys.' });

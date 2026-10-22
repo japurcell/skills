@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { gitModes, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
+import { gitModes, includedConfigQuery, parseTrace, validateModules, validateTrace } from './windows-startup.mjs';
 
 test('closed Git modes have exact native argv and no caller flags', () => {
   assert.deepEqual(gitModes, [
@@ -71,4 +72,20 @@ test('each fixed helper needs resolved module evidence and each Git case needs i
   writeFileSync(unknown, 'unknown module');
   assert.throws(() => validateModules([...created, dll(unknown)],
     executable, archive, systemRoot), /loaded module outside pinned archive and Windows root/);
+});
+
+test('the private global config control reads an included value explicitly', (t) => {
+  const base = mkdtempSync(join(tmpdir(), 'windows-startup-config-'));
+  t.after(() => rmSync(base, { recursive: true, force: true }));
+  const included = join(base, 'included config');
+  const config = join(base, 'global config');
+  writeFileSync(included, '[core]\n\tfsmonitor = owned-fixture-value\n');
+  writeFileSync(config, `[include]\n\tpath = ${JSON.stringify(included.replaceAll('\\', '/'))}\n`);
+  const result = spawnSync('git', includedConfigQuery, {
+    cwd: base, env: { ...process.env, GIT_CONFIG_GLOBAL: config },
+    encoding: 'utf8', timeout: 5000, maxBuffer: 8192,
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), 'owned-fixture-value');
 });

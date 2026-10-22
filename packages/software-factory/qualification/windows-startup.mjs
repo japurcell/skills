@@ -11,6 +11,9 @@ export const gitModes = Object.freeze([
   ['--no-pager', '--no-lazy-fetch', 'worktree', 'list', '--porcelain', '-z'],
 ].map((mode) => Object.freeze(mode)));
 
+// A scoped config query does not follow includes unless explicitly requested.
+export const includedConfigQuery = Object.freeze(['config', '--global', '--includes', '--get', 'core.fsmonitor']);
+
 const traceKinds = new Set(['ROOT', 'CREATE', 'DLL', 'EXIT', 'STOP_REQUESTED', 'STOP_OBSERVED', 'DONE', 'ERROR']);
 
 export function parseTrace(contents) {
