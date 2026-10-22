@@ -78,6 +78,7 @@ test('Windows helper exit codes take priority over diagnostic wording after real
     for (const item of cases) {
       const args = ['-e', script, String(item.code), item.stderr];
       const child = spawn(helper, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+      const closed = new Promise(resolve => child.once('close', resolve));
       const ready = new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('Windows exit fixture did not become ready')), 3000);
         child.once('message', message => {
@@ -86,7 +87,7 @@ test('Windows helper exit codes take priority over diagnostic wording after real
         child.once('error', error => { clearTimeout(timer); reject(error); });
         child.once('exit', () => { clearTimeout(timer); reject(new Error('Windows exit fixture exited before readiness')); });
       });
-      prepared.push({ ...item, args, child, ready });
+      prepared.push({ ...item, args, child, ready, closed });
     }
     await Promise.all(prepared.map(item => item.ready));
     let next = 0;
@@ -108,6 +109,7 @@ test('Windows helper exit codes take priority over diagnostic wording after real
     assert.equal(next, prepared.length);
   } finally {
     for (const { child } of prepared) child.kill('SIGKILL');
+    await Promise.all(prepared.map(item => item.closed));
     rmSync(directory, { recursive: true, force: true });
   }
 });
