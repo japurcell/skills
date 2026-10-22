@@ -173,6 +173,47 @@ test('failed native decode retains one bounded fixed diagnostic without qualifyi
   } finally { rmSync(evidence, { recursive: true, force: true }); }
 });
 
+test('a close failure preserves the first decode diagnostic and one terminal failure', () => {
+  const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
+  const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-close-compound-'));
+  const native = join(evidence, 'native.tsv');
+  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\tchild';
+  const firstFailure = failedDecode.replace('API\tclose\t0\nFAIL\tdecode\tinvalid-data\t0\n',
+    `API\tclose\t5\n${diagnostic}\nFAIL\tdecode\tinvalid-data\t0\n`);
+  const prepare = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
+    encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, WINDOWS_ETW_PROBE_EVIDENCE: evidence }
+  });
+  try {
+    writeFileSync(join(evidence, 'qualification.json'), JSON.stringify({
+      status: 'native-feasibility-passed-review-required', receipt: { ok: true },
+      rawEtl: 'removed-after-offline-parse'
+    }));
+    const duplicateFailure = firstFailure.replace(`${diagnostic}\n`,
+      `FAIL\tdecode\tnative-api\t5\n${diagnostic}\n`);
+    writeFileSync(native, duplicateFailure);
+    assert.equal(prepare().status, 0);
+    assert.equal(existsSync(native), false);
+    assert.equal(existsSync(join(evidence, 'upload', 'native.tsv')), false);
+
+    writeFileSync(native, firstFailure);
+    assert.equal(prepare().status, 0);
+    assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), firstFailure);
+    const summary = JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8'));
+    assert.equal(summary.status, 'failed');
+    assert.equal(summary.receipt.ok, false);
+    assert.deepEqual(summary.failure, { stage: 'receipt', code: 'receipt-invalid' });
+    assert.equal(validateProbeReceipt(firstFailure, 'C:\\node\\node.exe').ok, false);
+
+    const closeOnly = failedDecode.replace('API\tclose\t0\nFAIL\tdecode\tinvalid-data\t0\n',
+      'API\tclose\t5\nFAIL\tdecode\tnative-api\t5\n');
+    writeFileSync(native, closeOnly);
+    assert.equal(prepare().status, 0);
+    assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), closeOnly);
+    assert.equal(JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8')).status, 'failed');
+  } finally { rmSync(evidence, { recursive: true, force: true }); }
+});
+
 test('public receipt fails closed on health, schema and missing positive controls', () => {
   for (const changed of [
     good.replace('HEADER\t134000000001000000\t0\t0', 'HEADER\t0\t0\t0'),

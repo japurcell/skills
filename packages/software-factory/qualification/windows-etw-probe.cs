@@ -253,6 +253,21 @@ public static class WindowsEtwProbe
         Failure("decode", error);
     }
 
+    private static bool RecordDecodeOutcome(Exception error, uint closeCode)
+    {
+        if (error != null)
+        {
+            RecordDecodeFailure(error);
+            return false;
+        }
+        if (closeCode != 0)
+        {
+            Failure("decode", "native-api", closeCode);
+            return false;
+        }
+        return true;
+    }
+
     private static bool WriteReceipt(string path)
     {
         var text = new StringBuilder();
@@ -701,6 +716,8 @@ public static class WindowsEtwProbe
                 }
                 else
                 {
+                    Exception decodeFailure = null;
+                    uint closeCode = 0;
                     try
                     {
                         CallbackCount = 0; DecodeError = null; DecodeDiagnostic = null;
@@ -745,21 +762,13 @@ public static class WindowsEtwProbe
                         }
                         finally
                         {
-                            uint close = CloseTrace(reader);
-                            Line("API", "close", close);
-                            if (close != 0)
-                            {
-                                Failure("decode", "native-api", close);
-                                result = 4;
-                            }
+                            closeCode = CloseTrace(reader);
+                            Line("API", "close", closeCode);
                         }
-                        Receipt.AddRange(SelectedEvents);
                     }
-                    catch (Exception error)
-                    {
-                        RecordDecodeFailure(error);
-                        result = 4;
-                    }
+                    catch (Exception error) { decodeFailure = error; }
+                    if (RecordDecodeOutcome(decodeFailure, closeCode)) Receipt.AddRange(SelectedEvents);
+                    else result = 4;
                 }
             }
             if (stopped && !File.Exists(etl))
