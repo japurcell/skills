@@ -283,3 +283,65 @@ Reflection: per-attempt parser ownership, channel selection validation, saved
 raw evidence and bounded failure cleanup are enforced in runtime checks and
 maintained public subprocess tests. No separate durable brain or skill edit is
 needed. The parent owns task status, integration and independent review.
+
+
+## Stream stop callback review repairs
+
+Independent review rejected `38018c85691f0973dd7477b294c0e809b397da60` despite
+its passing 148 cases. SEC-001 isolated an introduced failure: the native child
+closed authoritative stdout, emitted an invalid stderr event 80 ms later and
+stayed alive, while `requestStop` returned a never-settling promise. The catch
+awaited that promise before direct native cleanup. The invocation exhausted its
+drain allowance, returned cancelled/unknown and retained an unsettled occupied
+attempt with a live process group. The reviewer established that the corresponding
+baseline instead failed and cleaned its owned group. SEC-002 showed the related
+existing gap when stdout stayed open: `allSettled` could not reach the catch while
+adapter cooperation failed to close that pipe.
+
+The repair keeps the original immutable first-failure deadline and charged
+natural-exit observation. After that observation, the runner starts its owned
+native scope stop independently of adapter cooperation, using only remaining
+grace. The adapter callback is awaited only against the same remaining deadline;
+its timeout or rejection cannot delay native stop or leave another machine pipe
+open. The catch's cached wait is now bounded, and its direct native fallback
+remains. No deadline, native process policy, declared child scope, persistence
+schema, or admission policy changes. Submission, callback settlement and timeout
+still prove no absence; the existing native closed-pipe/group checks decide
+quiescence. Recording failure and declared/observed uncertainty remain
+conservative.
+
+The first observed stream failure is retained while all streams settle. The
+escaped-pipe test reproduced a later stdout `Premature close` replacing the
+initiating stderr decode error under the former array-order selection. Cleanup
+errors now preserve that initiating independent failure and its saved raw input.
+
+Five additional maintained public subprocess cases cover hanging and rejecting
+stop callbacks, each with stdout open and closed, plus a native owner that exits
+zero while an escaped child keeps inherited pipes open. The paired hanging-stop
+cases were red before repair: approximately 2.02 and 2.05 seconds, cancelled
+instead of failed, with test-owned leaked groups explicitly cleaned in finalizers.
+They pass after repair at approximately one second including repository/startup
+work, with failed terminal attempts, actual group ESRCH, partial raw stderr,
+released claims and zero occupied capacity. The rejection cases prove the same
+measured cleanup. The escaped-pipe control preserves failed/unknown cleanup and
+occupied capacity, proves its original owner exited zero and its original group
+is absent, and verifies the escaped child remains live until explicit fixture
+cleanup. This establishes that independent stop does not manufacture descendant
+absence or clear genuine uncertainty.
+
+Reflection: the review exposed a real control dependency omitted from the first
+candidate's checks. Bounded adapter cooperation, independent live-scope stop and
+first-failure preservation are now enforced structurally by runtime ordering and
+maintained public regressions. No separate brain or skill edit is warranted.
+
+
+Final repaired-candidate verification uses the same qualified Node v24.22.1
+binary and full affected command documented above. Strict source/qualification
+typechecks and fresh runtime/declaration build pass. The complete suite passes
+153/153 in 56.488 seconds: 58 adapter cases and all 95 existing cases, with zero
+failures, skips or cancellations. `rtk git diff --check` passes. These results
+supersede the 148-case candidate proof for review acceptance; independent
+re-review is still required. This repair changes only `src/agents.ts`, the
+public adapter tests and this scoped evidence. The native process module,
+provider code, store/lifecycle/workspace sources, registry, canonical docs and CI
+remain unchanged.

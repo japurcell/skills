@@ -60,12 +60,20 @@ adapter.decodeFinal=text=>JSON.parse(text.trim().split('\\n').at(-1));
 adapter.mapEvent=()=>undefined;
 adapter.start=request=>{
   const script=\`import {appendFileSync} from 'node:fs';
+import {spawn} from 'node:child_process';
 const context=process.argv[1], nativeId='thread-'+context;
 appendFileSync('agent-launches.jsonl',context+'\\\\n');
 process.on('exit',code=>appendFileSync('native-exits.jsonl',JSON.stringify({context,code})+'\\\\n'));
 if(context.includes('live')){process.on('SIGTERM',()=>appendFileSync('native-signals.jsonl','SIGTERM\\\\n'));setInterval(()=>{},10000);}
 process.stdout.write(JSON.stringify({type:'thread.started',nativeId})+'\\\\n');
-setTimeout(()=>{
+if(context.includes('bad-event')){
+  if(context.includes('closed'))process.stdout.end();
+  if(context.includes('escaped')){
+    const escaped=spawn(process.execPath,['-e','setInterval(()=>{},10000)'],{detached:true,stdio:['ignore',process.stdout,process.stderr]});
+    appendFileSync('escaped-child.pid',String(escaped.pid));escaped.unref();
+    setTimeout(()=>process.stderr.write('invalid event bytes\\\\n',()=>process.exit(0)),80);
+  }else{setTimeout(()=>process.stderr.write('invalid event bytes\\\\n'),80);setInterval(()=>{},10000);}
+}else setTimeout(()=>{
   process.stdout.write(JSON.stringify({type:'turn.completed',tokens:context==='alpha'?7:13})+'\\\\n');
   process.stdout.write(JSON.stringify(context.includes('question')?{kind:'needs_input',question:'Which target?',context:'authoritative saved context'}:{kind:'result',payload:{context}})+'\\\\n');
   if(context.includes('denial')){process.stderr.write('native sandbox violation: denied write\\\\n');if(context.includes('question'))process.stdout.end();process.stderr.end();}
@@ -78,11 +86,12 @@ setTimeout(()=>{
       const capture=history.captures.find(c=>c.attemptId===request.attemptId&&c.channel===(channel==='stdout'?'result':'stderr'));
       if(!capture||!store.readCapture({id:capture.id}).chunks.map(c=>c.text).join('').includes(line))throw new Error('launch event exposed before raw save');
     } finally {store.close();}
-    if(channel==='stderr'){if(line.includes('denied write'))throw new Error('native sandbox violation');return;}
+    if(channel==='stderr'){if(line.includes('invalid event bytes'))throw new Error('invalid event bytes');if(line.includes('denied write'))throw new Error('native sandbox violation');return;}
     const event=JSON.parse(line);
     if(event.type==='thread.started'){nativeId=event.nativeId;return {nativeId,parentNativeId:null,lifecycle:'running'};}
     if(event.type==='turn.completed')return {nativeId,parentNativeId:null,lifecycle:'succeeded',usage:{tokens:event.tokens,scope:'self'}};
   }};
+  if(options.unknownScope)launch.childScope='unknown';
   if(options.streamConfig==='empty')launch.eventChannels=[];
   if(options.streamConfig==='duplicate')launch.eventChannels=['stdout','stdout'];
   if(options.streamConfig==='unknown')launch.eventChannels=['stdin'];
@@ -91,6 +100,8 @@ setTimeout(()=>{
   if(options.streamConfig==='mapper')launch.mapEvent=17;
   return launch;
 };` : ''}
+if(options.stopMode==='hang')adapter.requestStop=()=>new Promise(()=>{});
+if(options.stopMode==='reject')adapter.requestStop=()=>Promise.reject(new Error('fixture stop rejected'));
 const result=await invoke({...options,adapters:{fake:adapter}});console.log(JSON.stringify(result));process.exit(result.exitCode);`,
   );
   const invoke = (extra = {}) =>
@@ -912,3 +923,62 @@ for(const shutdownGraceMs of [1,100])
       try {assert.equal(store.inspectOwners().length,0);} finally {store.close();}
     } finally {repo.dispose();}
   });
+
+
+for(const stopMode of ['hang','reject'])for(const channelState of ['open','closed'])
+  test(`independent stream failure cleans its live scope when adapter stop ${stopMode}s with stdout ${channelState}`, async () => {
+    const repo=await fixture(`await context.agent('bad',{context:'bad-event-${channelState}',timeoutMs:10000});`,{},true);
+    let ownerPid;
+    try {
+      const started=Date.now(),r=repo.invoke({stopMode,shutdownGraceMs:100});
+      assert.equal(r.status,1,r.stdout+r.stderr);
+      const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId),attempt=agents(h)[0];
+      ownerPid=attempt.owner?.pid;
+      assert.equal(saved.outcome,'failed');
+      assert.match(saved.diagnostic,/invalid event bytes/);
+      assert.equal(saved.cleanup,'complete');
+      assert.equal(attempt.outcome,'failed');
+      assert.equal(attempt.quiescent,true);
+      assert.ok(Date.now()-started<1800,'hung stop callback must not consume invocation drain allowance');
+      assert.equal(agents(h).length,1);
+      assert.equal(h.accounting.occupiedAgents,0);
+      assert.equal(h.accounting.additionalUsed,0);
+      assert.throws(()=>process.kill(-ownerPid,0),error=>error.code==='ESRCH');
+      const store=openRepositoryStore(repo.common);
+      try {
+        const capture=h.captures.find(c=>c.attemptId===attempt.id&&c.channel==='stderr'), raw=store.readCapture({id:capture.id});
+        assert.equal(raw.state,'partial');
+        assert.match(raw.chunks.map(c=>c.text).join(''),/invalid event bytes/);
+        assert.equal(store.inspectOwners().length,0);
+      } finally {store.close();}
+    } finally {
+      if(ownerPid)try{process.kill(-ownerPid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+      repo.dispose();
+    }
+  });
+
+
+test('an exited owner with escaped inherited pipes keeps stream-failure cleanup unknown', async () => {
+  const repo=await fixture(`await context.agent('bad',{context:'bad-event-escaped',timeoutMs:10000});`,{},true);
+  let escapedPid;
+  try {
+    const r=repo.invoke({stopMode:'hang',unknownScope:true,shutdownGraceMs:100});
+    assert.equal(r.status,1,r.stdout+r.stderr);
+    const saved=JSON.parse(r.stdout),h=repo.history(saved.invocationId),attempt=agents(h)[0];
+    escapedPid=Number(readFileSync(join(saved.worktree,'escaped-child.pid'),'utf8'));
+    assert.equal(saved.outcome,'failed');
+    assert.match(saved.diagnostic,/invalid event bytes/);
+    assert.equal(saved.cleanup,'unknown');
+    assert.equal(attempt.outcome,'failed');
+    assert.equal(attempt.quiescent,false);
+    assert.equal(h.accounting.occupiedAgents,1);
+    assert.deepEqual(JSON.parse(readFileSync(join(saved.worktree,'native-exits.jsonl'),'utf8').trim()),{context:'bad-event-escaped',code:0});
+    assert.throws(()=>process.kill(-attempt.owner.pid,0),error=>error.code==='ESRCH');
+    assert.doesNotThrow(()=>process.kill(escapedPid,0));
+    const store=openRepositoryStore(repo.common);
+    try {assert.equal(store.inspectOwners().length,1);} finally {store.close();}
+  } finally {
+    if(escapedPid)try{process.kill(-escapedPid,'SIGKILL');}catch(error){if(error.code!=='ESRCH')throw error;}
+    repo.dispose();
+  }
+});

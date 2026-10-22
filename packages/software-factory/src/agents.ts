@@ -247,7 +247,12 @@ export class AgentCalls {
         return (streamFailureStop ??= (async () => {
           // Spend existing grace observing a natural exit before probing/signaling its transient native group.
           await Promise.race([scope.exited, delay(Math.min(10, host.grace))]);
-          await adapter.requestStop(() => scope.stop(remainingGrace()));
+          const adapterStop = Promise.resolve().then(() => adapter.requestStop(() => scope.stop(remainingGrace())));
+          // Adapter cooperation cannot gate the runner's owned native cleanup or keep another pipe open.
+          await Promise.all([
+            scope.stop(remainingGrace()),
+            Promise.race([adapterStop.catch(() => {}), delay(remainingGrace(), undefined, { ref: false })]),
+          ]);
         })());
       // A completed authoritative question need not signal its already-exited owner.
       // Descendant absence still comes from the unchanged native scope checks.
@@ -303,8 +308,10 @@ export class AgentCalls {
       }
     };
     const thisInfo = () => this.sessions.get(attempt.id)!;
+    let streamFailure: { error: unknown } | undefined;
     const stopOnStreamFailure = (promise: Promise<void>) =>
       promise.catch((error) => {
+        streamFailure ??= { error };
         if (!host.recorder.failed) {
           streamFailureDeadline ??= performance.now() + host.grace;
         }
@@ -356,9 +363,8 @@ export class AgentCalls {
     const outputStreams = Promise.allSettled([
       stopOnStreamFailure(adapter.finalChannel === 'stdout' ? stdoutStream.then(receiveFinal) : stdoutStream),
       stopOnStreamFailure(adapter.finalChannel === 'stderr' ? stderrStream.then(receiveFinal) : stderrStream),
-    ]).then((results) => {
-      const bad = results.find((r) => r.status === 'rejected');
-      if (bad?.status === 'rejected') throw bad.reason;
+    ]).then(() => {
+      if (streamFailure) throw streamFailure.error;
     });
     void outputStreams.catch(() => {});
     try {
