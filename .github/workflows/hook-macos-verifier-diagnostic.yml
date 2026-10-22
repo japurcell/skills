@@ -1,0 +1,70 @@
+name: Fresh macOS verifier diagnostic
+
+on:
+  push:
+    paths:
+      - 'scripts/verify-security-fixture-patch.py'
+      - 'scripts/test-verify-security-fixture-patch.py'
+      - '.github/workflows/hook-macos-verifier-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.13.16'
+      - name: Isolate fresh native verifier fixtures
+        run: |
+          umask 077
+          task_root="$RUNNER_TEMP/fresh macOS verifier"
+          mkdir -p "$task_root/home" "$task_root/tmp" "$task_root/logs"
+          : > "$task_root/gitconfig"
+          {
+            printf 'HOME=%s/home\n' "$task_root"
+            printf 'USERPROFILE=%s/home\n' "$task_root"
+            printf 'CODEX_HOME=%s/home/.codex\n' "$task_root"
+            printf 'TMPDIR=%s/tmp\n' "$task_root"
+            printf 'AUDIT_LOG=%s/logs/audit.log\n' "$task_root"
+            printf 'OBSERVABILITY_LOG_PATH=%s/logs/observability.jsonl\n' "$task_root"
+            printf 'OBSERVABILITY_TESTING=1\n'
+            printf 'GIT_CONFIG_GLOBAL=%s/gitconfig\n' "$task_root"
+            printf 'GIT_CONFIG_NOSYSTEM=1\n'
+            printf 'GIT_TERMINAL_PROMPT=0\n'
+          } >> "$GITHUB_ENV"
+      - name: Record bounded timer and host metadata
+        run: |
+          python3 - <<'PY' | tee "$RUNNER_TEMP/fresh macOS verifier/logs/timing.json"
+          import json, os, platform, sys, time
+          assert sys.version_info[:3] == (3, 13, 16)
+          samples = []
+          for requested in (0.3, 0.55) * 5:
+              started = time.monotonic()
+              time.sleep(requested)
+              samples.append({"requestedSeconds": requested, "elapsedSeconds": round(time.monotonic() - started, 6)})
+          print(json.dumps({"python": platform.python_version(), "os": platform.release(), "machine": platform.machine(),
+              "cpuCount": os.cpu_count(), "loadAverage": os.getloadavg(), "timerSamples": samples}))
+          PY
+          git --version
+      - name: Exercise unchanged native verifier suite on fresh host
+        run: |
+          python3 scripts/test-verify-security-fixture-patch.py 2>&1 | tee "$RUNNER_TEMP/fresh macOS verifier/logs/verifier.log"
+      - name: Retain diagnostic evidence including failures
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: fresh-macos-verifier-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fresh macOS verifier/logs
+          if-no-files-found: warn
+          retention-days: 14
