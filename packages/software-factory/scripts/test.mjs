@@ -4,13 +4,16 @@ import { parseArgs } from 'node:util';
 // Explicit registration excludes fixtures, historical experiments and native calls from discovery.
 const groups = {
   fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
-  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }, { path: 'test/browser/ui.test.mjs', suite: 'browser' }, { path: 'test/browser/scale.test.mjs', suite: 'browser' }], notifications: [
-    { path: 'test/notification-records.test.mjs' },
-    { path: 'test/notification-records-cli.test.mjs' },
-    { path: 'test/notification-records-success.test.mjs' },
-    { path: 'test/notification-senders.test.mjs' },
+  store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }, { path: 'test/browser/ui.test.mjs', suite: 'browser' }, { path: 'test/browser/scale.test.mjs', suite: 'browser' }, { path: 'test/browser/reminders.test.mjs', suite: 'browser' }], notifications: [
+    // Start fixed five-second uncertainty cases early so their waits overlap other fixtures.
     { path: 'test/notification-sender-uncertain.test.mjs' },
     { path: 'test/notification-success-uncertain.test.mjs' },
+    { path: 'test/notification-reminder-uncertain.test.mjs' },
+    { path: 'test/notification-records-cli.test.mjs' },
+    { path: 'test/notification-records.test.mjs' },
+    { path: 'test/notification-records-success.test.mjs' },
+    { path: 'test/notification-reminders.test.mjs' },
+    { path: 'test/notification-senders.test.mjs' },
     { path: 'test/notification-preflight.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] },
     { path: 'test/notification-pipe.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] },
   ],
