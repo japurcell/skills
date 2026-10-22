@@ -30,7 +30,7 @@ export function parseTrace(contents) {
   return records;
 }
 
-export function validateTrace(records, rootPid, expectChild) {
+export function validateTrace(records, rootPid, expectChild, expectedChildImage) {
   const reasons = [];
   const roots = records.filter((record) => record.kind === 'ROOT');
   const created = records.filter((record) => record.kind === 'CREATE');
@@ -45,6 +45,8 @@ export function validateTrace(records, rootPid, expectChild) {
   if (records.some((record) => ['STOP_REQUESTED', 'STOP_OBSERVED', 'ERROR'].includes(record.kind)))
     reasons.push('debug trace interrupted or uncertain');
   if (expectChild && children.length === 0) reasons.push('positive child control not observed');
+  if (expectedChildImage && !children.some((child) => child.value && normalized(child.value) === normalized(expectedChildImage)))
+    reasons.push('intended positive child image not observed');
   if (!expectChild && children.length !== 0) reasons.push('unexpected child process created');
   if (children.some((child) => exits.filter((record) => record.pid === child.pid).length !== 1))
     reasons.push('child exit unobserved');

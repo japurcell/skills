@@ -29,6 +29,21 @@ test('trace requires a positive child control and complete direct exit', () => {
   assert.equal(validateTrace(parseTrace([root, created, exit].join('\n')), 10, false).ok, false);
 });
 
+test('positive control requires the intended child image, not an incidental console host', () => {
+  const b64 = (text) => Buffer.from(text).toString('base64');
+  const rows = (childImage) => parseTrace([
+    `ROOT\t10\t${b64('C:\\Windows\\System32\\cmd.exe')}`,
+    `CREATE\t10\t${b64('\\\\?\\C:\\Windows\\System32\\cmd.exe')}`,
+    `CREATE\t11\t${b64(childImage)}`,
+    `EXIT\t11\t${b64('0')}`,
+    `EXIT\t10\t${b64('0')}`,
+    `DONE\t10\t${b64('0')}`,
+  ].join('\n'));
+  const intended = 'C:\\Windows\\System32\\cmd.exe';
+  assert.equal(validateTrace(rows('\\\\?\\C:\\Windows\\System32\\conhost.exe'), 10, true, intended).ok, false);
+  assert.equal(validateTrace(rows('\\\\?\\C:\\Windows\\System32\\cmd.exe'), 10, true, intended).ok, true);
+});
+
 test('each fixed helper needs resolved module evidence and each Git case needs its imported DLLs', (t) => {
   const base = mkdtempSync(join(tmpdir(), 'windows-startup-modules-'));
   t.after(() => rmSync(base, { recursive: true, force: true }));

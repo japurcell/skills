@@ -79,7 +79,7 @@ function launchCase(name, executable, cwd, args, env, archive, options = {}) {
       assert.equal(records.find((record) => record.kind === 'DONE')?.value, `stopped:${exits[0].value}`);
       assert.ok(!records.some((record) => record.kind === 'ERROR'), 'stop trace reported error');
     } else {
-      const checked = validateTrace(records, roots[0].pid, options.expectChild ?? false);
+      const checked = validateTrace(records, roots[0].pid, options.expectChild ?? false, options.expectedChildImage);
       assert.ok(checked.ok, checked.reasons.join('; '));
       if (archive) validateModules(records, executable, archive, env.SystemRoot, options.expectedGitDlls);
     }
@@ -228,10 +228,9 @@ async function main() {
     evidence: 'Pinned Git queried core.fsmonitor through the private global include without executing its value; other config canaries are unexercised decoys.' });
   save();
 
-  const positive = launchCase('positive-child-control', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
-    work, ['-NoProfile', '-NonInteractive', '-Command',
-      '$p = Start-Process -FilePath $env:ComSpec -ArgumentList "/c exit 0" -PassThru -Wait; exit $p.ExitCode'],
-    env, null, { expectChild: true, expectedExit: 0 });
+  const positive = launchCase('positive-child-control', env.ComSpec, work,
+    ['/d', '/c', env.ComSpec, '/d', '/c', 'exit', '0'],
+    env, null, { expectChild: true, expectedChildImage: env.ComSpec, expectedExit: 0, expectedNoOutput: true });
   assert.equal(positive.status, 'passed', 'debugger positive child control failed');
 
   const stopControl = launchCase('direct-stop-control', join(env.SystemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'),
