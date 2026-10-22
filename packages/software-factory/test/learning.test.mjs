@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
@@ -25,6 +25,7 @@ export async function run(context: WorkflowContext, input: Record<string, unknow
   return { status: 'seed' };
 }`);
   cpSync(join(root, 'templates/workflows/learn.ts'), join(repo.path, '.factory/workflows/learn.ts'));
+  cpSync(join(root, 'templates/workflows/change.ts'), join(repo.path, '.factory/workflows/change.ts'));
   repo.git(['add', '.factory']);
   repo.git(['commit', '-m', 'Install disposable extraction fixtures', '--only', '.factory']);
   const common = join(repo.path, '.git');
@@ -111,6 +112,23 @@ test('explicit extraction saves examined ended sources and a justified empty res
   } finally { repo.dispose(); }
 });
 
+test('explicit workspace-write override cannot make a modifying extraction succeed', async () => {
+  const repo = await fixture();
+  try {
+    const source = repo.invoke('source', { mode: 'command' }).saved;
+    const active = readFileSync(join(repo.path, '.factory/agents.json'), 'utf8');
+    const result = repo.invoke('learn', { version: 1, sources: [{ invocationId: source.invocationId }] },
+      { kind: 'mutate', payload: { proposals: [], noProposalReason: 'No justified change.' } },
+      { agentOverrides: { 'learn/extract': { permissions: 'workspace-write' } } });
+    assert.equal(JSON.parse(readFileSync(repo.launchLog, 'utf8').trim()).permissions, 'workspace-write');
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.saved.diagnostic, /candidate changed/);
+    assert.equal(readFileSync(join(result.saved.worktree, '.factory/agents.json'), 'utf8'), '{"changed":"by fake extraction agent"}');
+    assert.equal(readFileSync(join(repo.path, '.factory/agents.json'), 'utf8'), active);
+    assert.equal(repo.history(source.invocationId).invocation.outcome, 'succeeded');
+  } finally { repo.dispose(); }
+});
+
 test('failed, needs-input and interrupted invocations are valid explicit learning sources', async () => {
   const repo = await fixture();
   try {
@@ -145,6 +163,45 @@ test('a proposal retains exact supporting and contrary references supplied to th
     assert.deepEqual(report.proposals, [proposal]);
     assert.deepEqual(report.examinedSources[0].eventCursors, [eventCursor]);
     assert.deepEqual(report.examinedSources.map(item => item.attemptIds), [[attemptId], [contraryId]]);
+  } finally { repo.dispose(); }
+});
+
+test('extraction rejects diff paths that disagree with the single declared target', async () => {
+  const repo = await fixture();
+  try {
+    const source = repo.invoke('source', { mode: 'command' }).saved;
+    const attemptId = repo.history(source.invocationId).attempts.find(item => item.operationKey === 'observed').id;
+    const target = { scope: 'repository', path: '.factory/prompts/check.md' };
+    const base = { key: 'path-check', summary: 'Clarify the selected check.', target,
+      supportingEvidence: [{ invocationId: source.invocationId, attemptId }], contraryEvidence: [], suggestedCases: ['Selected check'] };
+    const cases = [
+      '--- a/other.md\n+++ b/other.md\n@@ -1 +1 @@\n-old\n+new',
+      '--- a/.factory/prompts/check.md\n+++ b/.factory/prompts/check.md\n@@ -1 +1 @@\n-old\n+new\n--- a/other.md\n+++ b/other.md\n@@ -1 +1 @@\n-old\n+new',
+      '--- a/.factory/prompts/../agents.json\n+++ b/.factory/prompts/../agents.json\n@@ -1 +1 @@\n-old\n+new',
+      'diff --git a/.factory/prompts/check.md b/.factory/prompts/check.md\nrename from other.md\nrename to .factory/prompts/check.md\n--- a/.factory/prompts/check.md\n+++ b/.factory/prompts/check.md\n@@ -1 +1 @@\n-old\n+new',
+    ];
+    for (const diff of cases) {
+      const result = repo.invoke('learn', { version: 1, sources: [{ invocationId: source.invocationId }] },
+        { kind: 'result', payload: { proposals: [{ ...base, diff }] } });
+      assert.equal(result.status, 1, result.stdout + result.stderr);
+      assert.match(result.saved.diagnostic, /result invalid|unresolved invalid/i);
+    }
+  } finally { repo.dispose(); }
+});
+
+test('extraction accepts a new-file diff without applying it', async () => {
+  const repo = await fixture();
+  try {
+    const source = repo.invoke('source', { mode: 'command' }).saved;
+    const attemptId = repo.history(source.invocationId).attempts.find(item => item.operationKey === 'observed').id;
+    const diff = 'diff --git a/.factory/prompts/new.md b/.factory/prompts/new.md\nnew file mode 100644\nindex 0000000..1234567\n--- /dev/null\n+++ b/.factory/prompts/new.md\n@@ -0,0 +1 @@\n+New prompt';
+    const proposal = { key: 'new-prompt', summary: 'Add a prompt.', target: { scope: 'repository', path: '.factory/prompts/new.md' }, diff,
+      supportingEvidence: [{ invocationId: source.invocationId, attemptId }], contraryEvidence: [], suggestedCases: ['New prompt check'] };
+    const result = repo.invoke('learn', { version: 1, sources: [{ invocationId: source.invocationId }] },
+      { kind: 'result', payload: { proposals: [proposal] } });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(repo.report(result.saved.invocationId).proposals, [proposal]);
+    assert.equal(existsSync(join(result.saved.worktree, '.factory/prompts/new.md')), false);
   } finally { repo.dispose(); }
 });
 
