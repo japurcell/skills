@@ -65,6 +65,7 @@ SUITES = (
     ("python3", "scripts/test-verify-hook-release.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-codex-hooks-windows.ps1"),
+    ("pwsh", "-NoProfile", "-File", "scripts/test-scan-secrets-windows-fixture.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-scan-secrets-windows.ps1"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-lifecycle-messages-windows.ps1"),
     ("bash", "scripts/test-install.sh"),
