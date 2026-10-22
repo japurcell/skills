@@ -247,6 +247,65 @@ public static class WindowsEtwProbe
         return new InvalidDataException("event decode rejected");
     }
 
+    private static bool IsWindowsName(string value)
+    {
+        if (String.IsNullOrEmpty(value) || value == "." || value == ".." ||
+            value[value.Length - 1] == '.' || value[value.Length - 1] == ' ') return false;
+        foreach (char c in value)
+            if (c < ' ' || c == '\u007f' || c == '\\' || c == '/' || c == ':' ||
+                c == '<' || c == '>' || c == '"' || c == '|' || c == '?' || c == '*') return false;
+        return true;
+    }
+
+    private static bool HasWindowsSegments(string value, int start, int minimum, bool allowForwardSlash)
+    {
+        if (start >= value.Length) return false;
+        string[] segments = value.Substring(start).Split(allowForwardSlash ? new[] { '\\', '/' } : new[] { '\\' });
+        if (segments.Length < minimum) return false;
+        foreach (string segment in segments) if (!IsWindowsName(segment)) return false;
+        return true;
+    }
+
+    private static string ProcessImageForm(string image)
+    {
+        if (IsWindowsName(image)) return "name-only";
+        if (image != null && image.Length >= 4 &&
+            ((image[0] >= 'A' && image[0] <= 'Z') || (image[0] >= 'a' && image[0] <= 'z')) &&
+            image[1] == ':' && (image[2] == '\\' || image[2] == '/') &&
+            HasWindowsSegments(image, 3, 1, true))
+            return "dos-absolute";
+        if (image != null && image.StartsWith("\\Device\\", StringComparison.OrdinalIgnoreCase) &&
+            HasWindowsSegments(image, 8, 2, false)) return "device-absolute";
+        return "other";
+    }
+
+    private static string ProcessImageBasename(string image, string pinned)
+    {
+        if (image == null || pinned == null) return "different";
+        int imageSeparator = Math.Max(image.LastIndexOf('\\'), image.LastIndexOf('/'));
+        int pinnedSeparator = Math.Max(pinned.LastIndexOf('\\'), pinned.LastIndexOf('/'));
+        return String.Equals(image.Substring(imageSeparator + 1), pinned.Substring(pinnedSeparator + 1),
+            StringComparison.OrdinalIgnoreCase) ? "same" : "different";
+    }
+
+    private static string ProcessImageTime(string target, long eventTime, long rootCreated)
+    {
+        if (target != "root" || eventTime <= 0 || rootCreated <= 0) return "unknown";
+        decimal delta = (decimal)eventTime - rootCreated;
+        if (delta < -50000000m) return "before-creation-window";
+        if (delta < 0) return "before-creation-within-window";
+        return delta <= 50000000m ? "at-or-after-creation-within-window" : "after-creation-window";
+    }
+
+    private static InvalidDataException RejectProcessImageMismatch(string image, string target, long eventTime)
+    {
+        if (DecodeDiagnostic == null)
+            DecodeDiagnostic = String.Join("\t", new[] { "DIAG", "callback", "process-image-mismatch", target,
+                ProcessImageForm(image), ProcessImageBasename(image, PinnedNode),
+                ProcessImageTime(target, eventTime, RootCreated) });
+        return new InvalidDataException("event decode rejected");
+    }
+
     private static void RecordDecodeFailure(Exception error)
     {
         if (DecodeDiagnostic != null) Receipt.Add(DecodeDiagnostic);
@@ -468,9 +527,12 @@ public static class WindowsEtwProbe
                 var keys = opcode == 1 ? StartKeys : EndKeys;
                 if (keys.ContainsKey((int)processId)) throw RejectDecode("callback", "duplicate-event", target);
                 keys[(int)processId] = key;
-                if (opcode == 1 && !String.Equals(TextProperty(address, "ImageFileName", false, target),
-                    PinnedNode, StringComparison.OrdinalIgnoreCase))
-                    throw RejectDecode("callback", "process-image-mismatch", target);
+                if (opcode == 1)
+                {
+                    string image = TextProperty(address, "ImageFileName", false, target);
+                    if (!String.Equals(image, PinnedNode, StringComparison.OrdinalIgnoreCase))
+                        throw RejectProcessImageMismatch(image, target, record.Header.TimeStamp);
+                }
                 KnownEvents.Add(new KnownEvent { Kind = opcode == 1 ? "process-start" : "process-end",
                     Pid = (int)processId, Parent = parentId, Key = key,
                     ExitStatus = opcode == 2 ? Property32(address, "ExitStatus", target) : 0,

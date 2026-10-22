@@ -9,7 +9,7 @@ const sourceRoot = fileURLToPath(new URL('.', import.meta.url));
 const maxEtlBytes = 64 * 1024 * 1024;
 const maxReceiptBytes = 65536;
 const requiredApis = ['start', 'readyQuery', 'beforeStopQuery', 'stop', 'open', 'process', 'close'];
-const diagnosticRow = /^DIAG\t(?:callback\t(?:callback-cap|schema-size|property-size|property-width|text-shape|empty-key|duplicate-event|process-image-mismatch|image-mismatch|other)\t(?:root|child|none)|keys\t(?:missing-start-key|missing-end-key|changed-key)\t(?:root|child)|identity\t(?:missing-event|missing-image|duplicate-image|identity-key|parent-mismatch|exit-status|creation-time|process-order|image-lifetime)\t(?:root|child|none))$/;
+const diagnosticRow = /^DIAG\t(?:callback\t(?:callback-cap|schema-size|property-size|property-width|text-shape|empty-key|duplicate-event|image-mismatch|other)\t(?:root|child|none)|callback\tprocess-image-mismatch\t(?:root\t(?:name-only|dos-absolute|device-absolute|other)\t(?:same|different)\t(?:before-creation-window|before-creation-within-window|at-or-after-creation-within-window|after-creation-window|unknown)|child\t(?:name-only|dos-absolute|device-absolute|other)\t(?:same|different)\tunknown)|keys\t(?:missing-start-key|missing-end-key|changed-key)\t(?:root|child)|identity\t(?:missing-event|missing-image|duplicate-image|identity-key|parent-mismatch|exit-status|creation-time|process-order|image-lifetime)\t(?:root|child|none))$/;
 const integer = (value) => /^\d+$/.test(value) && Number.isSafeInteger(Number(value));
 const tick = (value) => typeof value === 'string' && /^\d{15,20}$/.test(value) && BigInt(value) > 0n;
 const pid = (value) => integer(value) && Number(value) > 0 && Number(value) <= 0xffffffff;

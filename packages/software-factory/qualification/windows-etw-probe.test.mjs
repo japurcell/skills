@@ -28,16 +28,17 @@ const good = [
   'FILE\t65536', 'COMPLETE', ''
 ].join('\n');
 
-// Shape captured by native Windows run 39863447738, before SCHEMA was emitted.
+// Native Windows run 39866555694 before SCHEMA, with its old four-field DIAG omitted
+// so each public upload case can insert an exact diagnostic row.
 const failedDecode = [
   'ABI\t120\t280\t112\t448', 'TOKEN\tadministrator', 'OS\tMicrosoft Windows NT 10.0.26100.0',
   'API\tstart\t0', 'API\treadyQuery\t0', 'QUERY\treadyQuery\t1\t1\t1\t1\t1',
   'MODE\treadyQuery\t1\t1\t0\tstop\t0',
-  'OWNERSHIP\t01254f99-5e02-4390-be83-afe786d9dfc6\tCodex factory ETW feasibility 01254f995e024390be83afe786d9dfc6',
-  'SESSION\t37748737\t5\t64', 'ROOT\t7364\t134371808985697898\tpinned-node',
-  'CHILD\t8816', 'API\tbeforeStopQuery\t0', 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1',
+  'OWNERSHIP\tb1d11c8f-d68b-4ef3-a5ca-cc0a072e568e\tCodex factory ETW feasibility b1d11c8fd68b4ef3a5cacc0a072e568e',
+  'SESSION\t37748737\t5\t64', 'ROOT\t7552\t134371824125823679\tpinned-node',
+  'CHILD\t2928', 'API\tbeforeStopQuery\t0', 'QUERY\tbeforeStopQuery\t1\t1\t1\t1\t1',
   'MODE\tbeforeStopQuery\t1\t1\t0\tstop\t0', 'API\tstop\t0', 'STATS\t0\t0\t0',
-  'FILE\t3014656', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
+  'FILE\t3276800', 'API\topen\t0', 'API\tprocess\t0', 'API\tclose\t0',
   'FAIL\tdecode\tinvalid-data\t0', ''
 ].join('\n');
 
@@ -126,7 +127,7 @@ test('failed native decode retains one bounded fixed diagnostic without qualifyi
   const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
   const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-decode-diag-'));
   const native = join(evidence, 'native.tsv');
-  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\tchild';
+  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\troot\tname-only\tsame\tbefore-creation-within-window';
   const failed = failedDecode.replace('FAIL\tdecode', `${diagnostic}\nFAIL\tdecode`);
   const prepare = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
     encoding: 'utf8', timeout: 5000,
@@ -144,15 +145,40 @@ test('failed native decode retains one bounded fixed diagnostic without qualifyi
     assert.equal(staged.receipt.ok, false);
     assert.deepEqual(staged.failure, { stage: 'receipt', code: 'receipt-invalid' });
     assert.equal(validateProbeReceipt(failed, 'C:\\node\\node.exe').ok, false);
+    for (const allowed of [
+      diagnostic.replace('name-only', 'dos-absolute').replace('before-creation-within-window', 'before-creation-window'),
+      diagnostic.replace('name-only', 'device-absolute').replace('before-creation-within-window', 'at-or-after-creation-within-window'),
+      diagnostic.replace('name-only', 'other').replace('before-creation-within-window', 'after-creation-window'),
+      diagnostic.replace('before-creation-within-window', 'unknown'),
+      diagnostic.replace('\tsame\t', '\tdifferent\t'),
+      'DIAG\tcallback\tprocess-image-mismatch\tchild\tname-only\tsame\tunknown',
+      'DIAG\tcallback\tother\tnone',
+      'DIAG\tkeys\tchanged-key\troot',
+      'DIAG\tidentity\tcreation-time\troot'
+    ]) {
+      const evidenceRow = failed.replace(diagnostic, allowed);
+      writeFileSync(native, evidenceRow);
+      assert.equal(prepare().status, 0);
+      assert.equal(readFileSync(join(evidence, 'upload', 'native.tsv'), 'utf8'), evidenceRow);
+      assert.equal(JSON.parse(readFileSync(join(evidence, 'upload', 'qualification.json'), 'utf8')).status, 'failed');
+    }
     for (const invalid of [
       `${diagnostic}\n${diagnostic}\n`,
       'DIAG\tcallback\tunknown\tchild\n',
       'DIAG\tkeys\tprocess-image-mismatch\tchild\n',
       'DIAG\tkeys\tchanged-key\tnone\n',
-      'DIAG\tcallback\tprocess-image-mismatch\tchild\textra\n',
-      'DIAG\tcallback\tprocess-image-mismatch\tC:\\ambient\\node.exe\n',
-      'DIAG\tcallback\tprocess-image-mismatch\tchild\npath\n',
-      `DIAG\tcallback\tprocess-image-mismatch\tchild${'X'.repeat(65537)}\n`,
+      'DIAG\tcallback\tprocess-image-mismatch\troot\n',
+      'DIAG\tcallback\tprocess-image-mismatch\troot\tname-only\tsame\n',
+      `${diagnostic}\textra\n`,
+      diagnostic.replace('name-only', 'unknown') + '\n',
+      diagnostic.replace('\tsame\t', '\tunknown\t') + '\n',
+      diagnostic.replace('before-creation-within-window', 'unknown-time') + '\n',
+      diagnostic.replace('\troot\t', '\tnone\t') + '\n',
+      diagnostic.replace('\troot\t', '\tchild\t') + '\n',
+      diagnostic.replace('name-only', 'C:\\ambient\\node.exe') + '\n',
+      diagnostic.replace('process-image-mismatch', 'other') + '\n',
+      `${diagnostic}\npath\n`,
+      `${diagnostic}${'X'.repeat(65537)}\n`,
       `${diagnostic}\nFAIL\tdecode\tinvalid-data\t0\n`
     ]) {
       writeFileSync(native, failed.replace(`${diagnostic}\n`, invalid));
@@ -177,7 +203,7 @@ test('a close failure preserves the first decode diagnostic and one terminal fai
   const cli = fileURLToPath(new URL('./windows-etw-probe.mjs', import.meta.url));
   const evidence = mkdtempSync(join(tmpdir(), 'factory-etw-close-compound-'));
   const native = join(evidence, 'native.tsv');
-  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\tchild';
+  const diagnostic = 'DIAG\tcallback\tprocess-image-mismatch\tchild\tdevice-absolute\tdifferent\tunknown';
   const firstFailure = failedDecode.replace('API\tclose\t0\nFAIL\tdecode\tinvalid-data\t0\n',
     `API\tclose\t5\n${diagnostic}\nFAIL\tdecode\tinvalid-data\t0\n`);
   const prepare = () => spawnSync(process.execPath, [cli, '--prepare-artifacts'], {
