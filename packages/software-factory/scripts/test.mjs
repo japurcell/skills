@@ -1,9 +1,11 @@
 import { spawn } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { runOrderedTests } from './ordered-tests.mjs';
 
 // Explicit registration excludes fixtures, historical experiments and native calls from discovery.
 const groups = {
-  fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
+  fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }, { path: 'test/notification-selector-order.test.mjs' }],
   store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/validated-results.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }, { path: 'test/copilot-adapter.test.mjs', provider: 'copilot' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }, { path: 'test/browser/ui.test.mjs', suite: 'browser' }, { path: 'test/browser/scale.test.mjs', suite: 'browser' }, { path: 'test/browser/reminders.test.mjs', suite: 'browser' }], notifications: [
     // Start fixed five-second uncertainty cases early so their waits overlap other fixtures.
     { path: 'test/notification-sender-uncertain.test.mjs' },
@@ -56,10 +58,11 @@ try {
   }
 
   let child;
+  let orderedController;
   let interruptedBy;
   const signalHandlers = new Map();
   for (const signal of ['SIGINT', 'SIGTERM']) {
-    const handler = () => { interruptedBy = signal; child?.kill(signal); };
+    const handler = () => { interruptedBy = signal; child?.kill(signal); orderedController?.abort(); };
     signalHandlers.set(signal, handler);
     process.on(signal, handler);
   }
@@ -81,8 +84,18 @@ try {
   try {
     let exitCode = 0;
     if (files.size > 0 && !interruptedBy) {
-      const fileOptions = group === 'notifications' ? ['--test-concurrency=4'] : [];
-      exitCode = await run([...nodeOptions, ...fileOptions, '--test', ...files]);
+      if (group === 'notifications') {
+        orderedController = new AbortController();
+        exitCode = await runOrderedTests([...files], {
+          concurrency: 4,
+          cwd: fileURLToPath(new URL('../', import.meta.url)),
+          execArgv: [...nodeOptions],
+          signal: orderedController.signal,
+        });
+        orderedController = undefined;
+      } else {
+        exitCode = await run([...nodeOptions, '--test', ...files]);
+      }
     }
     if (!interruptedBy && exitCode !== 130 && exitCode !== 143 && extractionFiles.size > 0) {
       const extractionExitCode = await run([`--test-concurrency=${extractionConcurrency}`, '--test', ...extractionFiles]);

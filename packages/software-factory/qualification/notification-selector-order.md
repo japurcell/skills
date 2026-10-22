@@ -1,0 +1,21 @@
+# Notification selector scheduling qualification
+
+At source `43b3b9bb0ce623c16e2cde73b0965d2050956e75`, the unchanged public selector test in `test/dispatch.test.mjs` reached its 15-second deadline on hosted Linux (15016.515 ms) and barely passed on hosted macOS (14994.806 ms) in foundation run `39857139196`. The retained run is `/tmp/factory-native-foundation-39857139196/`, with failure text at `/tmp/factory-native-39857139196-failed.log`. Earlier 12.047/13.156-second passes did not close the timing risk. The same run completed every Linux notification case before the outer selector expired.
+
+The registry listed three five-second uncertainty files first, but `node --test` did not schedule them in argument order. A pinned Node 24.22.1 CLI reproducer with `z-first.test.mjs` before `a-second.test.mjs` in `argv` executed `a-second` first (`/tmp/factory-node-cli-test-order-proof.json`, receipt in `/tmp/factory-test-order-i86ui3ya/cli.log`). The order is based on test bodies writing a receipt, not TAP display order. An earlier `--input-type=module` API probe ran no tests and provides no ordering evidence.
+
+`scripts/test.mjs` now uses Node's programmatic `run({ files, concurrency: 4, execArgv, signal })` path for the notification group. A real `.mjs` probe with `files: [z-first, a-second]` and one worker wrote `z-first` then `a-second` to `/tmp/factory-test-order-i86ui3ya/api-order.log`. The first three registered uncertainty files therefore occupy three of the first four worker slots; other files proceed as workers close. The separate fixtures group registers synthetic tests that verify the four-slot bound and priority through child start receipts. They also check failure reporting, missing and empty files, skipped cases, and cancellation with an active child. The runner consumes the TAP reporter to completion, requires a final summary and a nonempty summary for every selected file, and rejects failed, cancelled, skipped, TODO or incomplete runs. The existing module-mocking flags pass to test subprocesses through `execArgv`. Other selectors continue through their existing CLI path.
+
+This uses the [Node 24.22.1 `run()` options](https://nodejs.org/docs/latest-v24.x/api/test.html#runoptions) and its [per-file and final summaries](https://nodejs.org/docs/latest-v24.x/api/test.html#event-testsummary). Node documents that `test:start` and `test:pass` are buffered in declaration order while `test:dequeue` and `test:complete` reflect execution order, so TAP order alone is not scheduling proof. The [event lifecycle](https://nodejs.org/docs/latest-v24.x/api/test.html#event-lifecycle) explains that distinction.
+
+## Local verification
+
+Checkout: `/Users/adam/.codex/worktrees/factory-notification-ordering/skills`, branch `codex/factory-notification-ordering`. Pinned Node v24.22.1 on Darwin arm64. This checkout installed its own dependencies with `npm ci --ignore-scripts --offline --cache /tmp/software-factory-npm-cache` and built its own `dist/`.
+
+- `node --test test/notification-selector-order.test.mjs`: 5/5 pass. The skipped-case assertion failed red before the runner rejected partial execution, then passed green.
+- `npm run test:notifications`: 36/36 original cases passed with zero failed, skipped or cancelled in 7.96 seconds after the final guard. The three unchanged five-second waits ran first.
+- `node --test test/dispatch.test.mjs qualification/ci.test.mjs`: 7/7 pass, including the unchanged public notification selector under its original 15-second deadline (8.08 seconds), non-notification selection/filter checks, and CI refusal checks.
+- `npm run test:fixtures`: 19/19 pass, including all five new runner cases and the existing dispatch cases, before the final skipped-run guard. The focused runner suite and direct notification group passed after that guard.
+- `npm run build`, `npm run typecheck`, and `git diff --check`: pass.
+
+The local result proves the pinned runner's execution order and the public selector behavior on this macOS checkout. It does not prove hosted Linux, macOS or Windows timing under foundation contention. The owner must run the unchanged public selector on the exact integrated pushed head in native Actions and retain each platform's duration and status.
