@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - codex/factory-windows-etw-probe
+      - codex/research-agentic-workflow-prototypes
     paths:
       - .github/workflows/windows-factory-etw-probe.yml
       - packages/software-factory/qualification/windows-etw-probe*
