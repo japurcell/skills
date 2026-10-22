@@ -1,11 +1,12 @@
-import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { currentOwner, inspectOwner } from './native/process.js';
 import type { Claim, RepositoryStore } from './store.js';
 
 const MAX_PAGE = 1048576;
-const liveHosts = new Map<string, { claim: Claim; sessionToken: string; available: () => boolean }>();
+const liveHosts = new Map<string, { claim: Claim; sessionToken: string; available: () => boolean; handoff: () => string }>();
 class RequestError extends Error { constructor(readonly status: number, message: string) { super(message); } }
 function parameters(route: URL, allowed: string[]) {
   for (const key of route.searchParams.keys()) if (!allowed.includes(key) || route.searchParams.getAll(key).length !== 1) throw new RequestError(400, 'invalid query');
@@ -61,7 +62,8 @@ async function verifyExisting(store: RepositoryStore, claim: Claim) {
   } catch { throw new Error('dashboard endpoint verification failed; explicit clearance required'); }
   const local = liveHosts.get(claim.id);
   const sessionToken = local?.available() && sameClaim(local.claim, claim) ? local.sessionToken : undefined;
-  return { url: endpoint.origin, reused: true as const, sessionToken, readCredentialAvailable: sessionToken !== undefined, close: async () => {} };
+  return { url: endpoint.origin, reused: true as const, sessionToken, readCredentialAvailable: sessionToken !== undefined,
+    createUiHandoff: sessionToken === undefined ? undefined : local?.handoff, close: async () => {} };
 }
 
 /** Owns only observation sockets. It never imports or executes a workflow. */
@@ -73,11 +75,28 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   let claim = await store.claimResource({ kind: 'dashboard', owner: currentOwner() });
   const sessionToken = randomUUID() + randomUUID();
   let url = '', closing = false, notificationWrites = 0;
+  const uiTickets = new Map<string, number>();
+  let badRedemptions = 0;
+  const assets = new Map([
+    ['/', { file: new URL('./web/index.html', import.meta.url), type: 'text/html; charset=utf-8' }],
+    ['/assets/app.js', { file: new URL('./web/app.js', import.meta.url), type: 'text/javascript; charset=utf-8' }],
+    ['/assets/style.css', { file: new URL('./web/style.css', import.meta.url), type: 'text/css; charset=utf-8' }],
+  ]);
+  function createUiHandoff() {
+    if (closing || !server.listening || !sameClaim(store.readDashboardClaim(), claim)) throw new Error('dashboard host unavailable');
+    for (const [ticket, deadline] of uiTickets) if (deadline < Date.now()) uiTickets.delete(ticket);
+    if (uiTickets.size >= 8 || badRedemptions >= 32) throw new Error('UI handoff limit reached');
+    const ticket = randomUUID() + randomUUID();
+    uiTickets.set(ticket, Date.now() + 60000);
+    return url + '/#handoff=' + ticket;
+  }
   const streams = new Set<ServerResponse>();
   const server = createServer({ maxHeaderSize: 8192, highWaterMark: 16384 }, (request, response) => { void handle(request, response); });
   async function handle(request: IncomingMessage, response: ServerResponse) {
     response.setHeader('cache-control', 'no-store');
     response.setHeader('x-content-type-options', 'nosniff');
+    response.setHeader('referrer-policy', 'no-referrer');
+    response.setHeader('x-frame-options', 'DENY');
     response.setHeader('content-security-policy', "default-src 'none'; frame-ancestors 'none'");
     try {
       if (closing || !sameClaim(store.readDashboardClaim(), claim)) { json(response, 503, { error: 'host claim unavailable' }); return; }
@@ -96,6 +115,27 @@ export async function startObservationHost(options: { store: RepositoryStore; po
       const raw = request.url ?? '';
       if (!raw.startsWith('/') || raw.startsWith('//') || raw.includes('%') || raw.includes('#') || raw.includes('\\') || raw.includes('/..')) { json(response, 400, { error: 'invalid path' }); return; }
       const route = new URL(raw, url);
+      if (request.method === 'POST' && route.pathname === '/api/ui-session') {
+        parameters(route, []);
+        if (request.headers.origin !== url || request.headers['content-type'] !== 'application/json' || badRedemptions >= 32) {
+          json(response, 403, { error: 'UI handoff denied' }); return;
+        }
+        const chunks: Buffer[] = []; let size = 0;
+        for await (const chunk of request) {
+          const bytes = Buffer.from(chunk as Uint8Array); size += bytes.length;
+          if (size > 512) throw new RequestError(413, 'UI handoff exceeds limit');
+          chunks.push(bytes);
+        }
+        let ticket: unknown;
+        try { ticket = (JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks))) as { ticket?: unknown }).ticket; }
+        catch { throw new RequestError(400, 'invalid UI handoff'); }
+        for (const [key, deadline] of uiTickets) if (deadline < Date.now()) uiTickets.delete(key);
+        const deadline = typeof ticket === 'string' ? uiTickets.get(ticket) : undefined;
+        if (deadline === undefined) { badRedemptions++; json(response, 403, { error: 'UI handoff denied' }); return; }
+        uiTickets.delete(ticket as string);
+        if (closing || Date.now() > deadline) { badRedemptions++; json(response, 403, { error: 'UI handoff denied' }); return; }
+        json(response, 200, { sessionToken }); return;
+      }
       if (request.method !== 'GET') {
         if (request.method !== 'POST' || !['/api/notifications/preferences', '/api/notifications/acknowledgments'].includes(route.pathname)) { json(response, 405, { error: 'read only' }); return; }
         parameters(route, []);
@@ -120,8 +160,21 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         parameters(route, ['challenge']);
         json(response, 200, { repositoryId: claim.resourceKey, claimId: claim.id, instanceId: claim.endpoint?.instanceId, proof: proof(claim, route.searchParams.get('challenge')!) }); return;
       }
-      if ((route.pathname === '/api/events' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
-        || route.pathname.startsWith('/api/invocations/')) && !bearerMatches(request, sessionToken)) {
+      const asset = assets.get(route.pathname);
+      if (asset) {
+        parameters(route, []);
+        const body = readFileSync(asset.file);
+        if (body.byteLength > MAX_PAGE) throw new RequestError(413, 'asset exceeds limit');
+        if (route.pathname === '/') {
+          const inline = /<script>([\s\S]*?)<\/script>/.exec(body.toString('utf8'))?.[1];
+          if (!inline) throw new Error('UI bootstrap missing');
+          const hash = createHash('sha256').update(inline).digest('base64');
+          response.setHeader('content-security-policy', `default-src 'none'; script-src 'self' 'sha256-${hash}'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`);
+        } else response.setHeader('content-security-policy', "default-src 'none'; frame-ancestors 'none'");
+        response.writeHead(200, { 'content-type': asset.type }); response.end(body); return;
+      }
+      if ((route.pathname === '/api/events' || route.pathname === '/api/events/head' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
+        || route.pathname.startsWith('/api/invocations/') || route.pathname === '/api/runs' || route.pathname.startsWith('/api/runs/')) && !bearerMatches(request, sessionToken)) {
         json(response, 403, { error: 'host session required' }); return;
       }
       if (route.pathname === '/api/events') {
@@ -129,6 +182,9 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         const after = cursor(route.searchParams.get('after') ?? '0'), limit = integer(route, 'limit', 200, 200);
         if (limit < 1) throw new RequestError(400, 'invalid event limit');
         json(response, 200, store.readEvents({ after, limit })); return;
+      }
+      if (route.pathname === '/api/events/head') {
+        parameters(route, []); json(response, 200, store.readEventHead()); return;
       }
       if (route.pathname === '/api/stream') {
         parameters(route, ['after']);
@@ -141,6 +197,28 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         parameters(route, ['after', 'limit']);
         const limit = integer(route, 'limit', 30, 100); if (limit < 1) throw new RequestError(400, 'invalid page');
         json(response, 200, store.readInvocations({ after: integer(route, 'after', 0), limit })); return;
+      }
+      if (route.pathname === '/api/runs') {
+        parameters(route, ['after', 'limit']);
+        const limit = integer(route, 'limit', 30, 30); if (limit < 1) throw new RequestError(400, 'invalid page');
+        json(response, 200, store.readRuns({ after: integer(route, 'after', 0), limit })); return;
+      }
+      const runDetail = /^\/api\/runs\/([0-9a-f-]{36})$/.exec(route.pathname);
+      if (runDetail) { parameters(route, []); json(response, 200, store.readRunSummary(runDetail[1]!)); return; }
+      const runMatch = /^\/api\/runs\/([0-9a-f-]{36})\/invocations$/.exec(route.pathname);
+      if (runMatch) {
+        parameters(route, ['after', 'limit']);
+        const limit = integer(route, 'limit', 30, 100); if (limit < 1) throw new RequestError(400, 'invalid page');
+        json(response, 200, store.readRunInvocations({ runId: runMatch[1]!, after: integer(route, 'after', 0), limit })); return;
+      }
+      const invocationEvents = /^\/api\/invocations\/([0-9a-f-]{36})\/events$/.exec(route.pathname);
+      if (invocationEvents) {
+        parameters(route, ['after', 'before', 'tail', 'limit']);
+        const limit = integer(route, 'limit', 200, 200); if (limit < 1) throw new RequestError(400, 'invalid event limit');
+        const after = route.searchParams.get('after'), before = route.searchParams.get('before'), tail = route.searchParams.get('tail');
+        if ((tail !== null && tail !== '1') || (after !== null && (before !== null || tail !== null)) || (before !== null && tail !== null)) throw new RequestError(400, 'ambiguous event window');
+        json(response, 200, store.readInvocationEvents({ invocationId: invocationEvents[1]!, ...(after === null ? {} : { after: cursor(after) }),
+          ...(before === null ? {} : { before: cursor(before) }), ...(tail === null ? {} : { tail: true }), limit })); return;
       }
       const match = /^\/api\/invocations\/([0-9a-f-]{36})(?:\/(sessions|attempts|captures)(?:\/([0-9a-f-]{36}))?)?$/.exec(route.pathname);
       if (match) {
@@ -205,6 +283,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   server.maxConnections = 32; server.headersTimeout = 5000; server.requestTimeout = 5000; server.keepAliveTimeout = 1000;
   async function stopServer() {
     closing = true;
+    uiTickets.clear();
     if (liveHosts.get(claim.id)?.sessionToken === sessionToken) liveHosts.delete(claim.id);
     for (const response of streams) response.destroy();
     const stopped = new Promise<void>(resolve => server.close(() => resolve()));
@@ -221,14 +300,14 @@ export async function startObservationHost(options: { store: RepositoryStore; po
     if (!address || typeof address === 'string') throw new Error('loopback bind unavailable');
     url = 'http://127.0.0.1:' + address.port;
     claim = await store.publishDashboardEndpoint({ claimId: claim.id, token: claim.token, url, instanceId: randomUUID() });
-    liveHosts.set(claim.id, { claim, sessionToken, available: () => !closing && server.listening });
+    liveHosts.set(claim.id, { claim, sessionToken, available: () => !closing && server.listening, handoff: createUiHandoff });
   } catch (error) {
     await stopServer();
     if (sameClaim(store.readDashboardClaim(), claim)) await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' });
     throw error;
   }
   let closeTask: Promise<void> | undefined;
-  return { url, reused: false as const, sessionToken, readCredentialAvailable: true as const, close: () => closeTask ??= (async () => {
+  return { url, reused: false as const, sessionToken, readCredentialAvailable: true as const, createUiHandoff, close: () => closeTask ??= (async () => {
     await stopServer();
     if (sameClaim(store.readDashboardClaim(), claim)) await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' });
   })().catch(error => { closeTask = undefined; throw error; }) };

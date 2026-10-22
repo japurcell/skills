@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { createRepository } from './fixtures/repository.mjs';
-import { initializeRepositoryStore } from '../dist/store.js';
+import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { startObservationHost } from '../dist/dashboard.js';
 
 test('host publishes only a bound loopback endpoint and reuses its current repository claim', async () => {
@@ -344,6 +344,126 @@ test('large saved invocation inputs cannot block summary pagination or exceed de
     const page = JSON.parse(text); assert.equal(page.invocations[0]?.id, f.invocation.id); assert.equal(page.invocations[0].metadata, undefined);
     assert.ok(page.nextCursor > 0); assert.equal(page.hasMore, false);
     assert.equal((await authorizedFetch(host, host.url + '/api/invocations/' + f.invocation.id)).status, 413);
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('run pages stay grouped and each run retains its chronological invocation history', async () => {
+  const f = await fixture(); let host;
+  try {
+    const second = await f.store.createRun();
+    const firstPageRun = f.invocation.runId;
+    const first = await f.store.readRunInvocations({ runId: firstPageRun, limit: 1 });
+    assert.equal(first.invocations[0].id, f.invocation.id);
+    await f.store.finalizeInvocation({ id: f.invocation.id, outcome: 'succeeded', cleanup: 'complete', claimId: f.invocation.claim.id, token: f.invocation.claim.token });
+    const followup = await f.store.startInvocation({ runId: firstPageRun, worktreeId: f.invocation.worktreeId, owner: { host: 'fixture', pid: process.pid, start: null } });
+    host = await startObservationHost({ store: f.store });
+    const page = await (await authorizedFetch(host, host.url + '/api/runs?limit=1')).json();
+    assert.equal(page.runs.length, 1);
+    assert.equal(page.runs[0].id, second.id);
+    const next = await (await authorizedFetch(host, host.url + '/api/runs?limit=1&after=' + page.nextCursor)).json();
+    assert.equal(next.runs[0].id, firstPageRun);
+    assert.equal(next.runs[0].latestInvocation.id, followup.id);
+    const history = await (await authorizedFetch(host, host.url + '/api/runs/' + firstPageRun + '/invocations?limit=1')).json();
+    assert.equal(history.invocations[0].id, f.invocation.id);
+    assert.equal(history.hasMore, true);
+    const later = await (await authorizedFetch(host, host.url + '/api/runs/' + firstPageRun + '/invocations?limit=1&after=' + history.nextCursor)).json();
+    assert.equal(later.invocations[0].id, followup.id);
+    assert.equal(later.hasMore, false);
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('owner handoff is one-use, short lived, same-origin and never a public GET credential', async () => {
+  const f = await fixture(); let host;
+  try {
+    host = await startObservationHost({ store: f.store });
+    const handoff = host.createUiHandoff();
+    assert.match(handoff, /^http:\/\/127\.0\.0\.1:\d+\/#handoff=[0-9a-f-]+$/);
+    const ticket = new URL(handoff).hash.slice('#handoff='.length);
+    for (const path of ['/', '/assets/app.js', '/assets/style.css']) {
+      const response = await fetch(host.url + path);
+      assert.equal(response.status, 200, path);
+      assert.ok(!(await response.text()).includes(host.sessionToken));
+    }
+    assert.equal((await http(host.url, { path: '/assets/../dashboard.js', headers: { Authorization: 'Bearer ' + host.sessionToken } })).status, 400);
+    assert.equal((await http(host.url, { path: '/', headers: { Host: 'evil.invalid' } })).status, 403);
+    assert.equal((await fetch(host.url + '/api/runs')).status, 403);
+    const body = JSON.stringify({ ticket });
+    const foreign = await fetch(host.url + '/api/ui-session', { method: 'POST', headers: { Origin: 'http://evil.invalid', 'Content-Type': 'application/json' }, body });
+    assert.equal(foreign.status, 403);
+    const redeemed = await fetch(host.url + '/api/ui-session', { method: 'POST', headers: { Origin: host.url, 'Content-Type': 'application/json' }, body });
+    assert.equal(redeemed.status, 200);
+    assert.equal((await redeemed.json()).sessionToken, host.sessionToken);
+    const replay = await fetch(host.url + '/api/ui-session', { method: 'POST', headers: { Origin: host.url, 'Content-Type': 'application/json' }, body });
+    assert.equal(replay.status, 403);
+    assert.equal((await fetch(host.url + '/api/identity?challenge=' + crypto.randomUUID())).status, 200);
+    assert.equal((await fetch(host.url + '/api/runs?ticket=' + ticket)).status, 403);
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('selected invocation event pages include its saved attempt and capture lifecycle only', async () => {
+  const f = await fixture(); let host;
+  try {
+    const attempt = await f.store.admitAttempt({ id: crypto.randomUUID(), invocationId: f.invocation.id, operationKey: 'fixture-step', kind: 'agent', intent: 'initial' });
+    await f.store.markStarted({ id: attempt.id, owner: { host: 'fixture', pid: process.pid, start: null } });
+    await f.store.settleAttempt({ id: attempt.id, launch: 'started', outcome: 'succeeded', quiescent: true, evidence: 'fixture complete' });
+    const capture = await f.store.createCapture({ invocationId: f.invocation.id, attemptId: attempt.id, channel: 'stdout' });
+    await f.store.appendCapture({ id: capture.id, chunks: [{ sequence: 1, text: 'saved output' }], state: 'complete' });
+    host = await startObservationHost({ store: f.store });
+    const url = host.url + '/api/invocations/' + f.invocation.id + '/events?limit=2';
+    const first = await (await authorizedFetch(host, url)).json();
+    assert.equal(first.events.length, 2);
+    assert.equal(first.events.every(event => event.data.invocationId === f.invocation.id), true);
+    let after = first.nextCursor, names = first.events.map(event => event.kind);
+    while (true) {
+      const page = await (await authorizedFetch(host, url + '&after=' + after)).json();
+      names.push(...page.events.map(event => event.kind));
+      if (!page.hasMore) break;
+      after = page.nextCursor;
+    }
+    assert.ok(names.includes('attempt.started'));
+    assert.ok(names.includes('attempt.settled'));
+    assert.ok(names.includes('capture.appended'));
+    assert.ok(!names.includes('dashboard.published'));
+    const tail = await (await authorizedFetch(host, url + '&tail=1')).json();
+    assert.equal(tail.events.at(-1).kind, 'capture.appended');
+    assert.equal(tail.hasEarlier, true);
+    const head = await (await authorizedFetch(host, host.url + '/api/events/head')).json();
+    assert.ok(BigInt(head.cursor) >= BigInt(tail.nextCursor));
+    for (const path of ['/api/events/head', '/api/runs', '/api/runs/' + f.invocation.runId, '/api/runs/' + f.invocation.runId + '/invocations', '/api/invocations/' + f.invocation.id + '/events']) {
+      assert.equal((await fetch(host.url + path)).status, 403, path);
+    }
+  } finally { await host?.close(); f.dispose(); }
+});
+
+test('older schema is refused without mutation until explicit forward maintenance', async () => {
+  const repo = createRepository();
+  const path = join(repo.path, '.git', 'factory', 'history.sqlite');
+  const store = await initializeRepositoryStore(join(repo.path, '.git'), { release: 'fixture' });
+  const run = await store.createRun(); store.close();
+  const database = new DatabaseSync(path); database.exec('PRAGMA user_version=3'); database.close();
+  try {
+    assert.throws(() => openRepositoryStore(join(repo.path, '.git')), /incompatible schema/);
+    const retained = new DatabaseSync(path);
+    try { assert.equal(retained.prepare('PRAGMA user_version').get().user_version, 3); assert.equal(retained.prepare('SELECT id FROM runs').get().id, run.id); }
+    finally { retained.close(); }
+  } finally { repo.dispose(); }
+});
+
+test('operator confirmation appears beside the original outcome and cleanup uncertainty', async () => {
+  const f = await fixture(); let host;
+  try {
+    await f.store.finishInvocation(f.invocation.id, 'interrupted', 'unknown');
+    const clearance = await f.store.clearOwner({ claimId: f.invocation.claim.id, token: f.invocation.claim.token,
+      operatorConfirmed: true, note: 'children checked by operator', inspection: 'unknown' });
+    host = await startObservationHost({ store: f.store });
+    const history = await (await authorizedFetch(host, host.url + '/api/invocations/' + f.invocation.id)).json();
+    assert.equal(history.invocation.outcome, 'interrupted');
+    assert.equal(history.invocation.cleanup, 'unknown');
+    assert.equal(history.clearance?.id, clearance.id);
+    assert.equal(history.clearance?.basis, 'operator_confirmed');
+    assert.equal(history.clearance?.note, 'children checked by operator');
+    const runs = await (await authorizedFetch(host, host.url + '/api/runs')).json();
+    assert.equal(runs.runs[0].clearance?.id, clearance.id);
   } finally { await host?.close(); f.dispose(); }
 });
 

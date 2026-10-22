@@ -37,7 +37,7 @@ export interface NativeSession {
 }
 export type CaptureState = 'open' | 'complete' | 'partial' | 'unknown' | 'pruned';
 export interface CaptureChunk { sequence: number; text: string }
-export interface Clearance { id: string; claimId: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown'; details?: object }
+export interface Clearance { id: string; claimId: string; invocationId?: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown'; details?: object }
 
 function text(value: string, label: string) {
   if (typeof value !== 'string' || Buffer.byteLength(value) < 1 || Buffer.byteLength(value) > 256 || value.includes('\0')) {
@@ -278,7 +278,9 @@ export class RepositoryStore {
       return { id: captureId, attemptId: row['attempt_id']===null?null:String(row['attempt_id']), state: page.state, channel: page.channel, chunks, nextSequence,
         hasMore: page.state !== 'pruned' && nextSequence < Number(row['sequence']) };
     });
+    const clearanceRow = this.database.prepare("SELECT data FROM clearances WHERE json_extract(data,'$.invocationId')=? ORDER BY rowid DESC LIMIT 1").get(id);
     return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId),
+      clearance: clearanceRow ? JSON.parse(String(clearanceRow['data'])) as Clearance : null,
       attemptsNextCursor: Number(attemptRows.slice(0, limit).at(-1)?.['cursor'] ?? afterAttempt), hasMoreAttempts: attemptRows.length > limit,
       capturesNextCursor: Number(captureRows.slice(0, limit).at(-1)?.['cursor'] ?? afterCapture), hasMoreCaptures: captureRows.length > limit };
   }
@@ -485,7 +487,7 @@ export class RepositoryStore {
       if (attempt.launch !== 'admitted' || attempt.outcome !== null) throw new Error('attempt cannot be marked started');
       attempt.launch = 'started'; attempt.owner = input.owner;
       this.database.prepare('UPDATE attempts SET data=? WHERE id=?').run(JSON.stringify(attempt), attempt.id);
-      this.event('attempt.started', { attemptId: attempt.id });
+      this.event('attempt.started', { attemptId: attempt.id, invocationId: attempt.invocationId });
     });
   }
 
@@ -522,7 +524,7 @@ export class RepositoryStore {
             .run(randomUUID(), attempt.id, attempt.runId, String(charge['scope']), String(charge['category']));
         }
       }
-      this.event('attempt.settled', { attemptId: attempt.id, outcome: attempt.outcome, quiescent: attempt.quiescent });
+      this.event('attempt.settled', { attemptId: attempt.id, invocationId: attempt.invocationId, outcome: attempt.outcome, quiescent: attempt.quiescent });
     });
   }
 
@@ -531,7 +533,7 @@ export class RepositoryStore {
     if(Buffer.byteLength(JSON.stringify(metadata))>8192)throw new Error('agent metadata exceeds limit');
     return this.transaction(()=>{ const attempt=this.readAttempt(id); if(attempt.kind!=='agent'||attempt.launch!=='admitted')throw new Error('agent inputs must be saved before launch');
       for(const captureId of [metadata.inputsCaptureId,metadata.resultCaptureId,metadata.outputCaptureId])if(!this.database.prepare('SELECT id FROM captures WHERE id=? AND attempt_id=?').get(captureId,id))throw new Error('agent capture mismatch');
-      attempt.agent=metadata;this.database.prepare('UPDATE attempts SET data=? WHERE id=?').run(JSON.stringify(attempt),id);this.event('attempt.inputs',{attemptId:id,inputsCaptureId:metadata.inputsCaptureId}); });
+      attempt.agent=metadata;this.database.prepare('UPDATE attempts SET data=? WHERE id=?').run(JSON.stringify(attempt),id);this.event('attempt.inputs',{attemptId:id,invocationId:attempt.invocationId,inputsCaptureId:metadata.inputsCaptureId}); });
   }
   async saveSession(attemptId:string, event:SessionEvent): Promise<NativeSession> {
     if(!event || typeof event!=='object' || Array.isArray(event) || Object.keys(event).some(key=>!['nativeId','parentNativeId','lifecycle','usage','loadedSkills'].includes(key)))throw new Error('invalid session event');
@@ -609,6 +611,83 @@ export class RepositoryStore {
     return { invocations, nextCursor, hasMore };
   }
 
+  /** Run cards are paged by stable insertion identity, newest first. Only one invocation is read per card. */
+  readRuns(input: { after?: number; limit?: number } = {}) {
+    const after = input.after ?? 0, limit = input.limit ?? 30;
+    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 30) throw new Error('invalid run page');
+    const rows = this.database.prepare(`
+      SELECT r.rowid AS cursor, r.data AS run_data,
+        json_remove(i.data,'$.metadata') AS invocation_data,
+        json_extract(i.data,'$.metadata.workflow') AS workflow,
+        (SELECT substr(c.text,1,240) FROM capture_chunks c
+          WHERE c.capture_id=json_extract(i.data,'$.metadata.inputCaptureId')
+          ORDER BY c.sequence LIMIT 1) AS request_preview,
+        (SELECT c.data FROM clearances c WHERE json_extract(c.data,'$.invocationId')=i.id ORDER BY c.rowid DESC LIMIT 1) AS clearance_data,
+        (SELECT json_extract(e.data,'$.at') FROM observation_events e WHERE json_extract(e.data,'$.invocationId')=i.id AND e.kind='invocation.started' ORDER BY e.cursor LIMIT 1) AS started_at,
+        CASE WHEN json_extract(i.data,'$.stage')='finalized' THEN
+          (SELECT json_extract(e.data,'$.at') FROM observation_events e WHERE json_extract(e.data,'$.invocationId')=i.id AND e.kind='invocation.finalized' ORDER BY e.cursor DESC LIMIT 1)
+          ELSE NULL END AS ended_at,
+        (SELECT c.state FROM captures c WHERE c.invocation_id=i.id ORDER BY c.rowid DESC LIMIT 1) AS latest_capture_state
+      FROM runs r LEFT JOIN invocations i ON i.rowid=(
+        SELECT max(latest.rowid) FROM invocations latest WHERE latest.run_id=r.id)
+      WHERE (?=0 OR r.rowid<?) ORDER BY r.rowid DESC LIMIT ?
+    `).all(after, after, limit + 1);
+    const runs: Array<Run & { latestInvocation: Invocation | null; workflow: string | null; requestPreview: string | null; clearance: Clearance | null; startedAt: string | null; endedAt: string | null; latestCaptureState: string | null }> = [];
+    let bytes = 0, nextCursor = after;
+    for (const row of rows.slice(0, limit)) {
+      const run = JSON.parse(String(row['run_data'])) as Run;
+      const latestInvocation = row['invocation_data'] === null ? null : JSON.parse(String(row['invocation_data'])) as Invocation;
+      const item = { ...run, latestInvocation, workflow: row['workflow'] === null ? null : String(row['workflow']),
+        requestPreview: row['request_preview'] === null ? null : String(row['request_preview']),
+        clearance: row['clearance_data'] === null ? null : JSON.parse(String(row['clearance_data'])) as Clearance,
+        startedAt: row['started_at'] === null ? null : String(row['started_at']), endedAt: row['ended_at'] === null ? null : String(row['ended_at']),
+        latestCaptureState: row['latest_capture_state'] === null ? null : String(row['latest_capture_state']) };
+      const size = Buffer.byteLength(JSON.stringify(item));
+      if (bytes + size > 1047552) break;
+      bytes += size; runs.push(item); nextCursor = Number(row['cursor']);
+    }
+    return { runs, nextCursor, hasMore: rows.some(row => Number(row['cursor']) < nextCursor) };
+  }
+
+  readRunSummary(id: string) {
+    const row = this.database.prepare(`SELECT r.data AS run_data,
+      json_remove(i.data,'$.metadata') AS invocation_data,
+      json_extract(i.data,'$.metadata.workflow') AS workflow,
+      (SELECT substr(c.text,1,240) FROM capture_chunks c
+       WHERE c.capture_id=json_extract(i.data,'$.metadata.inputCaptureId')
+       ORDER BY c.sequence LIMIT 1) AS request_preview,
+      (SELECT c.data FROM clearances c WHERE json_extract(c.data,'$.invocationId')=i.id ORDER BY c.rowid DESC LIMIT 1) AS clearance_data,
+      (SELECT json_extract(e.data,'$.at') FROM observation_events e WHERE json_extract(e.data,'$.invocationId')=i.id AND e.kind='invocation.started' ORDER BY e.cursor LIMIT 1) AS started_at,
+      CASE WHEN json_extract(i.data,'$.stage')='finalized' THEN
+        (SELECT json_extract(e.data,'$.at') FROM observation_events e WHERE json_extract(e.data,'$.invocationId')=i.id AND e.kind='invocation.finalized' ORDER BY e.cursor DESC LIMIT 1)
+        ELSE NULL END AS ended_at,
+      (SELECT c.state FROM captures c WHERE c.invocation_id=i.id ORDER BY c.rowid DESC LIMIT 1) AS latest_capture_state
+      FROM runs r LEFT JOIN invocations i ON i.rowid=(SELECT max(latest.rowid) FROM invocations latest WHERE latest.run_id=r.id)
+      WHERE r.id=?`).get(id);
+    if (!row) throw new Error('run not found');
+    const run = JSON.parse(String(row['run_data'])) as Run;
+    return { ...run, latestInvocation: row['invocation_data'] === null ? null : JSON.parse(String(row['invocation_data'])) as Invocation,
+      workflow: row['workflow'] === null ? null : String(row['workflow']),
+      requestPreview: row['request_preview'] === null ? null : String(row['request_preview']),
+      clearance: row['clearance_data'] === null ? null : JSON.parse(String(row['clearance_data'])) as Clearance,
+      startedAt: row['started_at'] === null ? null : String(row['started_at']), endedAt: row['ended_at'] === null ? null : String(row['ended_at']),
+      latestCaptureState: row['latest_capture_state'] === null ? null : String(row['latest_capture_state']) };
+  }
+
+  readRunInvocations(input: { runId: string; after?: number; limit?: number }) {
+    const after = input.after ?? 0, limit = input.limit ?? 30;
+    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('invalid run invocation page');
+    if (!this.database.prepare('SELECT id FROM runs WHERE id=?').get(input.runId)) throw new Error('run not found');
+    const rows = this.database.prepare("SELECT rowid AS cursor,json_remove(data,'$.metadata') AS data FROM invocations WHERE run_id=? AND rowid>? ORDER BY rowid LIMIT ?")
+      .all(input.runId, after, limit + 1);
+    const invocations: Invocation[] = []; let bytes = 0, nextCursor = after;
+    for (const row of rows.slice(0, limit)) {
+      const data = String(row['data']); if (bytes + Buffer.byteLength(data) > 1047552) break;
+      bytes += Buffer.byteLength(data); invocations.push(JSON.parse(data) as Invocation); nextCursor = Number(row['cursor']);
+    }
+    return { invocations, nextCursor, hasMore: rows.some(row => Number(row['cursor']) > nextCursor) };
+  }
+
   readSession(input: { invocationId: string; id: string }): NativeSession {
     const row = this.database.prepare('SELECT data FROM sessions WHERE invocation_id=? AND id=?').get(input.invocationId, input.id);
     if (!row) throw new Error('session not found');
@@ -651,7 +730,7 @@ export class RepositoryStore {
       const row = this.database.prepare('SELECT data FROM owner_claims WHERE id=? AND token=?').get(input.claimId, input.token);
       if (!row) throw new Error('claim/token no longer matches');
       const claim = JSON.parse(String(row['data'])) as Claim;
-      const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection as 'not_live' | 'unknown', ...(input.details ? {details:input.details} : {}) };
+      const clearance: Clearance = { id: randomUUID(), claimId: claim.id, ...(claim.invocationId ? {invocationId:claim.invocationId} : {}), note: input.note, basis: 'operator_confirmed', inspection: input.inspection as 'not_live' | 'unknown', ...(input.details ? {details:input.details} : {}) };
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)').run(clearance.id, claim.id, JSON.stringify(clearance));
       for (const row of this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? AND occupied=1').all(claim.invocationId)) {
         const attempt = JSON.parse(String(row['data'])) as Attempt;
@@ -659,7 +738,7 @@ export class RepositoryStore {
         this.database.prepare('UPDATE attempts SET occupied=0,data=? WHERE id=?').run(JSON.stringify(attempt), attempt.id);
       }
       this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(claim.id, claim.token);
-      this.event('owner.cleared', { claimId: claim.id, clearanceId: clearance.id, basis: clearance.basis });
+      this.event('owner.cleared', { claimId: claim.id, ...(claim.invocationId ? {invocationId:claim.invocationId} : {}), clearanceId: clearance.id, basis: clearance.basis });
       return clearance;
     });
   }
@@ -765,5 +844,45 @@ export class RepositoryStore {
     }
     const gap = BigInt(input.after) > 0n && !this.database.prepare('SELECT cursor FROM observation_events WHERE cursor=?').get(BigInt(input.after));
     return { events, nextCursor: events.at(-1)?.cursor ?? input.after, gap };
+  }
+
+  readEventHead() {
+    return { cursor: String(this.database.prepare('SELECT max(cursor) AS cursor FROM observation_events').get()?.['cursor'] ?? 0) };
+  }
+
+  readInvocationEvents(input: { invocationId: string; after?: string; before?: string; tail?: boolean; limit?: number }) {
+    this.readInvocation(input.invocationId);
+    const after = input.after ?? '0';
+    for (const value of [after, input.before].filter((value): value is string => value !== undefined)) {
+      if (!/^\d+$/.test(value) || value.length > 19 || BigInt(value) > 9223372036854775807n) throw new Error('invalid event cursor');
+    }
+    if ((input.before !== undefined && (input.after !== undefined || input.tail)) || (input.tail && input.after !== undefined)) throw new Error('ambiguous event window');
+    const limit = input.limit ?? 200;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error('event limit must be 1-200');
+    const reverse = input.tail || input.before !== undefined;
+    const statement = this.database.prepare(reverse
+      ? "SELECT cursor,kind,data FROM observation_events WHERE json_extract(data,'$.invocationId')=? AND cursor<? ORDER BY cursor DESC LIMIT ?"
+      : "SELECT cursor,kind,data FROM observation_events WHERE json_extract(data,'$.invocationId')=? AND cursor>? ORDER BY cursor LIMIT ?");
+    statement.setReadBigInts(true);
+    const events: { cursor: string; kind: string; data: object }[] = [];
+    let size = 0;
+    const bound = reverse ? BigInt(input.before ?? '9223372036854775807') : BigInt(after);
+    for (const row of statement.iterate(input.invocationId, bound, limit + 1)) {
+      if (events.length === limit) break;
+      const event = { cursor: String(row['cursor']), kind: String(row['kind']), data: JSON.parse(String(row['data'])) as object };
+      const bytes = Buffer.byteLength(JSON.stringify(event)) + 1;
+      if (size + bytes > 1047552) break;
+      size += bytes; events.push(event);
+    }
+    if (reverse) events.reverse();
+    const nextCursor = events.at(-1)?.cursor ?? after;
+    const previousCursor = events[0]?.cursor ?? input.before ?? '0';
+    const hasMore = !reverse && !!this.database.prepare("SELECT cursor FROM observation_events WHERE json_extract(data,'$.invocationId')=? AND cursor>? ORDER BY cursor LIMIT 1")
+      .get(input.invocationId, BigInt(nextCursor));
+    const hasEarlier = !!events.length && !!this.database.prepare("SELECT cursor FROM observation_events WHERE json_extract(data,'$.invocationId')=? AND cursor<? ORDER BY cursor DESC LIMIT 1")
+      .get(input.invocationId, BigInt(previousCursor));
+    const gap = !reverse && BigInt(after) > 0n && !this.database.prepare("SELECT cursor FROM observation_events WHERE json_extract(data,'$.invocationId')=? AND cursor=?")
+      .get(input.invocationId, BigInt(after));
+    return { events, nextCursor, previousCursor, hasMore, hasEarlier, gap };
   }
 }

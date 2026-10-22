@@ -5,6 +5,7 @@ import { clearClaim, inspectClaim } from './clearance.js';
 import { invoke } from './lifecycle.js';
 import { openRepositoryStore } from './store.js';
 import { repositoryIdentity } from './workspace.js';
+import { startObservationHost } from './dashboard.js';
 const args = process.argv.slice(2);
 const help = `software-factory (development)
 invoke --repository PATH --workflow .factory/workflows/FILE.ts --input JSON_FILE
@@ -12,6 +13,7 @@ invoke --repository PATH --workflow .factory/workflows/FILE.ts --input JSON_FILE
        [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--command-timeout-ms N] [--agent-timeout-ms N] [--shutdown-grace-ms N] [--json]
 history --repository PATH --invocation ID [--after-attempt CURSOR] [--after-capture CURSOR] [--limit N] [--json]
         [--capture ID --after-sequence N]
+dashboard --repository PATH
 inspect-owner (--repository PATH | --common-dir PATH) [--claim ID] [--json]
 clear-owner (--repository PATH | --common-dir PATH) --claim ID --token TOKEN --operator-confirmed --note NOTE [--json]
 Startup validates the explicitly installed toolchain; no automatic installation or resume.
@@ -19,7 +21,7 @@ Startup validates the explicitly installed toolchain; no automatic installation 
 async function main() {
   if (args.includes('--help')) { process.stdout.write(help); return; }
   const command = args.shift();
-  if (!command || !['invoke','history','inspect-owner','clear-owner'].includes(command)) throw new Error('command not implemented; startup refused');
+  if (!command || !['invoke','history','dashboard','inspect-owner','clear-owner'].includes(command)) throw new Error('command not implemented; startup refused');
   const values = new Map<string, string[]>();
   let json = false, newWorktree = false, operatorConfirmed = false;
   while (args.length) {
@@ -27,7 +29,7 @@ async function main() {
     if (key === '--json') { if (json) throw new Error('duplicate --json'); json = true; continue; }
     if (key === '--operator-confirmed' && command === 'clear-owner') { if (operatorConfirmed) throw new Error('duplicate --operator-confirmed'); operatorConfirmed = true; continue; }
     if (key === '--new-worktree') { if (newWorktree) throw new Error('duplicate --new-worktree'); newWorktree = true; continue; }
-    const allowed = command === 'invoke' ? ['--repository','--workflow','--input','--ref','--worktree','--run','--question','--context','--command-timeout-ms','--agent-timeout-ms','--shutdown-grace-ms'] : command === 'history' ? ['--repository','--invocation','--capture','--after-sequence','--after-attempt','--after-capture','--limit'] : command === 'inspect-owner' ? ['--repository','--common-dir','--claim'] : ['--repository','--common-dir','--claim','--token','--note'];
+    const allowed = command === 'invoke' ? ['--repository','--workflow','--input','--ref','--worktree','--run','--question','--context','--command-timeout-ms','--agent-timeout-ms','--shutdown-grace-ms'] : command === 'history' ? ['--repository','--invocation','--capture','--after-sequence','--after-attempt','--after-capture','--limit'] : command === 'dashboard' ? ['--repository'] : command === 'inspect-owner' ? ['--repository','--common-dir','--claim'] : ['--repository','--common-dir','--claim','--token','--note'];
     if (!allowed.includes(key) || !args[0] || args[0].startsWith('--')) throw new Error(`invalid or missing option: ${key}`);
     if (values.has(key) && key !== '--context') throw new Error(`duplicate option: ${key}`);
     values.set(key, [...values.get(key) ?? [], args.shift()!]);
@@ -38,7 +40,22 @@ async function main() {
   if (!repository && !commonDir) throw new Error('--repository is required');
   if (repository && commonDir) throw new Error('select exactly one of --repository or --common-dir');
   let result;
-  if (command === 'invoke') {
+  if (command === 'dashboard') {
+    if (newWorktree || operatorConfirmed || json) throw new Error('invalid dashboard option');
+    const store = openRepositoryStore((await repositoryIdentity(repository!)).common);
+    let host: Awaited<ReturnType<typeof startObservationHost>> | undefined;
+    try {
+      host = await startObservationHost({ store });
+      if (!host.readCredentialAvailable || !host.createUiHandoff) throw new Error('dashboard is owned by another process; UI handoff unavailable');
+      const stopping = new Promise<void>(resolve => {
+        process.once('SIGINT', () => resolve()); process.once('SIGTERM', () => resolve());
+      });
+      process.stdout.write(host.createUiHandoff() + '\n');
+      await stopping;
+      if (!host.reused) await host.close();
+    } finally { store.close(); }
+    return;
+  } else if (command === 'invoke') {
     const workflow = get('--workflow'), input = get('--input');
     if (!workflow || !input) throw new Error('--workflow and --input are required');
     result = await invoke({ repository:repository!, workflow, input, newWorktree, ...(get('--ref') ? { ref: get('--ref')! } : {}), ...(get('--worktree') ? { worktreeId: get('--worktree')! } : {}), ...(get('--run') ? { runId: get('--run')! } : {}), ...(get('--question') ? { question: get('--question')! } : {}), contexts: values.get('--context') ?? [], ...(get('--command-timeout-ms') ? {commandTimeoutMs:Number(get('--command-timeout-ms'))} : {}), ...(get('--agent-timeout-ms') ? {agentTimeoutMs:Number(get('--agent-timeout-ms'))} : {}), ...(get('--shutdown-grace-ms') ? {shutdownGraceMs:Number(get('--shutdown-grace-ms'))} : {}) });

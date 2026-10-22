@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-export const schemaVersion = 3;
+export const schemaVersion = 4;
 
 export function initializeSchema(database: DatabaseSync) {
   database.exec(`
@@ -11,6 +11,7 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE worktrees(id TEXT PRIMARY KEY, path TEXT UNIQUE NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE TABLE invocations(id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES runs(id), worktree_id TEXT NOT NULL REFERENCES worktrees(id), data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE INDEX invocation_history ON invocations(run_id, id);
+    CREATE INDEX invocation_run_page ON invocations(run_id);
     CREATE TABLE operations(id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES runs(id), operation_key TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(run_id, operation_key));
     CREATE TABLE attempts(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), operation_id TEXT NOT NULL REFERENCES operations(id), kind TEXT NOT NULL CHECK(kind IN ('agent','command')),
       occupied INTEGER NOT NULL CHECK(occupied IN (0,1)), data TEXT NOT NULL CHECK(json_valid(data)));
@@ -19,8 +20,10 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE owner_claims(id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, kind TEXT NOT NULL CHECK(kind IN ('worktree','dashboard','maintenance')),
       resource_key TEXT NOT NULL, invocation_id TEXT REFERENCES invocations(id), data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(kind, resource_key));
     CREATE TABLE observation_events(cursor INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)));
+    CREATE INDEX observation_invocation_page ON observation_events(json_extract(data,'$.invocationId'),cursor);
     CREATE TABLE clearances(id TEXT PRIMARY KEY, claim_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE INDEX clearance_history ON clearances(claim_id,id);
+    CREATE INDEX clearance_invocation_page ON clearances(json_extract(data,'$.invocationId'),id);
     CREATE TABLE captures(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT REFERENCES attempts(id),
       channel TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('open','complete','partial','unknown','pruned')), sequence INTEGER NOT NULL DEFAULT 0);
     CREATE INDEX capture_history ON captures(invocation_id,id);
@@ -28,7 +31,7 @@ export function initializeSchema(database: DatabaseSync) {
       PRIMARY KEY(capture_id,sequence), CHECK(length(CAST(text AS BLOB))<=65536));
     CREATE TABLE sessions(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT NOT NULL REFERENCES attempts(id), native_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(attempt_id,native_id));
     CREATE INDEX session_history ON sessions(invocation_id,attempt_id);
-    PRAGMA user_version=3;
+    PRAGMA user_version=4;
     COMMIT;
   `);
 }
