@@ -166,6 +166,53 @@ test('public AbortSignal closes a signal-resistant worker without starting the q
   }
 });
 
+async function closeWithin(close, milliseconds) {
+  let timeout;
+  try {
+    return await Promise.race([
+      close,
+      new Promise((resolve) => { timeout = setTimeout(() => resolve(null), milliseconds); }),
+    ]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function killAndClose(child, close, signal) {
+  let escalated = false;
+  assert.equal(child.kill(signal), true);
+  let outcome = await closeWithin(close, 600);
+  if (!outcome) {
+    escalated = true;
+    if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+    outcome = await closeWithin(close, 600);
+  }
+  assert.ok(outcome, 'native kill control did not close after forced cleanup');
+  const [code, termination] = outcome;
+  return { code, termination, escalated };
+}
+
+async function forceCloseNativeChild(child, close) {
+  if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+  assert.ok(await closeWithin(close, 600), 'native kill control retained a child after forced cleanup');
+}
+
+if (process.platform !== 'win32') test('native kill control force-closes a signal-resistant child', { timeout: 8000 }, async (t) => {
+  const { directory } = fixture(t);
+  const ready = join(directory, 'resistant-ready');
+  const child = spawn(process.execPath, ['-e', `const { writeFileSync } = require('node:fs'); process.on('SIGTERM', () => {}); writeFileSync(${JSON.stringify(ready)}, 'ready'); setInterval(() => {}, 1000); setTimeout(() => process.exit(22), 2000);`], { stdio: 'ignore' });
+  const close = new Promise((resolve) => child.once('close', (...args) => resolve(args)));
+  try {
+    for (let attempt = 0; attempt < 100 && !existsSync(ready); attempt++) await delay(20);
+    assert.ok(existsSync(ready), 'signal-resistant child must be ready');
+    const outcome = await killAndClose(child, close, 'SIGTERM');
+    assert.equal(outcome.escalated, true, 'the control must escalate when the child retains its interval');
+    assert.equal(outcome.termination, 'SIGKILL');
+  } finally {
+    await forceCloseNativeChild(child, close);
+  }
+});
+
 // On Windows, Node's subprocess.kill() cannot deliver a catchable SIGTERM or
 // SIGINT to the harness. This checks native behavior without claiming it tests
 // the cooperative AbortSignal path above.
@@ -175,16 +222,17 @@ if (process.platform === 'win32') test('Windows child.kill signals terminate wit
     const ready = join(directory, `ready-${signal}`);
     const handled = join(directory, `handled-${signal}`);
     const child = spawn(process.execPath, ['-e', `const { writeFileSync } = require('node:fs'); process.on(${JSON.stringify(signal)}, () => writeFileSync(${JSON.stringify(handled)}, 'handled')); writeFileSync(${JSON.stringify(ready)}, 'ready'); setInterval(() => {}, 1000);`], { stdio: 'ignore' });
+    const close = new Promise((resolve) => child.once('close', (...args) => resolve(args)));
     try {
       for (let attempt = 0; attempt < 100 && !existsSync(ready); attempt++) await delay(20);
       assert.ok(existsSync(ready), `${signal} child must be ready`);
-      assert.equal(child.kill(signal), true);
-      const [code, termination] = await new Promise((resolve) => child.once('close', (...args) => resolve(args)));
-      assert.equal(code, null);
-      assert.equal(termination, signal);
+      const outcome = await killAndClose(child, close, signal);
+      assert.equal(outcome.escalated, false, `${signal} must terminate without forced cleanup`);
+      assert.equal(outcome.code, null);
+      assert.equal(outcome.termination, signal);
       assert.equal(existsSync(handled), false);
     } finally {
-      if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+      await forceCloseNativeChild(child, close);
     }
   }
 });
