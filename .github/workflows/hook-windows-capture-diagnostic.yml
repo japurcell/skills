@@ -1,0 +1,58 @@
+name: Windows hook capture diagnostic
+
+on:
+  push:
+    paths:
+      - 'scripts/test-scan-secrets-windows.ps1'
+      - 'scripts/test-scan-secrets-windows-fixture.ps1'
+      - '.github/workflows/hook-windows-capture-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  partial-capture:
+    name: Fresh Windows copilot warn partial
+    runs-on: windows-2025
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: '3.13.16'
+      - name: Prepare bounded diagnostic evidence
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $taskRoot = Join-Path $env:RUNNER_TEMP 'native capture diagnostic'
+          New-Item -ItemType Directory -Path (Join-Path $taskRoot 'logs') -Force | Out-Null
+          $gitConfig = Join-Path $taskRoot 'gitconfig'
+          [System.IO.File]::WriteAllText($gitConfig, '')
+          "GIT_CONFIG_GLOBAL=$gitConfig" >> $env:GITHUB_ENV
+          'GIT_CONFIG_NOSYSTEM=1' >> $env:GITHUB_ENV
+          'GIT_TERMINAL_PROMPT=0' >> $env:GITHUB_ENV
+      - name: Exercise one unwarmed public capture scenario
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -c "import sys; print(sys.version); assert sys.version_info[:3] == (3, 13, 16)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Output "PowerShell $($PSVersionTable.PSVersion); .NET $([System.Environment]::Version)"
+          $logPath = Join-Path $env:RUNNER_TEMP 'native capture diagnostic/logs/partial.log'
+          pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1 -Case copilot/warn/partial 2>&1 | Tee-Object -FilePath $logPath
+          $captureExit = $LASTEXITCODE
+          if ($captureExit -ne 0) { exit $captureExit }
+      - name: Retain focused evidence including failures
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: windows-capture-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native capture diagnostic/logs
+          if-no-files-found: warn
+          retention-days: 14
