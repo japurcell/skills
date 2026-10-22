@@ -1,3 +1,5 @@
+import { preparationIdentity, assertPreparationIdentity } from './workspace.js';
+import type { PreparationIdentity } from './workspace.js';
 import { redactText } from './redaction.js';
 import type { SessionEvent } from './adapters/types.js';
 import { randomUUID } from 'node:crypto';
@@ -16,7 +18,7 @@ export interface Claim {
   invocationId: string | null; owner: Owner;
 }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
-interface Worktree { id: string; path: string; registration: string }
+interface Worktree { id: string; path: string; registration: string; preparation?: { identity: PreparationIdentity; invocationId: string; claimId: string } }
 export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object }
 export interface Attempt extends Admission {
   runId: string; operationId: string; fingerprint: string;
@@ -190,6 +192,44 @@ export class RepositoryStore {
     const row = this.database.prepare('SELECT data FROM worktrees WHERE id=?').get(id);
     if (!row) throw new Error('worktree not found');
     return JSON.parse(String(row['data'])) as Worktree;
+  }
+
+  findWorktreeByPath(path:string):Worktree|undefined {
+    const row=this.database.prepare('SELECT data FROM worktrees WHERE path=?').get(path);
+    return row?JSON.parse(String(row['data'])) as Worktree:undefined;
+  }
+
+  /** Bounded original-claim finalization; never probes Git or rewrites an existing anchor. */
+  async recordWorktreePreparation(input:{id:string;claimId:string;token:string}) {
+    return this.transaction(()=>{
+      const claim=this.readClaim(input.claimId);
+      if(claim.token!==input.token||claim.kind!=='worktree'||claim.resourceKey!==input.id||!claim.invocationId)throw new Error('claim/token no longer matches worktree');
+      const invocation=this.readInvocation(claim.invocationId),worktree=this.readWorktree(input.id);
+      if(invocation.stage==='finalized'||worktree.registration!=='reserved'||worktree.preparation)throw new Error('preparation evidence cannot be replaced');
+      worktree.preparation={identity:preparationIdentity(worktree.path),invocationId:invocation.id,claimId:claim.id};
+      this.database.prepare('UPDATE worktrees SET data=? WHERE id=?').run(JSON.stringify(worktree),worktree.id);
+      this.event('worktree.preparation_saved',{worktreeId:worktree.id,invocationId:invocation.id,claimId:claim.id});
+    });
+  }
+
+  async reconcileWorktreePreparation(input:{id:string;claimId:string;token:string;registration:string}) {
+    text(input.registration,'Git registration');
+    return this.transaction(()=>{
+      this.ready();
+      const claim=this.readClaim(input.claimId);
+      if(claim.token!==input.token||claim.kind!=='worktree'||claim.resourceKey!==input.id||!claim.invocationId)throw new Error('claim/token no longer matches worktree');
+      const current=this.readInvocation(claim.invocationId),worktree=this.readWorktree(input.id),saved=worktree.preparation;
+      if(current.stage!=='starting'||this.blockedInvocations.has(current.id)||worktree.registration!=='reserved')throw new Error('prepared worktree is not eligible for reconciliation');
+      if(!saved)throw new Error('reserved worktree lacks original preparation identity evidence; explicit recovery required');
+      const prior=this.readInvocation(saved.invocationId);
+      if(prior.worktreeId!==worktree.id||prior.runId!==current.runId||prior.id===current.id)throw new Error('prepared checkout recovery requires the original retained run');
+      if(!(prior.stage==='finalized'&&prior.cleanup==='complete')&&!this.database.prepare('SELECT id FROM clearances WHERE claim_id=?').get(saved.claimId))throw new Error('original preparation requires safe cleanup or exact operator clearance');
+      if(this.database.prepare('SELECT a.id FROM attempts a JOIN invocations i ON i.id=a.invocation_id WHERE i.worktree_id=? AND a.occupied=1 LIMIT 1').get(worktree.id))throw new Error('prepared worktree activity remains occupied');
+      assertPreparationIdentity(worktree.path,saved.identity);
+      worktree.registration=input.registration;
+      this.database.prepare('UPDATE worktrees SET data=? WHERE id=?').run(JSON.stringify(worktree),worktree.id);
+      this.event('worktree.reconciled',{worktreeId:worktree.id,invocationId:current.id,preparationInvocationId:prior.id,claimId:claim.id});
+    });
   }
 
   async finalizeWorktree(input: { id: string; claimId: string; token: string; registration: string }) {

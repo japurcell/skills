@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, renameSync, realpathSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
+import { spawn, spawnSync } from 'node:child_process';
+import { cpSync, mkdirSync, readFileSync, writeFileSync, rmSync, renameSync, realpathSync, existsSync, symlinkSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { DatabaseSync } from 'node:sqlite';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
 import { createRepository } from './fixtures/repository.mjs';
 const cli = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
@@ -365,3 +368,177 @@ for (const mode of ['caught', 'unawaited']) {
     } finally { repo.dispose(); }
   });
 }
+
+
+async function reservedCheckout({paid=false,failAnchor=false}={}) {
+  const repo=await fixture(`export async function run(c,inputs){await c.progress('original:'+inputs.request);}`);
+  let retainedRun;
+  if(paid){
+    writeFileSync(join(repo.path,'.factory/workflows/charge.ts'),`import type {WorkflowContext} from '@local/software-factory';export async function run(c:WorkflowContext){const settings={harness:'fake',model:'fixture',permissions:'read-only' as const,skillDelivery:'instructions' as const,prompt:'default'};const first=await c.agent('paid',settings);await c.agent('paid',{...settings,intent:'code_correction',priorAttemptId:first.attemptId,context:'saved fixture findings'});}`);
+    const host=join(repo.common,'paid-preparation-host.mjs');
+    writeFileSync(host,`import{invoke}from ${JSON.stringify(new URL('../dist/lifecycle.js',import.meta.url).href)};import{createFakeAdapter}from ${JSON.stringify(new URL('../dist/adapters/fake.js',import.meta.url).href)};const r=await invoke({repository:${JSON.stringify(repo.path)},workflow:'.factory/workflows/charge.ts',input:${JSON.stringify(repo.input)},newWorktree:false,worktreeId:${JSON.stringify(repo.path)},adapters:{fake:createFakeAdapter({executable:process.execPath,script:${JSON.stringify(join(packageRoot,'test/fixtures/agent-harness.mjs'))}})}});console.log(JSON.stringify(r));process.exit(r.exitCode);`);
+    const paidResult=spawnSync(process.execPath,[host],{encoding:'utf8',timeout:30000});assert.equal(paidResult.status,0,paidResult.stdout+paidResult.stderr);retainedRun=JSON.parse(paidResult.stdout).runId;
+    const savedStore=openRepositoryStore(repo.common);try{assert.equal(savedStore.readAccounting(retainedRun).additionalUsed,1);}finally{savedStore.close();}
+  }
+  const nonce=randomUUID(),script=join(repo.common,'escaped-preparation.mjs'),marker=join(repo.common,'escaped-preparation.json'),filter=join(repo.common,'preparation-filter.mjs');
+  writeFileSync(script,`import{writeFileSync}from'node:fs';writeFileSync(process.argv[2],JSON.stringify({pid:process.pid,nonce:process.argv[3]}));setInterval(()=>{},1000);`);
+  writeFileSync(filter,`import{spawn}from'node:child_process';const child=spawn(${JSON.stringify(process.execPath)},[${JSON.stringify(script)},${JSON.stringify(marker)},${JSON.stringify(nonce)}],{detached:true,stdio:['ignore','ignore','inherit']});child.unref();process.stdin.pipe(process.stdout);`);
+  writeFileSync(join(repo.path,'.gitattributes'),'payload.txt filter=preparation\n');writeFileSync(join(repo.path,'payload.txt'),'preserved checkout payload\n');
+  repo.git(['add','.gitattributes','payload.txt']);repo.git(['commit','-m','Commit preparation fixture','--only','.gitattributes','payload.txt']);
+  const quote=value=>"'"+value.replaceAll("'","'\\''")+"'";
+  repo.git(['config','filter.preparation.smudge',quote(process.execPath)+' '+quote(filter)]);repo.git(['config','filter.preparation.required','true']);
+  if(failAnchor){const db=new DatabaseSync(join(repo.common,'factory/history.sqlite'));db.exec("CREATE TRIGGER fail_preparation_anchor BEFORE UPDATE ON worktrees WHEN json_extract(NEW.data,'$.preparation') IS NOT NULL BEGIN SELECT RAISE(FAIL,'fixture anchor write failure'); END;");db.close();}
+  let stopped=false;
+  const identity=pid=>{const r=spawnSync('/bin/ps',['-p',String(pid),'-o','lstart=','-o','command='],{encoding:'utf8'});return r.status===0?r.stdout.trim():null;};
+  const stop=async()=>{
+    if(stopped)return;
+    const child=JSON.parse(readFileSync(marker,'utf8'));assert.equal(child.nonce,nonce);
+    const current=identity(child.pid);assert.ok(current?.includes(script)&&current.includes(nonce),'fresh fixture child identity must match');
+    assert.equal(identity(child.pid),current,'fixture start/command identity changed before signal');process.kill(child.pid,'SIGTERM');
+    const end=performance.now()+3000;while(identity(child.pid)&&performance.now()<end)await delay(20);
+    assert.equal(identity(child.pid),null,'fixture child must be absent before clearance');stopped=true;
+  };
+  const dispose=async()=>{if(existsSync(marker))await stop();repo.dispose();};
+  try {
+    const first=repo.invoke(['--new-worktree','--command-timeout-ms','1000','--shutdown-grace-ms','100',...(retainedRun?['--run',retainedRun]:[])]);
+    assert.equal(first.status,1,first.stdout+first.stderr);
+    const saved=JSON.parse(first.stdout);assert.equal(saved.cleanup,'unknown');assert.ok(existsSync(marker));
+    const history=()=>JSON.parse(repo.call(['history','--invocation',saved.invocationId]).stdout);
+    assert.equal(history().worktree.registration,'reserved');assert.equal(history().accounting.occupiedCommands,1);
+    assert.equal(readFileSync(join(saved.worktree,'payload.txt'),'utf8'),'preserved checkout payload\n');
+    const inspect=()=>JSON.parse(repo.call(['inspect-owner']).stdout);
+    const clear=()=>{const claim=inspect().find(row=>row.claim.invocationId===saved.invocationId).claim;const r=repo.call(['clear-owner','--claim',claim.id,'--token',claim.token,'--operator-confirmed','--note','Stopped exact disposable preparation child after fresh start/command verification']);assert.equal(r.status,0,r.stderr);return claim;};
+    return {...repo,saved,history,inspect,clear,stop,dispose,marker};
+  } catch(error){await dispose();throw error;}
+}
+
+for(const selection of ['id','path']) test(`cleared reserved checkout recovers by ${selection} using current entry and inputs`,async()=>{
+  const repo=await reservedCheckout({paid:selection==='id'});
+  try{
+    const uncleared=repo.invoke(['--worktree',selection==='id'?repo.saved.worktreeId:repo.saved.worktree,'--run',repo.saved.runId]);
+    assert.notEqual(uncleared.status,0);assert.match(uncleared.stderr,/already claimed/);
+    await repo.stop();
+    const inactive=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.notEqual(inactive.status,0);assert.match(inactive.stderr,/already claimed/);
+    repo.clear();const before=repo.history(),marker=readFileSync(repo.marker,'utf8');
+    writeFileSync(join(repo.saved.worktree,'unfinished.txt'),'preserve unfinished candidate\n');
+    writeFileSync(join(repo.saved.worktree,'.factory/workflows/audit.ts'),`export async function run(c,inputs){await c.progress('CURRENT-ENTRY:'+inputs.request);return {current:true};}`);
+    writeFileSync(repo.input,'{"request":"fresh input"}');
+    const next=repo.invoke(['--worktree',selection==='id'?repo.saved.worktreeId:repo.saved.worktree,'--run',repo.saved.runId]);
+    assert.equal(next.status,0,next.stdout+next.stderr);
+    const saved=JSON.parse(next.stdout),record=JSON.parse(repo.call(['history','--invocation',saved.invocationId]).stdout),after=repo.history();
+    assert.match(JSON.stringify(record.captures),/CURRENT-ENTRY:fresh input/);
+    assert.notEqual(after.worktree.registration,'reserved');assert.equal(saved.worktreeId,repo.saved.worktreeId);
+    assert.deepEqual(after.invocation,before.invocation);assert.deepEqual(after.attempts,before.attempts);assert.deepEqual(after.captures,before.captures);
+    assert.equal(after.accounting.additionalUsed,before.accounting.additionalUsed);assert.equal(after.accounting.additionalUsed,selection==='id'?1:0);assert.equal(record.accounting.occupiedCommands,0);
+    assert.equal(readFileSync(join(saved.worktree,'unfinished.txt'),'utf8'),'preserve unfinished candidate\n');
+    assert.equal(readFileSync(join(saved.worktree,'payload.txt'),'utf8'),'preserved checkout payload\n');
+    assert.equal(readFileSync(repo.marker,'utf8'),marker,'recovery must not replay checkout/filter');assert.deepEqual(repo.inspect(),[]);
+  }finally{await repo.dispose();}
+});
+
+
+for(const change of ['directory','marker','symlink','alias']) test(`reserved recovery refuses replaced ${change} identity`,async()=>{
+  const repo=await reservedCheckout();
+  try{
+    await repo.stop();repo.clear();const before=repo.history();let selected=repo.saved.worktreeId;
+    if(change==='directory'){const old=repo.saved.worktree+'-original';renameSync(repo.saved.worktree,old);mkdirSync(repo.saved.worktree);cpSync(old,repo.saved.worktree,{recursive:true});}
+    else if(change==='marker'){const marker=join(repo.saved.worktree,'.git'),bytes=readFileSync(marker);renameSync(marker,marker+'-original');writeFileSync(marker,bytes);}
+    else if(change==='symlink'){const marker=join(repo.saved.worktree,'.git');renameSync(marker,marker+'-original');symlinkSync(marker+'-original',marker);}
+    else {selected=join(repo.common,'reserved-alias');symlinkSync(repo.saved.worktree,selected);}
+    const r=repo.invoke(['--worktree',selected,'--run',repo.saved.runId]);assert.notEqual(r.status,0,r.stdout+r.stderr);
+    assert.match(r.stdout+r.stderr,/identity|marker|symlink/);
+    const after=repo.history();assert.equal(after.worktree.registration,'reserved');assert.deepEqual(after.invocation,before.invocation);assert.deepEqual(after.attempts,before.attempts);assert.deepEqual(repo.inspect(),[]);
+  }finally{await repo.dispose();}
+});
+
+test('reserved recovery verifies the current Git common directory rather than trusting its marker hash',async()=>{
+  const repo=await reservedCheckout(),foreign=await fixture();
+  try{
+    await repo.stop();repo.clear();const registration=repo.git(['-C',repo.saved.worktree,'rev-parse','--path-format=absolute','--git-dir']).trim();
+    writeFileSync(join(registration,'commondir'),foreign.common+'\n');
+    const r=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.notEqual(r.status,0,r.stdout+r.stderr);
+    assert.match(r.stdout+r.stderr,/another repository|Git probe failed|command failed/);
+    assert.equal(repo.history().worktree.registration,'reserved');assert.deepEqual(repo.inspect(),[]);
+  }finally{await repo.dispose();foreign.dispose();}
+});
+
+test('legacy reserved rows without original identity evidence remain refused',async()=>{
+  const repo=await fixture();let store;
+  try{
+    const directory=join(repo.common,'factory/worktrees');mkdirSync(directory);store=openRepositoryStore(repo.common);
+    const run=await store.createRun(),worktree=await store.reserveWorktree(join(directory,randomUUID()));
+    const invocation=await store.startInvocation({runId:run.id,worktreeId:worktree.id,owner:{host:'fixture',pid:process.pid,start:'fixture'}});
+    repo.git(['worktree','add','--detach',worktree.path,'HEAD']);
+    await store.finalizeInvocation({id:invocation.id,outcome:'failed',cleanup:'complete',claimId:invocation.claim.id,token:invocation.claim.token});store.close();store=undefined;
+    for(const selected of [worktree.id,worktree.path]){const r=repo.invoke(['--worktree',selected,'--run',run.id]);assert.notEqual(r.status,0);assert.match(r.stdout+r.stderr,/lacks original preparation identity evidence/);}
+    store=openRepositoryStore(repo.common);assert.equal(store.readWorktree(worktree.id).registration,'reserved');assert.deepEqual(store.inspectOwners(),[]);
+    assert.equal(readFileSync(join(worktree.path,'tracked.txt'),'utf8'),'committed\n');
+  }finally{store?.close();repo.dispose();}
+});
+
+test('prepared registration reconciliation is exact-claim guarded and commits at most once',async()=>{
+  const repo=await reservedCheckout();let a,b;
+  try{
+    await repo.stop();repo.clear();const registration=repo.git(['-C',repo.saved.worktree,'rev-parse','--path-format=absolute','--git-dir']).trim();
+    a=openRepositoryStore(repo.common);b=openRepositoryStore(repo.common);
+    const current=await a.startInvocation({runId:repo.saved.runId,worktreeId:repo.saved.worktreeId,owner:{host:'fixture',pid:process.pid,start:'fixture'}});
+    await assert.rejects(b.startInvocation({runId:repo.saved.runId,worktreeId:repo.saved.worktreeId,owner:{host:'fixture',pid:process.pid,start:'fixture'}}),/already claimed/);
+    await assert.rejects(a.reconcileWorktreePreparation({id:repo.saved.worktreeId,claimId:current.claim.id,token:'stale-token',registration}),/claim\/token/);
+    assert.equal(a.readWorktree(repo.saved.worktreeId).registration,'reserved');
+    const request={id:repo.saved.worktreeId,claimId:current.claim.id,token:current.claim.token,registration};
+    const results=await Promise.allSettled([a.reconcileWorktreePreparation(request),b.reconcileWorktreePreparation(request)]);
+    assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal(results.filter(r=>r.status==='rejected').length,1);
+    assert.equal(a.readWorktree(repo.saved.worktreeId).registration,registration);
+    await a.finalizeInvocation({id:current.id,outcome:'failed',cleanup:'complete',claimId:current.claim.id,token:current.claim.token});
+  }finally{a?.close();b?.close();await repo.dispose();}
+});
+
+test('failed reconciliation transaction remains reserved and an explicit fresh invocation can recover',async()=>{
+  const repo=await reservedCheckout();let database;
+  try{
+    await repo.stop();repo.clear();const before=repo.history();
+    writeFileSync(join(repo.saved.worktree,'.factory/workflows/audit.ts'),`export async function run(c){await c.progress('AFTER-RECOVERY');}`);
+    database=new DatabaseSync(join(repo.common,'factory/history.sqlite'));database.exec("CREATE TRIGGER fail_preparation_reconciliation BEFORE UPDATE ON worktrees WHEN json_extract(OLD.data,'$.registration')='reserved' AND json_extract(NEW.data,'$.registration')!='reserved' BEGIN SELECT RAISE(FAIL,'fixture reconciliation interruption'); END;");database.close();database=undefined;
+    const first=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.equal(first.status,3,first.stdout+first.stderr);
+    assert.match(first.stdout,/fixture reconciliation interruption/);const failed=JSON.parse(first.stdout);
+    const h=JSON.parse(repo.call(['history','--invocation',failed.invocationId]).stdout);assert.doesNotMatch(JSON.stringify(h.captures),/AFTER-RECOVERY/);assert.equal(repo.history().worktree.registration,'reserved');assert.deepEqual(repo.history().attempts,before.attempts);assert.deepEqual(repo.inspect(),[]);
+    database=new DatabaseSync(join(repo.common,'factory/history.sqlite'));database.exec('DROP TRIGGER fail_preparation_reconciliation');database.close();database=undefined;
+    const second=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.equal(second.status,0,second.stdout+second.stderr);
+    assert.equal(repo.history().accounting.additionalUsed,before.accounting.additionalUsed);
+  }finally{database?.close();await repo.dispose();}
+});
+
+
+test('SIGTERM during claimed recovery metadata leaves registration reserved for explicit fresh recovery',async()=>{
+  const repo=await reservedCheckout();let child,closed;
+  try{
+    await repo.stop();repo.clear();const before=repo.history();
+    const bin=join(repo.common,'recovery-bin'),ready=join(repo.common,'recovery-metadata-ready');mkdirSync(bin);
+    const realGit=realpathSync(spawnSync('/usr/bin/which',['git'],{encoding:'utf8'}).stdout.trim()),shim=join(bin,'git');
+    writeFileSync(shim,'#!'+process.execPath+'\n'+`const{spawnSync}=require('node:child_process');const{writeFileSync}=require('node:fs');const args=process.argv.slice(2);const run=()=>{const r=spawnSync(${JSON.stringify(realGit)},args,{stdio:'inherit',env:process.env});process.exit(r.status??1);};if(args.includes('worktree')&&args.includes('list')){writeFileSync(${JSON.stringify(ready)},'claimed metadata');setTimeout(run,5000);}else run();`);chmodSync(shim,0o755);
+    child=spawn(process.execPath,[cli,'invoke','--repository',repo.path,'--workflow','.factory/workflows/audit.ts','--input',repo.input,'--worktree',repo.saved.worktreeId,'--run',repo.saved.runId,'--shutdown-grace-ms','100','--json'],{env:{...process.env,PATH:bin+':'+process.env.PATH},stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',c=>stdout+=c);child.stderr.on('data',c=>stderr+=c);closed=new Promise(resolve=>child.once('close',status=>resolve(status)));
+    const end=performance.now()+8000;while(!existsSync(ready)&&performance.now()<end)await delay(20);assert.ok(existsSync(ready),'claimed Git metadata was not reached');child.kill('SIGTERM');assert.equal(await closed,143,stdout+stderr);
+    const saved=JSON.parse(stdout),interrupted=JSON.parse(repo.call(['history','--invocation',saved.invocationId]).stdout);assert.equal(saved.cleanup,'complete');assert.equal(repo.history().worktree.registration,'reserved');assert.equal(interrupted.attempts.some(a=>a.operationKey.startsWith('startup/build/')),false);assert.deepEqual(repo.inspect(),[]);assert.deepEqual(repo.history().attempts,before.attempts);
+    const next=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.equal(next.status,0,next.stdout+next.stderr);
+  }finally{if(child&&child.exitCode===null&&child.signalCode===null){child.kill('SIGTERM');await closed;}await repo.dispose();}
+});
+
+
+test('failed preparation anchor persistence leaves evidence missing and refuses guessed recovery',async()=>{
+  const repo=await reservedCheckout({failAnchor:true});
+  try{
+    assert.equal(repo.history().worktree.preparation,undefined);await repo.stop();repo.clear();
+    const before=repo.history(),r=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.equal(r.status,3,r.stdout+r.stderr);assert.match(r.stdout,/lacks original preparation identity evidence/);
+    assert.equal(repo.history().worktree.registration,'reserved');assert.deepEqual(repo.history().attempts,before.attempts);assert.equal(readFileSync(join(repo.saved.worktree,'payload.txt'),'utf8'),'preserved checkout payload\n');
+  }finally{await repo.dispose();}
+});
+
+test('reserved recovery cannot silently start a new run to discard paid allowance',async()=>{
+  const repo=await reservedCheckout({paid:true});
+  try{
+    await repo.stop();repo.clear();const before=repo.history();assert.equal(before.accounting.additionalUsed,1);
+    const changed=repo.invoke(['--worktree',repo.saved.worktreeId]);assert.equal(changed.status,3,changed.stdout+changed.stderr);assert.match(changed.stdout,/original retained run/);
+    assert.equal(repo.history().worktree.registration,'reserved');assert.equal(repo.history().accounting.additionalUsed,1);assert.deepEqual(repo.inspect(),[]);
+    const retained=repo.invoke(['--worktree',repo.saved.worktreeId,'--run',repo.saved.runId]);assert.equal(retained.status,0,retained.stdout+retained.stderr);assert.equal(repo.history().accounting.additionalUsed,1);
+  }finally{await repo.dispose();}
+});

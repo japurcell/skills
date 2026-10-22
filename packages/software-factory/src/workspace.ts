@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, realpathSync, rmSync } from 'node:fs';
+import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, realpathSync, rmSync, lstatSync, fstatSync, readSync, constants } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { LiveProcessScope } from './native/process.js';
@@ -64,4 +65,30 @@ export async function worktreeIdentity(path:string,common:string,execute:GitExec
 }
 export async function createWorktree(repository:string,destination:string,commit:string,execute:GitExecutor=git) {
   if(existsSync(destination))throw new Error('worktree destination collision');await execute(repository,['worktree','add','--detach','--',resolve(destination),commit]);
+}
+
+
+export interface PreparationIdentity {
+  directory: { device: string; inode: string };
+  marker: { device: string; inode: string; sha256: string };
+}
+/** Opaque file evidence only. Git remains the authority for registration semantics. */
+export function preparationIdentity(path: string): PreparationIdentity {
+  const directory=lstatSync(path,{bigint:true});
+  if(!directory.isDirectory()||directory.isSymbolicLink()||realpathSync(path)!==path||directory.ino===0n)throw new Error('prepared worktree path identity unavailable or changed');
+  const markerPath=join(path,'.git'),marker=lstatSync(markerPath,{bigint:true});
+  if(!marker.isFile()||marker.isSymbolicLink()||marker.ino===0n||marker.size>16384n)throw new Error('prepared worktree marker must be a bounded regular file');
+  const descriptor=openSync(markerPath,constants.O_RDONLY|(constants.O_NOFOLLOW??0)|(constants.O_NONBLOCK??0));
+  try {
+    const opened=fstatSync(descriptor,{bigint:true});
+    if(!opened.isFile()||opened.dev!==marker.dev||opened.ino!==marker.ino||opened.size>16384n)throw new Error('prepared worktree marker changed');
+    const bytes=Buffer.alloc(16385);let count=0;
+    while(count<bytes.length){const n=readSync(descriptor,bytes,count,bytes.length-count,count);if(!n)break;count+=n;}
+    const ended=fstatSync(descriptor,{bigint:true}),current=lstatSync(markerPath,{bigint:true}),root=lstatSync(path,{bigint:true});
+    if(count>16384||BigInt(count)!==opened.size||ended.size!==opened.size||ended.mtimeNs!==opened.mtimeNs||current.isSymbolicLink()||current.dev!==opened.dev||current.ino!==opened.ino||root.isSymbolicLink()||root.dev!==directory.dev||root.ino!==directory.ino||realpathSync(path)!==path)throw new Error('prepared worktree identity changed while reading');
+    return {directory:{device:String(directory.dev),inode:String(directory.ino)},marker:{device:String(opened.dev),inode:String(opened.ino),sha256:createHash('sha256').update(bytes.subarray(0,count)).digest('hex')}};
+  } finally {closeSync(descriptor);}
+}
+export function assertPreparationIdentity(path:string,expected:PreparationIdentity) {
+  if(JSON.stringify(preparationIdentity(path))!==JSON.stringify(expected))throw new Error('prepared worktree filesystem identity changed; refusing recovery');
 }

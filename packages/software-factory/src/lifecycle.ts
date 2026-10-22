@@ -3,12 +3,12 @@ import { environmentRedactionPolicy, redactText } from './redaction.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
 import { currentOwner, duration } from './native/process.js';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { buildWorkflow } from './build.js';
 import { InvocationRecorder } from './capture.js';
 import { openRepositoryStore } from './store.js';
 import { CommandRunner, NeedsInput, ShutdownInterrupted, workflowContext } from './workflow.js';
-import { createWorktree, git, repositoryIdentity, selectedCommit, StartupGitControl, StartupInterrupted, worktreeIdentity } from './workspace.js';
+import { createWorktree, git, repositoryIdentity, selectedCommit, StartupGitControl, StartupInterrupted, worktreeIdentity, assertPreparationIdentity } from './workspace.js';
 
 export interface InvokeOptions extends AgentConfiguration {
   repository: string; workflow: string; input: string; newWorktree: boolean; ref?: string;
@@ -54,10 +54,14 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     } else {
       try { worktree = store.readWorktree(options.worktreeId!); }
       catch {
-        const registration = await worktreeIdentity(options.worktreeId!, identity.common,executeEarly);
-        worktree = await store.registerWorktree({ path: realpathSync(options.worktreeId!), registration });
+        const path=realpathSync(options.worktreeId!);
+        worktree=store.findWorktreeByPath(path);
+        if(!worktree){const registration = await worktreeIdentity(options.worktreeId!, identity.common,executeEarly);
+        worktree = await store.registerWorktree({ path, registration });}
+        else if(worktree.registration==='reserved'&&resolve(options.worktreeId!)!==path)throw new Error('prepared worktree path must not be a symlink');
       }
-      if (await worktreeIdentity(worktree.path, identity.common,executeEarly) !== worktree.registration) throw new Error('worktree Git registration changed; refusing reuse');
+      if(worktree.preparation)assertPreparationIdentity(worktree.path,worktree.preparation.identity);
+      if (worktree.registration!=='reserved'&&await worktreeIdentity(worktree.path, identity.common,executeEarly) !== worktree.registration) throw new Error('worktree Git registration changed; refusing reuse');
     }
     worktreePath = worktree.path;
     invocation = await store.startInvocation({ runId, worktreeId: worktree.id, owner: currentOwner() });
@@ -70,10 +74,25 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     await store.saveInvocationMetadata(invocation.id, { settings, workflow: options.workflow, selectedCommit: commit, inputCaptureId: context.id, question: options.question ?? null, contexts: options.contexts ?? [] });
     if (commit) {
       const executeSetup=(repository:string,args:string[])=>git(repository,args,(argv,cwd,env)=>runner!.startupGit(argv,cwd,env));
-      await createWorktree(identity.root, worktree.path, commit,executeSetup);
-      await store.finalizeWorktree({ id: worktree.id, claimId: invocation.claim.id, token: invocation.claim.token, registration: await worktreeIdentity(worktree.path, identity.common,executeSetup) });
+      try {
+        await createWorktree(identity.root, worktree.path, commit,executeSetup);
+        await store.finalizeWorktree({ id: worktree.id, claimId: invocation.claim.id, token: invocation.claim.token, registration: await worktreeIdentity(worktree.path, identity.common,executeSetup) });
+      } catch(error) {
+        if(!recorder.failed)try{await recorder.barrier();await store.recordWorktreePreparation({id:worktree.id,claimId:invocation.claim.id,token:invocation.claim.token});}catch{/* Missing evidence stays explicit; never infer an identity or launch after stop. */}
+        throw error;
+      }
+    } else if(worktree.registration==='reserved') {
+      if(!worktree.preparation)throw new Error('reserved worktree lacks original preparation identity evidence; explicit recovery required');
+      assertPreparationIdentity(worktree.path,worktree.preparation.identity);
+      const executeSetup=(repository:string,args:string[])=>git(repository,args,(argv,cwd,env)=>runner!.startupGit(argv,cwd,env));
+      const registration=await worktreeIdentity(worktree.path,identity.common,executeSetup);
+      if(runner.dispatchStopped)throw new ShutdownInterrupted('shutdown stopped preparation recovery');
+      await recorder.barrier();
+      await store.reconcileWorktreePreparation({id:worktree.id,claimId:invocation.claim.id,token:invocation.claim.token,registration});
     }
+    if(worktree.preparation)assertPreparationIdentity(worktree.path,worktree.preparation.identity);
     const run = await runner.waitFor(buildWorkflow({ common: identity.common, worktree: worktree.path, workflow: options.workflow, invocationId: invocation.id, runner }));
+    if(worktree.preparation)assertPreparationIdentity(worktree.path,worktree.preparation.identity);
     await store.activateInvocation(invocation.id); entered = true;
     const result = await runner.waitFor(run(workflowContext(runner), inputs as Record<string, unknown>));
     await runner.drain();
