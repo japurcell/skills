@@ -12,7 +12,7 @@ const state = {
   routeGeneration: 0,
   snapshotGeneration: 0, readAbort: new AbortController(), streamGeneration: 0, snapshotting: false, projection: null, projecting: false, receivedCursor: '0',
   error: null, connectionKind: null, validatedParent: null,
-  notificationPreferences: null, preferencesStatus: '', preferencesError: false, acknowledgment: null, acknowledgmentStatus: '', acknowledgmentError: false,
+  notificationPreferences: null, reminderGroups: null, preferencesStatus: '', preferencesError: false, acknowledgment: null, acknowledgmentStatus: '', acknowledgmentError: false,
 };
 const idPattern = /^[0-9a-f-]{36}$/;
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
@@ -64,17 +64,26 @@ async function writeNotification(path, body) {
   return result;
 }
 async function loadNotificationPreferences() {
-  try { state.notificationPreferences = await api('/api/notifications/preferences'); state.preferencesError = false; }
+  try {
+    const [preferences, reminders] = await Promise.all([api('/api/notifications/preferences'), api('/api/notifications/reminders?limit=1')]);
+    state.notificationPreferences = preferences; state.reminderGroups = reminders.groups; state.preferencesError = false;
+  }
   catch (error) { state.preferencesStatus = error.message; state.preferencesError = true; }
 }
 function preferencesControls() {
   const preferences=state.notificationPreferences;
+  const latest=state.reminderGroups?.[0];
+  const status=latest ? latest.state==='submitted' ? 'Latest reminder submitted to the notification service. Desktop visibility is unverified.'
+    : latest.reason==='unbound_sender' ? 'Latest reminder could not be sent because no installed sender is available.'
+    : latest.cleanup==='unknown' ? 'Latest reminder submission or cleanup is unknown. The host retains its claim.'
+    : `Latest reminder status: ${latest.state}. Desktop visibility is unverified.` : 'No reminder group saved yet.';
   return `<details class="surface"><summary class="section-body">Notification preferences</summary><div class="section-body">
-    <p class="muted">Repository-wide settings. Success notices and reminders start off. Reminder delivery is not available yet.</p>
+    <p class="muted">Repository-wide settings. Success notices and reminders start off. Reminders wait 15 minutes after this host starts or you enable them.</p>
     <form id="notification-preferences" class="notification-form"><label><input type="checkbox" name="successNotices" ${preferences?.successNotices?'checked':''}> Success notices</label>
     <label><input type="checkbox" name="reminders" ${preferences?.reminders?'checked':''}> Reminders</label>
     <button type="submit" ${preferences?'':'disabled'}>Save notification preferences</button></form>
-    <p id="preferences-status" class="notification-status" role="${state.preferencesError?'alert':'status'}">${escapeHtml(state.preferencesStatus || (preferences?'Saved settings are shown above.':'Preferences unavailable.'))}</p></div></details>`;
+    <p id="preferences-status" class="notification-status" role="${state.preferencesError?'alert':'status'}">${escapeHtml(state.preferencesStatus || (preferences?'Saved settings are shown above.':'Preferences unavailable.'))}</p>
+    <p class="muted">${escapeHtml(status)}</p></div></details>`;
 }
 function acknowledgmentControls(invocation) {
   if (!invocation || invocation.stage !== 'finalized') return '';

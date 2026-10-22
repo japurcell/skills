@@ -525,7 +525,7 @@ test('version 5 notification store is refused without creating metadata tables',
   const store = await initializeRepositoryStore(common, { release: 'fixture' });
   const run = await store.createRun(); store.close();
   const database = new DatabaseSync(path);
-  database.exec('DROP TABLE notification_acknowledgments; DROP TABLE notification_preferences; PRAGMA user_version=5'); database.close();
+  database.exec('DROP TABLE notification_attention; DROP TABLE notification_reminder_groups; DROP TABLE notification_acknowledgments; DROP TABLE notification_preferences; PRAGMA user_version=5'); database.close();
   try {
     assert.throws(() => openRepositoryStore(common), /incompatible schema/);
     const retained = new DatabaseSync(path);

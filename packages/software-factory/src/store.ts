@@ -46,6 +46,11 @@ export interface NotificationDelivery {
 }
 export interface NotificationPreferences { successNotices: boolean; reminders: boolean; updatedAt: string | null }
 export interface NotificationAcknowledgment { id: string; invocationId: string; acknowledgedAt: string }
+export interface ReminderGroup {
+  id: string; kind: 'reminder'; claimId: string; invocationIds: string[]; count: number; hasMore: boolean;
+  state: 'reserved' | NotificationDelivery['state']; reason?: string; cleanup: 'complete' | 'unknown';
+  visibleDelivery: false; createdAt: string; updatedAt: string;
+}
 export class NotificationMetadataError extends Error { constructor(readonly status: 400 | 404, message: string) { super(message); } }
 function exactObject(value: unknown, keys: string[]): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) &&
@@ -320,6 +325,7 @@ export class RepositoryStore {
       if (cleanup === 'complete' && this.database.prepare('SELECT id FROM attempts WHERE invocation_id=? AND occupied=1').get(id)) throw new Error('activity is not quiescent');
       invocation.stage = 'finalized'; invocation.outcome = outcome; invocation.cleanup = cleanup;
       this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation), id);
+      this.recordNotificationAttention(invocation);
       this.event('invocation.finalized', { invocationId: id, outcome, cleanup });
     });
   }
@@ -337,6 +343,7 @@ export class RepositoryStore {
       invocation.stage = 'finalized'; invocation.outcome = input.outcome; invocation.cleanup = input.cleanup;
       if (successNoticePlanned) invocation.successNoticePlanned = true;
       this.database.prepare('UPDATE invocations SET data=? WHERE id=?').run(JSON.stringify(invocation),input.id);
+      this.recordNotificationAttention(invocation);
       this.event('invocation.finalized',{invocationId:input.id,outcome:input.outcome,cleanup:input.cleanup});
       if (input.cleanup === 'complete' && input.retainClaim !== true && !successNoticePlanned) {
         this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(input.claimId,input.token);
@@ -378,6 +385,62 @@ export class RepositoryStore {
     const row = this.database.prepare('SELECT success_notices,reminders,updated_at FROM notification_preferences WHERE id=1').get();
     return row ? { successNotices: row['success_notices'] === 1, reminders: row['reminders'] === 1, updatedAt: String(row['updated_at']) }
       : { successNotices: false, reminders: false, updatedAt: null };
+  }
+
+  private recordNotificationAttention(invocation: Invocation) {
+    const questions = this.database.prepare("SELECT id FROM captures WHERE invocation_id=? AND channel='request' AND state='complete' LIMIT 1").get(invocation.id);
+    if (invocation.outcome !== 'succeeded' || invocation.cleanup === 'unknown' || questions)
+      this.database.prepare('INSERT OR IGNORE INTO notification_attention(invocation_id) VALUES (?)').run(invocation.id);
+  }
+
+  readReminderGroups(options: { limit?: number } = {}) {
+    const limit = options.limit ?? 20;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new Error('invalid reminder page');
+    const rows = this.database.prepare('SELECT data FROM notification_reminder_groups ORDER BY rowid DESC LIMIT ?').all(limit + 1);
+    return { groups: rows.slice(0, limit).map(row => JSON.parse(String(row['data'])) as ReminderGroup), hasMore: rows.length > limit };
+  }
+
+  private requireDashboardClaim(claim: Claim) {
+    const row = this.database.prepare("SELECT token,data FROM owner_claims WHERE id=? AND kind='dashboard' AND resource_key=?").get(claim.id, claim.resourceKey);
+    if (!row || row['token'] !== claim.token || JSON.stringify(JSON.parse(String(row['data']))) !== JSON.stringify(claim))
+      throw new Error('dashboard claim changed');
+  }
+
+  /** A committed identity is never reused after a crash or uncertain submission. */
+  async reserveReminderGroup(claim: Claim): Promise<ReminderGroup | null> {
+    return this.transaction(() => {
+      this.requireDashboardClaim(claim);
+      if (!this.readNotificationPreferences().reminders) return null;
+      if (this.database.prepare('SELECT id FROM notification_reminder_groups WHERE claim_id=? AND unsettled=1 LIMIT 1').get(claim.id))
+        throw new Error('reminder cleanup or recording remains unknown');
+      const rows = this.database.prepare('SELECT a.invocation_id FROM notification_attention a LEFT JOIN notification_acknowledgments k ON k.invocation_id=a.invocation_id WHERE k.invocation_id IS NULL ORDER BY a.rowid LIMIT 101').all();
+      if (!rows.length) return null;
+      const invocationIds = rows.slice(0, 100).map(row => String(row['invocation_id']));
+      const at = new Date().toISOString();
+      const group: ReminderGroup = { id: randomUUID(), kind: 'reminder', claimId: claim.id, invocationIds, count: invocationIds.length, hasMore: rows.length > 100,
+        state: 'reserved', cleanup: 'unknown', visibleDelivery: false, createdAt: at, updatedAt: at };
+      this.database.prepare('INSERT INTO notification_reminder_groups(id,claim_id,unsettled,data) VALUES (?,?,1,?)').run(group.id, claim.id, JSON.stringify(group));
+      this.event('notification.reminder_reserved', { groupId: group.id, count: group.count, hasMore: group.hasMore });
+      return group;
+    });
+  }
+
+  async saveReminderGroupResult(claim: Claim, id: string, result: { state: NotificationDelivery['state']; reason?: string; cleanup: NotificationDelivery['cleanup'] }): Promise<ReminderGroup> {
+    if (!['submitted','failed','timed_out','unknown'].includes(result.state) || !['complete','unknown'].includes(result.cleanup) ||
+      (result.cleanup === 'unknown' && result.state !== 'unknown') ||
+      (result.reason !== undefined && (typeof result.reason !== 'string' || !/^[a-z_]{1,64}$/.test(result.reason)))) throw new Error('invalid reminder result');
+    return this.transaction(() => {
+      this.requireDashboardClaim(claim);
+      const row = this.database.prepare('SELECT claim_id,data FROM notification_reminder_groups WHERE id=?').get(id);
+      if (!row || row['claim_id'] !== claim.id) throw new Error('reminder reservation missing');
+      const saved = JSON.parse(String(row['data'])) as ReminderGroup;
+      if (saved.state !== 'reserved') return saved;
+      const record: ReminderGroup = { ...saved, state: result.state, cleanup: result.cleanup, updatedAt: new Date().toISOString() };
+      if (result.reason !== undefined) record.reason = result.reason;
+      this.database.prepare('UPDATE notification_reminder_groups SET unsettled=?,data=? WHERE id=?').run(result.cleanup === 'unknown' ? 1 : 0, JSON.stringify(record), id);
+      this.event('notification.reminder_recorded', { groupId: id, state: record.state });
+      return record;
+    });
   }
 
   async saveNotificationPreferences(input: unknown): Promise<NotificationPreferences> {
@@ -898,6 +961,8 @@ export class RepositoryStore {
       const row = this.database.prepare('SELECT token FROM owner_claims WHERE id=?').get(input.claimId);
       if (!row || row['token'] !== input.token) throw new Error('claim/token no longer matches');
       if (this.database.prepare('SELECT a.id FROM attempts a JOIN owner_claims c ON c.invocation_id=a.invocation_id WHERE c.id=? AND a.occupied=1').get(input.claimId)) throw new Error('owned activity is not quiescent');
+      if (this.database.prepare('SELECT id FROM notification_reminder_groups WHERE claim_id=? AND unsettled=1 LIMIT 1').get(input.claimId))
+        throw new Error('reminder cleanup or recording remains unknown');
       this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=?').run(input.claimId, input.token);
       this.event('owner.released', { claimId: input.claimId, basis: input.basis });
     });

@@ -1,5 +1,5 @@
 import type { DesktopNotification, NotificationResult } from './native/notifications.js';
-import type { NotificationDelivery, RepositoryStore } from './store.js';
+import type { Claim, NotificationDelivery, ReminderGroup, RepositoryStore } from './store.js';
 
 export type NotificationSender = (message: DesktopNotification) => Promise<NotificationResult>;
 
@@ -37,4 +37,30 @@ export async function sendInitialNotification(store: RepositoryStore, invocation
     result = { state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' };
   } finally { if (timer) clearTimeout(timer); }
   return store.saveInitialNotificationResult(reserved.id, result);
+}
+
+/** One reserved group belongs to the live dashboard claim, including its uncertain cleanup. */
+export async function sendReminderNotification(store: RepositoryStore, claim: Claim, sender: NotificationSender | undefined, canSubmit: () => boolean): Promise<ReminderGroup | null> {
+  const reserved = await store.reserveReminderGroup(claim);
+  if (!reserved) return null;
+  if (!canSubmit()) return store.saveReminderGroupResult(claim, reserved.id, { state: 'failed', reason: 'stopped_before_submit', cleanup: 'complete' });
+  if (!sender) return store.saveReminderGroupResult(claim, reserved.id, { state: 'failed', reason: 'unbound_sender', cleanup: 'complete' });
+
+  const body = reserved.hasMore ? '100 or more runs need attention' : `${reserved.count} run${reserved.count === 1 ? '' : 's'} need${reserved.count === 1 ? 's' : ''} attention`;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let result: NotificationResult;
+  try {
+    const submission = sender({ title: 'Software Factory needs attention', body });
+    result = await Promise.race([
+      submission,
+      new Promise<NotificationResult>(resolve => { timer = setTimeout(() => resolve({ state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' }), 5000); }),
+    ]);
+    if (!result || !['submitted','failed','timed_out','unknown'].includes(result.state) || !['complete','unknown'].includes(result.cleanup) ||
+        (result.cleanup === 'unknown' && result.state !== 'unknown') ||
+        (result.reason !== undefined && (typeof result.reason !== 'string' || !/^[a-z_]{1,64}$/.test(result.reason))))
+      result = { state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' };
+  } catch {
+    result = { state: 'unknown', reason: 'cleanup_unconfirmed', cleanup: 'unknown' };
+  } finally { if (timer) clearTimeout(timer); }
+  return store.saveReminderGroupResult(claim, reserved.id, result);
 }

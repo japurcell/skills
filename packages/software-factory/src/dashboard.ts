@@ -5,6 +5,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { currentOwner, inspectOwner } from './native/process.js';
 import type { Claim, RepositoryStore } from './store.js';
 import { NotificationMetadataError } from './store.js';
+import type { NotificationSender } from './notifications.js';
+import { sendReminderNotification } from './notifications.js';
 
 const MAX_PAGE = 1048576;
 const liveHosts = new Map<string, { claim: Claim; sessionToken: string; available: () => boolean; handoff: () => string }>();
@@ -68,7 +70,8 @@ async function verifyExisting(store: RepositoryStore, claim: Claim) {
 }
 
 /** Owns only observation sockets. It never imports or executes a workflow. */
-export async function startObservationHost(options: { store: RepositoryStore; port?: number; notificationWrite?: NotificationWrite }) {
+export async function startObservationHost(options: { store: RepositoryStore; port?: number; notificationWrite?: NotificationWrite;
+  reminderSender?: NotificationSender; reminderScheduler?: { setTimeout(callback: () => Promise<void>, milliseconds: number): unknown; clearTimeout(handle: unknown): void } }) {
   const { store } = options;
   const existing = store.readDashboardClaim();
   if (existing) return verifyExisting(store, existing);
@@ -76,6 +79,34 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   let claim = await store.claimResource({ kind: 'dashboard', owner: currentOwner() });
   const sessionToken = randomUUID() + randomUUID();
   let url = '', closing = false, notificationWrites = 0;
+  const reminderScheduler = options.reminderScheduler ?? { setTimeout: (callback: () => Promise<void>, milliseconds: number) => setTimeout(() => { void callback(); }, milliseconds),
+    clearTimeout: (handle: unknown) => clearTimeout(handle as ReturnType<typeof setTimeout>) };
+  let reminderTimer: unknown, reminderTask: Promise<void> | undefined, reminderUncertain = false, reminderGeneration = 0;
+  function cancelReminder() { reminderGeneration++; if (reminderTimer !== undefined) reminderScheduler.clearTimeout(reminderTimer); reminderTimer = undefined; }
+  function scheduleReminder() {
+    try {
+      if (closing || reminderUncertain || reminderTimer !== undefined || reminderTask || !store.readNotificationPreferences().reminders || !sameClaim(store.readDashboardClaim(), claim)) return;
+      const generation = reminderGeneration;
+      reminderTimer = reminderScheduler.setTimeout(async () => {
+        if (generation !== reminderGeneration) return;
+        reminderTimer = undefined;
+        try { await runReminder(); } catch { reminderUncertain = true; }
+      }, 15 * 60 * 1000);
+    } catch { reminderUncertain = true; }
+  }
+  async function runReminder() {
+    if (closing || reminderTask || !store.readNotificationPreferences().reminders || !sameClaim(store.readDashboardClaim(), claim)) return;
+    notificationWrites++;
+    reminderTask = (async () => {
+      try {
+        const group = await sendReminderNotification(store, claim, options.reminderSender,
+          () => !closing && store.readNotificationPreferences().reminders && sameClaim(store.readDashboardClaim(), claim));
+        if (group && group.cleanup === 'unknown') reminderUncertain = true;
+      } catch { reminderUncertain = true; }
+      finally { notificationWrites--; reminderTask = undefined; scheduleReminder(); }
+    })();
+    await reminderTask;
+  }
   const uiTickets = new Map<string, number>();
   let badRedemptions = 0;
   const assets = new Map([
@@ -151,8 +182,14 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         if (notificationWrites >= 4) throw new RequestError(429, 'notification write limit reached');
         notificationWrites++;
         try {
+          const wasEnabled = operation === 'preferences' && store.readNotificationPreferences().reminders;
           const saved = options.notificationWrite ? await options.notificationWrite(operation, input) :
             operation === 'preferences' ? await store.saveNotificationPreferences(input) : await store.acknowledgeNotification(input);
+          if (operation === 'preferences') {
+            const enabled = store.readNotificationPreferences().reminders;
+            if (!enabled) cancelReminder();
+            else if (!wasEnabled) scheduleReminder();
+          }
           if (!closing && !response.destroyed) json(response, 200, saved);
         } finally { notificationWrites--; }
         return;
@@ -174,7 +211,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         } else response.setHeader('content-security-policy', "default-src 'none'; frame-ancestors 'none'");
         response.writeHead(200, { 'content-type': asset.type }); response.end(body); return;
       }
-      if ((route.pathname === '/api/notifications/preferences' || route.pathname === '/api/events' || route.pathname === '/api/events/head' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
+      if ((route.pathname === '/api/notifications/preferences' || route.pathname === '/api/notifications/reminders' || route.pathname === '/api/events' || route.pathname === '/api/events/head' || route.pathname === '/api/stream' || route.pathname === '/api/invocations'
         || route.pathname.startsWith('/api/invocations/') || route.pathname === '/api/runs' || route.pathname.startsWith('/api/runs/')) && !bearerMatches(request, sessionToken)) {
         json(response, 403, { error: 'host session required' }); return;
       }
@@ -188,6 +225,11 @@ export async function startObservationHost(options: { store: RepositoryStore; po
         parameters(route, []);
         if (!bearerMatches(request, sessionToken)) throw new RequestError(403, 'host session required');
         json(response, 200, store.readNotificationPreferences()); return;
+      }
+      if (route.pathname === '/api/notifications/reminders') {
+        parameters(route, ['limit']);
+        const limit = integer(route, 'limit', 20, 100); if (limit < 1) throw new RequestError(400, 'invalid page');
+        json(response, 200, store.readReminderGroups({ limit })); return;
       }
       if (route.pathname === '/api/events/head') {
         parameters(route, []); json(response, 200, store.readEventHead()); return;
@@ -318,13 +360,16 @@ export async function startObservationHost(options: { store: RepositoryStore; po
   server.maxConnections = 32; server.headersTimeout = 5000; server.requestTimeout = 5000; server.keepAliveTimeout = 1000;
   async function stopServer() {
     closing = true;
+    cancelReminder();
     uiTickets.clear();
     if (liveHosts.get(claim.id)?.sessionToken === sessionToken) liveHosts.delete(claim.id);
     for (const response of streams) response.destroy();
     const stopped = new Promise<void>(resolve => server.close(() => resolve()));
     server.closeAllConnections();
     await stopped;
+    if (reminderTask) await reminderTask;
     if (notificationWrites) throw new Error('notification write remains unsettled; dashboard claim retained');
+    if (reminderUncertain) throw new Error('reminder cleanup or recording unknown; dashboard claim retained');
   }
   try {
     await new Promise<void>((resolve, reject) => {
@@ -336,6 +381,7 @@ export async function startObservationHost(options: { store: RepositoryStore; po
     url = 'http://127.0.0.1:' + address.port;
     claim = await store.publishDashboardEndpoint({ claimId: claim.id, token: claim.token, url, instanceId: randomUUID() });
     liveHosts.set(claim.id, { claim, sessionToken, available: () => !closing && server.listening, handoff: createUiHandoff });
+    scheduleReminder();
   } catch (error) {
     await stopServer();
     if (sameClaim(store.readDashboardClaim(), claim)) await store.releaseClaim({ claimId: claim.id, token: claim.token, basis: 'quiescent' });

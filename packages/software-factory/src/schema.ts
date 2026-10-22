@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-export const schemaVersion = 6;
+export const schemaVersion = 7;
 
 export function initializeSchema(database: DatabaseSync) {
   database.exec(`
@@ -37,7 +37,10 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE INDEX notification_invocation ON notification_deliveries(invocation_id);
     CREATE TABLE notification_preferences(id INTEGER PRIMARY KEY CHECK(id=1), success_notices INTEGER NOT NULL CHECK(success_notices IN (0,1)), reminders INTEGER NOT NULL CHECK(reminders IN (0,1)), updated_at TEXT NOT NULL);
     CREATE TABLE notification_acknowledgments(invocation_id TEXT PRIMARY KEY REFERENCES invocations(id), acknowledged_at TEXT NOT NULL);
-    PRAGMA user_version=6;
+    CREATE TABLE notification_attention(invocation_id TEXT PRIMARY KEY REFERENCES invocations(id));
+    CREATE TABLE notification_reminder_groups(id TEXT PRIMARY KEY, claim_id TEXT NOT NULL, unsettled INTEGER NOT NULL CHECK(unsettled IN (0,1)), data TEXT NOT NULL CHECK(json_valid(data)));
+    CREATE INDEX notification_reminder_unsettled ON notification_reminder_groups(claim_id,unsettled);
+    PRAGMA user_version=7;
     COMMIT;
   `);
 }
