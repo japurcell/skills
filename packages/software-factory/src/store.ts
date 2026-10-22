@@ -16,7 +16,18 @@ export interface Owner { host: string; pid: number; start: string | null }
 export interface Claim {
   id: string; token: string; kind: 'worktree' | 'dashboard' | 'maintenance'; resourceKey: string;
   invocationId: string | null; owner: Owner; endpoint?: { url: string; instanceId: string };
+  maintenance?: MaintenanceIntent;
 }
+export type MaintenanceKind = 'install' | 'upgrade' | 'dependencies' | 'repair' | 'uninstall' | 'cleanup';
+export type MaintenancePhase = 'preparing' | 'handoff-ready' | 'modifying' | 'validating';
+export interface MaintenanceIntent {
+  operationId: string; repositoryId: string; kind: MaintenanceKind; release: string;
+  targetReleaseSha256: string | null; selectionDigest: string; artifactDigests: Record<string, string>;
+  targetSchema: number; stagePath: string; stageDigest: string | null; stageIdentity: string | null;
+  phase: MaintenancePhase; ownedReceiptId: string | null; backupId: string | null;
+  ticketNonceHash: string | null; ticketConsumed: boolean;
+}
+export interface MaintenanceHandle { operationId: string; claimId: string; token: string; repositoryId: string; commonDir: string }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
 interface Worktree { id: string; path: string; registration: string; preparation?: { identity: PreparationIdentity; invocationId: string; claimId: string } }
 export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object; successNoticePlanned?: boolean }
@@ -86,6 +97,11 @@ function paths(commonDir: string, create: boolean) {
   return { directory, database: join(directory, 'history.sqlite'), marker: join(directory, 'bootstrap-incomplete') };
 }
 
+function pathAbsent(path: string) {
+  try { lstatSync(path); return false; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true; throw error; }
+}
+
 function configure(database: DatabaseSync) {
   database.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON');
   if (database.prepare('PRAGMA journal_mode').get()?.['journal_mode'] !== 'wal'
@@ -114,8 +130,17 @@ export async function initializeRepositoryStore(commonDir: string, options: { re
 }
 
 export function openRepositoryStore(commonDir: string) {
+  return openStore(commonDir, false);
+}
+
+/** Trusted controller path. Ordinary callers still refuse a bootstrap marker. */
+export function openMaintenanceStore(commonDir: string) {
+  return openStore(commonDir, true);
+}
+
+function openStore(commonDir: string, allowMarker: boolean) {
   const location = paths(commonDir, false);
-  if (existsSync(location.marker)) throw new Error('incomplete bootstrap; explicit repair required');
+  if (!allowMarker && !pathAbsent(location.marker)) throw new Error('incomplete bootstrap; explicit repair required');
   const file = lstatSync(location.database);
   if (!file.isFile() || file.isSymbolicLink()) throw new Error('invalid store file');
   const database = new DatabaseSync(location.database, { timeout: 100 });
@@ -758,6 +783,106 @@ export class RepositoryStore {
     });
   }
 
+  /** One write transaction owns admission and the recoverable typed intent. */
+  async beginMaintenance(intent: MaintenanceIntent, owner: Owner): Promise<Claim> {
+    validateOwner(owner);
+    return this.transaction(() => {
+      this.ready();
+      if (this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get()) throw new Error('active or uncertain owner blocks maintenance');
+      const repositoryId = this.repositoryId();
+      if (intent.repositoryId !== repositoryId || intent.phase !== 'preparing') throw new Error('maintenance intent does not match repository');
+      const claim: Claim = { id: randomUUID(), token: randomUUID(), kind: 'maintenance', resourceKey: repositoryId,
+        invocationId: null, owner, maintenance: intent };
+      if (Buffer.byteLength(JSON.stringify(claim)) > 8192) throw new Error('maintenance claim exceeds limit');
+      this.database.prepare('INSERT INTO owner_claims(id,token,kind,resource_key,invocation_id,data) VALUES (?,?,?,?,NULL,?)')
+        .run(claim.id, claim.token, claim.kind, repositoryId, JSON.stringify(claim));
+      this.event('maintenance.started', { operationId: intent.operationId, claimId: claim.id, kind: intent.kind });
+      return claim;
+    });
+  }
+
+  readMaintenanceClaim(operationId: string): Claim {
+    const row = this.database.prepare("SELECT data FROM owner_claims WHERE kind='maintenance'").get();
+    if (!row) throw new Error('maintenance claim unavailable');
+    const claim = JSON.parse(String(row['data'])) as Claim;
+    if (!claim.maintenance || claim.maintenance.operationId !== operationId || claim.resourceKey !== this.repositoryId()
+      || claim.maintenance.repositoryId !== claim.resourceKey) throw new Error('recorded maintenance operation does not match');
+    return claim;
+  }
+
+  async advanceMaintenance(input: { handle: MaintenanceHandle; expected: MaintenancePhase; next: MaintenancePhase;
+    stageDigest?: string; stageIdentity?: string; ticketNonceHash?: string }) {
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId);
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
+        || claim.maintenance!.phase !== input.expected) throw new Error('maintenance claim/token/phase no longer matches');
+      if (!((input.expected === 'preparing' && input.next === 'handoff-ready')
+        || (input.expected === 'modifying' && input.next === 'validating'))) throw new Error('invalid maintenance phase transition');
+      if (input.next === 'handoff-ready' && (!input.stageDigest || !input.stageIdentity || !input.ticketNonceHash))
+        throw new Error('handoff requires exact stage and ticket evidence');
+      Object.assign(claim.maintenance!, { phase: input.next,
+        ...(input.stageDigest ? { stageDigest: input.stageDigest } : {}),
+        ...(input.stageIdentity ? { stageIdentity: input.stageIdentity } : {}),
+        ...(input.ticketNonceHash ? { ticketNonceHash: input.ticketNonceHash } : {}) });
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?')
+        .run(JSON.stringify(claim), claim.id, claim.token);
+      this.event('maintenance.phase', { operationId: input.handle.operationId, claimId: claim.id, phase: input.next });
+      return claim.maintenance!;
+    });
+  }
+
+  async consumeMaintenanceHandoff(input: { handle: MaintenanceHandle; nonceHash: string; stageDigest: string; stageIdentity: string }) {
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId);
+      const intent = claim.maintenance!;
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
+        || intent.phase !== 'handoff-ready' || intent.ticketConsumed || intent.ticketNonceHash !== input.nonceHash
+        || intent.stageDigest !== input.stageDigest || intent.stageIdentity !== input.stageIdentity)
+        throw new Error('handoff claim/token/stage/nonce no longer matches');
+      if (this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('another owner blocks maintenance mutation');
+      intent.phase = 'modifying'; intent.ticketConsumed = true;
+      this.database.prepare("UPDATE repository SET state='incomplete' WHERE id=?").run(intent.repositoryId);
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?')
+        .run(JSON.stringify(claim), claim.id, claim.token);
+      this.event('maintenance.handoff_consumed', { operationId: intent.operationId, claimId: claim.id });
+      return intent;
+    });
+  }
+
+  async reissueMaintenanceHandoff(input: { handle: MaintenanceHandle; nonceHash: string; stageDigest: string; stageIdentity: string }) {
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId), recorded = claim.maintenance!;
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
+        || recorded.phase !== 'handoff-ready' || recorded.ticketConsumed || recorded.ticketNonceHash !== null
+        || recorded.stageDigest !== input.stageDigest || recorded.stageIdentity !== input.stageIdentity)
+        throw new Error('maintenance handoff reissue claim/token/stage no longer matches');
+      recorded.ticketNonceHash = input.nonceHash;
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?')
+        .run(JSON.stringify(claim), claim.id, claim.token);
+      this.event('maintenance.handoff_reissued', { operationId: recorded.operationId, claimId: claim.id });
+    });
+  }
+
+  async reclaimMaintenance(input: { operationId: string; expectedToken: string; owner: Owner; inspection: 'not_live' | 'unknown'; note: string }) {
+    validateOwner(input.owner);
+    text(input.note, 'maintenance clearance note');
+    if (!input.note.trim()) throw new Error('nonempty maintenance clearance note required');
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.operationId);
+      if (claim.token !== input.expectedToken) throw new Error('maintenance claim/token no longer matches');
+      const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection };
+      this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)')
+        .run(clearance.id, claim.id, JSON.stringify(clearance));
+      claim.token = randomUUID(); claim.owner = input.owner;
+      if (claim.maintenance?.phase === 'handoff-ready') claim.maintenance.ticketNonceHash = null;
+      this.database.prepare('UPDATE owner_claims SET token=?,data=? WHERE id=? AND token=?')
+        .run(claim.token, JSON.stringify(claim), claim.id, input.expectedToken);
+      this.event('maintenance.reclaimed', { operationId: input.operationId, claimId: claim.id, clearanceId: clearance.id });
+      return claim;
+    });
+  }
+
   repositoryId(): string {
     const row = this.database.prepare('SELECT id FROM repository').get();
     if (!row) throw new Error('repository identity unavailable');
@@ -942,6 +1067,7 @@ export class RepositoryStore {
       const row = this.database.prepare('SELECT data FROM owner_claims WHERE id=? AND token=?').get(input.claimId, input.token);
       if (!row) throw new Error('claim/token no longer matches');
       const claim = JSON.parse(String(row['data'])) as Claim;
+      if (claim.kind === 'maintenance') throw new Error('maintenance claims require explicit operation-preserving recovery');
       const clearance: Clearance = { id: randomUUID(), claimId: claim.id, ...(claim.invocationId ? {invocationId:claim.invocationId} : {}), note: input.note, basis: 'operator_confirmed', inspection: input.inspection as 'not_live' | 'unknown', ...(input.details ? {details:input.details} : {}) };
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)').run(clearance.id, claim.id, JSON.stringify(clearance));
       for (const row of this.database.prepare('SELECT data FROM attempts WHERE invocation_id=? AND occupied=1').all(claim.invocationId)) {
@@ -958,8 +1084,11 @@ export class RepositoryStore {
   async releaseClaim(input: { claimId: string; token: string; basis: 'quiescent' }) {
     if (input.basis !== 'quiescent') throw new Error('automatic release requires quiescence evidence');
     return this.transaction(() => {
-      const row = this.database.prepare('SELECT token FROM owner_claims WHERE id=?').get(input.claimId);
-      if (!row || row['token'] !== input.token) throw new Error('claim/token no longer matches');
+      const row = this.database.prepare('SELECT data FROM owner_claims WHERE id=?').get(input.claimId);
+      if (!row) throw new Error('claim/token no longer matches');
+      const claim = JSON.parse(String(row['data'])) as Claim;
+      if (claim.token !== input.token) throw new Error('claim/token no longer matches');
+      if (claim.kind === 'maintenance' && claim.maintenance) throw new Error('typed maintenance claims require validated completion');
       if (this.database.prepare('SELECT a.id FROM attempts a JOIN owner_claims c ON c.invocation_id=a.invocation_id WHERE c.id=? AND a.occupied=1').get(input.claimId)) throw new Error('owned activity is not quiescent');
       if (this.database.prepare('SELECT id FROM notification_reminder_groups WHERE claim_id=? AND unsettled=1 LIMIT 1').get(input.claimId))
         throw new Error('reminder cleanup or recording remains unknown');

@@ -2,8 +2,15 @@ import type { DatabaseSync } from 'node:sqlite';
 
 export const schemaVersion = 7;
 
-export function initializeSchema(database: DatabaseSync) {
-  database.exec(`
+export interface BootstrapRows {
+  repository: { id: string; release: string };
+  claim: { id: string; token: string; resourceKey: string; data: string };
+}
+
+/** The first repository row and maintenance claim commit with the schema, never later. */
+export function initializeSchema(database: DatabaseSync, bootstrap?: BootstrapRows) {
+  try {
+    database.exec(`
     BEGIN IMMEDIATE;
     CREATE TABLE repository(id TEXT PRIMARY KEY, release TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('ready','incomplete','absent')),
       agent_limit INTEGER NOT NULL DEFAULT 2, command_limit INTEGER NOT NULL DEFAULT 2);
@@ -41,6 +48,19 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE notification_reminder_groups(id TEXT PRIMARY KEY, claim_id TEXT NOT NULL, unsettled INTEGER NOT NULL CHECK(unsettled IN (0,1)), data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE INDEX notification_reminder_unsettled ON notification_reminder_groups(claim_id,unsettled);
     PRAGMA user_version=7;
-    COMMIT;
   `);
+    if (bootstrap) {
+      database.prepare("INSERT INTO repository(id,release,state) VALUES (?,?,'incomplete')")
+        .run(bootstrap.repository.id, bootstrap.repository.release);
+      database.prepare("INSERT INTO owner_claims(id,token,kind,resource_key,invocation_id,data) VALUES (?,?,'maintenance',?,NULL,?)")
+        .run(bootstrap.claim.id, bootstrap.claim.token, bootstrap.claim.resourceKey, bootstrap.claim.data);
+      database.prepare('INSERT INTO observation_events(kind,data) VALUES (?,?)')
+        .run('maintenance.started', JSON.stringify({ operationId: JSON.parse(bootstrap.claim.data).maintenance.operationId,
+          claimId: bootstrap.claim.id, kind: 'install', at: new Date().toISOString() }));
+    }
+    database.exec('COMMIT');
+  } catch (error) {
+    if (database.isTransaction) database.exec('ROLLBACK');
+    throw error;
+  }
 }
