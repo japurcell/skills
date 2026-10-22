@@ -815,6 +815,7 @@ test('delayed latest event page cannot unfreeze Repository runs', async () => {
     await intercepted;
     await page.getByRole('link',{name:'Repository runs',exact:true}).click();
     await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    await page.getByRole('button',{name:'Freeze this view'}).click();
     release();await pending;
     assert.equal(await page.getByRole('button',{name:'Follow latest events'}).getAttribute('aria-pressed'),'true');
     assert.equal(await page.locator('#connection').getAttribute('data-state'),'frozen');
@@ -1224,5 +1225,128 @@ test('frozen reader actions do not count replayed events twice beyond the deferr
     await page.waitForTimeout(400);
     assert.equal(await page.locator('#pending-events').innerText(),'205 new events - return to latest');
     assert.ok(await page.locator('.event-row').count()<=200);
+  } finally {await browser.close();await f.dispose();}
+});
+
+
+test('capture selection automatically recovers a transient catch-up head failure', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await f.store.createCapture({invocationId:f.invocation.id,channel:'stdout'});
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    await page.getByText('Saved outputs and traces',{exact:true}).click();
+    let reads=0;
+    await page.route(url=>url.pathname==='/api/events/head',async route=>{
+      if(reads++===0)await route.fulfill({status:503,contentType:'application/json',body:'{"error":"temporary head failure"}'});
+      else await route.continue();
+    });
+    await page.getByRole('button',{name:/stdout/}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='disconnected');
+    await f.store.createCapture({invocationId:f.invocation.id,channel:'stderr'});
+    const head=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,head,{timeout:2000});
+    assert.equal(await page.locator(`.event-row[data-cursor="${head}"]`).count(),1);
+    assert.ok(reads>=2);
+  } finally {await browser.close();await f.dispose();}
+});
+
+
+test('live card changes reconcile active outcome and search membership', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    await page.locator('#run-search').fill('Unique live preview');
+    assert.equal(await page.locator('.run-card').count(),0);
+    const recorder=new InvocationRecorder({store:f.store,invocationId:f.invocation.id,requestShutdown:()=>{}});
+    const context=await recorder.openCapture({channel:'context'});
+    const clear=page.getByRole('button',{name:'Clear filters',exact:true});
+    await clear.focus();
+    await clear.evaluate(element=>{window.savedClearFilter=element});
+    await f.store.saveInvocationMetadata(f.invocation.id,{workflow:'still-unmatched'});
+    const unmatched=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,unmatched);
+    assert.equal(await clear.evaluate(element=>element===window.savedClearFilter&&document.activeElement===element),true);
+    await page.locator('#run-search').focus();
+    await context.write(JSON.stringify({inputs:'Unique live preview',question:null,contexts:[]}));
+    await context.finish();await recorder.barrier();
+    await f.store.saveInvocationMetadata(f.invocation.id,{workflow:'new-workflow',inputCaptureId:context.id});
+    await page.getByRole('link',{name:/Unique live preview/}).waitFor({timeout:2000});
+    assert.equal(await page.locator('.run-card').count(),1);
+    assert.equal(await page.locator('#run-search').inputValue(),'Unique live preview');
+    assert.equal(await page.locator('#run-search').evaluate(element=>document.activeElement===element),true);
+    await page.locator('#run-search').fill('');
+    await page.locator('#outcome-filter').selectOption('running');
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    const head=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,head);
+    assert.equal(await page.locator('.run-card').count(),0,'failed card must leave Running filter');
+  } finally {await browser.close();await f.dispose();}
+});
+
+
+test('explicit navigation leaves Freeze before showing a current run snapshot', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:390,height:844}});
+  try {
+    await page.goto(f.host.createUiHandoff());
+    await page.getByRole('link',{name:new RegExp(f.run.id.slice(0,8))}).click();
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    await page.getByRole('button',{name:'Freeze this view'}).click();
+    const frozen=await page.locator('#connection').innerText();
+    assert.match(await page.locator('#observation-state').innerText(),/navigation follows latest history/);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    if(process.env.FACTORY_SCREENSHOT_DIR)await page.screenshot({path:join(process.env.FACTORY_SCREENSHOT_DIR,'frozen-run-390.png'),fullPage:true});
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    await page.getByRole('button',{name:/new events - return to latest/}).waitFor();
+    assert.equal(await page.locator('#connection').innerText(),frozen);
+    await page.getByRole('link',{name:'Repository runs',exact:true}).click();
+    await page.getByRole('heading',{name:'Repository runs'}).waitFor();
+    const head=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,head,{timeout:2000});
+    assert.equal(await page.locator('.run-card .status').innerText(),'Failed');
+    assert.equal(await page.getByRole('button',{name:'Freeze this view'}).getAttribute('aria-pressed'),'false');
+    assert.equal(await page.getByText(/Frozen at saved cursor/).count(),0);
+  } finally {await browser.close();await f.dispose();}
+});
+
+
+test('live index updates preserve page boundaries and untouched card reading state', async () => {
+  const f=await fixture();const browser=await chromium.launch({headless:true});const page=await browser.newPage();
+  try {
+    for(let index=0;index<31;index++)await f.store.createRun();
+    const indexReads=[];
+    page.on('request',request=>{const url=new URL(request.url());if(url.pathname==='/api/runs')indexReads.push(url.search);});
+    await page.goto(f.host.createUiHandoff());
+    await page.waitForFunction(()=>document.getElementById('connection')?.dataset.state==='connected');
+    assert.equal(await page.locator('.run-card').count(),30);
+    const firstPage=await page.locator('.run-card').evaluateAll(cards=>cards.map(card=>card.dataset.run));
+    await f.store.finishInvocation(f.invocation.id,'failed','unknown');
+    const head=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,head);
+    assert.deepEqual(await page.locator('.run-card').evaluateAll(cards=>cards.map(card=>card.dataset.run)),firstPage);
+    assert.equal(indexReads.length,1,'off-page events must not reload or expand the loaded page');
+    await page.getByRole('button',{name:'Next runs',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.run-card').length===2);
+    const untouched=page.locator('.run-card').first();
+    await untouched.locator('a').focus();
+    const selected=await untouched.evaluate(element=>{
+      window.untouchedCard=element;window.untouchedLink=element.querySelector('a');
+      const range=document.createRange();range.selectNodeContents(element.querySelector('.workflow'));
+      const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);return selection.toString();
+    });
+    const before=await page.locator('.run-card').evaluateAll(cards=>cards.map(card=>card.dataset.run));
+    await f.store.clearOwner({claimId:f.invocation.claim.id,token:f.invocation.claim.token,operatorConfirmed:true,note:'Fixture inspection',inspection:'not_live'});
+    const updated=f.store.readEventHead().cursor;
+    await page.waitForFunction(cursor=>document.getElementById('connection')?.textContent==='Connected - saved cursor '+cursor,updated);
+    assert.deepEqual(await page.locator('.run-card').evaluateAll(cards=>cards.map(card=>card.dataset.run)),before);
+    assert.equal(await untouched.evaluate(element=>element===window.untouchedCard&&document.activeElement===window.untouchedLink),true);
+    assert.equal(await page.evaluate(()=>window.getSelection().toString()),selected);
+    assert.equal(indexReads.length,2);
+    assert.ok(indexReads.every(query=>new URLSearchParams(query).get('limit')==='30'));
+    await page.getByRole('button',{name:'Previous runs',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.run-card').length===30);
+    assert.deepEqual(await page.locator('.run-card').evaluateAll(cards=>cards.map(card=>card.dataset.run)),firstPage);
   } finally {await browser.close();await f.dispose();}
 });

@@ -39,7 +39,7 @@ function showConnection(kind, text) {
   connection.dataset.state = kind;
   connection.textContent = text;
   const chipSlot=document.getElementById('observation-state');
-  if(chipSlot) chipSlot.innerHTML=chip(kind==='disconnected'?`Disconnected - last update ${state.lastUpdate?state.lastUpdate.toLocaleTimeString():'unknown'}`:kind==='frozen'?'Frozen at saved cursor '+state.cursor:kind==='connecting'?'Catching up':'Connected',kind==='connected'?'success':'attention');
+  if(chipSlot) chipSlot.innerHTML=chip(kind==='disconnected'?`Disconnected - last update ${state.lastUpdate?state.lastUpdate.toLocaleTimeString():'unknown'}`:kind==='frozen'?'Frozen at saved cursor '+state.cursor+'; navigation follows latest history':kind==='connecting'?'Catching up':'Connected',kind==='connected'?'success':'attention');
   if (changed) announcement.textContent = kind==='disconnected'?text:kind==='connected'?'Observation connected.':kind==='connecting'?'Catching up with saved observations.':'Observation frozen.';
 }
 async function api(path, options = {}) {
@@ -88,15 +88,15 @@ function card(run) {
     <div class="mini-activity" aria-label="Observed activity summary"><span data-kind="${run.startedAt?'active':''}"></span><span data-kind="${run.latestCaptureState?'active':''}"></span><span data-kind="${run.endedAt?'active':''}"></span><small>${invocation ? 'Latest invocation ' + escapeHtml(short(invocation.id)) : 'No invocation yet'}</small></div>
     <div class="card-foot"><div>${chip(label,tone)}<small>${escapeHtml(cleanup)}</small></div><small>${escapeHtml(run.startedAt?'Started '+readableTime(run.startedAt):'Start time unknown')}<br>${escapeHtml(elapsed)}<br>${escapeHtml(capture)}<br>Usage unknown</small></div></article>`;
 }
+function matchesRun(run) {
+  const latest=run.latestInvocation;
+  const haystack=`${run.requestPreview || ''} ${run.workflow || ''} ${run.id} ${latest?.id || ''}`.toLowerCase();
+  const current=latest?.outcome || latest?.stage || 'unknown';
+  return haystack.includes(state.query.trim().toLowerCase()) && (state.filter==='all' || current===state.filter);
+}
 function renderCards() {
   const cards = document.getElementById('cards'); if (!cards) return;
-  const needle = state.query.trim().toLowerCase();
-  const matches = state.runs.filter(run => {
-    const latest = run.latestInvocation;
-    const haystack = `${run.requestPreview || ''} ${run.workflow || ''} ${run.id} ${latest?.id || ''}`.toLowerCase();
-    const current = latest?.outcome || latest?.stage || 'unknown';
-    return haystack.includes(needle) && (state.filter === 'all' || current === state.filter);
-  });
+  const matches = state.runs.filter(matchesRun);
   cards.innerHTML = matches.length ? matches.map(card).join('') : `<div class="state-message">${state.runs.length ? 'No matching runs on this page.' : 'No saved runs. Start a workflow from the CLI to record one.'}${state.runs.length ? ' <button type="button" data-action="clear-filter">Clear filters</button>' : ''}</div>`;
 }
 function renderIndex() {
@@ -416,16 +416,20 @@ function beginViewIntent() {
   return snapshot;
 }
 async function resumeView(snapshot) {
-  if(snapshot!==state.snapshotGeneration)return;
-  try {
-    const head=await api('/api/events/head');
-    if(snapshot!==state.snapshotGeneration)return;
-    state.snapshotting=false;
-    startStream(head.cursor);
-  } catch {
-    if(snapshot!==state.snapshotGeneration)return;
-    state.snapshotting=false;
-    showConnection('disconnected','History unavailable');
+  let wait=300;
+  while(snapshot===state.snapshotGeneration) {
+    try {
+      const head=await api('/api/events/head');
+      if(snapshot!==state.snapshotGeneration)return;
+      state.snapshotting=false;
+      startStream(head.cursor);
+      return;
+    } catch {
+      if(snapshot!==state.snapshotGeneration)return;
+      showConnection('disconnected','History unavailable - retrying saved observations');
+      await new Promise(resolve=>setTimeout(resolve,wait));
+      wait=Math.min(wait*2,5000);
+    }
   }
 }
 async function loadRoute(reader = null, baseline = null, resume = true) {
@@ -461,6 +465,12 @@ async function loadRoute(reader = null, baseline = null, resume = true) {
       }
     }
   }
+}
+function navigateRoute(reader = null) {
+  // Explicit navigation reads current projections. End the old view's Freeze
+  // before rendering them, then replay through the new catch-up head.
+  state.frozen=false;
+  return loadRoute(reader);
 }
 function readerSnapshot() {
   const active=document.activeElement;
@@ -685,9 +695,22 @@ async function refreshIndexCard(event) {
   state.runs[index]=latest;
   const cards=document.getElementById('cards');
   const existing=cards?.querySelector(`[data-run="${CSS.escape(run.id)}"]`);
-  if(!existing)return;
+  if(!cards)return;
+  if(!matchesRun(latest)) {
+    existing?.remove();
+    if(existing&&!cards.querySelector('.run-card'))renderCards();
+    return;
+  }
   const replacement=document.createElement('div');replacement.innerHTML=card(latest);
   const fresh=replacement.firstElementChild;
+  if(!existing) {
+    cards.querySelector('.state-message')?.remove();
+    // Live updates retain the loaded page and its saved order. Only this
+    // card's membership changes; other cards keep their DOM and reader intent.
+    const next=state.runs.slice(index+1).map(item=>cards.querySelector(`[data-run="${CSS.escape(item.id)}"]`)).find(Boolean);
+    cards.insertBefore(fresh,next||null);
+    return;
+  }
   existing.dataset.outcome=fresh.dataset.outcome;
   existing.dataset.cardSearch=fresh.dataset.cardSearch;
   const oldHead=existing.querySelector('.card-head'),newHead=fresh.querySelector('.card-head');
@@ -898,7 +921,7 @@ app.addEventListener('click',async event=>{
   if(returning)[...document.querySelectorAll('.phase-bar, .timeline-text a')].find(item=>item.getAttribute('href')===originHref)?.focus({preventScroll:true});
   const destination=new URLSearchParams(anchor.getAttribute('href').slice(1));
   const sameInvocation=destination.get('run')===state.run?.id&&(!destination.get('invocation')||destination.get('invocation')===state.invocation?.id);
-  const loading=loadRoute(returning||sameInvocation?before:null),snapshot=state.snapshotGeneration;
+  const loading=navigateRoute(returning||sameInvocation?before:null),snapshot=state.snapshotGeneration;
   await loading;
   if(snapshot!==state.snapshotGeneration)return;
   if(route().run===oldRun) {window.scrollTo(0,before.top);}
@@ -924,14 +947,14 @@ app.addEventListener('click',async event=>{
       if(action==='next-runs')pages.push(state.runPageNext);
       else if(action==='previous-runs')pages.pop();
       else pages.splice(0,pages.length,0);
-      const loading=loadRoute(reader),owner=state.snapshotGeneration;
+      const loading=navigateRoute(reader),owner=state.snapshotGeneration;
       await loading;
       if(owner===state.snapshotGeneration&&action==='refresh-index'&&!state.error)state.newRuns=0;
     }
     else if(action==='next-invocations'||action==='previous-invocations'){
       const reader=readerSnapshot(),pages=reader.pages.invocations;
       if(action==='next-invocations')pages.push(state.invocationNext);else pages.pop();
-      await loadRoute(reader);
+      await navigateRoute(reader);
     }
     else if(action==='next-lanes'||action==='previous-lanes'){const reader=readerSnapshot();state.lanePage=Math.max(0,state.lanePage+(action==='next-lanes'?1:-1));renderRun(route());await restoreReader(reader,generation);if(generation===state.routeGeneration&&snapshot===state.snapshotGeneration&&href===location.href)document.querySelector(`[data-action="${action}"]`)?.focus({preventScroll:true});}
     else if(action==='more-attempts')await moreHistory('attempts');
@@ -959,7 +982,7 @@ app.addEventListener('click',async event=>{
     readFailure(error.message);}
   finally {if(ownsView)await resumeView(snapshot);}
 });
-function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;recentReading={top:0};userScrollUntil=0;void loadRoute(history.state?.reader);}
+function browserRouteChanged(){if(location.href===lastNavigatedHref)return;lastNavigatedHref=location.href;recentReading={top:0};userScrollUntil=0;void navigateRoute(history.state?.reader);}
 window.addEventListener('hashchange',browserRouteChanged);
 window.addEventListener('popstate',browserRouteChanged);
 
