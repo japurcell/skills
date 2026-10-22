@@ -10,6 +10,7 @@ test('suite selection fails for unfinished suites, unmatched filters and unknown
     const result = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000 });
     assert.equal(result.status, 1, result.stderr);
     assert.match(result.stderr, /not implemented|no tests|Unknown option/);
+    assert.equal(result.stdout, '', 'invalid selection must precede launching registered suites');
   }
 });
 
@@ -17,8 +18,23 @@ test('suite selection fails for unfinished suites, unmatched filters and unknown
 test('aggregate selection reports maintenance after learning registration', () => {
   const result = spawnSync(process.execPath, [dispatch, 'all'], { encoding: 'utf8', timeout: 5000 });
   assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stderr, /maintenance: not implemented; no tests registered/);
+  assert.match(result.stderr, /maintenance: not implemented; missing operations: install, upgrade, dependencies, repair, uninstall, cleanup/);
   assert.equal(result.stdout, '', 'aggregate refusal must precede launching registered suites');
+});
+
+test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [dispatch, 'maintenance', '--operation', 'controller'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /bootstrap/);
+  assert.match(result.stdout, /handoff/);
+  for (const operation of ['install', 'upgrade', 'dependencies', 'repair', 'uninstall', 'cleanup', 'unknown']) {
+    const refused = spawnSync(process.execPath, [dispatch, 'maintenance', '--operation', operation], { encoding: 'utf8', timeout: 5000, env });
+    assert.equal(refused.status, 1, refused.stderr);
+    assert.match(refused.stderr, /no tests match supplied filters/);
+    assert.equal(refused.stdout, '');
+  }
 });
 
 

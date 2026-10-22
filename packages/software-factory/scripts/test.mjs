@@ -26,7 +26,7 @@ const groups = {
     { path: 'test/learning-extraction-paths.test.mjs', operation: 'extract', testConcurrency: 2 },
     { path: 'test/learning-evaluation.test.mjs', operation: 'evaluate' },
     { path: 'test/learning-adoption.test.mjs', operation: 'adopt' },
-  ], maintenance: [], release: [{ path: 'test/release-packaging.test.mjs' }, { path: 'test/installation-bindings.test.mjs' }], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
+  ], maintenance: [{ path: 'test/maintenance-controller.test.mjs', operation: 'controller' }], release: [{ path: 'test/release-packaging.test.mjs' }, { path: 'test/installation-bindings.test.mjs' }], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
 try {
@@ -43,6 +43,11 @@ try {
   for (const name of names) {
     if (!(name in groups)) throw new Error(`unknown test group: ${name}`);
     const entries = groups[name];
+    if (name === 'maintenance' && values.operation === undefined) {
+      const required = ['controller', 'install', 'upgrade', 'dependencies', 'repair', 'uninstall', 'cleanup'];
+      const missing = required.filter(operation => !entries.some(entry => entry.operation === operation));
+      if (missing.length > 0) throw new Error(`maintenance: not implemented; missing operations: ${missing.join(', ')}`);
+    }
     if (entries.length === 0) throw new Error(`${name}: not implemented; no tests registered`);
     const selected = entries.filter((entry) => Object.entries(values).every(([key, value]) => entry[key] === value));
     if (selected.length === 0) throw new Error(`${name}: no tests match supplied filters`);
