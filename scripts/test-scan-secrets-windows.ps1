@@ -522,6 +522,16 @@ try {
         Invoke-Case -Provider gemini -Mode block -Scenario descendant -Attempt $attempt
         Invoke-Case -Provider gemini -Mode warn -Scenario oversized -Attempt $attempt
     }
+    # Repeated clean launches expose intermittent capture failures without
+    # accepting incomplete results or relaxing descendant and file checks.
+    for ($attempt = 1; $attempt -le 20; $attempt++) {
+        foreach ($provider in @('copilot', 'gemini', 'codex')) {
+            foreach ($mode in @('block', 'warn')) {
+                Invoke-Case -Provider $provider -Mode $mode -Scenario success -Attempt $attempt
+            }
+        }
+    }
+    Write-Output 'PASS: 120 repeated native Windows clean no-HEAD captures'
     Write-Output 'PASS: native Windows generated scanner capture tests'
 }
 finally {
