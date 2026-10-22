@@ -21,6 +21,8 @@ interface Attempt extends Admission {
   quiescent: boolean; owner: Owner | null; evidence: string | null;
   cleanupBasis?: 'operator_confirmed';
 }
+export type CaptureState = 'open' | 'complete' | 'partial' | 'unknown' | 'pruned';
+export interface CaptureChunk { sequence: number; text: string }
 interface Clearance { id: string; claimId: string; note: string; basis: 'operator_confirmed'; inspection: 'not_live' | 'unknown' }
 
 function text(value: string, label: string) {
@@ -97,6 +99,8 @@ export function openRepositoryStore(commonDir: string) {
 export class RepositoryStore {
   constructor(private readonly database: DatabaseSync) {}
 
+  private readonly blockedInvocations = new Set<string>();
+  blockAdmissions(invocationId: string) { this.blockedInvocations.add(invocationId); }
   close() { this.database.close(); }
 
   private async transaction<T>(action: () => T): Promise<T> {
@@ -120,6 +124,7 @@ export class RepositoryStore {
   }
 
   private event(kind: string, data: object) {
+    if (Buffer.byteLength(JSON.stringify(data)) > 8192) throw new Error('event metadata exceeds limit');
     this.database.prepare('INSERT INTO observation_events(kind,data) VALUES (?,?)').run(kind, JSON.stringify({ ...data, at: new Date().toISOString() }));
   }
 
@@ -252,6 +257,7 @@ export class RepositoryStore {
     validateAdmission(input);
     const fingerprint = JSON.stringify([input.id, input.invocationId, input.operationKey, input.kind, input.intent, input.priorAttemptId ?? null, input.loopKey ?? null]);
     return this.transaction(() => {
+      if (this.blockedInvocations.has(input.invocationId)) throw new Error('capture failure blocks admission');
       const existing = this.database.prepare('SELECT data FROM attempts WHERE id=?').get(input.id);
       if (existing) {
         const attempt = JSON.parse(String(existing['data'])) as Attempt;
@@ -395,13 +401,90 @@ export class RepositoryStore {
     });
   }
 
+  async createCapture(input: { invocationId: string; attemptId?: string; channel: string }) {
+    if (!['stdout', 'stderr', 'result', 'request', 'report', 'event', 'context'].includes(input.channel)) throw new Error('unsupported capture channel');
+    return this.transaction(() => {
+      const invocation = this.readInvocation(input.invocationId);
+      if (invocation.stage === 'finalized') throw new Error('invocation finalized');
+      if (input.attemptId && this.readAttempt(input.attemptId).invocationId !== input.invocationId) throw new Error('capture attempt belongs to another invocation');
+      const capture = { id: randomUUID(), ...input, state: 'open' as CaptureState };
+      this.database.prepare('INSERT INTO captures(id,invocation_id,attempt_id,channel,state) VALUES (?,?,?,?,?)')
+        .run(capture.id, input.invocationId, input.attemptId ?? null, input.channel, 'open');
+      this.event('capture.created', { captureId: capture.id, invocationId: input.invocationId, channel: input.channel });
+      return capture;
+    });
+  }
+
+  async appendCapture(input: { id: string; chunks: CaptureChunk[]; state?: CaptureState }) {
+    if (!Array.isArray(input.chunks) || input.chunks.length > 200) throw new Error('invalid capture batch');
+    if (input.state !== undefined && !['open','complete','partial','unknown','pruned'].includes(input.state)) throw new Error('invalid capture state');
+    let bytes = 0;
+    for (const chunk of input.chunks) {
+      if (typeof chunk.text !== 'string' || Buffer.from(chunk.text).toString('utf8') !== chunk.text || !Number.isSafeInteger(chunk.sequence) || chunk.sequence < 1) throw new Error('invalid capture chunk');
+      const size = Buffer.byteLength(chunk.text);
+      if (size > 65536) throw new Error('capture chunk exceeds 64 KiB');
+      bytes += size;
+    }
+    if (bytes > 262144) throw new Error('capture batch exceeds 256 KiB');
+    return this.transaction(() => {
+      const row = this.database.prepare('SELECT state,sequence,invocation_id FROM captures WHERE id=?').get(input.id);
+      if (!row) throw new Error('capture not found');
+      let sequence = Number(row['sequence']);
+      if ((input.chunks.length && input.chunks[0]!.sequence <= sequence) || (!input.chunks.length && input.state === row['state'] && row['state'] !== 'open')) {
+        let prior = input.chunks[0]?.sequence ?? 1;
+        for (const chunk of input.chunks) {
+          if (chunk.sequence !== prior++ || this.database.prepare('SELECT text FROM capture_chunks WHERE capture_id=? AND sequence=?').get(input.id, chunk.sequence)?.['text'] !== chunk.text) throw new Error('capture sequence conflicts with committed data');
+        }
+        if (input.state !== undefined && input.state !== row['state']) throw new Error('capture retry state conflicts with committed data');
+        return { sequence, state: row['state'] as CaptureState };
+      }
+      if (row['state'] !== 'open') throw new Error('capture is complete or closed');
+      for (const chunk of input.chunks) {
+        if (chunk.sequence !== sequence + 1) throw new Error('capture sequence must be contiguous and unique');
+        this.database.prepare('INSERT INTO capture_chunks(capture_id,sequence,text) VALUES (?,?,?)').run(input.id, chunk.sequence, chunk.text);
+        sequence++;
+      }
+      const state = input.state ?? 'open';
+      this.database.prepare('UPDATE captures SET sequence=?,state=? WHERE id=?').run(sequence, state, input.id);
+      this.event('capture.appended', { captureId: input.id, invocationId: row['invocation_id'], sequence, state, bytes });
+      return { sequence, state };
+    });
+  }
+
+  readCapture(input: { id: string; after?: number; limit?: number }) {
+    const after = input.after ?? 0, limit = input.limit ?? 200;
+    if (!Number.isSafeInteger(after) || after < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error('invalid capture page');
+    const row = this.database.prepare('SELECT state,sequence,channel FROM captures WHERE id=?').get(input.id);
+    const state = row ? String(row['state']) as CaptureState : 'missing';
+    const chunks: CaptureChunk[] = [];
+    let size = 0;
+    if (row && state !== 'pruned') {
+      for (const chunk of this.database.prepare('SELECT sequence,text FROM capture_chunks WHERE capture_id=? AND sequence>? ORDER BY sequence LIMIT ?').iterate(input.id, after, limit)) {
+        const item = { sequence: Number(chunk['sequence']), text: String(chunk['text']) };
+        const bytes = Buffer.byteLength(JSON.stringify(item)) + 1;
+        if (size + bytes > 1047552) break;
+        size += bytes; chunks.push(item);
+      }
+    }
+    const nextSequence = chunks.at(-1)?.sequence ?? after;
+    return { state, channel: row ? String(row['channel']) : null, chunks, nextSequence, hasMore: !!row && state !== 'pruned' && nextSequence < Number(row['sequence']) };
+  }
+
   readEvents(input: { after: string; limit?: number }) {
-    if (!/^\d+$/.test(input.after) || BigInt(input.after) > 9223372036854775807n) throw new Error('invalid event cursor');
+    if (!/^\d+$/.test(input.after) || input.after.length > 19 || BigInt(input.after) > 9223372036854775807n) throw new Error('invalid event cursor');
     const limit = input.limit ?? 200;
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 200) throw new Error('event limit must be 1-200');
     const statement = this.database.prepare('SELECT cursor,kind,data FROM observation_events WHERE cursor>? ORDER BY cursor LIMIT ?');
     statement.setReadBigInts(true);
-    const events = statement.all(BigInt(input.after), limit).map((row) => ({ cursor: String(row['cursor']), kind: String(row['kind']), data: JSON.parse(String(row['data'])) as object }));
-    return { events, nextCursor: events.at(-1)?.cursor ?? input.after };
+    const events: { cursor: string; kind: string; data: object }[] = [];
+    let size = 0;
+    for (const row of statement.iterate(BigInt(input.after), limit)) {
+      const event = { cursor: String(row['cursor']), kind: String(row['kind']), data: JSON.parse(String(row['data'])) as object };
+      const bytes = Buffer.byteLength(JSON.stringify(event)) + 1;
+      if (size + bytes > 1047552) break;
+      size += bytes; events.push(event);
+    }
+    const gap = BigInt(input.after) > 0n && !this.database.prepare('SELECT cursor FROM observation_events WHERE cursor=?').get(BigInt(input.after));
+    return { events, nextCursor: events.at(-1)?.cursor ?? input.after, gap };
   }
 }

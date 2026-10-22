@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-export const schemaVersion = 1;
+export const schemaVersion = 2;
 
 export function initializeSchema(database: DatabaseSync) {
   database.exec(`
@@ -21,7 +21,12 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE TABLE observation_events(cursor INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE TABLE clearances(id TEXT PRIMARY KEY, claim_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)));
     CREATE INDEX clearance_history ON clearances(claim_id,id);
-    PRAGMA user_version=1;
+    CREATE TABLE captures(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT REFERENCES attempts(id),
+      channel TEXT NOT NULL, state TEXT NOT NULL CHECK(state IN ('open','complete','partial','unknown','pruned')), sequence INTEGER NOT NULL DEFAULT 0);
+    CREATE INDEX capture_history ON captures(invocation_id,id);
+    CREATE TABLE capture_chunks(capture_id TEXT NOT NULL REFERENCES captures(id), sequence INTEGER NOT NULL CHECK(sequence>0), text TEXT NOT NULL,
+      PRIMARY KEY(capture_id,sequence), CHECK(length(CAST(text AS BLOB))<=65536));
+    PRAGMA user_version=2;
     COMMIT;
   `);
 }
