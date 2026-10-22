@@ -9,6 +9,8 @@ import type { InvocationRecorder } from './capture.js';
 
 export interface CommandOptions {
   argv: string[]; cwd?: string; env?: Record<string, string>; shell?: string;
+  /** False returns ordinary nonzero exits for explicit workflow handling. Infrastructure failures still throw. */
+  required?: boolean;
   intent?: Admission['intent']; priorAttemptId?: string; loopKey?: string;
 }
 export interface CommandResult { attemptId: string; exitCode: number | null; cleanup: 'complete' | 'unknown' }
@@ -48,6 +50,7 @@ export class CommandRunner {
   }
   private async perform(key: string, options: CommandOptions, startup: boolean): Promise<CommandResult> {
     if (!Array.isArray(options.argv) || !options.argv.length || options.argv.some(value => typeof value !== 'string' || value.includes('\0')) || !options.argv[0]) throw new Error('command requires nonempty argv without NUL');
+    if (options.required !== undefined && typeof options.required !== 'boolean') throw new Error('command required must be a boolean');
     if (options.shell !== undefined && (typeof options.shell !== 'string' || !isAbsolute(options.shell))) throw new Error('explicit shell must be an absolute executable path');
     const cwd = realpathSync(resolve(this.worktree, options.cwd ?? '.'));
     const outside = relative(realpathSync(this.worktree), cwd);
@@ -57,7 +60,7 @@ export class CommandRunner {
     const attempt = await this.store.admitAttempt({ id: randomUUID(), invocationId: this.invocationId, operationKey: key, kind: 'command', intent: options.intent ?? 'initial',
       ...(options.priorAttemptId ? { priorAttemptId: options.priorAttemptId } : {}), ...(options.loopKey ? { loopKey: options.loopKey } : {}) }, startup);
     const request = await this.recorder.openCapture({ channel: 'context', attemptId: attempt.id });
-    await request.write(JSON.stringify({ argv: options.argv, cwd, env, shell: options.shell ?? false })); await request.finish();
+    await request.write(JSON.stringify({ argv: options.argv, cwd, env, shell: options.shell ?? false, required: options.required ?? true })); await request.finish();
     const stdout = await this.recorder.openCapture({ channel: 'stdout', attemptId: attempt.id });
     const stderr = await this.recorder.openCapture({ channel: 'stderr', attemptId: attempt.id });
     let child;
@@ -81,10 +84,10 @@ export class CommandRunner {
       try { process.kill(-child.pid!, 0); } catch (error) { quiescent = (error as NodeJS.ErrnoException).code === 'ESRCH'; }
     }
     await this.store.settleAttempt({ id: attempt.id, launch: launched ? 'started' : 'not_started', outcome: result.code === 0 && !result.error ? 'succeeded' : 'failed', quiescent,
-      evidence: launched ? (quiescent ? 'process closed; owned process group absent' : 'process closed; descendant cleanup unknown') : 'spawn error before process creation' });
+      evidence: launched ? (quiescent ? `process exited ${result.code}; owned process group absent` : `process exited ${result.code}; descendant cleanup unknown`) : 'spawn error before process creation' });
     if (result.error) throw result.error;
-    if (result.code !== 0) throw new Error(`command failed: ${key} (exit ${result.code})`);
     if (!quiescent) throw new Error(`command descendant cleanup unknown: ${key}`);
+    if (result.code === null || (result.code !== 0 && options.required !== false)) throw new Error(`command failed: ${key} (exit ${result.code})`);
     return { attemptId: attempt.id, exitCode: result.code, cleanup: 'complete' };
   }
 }

@@ -32,7 +32,11 @@ explicitly without fabricating an attempt or result until T7/T8 exist.
 
 Commands accept `argv: string[]`, optional worktree-contained `cwd`, explicit
 `env: Record<string,string>` (default PATH only), and optional absolute `shell`.
-No shell is selected implicitly. `intent`, `priorAttemptId` and `loopKey` use the
+No shell is selected implicitly. `required` defaults to true; explicit `required: false`
+returns an ordinary nonzero `exitCode` and `attemptId` for workflow handling after
+confirmed launch and cleanup. The actual attempt remains failed and its exit is
+saved; requested/effective policy is recorded. Spawn, signal, admission, recording
+and cleanup errors remain terminal regardless of this flag. `intent`, `priorAttemptId` and `loopKey` use the
 existing store admission rules. Joined-run repeated work must explicitly supply
 its intent and prior attempt. Startup build operations have an invocation-scoped
 identity and command-only admission during `starting`; no agent is admitted.
@@ -128,3 +132,15 @@ the runtime Git change remains separate from this local macOS evidence.
 
 Reflection: the review gaps are structurally covered at public CLI seams; no
 additional brain or skill edit was needed.
+
+## Explicit expected command outcomes
+
+The advisory-check public reproduction initially failed even after the workflow
+wanted to correct and recheck. `CommandOptions.required: false` now provides the
+explicit expected/advisory result path. A real check exits 7, correction changes a
+candidate file, and a required fresh check verifies it; the invocation succeeds
+with all three truthful workflow attempts retained, including the original failed
+check. Default required failures stay terminal when caught or unawaited. A missing
+executable stays a terminal confirmed non-launch even with advisory policy and a
+workflow catch; no automatic retry occurs. Both pinned typechecks/declaration
+build and the combined 61-test check pass, including 28 public startup cases.

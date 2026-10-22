@@ -317,3 +317,51 @@ test('large failed command finalizes through narrow cleanup checks under a bound
     const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete');
   } finally { repo.dispose(); }
 });
+
+test('explicit advisory check can fail before correction and a required fresh check succeeds', async () => {
+  const repo = await fixture(`export async function run(context) {
+    const check = await context.command('expected-check', {argv: [process.execPath, '-e', 'process.exit(7)'], env: {}, required: false});
+    if (check.exitCode !== 7) throw new Error('expected check result missing');
+    await context.command('correction', {argv: [process.execPath, '-e', 'require("node:fs").writeFileSync("candidate.txt", "corrected")'], env: {}});
+    await context.command('fresh-check', {argv: [process.execPath, '-e', 'if(require("node:fs").readFileSync("candidate.txt", "utf8") !== "corrected") process.exit(1)'], env: {}});
+    return {initialCheck: check};
+  }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 0, result.stdout + result.stderr);
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'succeeded'); assert.equal(saved.cleanup, 'complete');
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    const commands = history.attempts.filter(attempt => !attempt.operationKey.startsWith('startup/build/'));
+    assert.deepEqual(commands.map(attempt => [attempt.operationKey, attempt.outcome]), [['expected-check', 'failed'], ['correction', 'succeeded'], ['fresh-check', 'succeeded']]);
+    assert.ok(commands.every(attempt => attempt.quiescent));
+    assert.match(JSON.stringify(history.captures), /required.*false/);
+    const report = history.captures.find(capture => capture.channel === 'report');
+    const final = JSON.parse(report.chunks.map(chunk => chunk.text).join(''));
+    assert.equal(final.initialCheck.exitCode, 7); assert.equal(final.initialCheck.attemptId, commands[0].id);
+  } finally { repo.dispose(); }
+});
+
+test('advisory missing executable remains a terminal non-launch without automatic retry', async () => {
+  const repo = await fixture(`export async function run(context) { try { await context.command('missing', {argv: [context.worktree + '/factory-fixture-missing-executable'], env: {}, required: false}); } catch {} await context.progress('workflow caught infrastructure error'); }`);
+  try {
+    const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
+    const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.equal(saved.cleanup, 'complete'); assert.match(saved.diagnostic, /ENOENT/);
+    const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+    const attempts = history.attempts.filter(attempt => attempt.operationKey === 'missing');
+    assert.equal(attempts.length, 1); assert.equal(attempts[0].launch, 'not_started'); assert.equal(attempts[0].outcome, 'failed');
+    assert.equal(history.accounting.occupiedCommands, 0);
+  } finally { repo.dispose(); }
+});
+for (const mode of ['caught', 'unawaited']) {
+  test(`default required command failure remains terminal when ${mode}`, async () => {
+    const command = `context.command('required-check', {argv: [process.execPath, '-e', 'process.exit(9)'], env: {}})`;
+    const source = mode === 'caught' ? `try { await ${command}; } catch {} await context.progress('continued');` : `void ${command};`;
+    const repo = await fixture(`export async function run(context) { ${source} }`);
+    try {
+      const result = repo.invoke(['--new-worktree']); assert.equal(result.status, 1, result.stdout + result.stderr);
+      const saved = JSON.parse(result.stdout); assert.equal(saved.outcome, 'failed'); assert.match(saved.diagnostic, /required-check/);
+      const history = JSON.parse(repo.call(['history', '--invocation', saved.invocationId]).stdout);
+      assert.equal(history.attempts.at(-1).outcome, 'failed'); assert.equal(history.attempts.at(-1).launch, 'started');
+      assert.match(JSON.stringify(history.captures), /required.*true/);
+    } finally { repo.dispose(); }
+  });
+}
