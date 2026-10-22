@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 const groups = {
   fixtures: [{ path: 'test/fixtures.test.mjs' }, { path: 'test/cli.test.mjs' }, { path: 'test/dispatch.test.mjs' }],
   store: [{ path: 'test/store.test.mjs' }, { path: 'test/capture.test.mjs' }, { path: 'test/recording-integration.test.mjs' }, { path: 'test/placement.test.mjs' }], lifecycle: [{ path: 'test/startup.test.mjs' }, { path: 'test/shutdown.test.mjs' }], adapters: [{ path: 'test/adapters.test.mjs', provider: 'fake' }, { path: 'test/codex-adapter.test.mjs', provider: 'codex' }], workflows: [{ path: 'test/workflows.test.mjs', provider: 'fake' }], web: [{ path: 'test/dashboard.test.mjs', suite: 'server' }], notifications: [{ path: 'test/notification-senders.test.mjs' }, { path: 'test/notification-preflight.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }, { path: 'test/notification-pipe.test.mjs', nodeOptions: ['--experimental-test-module-mocks'] }],
-  learning: [], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
+  learning: [{ path: 'test/learning.test.mjs', operation: 'extract' }], maintenance: [], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
 try {
