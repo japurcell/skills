@@ -2,7 +2,7 @@
 
 The [wayfinder map](map.md) records the completed specification baseline, explicitly accepted on 2026-10-20. All twenty-six decision tickets are closed. The [final acceptance](tickets/specification-readiness-and-acceptance.md#resolution) preserves the simpler SSSF-inspired scope and future qualification obligations; implementation requires a separate request.
 
-The [progress handoff](handoff.md) records current status, the next planning session, and verification limits.
+The [progress handoff](handoff.md) records current status and verification limits. The [implementation ExecPlan](ExecPlan.md) translates the accepted specification into ten delivery milestones with tasks and acceptance checks. It is authored only; implementation remains unauthorized. The [historical research plan](ExecPlan.history-2026-10-20.md) retains earlier prototype evidence.
 
 The [Foreground invocation lifecycle specification](lifecycle-specification.md) defines the concrete runtime, history, ownership, interruption, and maintenance contracts. Lifecycle design is complete, including the older inbox Windows notification API accepted on 2026-10-16. No implementation or native qualification is claimed.
 
