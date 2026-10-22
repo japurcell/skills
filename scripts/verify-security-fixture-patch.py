@@ -32,12 +32,16 @@ TIMEOUT = 12
 DEADLINE = None
 CANCEL_REQUESTS = 0
 CANCELLED_AT = None
+INSPECTOR = None
 PROCESS_BYTES = 1024 * 1024
 CLEANUP_SECONDS = 2.0
 # Observation may use half the cleanup envelope; escalation and reaping share
 # its remaining absolute deadline rather than multiplying independent waits.
 PROCESS_SECONDS = CLEANUP_SECONDS / 2
 REAP_SECONDS = 0.1
+# Native confirmation, exact-child reaps and ordinary temporary teardown share
+# this finalization allowance; none receives a separate cleanup deadline.
+FINALIZE_SECONDS = REAP_SECONDS / 2
 
 
 class Failure(Exception):
@@ -158,7 +162,7 @@ def process_snapshot(*, deadline=None, interruptible=True):
         deadline = DEADLINE if deadline is None else deadline
         allowance = PROCESS_SECONDS
         if deadline is not None:
-            allowance = max(0, min(allowance, deadline - started - REAP_SECONDS))
+            allowance = max(0, min(allowance, deadline - started - (REAP_SECONDS if interruptible else FINALIZE_SECONDS)))
         try:
             observer = subprocess.Popen(["/bin/ps", "-axo", "pid=,ppid=,pgid=,lstart=,stat="],
                 stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.DEVNULL,
@@ -201,8 +205,199 @@ def process_snapshot(*, deadline=None, interruptible=True):
             if observer.poll() is None:
                 with contextlib.suppress(ProcessLookupError, PermissionError):
                     os.killpg(observer.pid, signal.SIGKILL)
+            reap_deadline = deadline
+            if CANCELLED_AT is not None:
+                reap_deadline = min(reap_deadline, CANCELLED_AT + CLEANUP_SECONDS) if reap_deadline is not None else CANCELLED_AT + CLEANUP_SECONDS
+            allowance = REAP_SECONDS if reap_deadline is None else max(0, min(REAP_SECONDS, reap_deadline - time.monotonic()))
             with contextlib.suppress(subprocess.TimeoutExpired):
-                wait_process(observer, REAP_SECONDS)
+                wait_process(observer, allowance)
+
+
+def process_query_helper():
+    """Fixed numeric queries only; the parent bounds every native call over IPC."""
+    import errno
+    if sys.platform == "darwin":
+        import ctypes
+        class BSDInfo(ctypes.Structure):
+            # Public proc_bsdinfo, SDK sys/proc_info.h / PROC_PIDTBSDINFO.
+            _fields_ = [(name, ctypes.c_uint32) for name in (
+                "flags", "status", "xstatus", "pid", "ppid", "uid", "gid",
+                "ruid", "rgid", "svuid", "svgid", "reserved")] + [
+                ("comm", ctypes.c_char * 16), ("name", ctypes.c_char * 32)] + [
+                (name, ctypes.c_uint32) for name in (
+                    "nfiles", "pgid", "jobc", "tdev", "tpgid")] + [
+                ("nice", ctypes.c_int32), ("seconds", ctypes.c_uint64),
+                ("microseconds", ctypes.c_uint64)]
+        if ctypes.sizeof(BSDInfo) != 136 or BSDInfo.seconds.offset != 120:
+            raise SystemExit(2)
+        library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+        query = library.proc_pidinfo
+        query.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
+                          ctypes.c_void_p, ctypes.c_int]
+        query.restype = ctypes.c_int
+        def native(pid):
+            info = BSDInfo()
+            ctypes.set_errno(0)
+            size = query(pid, 3, 0, ctypes.byref(info), ctypes.sizeof(info))
+            if size <= 0 and ctypes.get_errno() == errno.ESRCH:
+                return None
+            if size != ctypes.sizeof(info):
+                raise OSError(ctypes.get_errno() or errno.EIO, "native query")
+            if info.pid != pid or info.status not in (1, 2, 3, 4, 5) or info.microseconds >= 1000000:
+                raise ValueError("native result")
+            state = "stopped" if info.status == 4 else "zombie" if info.status == 5 else "live"
+            return [info.pid, info.ppid, info.pgid, info.seconds, info.microseconds, state]
+    elif sys.platform.startswith("linux"):
+        ticks_per_second = os.sysconf("SC_CLK_TCK")
+        with open("/proc/stat", "rb") as stream:
+            boot = stream.read(PROCESS_BYTES + 1)
+        match = re.search(rb"^btime ([0-9]+)$", boot, re.MULTILINE)
+        if len(boot) > PROCESS_BYTES or match is None or ticks_per_second <= 0:
+            raise SystemExit(2)
+        boot_seconds = int(match[1])
+        def native(pid):
+            try:
+                with open("/proc/" + str(pid) + "/stat", "rb") as stream:
+                    raw = stream.read(16385)
+            except FileNotFoundError:
+                return None
+            prefix, separator, suffix = raw.rpartition(b") ")
+            fields = suffix.split()
+            if (len(raw) > 16384 or not separator or not prefix.startswith(str(pid).encode() + b" (")
+                    or len(fields) < 20 or fields[0] not in (b"R", b"S", b"D", b"Z", b"T", b"t", b"X", b"x", b"K", b"W", b"P", b"I")
+                    or not all(fields[n].isdigit() for n in (1, 2, 19))):
+                raise ValueError("native result")
+            ticks = int(fields[19])
+            state = "stopped" if fields[0] in (b"T", b"t") else "zombie" if fields[0] in (b"Z", b"X", b"x") else "live"
+            return [pid, int(fields[1]), int(fields[2]), boot_seconds + ticks // ticks_per_second, ticks, state]
+    else:
+        raise SystemExit(2)
+    while True:
+        raw = sys.stdin.buffer.readline(16385)
+        if not raw:
+            return
+        try:
+            if len(raw) > 16384:
+                raise ValueError("request")
+            pids = json.loads(raw)
+            if (not isinstance(pids, list) or len(pids) > 256
+                    or any(type(pid) is not int or not 0 < pid < 2 ** 31 for pid in pids)
+                    or len(set(pids)) != len(pids)):
+                raise ValueError("request")
+            result = {str(pid): native(pid) for pid in pids}
+            for row in result.values():
+                if row is not None:
+                    row.append(time.localtime(row[3]).tm_gmtoff)
+        except Exception:
+            # Absence is represented only by native ESRCH/ENOENT, never denial,
+            # partial structures, malformed records, or another native failure.
+            result = {"error": "native_query_unavailable"}
+        print(json.dumps(result, separators=(",", ":")), flush=True)
+
+
+class ProcessInspector:
+    def __init__(self):
+        code = ("import runpy;runpy.run_path(" + repr(str(Path(__file__).resolve()))
+                + ",run_name='fixture_process_helper')['process_query_helper']()")
+        try:
+            self.process = subprocess.Popen([sys.executable, "-I", "-S", "-B", "-c", code],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                env={"LC_ALL": "C", "PATH": os.defpath}, start_new_session=True)
+        except OSError:
+            raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
+        try:
+            os.set_blocking(self.process.stdin.fileno(), False)
+            os.set_blocking(self.process.stdout.fileno(), False)
+        except OSError:
+            self.close(time.monotonic() + REAP_SECONDS)
+            raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
+
+    def query(self, pids, deadline, *, interruptible=False):
+        pids = sorted(pids)
+        if not pids:
+            return {}
+        started = time.monotonic()
+        if not interruptible:
+            deadline -= FINALIZE_SECONDS
+        allowance = max(0, min(PROCESS_SECONDS, deadline - started))
+        deadline = started + allowance
+        request = json.dumps(pids, separators=(",", ":")).encode() + b"\n"
+        received = bytearray()
+        try:
+            while request or b"\n" not in received:
+                if interruptible:
+                    check_cancelled()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise Failure("process_observation_timeout", 2, "cleanup", limit=round(allowance, 3), measured=round(time.monotonic() - started, 3), unit="seconds")
+                ready, writable, _ = select.select(
+                    [] if request else [self.process.stdout], [self.process.stdin] if request else [], [],
+                    min(0.02, remaining))
+                if writable:
+                    request = request[os.write(self.process.stdin.fileno(), request):]
+                if ready:
+                    chunk = os.read(self.process.stdout.fileno(), 65537 - len(received))
+                    if not chunk:
+                        raise ValueError("closed native helper")
+                    received.extend(chunk)
+                    if len(received) > 65536:
+                        raise ValueError("native result bound")
+            result = json.loads(received)
+            if not isinstance(result, dict) or set(result) != {str(pid) for pid in pids}:
+                raise ValueError("incomplete native result")
+            for pid in pids:
+                row = result[str(pid)]
+                if row is None:
+                    continue
+                if (not isinstance(row, list) or len(row) != 7 or row[0] != pid
+                        or any(type(value) is not int for value in row[:5])
+                        or not 0 <= row[1] < 2 ** 31 or not 0 < row[2] < 2 ** 31
+                        or not 0 < row[3] < 2 ** 63 or not 0 <= row[4] < 2 ** 63
+                        or row[5] not in ("live", "stopped", "zombie")
+                        or type(row[6]) is not int or not -86400 < row[6] < 86400):
+                    raise ValueError("invalid native result")
+            return {int(pid): row for pid, row in result.items()}
+        except (OSError, ValueError, TypeError):
+            raise Failure("process_observation_native_unavailable", 2, "cleanup") from None
+
+    def close(self, deadline):
+        if self.process.poll() is None:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.killpg(self.process.pid, signal.SIGKILL)
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            wait_process(self.process, max(0, min(REAP_SECONDS, deadline - time.monotonic())))
+        self.process.stdin.close()
+        self.process.stdout.close()
+
+
+def native_living(known, identities, deadline):
+    current = INSPECTOR.query(known, deadline)
+    living = {}
+    for pid, row in current.items():
+        if row is None:
+            continue
+        identity = (row[3], row[4])
+        if (tuple(time.asctime(time.gmtime(row[3] + row[6])).encode("ascii").split()) != known[pid][2]
+                or pid in identities and identity != identities[pid]):
+            raise Failure("process_observation_identity_mismatch", 2, "cleanup")
+        identities[pid] = identity
+        if row[5] != "zombie":
+            living[pid] = row
+    return living
+
+
+def freeze_descendants(known, identities, deadline):
+    while True:
+        living = native_living(known, identities, deadline)
+        pending = {pid: row for pid, row in living.items() if row[5] != "stopped"}
+        if not pending:
+            return living
+        for pid in pending:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.kill(pid, signal.SIGSTOP)
+        # Delivery is asynchronous. A successful signal is not stop proof;
+        # acknowledge every identity through the bounded native helper first.
+        time.sleep(min(0.001, max(0, deadline - time.monotonic())))
 
 
 def remember_descendants(process, known, snapshot):
@@ -244,60 +439,49 @@ def signal_observed(living, signum):
 
 
 def stop_process(process, known):
-    # Cancellation includes any observation already in flight. Do not restart
-    # its envelope when control finally reaches this cleanup.
     started = time.monotonic()
     deadline = min(started, CANCELLED_AT if CANCELLED_AT is not None else started) + CLEANUP_SECONDS
+    identities = {}
     try:
-        leader_stopped = process.poll() is not None
-        # Our exact unreaped child cannot have its PID reused. Stop its spawning
-        # before collecting a fresh graph, including children created while an
-        # interrupted metadata observer was still returning an older capture.
-        if not leader_stopped:
+        if process.poll() is None:
+            # This exact unreaped child cannot have its PID recycled.
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.kill(process.pid, signal.SIGSTOP)
-        # Observation reserves its own observer reap; the leader reap below
-        # shares only the time left in this same absolute deadline.
-        snapshot = process_snapshot(deadline=deadline, interruptible=False)
-        remember_descendants(process, known, snapshot)
-        living = living_descendants(known, snapshot)
-        process.poll()
-        if leader_stopped and not living:
-            return
-        # Observe descendants before interruption can reparent them. A second
-        # graceful observation would consume the full final-observation reserve,
-        # so escalate from these freshly verified identities without another scan.
-        if process.returncode is None:
-            with contextlib.suppress(ProcessLookupError, PermissionError):
-                os.killpg(process.pid, signal.SIGINT)
-        # A scanner ignoring interruption must not strand capture_git's separate
-        # process group. Verify remembered identities, kill all observed groups,
-        # and rescan retained ancestors within the same finite cleanup window.
+            if process.pid not in known:
+                row = INSPECTOR.query([process.pid], deadline)[process.pid]
+                if row is not None:
+                    known[process.pid] = (row[1], row[2], tuple(time.asctime(time.gmtime(row[3] + row[6])).encode("ascii").split()), b"T")
         while True:
-            signal_observed(living, signal.SIGKILL)
-            process.poll()
-            if process.returncode is None and process.pid not in living:
-                with contextlib.suppress(ProcessLookupError, PermissionError):
-                    os.killpg(process.pid, signal.SIGKILL)
-            process.poll()
+            frozen = freeze_descendants(known, identities, deadline)
+            if process.pid in known and process.pid not in frozen and process.poll() is None:
+                # An exact owned child still alive in the kernel cannot also be
+                # absent from native observation. Do not treat unknown as exit.
+                raise Failure("process_observation_native_unavailable", 2, "cleanup")
+            # Acknowledged stopped ancestors remain alive while this fresh graph
+            # discovers children born during an earlier metadata capture/return.
             snapshot = process_snapshot(deadline=deadline, interruptible=False)
             remember_descendants(process, known, snapshot)
             living = living_descendants(known, snapshot)
-            # The leader can exit while metadata is collected; reap it before
-            # deciding whether another observation is necessary.
+            if any(pid not in frozen for pid in living):
+                continue
+            current = native_living(known, identities, deadline)
+            if any(row[5] != "stopped" for row in current.values()):
+                continue
+            # Closure was collected after every live ancestor's stop was
+            # acknowledged. Revalidate identities and current groups before kill.
+            verified = {pid: (row[1], row[2], known[pid][2], b"T") for pid, row in current.items()}
+            signal_observed(verified, signal.SIGKILL)
+            while native_living(known, identities, deadline):
+                if time.monotonic() >= deadline:
+                    raise Failure("process_cleanup_incomplete", 2, "cleanup", limit=CLEANUP_SECONDS, unit="seconds")
             process.poll()
-            if process.returncode is not None and not living:
-                return
-            if time.monotonic() + REAP_SECONDS >= deadline:
-                break
-            time.sleep(0.01)
-        raise Failure("process_cleanup_incomplete", 2, "cleanup", limit=CLEANUP_SECONDS, unit="seconds")
+            return
     finally:
         if process.poll() is None:
             with contextlib.suppress(ProcessLookupError, PermissionError):
                 os.killpg(process.pid, signal.SIGKILL)
         with contextlib.suppress(subprocess.TimeoutExpired):
-            process.wait(timeout=max(0, min(REAP_SECONDS, deadline - time.monotonic())))
+            wait_process(process, max(0, min(REAP_SECONDS, deadline - time.monotonic())))
 
 
 
@@ -788,7 +972,7 @@ def parser():
 def execute(args):
     if os.name == "nt":
         raise Failure("bounded_descendant_cleanup_unavailable", 2, "platform")
-    global DEADLINE
+    global DEADLINE, INSPECTOR
     DEADLINE = time.monotonic() + 180
     targets = [relative(p) for p in args.path]
     if len(targets) > MAX_TARGETS:
@@ -797,6 +981,11 @@ def execute(args):
         raise Failure("invalid_targets", 3, "arguments")
     process_snapshot()  # Refuse before launching Git/scanners if observation is unavailable.
     check_cancelled()
+    INSPECTOR = ProcessInspector()
+    if INSPECTOR.query([os.getpid()], DEADLINE, interruptible=True)[os.getpid()] is None:
+        # Our own running PID cannot be absent. Do not accept a broken native
+        # observer as authoritative before any Git/scanner can be launched.
+        raise Failure("process_observation_native_unavailable", 2, "cleanup")
     git_path = shutil.which("git", path=os.defpath + os.pathsep + "/opt/homebrew/bin")
     if git_path is None:
         raise Failure("git_unavailable", 2, "capture")
@@ -873,7 +1062,7 @@ def failure_action(reason):
     if reason == "bounded_descendant_cleanup_unavailable":
         return "Run verification on a supported POSIX host with process-observation access."
     if reason.startswith("process_observation_"):
-        return "Restore /bin/ps access and responsive numeric process metadata within the 1-second observation allowance, then rerun --check."
+        return "Restore /bin/ps and supported native identity access with responsive numeric metadata within the 1-second observation allowance, then rerun --check."
     if reason == "process_cleanup_incomplete":
         return "Stop remaining verifier-owned children and restore process-observation access before retrying --check."
     if reason == "descendant_limit":
@@ -936,6 +1125,19 @@ def main():
     except Exception:  # Fail closed without payload-derived exception text.
         code = 2
         report = {"schema": SCHEMA, "version": VERSION, "result": "rejected", "reason": "unsafe_or_unavailable_state", "phase": "preflight"}
+    finally:
+        if INSPECTOR is not None:
+            INSPECTOR.close(CANCELLED_AT + CLEANUP_SECONDS if CANCELLED_AT is not None
+                            else time.monotonic() + REAP_SECONDS)
+    # Filesystem teardown is synchronous. Budget its routine work above and
+    # report a real overrun honestly; arbitrary filesystem/scheduler stalls do
+    # not have a universal real-time guarantee.
+    if CANCELLED_AT is not None and time.monotonic() >= CANCELLED_AT + CLEANUP_SECONDS:
+        code = 2
+        report = {"schema": SCHEMA, "version": VERSION, "result": "rejected",
+                  "reason": "process_cleanup_incomplete", "phase": "cleanup",
+                  "limit": CLEANUP_SECONDS, "measured": round(time.monotonic() - CANCELLED_AT, 3),
+                  "unit": "seconds", "action": failure_action("process_cleanup_incomplete")}
     try:
         if "--json" in sys.argv:
             print(json.dumps(report, sort_keys=True), flush=True)

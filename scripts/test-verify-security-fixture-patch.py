@@ -601,7 +601,7 @@ class PreflightTests(unittest.TestCase):
                         except ProcessLookupError:
                             pass
 
-    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None):
+    def observation_wrapper(self, delay, *, first=0, after=None, seen=None, settle=0, until=None, trigger=None, descendants=()):
         """Delay the real metadata process at the OS process boundary."""
         wrapper = self.base / "observer-wrapper.py"
         observers = self.base / "observer-pids"
@@ -612,9 +612,10 @@ class PreflightTests(unittest.TestCase):
             child = ("import os,sys,time,subprocess\nfrom pathlib import Path\n"
                 "time.sleep(" + repr(delay) + ")\n"
                 "raw = subprocess.check_output(['/bin/ps', *sys.argv[1:]])\n"
-                "marker = Path(" + repr(str(after)) + ")\n"
-                "if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
-                " Path(" + repr(str(seen)) + ").touch()\n"
+                "for marker_name, seen_name in " + repr([(str(after), str(seen)), *[(str(a), str(s)) for a, s in descendants]]) + ":\n"
+                " marker = Path(marker_name)\n"
+                " if marker.exists() and any(row.split()[:1] == [marker.read_bytes()] for row in raw.splitlines()):\n"
+                "  Path(seen_name).touch()\n"
                 "time.sleep(" + repr(settle) + ")\nos.write(1, raw)\n")
         wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
             "real = subprocess.Popen\nobservations = 0\n"
@@ -623,7 +624,8 @@ class PreflightTests(unittest.TestCase):
             " if command[0] == '/bin/ps':\n"
             "  observations += 1\n"
             "  if observations <= " + repr(first) + " or (" + repr(str(after)) +
-            " != 'None' and Path(" + repr(str(after)) + ").exists() and (" + repr(str(until)) +
+            " != 'None' and Path(" + repr(str(after)) + ").exists() and (" + repr(str(trigger)) +
+            " == 'None' or Path(" + repr(str(trigger)) + ").exists()) and (" + repr(str(until)) +
             " == 'None' or not Path(" + repr(str(until)) + ").exists())):\n"
             "   command = [sys.executable, '-I', '-S', '-B', '-c', " + repr(child) + ", *command[1:]]\n"
             "  process = real(command,*args,**kwargs)\n"
@@ -803,6 +805,298 @@ class PreflightTests(unittest.TestCase):
                         os.kill(child, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_retains_separate_ancestor_until_descendants_discovered(self):
+        active = self.active_copy("grandchild-after-snapshot")
+        marker = self.base / 'separate-ancestor-pid'
+        sampled = self.base / 'ancestor-sampled-after-cancel'
+        trigger = self.base / 'cancel-trigger'
+        ready = self.base / 'new-grandchild-pid'
+        child_code = ('import signal,time\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'signal.signal(signal.SIGTERM,signal.SIG_IGN)\ntime.sleep(60)\n')
+        ancestor_code = ('import subprocess,sys,signal,time\nfrom pathlib import Path\n'
+            'signal.signal(signal.SIGINT,signal.SIG_IGN)\nsignal.signal(signal.SIGTERM,signal.SIG_IGN)\n'
+            'while not Path(' + repr(str(sampled)) + ').exists(): time.sleep(0.005)\n'
+            'child=subprocess.Popen([sys.executable,"-c",' + repr(child_code) + '],start_new_session=True)\n'
+            'Path(' + repr(str(ready)) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
+        injection = ('import subprocess\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'child=subprocess.Popen([sys.executable,"-c",' + repr(ancestor_code) + '],start_new_session=True)\n'
+            'Path(' + repr(str(marker)) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
+        scanner = active / '.codex/hooks/scan-secrets.py'
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        wrapper, observers, _ = self.observation_wrapper(0, after=marker,
+            seen=sampled, settle=0.55, until=sampled, trigger=trigger)
+        before = self.fingerprint()
+        identities = {}
+        try:
+            with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(active), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                deadline = time.monotonic() + 6
+                while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+                    time.sleep(0.01)
+                self.assertTrue(marker.exists(), 'separate-session ancestor did not start')
+                ancestor = int(marker.read_text())
+                identities[ancestor] = subprocess.check_output(['/bin/ps', '-o', 'lstart=', '-p', str(ancestor)])
+                time.sleep(0.2)
+                trigger.touch()
+                started = time.monotonic()
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=4)
+                elapsed = time.monotonic() - started
+                self.assertEqual(process.returncode, 130, stdout + stderr)
+                self.assertEqual(json.loads(stdout)['reason'], 'interrupted')
+                self.assertLess(elapsed, 2)
+                self.assertNotIn(b'Traceback', stderr)
+                self.assertNotIn(TOKEN.encode(), stdout + stderr)
+            children = [ancestor]
+            if ready.exists():
+                child = int(ready.read_text())
+                identities[child] = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(child)],
+                    capture_output=True, timeout=2).stdout
+                children.append(child)
+            pids = [int(pid) for pid in observers.read_text().splitlines()]
+            self.assert_stopped([*children, *pids])
+            self.assertEqual(self.fingerprint(), before)
+            print(json.dumps({'fixture_observer': 'grandchild-after-fresh-snapshot',
+                'cleanup_seconds': round(elapsed, 6), 'spawn_prevented': not ready.exists(),
+                'observed_processes_stopped': len(children) + len(pids)}), flush=True)
+        finally:
+            for pid, identity in identities.items():
+                current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(pid)],
+                    capture_output=True, timeout=2).stdout
+                if identity and current == identity:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
+    @unittest.skipIf(os.name == "nt", "POSIX observed descendant cancellation")
+    def test_cancellation_discovers_descendants_created_during_successive_scans(self):
+        active = self.active_copy("successive-descendants")
+        root_marker = self.base / 'cascade-root'
+        root_seen = self.base / 'cascade-root-seen'
+        markers = [self.base / ('cascade-pid-' + str(n)) for n in range(3)]
+        seen = [self.base / ('cascade-seen-' + str(n)) for n in range(2)]
+        code = 'import signal,time\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\nsignal.signal(signal.SIGTERM,signal.SIG_IGN)\ntime.sleep(60)\n'
+        for number in (1, 0):
+            code = ('import subprocess,sys,signal,time\nfrom pathlib import Path\n'
+                'signal.signal(signal.SIGINT,signal.SIG_IGN)\nsignal.signal(signal.SIGTERM,signal.SIG_IGN)\n'
+                'while not Path(' + repr(str(seen[number])) + ').exists(): time.sleep(0.005)\n'
+                'child=subprocess.Popen([sys.executable,"-c",' + repr(code) + '],start_new_session=True)\n'
+                'Path(' + repr(str(markers[number + 1])) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
+        injection = ('import subprocess\nsignal.signal(signal.SIGINT,signal.SIG_IGN)\n'
+            'Path(' + repr(str(root_marker)) + ').write_text(str(os.getpid()))\n'
+            'while not Path(' + repr(str(root_seen)) + ').exists(): time.sleep(0.005)\n'
+            'child=subprocess.Popen([sys.executable,"-c",' + repr(code) + '],start_new_session=True)\n'
+            'Path(' + repr(str(markers[0])) + ').write_text(str(child.pid))\ntime.sleep(60)\n')
+        scanner = active / '.codex/hooks/scan-secrets.py'
+        scanner.write_text(scanner.read_text().replace('if __name__ == "__main__":', injection + 'if __name__ == "__main__":'))
+        wrapper, observers, _ = self.observation_wrapper(0, after=root_marker,
+            seen=root_seen, settle=0.2, until=seen[1], descendants=tuple(zip(markers, seen)))
+        before = self.fingerprint()
+        identities = {}
+        try:
+            with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(active), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                deadline = time.monotonic() + 6
+                while not markers[0].exists() and time.monotonic() < deadline and process.poll() is None:
+                    time.sleep(0.005)
+                self.assertTrue(markers[0].exists(), 'first separate ancestor did not start')
+                started = time.monotonic()
+                process.send_signal(signal.SIGINT)
+                stdout, stderr = process.communicate(timeout=4)
+                elapsed = time.monotonic() - started
+                self.assertIn(process.returncode, (130, 2), stdout + stderr)
+                report = json.loads(stdout)
+                if process.returncode == 130:
+                    self.assertEqual(report['reason'], 'interrupted')
+                else:
+                    self.assertEqual(report['result'], 'rejected')
+                    self.assertIn(report['phase'], ('cleanup', 'cancellation'))
+                self.assertLess(elapsed, 2)
+                self.assertNotIn(b'Traceback', stderr)
+                self.assertNotIn(TOKEN.encode(), stdout + stderr)
+            children = []
+            for marker in markers:
+                if marker.exists():
+                    pid = int(marker.read_text())
+                    identities[pid] = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(pid)],
+                        capture_output=True, timeout=2).stdout
+                    children.append(pid)
+            self.assertTrue(markers[1].exists(), 'second generation was not created during discovery')
+            self.assertTrue(markers[2].exists(), 'third generation was not created during the next discovery scan')
+            pids = [int(pid) for pid in observers.read_text().splitlines()]
+            self.assert_stopped([*children, *pids])
+            self.assertEqual(self.fingerprint(), before)
+            print(json.dumps({'fixture_observer': 'successive-descendant-discovery',
+                'cleanup_seconds': round(elapsed, 6), 'generations': len(children),
+                'result': report['reason']}), flush=True)
+        finally:
+            for pid, identity in identities.items():
+                current = subprocess.run(['/bin/ps', '-o', 'lstart=', '-p', str(pid)],
+                    capture_output=True, timeout=2).stdout
+                if identity and current == identity:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+
+    def native_wrapper(self, mode, *, active=False):
+        wrapper = self.base / 'native-wrapper.py'
+        marker = self.base / 'native-git-started'
+        pids = self.base / 'native-pids'
+        fault = ("import json,os,time\nreal_dumps=json.dumps\n"
+            "def encoded(value,*args,**kwargs):\n"
+            " if isinstance(value,dict) and any(key.isdigit() and int(key)!=os.getppid() for key in value):\n"
+            "  if " + repr(mode) + " == 'stall': time.sleep(60)\n"
+            "  if " + repr(mode) + " == 'denied': value={'error':'native_query_denied'}\n"
+            "  if " + repr(mode) + " == 'absent': value={key:None for key in value}\n"
+            "  if " + repr(mode) + " == 'mismatch':\n"
+            "   for row in value.values():\n"
+            "    if isinstance(row,list): row[3]+=60\n"
+            " return real_dumps(value,*args,**kwargs)\n"
+            "json.dumps=encoded\n")
+        response = {'absent': '{}', 'denied': '{"error":"native_query_denied"}', 'invalid': '[]'}.get(mode, '{}')
+        fake = ('import time;time.sleep(60)' if mode == 'stall'
+                else 'import json,sys;print(json.dumps({str(pid):None for pid in json.loads(sys.stdin.readline())}),flush=True);import time;time.sleep(60)' if mode == 'absent'
+                else 'import time;print(' + repr(response) + ',flush=True);time.sleep(60)')
+        wrapper.write_text("import subprocess,runpy,sys\nfrom pathlib import Path\n"
+            "real=subprocess.Popen\n"
+            "def launched(command,*args,**kwargs):\n"
+            " if any('fixture_process_helper' in str(part) for part in command):\n"
+            "  if " + repr(active) + ": command=[*command[:-1]," + repr(fault) + "+command[-1]]\n"
+            "  else: command=[sys.executable,'-I','-S','-B','-c'," + repr(fake) + "]\n"
+            " elif Path(command[0]).name=='git':\n"
+            "  Path(" + repr(str(marker)) + ").touch()\n"
+            "  if " + repr(active) + ": command=[sys.executable,'-I','-S','-B','-c','import signal,time;signal.signal(signal.SIGINT,signal.SIG_IGN);time.sleep(60)']\n"
+            " process=real(command,*args,**kwargs)\n"
+            " with Path(" + repr(str(pids)) + ").open('a') as stream: stream.write(str(process.pid)+'\\n')\n"
+            " return process\n"
+            "subprocess.Popen=launched\n"
+            "sys.argv=[" + repr(str(CLI)) + "]+sys.argv[1:]\n"
+            "runpy.run_path(" + repr(str(CLI)) + ",run_name='__main__')\n")
+        return wrapper, marker, pids
+
+    @unittest.skipIf(os.name == "nt", "POSIX native identity query")
+    def test_native_query_failure_and_stall_stop_before_git(self):
+        before = self.fingerprint()
+        for mode in ('denied', 'invalid', 'absent', 'stall'):
+            with self.subTest(mode=mode):
+                wrapper, marker, pids = self.native_wrapper(mode)
+                marker.unlink(missing_ok=True)
+                pids.unlink(missing_ok=True)
+                started = time.monotonic()
+                result = subprocess.run([sys.executable, '-I', '-S', '-B', str(wrapper),
+                    '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                    '--active-hook-root', str(ROOT), '--check', '--json', '--no-input'],
+                    cwd=self.repo, env=self.env, capture_output=True, timeout=4)
+                self.assertLess(time.monotonic() - started, 2)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertTrue(json.loads(result.stdout)['reason'].startswith('process_observation_'))
+                self.assertFalse(marker.exists())
+                self.assertNotIn(b'Traceback', result.stderr)
+                self.assertNotIn(TOKEN.encode(), result.stdout + result.stderr)
+                self.assert_stopped([int(pid) for pid in pids.read_text().splitlines()])
+                self.assertEqual(self.fingerprint(), before)
+
+    @unittest.skipIf(os.name == "nt", "POSIX native identity query")
+    def test_native_cleanup_query_failure_stall_and_identity_mismatch_are_incomplete(self):
+        before = self.fingerprint()
+        for mode in ('denied', 'stall', 'mismatch', 'absent'):
+            with self.subTest(mode=mode):
+                wrapper, marker, pids = self.native_wrapper(mode, active=True)
+                marker.unlink(missing_ok=True)
+                pids.unlink(missing_ok=True)
+                with subprocess.Popen([sys.executable, '-I', '-S', '-B', str(wrapper),
+                        '--patch', str(self.patch("value = 'repaired'\n")), '--path', 'fixture.py',
+                        '--active-hook-root', str(ROOT), '--check', '--json', '--no-input'],
+                        cwd=self.repo, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as process:
+                    deadline = time.monotonic() + 3
+                    while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+                        time.sleep(0.01)
+                    self.assertTrue(marker.exists(), 'bounded child did not start after healthy native preflight')
+                    time.sleep(0.2)
+                    started = time.monotonic()
+                    process.send_signal(signal.SIGINT)
+                    stdout, stderr = process.communicate(timeout=4)
+                    self.assertLess(time.monotonic() - started, 2)
+                    self.assertEqual(process.returncode, 2, stdout + stderr)
+                    expected = ('process_observation_identity_mismatch' if mode == 'mismatch'
+                        else 'process_observation_timeout' if mode == 'stall'
+                        else 'process_observation_native_unavailable')
+                    self.assertEqual(json.loads(stdout)['reason'], expected)
+                    self.assertNotIn(b'Traceback', stderr)
+                    self.assertNotIn(TOKEN.encode(), stdout + stderr)
+                self.assert_stopped([int(pid) for pid in pids.read_text().splitlines()])
+                self.assertEqual(self.fingerprint(), before)
+
+    def test_linux_native_process_protocol_validates_targeted_proc_records(self):
+        fields = ['T', '100', '4321', *(['0'] * 16), '123456']
+        valid = b'4321 (name with ) spaces) ' + ' '.join(fields).encode() + b'\n'
+        for mode in ('valid', 'absent', 'denied', 'short', 'wrong_pid', 'unknown_state'):
+            with self.subTest(mode=mode):
+                raw = (b'4322' + valid[4:] if mode == 'wrong_pid' else
+                    valid.replace(b') T ', b') Q ') if mode == 'unknown_state' else
+                    b'4321 (short) T 100' if mode == 'short' else valid)
+                code = ("import runpy,sys,os,time,io,builtins\n"
+                    "scope=runpy.run_path(" + repr(str(CLI)) + ",run_name='fixture_process_helper')\n"
+                    "os.environ['TZ']='UTC';time.tzset();sys.platform='linux'\n"
+                    "real_open=builtins.open;real_sysconf=os.sysconf\n"
+                    "def opened(name,*args,**kwargs):\n"
+                    " if name=='/proc/stat': return io.BytesIO(b'btime 1700000000\\n')\n"
+                    " if name=='/proc/4321/stat':\n"
+                    "  if " + repr(mode) + " == 'absent': raise FileNotFoundError\n"
+                    "  if " + repr(mode) + " == 'denied': raise PermissionError\n"
+                    "  return io.BytesIO(" + repr(raw) + ")\n"
+                    " return real_open(name,*args,**kwargs)\n"
+                    "builtins.open=opened\n"
+                    "os.sysconf=lambda name:100 if name=='SC_CLK_TCK' else real_sysconf(name)\n"
+                    "scope['process_query_helper']()\n")
+                result = subprocess.run([sys.executable, '-I', '-S', '-B', '-c', code],
+                    input=b'[4321]\n', capture_output=True, timeout=2)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                if mode == 'valid':
+                    self.assertEqual(report, {'4321': [4321, 100, 4321, 1700001234, 123456, 'stopped', 0]})
+                elif mode == 'absent':
+                    self.assertEqual(report, {'4321': None})
+                else:
+                    self.assertEqual(report, {'error': 'native_query_unavailable'})
+
+    def test_darwin_native_process_protocol_rejects_partial_or_denied_records(self):
+        for mode in ('valid', 'absent', 'denied', 'partial', 'wrong_pid', 'unknown_state'):
+            with self.subTest(mode=mode):
+                code = ("import runpy,sys,os,time,ctypes,errno\n"
+                    "scope=runpy.run_path(" + repr(str(CLI)) + ",run_name='fixture_process_helper')\n"
+                    "os.environ['TZ']='UTC';time.tzset();sys.platform='darwin'\n"
+                    "class Query:\n"
+                    " def __call__(self,pid,flavor,arg,buffer,size):\n"
+                    "  assert flavor==3 and size==136\n"
+                    "  if " + repr(mode) + " in ('absent','denied'):\n"
+                    "   ctypes.set_errno(errno.ESRCH if " + repr(mode) + "=='absent' else errno.EPERM);return 0\n"
+                    "  info=buffer._obj;info.pid=pid;info.ppid=100;info.pgid=pid;info.status=4\n"
+                    "  info.seconds=1700001234;info.microseconds=123456\n"
+                    "  if " + repr(mode) + "=='wrong_pid': info.pid+=1\n"
+                    "  if " + repr(mode) + "=='unknown_state': info.status=99\n"
+                    "  return 135 if " + repr(mode) + "=='partial' else size\n"
+                    "class Library: proc_pidinfo=Query()\n"
+                    "ctypes.CDLL=lambda *args,**kwargs:Library()\n"
+                    "scope['process_query_helper']()\n")
+                result = subprocess.run([sys.executable, '-I', '-S', '-B', '-c', code],
+                    input=b'[4321]\n', capture_output=True, timeout=2)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                if mode == 'valid':
+                    self.assertEqual(report, {'4321': [4321, 100, 4321, 1700001234, 123456, 'stopped', 0]})
+                elif mode == 'absent':
+                    self.assertEqual(report, {'4321': None})
+                else:
+                    self.assertEqual(report, {'error': 'native_query_unavailable'})
 
     def test_unavailable_process_observation_stops_before_git_or_scanners(self):
         before = self.fingerprint()
