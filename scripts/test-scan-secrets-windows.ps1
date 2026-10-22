@@ -1,5 +1,10 @@
 #!/usr/bin/env pwsh
 
+param(
+    [ValidateSet('copilot/warn/partial')]
+    [string]$Case
+)
+
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) {
     Write-Output 'SKIP: native Windows scanner capture tests require Windows'
@@ -16,21 +21,57 @@ $hooks = @{
     codex = Join-Path $repoRoot '.codex/hooks/scan-secrets.py'
 }
 
+function Write-DiagnosticRunner {
+    param([string]$Target, [string]$Runner)
+    $literal = $Target | ConvertTo-Json -Compress
+    # Test-only wrapper: the public hook still owns all capture deadlines.
+    [System.IO.File]::WriteAllText($Runner, @"
+import faulthandler, runpy
+faulthandler.dump_traceback_later(6.5)
+try:
+    runpy.run_path($literal, run_name='__main__')
+finally:
+    faulthandler.cancel_dump_traceback_later()
+"@)
+}
+
+function Write-WatchdogEvidence {
+    param([string]$Provider, [string]$Mode, [string]$Scenario, [double]$ElapsedSeconds,
+          [string]$OutputPath, [string]$ErrorPath, [string]$LogPath)
+    $stdoutBytes = if (Test-Path -LiteralPath $OutputPath) { (Get-Item -LiteralPath $OutputPath).Length } else { 0 }
+    $stderrBytes = if (Test-Path -LiteralPath $ErrorPath) { (Get-Item -LiteralPath $ErrorPath).Length } else { 0 }
+    $auditState = 'missing-or-other'
+    $stack = @()
+    foreach ($path in @($LogPath, $ErrorPath)) {
+        if (-not (Test-Path -LiteralPath $path)) { continue }
+        # Bound reads before cleanup; never retain arbitrary output, logs or locals.
+        $stream = [System.IO.File]::Open($path, [System.IO.FileMode]::Open,
+            [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        try {
+            $buffer = [byte[]]::new(8192)
+            $count = $stream.Read($buffer, 0, $buffer.Length)
+            $text = [System.Text.Encoding]::UTF8.GetString($buffer, 0, $count)
+        }
+        finally { $stream.Dispose() }
+        if ($path -eq $LogPath) {
+            if ($text -match '"status"\s*:\s*"(clean|incomplete|findings)"') { $auditState = $Matches[1] }
+        } else {
+            $stack = @($text -split '\r?\n' | Where-Object {
+                $_ -match '^(Timeout \(0:00:06\.500000\)!|Thread 0x[0-9a-f]+ \(most recent call first\):|  File "[^"\r\n]+", line [0-9]+ in [^\r\n]+)$'
+            } | Select-Object -First 32 | ForEach-Object { $_.Substring(0, [Math]::Min(256, $_.Length)) })
+        }
+    }
+    $elapsed = $ElapsedSeconds.ToString('F3', [System.Globalization.CultureInfo]::InvariantCulture)
+    Write-Output "WATCHDOG: provider=$Provider mode=$Mode scenario=$Scenario elapsed-seconds=$elapsed stdout-bytes=$stdoutBytes stderr-bytes=$stderrBytes audit=$auditState"
+    foreach ($frame in $stack) { Write-Output "WATCHDOG-STACK: $frame" }
+}
+
 function Invoke-Case {
     param([string]$Provider, [string]$Mode, [string]$Scenario, [int]$Attempt = 0)
     $caseDir = Join-Path $workdir "$Provider-$Mode-$Scenario-$Attempt"
     $repo = Join-Path $caseDir 'repo'
     $bin = Join-Path $caseDir 'bin'
     New-Item -ItemType Directory -Path $repo, $bin | Out-Null
-    & $realGit -C $repo init -q
-    if ($LASTEXITCODE -ne 0) { throw 'Git init failed' }
-    if ($Scenario -eq 'head-failure') {
-        [System.IO.File]::WriteAllText((Join-Path $repo 'README.md'), "safe fixture`n")
-        & $realGit -C $repo add README.md
-        if ($LASTEXITCODE -ne 0) { throw 'Git add failed' }
-        & $realGit -C $repo -c user.name=ScannerTest -c user.email=scanner@example.invalid -c commit.gpgsign=false commit -qm fixture
-        if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
-    }
 
     $executionMarker = Join-Path $caseDir 'fixture-executed'
     $imageObserver = Join-Path $caseDir 'observe-image-pin.py'
@@ -193,14 +234,41 @@ finally:
     $errorPath = Join-Path $caseDir 'stderr.txt'
     [System.IO.File]::WriteAllText($inputPath, $payload)
 
-    $savedPath = $env:PATH
-    $savedMode = $env:SCAN_MODE
-    $savedComspec = $env:COMSPEC
-    $savedLog = $env:SECRETS_LOG_DIR
-    $savedTemp = $env:TEMP
-    $savedTmp = $env:TMP
+    $savedEnvironment = @{}
+    foreach ($name in @('PATH', 'SCAN_MODE', 'COMSPEC', 'SECRETS_LOG_DIR', 'TEMP', 'TMP',
+                       'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'CODEX_HOME', 'XDG_CONFIG_HOME',
+                       'AUDIT_LOG', 'OBSERVABILITY_LOG_PATH', 'OBSERVABILITY_TESTING',
+                       'COPILOT_OBSERVABILITY_LOG_PATH', 'GEMINI_OBSERVABILITY_LOG_PATH',
+                       'GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL')) {
+        $savedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+    }
     try {
-        $env:PATH = "$bin;$savedPath"
+        $fixtureHome = Join-Path $caseDir 'home'
+        New-Item -ItemType Directory -Path $fixtureHome | Out-Null
+        $env:HOME = $fixtureHome
+        $env:USERPROFILE = $fixtureHome
+        $env:APPDATA = Join-Path $fixtureHome 'AppData/Roaming'
+        $env:LOCALAPPDATA = Join-Path $fixtureHome 'AppData/Local'
+        $env:CODEX_HOME = Join-Path $fixtureHome '.codex'
+        $env:XDG_CONFIG_HOME = Join-Path $fixtureHome '.config'
+        $env:AUDIT_LOG = Join-Path $caseDir 'audit.log'
+        $env:OBSERVABILITY_LOG_PATH = Join-Path $caseDir 'observability.jsonl'
+        $env:COPILOT_OBSERVABILITY_LOG_PATH = $env:OBSERVABILITY_LOG_PATH
+        $env:GEMINI_OBSERVABILITY_LOG_PATH = $env:OBSERVABILITY_LOG_PATH
+        $env:OBSERVABILITY_TESTING = '1'
+        $env:GIT_CONFIG_NOSYSTEM = '1'
+        $env:GIT_CONFIG_GLOBAL = Join-Path $caseDir 'gitconfig'
+        [System.IO.File]::WriteAllText($env:GIT_CONFIG_GLOBAL, '')
+        & $realGit -C $repo init -q
+        if ($LASTEXITCODE -ne 0) { throw 'Git init failed' }
+        if ($Scenario -eq 'head-failure') {
+            [System.IO.File]::WriteAllText((Join-Path $repo 'README.md'), "safe fixture`n")
+            & $realGit -C $repo add README.md
+            if ($LASTEXITCODE -ne 0) { throw 'Git add failed' }
+            & $realGit -C $repo -c user.name=ScannerTest -c user.email=scanner@example.invalid -c commit.gpgsign=false commit -qm fixture
+            if ($LASTEXITCODE -ne 0) { throw 'Git commit failed' }
+        }
+        $env:PATH = "$bin;$($savedEnvironment['PATH'])"
         $env:SCAN_MODE = $Mode
         if ($Scenario -eq 'hostile-comspec') {
             $hostileComspec = Join-Path $caseDir 'hostile-comspec.cmd'
@@ -359,12 +427,22 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
                 "def fail(*args, **kwargs):`n    raise OSError('private capture failure detail')`n" +
                 "tempfile.TemporaryFile = fail`nrunpy.run_path($hookLiteral, run_name='__main__')`n")
         }
+        $diagnosticRunner = Join-Path $caseDir 'diagnostic-runner.py'
+        Write-DiagnosticRunner -Target $runner -Runner $diagnosticRunner
+        $runner = $diagnosticRunner
         $process = Start-Process -FilePath $python -ArgumentList @('-I', '-S', '-B', "`"$runner`"") `
             -WorkingDirectory $repo -RedirectStandardInput $inputPath -RedirectStandardOutput $outputPath `
             -RedirectStandardError $errorPath -PassThru -NoNewWindow
         if (-not $process.WaitForExit(8000)) {
-            $process.Kill($true)
-            $process.WaitForExit(1000) | Out-Null
+            try {
+                Write-WatchdogEvidence -Provider $Provider -Mode $Mode -Scenario $Scenario `
+                    -ElapsedSeconds $started.Elapsed.TotalSeconds -OutputPath $outputPath `
+                    -ErrorPath $errorPath -LogPath (Join-Path $caseDir 'logs/scan.log')
+            }
+            finally {
+                $process.Kill($true)
+                $process.WaitForExit(1000) | Out-Null
+            }
             throw "$Provider $Mode $Scenario exceeded outer watchdog"
         }
         $started.Stop()
@@ -490,22 +568,29 @@ runpy.run_path(HOOK_LITERAL, run_name='__main__')
     }
     finally {
         $cleanupCode = 0
-        if (($Scenario -eq 'grandchild' -or $Scenario -eq 'launch-death') -and (Test-Path -LiteralPath $grandchildMarker)) {
-            & $python -I -S -B $grandchildObserver $grandchildMarker cleanup
-            $cleanupCode = $LASTEXITCODE
+        try {
+            if (($Scenario -eq 'grandchild' -or $Scenario -eq 'launch-death') -and (Test-Path -LiteralPath $grandchildMarker)) {
+                & $python -I -S -B $grandchildObserver $grandchildMarker cleanup
+                $cleanupCode = $LASTEXITCODE
+            }
         }
-        $env:PATH = $savedPath
-        $env:SCAN_MODE = $savedMode
-        $env:COMSPEC = $savedComspec
-        $env:SECRETS_LOG_DIR = $savedLog
-        $env:TEMP = $savedTemp
-        $env:TMP = $savedTmp
+        finally {
+            foreach ($name in $savedEnvironment.Keys) {
+                $value = if ($null -eq $savedEnvironment[$name]) { [NullString]::Value } else { $savedEnvironment[$name] }
+                [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+            }
+        }
         if ($cleanupCode -ne 0) { throw "$Provider $Mode grandchild cleanup refused or failed: $cleanupCode" }
     }
 }
 
 try {
     New-Item -ItemType Directory -Path $workdir | Out-Null
+    if ($Case) {
+        Invoke-Case -Provider copilot -Mode warn -Scenario partial
+        Write-Output 'PASS: focused native Windows scanner capture copilot/warn/partial'
+        return
+    }
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
