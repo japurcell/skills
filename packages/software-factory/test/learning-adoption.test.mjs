@@ -24,34 +24,65 @@ function fixture() {
   const revision = repo.git(['rev-parse', 'HEAD']).trim();
   const extraction = { invocationId: 'extraction-1', proposalKey: 'improve' };
   const candidate = { invocationId: 'source-1', captureId: 'candidate-1', sha256: sha(candidateText) };
-  const report = {
-    version: 1, assessment: 'supported', limitations: [], target: { scope: 'repository', path },
+  const captures = new Map(), attempts = new Map();
+  const put = (id, invocationId, channel, value, attemptId = null) => {
+    const text = typeof value === 'string' ? value : JSON.stringify(value);
+    captures.set(id, { invocationId, channel, text, attemptId, state: 'complete' }); return { captureId: id, sha256: sha(text) };
+  };
+  put('candidate-1', 'source-1', 'event', candidateText);
+  put('baseline-1', 'source-1', 'event', originalText);
+  const source = { invocationId: 'source-1', outcome: 'succeeded', attempts: [], events: [],
+    captures: ['candidate-1', 'baseline-1'].map(id => ({ id, channel: 'event', state: 'complete', chunks: [{ sequence: 1, text: captures.get(id).text }] })) };
+  const agent = (invocationId, attemptId, operationKey, validator, payload, context, purpose) => {
+    const refs = { inputsCaptureId: `${attemptId}-inputs`, resultCaptureId: `${attemptId}-raw`, validatedResultCaptureId: `${attemptId}-validated`, validator };
+    put(refs.inputsCaptureId, invocationId, 'context', { inputs: { permissions: 'read-only' }, purpose, context: JSON.stringify(context) }, attemptId);
+    put(refs.resultCaptureId, invocationId, 'result', JSON.stringify(payload), attemptId);
+    put(refs.validatedResultCaptureId, invocationId, 'validated-result', { kind: 'result', payload }, attemptId);
+    attempts.set(attemptId, { id: attemptId, invocationId, kind: 'agent', outcome: 'succeeded', operationKey, agent: refs });
+    return refs;
+  };
+  const proposals = [{ key: 'improve', target: { scope: 'repository', path }, candidateCapture: { invocationId: 'source-1', captureId: 'candidate-1' },
+    suggestedCases: ['candidate check'], supportingEvidence: [{ invocationId: 'source-1', captureId: 'candidate-1' }], contraryEvidence: [] }];
+  const extractionAgent = agent('extraction-1', 'extract-attempt-1', 'learn/extract', 'learning-extraction-v1', { proposals },
+    { version: 1, evidence: [source], captureLimitations: [] }, 'report');
+  const extractionReport = put('extraction-report-1', 'extraction-1', 'report', { version: 1,
+    suppliedSources: [{ invocationId: 'source-1' }], examinedSources: [{ invocationId: 'source-1', outcome: 'succeeded', attemptIds: [], eventCursors: [], captureIds: ['candidate-1', 'baseline-1'] }],
+    captureLimitations: [], proposals, proposalResultCaptureId: extractionAgent.resultCaptureId, proposalValidatedResultCaptureId: extractionAgent.validatedResultCaptureId });
+  const cases = [{ key: 'check', criteria: 'candidate text', sourceSuggestion: 'candidate check', settings: { argv: ['/fixture/check'], cwd: '/fixture/case', timeoutMs: 5000, repetitions: 2 } }];
+  for (const variant of ['baseline', 'candidate']) {
+    const objective = [1, 2].map(index => ({ attemptId: `check-${variant}-${index}`, exitCode: variant === 'candidate' ? 0 : 1, cleanup: 'complete' }));
+    for (const [index, entry] of objective.entries()) {
+      attempts.set(entry.attemptId, { id: entry.attemptId, invocationId: 'evaluation-1', kind: 'command', outcome: entry.exitCode === 0 ? 'succeeded' : 'failed', operationKey: `evaluate/check/${variant}/objective/${index + 1}`, agent: null });
+      put(`${entry.attemptId}-inputs`, 'evaluation-1', 'context', { ...cases[0].settings, required: false, shell: false }, entry.attemptId);
+    }
+    const payload = { judgment: variant === 'candidate' ? 'pass' : 'fail', reason: 'observed criterion' };
+    const refs = agent('evaluation-1', `review-${variant}`, `evaluate/check/${variant}/review`, 'learning-evaluation-review-v1', payload,
+      { variant, caseKey: 'check', criteria: 'candidate text', target: { scope: 'repository', path }, objective, text: variant === 'candidate' ? candidateText : originalText }, 'review');
+    cases[0][variant] = { objective, review: { ...payload, attemptId: `review-${variant}`, resultCaptureId: refs.resultCaptureId,
+      inputsCaptureId: refs.inputsCaptureId, effectivePermissions: 'read-only', effectiveProfile: null } };
+  }
+  const report = { version: 1, assessment: 'supported', limitations: [], target: { scope: 'repository', path },
     suppliedReferences: { extraction, baseline: { invocationId: 'source-1', captureId: 'baseline-1', sha256: sha(originalText) }, candidate },
-    extractionReport: { captureId: 'extraction-report-1', sha256: sha('extraction report') },
-    extractionResult: { attemptId: 'extract-attempt-1', rawCaptureId: 'raw-1', validatedCaptureId: 'validated-1' },
-    resolved: { baselineSha256: sha(originalText), candidateSha256: sha(candidateText) },
-    cases: [{ key: 'check' }],
-  };
-  const reportText = JSON.stringify(report);
-  const evaluation = { invocationId: 'evaluation-1', reportCaptureId: 'evaluation-report-1', sha256: sha(reportText) };
-  const captures = new Map([[evaluation.reportCaptureId, { channel: 'report', text: reportText }], [candidate.captureId, { channel: 'event', text: candidateText }]]);
-  const evaluations = new Map([[evaluation.invocationId, evaluation.reportCaptureId]]);
+    extractionReport, extractionResult: { attemptId: 'extract-attempt-1', rawCaptureId: extractionAgent.resultCaptureId, validatedCaptureId: extractionAgent.validatedResultCaptureId },
+    resolved: { baselineSha256: sha(originalText), candidateSha256: sha(candidateText) }, proposalSuggestedCases: ['candidate check'], cases };
+  const evaluations = new Map();
   const addEvaluation = (value, suffix) => {
-    const text = JSON.stringify(value);
-    const reference = { invocationId: `evaluation-${suffix}`, reportCaptureId: `evaluation-report-${suffix}`, sha256: sha(text) };
-    captures.set(reference.reportCaptureId, { channel: 'report', text });
-    evaluations.set(reference.invocationId, reference.reportCaptureId);
-    return reference;
+    // Revised fixture reports share the same verified evidence-producing invocation.
+    const reference = { invocationId: 'evaluation-1', reportCaptureId: `evaluation-report-${suffix}`, sha256: sha(JSON.stringify(value)) };
+    put(reference.reportCaptureId, reference.invocationId, 'report', value);
+    evaluations.set(reference.invocationId, reference.reportCaptureId); return reference;
   };
+  const evaluation = addEvaluation(report, '1');
   const sourceHistory = {
     async read(id) {
-      const captureId = id === candidate.invocationId ? candidate.captureId : evaluations.get(id);
-      return { invocation: { id, stage: 'finalized', outcome: 'succeeded' },
-        captures: captureId ? [{ id: captureId, channel: captures.get(captureId).channel, state: 'complete' }] : [],
-        capturesNextCursor: 1, hasMoreCaptures: false };
+      return { invocation: { id, stage: 'finalized', outcome: 'succeeded', workflow: id === 'extraction-1' ? '.factory/workflows/learn.ts' : id === 'evaluation-1' ? '.factory/workflows/evaluate.ts' : null },
+        captures: [...captures].filter(([, capture]) => capture.invocationId === id).map(([id, capture]) => ({ id, ...capture })),
+        attempts: [...attempts.values()].filter(item => item.invocationId === id),
+        capturesNextCursor: 1, hasMoreCaptures: false, attemptsNextCursor: 1, hasMoreAttempts: false };
     },
-    async capture(_invocationId, id) { const capture = captures.get(id); assert.ok(capture); return {
-      id, channel: capture.channel, state: 'complete', chunks: [{ sequence: 1, text: capture.text }], nextSequence: 1, hasMore: false,
+    async attempt(id) { assert.ok(attempts.has(id)); return attempts.get(id); },
+    async capture(invocationId, id) { const capture = captures.get(id); assert.ok(capture); assert.equal(capture.invocationId, invocationId); return {
+      id, channel: capture.channel, state: capture.state, chunks: [{ sequence: 1, text: capture.text }], nextSequence: 1, hasMore: false,
     }; },
   };
   const approval = { reference: 'human-approval-1', extraction, evaluation, candidate,
@@ -105,9 +136,9 @@ test('approval requires exact supported evaluation and candidate; changed scope 
     await assert.rejects(prepareAdoption(f.sourceHistory, { ...approved, target: { ...approved.target, scope: 'shared' } }), /exact human approval/);
     await assert.rejects(prepareAdoption(f.sourceHistory, { ...approved, reference: '' }), /exact human approval/);
     await assert.rejects(prepareAdoption(f.sourceHistory, { ...approved, target: { ...approved.target, expectedSha256: sha('stale') } }), /supported exact evaluation/);
-    f.captures.set(approved.candidate.captureId, { channel: 'event', text: 'changed captured candidate\n' });
-    await assert.rejects(prepareAdoption(f.sourceHistory, approved), /approved candidate bytes changed/);
-    f.captures.set(approved.candidate.captureId, { channel: 'event', text: candidateText });
+    f.captures.set(approved.candidate.captureId, { ...f.captures.get(approved.candidate.captureId), text: 'changed captured candidate\n' });
+    await assert.rejects(prepareAdoption(f.sourceHistory, approved), /approved candidate bytes changed|retained evidence/);
+    f.captures.set(approved.candidate.captureId, { ...f.captures.get(approved.candidate.captureId), text: candidateText });
     writeFileSync(join(f.repo.path, path), 'changed target\n');
     f.repo.git(['add', path]);
     f.repo.git(['commit', '-m', 'Change target before approval']);
@@ -204,6 +235,74 @@ test('success claim with changed content or broader commit scope remains uncerta
   } finally { intervening.repo.dispose(); }
 });
 
+test('saved preparations cannot replace approved adoption or revert parents', async () => {
+  const f = fixture();
+  try {
+    const prepared = JSON.parse(JSON.stringify(await prepareAdoption(f.sourceHistory, f.approval)));
+    writeFileSync(join(f.repo.path, path), 'intervening\n');
+    f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Intervening']);
+    prepared.expected = { revision: f.repo.git(['rev-parse', 'HEAD']).trim(), sha256: sha('intervening\n') };
+    writeFileSync(join(f.repo.path, path), candidateText);
+    f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Candidate']);
+    await assert.rejects(confirmAdoption(prepared, { reference: 'action', status: 'succeeded' }), /preparation/);
+    const forged = { kind: 'adoption', status: 'applied', approval: f.approval, evidence: prepared.evidence,
+      action: { reference: 'action', status: 'succeeded' }, applied: { revision: f.repo.git(['rev-parse', 'HEAD']).trim(), sha256: sha(candidateText) } };
+    await assert.rejects(prepareRevert(forged, { reference: 'revert' }), /observed adoption/);
+  } finally { f.repo.dispose(); }
+});
+
+test('retained provenance rejects missing, foreign, partial, pruned and mismatched evidence', async () => {
+  const f = fixture();
+  try {
+    for (const id of ['extraction-report-1', 'extract-attempt-1-raw', 'extract-attempt-1-validated', 'extract-attempt-1-inputs', 'review-candidate-validated', 'check-candidate-1-inputs']) {
+      const original = f.captures.get(id);
+      for (const state of ['partial', 'pruned']) {
+        f.captures.set(id, { ...original, state });
+        await assert.rejects(prepareAdoption(f.sourceHistory, f.approval));
+      }
+      f.captures.set(id, { ...original, invocationId: 'foreign' });
+      await assert.rejects(prepareAdoption(f.sourceHistory, f.approval));
+      f.captures.delete(id);
+      await assert.rejects(prepareAdoption(f.sourceHistory, f.approval));
+      f.captures.set(id, original);
+    }
+    const id = 'extract-attempt-1-validated', original = f.captures.get(id);
+    const changed = JSON.parse(original.text); changed.payload.proposals[0].target.path = 'tracked.txt';
+    f.captures.set(id, { ...original, text: JSON.stringify(changed) });
+    await assert.rejects(prepareAdoption(f.sourceHistory, f.approval), /retained evidence/);
+    f.captures.set(id, original);
+    const lied = structuredClone(f.report); lied.cases[0].baseline.objective[0].exitCode = 0;
+    await assert.rejects(prepareAdoption(f.sourceHistory, { ...f.approval, evaluation: f.addEvaluation(lied, 'lying-objective') }), /retained evidence/);
+    assert.equal((await prepareAdoption(f.sourceHistory, f.approval)).kind, 'adoption-preparation');
+  } finally { f.repo.dispose(); }
+});
+
+test('saved revert preparation and claimed historical adoption are revalidated', async () => {
+  const f = fixture();
+  try {
+    const prepared = await prepareAdoption(f.sourceHistory, f.approval);
+    writeFileSync(join(f.repo.path, path), candidateText);
+    f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Candidate']);
+    const applied = await confirmAdoption(prepared, { reference: 'apply', status: 'succeeded' });
+    assert.equal(applied.status, 'applied');
+    const invalidBaseline = structuredClone(applied); invalidBaseline.approval.target.expectedSha256 = sha('invented baseline');
+    await assert.rejects(prepareRevert(invalidBaseline, { reference: 'revert' }), /observed adoption/);
+    const revertApproval = { reference: 'revert' };
+    const pending = prepareRevert(applied, revertApproval);
+    revertApproval.reference = 'changed after call';
+    const reverting = JSON.parse(JSON.stringify(await pending));
+    assert.equal(reverting.approvalReference, 'revert');
+    writeFileSync(join(f.repo.path, 'tracked.txt'), 'unapproved intervening scope\n');
+    f.repo.git(['add', 'tracked.txt']); f.repo.git(['commit', '-m', 'Intervening']);
+    reverting.expected.revision = f.repo.git(['rev-parse', 'HEAD']).trim();
+    writeFileSync(join(f.repo.path, path), originalText);
+    f.repo.git(['add', path]); f.repo.git(['commit', '-m', 'Restore']);
+    await assert.rejects(confirmRevert(reverting, { reference: 'restore', status: 'succeeded' }), /revert preparation/);
+    for (const malformed of [null, {}, { ...prepared, kind: 'revert-preparation' }, { ...prepared, evidence: {} }])
+      await assert.rejects(confirmAdoption(malformed, { reference: 'action', status: 'succeeded' }));
+  } finally { f.repo.dispose(); }
+});
+
 test('real retained extraction, inconclusive evaluation, revised evaluation, approval, action and revert preserve lineage', async () => {
   const repo = createRepository();
   try {
@@ -269,13 +368,13 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       const text = capture.chunks.map(chunk => chunk.text).join('');
       return { captureId: capture.id, text, value: JSON.parse(text) };
     } finally { reader.close(); } };
-    const saveOperation = async (name, value) => {
+    const saveOperation = async (name, value, workflow = `explicit-learning/${name}`) => {
       const recorder = openRepositoryStore(common);
       try {
         const run = await recorder.createRun();
         const invocation = await recorder.startInvocation({ runId: run.id, worktreeId: sourceWorktreeId,
           owner: { host: 'fixture', pid: process.pid, start: null } });
-        await recorder.saveInvocationMetadata(invocation.id, { workflow: `explicit-learning/${name}` });
+        await recorder.saveInvocationMetadata(invocation.id, { workflow });
         const capture = await recorder.createCapture({ invocationId: invocation.id, channel: 'report' });
         await recorder.appendCapture({ id: capture.id, chunks: [{ sequence: 1, text: JSON.stringify(value) }], state: 'complete' });
         await recorder.finalizeInvocation({ id: invocation.id, outcome: 'succeeded', cleanup: 'complete',
@@ -309,6 +408,18 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       await assert.rejects(prepareAdoption(history, { ...approval,
         evaluation: { invocationId: inconclusiveRun.invocationId, reportCaptureId: inconclusive.captureId, sha256: sha(inconclusive.text) } }),
       /supported exact evaluation/);
+      // A successful report with matching claims is insufficient without its retained producer relationships.
+      for (const workflow of ['unrelated-operation', '.factory/workflows/evaluate.ts']) {
+        const forgedReport = structuredClone(revised.value);
+        const recorded = await saveOperation('forged-evaluation', forgedReport, workflow);
+        await assert.rejects(prepareAdoption(history, { ...approval, evaluation: {
+          invocationId: recorded.invocationId, reportCaptureId: recorded.captureId, sha256: sha(JSON.stringify(forgedReport)) } }));
+      }
+      const missing = structuredClone(revised.value);
+      missing.suppliedReferences.extraction.invocationId = 'nonexistent-extraction';
+      const recorded = await saveOperation('missing-extraction', missing, '.factory/workflows/evaluate.ts');
+      await assert.rejects(prepareAdoption(history, { ...approval, extraction: missing.suppliedReferences.extraction,
+        evaluation: { invocationId: recorded.invocationId, reportCaptureId: recorded.captureId, sha256: sha(JSON.stringify(missing)) } }));
       const prepared = await prepareAdoption(history, approval);
       assert.deepEqual(prepared.evidence.extractionReport, revised.value.extractionReport);
       assert.deepEqual(prepared.evidence.extractionResult, revised.value.extractionResult);
