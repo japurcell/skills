@@ -1,3 +1,9 @@
+import { AgentCalls } from './agents.js';
+import type { AgentConfiguration, AgentOptions } from './agents.js';
+import type { AgentResult } from './adapters/types.js';
+export type { AgentOptions } from './agents.js';
+export type { AgentResult, PayloadValidator } from './adapters/types.js';
+export type { ProfileFields, EffectiveInputs, SkillInput } from './profiles.js';
 import { spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { realpathSync } from 'node:fs';
@@ -21,20 +27,28 @@ export interface WorkflowContext {
   command(name: string, options: CommandOptions): Promise<CommandResult>;
   progress(message: string): Promise<void>;
   needsInput(question: string, context: string): Promise<never>;
-  agent(name: string, options: unknown): Promise<never>;
+  agent<T=unknown>(name: string, options: AgentOptions<T>): Promise<AgentResult<T>>;
   cancel(reason: string): Promise<never>;
 }
-export class NeedsInput extends Error {}
-export class ShutdownInterrupted extends Error {}
-export type StopCause = 'needs_input' | 'signal' | 'timeout' | 'recording' | 'failure' | 'manual';
+export { NeedsInput, ShutdownInterrupted } from './execution-control.js';
+import { NeedsInput, ShutdownInterrupted } from './execution-control.js';
+import type { StopCause } from './execution-control.js';
+export type { StopCause } from './execution-control.js';
 export class CommandRunner {
   constructor(readonly store: RepositoryStore, readonly recorder: InvocationRecorder, readonly invocationId: string, readonly worktree: string,
-    readonly settings: {commandTimeoutMs?:number; agentTimeoutMs?:number; shutdownGraceMs?:number} = {}) {
+    readonly settings: {commandTimeoutMs?:number; agentTimeoutMs?:number; shutdownGraceMs?:number} & AgentConfiguration = {}) {
+    this.agents = new AgentCalls(this,settings);
     this.agentTimeoutMs = duration(settings.agentTimeoutMs,3600000);
     this.commandTimeoutMs = duration(settings.commandTimeoutMs, 1800000);
     this.grace = duration(settings.shutdownGraceMs, 30000, 300000);
     this.stopped = new Promise(resolve => { this.stopResolve = resolve; });
   }
+  private readonly agents:AgentCalls;
+  private readonly agentStops=new Map<string,()=>Promise<void>>();
+  get dispatchStopped(){return this.admissionStopped;}
+  registerAgent(id:string,scope:LiveProcessScope,stop:()=>Promise<void>){this.active.set(id,scope);this.agentStops.set(id,stop);if(this.stopping)void stop().catch(()=>{this.unresolved=true;});}
+  unregisterAgent(id:string){this.active.delete(id);this.agentStops.delete(id);}
+  agent<T>(key:string,options:AgentOptions<T>){return this.track(()=>this.agents.execute(key,options));}
   readonly commandTimeoutMs: number;
   readonly agentTimeoutMs: number;
   readonly grace: number;
@@ -66,7 +80,7 @@ export class CommandRunner {
       this.stopAt = performance.now();
       this.stopResolve();
     }
-    for (const scope of this.active.values()) void scope.stop(this.grace);
+    for (const [id,scope] of this.active) { const stop=this.agentStops.get(id); if(stop)void stop().catch(()=>{this.unresolved=true;}); else void scope.stop(this.grace); }
   }
   track<T>(action: () => Promise<T>): Promise<T> {
     const operation = Promise.resolve().then(() => {
@@ -106,6 +120,7 @@ export class CommandRunner {
     }
     if (this.stopping) await this.stopRecord;
     if (this.failed) throw this.failure;
+    this.agents.assertValid();
     if (this.question) throw this.question;
     if (this.stopping) throw new ShutdownInterrupted(this.reasons[0]?.message ?? 'shutdown requested');
   }
@@ -200,6 +215,6 @@ export function workflowContext(runner: CommandRunner, prefix = ''): WorkflowCon
       throw new NeedsInput('workflow needs input');
     }),
     cancel: reason => runner.track(async () => { if (typeof reason !== 'string' || !reason.trim()) throw new Error('cancel requires a nonempty reason'); runner.requestShutdown('manual',reason); throw new ShutdownInterrupted(reason); }),
-    agent: () => runner.track(async () => { throw new Error('agent adapters unavailable; no agent attempt launched'); }),
+    agent: (name,options) => runner.agent(key(name),options),
   };
 }

@@ -1,3 +1,4 @@
+import type { AgentConfiguration } from './agents.js';
 import { environmentRedactionPolicy, redactText } from './redaction.js';
 import { randomUUID } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
@@ -9,7 +10,7 @@ import { openRepositoryStore } from './store.js';
 import { CommandRunner, NeedsInput, ShutdownInterrupted, workflowContext } from './workflow.js';
 import { createWorktree, git, repositoryIdentity, selectedCommit, StartupGitControl, StartupInterrupted, worktreeIdentity } from './workspace.js';
 
-export interface InvokeOptions {
+export interface InvokeOptions extends AgentConfiguration {
   repository: string; workflow: string; input: string; newWorktree: boolean; ref?: string;
   worktreeId?: string; runId?: string; question?: string; contexts?: string[]; commandTimeoutMs?:number; agentTimeoutMs?:number; shutdownGraceMs?:number;
 }
@@ -61,7 +62,7 @@ async function invokeOwned(options:InvokeOptions,settings:{agentTimeoutMs:number
     worktreePath = worktree.path;
     invocation = await store.startInvocation({ runId, worktreeId: worktree.id, owner: currentOwner() });
     recorder = new InvocationRecorder({ store, invocationId: invocation.id, secrets: policy.secrets, requestShutdown: reason => { store.blockAdmissions(invocation!.id); runner?.requestShutdown('recording',reason); } });
-    runner = new CommandRunner(store,recorder,invocation.id,worktree.path,settings);
+    runner = new CommandRunner(store,recorder,invocation.id,worktree.path,{...settings,...(options.adapters?{adapters:options.adapters}:{}),...(options.agentOverrides?{agentOverrides:options.agentOverrides}:{})});
     attach(runner);
     if(early.stopSignal)runner.requestShutdown('signal',`user ${early.stopSignal}`,early.stopSignal);
     const context = await recorder.openCapture({ channel: 'context' });

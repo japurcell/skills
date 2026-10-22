@@ -144,7 +144,7 @@ export class CaptureWriter {
     });
   }
   /** Parses only an ended complete result. Oversize remains fully saved as raw filtered text. */
-  async readResult(limit = 1048576): Promise<unknown> {
+  async readText(limit = 1048576): Promise<string> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1048576) throw new Error('invalid structured result limit');
     if (!this.ended) throw new Error('result capture is still open');
     if (this.originalBytes > limit) throw new Error('structured result exceeds size limit; raw capture preserved');
@@ -161,6 +161,10 @@ export class CaptureWriter {
       after = page.nextSequence;
       if (!page.hasMore) break;
     } while (true);
-    try { return JSON.parse(parts.join('')); } catch { throw new Error('invalid structured result JSON; raw capture preserved'); }
+    return parts.join('');
+  }
+  async readResult(limit = 1048576): Promise<unknown> {
+    const text = await this.readText(limit);
+    try { return JSON.parse(text); } catch { throw new Error('invalid structured result JSON; raw capture preserved'); }
   }
 }

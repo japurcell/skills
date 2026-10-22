@@ -1,3 +1,5 @@
+import { redactText } from './redaction.js';
+import type { SessionEvent } from './adapters/types.js';
 import { randomUUID } from 'node:crypto';
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, unlinkSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -16,11 +18,20 @@ export interface Claim {
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
 interface Worktree { id: string; path: string; registration: string }
 export interface Invocation { id: string; runId: string; worktreeId: string; stage: 'starting' | 'running' | 'shutting_down' | 'finalized'; outcome: string | null; cleanup?: 'complete' | 'unknown'; metadata?: object }
-interface Attempt extends Admission {
+export interface Attempt extends Admission {
   runId: string; operationId: string; fingerprint: string;
   launch: 'admitted' | 'started' | 'not_started' | 'unknown'; outcome: 'succeeded' | 'failed' | 'needs_input' | 'interrupted' | null;
   quiescent: boolean; owner: Owner | null; evidence: string | null;
   cleanupBasis?: 'operator_confirmed';
+  agent?: { inputsCaptureId:string; resultCaptureId:string; outputCaptureId:string; adapter:string; sessionMode:'fresh'|'reuse'; context:string; reusedAttemptId?:string; validator:string|null };
+}
+/** Optional observations remain unknown until the adapter reports actual evidence. */
+export interface NativeSession {
+  id: string; attemptId: string; invocationId: string; nativeId: string; parentNativeId: string | null;
+  lifecycle: SessionEvent['lifecycle'];
+  usage: NonNullable<SessionEvent['usage']> | { state: 'unknown' };
+  loadedSkills: string[] | { state: 'unknown' };
+  inputsCaptureId: string | null; outputCaptureId: string | null; resultCaptureId: string | null;
 }
 export type CaptureState = 'open' | 'complete' | 'partial' | 'unknown' | 'pruned';
 export interface CaptureChunk { sequence: number; text: string }
@@ -212,7 +223,7 @@ export class RepositoryStore {
     const invocation = this.readInvocation(id);
     const attemptRows = this.database.prepare('SELECT rowid AS cursor,data FROM attempts WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(id, afterAttempt, limit + 1);
     const attempts = attemptRows.slice(0, limit).map(row => JSON.parse(String(row['data'])) as Attempt);
-    const captureRows = this.database.prepare('SELECT rowid AS cursor,id,state,channel,sequence FROM captures WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(id, afterCapture, limit + 1);
+    const captureRows = this.database.prepare('SELECT rowid AS cursor,id,attempt_id,state,channel,sequence FROM captures WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(id, afterCapture, limit + 1);
     let textBytes = 0;
     const captures = captureRows.slice(0, limit).map(row => {
       const captureId = String(row['id']);
@@ -224,7 +235,7 @@ export class RepositoryStore {
         textBytes += size; chunks.push(chunk);
       }
       const nextSequence = chunks.at(-1)?.sequence ?? 0;
-      return { id: captureId, state: page.state, channel: page.channel, chunks, nextSequence,
+      return { id: captureId, attemptId: row['attempt_id']===null?null:String(row['attempt_id']), state: page.state, channel: page.channel, chunks, nextSequence,
         hasMore: page.state !== 'pruned' && nextSequence < Number(row['sequence']) };
     });
     return { invocation, worktree: this.readWorktree(invocation.worktreeId), attempts, captures, accounting: this.readAccounting(invocation.runId),
@@ -456,6 +467,37 @@ export class RepositoryStore {
       }
       this.event('attempt.settled', { attemptId: attempt.id, outcome: attempt.outcome, quiescent: attempt.quiescent });
     });
+  }
+
+  async saveAgentMetadata(id:string, metadata:NonNullable<Attempt['agent']>) {
+    if(Buffer.byteLength(JSON.stringify(metadata))>8192)throw new Error('agent metadata exceeds limit');
+    return this.transaction(()=>{ const attempt=this.readAttempt(id); if(attempt.kind!=='agent'||attempt.launch!=='admitted')throw new Error('agent inputs must be saved before launch');
+      for(const captureId of [metadata.inputsCaptureId,metadata.resultCaptureId,metadata.outputCaptureId])if(!this.database.prepare('SELECT id FROM captures WHERE id=? AND attempt_id=?').get(captureId,id))throw new Error('agent capture mismatch');
+      attempt.agent=metadata;this.database.prepare('UPDATE attempts SET data=? WHERE id=?').run(JSON.stringify(attempt),id);this.event('attempt.inputs',{attemptId:id,inputsCaptureId:metadata.inputsCaptureId}); });
+  }
+  async saveSession(attemptId:string, event:SessionEvent): Promise<NativeSession> {
+    if(!event || typeof event!=='object' || Array.isArray(event) || Object.keys(event).some(key=>!['nativeId','parentNativeId','lifecycle','usage','loadedSkills'].includes(key)))throw new Error('invalid session event');
+    const raw=JSON.stringify(event);
+    if(Buffer.byteLength(raw)>8192)throw new Error('session metadata exceeds limit');
+    const filtered=JSON.parse(redactText(raw)) as SessionEvent;
+    if(Buffer.byteLength(JSON.stringify(filtered))>8192)throw new Error('session metadata exceeds limit');
+    if(!filtered.nativeId||typeof filtered.nativeId!=='string'||filtered.nativeId.length>512||!(filtered.parentNativeId===null||(typeof filtered.parentNativeId==='string'&&filtered.parentNativeId.length>0&&filtered.parentNativeId.length<=512))||!['running','succeeded','failed','stopped'].includes(filtered.lifecycle))throw new Error('invalid session event');
+    if(filtered.usage !== undefined && (!filtered.usage || typeof filtered.usage!=='object' || Array.isArray(filtered.usage) || !Number.isSafeInteger(filtered.usage.tokens)||filtered.usage.tokens<0||!['self','includes-children'].includes(filtered.usage.scope)))throw new Error('invalid session usage');
+    if(filtered.loadedSkills !== undefined && (!Array.isArray(filtered.loadedSkills)||filtered.loadedSkills.some(v=>typeof v!=='string'||!v)))throw new Error('invalid loaded-skill evidence');
+    return this.transaction(()=>{const attempt=this.readAttempt(attemptId);if(attempt.kind!=='agent')throw new Error('session requires agent attempt');
+      const prior=this.database.prepare('SELECT id FROM sessions WHERE attempt_id=? AND native_id=?').get(attemptId,filtered.nativeId);
+      const session:NativeSession={id:prior?String(prior['id']):randomUUID(),attemptId,invocationId:attempt.invocationId,...filtered,usage:filtered.usage??{state:'unknown'},loadedSkills:filtered.loadedSkills??{state:'unknown'},inputsCaptureId:attempt.agent?.inputsCaptureId??null,outputCaptureId:attempt.agent?.outputCaptureId??null,resultCaptureId:attempt.agent?.resultCaptureId??null};
+      if(prior)this.database.prepare('UPDATE sessions SET data=? WHERE id=?').run(JSON.stringify(session),session.id);
+      else this.database.prepare('INSERT INTO sessions(id,invocation_id,attempt_id,native_id,data) VALUES (?,?,?,?,?)').run(session.id,attempt.invocationId,attemptId,filtered.nativeId,JSON.stringify(session));
+      this.event('session.changed',{sessionId:session.id,attemptId,invocationId:attempt.invocationId,lifecycle:session.lifecycle});return session;});
+  }
+  readSessions(input:{invocationId:string;after?:number;limit?:number}) {
+    this.readInvocation(input.invocationId);const after=input.after??0,limit=input.limit??50;
+    if(!Number.isSafeInteger(after)||after<0||!Number.isSafeInteger(limit)||limit<1||limit>200)throw new Error('invalid session page');
+    const rows=this.database.prepare('SELECT rowid AS cursor,data FROM sessions WHERE invocation_id=? AND rowid>? ORDER BY rowid LIMIT ?').all(input.invocationId,after,limit+1);
+    const sessions:NativeSession[]=[];let bytes=0,nextCursor=after;
+    for(const row of rows.slice(0,limit)){const data=String(row['data']);if(bytes+Buffer.byteLength(data)>1047552)break;bytes+=Buffer.byteLength(data);sessions.push(JSON.parse(data) as NativeSession);nextCursor=Number(row['cursor']);}
+    return {sessions,nextCursor,hasMore:rows.some(row=>Number(row['cursor'])>nextCursor)};
   }
 
   readClaim(id: string): Claim {

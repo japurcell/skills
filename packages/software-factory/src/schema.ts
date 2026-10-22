@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-export const schemaVersion = 2;
+export const schemaVersion = 3;
 
 export function initializeSchema(database: DatabaseSync) {
   database.exec(`
@@ -26,7 +26,9 @@ export function initializeSchema(database: DatabaseSync) {
     CREATE INDEX capture_history ON captures(invocation_id,id);
     CREATE TABLE capture_chunks(capture_id TEXT NOT NULL REFERENCES captures(id), sequence INTEGER NOT NULL CHECK(sequence>0), text TEXT NOT NULL,
       PRIMARY KEY(capture_id,sequence), CHECK(length(CAST(text AS BLOB))<=65536));
-    PRAGMA user_version=2;
+    CREATE TABLE sessions(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), attempt_id TEXT NOT NULL REFERENCES attempts(id), native_id TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(attempt_id,native_id));
+    CREATE INDEX session_history ON sessions(invocation_id,attempt_id);
+    PRAGMA user_version=3;
     COMMIT;
   `);
 }
