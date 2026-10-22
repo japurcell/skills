@@ -26,10 +26,10 @@ test('pinned native runtime proves SQLite transaction, backup, contention and pr
   assert.ok(report.maxCommitMs < 1000, JSON.stringify(report));
 });
 
-test('cancelling qualification closes owned workers and removes only its disposable directory', async () => {
+test('handled qualification cancellation closes owned workers and removes only its disposable directory', async () => {
   const probe = fileURLToPath(new URL('./runtime.ts', import.meta.url));
   for (const [signal, expected] of [['SIGINT', 130], ['SIGTERM', 143]]) {
-    const child = spawn(process.execPath, [probe, '--pause-before-loss', '5000'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [probe, '--pause-before-loss', '5000'], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
     const closed = once(child, 'close');
     let diagnostic = '';
     child.stdout.resume();
@@ -43,7 +43,8 @@ test('cancelling qualification closes owned workers and removes only its disposa
     });
     try {
       const owned = await ready;
-      child.kill(signal);
+      if (process.platform === 'win32') child.send({ type: 'qualifier-stop', signal });
+      else child.kill(signal);
       const [status] = await closed;
       assert.equal(status, expected, diagnostic);
       assert.throws(() => process.kill(owned.pid, 0), { code: 'ESRCH' });

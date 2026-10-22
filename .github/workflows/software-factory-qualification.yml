@@ -1,0 +1,62 @@
+name: Software factory native foundation qualification
+
+on:
+  pull_request:
+    paths:
+      - 'packages/software-factory/**'
+      - '.github/workflows/software-factory-qualification.yml'
+      - 'scripts/test-software-factory.py'
+  push:
+    paths:
+      - 'packages/software-factory/**'
+      - '.github/workflows/software-factory-qualification.yml'
+      - 'scripts/test-software-factory.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-foundation:
+    name: Foundation ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+          - os: windows-2025
+            target: win32-x64
+          - os: macos-15
+            target: darwin-arm64
+    env:
+      FACTORY_TARGET: ${{ matrix.target }}
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify and extract exact official native runtime
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-qualification-evidence
+        run: node packages/software-factory/scripts/qualification-bootstrap.mjs
+      - name: Run locked foundational checks and preserve each result
+        timeout-minutes: 12
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-qualification-evidence
+        run: node packages/software-factory/scripts/qualification-foundation.mjs
+      - name: Upload native evidence including failures
+        if: always()
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: software-factory-foundation-${{ matrix.target }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/factory-qualification-evidence/
+          if-no-files-found: error
+          retention-days: 14

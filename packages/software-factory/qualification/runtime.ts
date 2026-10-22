@@ -1,22 +1,29 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
 import { once } from 'node:events';
-import { mkdtempSync, readFileSync, rmSync, statfsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir, release } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { DatabaseSync, backup } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { assertLocalPlacement } from '../src/placement.ts';
 import { setTimeout as delay } from 'node:timers/promises';
 
 let stopSignal: 'SIGINT' | 'SIGTERM' | undefined;
 const cancellation = new AbortController();
 const ownedWorkers: ReturnType<typeof spawn>[] = [];
-for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => {
+function stop(signal: 'SIGINT' | 'SIGTERM') {
   stopSignal ??= signal;
   cancellation.abort();
   for (const child of ownedWorkers) if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+}
+for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => stop(signal));
+// Windows kill signals terminate immediately; the private qualifier controller can request handled cleanup over IPC.
+process.on('message', (message: unknown) => {
+  if (typeof message === 'object' && message !== null && 'type' in message && message.type === 'qualifier-stop'
+    && 'signal' in message && (message.signal === 'SIGINT' || message.signal === 'SIGTERM')) stop(message.signal);
 });
 function checkStopped() {
   if (stopSignal) throw new Error(`cancelled by ${stopSignal}`);
@@ -32,10 +39,6 @@ async function qualify() {
   assert.equal(process.version, manifest.node, 'runtime mismatch; explicitly obtain the manifest-pinned Node before qualification');
   assert.equal(process.versions.sqlite, manifest.sqlite, 'bundled SQLite differs from the reviewed WAL-fixed version');
   const directory = mkdtempSync(join(tmpdir(), 'factory-sqlite-probe-'));
-  const filesystem = statfsSync(directory).type;
-  // APFS/HFS, Linux ext/btrfs/xfs/tmpfs. Windows placement needs its own native qualification.
-  const localTypes = process.platform === 'darwin' ? [26, 17] : process.platform === 'linux'
-    ? [0xef53, 0x9123683e, 0x58465342, 0x01021994] : [];
   const path = join(directory, 'history.sqlite');
   let database: DatabaseSync | undefined;
   const completions: Promise<unknown>[] = [];
@@ -56,7 +59,7 @@ async function qualify() {
     return { child, completion };
   }
   try {
-    assert.ok(localTypes.includes(filesystem), `unsupported or unqualified local filesystem: ${filesystem} (${process.platform})`);
+    const { filesystem } = assertLocalPlacement(directory);
     database = new DatabaseSync(path, { timeout: 100 });
     database.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON');
     const journal = database.prepare('PRAGMA journal_mode').get()?.['journal_mode'];
@@ -147,4 +150,6 @@ try {
 } catch (error) {
   process.stderr.write(`runtime qualification ${stopSignal ? `cancelled by ${stopSignal}` : `failed: ${error instanceof Error ? error.message : String(error)}`}\n`);
   process.exitCode = stopSignal === 'SIGINT' ? 130 : stopSignal === 'SIGTERM' ? 143 : 1;
+} finally {
+  if (process.connected) process.disconnect();
 }
