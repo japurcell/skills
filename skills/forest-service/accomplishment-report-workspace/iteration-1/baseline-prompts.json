@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "prompt": "Create the accomplishment report for plans/recreation/ExecPlan.md. This repository provides a campground repair dashboard. All plan tasks and acceptance checks are complete: repair queues and status export shipped, 18 acceptance tests passed, deployment and adoption are outside scope. Human-only work-package estimates: design 4h, implementation 12h, verification 6h, documentation 2h. Assisted human effort is 6h total including prompting, review, testing and corrections. Fully burdened labor is USD 100/h for both. Scoped AI billing including all agents and retries is USD 40. Agent runtimes total 10h, overlapping within 4h elapsed delivery. No other costs. Treat these as base-case inputs and explain sensitivity assumptions."
+  },
+  {
+    "id": 2,
+    "prompt": "Update the existing plans/internal/ accomplishment report for its completed ExecPlan.md. Preserve the human-written note: \"Owner note: adoption review scheduled for November.\" Repository maintains internal developer tooling; all tests and plan acceptance passed. Existing report claims USD 10000 measured savings but supplies no cost evidence. There are no labor logs, token records, billing allocations, or deployment metrics. Git timestamps span two days; do not treat them as work hours. Produce a useful executive report using explicit assumptions, including a scenario where AI costs exceed human-only work."
+  },
+  {
+    "id": 3,
+    "prompt": "Close out plans/incomplete/ExecPlan.md and create an accomplishment report. Its progress checkboxes are all checked, but milestone acceptance says not met: the end-to-end export test is failing and owner signoff is pending. Do not fix implementation or edit the plan during this reporting task."
+  }
+]

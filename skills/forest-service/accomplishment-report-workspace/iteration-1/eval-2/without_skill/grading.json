@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Existing file updated without duplicate; owner note preserved",
+      "passed": false,
+      "evidence": "Owner note preserved, but output path omits plans directory."
+    },
+    {
+      "text": "Unsupported measured savings corrected",
+      "passed": true,
+      "evidence": "Unsupported measured claim disavowed."
+    },
+    {
+      "text": "Unknown usage not zero; assumptions and oversight explicit",
+      "passed": false,
+      "evidence": "Assumed costs labeled, but 18 assisted hours have no explicit oversight/review inclusion."
+    },
+    {
+      "text": "Negative savings retained; alignment not forced",
+      "passed": true,
+      "evidence": "Shows 2300 higher cost and does not invent agency alignment."
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "total": 4,
+    "pass_rate": 0.5
+  }
+}

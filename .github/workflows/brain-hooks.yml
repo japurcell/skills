@@ -12,6 +12,7 @@ on:
       - '.codex/hooks/**'
       - 'scripts/test-brain-hooks.py'
       - 'scripts/generate-hooks.py'
+      - 'skills/default/brain-install/**'
       - '.github/workflows/brain-hooks.yml'
   pull_request:
     paths: *brain_hook_paths
@@ -40,3 +41,5 @@ jobs:
         run: python scripts/generate-hooks.py --check
       - name: Exercise copied standalone scripts
         run: python scripts/test-brain-hooks.py
+      - name: Exercise portable brain installation
+        run: python -m unittest discover -s skills/default/brain-install/tests -p "test_*.py"

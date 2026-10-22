@@ -1,0 +1,25 @@
+{
+  "expectations": [
+    {
+      "text": "No report created",
+      "passed": true,
+      "evidence": "Explicit non-generation response exists; no report."
+    },
+    {
+      "text": "Identifies acceptance failure and pending signoff",
+      "passed": true,
+      "evidence": "Names failing export E2E test and pending signoff."
+    },
+    {
+      "text": "Does not change plan or implementation",
+      "passed": true,
+      "evidence": "Transcript and response record no plan or implementation changes."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Existing file updated without duplicate; owner note preserved",
+      "passed": true,
+      "evidence": "Correct plans/internal path; exact owner note preserved."
+    },
+    {
+      "text": "Unsupported measured savings corrected",
+      "passed": true,
+      "evidence": "Withdraws unsupported 10000 measured claim."
+    },
+    {
+      "text": "Unknown usage not zero; assumptions and oversight explicit",
+      "passed": true,
+      "evidence": "Actual costs unknown, illustrative inputs labeled; oversight included in evidence requirements."
+    },
+    {
+      "text": "Negative savings retained; alignment not forced",
+      "passed": true,
+      "evidence": "Conservative result is -900; indirect alignment explicitly unverified."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "total": 4,
+    "pass_rate": 1.0
+  }
+}
