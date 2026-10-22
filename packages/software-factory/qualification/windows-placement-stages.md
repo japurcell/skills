@@ -36,3 +36,7 @@ The parser now catches only JSON parsing failure and refuses storage with the fi
 After the source edit, focused placement passed 3/3 and the affected store group passed 30/30. Strict source and qualification TypeScript checks and the package build passed. The extracted PowerShell probe parsed and its unchanged embedded C# compiled with local PowerShell 7 `Add-Type`. These checks validate the local process seam and source, not native Windows execution or delivery of stage markers on Windows PowerShell 5.1. The retained Windows run and required integrated Windows qualification remain as described above.
 
 API references: [Node 24 `spawnSync` result and timeout](https://r2.nodejs.org/docs/latest-v24.x/api/child_process.html#child_processspawnsynccommand-args-options), [Windows PowerShell 5.1 `Add-Type`](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.utility/add-type?view=powershell-5.1), and [.NET Framework `Console.Error`](https://learn.microsoft.com/en-us/dotnet/api/system.console.error?view=netframework-4.8.1).
+
+## Reviewed integration evidence
+
+Independent final review approves `04906de5`; rebasing onto the current base preserves all three owned files exactly, producing `c7256a0f`/`934a581c`. Integrated at `da260785`, pinned Node 24.22.1 strict checks/build and the 30-case composed storage/placement group pass in 2.269 seconds (`/tmp/factory-placement-stage-base30.log`). Windows stage delivery and native performance remain pending the intentional hosted experiment.
