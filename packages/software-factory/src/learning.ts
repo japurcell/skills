@@ -16,7 +16,7 @@ export interface SourceHistoryGateway {
   event(cursor: string): Promise<{ cursor: string; kind: string; data: object } | null>;
   attempt(attemptId: string): Promise<{
     id: string; invocationId: string; operationKey: string; kind: string; outcome: string | null;
-    agent: { inputsCaptureId: string; resultCaptureId: string; validator: string | null } | null;
+    agent: { inputsCaptureId: string; resultCaptureId: string; validatedResultCaptureId?: string; validator: string | null } | null;
   }>;
 }
 
@@ -56,7 +56,9 @@ export function sourceHistoryGateway(store: RepositoryStore, track: <T>(action: 
       return { id: attempt.id, invocationId: attempt.invocationId, operationKey: attempt.operationKey,
         kind: attempt.kind, outcome: attempt.outcome,
         agent: attempt.agent ? { inputsCaptureId: attempt.agent.inputsCaptureId,
-          resultCaptureId: attempt.agent.resultCaptureId, validator: attempt.agent.validator } : null };
+          resultCaptureId: attempt.agent.resultCaptureId,
+          ...(attempt.agent.validatedResultCaptureId ? { validatedResultCaptureId: attempt.agent.validatedResultCaptureId } : {}),
+          validator: attempt.agent.validator } : null };
     }),
   });
 }

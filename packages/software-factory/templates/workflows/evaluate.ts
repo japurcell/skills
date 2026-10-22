@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { constants } from 'node:fs';
 import { lstat, mkdir, mkdtemp, open, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import type { PayloadValidator, WorkflowContext } from '@local/software-factory';
 import { candidateFingerprint } from './change.js';
 
@@ -14,7 +15,8 @@ type Objective = { attemptId: string; exitCode: number | null; cleanup: string }
 type Side = { objective: Objective[]; review: Review & { attemptId: string; resultCaptureId: string; inputsCaptureId: string | null;
   effectivePermissions: string | null; effectiveProfile: string | null } };
 type CaseResult = { key: string; criteria: string; sourceSuggestion?: string; settings: { argv: string[]; cwd: string; timeoutMs: number; repetitions: 2 }; baseline: Side; candidate: Side };
-type Limitation = { kind: string; reference?: string };
+type ResultEvidence = { attemptId: string; rawCaptureId: string; validatedCaptureId: string };
+type Limitation = { kind: string; reference?: string; reportCaptureId?: string; reportSha256?: string; resultEvidence?: ResultEvidence };
 
 const MAX_CASES = 3, MAX_CAPTURE_BYTES = 131072, MAX_REPORT_BYTES = 131072;
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
@@ -106,10 +108,12 @@ async function reviewSettings(context: WorkflowContext, operationKey: string, at
     effectiveProfile: typeof parsed.inputs.profile === 'string' ? parsed.inputs.profile : null };
 }
 
-async function proposal(context: WorkflowContext, extraction: Extraction): Promise<{ reportCaptureId: string; reportSha256: string; target: { scope: string; path: string }; candidateCapture?: { invocationId: string; captureId: string }; suggestedCases: string[] } | Limitation> {
+async function proposal(context: WorkflowContext, extraction: Extraction): Promise<{ reportCaptureId: string; reportSha256: string;
+  resultEvidence: ResultEvidence;
+  target: { scope: string; path: string }; candidateCapture?: { invocationId: string; captureId: string }; suggestedCases: string[] } | Limitation> {
   let afterCapture = 0, more = false;
   const reports: string[] = [];
-  const captures = new Map<string, { attemptId: string | null; state: string }>();
+  const captures = new Map<string, { attemptId: string | null; channel: string | null; state: string }>();
   let workflow: string | null = null;
   for (let pageIndex = 0; pageIndex < 4; pageIndex++) {
     const page = await context.sourceHistory.read(extraction.invocationId, 0, afterCapture);
@@ -141,7 +145,8 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
   if (!object(parsed) || parsed.version !== 1 || !Array.isArray(parsed.suppliedSources) || !Array.isArray(parsed.examinedSources)
     || parsed.suppliedSources.length < 1 || parsed.suppliedSources.length > 6
     || parsed.examinedSources.length !== parsed.suppliedSources.length || !Array.isArray(parsed.captureLimitations)
-    || !named(parsed.proposalResultCaptureId) || !Array.isArray(parsed.proposals))
+    || !named(parsed.proposalResultCaptureId) || !named(parsed.proposalValidatedResultCaptureId)
+    || !Array.isArray(parsed.proposals))
     return { kind: 'extraction_report_invalid', reference: extraction.invocationId };
   const supplied = new Set<string>();
   for (const source of parsed.suppliedSources) {
@@ -168,6 +173,46 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
     || attempt.outcome !== 'succeeded' || attempt.agent?.resultCaptureId !== parsed.proposalResultCaptureId
     || attempt.agent.validator !== 'learning-extraction-v1')
     return { kind: 'extraction_result_attempt_unverified', reference: extraction.invocationId };
+  const validatedId = parsed.proposalValidatedResultCaptureId as string;
+  const reportSha256 = hash(report);
+  const resultEvidence = { attemptId: attempt.id, rawCaptureId: parsed.proposalResultCaptureId as string, validatedCaptureId: validatedId };
+  const inconclusive = (kind: string): Limitation => ({ kind, reference: `${extraction.invocationId}:${validatedId}`,
+    reportCaptureId: reportId, reportSha256, resultEvidence });
+  const validatedCapture = captures.get(validatedId);
+  if (!validatedCapture || validatedCapture.state !== 'complete')
+    return inconclusive('extraction_validated_result_missing_or_partial');
+  if (validatedCapture.channel !== 'validated-result' || validatedCapture.attemptId !== attempt.id
+    || attempt.agent.validatedResultCaptureId !== validatedId)
+    return inconclusive('extraction_validated_result_unverified');
+  let resultText = '', resultAfter = 0, resultMore = true;
+  for (let pageIndex = 0; pageIndex < 8 && resultMore; pageIndex++) {
+    let detail;
+    try { detail = await context.sourceHistory.capture(extraction.invocationId, validatedId, resultAfter, 32768); }
+    catch (error) {
+      if (error instanceof Error && error.message === 'capture does not belong to selected invocation')
+        return inconclusive('extraction_validated_result_missing_or_partial');
+      throw error;
+    }
+    if (detail.state !== 'complete')
+      return inconclusive('extraction_validated_result_missing_or_partial');
+    if (detail.channel !== 'validated-result') return inconclusive('extraction_validated_result_unverified');
+    for (const chunk of detail.chunks) resultText += chunk.text;
+    if (Buffer.byteLength(resultText) > MAX_CAPTURE_BYTES)
+      return inconclusive('extraction_validated_result_byte_limit');
+    if (detail.hasMore && detail.nextSequence === resultAfter)
+      return inconclusive('extraction_validated_result_unexamined');
+    resultAfter = detail.nextSequence; resultMore = detail.hasMore;
+  }
+  if (resultMore) return inconclusive('extraction_validated_result_unexamined');
+  let result: unknown;
+  try { result = JSON.parse(resultText); } catch {
+    return inconclusive('extraction_validated_result_invalid');
+  }
+  if (!object(result) || !keys(result, ['kind', 'payload']) || result.kind !== 'result'
+    || !object(result.payload) || !Array.isArray(result.payload.proposals))
+    return inconclusive('extraction_validated_result_invalid');
+  if (!isDeepStrictEqual(result.payload.proposals, parsed.proposals))
+    return inconclusive('extraction_proposals_mismatch');
   const selected = parsed.proposals.filter(item => object(item) && item.key === extraction.proposalKey);
   if (selected.length !== 1) throw new Error('evaluation proposal key is missing or ambiguous in selected extraction');
   const item = selected[0] as Record<string, unknown>;
@@ -191,7 +236,8 @@ async function proposal(context: WorkflowContext, extraction: Extraction): Promi
   if (!Array.isArray(item.suggestedCases) || item.suggestedCases.length < 1 || item.suggestedCases.length > 12
     || !item.suggestedCases.every(value => named(value, 1024)))
     throw new Error('evaluation proposal suggested cases are invalid');
-  return { reportCaptureId: reportId, reportSha256: hash(report), target: item.target as { scope: string; path: string },
+  return { reportCaptureId: reportId, reportSha256, resultEvidence,
+    target: item.target as { scope: string; path: string },
     ...(capture ? { candidateCapture: capture as { invocationId: string; captureId: string } } : {}),
     suggestedCases: item.suggestedCases as string[] };
 }
@@ -250,7 +296,7 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
   const coveredSuggestions = new Set(input.cases.map(item => item.sourceSuggestion).filter((item): item is string => item !== undefined));
   if ('suggestedCases' in selected && [...coveredSuggestions].some(item => !selected.suggestedCases.includes(item)))
     throw new Error('evaluation case references a suggestion foreign to selected proposal');
-  if ('kind' in selected) limitations.push(selected);
+  if ('kind' in selected) limitations.push({ kind: selected.kind, ...(selected.reference ? { reference: selected.reference } : {}) });
   else if (selected.target.scope !== 'repository') limitations.push({ kind: 'unsupported_target_scope', reference: selected.target.scope });
   else if (!selected.candidateCapture) limitations.push({ kind: 'diff_only_candidate_requires_exact_materialization', reference: input.extraction.proposalKey });
   else if (selected.candidateCapture.invocationId !== input.candidate.invocationId || selected.candidateCapture.captureId !== input.candidate.captureId)
@@ -262,7 +308,8 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
     limitations.push({ kind: 'identical_variants' });
   if (limitations.length || !('target' in selected) || baseline.text === undefined || candidate.text === undefined)
     return { version: 1, suppliedReferences, target: 'target' in selected ? selected.target : null,
-      extractionReport: 'target' in selected ? { captureId: selected.reportCaptureId, sha256: selected.reportSha256 } : null,
+      extractionReport: selected.reportCaptureId ? { captureId: selected.reportCaptureId, sha256: selected.reportSha256 } : null,
+      extractionResult: selected.resultEvidence ?? null,
       proposalSuggestedCases: 'target' in selected ? selected.suggestedCases : [], settings, cases, limitations, contraryCases: [], assessment: 'inconclusive' };
 
   for (const suggestion of selected.suggestedCases)
@@ -337,6 +384,7 @@ export async function run(context: WorkflowContext, raw: Record<string, unknown>
   const judged = assess(cases, limitations);
   return { version: 1, suppliedReferences, target: selected.target,
     extractionReport: { captureId: selected.reportCaptureId, sha256: selected.reportSha256 }, proposalSuggestedCases: selected.suggestedCases,
+    extractionResult: selected.resultEvidence,
     resolved: { baselineSha256: hash(baseline.text), candidateSha256: hash(candidate.text) },
     settings, cases, limitations, ...judged };
 }

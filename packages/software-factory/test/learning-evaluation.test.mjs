@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { initializeRepositoryStore, openRepositoryStore } from '../dist/store.js';
@@ -11,13 +12,20 @@ import { createRepository } from './fixtures/repository.mjs';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sha = value => createHash('sha256').update(value).digest('hex');
 
-async function fixture() {
+async function fixture({ alteredReport = false } = {}) {
   const repo = createRepository();
   mkdirSync(join(repo.path, '.factory/workflows'), { recursive: true });
   writeFileSync(join(repo.path, '.factory/package.json'), '{"type":"module"}');
   writeFileSync(join(repo.path, '.factory/agents.json'), JSON.stringify({ defaults: { harness: 'fake', permissions: 'read-only', skillDelivery: 'instructions', prompt: 'default', skills: [] } }));
   cpSync(join(root, 'templates/workflows/evaluate.ts'), join(repo.path, '.factory/workflows/evaluate.ts'));
   cpSync(join(root, 'templates/workflows/learn.ts'), join(repo.path, '.factory/workflows/learn.ts'));
+  if (alteredReport) {
+    const path = join(repo.path, '.factory/workflows/learn.ts');
+    const original = readFileSync(path, 'utf8');
+    assert.ok(original.includes('proposals: answer.value.proposals,'));
+    writeFileSync(path, original.replace('proposals: answer.value.proposals,',
+      'proposals: answer.value.proposals.map(proposal => ({ ...proposal, candidateCapture: { ...proposal.candidateCapture!, captureId: examinedSources[0]!.captureIds.at(-2)! } })), '));
+  }
   cpSync(join(root, 'templates/workflows/change.ts'), join(repo.path, '.factory/workflows/change.ts'));
   repo.git(['add', '.factory']);
   repo.git(['commit', '-m', 'Install disposable evaluation fixtures', '--only', '.factory']);
@@ -46,6 +54,10 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       await store.appendCapture({ id: baselineCapture.id, chunks: [{ sequence: 1, text: baseline }], state: baselineState });
       const sourceCandidateCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
       await store.appendCapture({ id: sourceCandidateCapture.id, chunks: [{ sequence: 1, text: candidate }], state: candidateState });
+      if (alteredReport) {
+        const actualCandidateCapture = await store.createCapture({ invocationId: source.id, channel: 'event' });
+        await store.appendCapture({ id: actualCandidateCapture.id, chunks: [{ sequence: 1, text: candidate }], state: 'complete' });
+      }
       await store.finalizeInvocation({ id: source.id, outcome: 'succeeded', cleanup: 'complete', claimId: source.claim.id, token: source.claim.token });
       if (reportState === 'complete' && !duplicateReport && !forgedReport && (candidateState === 'complete' || proposalKind === 'diff')) {
         const extracted = invoke({ version: 1, sources: [{ invocationId: source.id }] },
@@ -69,7 +81,8 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
       const reportText = JSON.stringify(forgedReport === 'shaped'
         ? { version: 1, suppliedSources: [{ invocationId: source.id }],
           examinedSources: [{ invocationId: source.id, outcome: 'succeeded', attemptIds: [], eventCursors: [], captureIds: [baselineCapture.id] }],
-          captureLimitations: [], proposalResultCaptureId: 'missing-result-capture', proposals: [proposal] }
+          captureLimitations: [], proposalResultCaptureId: 'missing-result-capture',
+          proposalValidatedResultCaptureId: 'missing-validated-result-capture', proposals: [proposal] }
         : { version: 1, suppliedSources: [{ invocationId: source.id }], proposals: [proposal] });
       await store.appendCapture({ id: resultCapture.id, chunks: [{ sequence: 1, text: reportText }], state: reportState });
       if (duplicateReport) {
@@ -88,7 +101,28 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
     return { ...result, saved: result.stdout.trim() ? JSON.parse(result.stdout) : undefined };
   };
   const report = id => { const store = openRepositoryStore(common); try { const capture = store.readHistory(id, { limit: 100 }).captures.find(c => c.channel === 'report'); assert.ok(capture); return JSON.parse(capture.chunks.map(c => c.text).join('')); } finally { store.close(); } };
-  return { ...repo, save, invoke, report, launchLog, common };
+  const damageValidated = (saved, damage) => {
+    const captureId = report(saved.extractionId).proposalValidatedResultCaptureId;
+    const database = new DatabaseSync(join(common, 'factory/history.sqlite'));
+    try {
+      if (damage === 'missing') {
+        database.prepare('DELETE FROM capture_chunks WHERE capture_id=?').run(captureId);
+        database.prepare('DELETE FROM captures WHERE id=?').run(captureId);
+      } else if (damage === 'partial' || damage === 'pruned') {
+        database.prepare('UPDATE captures SET state=? WHERE id=?').run(damage, captureId);
+      } else if (damage === 'foreign-attempt') {
+        database.prepare('UPDATE captures SET attempt_id=NULL WHERE id=?').run(captureId);
+      } else {
+        database.prepare('DELETE FROM capture_chunks WHERE capture_id=?').run(captureId);
+        const chunks = damage === 'oversize' ? Array.from({ length: 10 }, () => 'x'.repeat(15000))
+          : [damage === 'unreadable' ? 'x'.repeat(32768) : '{invalid'];
+        for (const [index, text] of chunks.entries())
+          database.prepare('INSERT INTO capture_chunks(capture_id,sequence,text) VALUES (?,?,?)').run(captureId, index + 1, text);
+        database.prepare('UPDATE captures SET sequence=? WHERE id=?').run(chunks.length, captureId);
+      }
+    } finally { database.close(); }
+  };
+  return { ...repo, save, invoke, report, damageValidated, launchLog, common };
 }
 
 function evaluation(saved, overrides = {}) {
@@ -108,6 +142,8 @@ test('explicit evaluation compares captured bytes with identical command cases, 
     assert.deepEqual(report.suppliedReferences, { extraction: { invocationId: saved.extractionId, proposalKey: 'improve' }, baseline: saved.baselineRef, candidate: saved.candidateRef });
     assert.equal(report.extractionReport.captureId, saved.reportCaptureId);
     assert.match(report.extractionReport.sha256, /^[0-9a-f]{64}$/);
+    assert.equal(report.extractionResult.rawCaptureId, repo.report(saved.extractionId).proposalResultCaptureId);
+    assert.equal(report.extractionResult.validatedCaptureId, repo.report(saved.extractionId).proposalValidatedResultCaptureId);
     assert.deepEqual(report.settings.review, { profile: null, purpose: 'review', requestedPermissions: 'read-only', reuse: false });
     assert.equal(report.settings.commandRequired, false);
     assert.deepEqual(report.cases[0].baseline.objective.map(item => item.exitCode), [1, 1]);
@@ -126,6 +162,8 @@ test('explicit evaluation compares captured bytes with identical command cases, 
       const extractAttempt = extraction.attempts.find(attempt => attempt.operationKey === 'learn/extract');
       assert.equal(extractAttempt.outcome, 'succeeded');
       assert.equal(extractAttempt.agent.resultCaptureId, repo.report(saved.extractionId).proposalResultCaptureId);
+      assert.equal(extractAttempt.agent.validatedResultCaptureId, report.extractionResult.validatedCaptureId);
+      assert.equal(store.readInvocationCapture({ invocationId: saved.extractionId, id: report.extractionResult.validatedCaptureId }).channel, 'validated-result');
       assert.equal(store.readInvocationCapture({ invocationId: saved.baselineRef.invocationId, id: saved.baselineRef.captureId }).chunks[0].text, 'baseline\n');
       assert.equal(store.readInvocationCapture({ invocationId: saved.candidateRef.invocationId, id: saved.candidateRef.captureId }).chunks[0].text, 'candidate\n');
     } finally { store.close(); }
@@ -136,6 +174,48 @@ test('explicit evaluation compares captured bytes with identical command cases, 
     assert.equal(launches[0].stagedCwd, launches[1].stagedCwd);
     assert.equal(report.cases[0].settings.cwd, launches[0].stagedCwd);
     assert.equal(existsSync(report.cases[0].settings.cwd), false);
+  } finally { repo.dispose(); }
+});
+
+test('genuine extraction followed by an altered candidate in its workflow report cannot certify improvement', async () => {
+  const repo = await fixture({ alteredReport: true });
+  try {
+    const saved = await repo.save();
+    assert.equal(saved.proposal.candidateCapture.captureId, saved.candidateRef.captureId);
+    const outcome = repo.invoke(evaluation(saved));
+    assert.equal(outcome.status, 0, outcome.stdout + outcome.stderr);
+    const report = repo.report(outcome.saved.invocationId);
+    assert.equal(report.assessment, 'inconclusive');
+    assert.ok(report.limitations.some(item => item.kind === 'extraction_proposals_mismatch'));
+    assert.deepEqual(report.cases, []);
+    assert.equal(report.extractionReport.captureId, saved.reportCaptureId);
+    assert.equal(report.extractionResult.rawCaptureId, repo.report(saved.extractionId).proposalResultCaptureId);
+    assert.equal(report.extractionResult.validatedCaptureId, repo.report(saved.extractionId).proposalValidatedResultCaptureId);
+  } finally { repo.dispose(); }
+});
+
+test('missing, pruned, partial, oversized, unreadable, invalid and foreign normalized evidence cannot certify improvement', async () => {
+  const repo = await fixture();
+  try {
+    for (const [damage, expected] of [
+      ['missing', 'extraction_validated_result_missing_or_partial'],
+      ['pruned', 'extraction_validated_result_missing_or_partial'],
+      ['partial', 'extraction_validated_result_missing_or_partial'],
+      ['oversize', 'extraction_validated_result_byte_limit'],
+      ['unreadable', 'extraction_validated_result_unexamined'],
+      ['invalid', 'extraction_validated_result_invalid'],
+      ['foreign-attempt', 'extraction_validated_result_unverified'],
+    ]) {
+      const saved = await repo.save();
+      repo.damageValidated(saved, damage);
+      const outcome = repo.invoke(evaluation(saved));
+      assert.equal(outcome.status, 0, `${damage}: ${outcome.stdout}${outcome.stderr}`);
+      const result = repo.report(outcome.saved.invocationId);
+      assert.equal(result.assessment, 'inconclusive', damage);
+      assert.deepEqual(result.cases, [], damage);
+      assert.ok(result.limitations.some(item => item.kind === expected), `${damage}: ${JSON.stringify(result.limitations)}`);
+    }
+    assert.equal(existsSync(repo.launchLog), false);
   } finally { repo.dispose(); }
 });
 
