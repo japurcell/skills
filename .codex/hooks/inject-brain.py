@@ -598,7 +598,7 @@ def main():
                     if arguments.provider == "codex":
                         specific["hookEventName"] = "SessionStart"
                     result = {"hookSpecificOutput": specific}
-                if event is not None:
+                if arguments.provider == "copilot" or event is not None:
                     message = "inject-brain: pass; index loaded"
                     if arguments.provider == "copilot":
                         sys.stdout.buffer.write((json.dumps({"type": "progress", "message": message}) + "\n").encode("utf-8"))
