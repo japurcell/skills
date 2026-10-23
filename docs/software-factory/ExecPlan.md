@@ -86,7 +86,7 @@ Verified reminder baseline `6ed1212` includes independently approved reminders a
 - [x] (2026-10-22) [milestone-10] T17-Python-prerequisite: Reviewed exact CI interpreter wiring0f1d2306 passes public4checks and native3.13.14 prerequisite on all3platforms in39869638499; full Windows foundation remains failed.
 - [x] (2026-10-22) [milestone-10] T17-Windows-image-diagnostic: Approved source-identical1d718a88 and19parentchecks; native39869638463 proves name-only/same/within-creation-window root rejection only, no identity acceptance.
 - [ ] [milestone-10] T17-Windows-held-fixture: Verify controlled pin file and independently held live root/child objects, preserving existing ETW acceptance; full review and actual Windows proof required.
-- [ ] [milestone-10] T17-Windows-event-binding: After held-fixture acceptance, associate ETW keys/lifetimes and OS-proven pinned main-image paths; all six real positive events and finalized health required.
+- [ ] [milestone-10] T17-Windows-event-binding: Native held fixture and foreign-child rejection now pass at8664120/run39879902836. Root implements ETW keys/lifetimes and complete OS-returned pinned main-image paths; all six real positive events, finalized health and deferred review remain required.
 - [ ] [milestone-10] T17: Complete native support matrix and integrated release acceptance.
 - [ ] [milestone-10] T17-desktop: Run the deferred live desktop notification qualification after all implementation tasks.
 - [ ] [milestone-10] Verify packaged behavior and repository regressions; record remaining unsupported combinations.

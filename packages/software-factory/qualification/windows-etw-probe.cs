@@ -244,6 +244,10 @@ public static class WindowsEtwProbe
     [DllImport("kernel32.dll", EntryPoint = "GetFileInformationByHandleEx", SetLastError = true)]
     private static extern bool GetFileInformationByHandleEx(IntPtr file, uint infoClass,
         out FileIdInformation info, uint size);
+    [DllImport("kernel32.dll", EntryPoint = "GetFinalPathNameByHandleW", CharSet = CharSet.Unicode,
+        SetLastError = true)]
+    private static extern uint GetFinalPathNameByHandle(IntPtr file, StringBuilder path, uint length,
+        uint flags);
     [DllImport("kernel32.dll", EntryPoint = "CreateToolhelp32Snapshot", SetLastError = true)]
     private static extern IntPtr CreateToolhelp32Snapshot(uint flags, uint processId);
     [DllImport("kernel32.dll", EntryPoint = "Process32FirstW", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -268,6 +272,9 @@ public static class WindowsEtwProbe
     private static string DecodeDiagnostic;
     private static string PinnedNode;
     private static long RootCreated;
+    private static long RootExited, ChildCreated, ChildExited;
+    private static uint RootParent;
+    private static string PinnedDosPath, PinnedNtPath;
     private static int RootPid, ChildPid;
     private static int CallbackCount;
     private static int ProcessRundown, ImageRundown;
@@ -587,7 +594,10 @@ public static class WindowsEtwProbe
                 if (opcode == 1)
                 {
                     string image = TextProperty(address, "ImageFileName", false, target);
-                    if (!String.Equals(image, PinnedNode, StringComparison.OrdinalIgnoreCase))
+                    // A process name supplies consistency only. Held handles and event
+                    // keys/lifetimes establish identity before any EVENT is committed.
+                    if (!(IsWindowsName(image) && ProcessImageBasename(image, PinnedNode) == "same") &&
+                        !MatchesPinnedPath(image))
                         throw RejectProcessImageMismatch(image, target, record.Header.TimeStamp);
                 }
                 KnownEvents.Add(new KnownEvent { Kind = opcode == 1 ? "process-start" : "process-end",
@@ -601,7 +611,7 @@ public static class WindowsEtwProbe
                 if (processId != RootPid && processId != ChildPid) return;
                 target = processId == RootPid ? "root" : "child";
                 string image = TextProperty(address, "FileName", true, target);
-                if (String.Equals(image, PinnedNode, StringComparison.OrdinalIgnoreCase))
+                if (MatchesPinnedPath(image))
                     KnownEvents.Add(new KnownEvent { Kind = "image-load", Pid = (int)processId,
                         Time = record.Header.TimeStamp });
                 // A basename match only rejects a foreign Node image; it never establishes identity.
@@ -643,15 +653,26 @@ public static class WindowsEtwProbe
         if (rootStart.Key == childStart.Key) throw RejectDecode("identity", "identity-key", "none");
         if (childStart.Parent != RootPid || childEnd.Parent != RootPid)
             throw RejectDecode("identity", "parent-mismatch", "child");
-        if (rootStart.Parent != rootEnd.Parent)
+        if (rootStart.Parent != RootParent || rootEnd.Parent != RootParent)
             throw RejectDecode("identity", "parent-mismatch", "root");
         if (rootStart.ExitStatus != 0 || rootEnd.ExitStatus != 0)
             throw RejectDecode("identity", "exit-status", "root");
         if (childEnd.ExitStatus != 0) throw RejectDecode("identity", "exit-status", "child");
-        if (rootStart.Time < RootCreated - 50000000L || rootStart.Time > RootCreated + 50000000L)
-            throw RejectDecode("identity", "creation-time", "root");
+        foreach (KnownEvent item in KnownEvents)
+        {
+            long created = item.Pid == RootPid ? RootCreated : ChildCreated;
+            long exited = item.Pid == RootPid ? RootExited : ChildExited;
+            if (!ChildOwned || PinnedFile == null || created <= 0 || exited <= created ||
+                item.Time < created || item.Time > exited)
+                throw RejectDecode("identity", "creation-time", item.Pid == RootPid ? "root" : "child");
+        }
         if (!(rootStart.Time < childStart.Time && childStart.Time < childEnd.Time &&
               childEnd.Time < rootEnd.Time)) throw RejectDecode("identity", "process-order", "none");
+        // Reopen only the known local pin, never an event-controlled path.
+        // The original read-only sharing handle remains held throughout decode.
+        using (var pin = new FileStream(PinnedNode, FileMode.Open, FileAccess.Read, FileShare.Read))
+            if (!SameFile(PinnedFileId, FileIdentity(pin.SafeFileHandle.DangerousGetHandle())))
+                throw RejectDecode("callback", "image-mismatch", "none");
         foreach (KnownEvent item in KnownEvents)
         {
             if (item.Kind != "image-load") continue;
@@ -692,6 +713,23 @@ public static class WindowsEtwProbe
         return true;
     }
 
+    private static string FinalPinnedPath(uint volumeForm)
+    {
+        var path = new StringBuilder(32768);
+        uint length = GetFinalPathNameByHandle(PinnedFile.SafeFileHandle.DangerousGetHandle(), path,
+            (uint)path.Capacity, volumeForm);
+        if (length == 0 || length >= path.Capacity)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "held file path unavailable");
+        return path.ToString();
+    }
+
+    private static bool MatchesPinnedPath(string path)
+    {
+        return !String.IsNullOrEmpty(path) &&
+            (String.Equals(path, PinnedDosPath, StringComparison.OrdinalIgnoreCase) ||
+             String.Equals(path, PinnedNtPath, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static void HoldPinnedFile(string node, string expectedDigest, Stopwatch watch)
     {
         if (expectedDigest == null || expectedDigest.Length != 64)
@@ -710,6 +748,9 @@ public static class WindowsEtwProbe
         }
         PinnedFile.Position = 0;
         PinnedFileId = FileIdentity(PinnedFile.SafeFileHandle.DangerousGetHandle());
+        // These complete spellings come from the held file, without prefix conversion.
+        PinnedDosPath = FinalPinnedPath(0); // FILE_NAME_NORMALIZED | VOLUME_NAME_DOS
+        PinnedNtPath = FinalPinnedPath(2); // FILE_NAME_NORMALIZED | VOLUME_NAME_NT
         Remaining(watch, MaxObservationMs);
     }
 
@@ -828,6 +869,7 @@ public static class WindowsEtwProbe
         FixtureStep = "root-image";
         VerifyProcessImage(RootProcess.Handle, node);
         RootCreated = rootCreated.Ticks;
+        RootParent = ParentFromSnapshot((uint)RootPid);
         Line("ROOT", RootPid, RootCreated, "pinned-node");
         FixtureStep = "pid-line";
         int printedPid = ReadChildPid(RootProcess, watch);
@@ -854,6 +896,7 @@ public static class WindowsEtwProbe
             WaitForSingleObject(ChildHandle, 0) != WaitTimeout)
             throw new InvalidDataException("fixture child is not live child of held root");
         ChildPid = printedPid;
+        ChildCreated = childCreated.Ticks;
         ChildOwned = true;
         FixtureStep = "release";
         RootProcess.StandardInput.BaseStream.WriteByte(0x52);
@@ -875,6 +918,8 @@ public static class WindowsEtwProbe
             RootProcess.StandardOutput.BaseStream.ReadByte() != -1 ||
             RootProcess.StandardError.BaseStream.ReadByte() != -1)
             throw new InvalidDataException("held fixture exit or output invalid");
+        RootExited = rootExited.Ticks;
+        ChildExited = childExited.Ticks;
         FixtureStep = "complete";
         Line("CHILD", ChildPid);
         Line("HELD", "root", 1, 1, 1);
