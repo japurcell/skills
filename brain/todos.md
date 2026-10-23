@@ -11,7 +11,7 @@
 
 ## Investigations
 
-15. [ ] Make a minimal change to `execplan-implement` so needed code review happens outside its task loop; long-running plans currently bog down in implement-review-fix loops.
+15. [ ] Make a minimal change to `execplan-implement` so needed code review happens outside its task loop; long-running plans currently bog down in implement-review-fix loops. Also move worktree cleanup to the end (see pocock's implement-spec and chief of staff).
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
 3. [ ] Evaluate correction capture, deduplication, provenance, staleness, and replay for agent memory; distinguish measured improvements from the [source video's proposals](https://youtu.be/mAKUL12h1n8?si=jo_E1lSoFM9btLqY). Retain the [original investigation context](archive/plans/2026-10-21-legacy-guidance-audit/idea-context.md#investigation-3-agent-memory) when framing the research.
