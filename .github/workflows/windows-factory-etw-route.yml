@@ -1,0 +1,105 @@
+name: Windows factory non-debug ETW route observation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/windows-factory-etw-route.yml
+      - packages/software-factory/qualification/windows-etw-route*
+      - packages/software-factory/qualification/windows-startup-artifacts.mjs
+      - packages/software-factory/qualification/windows-startup-control*
+      - packages/software-factory/qualification/runtime-manifest.json
+      - packages/software-factory/scripts/qualification-bootstrap.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  representative-etw-route:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      FACTORY_TARGET: win32-x64
+      CI: 'true'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout source without credentials
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify exact Node 24.22.1 bootstrap
+        id: bootstrap
+        timeout-minutes: 5
+        env:
+          FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-windows-etw-route-evidence
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & node packages/software-factory/scripts/qualification-bootstrap.mjs *> $null
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route bootstrap failed' }
+      - name: Verify official Git and TypeScript archives
+        id: artifacts
+        timeout-minutes: 5
+        env:
+          WINDOWS_STARTUP_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-route-evidence
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & node packages/software-factory/qualification/windows-startup-artifacts.mjs *> $null
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route artifact preparation failed' }
+      - name: Check public route protocol
+        timeout-minutes: 1
+        run: |
+          & node --test packages/software-factory/qualification/windows-etw-route.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route protocol failed' }
+      - name: Observe seven non-debug pinned Node spawn cases
+        id: observation
+        timeout-minutes: 12
+        env:
+          WINDOWS_ETW_ROUTE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-route-evidence
+        run: |
+          & node packages/software-factory/qualification/windows-etw-route-run.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route observation incomplete' }
+      - name: Reject forged process attribution and incorrect native pin
+        if: ${{ !cancelled() && steps.artifacts.outcome == 'success' }}
+        timeout-minutes: 2
+        env:
+          WINDOWS_ETW_ROUTE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-route-evidence
+        run: |
+          & node packages/software-factory/qualification/windows-etw-route-native.qualification.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route native controls failed' }
+      - name: Remove only the seven known raw ETL paths
+        id: remove_etl
+        if: always()
+        timeout-minutes: 1
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:RUNNER_TEMP 'factory-windows-etw-route-evidence/cases'
+          $cases = @('baseline-git', 'baseline-typescript', 'candidate-git', 'candidate-typescript', 'candidate-nested-cmd', 'candidate-deadline-control', 'candidate-output-control')
+          foreach ($case in $cases) {
+            $etl = Join-Path (Join-Path $root $case) 'trace.etl'
+            if (Test-Path -LiteralPath $etl) { Remove-Item -LiteralPath $etl -Force -ErrorAction Stop }
+          }
+      - name: Reconstruct bounded fixed receipts for upload
+        id: artifact_guard
+        if: always()
+        timeout-minutes: 1
+        env:
+          WINDOWS_ETW_ROUTE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-route-evidence
+        run: |
+          & node packages/software-factory/qualification/windows-etw-route.mjs --prepare-artifacts
+          if ($LASTEXITCODE -ne 0) { throw 'ETW route artifact guard refused' }
+      - name: Retain only sanitized route receipts
+        if: always() && steps.remove_etl.outcome == 'success' && steps.artifact_guard.outcome == 'success'
+        timeout-minutes: 3
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: factory-windows-etw-route-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/factory-windows-etw-route-evidence/upload/qualification.json
+            ${{ runner.temp }}/factory-windows-etw-route-evidence/upload/native.tsv
+          if-no-files-found: error
+          retention-days: 14
