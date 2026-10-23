@@ -664,7 +664,14 @@ public static class WindowsEtwProbe
             long exited = item.Pid == RootPid ? RootExited : ChildExited;
             if (!ChildOwned || PinnedFile == null || created <= 0 || exited <= created ||
                 item.Time < created || item.Time > exited)
-                throw RejectDecode("identity", "creation-time", item.Pid == RootPid ? "root" : "child");
+            {
+                if (DecodeDiagnostic == null)
+                    DecodeDiagnostic = String.Join("\t", new[] { "DIAG", "identity", "held-time",
+                        item.Pid == RootPid ? "root" : "child", item.Kind,
+                        created <= 0 || exited <= created || !ChildOwned || PinnedFile == null ? "unavailable" :
+                        item.Time < created ? "before-creation" : "after-exit" });
+                throw new InvalidDataException("held event lifetime rejected");
+            }
         }
         if (!(rootStart.Time < childStart.Time && childStart.Time < childEnd.Time &&
               childEnd.Time < rootEnd.Time)) throw RejectDecode("identity", "process-order", "none");

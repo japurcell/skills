@@ -299,7 +299,8 @@ test('failed native decode retains one bounded fixed diagnostic without qualifyi
       'DIAG\tcallback\tprocess-image-mismatch\tchild\tname-only\tsame\tunknown',
       'DIAG\tcallback\tother\tnone',
       'DIAG\tkeys\tchanged-key\troot',
-      'DIAG\tidentity\tcreation-time\troot'
+      'DIAG\tidentity\tcreation-time\troot',
+      'DIAG\tidentity\theld-time\tchild\tprocess-end\tafter-exit'
     ]) {
       const evidenceRow = failed.replace(diagnostic, allowed);
       writeFileSync(native, evidenceRow);
