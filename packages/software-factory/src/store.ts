@@ -923,6 +923,48 @@ export class RepositoryStore {
     });
   }
 
+  /** Final first-install publication commits ownership evidence, readiness and exact release together. */
+  async completeFirstInstall(input: { handle: MaintenanceHandle; receiptId: string; receiptSha256: string;
+    selectionDigest: string; manifestSha256: string }) {
+    if (!/^[a-f0-9]{64}$/.test(input.receiptSha256) || !/^[a-f0-9]{64}$/.test(input.selectionDigest)
+      || !/^[a-f0-9]{64}$/.test(input.manifestSha256) || !/^[a-f0-9-]{36}$/i.test(input.receiptId))
+      throw new Error('invalid installed ownership evidence');
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId), recorded = claim.maintenance!;
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token
+        || claim.resourceKey !== input.handle.repositoryId || recorded.kind !== 'install'
+        || recorded.phase !== 'validating' || !recorded.ticketConsumed || !recorded.candidate
+        || recorded.selectionDigest !== input.selectionDigest || recorded.targetReleaseSha256 !== input.manifestSha256)
+        throw new Error('install completion claim/token/selection differs');
+      const repository = this.database.prepare('SELECT id,release,state FROM repository').get();
+      if (repository?.['id'] !== input.handle.repositoryId || repository['state'] !== 'incomplete'
+        || repository['release'] !== recorded.release
+        || this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('install completion repository or sole claim differs');
+      const completion = { version: 1, operationId: recorded.operationId, repositoryId: recorded.repositoryId,
+        claimId: claim.id, selectionDigest: recorded.selectionDigest, manifestSha256: input.manifestSha256,
+        receiptId: input.receiptId, receiptSha256: input.receiptSha256 };
+      this.event('install.completed', completion);
+      this.database.prepare("UPDATE repository SET state='ready' WHERE id=? AND state='incomplete'").run(recorded.repositoryId);
+      this.database.prepare('DELETE FROM owner_claims WHERE id=? AND token=? AND kind=?')
+        .run(claim.id, claim.token, 'maintenance');
+      return completion;
+    });
+  }
+
+  /** Narrow read-only evidence for ready-before-marker-unlink install recovery. */
+  readFirstInstallCompletion(operationId: string) {
+    const rows = this.database.prepare("SELECT data FROM observation_events WHERE kind='install.completed' AND json_extract(data,'$.operationId')=? LIMIT 2")
+      .all(operationId);
+    if (rows.length !== 1) throw new Error('unique installed completion unavailable');
+    const repository = this.database.prepare('SELECT id,state FROM repository').get();
+    if (repository?.['state'] !== 'ready' || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get())
+      throw new Error('installed completion is not ready or claim-free');
+    return { completion: JSON.parse(String(rows[0]!['data'])) as { version: number; operationId: string;
+      repositoryId: string; claimId: string; selectionDigest: string; manifestSha256: string; receiptId: string;
+      receiptSha256: string }, repositoryId: String(repository['id']) };
+  }
+
   repositoryId(): string {
     const row = this.database.prepare('SELECT id FROM repository').get();
     if (!row) throw new Error('repository identity unavailable');

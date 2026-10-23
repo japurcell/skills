@@ -4,7 +4,7 @@ import { closeSync, constants, fstatSync, fsyncSync, lstatSync, mkdirSync, openS
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { currentOwner, inspectOwner } from './native/process.js';
-import { verifyBoundInstallCandidate } from './install-candidate.js';
+import { verifyPublicationLayout } from './install-publication-state.js';
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
 import { openMaintenanceStore, openRepositoryStore } from './store.js';
@@ -142,6 +142,16 @@ function sameBootstrapOperation(marker: BootstrapRecord, claim: Claim) {
     && current.targetReleaseSha256 === original.targetReleaseSha256 && current.targetSchema === original.targetSchema
     && current.stagePath === original.stagePath && JSON.stringify(current.artifactDigests) === JSON.stringify(original.artifactDigests);
 }
+/** Install-owned marker check also works after the exact completion transaction releases its claim. */
+export async function assertInstallBootstrapMarker(repository: string, operationId: string, claimId: string,
+  selectionDigest: string, manifestSha256: string): Promise<{ root: string; common: string; markerClaim: Claim }> {
+  const { root, common } = await repositoryIdentity(repository);
+  const marker = parseMarker(join(common, 'factory', 'bootstrap-incomplete'), root, common);
+  const initial = marker.claim.maintenance!;
+  if (initial.operationId !== operationId || marker.claim.id !== claimId || initial.selectionDigest !== selectionDigest
+    || initial.targetReleaseSha256 !== manifestSha256) throw new Error('install bootstrap operation differs');
+  return { root, common, markerClaim: marker.claim };
+}
 function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceIntent {
   const recorded = claim.maintenance;
   if (!recorded || claim.kind !== 'maintenance' || !UUID.test(claim.id) || !UUID.test(claim.token)
@@ -178,9 +188,7 @@ function verifyInstallCandidate(commonDir: string, claim: Claim, required: boole
     if (required || !absent(path)) throw new Error('install candidate absent or unbound; operation requires inspection');
     return;
   }
-  verifyBoundInstallCandidate(recorded.candidate, { operationId: recorded.operationId,
-    repositoryId: recorded.repositoryId, claimId: claim.id, selectionDigest: recorded.selectionDigest,
-    manifestSha256: recorded.targetReleaseSha256! });
+  verifyPublicationLayout(commonDir, claim);
 }
 function redacted(intent: MaintenanceIntent) {
   const { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,

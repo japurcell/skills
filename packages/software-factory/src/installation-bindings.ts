@@ -135,3 +135,29 @@ export function validateInstallSelection(value: unknown): VerifiedInstallSelecti
     providers: Object.freeze(verifiedProviders),
   }) as VerifiedInstallSelection;
 }
+
+/** Recheck external qualified provider sources after candidate binding and before each install move. */
+export function validateBoundProviderSources(value: unknown): void {
+  const providers = object(value);
+  keys(providers, [], ['codex', 'copilot']);
+  if (providers.codex !== undefined) {
+    const codex = object(providers.codex);
+    keys(codex, ['executable', 'version', 'sha256', 'bytes', 'model', 'reasoning', 'modes']);
+    const executable = canonicalPath(codex.executable, 'file');
+    modes(codex.modes, ['read-only', 'workspace-write']);
+    const measured = checkedHash(executable, MAX_CODEX_EXECUTABLE_BYTES);
+    if (codex.version !== '0.163.0' || codex.sha256 !== CODEX_SHA256 || codex.bytes !== measured.bytes
+      || measured.sha256 !== CODEX_SHA256 || codex.model !== 'gpt-6-luna' || codex.reasoning !== 'low')
+      fail('bound Codex source differs');
+  }
+  if (providers.copilot !== undefined) {
+    const copilot = object(providers.copilot);
+    keys(copilot, ['packageRoot', 'manifestFile', 'version', 'manifestSha256', 'model', 'reasoning', 'modes']);
+    const packageRoot = canonicalPath(copilot.packageRoot, 'directory');
+    const manifestFile = canonicalPath(copilot.manifestFile, 'file');
+    if (JSON.stringify(modes(copilot.modes, ['read-only'])) !== JSON.stringify(['read-only'])
+      || copilot.version !== '1.0.101' || copilot.manifestSha256 !== COPILOT_MANIFEST_SHA256
+      || copilot.model !== 'gpt-6-luna' || copilot.reasoning !== 'low') fail('bound Copilot source differs');
+    validateCopilotPackageArtifact({ packageRoot, manifestFile, manifestSha256: COPILOT_MANIFEST_SHA256 });
+  }
+}

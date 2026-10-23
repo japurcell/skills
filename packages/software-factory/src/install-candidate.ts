@@ -135,15 +135,13 @@ export function writeCandidateReceipt(path: string, receipt: CandidateReceipt): 
   try { fsyncSync(parentFd); } finally { closeSync(parentFd); }
   return createHash('sha256').update(bytes).digest('hex');
 }
-export function verifyBoundInstallCandidate(binding: CandidateBinding, expected: {
+export function readBoundInstallCandidateReceipt(binding: CandidateBinding, expected: {
   operationId: string; repositoryId: string; claimId: string; selectionDigest: string; manifestSha256: string;
 }): CandidateReceipt {
   if (!binding || typeof binding.path !== 'string' || basename(binding.path) !== `install-candidate-${expected.operationId}`
     || resolve(binding.path) !== binding.path || !/^\d+:\d+$/.test(binding.identity)
     || !SHA.test(binding.treeDigest) || !UUID.test(binding.receiptId) || !SHA.test(binding.receiptSha256)) fail('invalid candidate binding');
   if (directoryIdentity(binding.path) !== binding.identity) fail('candidate root identity changed');
-  const rootEntries = readdirSync(binding.path).sort();
-  if (JSON.stringify(rootEntries) !== JSON.stringify(['candidate-receipt.json', 'install', 'toolchain'])) fail('candidate root inventory differs');
   const bytes = readPrivate(join(binding.path, 'candidate-receipt.json'));
   if (createHash('sha256').update(bytes).digest('hex') !== binding.receiptSha256) fail('candidate receipt hash changed');
   const receipt = exact(JSON.parse(bytes.toString('utf8')), ['schema', 'receiptId', 'operationId', 'repositoryId', 'claimId',
@@ -155,6 +153,14 @@ export function verifyBoundInstallCandidate(binding: CandidateBinding, expected:
     || !SHA.test(receipt.nodeArchiveSha256) || !SHA.test(receipt.toolchainLockSha256)
     || !Array.isArray(receipt.entries) || receipt.entries.length > MAX_ENTRIES || !Array.isArray(receipt.omittedLinks)
     || !receipt.providers || typeof receipt.providers !== 'object' || Array.isArray(receipt.providers)) fail('candidate receipt fields differ');
+  return receipt;
+}
+export function verifyBoundInstallCandidate(binding: CandidateBinding, expected: {
+  operationId: string; repositoryId: string; claimId: string; selectionDigest: string; manifestSha256: string;
+}): CandidateReceipt {
+  const receipt = readBoundInstallCandidateReceipt(binding, expected);
+  const rootEntries = readdirSync(binding.path).sort();
+  if (JSON.stringify(rootEntries) !== JSON.stringify(['candidate-receipt.json', 'install', 'toolchain'])) fail('candidate root inventory differs');
   const measured = scanOwnedTree(binding.path, 'candidate', true);
   if (measured.digest !== binding.treeDigest || JSON.stringify(measured.rows) !== JSON.stringify(receipt.entries))
     fail('candidate tree differs from receipt');

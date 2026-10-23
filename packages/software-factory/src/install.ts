@@ -2,11 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { chmodSync, closeSync, constants, fchmodSync, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readSync, readdirSync,
   realpathSync, statSync, writeSync } from 'node:fs';
-import { dirname, join, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, parse, resolve, sep } from 'node:path';
 import { currentOwner } from './native/process.js';
 import { validateInstallSelection, type InstallSelection, type VerifiedInstallSelection } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
-import { beginRepositoryBootstrap, measureMaintenanceStage, type MaintenanceSelection } from './maintenance.js';
+import { beginRepositoryBootstrap, measureMaintenanceStage, prepareMaintenanceHandoff, type MaintenanceSelection } from './maintenance.js';
 import { openMaintenanceStore } from './store.js';
 import { directoryIdentity, scanOwnedTree, verifyBoundInstallCandidate, writeCandidateReceipt,
   type CandidateReceipt, type TreeEntry, type TreeEvidence } from './install-candidate.js';
@@ -27,6 +27,7 @@ interface Request {
 export interface PreparedCandidateReceipt {
   operationId: string; repositoryId: string; claimId: string; stagePath: string; candidateDigest: string;
 }
+export interface PreparedInstallHandoff extends PreparedCandidateReceipt { ticketPath: string; stageDigest: string }
 function fail(message: string): never { throw new Error(`install prepare: ${message}`); }
 function exact(value: unknown, keys: readonly string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== keys.length
@@ -58,10 +59,11 @@ function privateFile(path: string, maximum: number): Buffer {
   } finally { closeSync(fd); }
 }
 function checkedPath(path: unknown, kind: 'file' | 'directory'): string {
-  if (typeof path !== 'string' || path.length > 4096 || !path.startsWith(sep) || resolve(path) !== path)
+  if (typeof path !== 'string' || path.length > 4096 || !isAbsolute(path) || resolve(path) !== path)
     fail('canonical private path required');
-  let current: string = sep;
-  for (const part of path.slice(1).split(sep).filter(Boolean)) {
+  const root = parse(path).root;
+  let current: string = root;
+  for (const part of path.slice(root.length).split(sep).filter(Boolean)) {
     current = join(current, part);
     const info = lstatSync(current);
     if (info.isSymbolicLink() || (current !== path && !info.isDirectory())) fail('linked private path refused');
@@ -174,13 +176,14 @@ function normalizeToolchain(path: string): void {
     const target = join(path, name), info = lstatSync(target);
     if (info.isSymbolicLink() || info.isFile() && info.nlink !== 1) fail('npm created a link');
     if (info.isDirectory()) { normalizeToolchain(target); chmodSync(target, 0o700); const fd = openSync(target, constants.O_RDONLY); try { fsyncSync(fd); } finally { closeSync(fd); } }
-    else if (info.isFile()) { const fd = openSync(target, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0)); try { fchmodSync(fd, 0o600); fsyncSync(fd); } finally { closeSync(fd); } }
+    else if (info.isFile()) { const fd = openSync(target, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+      try { fchmodSync(fd, info.mode & 0o111 ? 0o700 : 0o600); fsyncSync(fd); } finally { closeSync(fd); } }
     else fail('npm created special content');
   }
   chmodSync(path, 0o700);
 }
 /** Internal measured closure seam for the fixed npm and staged self-check commands. */
-export async function runManagedInstallCommand(executable: string, args: string[], cwd: string, env: NodeJS.ProcessEnv): Promise<void> {
+export async function runManagedInstallCommand(executable: string, args: string[], cwd: string, env: NodeJS.ProcessEnv): Promise<string> {
   if (process.platform === 'win32') fail('Windows preparer closure requires native qualification');
   // Give each fixed tool command a distinct POSIX process group. The direct
   // process may exit after a descendant closes its inherited pipes; group
@@ -188,7 +191,9 @@ export async function runManagedInstallCommand(executable: string, args: string[
   // preparer's own group closed before it publishes a public result.
   const child = spawn(executable, args, { cwd, env, detached: true, stdio: ['ignore', 'pipe', 'pipe'], shell: false });
   let output = 0, overflow = false;
-  for (const stream of [child.stdout, child.stderr]) stream.on('data', (chunk: Buffer) => { output += chunk.length; if (output > 64 * 1024) overflow = true; });
+  const stdout: Buffer[] = [];
+  child.stdout.on('data', (chunk: Buffer) => { output += chunk.length; if (output > 64 * 1024) overflow = true; else stdout.push(chunk); });
+  child.stderr.on('data', (chunk: Buffer) => { output += chunk.length; if (output > 64 * 1024) overflow = true; });
   const outcome = await new Promise<{ code: number | null; signal: NodeJS.Signals | null }>((resolveResult, reject) => {
     const timer = setTimeout(() => { if (child.pid) try { process.kill(-child.pid, 'SIGKILL'); } catch { /* closure checked below */ } }, PREPARATION_MS);
     child.once('error', error => { clearTimeout(timer); reject(error); });
@@ -202,6 +207,7 @@ export async function runManagedInstallCommand(executable: string, args: string[
     fail('managed process group remains');
   }
   if (outcome.code !== 0 || outcome.signal || overflow) fail('managed command failed or closure unknown');
+  return Buffer.concat(stdout).toString('utf8');
 }
 function npmEnvironment(root: string): NodeJS.ProcessEnv {
   return { HOME: join(root, 'npm/home'), TMPDIR: join(root, 'npm/home'), PATH: '', LANG: 'C', LC_ALL: 'C', NO_COLOR: '1' };
@@ -221,7 +227,9 @@ function validateToolchain(toolchain: string): void {
 }
 
 /** Authenticated private request to an incomplete, candidate-bound operation. No installed-ready effect. */
-export async function prepareInstallCandidate(requestPath: string): Promise<PreparedCandidateReceipt> {
+async function prepareCandidate(requestPath: string, handoff: false): Promise<PreparedCandidateReceipt>;
+async function prepareCandidate(requestPath: string, handoff: true): Promise<PreparedInstallHandoff>;
+async function prepareCandidate(requestPath: string, handoff: boolean): Promise<PreparedCandidateReceipt | PreparedInstallHandoff> {
   const request = readRequest(requestPath);
   const privateSelection = validateInstallSelection({ bundleRoot: request.snapshot.bundleRoot,
     manifestSha256: request.source.manifestSha256, nodeArchivePath: request.snapshot.nodeArchivePath,
@@ -296,6 +304,15 @@ export async function prepareInstallCandidate(requestPath: string): Promise<Prep
     claimId: handle.claimId, selectionDigest: selection.selectionDigest, manifestSha256: request.source.manifestSha256 });
   const store = openMaintenanceStore(common);
   try { await store.bindInstallCandidate({ handle, candidate: binding, ...stageEvidence }); } finally { store.close(); }
-  return { operationId: handle.operationId, repositoryId: handle.repositoryId, claimId: handle.claimId,
+  const result = { operationId: handle.operationId, repositoryId: handle.repositoryId, claimId: handle.claimId,
     stagePath, candidateDigest: tree.digest };
+  if (handoff) {
+    const ticket = await prepareMaintenanceHandoff(request.repository, handle);
+    return { ...result, ticketPath: ticket.ticketPath, stageDigest: ticket.stageDigest };
+  }
+  return result;
 }
+/** Authenticated preparation without handoff, retained for the explicit prepare route. */
+export function prepareInstallCandidate(requestPath: string): Promise<PreparedCandidateReceipt> { return prepareCandidate(requestPath, false); }
+/** Trusted preparer emits a private one-use handoff ticket while it still owns the claim. */
+export function prepareInstallHandoff(requestPath: string): Promise<PreparedInstallHandoff> { return prepareCandidate(requestPath, true); }

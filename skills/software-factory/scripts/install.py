@@ -40,7 +40,7 @@ LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings",
-    "install", "install-candidate", "install-entry", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
+    "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "store",
     "workflow", "workspace",
 )
@@ -885,7 +885,7 @@ def adopt_npm_outputs(stage: PrivateStage, seeded: dict):
         stage.check(name)
 
 
-def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None):
+def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None, handoff=False):
     stage = prepared.stage
     stage.check("")
     canonical(repository, True)
@@ -910,9 +910,15 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     entry = prepared.snapshot_bundle_root / "dist/install-entry.js"
     executable = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
     try:
-        response = bounded_child([str(executable), str(entry), "--request", str(stage.root / "preparer-request.json")], stage,
+        command = [str(executable), str(entry), "--request", str(stage.root / "preparer-request.json")]
+        if handoff:
+            command.append("--handoff")
+        response = bounded_child(command, stage,
                                  timeout_seconds=300)
-        result = fields(json_bytes(response), {"operationId", "repositoryId", "claimId", "stagePath", "candidateDigest"})
+        required = {"operationId", "repositoryId", "claimId", "stagePath", "candidateDigest"}
+        if handoff:
+            required.update({"ticketPath", "stageDigest"})
+        result = fields(json_bytes(response), required)
         if any(not isinstance(result[key], str) or not result[key] for key in result):
             refuse("invalid candidate preparation receipt")
         prepared.revalidate_sources()
@@ -924,6 +930,121 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     except BaseException:
         stage.preserved = True
         raise
+
+
+def publish_candidate(prepared: dict):
+    """Issue the private post-wait receipt and run only the staged Node in foreground."""
+    stage = canonical(prepared["stagePath"], True)
+    ticket_path = canonical(prepared["ticketPath"], False)
+    if ticket_path != stage / "handoff-ticket.json" or ticket_path.stat().st_size > 8192:
+        refuse("private handoff ticket path or bound invalid")
+    ticket = fields(json_bytes(ticket_path.read_bytes()), {"version", "operationId", "repositoryId", "root", "commonDir",
+        "claimId", "token", "stagePath", "stageIdentity", "stageDigest", "nonce", "release", "selectionDigest",
+        "targetReleaseSha256", "artifactDigests", "targetSchema", "exitReceiptPath", "candidate"})
+    if ticket["version"] != 1 or ticket["operationId"] != prepared["operationId"] or ticket["claimId"] != prepared["claimId"] or ticket["stagePath"] != str(stage) or ticket["stageDigest"] != prepared["stageDigest"]:
+        refuse("private handoff ticket differs from preparer receipt")
+    nonce = ticket["nonce"]
+    if not isinstance(nonce, str) or str(uuid.UUID(nonce)) != nonce:
+        refuse("private handoff nonce invalid")
+    exit_path = stage / f"handoff-exit-{nonce}.json"
+    if ticket["exitReceiptPath"] != str(exit_path):
+        refuse("private handoff exit path differs")
+    exit_receipt = {"version": 1, "operationId": prepared["operationId"], "claimId": prepared["claimId"],
+                    "stageDigest": prepared["stageDigest"], "nonce": nonce}
+    data = (json.dumps(exit_receipt, separators=(",", ":"), sort_keys=True) + "\n").encode()
+    fd = os.open(exit_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    with os.fdopen(fd, "wb") as output:
+        os.fchmod(output.fileno(), 0o600)
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+    if exit_path.read_bytes() != data:
+        refuse("post-wait receipt changed")
+    directory_fd = os.open(stage, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+    platform = "win32-x64" if os.name == "nt" else None
+    executable = canonical(str(stage / "payload" / ("node.exe" if platform else "node")), False)
+    entry = canonical(str(stage / "payload/dist/maintenance-entry.js"), False)
+    owned = snapshot_completed_stage(stage)
+    result = fields(json_bytes(bounded_child([str(executable), str(entry), "--ticket", str(ticket_path)],
+                                             timeout_seconds=300)), {"state", "operationId", "repositoryId"})
+    if result != {"state": "ready", "operationId": prepared["operationId"], "repositoryId": prepared["repositoryId"]}:
+        refuse("staged controller completion differs")
+    cleanup_completed_stage(stage, owned)
+    return result
+
+
+def snapshot_completed_stage(stage: Path):
+    """Capture only the private operation stage, including every payload and sidecar."""
+    if os.name != "posix":
+        refuse("Windows stage cleanup ownership requires native qualification")
+    root = stage.lstat()
+    if not stat.S_ISDIR(root.st_mode) or stat.S_ISLNK(root.st_mode):
+        refuse("completed stage root changed")
+    found = inventory(stage)
+    if len(found) > 576:
+        refuse("completed stage inventory exceeds bound")
+    rows = {"": (stage_directory_identity(root), None)}
+    total = 0
+    for name, observed in found.items():
+        path = stage / name
+        info = path.lstat()
+        if file_id(info) != observed:
+            refuse("completed stage entry changed")
+        if stat.S_ISDIR(info.st_mode):
+            rows[name] = (stage_directory_identity(info), None)
+            continue
+        if info.st_nlink != 1 or info.st_size > 256 * MIB:
+            refuse("completed stage file link or bound refused")
+        total += info.st_size
+        if total > 256 * MIB:
+            refuse("completed stage bytes exceed bound")
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            if file_id(os.fstat(descriptor)) != observed:
+                refuse("completed stage descriptor identity changed")
+            digest = hashlib.sha256()
+            with os.fdopen(descriptor, "rb", closefd=False) as source:
+                while chunk := source.read(65536):
+                    digest.update(chunk)
+            if file_id(os.fstat(descriptor)) != observed:
+                refuse("completed stage file changed while reading")
+            rows[name] = (observed, digest.hexdigest())
+        finally:
+            os.close(descriptor)
+    if stage_directory_identity(stage.lstat()) != rows[""][0]:
+        refuse("completed stage root changed")
+    return rows
+
+
+def stage_directory_identity(info):
+    return info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode), info.st_mode & 0o777
+
+
+def cleanup_completed_stage(stage: Path, owned):
+    if snapshot_completed_stage(stage) != owned:
+        refuse("completed stage changed; retained for inspection")
+    for name in sorted((name for name in owned if name), key=lambda item: (item.count("/"), item), reverse=True):
+        path = stage / name
+        observed = path.lstat()
+        actual = stage_directory_identity(observed) if owned[name][1] is None else file_id(observed)
+        if actual != owned[name][0]:
+            refuse("completed stage changed during cleanup")
+        if owned[name][1] is None:
+            path.rmdir()
+        else:
+            path.unlink()
+    if stage_directory_identity(stage.lstat()) != owned[""][0]:
+        refuse("completed stage root changed during cleanup")
+    stage.rmdir()
+    directory_fd = os.open(stage.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
 
 
 def main():
@@ -942,14 +1063,24 @@ def main():
     prepare.add_argument("--node-archive", required=True)
     prepare.add_argument("--offline", action="store_true")
     prepare.add_argument("--offline-cache-seed")
+    install = sub.add_parser("install", help="Publish a foreground first install from authenticated selected bytes")
+    install.add_argument("--repository", required=True)
+    install.add_argument("--bundle-root", required=True)
+    install.add_argument("--manifest-sha256", required=True)
+    install.add_argument("--node-archive", required=True)
+    install.add_argument("--offline", action="store_true")
+    install.add_argument("--offline-cache-seed")
     args = parser.parse_args()
-    if args.command == "prepare" and args.offline_cache_seed and not args.offline:
+    if args.command in ("prepare", "install") and args.offline_cache_seed and not args.offline:
         refuse("offline cache seed requires --offline")
     with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive) as prepared:
         if args.command == "verify":
             result = prepared.receipt
         else:
-            result = prepare_candidate(prepared, args.repository, args.offline, args.offline_cache_seed)
+            result = prepare_candidate(prepared, args.repository, args.offline, args.offline_cache_seed,
+                                       handoff=args.command == "install")
+    if args.command == "install":
+        result = publish_candidate(result)
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))
 
 
