@@ -5,7 +5,7 @@ const { writeSync } = require('node:fs');
 
 const release = Buffer.from('R');
 let child;
-const failureKinds = new Set(['control', 'arguments', 'spawn-no-pid', 'spawn-error', 'child-stdin-error', 'child-stdout-error', 'child-ready-shape', 'root-output-error', 'root-release-shape', 'root-input-ended', 'child-release-shape', 'child-input-ended', 'child-ready-write', 'root-timeout', 'child-timeout']);
+const failureKinds = new Set(['control', 'arguments', 'spawn-no-pid', 'spawn-error', 'child-stdin-error', 'child-stdout-error', 'child-ready-shape', 'root-output-error', 'root-release-shape', 'root-input-utf8-preamble', 'root-input-utf16-preamble', 'root-input-before-ready', 'root-input-ended', 'child-release-shape', 'child-input-ended', 'child-ready-write', 'root-timeout', 'child-timeout']);
 function fail(reason = 'control') {
   const category = typeof reason === 'string' && (failureKinds.has(reason) || /^child-exit-[0-9]{1,10}$/.test(reason)) ? reason : 'control';
   try { writeSync(2, `FIXTURE_FAILURE ${category}\n`); } catch { }
@@ -46,7 +46,12 @@ if (process.argv[2] === '--child' && process.argv.length === 3) {
     process.exit(0);
   });
   process.stdin.once('data', (value) => {
-    if (!initialized || value.length !== 1 || value[0] !== release[0]) fail('root-release-shape');
+    if (value.length > 0 && value.length <= 3 && Buffer.from([0xef, 0xbb, 0xbf]).subarray(0, value.length).equals(value))
+      fail('root-input-utf8-preamble');
+    if (value.length > 0 && value.length <= 2 && Buffer.from([0xff, 0xfe]).subarray(0, value.length).equals(value))
+      fail('root-input-utf16-preamble');
+    if (!initialized) fail('root-input-before-ready');
+    if (value.length !== 1 || value[0] !== release[0]) fail('root-release-shape');
     released = true;
     child.stdin.end(release);
   });

@@ -149,7 +149,7 @@ try {
       $text=[Text.Encoding]::ASCII.GetString($bytes,0,$read.Result)
       $end=$root.StandardError.BaseStream.ReadAsync($bytes,0,1)
       if($end.Wait(1000) -and $end.Result -eq 0 -and
-         $text -cmatch '^FIXTURE_FAILURE (control|arguments|spawn-no-pid|spawn-error|child-stdin-error|child-stdout-error|child-ready-shape|root-output-error|root-release-shape|root-input-ended|child-release-shape|child-input-ended|child-ready-write|root-timeout|child-timeout|child-exit-[0-9]{1,10})\\r?\\n$'){
+         $text -cmatch '^FIXTURE_FAILURE (control|arguments|spawn-no-pid|spawn-error|child-stdin-error|child-stdout-error|child-ready-shape|root-output-error|root-release-shape|root-input-utf8-preamble|root-input-utf16-preamble|root-input-before-ready|root-input-ended|child-release-shape|child-input-ended|child-ready-write|root-timeout|child-timeout|child-exit-[0-9]{1,10})\\r?\\n$'){
         $category=if($matches[1].StartsWith('child-exit-')){$matches[1]}else{'fixture-'+$matches[1]}
       }
     }
@@ -182,7 +182,7 @@ exit 1
     });
     const positiveResult = await waitForBridge(closed, 35000);
     if (!overflow && !hadError && positiveResult === 1 &&
-        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|fixture-(?:control|arguments|spawn-no-pid|spawn-error|child-stdin-error|child-stdout-error|child-ready-shape|root-output-error|root-release-shape|root-input-ended|child-release-shape|child-input-ended|child-ready-write|root-timeout|child-timeout)|child-exit-[0-9]{1,10}|child-pid|child-handle|child-timing|image-path|image-file|parent|snapshot-missing|snapshot-open|snapshot-first|snapshot-close|native-api|argument|invalid-data|invalid-state|marshal|method|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
+        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|fixture-(?:control|arguments|spawn-no-pid|spawn-error|child-stdin-error|child-stdout-error|child-ready-shape|root-output-error|root-release-shape|root-input-utf8-preamble|root-input-utf16-preamble|root-input-before-ready|root-input-ended|child-release-shape|child-input-ended|child-ready-write|root-timeout|child-timeout)|child-exit-[0-9]{1,10}|child-pid|child-handle|child-timing|image-path|image-file|parent|snapshot-missing|snapshot-open|snapshot-first|snapshot-close|native-api|argument|invalid-data|invalid-state|marshal|method|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
       positiveFailure = `HELD_NATIVE_${output.trim()}\n`;
     assert.equal(positiveResult, 0);
     assert.equal(overflow, false);

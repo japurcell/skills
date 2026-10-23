@@ -804,7 +804,18 @@ public static class WindowsEtwProbe
         start.EnvironmentVariables["TEMP"] = evidence;
         start.EnvironmentVariables["TMP"] = evidence;
         FixtureStep = "root-handle";
-        RootProcess = Process.Start(start);
+        // .NET Framework constructs and immediately flushes stdin using the
+        // console encoding. Suppress its preamble without accepting extra bytes
+        // in the fixed fixture protocol, then restore this isolated host.
+        Encoding previousInput = Console.InputEncoding;
+        bool inputChanged = false;
+        try
+        {
+            Console.InputEncoding = new UTF8Encoding(false);
+            inputChanged = true;
+            RootProcess = Process.Start(start);
+        }
+        finally { if (inputChanged) Console.InputEncoding = previousInput; }
         if (RootProcess == null) throw new InvalidOperationException("Node fixture launch returned no process");
         RootPid = RootProcess.Id;
         if (GetProcessId(RootProcess.Handle) != (uint)RootPid || RootProcess.HasExited)
@@ -845,8 +856,8 @@ public static class WindowsEtwProbe
         ChildPid = printedPid;
         ChildOwned = true;
         FixtureStep = "release";
-        RootProcess.StandardInput.Write('R');
-        RootProcess.StandardInput.Flush();
+        RootProcess.StandardInput.BaseStream.WriteByte(0x52);
+        RootProcess.StandardInput.BaseStream.Flush();
         RootProcess.StandardInput.Close();
         FixtureStep = "child-wait";
         uint wait = WaitForSingleObject(ChildHandle, (uint)Remaining(watch, 15000));

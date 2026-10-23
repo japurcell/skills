@@ -1,0 +1,26 @@
+# Forward schema transition implementation input
+
+Read-only implementation preparation on 2026-10-22 against base `92aee10`. This records source facts for T16; it neither migrates a store nor approves implementation. Remaining reviews are deferred by the user until all implementation tasks finish. Installation publication remains the implementation prerequisite.
+
+## Exact observed transitions
+
+Current `packages/software-factory/src/schema.ts` creates schema 7. Git history establishes these actual changes:
+
+- `db129729`, version 3 to 4: add `invocation_run_page` on `invocations(run_id)`, `observation_invocation_page` on `observation_events(json_extract(data,'$.invocationId'),cursor)`, and `clearance_invocation_page` on `clearances(json_extract(data,'$.invocationId'),id)`.
+- `ddda0386`, still version 4: add `attempt_operation_target` on `attempts(operation_id,invocation_id)` and `capture_question_target` on `captures(invocation_id,channel)`. Therefore real version-4 stores have two known index variants. A version number alone cannot establish the complete shape. An explicit forward operation must recognize these exact known variants and create the missing required indexes transactionally; it must not infer that every version-4 store already has both.
+- `11972a65`, version 4 to 5: create `notification_deliveries(id TEXT PRIMARY KEY, invocation_id TEXT NOT NULL REFERENCES invocations(id), kind TEXT NOT NULL CHECK(kind='initial'), data TEXT NOT NULL CHECK(json_valid(data)), UNIQUE(invocation_id,kind))` and its `notification_invocation` index on `invocation_id`.
+- `61e5e1af`, version 5 to 6: create `notification_preferences(id INTEGER PRIMARY KEY CHECK(id=1), success_notices INTEGER NOT NULL CHECK(success_notices IN (0,1)), reminders INTEGER NOT NULL CHECK(reminders IN (0,1)), updated_at TEXT NOT NULL)` and `notification_acknowledgments(invocation_id TEXT PRIMARY KEY REFERENCES invocations(id), acknowledged_at TEXT NOT NULL)`.
+- `e7f52cc9`, version 6 to 7: create `notification_attention(invocation_id TEXT PRIMARY KEY REFERENCES invocations(id))`, `notification_reminder_groups(id TEXT PRIMARY KEY, claim_id TEXT NOT NULL, unsettled INTEGER NOT NULL CHECK(unsettled IN (0,1)), data TEXT NOT NULL CHECK(json_valid(data)))`, and `notification_reminder_unsettled` on `(claim_id,unsettled)`.
+- `a1ded305` changes first-bootstrap transaction composition, not the version-7 table shape.
+
+Tests that create a version-7 database and merely lower `user_version` prove ordinary-opening refusal only. They are not real prior-schema migration fixtures. T16 must retain actual historical DDL for each supported shape and representative history/claims/captures/notification rows, then prove row preservation and each transition. Do not retrieve mutable Git history during product operation.
+
+## Admission and backup prerequisites
+
+Version-3 `store.ts` at `ba460e3a` already has the same `repository` and `owner_claims` admission columns. Its `ready()` refuses a non-ready repository and any maintenance claim; its `claimResource()` checks all owners within an immediate transaction. This establishes a source basis for an explicit typed maintenance bridge, not native race proof. Keep normal `openRepositoryStore()` refusing old schemas. A dedicated migration opener must validate an exact supported schema shape and integrity, then revalidate that shape, database identity, repository and owner absence under the same admission transaction before persisting the operation claim. Unknown versions, unexpected schema objects, corrupt storage or incompatible ownership shapes refuse without recreation or salvage.
+
+After exclusive admission and before existing-store or installed-file mutation, create an absent operation-owned private backup directory. Pass only an absent SQLite target within it to pinned Node `sqlite.backup`; the API overwrites existing destinations. Await its consistent snapshot, open read-only, verify integrity, foreign keys, exact schema/repository identity and essential counts, then persist the exact verified backup identity. Never reuse a target after a collision or interruption and never copy live WAL files as a backup. Backups survive successful maintenance until explicitly selected cleanup.
+
+Every DDL transition and version/operation progress marker must commit atomically. Before replay, check the actual prior/current schema and the recorded operation; run only missing forward steps. Resume only the original selected release/schema/lock and preserve incomplete state on uncertainty. No automatic startup migration, downgrade, restore, repeated workflow execution, empty-store recreation or broad data salvage is authorized.
+
+The installed controller survival and ordered file-publication receipts come from T15b-install-publication. Upgrade, dependencies and repair must consume those verified interfaces after integration rather than add a second admission lock. The canonical ExecPlan retains final acceptance and task order.
