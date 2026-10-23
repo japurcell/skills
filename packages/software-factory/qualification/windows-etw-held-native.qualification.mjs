@@ -35,6 +35,7 @@ async function qualifyHeldFixtures() {
   const fixture = join(evidence, 'hostile.cjs');
   const driver = join(evidence, 'check.ps1');
   let bridge, foreign, closed;
+  let parentRejected = false, positiveFailure;
   try {
     const digest = createHash('sha256').update(readFileSync(process.execPath)).digest('hex');
     writeFileSync(fixture, `const fs=require('node:fs');fs.writeFileSync(${JSON.stringify(request)},'ready');` +
@@ -92,7 +93,7 @@ try {
     assert.match(output, /^PARENT_REJECTED\r?\n$/);
     assert.equal(hadError, false);
     assert.doesNotThrow(() => process.kill(foreign.pid, 0));
-    process.stdout.write('HELD_NATIVE_PARENT_REJECTION_OK\n');
+    parentRejected = true;
 
     // Exercise the unchanged positive path separately from ETW decoding. Never
     // print exception text, paths, file identities or other ambient metadata.
@@ -140,6 +141,19 @@ try {
       }
     }
   }
+  $root=$type.GetField('RootProcess',$flags).GetValue($null)
+  if($category -ceq 'pid-unavailable' -and $root -and $root.HasExited){
+    $bytes=New-Object byte[] 64
+    $read=$root.StandardError.BaseStream.ReadAsync($bytes,0,$bytes.Length)
+    if($read.Wait(1000) -and $read.Result -gt 0 -and $read.Result -lt $bytes.Length){
+      $text=[Text.Encoding]::ASCII.GetString($bytes,0,$read.Result)
+      $end=$root.StandardError.BaseStream.ReadAsync($bytes,0,1)
+      if($end.Wait(1000) -and $end.Result -eq 0 -and
+         $text -cmatch '^FIXTURE_FAILURE (control|child-exit-[0-9]{1,10})\\r?\\n$'){
+        $category=if($matches[1] -ceq 'control'){'fixture-control'}else{$matches[1]}
+      }
+    }
+  }
 } finally {
   try {
     if(-not $type.GetMethod('StopFixture',$flags).Invoke($null,@())){$passed=$false;$category='stop'}
@@ -168,20 +182,30 @@ exit 1
     });
     const positiveResult = await waitForBridge(closed, 35000);
     if (!overflow && !hadError && positiveResult === 1 &&
-        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|snapshot-missing|snapshot-open|snapshot-first|snapshot-close|native-api|argument|invalid-data|invalid-state|marshal|method|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
-      process.stderr.write(`HELD_NATIVE_${output.trim()}\n`);
+        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|fixture-control|child-exit-[0-9]{1,10}|child-pid|child-handle|child-timing|image-path|image-file|parent|snapshot-missing|snapshot-open|snapshot-first|snapshot-close|native-api|argument|invalid-data|invalid-state|marshal|method|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
+      positiveFailure = `HELD_NATIVE_${output.trim()}\n`;
     assert.equal(positiveResult, 0);
     assert.equal(overflow, false);
     assert.equal(hadError, false);
     assert.match(output, /^POSITIVE_OK\r?\n$/);
   } finally {
-    if (bridge?.exitCode === null) {
-      bridge.kill();
-      await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 2000))]);
-    }
-    if (foreign?.exitCode === null) foreign.kill();
+    let cleaned = true;
+    try {
+      if (bridge?.exitCode === null) bridge.kill();
+      if (closed) await waitForBridge(closed, 2000);
+    } catch { cleaned = false; }
+    try {
+      if (foreign?.exitCode === null) {
+        const foreignClosed = new Promise(resolve => foreign.once('close', resolve));
+        foreign.kill();
+        await waitForBridge(foreignClosed, 2000);
+      }
+    } catch { cleaned = false; }
+    if (!cleaned) throw new Error('owned process closure uncertain');
     // The native check never opens ETW; remove any unexpected trace before output.
     rmSync(evidence, { recursive: true, force: true });
+    if (parentRejected) process.stdout.write('HELD_NATIVE_PARENT_REJECTION_OK\n');
+    if (positiveFailure) process.stderr.write(positiveFailure);
   }
 }
 

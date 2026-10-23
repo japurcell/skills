@@ -1,10 +1,13 @@
 'use strict';
 
 const { spawn } = require('node:child_process');
+const { writeSync } = require('node:fs');
 
 const release = Buffer.from('R');
 let child;
-function fail() {
+function fail(reason = 'control') {
+  const category = typeof reason === 'string' && /^child-exit-[0-9]{1,10}$/.test(reason) ? reason : 'control';
+  try { writeSync(2, `FIXTURE_FAILURE ${category}\n`); } catch { }
   if (child && child.exitCode === null) child.kill();
   process.exit(2);
 }
@@ -35,10 +38,10 @@ if (process.argv[2] === '--child' && process.argv.length === 3) {
     initialized = true;
     process.stdout.write(`${child.pid}\n`, (error) => { if (error) fail(); });
   });
-  child.stdout.once('end', () => { if (!initialized) fail(); });
   child.once('exit', (code, signal) => {
     clearTimeout(timer);
-    if (!released || code !== 0 || signal !== null) fail();
+    if (!released || code !== 0 || signal !== null)
+      fail(Number.isInteger(code) ? `child-exit-${code >>> 0}` : 'control');
     process.exit(0);
   });
   process.stdin.once('data', (value) => {
