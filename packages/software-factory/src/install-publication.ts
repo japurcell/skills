@@ -16,7 +16,7 @@ import { repositoryIdentity } from './workspace.js';
 
 const SHA = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-interface InstalledReceipt {
+export interface InstalledReceipt {
   version: 1; receiptId: string; operationId: string; repositoryId: string; claimId: string;
   release: string; targetSchema: number; selectionDigest: string; manifestSha256: string; candidate: CandidateBinding;
   installIdentity: string; toolchainIdentity: string;
@@ -279,7 +279,7 @@ async function validatePublished(root: string, common: string, claim: Claim, aut
     fail('installed direct command version differs');
 }
 function installedReceiptPath(common: string): string { return join(common, 'factory', 'installed-receipt.json'); }
-function readInstalledReceipt(common: string): { receipt: InstalledReceipt; sha256: string } {
+export function readInstalledReceipt(common: string): { receipt: InstalledReceipt; sha256: string } {
   const bytes = readPublicationRecord(installedReceiptPath(common));
   const value = JSON.parse(bytes.toString('utf8')) as InstalledReceipt;
   if (value.version !== 1 || !UUID.test(value.receiptId) || !UUID.test(value.operationId)

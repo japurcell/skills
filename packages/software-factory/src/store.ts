@@ -140,6 +140,33 @@ export function openMaintenanceStore(commonDir: string) {
   return openStore(commonDir, true);
 }
 
+/** Existing-only, read-only installed ownership proof. Ordinary runner/dashboard claims remain valid. */
+export function readInstalledCompletion(commonDir: string, operationId: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(operationId)) throw new Error('invalid installed operation identity');
+  const location = paths(commonDir, false);
+  if (!pathAbsent(location.marker)) throw new Error('incomplete bootstrap; explicit repair required');
+  const file = lstatSync(location.database);
+  if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1
+    || (process.platform !== 'win32' && (file.mode & 0o077) !== 0)) throw new Error('invalid store file');
+  const database = new DatabaseSync(location.database, { readOnly: true, timeout: 100 });
+  try {
+    if (database.prepare('PRAGMA user_version').get()?.['user_version'] !== schemaVersion
+      || database.prepare('PRAGMA quick_check').get()?.['quick_check'] !== 'ok')
+      throw new Error('installed store schema or integrity differs');
+    const repositories = database.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
+    const repository = repositories[0];
+    if (repositories.length !== 1 || repository?.['state'] !== 'ready'
+      || database.prepare("SELECT id FROM owner_claims WHERE kind='maintenance' LIMIT 1").get())
+      throw new Error('installed repository is not ready');
+    const rows = database.prepare("SELECT data FROM observation_events WHERE kind='install.completed' AND json_extract(data,'$.operationId')=? LIMIT 2")
+      .all(operationId);
+    if (rows.length !== 1) throw new Error('unique installed completion unavailable');
+    return { completion: JSON.parse(String(rows[0]!['data'])) as { version: number; operationId: string;
+      repositoryId: string; claimId: string; selectionDigest: string; manifestSha256: string;
+      receiptId: string; receiptSha256: string }, repositoryId: String(repository['id']), release: String(repository['release']) };
+  } finally { database.close(); }
+}
+
 function openStore(commonDir: string, allowMarker: boolean) {
   const location = paths(commonDir, false);
   if (!allowMarker && !pathAbsent(location.marker)) throw new Error('incomplete bootstrap; explicit repair required');

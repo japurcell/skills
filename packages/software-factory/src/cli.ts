@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { fileURLToPath } from 'node:url';
 import { redactText } from './redaction.js';
 import { StartupInterrupted } from './workspace.js';
 import { clearClaim, inspectClaim } from './clearance.js';
@@ -6,8 +7,9 @@ import { invoke } from './lifecycle.js';
 import { openRepositoryStore } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 import { startObservationHost } from './dashboard.js';
+import { loadInstalledBindings } from './installed-bindings.js';
 const args = process.argv.slice(2);
-const help = `software-factory (development)
+const help = `software-factory
 invoke --repository PATH --workflow .factory/workflows/FILE.ts --input JSON_FILE
        (--new-worktree [--ref COMMIT] | --worktree ID_OR_PATH) [--run ID]
        [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--command-timeout-ms N] [--agent-timeout-ms N] [--shutdown-grace-ms N] [--json]
@@ -19,7 +21,8 @@ clear-owner (--repository PATH | --common-dir PATH) --claim ID --token TOKEN --o
 Startup validates the explicitly installed toolchain; no automatic installation or resume.
 `;
 async function main() {
-  if (args.includes('--help')) { process.stdout.write(help); return; }
+  const modulePath = fileURLToPath(import.meta.url);
+  if (args.includes('--help')) { await loadInstalledBindings(modulePath); process.stdout.write(help); return; }
   const command = args.shift();
   if (!command || !['invoke','history','dashboard','inspect-owner','clear-owner'].includes(command)) throw new Error('command not implemented; startup refused');
   const values = new Map<string, string[]>();
@@ -39,13 +42,14 @@ async function main() {
   const commonDir=get('--common-dir');
   if (!repository && !commonDir) throw new Error('--repository is required');
   if (repository && commonDir) throw new Error('select exactly one of --repository or --common-dir');
+  const installed = await loadInstalledBindings(modulePath, repository, commonDir);
   let result;
   if (command === 'dashboard') {
     if (newWorktree || operatorConfirmed || json) throw new Error('invalid dashboard option');
     const store = openRepositoryStore((await repositoryIdentity(repository!)).common);
     let host: Awaited<ReturnType<typeof startObservationHost>> | undefined;
     try {
-      host = await startObservationHost({ store });
+      host = await startObservationHost({ store, ...(installed ? { reminderSender: installed.notificationSender } : {}) });
       if (!host.readCredentialAvailable || !host.createUiHandoff) throw new Error('dashboard is owned by another process; UI handoff unavailable');
       const stopping = new Promise<void>(resolve => {
         process.once('SIGINT', () => resolve()); process.once('SIGTERM', () => resolve());
@@ -58,7 +62,7 @@ async function main() {
   } else if (command === 'invoke') {
     const workflow = get('--workflow'), input = get('--input');
     if (!workflow || !input) throw new Error('--workflow and --input are required');
-    result = await invoke({ repository:repository!, workflow, input, newWorktree, ...(get('--ref') ? { ref: get('--ref')! } : {}), ...(get('--worktree') ? { worktreeId: get('--worktree')! } : {}), ...(get('--run') ? { runId: get('--run')! } : {}), ...(get('--question') ? { question: get('--question')! } : {}), contexts: values.get('--context') ?? [], ...(get('--command-timeout-ms') ? {commandTimeoutMs:Number(get('--command-timeout-ms'))} : {}), ...(get('--agent-timeout-ms') ? {agentTimeoutMs:Number(get('--agent-timeout-ms'))} : {}), ...(get('--shutdown-grace-ms') ? {shutdownGraceMs:Number(get('--shutdown-grace-ms'))} : {}) });
+    result = await invoke({ repository:repository!, workflow, input, newWorktree, ...(installed ? { adapters: installed.adapters, notificationSender: installed.notificationSender } : {}), ...(get('--ref') ? { ref: get('--ref')! } : {}), ...(get('--worktree') ? { worktreeId: get('--worktree')! } : {}), ...(get('--run') ? { runId: get('--run')! } : {}), ...(get('--question') ? { question: get('--question')! } : {}), contexts: values.get('--context') ?? [], ...(get('--command-timeout-ms') ? {commandTimeoutMs:Number(get('--command-timeout-ms'))} : {}), ...(get('--agent-timeout-ms') ? {agentTimeoutMs:Number(get('--agent-timeout-ms'))} : {}), ...(get('--shutdown-grace-ms') ? {shutdownGraceMs:Number(get('--shutdown-grace-ms'))} : {}) });
     process.exitCode = result.exitCode;
   } else if (command === 'inspect-owner' || command === 'clear-owner') {
     if (newWorktree) throw new Error('worktree selection is not valid for owner commands');
