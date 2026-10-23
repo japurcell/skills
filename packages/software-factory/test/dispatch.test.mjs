@@ -66,6 +66,17 @@ test('release installed selection validates startup bindings without provider or
   assert.doesNotMatch(result.stdout, /public pinned offline/);
 });
 
+test('release providers selection exercises public descriptor guards without native providers', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'providers'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /public verify, prepare and install reject an unsafe provider selector/);
+  assert.match(result.stdout, /public selector accepts the bounded provider shape/);
+  assert.doesNotMatch(result.stdout, /selected provider install binds/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
