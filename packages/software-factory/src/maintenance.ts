@@ -4,10 +4,11 @@ import { closeSync, constants, fstatSync, fsyncSync, lstatSync, mkdirSync, openS
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { currentOwner, inspectOwner } from './native/process.js';
+import { verifyBoundInstallCandidate } from './install-candidate.js';
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
 import { openMaintenanceStore, openRepositoryStore } from './store.js';
-import type { Claim, MaintenanceHandle, MaintenanceIntent, MaintenanceKind, MaintenancePhase, Owner } from './store.js';
+import type { CandidateBinding, Claim, MaintenanceHandle, MaintenanceIntent, MaintenanceKind, MaintenancePhase, Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 
 const MAX_RECORD_BYTES = 8192;
@@ -25,6 +26,7 @@ interface HandoffTicket {
   claimId: string; token: string; stagePath: string; stageIdentity: string; stageDigest: string; nonce: string;
   release: string; selectionDigest: string; targetReleaseSha256: string | null;
   artifactDigests: Record<string, string>; targetSchema: number; exitReceiptPath: string;
+  candidate?: CandidateBinding | null;
 }
 interface ExitReceipt { version: 1; operationId: string; claimId: string; stageDigest: string; nonce: string }
 
@@ -70,7 +72,7 @@ function intent(operationId: string, repositoryId: string, kind: MaintenanceKind
     artifactDigests: Object.fromEntries(Object.entries(value.artifactDigests).sort(([a], [b]) => a.localeCompare(b))),
     targetSchema: value.targetSchema, stagePath: join(location, 'controller-staging', operationId),
     stageDigest: null, stageIdentity: null, phase: 'preparing', ownedReceiptId: null, backupId: null,
-    ticketNonceHash: null, ticketConsumed: false };
+    ticketNonceHash: null, ticketConsumed: false, candidate: null };
 }
 function readRecord(path: string): Buffer {
   const observed = lstatSync(path, { bigint: true });
@@ -151,7 +153,16 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
     || (recorded.ticketNonceHash !== null && !SHA.test(recorded.ticketNonceHash))
     || (recorded.stageIdentity !== null && !/^\d+:\d+$/.test(recorded.stageIdentity))
     || typeof recorded.ticketConsumed !== 'boolean'
-    || (recorded.phase !== 'preparing' && (!recorded.stageDigest || !recorded.stageIdentity)))
+    || (recorded.stageDigest === null) !== (recorded.stageIdentity === null)
+    || (recorded.kind === 'install' && (recorded.candidate ?? null) !== null && !recorded.stageDigest)
+    || (recorded.phase !== 'preparing' && (!recorded.stageDigest || !recorded.stageIdentity))
+    || ((recorded.candidate ?? null) !== null && (!recorded.candidate || typeof recorded.candidate !== 'object'
+      || Array.isArray(recorded.candidate) || Object.keys(recorded.candidate).sort().join(',') !== 'identity,path,receiptId,receiptSha256,treeDigest'
+      || typeof recorded.candidate.path !== 'string'
+      || recorded.candidate.path !== join(commonDir, 'factory', `install-candidate-${recorded.operationId}`)
+      || typeof recorded.candidate.identity !== 'string' || !/^\d+:\d+$/.test(recorded.candidate.identity)
+      || !SHA.test(recorded.candidate.treeDigest) || !UUID.test(recorded.candidate.receiptId)
+      || !SHA.test(recorded.candidate.receiptSha256))))
     throw new Error('recorded maintenance intent invalid');
   selected({ release: recorded.release, selectionDigest: recorded.selectionDigest,
     targetReleaseSha256: recorded.targetReleaseSha256, artifactDigests: recorded.artifactDigests,
@@ -159,11 +170,23 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
   validOwner(claim.owner);
   return recorded;
 }
+function verifyInstallCandidate(commonDir: string, claim: Claim, required: boolean): void {
+  const recorded = assertRecordedIntent(commonDir, claim);
+  if (recorded.kind !== 'install') return;
+  const path = join(commonDir, 'factory', `install-candidate-${recorded.operationId}`);
+  if (!recorded.candidate) {
+    if (required || !absent(path)) throw new Error('install candidate absent or unbound; operation requires inspection');
+    return;
+  }
+  verifyBoundInstallCandidate(recorded.candidate, { operationId: recorded.operationId,
+    repositoryId: recorded.repositoryId, claimId: claim.id, selectionDigest: recorded.selectionDigest,
+    manifestSha256: recorded.targetReleaseSha256! });
+}
 function redacted(intent: MaintenanceIntent) {
   const { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,
-    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId } = intent;
+    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate } = intent;
   return { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,
-    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId };
+    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate: candidate ?? null };
 }
 function handle(claim: Claim, commonDir: string): MaintenanceHandle {
   if (!claim.maintenance) throw new Error('typed maintenance claim required');
@@ -260,6 +283,7 @@ export async function inspectMaintenance(repository: string) {
       const claims = database.prepare('SELECT data FROM owner_claims LIMIT 2').all();
       const typed = claims.map(entry => JSON.parse(String(entry['data'])) as Claim).find(claim => claim.maintenance);
       if (typed) assertRecordedIntent(common, typed);
+      if (typed) verifyInstallCandidate(common, typed, false);
       if (typed && claims.length !== 1) throw new Error('typed maintenance claim is not exclusive');
       if (marker && (marker.claim.resourceKey !== row['id'] || (typed && !sameBootstrapOperation(marker, typed))))
         throw new Error('marker and database disagree');
@@ -299,7 +323,8 @@ export async function reclaimMaintenance(repository: string, operationId: string
     if (claim.maintenance?.kind === 'install' && !marker) throw new Error('bootstrap marker missing; repair refused');
     if (marker && !sameBootstrapOperation(marker, claim))
       throw new Error('bootstrap marker and claim identity differ');
-    if (claim.maintenance?.phase !== 'preparing') {
+    verifyInstallCandidate(common, claim, false);
+    if (claim.maintenance?.stageDigest || claim.maintenance?.stageIdentity) {
       const measured = stageEvidence(claim.maintenance!.stagePath);
       if (measured.stageDigest !== claim.maintenance?.stageDigest || measured.stageIdentity !== claim.maintenance?.stageIdentity)
         throw new Error('recorded maintenance stage changed; repair refused');
@@ -375,6 +400,8 @@ function stageEvidence(stagePath: string) {
     throw new Error('stage identity changed');
   return { stageIdentity, stageDigest: digest.digest('hex') };
 }
+/** Read-only payload limit and identity proof for a preparer that leaves the phase unchanged. */
+export function measureMaintenanceStage(stagePath: string) { return stageEvidence(stagePath); }
 
 /** Create a private one-use ticket only after a caller has staged a self-contained payload. */
 export async function prepareMaintenanceHandoff(repository: string, current: MaintenanceHandle) {
@@ -393,13 +420,16 @@ export async function prepareMaintenanceHandoff(repository: string, current: Mai
     if (recorded.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; handoff refused');
     if (!absent(markerPath) && !sameBootstrapOperation(parseMarker(markerPath, root, common), claim))
       throw new Error('bootstrap marker differs from maintenance claim');
+    verifyInstallCandidate(common, claim, true);
     const stage = stageEvidence(recorded.stagePath), nonce = randomUUID();
+    if (recorded.kind === 'install' && (recorded.stageDigest !== stage.stageDigest
+      || recorded.stageIdentity !== stage.stageIdentity)) throw new Error('prepared install stage changed');
     const ticket: HandoffTicket = { version: 1, operationId: current.operationId, repositoryId: current.repositoryId,
       root, commonDir: common, claimId: current.claimId, token: current.token,
       stagePath: recorded.stagePath, ...stage, nonce,
       release: recorded.release, selectionDigest: recorded.selectionDigest,
       targetReleaseSha256: recorded.targetReleaseSha256, artifactDigests: recorded.artifactDigests,
-      targetSchema: recorded.targetSchema,
+      targetSchema: recorded.targetSchema, candidate: recorded.candidate ?? null,
       exitReceiptPath: join(recorded.stagePath, `handoff-exit-${nonce}.json`) };
     const ticketPath = join(recorded.stagePath, 'handoff-ticket.json');
     if (absent(ticketPath)) writeRecord(ticketPath, ticket);
@@ -450,6 +480,9 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
       || JSON.stringify(ticket.artifactDigests) !== JSON.stringify(claim.maintenance.artifactDigests)
       || ticket.targetSchema !== claim.maintenance.targetSchema)
       throw new Error('handoff ticket selection differs from recorded intent');
+    if (JSON.stringify(ticket.candidate ?? null) !== JSON.stringify(claim.maintenance.candidate ?? null))
+      throw new Error('handoff candidate binding differs');
+    verifyInstallCandidate(common, claim, claim.maintenance.kind === 'install');
     if (claim.maintenance?.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; handoff refused');
     if (!absent(markerPath) && !sameBootstrapOperation(parseMarker(markerPath, root, common), claim))
       throw new Error('handoff bootstrap marker differs');
@@ -470,6 +503,7 @@ export async function recordMaintenanceStage(current: MaintenanceHandle, expecte
     assertRecordedIntent(current.commonDir, claim);
     const markerPath = join(current.commonDir, 'factory', 'bootstrap-incomplete');
     if (claim.maintenance?.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; phase refused');
+    verifyInstallCandidate(current.commonDir, claim, claim.maintenance?.kind === 'install');
     if (!absent(markerPath)) {
       const raw = JSON.parse(readRecord(markerPath).toString('utf8')) as BootstrapRecord;
       const { root, common } = await repositoryIdentity(raw.root);

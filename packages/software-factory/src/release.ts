@@ -47,7 +47,7 @@ const TOOLCHAIN_FILES = ['package.json', 'package-lock.json'] as const;
 const RUNTIME_MODULES = [
   'accounting', 'adapters/codex', 'adapters/copilot', 'adapters/fake', 'adapters/types',
   'agents', 'build', 'capture', 'clearance', 'cli', 'dashboard', 'execution-control', 'installation-bindings',
-  'learning', 'lifecycle', 'maintenance', 'native/notification-transport', 'native/notifications',
+  'install', 'install-candidate', 'install-entry', 'learning', 'lifecycle', 'maintenance', 'maintenance-entry', 'native/notification-transport', 'native/notifications',
   'native/process', 'notifications', 'placement', 'profiles', 'redaction', 'release', 'schema', 'store',
   'workflow', 'workspace',
 ] as const;

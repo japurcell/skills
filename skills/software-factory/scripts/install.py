@@ -25,6 +25,7 @@ import tarfile
 import tempfile
 import threading
 import time
+import uuid
 import zipfile
 
 
@@ -39,7 +40,7 @@ LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings",
-    "learning", "lifecycle", "maintenance", "native/notification-transport", "native/notifications",
+    "install", "install-candidate", "install-entry", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "store",
     "workflow", "workspace",
 )
@@ -114,13 +115,13 @@ def file_id(info):
     return info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
-def inventory(root: Path):
+def inventory(root: Path, allow_node_modules=False):
     found = {}
     folded = set()
     def visit(directory, prefix=""):
         for item in os.scandir(directory):
             name = f"{prefix}/{item.name}" if prefix else item.name
-            safe_name(name)
+            safe_name(name, allow_node_modules=allow_node_modules)
             if name.lower() in folded:
                 refuse("case-insensitive path collision")
             folded.add(name.lower())
@@ -664,6 +665,7 @@ class PreparedSelection:
     source_bundle_identity: tuple
     source_bundle_inventory: tuple
     source_archive_identity: tuple
+    stage: PrivateStage
 
     def revalidate_sources(self):
         """Required before a later candidate binds the original selection."""
@@ -704,7 +706,224 @@ def prepare_install_selection(bundle_root: str, manifest_sha256: str, node_archi
         if semantic != {"version": manifest["version"], "platform": platform, "manifestSha256": manifest_sha256, "nodeSha256": NODE[platform][1]}:
             refuse("semantic selection receipt mismatch")
         receipt = {"schema": 1, "version": manifest["version"], "platform": platform, "manifestSha256": manifest_sha256, "nodeSha256": NODE[platform][1], "nodeArchiveBytes": archive_size, "bundleFiles": len(manifest["files"]), "archiveMembers": extraction["members"], "omittedLinks": extraction["omittedLinks"]}
-        yield PreparedSelection(bundle, archive, stage.root / "bundle", stage.root / "selected-node-archive", stage.root / "node", manifest_sha256, receipt, source_bundle_identity, source_bundle_inventory, source_archive_identity)
+        yield PreparedSelection(bundle, archive, stage.root / "bundle", stage.root / "selected-node-archive", stage.root / "node", manifest_sha256, receipt, source_bundle_identity, source_bundle_inventory, source_archive_identity, stage)
+
+
+def extracted_node_tree(root: Path, platform: str):
+    """Canonical byte-and-mode tree digest agreed with install-candidate.ts."""
+    canonical(str(root), True)
+    original = file_id(root.lstat())
+    rows = []
+    folded = set()
+    regular_bytes = 0
+
+    def visit(directory: Path, prefix=""):
+        nonlocal regular_bytes
+        for item in os.scandir(directory):
+            name = f"{prefix}/{item.name}" if prefix else item.name
+            safe_name(name, allow_node_modules=True)
+            if len(name.encode("utf-8")) > 512 or len(name.split("/")) > 32 or name.lower() in folded:
+                refuse("extracted Node path bound or collision")
+            folded.add(name.lower())
+            info = item.stat(follow_symlinks=False)
+            mode = stat.S_IMODE(info.st_mode)
+            if stat.S_ISDIR(info.st_mode):
+                if mode != 0o700:
+                    refuse("extracted Node directory mode changed")
+                rows.append((name, "D", mode, 0, None))
+                visit(Path(item.path), name)
+            elif stat.S_ISREG(info.st_mode):
+                if info.st_nlink != 1 or mode != (0o700 if name in ("bin/node", "node.exe") else 0o600):
+                    refuse("extracted Node file link or mode changed")
+                if info.st_size > 128 * MIB:
+                    refuse("extracted Node file exceeds bound")
+                regular_bytes += info.st_size
+                if regular_bytes > 512 * MIB:
+                    refuse("extracted Node bytes exceed bound")
+                digest = hashlib.sha256()
+                fd = os.open(item.path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+                try:
+                    before = os.fstat(fd)
+                    if file_id(before) != file_id(info):
+                        refuse("extracted Node file identity changed")
+                    remaining = before.st_size
+                    while remaining:
+                        chunk = os.read(fd, min(64 * 1024, remaining))
+                        if not chunk:
+                            refuse("extracted Node file truncated")
+                        digest.update(chunk)
+                        remaining -= len(chunk)
+                    if file_id(os.fstat(fd)) != file_id(before) or file_id(Path(item.path).lstat()) != file_id(before):
+                        refuse("extracted Node file changed during read")
+                finally:
+                    os.close(fd)
+                rows.append((name, "F", mode, info.st_size, digest.digest()))
+            else:
+                refuse("linked or special extracted Node entry")
+            if len(rows) > 8192:
+                refuse("extracted Node entries exceed bound")
+
+    visit(root)
+    digest = hashlib.sha256(b"factory-node-tree-v1\0")
+    for name, kind, mode, size, file_digest in sorted(rows, key=lambda row: row[0].encode("utf-8")):
+        if kind == "D":
+            digest.update(b"D\0" + name.encode("utf-8") + b"\0" + format(mode, "o").encode() + b"\0")
+        else:
+            digest.update(b"F\0" + name.encode("utf-8") + b"\0" + str(size).encode() + b"\0" + format(mode, "o").encode() + b"\0" + file_digest)
+    if file_id(root.lstat()) != original:
+        refuse("extracted Node root changed")
+    return {"schema": 1, "digest": digest.hexdigest(), "entries": len(rows), "regularBytes": regular_bytes,
+            "omittedLinks": [] if platform == "win32-x64" else sorted(OMIT)}
+
+
+def private_npm_inputs(stage: PrivateStage, offline: bool, seed: str | None):
+    for name in ("npm", "npm/cache", "npm/home"):
+        stage.mkdir(name)
+    for name in ("npm/user.npmrc", "npm/global.npmrc"):
+        with stage.create(name) as output:
+            output.flush()
+            os.fsync(output.fileno())
+    seeded = {}
+    if seed is None:
+        return seeded
+    if not offline:
+        refuse("offline cache seed requires --offline")
+    cache = canonical(seed, True)
+    source = cache / "_cacache"
+    canonical(str(source), True)
+    count = 0
+    total = 0
+    folded = set()
+
+    def visit(directory: Path, prefix=""):
+        nonlocal count, total
+        for item in sorted(os.scandir(directory), key=lambda entry: entry.name.encode("utf-8")):
+            name = f"{prefix}/{item.name}" if prefix else item.name
+            safe_name(name, allow_node_modules=True)
+            if len(name.encode("utf-8")) > 512 or len(name.split("/")) > 32 or name.lower() in folded:
+                refuse("offline cache path bound or collision")
+            folded.add(name.lower())
+            count += 1
+            if count > 4096:
+                refuse("offline cache entry bound exceeded")
+            info = item.stat(follow_symlinks=False)
+            destination = f"npm/cache/_cacache/{name}"
+            if stat.S_ISDIR(info.st_mode):
+                stage.mkdir(destination)
+                visit(Path(item.path), name)
+            elif stat.S_ISREG(info.st_mode):
+                if info.st_nlink != 1 or info.st_size > 64 * MIB:
+                    refuse("offline cache link or file bound refused")
+                total += info.st_size
+                if total > 128 * MIB:
+                    refuse("offline cache bytes exceed bound")
+                size, digest = copy_checked(Path(item.path), stage, destination, 64 * MIB, size=info.st_size)
+                if file_id(Path(item.path).lstat()) != file_id(info) or size != info.st_size:
+                    refuse("offline cache source changed")
+                seeded[destination] = (stage.owned[destination], size, digest)
+            else:
+                refuse("linked or special offline cache entry")
+
+    stage.mkdir("npm/cache/_cacache")
+    visit(source)
+    return seeded
+
+
+def adopt_npm_outputs(stage: PrivateStage, seeded: dict):
+    """After known process-group closure, admit only bounded private cache/home outputs."""
+    count = 0
+    total = 0
+    folded = set()
+
+    def visit(directory: Path, prefix: str):
+        nonlocal count, total
+        for item in os.scandir(directory):
+            relative = f"{prefix}/{item.name}"
+            name = relative[len("npm/"):]
+            safe_name(name, allow_node_modules=True)
+            if len(name.encode("utf-8")) > 512 or len(name.split("/")) > 32 or name.lower() in folded:
+                refuse("post-npm cache path bound or collision")
+            folded.add(name.lower())
+            count += 1
+            if count > 8192:
+                refuse("post-npm cache entry bound exceeded")
+            info = item.stat(follow_symlinks=False)
+            if stat.S_ISDIR(info.st_mode):
+                if relative not in stage.owned:
+                    stage.owned[relative] = stage._id(Path(item.path))
+                else:
+                    stage.check(relative)
+                visit(Path(item.path), relative)
+            elif stat.S_ISREG(info.st_mode):
+                if info.st_nlink != 1 or info.st_size > 64 * MIB:
+                    refuse("post-npm cache link or file bound refused")
+                total += info.st_size
+                if total > 256 * MIB:
+                    refuse("post-npm cache bytes exceed bound")
+                if relative not in stage.owned:
+                    stage.owned[relative] = stage._id(Path(item.path))
+                else:
+                    stage.check(relative)
+                if relative in seeded:
+                    original_id, size, digest = seeded[relative]
+                    if stage.owned[relative] != original_id or info.st_size != size or hashlib.sha256(Path(item.path).read_bytes()).hexdigest() != digest:
+                        refuse("seeded offline cache changed")
+            else:
+                refuse("post-npm linked or special entry")
+
+    visit(stage.root / "npm/cache", "npm/cache")
+    visit(stage.root / "npm/home", "npm/home")
+    for name in ("npm/user.npmrc", "npm/global.npmrc"):
+        stage.check(name)
+        if (stage.root / name).stat().st_size != 0:
+            refuse("private npm configuration changed")
+    # A full owned-tree preflight prevents an unregistered sidecar from causing partial cleanup.
+    actual = set(inventory(stage.root, allow_node_modules=True))
+    if actual != set(stage.owned) - {""}:
+        refuse("unowned private stage content after preparation")
+    for name in stage.owned:
+        stage.check(name)
+
+
+def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None):
+    stage = prepared.stage
+    stage.check("")
+    canonical(repository, True)
+    seeded = private_npm_inputs(stage, offline, seed)
+    node_tree = extracted_node_tree(prepared.extracted_node_root, prepared.receipt["platform"])
+    request = {"schema": 1, "requestId": str(uuid.uuid4()),
+               "repository": repository, "npm": {"offline": offline}, "stageRoot": str(stage.root),
+               "stageIdentity": f"{stage.root.lstat().st_dev}:{stage.root.lstat().st_ino}",
+               "source": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
+                          "nodeArchivePath": str(prepared.source_node_archive)},
+               "snapshot": {"bundleRoot": str(prepared.snapshot_bundle_root), "nodeArchivePath": str(prepared.snapshot_node_archive),
+                            "extractedNodeRoot": str(prepared.extracted_node_root), "nodeTree": node_tree}}
+    data = (json.dumps(request, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
+    if len(data) > 64 * 1024:
+        refuse("private prepare request exceeds bound")
+    with stage.create("preparer-request.json") as output:
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+    prepared.revalidate_sources()
+    stage.check("")
+    entry = prepared.snapshot_bundle_root / "dist/install-entry.js"
+    executable = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
+    try:
+        response = bounded_child([str(executable), str(entry), "--request", str(stage.root / "preparer-request.json")], stage,
+                                 timeout_seconds=300)
+        result = fields(json_bytes(response), {"operationId", "repositoryId", "claimId", "stagePath", "candidateDigest"})
+        if any(not isinstance(result[key], str) or not result[key] for key in result):
+            refuse("invalid candidate preparation receipt")
+        prepared.revalidate_sources()
+        if extracted_node_tree(prepared.extracted_node_root, prepared.receipt["platform"]) != node_tree:
+            refuse("private extracted Node changed after preparation")
+        adopt_npm_outputs(stage, seeded)
+        stage.check("")
+        return result
+    except BaseException:
+        stage.preserved = True
+        raise
 
 
 def main():
@@ -716,9 +935,22 @@ def main():
     verify.add_argument("--bundle-root", required=True)
     verify.add_argument("--manifest-sha256", required=True)
     verify.add_argument("--node-archive", required=True)
+    prepare = sub.add_parser("prepare", help="Prepare an incomplete, candidate-bound install without publication")
+    prepare.add_argument("--repository", required=True)
+    prepare.add_argument("--bundle-root", required=True)
+    prepare.add_argument("--manifest-sha256", required=True)
+    prepare.add_argument("--node-archive", required=True)
+    prepare.add_argument("--offline", action="store_true")
+    prepare.add_argument("--offline-cache-seed")
     args = parser.parse_args()
+    if args.command == "prepare" and args.offline_cache_seed and not args.offline:
+        refuse("offline cache seed requires --offline")
     with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive) as prepared:
-        print(json.dumps(prepared.receipt, separators=(",", ":"), sort_keys=True))
+        if args.command == "verify":
+            result = prepared.receipt
+        else:
+            result = prepare_candidate(prepared, args.repository, args.offline, args.offline_cache_seed)
+    print(json.dumps(result, separators=(",", ":"), sort_keys=True))
 
 
 if __name__ == "__main__":

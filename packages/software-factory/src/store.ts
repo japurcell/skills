@@ -20,12 +20,14 @@ export interface Claim {
 }
 export type MaintenanceKind = 'install' | 'upgrade' | 'dependencies' | 'repair' | 'uninstall' | 'cleanup';
 export type MaintenancePhase = 'preparing' | 'handoff-ready' | 'modifying' | 'validating';
+export interface CandidateBinding { path: string; identity: string; treeDigest: string; receiptId: string; receiptSha256: string }
 export interface MaintenanceIntent {
   operationId: string; repositoryId: string; kind: MaintenanceKind; release: string;
   targetReleaseSha256: string | null; selectionDigest: string; artifactDigests: Record<string, string>;
   targetSchema: number; stagePath: string; stageDigest: string | null; stageIdentity: string | null;
   phase: MaintenancePhase; ownedReceiptId: string | null; backupId: string | null;
   ticketNonceHash: string | null; ticketConsumed: boolean;
+  candidate: CandidateBinding | null;
 }
 export interface MaintenanceHandle { operationId: string; claimId: string; token: string; repositoryId: string; commonDir: string }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
@@ -807,7 +809,39 @@ export class RepositoryStore {
     const claim = JSON.parse(String(row['data'])) as Claim;
     if (!claim.maintenance || claim.maintenance.operationId !== operationId || claim.resourceKey !== this.repositoryId()
       || claim.maintenance.repositoryId !== claim.resourceKey) throw new Error('recorded maintenance operation does not match');
+    if (!Object.hasOwn(claim.maintenance, 'candidate')) claim.maintenance.candidate = null;
     return claim;
+  }
+
+  async bindInstallCandidate(input: { handle: MaintenanceHandle; candidate: CandidateBinding;
+    stageDigest: string; stageIdentity: string }): Promise<MaintenanceIntent> {
+    const candidate = input.candidate;
+    if (!candidate || Object.keys(candidate).sort().join(',') !== 'identity,path,receiptId,receiptSha256,treeDigest'
+      || !/^\d+:\d+$/.test(candidate.identity) || !/^[a-f0-9]{64}$/.test(candidate.treeDigest)
+      || !/^[a-f0-9]{64}$/.test(candidate.receiptSha256)
+      || !/^[a-f0-9]{8}-[a-f0-9-]{27}$/i.test(candidate.receiptId)
+      || !/^[a-f0-9]{64}$/.test(input.stageDigest) || !/^\d+:\d+$/.test(input.stageIdentity))
+      throw new Error('invalid compact candidate binding');
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId), recorded = claim.maintenance!;
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token
+        || claim.resourceKey !== input.handle.repositoryId || recorded.repositoryId !== input.handle.repositoryId
+        || recorded.kind !== 'install' || recorded.phase !== 'preparing' || (recorded.candidate ?? null) !== null
+        || input.candidate.path !== join(input.handle.commonDir, 'factory', `install-candidate-${recorded.operationId}`))
+        throw new Error('install candidate claim/token/phase no longer matches');
+      if (this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('another owner blocks candidate binding');
+      recorded.candidate = input.candidate;
+      recorded.stageDigest = input.stageDigest;
+      recorded.stageIdentity = input.stageIdentity;
+      const data = JSON.stringify(claim);
+      if (Buffer.byteLength(data) > 8192) throw new Error('maintenance claim exceeds limit');
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?')
+        .run(data, claim.id, claim.token);
+      this.event('maintenance.candidate_bound', { operationId: recorded.operationId, claimId: claim.id,
+        treeDigest: input.candidate.treeDigest });
+      return recorded;
+    });
   }
 
   async advanceMaintenance(input: { handle: MaintenanceHandle; expected: MaintenancePhase; next: MaintenancePhase;
