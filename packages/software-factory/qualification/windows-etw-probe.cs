@@ -225,6 +225,8 @@ public static class WindowsEtwProbe
     [DllImport("kernel32.dll", EntryPoint = "GetProcessTimes", SetLastError = true)]
     private static extern bool GetProcessTimes(IntPtr process, out FileTime created, out FileTime exited,
         out FileTime kernel, out FileTime user);
+    [DllImport("kernel32.dll", EntryPoint = "GetSystemTimePreciseAsFileTime")]
+    private static extern void GetSystemTimePreciseAsFileTime(out FileTime time);
     [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", CharSet = CharSet.Unicode,
         SetLastError = true)]
     private static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path,
@@ -273,6 +275,7 @@ public static class WindowsEtwProbe
     private static string PinnedNode;
     private static long RootCreated;
     private static long RootExited, ChildCreated, ChildExited;
+    private static long ReleaseTime, RootExitObserved, ChildExitObserved;
     private static uint RootParent;
     private static string PinnedDosPath, PinnedNtPath;
     private static int RootPid, ChildPid;
@@ -662,14 +665,23 @@ public static class WindowsEtwProbe
         {
             long created = item.Pid == RootPid ? RootCreated : ChildCreated;
             long exited = item.Pid == RootPid ? RootExited : ChildExited;
+            long observed = item.Pid == RootPid ? RootExitObserved : ChildExitObserved;
+            // Exit FILETIME is not the ETW End timestamp. Bound End by the
+            // independently measured release-to-signaled interval, with both
+            // process handles still held so their PIDs cannot be reused.
+            long lower = item.Kind == "process-end" ? ReleaseTime : created;
+            long upper = item.Kind == "process-end" ? observed : exited;
             if (!ChildOwned || PinnedFile == null || created <= 0 || exited <= created ||
-                item.Time < created || item.Time > exited)
+                ReleaseTime < created || exited < ReleaseTime || observed < exited ||
+                item.Time < lower || item.Time > upper)
             {
                 if (DecodeDiagnostic == null)
                     DecodeDiagnostic = String.Join("\t", new[] { "DIAG", "identity", "held-time",
                         item.Pid == RootPid ? "root" : "child", item.Kind,
-                        created <= 0 || exited <= created || !ChildOwned || PinnedFile == null ? "unavailable" :
-                        item.Time < created ? "before-creation" : "after-exit" });
+                        created <= 0 || exited <= created || !ChildOwned || PinnedFile == null ||
+                            ReleaseTime < created || exited < ReleaseTime || observed < exited ? "unavailable" :
+                        item.Time < lower ? (item.Kind == "process-end" ? "before-release" : "before-creation") :
+                            (item.Kind == "process-end" ? "after-observation" : "after-exit") });
                 throw new InvalidDataException("held event lifetime rejected");
             }
         }
@@ -906,15 +918,22 @@ public static class WindowsEtwProbe
         ChildCreated = childCreated.Ticks;
         ChildOwned = true;
         FixtureStep = "release";
+        FileTime precise;
+        GetSystemTimePreciseAsFileTime(out precise);
+        ReleaseTime = precise.Ticks;
         RootProcess.StandardInput.BaseStream.WriteByte(0x52);
         RootProcess.StandardInput.BaseStream.Flush();
         RootProcess.StandardInput.Close();
         FixtureStep = "child-wait";
         uint wait = WaitForSingleObject(ChildHandle, (uint)Remaining(watch, 15000));
         if (wait != WaitObject) throw new TimeoutException("held child exit unobserved");
+        GetSystemTimePreciseAsFileTime(out precise);
+        ChildExitObserved = precise.Ticks;
         FixtureStep = "root-wait";
         if (!RootProcess.WaitForExit(Remaining(watch, 15000)))
             throw new TimeoutException("root fixture exit unobserved");
+        GetSystemTimePreciseAsFileTime(out precise);
+        RootExitObserved = precise.Ticks;
         FixtureStep = "exit-output";
         uint childCode;
         if (!GetExitCodeProcess(ChildHandle, out childCode) || childCode != 0 || RootProcess.ExitCode != 0 ||
