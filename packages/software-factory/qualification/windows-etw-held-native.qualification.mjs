@@ -121,10 +121,24 @@ try {
     'process handle image differs from pin' {'image-path'}
     'process image file identity differs from pin' {'image-file'}
     'fixture child is not live child of held root' {'parent'}
+    'held child missing from process snapshot' {'snapshot-missing'}
+    'process snapshot' {'snapshot-open'}
+    'process snapshot first' {'snapshot-first'}
+    'snapshot close' {'snapshot-close'}
     'held child exit unobserved' {'child-exit'}
     'root fixture exit unobserved' {'root-exit'}
     'held fixture exit or output invalid' {'exit-output'}
-    default {'other'}
+    default {
+      switch -Exact ($cause.GetType().FullName) {
+        'System.ComponentModel.Win32Exception' {'native-api'}
+        'System.ArgumentException' {'argument'}
+        'System.InvalidDataException' {'invalid-data'}
+        'System.InvalidOperationException' {'invalid-state'}
+        'System.Runtime.InteropServices.MarshalDirectiveException' {'marshal'}
+        'System.Management.Automation.MethodException' {'method'}
+        default {'other'}
+      }
+    }
   }
 } finally {
   try {
@@ -154,7 +168,7 @@ exit 1
     });
     const positiveResult = await waitForBridge(closed, 35000);
     if (!overflow && !hadError && positiveResult === 1 &&
-        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
+        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|snapshot-missing|snapshot-open|snapshot-first|snapshot-close|native-api|argument|invalid-data|invalid-state|marshal|method|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
       process.stderr.write(`HELD_NATIVE_${output.trim()}\n`);
     assert.equal(positiveResult, 0);
     assert.equal(overflow, false);
