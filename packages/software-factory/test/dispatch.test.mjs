@@ -33,6 +33,17 @@ test('release bootstrap selection runs deterministic verification without a nati
   assert.doesNotMatch(result.stdout, /native public verifier executes authenticated snapshot/);
 });
 
+test('release candidate selection runs deterministic preparation checks without native acquisition', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'candidate'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /a bound candidate receipt rejects changed bytes/);
+  assert.match(result.stdout, /public Python inventory rejects a changed new import/);
+  assert.doesNotMatch(result.stdout, /explicit native offline prepare/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

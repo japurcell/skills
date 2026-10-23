@@ -277,6 +277,8 @@ public static class WindowsEtwProbe
     private static FileIdInformation PinnedFileId;
     private static IntPtr ChildHandle;
     private static bool ChildOwned;
+    private static string FixtureStep = "not-started";
+    private static string ReadFixtureStep() { return FixtureStep; }
     private static readonly Dictionary<int, ulong> StartKeys = new Dictionary<int, ulong>();
     private static readonly Dictionary<int, ulong> EndKeys = new Dictionary<int, ulong>();
 
@@ -782,6 +784,7 @@ public static class WindowsEtwProbe
 
     private static void RunFixture(string node, string evidence, string fixture, Stopwatch watch)
     {
+        FixtureStep = "start";
         // The fixed script reports a live child before receiving the single release byte.
         if (!File.Exists(fixture) || fixture.IndexOf('"') >= 0)
             throw new InvalidDataException("fixed fixture unavailable");
@@ -800,21 +803,26 @@ public static class WindowsEtwProbe
         start.EnvironmentVariables["PATH"] = Path.Combine(windows, "System32") + ";" + windows;
         start.EnvironmentVariables["TEMP"] = evidence;
         start.EnvironmentVariables["TMP"] = evidence;
+        FixtureStep = "root-handle";
         RootProcess = Process.Start(start);
         if (RootProcess == null) throw new InvalidOperationException("Node fixture launch returned no process");
         RootPid = RootProcess.Id;
         if (GetProcessId(RootProcess.Handle) != (uint)RootPid || RootProcess.HasExited)
             throw new InvalidDataException("root process handle changed or exited");
+        FixtureStep = "root-timing";
         FileTime rootCreated, rootExited, kernel, user;
         if (!GetProcessTimes(RootProcess.Handle, out rootCreated, out rootExited, out kernel, out user) ||
             rootCreated.Ticks <= 0)
             throw new Win32Exception(Marshal.GetLastWin32Error(), "root process timing");
+        FixtureStep = "root-image";
         VerifyProcessImage(RootProcess.Handle, node);
         RootCreated = rootCreated.Ticks;
         Line("ROOT", RootPid, RootCreated, "pinned-node");
+        FixtureStep = "pid-line";
         int printedPid = ReadChildPid(RootProcess, watch);
         if (printedPid == RootPid || RootProcess.HasExited)
             throw new InvalidDataException("fixture child PID invalid");
+        FixtureStep = "child-handle";
         ChildHandle = OpenProcess(ProcessQueryLimitedInformation | ProcessSynchronize | ProcessTerminate,
             false, (uint)printedPid);
         if (ChildHandle == IntPtr.Zero)
@@ -822,24 +830,31 @@ public static class WindowsEtwProbe
         if (GetProcessId(ChildHandle) != (uint)printedPid ||
             WaitForSingleObject(ChildHandle, 0) != WaitTimeout)
             throw new InvalidDataException("fixture child handle invalid or exited");
+        FixtureStep = "child-timing";
         FileTime childCreated, childExited;
         if (!GetProcessTimes(ChildHandle, out childCreated, out childExited, out kernel, out user) ||
             childCreated.Ticks <= RootCreated)
             throw new InvalidDataException("fixture child timing invalid");
+        FixtureStep = "child-image";
         VerifyProcessImage(ChildHandle, node);
+        FixtureStep = "parent";
         if (RootProcess.HasExited || ParentFromSnapshot((uint)printedPid) != (uint)RootPid ||
             RootProcess.HasExited ||
             WaitForSingleObject(ChildHandle, 0) != WaitTimeout)
             throw new InvalidDataException("fixture child is not live child of held root");
         ChildPid = printedPid;
         ChildOwned = true;
+        FixtureStep = "release";
         RootProcess.StandardInput.Write('R');
         RootProcess.StandardInput.Flush();
         RootProcess.StandardInput.Close();
+        FixtureStep = "child-wait";
         uint wait = WaitForSingleObject(ChildHandle, (uint)Remaining(watch, 15000));
         if (wait != WaitObject) throw new TimeoutException("held child exit unobserved");
+        FixtureStep = "root-wait";
         if (!RootProcess.WaitForExit(Remaining(watch, 15000)))
             throw new TimeoutException("root fixture exit unobserved");
+        FixtureStep = "exit-output";
         uint childCode;
         if (!GetExitCodeProcess(ChildHandle, out childCode) || childCode != 0 || RootProcess.ExitCode != 0 ||
             !GetProcessTimes(ChildHandle, out childCreated, out childExited, out kernel, out user) ||
@@ -849,6 +864,7 @@ public static class WindowsEtwProbe
             RootProcess.StandardOutput.BaseStream.ReadByte() != -1 ||
             RootProcess.StandardError.BaseStream.ReadByte() != -1)
             throw new InvalidDataException("held fixture exit or output invalid");
+        FixtureStep = "complete";
         Line("CHILD", ChildPid);
         Line("HELD", "root", 1, 1, 1);
         Line("HELD", "child", 1, 1, 1);

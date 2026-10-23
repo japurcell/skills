@@ -134,7 +134,9 @@ try {
   }
 }
 if($passed){[Console]::WriteLine('POSITIVE_OK');exit 0}
-[Console]::WriteLine('POSITIVE_FAIL '+$category)
+$step=$type.GetMethod('ReadFixtureStep',$flags).Invoke($null,@())
+if($step -cnotmatch '^(not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete)$'){$step='other'}
+[Console]::WriteLine('POSITIVE_FAIL '+$category+' '+$step)
 exit 1
 `);
     bridge = spawn(powershell, ['-NoProfile', '-NonInteractive', '-File', driver,
@@ -152,7 +154,7 @@ exit 1
     });
     const positiveResult = await waitForBridge(closed, 35000);
     if (!overflow && !hadError && positiveResult === 1 &&
-        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|child-exit|root-exit|exit-output|other|stop|close)\r?\n$/.test(output))
+        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|child-exit|root-exit|exit-output|other|stop|close) (?:not-started|start|root-handle|root-timing|root-image|pid-line|child-handle|child-timing|child-image|parent|release|child-wait|root-wait|exit-output|complete|other)\r?\n$/.test(output))
       process.stderr.write(`HELD_NATIVE_${output.trim()}\n`);
     assert.equal(positiveResult, 0);
     assert.equal(overflow, false);
