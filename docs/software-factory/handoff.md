@@ -78,3 +78,5 @@ Reflect skill at actual session end remains required. Durable NodeCLI sorting an
 ## Historical evidence
 
 The verified [controller integration snapshot](handoff.history-2026-10-22-controller-integration.md) retains prior exact reports/commands/rejected-action details. Earlier archives linked there preserve preceding native and integration history. Historical evidence never overrides current constraints or user authorization.
+
+Native39878775369 at695135a8 reports fixture-control at pid-line, with foreign-PID rejection still passing. The numeric-exit path is not reached; parent adds a fixed callback-site vocabulary (no raw error text) to identify whether input, readiness, spawn or pipe control fires first. Protocol/CI24 PASS1.827seconds, both PowerShell drivers parse; next native replay pending. Redirected .NET Framework stdin uses Console.InputEncoding with immediate AutoFlush, so a writer preamble is a concrete hypothesis, not an established cause. No encoding or identity predicate has been changed.
