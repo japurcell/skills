@@ -111,6 +111,53 @@ def canonical(path: str, directory: bool):
     return value
 
 
+def provider_selection(path: str):
+    """Bounded structural gate before selected JavaScript; fixed errors disclose no source paths."""
+    try:
+        if not isinstance(path, str) or len(path.encode("utf-8")) > 512:
+            refuse("invalid provider selector path")
+        descriptor = canonical(path, False)
+        observed = descriptor.lstat()
+        if observed.st_nlink != 1 or not 1 <= observed.st_size <= 4096:
+            refuse("invalid provider selector file")
+        fd = os.open(descriptor, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            before = os.fstat(fd)
+            data = os.read(fd, 4097)
+            after = os.fstat(fd)
+        finally:
+            os.close(fd)
+        if len(data) != before.st_size or file_id(before) != file_id(after) or file_id(after) != file_id(descriptor.lstat()):
+            refuse("changed provider selector file")
+        providers = json.loads(data.decode("utf-8"), object_pairs_hook=pairs,
+                               parse_constant=lambda _: refuse("invalid provider JSON constant"))
+        pending = [(providers, 0)]
+        while pending:
+            value, depth = pending.pop()
+            if depth > 3:
+                refuse("deep provider descriptor")
+            if isinstance(value, dict):
+                pending.extend((item, depth + 1) for item in value.values())
+            elif isinstance(value, list):
+                pending.extend((item, depth + 1) for item in value)
+        fields(providers, set(), {"codex", "copilot"})
+        for name, value in providers.items():
+            required = {"executable", "modes"} if name == "codex" else {"packageRoot", "manifestFile", "modes"}
+            fields(value, required)
+            modes = value["modes"]
+            allowed = {"read-only", "workspace-write"} if name == "codex" else {"read-only"}
+            if not isinstance(modes, list) or not 1 <= len(modes) <= len(allowed) or any(type(mode) is not str or mode not in allowed for mode in modes) or len(set(modes)) != len(modes):
+                refuse("unsupported provider mode")
+            for field in required - {"modes"}:
+                selected = value[field]
+                if not isinstance(selected, str) or len(selected.encode("utf-8")) > 512 or selected.count("/") > 32:
+                    refuse("invalid provider source path")
+                canonical(selected, field == "packageRoot")
+        return descriptor, providers, file_id(observed), hashlib.sha256(data).hexdigest()
+    except (OSError, ValueError, TypeError, UnicodeError, RecursionError, OverflowError):
+        refuse("provider selection refused")
+
+
 def file_id(info):
     return info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
@@ -665,10 +712,18 @@ class PreparedSelection:
     source_bundle_identity: tuple
     source_bundle_inventory: tuple
     source_archive_identity: tuple
+    providers: dict
+    provider_descriptor: Path | None
+    provider_descriptor_identity: tuple | None
+    provider_descriptor_sha256: str | None
     stage: PrivateStage
 
     def revalidate_sources(self):
         """Required before a later candidate binds the original selection."""
+        if self.provider_descriptor is not None:
+            _, providers, identity, digest = provider_selection(str(self.provider_descriptor))
+            if providers != self.providers or identity != self.provider_descriptor_identity or digest != self.provider_descriptor_sha256:
+                refuse("provider selection refused")
         canonical(str(self.source_bundle_root), True)
         canonical(str(self.source_node_archive), False)
         if file_id(self.source_bundle_root.lstat()) != self.source_bundle_identity or tuple(sorted(inventory(self.source_bundle_root).items())) != self.source_bundle_inventory or file_id(self.source_node_archive.lstat()) != self.source_archive_identity:
@@ -681,8 +736,9 @@ class PreparedSelection:
 
 
 @contextmanager
-def prepare_install_selection(bundle_root: str, manifest_sha256: str, node_archive: str):
+def prepare_install_selection(bundle_root: str, manifest_sha256: str, node_archive: str, providers_path: str | None = None):
     """Reusable authenticated preparation scope for the later installer."""
+    descriptor, providers, descriptor_identity, descriptor_sha = provider_selection(providers_path) if providers_path is not None else (None, {}, None, None)
     bundle = canonical(bundle_root, True)
     archive = canonical(node_archive, False)
     with private_stage() as stage:
@@ -700,13 +756,20 @@ def prepare_install_selection(bundle_root: str, manifest_sha256: str, node_archi
             refuse("verified Node executable missing")
         authenticate_snapshot(stage.root / "bundle", manifest_sha256)
         entry = stage.root / "bundle/dist/installation-bindings.js"
-        program = "import {validateInstallSelection} from " + json.dumps(entry.as_uri()) + ";const s=validateInstallSelection({bundleRoot:process.argv[1],manifestSha256:process.argv[2],nodeArchivePath:process.argv[3]});process.stdout.write(JSON.stringify({version:s.bundle.version,platform:s.bundle.platform,manifestSha256:s.bundle.manifestSha256,nodeSha256:s.node.sha256}));"
-        output = bounded_child([str(executable), "--input-type=module", "-e", program, str(stage.root / "bundle"), manifest_sha256, str(stage.root / "selected-node-archive")], stage)
+        selected_file = "-"
+        if providers:
+            selected_file = str(stage.root / "selected-providers.json")
+            with stage.create("selected-providers.json") as output:
+                output.write((json.dumps(providers, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8"))
+                output.flush()
+                os.fsync(output.fileno())
+        program = "import {readFileSync} from 'node:fs';import {validateInstallSelection} from " + json.dumps(entry.as_uri()) + ";const p=process.argv[4]==='-'?undefined:JSON.parse(readFileSync(process.argv[4],'utf8'));const s=validateInstallSelection({bundleRoot:process.argv[1],manifestSha256:process.argv[2],nodeArchivePath:process.argv[3],...(p?{providers:p}:{})});process.stdout.write(JSON.stringify({version:s.bundle.version,platform:s.bundle.platform,manifestSha256:s.bundle.manifestSha256,nodeSha256:s.node.sha256}));"
+        output = bounded_child([str(executable), "--input-type=module", "-e", program, str(stage.root / "bundle"), manifest_sha256, str(stage.root / "selected-node-archive"), selected_file], stage)
         semantic = fields(json_bytes(output), {"version", "platform", "manifestSha256", "nodeSha256"})
         if semantic != {"version": manifest["version"], "platform": platform, "manifestSha256": manifest_sha256, "nodeSha256": NODE[platform][1]}:
             refuse("semantic selection receipt mismatch")
         receipt = {"schema": 1, "version": manifest["version"], "platform": platform, "manifestSha256": manifest_sha256, "nodeSha256": NODE[platform][1], "nodeArchiveBytes": archive_size, "bundleFiles": len(manifest["files"]), "archiveMembers": extraction["members"], "omittedLinks": extraction["omittedLinks"]}
-        yield PreparedSelection(bundle, archive, stage.root / "bundle", stage.root / "selected-node-archive", stage.root / "node", manifest_sha256, receipt, source_bundle_identity, source_bundle_inventory, source_archive_identity, stage)
+        yield PreparedSelection(bundle, archive, stage.root / "bundle", stage.root / "selected-node-archive", stage.root / "node", manifest_sha256, receipt, source_bundle_identity, source_bundle_inventory, source_archive_identity, providers, descriptor, descriptor_identity, descriptor_sha, stage)
 
 
 def extracted_node_tree(root: Path, platform: str):
@@ -895,7 +958,8 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
                "repository": repository, "npm": {"offline": offline}, "stageRoot": str(stage.root),
                "stageIdentity": f"{stage.root.lstat().st_dev}:{stage.root.lstat().st_ino}",
                "source": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
-                          "nodeArchivePath": str(prepared.source_node_archive)},
+                          "nodeArchivePath": str(prepared.source_node_archive),
+                          **({"providers": prepared.providers} if prepared.providers else {})},
                "snapshot": {"bundleRoot": str(prepared.snapshot_bundle_root), "nodeArchivePath": str(prepared.snapshot_node_archive),
                             "extractedNodeRoot": str(prepared.extracted_node_root), "nodeTree": node_tree}}
     data = (json.dumps(request, separators=(",", ":"), sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
@@ -1056,6 +1120,7 @@ def main():
     verify.add_argument("--bundle-root", required=True)
     verify.add_argument("--manifest-sha256", required=True)
     verify.add_argument("--node-archive", required=True)
+    verify.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
     prepare = sub.add_parser("prepare", help="Prepare an incomplete, candidate-bound install without publication")
     prepare.add_argument("--repository", required=True)
     prepare.add_argument("--bundle-root", required=True)
@@ -1063,6 +1128,7 @@ def main():
     prepare.add_argument("--node-archive", required=True)
     prepare.add_argument("--offline", action="store_true")
     prepare.add_argument("--offline-cache-seed")
+    prepare.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
     install = sub.add_parser("install", help="Publish a foreground first install from authenticated selected bytes")
     install.add_argument("--repository", required=True)
     install.add_argument("--bundle-root", required=True)
@@ -1070,10 +1136,11 @@ def main():
     install.add_argument("--node-archive", required=True)
     install.add_argument("--offline", action="store_true")
     install.add_argument("--offline-cache-seed")
+    install.add_argument("--providers", help="Canonical local JSON file with selected qualified external providers")
     args = parser.parse_args()
     if args.command in ("prepare", "install") and args.offline_cache_seed and not args.offline:
         refuse("offline cache seed requires --offline")
-    with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive) as prepared:
+    with prepare_install_selection(args.bundle_root, args.manifest_sha256, args.node_archive, args.providers) as prepared:
         if args.command == "verify":
             result = prepared.receipt
         else:

@@ -242,9 +242,12 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
   const original = validateInstallSelection(request.source);
   sameSelection(privateSelection, original);
   const { common } = await repositoryIdentity(request.repository);
-  for (const provider of [original.providers.codex?.executable, original.providers.copilot?.packageRoot]) {
-    if (provider && (provider === join(common, 'factory', 'install') || provider.startsWith(`${join(common, 'factory', 'install')}${sep}`)
-      || provider.startsWith(`${request.stageRoot}${sep}`))) fail('provider source under replaceable or private stage');
+  for (const provider of [original.providers.codex?.executable, original.providers.copilot?.packageRoot,
+    original.providers.copilot?.manifestFile]) {
+    const factory = join(common, 'factory');
+    if (provider && (provider === factory || provider.startsWith(`${factory}${sep}`)
+      || provider === request.stageRoot || provider.startsWith(`${request.stageRoot}${sep}`)))
+      fail('provider source under replaceable or private stage');
   }
   const selection = selectionFrom(original);
   const handle = await beginRepositoryBootstrap(request.repository, selection, currentOwner());
