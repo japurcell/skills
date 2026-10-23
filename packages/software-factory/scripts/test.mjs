@@ -26,7 +26,7 @@ const groups = {
     { path: 'test/learning-extraction-paths.test.mjs', operation: 'extract', testConcurrency: 2 },
     { path: 'test/learning-evaluation.test.mjs', operation: 'evaluate' },
     { path: 'test/learning-adoption.test.mjs', operation: 'adopt' },
-  ], maintenance: [{ path: 'test/maintenance-controller.test.mjs', operation: 'controller' }], release: [{ path: 'test/release-packaging.test.mjs' }, { path: 'test/installation-bindings.test.mjs' }, { path: 'test/install-bootstrap.test.mjs', area: 'bootstrap' }, { path: 'test/install-bootstrap-process.test.mjs', area: 'bootstrap' }, { path: 'test/install-candidate.test.mjs', area: 'candidate' }, { path: 'test/install-publication.test.mjs', area: 'publication' }], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
+  ], maintenance: [{ path: 'test/maintenance-controller.test.mjs', operation: 'controller' }], release: [{ path: 'test/release-packaging.test.mjs' }, { path: 'test/installation-bindings.test.mjs' }, { path: 'test/install-bootstrap.test.mjs', area: 'bootstrap' }, { path: 'test/install-bootstrap-process.test.mjs', area: 'bootstrap' }, { path: 'test/install-candidate.test.mjs', area: 'candidate' }, { path: 'test/install-publication.test.mjs', area: 'publication' }, { path: 'test/installed-bindings.test.mjs', area: 'installed' }], qualification: [{ path: 'qualification/runtime.test.mjs', area: 'runtime' }, { path: 'qualification/ci.test.mjs', area: 'ci' }],
 };
 
 try {

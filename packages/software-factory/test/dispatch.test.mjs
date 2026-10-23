@@ -55,6 +55,17 @@ test('release publication selection runs deterministic ownership checks without 
   assert.doesNotMatch(result.stdout, /explicit native/);
 });
 
+test('release installed selection validates startup bindings without provider or desktop calls', () => {
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  delete env.FACTORY_TEST_NODE_ARCHIVE;
+  const result = spawnSync(process.execPath, [dispatch, 'release', '--area', 'installed'], { encoding: 'utf8', timeout: 15000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /development CLI remains unbound/);
+  assert.match(result.stdout, /unqualified external provider bytes refuse adapter construction/);
+  assert.doesNotMatch(result.stdout, /public pinned offline/);
+});
+
 test('maintenance controller selection executes admission and handoff checks while incomplete operations refuse', () => {
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
