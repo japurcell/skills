@@ -307,6 +307,9 @@ for target in targets():
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
+# Generated brain assets also require the skill's real source entrypoint.
+entrypoint = Path("skills/default/brain-install/SKILL.md")
+shutil.copy2(source_root / entrypoint, fixture_root / entrypoint)
 '@
     $oldBytecode = [System.Environment]::GetEnvironmentVariable('PYTHONDONTWRITEBYTECODE', [System.EnvironmentVariableTarget]::Process)
     try {
@@ -2093,6 +2096,21 @@ function Test-EmptyCategoriesMarkersAndExclusions {
         foreach ($category in @('default', 'forest-service')) {
             New-Item -ItemType Directory -Path (Join-Path $repo "skills/$category") | Out-Null
         }
+        # Keep all provider targets in this synthetic empty-skill catalog.
+        $emptyCatalog = @'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+with path.open("a", encoding="utf-8") as stream:
+    stream.write('\n_catalog_targets = targets\ndef targets():\n    return tuple(target for target in _catalog_targets() if target.output_path.parts[0] != "skills")\n')
+'@
+        $python = Get-PythonForFixture
+        & $python.Path @($python.Arguments) -c $emptyCatalog (Join-Path $repo 'hooks/manifest.py')
+        Assert-Equals 0 $LASTEXITCODE 'Expected empty-catalog fixture configuration.'
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/generate-hooks.py') --write | Out-Null
+        Assert-Equals 0 $LASTEXITCODE 'Expected empty-catalog fixture output regeneration.'
+        & $python.Path @($python.Arguments) (Join-Path $repo 'scripts/generate-hooks.py') --check
+        Assert-Equals 0 $LASTEXITCODE 'Expected every declared provider hook to remain fresh.'
         $homeDir = Join-Path $workdir 'empty-home'
         $result = Invoke-InstallProcess -Repo $repo -HomeDir $homeDir -Workdir $workdir -InstallArguments @('--fs')
         Assert-Equals 0 $result.ExitCode 'Expected both empty categories valid.'

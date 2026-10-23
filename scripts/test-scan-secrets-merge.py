@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
+import subprocess
 import sys
 import unittest
 
@@ -139,7 +141,7 @@ class MergeScannerTests(ScannerFixtureMixin, unittest.TestCase):
         contents = {f"entry-{index:03}-" + "x" * 190 + ".txt": "safe changed content\n"
                     for index in range(256)}
         self.stage_pair(contents)
-        self.install_fake_git(
+        wrapper = self.install_fake_git(
             "import os, sys\n"
             "args = sys.argv[1:]\n"
             "if args[:5] == ['--literal-pathspecs', 'ls-files', '--stage', '-z', '--']:\n"
@@ -148,6 +150,23 @@ class MergeScannerTests(ScannerFixtureMixin, unittest.TestCase):
             "        sys.exit(129)\n"
             "os.execv(os.environ['REAL_GIT'], [os.environ['REAL_GIT'], *args])\n",
             directory="argv-bin")
+        # Only metadata requests need this Python fault injector. Launching a
+        # Python interpreter for each ordinary diff consumes the real scanner's
+        # deadline and makes this command-line batching test machine-dependent.
+        guard = wrapper.with_suffix(".py")
+        wrapper.rename(guard)
+        wrapper.write_text(
+            "#!/bin/sh\n"
+            'if [ "$1 $2 $3 $4 $5" = "--literal-pathspecs ls-files --stage -z --" ]; then\n'
+            f"  exec {shlex.quote(sys.executable)} {shlex.quote(str(guard))} \"$@\"\n"
+            "fi\n"
+            'exec "$REAL_GIT" "$@"\n', encoding="utf-8")
+        wrapper.chmod(0o755)
+        oversized = subprocess.run(
+            [str(wrapper), "--literal-pathspecs", "ls-files", "--stage", "-z", "--", *contents],
+            cwd=self.repo, env=self.env, capture_output=True, timeout=10)
+        self.assertEqual(oversized.returncode, 129, oversized.stderr)
+        self.assertIn(b"command line exceeds fixture limit", oversized.stderr)
         self.assert_all_scans("clean")
         last_path = sorted(contents)[-1]
         self.write_files({last_path: f"fake_token={FAKE_TOKEN}\n"})

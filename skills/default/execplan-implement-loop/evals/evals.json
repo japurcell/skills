@@ -1,0 +1,26 @@
+{
+  "skill_name": "execplan-implement-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use this exact local execplan-implement-loop skill to run a canonical, authorized plan in an isolated Git project. Use the supplied fake Gemini, never a real provider. The project has two implementation tasks, milestone checks, and final acceptance. Report the result and evidence; do not implement tasks yourself outside the runner.",
+      "expected_output": "One runner invocation; verified task commits; completed report with usage unknown where absent.",
+      "files": ["fixtures/example.md"],
+      "assertions": ["Launches bundled runner rather than an outer-agent iteration loop", "Requires verification before commits", "Distinguishes fixture coverage from live Gemini acceptance"]
+    },
+    {
+      "id": 2,
+      "prompt": "Use this exact local skill to resume a recorded interrupted canonical plan in an isolated Git fixture. A pre-commit hook previously failed after verification. Fix only that fixture hook cause and resume the recorded run directory. Never call real Gemini. Preserve changes, commit transaction, and cumulative history.",
+      "expected_output": "Resume uses the existing transaction without another implementation call, and reports current and cumulative work.",
+      "files": [],
+      "assertions": ["Uses explicit --resume with original plan", "Does not reset or discard partial changes", "Does not rerun Gemini implementation for commit failure"]
+    },
+    {
+      "id": 3,
+      "prompt": "Use this exact local skill on an isolated ExecPlan missing verification commands. Do not change the plan or install dependencies. Explain the outcome with structured runner evidence. Never invoke a real provider.",
+      "expected_output": "Static validation rejects input with zero provider calls; no invented verification commands or success claim.",
+      "files": [],
+      "assertions": ["Runs --validate-only before execution", "Stops on invalid contract", "Does not invent commands or silently broaden scope"]
+    }
+  ]
+}

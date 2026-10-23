@@ -262,6 +262,10 @@ class LifecycleTests(unittest.TestCase):
         source.mkdir()
         for name in ("hooks", ".codex", ".copilot", ".gemini", ".github"):
             shutil.copytree(ROOT / name, source / name, ignore=shutil.ignore_patterns("__pycache__", "logs"))
+        # Installer freshness validation covers every generated hook target.
+        # Keep the packaged brain targets alongside the provider fixtures.
+        for name in ("skills/default/brain-install",):
+            shutil.copytree(ROOT / name, source / name, ignore=shutil.ignore_patterns("__pycache__", "logs"))
         (source / "scripts").mkdir()
         for path in (ROOT / "scripts").iterdir():
             if path.suffix in {".py", ".sh", ".ps1"}:

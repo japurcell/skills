@@ -8,19 +8,20 @@ Publish `execplan-implement-loop`, an explicitly invoked skill accepting an Exec
 
 The default total execution budget is 3,600 seconds and the Gemini iteration limit is 1,200 seconds; both are configurable. A timeout preserves partial work and starts another iteration while the total budget allows. Success requires all tasks and milestone/final acceptance checks to pass, with commit evidence. Blockers, exhausted failure limits, cancellation, and deadlines are explicit non-success outcomes.
 
-Current authorization: create this plan and obtain an independent adversarial review only. Do not implement the skill or run paid Gemini sessions in this planning session. Future implementation starts when the user authorizes execution of this plan.
+Current authorization: the user invoked `execplan-implement` on this plan on 2026-10-22. Implement T1 through T6 and commit verified implementation changes on the existing topic branch. The user will perform live Gemini qualification on another machine; no live Gemini calls are authorized or required on this host.
 
 ## Progress
 
 - [x] (2026-10-22) [design] Agree responsibilities, deadlines, recovery, verification, and runner-owned commits with the user.
 - [x] (2026-10-22) [design] Create the implementation contract and repository navigation link.
 - [x] (2026-10-22) [design] Obtain and reconcile seven independent adversarial findings; see [review](adversarial-review.md).
-- [ ] [milestone-1] T1: Define and validate the supported plan and result protocols.
-- [ ] [milestone-2] T2: Deliver the bounded Gemini process adapter and reporting.
-- [ ] [milestone-3] T3: Deliver verification, commit transactions, and restart recovery.
-- [ ] [milestone-4] T4: Integrate deterministic scheduling, repair, and termination policy.
-- [ ] [milestone-5] T5: Publish the portable skill, references, and evaluation fixtures.
-- [ ] [milestone-5] T6: Prove integrated behavior and installation independence.
+- [x] (2026-10-22) [milestone-1] T1: Define and validate the supported plan and result protocols.
+- [x] (2026-10-22) [milestone-2] T2: Deliver the bounded Gemini process adapter and reporting.
+- [x] (2026-10-22) [milestone-3] T3: Deliver verification, commit transactions, and restart recovery.
+- [x] (2026-10-22) [milestone-4] T4: Integrate deterministic scheduling, repair, and termination policy.
+- [x] (2026-10-22) [milestone-5] T5: Publish the portable skill, references, and evaluation fixtures.
+- [x] (2026-10-22) [milestone-5] T6: Finish local aggregate verification, instruction evaluations, deferred final review, and reproduced fixture repairs.
+- [ ] [milestone-5] T6: Owner runs live Gemini qualification on another machine and returns evidence for review. Live-provider acceptance remains pending.
 
 ## Surprises & Discoveries
 
@@ -38,12 +39,16 @@ Current authorization: create this plan and obtain an independent adversarial re
 - 2026-10-22, user: Use Python's standard library on macOS/Linux, final JSON on stdout, progress on stderr, atomic per-run summaries, and no duplicate raw provider JSONL transcript.
 - 2026-10-22, user: Declared verification commands are deterministic acceptance gates. Gemini develops with TDD and proposes a commit message; the runner verifies, records completion, stages, and commits. Commit failure must not trigger implementation again.
 - 2026-10-22, user: Explicit resume permits recognized partial state, gives the invocation a new time budget, and preserves historical statistics. Stop after three consecutive same-class failures without verified progress; Gemini iteration timeouts are exempt.
+- 2026-10-22, user: Defer code review until all implementation tasks are complete. Continue task verification during implementation.
+- 2026-10-22, user: Run final live qualification personally on another machine with Gemini CLI. Supply easy copy-and-run instructions and keep live acceptance pending returned evidence.
 - 2026-10-22, design detail: Keep runner code inside the published skill bundle so copied installations work without this checkout. Keep the maintained test entrypoint in root `scripts/`. This portability requirement is the reason for the bundle-local helper rather than a repository-only runtime script.
 - 2026-10-22, design detail: Use a fenced JSON control block within Markdown to avoid ambiguous natural-language parsing. Immutable task requirements and command declarations are distinct from runner-owned mutable completion fields.
 
 ## Outcomes & Retrospective
 
-Design is agreed; implementation has not started. No runtime, live Gemini, or installation claim has been verified. Independent review identified seven gaps; the contracts below now address them. A focused reviewer recheck found no remaining concrete design blockers. This is design review, not runtime proof. The key refinement from the interview was moving all commits and acceptance decisions from Gemini to the deterministic runner.
+Source implementation, local validation, and final code review are complete. Both installer suites pass after the reproduced fixture repairs. The frozen aggregate initially passed 52/57 suites; focused reruns reconciled all five failures. This is combined validation evidence, not a claim of a clean uninterrupted 57-suite run. Copied-bundle CLI fixtures, real Git commits, process cleanup, and recovery pass deterministic checks. Final review found and repaired reverse-ordered graph recursion and missing branch identity guards. Bounded regular-file input and partial-usage totals also passed focused review. No high-priority findings remain.
+
+Live Gemini acceptance remains pending an owner-run qualification on another machine. The bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md) provides a disposable source-code plan, commands, expected results, recovery instructions, and evidence to return. Mocked success does not satisfy this gate. The design review and final implementation review are distinct evidence.
 
 ## Context and Orientation
 
@@ -100,7 +105,7 @@ After commit, verify the resulting commit's parent and tree against the prepared
 
 Resume validates physical repository/worktree identity, branch, plan identity/frozen contract, expected HEAD, and saved working/index fingerprints. Recover `commit_preparing` using its write-ahead before/after artifacts without invoking Gemini. After a crash between commit and journal finalization, recognize exactly the expected parent/tree/message transaction rather than committing twice. If the candidate changed, reverify it before retrying a commit. A commit failure stops with a recoverable reason; explicit resume retries verification/commit as needed without launching Gemini implementation again. Unrecognized edits or unrelated HEAD changes block; never guess ownership or roll back.
 
-Acceptance evidence records the exact verified candidate content digest and Git base. Later deliverable changes make earlier evidence historical, not proof of the final candidate. Before overall success, rerun every milestone acceptance command plus final acceptance commands against the final candidate, even if their nodes passed earlier. Verification commands must leave the candidate unchanged. Only deterministic generated plan metadata may differ between verified content and the resulting commit; exclude exactly those generated fields/regions when computing the acceptance digest, then verify the committed digest matches. The plan contract itself remains included. If a command depends on generated metadata, require the final rendered plan to be its input and verify that rendering before committing. A failed earlier-milestone recheck is owned by the final verification node, requires that node's explicit repair policy/scope, invalidates the final sweep, and causes the entire sweep to rerun after any repair. Never claim final acceptance from obsolete command evidence.
+Acceptance evidence records the exact verified candidate content digest and Git base. Later deliverable changes make earlier evidence historical, not proof of the final candidate. Before overall success, rerun every milestone acceptance command plus final acceptance commands against the final candidate, even if their nodes passed earlier. Verification commands must leave the candidate unchanged. Only deterministic generated plan metadata may differ between verified content and the resulting commit; exclude exactly those generated fields/regions when computing the acceptance digest, then verify the committed digest matches. The plan contract itself remains included. If a command depends on generated metadata, require the final rendered plan to be its input and verify that rendering before committing. A failed earlier-milestone recheck is owned by the final verification node, uses the failure_policy of that node's first declared command and the final node's writable scope, invalidates the final sweep, and causes the entire sweep to rerun after any repair. Never claim final acceptance from obsolete command evidence.
 
 ### Deadlines, failure limits, and reporting
 
@@ -115,8 +120,8 @@ The versioned summary contains run/invocation IDs, status and reason, plan/workt
 ## Plan of Work
 
 ### Milestone 1: Validate the contract without model usage
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T1: Implement plan and result contracts
 
@@ -125,8 +130,8 @@ Prerequisites: none. Inputs: Interfaces and Dependencies above, repository scrip
 Verification: from repository root run `rtk proxy python3 scripts/test-execplan-implement-loop.py --group contract`. Create this suite option. Expect exit 0 for fixtures covering valid dependency ordering and precise rejection of every malformed/ambiguous contract case above, with no Gemini calls. Include one complete v1 example and round-trip fixtures proving generated updates preserve the immutable hash while requirements edited inside or adjacent to generated regions cannot gain authority. The milestone is met when validation works through the public CLI in a copied bundle outside this checkout.
 
 ### Milestone 2: Bound provider execution and report it honestly
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T2: Implement process supervision and the Gemini adapter
 
@@ -135,8 +140,8 @@ Prerequisites: T1. Inputs: protocol reference and pinned official Gemini event f
 Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group process`. Expect exit 0 for interleaved streams, oversized/malformed data, missing/duplicate terminal events, huge stderr, timeout, both signals, broken pipes, and descendants retaining pipes after their leader exits. Tests must assert cleanup before fixture cleanup can mask leaked descendants.
 
 ### Milestone 3: Commit only verified changes and recover safely
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T3: Implement Git ownership, verification, and commit recovery
 
@@ -145,8 +150,8 @@ Prerequisites: T1 and T2. Inputs: state/transaction contract above. Implement lo
 Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group git`. Expect exit 0 for failed verification producing no commit; successful verification producing one exact commit; dirty preflight rejection; concurrent lock rejection; commit hook failure; paths with spaces/leading dashes; deletion/rename handling; and fault injection before, during, and after plan replacement, staging, every journal write, commit creation, and finalization. Include runner SIGKILL with a still-writing child, blocked ordinary resume, and acknowledged recovery only after operator reconciliation. An already-created matching commit must be finalized without a duplicate or Gemini rerun.
 
 ### Milestone 4: Complete the deterministic loop
-Status: open
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T4: Integrate scheduling, repair, and terminal outcomes
 
@@ -155,7 +160,7 @@ Prerequisites: T2 and T3. Inputs: task graph and failure/deadline rules. Impleme
 Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group loop`. Expect exit 0 for a multi-milestone fake-Gemini run, failed-check repair, timeout followed by success, repeated timeout to total deadline, same-class cutoff, mixed failure accounting, precompleted invalid input, permission blocker, modified plan, commit recovery, and final acceptance failure. Include a later task breaking an earlier milestone, timeout/protocol failure after unauthorized HEAD/index/plan mutation with zero replacement calls, and unmapped infrastructure/out-of-scope verification failures with zero repair calls. Assert exact Gemini call counts, command order, commit counts, stdout schema, and stderr events.
 
 ### Milestone 5: Publish and prove the installed workflow
-Status: open
+Status: in progress
 Acceptance: not met
 
 #### Task T5: Author the skill and maintenance fixtures
@@ -172,9 +177,9 @@ Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `
 
 ## Concrete Steps
 
-Next authorized action: obtain a read-only adversarial review of this plan and reconcile findings. Implementation is not authorized by this planning request. After implementation authorization, start T1 with failing public CLI tests, then follow task prerequisites. Do not attempt to run this Markdown plan through the new runner before the runner exists and the plan has been explicitly converted to its supported dialect.
+Next action belongs to the owner: follow `skills/default/execplan-implement-loop/references/live-qualification.md` on a macOS/Linux machine with Gemini CLI 0.65.0. The guide provides a disposable source-code plan, clean baseline, copy-and-run commands, acceptance checklist, recovery commands, and evidence to return. No live Gemini calls were made on this host. Do not mark milestone 5 acceptance met until the returned evidence is reviewed or the owner explicitly waives that gate.
 
-All proposed verification commands above run from `/Users/adam/dev/skills`. Their test entrypoint and group switches do not exist yet; creating them is part of the assigned tasks. Expected results are not observed evidence.
+Local implementation, all five maintained runner groups, instruction evaluations, final deferred review, installer rechecks, and reflection are complete. The agreed test seams are the installed CLI process, fake provider executable, real disposable Git repository, and declared verification commands. Recorded results below are observed evidence. Do not attempt to run this Markdown implementation plan through the runner before explicitly converting it to the supported dialect.
 
 ## Validation and Acceptance
 
@@ -192,4 +197,21 @@ The lock is advisory and prompt instructions are not a security sandbox. Gemini 
 
 Primary research references: [Gemini CLI flags](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md), [headless automation](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/tutorials/automation.md), [policy engine](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/policy-engine.md), [noninteractive implementation](https://github.com/google-gemini/gemini-cli/blob/main/packages/cli/src/nonInteractiveCli.ts), and [Ralph prior art](https://github.com/ghuntley/how-to-ralph-wiggum). Research informed fresh contexts, durable plan state, tests as gates, and loop bounds; it did not establish live-provider acceptance.
 
-Independent review: [findings and dispositions](adversarial-review.md). Reflection: recovery lessons are encoded in the planned state machine and fault-injection tests rather than a separate generic brain note. No existing skill changes are needed.
+Implementation evidence (2026-10-22):
+
+- Current-source acceptance: all 42 maintained runner cases passed in 130.944 seconds with process inspection enabled. Coverage includes copied installation, two implementation tasks to final acceptance, real verification/commits, signals and descendants, SIGKILL reconciliation, write-ahead recovery, Git filters/submodules, unusual paths, branch identity, maximum graph size, bounded plan-file reads, and the manual source-code qualification fixture.
+- Packaging: five cases passed in 8.721 seconds. The live fixture rejects absent/wrong source and passes correct source plus tests. The portable skill validator reports `Skill is valid!`; bundle links, punctuation, exact commit-reference parity, and explicit Python compilation passed.
+- Aggregate runner: 14 cases passed. The new suite is listed once among 57 maintained suites. The frozen aggregate completed 52/57 suites successfully in 1,662.8 seconds. The retained log is `/private/tmp/execplan-loop-final-suite.log` from frozen checkout `/private/tmp/execplan-loop-final-r8iyulgh/checkout`. All five failures were reconciled by the targeted results below; no uninterrupted all-green aggregate rerun is claimed. Current-source runner acceptance covers later input guards and qualification additions outside that frozen snapshot.
+- Aggregate isolation: a generator snapshot assertion was invalidated by concurrent implementation edits; it was interrupted during large-diff formatting and generated outputs were restored. Isolated generator (27 cases, 27.966 seconds) and RTK installer (12 cases, 33.388 seconds) reruns passed. A sandbox run was stopped when existing security suites hit denied `/bin/ps`; the full frozen run has process inspection enabled.
+- Lifecycle fixture: `rtk proxy python3 scripts/test-scan-secrets-lifecycle.py` passed all 32 cases in 68.483 seconds; log `/private/tmp/execplan-loop-lifecycle-recheck.log`. Copying the complete brain-install fixture restored omitted packaged hook targets.
+- Long-path fixture: `rtk proxy python3 scripts/test-scan-secrets-merge.py -v -k test_batch_long_paths_fit_bounded_git_command_lines` passed across all providers in 67.116 seconds; log `/private/tmp/execplan-loop-merge-serial.log`. The other 32 cases passed in the aggregate. The fixture now invokes its Python fault injector only for the metadata command under test and asserts an oversized negative control. Production scanner limits and existing path/secret assertions remain unchanged. Deadline-sensitive reruns require serial execution.
+- Release verification: `rtk proxy python3 scripts/test-verify-hook-release.py` passed all 37 cases in 23.008 seconds in the real source checkout; log `/private/tmp/execplan-loop-release-recheck.log`. The frozen checkout lacked the historical Git object needed by the fixed baseline test.
+- Bash installer: `rtk proxy bash scripts/test-install.sh` passed, exit 0, in 96.628 seconds; log `/private/tmp/execplan-loop-install-bash-accepted.log`.
+- PowerShell installer: `rtk proxy pwsh -NoProfile -File scripts/test-install.ps1` passed, exit 0, in 405.412 seconds; log `/private/tmp/execplan-loop-install-powershell-accepted.log`. Native Windows DACL and junction checks reported host-specific skips on macOS; this does not establish native Windows proof.
+- Installer fixture repairs: both builders copy the real brain-install entrypoint beside its generated assets. Only the final synthetic empty-catalog case filters bundled skill targets from its copied manifest, then uses real generation and freshness checks for every remaining provider target. Normal fixtures retain the complete canonical manifest. The Bash import fixture checks active caveman/show-me declarations; retired lavish is commented out in the import source. No production installer or generator behavior changed. Canonical root freshness passed: `Generated hooks are current (62 files)`.
+- Instruction evaluations: both configurations passed all three scenarios, 18/18 combined objective assertions. Agent usage/time metrics remain null because unavailable. Generated artifacts and review viewer are under `skills/default/execplan-implement-loop-workspace/iteration-1/`; these sampled runs establish no measured advantage over the baseline.
+- Final review: performed after implementation completed, as requested. Reproduced graph and branch findings were repaired and independently rechecked. Later bounded-input, usage, qualification guide, and fixture changes received narrow reviews. No high-priority findings remain.
+- Live provider: no paid Gemini prompt ran. No Gemini executable exists on this host's PATH. The owner will follow the bundled guide on another machine with CLI 0.65.0. Authentication, policy, actual skill activation/TDD, and terminal parsing still need live evidence. Milestone 5 acceptance remains not met until evidence review or an explicit owner waiver.
+
+
+Independent design review: [findings and dispositions](adversarial-review.md). Reflection: recovery, Git filter, branch identity, and maximum graph lessons are encoded in runtime guards and process-boundary tests. The aggregate snapshot isolation, historical Git-object, and deadline-sensitive test lessons are recorded in brain/codebase/script-testing.md. Reflection found no additional in-scope skill improvements; the other correctness lessons are enforced by runtime guards and tests. The user's review sequencing correction is recorded in this plan. No existing skill changes are needed.

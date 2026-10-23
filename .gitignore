@@ -625,3 +625,6 @@ skills/default/handoff/evals/files/owner-action-fixture/.agents/scratchpad/relea
 
 # Local benchmark artifacts for the AGENTS.md installer skill.
 /skills/default/agents-md-install-workspace/
+
+# Local benchmark artifacts for the ExecPlan implementation loop skill.
+/skills/default/execplan-implement-loop-workspace/

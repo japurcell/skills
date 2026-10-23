@@ -90,6 +90,10 @@ for target in targets():
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
+# Generated brain assets create a publishable skill directory; source preflight
+# requires its real entrypoint as well as the generated files.
+entrypoint = Path("skills/default/brain-install/SKILL.md")
+shutil.copy2(source_root / entrypoint, fixture_root / entrypoint)
 PY
   PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
 }
@@ -1587,6 +1591,17 @@ test_empty_categories_markers_and_exclusions() {
   done
   rm -rf -- "$repo/skills/default" "$repo/skills/forest-service"
   mkdir -p "$repo/skills/default" "$repo/skills/forest-service"
+  # This synthetic catalog has no bundled skills. Retain every provider target
+  # while aligning only the copied manifest with that empty skill catalog.
+  python3 - "$repo/hooks/manifest.py" <<'PY'
+from pathlib import Path
+import sys
+path = Path(sys.argv[1])
+with path.open("a", encoding="utf-8") as stream:
+    stream.write('\n_catalog_targets = targets\ndef targets():\n    return tuple(target for target in _catalog_targets() if target.output_path.parts[0] != "skills")\n')
+PY
+  PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
+  PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --check
   home="$workdir/empty-home"
   HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
   assert_equals '' "$(find "$home/.agents/skills" -mindepth 1 -maxdepth 1 -print)" 'Expected both empty categories valid without leaf copies.'
@@ -1609,7 +1624,7 @@ import shlex
 import sys
 
 script, origin, repo = map(Path, sys.argv[1:])
-expected = {"caveman", "show-me", "lavish"}
+expected = {"caveman", "show-me"}
 found = set()
 for line in script.read_text().replace("\\\n", "").splitlines():
     args = shlex.split(line)
@@ -1638,7 +1653,7 @@ PY
   done < "$workdir/mappings"
 
   HOME="$home" bash "$repo/scripts/install.sh" > "$workdir/out" 2> "$workdir/err"
-  for name in caveman show-me lavish; do
+  for name in caveman show-me; do
     assert_file_contains "$home/.agents/skills/$name/SKILL.md" "Refreshed $name." \
       "Expected refreshed $name import to reach the flat installed skill."
     [[ ! -e "$repo/skills/$name" ]] || { echo "Expected no uncategorized $name import." >&2; exit 1; }
