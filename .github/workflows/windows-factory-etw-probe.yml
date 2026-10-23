@@ -55,7 +55,7 @@ jobs:
         env:
           WINDOWS_ETW_PROBE_EVIDENCE: ${{ runner.temp }}/factory-windows-etw-probe-evidence
         run: node packages/software-factory/qualification/windows-etw-probe.mjs
-      - name: Reject a foreign same-Node child without terminating it
+      - name: Verify held fixture and reject a foreign same-Node child
         if: ${{ !cancelled() && steps.bootstrap.outcome == 'success' }}
         timeout-minutes: 2
         run: node packages/software-factory/qualification/windows-etw-held-native.qualification.mjs

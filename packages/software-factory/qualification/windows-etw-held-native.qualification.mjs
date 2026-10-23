@@ -6,9 +6,18 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Invoke with the exact pinned Windows x64 Node binary before the ETW probe.
+async function waitForBridge(closed, milliseconds) {
+  let timer;
+  try {
+    return await Promise.race([closed, new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error('bridge timeout')), milliseconds);
+    })]);
+  } finally { clearTimeout(timer); }
+}
+
+// Invoke with the exact pinned Windows x64 Node binary independently of ETW.
 // This exercises the real held-fixture bridge without starting ETW or retaining an ETL.
-async function qualifyForeignPidRejection() {
+async function qualifyHeldFixtures() {
   assert.equal(process.platform, 'win32');
   assert.equal(process.arch, 'x64');
   assert.equal(process.version, 'v24.22.1');
@@ -78,12 +87,77 @@ try {
     foreign.once('error', () => {});
     assert.ok(foreign.pid > 0);
     writeFileSync(response, `${foreign.pid}\n`);
-    const result = await Promise.race([closed,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('bridge timeout')), 8000))]);
+    const result = await waitForBridge(closed, 8000);
     assert.equal(result, 0);
     assert.match(output, /^PARENT_REJECTED\r?\n$/);
     assert.equal(hadError, false);
     assert.doesNotThrow(() => process.kill(foreign.pid, 0));
+    process.stdout.write('HELD_NATIVE_PARENT_REJECTION_OK\n');
+
+    // Exercise the unchanged positive path separately from ETW decoding. Never
+    // print exception text, paths, file identities or other ambient metadata.
+    writeFileSync(driver, `param($Source,$Node,$Evidence,$Fixture,$Digest)
+$ErrorActionPreference='Stop'
+Add-Type -LiteralPath $Source
+$type=[WindowsEtwProbe]
+$flags=[Reflection.BindingFlags]'NonPublic,Static'
+$watch=[Diagnostics.Stopwatch]::StartNew()
+$category='other'
+$passed=$false
+try {
+  $type.GetMethod('HoldPinnedFile',$flags).Invoke($null,@($Node,$Digest,$watch)) | Out-Null
+  $type.GetMethod('RunFixture',$flags).Invoke($null,@($Node,$Evidence,$Fixture,$watch)) | Out-Null
+  $passed=$true
+} catch {
+  $cause=$_.Exception
+  while($cause.InnerException){$cause=$cause.InnerException}
+  $category=switch -Exact ($cause.Message) {
+    'fixture PID malformed' {'pid-shape'}
+    'fixture PID over cap' {'pid-cap'}
+    'fixture PID line unavailable' {'pid-unavailable'}
+    'fixture child PID invalid' {'child-pid'}
+    'fixture child handle invalid or exited' {'child-handle'}
+    'fixture child timing invalid' {'child-timing'}
+    'process handle image differs from pin' {'image-path'}
+    'process image file identity differs from pin' {'image-file'}
+    'fixture child is not live child of held root' {'parent'}
+    'held child exit unobserved' {'child-exit'}
+    'root fixture exit unobserved' {'root-exit'}
+    'held fixture exit or output invalid' {'exit-output'}
+    default {'other'}
+  }
+} finally {
+  try {
+    if(-not $type.GetMethod('StopFixture',$flags).Invoke($null,@())){$passed=$false;$category='stop'}
+  } finally {
+    if(-not $type.GetMethod('CloseOwnedResources',$flags).Invoke($null,@())){$passed=$false;$category='close'}
+  }
+}
+if($passed){[Console]::WriteLine('POSITIVE_OK');exit 0}
+[Console]::WriteLine('POSITIVE_FAIL '+$category)
+exit 1
+`);
+    bridge = spawn(powershell, ['-NoProfile', '-NonInteractive', '-File', driver,
+      source, process.execPath, evidence, fixedFixture, digest], { stdio: ['ignore', 'pipe', 'pipe'] });
+    output = ''; hadError = false;
+    let overflow = false;
+    bridge.stdout.on('data', (chunk) => {
+      if (Buffer.byteLength(output) + chunk.length > 1024) overflow = true;
+      output = (output + chunk).slice(0, 1024);
+    });
+    bridge.stderr.on('data', () => { hadError = true; });
+    closed = new Promise((resolve) => {
+      bridge.once('close', resolve);
+      bridge.once('error', () => resolve(-1));
+    });
+    const positiveResult = await waitForBridge(closed, 35000);
+    if (!overflow && !hadError && positiveResult === 1 &&
+        /^POSITIVE_FAIL (?:pid-shape|pid-cap|pid-unavailable|child-pid|child-handle|child-timing|image-path|image-file|parent|child-exit|root-exit|exit-output|other|stop|close)\r?\n$/.test(output))
+      process.stderr.write(`HELD_NATIVE_${output.trim()}\n`);
+    assert.equal(positiveResult, 0);
+    assert.equal(overflow, false);
+    assert.equal(hadError, false);
+    assert.match(output, /^POSITIVE_OK\r?\n$/);
   } finally {
     if (bridge?.exitCode === null) {
       bridge.kill();
@@ -96,8 +170,8 @@ try {
 }
 
 try {
-  await qualifyForeignPidRejection();
-  process.stdout.write('HELD_NATIVE_PARENT_REJECTION_OK\n');
+  await qualifyHeldFixtures();
+  process.stdout.write('HELD_NATIVE_POSITIVE_OK\n');
 } catch {
   process.stderr.write('HELD_NATIVE_FAIL\n');
   process.exitCode = 1;
