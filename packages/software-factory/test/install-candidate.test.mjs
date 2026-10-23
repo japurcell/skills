@@ -1,3 +1,4 @@
+import { pythonSourcePaths } from './fixtures/python-source-paths.mjs';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -171,8 +172,10 @@ test('public Python inventory rejects a changed new import, missing map and stal
       '--source-root', packageRoot, '--destination', bundle], { encoding: 'utf8' });
     assert.equal(packageResult.status, 0, packageResult.stderr);
     const manifestSha256 = JSON.parse(packageResult.stdout).manifestSha256;
-    const verify = script => spawnSync(process.env.FACTORY_TEST_PYTHON ?? 'python3', [script, 'verify', '--bundle-root', bundle,
-      '--manifest-sha256', manifestSha256, '--node-archive', archive], { encoding: 'utf8' });
+    const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
+    const { pythonBundle, pythonArchive } = pythonSourcePaths(python, bundle, archive);
+    const verify = script => spawnSync(python, [script, 'verify', '--bundle-root', pythonBundle,
+      '--manifest-sha256', manifestSha256, '--node-archive', pythonArchive], { encoding: 'utf8' });
     const imported = join(bundle, 'dist/install-candidate.js'), original = readFileSync(imported);
     writeFileSync(imported, `process.stderr.write('EXECUTED');\n${original}`);
     const changed = verify(bootstrapScript);

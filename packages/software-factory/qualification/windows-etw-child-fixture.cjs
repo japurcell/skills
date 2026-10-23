@@ -18,23 +18,31 @@ if (process.argv[2] === '--child' && process.argv.length === 3) {
   });
   process.stdin.once('end', fail);
   process.stdin.resume();
+  process.stdout.write('K', (error) => { if (error) fail(); });
 } else if (process.argv.length === 2) {
   child = spawn(process.execPath, [__filename, '--child'], {
-    shell: false, windowsHide: true, stdio: ['pipe', 'ignore', 'ignore']
+    shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'ignore']
   });
   if (!Number.isInteger(child.pid) || child.pid <= 0) fail();
   let released = false;
+  let initialized = false;
   const timer = setTimeout(fail, 15000);
   child.once('error', fail);
   child.stdin.once('error', fail);
+  child.stdout.once('error', fail);
+  child.stdout.on('data', (value) => {
+    if (initialized || value.length !== 1 || value[0] !== 0x4b) fail();
+    initialized = true;
+    process.stdout.write(`${child.pid}\n`, (error) => { if (error) fail(); });
+  });
+  child.stdout.once('end', () => { if (!initialized) fail(); });
   child.once('exit', (code, signal) => {
     clearTimeout(timer);
     if (!released || code !== 0 || signal !== null) fail();
     process.exit(0);
   });
-  process.stdout.write(`${child.pid}\n`, (error) => { if (error) fail(); });
   process.stdin.once('data', (value) => {
-    if (value.length !== 1 || value[0] !== release[0]) fail();
+    if (!initialized || value.length !== 1 || value[0] !== release[0]) fail();
     released = true;
     child.stdin.end(release);
   });

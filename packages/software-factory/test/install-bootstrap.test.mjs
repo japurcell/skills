@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pythonSourcePaths } from './fixtures/python-source-paths.mjs';
 
 const script = resolve(fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url)));
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -17,15 +18,6 @@ assert.equal(prerequisite.status, 0, `Python 3.11+ prerequisite failed: ${prereq
 const nodeAsset = { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz', sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628' };
 const sha = data => createHash('sha256').update(data).digest('hex');
 const run = args => spawnSync(python, [script, ...args], { encoding: 'utf8' });
-
-// The verifier requires Python's canonical spelling, which can differ from
-// Node's realpath spelling on Windows. Resolve only existing fixture inputs.
-function pythonSourcePaths(bundle, archive) {
-  const result = spawnSync(python, ['-I', '-c', 'import json,sys; from pathlib import Path; print(json.dumps([str(Path(p).resolve(strict=True)) for p in sys.argv[1:]]))', bundle, archive], { encoding: 'utf8', timeout: 5000, maxBuffer: 16 * 1024 });
-  assert.equal(result.status, 0, result.stderr);
-  const [pythonBundle, pythonArchive] = JSON.parse(result.stdout);
-  return { pythonBundle, pythonArchive };
-}
 
 test('default Node discovery excludes explicit native bootstrap qualification', () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-discovery-')));
@@ -51,7 +43,7 @@ function fixture() {
   const archive = join(root, 'node.tar.xz');
   mkdirSync(bundle);
   writeFileSync(archive, 'unqualified archive');
-  const { pythonBundle, pythonArchive } = pythonSourcePaths(bundle, archive);
+  const { pythonBundle, pythonArchive } = pythonSourcePaths(python, bundle, archive);
   const entry = { path: 'dist/cli.js', bytes: 8, sha256: sha('old code') };
   mkdirSync(join(bundle, 'dist'));
   writeFileSync(join(bundle, entry.path), 'old code');
@@ -75,7 +67,7 @@ function completeFixture() {
   const manifestSha256 = JSON.parse(packaged.stdout).manifestSha256;
   const archive = join(root, 'unqualified-node.tar.xz');
   writeFileSync(archive, 'unqualified archive');
-  const { pythonBundle, pythonArchive } = pythonSourcePaths(bundle, archive);
+  const { pythonBundle, pythonArchive } = pythonSourcePaths(python, bundle, archive);
   return { root, bundle, archive, pythonBundle, pythonArchive, manifestSha256, verify: () => run(['verify', '--bundle-root', pythonBundle, '--manifest-sha256', manifestSha256, '--node-archive', pythonArchive]), dispose: () => rmSync(root, { recursive: true, force: true }) };
 }
 

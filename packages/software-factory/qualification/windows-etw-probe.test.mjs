@@ -74,6 +74,31 @@ test('fixed fixture reports a live child and exits silently after one release by
   } finally { if (root.exitCode === null) root.kill(); }
 });
 
+test('fixed child announces readiness before accepting the release byte', { timeout: 7000 }, async () => {
+  const fixture = fileURLToPath(new URL('./windows-etw-child-fixture.cjs', import.meta.url));
+  const child = spawn(process.execPath, [fixture, '--child'], { stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+  let output = '', errors = '';
+  child.stdout.on('data', chunk => { output += chunk; });
+  child.stderr.on('data', chunk => { errors += chunk; });
+  try {
+    const ready = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('child readiness missing')), 3000);
+      child.once('error', error => { clearTimeout(timer); reject(error); });
+      child.stdout.once('data', bytes => { clearTimeout(timer); resolve(bytes); });
+    });
+    assert.deepEqual(ready, Buffer.from('K'));
+    assert.doesNotThrow(() => process.kill(child.pid, 0));
+    const closed = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('ready child did not exit')), 3000);
+      child.once('close', (code, signal) => { clearTimeout(timer); resolve({ code, signal }); });
+    });
+    child.stdin.end('R');
+    assert.deepEqual(await closed, { code: 0, signal: null });
+    assert.equal(output, 'K');
+    assert.equal(errors, '');
+  } finally { if (child.exitCode === null) child.kill(); }
+});
+
 test('public receipt accepts a complete known root and child, pending native proof', () => {
   assert.deepEqual(validateProbeReceipt(good, 'C:\\node\\node.exe'), {
     ok: true, reasons: [], rootPid: 100, childPid: 101,
