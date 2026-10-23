@@ -18,6 +18,15 @@ const nodeAsset = { version: 'v24.22.1', url: 'https://nodejs.org/download/relea
 const sha = data => createHash('sha256').update(data).digest('hex');
 const run = args => spawnSync(python, [script, ...args], { encoding: 'utf8' });
 
+// The verifier requires Python's canonical spelling, which can differ from
+// Node's realpath spelling on Windows. Resolve only existing fixture inputs.
+function pythonSourcePaths(bundle, archive) {
+  const result = spawnSync(python, ['-I', '-c', 'import json,sys; from pathlib import Path; print(json.dumps([str(Path(p).resolve(strict=True)) for p in sys.argv[1:]]))', bundle, archive], { encoding: 'utf8', timeout: 5000, maxBuffer: 16 * 1024 });
+  assert.equal(result.status, 0, result.stderr);
+  const [pythonBundle, pythonArchive] = JSON.parse(result.stdout);
+  return { pythonBundle, pythonArchive };
+}
+
 test('default Node discovery excludes explicit native bootstrap qualification', () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-bootstrap-discovery-')));
   try {
@@ -42,6 +51,7 @@ function fixture() {
   const archive = join(root, 'node.tar.xz');
   mkdirSync(bundle);
   writeFileSync(archive, 'unqualified archive');
+  const { pythonBundle, pythonArchive } = pythonSourcePaths(bundle, archive);
   const entry = { path: 'dist/cli.js', bytes: 8, sha256: sha('old code') };
   mkdirSync(join(bundle, 'dist'));
   writeFileSync(join(bundle, entry.path), 'old code');
@@ -51,7 +61,7 @@ function fixture() {
     writeFileSync(join(bundle, 'release-manifest.json'), bytes);
     return sha(bytes);
   };
-  const verify = digest => run(['verify', '--bundle-root', bundle, '--manifest-sha256', digest, '--node-archive', archive]);
+  const verify = digest => run(['verify', '--bundle-root', pythonBundle, '--manifest-sha256', digest, '--node-archive', pythonArchive]);
   return { root, bundle, archive, manifest, save, verify, dispose: () => rmSync(root, { recursive: true, force: true }) };
 }
 
@@ -65,7 +75,8 @@ function completeFixture() {
   const manifestSha256 = JSON.parse(packaged.stdout).manifestSha256;
   const archive = join(root, 'unqualified-node.tar.xz');
   writeFileSync(archive, 'unqualified archive');
-  return { root, bundle, archive, manifestSha256, verify: () => run(['verify', '--bundle-root', bundle, '--manifest-sha256', manifestSha256, '--node-archive', archive]), dispose: () => rmSync(root, { recursive: true, force: true }) };
+  const { pythonBundle, pythonArchive } = pythonSourcePaths(bundle, archive);
+  return { root, bundle, archive, pythonBundle, pythonArchive, manifestSha256, verify: () => run(['verify', '--bundle-root', pythonBundle, '--manifest-sha256', manifestSha256, '--node-archive', pythonArchive]), dispose: () => rmSync(root, { recursive: true, force: true }) };
 }
 
 test('public verifier refuses a changed imported module before any selected JavaScript runs', () => {
@@ -99,7 +110,7 @@ test('source mutation while the bundle is copied is refused before execution', a
   writeFileSync(manifestPath, selectedManifest);
   f.manifestSha256 = sha(selectedManifest);
   const knownStages = new Set(readdirSync(tmpdir()).filter(name => name.startsWith('factory-install-verify-')));
-  const child = spawn(python, [script, 'verify', '--bundle-root', f.bundle, '--manifest-sha256', f.manifestSha256, '--node-archive', f.archive], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const child = spawn(python, [script, 'verify', '--bundle-root', f.pythonBundle, '--manifest-sha256', f.manifestSha256, '--node-archive', f.pythonArchive], { stdio: ['ignore', 'pipe', 'pipe'] });
   const completed = new Promise(resolve => child.on('close', resolve));
   let output = '', errors = '';
   child.stdout.setEncoding('utf8').on('data', data => { output += data; });
