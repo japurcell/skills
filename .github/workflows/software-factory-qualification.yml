@@ -58,6 +58,8 @@ jobs:
         env:
           FACTORY_EVIDENCE_DIR: ${{ runner.temp }}/factory-qualification-evidence
           FACTORY_TEST_PYTHON: ${{ steps.python.outputs.python-path }}
+          NPM_CONFIG_CACHE: ${{ runner.temp }}/factory-qualification-npm-cache
+          FACTORY_TEST_NPM_CACHE_SEED: ${{ runner.temp }}/factory-qualification-npm-cache
         run: node packages/software-factory/scripts/qualification-foundation.mjs
       - name: Upload native evidence including failures
         if: always()

@@ -9,7 +9,7 @@ import { repositoryIdentity } from './workspace.js';
 import { startObservationHost } from './dashboard.js';
 import { loadInstalledBindings } from './installed-bindings.js';
 const args = process.argv.slice(2);
-const help = `software-factory
+const help = (installed: boolean) => `software-factory${installed ? '' : ' (development)'}
 invoke --repository PATH --workflow .factory/workflows/FILE.ts --input JSON_FILE
        (--new-worktree [--ref COMMIT] | --worktree ID_OR_PATH) [--run ID]
        [--question CAPTURE_ID] [--context CAPTURE_ID ...] [--command-timeout-ms N] [--agent-timeout-ms N] [--shutdown-grace-ms N] [--json]
@@ -22,7 +22,7 @@ Startup validates the explicitly installed toolchain; no automatic installation 
 `;
 async function main() {
   const modulePath = fileURLToPath(import.meta.url);
-  if (args.includes('--help')) { await loadInstalledBindings(modulePath); process.stdout.write(help); return; }
+  if (args.includes('--help')) { const installed = await loadInstalledBindings(modulePath); process.stdout.write(help(installed !== null)); return; }
   const command = args.shift();
   if (!command || !['invoke','history','dashboard','inspect-owner','clear-owner'].includes(command)) throw new Error('command not implemented; startup refused');
   const values = new Map<string, string[]>();

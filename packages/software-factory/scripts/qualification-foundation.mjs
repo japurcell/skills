@@ -45,6 +45,13 @@ try {
   if (process.platform === 'darwin' && process.arch === 'arm64') {
     run('install-bootstrap-native-darwin-arm64', ['--test', 'qualification/install-bootstrap-native.qualification.mjs']);
   }
+  // Each declared POSIX target must prove a real pinned offline install and
+  // command workflow. Missing selected archives/cache/interpreters fail inside
+  // the explicit native entry; their presence never controls registration.
+  if ((process.platform === 'darwin' && process.arch === 'arm64')
+    || (process.platform === 'linux' && process.arch === 'x64')) {
+    run('installed-cli-native-posix', ['--test', 'qualification/installed-cli-native.qualification.mjs'], 180_000);
+  }
   const fixturesPassed = run('fixtures', ['scripts/test.mjs', 'fixtures']);
   if (!fixturesPassed) {
     // Preserve the original failed fixture step and diagnose one public case

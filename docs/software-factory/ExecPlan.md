@@ -92,6 +92,7 @@ Verified reminder baseline `6ed1212` includes independently approved reminders a
 - [x] (2026-10-22) [milestone-10] T17-Windows-comparator-decision: Verified source/primary-contract decision in research/windows-etw-comparator-boundary-2026-10-22.md. Offline transient events establish event identity/path consistency, not missing live process/FileID proof or termination authority.
 - [ ] [milestone-10] T17-Windows-comparator implementation: /root/windows_etw_comparator_decision owns additive qualification files only in private factory-windows-etw-route/skills, codex/factory-windows-etw-route from0fec5e9, warning60minutes from01:14UTC. Seven representative cases, strict privacy/cleanup/graph controls, productAdmission=false and transient-identity refusal retained. Parent owns workflow wiring/native proof.
 - [ ] [milestone-10] T17: Complete native support matrix and integrated release acceptance.
+- [ ] [milestone-10] T17-installed-POSIX: Explicit installed workflow/history/tamper proof now selects exact Linuxx64 or Darwinarm64 assets and runner-private offline cache in Actions. Local currentMac1PASS68.035s, prerequisite/CI5PASS and actionlintPASS. Actual Linux execution and composed/native replay remain required; Windows installed support remains separately unqualified.
 - [ ] [milestone-10] T17-desktop: Run the deferred live desktop notification qualification after all implementation tasks.
 - [ ] [milestone-10] Verify packaged behavior and repository regressions; record remaining unsupported combinations.
 
@@ -480,7 +481,7 @@ T17-Windows-startup read-only decision is complete against `caf46b4`, retained i
 
 ## Concrete Steps
 
-Current next: /root/maintenance_controller implements T15b-installed-CLI/skill in private codex/factory-installed-cli after parent publication strict/build, nativeMac1 and composed510 proof. Parent owns Windows event-binding native replay at5e8d5b81, registry/CI and canonical documents. All remaining reviews wait until every implementation task is complete. T16 implementation follows verified installed CLI behavior; no provider or live desktop call is authorized now. Native39880935367 Linux/macOS foundation pass does not establish installed Linux execution or Windows lifetime/ACL support.
+Current next: /root/maintenance_controller finishes T15b-provider-selector in private codex/factory-provider-selector after public no-call selected-artifact install proof. Installed CLI is source-identically integrated44bba0b1. Parent latest composed513 had512pass and one development-help regression; the existing public case now passes after mode-specific help repair, strict/build pass and currentMac installed proof1PASS68.035s. Parent will run the next composed proof after integrating the selector. Parent owns POSIX installed Actions wiring, Windows comparator/native integration, registry/CI and canonical documents. All remaining reviews wait until every implementation task is complete. T16 implementation follows verified installed behavior; no provider or live desktop call is authorized now. Prior foundation passes do not establish installed Linux execution or Windows lifetime/ACL support.
 
 #### Historical T17-Windows-Node-route calibration contract
 

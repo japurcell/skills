@@ -11,11 +11,19 @@ import { createRepository } from '../test/fixtures/repository.mjs';
 
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const script = resolve(packageRoot, '../../skills/software-factory/scripts/install.py');
-const archive = '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz';
-const cache = '/tmp/software-factory-npm-cache';
+const platform = `${process.platform}-${process.arch}`;
+const assets = {
+  'darwin-arm64': { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz',
+    sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628' },
+  'linux-x64': { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-linux-x64.tar.xz',
+    sha256: '6c172a9ab6718f7b801fb5a7bd486af2ee5e32758086a04b84fcce2aa77095e6' },
+};
+const archive = process.env.FACTORY_TEST_NODE_ARCHIVE ?? (platform === 'darwin-arm64'
+  ? '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz'
+  : '/tmp/factory-node-v24.22.1-linux-x64-install-selection.tar.xz');
+const cache = process.env.FACTORY_TEST_NPM_CACHE_SEED ?? '/tmp/software-factory-npm-cache';
 const python = process.env.FACTORY_TEST_PYTHON ?? '/Users/adam/.pyenv/versions/3.13.14/bin/python3.13';
-const node = { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz',
-  sha256: '654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628' };
+const node = assets[platform];
 function fingerprint(root) {
   const digest = createHash('sha256');
   const visit = (directory, prefix = '') => {
@@ -32,8 +40,7 @@ function fingerprint(root) {
 }
 
 test('installed CLI runs a command-only workflow and refuses changed published bytes', async () => {
-  assert.equal(process.platform, 'darwin', 'native Darwin qualification required');
-  assert.equal(process.arch, 'arm64', 'native arm64 qualification required');
+  assert.ok(node, 'native POSIX qualification requires darwin-arm64 or linux-x64');
   assert.ok(existsSync(archive), `exact pinned Node archive missing: ${archive}`);
   assert.ok(existsSync(join(cache, '_cacache')), `offline cache missing: ${cache}`);
   const version = spawnSync(python, ['-c', 'import sys; print(".".join(map(str, sys.version_info[:3])))'], { encoding: 'utf8' });
@@ -50,7 +57,7 @@ test('installed CLI runs a command-only workflow and refuses changed published b
     writeFileSync(join(authoring, 'package.json'), customPackage);
     writeFileSync(join(authoring, 'agents.json'), customAgents);
     const descriptor = join(container, 'selection.json'), bundle = join(container, 'bundle');
-    writeFileSync(descriptor, JSON.stringify({ version: '1.2.3', platform: 'darwin-arm64', node }));
+    writeFileSync(descriptor, JSON.stringify({ version: '1.2.3', platform, node }));
     const packaged = spawnSync(process.execPath, [join(packageRoot, 'scripts/package-release.mjs'), '--descriptor', descriptor,
       '--source-root', packageRoot, '--destination', bundle], { encoding: 'utf8' });
     assert.equal(packaged.status, 0, packaged.stderr);
@@ -108,6 +115,10 @@ export async function run(context: WorkflowContext) {
     const input = join(container, 'input.json');
     writeFileSync(input, '{}\n');
     const cli = join(factory, 'install/runtime/dist/cli.js');
+    const help = spawnSync(installedNode, [cli, '--help'], { encoding: 'utf8', timeout: 30_000 });
+    assert.equal(help.status, 0, help.stderr);
+    assert.match(help.stdout, /^software-factory\n/);
+    assert.doesNotMatch(help.stdout, /development/);
     const invoked = spawnSync(installedNode, [cli, 'invoke', '--repository', root,
       '--workflow', '.factory/workflows/command-only.ts', '--input', input, '--worktree', root, '--json'],
     { encoding: 'utf8', timeout: 120_000, maxBuffer: 2 * 1024 * 1024 });
