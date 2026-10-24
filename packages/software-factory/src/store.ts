@@ -6,10 +6,13 @@ import { randomUUID } from 'node:crypto';
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, unlinkSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { initializeSchema, schemaVersion } from './schema.js';
 import { validateAdmission } from './accounting.js';
 import { assertLocalPlacement } from './placement.js';
+import { applyForwardStep, assertForwardIntegrity, assertForwardRuntime, forwardCounts, knownForwardShape } from './schema-forward.js';
+import type { ForwardShape } from './schema-forward.js';
 import type { Admission } from './accounting.js';
 
 export interface Owner { host: string; pid: number; start: string | null }
@@ -28,6 +31,10 @@ export interface MaintenanceIntent {
   phase: MaintenancePhase; ownedReceiptId: string | null; backupId: string | null;
   ticketNonceHash: string | null; ticketConsumed: boolean;
   candidate: CandidateBinding | null;
+  forward?: { sourceShape: ForwardShape; currentShape: ForwardShape; sourceRelease: string; sourceIdentity: string; backup: null | {
+    id: string; identity: string; sha256: string; bytes: number; countDigest: string;
+    receiptId: string; receiptSha256: string;
+  } };
 }
 export interface MaintenanceHandle { operationId: string; claimId: string; token: string; repositoryId: string; commonDir: string }
 interface Run { id: string; additionalLimit: number; codeLimit: number; formatLimit: number }
@@ -103,6 +110,15 @@ function pathAbsent(path: string) {
   try { lstatSync(path); return false; }
   catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true; throw error; }
 }
+function assertForwardSidecars(path: string) {
+  for (const suffix of ['-wal', '-shm', '-journal']) {
+    const sidecar = `${path}${suffix}`;
+    if (pathAbsent(sidecar)) continue;
+    const file = lstatSync(sidecar, { bigint: true });
+    if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1n || (file.mode & 0o077n) !== 0n)
+      throw new Error('forward store sidecar is not private regular storage');
+  }
+}
 
 function configure(database: DatabaseSync) {
   database.exec('PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON');
@@ -138,6 +154,33 @@ export function openRepositoryStore(commonDir: string) {
 /** Trusted controller path. Ordinary callers still refuse a bootstrap marker. */
 export function openMaintenanceStore(commonDir: string) {
   return openStore(commonDir, true);
+}
+
+/** Existing-only historical opener. Never creates, configures, or migrates storage. */
+export function openForwardMaintenanceStore(commonDir: string) {
+  assertForwardRuntime();
+  if (process.platform === 'win32') throw new Error('forward maintenance private ownership is unqualified on Windows');
+  const location = paths(commonDir, false);
+  if (!pathAbsent(location.marker)) throw new Error('bootstrap marker blocks forward maintenance');
+  const before = lstatSync(location.database, { bigint: true });
+  if (!before.isFile() || before.isSymbolicLink() || before.nlink !== 1n || before.ino === 0n
+    || (before.mode & 0o077n) !== 0n) throw new Error('invalid forward store file');
+  assertForwardSidecars(location.database);
+  const url = pathToFileURL(location.database); url.searchParams.set('mode', 'rw');
+  const database = new DatabaseSync(url, { timeout: 100 });
+  try {
+    const after = lstatSync(location.database, { bigint: true });
+    if (after.dev !== before.dev || after.ino !== before.ino || after.nlink !== 1n) throw new Error('forward store identity changed');
+    assertForwardSidecars(location.database);
+    knownForwardShape(database);
+    assertForwardIntegrity(database);
+    database.exec('PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL');
+    if (database.prepare('PRAGMA foreign_keys').get()?.['foreign_keys'] !== 1
+      || database.prepare('PRAGMA synchronous').get()?.['synchronous'] !== 2)
+      throw new Error('forward durability settings unavailable');
+    return new RepositoryStore(database, { path: location.database, marker: location.marker,
+      identity: `${before.dev}:${before.ino}` });
+  } catch (error) { database.close(); throw error; }
 }
 
 /** Existing-only, read-only installed ownership proof. Ordinary runner/dashboard claims remain valid. */
@@ -183,7 +226,16 @@ function openStore(commonDir: string, allowMarker: boolean) {
 }
 
 export class RepositoryStore {
-  constructor(private readonly database: DatabaseSync) {}
+  constructor(private readonly database: DatabaseSync,
+    private readonly forwardStorage?: { path: string; marker: string; identity: string }) {}
+
+  private assertForwardStorage() {
+    if (!this.forwardStorage) return;
+    const stat = lstatSync(this.forwardStorage.path, { bigint: true });
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1n || `${stat.dev}:${stat.ino}` !== this.forwardStorage.identity
+      || !pathAbsent(this.forwardStorage.marker)) throw new Error('forward store identity or marker changed');
+    assertForwardSidecars(this.forwardStorage.path);
+  }
 
   private readonly blockedInvocations = new Set<string>();
   blockAdmissions(invocationId: string) { this.blockedInvocations.add(invocationId); }
@@ -200,6 +252,7 @@ export class RepositoryStore {
       }
     }
     try {
+      this.assertForwardStorage();
       const result = action();
       this.database.exec('COMMIT');
       return result;
@@ -830,6 +883,90 @@ export class RepositoryStore {
     });
   }
 
+  /** The only historical-schema admission path, with all checks inside the writer transaction. */
+  async beginForwardMaintenance(intent: MaintenanceIntent, owner: Owner): Promise<Claim> {
+    validateOwner(owner);
+    return this.transaction(() => {
+      const shape = knownForwardShape(this.database);
+      assertForwardIntegrity(this.database);
+      const rows = this.database.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
+      if (rows.length !== 1 || rows[0]?.['state'] !== 'ready' || rows[0]['id'] !== intent.repositoryId
+        || intent.kind !== 'upgrade' || intent.phase !== 'preparing' || !intent.backupId
+        || !intent.forward || intent.forward.sourceShape !== shape || intent.forward.currentShape !== shape
+        || intent.forward.sourceRelease !== rows[0]['release']
+        || intent.forward.sourceIdentity !== this.forwardStorage?.identity
+        || intent.forward.backup !== null || this.database.prepare('SELECT id FROM owner_claims LIMIT 1').get())
+        throw new Error('forward admission requires exact ready idle repository and source shape');
+      if (this.database.prepare('SELECT id FROM attempts WHERE occupied=1 LIMIT 1').get())
+        throw new Error('occupied attempts block forward admission');
+      const claim: Claim = { id: randomUUID(), token: randomUUID(), kind: 'maintenance', resourceKey: intent.repositoryId,
+        invocationId: null, owner, maintenance: intent };
+      const data = JSON.stringify(claim);
+      if (Buffer.byteLength(data) > 8192) throw new Error('forward maintenance claim exceeds limit');
+      this.database.prepare("INSERT INTO owner_claims(id,token,kind,resource_key,invocation_id,data) VALUES (?,?, 'maintenance',?,NULL,?)")
+        .run(claim.id, claim.token, claim.resourceKey, data);
+      this.event('maintenance.started', { operationId: intent.operationId, claimId: claim.id, kind: 'upgrade', sourceShape: shape });
+      return claim;
+    });
+  }
+
+  forwardShape(): ForwardShape { return knownForwardShape(this.database); }
+  forwardCounts() { return forwardCounts(this.database); }
+  repositoryRelease(): string {
+    const rows = this.database.prepare('SELECT release FROM repository LIMIT 2').all();
+    if (rows.length !== 1) throw new Error('forward repository cardinality differs');
+    return String(rows[0]!['release']);
+  }
+  forwardIdentity(): string {
+    if (!this.forwardStorage) throw new Error('forward store identity unavailable');
+    this.assertForwardStorage(); return this.forwardStorage.identity;
+  }
+
+  async bindForwardBackup(input: { handle: MaintenanceHandle; backup: NonNullable<NonNullable<MaintenanceIntent['forward']>['backup']> }) {
+    if (!/^[0-9a-f-]{36}$/i.test(input.backup.id) || !/^[0-9a-f-]{36}$/i.test(input.backup.receiptId)
+      || !/^[0-9a-f]{64}$/.test(input.backup.sha256) || !/^[0-9a-f]{64}$/.test(input.backup.countDigest)
+      || !/^[0-9a-f]{64}$/.test(input.backup.receiptSha256) || !/^\d+:\d+$/.test(input.backup.identity)
+      || !Number.isSafeInteger(input.backup.bytes) || input.backup.bytes < 1 || input.backup.bytes > 512 * 1024 * 1024)
+      throw new Error('invalid compact forward backup binding');
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(input.handle.operationId), intent = claim.maintenance!;
+      if (claim.id !== input.handle.claimId || claim.token !== input.handle.token || claim.resourceKey !== input.handle.repositoryId
+        || intent.kind !== 'upgrade' || intent.phase !== 'preparing' || !intent.forward
+        || intent.forward.backup !== null || intent.backupId !== input.backup.id
+        || intent.forward.currentShape !== knownForwardShape(this.database)
+        || intent.forward.sourceIdentity !== this.forwardStorage?.identity
+        || this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('forward backup bind claim/token/shape differs');
+      intent.forward.backup = input.backup;
+      const data = JSON.stringify(claim);
+      if (Buffer.byteLength(data) > 8192) throw new Error('forward maintenance claim exceeds limit');
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?').run(data, claim.id, claim.token);
+      this.event('maintenance.backup_bound', { operationId: intent.operationId, claimId: claim.id, backupId: input.backup.id });
+    });
+  }
+
+  async advanceForwardStep(handle: MaintenanceHandle): Promise<ForwardShape> {
+    return this.transaction(() => {
+      const claim = this.readMaintenanceClaim(handle.operationId), intent = claim.maintenance!;
+      if (claim.id !== handle.claimId || claim.token !== handle.token || claim.resourceKey !== handle.repositoryId
+        || intent.kind !== 'upgrade' || intent.phase !== 'modifying' || !intent.ticketConsumed
+        || !intent.forward?.backup || intent.forward.backup.id !== intent.backupId
+        || intent.forward.sourceIdentity !== this.forwardStorage?.identity
+        || this.database.prepare('SELECT state FROM repository WHERE id=?').get(intent.repositoryId)?.['state'] !== 'incomplete'
+        || this.database.prepare('SELECT id FROM owner_claims WHERE id<>? LIMIT 1').get(claim.id))
+        throw new Error('forward step requires consumed exclusive upgrade handoff');
+      assertForwardIntegrity(this.database);
+      const next = applyForwardStep(this.database, intent.forward.currentShape);
+      intent.forward.currentShape = next;
+      const data = JSON.stringify(claim);
+      if (Buffer.byteLength(data) > 8192) throw new Error('forward maintenance claim exceeds limit');
+      this.database.prepare('UPDATE owner_claims SET data=? WHERE id=? AND token=?').run(data, claim.id, claim.token);
+      this.event('maintenance.schema_advanced', { operationId: intent.operationId, claimId: claim.id, shape: next });
+      assertForwardIntegrity(this.database);
+      return next;
+    });
+  }
+
   readMaintenanceClaim(operationId: string): Claim {
     const row = this.database.prepare("SELECT data FROM owner_claims WHERE kind='maintenance'").get();
     if (!row) throw new Error('maintenance claim unavailable');
@@ -928,7 +1065,8 @@ export class RepositoryStore {
   }
 
   async reclaimMaintenance(input: { operationId: string; expectedToken: string; expectedOwner: Owner;
-    expectedPhase: MaintenancePhase; owner: Owner; inspection: 'not_live' | 'unknown'; note: string }) {
+    expectedPhase: MaintenancePhase; owner: Owner; inspection: 'not_live' | 'unknown'; note: string;
+    replacementBackupId?: string }) {
     validateOwner(input.owner);
     text(input.note, 'maintenance clearance note');
     if (!input.note.trim()) throw new Error('nonempty maintenance clearance note required');
@@ -938,10 +1076,16 @@ export class RepositoryStore {
       if (claim.owner.host !== input.expectedOwner.host || claim.owner.pid !== input.expectedOwner.pid
         || claim.owner.start !== input.expectedOwner.start || claim.maintenance?.phase !== input.expectedPhase)
         throw new Error('maintenance owner or phase changed after inspection');
+      if (input.replacementBackupId && (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.replacementBackupId)
+        || claim.maintenance?.kind !== 'upgrade' || !claim.maintenance.forward
+        || claim.maintenance.forward.backup !== null || claim.maintenance.phase !== 'preparing'
+        || claim.maintenance.backupId === input.replacementBackupId))
+        throw new Error('forward backup replacement is not eligible');
       const clearance: Clearance = { id: randomUUID(), claimId: claim.id, note: input.note, basis: 'operator_confirmed', inspection: input.inspection };
       this.database.prepare('INSERT INTO clearances(id,claim_id,data) VALUES (?,?,?)')
         .run(clearance.id, claim.id, JSON.stringify(clearance));
       claim.token = randomUUID(); claim.owner = input.owner;
+      if (input.replacementBackupId) claim.maintenance!.backupId = input.replacementBackupId;
       if (claim.maintenance?.phase === 'handoff-ready') claim.maintenance.ticketNonceHash = null;
       this.database.prepare('UPDATE owner_claims SET token=?,data=? WHERE id=? AND token=?')
         .run(claim.token, JSON.stringify(claim), claim.id, input.expectedToken);

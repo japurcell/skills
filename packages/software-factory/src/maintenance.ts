@@ -1,15 +1,20 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { closeSync, constants, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readSync, readdirSync,
   realpathSync, renameSync, writeSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { currentOwner, inspectOwner } from './native/process.js';
+import { LiveProcessScope } from './native/process.js';
 import { verifyPublicationLayout } from './install-publication-state.js';
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
-import { openMaintenanceStore, openRepositoryStore } from './store.js';
+import { openForwardMaintenanceStore, openMaintenanceStore, openRepositoryStore } from './store.js';
 import type { CandidateBinding, Claim, MaintenanceHandle, MaintenanceIntent, MaintenanceKind, MaintenancePhase, Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
+import { assertForwardIntegrity, forwardCounts, knownForwardShape } from './schema-forward.js';
+import type { ForwardShape } from './schema-forward.js';
 
 const MAX_RECORD_BYTES = 8192;
 const SHA = /^[0-9a-f]{64}$/;
@@ -174,6 +179,23 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
       || !SHA.test(recorded.candidate.treeDigest) || !UUID.test(recorded.candidate.receiptId)
       || !SHA.test(recorded.candidate.receiptSha256))))
     throw new Error('recorded maintenance intent invalid');
+  if (recorded.forward !== undefined) {
+    const forward = recorded.forward, backup = forward.backup;
+    if (!forward || typeof forward !== 'object' || Array.isArray(forward)
+      || Object.keys(forward).sort().join(',') !== 'backup,currentShape,sourceIdentity,sourceRelease,sourceShape'
+      || recorded.kind !== 'upgrade' || !UUID.test(recorded.backupId ?? '')
+      || typeof forward.sourceRelease !== 'string' || Buffer.byteLength(forward.sourceRelease) < 1
+      || Buffer.byteLength(forward.sourceRelease) > 256 || !/^\d+:\d+$/.test(forward.sourceIdentity)
+      || !(['v3','v4-base','v4-plus','v5','v6','v7'] as string[]).includes(forward.sourceShape)
+      || !(['v3','v4-base','v4-plus','v5','v6','v7'] as string[]).includes(forward.currentShape)
+      || (backup !== null && (!backup || typeof backup !== 'object' || Array.isArray(backup)
+        || Object.keys(backup).sort().join(',') !== 'bytes,countDigest,id,identity,receiptId,receiptSha256,sha256'
+        || backup.id !== recorded.backupId || !SHA.test(backup.sha256)
+        || !SHA.test(backup.countDigest) || !UUID.test(backup.receiptId) || !SHA.test(backup.receiptSha256)
+        || !/^\d+:\d+$/.test(backup.identity)
+        || !Number.isSafeInteger(backup.bytes) || backup.bytes < 1 || backup.bytes > 512 * 1024 * 1024)))
+      throw new Error('recorded forward intent invalid');
+  }
   selected({ release: recorded.release, selectionDigest: recorded.selectionDigest,
     targetReleaseSha256: recorded.targetReleaseSha256, artifactDigests: recorded.artifactDigests,
     targetSchema: recorded.targetSchema });
@@ -194,7 +216,9 @@ function redacted(intent: MaintenanceIntent) {
   const { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,
     targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate } = intent;
   return { operationId, repositoryId, kind, release, selectionDigest, targetReleaseSha256, artifactDigests,
-    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate: candidate ?? null };
+    targetSchema, stagePath, stageDigest, phase, ownedReceiptId, backupId, candidate: candidate ?? null,
+    ...(intent.forward ? { forward: { sourceShape: intent.forward.sourceShape,
+      currentShape: intent.forward.currentShape, backupBound: intent.forward.backup !== null } } : {}) };
 }
 function handle(claim: Claim, commonDir: string): MaintenanceHandle {
   if (!claim.maintenance) throw new Error('typed maintenance claim required');
@@ -260,6 +284,192 @@ export async function beginMaintenance(repository: string, kind: MaintenanceKind
   } finally { store.close(); }
 }
 
+function forwardBackupPath(common: string, operationId: string, backupId: string) {
+  if (!UUID.test(operationId) || !UUID.test(backupId)) throw new Error('invalid forward backup identity');
+  return join(common, 'factory', 'maintenance-backups', operationId, backupId, 'history.sqlite');
+}
+
+function openImmutableForwardBackup(path: string) {
+  const url = pathToFileURL(path);
+  url.searchParams.set('mode', 'ro');
+  url.searchParams.set('immutable', '1');
+  return new DatabaseSync(url, { readOnly: true, timeout: 100 });
+}
+
+function verifyForwardBackup(common: string, claim: Claim) {
+  const intent = assertRecordedIntent(common, claim), bound = intent.forward?.backup;
+  if (intent.kind !== 'upgrade' || !intent.forward || !bound || bound.id !== intent.backupId)
+    throw new Error('verified forward backup binding required');
+  const source = lstatSync(join(common, 'factory', 'history.sqlite'), { bigint: true });
+  if (!source.isFile() || source.isSymbolicLink() || source.nlink !== 1n
+    || `${source.dev}:${source.ino}` !== intent.forward.sourceIdentity
+    || !absent(join(common, 'factory', 'bootstrap-incomplete')))
+    throw new Error('forward source identity or marker changed');
+  const path = forwardBackupPath(common, intent.operationId, bound.id), directory = dirname(path);
+  for (const part of [dirname(directory), directory]) {
+    const stat = lstatSync(part);
+    if (!stat.isDirectory() || stat.isSymbolicLink() || realpathSync(part) !== part
+      || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0)) throw new Error('forward backup directory changed');
+  }
+  if (readdirSync(directory).sort().join(',') !== 'backup-receipt.json,backup-request.json,history.sqlite')
+    throw new Error('forward backup inventory changed');
+  const actual = fileDigest(path);
+  if (actual.identity !== bound.identity || actual.sha256 !== bound.sha256 || actual.bytes !== bound.bytes)
+    throw new Error('forward backup changed after binding');
+  const receiptBytes = readRecord(join(directory, 'backup-receipt.json'));
+  if (hash(receiptBytes) !== bound.receiptSha256) throw new Error('forward backup receipt changed');
+  const receipt = JSON.parse(receiptBytes.toString('utf8')) as Record<string, unknown>;
+  if (receipt.version !== 1 || receipt.operationId !== intent.operationId || receipt.backupId !== bound.id
+    || receipt.repositoryId !== intent.repositoryId || receipt.sourceShape !== intent.forward.sourceShape
+    || receipt.sourceRelease !== intent.forward.sourceRelease || receipt.sourceIdentity !== intent.forward.sourceIdentity
+    || receipt.selectionDigest !== intent.selectionDigest || receipt.receiptId !== bound.receiptId
+    || receipt.requestSha256 !== hash(readRecord(join(directory, 'backup-request.json')))
+    || receipt.identity !== bound.identity || receipt.sha256 !== bound.sha256 || receipt.bytes !== bound.bytes
+    || receipt.countDigest !== bound.countDigest) throw new Error('forward backup receipt differs');
+  const copied = openImmutableForwardBackup(path);
+  try {
+    assertForwardIntegrity(copied);
+    const rows = copied.prepare('SELECT id,release,state FROM repository LIMIT 2').all();
+    if (knownForwardShape(copied) !== intent.forward.sourceShape || forwardCounts(copied).digest !== bound.countDigest
+      || rows.length !== 1 || rows[0]?.['id'] !== intent.repositoryId || rows[0]['release'] !== intent.forward.sourceRelease
+      || rows[0]['state'] !== 'ready'
+      || copied.prepare('SELECT id,token FROM owner_claims LIMIT 2').all().length !== 1
+      || copied.prepare('SELECT id FROM owner_claims').get()?.['id'] !== claim.id)
+      throw new Error('forward backup rows differ from bound operation');
+  } finally { copied.close(); }
+}
+
+function openControllerStore(common: string) {
+  const databasePath = join(common, 'factory', 'history.sqlite');
+  const file = lstatSync(databasePath);
+  if (!file.isFile() || file.isSymbolicLink() || file.nlink !== 1
+    || (process.platform !== 'win32' && (file.mode & 0o077) !== 0)) throw new Error('invalid controller store file');
+  for (const suffix of ['-wal', '-shm', '-journal']) {
+    const sidecar = `${databasePath}${suffix}`;
+    if (absent(sidecar)) continue;
+    const stat = lstatSync(sidecar);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1
+      || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0))
+      throw new Error('invalid controller store sidecar');
+  }
+  try { return openMaintenanceStore(common); }
+  catch (error) {
+    if (!(error instanceof Error) || !error.message.includes('incompatible schema')) throw error;
+    return openForwardMaintenanceStore(common);
+  }
+}
+
+function fileDigest(path: string): { sha256: string; identity: string; bytes: number } {
+  const observed = lstatSync(path, { bigint: true });
+  if (!observed.isFile() || observed.isSymbolicLink() || observed.nlink !== 1n || observed.ino === 0n
+    || observed.size < 1n || observed.size > 512n * 1024n * 1024n
+    || (process.platform !== 'win32' && (observed.mode & 0o777n) !== 0o600n))
+    throw new Error('invalid private forward backup');
+  const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const opened = fstatSync(fd, { bigint: true }), digest = createHash('sha256'), buffer = Buffer.allocUnsafe(1024 * 1024);
+    if (opened.dev !== observed.dev || opened.ino !== observed.ino || opened.size !== observed.size)
+      throw new Error('forward backup identity changed');
+    let offset = 0;
+    while (offset < Number(opened.size)) {
+      const count = readSync(fd, buffer, 0, Math.min(buffer.length, Number(opened.size) - offset), offset);
+      if (!count) throw new Error('forward backup truncated');
+      digest.update(buffer.subarray(0, count)); offset += count;
+    }
+    const ended = fstatSync(fd, { bigint: true }), current = lstatSync(path, { bigint: true });
+    if (ended.size !== opened.size || ended.mtimeNs !== opened.mtimeNs || current.dev !== opened.dev || current.ino !== opened.ino)
+      throw new Error('forward backup changed while hashing');
+    fsyncSync(fd);
+    return { sha256: digest.digest('hex'), identity: `${opened.dev}:${opened.ino}`, bytes: Number(opened.size) };
+  } finally { closeSync(fd); }
+}
+
+async function runForwardBackup(source: string, target: string) {
+  const requestPath = join(dirname(target), 'backup-request.json');
+  writeRecord(requestPath, { source, target });
+  const child = spawn(process.execPath, [fileURLToPath(new URL('./forward-backup-entry.js', import.meta.url)), '--request', requestPath],
+    { detached: process.platform !== 'win32', stdio: ['ignore', 'pipe', 'pipe'], env: { PATH: process.env.PATH ?? '', HOME: dirname(target) } });
+  const scope = new LiveProcessScope(child, process.platform === 'win32');
+  let stdout = '', stderr = '';
+  child.stdout?.on('data', bytes => { stdout += String(bytes); if (Buffer.byteLength(stdout) > 8192) void scope.stop(500); });
+  child.stderr?.on('data', bytes => { stderr += String(bytes); if (Buffer.byteLength(stderr) > 8192) void scope.stop(500); });
+  const timer = setTimeout(() => { void scope.stop(500); }, 30000);
+  try {
+    const result = await scope.result(500);
+    if (result.code !== 0 || result.signal || result.error || !result.quiescent || scope.interrupted || stdout !== '{"completed":true}\n')
+      throw new Error('forward backup helper failed or closure uncertain');
+  } finally { clearTimeout(timer); }
+}
+
+async function createAndBindForwardBackup(current: MaintenanceHandle, planned: MaintenanceIntent) {
+  const common = current.commonDir;
+  const target = forwardBackupPath(common, current.operationId, planned.backupId!);
+  const backups = join(common, 'factory', 'maintenance-backups'), operationDir = dirname(dirname(target)), backupDir = dirname(target);
+  for (const path of [backups, operationDir, backupDir]) {
+    if (absent(path)) mkdirSync(path, { mode: 0o700 });
+    else if (path === backupDir) throw new Error('forward backup target already exists; preserve for inspection');
+    const stat = lstatSync(path);
+    if (!stat.isDirectory() || stat.isSymbolicLink() || realpathSync(path) !== path
+      || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0)) throw new Error('invalid forward backup directory');
+    flushDirectory(dirname(path));
+  }
+  await runForwardBackup(join(common, 'factory', 'history.sqlite'), target);
+  if (readdirSync(backupDir).sort().join(',') !== 'backup-request.json,history.sqlite')
+    throw new Error('forward backup helper left unexpected inventory');
+  const details = fileDigest(target), sourceStore = openForwardMaintenanceStore(common);
+  try {
+    const live = sourceStore.readMaintenanceClaim(current.operationId);
+    if (live.id !== current.claimId || live.token !== current.token || live.maintenance?.forward?.backup !== null
+      || live.maintenance.forward.currentShape !== planned.forward!.sourceShape
+      || sourceStore.forwardShape() !== planned.forward!.sourceShape
+      || sourceStore.forwardIdentity() !== planned.forward!.sourceIdentity
+      || sourceStore.repositoryRelease() !== planned.forward!.sourceRelease)
+      throw new Error('forward backup source changed');
+    const copied = openImmutableForwardBackup(target);
+    try {
+      assertForwardIntegrity(copied);
+      if (knownForwardShape(copied) !== planned.forward!.sourceShape
+        || copied.prepare('SELECT id,release,state FROM repository LIMIT 2').all().length !== 1
+        || copied.prepare('SELECT id,release,state FROM repository').get()?.['id'] !== current.repositoryId
+        || copied.prepare('SELECT release FROM repository').get()?.['release'] !== planned.forward!.sourceRelease
+        || copied.prepare('SELECT id FROM owner_claims LIMIT 2').all().length !== 1
+        || copied.prepare('SELECT token FROM owner_claims').get()?.['token'] !== current.token
+        || forwardCounts(copied).digest !== sourceStore.forwardCounts().digest)
+        throw new Error('forward backup content or counts differ');
+      const receipt = { version: 1, receiptId: randomUUID(), operationId: current.operationId, backupId: planned.backupId,
+        repositoryId: current.repositoryId, sourceShape: planned.forward!.sourceShape,
+        sourceRelease: planned.forward!.sourceRelease, sourceIdentity: planned.forward!.sourceIdentity,
+        selectionDigest: planned.selectionDigest,
+        requestSha256: hash(readRecord(join(backupDir, 'backup-request.json'))),
+        ...details, countDigest: forwardCounts(copied).digest };
+      writeRecord(join(backupDir, 'backup-receipt.json'), receipt);
+      await sourceStore.bindForwardBackup({ handle: current,
+        backup: { id: planned.backupId!, identity: details.identity, sha256: details.sha256,
+          bytes: details.bytes, countDigest: receipt.countDigest, receiptId: receipt.receiptId,
+          receiptSha256: hash(`${JSON.stringify(receipt)}\n`) } });
+    } finally { copied.close(); }
+  } finally { sourceStore.close(); }
+  return { ...current, backupId: planned.backupId! };
+}
+
+/** Administrative admission precedes any schema/data mutation; verified backup is then bound by exact CAS. */
+export async function prepareForwardSchema(repository: string, selection: MaintenanceSelection, owner: Owner) {
+  const { common } = await repositoryIdentity(repository);
+  selected(selection); validOwner(owner);
+  if (inspectOwner(owner).state !== 'known_live') throw new Error('forward owner identity unavailable');
+  const store = openForwardMaintenanceStore(common);
+  let claim: Claim;
+  try {
+    const operationId = randomUUID(), backupId = randomUUID(), shape = store.forwardShape();
+    const planned = intent(operationId, store.repositoryId(), 'upgrade', join(common, 'factory'), selection);
+    planned.backupId = backupId;
+    planned.forward = { sourceShape: shape, currentShape: shape, sourceRelease: store.repositoryRelease(),
+      sourceIdentity: store.forwardIdentity(), backup: null };
+    claim = await store.beginForwardMaintenance(planned, owner);
+  } finally { store.close(); }
+  return createAndBindForwardBackup(handle(claim, common), claim.maintenance!);
+}
+
 /** Read-only status is available even when normal open rejects the marker or incomplete state. */
 export async function inspectMaintenance(repository: string) {
   const { root, common } = await repositoryIdentity(repository);
@@ -281,16 +491,25 @@ export async function inspectMaintenance(repository: string) {
   }
   try {
     const info = lstatSync(databasePath);
-    if (!info.isFile() || info.isSymbolicLink()) throw new Error('nonregular database');
+    if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1
+      || (process.platform !== 'win32' && (info.mode & 0o077) !== 0)) throw new Error('nonprivate database');
+    for (const suffix of ['-wal', '-shm', '-journal']) {
+      const sidecar = `${databasePath}${suffix}`;
+      if (absent(sidecar)) continue;
+      const stat = lstatSync(sidecar);
+      if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1
+        || (process.platform !== 'win32' && (stat.mode & 0o077) !== 0)) throw new Error('nonprivate database sidecar');
+    }
     const database = new DatabaseSync(databasePath, { readOnly: true, timeout: 100 });
     try {
-      if (database.prepare('PRAGMA user_version').get()?.['user_version'] !== schemaVersion
-        || database.prepare('PRAGMA quick_check').get()?.['quick_check'] !== 'ok') throw new Error('invalid database');
+      const observedShape = knownForwardShape(database);
+      assertForwardIntegrity(database);
       const row = database.prepare('SELECT id,state FROM repository').get();
       if (!row) throw new Error('missing repository');
       const claims = database.prepare('SELECT data FROM owner_claims LIMIT 2').all();
       const typed = claims.map(entry => JSON.parse(String(entry['data'])) as Claim).find(claim => claim.maintenance);
       if (typed) assertRecordedIntent(common, typed);
+      if (typed?.maintenance?.forward?.backup) verifyForwardBackup(common, typed);
       if (typed) verifyInstallCandidate(common, typed, false);
       if (typed && claims.length !== 1) throw new Error('typed maintenance claim is not exclusive');
       if (marker && (marker.claim.resourceKey !== row['id'] || (typed && !sameBootstrapOperation(marker, typed))))
@@ -300,7 +519,7 @@ export async function inspectMaintenance(repository: string) {
         throw new Error('incomplete install missing bootstrap marker');
       const summary = typed?.maintenance ? redacted(typed.maintenance) : marker ? redacted(marker.claim.maintenance!) : undefined;
       return { status: marker || row['state'] !== 'ready' || typed ? 'incomplete' as const : 'ready' as const,
-        commonDir: common, marker: marker ? 'complete' : 'absent', database: 'current', claims: claims.length,
+        commonDir: common, marker: marker ? 'complete' : 'absent', database: observedShape === 'v7' ? 'current' : observedShape, claims: claims.length,
         ...(summary ? { intent: summary } : {}) };
     } finally { database.close(); }
   } catch {
@@ -310,7 +529,7 @@ export async function inspectMaintenance(repository: string) {
 
 /** Only a recorded complete marker can resume an absent database after inspected owner clearance. */
 export async function reclaimMaintenance(repository: string, operationId: string, owner: Owner,
-  clearance: { operatorConfirmed: boolean; note: string }): Promise<MaintenanceHandle> {
+  clearance: { operatorConfirmed: boolean; note: string; replacementBackupId?: string }): Promise<MaintenanceHandle> {
   if (clearance.operatorConfirmed !== true || !clearance.note?.trim() || Buffer.byteLength(clearance.note) > 256)
     throw new Error('explicit bounded operator clearance required');
   const { root, common } = await repositoryIdentity(repository);
@@ -324,10 +543,13 @@ export async function reclaimMaintenance(repository: string, operationId: string
     if (inspectOwner(marker.claim.owner).state === 'known_live') throw new Error('known-live owner cannot be reclaimed');
     createBootstrapDatabase(databasePath, marker.claim);
   }
-  const store = openMaintenanceStore(common);
+  const store = openControllerStore(common);
   try {
     const claim = store.readMaintenanceClaim(operationId);
     assertRecordedIntent(common, claim);
+    if (claim.maintenance?.forward?.backup) verifyForwardBackup(common, claim);
+    else if (claim.maintenance?.forward && !clearance.replacementBackupId)
+      throw new Error('unbound forward backup requires explicit fresh backup recovery');
     if (claim.maintenance?.kind === 'install' && !marker) throw new Error('bootstrap marker missing; repair refused');
     if (marker && !sameBootstrapOperation(marker, claim))
       throw new Error('bootstrap marker and claim identity differ');
@@ -341,7 +563,8 @@ export async function reclaimMaintenance(repository: string, operationId: string
     if (inspection.state === 'known_live') throw new Error('known-live owner cannot be reclaimed');
     return handle(await store.reclaimMaintenance({ operationId, expectedToken: claim.token,
       expectedOwner: claim.owner, expectedPhase: claim.maintenance!.phase, owner,
-      inspection: inspection.state, note: clearance.note }), common);
+      inspection: inspection.state, note: clearance.note,
+      ...(clearance.replacementBackupId ? { replacementBackupId: clearance.replacementBackupId } : {}) }), common);
   } finally { store.close(); }
 }
 
@@ -415,10 +638,11 @@ export function measureMaintenanceStage(stagePath: string) { return stageEvidenc
 export async function prepareMaintenanceHandoff(repository: string, current: MaintenanceHandle) {
   const { root, common } = await repositoryIdentity(repository);
   if (common !== current.commonDir) throw new Error('handoff repository differs');
-  const store = openMaintenanceStore(common);
+  const store = openControllerStore(common);
   try {
     const claim = store.readMaintenanceClaim(current.operationId), recorded = claim.maintenance!;
     assertRecordedIntent(common, claim);
+    if (recorded.forward) verifyForwardBackup(common, claim);
     if (claim.id !== current.claimId || claim.token !== current.token
       || (recorded.phase !== 'preparing' && !(recorded.phase === 'handoff-ready' && recorded.ticketNonceHash === null)))
       throw new Error('maintenance claim/token/phase no longer matches');
@@ -479,10 +703,11 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
   if (stage.stageDigest !== ticket.stageDigest || stage.stageIdentity !== ticket.stageIdentity)
     throw new Error('handoff stage changed');
   const markerPath = join(common, 'factory', 'bootstrap-incomplete');
-  const store = openMaintenanceStore(common);
+  const store = openControllerStore(common);
   try {
     const claim = store.readMaintenanceClaim(ticket.operationId);
     assertRecordedIntent(common, claim);
+    if (claim.maintenance?.forward) verifyForwardBackup(common, claim);
     if (ticket.release !== claim.maintenance?.release || ticket.selectionDigest !== claim.maintenance.selectionDigest
       || ticket.targetReleaseSha256 !== claim.maintenance.targetReleaseSha256
       || JSON.stringify(ticket.artifactDigests) !== JSON.stringify(claim.maintenance.artifactDigests)
@@ -505,10 +730,11 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
 
 /** Trusted phase CAS leaves publication and claim release to the installed validator. */
 export async function recordMaintenanceStage(current: MaintenanceHandle, expected: MaintenancePhase, next: MaintenancePhase) {
-  const store = openMaintenanceStore(current.commonDir);
+  const store = openControllerStore(current.commonDir);
   try {
     const claim = store.readMaintenanceClaim(current.operationId);
     assertRecordedIntent(current.commonDir, claim);
+    if (claim.maintenance?.forward) verifyForwardBackup(current.commonDir, claim);
     const markerPath = join(current.commonDir, 'factory', 'bootstrap-incomplete');
     if (claim.maintenance?.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; phase refused');
     verifyInstallCandidate(current.commonDir, claim, claim.maintenance?.kind === 'install');
@@ -526,4 +752,70 @@ export async function recordMaintenanceStage(current: MaintenanceHandle, expecte
     return await store.advanceMaintenance({ handle: current, expected, next });
   }
   finally { store.close(); }
+}
+
+/** One crash-atomic historical DDL step. Calling again after a commit advances only the recorded next step. */
+export async function advanceForwardSchema(current: MaintenanceHandle): Promise<{ shape: ForwardShape; state: 'incomplete' }> {
+  const store = openForwardMaintenanceStore(current.commonDir);
+  try {
+    const claim = store.readMaintenanceClaim(current.operationId), intent = assertRecordedIntent(current.commonDir, claim);
+    if (!intent.forward || claim.id !== current.claimId || claim.token !== current.token
+      || claim.resourceKey !== current.repositoryId || intent.phase !== 'modifying' || !intent.ticketConsumed
+      || !intent.stageDigest || !intent.stageIdentity || store.forwardShape() !== intent.forward.currentShape
+      || store.forwardIdentity() !== intent.forward.sourceIdentity
+      || store.repositoryRelease() !== intent.forward.sourceRelease)
+      throw new Error('forward step claim/token/checkpoint differs');
+    const live = currentOwner();
+    if (inspectOwner(live).state !== 'known_live' || live.host !== claim.owner.host
+      || live.pid !== claim.owner.pid || live.start !== claim.owner.start)
+      throw new Error('forward step requires live staged controller owner');
+    verifyForwardBackup(current.commonDir, claim);
+    const stage = stageEvidence(intent.stagePath);
+    if (stage.stageDigest !== intent.stageDigest || stage.stageIdentity !== intent.stageIdentity)
+      throw new Error('forward stage changed');
+    if (intent.forward.currentShape === 'v7') return { shape: 'v7', state: 'incomplete' };
+    const shape = await store.advanceForwardStep(current);
+    return { shape, state: 'incomplete' };
+  } finally { store.close(); }
+}
+
+/** Redacted operation inspection is available even while normal startup rejects the old schema. */
+export async function inspectForwardSchema(repository: string, operationId: string) {
+  const status = await inspectMaintenance(repository);
+  if (status.status !== 'incomplete' || !('intent' in status) || status.intent?.kind !== 'upgrade'
+    || status.intent.operationId !== operationId) throw new Error('forward operation unavailable for inspection');
+  return status;
+}
+
+/** Explicit clearance retains the original operation/selection and rotates only its owner/token. */
+export async function resumeForwardSchema(repository: string, operationId: string, selection: MaintenanceSelection,
+  owner: Owner, clearance: { operatorConfirmed: boolean; note: string }): Promise<MaintenanceHandle> {
+  selected(selection);
+  const { common } = await repositoryIdentity(repository);
+  const store = openForwardMaintenanceStore(common);
+  let pendingBackup = false;
+  try {
+    const claim = store.readMaintenanceClaim(operationId), intent = assertRecordedIntent(common, claim);
+    if (!intent.forward || intent.selectionDigest !== selection.selectionDigest
+      || intent.release !== selection.release || intent.targetReleaseSha256 !== selection.targetReleaseSha256
+      || intent.targetSchema !== selection.targetSchema
+      || JSON.stringify(intent.artifactDigests) !== JSON.stringify(Object.fromEntries(Object.entries(selection.artifactDigests).sort(([a],[b]) => a.localeCompare(b))))
+      || store.forwardShape() !== intent.forward.currentShape
+      || store.forwardIdentity() !== intent.forward.sourceIdentity
+      || store.repositoryRelease() !== intent.forward.sourceRelease)
+      throw new Error('forward resume original or target selection differs');
+    if (intent.forward.backup) verifyForwardBackup(common, claim);
+    else {
+      if (intent.phase !== 'preparing' || intent.forward.currentShape !== intent.forward.sourceShape)
+        throw new Error('unbound forward backup cannot resume after mutation');
+      pendingBackup = true;
+    }
+  } finally { store.close(); }
+  const replacementBackupId = pendingBackup ? randomUUID() : undefined;
+  const recovered = await reclaimMaintenance(repository, operationId, owner,
+    { ...clearance, ...(replacementBackupId ? { replacementBackupId } : {}) });
+  if (!pendingBackup) return recovered;
+  const reopened = openForwardMaintenanceStore(common);
+  try { return createAndBindForwardBackup(recovered, reopened.readMaintenanceClaim(operationId).maintenance!); }
+  finally { reopened.close(); }
 }
