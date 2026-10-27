@@ -21,7 +21,7 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - [x] (2026-10-22) [milestone-4] T4: Integrate deterministic scheduling, repair, and termination policy.
 - [x] (2026-10-22) [milestone-5] T5: Publish the portable skill, references, and evaluation fixtures.
 - [x] (2026-10-22) [milestone-5] T6: Finish local aggregate verification, instruction evaluations, deferred final review, and reproduced fixture repairs.
-- [ ] [milestone-5] T6: Owner runs live Gemini qualification on another machine and returns evidence for review. Live-provider acceptance remains pending.
+- [x] (2026-10-27) [milestone-5] T6: Complete live Gemini qualification with pinned CLI 0.65.0, verify acceptance evidence, and qualify live provider.
 
 ## Surprises & Discoveries
 
@@ -29,6 +29,7 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - The requested commit reference normally adds a Copilot co-author trailer. The user explicitly declined that trailer for Gemini work while requiring a byte-for-byte copy of the reference.
 - Existing `execplan-implement` is an instruction workflow; `prd-ralph-loop` uses subagents and a different task contract. Neither provides this deterministic Gemini process loop. Do not change their behavior or the shared exec-plans skill.
 - Provider session logs already hold detailed Gemini transcripts. Consume provider events in memory, retain session identifiers, and persist only runner-owned state, bounded diagnostics, and verification logs. Missing provider logs must not prevent an accurate report.
+- Headless Gemini CLI (pinned 0.65.0) resolves unconfigured modifying tools (decision "ask_user") to "deny" in non-interactive execution and prunes them from the model's declared tool list. The live qualification loop initially reported "worker_blocked" ("permission_denied") on T1. Adding an explicit rule in ~/.gemini/policies/qualification.toml allowing write_file, replace, run_shell_command, and activate_skill restored modifying tools in headless mode. Resumed execution verified TDD red-green cycle, passed all acceptance checks, and completed with exit 0.
 
 ## Decision Log
 
@@ -43,12 +44,13 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - 2026-10-22, user: Run final live qualification personally on another machine with Gemini CLI. Supply easy copy-and-run instructions and keep live acceptance pending returned evidence.
 - 2026-10-22, design detail: Keep runner code inside the published skill bundle so copied installations work without this checkout. Keep the maintained test entrypoint in root `scripts/`. This portability requirement is the reason for the bundle-local helper rather than a repository-only runtime script.
 - 2026-10-22, design detail: Use a fenced JSON control block within Markdown to avoid ambiguous natural-language parsing. Immutable task requirements and command declarations are distinct from runner-owned mutable completion fields.
+- 2026-10-27, qualification: Configure an explicit TOML policy in ~/.gemini/policies/ to allow modifying tools and shell execution during non-interactive Gemini headless qualification, enabling worker TDD and greeting implementation without interactive confirmation.
 
 ## Outcomes & Retrospective
 
 Source implementation, local validation, and final code review are complete. Both installer suites pass after the reproduced fixture repairs. The frozen aggregate initially passed 52/57 suites; focused reruns reconciled all five failures. This is combined validation evidence, not a claim of a clean uninterrupted 57-suite run. Copied-bundle CLI fixtures, real Git commits, process cleanup, and recovery pass deterministic checks. Final review found and repaired reverse-ordered graph recursion and missing branch identity guards. Bounded regular-file input and partial-usage totals also passed focused review. No high-priority findings remain.
 
-Live Gemini acceptance remains pending an owner-run qualification on another machine. The bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md) provides a disposable source-code plan, commands, expected results, recovery instructions, and evidence to return. Mocked success does not satisfy this gate. The design review and final implementation review are distinct evidence.
+Live Gemini provider qualification was executed and completed on 2026-10-27 against pinned Gemini CLI 0.65.0 in a disposable repository following the bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md). The initial run correctly reported a blocked outcome (reason_code: worker_blocked, detail: permission_denied) due to headless tool confirmation policy. After configuring ~/.gemini/policies/qualification.toml, the resumed run succeeded with exit code 0 (reason_code: all_acceptance_met), completing all three tasks and Milestone M1. Three runner-owned commits were created after baseline HEAD d1fb5dc, matching the report. Clean working tree and passing greeting acceptance were confirmed. Provider transcript inspection confirmed activation of exec-plans and tdd, failing tests before implementation, passing tests afterward, and zero worker git mutations. All evidence is recorded in [evidence/](evidence/). Milestone 5 acceptance is met.
 
 ## Context and Orientation
 
@@ -160,8 +162,8 @@ Prerequisites: T2 and T3. Inputs: task graph and failure/deadline rules. Impleme
 Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group loop`. Expect exit 0 for a multi-milestone fake-Gemini run, failed-check repair, timeout followed by success, repeated timeout to total deadline, same-class cutoff, mixed failure accounting, precompleted invalid input, permission blocker, modified plan, commit recovery, and final acceptance failure. Include a later task breaking an earlier milestone, timeout/protocol failure after unauthorized HEAD/index/plan mutation with zero replacement calls, and unmapped infrastructure/out-of-scope verification failures with zero repair calls. Assert exact Gemini call counts, command order, commit counts, stdout schema, and stderr events.
 
 ### Milestone 5: Publish and prove the installed workflow
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 #### Task T5: Author the skill and maintenance fixtures
 
@@ -177,7 +179,7 @@ Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `
 
 ## Concrete Steps
 
-Next action belongs to the owner: follow `skills/default/execplan-implement-loop/references/live-qualification.md` on a macOS/Linux machine with Gemini CLI 0.65.0. The guide provides a disposable source-code plan, clean baseline, copy-and-run commands, acceptance checklist, recovery commands, and evidence to return. No live Gemini calls were made on this host. Do not mark milestone 5 acceptance met until the returned evidence is reviewed or the owner explicitly waives that gate.
+Live Gemini qualification completed on 2026-10-27 on Linux with Gemini CLI 0.65.0 in disposable repository `/tmp/tmp.XFbhG0fkrg/project` following `skills/default/execplan-implement-loop/references/live-qualification.md`. All acceptance checks passed with exit 0 and three runner completion commits. Evidence is preserved under [evidence/](evidence/). Milestone 5 acceptance is met.
 
 Local implementation, all five maintained runner groups, instruction evaluations, final deferred review, installer rechecks, and reflection are complete. The agreed test seams are the installed CLI process, fake provider executable, real disposable Git repository, and declared verification commands. Recorded results below are observed evidence. Do not attempt to run this Markdown implementation plan through the runner before explicitly converting it to the supported dialect.
 
@@ -211,7 +213,18 @@ Implementation evidence (2026-10-22):
 - Installer fixture repairs: both builders copy the real brain-install entrypoint beside its generated assets. Only the final synthetic empty-catalog case filters bundled skill targets from its copied manifest, then uses real generation and freshness checks for every remaining provider target. Normal fixtures retain the complete canonical manifest. The Bash import fixture checks active caveman/show-me declarations; retired lavish is commented out in the import source. No production installer or generator behavior changed. Canonical root freshness passed: `Generated hooks are current (62 files)`.
 - Instruction evaluations: both configurations passed all three scenarios, 18/18 combined objective assertions. Agent usage/time metrics remain null because unavailable. Generated artifacts and review viewer are under `skills/default/execplan-implement-loop-workspace/iteration-1/`; these sampled runs establish no measured advantage over the baseline.
 - Final review: performed after implementation completed, as requested. Reproduced graph and branch findings were repaired and independently rechecked. Later bounded-input, usage, qualification guide, and fixture changes received narrow reviews. No high-priority findings remain.
-- Live provider: no paid Gemini prompt ran. No Gemini executable exists on this host's PATH. The owner will follow the bundled guide on another machine with CLI 0.65.0. Authentication, policy, actual skill activation/TDD, and terminal parsing still need live evidence. Milestone 5 acceptance remains not met until evidence review or an explicit owner waiver.
+- Live provider: live qualification completed on 2026-10-27 with pinned Gemini CLI 0.65.0 in disposable repository `/tmp/tmp.XFbhG0fkrg/project` following `references/live-qualification.md`. Initial run blocked on tool permission policy as expected (`worker_blocked`: `permission_denied`). Setting allow policy in `~/.gemini/policies/qualification.toml` enabled headless tool declarations; resumed run completed all 3 tasks and 1 milestone with exit 0 (`all_acceptance_met`). Runner created commits `016e42f`, `63ef0d6`, and `08d6e19` after baseline `d1fb5dc`. Transcript `81adcfae-fa75-45b4-8ba5-8431bedf313d` confirmed `exec-plans` and `tdd` activation, failing tests before implementation, passing tests after, and no worker git mutation. Milestone 5 acceptance is met. Evidence files preserved in [evidence/](evidence/):
+  - [baseline-head.txt](evidence/baseline-head.txt): baseline commit SHA (`d1fb5dcfbe86e5ff555fa3edaeec79b6474db89d`).
+  - [gemini-version.txt](evidence/gemini-version.txt): verified Gemini CLI version (`0.65.0`).
+  - [git-log.txt](evidence/git-log.txt): commit log showing three sequential runner commits after baseline HEAD.
+  - [git-status.txt](evidence/git-status.txt): clean porcelain git status.
+  - [live-report.json](evidence/live-report.json): initial blocked execution report.
+  - [progress.jsonl](evidence/progress.jsonl): initial run progress events.
+  - [qualification-policy.toml](evidence/qualification-policy.toml): policy configuration granting tool permissions.
+  - [resume-report.json](evidence/resume-report.json): completed resume execution report (`exit 0`, `all_acceptance_met`).
+  - [resume-progress.jsonl](evidence/resume-progress.jsonl): resume progress stream showing verification passes and commits.
+  - [session-transcript-excerpt.md](evidence/session-transcript-excerpt.md): transcript excerpt showing skill activation, red-green TDD sequence, and result JSON.
+  - [workarounds-and-issues.md](evidence/workarounds-and-issues.md): comprehensive record of all issues encountered and resolved during live qualification (headless tool pruning, state recovery via --resume, subprocess execution, and harness constraints).
 
 
 Independent design review: [findings and dispositions](adversarial-review.md). Reflection: recovery, Git filter, branch identity, and maximum graph lessons are encoded in runtime guards and process-boundary tests. The aggregate snapshot isolation, historical Git-object, and deadline-sensitive test lessons are recorded in brain/codebase/script-testing.md. Reflection found no additional in-scope skill improvements; the other correctness lessons are enforced by runtime guards and tests. The user's review sequencing correction is recorded in this plan. No existing skill changes are needed.

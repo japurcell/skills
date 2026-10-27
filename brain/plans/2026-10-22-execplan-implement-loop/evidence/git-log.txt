@@ -1,0 +1,6 @@
+08d6e19 docs: record T3 verification
+63ef0d6 docs: record T2 verification
+016e42f feat: implement greeting module and unit tests
+d1fb5dc chore: add initial settings configuration for execplan-implement-loop
+b5009eb Adding exec-plans skill
+6069575 test: prepare live loop qualification

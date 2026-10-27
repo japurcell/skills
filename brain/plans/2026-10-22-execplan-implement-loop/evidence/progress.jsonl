@@ -1,0 +1,4 @@
+{"event": "task_start", "timestamp": "2026-10-27T14:44:53.497834+00:00", "task_id": "T1", "iteration_id": "35014fb44d5749bfaf7282506d005a9d"}
+{"event": "task_failure", "timestamp": "2026-10-27T14:46:43.818473+00:00", "task_id": "T1", "reason_code": "worker_blocked"}
+{"event": "blocked", "timestamp": "2026-10-27T14:46:43.818511+00:00", "task_id": "T1", "reason_code": "worker_blocked"}
+{"event": "final_status", "timestamp": "2026-10-27T14:46:43.819019+00:00", "task_id": "T1", "status": "blocked", "reason_code": "worker_blocked"}

@@ -1,0 +1,4 @@
+[[rule]]
+toolName = ["write_file", "replace", "run_shell_command", "activate_skill"]
+decision = "allow"
+priority = 100
