@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 15 -->
+<!-- next-id: 16 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -10,6 +10,8 @@
 13. [ ] Reproduce and fix stale observability cleanup deleting sessions SQLite still reports as running, finalizing, or sealing after seven days. Follow [the restored cleanup policy](codebase/hook-observability.md): require age over 24 hours and terminal/absent database state. Change the canonical helper, regenerate provider copies, and verify active-session retention, terminal/absent cleanup, and database-failure behavior through the existing disposable observability fixtures. Preserve unrelated logs and session state; do not test against real installed logs.
 
 ## Investigations
+
+15. [ ] Make a minimal change to `execplan-implement` so needed code review happens outside its task loop; long-running plans currently bog down in implement-review-fix loops. Also move worktree cleanup to the end (see pocock's implement-spec and chief of staff).
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
 3. [ ] Evaluate correction capture, deduplication, provenance, staleness, and replay for agent memory; distinguish measured improvements from the [source video's proposals](https://youtu.be/mAKUL12h1n8?si=jo_E1lSoFM9btLqY). Retain the [original investigation context](archive/plans/2026-10-21-legacy-guidance-audit/idea-context.md#investigation-3-agent-memory) when framing the research.

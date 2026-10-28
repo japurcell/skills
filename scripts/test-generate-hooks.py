@@ -103,6 +103,10 @@ DIAGNOSTICS_TARGETS = (
     ".gemini/hooks/scripts/hooks-diagnostics.py",
 )
 
+BRAIN_BUNDLE_TARGETS = (
+    "skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py",
+    "skills/default/brain-install/assets/hooks/inject-brain.py",
+)
 BRAIN_TARGETS = (
     ".github/hooks/scripts/auto-index-brain.py",
     ".github/hooks/scripts/inject-brain.py",
@@ -110,7 +114,7 @@ BRAIN_TARGETS = (
     ".gemini/hooks/scripts/inject-brain.py",
     ".codex/hooks/auto-index-brain.py",
     ".codex/hooks/inject-brain.py",
-)
+) + BRAIN_BUNDLE_TARGETS
 
 RTK_TARGETS = (
     ".copilot/hooks/scripts/rtk-hook-copilot.py",
@@ -315,7 +319,7 @@ class GenerateHooksTests(unittest.TestCase):
         before = snapshot(ROOT)
         fresh = self.run_cli("--check")
         self.assertEqual(fresh.returncode, 0, fresh.stderr)
-        self.assertEqual(fresh.stdout, "Generated hooks are current (60 files).\n")
+        self.assertEqual(fresh.stdout, "Generated hooks are current (62 files).\n")
         self.assertEqual(fresh.stderr, "")
         self.assertEqual(before, snapshot(ROOT))
 
@@ -334,6 +338,33 @@ class GenerateHooksTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertIn(undeclared.relative_to(ROOT).as_posix(), result.stdout)
         undeclared.unlink()
+
+    def test_bundle_helpers_are_checked_repaired_and_match_provider_outputs(self) -> None:
+        self.restore_checked_in_outputs()
+        for relative in BRAIN_BUNDLE_TARGETS:
+            with self.subTest(target=relative):
+                path = ROOT / relative
+                original = path.read_bytes()
+                mode = stat.S_IMODE(path.stat().st_mode)
+                try:
+                    path.write_bytes(original + b"\n# bundle drift probe\n")
+                    before = snapshot(ROOT)
+                    stale = self.run_cli("--check")
+                    self.assertEqual(stale.returncode, 1, stale.stdout + stale.stderr)
+                    self.assertIn(relative, stale.stdout)
+                    self.assertEqual(before, snapshot(ROOT))
+                    repaired = self.run_cli("--write")
+                    self.assertEqual(repaired.returncode, 0, repaired.stderr)
+                    self.assertIn(relative, repaired.stdout)
+                    canonical = ROOT / ".github/hooks/scripts" / path.name
+                    self.assertEqual(path.read_bytes(), canonical.read_bytes())
+                    if os.name != "nt":
+                        self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o755)
+                    current = self.run_cli("--check")
+                    self.assertEqual(current.returncode, 0, current.stdout + current.stderr)
+                finally:
+                    path.write_bytes(original)
+                    path.chmod(mode)
 
     def test_guardian_runtime_source_is_an_authoritative_generator_input(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -374,7 +405,7 @@ class GenerateHooksTests(unittest.TestCase):
             environment={"LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout, "Generated hooks are current (60 files).\n")
+        self.assertEqual(result.stdout, "Generated hooks are current (62 files).\n")
         self.assertEqual(result.stderr, "")
         self.assertEqual(before, {path: (path.read_bytes(), stat.S_IMODE(path.stat().st_mode)) for path in paths})
 
@@ -399,7 +430,7 @@ class GenerateHooksTests(unittest.TestCase):
         after_first_write = snapshot(ROOT)
         second = self.run_cli("--write")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(second.stdout, "Generated hooks already current (60 files).\n")
+        self.assertEqual(second.stdout, "Generated hooks already current (62 files).\n")
         self.assertEqual(after_first_write, snapshot(ROOT))
         for target_path in TARGETS:
             content = (ROOT / target_path).read_text(encoding="utf-8")

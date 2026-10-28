@@ -10,7 +10,6 @@ import unittest
 from itertools import combinations
 from pathlib import Path
 
-
 BUNDLE = Path(__file__).resolve().parents[1]
 
 
@@ -36,7 +35,8 @@ class InstallerTests(unittest.TestCase):
 
     def run_install(self, *arguments, expected=0):
         result = subprocess.run(
-            [sys.executable, "-I", "-S", "-B", str(self.bundle / "scripts/install.py"),
+            check=False,
+            args=[sys.executable, "-I", "-S", "-B", str(self.bundle / "scripts/install.py"),
              str(self.target), *arguments],
             cwd=self.root, env=self.environment, capture_output=True, text=True, encoding="utf-8",
         )
@@ -50,7 +50,7 @@ class InstallerTests(unittest.TestCase):
     def directory_link(self, link, destination):
         if os.name == "nt":
             result = subprocess.run(["cmd", "/d", "/c", "mklink", "/J", str(link), str(destination)],
-                                    capture_output=True, text=True)
+                                    capture_output=True, text=True, check=False)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         else:
             link.symlink_to(destination, target_is_directory=True)
@@ -285,7 +285,8 @@ class InstallerTests(unittest.TestCase):
         config.parent.mkdir()
         config.write_text("[]")
         result = subprocess.run(
-            [sys.executable, str(self.bundle / "scripts/install.py"), str(self.target),
+            check=False,
+            args=[sys.executable, str(self.bundle / "scripts/install.py"), str(self.target),
              "--provider", "codex"],
             cwd=self.root, env=dict(self.environment, PYTHONIOENCODING="cp1252"),
             capture_output=True,
@@ -318,7 +319,7 @@ class InstallerTests(unittest.TestCase):
                         use_shell = False
                     else:
                         invocation, use_shell = command, True
-                    result = subprocess.run(invocation, shell=use_shell, cwd=nested, env=self.environment,
+                    result = subprocess.run(invocation, shell=use_shell, cwd=nested, env=self.environment, check=False,
                                             input=json.dumps(payload), text=True, encoding="utf-8", capture_output=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertEqual(result.stderr, "")
@@ -334,6 +335,89 @@ class InstallerTests(unittest.TestCase):
                         self.assertIn("codebase/new.md", (self.target / "brain/index.md").read_text())
                         (self.target / "brain/codebase/new.md").unlink()
 
+    def test_python_only_path_runs_portable_registrations_and_reconciles_legacy(self):
+        self.run_install("--provider", "copilot", "--provider", "gemini", "--apply")
+        config_path = self.target / ".gemini/settings.json"
+        config = json.loads(config_path.read_text())
+        handler = config["hooks"]["SessionStart"][0]["hooks"][0]
+        handler["command"] = handler["command"].replace("python -I", "python3 -I", 1)
+        config["unmanaged"] = {"preserve": True}
+        config_path.write_text(json.dumps(config))
+        before = self.fingerprints()
+        self.run_install("--provider", "gemini", "--index-reviewed")
+        self.assertEqual(self.fingerprints(), before)
+        self.run_install("--provider", "gemini", "--index-reviewed", "--apply")
+        self.assertTrue(json.loads(config_path.read_text())["unmanaged"]["preserve"])
+        before = self.fingerprints()
+        self.run_install("--provider", "gemini", "--index-reviewed", "--apply")
+        self.assertEqual(self.fingerprints(), before)
+        if os.name == "nt":
+            return
+        binaries = self.root / "python only"
+        binaries.mkdir()
+        (binaries / "python").symlink_to(sys.executable)
+        nested = self.target / "nested cwd"
+        nested.mkdir()
+        for provider, relative, event, field in (
+                ("copilot", ".github/hooks/hooks.json", "sessionStart", "bash"),
+                ("gemini", ".gemini/settings.json", "SessionStart", "command")):
+            config = json.loads((self.target / relative).read_text())
+            entry = config["hooks"][event][0]
+            handler = entry if provider == "copilot" else entry["hooks"][0]
+            self.assertTrue(handler[field].startswith("python -I "), handler[field])
+            result = subprocess.run(
+                check=False,
+                args=["/bin/sh", "-c", handler[field]], cwd=nested,
+                env=dict(self.environment, PATH=str(binaries)),
+                input=json.dumps({"cwd": str(nested), "source": "startup",
+                                  "hook_event_name": event}),
+                text=True, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stderr, "")
+            self.assertIn("Brain", result.stdout)
+
+    @unittest.skipIf(os.name == "nt", "POSIX controlled executable fixture")
+    def test_selected_hooks_reject_old_python_alias_before_writes(self):
+        binaries = self.root / "old python"
+        binaries.mkdir()
+        python = binaries / "python"
+        python.write_text("#!/bin/sh\nexit 1\n")
+        python.chmod(0o755)
+        self.environment["PATH"] = str(binaries)
+        before = self.fingerprints()
+        result = self.run_install("--provider", "gemini", "--apply", expected=2)
+        self.assertIn("PATH", result.stderr)
+        self.assertIn("3.12", result.stderr)
+        self.assertEqual(self.fingerprints(), before)
+        python.unlink()
+        result = self.run_install("--provider", "gemini", "--apply", expected=2)
+        self.assertIn("PATH", result.stderr)
+        self.assertIn("3.12", result.stderr)
+        self.assertEqual(self.fingerprints(), before)
+
+    def test_pinned_interpreter_upgrade_preserves_settings_and_rejects_changed_code(self):
+        self.run_install("--provider", "copilot", "--apply")
+        path = self.target / ".github/hooks/hooks.json"
+        config = json.loads(path.read_text())
+        handler = config["hooks"]["sessionStart"][0]
+        handler["bash"] = handler["bash"].replace(
+            "python -I", "'/reviewed host/python3.13' -I", 1)
+        path.write_text(json.dumps(config))
+        self.run_install("--provider", "copilot", "--apply", "--index-reviewed")
+        canonical = json.loads(path.read_text())
+        self.assertTrue(canonical["hooks"]["sessionStart"][0]["bash"].startswith("python -I "))
+        for changed in (
+                canonical["hooks"]["sessionStart"][0]["bash"] + "; echo changed",
+                canonical["hooks"]["sessionStart"][0]["bash"].replace(
+                    "python -I", "'$(echo unsafe)/python' -I", 1)):
+            config = json.loads(path.read_text())
+            config["hooks"]["sessionStart"][0]["bash"] = changed
+            path.write_text(json.dumps(config))
+            before = self.fingerprints()
+            self.run_install("--provider", "copilot", "--apply", "--index-reviewed", expected=2)
+            self.assertEqual(self.fingerprints(), before)
+
 
 class PayloadTests(unittest.TestCase):
     def test_relocated_extractor_uses_utf8_for_unicode_output_paths(self):
@@ -347,7 +431,8 @@ class PayloadTests(unittest.TestCase):
                 {"type": "user", "message": {"content": message}}) + "\n", encoding="utf-8")
             output = root / "output-漢字"
             result = subprocess.run(
-                [sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
+                check=False,
+                args=[sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
                  str(output), "--claude-dir", str(conversations), "--min-size", "0"],
                 cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
             )
@@ -408,7 +493,8 @@ class PayloadTests(unittest.TestCase):
 
             output = root / "extract café"
             result = subprocess.run(
-                [sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
+                check=False,
+                args=[sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
                  str(output), "--claude-dir", str(claude_dir), "--codex-dir", str(codex_dir), "--min-size", "0"],
                 cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
             )
@@ -450,7 +536,8 @@ class PayloadTests(unittest.TestCase):
             (vault / "ignored.txt").write_text("Ignored", encoding="utf-8")
             output = root / "snapshot café.md"
             result = subprocess.run(
-                [sys.executable, str(relocated / "assets/skills/meditate/scripts/snapshot.py"),
+                check=False,
+                args=[sys.executable, str(relocated / "assets/skills/meditate/scripts/snapshot.py"),
                  str(vault), str(output)],
                 cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"),
                 capture_output=True, text=True, encoding="utf-8",

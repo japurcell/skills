@@ -3,13 +3,15 @@
   "evals": [
     {
       "id": 3,
-      "prompt": "Describe assignments only; do not edit files, run Git, or dispatch agents. Two ready ExecPlan tasks will use private worktrees with disjoint source ownership. Both will update the canonical file map and known-issues document. Explain what ownership must be resolved before dispatch and how findings and branches are integrated.",
-      "expected_output": "Apply delegate-to-subagents shared-document ownership before dispatch. Preserve explicit task owners, private worktrees, prompt evidence reporting, serialized branch integration, and the final documentation pass.",
+      "prompt": "Describe orchestration only; do not edit files, run Git, dispatch agents, or commit. The current branch is main. The ExecPlan has two independent ready source tasks with disjoint ownership. Explain branch setup, implementer isolation, the required worker instructions, and how completed work reaches the integration branch.",
+      "expected_output": "Create an integration branch from main, assign each task to a background implementer in its own worktree and branch, confirm each is based on integration, activate tdd, merge the integration tip into each worker branch before completion, then use a merger subagent to merge completed work into integration.",
       "files": [],
-      "eval_name": "shared-document-ownership",
+      "eval_name": "private-worktrees-and-merger-handoff",
       "assertions": [
-        "Shared canonical documents have one integration owner or explicit serialization before dispatch.",
-        "Workers retain scoped findings and integration occurs serially, followed by one coordinated documentation pass."
+        "Creates an integration branch when starting on main.",
+        "Each task has its own implementer worktree and branch based on integration.",
+        "Instructs source implementers to activate tdd and merge the integration tip into their branch before reporting done.",
+        "Uses a merger subagent to integrate completed work."
       ]
     },
     {
@@ -26,7 +28,7 @@
     },
     {
       "id": 1,
-      "eval_name": "integrated-tree-after-clean-rebase",
+      "eval_name": "integrated-tree-acceptance",
       "prompt": "Use the supplied execplan-implement skill for a read-only orchestration review. Do not run Git or product commands, edit files, or dispatch agents. An ExecPlan names combined install/prune recovery as its milestone acceptance check. Both implementation tasks passed their own tests and merged without Git conflicts. Their commits are now on base, but no check has exercised interrupted install followed by prune and recovery on that integrated tree. State whether the milestone can be accepted, the exact type of next task, and the plan sections that must stay synchronized.",
       "expected_output": "Milestone remains unaccepted until the named composed recovery check runs against the integrated tree, including interrupted and refusal paths; clean Git integration does not waive it.",
       "files": [],
@@ -51,49 +53,51 @@
     {
       "id": 4,
       "eval_name": "finish-authorized-scope",
-      "prompt": "Give a read-only execution decision; do not edit, commit or dispatch. Every authorized requirement and acceptance check is met. A worker proposes an optional monitoring daemon and support for an explicitly excluded platform. State whether either enters the frontier and what happens next. Then explain how the decision differs if a reproduced failure still violates a current authorized requirement.",
-      "expected_output": "Finish when authorized acceptance is met and defer the daemon and excluded platform. Reopen a bounded repair only for the reproduced in-scope failure; preserve prerequisites and acceptance evidence.",
+      "prompt": "Give a read-only execution decision; do not edit, commit, or dispatch. Every authorized implementation task and acceptance check is met, but final branch review has not run. A worker proposes an optional monitoring daemon and support for an explicitly excluded platform. State whether either enters the frontier and what happens next. Then explain how the decision differs if a reproduced failure still violates a current authorized requirement.",
+      "expected_output": "Keep the daemon and excluded platform outside the authorized scope. Run the required code-review-biaxis review before final completion. A reproduced in-scope failure needs a bounded repair with prerequisites and acceptance evidence.",
       "files": [],
       "assertions": [
-        "Optional improvements stay outside the execution frontier.",
-        "Completed authorized work finishes without invented tasks or another approval question.",
-        "A reproduced in-scope failure still requires a bounded repair before completion."
+        "Optional improvements and explicitly excluded platform work remain outside the authorized scope.",
+        "Calls for code-review-biaxis before declaring final completion.",
+        "A reproduced in-scope failure requires a bounded repair before completion."
       ]
     },
     {
       "id": 5,
-      "eval_name": "cheap-local-task",
-      "prompt": "Give an execution decision only; do not execute tools or delegate. A ready documentation task takes one small edit and a known check. The coordinator already holds all required current context. A worker would need that context copied, routing, startup, and handback review. No independent-review requirement applies. Choose the owner and explain the cost and correctness tradeoff.",
-      "expected_output": "Prefer local execution when its total expected cost is lower, with unchanged ownership, checks, evidence, and reconciliation.",
+      "eval_name": "small-task-uses-implementer",
+      "prompt": "Give an execution decision only; do not execute tools or delegate. An ExecPlan has one ready documentation task with a small edit and a known check. The coordinator already holds the context and delegation costs more than local execution. No user restriction prevents delegation. Choose the executor and branch arrangement under execplan-implement.",
+      "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort before dispatch, give a runtime limit, and use a merger subagent for integration.",
       "files": [],
       "assertions": [
-        "Selects local execution rather than mandatory delegation.",
-        "Includes dispatch/context/review overhead, not merely model price.",
-        "Retains verification and plan reconciliation."
+        "Selects an implementer subagent rather than local execution based on lower overhead.",
+        "Uses a private worktree and branch based on the integration branch.",
+        "Routes model and effort before dispatch and assigns a runtime limit.",
+        "Uses a merger subagent for integration."
       ]
     },
     {
       "id": 6,
       "eval_name": "isolated-large-exploration",
       "prompt": "Give an execution decision only; do not run tools or dispatch. Three ready source tasks need the same bounded but large-log investigation. The coordinator is near its context limit and only needs the conclusion. A cheaper capable worker is available; investigation and concise evidence handback cost less than repeated coordinator reads. Choose execution, shared context handling, and the handback. Preserve current authorization and negative cases.",
-      "expected_output": "Delegate one shared investigation with scoped context and retained evidence; send concise results to the coordinator and dependent workers.",
+      "expected_output": "Use one optional exploration subagent for the shared investigation. Save its Markdown notes beside the plan so implementers can read them; communicate through concise context pointers while preserving the current plan contract.",
       "files": [],
       "assertions": [
-        "Delegates the investigation and avoids three duplicate investigations.",
-        "Uses a small sufficient packet and concise evidence-backed results, not whole histories or logs.",
-        "Preserves acceptance, negative cases and authorization despite context trimming."
+        "Uses one shared exploration rather than three duplicate investigations.",
+        "Saves exploration notes in a directory next to the plan, accessible to later implementers.",
+        "Uses concise context pointers while preserving acceptance, negative cases, and authorization."
       ]
     },
     {
       "id": 7,
-      "eval_name": "worker-reuse-boundaries",
-      "prompt": "Describe ownership choices only. A worker just completed a parser node with compact, current context. A closely related ready parser node can reuse that context more cheaply than a new worker; requirements and verification remain explicit. A different ready payments node has unrelated context. Also describe what changes if parser context is stale or crowded. Do not execute.",
-      "expected_output": "Reuse for the related node when cost and context favor it, refresh routing and ownership, and keep separate acceptance. Prefer a fresh worker for unrelated or stale context.",
+      "eval_name": "review-repair-cycle-limit",
+      "prompt": "Describe orchestration only; do not run tools, dispatch agents, edit files, or commit. All ExecPlan implementation tasks have been integrated. The first code-review-biaxis review reports three issues. Explain how findings become work, who fixes them, and what happens if issues still remain after the third review-and-fix iteration.",
+      "expected_output": "Track all review findings as new tasks in the ExecPlan frontier, fix them with one implementer subagent, integrate the repair, and repeat review and fixes for at most three iterations. Report unresolved issues when the limit is reached.",
       "files": [],
       "assertions": [
-        "Allows cost-justified reuse for a closely related node with separate ownership and acceptance.",
-        "Revalidates routing and current context before reuse.",
-        "Uses fresh context for unrelated or stale/crowded work and retains necessary evidence."
+        "Invokes code-review-biaxis on the integration branch after implementation tasks complete.",
+        "Records all reported issues as new ExecPlan frontier tasks.",
+        "Uses a single implementer subagent for the review fixes.",
+        "Stops the review-and-fix loop after at most three iterations and reports unresolved issues."
       ]
     },
     {
@@ -106,6 +110,17 @@
         "Does not create commits, force a merge, or remove unintegrated worktrees.",
         "Separates task verification from pending branch integration and milestone proof.",
         "Retains changes and evidence and reports the actual state."
+      ]
+    },
+    {
+      "id": 9,
+      "eval_name": "completed-plan-report-and-cleanup",
+      "prompt": "Describe completion actions only; do not execute commands, dispatch agents, edit files, or remove worktrees. Every authorized task and milestone is resolved with acceptance evidence, final code review has no remaining issues, and every implementer worktree is clean with all changes integrated. The integration branch is feature/parser. Explain the final report and cleanup.",
+      "expected_output": "Report the resolved tasks and milestones and the integration branch feature/parser, then clean up all implementer worktrees.",
+      "files": [],
+      "assertions": [
+        "Reports feature/parser as the integration branch and states that tasks and milestones are resolved.",
+        "Includes cleanup of all completed implementer worktrees."
       ]
     }
   ]

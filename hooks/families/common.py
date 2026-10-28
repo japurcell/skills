@@ -13,22 +13,7 @@ def _header() -> str:
     return "# Generated from hooks/families/common.py by scripts/generate-hooks.py. Do not edit.\n"
 
 
-STANDARD_IMPORTS = """from __future__ import annotations
-
-import json
-import os
-import re
-import sys
-import time
-from collections.abc import Callable, Mapping
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, NoReturn, Sequence
-
-if TYPE_CHECKING:
-    import subprocess
-
-
-INPUT_COMPLETION_IDLE_SECONDS = 0.5
+INPUT_PREAMBLE = """INPUT_COMPLETION_IDLE_SECONDS = 0.5
 INPUT_COMPLETION_TOTAL_SECONDS = 2.0
 # Six-byte JSON escapes for 256 KiB of native data, plus 512 KiB of metadata.
 INPUT_MAX_BYTES = 2 * 1024 * 1024
@@ -66,6 +51,23 @@ def _stdin_is_ready(stdin_fd: int, timeout: float = 0) -> bool:
         time.sleep(min(0.01, remaining))
 
 """
+
+STANDARD_IMPORTS = """from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+import time
+from collections.abc import Callable, Mapping
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, NoReturn, Sequence
+
+if TYPE_CHECKING:
+    import subprocess
+
+
+""" + INPUT_PREAMBLE
 
 INPUT_READER = """class InputLimitError(ValueError):
     def __init__(self, rule_id: str, limit: int, measured: int, unit: str):

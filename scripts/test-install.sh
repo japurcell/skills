@@ -90,6 +90,11 @@ for target in targets():
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
+    # Generated skill assets need their owning skill metadata for source validation.
+    parts = target.output_path.parts
+    if parts[:1] == ("skills",):
+        skill_path = Path(*parts[:3]) / "SKILL.md"
+        shutil.copy2(source_root / skill_path, fixture_root / skill_path)
 PY
   PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
 }
@@ -1587,6 +1592,15 @@ test_empty_categories_markers_and_exclusions() {
   done
   rm -rf -- "$repo/skills/default" "$repo/skills/forest-service"
   mkdir -p "$repo/skills/default" "$repo/skills/forest-service"
+  # This fixture models empty skill categories, so it owns no generated skill assets.
+  python3 - "$repo/hooks/manifest.py" <<'PYFIXTURE'
+from pathlib import Path
+import sys
+manifest = Path(sys.argv[1])
+manifest.write_text("".join(line for line in manifest.read_text().splitlines(keepends=True)
+                            if not ('GeneratedTarget(' in line and 'PurePosixPath("skills/' in line)))
+PYFIXTURE
+  python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
   home="$workdir/empty-home"
   HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
   assert_equals '' "$(find "$home/.agents/skills" -mindepth 1 -maxdepth 1 -print)" 'Expected both empty categories valid without leaf copies.'
@@ -1609,13 +1623,22 @@ import shlex
 import sys
 
 script, origin, repo = map(Path, sys.argv[1:])
-expected = {"caveman", "show-me", "lavish"}
+expected = {"caveman", "show-me"}
 found = set()
 for line in script.read_text().replace("\\\n", "").splitlines():
     args = shlex.split(line)
+    if args and args[0] == "run_step":
+        args = args[2:]
     if not args or args[0] != "$SCRIPT_DIR/copy-from-git.sh":
         continue
-    for source, destination in zip(args[2::2], args[3::2]):
+    pairs = args[1:]
+    if pairs[0] == "--repo":
+        pairs = pairs[2:]
+        if pairs[:1] == ["--clone-dir"]:
+            pairs = pairs[2:]
+    else:
+        pairs = pairs[1:]
+    for source, destination in zip(pairs[::2], pairs[1::2]):
         name = Path(source.rstrip("/")).name
         if name not in expected:
             continue
@@ -1629,12 +1652,17 @@ for line in script.read_text().replace("\\\n", "").splitlines():
         stale.write_text(f"Stale {name}.\n")
         print(name, source, destination, sep="\t")
 assert found == expected, found
+# Keep coverage for the optional lavish import without enabling it in orchestration.
+upstream = origin / "skills/lavish/SKILL.md"
+upstream.parent.mkdir(parents=True, exist_ok=True)
+upstream.write_text("---\nname: lavish\n---\nRefreshed lavish.\n")
+print("lavish", "skills/lavish", "skills/default", sep="\t")
 PY
   git -C "$origin" init -q -b main
   git -C "$origin" add .
   git -C "$origin" -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit -qm 'Fixture imported skills'
   while IFS=$'\t' read -r name source_path destination; do
-    bash "$repo/scripts/copy-from-git.sh" "$origin" "$source_path" "$destination" > "$workdir/import-out" 2> "$workdir/import-err"
+    bash "$repo/scripts/copy-from-git.sh" --clone-dir imported-fixture "$origin" "$source_path" "$destination" > "$workdir/import-out" 2> "$workdir/import-err"
   done < "$workdir/mappings"
 
   HOME="$home" bash "$repo/scripts/install.sh" > "$workdir/out" 2> "$workdir/err"

@@ -16,6 +16,8 @@ Read the target's applicable instructions and current worktree state. Preserve m
 
 Use only the requested providers. Repeat `--provider copilot`, `--provider codex`, or `--provider gemini` for any combination. Omit these options for no hooks. If the user has not requested hooks, use no hooks and say so. Selection adds or updates a provider; omission never removes a previously installed provider. User-global settings remain outside this operation.
 
+Selected hooks require the PATH alias `python` to run Python 3.12+ on every platform, including Windows. Inspection validates this alias in the installer environment; verify it also exists in the provider environment. A host with only `python3` or `py` must explicitly provide `python` before using hooks. Registrations remain portable and do not pin a user's absolute interpreter.
+
 Run inspection before applying:
 
 ```text
@@ -34,7 +36,7 @@ Resolve each reported content conflict concretely. Preserve existing todos, prin
 
 For a populated codebase, plans, audits, or archive directory without an index, create a curated `index.md` linking its existing content, then retain it with `--keep-existing`. Empty starter indexes are only for empty directories.
 
-For differing AGENTS sections or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
+For differing AGENTS sections, helper payloads, or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Exact known registrations differing only in their Python executable prefix are automatically upgraded to the canonical PATH command; changed handler code or fields remain conflicts. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
 
 ## 3. Install
 

@@ -43,6 +43,8 @@ Update incoming references before deleting legacy files. Remove an old ingestion
 
 Preserve recoverable exact content before replacement/removal, including uncommitted edits. If verification fails, restore only affected files after checking for newer user changes. Do not commit, stash, reset, or restore the whole tree automatically. Leave unresolved guidance intact and report it.
 
+When updating a prior installation, compare differing helper and skill files with the canonical bundle. Back up their exact current bytes, preserve intentional customizations, and replace only reviewed paths that should converge to canonical. Provider helpers cannot be bypassed with `--keep-existing`; reconcile them rather than suppressing the conflict. Exact brain registrations differing only in the Python executable prefix are upgraded automatically, preserving unrelated handlers. Verify the required PATH `python` alias runs Python 3.12+ in the provider environment, then repeat inspection and apply with the same retention choices and index acknowledgement. Stable files must keep their bytes and timestamps.
+
 ## Completion
 
 Complete migration only when every source obligation has a verified disposition, all new brain files are reachable, incoming links work, retained rules keep their scope, and retired loaders no longer point at deleted files. Reconcile curated indexes, then use the installed brain skill's manual index command if hooks are absent. Report backup locations and any remaining decisions separately from successful mechanical installation.

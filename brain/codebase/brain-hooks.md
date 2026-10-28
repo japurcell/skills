@@ -2,6 +2,8 @@
 
 The two generated scripts require Python 3.12 or newer and only its standard library. Copy either script alone from a provider tree; neither imports repository helpers. The scripts need no Git, Bash, jq, RTK, packages, or network access at runtime.
 
+The `brain-install` bundle's two hook helpers are also generator-owned outputs declared in `hooks/manifest.py`. Edit `hooks/families/brain.py`, then regenerate provider and bundled copies together. `generate-hooks.py --check` covers both; do not maintain bundle-local helper forks. The generator CLI suite verifies bundled drift detection, read-only checks, repair, and byte parity with provider outputs.
+
 `auto-index-brain.py --provider copilot|codex|gemini` maintains `brain/index.md`. `inject-brain.py` takes the same selector and reconciles the index before returning startup context. Both read the provider's JSON object on stdin. Use the provider matching the registration; do not infer it from payload field names.
 
 ## Inventory and context

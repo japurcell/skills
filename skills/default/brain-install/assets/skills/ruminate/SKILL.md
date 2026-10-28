@@ -51,6 +51,8 @@ subprocess.run([
 
 Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
 
+Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
+
 ### 4. Spawn analysis team
 
 Analyze each batch with available general analysis subagents, following the model-routing skill when available and respecting harness concurrency limits. Use bounded local passes if delegation is unavailable.

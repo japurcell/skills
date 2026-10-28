@@ -4,13 +4,12 @@
 import argparse
 import json
 import os
-from pathlib import Path
 import re
 import shlex
 import subprocess
 import sys
 import tempfile
-
+from pathlib import Path
 
 ASSETS = Path(__file__).resolve().parents[1] / "assets"
 PROVIDERS = {
@@ -137,25 +136,50 @@ def load_config(path):
     return value
 
 
-def pin_interpreter(template, provider):
-    """Keep root discovery and provider fields, pinning the active host interpreter."""
-    python = str(Path(sys.executable).resolve())
-    if os.name == "nt" and any(character in python for character in ('"', '%', '!', '\r', '\n')):
-        raise Conflict("Python path contains unsupported Windows shell characters")
-    for groups in template["hooks"].values():
-        for entry in groups:
-            for handler in ([entry] if provider == "copilot" else entry["hooks"]):
-                field = ("powershell" if provider == "copilot" else
-                         "commandWindows" if provider == "codex" else "command") if os.name == "nt" else (
-                             "bash" if provider == "copilot" else "command")
-                command = handler[field]
-                suffix = command[command.index(" -I "):]
-                if os.name == "nt":
-                    prefix = ("& '" + python.replace("'", "''") + "'" if provider == "copilot"
-                              else '"' + python + '"')
-                else:
-                    prefix = shlex.quote(python)
-                handler[field] = prefix + suffix
+def portable_registration(entry):
+    """Normalize only known interpreter prefixes, retaining every other field."""
+    result = json.loads(json.dumps(entry))
+    handlers = [result] if "bash" in result else result.get("hooks", [])
+    for handler in handlers:
+        for field in ("command", "commandWindows", "bash", "powershell"):
+            command = handler.get(field)
+            if not isinstance(command, str) or " -I -S -B -c " not in command:
+                continue
+            prefix, suffix = command.split(" -I -S -B -c ", 1)
+            try:
+                words = shlex.split(prefix.removeprefix("& "), posix=True)
+            except ValueError:
+                continue
+            if len(words) == 2 and words == ["py", "-3"]:
+                words = ["py"]
+            if len(words) != 1:
+                continue
+            path = words[0].replace("\\", "/")
+            if (any(character in path for character in "$`;&|<>%!\r\n")
+                    or ("/" in path and not (path.startswith("/")
+                                            or re.match(r"^[A-Za-z]:/", path)))):
+                continue
+            executable = path.rsplit("/", 1)[-1]
+            if not re.fullmatch(r"(?:python(?:3(?:\.\d+)?)?|py)(?:\.exe)?", executable):
+                continue
+            handler[field] = 'python -I -S -B -c ' + suffix
+    return result
+
+
+def validate_hook_python():
+    try:
+        result = subprocess.run(
+            check=False,
+            args=["python", "-I", "-S", "-B", "-c",
+             "import sys; sys.exit(sys.version_info < (3,12))"],
+            capture_output=True, timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise Conflict("hooks require the PATH alias python to run Python 3.12+ "
+                       "in the provider environment") from error
+    if result.returncode:
+        raise Conflict("hooks require the PATH alias python to run Python 3.12+ "
+                       "in the provider environment")
 
 
 def merge_provider(existing, template, provider):
@@ -187,11 +211,10 @@ def merge_provider(existing, template, provider):
                 for field in ("command", "commandWindows", "bash", "powershell", "exec"):
                     if field in handler and not isinstance(handler[field], str):
                         raise Conflict(f"{provider}: hook {field} must be a string")
-    original = load_config(ASSETS / "hooks" / f"{provider}.json")
-    expected_entries = [(event, entry, original["hooks"][event][index])
+    expected_entries = [(event, entry)
                         for event, entries in template["hooks"].items()
-                        for index, entry in enumerate(entries)]
-    for event, wanted, portable in expected_entries:
+                        for entry in entries]
+    for event, wanted in expected_entries:
         # Recognize only the two brain registrations. Ambiguous mixed handlers
         # require review rather than broad ownership inference or replacement.
         name = "inject-brain" if "inject-brain" in json.dumps(wanted) else "auto-index-brain"
@@ -199,8 +222,11 @@ def merge_provider(existing, template, provider):
                    if not (provider == "gemini" and old_event == "disabled")
                    for entry in entries if name in json.dumps(entry)]
         if matches:
-            if len(matches) != 1 or matches[0][0] != event or matches[0][1] not in (wanted, portable):
+            if (len(matches) != 1 or matches[0][0] != event
+                    or portable_registration(matches[0][1]) != portable_registration(wanted)):
                 raise Conflict(f"{provider}: conflicting or ambiguous {name} registration; reconcile before retrying")
+            entries = hooks[event]
+            entries[entries.index(matches[0][1])] = wanted
         else:
             hooks.setdefault(event, []).append(wanted)
     return existing
@@ -228,6 +254,8 @@ def main():
         if not target.is_dir():
             raise Conflict("target must be an existing directory")
         files = payload()
+        if arguments.provider:
+            validate_hook_python()
         kept = set()
         for relative in arguments.keep_existing:
             path = Path(relative)
@@ -249,7 +277,6 @@ def main():
             before = config.read_bytes() if config.exists() else None
             existing = load_config(config) if before is not None else {}
             template = load_config(ASSETS / "hooks" / f"{provider}.json")
-            pin_interpreter(template, provider)
             merged = merge_provider(existing, template, provider)
             if before is not None and merged == load_config(config):
                 files[config_name] = before
@@ -293,7 +320,8 @@ def main():
             atomic_write(safe_path(target, relative), content)
             completed.append(relative)
         result = subprocess.run(
-            [sys.executable, "-I", "-S", "-B",
+            check=False,
+            args=[sys.executable, "-I", "-S", "-B",
              str(target / ".agents/skills/brain/scripts/auto-index-brain.py"), "--provider", "codex"],
             input=json.dumps({"cwd": str(target), "hook_event_name": "PostToolUse"}),
             text=True, capture_output=True, timeout=15,
