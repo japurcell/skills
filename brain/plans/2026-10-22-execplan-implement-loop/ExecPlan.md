@@ -8,7 +8,9 @@ Publish `execplan-implement-loop`, an explicitly invoked skill accepting an Exec
 
 The default total execution budget is 3,600 seconds and the Gemini iteration limit is 1,200 seconds; both are configurable. A timeout preserves partial work and starts another iteration while the total budget allows. Success requires all tasks and milestone/final acceptance checks to pass, with commit evidence. Blockers, exhausted failure limits, cancellation, and deadlines are explicit non-success outcomes.
 
-Current authorization: the user invoked `execplan-implement` on this plan on 2026-10-22. Implement T1 through T6 and commit verified implementation changes on the existing topic branch. The user will perform live Gemini qualification on another machine; no live Gemini calls are authorized or required on this host.
+Current authorization (2026-10-28): the user authorizes all recommendations from returned live evidence as T7-T12, then implementation through `execplan-implement` on the existing topic branch. T1-T6 and Milestones 1-5 remain completed historical acceptance, including the 2026-10-27 live adapter proof. New behavior remains live-unqualified. No paid Gemini calls, including readiness probes, are authorized for this extension. Use fake providers and real disposable Git for local proof.
+
+The extension makes setup failures diagnosable before a paid attempt, records reviewed policy inputs, preserves actionable blocked outcomes across resume, and supplies shell-free disposable qualification operations. Scheduling, deadlines, failure counters, verification, ownership, commit transactions, and crash recovery retain their existing invariants.
 
 ## Progress
 
@@ -23,6 +25,16 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - [x] (2026-10-22) [milestone-5] T6: Finish local aggregate verification, instruction evaluations, deferred final review, and reproduced fixture repairs.
 - [x] (2026-10-27) [milestone-5] T6: Complete live Gemini qualification with pinned CLI 0.65.0, verify acceptance evidence, and qualify live provider.
 
+- [x] (2026-10-28) [design] Reconcile live evidence and freeze T7-T12 contracts without runtime edits.
+- [ ] [milestone-6] T7: Deliver deterministic doctor diagnostics and CLI proof.
+- [ ] [milestone-6] T8: Bind execution/resume to reviewed policy provenance and fresh readiness.
+- [ ] [milestone-6] Verify doctor, execution, resume, and historical-journal compatibility together.
+- [ ] [milestone-7] T9: Preserve blocked iterations and add actionable blockers and optional observations.
+- [ ] [milestone-7] Verify reporting and resumed history together without changing failure accounting.
+- [ ] [milestone-8] T10: Deliver shell-free disposable qualification helper.
+- [ ] [milestone-8] T11: Reconcile skill, policy, confinement, and host-session guidance.
+- [ ] [milestone-8] T12: Integrate, verify, review, and reflect; keep new live qualification pending.
+
 ## Surprises & Discoveries
 
 - Gemini's `--output-format json` wraps model text rather than enforcing our result schema. `stream-json` supplies live provider events; local parsing and validation remain necessary. Prior research identified `--prompt`, `--output-format stream-json`, optional `--model`, and `--approval-mode`; T2 must pin a tested CLI version and verify its actual event shapes.
@@ -30,6 +42,11 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - Existing `execplan-implement` is an instruction workflow; `prd-ralph-loop` uses subagents and a different task contract. Neither provides this deterministic Gemini process loop. Do not change their behavior or the shared exec-plans skill.
 - Provider session logs already hold detailed Gemini transcripts. Consume provider events in memory, retain session identifiers, and persist only runner-owned state, bounded diagnostics, and verification logs. Missing provider logs must not prevent an accurate report.
 - Headless Gemini CLI (pinned 0.65.0) resolves unconfigured modifying tools (decision "ask_user") to "deny" in non-interactive execution and prunes them from the model's declared tool list. The live qualification loop initially reported "worker_blocked" ("permission_denied") on T1. Adding an explicit rule in ~/.gemini/policies/qualification.toml allowing write_file, replace, run_shell_command, and activate_skill restored modifying tools in headless mode. Resumed execution verified TDD red-green cycle, passed all acceptance checks, and completed with exit 0.
+
+- The original reports expose a status defect: the worker result and invocation are blocked, but the iteration is failed. `Engine.implement` overwrites status in its `except Stop` path. Reproduce through the CLI before fixing in T9; preserve original evidence.
+- Dependency metadata and active docs still say live qualification pending. Separate historical adapter qualification from current invocation readiness and pending qualification of this extension.
+- Pinned 0.65.0 supports explicit `--policy` paths, but implicit workspace `.gemini/policies` discovery is disabled. Readable allow files do not prove effective permissions, authentication, or trust. See [policy source note](follow-up-design.md).
+- The historical editing-tool workaround does not establish authorization for alternate I/O. Current guidance must restrict approved alternatives to already-authorized paths and stop at actual boundaries.
 
 ## Decision Log
 
@@ -44,13 +61,18 @@ Current authorization: the user invoked `execplan-implement` on this plan on 202
 - 2026-10-22, user: Run final live qualification personally on another machine with Gemini CLI. Supply easy copy-and-run instructions and keep live acceptance pending returned evidence.
 - 2026-10-22, design detail: Keep runner code inside the published skill bundle so copied installations work without this checkout. Keep the maintained test entrypoint in root `scripts/`. This portability requirement is the reason for the bundle-local helper rather than a repository-only runtime script.
 - 2026-10-22, design detail: Use a fenced JSON control block within Markdown to avoid ambiguous natural-language parsing. Immutable task requirements and command declarations are distinct from runner-owned mutable completion fields.
-- 2026-10-27, qualification: Configure an explicit TOML policy in ~/.gemini/policies/ to allow modifying tools and shell execution during non-interactive Gemini headless qualification, enabling worker TDD and greeting implementation without interactive confirmation.
+- 2026-10-27, historical qualification: the operator used a global user TOML allow policy for the recorded fixture. This is evidence of what happened, not a current recommendation or authorization for global grants.
+- 2026-10-28, follow-up: reuse a deterministic collector across doctor, new execution, and resume. No known local blocker permits an attempt but never proves permission or authorizes paid use. Do not emulate Gemini's policy engine.
+- 2026-10-28, follow-up: keep schema version 1 for plan, worker result, journal, and summary; report/journal additions are optional when reading historical records. Preserve historical statuses while correcting new iteration semantics.
+- 2026-10-28, follow-up: use an explicit reviewed single policy file, no automatic global writes or admin-policy overrides. Use a Python foreground qualification helper, no daemon. T7/T8 precede reporting; T10 may proceed beside T7 against the frozen D1-D5 design and a fake runner boundary. T11 follows T9, and T12 proves actual composition. Defer review until implementation tasks finish.
 
 ## Outcomes & Retrospective
 
-Source implementation, local validation, and final code review are complete. Both installer suites pass after the reproduced fixture repairs. The frozen aggregate initially passed 52/57 suites; focused reruns reconciled all five failures. This is combined validation evidence, not a claim of a clean uninterrupted 57-suite run. Copied-bundle CLI fixtures, real Git commits, process cleanup, and recovery pass deterministic checks. Final review found and repaired reverse-ordered graph recursion and missing branch identity guards. Bounded regular-file input and partial-usage totals also passed focused review. No high-priority findings remain.
+Historical T1-T6 outcome: source implementation, local validation, and final code review were complete. Both installer suites pass after the reproduced fixture repairs. The frozen aggregate initially passed 52/57 suites; focused reruns reconciled all five failures. This is combined validation evidence, not a claim of a clean uninterrupted 57-suite run. Copied-bundle CLI fixtures, real Git commits, process cleanup, and recovery pass deterministic checks. Final review found and repaired reverse-ordered graph recursion and missing branch identity guards. Bounded regular-file input and partial-usage totals also passed focused review. No high-priority findings remain.
 
 Live Gemini provider qualification was executed and completed on 2026-10-27 against pinned Gemini CLI 0.65.0 in a disposable repository following the bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md). The initial run correctly reported a blocked outcome (reason_code: worker_blocked, detail: permission_denied) due to headless tool confirmation policy. After configuring ~/.gemini/policies/qualification.toml, the resumed run succeeded with exit code 0 (reason_code: all_acceptance_met), completing all three tasks and Milestone M1. Three runner-owned commits were created after baseline HEAD d1fb5dc, matching the report. Clean working tree and passing greeting acceptance were confirmed. Provider transcript inspection confirmed activation of exec-plans and tdd, failing tests before implementation, passing tests afterward, and zero worker git mutations. All evidence is recorded in [evidence/](evidence/). Milestone 5 acceptance is met.
+
+Follow-up status (2026-10-28): T7-T12 are open and unverified. Next owner: T7 readiness implementer, using TDD and copied installed CLI tests. This plan-only extension claims no new runtime behavior or live proof. Local acceptance of Milestones 6-8 will not imply new live-provider qualification.
 
 ## Context and Orientation
 
@@ -119,6 +141,32 @@ Maintain same-class consecutive counters for `protocol`, `transient_infrastructu
 
 The versioned summary contains run/invocation IDs, status and reason, plan/worktree identity, timestamps and elapsed/remaining budgets, current task and phase, task/milestone counts, completed task IDs and commit SHAs, pending tasks, iteration records, retries by class, timeout counts, command outcomes, available token observations with completeness flags, and evidence/session references. Keep invocation totals and historical cumulative totals distinct. Progress emits task start, verification start/pass/fail, commit success/failure, retry, timeout, blocked, interrupted, and final status. Do not echo secrets, full prompts, or arbitrary provider output to progress. Missing provider session logs only limit transcript retrieval.
 
+### Follow-up contracts (T7-T12)
+
+The additions below preserve all existing scheduling, command acceptance, deadlines, ownership, commit/recovery invariants, plan/result fields, and exit meanings. `--validate-only` remains static and unchanged.
+
+**D1 - Doctor.** Add `--doctor`, exclusive with `--validate-only`, retaining required `PLAN`. Allow `--gemini`, `--policy`, `--model`, `--approval-mode`, and read-only `--resume` inspection; reject doctor with `--run-dir` or `--acknowledge-unclean-stop` as usage errors. Read files with the existing 1 MiB bound and local Git identity/status; invoke only bounded local Git queries and `gemini --version`. Never issue a prompt, activate skills, execute acceptance commands, create locks/run directories, install dependencies, edit configuration, or mutate Git/files. Respect total deadline/cancellation. Collect independently inspectable failures rather than stopping at the first missing dependency.
+
+Emit one JSON object: `schema_version: 1`, `status: diagnosed`, `reason_code: doctor_complete`, `readiness`, and `blockers`. Exit 0 means diagnosis finished with no known local blocker, including honest unknowns; known blockers use exit 3/reason `doctor_blocked`. Invalid contracts/configuration use exit 2; existing signal/deadline codes remain. `readiness.status` is `blocked | unknown`, never ready; `can_attempt` means only no known local blocker, not permission or paid-use authorization. Report host/Python/Git/provider versions, plan/workspace identity and clean-or-resume state, required skill paths/hashes, requested approval/model, selected/discovered policy provenance, and headless/workspace caveats. Authentication, trust, and effective permission remain unknown without explicit provider evidence from an authorized attempt. Do not bill a capability probe or infer success from readable files.
+
+**D2 - Reviewed policy.** Add optional single-file `--policy PATH` to doctor, normal execution, and resume. Caller supplies a reviewed UTF-8 `.toml` regular file of at most 1 MiB. Resolve absolute physical path; reject symlink components, directories, comma-containing paths (provider flag comma splitting), unreadable/oversized/malformed TOML using `tomllib`. Record exact-byte SHA-256. Pass the same absolute file via `--policy PATH` to each provider attempt. No option preserves inherited policy compatibility. Never create/write global policy, add admin-policy, auto-enable yolo, or install broad historical grants. Explicit policy supplements other provider policies; it is not a complete effective-policy proof. Implicit workspace policy is disabled in 0.65.0; an explicitly passed file there is recorded as explicit, not discovered workspace configuration.
+
+Record discovered user/workspace settings/policy paths and digests, with observed/unreadable/absent state and discovery limitations, without file bodies, credentials, environment dumps, log scraping, or policy precedence/regex emulation. Missing executable/version/required skills and invalid supplied policy prevent an attempt. Unknown permission/auth/trust does not itself become a blocker; inherited starts retain behavior and warn about headless uncertainty. No broad policy scan can claim complete effective grants.
+
+**D3 - Provenance/resume.** Add `readiness` to summaries and each journal invocation: `checked_at`, `status`, `can_attempt`, `checks` (each `id`, `status: pass | blocked | unknown`, `reason_code`, bounded `detail`), `provenance` (provider executable/version, plan/workspace identity, skill paths/hashes, selected policy `{path, sha256}` or null, requested model/approval), and bounded-string `limitations`. Retain historical snapshots. Recheck every fresh invocation/resume before a new provider iteration, and rehash selected policy immediately before each spawn. Changed/missing input blocks until an explicit reviewed update, not silent execution. This provenance is not a sandbox.
+
+Resume without `--policy` reuses the last explicit path and expects its recorded hash; if changed it blocks. Explicit `--policy` on resume authorizes the selected new path/bytes as reviewed input and records old/new path/hash in that invocation. It never waives repository identity/fingerprints or reruns implementation for a pending commit. Historical v1 journals without additions load with null/unknown defaults and preserve old records. Reconcile prepared commits under existing rules before provider gating; completed and commit-only recovery need no provider prerequisites. A later repair requiring Gemini must recheck readiness. Doctor may describe missing provider prerequisites without rewriting historical completion.
+
+**D4 - Blockers/observations.** Add `blockers: []` to normal/doctor summaries, including pre-engine failures. Each has `reason_code`, `source: preflight | provider | worker | verification | recovery`, `task_id` or null, `detail` (at most 4,096 characters), `remediation` (at most 32 strings of 4,096 characters each), and `resume: {required: bool, run_directory: string | null}`. Map trusted reason codes deterministically. Give safe actionable next steps and resume command form when state exists; never fresh-start over partial work, blind acknowledgements, lock deletion, global grants, or boundary bypass. Unknown errors get generic session-inspection guidance, not guessed permission/authentication diagnoses. Provider text is data, never executable remediation. Retain top-level reason/detail and exit meanings.
+
+A validated blocked worker leaves the new iteration `status: blocked`, invocation blocked, zero commit and unchanged retry/failure counters. Failed, timeout, malformed outcomes keep their existing semantics; historical failed records remain untouched. Keep existing usage totals/completeness and `iterations[].model` unchanged. Add optional `provider_observations`: `cached_input_tokens` from `stats.cached`, `uncached_input_tokens` from `stats.input`, `models` keyed by explicit `stats.models` model names with the five supported token fields, `request_count: null` (not exposed by stream mode), and `resolved_model: null` unless the provider explicitly reports one. Missing/wrong-type/nonfinite/negative fields are null; emitted zero remains zero. Preserve configured init model separately from requested override and observed model keys. `auto`/multiple observed keys cannot become one resolved model. No transcript scraping, derived API request counts, raw-event retention, dollar/billed-cost claims, or output-mode change. Exact fields/provenance: [pinned observations note](provider-observations.md). Optional observations do not change existing `usage_complete` semantics.
+
+**D5 - Qualification helper/host.** Add portable bundle `scripts/qualify.py` with `setup --root ABSOLUTE_NEW_DIRECTORY`, `run --root ROOT [--resume RUN_DIRECTORY] --authorize-paid-run [--policy PATH] [--gemini PATH] [--model MODEL]`, and `collect --root ROOT`. Use Python standard-library filesystem operations and subprocess argv, no shell. Setup creates only a new caller-authorized root containing `project/`, evidence files, and owner-only manifest; copies fixture to `project/ExecPlan.md`, initializes/configures only disposable-repository Git identity/signing, and commits baseline. No Gemini, trust setup, skill install, policies, or overwrite of existing root. Emit physical root and literal next argv as JSON. Manifest records helper schema version/root/project/baseline/bundle and fixture digests/owned artifact paths; reject foreign roots and symlink escapes. Partial setup retains files for inspection; choose a new authorized root rather than clobber uncertain state.
+
+Run requires paid-run flag and caller's actual user authorization, invokes doctor first, then the foreground runner with reports/progress saved outside project and numbered to preserve prior attempts. Defaults are 600/300 seconds. In this extension test only fake provider runs. Prevent concurrent runs, do not overwrite evidence, preserve runner exit/status, require explicit same-run resume once state exists, and forward cancellation with bounded cleanup. Collect only local Git/saved reports to refresh baseline/version/log/status, report missing evidence honestly, and never scrape transcripts. No daemon, detached worker, cleanup/delete/reset, policy escalation, or nested agent. Setup/collect never prompt. Main guide uses direct Python commands with literal paths and no shell substitution/backticks/pipelines/redirection.
+
+Alternative I/O is permitted only when already approved for the same authorized writable paths. Tool-specific inability does not grant authority beyond actual sandbox, user, policy, filesystem, or path restrictions; those remain actionable blockers. Host guidance launches foreground helper via a long-session-capable tool, retains/waits on the same session, reads evidence files, and never starts a replacement while old children survive. Existing runner cleanup/recovery rules continue to apply; no new background supervisor.
+
 ## Plan of Work
 
 ### Milestone 1: Validate the contract without model usage
@@ -177,7 +225,65 @@ Prerequisites: T5. Register the maintained suite in `scripts/test-all.py`; updat
 
 Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk proxy python3 scripts/test_test_all.py`, and `rtk proxy python3 scripts/test-all.py --list`. Expect exit 0 and the new suite listed exactly once. Compile the new Python sources with `rtk proxy python3 -m py_compile` using their final explicit paths. Run the full aggregate suite when its documented dependencies are available and report any unmet prerequisite rather than skipping failures. Live-provider evidence remains explicitly pending until run; final milestone acceptance requires it or a user-recorded waiver of that acceptance scope.
 
+### Milestone 6: Diagnose prerequisites and bind reviewed inputs
+Status: open
+Acceptance: not met
+
+A copied installed CLI diagnoses local prerequisites without paid requests and records actual reviewed inputs for new/resumed attempts. Permission/authentication/trust stay honestly unknown. Historical qualification cannot substitute for current readiness.
+
+#### Task T7: Deliver deterministic doctor
+
+Prerequisites: historical T6. Owner: readiness implementer, new `skills/default/execplan-implement-loop/scripts/readiness.py`, doctor dispatch/arguments in bundle `scripts/run.py`, and readiness tests/group in `scripts/test-execplan-implement-loop.py`. Inputs: D1-D3, existing `Engine.dependencies`, `Supervisor`, `Plan`, and policy source note. Activate `tdd`; reproduce absent prerequisite and workspace-only-policy diagnostics through copied CLI before implementing a side-effect-free shared collector. Freeze shared collector/output interface here. Stop before normal engine integration.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` (add group). Expect exit 0 for valid/invalid plan, wrong/missing provider, absent/unreadable skills/policy, malformed TOML, unknown auth/trust/permission, workspace-disabled caveat, literal spaces/leading dashes, comma/symlink rejection, deadline/cancellation, and recognized resume inspection. Assert exact stdout/exit, provider ledger with only `--version`, zero acceptance commands/prompts, unchanged project/home/journal files, no locks/new directories, and no permission-success claim from readable configuration.
+
+#### Task T8: Integrate policy provenance and fresh resume checks
+
+Prerequisites: T7. Owner: execution-readiness implementer, bundle `scripts/engine.py`, normal/resume parsing in `scripts/run.py`, narrow collector refinements, and readiness/git/loop tests in maintained runner suite. Inputs: D2-D3 and unchanged commit recovery. Reuse collector, pass explicit policy argv, save per-invocation provenance, recheck bytes before spawn, and load historical journals with defaults. Preserve previous snapshots, repository fingerprints, and transaction recovery. Do not add a full policy evaluator or readiness prompts.
+
+Verification: run readiness, git, and loop groups with `rtk proxy python3 scripts/test-execplan-implement-loop.py --group GROUP`. Cover absent/present policy, change before spawn, omitted-versus-explicit updated policy on resume, symlink swap, blocked-then-fixed prerequisite, old v1 journal without new fields, verification-only plans, completed resume, and commit-only recovery despite missing provider. Assert zero paid prompts on blockers, exact provider argv/provenance agreement, retained cumulative records, and unchanged call/commit/transaction counts. Milestone integration: run the entire maintained runner suite on integrated T7/T8 source before accepting Milestone 6; record actual evidence. Stop before reporting enrichment.
+
+### Milestone 7: Preserve actionable blocked state and honest observations
+Status: open
+Acceptance: not met
+
+New blocked iterations remain visibly blocked through journal/report/resume, with safe next actions and fresh provenance. Optional usage observations add source-backed detail without changing token accounting or implying cost.
+
+#### Task T9: Repair blocked history and extend reports
+
+Prerequisites: T8. Owner: reporting implementer, bundle `scripts/engine.py`, `scripts/processes.py`, pre-engine error seam in `scripts/run.py` if needed, and runner readiness/process/loop tests. Inputs: D3-D4, immutable original reports, and provider-observations note. Activate `tdd`; first reproduce live mismatch via fake provider returning typed blocked/permission_denied, observing exit 3 but incorrect failed iteration. Fix new statuses without rewriting historical records or changing failure counters. Add deterministic structured remediation and optional observations. Do not extend strict worker-result schema or inspect provider session files.
+
+Verification: run readiness, process, git, and loop groups. Assert blocked status persists through atomic journal/report and later resume, no commit/repair retry on permissions, exact remediation/run-directory fields, pre-engine blockers, generic unknown errors, old journal defaults, explicit zero versus missing/malformed optional numbers, configured `auto` versus observed model keys, and no derived request/resolved-model or cost claims. Existing complete/partial totals and usage completeness remain identical. Milestone integration: full runner suite plus copied-installation blocked-first/resume-success fixture with exact call/commit counts. Stop after the implementation agrees with the shared CLI/report contract used by T10 and needed by T11.
+
+### Milestone 8: Publish reproducible operations and finish local proof
+Status: open
+Acceptance: not met
+
+Operators can prepare/run/collect disposable qualification through explicit Python commands and reviewed inputs. New live qualification stays pending. T10 may run beside T7 after the D1-D5 design contract is committed, using a fake runner boundary. T11 follows T9; T12 proves actual composition. Each task owns distinct files; serialize contract changes.
+
+#### Task T10: Deliver foreground shell-free qualification helper
+
+Prerequisites: historical T6 and this committed D1-D5 design contract; independent of unfinished T7-T9. Owner: helper implementer, new bundle `scripts/qualify.py` and new `scripts/test-execplan-qualification.py`; do not edit T11 docs or maintained runner suite concurrently. Inputs: D5, frozen D1-D4 interfaces, bundled `evals/fixtures/live-qualification.md`, and existing cleanup conventions. Activate `tdd`. Implement setup/run/collect with direct subprocess argv and standard-library I/O, isolated disposable Git config, manifests, preserved attempts, and one foreground child. Use a fake runner executable at the public subprocess boundary to test the declared doctor/run/report contract while T7-T9 are unfinished; T12 owns real runner composition. No policy writes, daemon, or live provider.
+
+Verification: `rtk proxy python3 scripts/test-execplan-qualification.py`. Copied-bundle CLI tests use real Git and fake runner/provider boundaries for setup/doctor/run/collect, blocked-first explicit resume, correct baseline/three-commit evidence, literal metacharacters/spaces, missing paid flag, existing/foreign roots, malformed/partial manifests, symlink escape, concurrent runs, repeated collection, retained reports, missing evidence, cancellation/descendant cleanup, and no writes outside fixture roots including home. Assert zero prompt calls for setup/collect/rejected run and no shell/policy/global configuration mutations. Stop after focused tests pass.
+
+#### Task T11: Reconcile instructions and qualification claims
+
+Prerequisites: T9; T10 helper CLI is already fixed by D5, so documentation need not wait for helper implementation. Owner: docs implementer, bundle `SKILL.md`, `README.md`, `references/protocol.md`, `references/live-qualification.md`, `references/worker-prompt.md` only if needed, and evaluation scenario descriptions. Activate `create-skill` and `writing-for-agents` before instructions edits. Inputs: D1-D5, original evidence, historical Milestones 1-5, and linked source notes. Explain doctor-first operation, literal helper commands, explicit reviewed policy, unknowns/headless/workspace caveats, actionable resume, long-session waiting, and authorized-path-only alternatives. Distinguish qualified historical adapter, current readiness, and pending new live proof; remove stale blanket pending claims in active docs. Do not alter original evidence, exact message-reference bytes, or scheduler scope.
+
+Verification: run packaging/readiness groups; inspect all bundled Markdown links and execute documented setup/doctor/collect commands from copied installation with fake provider and explicit temporary root. Verify docs match CLI/JSON/exits, no shell substitution/redirection on main path, no blanket global grants or boundary bypass, and explicit pending external qualification with no paid execution. Stop after instructions and narrow checks agree.
+
+#### Task T12: Integrate, verify, and review
+
+Prerequisites: T10 and T11. Owner: integration implementer, helper suite registration in `scripts/test-all.py`, README validation registry if needed, this plan's progress/evidence, and bounded review repairs in owning modules. Inputs: all follow-up contracts and unchanged scheduler/transaction invariants. Register helper exactly once; finish deterministic integration after source settles, then perform deferred review of permission/provenance, unknowns, status/recovery, helper ownership, and portability. Fix reproduced findings without weakening tests. Run reflect at session end.
+
+Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk proxy python3 scripts/test-execplan-qualification.py`, `rtk proxy python3 scripts/test_test_all.py`, and `rtk proxy python3 scripts/test-all.py --list`; compile final explicit Python paths. Run full aggregate with documented available prerequisites against frozen source and preserve/report failures. Confirm suite registry once each, exact reference parity, copied-bundle links, unchanged historical evidence digests, and installed end-to-end fixture spanning doctor unknowns, explicit policy, blocked iteration, reviewed policy-updated resume, final acceptance/real runner commits, and helper evidence collection. Record actual commands/results and final review before accepting Milestone 8. New live-provider behavior remains unqualified; any future paid rerun needs separate explicit authorization.
+
 ## Concrete Steps
+
+Next authorized action: T7's owner reproduces prerequisite gaps via copied CLI, adds readiness cases, and implements doctor. Execute T7 -> T8 -> T9 -> T11, with T10 eligible in parallel from the committed D1-D5 design; T12 joins T9/T10/T11 for actual integration/review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+
+Completed historical steps:
 
 Live Gemini qualification completed on 2026-10-27 on Linux with Gemini CLI 0.65.0 in disposable repository `/tmp/tmp.XFbhG0fkrg/project` following `skills/default/execplan-implement-loop/references/live-qualification.md`. All acceptance checks passed with exit 0 and three runner completion commits. Evidence is preserved under [evidence/](evidence/). Milestone 5 acceptance is met.
 
@@ -185,17 +291,23 @@ Local implementation, all five maintained runner groups, instruction evaluations
 
 ## Validation and Acceptance
 
+Follow-up proof is prospective: no T7-T12 runtime checks have run. Milestones 6-8 require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun is pending authorization, separate from local milestone acceptance.
+
 Success means a copied installed skill can run an authorized canonical plan to verified, committed completion, or stop with an accurate typed non-success outcome and recoverable state. It must not incur model calls for parsing, scheduling, progress, acceptance commands, commits, retries, or summaries. Prove the core behavior at the process boundary with a fake Gemini and real Git, then separately qualify the provider adapter with a live smoke test.
 
 Tests must cover malformed input, failure and recovery, command mutation, changing HEAD, hooks, concurrency, partial stream output, provider version incompatibility, timeout clipping, no leaked descendants, and correct handling of final acceptance. No tests may be disabled or weakened to get a pass. No regression tests are required for feature deletions; this work adds a feature. Record actual results in this section as milestones complete.
 
 ## Idempotence and Recovery
 
+Doctor/collect are repeatable read-only operations; setup never overwrites an existing root. Keep partial setup/failed attempts and resume reported state. Approved alternative I/O applies only within already-authorized paths; actual user, sandbox, policy, OS, or filesystem restrictions remain blockers. Stale readiness never grants permission. Explicit policy inputs are read-only and rechecked before attempts; changed inputs require caller-reviewed resume selection.
+
 Repeat validation and fixture tests freely. Never run operational fixtures against the author's real home, Git configuration, or active repository changes. New runs do not adopt dirty worktrees; explicit resume verifies saved ownership and commit transaction evidence. Atomic journal writes and prepared commit identities make a crash recoverable without duplicate commits. Unrecognized external changes require human reconciliation. Keep all failed checks and unresolved blockers visible.
 
 The lock is advisory and prompt instructions are not a security sandbox. Gemini and declared commands run with the user's selected permissions. This feature does not claim to contain malicious repository code or prevent arbitrary external edits. A timeout must not overlap surviving workers. Report cleanup, filesystem, and persistence errors explicitly; do not fabricate final success when reporting fails.
 
 ## Artifacts and Notes
+
+Follow-up sources: [policy/readiness interpretation](follow-up-design.md) and [provider observation fields](provider-observations.md). New runtime proof is pending. Plan-only validation on 2026-10-28 passed `rtk git diff --check` and a Python document-integrity check for local links, punctuation, unique T7-T12 headings, open new milestone states, and exact unchanged Milestones 1-5/evidence. No runtime tests or paid calls were run for this documentation-only extension. Records below establish historical T1-T6 behavior only and must remain unchanged as evidence.
 
 Primary research references: [Gemini CLI flags](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md), [headless automation](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/tutorials/automation.md), [policy engine](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/policy-engine.md), [noninteractive implementation](https://github.com/google-gemini/gemini-cli/blob/main/packages/cli/src/nonInteractiveCli.ts), and [Ralph prior art](https://github.com/ghuntley/how-to-ralph-wiggum). Research informed fresh contexts, durable plan state, tests as gates, and loop bounds; it did not establish live-provider acceptance.
 
