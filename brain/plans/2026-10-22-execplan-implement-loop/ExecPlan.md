@@ -28,6 +28,8 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 - [x] (2026-10-28) [design] Reconcile live evidence and freeze T7-T12 contracts without runtime edits.
 - [x] (2026-10-28) [milestone-6] T7: Deliver deterministic doctor diagnostics and CLI proof; integrated readiness group passed 9/9 in 7.717 seconds.
 - [ ] [milestone-6] T8: Bind execution/resume to reviewed policy provenance and fresh readiness.
+- [x] (2026-10-28) [milestone-6] T8 partial: Core policy, resume, and provider-free recovery cases passed; the 17-case readiness suite passed once (reported by the T8 owner).
+- [ ] [milestone-6] T8: Resolve the intermittent active-child doctor deadline cleanup failure; copied CLI sometimes returns `io_error`/EPERM with exit 2 instead of timeout exit 124. Traceback points to `Supervisor.__exit__` -> `kill_group(active.pid, SIGKILL)` -> `os.killpg`. Eight serial diagnostic reruns passed, but the cause is unproven and the issue is not resolved.
 - [ ] [milestone-6] Verify doctor, execution, resume, and historical-journal compatibility together.
 - [ ] [milestone-7] T9: Preserve blocked iterations and add actionable blockers and optional observations.
 - [ ] [milestone-7] Verify reporting and resumed history together without changing failure accounting.
@@ -47,6 +49,7 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 - Dependency metadata and active docs still say live qualification pending. Separate historical adapter qualification from current invocation readiness and pending qualification of this extension.
 - Pinned 0.65.0 supports explicit `--policy` paths, but implicit workspace `.gemini/policies` discovery is disabled. Readable allow files do not prove effective permissions, authentication, or trust. See [policy source note](follow-up-design.md).
 - The historical editing-tool workaround does not establish authorization for alternate I/O. Current guidance must restrict approved alternatives to already-authorized paths and stop at actual boundaries.
+- Observation: T8's active-child doctor deadline path remains intermittently unresolved. Evidence: copied CLI sometimes returns `io_error`/EPERM (exit 2) where timeout exit 124 is expected; a temporary traceback reaches `Supervisor.__exit__` -> `kill_group(active.pid, SIGKILL)` -> `os.killpg`. Eight serial diagnostic reruns passed, but do not establish a cause or fix. T8 owner is tracing cleanup state; no tests or assertions were weakened.
 
 ## Decision Log
 
@@ -281,7 +284,7 @@ Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk 
 
 ## Concrete Steps
 
-Next authorized action: T8 integrates the shared readiness collector into new execution and resume, with fresh policy provenance and historical-journal compatibility. T7 and T10 are implemented and their focused integrated tests passed; T9 follows T8, T11 follows T9, and T12 performs combined verification and review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+Next authorized action: T8 owner continues tracing the intermittent active-child doctor deadline cleanup error and completes focused/full verification for policy provenance, resume, and provider-free commit recovery. The eight passing serial reruns do not resolve the reported `io_error`/EPERM versus timeout-exit discrepancy. After T8 is complete, proceed to T9, then T11; T12 proves actual composition of the helper with the runner and performs combined verification and review. T10's standalone fake-runner proof is complete; actual runner composition remains pending T12. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
 
 Integrated 2026-10-28: T7 branch `f67432e0fcef419fd9a874336bb947716c14f1bd` was fast-forwarded; T10 branch `21460b08073f9150c20e95db73c5238f96c22d44` was merged. `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` passed 9/9 in 7.717 seconds. Then `rtk proxy python3 scripts/test-execplan-qualification.py` passed 10/10 in 8.632 seconds. The worker branches also passed their reported compile and diff checks. These focused task checks do not satisfy Milestone 6 or 8 integration acceptance; those remain unmet.
 
@@ -293,7 +296,7 @@ Local implementation, all five maintained runner groups, instruction evaluations
 
 ## Validation and Acceptance
 
-T7 and T10 focused runtime checks passed on the integrated tree: readiness 9/9 and helper 10/10, run serially with process inspection. T8-T9 and T11-T12 runtime checks and the Milestone 6/8 integration checks remain pending. Milestones require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun remains separately pending authorization.
+T7 readiness (9/9) and T10 helper (10/10) focused runtime checks passed on the integrated tree, serially with process inspection. The T8 owner reports core policy/resume/provider-free recovery cases green and one passing 17-case readiness run. An intermittent doctor active-child deadline cleanup error remains unresolved, so T8 and Milestone 6 acceptance remain open. T9, T11-T12, and the Milestone 6/8 integration checks remain pending. Milestones require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun remains separately pending authorization.
 
 Success means a copied installed skill can run an authorized canonical plan to verified, committed completion, or stop with an accurate typed non-success outcome and recoverable state. It must not incur model calls for parsing, scheduling, progress, acceptance commands, commits, retries, or summaries. Prove the core behavior at the process boundary with a fake Gemini and real Git, then separately qualify the provider adapter with a live smoke test.
 
