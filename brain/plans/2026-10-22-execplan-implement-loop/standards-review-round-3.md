@@ -1,0 +1,11 @@
+Reviewed pinned cumulative diff `e231bcc35b44d42c12f86b8893f514468dfc5f31...fb15c72f7cd33f26d240c671e7d79edbb84d1070`, the commit list, and repair delta `bec5060e01fca4ff464e41caf905ba4a3b3ad507..fb15c72f7cd33f26d240c671e7d79edbb84d1070`. Both refs, pinned HEAD, and clean worktree verified. Standards axis only; no Spec report consulted.
+
+One documented-standard breach:
+
+- **[P3] Reconcile remaining stale execution status in the active plan.** `brain/plans/2026-10-22-execplan-implement-loop/ExecPlan.md:308` says the maintained runner is "now running serially" and directs the coordinator to preserve/report its result after synchronization. Line 318 says the aggregate "remains in progress elsewhere". The same pinned plan already records the runner's completed 72/72 result at line 70 and the aggregate's completed 56/58 plus corrected dependency reruns at lines 71 and 312. Applicable rule: `.agents/skills/exec-plans/SKILL.md`, "Reconcile the plan as work changes": "Replace outdated statements wherever they appear in active sections. A correction only in a new note is insufficient." Remove those present-tense pending claims or label them historical, retaining the completed evidence and the distinction between combined verification and an uninterrupted current-source aggregate pass. This is a documentation consistency breach, not a runtime defect or heuristic smell.
+
+**T20 closure: confirmed.** `provider-observations.md:35` now explicitly dates the five-field description to the pre-extension baseline, describes T9's cached/uncached and per-model observations, and retains uncertainty about request count, resolved model, zero, and billed cost. An independently executed static note/parser AST cross-check passed, including the optional field set and null request count. No runtime suite was needed for this documentation closure.
+
+All twelve supplied smell heuristics were considered; no additional actionable heuristic finding established. No source/plan edits, broad/heavy suites, nested agents, paid provider calls, or global configuration changes. Existing runner/helper and aggregate results are coordinator-supplied evidence, not independently rerun here.
+
+Counts: **1 documented-standard breach (P3); 0 heuristic findings; worst P3 within Standards.**

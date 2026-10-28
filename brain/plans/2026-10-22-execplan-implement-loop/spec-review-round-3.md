@@ -1,0 +1,13 @@
+# Spec review, round 3
+
+Reviewed exact pin `fb15c72f7cd33f26d240c671e7d79edbb84d1070` against base `e231bcc35b44d42c12f86b8893f514468dfc5f31` using the nonempty cumulative three-dot diff and commit range, plus repair delta `bec5060e..fb15c72f`. Read ExecPlan D1-D5/T7-T21 and linked design/provider notes. No Standards reports consulted; no source/plan edits or paid calls.
+
+**[P3] Reject explicitly supplied invalid policy on provider-free execution.** Source: `skills/default/execplan-implement-loop/scripts/engine.py:263-273`, `648-689`. Spec `brain/plans/2026-10-22-execplan-implement-loop/ExecPlan.md:174` requires normal execution/resume to “reject symlink components, directories, comma-containing paths ... unreadable/oversized/malformed TOML”; :116 defines exit 2 as “invalid input/configuration.” Preflight catches `validate_policy_file` failure and only records blocked readiness. A verification-only graph never calls `require_readiness`, so it executes acceptance commands, creates completion commits, and reports success despite explicitly invalid configuration.
+
+Public-CLI proof: instantiate the maintained `Fixture`, change its three tasks to `kind='verification'`, write `markdown(data)`, call `execution_fixture()`, create an external `invalid.toml` containing `not valid = [`, then `execute('--policy', str(invalid))`. The copied installed CLI returns **0 / completed / all_acceptance_met**, three commits, `blockers: []`, yet `readiness.status: blocked`, `can_attempt: false`, and check `invalid_policy`. No provider prompt occurred. Captured output: `/private/tmp/execplan-spec-round3-invalid-policy.json`. Propagate explicit-policy validation failure after existing transaction reconciliation. Preserve D3:180's provider-free completed/prepared-commit recovery with omitted policy and unavailable provider prerequisites; do not gate those paths on fresh provider readiness or historical policy revalidation.
+
+Prior closure: round 2's sole Spec P2 is closed by `qualify.py:690-706`. Independently passed six public-CLI cases in **26.350s**, covering killed doctor initial/resume, typed `cleanup_unconfirmed`, missing/partial/incomplete terminal reports, real invalid/cancellation terminal outcomes, and ordinary blockers. Log: `/private/tmp/execplan-spec-round3-focused.log`. Initial sandbox inspection was unavailable; process-enabled rerun passed. Round 1's five previously closed Spec findings remain closed on inspection.
+
+No scope creep or other actionable missing/incorrect requirement found. Aggregate and new live qualification limits remain explicit, without a current uninterrupted 58-suite claim.
+
+Count: **1 new Spec finding**, worst **P3**; **1 round-2 finding closed**.
