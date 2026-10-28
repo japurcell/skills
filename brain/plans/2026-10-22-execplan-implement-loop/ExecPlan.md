@@ -26,12 +26,12 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 - [x] (2026-10-27) [milestone-5] T6: Complete live Gemini qualification with pinned CLI 0.65.0, verify acceptance evidence, and qualify live provider.
 
 - [x] (2026-10-28) [design] Reconcile live evidence and freeze T7-T12 contracts without runtime edits.
-- [ ] [milestone-6] T7: Deliver deterministic doctor diagnostics and CLI proof.
+- [x] (2026-10-28) [milestone-6] T7: Deliver deterministic doctor diagnostics and CLI proof; integrated readiness group passed 9/9 in 7.717 seconds.
 - [ ] [milestone-6] T8: Bind execution/resume to reviewed policy provenance and fresh readiness.
 - [ ] [milestone-6] Verify doctor, execution, resume, and historical-journal compatibility together.
 - [ ] [milestone-7] T9: Preserve blocked iterations and add actionable blockers and optional observations.
 - [ ] [milestone-7] Verify reporting and resumed history together without changing failure accounting.
-- [ ] [milestone-8] T10: Deliver shell-free disposable qualification helper.
+- [x] (2026-10-28) [milestone-8] T10: Deliver shell-free disposable qualification helper; integrated helper suite passed 10/10 in 8.632 seconds.
 - [ ] [milestone-8] T11: Reconcile skill, policy, confinement, and host-session guidance.
 - [ ] [milestone-8] T12: Integrate, verify, review, and reflect; keep new live qualification pending.
 
@@ -281,9 +281,9 @@ Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk 
 
 ## Concrete Steps
 
-Next authorized action: T7 and T10 owners continue their bounded implementations in independent worktrees. T7 reproduces prerequisite gaps via copied CLI, adds readiness cases, and implements doctor; T10 builds the shell-free helper against a fake runner boundary. Execute T7 -> T8 -> T9 -> T11, with T10 eligible in parallel from the committed D1-D5 design; T12 joins T9/T10/T11 for actual integration/review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+Next authorized action: T8 integrates the shared readiness collector into new execution and resume, with fresh policy provenance and historical-journal compatibility. T7 and T10 are implemented and their focused integrated tests passed; T9 follows T8, T11 follows T9, and T12 performs combined verification and review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
 
-Started 2026-10-28: T7 and T10 implementation are underway in independent worktrees. No acceptance evidence has been recorded yet; both milestones remain in progress and acceptance not met.
+Integrated 2026-10-28: T7 branch `f67432e0fcef419fd9a874336bb947716c14f1bd` was fast-forwarded; T10 branch `21460b08073f9150c20e95db73c5238f96c22d44` was merged. `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` passed 9/9 in 7.717 seconds. Then `rtk proxy python3 scripts/test-execplan-qualification.py` passed 10/10 in 8.632 seconds. The worker branches also passed their reported compile and diff checks. These focused task checks do not satisfy Milestone 6 or 8 integration acceptance; those remain unmet.
 
 Completed historical steps:
 
@@ -293,7 +293,7 @@ Local implementation, all five maintained runner groups, instruction evaluations
 
 ## Validation and Acceptance
 
-Follow-up proof is prospective: no T7-T12 runtime checks have run. Milestones 6-8 require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun is pending authorization, separate from local milestone acceptance.
+T7 and T10 focused runtime checks passed on the integrated tree: readiness 9/9 and helper 10/10, run serially with process inspection. T8-T9 and T11-T12 runtime checks and the Milestone 6/8 integration checks remain pending. Milestones require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun remains separately pending authorization.
 
 Success means a copied installed skill can run an authorized canonical plan to verified, committed completion, or stop with an accurate typed non-success outcome and recoverable state. It must not incur model calls for parsing, scheduling, progress, acceptance commands, commits, retries, or summaries. Prove the core behavior at the process boundary with a fake Gemini and real Git, then separately qualify the provider adapter with a live smoke test.
 
@@ -309,7 +309,9 @@ The lock is advisory and prompt instructions are not a security sandbox. Gemini 
 
 ## Artifacts and Notes
 
-Follow-up sources: [policy/readiness interpretation](follow-up-design.md) and [provider observation fields](provider-observations.md). New runtime proof is pending. Plan-only validation on 2026-10-28 passed `rtk git diff --check` and a Python document-integrity check for local links, punctuation, unique T7-T12 headings, open new milestone states, and exact unchanged Milestones 1-5/evidence. No runtime tests or paid calls were run for this documentation-only extension. Records below establish historical T1-T6 behavior only and must remain unchanged as evidence.
+Follow-up sources: [policy/readiness interpretation](follow-up-design.md) and [provider observation fields](provider-observations.md). T7/T10 integration evidence is recorded above; T8-T12 and combined milestone proof remain pending. No paid calls were made. Earlier plan-only validation on 2026-10-28 passed `rtk git diff --check` and a Python document-integrity check for local links, punctuation, unique T7-T12 headings, open new milestone states, and exact unchanged Milestones 1-5/evidence. Records below establish historical T1-T6 behavior only and must remain unchanged as evidence.
+
+Reflection (2026-10-28): no new durable note was needed; serialized process-sensitive fixture guidance is already captured in [script testing](../../codebase/script-testing.md).
 
 Primary research references: [Gemini CLI flags](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/cli-reference.md), [headless automation](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/tutorials/automation.md), [policy engine](https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/policy-engine.md), [noninteractive implementation](https://github.com/google-gemini/gemini-cli/blob/main/packages/cli/src/nonInteractiveCli.ts), and [Ralph prior art](https://github.com/ghuntley/how-to-ralph-wiggum). Research informed fresh contexts, durable plan state, tests as gates, and loop bounds; it did not establish live-provider acceptance.
 
