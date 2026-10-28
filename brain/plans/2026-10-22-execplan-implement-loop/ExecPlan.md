@@ -226,7 +226,7 @@ Prerequisites: T5. Register the maintained suite in `scripts/test-all.py`; updat
 Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk proxy python3 scripts/test_test_all.py`, and `rtk proxy python3 scripts/test-all.py --list`. Expect exit 0 and the new suite listed exactly once. Compile the new Python sources with `rtk proxy python3 -m py_compile` using their final explicit paths. Run the full aggregate suite when its documented dependencies are available and report any unmet prerequisite rather than skipping failures. Live-provider evidence remains explicitly pending until run; final milestone acceptance requires it or a user-recorded waiver of that acceptance scope.
 
 ### Milestone 6: Diagnose prerequisites and bind reviewed inputs
-Status: open
+Status: in progress
 Acceptance: not met
 
 A copied installed CLI diagnoses local prerequisites without paid requests and records actual reviewed inputs for new/resumed attempts. Permission/authentication/trust stay honestly unknown. Historical qualification cannot substitute for current readiness.
@@ -256,7 +256,7 @@ Prerequisites: T8. Owner: reporting implementer, bundle `scripts/engine.py`, `sc
 Verification: run readiness, process, git, and loop groups. Assert blocked status persists through atomic journal/report and later resume, no commit/repair retry on permissions, exact remediation/run-directory fields, pre-engine blockers, generic unknown errors, old journal defaults, explicit zero versus missing/malformed optional numbers, configured `auto` versus observed model keys, and no derived request/resolved-model or cost claims. Existing complete/partial totals and usage completeness remain identical. Milestone integration: full runner suite plus copied-installation blocked-first/resume-success fixture with exact call/commit counts. Stop after the implementation agrees with the shared CLI/report contract used by T10 and needed by T11.
 
 ### Milestone 8: Publish reproducible operations and finish local proof
-Status: open
+Status: in progress
 Acceptance: not met
 
 Operators can prepare/run/collect disposable qualification through explicit Python commands and reviewed inputs. New live qualification stays pending. T10 may run beside T7 after the D1-D5 design contract is committed, using a fake runner boundary. T11 follows T9; T12 proves actual composition. Each task owns distinct files; serialize contract changes.
@@ -281,7 +281,9 @@ Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk 
 
 ## Concrete Steps
 
-Next authorized action: T7's owner reproduces prerequisite gaps via copied CLI, adds readiness cases, and implements doctor. Execute T7 -> T8 -> T9 -> T11, with T10 eligible in parallel from the committed D1-D5 design; T12 joins T9/T10/T11 for actual integration/review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+Next authorized action: T7 and T10 owners continue their bounded implementations in independent worktrees. T7 reproduces prerequisite gaps via copied CLI, adds readiness cases, and implements doctor; T10 builds the shell-free helper against a fake runner boundary. Execute T7 -> T8 -> T9 -> T11, with T10 eligible in parallel from the committed D1-D5 design; T12 joins T9/T10/T11 for actual integration/review. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+
+Started 2026-10-28: T7 and T10 implementation are underway in independent worktrees. No acceptance evidence has been recorded yet; both milestones remain in progress and acceptance not met.
 
 Completed historical steps:
 
