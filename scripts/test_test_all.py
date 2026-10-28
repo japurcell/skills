@@ -105,6 +105,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-codex-agents.py")
         expected.add("scripts/test-generate-hooks.py")
         expected.add("scripts/test-execplan-implement-loop.py")
+        expected.add("scripts/test-execplan-qualification.py")
         expected.add("scripts/test-brain-hooks.py")
         expected.add("scripts/test-install-codex-hooks.py")
         expected.add("scripts/test-probe-provider-hook-delivery.py")
@@ -144,6 +145,7 @@ class TestTestAll(unittest.TestCase):
         }
         self.assertEqual(listed, expected)
         self.assertEqual(len(commands), len(expected))
+        self.assertEqual(commands.count(["python3", "scripts/test-execplan-qualification.py"]), 1)
         self.assertIn(["python3", "scripts/test-codex-agents.py"], commands)
         for suite in ("test-scan-secrets-cli.py", "test-scan-secrets-git-gates.py", "test-scan-secrets-lfs.py", "test-scan-secrets-status.py", "test-scan-secrets-lifecycle.py", "test-install-scan-secrets.py", "test-install-repo-gates.py"):
             self.assertIn(["python3", "scripts/" + suite], commands)

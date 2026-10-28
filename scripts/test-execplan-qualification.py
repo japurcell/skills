@@ -110,6 +110,91 @@ raise SystemExit(3)
 '''
         (self.bundle / 'scripts/run.py').write_text(fake, encoding='utf-8')
 
+    def install_composed_gemini(self, mode='blocked-first'):
+        self.gemini = self.base / 'fake Gemini'
+        self.gemini_calls = self.base / 'fake Gemini calls.jsonl'
+        self.gemini_count = self.base / 'fake Gemini prompt count'
+        self.gemini_child_pid = self.base / 'fake Gemini child pid'
+        self.env.update(
+            QUALIFY_FAKE_GEMINI_CALLS=str(self.gemini_calls),
+            QUALIFY_FAKE_GEMINI_COUNT=str(self.gemini_count),
+            QUALIFY_FAKE_GEMINI_CHILD_PID=str(self.gemini_child_pid),
+            QUALIFY_FAKE_GEMINI_MODE=mode,
+        )
+        for skill in ('exec-plans', 'tdd'):
+            path = self.home / '.agents/skills' / skill / 'SKILL.md'
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('---\nname: ' + skill + '\n---\nFixture skill.\n')
+        fake = '#!' + sys.executable + '\n' + r'''
+import json, os, pathlib, subprocess, sys, time
+
+args = sys.argv[1:]
+calls = pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_CALLS'])
+
+def record(value):
+    with calls.open('a', encoding='utf-8') as output:
+        output.write(json.dumps(value) + '\n')
+
+if '--version' in args:
+    record({'kind': 'version', 'argv': args})
+    print('0.65.0')
+    raise SystemExit(0)
+
+prompt = args[args.index('--prompt') + 1]
+packet = json.loads(prompt.split('\nRUNNER_PACKET=', 1)[1])
+policy = args[args.index('--policy') + 1] if '--policy' in args else None
+counter = pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_COUNT'])
+count = int(counter.read_text()) + 1 if counter.exists() else 1
+counter.write_text(str(count), encoding='utf-8')
+record({'kind': 'prompt', 'argv': args, 'task_id': packet['task_id'], 'policy': policy})
+print(json.dumps({'type': 'init', 'session_id': 'qualification-' + str(count),
+                  'model': 'qualification-fixture'}), flush=True)
+
+mode = os.environ['QUALIFY_FAKE_GEMINI_MODE']
+if mode == 'descendant':
+    child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
+    pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_CHILD_PID']).write_text(
+        str(child.pid), encoding='utf-8')
+    time.sleep(60)
+
+if mode == 'blocked-first' and count == 1:
+    result = {'schema_version': 1, 'iteration_id': packet['iteration_id'],
+              'task_id': packet['task_id'], 'status': 'blocked',
+              'summary': 'The worker is blocked pending review.', 'changed_files': [],
+              'commit_message': None, 'plan_notes': [], 'reason_code': 'permission_denied'}
+else:
+    pathlib.Path('greeting.py').write_text(
+        'def greet(name):\n    return f"Hello, {name}!"\n', encoding='utf-8')
+    pathlib.Path('test_greeting.py').write_text(
+        'import unittest\nfrom greeting import greet\n\n'
+        'class GreetingTests(unittest.TestCase):\n'
+        '    def test_named_person(self):\n'
+        '        self.assertEqual(greet("Ada"), "Hello, Ada!")\n\n'
+        '    def test_empty_name(self):\n'
+        '        self.assertEqual(greet(""), "Hello, !")\n', encoding='utf-8')
+    result = {'schema_version': 1, 'iteration_id': packet['iteration_id'],
+              'task_id': packet['task_id'], 'status': 'ready_for_verification',
+              'summary': 'Create and verify the greeting module.',
+              'changed_files': ['greeting.py', 'test_greeting.py'],
+              'commit_message': ('feat: create greeting module\n\nSummary:\n'
+                                 '- Create greeting behavior\n\nRationale:\n'
+                                 '- Complete the qualification plan\n\nTests:\n'
+                                 '- Run greeting acceptance'),
+              'plan_notes': [], 'reason_code': 'ready'}
+
+print(json.dumps({'type': 'message', 'role': 'assistant',
+                  'content': json.dumps(result), 'delta': True}), flush=True)
+print(json.dumps({'type': 'result', 'status': 'success',
+                  'stats': {'total_tokens': 12}}), flush=True)
+'''
+        self.gemini.write_text(fake, encoding='utf-8')
+        self.gemini.chmod(0o700)
+
+    def gemini_calls_read(self):
+        if not self.gemini_calls.exists():
+            return []
+        return [json.loads(line) for line in self.gemini_calls.read_text().splitlines()]
+
     def setup_root(self):
         result = self.run_helper('setup', '--root', str(self.root))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -284,6 +369,154 @@ raise SystemExit(3)
         self.assertEqual(json.loads(third.stdout)['missing_evidence'], [
             {'attempt': 2, 'artifact': 'runner_progress',
              'path': 'evidence/attempts/attempt-0002/runner-progress.jsonl'}])
+
+    def test_real_helper_runner_composition_preserves_reviewed_resume_and_evidence(self):
+        self.install_composed_gemini()
+        setup = self.setup_root()
+        policy = self.base / 'reviewed policy.toml'
+        updated_policy = self.base / 'reviewed policy update.toml'
+        policy.write_text("[[rule]]\ntoolName = 'write_file'\ndecision = 'allow'\n",
+                          encoding='utf-8')
+        updated_policy.write_text("# explicitly reviewed update\n[[rule]]\n"
+                                  "toolName = 'write_file'\ndecision = 'allow'\n",
+                                  encoding='utf-8')
+        policy_bytes = policy.read_bytes()
+        updated_policy_bytes = updated_policy.read_bytes()
+
+        def selected(path):
+            return {'path': str(path.resolve()),
+                    'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+
+        blocked = self.run_helper(
+            'run', '--root', str(self.root), '--authorize-paid-run',
+            '--policy', str(policy), '--gemini', str(self.gemini), timeout=30)
+
+        self.assertEqual(blocked.returncode, 3, blocked.stdout + blocked.stderr)
+        blocked_report = json.loads(blocked.stdout)
+        self.assertEqual(blocked_report['status'], 'blocked')
+        self.assertEqual(blocked_report.get('reason_code'), 'worker_blocked',
+                         blocked.stdout + blocked.stderr)
+        run_directory = blocked_report['run_directory']
+        first_attempt = self.root / 'evidence/attempts/attempt-0001'
+        first_doctor = json.loads((first_attempt / 'doctor.json').read_text())
+        self.assertEqual(first_doctor['readiness']['status'], 'unknown')
+        self.assertTrue(first_doctor['readiness']['can_attempt'])
+        self.assertEqual(first_doctor['readiness']['provenance']['selected_policy'], selected(policy))
+        checks = {check['id']: check for check in first_doctor['readiness']['checks']}
+        for name in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(checks[name]['status'], 'unknown')
+        blocked_runner = json.loads((first_attempt / 'runner-summary.json').read_text())
+        self.assertEqual(blocked_runner['status'], 'blocked')
+        self.assertEqual([item['status'] for item in blocked_runner['iterations']], ['blocked'])
+        self.assertEqual(blocked_runner['iterations'][0]['result']['status'], 'blocked')
+        self.assertEqual(blocked_runner['commits'], [])
+        self.assertTrue(all(value == 0 for value in blocked_runner['failure_counts'].values()))
+        self.assertEqual(blocked_runner['readiness']['provenance']['selected_policy'], selected(policy))
+
+        refused = self.run_helper(
+            'run', '--root', str(self.root), '--authorize-paid-run',
+            '--policy', str(updated_policy), '--gemini', str(self.gemini))
+        self.assertEqual(refused.returncode, 3, refused.stdout + refused.stderr)
+        self.assertEqual(json.loads(refused.stdout)['reason_code'], 'explicit_resume_required')
+        self.assertFalse((self.root / 'evidence/attempts/attempt-0002').exists())
+        self.assertEqual(len([call for call in self.gemini_calls_read() if call['kind'] == 'prompt']), 1)
+
+        resumed = self.run_helper(
+            'run', '--root', str(self.root), '--resume', run_directory,
+            '--authorize-paid-run', '--policy', str(updated_policy),
+            '--gemini', str(self.gemini), timeout=30)
+
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        resumed_report = json.loads(resumed.stdout)
+        self.assertEqual(resumed_report['status'], 'completed')
+        self.assertEqual(resumed_report['runner_status'], 'completed')
+        self.assertEqual(resumed_report['run_directory'], run_directory)
+        second_attempt = self.root / 'evidence/attempts/attempt-0002'
+        second_doctor = json.loads((second_attempt / 'doctor.json').read_text())
+        self.assertEqual(second_doctor['readiness']['status'], 'unknown')
+        self.assertEqual(second_doctor['readiness']['provenance']['selected_policy'],
+                         selected(updated_policy))
+        resumed_runner = json.loads((second_attempt / 'runner-summary.json').read_text())
+        self.assertEqual(resumed_runner['status'], 'completed')
+        self.assertEqual(resumed_runner['task_counts'], {'total': 3, 'done': 3})
+        self.assertEqual([item['status'] for item in resumed_runner['iterations']],
+                         ['blocked', 'ready_for_verification'])
+        self.assertEqual(resumed_runner['iterations'][0]['status'], 'blocked')
+        self.assertEqual(len(resumed_runner['commits']), 3)
+        self.assertEqual(resumed_runner['readiness']['provenance']['selected_policy'], selected(updated_policy))
+        self.assertEqual(resumed_runner['invocations'][0]['readiness']['provenance']['selected_policy'],
+                         selected(policy))
+        self.assertEqual(resumed_runner['invocations'][1]['readiness']['provenance']['selected_policy'],
+                         selected(updated_policy))
+        self.assertEqual(resumed_runner['invocations'][-1]['policy_selection'], {
+            'explicit': True, 'previous': selected(policy), 'selected': selected(updated_policy)})
+        plan_text = (self.root / 'project/ExecPlan.md').read_text()
+        self.assertIn('Status: done\nAcceptance: met', plan_text)
+        for task in ('T1', 'T2', 'T3'):
+            self.assertIn(f'- [x] [M1] {task}:', plan_text)
+
+        prompt_calls = [call for call in self.gemini_calls_read() if call['kind'] == 'prompt']
+        self.assertEqual([call['task_id'] for call in prompt_calls], ['T1', 'T1'])
+        self.assertEqual([call['policy'] for call in prompt_calls],
+                         [str(policy.resolve()), str(updated_policy.resolve())])
+        for call, path in zip(prompt_calls, (policy, updated_policy)):
+            self.assertEqual(call['argv'][call['argv'].index('--policy') + 1], str(path.resolve()))
+        self.assertEqual(policy.read_bytes(), policy_bytes)
+        self.assertEqual(updated_policy.read_bytes(), updated_policy_bytes)
+        journal = json.loads((Path(run_directory) / 'state.json').read_text())
+        self.assertEqual(journal['invocations'][0]['readiness']['provenance']['selected_policy'],
+                         selected(policy))
+        self.assertEqual(journal['invocations'][1]['readiness']['provenance']['selected_policy'],
+                         selected(updated_policy))
+
+        collected = self.run_helper('collect', '--root', str(self.root))
+
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+        collection = json.loads(collected.stdout)
+        self.assertEqual(collection['status'], 'collection_complete')
+        self.assertEqual(collection['baseline_commit'], setup['baseline_commit'])
+        self.assertEqual(collection['missing_evidence'], [])
+        self.assertTrue(collection['git']['clean'])
+        self.assertEqual(collection['git']['commit_count'], 4)
+        self.assertEqual(collection['git']['commits_since_baseline'], 3)
+        self.assertEqual([report['runner']['status'] for report in collection['reports']],
+                         ['blocked', 'completed'])
+        self.assertEqual(collection['reports'][0]['doctor']['readiness']['status'], 'unknown')
+        self.assertEqual(len(collection['git']['commit_log']), 4)
+        self.assertFalse((self.home / '.gemini').exists())
+
+    def test_nested_real_runner_cancellation_cleans_provider_descendant(self):
+        self.install_composed_gemini(mode='descendant')
+        self.setup_root()
+        policy = self.base / 'reviewed cancellation policy.toml'
+        policy.write_text("[[rule]]\ntoolName = 'write_file'\ndecision = 'allow'\n",
+                          encoding='utf-8')
+        argv = [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run', '--root',
+                str(self.root), '--authorize-paid-run', '--policy', str(policy),
+                '--gemini', str(self.gemini)]
+        helper = subprocess.Popen(argv, cwd=self.base, env=self.env, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True)
+        self.addCleanup(self.terminate_helper, helper)
+        deadline = time.monotonic() + 12
+        while (time.monotonic() < deadline and helper.poll() is None
+               and not self.gemini_child_pid.exists()):
+            time.sleep(0.05)
+        self.assertTrue(self.gemini_child_pid.exists(), 'real runner did not start fake Gemini descendant')
+        child_pid = int(self.gemini_child_pid.read_text())
+
+        helper.send_signal(signal.SIGINT)
+        stdout, stderr = helper.communicate(timeout=18)
+
+        self.assertEqual(helper.returncode, 130, stdout + stderr)
+        self.assertEqual(json.loads(stdout)['status'], 'interrupted')
+        summary_path = self.root / 'evidence/attempts/attempt-0001/runner-summary.json'
+        self.assertTrue(summary_path.is_file())
+        self.assertEqual(json.loads(summary_path.read_text())['status'], 'interrupted')
+        inspected = subprocess.run(['/bin/ps', '-p', str(child_pid), '-o', 'stat='],
+                                   capture_output=True, text=True, check=False)
+        self.assertIn(inspected.returncode, (0, 1), inspected.stderr)
+        self.assertTrue(not inspected.stdout.strip() or inspected.stdout.strip().startswith('Z'),
+                        inspected.stdout)
 
     def test_existing_and_foreign_roots_are_rejected_without_overwrite(self):
         self.root.mkdir()
