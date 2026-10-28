@@ -21,7 +21,7 @@ Avoid duplicate reads and context gathering; consider one exploration subagent w
 
 ## 2. Dispatch
 
-Activate the `subagent-model-router` skill for each materially different subtask to determine the most cost-efficient and capable model and reasoning effort for that subtask.
+Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask.
 
 Prohibit nested delegation unless intentionally authorized.
 

@@ -57,6 +57,20 @@
         "The caller controls storage and presentation without a dependency on a named consumer skill.",
         "Exact dispatch values remain mandatory."
       ]
+    },
+    {
+      "id": 7,
+      "eval_name": "reference-reuse-and-route-reassessment",
+      "prompt": "Describe routing procedure only; do not browse, read files, dispatch, or edit. Router instructions and all needed references are already available and unchanged in one agent context. First route a bounded read-only exploration task, then an authentication security review with materially different risk. Later the review's selected model becomes unavailable, and only a below-floor model is accepted under the user's explicit model-family constraint. Explain which content to reload, when a route can be reused, the decision metadata to retain, and whether the final review is dispatchable. Also explain what to do if reference content changes or leaves context.",
+      "expected_output": "Reuse the available instructions and references without rereading them, but evaluate distinct routes for the changed tasks. Reassess risk, explicit constraints, and availability before every dispatch. Security review has a Premium floor. When no permitted configuration meets that floor, return dispatchable: false rather than reuse the unavailable route, lower the floor, or violate the family constraint. Record exact model, effort, capability floor, and assumptions. Reload reference content when changed or no longer available in context.",
+      "files": [],
+      "assertions": [
+        "Reuses unchanged instructions and references already available in context while reevaluating materially different tasks.",
+        "Reassesses risk, explicit user constraints, and runtime availability before each dispatch and preserves the Premium security review floor.",
+        "Rejects dispatch when no permitted runtime configuration meets the floor instead of reusing an unavailable route or weakening constraints.",
+        "Records exact model, effort, capability floor, and assumptions in the structured decision.",
+        "Reloads content only when changed or unavailable in context."
+      ]
     }
   ]
 }

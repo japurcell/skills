@@ -11,6 +11,8 @@
 
 ## Investigations
 
+16. [x] Reduce repeated skill loading and coordination overhead. Separate loading skill instructions, evaluating routing, and dispatching agents; reuse reference content within an agent context while reassessing task risk before each dispatch. Record the chosen model, effort, capability floor, and assumptions; reuse the route only while task facts and runtime availability remain materially unchanged, preserving security review floors and explicit user constraints. Use one integration coordinator for successive merge waves, progress updates, and final checks; keep implementation worktrees isolated and Standards and Spec reviewers independent. Avoid agents for deterministic commits or status checks when the coordinator can safely handle them. Evaluate a representative run against before metrics for tool counts, context volume, coordination time, and final correctness without reducing checks or choosing below the task's capability floor. Starting locations: `execplan-implement`, `delegate-to-subagents`, and `subagent-model-router`; project `exec-plans` skill and progress-update requirements; agent runner skill-loading configuration. - Archived 2026-10-28 after the user-scoped minimal skill edits and adversarial reviews. Preserved the standalone delegation skill's all-work-in-subagents rule per user correction. Runtime efficiency benchmarking and runner configuration changes were outside the final scope.
+
 5. [x] Investigate whether nested AGENTS.md maps complement the root brain index for local context; evaluate [harness-engineering](https://github.com/lopopolo/harness-engineering) - superseded by #12 `agents-md-install` skill.
 
 ## Skills

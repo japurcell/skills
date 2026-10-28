@@ -6,7 +6,7 @@
 - [Prices](#prices)
 - [Notes](#notes)
 
-Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-10-19**. Rates and conditions below were checked against its provider tables and footnotes.
+Source: [GitHub Copilot models and pricing](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing). Source snapshot: **2026-10-28**. Rates and conditions below were checked against its provider tables and footnotes.
 
 Prices are USD per 1 million tokens for GitHub Copilot. They are not direct-provider API prices. Where GitHub AI Credits are used, 1 credit = $0.01 USD.
 
@@ -47,13 +47,7 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 | Provider | Model | Condition | Input | Cached input | Cache write | Output |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | OpenAI | `gpt-5.4-nano` | default | $0.20 | $0.02 | N/A | $1.25 |
-| OpenAI | `gpt-5-mini` | default | $0.25 | $0.025 | N/A | $2.00 |
-| OpenAI | `gpt-5.4-mini` | default | $0.75 | $0.075 | N/A | $4.50 |
 | OpenAI | `gpt-5.3-codex` | default | $1.75 | $0.175 | N/A | $14.00 |
-| OpenAI | `gpt-5.4` | ≤272K | $2.50 | $0.25 | N/A | $15.00 |
-| OpenAI | `gpt-5.4` | >272K | $5.00 | $0.50 | N/A | $22.50 |
-| OpenAI | `gpt-5.5` | ≤272K | $5.00 | $0.50 | N/A | $30.00 |
-| OpenAI | `gpt-5.5` | >272K | $10.00 | $1.00 | N/A | $45.00 |
 | OpenAI | `gpt-5.6-luna` | ≤200K | $0.20 | $0.02 | $0.25 | $1.20 |
 | OpenAI | `gpt-5.6-luna` | >200K | $0.40 | $0.04 | $0.50 | $1.80 |
 | OpenAI | `gpt-5.6-terra` | ≤272K | $2.00 | $0.20 | $2.50 | $12.00 |
@@ -68,6 +62,8 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 | OpenAI | `gpt-6-sol` | >272K | $4.00 | $0.40 | $5.00 | $15.00 |
 | OpenAI | `gpt-6.1-sol` | ≤272K | $2.00 | $0.10 | $2.50 | $10.00 |
 | OpenAI | `gpt-6.1-sol` | >272K | $4.00 | $0.20 | $5.00 | $15.00 |
+| OpenAI | `gpt-6.1-terra` | ≤272K | $1.00 | $0.05 | $1.25 | $5.00 |
+| OpenAI | `gpt-6.1-terra` | >272K | $2.00 | $0.10 | $2.50 | $7.50 |
 | Anthropic | `claude-haiku-4.5` | default | $1.00 | $0.10 | $1.25 | $5.00 |
 | Anthropic | `claude-haiku-5.5` | ≤100K | $0.10 | $0.01 | $0.125 | $0.50 |
 | Anthropic | `claude-haiku-5.5` | >100K | $0.50 | $0.05 | $0.625 | $2.50 |
@@ -81,7 +77,6 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 | Anthropic | `claude-opus-5` | default | $5.00 | $0.50 | $6.25 | $25.00 |
 | Anthropic | `claude-opus-5.5` | default | $4.00 | $0.20 | $5.00 | $20.00 |
 | Anthropic | `claude-fable-5.1` | default | $10.00 | $0.25 | $12.50 | $50.00 |
-| Google | `gemini-3.7-flash` | promotional | $0.75 | $0.075 | N/A | $3.75 |
 | Google | `gemini-3.8-flash` | promotional | $0.75 | $0.075 | N/A | $3.75 |
 | Google | `gemini-4-argon` | promotional | $2.00 | $0.10 | N/A | $10.00 |
 | Microsoft | `mai-code-1.1-flash` | default | $0.20 | $0.02 | N/A | $1.20 |
@@ -97,7 +92,7 @@ Assume uncached input unless cache reuse is confirmed for the platform, model, a
 
 - Conditions are input-token thresholds, not necessarily context-window limits.
 - Check [`model-catalog.md`](model-catalog.md) and the supported-models source before routing; this table may retain retired or restricted entries.
-- Gemini 3.7 and 3.8 Flash promotional rates apply through **2026-12-31**.
+- Gemini 3.8 Flash promotional rates apply through **2026-12-31**.
 - Gemini 4 Argon's [Google pricing row](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#google) lists no input threshold or cache-write charge. Its [promotional pricing footnote](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing#footnotes) applies until **2026-12-01**; recheck before work on or after that date.
 - Legacy annual Copilot Pro or Pro+ plans may use [request multipliers](https://docs.github.com/en/copilot/reference/copilot-billing/request-based-billing-legacy/model-multipliers-for-annual-plans).
 - If the platform selects models automatically, do not claim precise per-model cost control.

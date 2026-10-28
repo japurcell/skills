@@ -31,6 +31,8 @@ Tiers classify task requirements and model-and-effort configurations. Price, lat
 
 ## Routing procedure
 
+Loading instructions, evaluating a route, and dispatching an agent are separate actions. Reuse instructions and references already available in the current agent context; reload them only when their content changes or is no longer available. The load steps below require fresh reads only under those conditions.
+
 1. Gather objective, work class, stakes, security sensitivity, ambiguity, reasoning difficulty, affected behavior, context size, review history, verification approach, existing constraints (or `none`), and exact runtime model/effort capabilities.
 2. Determine the lowest permitted tier. For code/PR review and audits, load [review-routing.md](reference/review-routing.md). Otherwise use the tier definitions above.
 3. For failures, changed risk, or context-fit problems, load [escalation-policy.md](reference/escalation-policy.md).
@@ -38,7 +40,7 @@ Tiers classify task requirements and model-and-effort configurations. Price, lat
 5. Apply the availability rule below. Load [pricing.md](reference/pricing.md) and compare all eligible candidates at applicable context and cache rates. Task defaults are provisional starting points, not preference orders.
 6. Return one exact route and the lowest-cost eligible alternative at its selected tier, if any.
 
-Reuse a route only when the facts gathered in step 1 are materially unchanged.
+Before each dispatch, reassess task risk, explicit user constraints, and runtime availability, preserving security review floors. Reuse a route only when the facts gathered in step 1 and runtime availability remain materially unchanged. Record the chosen model, effort, capability floor, and assumptions in the structured decision below.
 
 ### Availability
 

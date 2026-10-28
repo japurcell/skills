@@ -40,10 +40,11 @@
       "id": 3,
       "eval_name": "route-distinct-subtasks",
       "prompt": "Describe dispatch preparation only; do not dispatch or write files. One task is bounded read-only exploration; another is a substantive cross-file code review. All required task facts and runtime capabilities are available. Explain routing, how model and effort reach dispatch, and how runtime limits are chosen.",
-      "expected_output": "Activate subagent-model-router for each materially different subtask, submit its exact model and reasoning effort through dispatch controls, and assign each worker an effort-appropriate runtime limit.",
+      "expected_output": "Load subagent-model-router once per agent context, evaluate a distinct route for each materially different subtask, submit its exact model and reasoning effort through dispatch controls, and assign each worker an effort-appropriate runtime limit.",
       "files": [],
       "assertions": [
         "Routes the exploration and substantive review as materially different subtasks.",
+        "Reuses already available router instructions rather than loading them again for the second task.",
         "Submits the exact routed model and reasoning effort through dispatch controls.",
         "Assigns every subagent a runtime limit based on expected effort and complexity."
       ]
@@ -75,12 +76,24 @@
       "id": 6,
       "eval_name": "small-task-still-delegated",
       "prompt": "Give an execution decision only; do not execute tools, dispatch agents, or edit files. The delegate-to-subagents workflow is active. A ready task is a one-line documentation edit with a known check, and the coordinator already has the context. No user restriction prevents delegation. Choose the executor and describe communication and dispatch settings.",
-      "expected_output": "Delegate the small task under the active all-work-in-subagents policy, use sparse context pointers, and submit the router-selected exact model and effort with a runtime limit.",
+      "expected_output": "Delegate the documentation implementation task, use sparse context pointers, and submit the router-selected exact model and effort with a runtime limit.",
       "files": [],
       "assertions": [
         "Assigns the task to a subagent rather than choosing local execution because it is cheaper.",
         "Uses sparse communication and context pointers.",
         "Uses the router-selected exact model and effort with a runtime limit."
+      ]
+    },
+    {
+      "id": 7,
+      "eval_name": "deterministic-operations-still-delegated",
+      "prompt": "Describe executor choices only; do not run tools, dispatch, edit files, or commit. The delegate-to-subagents workflow is active. The parent coordinator has all context needed for a read-only Git status check and a deterministic commit of verified, explicitly authorized changes. Choose the executor for each operation under the active skill. Then explain what changes if the user says not to commit yet, or if unexpected files make commit scope uncertain.",
+      "expected_output": "Assign both the status check and the safe, authorized deterministic commit to subagents under the all-work-in-subagents rule, even though the parent has the context. A no-commit instruction blocks committing by every agent. Unexpected files require resolving scope before any commit; delegation does not authorize uncertain or unsafe commits.",
+      "files": [],
+      "assertions": [
+        "Assigns both deterministic operations to subagents rather than direct parent execution.",
+        "Honors an explicit no-commit instruction for every agent.",
+        "Resolves uncertain commit scope before committing rather than treating delegation as authorization."
       ]
     }
   ]

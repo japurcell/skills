@@ -4,14 +4,14 @@
     {
       "id": 3,
       "prompt": "Describe orchestration only; do not edit files, run Git, dispatch agents, or commit. The current branch is main. The ExecPlan has two independent ready source tasks with disjoint ownership. Explain branch setup, implementer isolation, the required worker instructions, and how completed work reaches the integration branch.",
-      "expected_output": "Create an integration branch from main, assign each task to a background implementer in its own worktree and branch, confirm each is based on integration, activate tdd, merge the integration tip into each worker branch before completion, then use a merger subagent to merge completed work into integration.",
+      "expected_output": "Create an integration branch from main, start one persistent integration coordinator subagent before implementers, assign each task to a background implementer in its own worktree and branch, confirm each is based on integration, activate tdd, merge the integration tip into each worker branch before completion, then reuse the same coordinator subagent across merge waves. The parent handles dispatch and user dialogue, not integration coordination.",
       "files": [],
       "eval_name": "private-worktrees-and-merger-handoff",
       "assertions": [
         "Creates an integration branch when starting on main.",
         "Each task has its own implementer worktree and branch based on integration.",
         "Instructs source implementers to activate tdd and merge the integration tip into their branch before reporting done.",
-        "Uses a merger subagent to integrate completed work."
+        "Starts one persistent integration coordinator subagent before implementers and reuses it across merge waves; the parent does not serve this role."
       ]
     },
     {
@@ -66,13 +66,13 @@
       "id": 5,
       "eval_name": "small-task-uses-implementer",
       "prompt": "Give an execution decision only; do not execute tools or delegate. An ExecPlan has one ready documentation task with a small edit and a known check. The coordinator already holds the context and delegation costs more than local execution. No user restriction prevents delegation. Choose the executor and branch arrangement under execplan-implement.",
-      "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort before dispatch, give a runtime limit, and use a merger subagent for integration.",
+      "expected_output": "Use an implementer subagent for the task in its own worktree and branch based on integration, despite the small edit. Route model and effort before dispatch, give a runtime limit, and use the same persistent integration coordinator subagent for integration. The parent cannot fill that role.",
       "files": [],
       "assertions": [
         "Selects an implementer subagent rather than local execution based on lower overhead.",
         "Uses a private worktree and branch based on the integration branch.",
         "Routes model and effort before dispatch and assigns a runtime limit.",
-        "Uses a merger subagent for integration."
+        "Uses the same persistent integration coordinator subagent for integration, never the parent."
       ]
     },
     {
