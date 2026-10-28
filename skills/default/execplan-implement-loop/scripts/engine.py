@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import fcntl
 import hashlib
 import json
@@ -12,13 +13,14 @@ import stat
 import tempfile
 import time
 import uuid
+from types import SimpleNamespace
 from datetime import datetime, timezone
 
 from contracts import Plan, Stop, confined, message_valid, require, worker_result
 from processes import GeminiStream, Supervisor
+from readiness import collect_readiness, recorded_policy, validate_policy_file
 
 BUNDLE = Path(__file__).resolve().parents[1]
-PINNED_GEMINI = '0.65.0'
 
 
 def now():
@@ -78,6 +80,11 @@ class Engine:
         self.current = None
         self.phase = 'preflight'
         self.integrity_errors = []
+        self.readiness = None
+        self.readiness_result = None
+        self.selected_policy = None
+        self.previous_policy = None
+        self.policy_bound = False
 
     def event(self, kind, **fields):
         import sys
@@ -228,6 +235,7 @@ class Engine:
                     self.checkpoint()
                 else:
                     self.save()
+            self.start_invocation()
             if self.state.get('transaction'):
                 self.current = self.state['transaction']['task_id']
                 self.recover_commit()
@@ -247,9 +255,39 @@ class Engine:
                     'Run directory must be outside tracked worktree')
             # Git metadata is inside ordinary worktrees; this is the deliberate default exception.
             self.new_state()
-        self.state['invocations'].append(dict(id=self.invocation, started_at=now(), max_runtime=self.args.max_runtime))
+            self.start_invocation()
         self.save()
-        self.dependencies()
+        # Commit reconciliation deliberately precedes policy/provider gating.
+        # Even provider-free invocations retain any explicitly selected input.
+        if self.args.policy is not None:
+            try:
+                self.selected_policy = validate_policy_file(self.args.policy)
+            except Stop as error:
+                self.readiness_blocker(error.reason, error.detail)
+            else:
+                self.policy_bound = True
+                self.readiness['provenance']['selected_policy'] = self.selected_policy
+                self.state['invocations'][-1]['policy_selection'] = dict(
+                    explicit=True, previous=self.previous_policy, selected=self.selected_policy)
+            self.save()
+
+    def start_invocation(self):
+        self.previous_policy = recorded_policy(self.state['invocations'])
+        self.readiness = dict(checked_at=now(), status='unknown', can_attempt=True,
+                              checks=[dict(id='provider_readiness', status='unknown',
+                                           reason_code='provider_check_deferred',
+                                           detail='Provider checks run only when a new Gemini iteration is needed')],
+                              provenance=dict(provider=dict(executable=self.args.gemini, version=None),
+                                              plan=dict(path=str(self.plan.path), plan_id=self.plan.data['plan_id'],
+                                                        contract_hash=self.plan.immutable_hash()),
+                                              workspace=dict(root=str(self.root), git_dir=str(self.git_dir), branch=self.branch),
+                                              skills=[], selected_policy=self.previous_policy,
+                                              requested=dict(model=self.args.model, approval_mode=self.args.approval_mode)),
+                              limitations=['Provider prerequisites, authentication, trust, and effective permission have not been checked for this invocation.',
+                                           'Provenance is not a sandbox or authorization for paid use.'])
+        self.state['invocations'].append(dict(id=self.invocation, started_at=now(), max_runtime=self.args.max_runtime,
+                                              readiness=self.readiness))
+        self.save()
 
     def new_state(self):
         require(not self.directory.exists(), 'Run directory already exists; use --resume')
@@ -263,31 +301,67 @@ class Engine:
                           current_task=None, task_states={i: 'open' for i in self.plan.tasks}, execution_in_flight=None, transaction=None)
         self.checkpoint()
 
-    def dependencies(self, force=False):
-        if len(self.state['completed']) == len(self.plan.tasks):
-            return
-        if not force and all(t['kind'] == 'verification' for t in self.plan.tasks.values()):
-            return
-        executable = shutil.which(self.args.gemini)
-        if not executable:
-            raise Stop('missing_gemini', 'Gemini CLI is not executable', 3)
-        self.executable = executable
-        self.process_cwd = '.'
-        owner = self.plan.tasks.get(self.state.get('current_task')) or next(iter(self.plan.tasks.values()))
-        version = self.owned_process([executable, '--version'], 10, owner)
-        if version.code or version.timed_out or version.stdout_truncated or version.stdout.decode().strip() != PINNED_GEMINI:
-            raise Stop('unsupported_gemini_version', f'Require Gemini CLI {PINNED_GEMINI}', 3)
-        paths = []
-        for name in ('exec-plans', 'tdd'):
-            candidates = [self.root / '.agents/skills' / name / 'SKILL.md', self.root / '.gemini/skills' / name / 'SKILL.md',
-                          Path.home() / '.agents/skills' / name / 'SKILL.md', Path.home() / '.gemini/skills' / name / 'SKILL.md']
-            found = next((p for p in candidates if p.is_file()), None)
-            if not found:
-                raise Stop('missing_skill_dependency', f'Gemini-visible {name}/SKILL.md required', 3)
-            paths.append(dict(name=name, path=str(found), digest=digest(found.read_bytes())))
-        self.state['dependencies'] = dict(gemini_version=PINNED_GEMINI, skills=paths,
-                                          activation='requires provider trust and permission; live qualification pending')
+    def dependencies(self):
+        previous = self.previous_policy
+        expected = self.selected_policy if self.policy_bound else previous
+        policy = (Path(expected['path']) if expected else None) if self.policy_bound or self.args.policy is None else self.args.policy
+        provider = shutil.which(self.args.gemini)
+        def inspect(argv, cwd, timeout):
+            if argv == [provider, '--version']:
+                self.process_cwd = '.'
+                return self.owned_process(argv, timeout, self.plan.tasks[self.current])
+            return self.supervisor.run(argv, cwd, timeout)
+        inspector = SimpleNamespace(check=self.supervisor.check, run=inspect)
+        result = collect_readiness(plan_path=self.plan.path, workspace=self.root,
+                                   gemini=self.args.gemini, policy=policy, model=self.args.model,
+                                   approval_mode=self.args.approval_mode, resume=self.directory,
+                                   supervisor=inspector)
+        self.readiness_result, self.readiness = result, result.readiness
+        observed = self.readiness['provenance']['selected_policy']
+        if not self.policy_bound:
+            self.selected_policy = observed if self.args.policy is not None else previous
+            self.policy_bound = True
+        invocation = self.state['invocations'][-1]
+        invocation.update(readiness=self.readiness,
+                          policy_selection=dict(explicit=self.args.policy is not None,
+                                                previous=previous, selected=self.selected_policy))
+        policy_checked = any(item['id'] == 'explicit_policy' for item in self.readiness['checks'])
+        if self.selected_policy is not None and policy_checked and observed != self.selected_policy:
+            self.readiness_blocker('policy_changed', 'Recorded policy changed or is unavailable; select reviewed bytes explicitly with --policy')
+        elif not policy_checked:
+            self.readiness['provenance']['selected_policy'] = self.selected_policy
+        self.executable = self.readiness['provenance']['provider']['executable']
+        invocation.setdefault('readiness_history', []).append(copy.deepcopy(self.readiness))
         self.save()
+
+    def readiness_blocker(self, reason, detail):
+        self.readiness.update(status='blocked', can_attempt=False)
+        self.readiness['checks'].append(dict(id='selected_policy_binding', status='blocked',
+                                             reason_code=reason, detail=detail[:4096]))
+
+    def require_readiness(self):
+        if not self.readiness['can_attempt']:
+            if self.readiness_result.reason_code in ('interrupted', 'total_deadline', 'cleanup_unconfirmed'):
+                raise Stop(self.readiness_result.reason_code, 'Readiness inspection could not finish', self.readiness_result.exit_code)
+            checks = [item for item in self.readiness['checks'] if item['status'] == 'blocked']
+            failure = next((item for item in checks if item['reason_code'] == 'policy_changed'), checks[0])
+            code = self.readiness_result.exit_code or 3
+            if failure['reason_code'] == 'policy_changed':
+                code = 3
+            raise Stop(failure['reason_code'], failure['detail'], code)
+
+    def recheck_policy(self):
+        if self.selected_policy is None:
+            return
+        try:
+            observed = validate_policy_file(self.selected_policy['path'])
+        except Stop:
+            observed = None
+        if observed != self.selected_policy:
+            detail = 'Selected policy changed or is unavailable before spawn; resume with an explicitly reviewed --policy'
+            self.readiness_blocker('policy_changed', detail)
+            self.save()
+            raise Stop('policy_changed', detail, 3)
 
     def integrity(self, task):
         self.assert_branch()
@@ -307,7 +381,7 @@ class Engine:
         if any(os.fsdecode(name) in self.changed() for name in submodules):
             raise Stop('submodule_change', 'Submodule changes require manual reconciliation', 3)
 
-    def owned_process(self, argv, timeout, task, consume=None):
+    def owned_process(self, argv, timeout, task, consume=None, before_spawn=None):
         self.state['execution_in_flight'] = dict(argv0=argv[0], task_id=task['id'], started_at=now(), pid=None)
         self.save()
         def spawned(pid):
@@ -316,6 +390,8 @@ class Engine:
         outcome = None
         failure = None
         try:
+            if before_spawn:
+                before_spawn()
             outcome = self.supervisor.run(argv, confined(self.root, self.process_cwd), timeout, consume, spawned)
         except Stop as error:
             failure = error
@@ -347,8 +423,8 @@ class Engine:
         return outcome
 
     def invoke(self, task, diagnostics):
-        if not hasattr(self, 'executable'):
-            self.dependencies(force=True)
+        self.dependencies()
+        self.require_readiness()
         self.phase = 'implementation'
         iteration = uuid.uuid4().hex
         self.event('task_start', iteration_id=iteration)
@@ -368,13 +444,16 @@ class Engine:
             argv += ['--model', self.args.model]
         if self.args.approval_mode:
             argv += ['--approval-mode', self.args.approval_mode]
+        if self.selected_policy:
+            argv += ['--policy', self.selected_policy['path']]
         stream = GeminiStream()
         record = dict(iteration_id=iteration, invocation_id=self.invocation, task_id=task['id'], started_at=now(),
                       session_id=None, model=None, usage=None, status='in_progress')
         self.state['iterations'].append(record)
         self.process_cwd = '.'
         try:
-            result = self.owned_process(argv, self.args.iteration_timeout, task, stream.feed)
+            result = self.owned_process(argv, self.args.iteration_timeout, task, stream.feed,
+                                        before_spawn=self.recheck_policy)
             record.update(duration_seconds=result.duration, exit_code=result.code)
             if result.timed_out:
                 self.state['timeout_counts']['gemini'] += 1
@@ -626,6 +705,7 @@ class Engine:
                                                       if i['id'] != self.invocation) + elapsed,
                        invocation_iteration_count=sum(i['invocation_id'] == self.invocation for i in state.get('iterations', [])),
                        invocations=state.get('invocations', []), integrity_errors=self.integrity_errors,
+                       readiness=self.readiness,
                        usage_complete=bool(state.get('iterations')) and all(i.get('usage_complete', False) for i in state.get('iterations', [])))
         if self.state and self.directory:
             self.state['last_outcome'] = dict(status=status, reason_code=reason, invocation_id=self.invocation)

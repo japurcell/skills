@@ -49,8 +49,6 @@ def arguments():
         parser.error('--doctor cannot acknowledge an unclean stop')
     if args.validate_only and args.policy is not None:
         parser.error('--policy is not used with --validate-only')
-    if args.policy is not None and not args.doctor:
-        parser.error('--policy for execution and resume is integrated with T8; use --doctor for inspection')
     return args
 
 

@@ -125,6 +125,26 @@ def validate_policy_file(value: Path | str) -> dict[str, str]:
     return {'path': str(path), 'sha256': _digest(raw)}
 
 
+def recorded_policy(invocations: list[dict[str, Any]]) -> dict[str, str] | None:
+    """Read the last reviewed selection, preserving historical v1 defaults."""
+    for invocation in reversed(invocations):
+        selection = invocation.get('policy_selection')
+        if selection is None:
+            selected = (invocation.get('readiness') or {}).get('provenance', {}).get('selected_policy')
+        elif isinstance(selection, dict):
+            selected = selection.get('selected')
+        else:
+            raise Stop('invalid_resume_state', 'Invalid recorded policy selection', 2)
+        if selected is None:
+            continue
+        if (not isinstance(selected, dict) or set(selected) != {'path', 'sha256'} or
+                not isinstance(selected['path'], str) or not Path(selected['path']).is_absolute() or
+                not isinstance(selected['sha256'], str) or not re.fullmatch(r'[0-9a-f]{64}', selected['sha256'])):
+            raise Stop('invalid_resume_state', 'Invalid recorded policy path or SHA-256', 2)
+        return dict(selected)
+    return None
+
+
 def _observe_file(path: Path) -> dict[str, str | None]:
     """Inventory a conventional config file without retaining its contents."""
     try:
@@ -223,6 +243,7 @@ class _Collector:
         self.provider_version: str | None = None
         self.skills: list[dict[str, str | None]] = []
         self.selected_policy: dict[str, str] | None = None
+        self.previous_policy: dict[str, str] | None = None
         self.policy_sources: list[dict[str, Any]] = []
         self.resume_info: dict[str, Any] = {'status': 'not_requested'}
         self.fatal_reason: str | None = None
@@ -498,6 +519,9 @@ class _Collector:
             self.skills.append(record)
 
     def _collect_policy(self) -> None:
+        expected = self.previous_policy if self.policy is None else None
+        if expected:
+            self.policy = Path(expected['path'])
         if self.policy is None:
             self._check('explicit_policy', 'unknown', 'no_explicit_policy',
                         'No reviewed --policy file was selected; inherited provider policy is not evaluated')
@@ -505,11 +529,19 @@ class _Collector:
         try:
             self.selected_policy = validate_policy_file(self.policy)
         except Stop as error:
-            self._fatal('invalid_policy')
-            self._check('explicit_policy', 'blocked', 'invalid_policy', error.detail)
+            if expected:
+                self._check('explicit_policy', 'blocked', 'policy_changed',
+                            'Recorded policy is unavailable; select reviewed bytes explicitly with --policy')
+            else:
+                self._fatal('invalid_policy')
+                self._check('explicit_policy', 'blocked', 'invalid_policy', error.detail)
         else:
-            self._check('explicit_policy', 'pass', 'explicit_policy_syntax_valid',
-                        f'Validated TOML syntax and SHA-256 for {self.selected_policy["path"]}')
+            if expected and self.selected_policy != expected:
+                self._check('explicit_policy', 'blocked', 'policy_changed',
+                            'Recorded policy bytes changed; select reviewed bytes explicitly with --policy')
+            else:
+                self._check('explicit_policy', 'pass', 'explicit_policy_syntax_valid',
+                            f'Validated TOML syntax and SHA-256 for {self.selected_policy["path"]}')
 
     def _collect_policy_sources(self) -> None:
         for scope, base in (('workspace', self.workspace), ('user', Path.home())):
@@ -592,6 +624,7 @@ class _Collector:
             }
             if any(state.get(field) != value for field, value in identity.items()):
                 raise _CheckFailure('resume_identity_mismatch', 'Resume journal does not belong to this plan and worktree')
+            self.previous_policy = recorded_policy(state['invocations'])
             in_flight = state.get('execution_in_flight') is not None
             transaction = state.get('transaction')
             if transaction is not None:
@@ -700,9 +733,9 @@ class _Collector:
             self._collect_git()
             self._collect_provider()
             self._collect_skills()
+            self._collect_resume()
             self._collect_policy()
             self._collect_policy_sources()
-            self._collect_resume()
             self._collect_unknowns()
             self.supervisor.check()
         except Stop as error:

@@ -177,6 +177,32 @@ if behavior != 'missing_terminal':
     def execute(self, *args, **kwargs):
         return self.run_cli('--gemini', str(self.provider), '--max-runtime', '10', *args, **kwargs)
 
+    def deny_group_signals(self, trigger):
+        injection = self.root / 'signal-fault'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''
+import errno, os
+from pathlib import Path
+original = os.killpg
+def killpg(pid, signum):
+    if not signum and os.environ.get('SIGNAL_FAULT_PROBE_DENIED') == '1' and Path(os.environ['SIGNAL_FAULT_PID']).exists():
+        raise PermissionError(errno.EPERM, 'Injected process-group probe denial')
+    if signum and Path(os.environ['SIGNAL_FAULT_TRIGGER']).exists():
+        Path(os.environ['SIGNAL_FAULT_PID']).write_text(str(pid))
+        if os.environ.get('SIGNAL_FAULT_MODE') == 'vanished':
+            original(pid, 9)
+            try:
+                os.waitpid(pid, 0)
+            except ChildProcessError:
+                pass
+        raise PermissionError(errno.EPERM, 'Injected process-group signal denial')
+    return original(pid, signum)
+os.killpg = killpg
+''')
+        marker = self.root / 'signal-fault-pid'
+        self.env.update(PYTHONPATH=str(injection), SIGNAL_FAULT_TRIGGER=str(trigger), SIGNAL_FAULT_PID=str(marker))
+        return marker
+
 
 class ContractTests(Fixture):
     def test_named_pipe_plan_is_rejected_without_waiting_for_a_writer(self):
@@ -253,6 +279,35 @@ class ContractTests(Fixture):
 
 
 class ProcessTests(Fixture):
+    def test_signal_denial_reports_cleanup_uncertainty_and_preserves_unclean_worker(self):
+        self.execution_fixture('timeout')
+        marker = self.deny_group_signals(self.root / 'calls')
+        try:
+            result = self.execute('--iteration-timeout', '.15', timeout=10)
+
+            self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+            report = json.loads(result.stdout)
+            self.assertEqual(report['reason_code'], 'cleanup_unconfirmed')
+            self.assertEqual(report['status'], 'blocked')
+            self.assertEqual(result.stdout, json.dumps(report) + '\n')
+            self.assertNotIn('Traceback', result.stderr)
+            self.assertEqual((self.root / 'calls').read_text(), '1')
+            self.assertEqual(report['commits'], [])
+            state = json.loads((Path(report['run_directory']) / 'state.json').read_text())
+            self.assertIsNotNone(state['execution_in_flight'])
+            self.assertEqual(state['execution_in_flight']['pid'], int(marker.read_text()))
+            os.kill(int(marker.read_text()), 0)
+            self.env.pop('PYTHONPATH')
+            resumed = self.execute('--resume', report['run_directory'])
+            self.assertEqual(json.loads(resumed.stdout)['reason_code'], 'unclean_execution_requires_reconciliation')
+            self.assertEqual((self.root / 'calls').read_text(), '1')
+        finally:
+            if marker.exists():
+                try:
+                    os.killpg(int(marker.read_text()), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
     def test_only_final_assistant_turn_is_used_as_typed_result(self):
         self.execution_fixture('tool_narration')
         result = self.execute()
@@ -407,6 +462,19 @@ class ProcessTests(Fixture):
 
 
 class GitTests(Fixture):
+    def test_provider_version_cannot_switch_branch_before_a_paid_attempt(self):
+        self.execution_fixture()
+        source = self.provider.read_text()
+        source = source.replace("    print('0.65.0'); raise SystemExit()", "    import subprocess\n    subprocess.run(['git', 'switch', '-qc', 'version-created'], check=True)\n    print('0.65.0'); raise SystemExit()")
+        self.provider.write_text(source)
+
+        result = self.execute()
+
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)['reason_code'], 'unexpected_branch')
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertEqual(self.git('rev-list', '--count', 'HEAD'), '1')
+
     def test_post_commit_hook_cannot_move_work_to_another_branch_silently(self):
         self.execution_fixture()
         hook = self.repo / '.git/hooks/post-commit'
@@ -548,6 +616,8 @@ raise SystemExit(code)
         report = json.loads(result.stdout)
         self.assertEqual(report['reason_code'], 'commit_failed', result.stdout + result.stderr)
         hook.write_text('#!/bin/sh\nexit 0\n')
+        self.provider.unlink()
+        shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
         resumed = self.execute('--resume', report['run_directory'])
         self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
         resumed_report = json.loads(resumed.stdout)
@@ -696,6 +766,302 @@ class LoopTests(Fixture):
 
 
 class ReadinessTests(Fixture):
+    def test_denied_signal_with_independently_confirmed_absent_group_keeps_deadline(self):
+        self.doctor_fixture()
+        marker = self.deny_group_signals(self.ledger)
+        self.env.update(DOCTOR_DELAY='5', SIGNAL_FAULT_MODE='vanished', SIGNAL_FAULT_PROBE_DENIED='1')
+
+        result = self.run_doctor('--max-runtime', '1', timeout=10)
+
+        self.assert_doctor_summary(result, 124, 'total_deadline')
+        with self.assertRaises(ProcessLookupError):
+            os.kill(int(marker.read_text()), 0)
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_doctor_signal_denial_keeps_one_typed_cleanup_report(self):
+        self.doctor_fixture()
+        marker = self.deny_group_signals(self.ledger)
+        self.env['DOCTOR_DELAY'] = '5'
+        try:
+            result = self.run_doctor('--max-runtime', '1', timeout=10)
+
+            report = self.assert_doctor_summary(result, 3, 'cleanup_unconfirmed')
+            self.assertFalse(report['readiness']['can_attempt'])
+            self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+            os.kill(int(marker.read_text()), 0)
+        finally:
+            if marker.exists():
+                try:
+                    os.killpg(int(marker.read_text()), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_readiness_deadline_with_policy_keeps_deadline_exit_and_no_prompt(self):
+        self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        policy.write_text("decision = 'allow'\n")
+        self.provider.write_text(self.provider.read_text().replace(
+            "    print('0.65.0'); raise SystemExit()", "    time.sleep(5); print('0.65.0'); raise SystemExit()"))
+
+        result = self.execute('--policy', str(policy), '--max-runtime', '1', timeout=10)
+
+        self.assertEqual(result.returncode, 124, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)['reason_code'], 'total_deadline')
+        self.assertFalse((self.root / 'calls').exists())
+
+    def test_later_repair_refreshes_skills_and_preserves_previous_readiness(self):
+        skill = Path(self.env['HOME']) / '.agents/skills/tdd/SKILL.md'
+        self.data['tasks'][0]['verification'][0]['argv'] = [sys.executable, '-c',
+            'from pathlib import Path; '
+            'broken = Path("output.txt").read_text() != "complete"; '
+            f'Path({str(skill)!r}).unlink(missing_ok=True) if broken else None; '
+            'raise SystemExit(1 if broken else 0)']
+        self.plan.write_text(markdown(self.data))
+        self.execution_fixture('repair_once')
+        original = skill.read_bytes()
+
+        result = self.execute()
+
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['reason_code'], 'missing_skill_dependency')
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertEqual(report['retries']['verification'], 1)
+        self.assertEqual(report['commits'], [])
+        self.assertEqual(report['readiness']['status'], 'blocked')
+        history = report['invocations'][0]['readiness_history']
+        self.assertEqual(len(history), 2)
+        self.assertTrue(history[0]['can_attempt'])
+        self.assertFalse(history[1]['can_attempt'])
+        skill.write_bytes(original)
+        self.env['BEHAVIOR'] = 'success'
+        resumed = self.execute('--resume', report['run_directory'])
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = json.loads(resumed.stdout)
+        self.assertEqual(after['invocations'][0]['readiness_history'], history)
+        self.assertEqual((self.root / 'calls').read_text(), '2')
+        self.assertEqual(len(after['commits']), 3)
+
+    def test_verification_only_plan_records_policy_without_provider_prerequisites(self):
+        for task in self.data['tasks']:
+            task['kind'] = 'verification'
+        self.plan.write_text(markdown(self.data))
+        self.execution_fixture()
+        self.provider.unlink()
+        shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
+        policy = self.root / 'reviewed.toml'
+        policy.write_bytes(b"decision = 'allow'\n")
+
+        result = self.execute('--policy', str(policy))
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertEqual(report['iterations'], [])
+        self.assertEqual(len(report['commits']), 3)
+        self.assertEqual(report['readiness']['provenance']['selected_policy'],
+                         {'path': str(policy), 'sha256': hashlib.sha256(policy.read_bytes()).hexdigest()})
+
+    def test_resume_reuses_unchanged_policy_without_a_new_selection(self):
+        self.execution_fixture('auth_error')
+        policy = self.root / 'reviewed.toml'
+        policy.write_text("decision = 'allow'\n")
+        first = self.execute('--policy', str(policy))
+        before = json.loads(first.stdout)
+        self.assertEqual(before['reason_code'], 'provider_blocked', first.stdout + first.stderr)
+        self.env.update(BEHAVIOR='success', OBSERVATIONS=str(self.root / 'observations.json'))
+
+        resumed = self.execute('--resume', before['run_directory'])
+
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = json.loads(resumed.stdout)
+        self.assertEqual(after['invocations'][0]['readiness'], before['readiness'])
+        self.assertEqual(after['readiness']['provenance']['selected_policy'],
+                         before['readiness']['provenance']['selected_policy'])
+        selection = after['invocations'][-1]['policy_selection']
+        self.assertFalse(selection['explicit'])
+        self.assertEqual(selection['previous'], selection['selected'])
+        argv = json.loads((self.root / 'observations.json').read_text())['argv']
+        self.assertEqual(argv[argv.index('--policy') + 1], str(policy))
+        self.assertEqual((self.root / 'calls').read_text(), '2')
+        self.assertEqual(len(after['iterations']), 2)
+        self.assertEqual(len(after['commits']), 3)
+
+    def test_changed_policy_blocks_omitted_resume_until_explicit_reviewed_update(self):
+        self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        policy.write_text("decision = 'allow'\n")
+        skill = Path(self.env['HOME']) / '.agents/skills/tdd/SKILL.md'
+        original_skill = skill.read_bytes()
+        skill.unlink()
+        first = self.execute('--policy', str(policy))
+        before = json.loads(first.stdout)
+        self.assertEqual(before['reason_code'], 'missing_skill_dependency', first.stdout + first.stderr)
+        old = before['readiness']['provenance']['selected_policy']
+        self.assertFalse((self.root / 'calls').exists())
+        skill.write_bytes(original_skill)
+        doctor = self.run_cli('--doctor', '--gemini', str(self.provider), '--resume', before['run_directory'])
+        self.assertEqual(doctor.returncode, 0, doctor.stdout + doctor.stderr)
+        self.assertEqual(json.loads(doctor.stdout)['readiness']['provenance']['selected_policy'], old)
+        policy.write_text("decision = 'deny'\n")
+        doctor_changed = self.run_cli('--doctor', '--gemini', str(self.provider), '--resume', before['run_directory'])
+        self.assertEqual(doctor_changed.returncode, 3, doctor_changed.stdout + doctor_changed.stderr)
+        self.assertIn('policy_changed', [item['reason_code'] for item in json.loads(doctor_changed.stdout)['readiness']['checks']])
+
+        blocked = self.execute('--resume', before['run_directory'])
+
+        self.assertEqual(blocked.returncode, 3, blocked.stdout + blocked.stderr)
+        rejected = json.loads(blocked.stdout)
+        self.assertEqual(rejected['reason_code'], 'policy_changed')
+        self.assertFalse((self.root / 'calls').exists())
+        # Another omitted resume must not adopt bytes observed by the rejected invocation.
+        blocked_again = self.execute('--resume', before['run_directory'])
+        self.assertEqual(json.loads(blocked_again.stdout)['reason_code'], 'policy_changed')
+        replacement = self.root / 'new reviewed path.toml'
+        replacement.write_text("decision = 'allow'\nmarker = 'reviewed-new-bytes'\n")
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+        resumed = self.execute('--resume', before['run_directory'], '--policy', str(replacement))
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = json.loads(resumed.stdout)
+        selected = {'path': str(replacement), 'sha256': hashlib.sha256(replacement.read_bytes()).hexdigest()}
+        self.assertEqual(after['invocations'][-1]['policy_selection'],
+                         {'explicit': True, 'previous': old, 'selected': selected})
+        self.assertEqual(after['invocations'][0]['readiness'], before['readiness'])
+        self.assertEqual(after['invocations'][1]['readiness'], rejected['readiness'])
+        self.assertEqual(after['readiness']['provenance']['selected_policy'], selected)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertEqual(len(after['iterations']), 1)
+        self.assertEqual(len(after['commits']), 3)
+
+    def test_historical_v1_journal_without_readiness_loads_with_inherited_policy(self):
+        self.execution_fixture('auth_error')
+        first = self.execute()
+        before = json.loads(first.stdout)
+        self.assertEqual(before['reason_code'], 'provider_blocked')
+        state_path = Path(before['run_directory']) / 'state.json'
+        state = json.loads(state_path.read_text())
+        for invocation in state['invocations']:
+            invocation.pop('readiness', None)
+            invocation.pop('readiness_history', None)
+            invocation.pop('policy_selection', None)
+        historical = copy.deepcopy(state['invocations'][0])
+        state_path.write_text(json.dumps(state))
+        self.env.update(BEHAVIOR='success', OBSERVATIONS=str(self.root / 'observations.json'))
+
+        resumed = self.execute('--resume', before['run_directory'])
+
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = json.loads(resumed.stdout)
+        self.assertEqual(after['invocations'][0], historical)
+        self.assertIsNone(after['readiness']['provenance']['selected_policy'])
+        self.assertNotIn('--policy', json.loads((self.root / 'observations.json').read_text())['argv'])
+        self.assertEqual(after['schema_version'], 1)
+        self.assertEqual((self.root / 'calls').read_text(), '2')
+
+    def test_policy_rehash_before_spawn_rejects_byte_change_and_symlink_swap(self):
+        self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        raw = b"decision = 'allow'\n"
+        policy.write_bytes(raw)
+        target = self.root / 'swapped.toml'
+        target.write_bytes(raw)
+        injection = self.root / 'injection'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''
+import json, os
+from pathlib import Path
+original = os.replace
+def replace(source, target, *args, **kwargs):
+    mutate = False
+    if str(target).endswith('state.json'):
+        state = json.loads(Path(source).read_text())
+        flight = state.get('execution_in_flight') or {}
+        mutate = (flight.get('argv0') == os.environ['MUTATE_PROVIDER'] and flight.get('pid') is None and
+                  state['task_states'].get(flight.get('task_id')) == 'in_progress')
+    result = original(source, target, *args, **kwargs)
+    if mutate:
+        policy = Path(os.environ['MUTATE_POLICY'])
+        if os.environ['MUTATE_MODE'] == 'bytes':
+            policy.write_text("decision = 'deny'\\n")
+        else:
+            policy.unlink()
+            policy.symlink_to(os.environ['MUTATE_TARGET'])
+    return result
+os.replace = replace
+''')
+        self.env.update(PYTHONPATH=str(injection), MUTATE_PROVIDER=str(self.provider),
+                        MUTATE_POLICY=str(policy), MUTATE_TARGET=str(target), MUTATE_MODE='bytes')
+        first = self.execute('--policy', str(policy))
+        before = json.loads(first.stdout)
+        self.assertEqual(before['reason_code'], 'policy_changed', first.stdout + first.stderr)
+        self.assertEqual(first.returncode, 3)
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertEqual(before['readiness']['provenance']['selected_policy']['sha256'], hashlib.sha256(raw).hexdigest())
+        policy.write_bytes(raw)
+        self.env['MUTATE_MODE'] = 'symlink'
+        swapped = self.execute('--resume', before['run_directory'], '--policy', str(policy))
+        self.assertEqual(json.loads(swapped.stdout)['reason_code'], 'policy_changed', swapped.stdout + swapped.stderr)
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertTrue(policy.is_symlink())
+        policy.unlink()
+        policy.write_bytes(raw)
+        self.env.pop('PYTHONPATH')
+        resumed = self.execute('--resume', before['run_directory'], '--policy', str(policy))
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = json.loads(resumed.stdout)
+        self.assertEqual(len(after['invocations']), 3)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertIsNone(json.loads((Path(after['run_directory']) / 'state.json').read_text())['execution_in_flight'])
+
+    def test_completed_resume_does_not_run_even_a_provider_version_check(self):
+        self.execution_fixture()
+        first = self.execute()
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        report = json.loads(first.stdout)
+        marker = self.root / 'provider-touched'
+        self.provider.write_text('#!' + sys.executable + '\n' +
+                                 f'from pathlib import Path; Path({str(marker)!r}).touch(); raise SystemExit(99)\n')
+        shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
+
+        resumed = self.execute('--resume', report['run_directory'])
+
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        self.assertFalse(marker.exists())
+        current = json.loads(resumed.stdout)
+        self.assertEqual(len(current['invocations']), 2)
+        self.assertEqual(current['invocations'][0]['readiness'], report['readiness'])
+        self.assertEqual(current['invocations'][1]['readiness']['status'], 'unknown')
+        self.assertEqual(current['invocation_iteration_count'], 0)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertEqual(len(current['commits']), 3)
+
+    def test_execution_records_reviewed_policy_and_unknowns_without_paid_probe(self):
+        self.execution_fixture()
+        policy = self.root / '- reviewed policy.toml'
+        policy.write_bytes(b"[[rule]]\ntoolName = 'write_file'\ndecision = 'allow'\n")
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+
+        result = self.execute('--policy', str(policy), '--model', 'requested-model')
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        selected = {'path': str(policy), 'sha256': hashlib.sha256(policy.read_bytes()).hexdigest()}
+        readiness = report['readiness']
+        self.assertEqual(readiness['status'], 'unknown')
+        self.assertTrue(readiness['can_attempt'])
+        self.assertEqual(readiness['provenance']['selected_policy'], selected)
+        self.assertEqual(readiness['provenance']['requested']['model'], 'requested-model')
+        for name in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(self.checks(report)[name]['status'], 'unknown')
+        self.assertEqual(report['invocations'][0]['readiness'], readiness)
+        state = json.loads((Path(report['run_directory']) / 'state.json').read_text())
+        self.assertEqual(state['invocations'][0]['readiness'], readiness)
+        argv = json.loads((self.root / 'observations.json').read_text())['argv']
+        self.assertEqual(argv[argv.index('--policy') + 1], str(policy))
+        self.assertNotIn('--approval-mode', argv)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertEqual(len(report['commits']), 3)
+
     def doctor_fixture(self, workspace_sources=False):
         marker = self.root / 'acceptance-ran'
         self.data['tasks'][0]['verification'][0]['argv'] = [

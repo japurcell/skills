@@ -32,16 +32,18 @@ class Supervisor:
         self.force = False
         self.active = None
         self.inspection = False
+        self.cleanup_failure = None
 
     def __enter__(self):
         self.handlers = {s: signal.signal(s, self.on_signal) for s in (signal.SIGINT, signal.SIGTERM)}
         return self
 
-    def __exit__(self, *unused):
+    def __exit__(self, error_type, error, traceback):
         try:
             if self.active:
-                self.kill_group(self.active.pid, signal.SIGKILL)
-                self.active.wait(timeout=1)
+                failure = self.finalize_child(self.active)
+                if failure and error is None:
+                    raise failure
         finally:
             for s, handler in self.handlers.items():
                 signal.signal(s, handler)
@@ -53,6 +55,8 @@ class Supervisor:
             self.signal = signum
 
     def check(self):
+        if self.cleanup_failure:
+            raise self.cleanup_failure
         if self.inspection:
             return
         if self.signal:
@@ -66,6 +70,12 @@ class Supervisor:
             os.killpg(pid, signum)
         except ProcessLookupError:
             pass
+        except PermissionError:
+            # The group may have disappeared while a short-lived leader exited.
+            # A denied signal is harmless only after independent group inspection
+            # proves that no live member remains. Real denial stays a blocker.
+            if Supervisor.living_group(pid):
+                raise
 
     @staticmethod
     def living_group(pid):
@@ -74,12 +84,49 @@ class Supervisor:
             os.killpg(pid, 0)
         except ProcessLookupError:
             return False
+        except PermissionError:
+            # A denied kernel probe cannot establish whether members still live.
+            # Use the bounded process inventory below rather than guessing.
+            pass
         result = subprocess.run(['/bin/ps', '-eo', 'pgid=,stat='], stdin=subprocess.DEVNULL,
                                 capture_output=True, timeout=1)
         if result.returncode:
             raise Stop('cleanup_unconfirmed', 'Unable to inspect remaining child group', 3)
         return any(parts[0] == str(pid) and not parts[1].startswith('Z')
                    for line in result.stdout.decode().splitlines() if len(parts := line.split()) >= 2)
+
+    def finalize_child(self, child, cleanup_confirmed=False):
+        """Always release local resources, retaining a barrier on uncertain cleanup."""
+        failure = None
+        try:
+            if not cleanup_confirmed:
+                try:
+                    self.kill_group(child.pid, signal.SIGKILL)
+                except OSError as error:
+                    failure = Stop('cleanup_unconfirmed', f'Cannot terminate owned child group {child.pid}: {error}', 3)
+            try:
+                child.wait(timeout=1)
+            except (OSError, subprocess.TimeoutExpired) as error:
+                failure = failure or Stop('cleanup_unconfirmed', f'Child leader termination is unconfirmed: {error}', 3)
+            if not cleanup_confirmed and failure is None:
+                try:
+                    limit = time.monotonic() + .5
+                    while self.living_group(child.pid) and time.monotonic() < limit:
+                        time.sleep(.02)
+                    if self.living_group(child.pid):
+                        failure = Stop('cleanup_unconfirmed', 'Owned descendants remain alive', 3)
+                except (OSError, Stop, subprocess.SubprocessError) as error:
+                    failure = Stop('cleanup_unconfirmed', f'Child group cleanup is unconfirmed: {error}', 3)
+        finally:
+            for pipe in (child.stdout, child.stderr):
+                try:
+                    pipe.close()
+                except OSError as error:
+                    failure = failure or Stop('cleanup_unconfirmed', f'Cannot close owned child stream: {error}', 3)
+            self.active = None
+        if failure:
+            self.cleanup_failure = failure
+        return failure
 
     def run(self, argv, cwd: Path, timeout, consume=None, spawned=None):
         self.check()
@@ -95,6 +142,7 @@ class Supervisor:
             raise Stop('spawn_error', f'Cannot start {argv[0]}: {error}', 3) from error
         self.active = child
         stop_at = None
+        cleanup_confirmed = False
         try:
             if spawned:
                 spawned(child.pid)
@@ -139,19 +187,17 @@ class Supervisor:
                     time.sleep(.02)
                 if self.living_group(child.pid):
                     raise Stop('cleanup_unconfirmed', 'Owned descendants remain alive', 3)
+            cleanup_confirmed = True
             if failure:
                 raise Stop('protocol', failure.detail, 1)
             return Outcome(child.returncode, bytes(output), bytes(errors), time.monotonic() - started, timed_out,
                            sizes[0] > LIMIT, sizes[1] > LIMIT)
+        except OSError as error:
+            raise Stop('cleanup_unconfirmed', f'Owned child I/O or cleanup failed: {error}', 3) from error
         finally:
-            self.kill_group(child.pid, signal.SIGKILL)
-            try:
-                child.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                raise Stop('cleanup_unconfirmed', 'Child leader did not terminate', 3)
-            child.stdout.close()
-            child.stderr.close()
-            self.active = None
+            cleanup_error = self.finalize_child(child, cleanup_confirmed)
+            if cleanup_error:
+                raise cleanup_error
 
 
 class GeminiStream:
