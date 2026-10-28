@@ -927,11 +927,15 @@ raise SystemExit(97)
 
     def test_doctor_deadline_and_cancellation_keep_provider_bounded(self):
         self.doctor_fixture()
-        timed = self.run_doctor('--max-runtime', '0.000001', timeout=5)
+        self.env['DOCTOR_DELAY'] = '5'
+        timed = self.run_doctor('--max-runtime', '1', timeout=10)
         self.assertEqual(timed.returncode, 124, timed.stdout + timed.stderr)
         timed_report = json.loads(timed.stdout)
         self.assertEqual(timed_report['reason_code'], 'total_deadline')
-        self.assertEqual(self.provider_calls(), [])
+        calls = self.provider_calls()
+        self.assertEqual([item['argv'] for item in calls], [['--version']])
+        with self.assertRaises(ProcessLookupError):
+            os.kill(calls[0]['pid'], 0)
 
         if self.ledger.exists():
             self.ledger.unlink()
