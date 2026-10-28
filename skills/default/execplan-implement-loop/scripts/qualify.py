@@ -681,11 +681,25 @@ def _run_qualification(args: argparse.Namespace) -> tuple[int, dict[str, object]
                             and isinstance(doctor_ready, dict)
                             and doctor_ready.get('status') in ('blocked', 'unknown')
                             and isinstance(doctor_ready.get('can_attempt'), bool)
+                            and isinstance(doctor_reason, str) and bool(doctor_reason)
                             and not (doctor_ready.get('status') == 'blocked'
                                      and doctor_ready.get('can_attempt') is True))
-            if doctor_result.cleanup_error:
+            # Only the doctor's terminal report can attest that its independently
+            # grouped provider children were finalized. An empty doctor group
+            # cannot establish this after a crash or a lost/malformed report.
+            doctor_terminal = (doctor_valid and doctor_reason != 'cleanup_unconfirmed'
+                               and ((doctor_code == 0 and doctor_reason == 'doctor_complete'
+                                     and doctor_can_attempt)
+                                    or (doctor_code in (2, 3) and not doctor_can_attempt)
+                                    or (doctor_code == 124 and doctor_reason == 'total_deadline'
+                                        and not doctor_can_attempt)
+                                    or (doctor_code in (130, 143) and doctor_reason == 'interrupted'
+                                        and not doctor_can_attempt)))
+            if doctor_result.cleanup_error or not doctor_terminal:
                 final = {'schema_version': SCHEMA_VERSION, 'status': 'blocked',
-                         'reason_code': 'cleanup_unconfirmed', 'detail': doctor_result.cleanup_error,
+                         'reason_code': 'cleanup_unconfirmed',
+                         'detail': (doctor_result.cleanup_error or
+                                    'Doctor did not provide a valid terminal cleanup outcome; preserve this root for operator reconciliation or use a new authorized disposable root'),
                          'root': str(root), 'attempt': number, 'doctor_exit_code': doctor_code,
                          'signal': doctor_result.interrupted,
                          'exit_code': 3}
@@ -701,12 +715,6 @@ def _run_qualification(args: argparse.Namespace) -> tuple[int, dict[str, object]
                          'reason_code': 'doctor_deadline', 'root': str(root), 'attempt': number,
                          'exit_code': 124, 'doctor_report': str(_owned_path(root, record['doctor_report']))}
                 code = 124
-            elif not doctor_valid:
-                final = {'schema_version': SCHEMA_VERSION, 'status': 'failed',
-                         'reason_code': 'doctor_report_invalid', 'root': str(root),
-                         'attempt': number, 'exit_code': 1,
-                         'doctor_report': str(_owned_path(root, record['doctor_report']))}
-                code = 1
             elif doctor_code != 0 or not doctor_can_attempt:
                 if doctor_code == 0:
                     doctor_reason = 'doctor_blocked' if isinstance(doctor_ready, dict) and doctor_ready.get('status') == 'blocked' else 'doctor_inconsistent_readiness'

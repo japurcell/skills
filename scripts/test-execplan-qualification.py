@@ -785,6 +785,182 @@ subprocess.run = run
         self.assertEqual(manifest_path.read_bytes(), before)
         self.assertEqual(len(self.gemini_calls_read()), 1)
 
+    def register_version_provider_cleanup(self, pid, group):
+        argv = ['/bin/ps', '-p', str(pid), '-o', 'pid=,pgid=,lstart=,command=']
+        identity = subprocess.run(argv, capture_output=True, text=True, check=False)
+        self.assertEqual(identity.returncode, 0, identity.stderr)
+        self.assertIn(str(self.gemini), identity.stdout)
+
+        def cleanup():
+            current = subprocess.run(argv, capture_output=True, text=True, check=False)
+            # Never signal a vanished/reused PID or group using stale evidence.
+            if current.returncode == 0 and current.stdout == identity.stdout:
+                try:
+                    if os.getpgid(pid) == group:
+                        self.kill_fixture_group(group)
+                except ProcessLookupError:
+                    pass
+        self.addCleanup(cleanup)
+
+    def assert_version_provider_alive(self, pid, group):
+        inspected = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'stat='],
+                                   capture_output=True, text=True, check=False)
+        self.assertEqual(inspected.returncode, 0, inspected.stderr)
+        self.assertTrue(inspected.stdout.strip())
+        self.assertFalse(inspected.stdout.strip().startswith('Z'), inspected.stdout)
+        self.assertEqual(os.getpgid(pid), group)
+
+    def doctor_child_survival_barrier(self, *, resume=False, signal_denied=False):
+        self.install_composed_gemini()
+        self.setup_root()
+        options = ['--authorize-paid-run', '--gemini', str(self.gemini)]
+        resume_options = []
+        if resume:
+            first = self.run_helper('run', '--root', str(self.root), *options)
+            self.assertEqual(first.returncode, 3, first.stdout + first.stderr)
+            resume_options = ['--resume', json.loads(first.stdout)['run_directory']]
+        self.env['QUALIFY_FAKE_GEMINI_MODE'] = 'hold-version'
+        if signal_denied:
+            injection = self.base / 'doctor signal denial'
+            injection.mkdir()
+            # Inject only the OS signal failure for this fixture-owned provider
+            # in the actual doctor process. Supervision/reporting remain real.
+            (injection / 'sitecustomize.py').write_text('''import errno, json, os, pathlib, sys
+original = os.killpg
+def killpg(group, signum):
+    marker = pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_CHILD_PID'])
+    if '--doctor' in sys.argv and signum and marker.exists():
+        if group == json.loads(marker.read_text())['provider']:
+            raise PermissionError(errno.EPERM, 'fixture-owned provider signal denial')
+    return original(group, signum)
+os.killpg = killpg
+''')
+            self.env['PYTHONPATH'] = str(injection)
+        helper = subprocess.Popen(
+            [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run',
+             '--root', str(self.root), *resume_options, *options], cwd=self.base,
+            env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.addCleanup(self.terminate_helper, helper)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline and not self.gemini_child_pid.exists():
+            time.sleep(0.05)
+        self.assertTrue(self.gemini_child_pid.exists(), 'doctor did not start fake version check')
+        pids = json.loads(self.gemini_child_pid.read_text())
+        provider_group = os.getpgid(pids['provider'])
+        self.assertNotEqual(provider_group, os.getpgid(pids['doctor']))
+        # Record ownership while the child is live; only fixture-owned groups
+        # are cleaned, after the survival and no-replacement assertions.
+        self.register_version_provider_cleanup(pids['provider'], provider_group)
+        if not signal_denied:
+            os.kill(pids['doctor'], signal.SIGKILL)
+        stdout, stderr = helper.communicate(timeout=20 if signal_denied else 8)
+        if signal_denied:
+            doctor = json.loads((self.root / 'evidence/attempts/attempt-0001/doctor.json').read_text())
+            self.assertEqual(doctor['status'], 'diagnosed')
+            self.assertEqual(doctor['reason_code'], 'cleanup_unconfirmed')
+            self.assertFalse(doctor['readiness']['can_attempt'])
+            self.assertEqual(json.loads(stdout)['doctor_exit_code'], 3)
+        self.assert_version_provider_alive(pids['provider'], provider_group)
+
+        self.assertEqual(helper.returncode, 3, stdout + stderr)
+        self.assertEqual(json.loads(stdout)['reason_code'], 'cleanup_unconfirmed')
+        manifest_path = self.root / 'manifest.json'
+        before = manifest_path.read_bytes()
+        attempt = json.loads(before)['attempts'][-1]
+        self.assertEqual(attempt['reason_code'], 'cleanup_unconfirmed')
+        self.assertFalse(attempt['runner_started'])
+        calls = self.gemini_calls_read()
+        for retry_options in ([], resume_options):
+            retry = self.run_helper('run', '--root', str(self.root), *retry_options, *options)
+            self.assertEqual(retry.returncode, 3, retry.stdout + retry.stderr)
+            self.assertEqual(json.loads(retry.stdout)['reason_code'], 'cleanup_unconfirmed')
+            self.assertEqual(manifest_path.read_bytes(), before)
+            self.assertEqual(self.gemini_calls_read(), calls)
+            self.assert_version_provider_alive(pids['provider'], provider_group)
+
+    def test_doctor_killed_with_separate_provider_preserves_initial_barrier(self):
+        self.doctor_child_survival_barrier()
+
+    def test_doctor_killed_with_separate_provider_preserves_resume_barrier(self):
+        self.doctor_child_survival_barrier(resume=True)
+
+    def test_typed_doctor_cleanup_uncertainty_preserves_provider_barrier(self):
+        self.doctor_child_survival_barrier(signal_denied=True)
+
+    def test_lost_terminal_doctor_reports_preserve_barrier_after_normal_exit(self):
+        self.install_composed_gemini(mode='hold-version')
+        for report_bytes in (None, b'{partial', b'{"schema_version": 1}'):
+            with self.subTest(report=report_bytes):
+                self.root = self.base / f'lost report root {len(list(self.base.glob("lost report root *")))}'
+                self.gemini_child_pid.unlink(missing_ok=True)
+                self.setup_root()
+                options = ['--authorize-paid-run', '--gemini', str(self.gemini)]
+                helper = subprocess.Popen(
+                    [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run',
+                     '--root', str(self.root), *options], cwd=self.base, env=self.env,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                self.addCleanup(self.terminate_helper, helper)
+                deadline = time.monotonic() + 8
+                while time.monotonic() < deadline and not self.gemini_child_pid.exists():
+                    time.sleep(0.05)
+                self.assertTrue(self.gemini_child_pid.exists())
+                pids = json.loads(self.gemini_child_pid.read_text())
+                group = os.getpgid(pids['provider'])
+                self.register_version_provider_cleanup(pids['provider'], group)
+                # The real doctor writes its terminal report to its original
+                # open inode; the public evidence path has been lost/corrupted.
+                report_path = self.root / 'evidence/attempts/attempt-0001/doctor.json'
+                report_path.unlink()
+                if report_bytes is not None:
+                    report_path.write_bytes(report_bytes)
+                os.killpg(group, signal.SIGTERM)
+                stdout, stderr = helper.communicate(timeout=8)
+                self.assertEqual(helper.returncode, 3, stdout + stderr)
+                result = json.loads(stdout)
+                self.assertEqual(result['doctor_exit_code'], 3)
+                self.assertEqual(result['reason_code'], 'cleanup_unconfirmed')
+                before = (self.root / 'manifest.json').read_bytes()
+                calls = self.gemini_calls_read()
+                retry = self.run_helper('run', '--root', str(self.root), *options)
+                self.assertEqual(retry.returncode, 3, retry.stdout + retry.stderr)
+                self.assertEqual(json.loads(retry.stdout)['reason_code'], 'cleanup_unconfirmed')
+                self.assertEqual((self.root / 'manifest.json').read_bytes(), before)
+                self.assertEqual(self.gemini_calls_read(), calls)
+
+    def test_real_doctor_invalid_input_and_cancellation_keep_confirmed_outcomes(self):
+        self.install_composed_gemini(mode='hold-version')
+        self.setup_root()
+        options = ['--authorize-paid-run', '--gemini', str(self.gemini)]
+        invalid = self.run_helper('run', '--root', str(self.root), *options,
+                                  '--policy', str(self.base / 'missing policy.toml'))
+        self.assertEqual(invalid.returncode, 2, invalid.stdout + invalid.stderr)
+        self.assertNotEqual(json.loads(invalid.stdout)['reason_code'], 'cleanup_unconfirmed')
+        # An ordinary invalid diagnosis is terminal and can be retried after
+        # correcting the supplied input. Cancellation then lets doctor clean
+        # its independently grouped provider and publish its terminal report.
+        self.gemini_child_pid.unlink(missing_ok=True)
+        helper = subprocess.Popen(
+            [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run',
+             '--root', str(self.root), *options], cwd=self.base, env=self.env,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.addCleanup(self.terminate_helper, helper)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline and not self.gemini_child_pid.exists():
+            time.sleep(0.05)
+        self.assertTrue(self.gemini_child_pid.exists())
+        pids = json.loads(self.gemini_child_pid.read_text())
+        group = os.getpgid(pids['provider'])
+        self.register_version_provider_cleanup(pids['provider'], group)
+        helper.send_signal(signal.SIGINT)
+        stdout, stderr = helper.communicate(timeout=8)
+        self.assertEqual(helper.returncode, 130, stdout + stderr)
+        self.assertEqual(json.loads(stdout)['reason_code'], 'interrupted_during_doctor')
+        inspected = subprocess.run(['/bin/ps', '-p', str(pids['provider']), '-o', 'stat='],
+                                   capture_output=True, text=True, check=False)
+        self.assertIn(inspected.returncode, (0, 1), inspected.stderr)
+        self.assertTrue(not inspected.stdout.strip() or inspected.stdout.strip().startswith('Z'),
+                        inspected.stdout)
+
     def test_helper_killed_before_doctor_spawn_preserves_write_ahead_barrier(self):
         self.install_fake_runner()
         self.setup_root()
