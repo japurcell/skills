@@ -9,6 +9,10 @@ import sys
 import os
 import time
 
+# Diagnostics must leave a freshly copied installed bundle unchanged, including
+# when the caller did not set PYTHONDONTWRITEBYTECODE.
+sys.dont_write_bytecode = True
+
 from contracts import Plan, Stop
 from reporting import make_blocker, readiness_blockers
 

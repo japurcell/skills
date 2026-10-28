@@ -50,6 +50,8 @@ For an already-reviewed policy, append its literal path as `--policy /absolute/p
 
 The helper numbers attempts and stores doctor JSON, runner summary, progress, and state under `evidence/attempts/`. It preserves earlier attempts and refuses to overwrite evidence or run concurrently. Review the JSON it prints and the paths it names. The helper never scrapes provider transcripts.
 
+If the helper dies before finishing an attempt, `qualification_attempt_incomplete` blocks further execution from that root, including a crash during doctor or before a child PID or runner state exists. A saved `cleanup_unconfirmed` also blocks helper retries. Preserve the root for operator reconciliation, confirm owned children have stopped, and use a new disposable root for any separately authorized attempt. Missing state or PIDs are insufficient proof of cleanup. The helper has no flag to clear either barrier and never kills a saved, unverified PID.
+
 ## Resume and collect evidence
 
 If a run stops with a recorded run directory, preserve the project and resume that same run after reviewing the report. Use the exact run directory printed by the previous report:

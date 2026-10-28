@@ -137,6 +137,10 @@ def record(value):
 
 if '--version' in args:
     record({'kind': 'version', 'argv': args})
+    if os.environ['QUALIFY_FAKE_GEMINI_MODE'] == 'hold-version':
+        pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_CHILD_PID']).write_text(json.dumps(
+            {'provider': os.getpid(), 'doctor': os.getppid()}), encoding='utf-8')
+        time.sleep(60)
     print('0.65.0')
     raise SystemExit(0)
 
@@ -345,6 +349,7 @@ print(json.dumps({'type': 'result', 'status': 'success',
         first_report = json.loads(first.stdout)
         self.assertEqual(first_report['status'], 'collection_complete')
         self.assertEqual(first_report['baseline_commit'], baseline)
+        self.assertTrue(first_report['git']['baseline_reachable'])
         self.assertEqual(first_report['git']['commits_since_baseline'], 3)
         self.assertEqual(first_report['git']['commit_count'], 4)
         self.assertEqual(first_report['missing_evidence'], [])
@@ -369,6 +374,80 @@ print(json.dumps({'type': 'result', 'status': 'success',
         self.assertEqual(json.loads(third.stdout)['missing_evidence'], [
             {'attempt': 2, 'artifact': 'runner_progress',
              'path': 'evidence/attempts/attempt-0002/runner-progress.jsonl'}])
+
+    def test_collect_only_counts_commits_when_baseline_is_an_ancestor(self):
+        setup = self.setup_root()
+        first = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        self.assertTrue(json.loads(first.stdout)['git']['baseline_reachable'])
+        self.assertEqual(json.loads(first.stdout)['git']['commits_since_baseline'], 0)
+        project = self.root / 'project'
+        for args in (('checkout', '--orphan', 'unrelated'),
+                     ('commit', '--quiet', '--no-gpg-sign', '-m', 'unrelated history')):
+            subprocess.run(['git', '-C', str(project), *args], env=self.env,
+                           capture_output=True, text=True, check=True)
+        actual = subprocess.run(['git', '-C', str(project), 'merge-base', '--is-ancestor',
+                                 setup['baseline_commit'], 'HEAD'], env=self.env,
+                                capture_output=True, text=True)
+        self.assertEqual(actual.returncode, 1, actual.stderr)
+
+        collected = self.run_helper('collect', '--root', str(self.root))
+
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+        report = json.loads(collected.stdout)
+        self.assertFalse(report['git']['baseline_reachable'])
+        self.assertIsNone(report['git']['commits_since_baseline'])
+        self.assertEqual(report['git']['commit_count'], 1)
+
+    def test_collect_preserves_index_bytes_and_metadata_without_losing_status(self):
+        self.setup_root()
+        project = self.root / 'project'
+        index = project / '.git/index'
+        before_bytes = index.read_bytes()
+        before = index.stat()
+        plan = project / 'ExecPlan.md'
+        plan_stat = plan.stat()
+        os.utime(plan, ns=(plan_stat.st_atime_ns, plan_stat.st_mtime_ns + 1_000_000_000))
+
+        for dirty in (False, True, True):
+            with self.subTest(dirty=dirty):
+                if dirty:
+                    (project / 'untracked.txt').write_text('observable status\n')
+                result = self.run_helper('collect', '--root', str(self.root))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report['git']['clean'], not dirty)
+                self.assertEqual(report['git']['dirty_entry_count'], int(dirty))
+                self.assertEqual(index.read_bytes(), before_bytes)
+                after = index.stat()
+                self.assertEqual((after.st_mtime_ns, after.st_ctime_ns, after.st_ino, after.st_mode),
+                                 (before.st_mtime_ns, before.st_ctime_ns, before.st_ino, before.st_mode))
+
+    def test_collect_uses_real_saved_provider_version_and_preserves_unknown_metadata(self):
+        self.install_composed_gemini()
+        self.setup_root()
+        attempt = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run',
+                                  '--gemini', str(self.gemini))
+        self.assertEqual(attempt.returncode, 3, attempt.stdout + attempt.stderr)
+        doctor_path = self.root / 'evidence/attempts/attempt-0001/doctor.json'
+        doctor = json.loads(doctor_path.read_text())
+        self.assertEqual(doctor['readiness']['provenance']['provider']['version'], '0.65.0')
+
+        collected = self.run_helper('collect', '--root', str(self.root))
+
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+        saved = json.loads(collected.stdout)['reports'][0]['doctor']
+        self.assertEqual(saved['versions']['provider'], '0.65.0')
+        for provenance in ({}, None, {'provider_version': 'historical-wrong-shape'},
+                           {'provider': None}, {'provider': 'malformed'}, {'provider': {}},
+                           {'provider': {'version': 65}}, {'provider': {'version': ''}}):
+            with self.subTest(provenance=provenance):
+                doctor['readiness']['provenance'] = provenance
+                doctor_path.write_text(json.dumps(doctor))
+                result = self.run_helper('collect', '--root', str(self.root))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                saved = json.loads(result.stdout)['reports'][0]['doctor']
+                self.assertIsNone((saved['versions'] or {}).get('provider'))
 
     def test_real_helper_runner_composition_preserves_reviewed_resume_and_evidence(self):
         self.install_composed_gemini()
@@ -624,6 +703,120 @@ print(json.dumps({'type': 'result', 'status': 'success',
         self.assertIn(inspected.returncode, (0, 1), inspected.stderr)
         self.assertTrue(not inspected.stdout.strip() or inspected.stdout.strip().startswith('Z'),
                         inspected.stdout)
+
+    def test_failed_process_inspection_still_kills_descendants_and_blocks_retry(self):
+        self.install_fake_runner(mode='hold-descendant')
+        pidfile = self.base / 'inspection descendant pid'
+        self.env['QUALIFY_FAKE_CHILD_PID'] = str(pidfile)
+        injection = self.base / 'inspection failure'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''import os, pathlib, subprocess
+original = subprocess.run
+def run(argv, *args, **kwargs):
+    if argv and argv[0] == '/bin/ps' and pathlib.Path(os.environ['QUALIFY_FAKE_CHILD_PID']).exists():
+        raise PermissionError('injected process inventory failure')
+    return original(argv, *args, **kwargs)
+subprocess.run = run
+''')
+        self.env['PYTHONPATH'] = str(injection)
+        self.setup_root()
+        helper = subprocess.Popen(
+            [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run',
+             '--root', str(self.root), '--authorize-paid-run'],
+            cwd=self.base, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.addCleanup(self.terminate_helper, helper)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline and not pidfile.exists():
+            time.sleep(0.05)
+        self.assertTrue(pidfile.exists(), 'fake runner did not start its descendant')
+        child_pid = int(pidfile.read_text())
+        # Capture the process group while the owned fixture is alive. Cleanup only
+        # follows the assertions, so it cannot make a leaked descendant pass.
+        group = os.getpgid(child_pid)
+        self.addCleanup(self.kill_fixture_group, group)
+        helper.send_signal(signal.SIGINT)
+        stdout, stderr = helper.communicate(timeout=12)
+
+        self.assertEqual(helper.returncode, 3, stdout + stderr)
+        self.assertEqual(json.loads(stdout)['reason_code'], 'cleanup_unconfirmed')
+        inspected = subprocess.run(['/bin/ps', '-p', str(child_pid), '-o', 'stat='],
+                                   capture_output=True, text=True, check=False)
+        self.assertIn(inspected.returncode, (0, 1), inspected.stderr)
+        self.assertTrue(not inspected.stdout.strip() or inspected.stdout.strip().startswith('Z'),
+                        inspected.stdout)
+        before = self.fake_calls_read()
+        retry = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+        self.assertEqual(retry.returncode, 3, retry.stdout + retry.stderr)
+        self.assertEqual(json.loads(retry.stdout)['reason_code'], 'cleanup_unconfirmed')
+        self.assertEqual(self.fake_calls_read(), before)
+
+    def test_helper_killed_during_doctor_preserves_barrier_before_runner_state_exists(self):
+        self.install_composed_gemini(mode='hold-version')
+        self.setup_root()
+        argv = [sys.executable, str(self.bundle / 'scripts/qualify.py'), 'run',
+                '--root', str(self.root), '--authorize-paid-run', '--gemini', str(self.gemini)]
+        helper = subprocess.Popen(argv, cwd=self.base, env=self.env, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True)
+        self.addCleanup(self.terminate_helper, helper)
+        deadline = time.monotonic() + 8
+        while time.monotonic() < deadline and not self.gemini_child_pid.exists():
+            time.sleep(0.05)
+        self.assertTrue(self.gemini_child_pid.exists(), 'doctor did not start fake version check')
+        pids = json.loads(self.gemini_child_pid.read_text())
+        groups = {os.getpgid(pid) for pid in pids.values()}
+        for group in groups:
+            self.addCleanup(self.kill_fixture_group, group)
+        helper.kill()
+        helper.communicate(timeout=3)
+        for pid in pids.values():
+            os.kill(pid, 0)
+        manifest_path = self.root / 'manifest.json'
+        before = manifest_path.read_bytes()
+        record = json.loads(before)['attempts'][0]
+        self.assertEqual(record['status'], 'starting')
+        self.assertFalse(record['runner_started'])
+        self.assertFalse((self.root / record['run_directory']).exists())
+
+        retry = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run',
+                                '--gemini', str(self.gemini))
+
+        self.assertEqual(retry.returncode, 3, retry.stdout + retry.stderr)
+        self.assertEqual(json.loads(retry.stdout)['reason_code'], 'qualification_attempt_incomplete')
+        self.assertEqual(manifest_path.read_bytes(), before)
+        self.assertEqual(len(self.gemini_calls_read()), 1)
+
+    def test_helper_killed_before_doctor_spawn_preserves_write_ahead_barrier(self):
+        self.install_fake_runner()
+        self.setup_root()
+        injection = self.base / 'pre-spawn crash'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''import os, signal, subprocess
+original = subprocess.Popen
+def popen(argv, *args, **kwargs):
+    if '--doctor' in argv:
+        os.kill(os.getpid(), signal.SIGKILL)
+    return original(argv, *args, **kwargs)
+subprocess.Popen = popen
+''')
+        self.env['PYTHONPATH'] = str(injection)
+        first = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+        self.assertEqual(first.returncode, -signal.SIGKILL)
+        self.env.pop('PYTHONPATH')
+        before = (self.root / 'manifest.json').read_bytes()
+
+        retry = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+
+        self.assertEqual(retry.returncode, 3, retry.stdout + retry.stderr)
+        self.assertEqual(json.loads(retry.stdout)['reason_code'], 'qualification_attempt_incomplete')
+        self.assertEqual((self.root / 'manifest.json').read_bytes(), before)
+        self.assertEqual(self.fake_calls_read(), [])
+
+    @staticmethod
+    def kill_fixture_group(group):
+        try:
+            os.killpg(group, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
 
 
 if __name__ == '__main__':

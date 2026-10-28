@@ -424,6 +424,15 @@ def _attempt_number(manifest: dict[str, object]) -> int:
 
 
 def _resume_target(root: Path, manifest: dict[str, object], value: str | None) -> tuple[str | None, str | None]:
+    if any(attempt['reason_code'] == 'cleanup_unconfirmed' for attempt in manifest['attempts']):
+        raise BlockedError('Prior child cleanup is unconfirmed; reconcile this root manually or use a new disposable root',
+                           reason_code='cleanup_unconfirmed')
+    # The attempt is durably written before either child can spawn. After a
+    # crash, missing runner state or a missing PID cannot prove no child lives.
+    if any(attempt['finished_at'] is None or attempt['status'] in ('starting', 'running')
+           for attempt in manifest['attempts']):
+        raise BlockedError('An unfinished attempt may still own doctor or runner children; preserve this root for operator reconciliation and use a new disposable root',
+                           reason_code='qualification_attempt_incomplete')
     existing: set[str] = set()
     for attempt in manifest['attempts']:
         relative = attempt['run_directory']
@@ -510,21 +519,27 @@ def _signal_group(pgid: int, signum: int) -> None:
 
 
 def _stop_group(pgid: int, child: subprocess.Popen[bytes], signum: int) -> str | None:
-    _signal_group(pgid, signum)
+    errors: list[str] = []
+    try:
+        _signal_group(pgid, signum)
+    except OSError as error:
+        errors.append(str(error))
+    active = True
     graceful_until = time.monotonic() + 5
     while time.monotonic() < graceful_until:
-        if not _active_group(pgid):
+        try:
+            active = _active_group(pgid)
+        except (OSError, subprocess.SubprocessError, QualificationError) as error:
+            errors.append(str(error))
+            break
+        if not active:
             break
         time.sleep(0.05)
-    try:
-        active = _active_group(pgid)
-    except (OSError, subprocess.SubprocessError, QualificationError) as error:
-        active = True
-        inspect_error = str(error)
-    else:
-        inspect_error = None
     if active:
-        _signal_group(pgid, signal.SIGKILL)
+        try:
+            _signal_group(pgid, signal.SIGKILL)
+        except OSError as error:
+            errors.append(str(error))
         kill_until = time.monotonic() + 2
         while time.monotonic() < kill_until:
             try:
@@ -532,7 +547,7 @@ def _stop_group(pgid: int, child: subprocess.Popen[bytes], signum: int) -> str |
                     active = False
                     break
             except (OSError, subprocess.SubprocessError, QualificationError) as error:
-                inspect_error = str(error)
+                errors.append(str(error))
                 break
             time.sleep(0.05)
     try:
@@ -540,7 +555,7 @@ def _stop_group(pgid: int, child: subprocess.Popen[bytes], signum: int) -> str |
     except subprocess.TimeoutExpired:
         return 'Runner leader did not exit after bounded process-group cleanup'
     if active:
-        return inspect_error or 'Runner descendants remain active after bounded process-group cleanup'
+        return '; '.join(errors) or 'Runner descendants remain active after bounded process-group cleanup'
     return None
 
 
@@ -571,7 +586,8 @@ def _supervised_child(root: Path, argv: list[str], cwd: Path, stdout_path: Path,
         try:
             has_descendants = _active_group(child.pid)
         except (OSError, subprocess.SubprocessError, QualificationError) as error:
-            return ChildResult(code, cleanup_error=f'Could not confirm runner cleanup: {error}')
+            cleanup = _stop_group(child.pid, child, signal.SIGTERM)
+            return ChildResult(code, cleanup_error=cleanup or f'Could not confirm runner cleanup: {error}')
         if has_descendants:
             cleanup = _stop_group(child.pid, child, signal.SIGTERM)
             return ChildResult(code, cleanup_error=cleanup or 'Runner exited with a surviving descendant')
@@ -814,14 +830,15 @@ def _collect_qualification(root_value: str) -> dict[str, object]:
         baseline = manifest['baseline_commit']
         head = _git(project, 'rev-parse', 'HEAD')
         branch = _git(project, 'branch', '--show-current')
-        porcelain = _git(project, 'status', '--porcelain=v1', '--untracked-files=all')
+        porcelain = _git(project, '--no-optional-locks', 'status', '--porcelain=v1', '--untracked-files=all')
         commit_count = int(_git(project, 'rev-list', '--count', 'HEAD'))
-        range_result = subprocess.run(
-            ['git', '-C', str(project), 'rev-list', '--count', f'{baseline}..HEAD'],
+        ancestor_result = subprocess.run(
+            ['git', '-C', str(project), 'merge-base', '--is-ancestor', baseline, 'HEAD'],
             cwd=project, env=_git_environment(), stdin=subprocess.DEVNULL,
             capture_output=True, text=True, timeout=10, check=False)
-        baseline_reachable = range_result.returncode == 0
-        commits_since_baseline = int(range_result.stdout.strip()) if baseline_reachable else None
+        baseline_reachable = ancestor_result.returncode == 0
+        commits_since_baseline = (int(_git(project, 'rev-list', '--count', f'{baseline}..HEAD'))
+                                  if baseline_reachable else None)
         log_text = _git(project, 'log', '--max-count=100', '--format=%H%x09%s', 'HEAD')
         commit_log = []
         for line in log_text.splitlines():
@@ -865,7 +882,9 @@ def _collect_qualification(root_value: str) -> dict[str, object]:
                 if versions is None and isinstance(doctor_report.get('readiness'), dict):
                     provenance = doctor_report['readiness'].get('provenance')
                     if isinstance(provenance, dict):
-                        versions = {'provider': provenance.get('provider_version')}
+                        provider = provenance.get('provider')
+                        version = provider.get('version') if isinstance(provider, dict) else None
+                        versions = {'provider': version if isinstance(version, str) and version else None}
             reports.append({
                 'attempt': attempt['number'], 'status': attempt['status'],
                 'exit_code': attempt['exit_code'], 'reason_code': attempt['reason_code'],

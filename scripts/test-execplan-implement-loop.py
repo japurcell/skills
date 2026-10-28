@@ -1368,6 +1368,20 @@ raise SystemExit(97)
         self.assertFalse((self.repo / '.git/execplan-implement-loop.lock').exists())
         self.assertFalse((self.repo / '.git/execplan-implement-loop').exists())
 
+    def test_doctor_fresh_copy_does_not_create_bundle_bytecode(self):
+        self.doctor_fixture()
+        for cache in self.bundle.rglob('__pycache__'):
+            shutil.rmtree(cache)
+        for key in ('PYTHONDONTWRITEBYTECODE', 'PYTHONPYCACHEPREFIX'):
+            self.env.pop(key, None)
+        before = self.snapshot_tree(self.bundle)
+
+        result = self.run_doctor()
+
+        self.assert_doctor_summary(result, 0, 'doctor_complete')
+        self.assertEqual(self.snapshot_tree(self.bundle), before)
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
     def test_doctor_collects_missing_provider_and_skill_blockers_together(self):
         self.doctor_fixture()
         (Path(self.env['HOME']) / '.agents/skills/tdd/SKILL.md').unlink()
