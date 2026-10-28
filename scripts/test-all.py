@@ -71,6 +71,7 @@ SUITES = (
     ("bash", "scripts/test-repo-root.sh"),
     ("python3", "scripts/test_helpers.py"),
     ("python3", "scripts/test-execplan-implement-loop.py"),
+    ("python3", "scripts/test-execplan-qualification.py"),
     ("python3", "skills/default/create-skill/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"),
