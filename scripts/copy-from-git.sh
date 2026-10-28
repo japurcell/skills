@@ -9,24 +9,26 @@ readonly REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd -P)"
 usage() {
   cat <<'EOF'
 Usage:
-  ./import-skill-repos.sh <github_repo_url> <src1> <dest1> [<src2> <dest2> ...]
+  copy-from-git.sh [--clone-dir NAME] --repo URL [--] SRC DEST [SRC DEST ...]
+  copy-from-git.sh [--clone-dir NAME] URL SRC DEST [SRC DEST ...]
+
+Options:
+  -r, --repo URL        Repository URL (or local Git repository path).
+  -c, --clone-dir NAME  Clone folder name under the repository's parent directory.
+                       Defaults to the repository basename without .git.
+  -h, --help            Show this help and exit.
+  --                   End options; remaining arguments are source/destination pairs.
 
 Example:
-  ./import-skill-repos.sh \
-    https://github.com/example/repo.git \
-    README.md third_party/README.md \
-    docs vendor/docs
+  copy-from-git.sh --repo https://github.com/example/skills.git \
+    --clone-dir example-skills -- docs vendor/docs
 
-Notes:
-  - If ../<repo-name> already exists and is the same repo, the script always runs:
-      git pull --ff-only
-    before copying.
-  - If that fails, it attempts:
-      git fetch origin --prune
-      git reset --hard origin/<default-branch>
-  - If src is a directory, it copies the directory recursively.
-  - If you want directory contents copied into a destination, pass src as:
-      path/to/dir/.
+Existing clones must match the requested remote. Collisions fail with an error;
+choose another --clone-dir. Matching clones run git pull --ff-only, with fetch
+and reset --hard to the remote default branch as recovery if pulling fails.
+Directory sources copy recursively; use path/to/dir/. to copy their contents.
+Destinations are relative to this repository and cannot contain '..'.
+Exit codes: 0 success/help, 1 repository/dependency error, 2 usage/copy error.
 EOF
 }
 
@@ -63,6 +65,10 @@ repo_name_from_url() {
 
 normalize_remote() {
   local url="$1"
+  if [[ -d "$url" ]]; then
+    (cd -- "$url" && pwd -P)
+    return
+  fi
   url="${url%.git}"
   url="${url#git@github.com:}"
   url="${url#https://github.com/}"
@@ -147,44 +153,28 @@ update_existing_repo() {
 
 prepare_repo() {
   local repo_url="$1"
+  local clone_name="$2"
   local parent_dir="${REPO_ROOT}/.."
-  local repo_name preferred_dir temp_dir repo_dir
+  local repo_dir="${parent_dir%/}/$clone_name"
 
-  mkdir -p "$parent_dir"
-  repo_name="$(repo_name_from_url "$repo_url")"
-  preferred_dir="${parent_dir%/}/$repo_name"
-
-  for repo_dir in "$parent_dir"/*; do
-    [[ -d "$repo_dir" ]] || continue
-    [[ "$repo_dir" == *.clone.* ]] && continue
-
+  if [[ -e "$repo_dir" || -L "$repo_dir" ]]; then
     if ! same_remote "$repo_dir" "$repo_url"; then
-      continue
+      err "Clone path already exists and does not match $repo_url: $repo_dir"
+      err "Choose a different folder with --clone-dir NAME."
+      return 1
     fi
-
-    if update_existing_repo "$repo_dir"; then
-      printf '%s\n' "$repo_dir"
-      return 0
+    if ! update_existing_repo "$repo_dir"; then
+      err "Could not update $repo_url at $repo_dir; see Git diagnostics above."
+      return 1
     fi
-    warn "Could not safely update existing repo; falling back to fresh temp clone"
-    break
-  done
-
-  if [[ ! -e "$preferred_dir" ]]; then
-    log "Cloning into preferred location: $preferred_dir"
-    if git clone "$repo_url" "$preferred_dir" >&2; then
-      printf '%s\n' "$preferred_dir"
-      return 0
-    fi
-    warn "Clone into preferred location failed"
   else
-    warn "Preferred path exists but is not a matching usable git repo: $preferred_dir"
+    log "Cloning $repo_url into $repo_dir"
+    if ! git clone -- "$repo_url" "$repo_dir" >&2; then
+      err "Could not clone $repo_url into $repo_dir; check the URL, access, and Git diagnostics above."
+      return 1
+    fi
   fi
-
-  temp_dir="$(mktemp -d "${parent_dir%/}/${repo_name}.clone.XXXXXX")"
-  log "Cloning into fallback temp dir: $temp_dir"
-  git clone "$repo_url" "$temp_dir" >&2
-  printf '%s\n' "$temp_dir"
+  printf '%s\n' "$repo_dir"
 }
 
 copy_with_rsync() {
@@ -206,7 +196,7 @@ copy_path() {
   local dest="$2"
 
   if [[ ! -e "$src" ]]; then
-    warn "Source not found, skipping: $src"
+    err "Source path does not exist: $src"
     return 1
   fi
 
@@ -252,28 +242,62 @@ resolve_dest() {
 }
 
 main() {
+  local repo_url="" clone_name=""
+  local -a paths=()
+  while (( $# )); do
+    case "$1" in
+      -h|--help) usage; return 0 ;;
+      -r|--repo|-c|--clone-dir)
+        if (( $# < 2 )) || [[ -z "$2" || "$2" == -* ]]; then
+          err "Option $1 requires a value. See --help."
+          return 2
+        fi
+        case "$1" in
+          -r|--repo) repo_url="$2" ;;
+          *) clone_name="$2" ;;
+        esac
+        shift 2 ;;
+      --repo=|--clone-dir=) err "Option ${1%%=*} requires a value. See --help."; return 2 ;;
+      --repo=*) repo_url="${1#*=}"; shift ;;
+      --clone-dir=*) clone_name="${1#*=}"; shift ;;
+      --) shift; paths+=("$@"); break ;;
+      -*) err "Unknown option: $1. See --help."; return 2 ;;
+      *)
+        if [[ -z "$repo_url" ]]; then repo_url="$1"
+        else paths+=("$1"); fi
+        shift ;;
+    esac
+  done
+  if [[ -z "$repo_url" ]] || (( ${#paths[@]} < 2 || ${#paths[@]} % 2 != 0 )); then
+    err "Provide a repository and source/destination pairs. See --help."
+    return 2
+  fi
+  [[ -n "$clone_name" ]] || clone_name="$(repo_name_from_url "$repo_url")"
+  case "$clone_name" in
+    .|..|*/*|*\\*|-*) err "Clone folder must be a single folder name: $clone_name"; return 2 ;;
+  esac
+  local i
+  for (( i=1; i<${#paths[@]}; i+=2 )); do
+    resolve_dest "${paths[i]}" >/dev/null || return 2
+  done
+
   require_cmd git
   require_cmd basename
   require_cmd dirname
   require_cmd mkdir
   require_cmd cp
 
-  if [[ $# -lt 3 ]]; then
-    usage
-    exit 1
-  fi
-
-  local repo_url="$1"
-  shift
-
-  if (( $# % 2 != 0 )); then
-    err "Source/destination arguments must be provided in pairs"
-    usage
-    exit 1
+  # Git stores local clone origins as absolute paths. Use the same physical path
+  # for cloning and comparison so relative paths and symlinks can be reused.
+  if [[ -d "$repo_url" ]]; then
+    repo_url="$(cd -- "$repo_url" && pwd -P)" || return 1
   fi
 
   local repo_root
-  repo_root="$(prepare_repo "$repo_url")"
+  if ! repo_root="$(prepare_repo "$repo_url" "$clone_name")"; then
+    return 1
+  fi
+  set -- "${paths[@]}"
   log "Using repo root: $repo_root"
 
   local failures=0
@@ -292,6 +316,11 @@ main() {
     fi
 
     log "Processing: $rel_src -> $rel_dest"
+    if [[ ! -e "$full_src" ]]; then
+      err "Missing source path '$rel_src' in repository $repo_url. It may have moved or been removed upstream. Update or remove this source mapping in scripts/import-skill-repos.sh."
+      failures=$((failures + 1))
+      continue
+    fi
     if ! copy_path "$full_src" "$full_dest"; then
       failures=$((failures + 1))
     fi

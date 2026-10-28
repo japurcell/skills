@@ -18,6 +18,8 @@ from typing import BinaryIO
 
 # Register maintained suites explicitly; never discover fixture or archived tests.
 SUITES = (
+    ("python3", "scripts/test_copy_from_git.py"),
+    ("python3", "scripts/test_workspace_config.py"),
     ("bash", "scripts/test-addy-install.sh"),
     ("bash", "scripts/test-cleanup-skill-workspaces.sh"),
     ("bash", "scripts/test-codex-hooks-startup.sh"),
