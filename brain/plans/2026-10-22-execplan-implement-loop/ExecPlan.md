@@ -27,10 +27,10 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 
 - [x] (2026-10-28) [design] Reconcile live evidence and freeze T7-T12 contracts without runtime edits.
 - [x] (2026-10-28) [milestone-6] T7: Deliver deterministic doctor diagnostics and CLI proof; integrated readiness group passed 9/9 in 7.717 seconds.
-- [ ] [milestone-6] T8: Bind execution/resume to reviewed policy provenance and fresh readiness.
+- [x] (2026-10-28) [milestone-6] T8: Bind execution/resume to reviewed policy provenance and fresh readiness; readiness, Git, loop, and process groups passed on the tested source, plus 20/20 root readiness cases.
 - [x] (2026-10-28) [milestone-6] T8 partial: Core policy, resume, and provider-free recovery cases passed; the 17-case readiness suite passed once (reported by the T8 owner).
-- [ ] [milestone-6] T8: Resolve the intermittent active-child doctor deadline cleanup failure; copied CLI sometimes returns `io_error`/EPERM with exit 2 instead of timeout exit 124. Traceback points to `Supervisor.__exit__` -> `kill_group(active.pid, SIGKILL)` -> `os.killpg`. Eight serial diagnostic reruns passed, but the cause is unproven and the issue is not resolved.
-- [ ] [milestone-6] Verify doctor, execution, resume, and historical-journal compatibility together.
+- [x] (2026-10-28) [milestone-6] T8 cleanup proof: deterministic EPERM cases now preserve one typed `cleanup_unconfirmed` result and in-flight intent; independently confirmed process-group absence permits the deadline outcome, and no replacement invocation starts. The underlying OS-level EPERM cause remains unproven.
+- [x] (2026-10-28) [milestone-6] Verify doctor, execution, resume, and historical-journal compatibility together; the final frozen maintained runner passed 64/64, and the integrated root readiness group passed 20/20.
 - [ ] [milestone-7] T9: Preserve blocked iterations and add actionable blockers and optional observations.
 - [ ] [milestone-7] Verify reporting and resumed history together without changing failure accounting.
 - [x] (2026-10-28) [milestone-8] T10: Deliver shell-free disposable qualification helper; integrated helper suite passed 10/10 in 8.632 seconds.
@@ -49,7 +49,7 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 - Dependency metadata and active docs still say live qualification pending. Separate historical adapter qualification from current invocation readiness and pending qualification of this extension.
 - Pinned 0.65.0 supports explicit `--policy` paths, but implicit workspace `.gemini/policies` discovery is disabled. Readable allow files do not prove effective permissions, authentication, or trust. See [policy source note](follow-up-design.md).
 - The historical editing-tool workaround does not establish authorization for alternate I/O. Current guidance must restrict approved alternatives to already-authorized paths and stop at actual boundaries.
-- Observation: T8's active-child doctor deadline path remains intermittently unresolved. Evidence: copied CLI sometimes returns `io_error`/EPERM (exit 2) where timeout exit 124 is expected; a temporary traceback reaches `Supervisor.__exit__` -> `kill_group(active.pid, SIGKILL)` -> `os.killpg`. Eight serial diagnostic reruns passed, but do not establish a cause or fix. T8 owner is tracing cleanup state; no tests or assertions were weakened.
+- Observation: T8 cleanup now reports the active-child signal-denial case deterministically. Evidence: the process-group cleanup path preserves one typed `cleanup_unconfirmed` result and in-flight intent; an independently confirmed absent group permits the deadline result, and no replacement invocation starts. The underlying OS-level EPERM cause remains unproven. An earlier 62/63 runner result and its failure evidence were retained; the final frozen maintained runner passed 64/64 without weakened assertions.
 
 ## Decision Log
 
@@ -229,8 +229,8 @@ Prerequisites: T5. Register the maintained suite in `scripts/test-all.py`; updat
 Verification: run `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk proxy python3 scripts/test_test_all.py`, and `rtk proxy python3 scripts/test-all.py --list`. Expect exit 0 and the new suite listed exactly once. Compile the new Python sources with `rtk proxy python3 -m py_compile` using their final explicit paths. Run the full aggregate suite when its documented dependencies are available and report any unmet prerequisite rather than skipping failures. Live-provider evidence remains explicitly pending until run; final milestone acceptance requires it or a user-recorded waiver of that acceptance scope.
 
 ### Milestone 6: Diagnose prerequisites and bind reviewed inputs
-Status: in progress
-Acceptance: not met
+Status: done
+Acceptance: met
 
 A copied installed CLI diagnoses local prerequisites without paid requests and records actual reviewed inputs for new/resumed attempts. Permission/authentication/trust stay honestly unknown. Historical qualification cannot substitute for current readiness.
 
@@ -247,7 +247,7 @@ Prerequisites: T7. Owner: execution-readiness implementer, bundle `scripts/engin
 Verification: run readiness, git, and loop groups with `rtk proxy python3 scripts/test-execplan-implement-loop.py --group GROUP`. Cover absent/present policy, change before spawn, omitted-versus-explicit updated policy on resume, symlink swap, blocked-then-fixed prerequisite, old v1 journal without new fields, verification-only plans, completed resume, and commit-only recovery despite missing provider. Assert zero paid prompts on blockers, exact provider argv/provenance agreement, retained cumulative records, and unchanged call/commit/transaction counts. Milestone integration: run the entire maintained runner suite on integrated T7/T8 source before accepting Milestone 6; record actual evidence. Stop before reporting enrichment.
 
 ### Milestone 7: Preserve actionable blocked state and honest observations
-Status: open
+Status: in progress
 Acceptance: not met
 
 New blocked iterations remain visibly blocked through journal/report/resume, with safe next actions and fresh provenance. Optional usage observations add source-backed detail without changing token accounting or implying cost.
@@ -284,9 +284,11 @@ Verification: `rtk proxy python3 scripts/test-execplan-implement-loop.py`, `rtk 
 
 ## Concrete Steps
 
-Next authorized action: T8 owner continues tracing the intermittent active-child doctor deadline cleanup error and completes focused/full verification for policy provenance, resume, and provider-free commit recovery. The eight passing serial reruns do not resolve the reported `io_error`/EPERM versus timeout-exit discrepancy. After T8 is complete, proceed to T9, then T11; T12 proves actual composition of the helper with the runner and performs combined verification and review. T10's standalone fake-runner proof is complete; actual runner composition remains pending T12. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
+Next authorized action: T9 preserves blocked status through reporting and resume, then T11 reconciles the skill and qualification guidance. T8 and Milestone 6 are complete. T10's standalone fake-runner proof is complete; actual helper/runner composition remains pending T12. T12 also owns final combined verification and deferred review. The OS-level cause of the T8 signal-denial case remains unknown even though its runner outcome is now deterministic. Source implementers activate `tdd`. Use `execplan-implement` and required Summary/Rationale/Tests commit body; Copilot attribution remains declined. Do not run this prose plan through `execplan-implement-loop` or issue paid Gemini calls.
 
-Integrated 2026-10-28: T7 branch `f67432e0fcef419fd9a874336bb947716c14f1bd` was fast-forwarded; T10 branch `21460b08073f9150c20e95db73c5238f96c22d44` was merged. `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` passed 9/9 in 7.717 seconds. Then `rtk proxy python3 scripts/test-execplan-qualification.py` passed 10/10 in 8.632 seconds. The worker branches also passed their reported compile and diff checks. These focused task checks do not satisfy Milestone 6 or 8 integration acceptance; those remain unmet.
+Integrated 2026-10-28: T7 branch `f67432e0fcef419fd9a874336bb947716c14f1bd` was fast-forwarded; T10 branch `21460b08073f9150c20e95db73c5238f96c22d44` was merged. `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` passed 9/9 in 7.717 seconds. Then `rtk proxy python3 scripts/test-execplan-qualification.py` passed 10/10 in 8.632 seconds. The worker branches also passed their reported compile and diff checks. These focused task checks do not satisfy Milestone 8 integration acceptance; that remains unmet.
+
+T8 integration 2026-10-28: source commit `bbd222d28d5177a3fb7847f8ff67a33b92e19716` was fast-forwarded through branch head `f8286d1fa9f4046a5746c006bc8602601594c4a5`; the final branch adds only this plan update after the tested source commit. Owner-reported serial results on that source: readiness 19/19, Git 14/14, loop 6/6, process 13/13, compile and diff checks passed, and final frozen maintained runner 64/64 in 158.392 seconds. Earlier 62/63 failure evidence was retained. Root integration proof: `rtk proxy python3 scripts/test-execplan-implement-loop.py --group readiness` passed 20/20 in 42.363 seconds with process inspection enabled. Milestone 6 acceptance is met. No claim is made that the underlying OS-level EPERM cause is resolved.
 
 Completed historical steps:
 
@@ -296,7 +298,7 @@ Local implementation, all five maintained runner groups, instruction evaluations
 
 ## Validation and Acceptance
 
-T7 readiness (9/9) and T10 helper (10/10) focused runtime checks passed on the integrated tree, serially with process inspection. The T8 owner reports core policy/resume/provider-free recovery cases green and one passing 17-case readiness run. An intermittent doctor active-child deadline cleanup error remains unresolved, so T8 and Milestone 6 acceptance remain open. T9, T11-T12, and the Milestone 6/8 integration checks remain pending. Milestones require integrated process-boundary proof, not independent task passes alone. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun remains separately pending authorization.
+Milestone 6 is accepted: the T8 source passed its readiness/Git/loop/process groups and final frozen maintained runner (64/64), and the integrated root readiness group passed 20/20. T7 root readiness and T10 standalone helper focused checks also passed earlier. The active-child cleanup outcome is deterministic under signal denial, while its underlying OS-level EPERM cause remains unknown. Milestone 7 is in progress with T9 next. Milestone 8 remains in progress: T10's fake-runner helper proof is complete, while T11 and T12 composition/integration remain pending. Diagnostics/setup/collection must prove no paid prompt and no unintended writes. Operational fixtures must prove blocked history, fresh resume provenance, exact commits after acceptance, installed portability, and unchanged original evidence. Preserve all 2026-10-27 evidence files. A future real-provider rerun remains separately pending authorization.
 
 Success means a copied installed skill can run an authorized canonical plan to verified, committed completion, or stop with an accurate typed non-success outcome and recoverable state. It must not incur model calls for parsing, scheduling, progress, acceptance commands, commits, retries, or summaries. Prove the core behavior at the process boundary with a fake Gemini and real Git, then separately qualify the provider adapter with a live smoke test.
 
@@ -312,7 +314,7 @@ The lock is advisory and prompt instructions are not a security sandbox. Gemini 
 
 ## Artifacts and Notes
 
-Follow-up sources: [policy/readiness interpretation](follow-up-design.md) and [provider observation fields](provider-observations.md). T7/T10 integration evidence is recorded above; T8-T12 and combined milestone proof remain pending. No paid calls were made. Earlier plan-only validation on 2026-10-28 passed `rtk git diff --check` and a Python document-integrity check for local links, punctuation, unique T7-T12 headings, open new milestone states, and exact unchanged Milestones 1-5/evidence. Records below establish historical T1-T6 behavior only and must remain unchanged as evidence.
+Follow-up sources: [policy/readiness interpretation](follow-up-design.md) and [provider observation fields](provider-observations.md). T7 and T8/Milestone 6 acceptance evidence and T10 standalone proof are recorded above. T9, T11, T12, Milestone 7/8 integration, and actual helper/runner composition remain pending. No paid calls were made. Earlier plan-only validation on 2026-10-28 passed `rtk git diff --check` and a Python document-integrity check for local links, punctuation, unique T7-T12 headings, open new milestone states, and exact unchanged Milestones 1-5/evidence. Records below establish historical T1-T6 behavior only and must remain unchanged as evidence.
 
 Reflection (2026-10-28): no new durable note was needed; serialized process-sensitive fixture guidance is already captured in [script testing](../../codebase/script-testing.md).
 
