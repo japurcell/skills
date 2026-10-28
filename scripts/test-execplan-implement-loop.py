@@ -2,6 +2,7 @@
 """Process-boundary acceptance tests for the portable ExecPlan runner."""
 import argparse
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -694,6 +695,277 @@ class LoopTests(Fixture):
         self.assertIn('3 / 3', text)
 
 
+class ReadinessTests(Fixture):
+    def doctor_fixture(self, workspace_sources=False):
+        marker = self.root / 'acceptance-ran'
+        self.data['tasks'][0]['verification'][0]['argv'] = [
+            sys.executable, '-c',
+            f'from pathlib import Path; Path({str(marker)!r}).write_text("ran")']
+        self.plan.write_text(markdown(self.data))
+        self.execution_fixture()
+        if workspace_sources:
+            policies = self.repo / '.gemini/policies'
+            policies.mkdir(parents=True)
+            (policies / 'workspace.toml').write_text("marker = 'secret-workspace-marker'\n")
+            settings = self.repo / '.gemini/settings.json'
+            settings.write_text('{"credential":"secret-settings-marker"}\n')
+            self.git('add', '--', '.gemini')
+            self.git('commit', '-qm', 'Add workspace policy fixtures')
+        self.install_doctor_provider()
+        return marker
+
+    def install_doctor_provider(self):
+        self.provider = self.root / 'provider bin with spaces' / '-fake-gemini'
+        self.provider.parent.mkdir()
+        self.provider.write_text('#!' + sys.executable + '\n' + '''
+import json, os, signal, sys, time
+with open(os.environ['DOCTOR_LEDGER'], 'a', encoding='utf-8') as ledger:
+    ledger.write(json.dumps({'argv': sys.argv[1:], 'pid': os.getpid()}) + '\\n')
+if sys.argv[1:] == ['--version']:
+    if os.environ.get('DOCTOR_SIGNAL_PARENT') == '1':
+        print(os.environ.get('DOCTOR_VERSION', '0.65.0'), flush=True)
+        os.kill(os.getppid(), signal.SIGTERM)
+        raise SystemExit(0)
+    time.sleep(float(os.environ.get('DOCTOR_DELAY', '0')))
+    print(os.environ.get('DOCTOR_VERSION', '0.65.0'))
+    raise SystemExit(0)
+print('doctor must not issue provider prompts', file=sys.stderr)
+raise SystemExit(97)
+''')
+        self.provider.chmod(0o700)
+        self.ledger = self.root / 'provider-ledger.jsonl'
+        self.env['DOCTOR_LEDGER'] = str(self.ledger)
+
+    def run_doctor(self, *args, **kwargs):
+        return self.run_cli('--doctor', '--gemini', str(self.provider), *args, **kwargs)
+
+    def checks(self, report):
+        return {check['id']: check for check in report['readiness']['checks']}
+
+    def provider_calls(self):
+        if not self.ledger.exists():
+            return []
+        return [json.loads(line) for line in self.ledger.read_text().splitlines()]
+
+    @staticmethod
+    def snapshot_tree(root):
+        entries = []
+        for path in sorted(root.rglob('*')):
+            relative = path.relative_to(root).as_posix()
+            if path.is_symlink():
+                entries.append((relative, 'symlink:' + os.readlink(path)))
+            elif path.is_dir():
+                entries.append((relative, 'directory'))
+            elif path.is_file():
+                entries.append((relative, hashlib.sha256(path.read_bytes()).hexdigest()))
+        return entries
+
+    def assert_doctor_summary(self, result, code, reason):
+        self.assertEqual(result.returncode, code, result.stdout + result.stderr)
+        self.assertEqual(result.stderr, '')
+        report = json.loads(result.stdout)
+        self.assertEqual(result.stdout, json.dumps(report) + '\n')
+        self.assertEqual(report['schema_version'], 1)
+        self.assertEqual(report['status'], 'diagnosed')
+        self.assertEqual(report['reason_code'], reason)
+        self.assertEqual(set(report), {'schema_version', 'status', 'reason_code', 'readiness', 'blockers'})
+        self.assertEqual(set(report['readiness']), {'checked_at', 'status', 'can_attempt', 'checks', 'provenance', 'limitations'})
+        self.assertIn(report['readiness']['status'], ('blocked', 'unknown'))
+        return report
+
+    def test_doctor_reports_unknown_capabilities_and_only_reads_inputs(self):
+        self.doctor_fixture(workspace_sources=True)
+        policy = self.root / '- reviewed policy dir' / '- policy with spaces.toml'
+        policy.parent.mkdir()
+        policy.write_text("marker = 'secret-explicit-marker'\n")
+        home = Path(self.env['HOME'])
+        before_repo = self.snapshot_tree(self.repo)
+        before_home = self.snapshot_tree(home)
+
+        result = self.run_doctor(f'--policy={policy}', '--model', 'requested-model',
+                                 '--approval-mode', 'auto_edit')
+
+        report = self.assert_doctor_summary(result, 0, 'doctor_complete')
+        readiness = report['readiness']
+        self.assertEqual(readiness['status'], 'unknown')
+        self.assertTrue(readiness['can_attempt'])
+        self.assertEqual(report['blockers'], [])
+        checks = self.checks(report)
+        for name in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(checks[name]['status'], 'unknown')
+        self.assertEqual(checks['workspace_policy']['status'], 'unknown')
+        self.assertEqual(checks['provider_version']['status'], 'pass')
+        provenance = readiness['provenance']
+        self.assertEqual(provenance['provider']['version'], '0.65.0')
+        self.assertEqual(provenance['provider']['executable'], str(self.provider.resolve()))
+        self.assertEqual(provenance['requested'], {'model': 'requested-model', 'approval_mode': 'auto_edit'})
+        self.assertEqual(provenance['selected_policy'], {
+            'path': str(policy.resolve()), 'sha256': hashlib.sha256(policy.read_bytes()).hexdigest()})
+        skills = {item['name']: item for item in provenance['skills']}
+        self.assertEqual(set(skills), {'exec-plans', 'tdd'})
+        for skill in skills.values():
+            self.assertEqual(len(skill['sha256']), 64)
+            self.assertTrue(Path(skill['path']).is_file())
+        self.assertTrue(any('workspace .gemini/policies is disabled' in item.lower()
+                            for item in readiness['limitations']))
+        self.assertNotIn('secret-workspace-marker', result.stdout)
+        self.assertNotIn('secret-settings-marker', result.stdout)
+        self.assertNotIn('secret-explicit-marker', result.stdout)
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+        self.assertFalse((self.root / 'acceptance-ran').exists())
+        self.assertEqual(before_repo, self.snapshot_tree(self.repo))
+        self.assertEqual(before_home, self.snapshot_tree(home))
+        self.assertFalse((self.repo / '.git/execplan-implement-loop.lock').exists())
+        self.assertFalse((self.repo / '.git/execplan-implement-loop').exists())
+
+    def test_doctor_collects_missing_provider_and_skill_blockers_together(self):
+        self.doctor_fixture()
+        (Path(self.env['HOME']) / '.agents/skills/tdd/SKILL.md').unlink()
+        self.provider.unlink()
+
+        report = self.assert_doctor_summary(self.run_doctor(), 3, 'doctor_blocked')
+
+        self.assertEqual(report['readiness']['status'], 'blocked')
+        self.assertFalse(report['readiness']['can_attempt'])
+        checks = self.checks(report)
+        self.assertEqual(checks['provider_version']['status'], 'blocked')
+        self.assertEqual(checks['skill_tdd']['status'], 'blocked')
+        self.assertEqual(checks['skill_exec_plans']['status'], 'pass')
+        for name in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(checks[name]['status'], 'unknown')
+        self.assertEqual(self.provider_calls(), [])
+
+    def test_doctor_reports_wrong_provider_version_as_a_blocker(self):
+        self.doctor_fixture()
+        self.env['DOCTOR_VERSION'] = '9.9.9'
+
+        report = self.assert_doctor_summary(self.run_doctor(), 3, 'doctor_blocked')
+
+        check = self.checks(report)['provider_version']
+        self.assertEqual(check['status'], 'blocked')
+        self.assertEqual(check['reason_code'], 'unsupported_gemini_version')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_invalid_plan_does_not_suppress_other_readiness_checks(self):
+        self.doctor_fixture()
+        self.plan.write_text('# invalid plan\n')
+        self.env['DOCTOR_VERSION'] = '9.9.9'
+
+        report = self.assert_doctor_summary(self.run_doctor(), 2, 'invalid_contract')
+
+        checks = self.checks(report)
+        self.assertEqual(checks['plan']['status'], 'blocked')
+        self.assertEqual(checks['provider_version']['status'], 'blocked')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_explicit_policy_rejects_invalid_and_unsafe_paths(self):
+        self.doctor_fixture()
+        cases = []
+        comma = self.root / 'comma,name.toml'
+        comma.write_text('value = 1\n')
+        cases.append(('comma', comma))
+        missing = self.root / 'missing.toml'
+        cases.append(('missing', missing))
+        directory = self.root / 'policy-directory.toml'
+        directory.mkdir()
+        cases.append(('directory', directory))
+        malformed = self.root / 'malformed.toml'
+        malformed.write_text('value = [\n')
+        cases.append(('malformed', malformed))
+        unreadable = self.root / 'unreadable.toml'
+        unreadable.write_text('value = 1\n')
+        unreadable.chmod(0)
+        cases.append(('unreadable', unreadable))
+        wrong_extension = self.root / 'policy.txt'
+        wrong_extension.write_text('value = 1\n')
+        cases.append(('extension', wrong_extension))
+        oversized = self.root / 'oversized.toml'
+        oversized.write_bytes(b'x' * (1024 * 1024 + 1))
+        cases.append(('oversized', oversized))
+        invalid_utf8 = self.root / 'invalid-utf8.toml'
+        invalid_utf8.write_bytes(b'\xff')
+        cases.append(('utf8', invalid_utf8))
+        linked = self.root / 'linked.toml'
+        linked.symlink_to(malformed)
+        cases.append(('symlink', linked))
+        linked_parent = self.root / 'linked-parent'
+        linked_parent.symlink_to(self.root, target_is_directory=True)
+        cases.append(('symlink component', linked_parent / 'malformed.toml'))
+
+        for label, path in cases:
+            with self.subTest(policy=label):
+                report = self.assert_doctor_summary(self.run_doctor(f'--policy={path}'), 2, 'invalid_policy')
+                check = self.checks(report)['explicit_policy']
+                self.assertEqual(check['status'], 'blocked')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']] * len(cases))
+
+    def test_unreadable_skill_is_a_blocker_without_a_prompt(self):
+        self.doctor_fixture()
+        skill = Path(self.env['HOME']) / '.agents/skills/exec-plans/SKILL.md'
+        skill.chmod(0)
+        if os.access(skill, os.R_OK):
+            self.skipTest('host privileges bypass unreadable file mode bits')
+
+        report = self.assert_doctor_summary(self.run_doctor(), 3, 'doctor_blocked')
+
+        self.assertEqual(self.checks(report)['skill_exec_plans']['status'], 'blocked')
+        self.assertEqual(self.checks(report)['skill_exec_plans']['reason_code'], 'unreadable_skill_dependency')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_doctor_rejects_conflicting_or_mutating_options_before_inspection(self):
+        self.doctor_fixture()
+        incompatible = [('--validate-only',), ('--run-dir', str(self.root / 'run')),
+                        ('--acknowledge-unclean-stop',)]
+        for args in incompatible:
+            with self.subTest(args=args):
+                result = self.run_doctor(*args)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.stdout, '')
+                self.assertIn('usage:', result.stderr.lower())
+        self.assertEqual(self.provider_calls(), [])
+        self.assertFalse((self.repo / '.git/execplan-implement-loop.lock').exists())
+
+    def test_doctor_deadline_and_cancellation_keep_provider_bounded(self):
+        self.doctor_fixture()
+        timed = self.run_doctor('--max-runtime', '0.000001', timeout=5)
+        self.assertEqual(timed.returncode, 124, timed.stdout + timed.stderr)
+        timed_report = json.loads(timed.stdout)
+        self.assertEqual(timed_report['reason_code'], 'total_deadline')
+        self.assertEqual(self.provider_calls(), [])
+
+        if self.ledger.exists():
+            self.ledger.unlink()
+        self.env['DOCTOR_DELAY'] = '0'
+        self.env['DOCTOR_SIGNAL_PARENT'] = '1'
+        cancelled = self.run_doctor('--max-runtime', '30', timeout=5)
+        self.assertEqual(cancelled.returncode, 143, cancelled.stdout + cancelled.stderr)
+        self.assertEqual(json.loads(cancelled.stdout)['reason_code'], 'interrupted')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_doctor_inspects_a_recognized_resume_without_mutating_journal_or_project(self):
+        self.execution_fixture()
+        self.provider = self.root / 'provider bin with spaces' / '-fake-gemini'
+        run_dir = self.root / 'recognized run'
+        executed = self.run_cli('--gemini', str(self.root / 'gemini'), '--run-dir', str(run_dir), '--max-runtime', '10')
+        self.assertEqual(executed.returncode, 0, executed.stdout + executed.stderr)
+        self.install_doctor_provider()
+        ledger_before = self.ledger
+        state_before = (run_dir / 'state.json').read_bytes()
+        summary_before = (run_dir / 'summary.json').read_bytes()
+        project_before = self.snapshot_tree(self.repo)
+        lock_path = self.repo / '.git/execplan-implement-loop.lock'
+        lock_before = lock_path.read_bytes() if lock_path.exists() else None
+
+        report = self.assert_doctor_summary(self.run_doctor('--resume', str(run_dir)), 0, 'doctor_complete')
+
+        self.assertEqual(report['readiness']['provenance']['resume']['status'], 'recognized')
+        self.assertEqual((run_dir / 'state.json').read_bytes(), state_before)
+        self.assertEqual((run_dir / 'summary.json').read_bytes(), summary_before)
+        self.assertEqual(self.snapshot_tree(self.repo), project_before)
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+        self.assertEqual(lock_path.read_bytes() if lock_path.exists() else None, lock_before)
+
+
 class PackagingTests(Fixture):
     def test_live_qualification_plan_has_real_source_acceptance(self):
         self.plan.write_bytes((self.bundle / 'evals/fixtures/live-qualification.md').read_bytes())
@@ -754,9 +1026,10 @@ class PackagingTests(Fixture):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--group', choices=['contract', 'process', 'git', 'loop', 'packaging'])
+    parser.add_argument('--group', choices=['contract', 'process', 'git', 'loop', 'packaging', 'readiness'])
     options = parser.parse_args()
-    classes = {'contract': ContractTests, 'process': ProcessTests, 'git': GitTests, 'loop': LoopTests, 'packaging': PackagingTests}
+    classes = {'contract': ContractTests, 'process': ProcessTests, 'git': GitTests, 'loop': LoopTests,
+               'packaging': PackagingTests, 'readiness': ReadinessTests}
     suite = unittest.TestSuite()
     for name, cls in classes.items():
         if options.group is None or options.group == name:

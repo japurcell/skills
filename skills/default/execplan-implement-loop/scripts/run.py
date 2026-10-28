@@ -38,8 +38,20 @@ def arguments():
     parser.add_argument('--model', help='explicit Gemini model override; otherwise inherited')
     parser.add_argument('--approval-mode', choices=['default', 'auto_edit', 'yolo'], help='explicit Gemini permission policy; otherwise inherited')
     parser.add_argument('--gemini', default='gemini', help='Gemini executable path or name')
-    parser.add_argument('--validate-only', action='store_true', help='validate static contracts without executing commands')
-    return parser.parse_args()
+    validation = parser.add_mutually_exclusive_group()
+    validation.add_argument('--validate-only', action='store_true', help='validate static contracts without executing commands')
+    validation.add_argument('--doctor', action='store_true', help='diagnose local prerequisites without a provider prompt')
+    parser.add_argument('--policy', type=Path, help='reviewed single-file Gemini policy TOML')
+    args = parser.parse_args()
+    if args.doctor and args.run_dir:
+        parser.error('--doctor cannot be combined with --run-dir')
+    if args.doctor and args.acknowledge_unclean_stop:
+        parser.error('--doctor cannot acknowledge an unclean stop')
+    if args.validate_only and args.policy is not None:
+        parser.error('--policy is not used with --validate-only')
+    if args.policy is not None and not args.doctor:
+        parser.error('--policy for execution and resume is integrated with T8; use --doctor for inspection')
+    return args
 
 
 def main():
@@ -47,6 +59,18 @@ def main():
     args = arguments()
     engine = None
     try:
+        if args.doctor:
+            from processes import Supervisor
+            from readiness import collect_readiness
+            with Supervisor(started + args.max_runtime) as supervisor:
+                result = collect_readiness(plan_path=args.plan.resolve(), workspace=None,
+                                           gemini=args.gemini, policy=args.policy,
+                                           model=args.model, approval_mode=args.approval_mode,
+                                           resume=args.resume, supervisor=supervisor)
+            report = dict(schema_version=1, status='diagnosed', reason_code=result.reason_code,
+                          readiness=result.readiness, blockers=result.blockers)
+            print(json.dumps(report), flush=True)
+            return result.exit_code
         if sys.version_info < (3, 12) or sys.platform not in ('darwin', 'linux'):
             raise Stop('unsupported_platform', 'Python 3.12+ on macOS or Linux required')
         plan = Plan(args.plan.resolve())
