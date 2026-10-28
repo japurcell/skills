@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from contracts import Plan, Stop, confined, message_valid, require, worker_result
 from processes import GeminiStream, Supervisor
 from readiness import collect_readiness, recorded_policy, validate_policy_file
+from reporting import make_blocker
 
 BUNDLE = Path(__file__).resolve().parents[1]
 
@@ -448,7 +449,8 @@ class Engine:
             argv += ['--policy', self.selected_policy['path']]
         stream = GeminiStream()
         record = dict(iteration_id=iteration, invocation_id=self.invocation, task_id=task['id'], started_at=now(),
-                      session_id=None, model=None, usage=None, status='in_progress')
+                      session_id=None, model=None, requested_model=self.args.model,
+                      usage=None, status='in_progress')
         self.state['iterations'].append(record)
         self.process_cwd = '.'
         try:
@@ -480,10 +482,12 @@ class Engine:
                 raise Stop('worker_' + proposed['status'], proposed['reason_code'], 3 if proposed['status'] == 'blocked' else 1)
             return proposed['commit_message']
         except Stop as error:
-            record.update(status='failed', reason_code=error.reason)
+            status = 'blocked' if error.reason == 'worker_blocked' else 'failed'
+            record.update(status=status, reason_code=error.reason)
             raise
         finally:
             record.update(session_id=stream.session_id, model=stream.model, usage=stream.usage,
+                          provider_observations=stream.provider_observations,
                           usage_complete=bool(stream.usage and all(v is not None for v in stream.usage.values())))
             self.save()
 
@@ -688,6 +692,10 @@ class Engine:
         elapsed = time.monotonic() - self.started
         state = self.state or {}
         completed = state.get('completed', [])
+        blockers = [] if reason == 'all_acceptance_met' else [make_blocker(
+            reason, task_id=state.get('current_task') or self.current,
+            run_directory=self.directory, plan_path=self.plan.path,
+            run_script=BUNDLE / 'scripts/run.py', fallback_source='recovery')]
         summary = dict(schema_version=1, run_id=state.get('run_id'), invocation_id=self.invocation,
                        status=status, reason_code=reason, detail=detail, plan_path=str(self.plan.path),
                        worktree=str(self.root), run_directory=str(self.directory) if self.directory else None,
@@ -705,7 +713,7 @@ class Engine:
                                                       if i['id'] != self.invocation) + elapsed,
                        invocation_iteration_count=sum(i['invocation_id'] == self.invocation for i in state.get('iterations', [])),
                        invocations=state.get('invocations', []), integrity_errors=self.integrity_errors,
-                       readiness=self.readiness,
+                       readiness=self.readiness, blockers=blockers,
                        usage_complete=bool(state.get('iterations')) and all(i.get('usage_complete', False) for i in state.get('iterations', [])))
         if self.state and self.directory:
             self.state['last_outcome'] = dict(status=status, reason_code=reason, invocation_id=self.invocation)

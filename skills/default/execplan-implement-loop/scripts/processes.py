@@ -14,6 +14,14 @@ from dataclasses import dataclass
 from contracts import LIMIT, Stop, decode, require
 
 
+def nonnegative_number(value):
+    if type(value) is int:
+        return value if value >= 0 else None
+    if type(value) is float and math.isfinite(value) and value >= 0:
+        return value
+    return None
+
+
 @dataclass
 class Outcome:
     code: int
@@ -208,6 +216,8 @@ class GeminiStream:
         self.session_id = None
         self.model = None
         self.usage = None
+        self.provider_observations = dict(cached_input_tokens=None, uncached_input_tokens=None,
+                                          models=None, request_count=None, resolved_model=None)
         self.error = None
         self.seen_init = False
 
@@ -249,8 +259,22 @@ class GeminiStream:
             self.terminal = event
             stats = event.get('stats')
             if isinstance(stats, dict):
-                self.usage = {key: stats.get(key) if type(stats.get(key)) in (int, float) and math.isfinite(stats[key]) and stats[key] >= 0 else None
+                self.usage = {key: nonnegative_number(stats.get(key))
                               for key in ('total_tokens', 'input_tokens', 'output_tokens', 'duration_ms', 'tool_calls')}
+                model_stats = stats.get('models')
+                models = None
+                if isinstance(model_stats, dict):
+                    fields = ('total_tokens', 'input_tokens', 'output_tokens', 'cached', 'input')
+                    models = {name: {field: nonnegative_number(values.get(field))
+                                     if isinstance(values, dict) else None for field in fields}
+                              for name, values in model_stats.items()
+                              if isinstance(name, str)}
+                resolved = event.get('resolved_model')
+                self.provider_observations = dict(
+                    cached_input_tokens=nonnegative_number(stats.get('cached')),
+                    uncached_input_tokens=nonnegative_number(stats.get('input')),
+                    models=models, request_count=None,
+                    resolved_model=resolved if isinstance(resolved, str) and resolved else None)
 
     def finish(self):
         if self.pending:

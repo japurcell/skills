@@ -10,6 +10,7 @@ import os
 import time
 
 from contracts import Plan, Stop
+from reporting import make_blocker, readiness_blockers
 
 
 def seconds(value):
@@ -66,7 +67,10 @@ def main():
                                            model=args.model, approval_mode=args.approval_mode,
                                            resume=args.resume, supervisor=supervisor)
             report = dict(schema_version=1, status='diagnosed', reason_code=result.reason_code,
-                          readiness=result.readiness, blockers=result.blockers)
+                          readiness=result.readiness,
+                          blockers=readiness_blockers(result.blockers, run_directory=args.resume,
+                                                      plan_path=args.plan.resolve(),
+                                                      run_script=Path(__file__).resolve()))
             print(json.dumps(report), flush=True)
             return result.exit_code
         if sys.version_info < (3, 12) or sys.platform not in ('darwin', 'linux'):
@@ -75,6 +79,7 @@ def main():
         if args.validate_only:
             result = dict(schema_version=1, status='valid', reason_code='valid_contract',
                           plan_id=plan.data['plan_id'], immutable_hash=plan.immutable_hash(),
+                          blockers=[],
                           task_counts=dict(total=len(plan.tasks), done=sum(t['state'] == 'done' for t in plan.tasks.values())))
             print(json.dumps(result))
             return 0
@@ -101,8 +106,13 @@ def main():
         raise
     except (OSError, Stop, ValueError) as error:
         code = error.code if isinstance(error, Stop) else 2
+        reason = error.reason if isinstance(error, Stop) else 'io_error'
+        plan_path = args.plan.resolve()
         print(json.dumps(dict(schema_version=1, status='blocked' if code == 3 else 'invalid',
-                              reason_code=error.reason if isinstance(error, Stop) else 'io_error', detail=str(error))))
+                              reason_code=reason, detail=str(error),
+                              blockers=[make_blocker(reason, run_directory=args.resume,
+                                                     plan_path=plan_path, run_script=Path(__file__).resolve(),
+                                                     fallback_source='preflight')])))
         return code
 
 
