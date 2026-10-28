@@ -1,0 +1,20 @@
+DISPOSABLE NATIVE ALERT PROTOTYPE
+
+Requires user-accessible Python 3.10 or newer and a graphical desktop/audio session.
+Windows: run.cmd open
+macOS / Ubuntu / WSLg: sh run.sh open
+
+Send an alert: run.cmd send success --agent Codex --repo skills
+On macOS / Linux, replace run.cmd with sh run.sh.
+Inspect status: run.cmd status
+Quit cleanly: run.cmd stop
+
+The launchers restore pinned Qt wheels into this folder's .venv.
+They do not require administrator privileges or change startup, hooks, or shell policy.
+Network access to PyPI is required for the first restore.
+Missing Python, blocked package downloads, or missing Linux system libraries are
+environment prerequisites; do not use sudo or change corporate policy to work around them.
+
+Success, failure, and attention preview buttons use short low-amplitude WAVs.
+Direct playback is confirmed on macOS; Windows, Ubuntu, and WSLg still need live checks.
+This is not a packaged/signed production app or a replacement for OS mute controls.

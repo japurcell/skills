@@ -3,7 +3,8 @@
 - Status: native macOS window/audio and corrected Quit verified. Windows, Ubuntu, and WSL2 launchers prepared; actual desktop runs there remain pending.
 - User accepted deletion/Undo browser interaction and requested native prototypes. Linux targets are Ubuntu desktop and WSL2. User has no admin access.
 - [Runnable source bundle](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype.zip)
-- [Local source](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype/native_alerts.py)
+- [Tracked source kit](../../../prototypes/agent-notifications/README.md) is the canonical fetchable copy on branch `codex/notify-app`. It includes only source, launchers, pinned requirements, and gentle WAV assets; no environments, logs, pending alerts, or local app bundles.
+- [Prototype source](../../../prototypes/agent-notifications/native_alerts.py)
 - [Platform run instructions](native-platform-run-guide.md)
 - [Native ExecPlan](native-prototype-exec-plan.md)
 - [Toolkit research](research/native-toolkit-feasibility/findings.md)

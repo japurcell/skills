@@ -12,6 +12,7 @@ Move the accepted browser interaction into a disposable real desktop-window expe
 - [x] (2026-10-22) [milestone-2] Reproduce Quit SIGSEGV (-11), correct event-loop/object teardown, verify audio-active exit 0, and obtain user confirmation that the actual button quits without error.
 - [ ] [milestone-2] Complete native keyboard/focus, stack/Undo, mute, no-device, and desktop-space checks; computer-use permission is unavailable here.
 - [x] (2026-10-22) [milestone-3] Produce portable source kit and Windows/Ubuntu/WSL2 instructions without system/admin installation steps.
+- [x] (2026-10-28) [milestone-3] Add the verified source kit to `prototypes/agent-notifications/` for Git-based transfer, excluding environments, logs, app bundles, and pending alerts.
 - [x] (2026-10-22) [milestone-3] Record evidence, limits, and recovery in the native phase note and run guide.
 - [ ] [milestone-3] Run the experiment on actual Windows, Ubuntu desktop, and WSL2 sessions and reconcile findings before accepting cross-platform feasibility.
 
@@ -24,7 +25,7 @@ Move the accepted browser interaction into a disposable real desktop-window expe
 
 ## Decision Log
 
-- Keep all planning/research/evidence notes under `brain/plans/14-agent-notifications/`; put disposable code and binaries in the task visualization directory. User direction controls over default scratchpad paths.
+- Keep all planning/research/evidence notes under `brain/plans/14-agent-notifications/`. At the user's request, the fetchable source kit now lives in `prototypes/agent-notifications/`; historical runtime artifacts stay in the visualization directory. No runtime data or environment belongs in Git.
 - Use PySide6 6.12.0 / Qt 6.12 for this experiment after comparing Avalonia and Electron. Qt provides native top-level widgets and a documented direct WAV API in one dependency. This is not production architecture approval.
 - User authorized real native popup/sound prototypes. Project-local dependency restoration is allowed for this experiment; system app installation, login registration, real hooks, and remote delivery are outside this work.
 - Use manual CLI/UI checks for this throwaway experiment, consistent with the prototype skill. Do not add regression tests for removal of retained history.
@@ -37,7 +38,7 @@ Research/scaffolding and a portable source kit are complete. User confirmed nati
 
 Current product contract is `phase-3-deletion-and-undo.md`: all alert types persist until dismissed; Snooze cycles to the back; Dismiss and Dismiss all delete with brief Undo; pending records survive restart; no separate history. Sounds play once per new event, with explicit replay, independent mute/quiet control, no automatic replay on cycling/reopening. The native experiment prioritizes actual window/audio delivery; any omitted product behavior must be visibly labeled and recorded.
 
-The local artifact root is `/Users/adam/.codex/visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/`. Use its `native-alert-prototype/` folder for source, generated WAVs, project-local Python virtual environment, release bundles, and isolated prototype data. No real installed logs or session state may be used.
+The canonical source kit is `prototypes/agent-notifications/`, with launchers, pinned requirements, Python source, and three gentle WAV assets. Runtime `.venv`, `PROTOTYPE-*/`, logs, and `.app` bundles are ignored there. The original macOS runtime evidence remains under `/Users/adam/.codex/visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype/`. No real installed logs or session state may be used.
 
 ## Plan of Work
 
@@ -65,7 +66,7 @@ Complete evidence notes and handoff with exactly what ran on each platform, reta
 
 ## Concrete Steps
 
-Next owner action: extract the source kit on a real Windows or Ubuntu/WSL2 desktop and follow [the run guide](native-platform-run-guide.md). The macOS user has already confirmed the fixed Quit button. Do not reopen the app automatically after explicit Quit.
+Next owner action: fetch branch `codex/notify-app` on a real Windows or Ubuntu/WSL2 desktop, enter `prototypes/agent-notifications/`, and follow [the run guide](native-platform-run-guide.md). Use separate Windows/Linux clones. The macOS user has already confirmed the fixed Quit button. Do not reopen the app automatically after explicit Quit.
 
 Completed local commands from the artifact `native-alert-prototype/` directory: `.venv/bin/python native_alerts.py open`, `status`, and `stop`; `.venv/bin/python -m py_compile native_alerts.py`; `sh -n run.sh`; `.venv/bin/python -m pip check`. Real desktop/audio execution required sandbox escalation but ran as the same user, without admin privileges. The source kit contains no virtual environment or user state. Its `START-HERE.txt` supplies no-admin launch commands.
 
