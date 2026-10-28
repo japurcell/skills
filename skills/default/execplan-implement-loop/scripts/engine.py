@@ -265,6 +265,8 @@ class Engine:
                 self.selected_policy = validate_policy_file(self.args.policy)
             except Stop as error:
                 self.readiness_blocker(error.reason, error.detail)
+                self.save()
+                raise
             else:
                 self.policy_bound = True
                 self.readiness['provenance']['selected_policy'] = self.selected_policy

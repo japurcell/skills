@@ -774,13 +774,16 @@ raise SystemExit(code)
 
     def test_commit_hook_failure_resumes_without_reimplementing(self):
         self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        policy.write_text('reviewed = true')
         hook = self.repo / '.git/hooks/pre-commit'
         hook.write_text('#!/bin/sh\nexit 1\n')
         hook.chmod(0o700)
-        result = self.execute()
+        result = self.execute('--policy', str(policy))
         report = json.loads(result.stdout)
         self.assertEqual(report['reason_code'], 'commit_failed', result.stdout + result.stderr)
         hook.write_text('#!/bin/sh\nexit 0\n')
+        policy.unlink()
         self.provider.unlink()
         shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
         resumed = self.execute('--resume', report['run_directory'])
@@ -1020,6 +1023,119 @@ class ReadinessTests(Fixture):
         self.assertEqual(after['invocations'][0]['readiness_history'], history)
         self.assertEqual((self.root / 'calls').read_text(), '2')
         self.assertEqual(len(after['commits']), 3)
+
+    def test_verification_only_plan_rejects_explicit_invalid_policy_before_acceptance(self):
+        marker = self.root / 'acceptance-executed'
+        for task in self.data['tasks']:
+            task['kind'] = 'verification'
+            task['verification'][0]['argv'] = [sys.executable, '-c',
+                f'from pathlib import Path; Path({str(marker)!r}).touch()']
+        self.plan.write_text(markdown(self.data))
+        self.execution_fixture()
+        initial_head = self.git('rev-parse', 'HEAD')
+        policy = self.root / 'invalid.toml'
+        policy.write_text('not valid = [')
+
+        result = self.execute('--policy', str(policy))
+
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['status'], 'invalid')
+        self.assertEqual(report['reason_code'], 'invalid_policy')
+        self.assertEqual(report['commands'], [])
+        self.assertEqual(report['commits'], [])
+        self.assertEqual(report['completed_task_ids'], [])
+        self.assertFalse(marker.exists())
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertEqual(self.git('rev-parse', 'HEAD'), initial_head)
+        self.assertEqual(report['readiness']['status'], 'blocked')
+        self.assertIn('invalid_policy', {check['reason_code'] for check in report['readiness']['checks']})
+
+    def test_normal_execution_rejects_explicit_invalid_policy_shapes(self):
+        self.execution_fixture()
+        initial_head = self.git('rev-parse', 'HEAD')
+        malformed = self.root / 'malformed.toml'
+        malformed.write_text('not valid = [')
+        directory = self.root / 'directory.toml'
+        directory.mkdir()
+        comma = self.root / 'comma,policy.toml'
+        comma.write_text('valid = true')
+        symlink = self.root / 'symlink.toml'
+        symlink.symlink_to(comma)
+        oversized = self.root / 'oversized.toml'
+        oversized.write_bytes(b'#' * (1024 * 1024 + 1))
+        for policy in (malformed, directory, comma, symlink, oversized, self.root / 'missing.toml'):
+            with self.subTest(policy=policy.name):
+                result = self.execute('--policy', str(policy))
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report['reason_code'], 'invalid_policy')
+                self.assertEqual(report['commands'], [])
+                self.assertEqual(report['commits'], [])
+                self.assertEqual(report['iterations'], [])
+                self.assertFalse((self.root / 'calls').exists())
+                self.assertEqual(self.git('rev-parse', 'HEAD'), initial_head)
+
+    def test_invalid_explicit_resume_policy_follows_prepared_commit_reconciliation(self):
+        self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        policy.write_text('reviewed = true')
+        hook = self.repo / '.git/hooks/pre-commit'
+        hook.write_text('#!/bin/sh\nexit 1\n')
+        hook.chmod(0o700)
+        first = self.execute('--policy', str(policy))
+        before = json.loads(first.stdout)
+        self.assertEqual(before['reason_code'], 'commit_failed', first.stdout + first.stderr)
+        hook.write_text('#!/bin/sh\nexit 0\n')
+        invalid = self.root / 'invalid.toml'
+        invalid.write_text('not valid = [')
+        self.provider.unlink()
+        shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
+
+        rejected = self.execute('--resume', before['run_directory'], '--policy', str(invalid))
+
+        self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+        report = json.loads(rejected.stdout)
+        self.assertEqual(report['status'], 'invalid')
+        self.assertEqual(report['reason_code'], 'invalid_policy')
+        self.assertEqual(report['completed_task_ids'], ['T1'])
+        self.assertEqual([item['task_id'] for item in report['commits']], ['T1'])
+        self.assertEqual(report['commands'], before['commands'])
+        self.assertEqual(self.git('rev-list', '--count', 'HEAD'), '2')
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        state = json.loads((Path(before['run_directory']) / 'state.json').read_text())
+        self.assertIsNone(state['transaction'])
+        self.assertEqual(state['task_states']['T1'], 'done')
+        policy.unlink()
+        resumed = self.execute('--resume', before['run_directory'])
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        self.assertEqual(len(json.loads(resumed.stdout)['commits']), 3)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+
+    def test_completed_resume_omits_unavailable_policy_but_rejects_explicit_invalid_input(self):
+        self.execution_fixture()
+        policy = self.root / 'reviewed.toml'
+        policy.write_text('reviewed = true')
+        first = self.execute('--policy', str(policy))
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        before = json.loads(first.stdout)
+        policy.unlink()
+        self.provider.unlink()
+        shutil.rmtree(Path(self.env['HOME']) / '.agents/skills')
+        initial_head = self.git('rev-parse', 'HEAD')
+
+        resumed = self.execute('--resume', before['run_directory'])
+
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        self.assertEqual(json.loads(resumed.stdout)['commits'], before['commits'])
+        rejected = self.execute('--resume', before['run_directory'], '--policy', str(policy))
+        self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+        report = json.loads(rejected.stdout)
+        self.assertEqual(report['reason_code'], 'invalid_policy')
+        self.assertEqual(report['commits'], before['commits'])
+        self.assertEqual(report['commands'], before['commands'])
+        self.assertEqual(self.git('rev-parse', 'HEAD'), initial_head)
+        self.assertEqual((self.root / 'calls').read_text(), '1')
 
     def test_verification_only_plan_records_policy_without_provider_prerequisites(self):
         for task in self.data['tasks']:
