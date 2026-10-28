@@ -28,3 +28,5 @@ Prohibit nested delegation unless intentionally authorized.
 Submit the exact routed model and effort through dispatch controls when dispatching a subagent.
 
 Give every subagent a runtime limit based on the expected effort and complexity of its task to prevent indefinite execution. Treat runtime limits as warning thresholds. When overdue, send a non-interrupting warning and request status, completed work, blockers, and an updated ETA. Keep the subagent running; lateness alone does not justify interruption, cancellation, or replacement.
+
+Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
