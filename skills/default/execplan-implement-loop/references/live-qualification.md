@@ -14,6 +14,10 @@ The historical qualification used the user-level policy file `~/.gemini/policies
 
 Use macOS or Linux with Python 3.12 or newer, Git, Gemini CLI 0.65.0, authentication configured through the owner's normal process, and the real `exec-plans` and `tdd` skills discoverable to Gemini. The runner checks the version and required skill files. It does not install skills, establish project trust, write policy, or prompt to discover permissions.
 
+Gemini CLI 0.65.0 is the only qualified version. Other versions are untested; rejection by the exact version check does not establish incompatibility. If the known 0.65.0 executable is not the `gemini` found on `PATH`, pass its absolute path with the existing `--gemini` option to the runner or helper. For example, append `--gemini /absolute/path/to/gemini-0.65.0` to a `run.py` or `qualify.py run` command. This selects the executable for that invocation and does not change the global install.
+
+Some Google authentication accounts require a Cloud project. When the owner knows this applies to the selected account, set `GOOGLE_CLOUD_PROJECT` or `GOOGLE_CLOUD_PROJECT_ID` in the environment that starts the runner or helper, using the owner's normal session or shell process. For example, export the variable in the terminal that will start the helper, then launch the helper from that terminal. If a shell startup file changes, start a new shell or tool process so it inherits the updated environment. Readiness records variable presence only; it does not reveal the value or prove authentication. A Cloud project is not a universal requirement for every account. Do not create cloud resources or enable billing as part of this procedure.
+
 Choose an absolute path to the installed bundle and a new absolute qualification root whose parent already exists. Replace the example paths below with those literal paths. Use the same literal paths in every command, quoting a literal path if it contains spaces. The root must not already exist. If setup stops after creating it, preserve the partial files and choose a different new root for a retry.
 
 An explicit policy is optional. If the owner has already reviewed a single UTF-8 TOML file, it can be supplied with `--policy` to doctor and run. The file must be a regular file no larger than 1 MiB; symlink path components and commas in the path are rejected. The selected path and exact-byte hash are recorded and checked before provider spawn. This file supplements other provider policies and does not prove effective permissions. Gemini CLI 0.65.0 disables implicit workspace `.gemini/policies` discovery. Do not create or edit global policy or add blanket grants for this qualification.
@@ -22,9 +26,21 @@ An explicit policy is optional. If the owner has already reviewed a single UTF-8
 
 Run setup from the copied or installed bundle. It creates a new owner-only root containing `project/`, `evidence/`, and an owner-only manifest; copies the bundled fixture to `project/ExecPlan.md`; and configures Git identity and signing only in that disposable repository. Setup makes no Gemini call and changes no trust, skills, policy, or user configuration. It prints the physical root, baseline commit, manifest path, and a suggested next argument vector as JSON. Review the output; setup does not start the paid run.
 
+New setup roots use helper schema 2. Existing schema 1 roots remain supported by `qualify.py collect` and `qualify.py run --resume`; preserve their ownership manifest. When a required skill is not discoverable, setup accepts an explicit local source directory for each skill:
+
+```sh
+python3 /absolute/path/to/execplan-implement-loop/scripts/qualify.py setup --root /tmp/execplan-loop-qualification-2026-10-28 --exec-plans-source /absolute/path/to/exec-plans --tdd-source /absolute/path/to/tdd
+```
+
+The optional `--exec-plans-source` and `--tdd-source` arguments copy those skill trees into the disposable project's `.gemini/skills/` directory before setup creates the baseline commit. The copies are part of the fixture and its baseline; they do not install or modify global skills. The existing setup command without either option remains supported.
+
 ```sh
 python3 /absolute/path/to/execplan-implement-loop/scripts/qualify.py setup --root /tmp/execplan-loop-qualification-2026-10-28
 ```
+
+## Review trust for the exact disposable folder
+
+The helper does not know the current folder-trust state. Doctor does not inspect it, and `gemini --version` only checks the executable version. Do not infer trust from a settings default or the presence of a trust file. Before a separately authorized live attempt, the owner may open Gemini's ordinary interactive CLI with its working directory set to the exact disposable `project/` directory. If Gemini asks whether to trust the folder, inspect the displayed path and approve only that exact directory if the owner chooses. The owner's normal interactive flow may persist that exact-folder decision. Exit the interactive CLI after review. This procedure does not write trust files or set trust override variables; do not edit trust files directly, use `--skip-trust`, set a trust override, or grant broad `/tmp` trust. The review does not authorize a paid provider call.
 
 ## Inspect local readiness
 
@@ -69,6 +85,8 @@ python3 /absolute/path/to/execplan-implement-loop/scripts/qualify.py collect --r
 ```
 
 Collection refreshes baseline reachability, branch, HEAD, Git status, commit history, and saved doctor and runner reports. It writes a new numbered collection without replacing earlier evidence, and reports missing expected artifacts in `missing_evidence`. A successful collection means collection finished; it does not mean qualification succeeded. In particular, an empty collection before a paid run is not live qualification evidence.
+
+Keep ad hoc operator notes in an owner-selected session or files location outside the entire qualification root. The helper root, including its nested `project/` and helper-owned `evidence/`, is reserved for its declared artifacts. Do not place notes under `evidence/`, add a `diagnostics/` directory to the root, or edit the owner-only manifest to register notes. Collection rejects foreign paths and only collects declared artifacts.
 
 ## Review the result
 
