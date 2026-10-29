@@ -11,7 +11,8 @@ The goal is the entire plan implemented on a single **integration branch**, with
 The tasks are not a list of steps. They are a **task graph** with blocking relationships between them. This means there is always a **frontier** of tasks which are ready to be grabbed.
 
 **Subagent management rules:**
-- Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask. Submit the exact routed model and effort through dispatch controls.
+
+- Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask. Submit the exact routed model and reasoning effort through dispatch controls when dispatching a subagent. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
 - Give every subagent a runtime limit. Treat runtime limits as warning thresholds; lateness alone does not justify interruption, cancellation, or replacement.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
@@ -41,4 +42,3 @@ All commits must follow [commit message guidelines](references/message.md).
 8. Ensure all tasks and milestones are resolved and report the integration branch.
 
 9. Clean up all **implementer subagent** worktrees.
-

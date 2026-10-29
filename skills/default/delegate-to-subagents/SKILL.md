@@ -23,9 +23,9 @@ Avoid duplicate reads and context gathering; consider one exploration subagent w
 
 Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask.
 
-Prohibit nested delegation unless intentionally authorized.
+Submit the exact routed model and reasoning effort through dispatch controls when dispatching a subagent. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
 
-Submit the exact routed model and effort through dispatch controls when dispatching a subagent.
+Prohibit nested delegation unless intentionally authorized.
 
 Give every subagent a runtime limit based on the expected effort and complexity of its task to prevent indefinite execution. Treat runtime limits as warning thresholds. When overdue, send a non-interrupting warning and request status, completed work, blockers, and an updated ETA. Keep the subagent running; lateness alone does not justify interruption, cancellation, or replacement.
 
