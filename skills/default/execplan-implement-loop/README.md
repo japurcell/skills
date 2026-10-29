@@ -24,6 +24,12 @@ The original adapter had a successful owner-run Gemini CLI 0.65.0 qualification 
 
 The bundled qualification helper has `setup`, `run`, and `collect` commands. Setup and collect are local-only; run repeats doctor before the provider and requires both `--authorize-paid-run` and actual owner authorization. Use the foreground workflow in the guide and wait on the same long-running session.
 
+## Worker packet and provider diagnostics
+
+Before a provider iteration, the runner builds a self-contained `RUNNER_PACKET` containing the current task, prerequisite state, acceptance commands, design context, result schema, and exact UTF-8 contents and SHA-256 digests for the bundled message and protocol references. The complete prompt is limited to 96 KiB; required context that exceeds the limit stops before provider invocation with `worker_context_limit`. Workers use the embedded reference content instead of searching the source checkout for it.
+
+When a provider process returns normally after cleanup without a terminal result, the iteration records typed `provider_diagnostic` metadata and may retain a sanitized stderr artifact. This covers zero-exit protocol-retry outcomes and nonzero provider-blocked outcomes, not every failure. Captured stderr is bounded at 1 MiB and a saved artifact at 65,536 bytes. If capture was truncated, text is omitted. Redaction applies known credential patterns and values from credential-like environment names; arbitrary secrets cannot be guaranteed removed. Timeouts, midstream decoder failures, and cleanup-unconfirmed outcomes that exit before normal returned-outcome handling keep their existing behavior and do not gain a new artifact. A persistence error stops with `diagnostic_persistence_failed`. Helper collection carries the typed metadata and original relative reference without copying the artifact.
+
 ## Validation
 
 These commands are repository-maintainer checks, not installed runtime dependencies. From the source repository root:
