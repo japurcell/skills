@@ -155,6 +155,9 @@ print(json.dumps({'type': 'init', 'session_id': 'qualification-' + str(count),
                   'model': 'qualification-fixture'}), flush=True)
 
 mode = os.environ['QUALIFY_FAKE_GEMINI_MODE']
+if mode == 'diagnostic-first' and count == 1:
+    sys.stderr.write('Startup failed: ' + os.environ['QUALIFY_API_KEY'] + '\n')
+    raise SystemExit(1)
 if mode == 'descendant':
     child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
     pathlib.Path(os.environ['QUALIFY_FAKE_GEMINI_CHILD_PID']).write_text(
@@ -658,6 +661,68 @@ os.open = open_file
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 saved = json.loads(result.stdout)['reports'][0]['doctor']
                 self.assertIsNone((saved['versions'] or {}).get('provider'))
+
+    def test_collection_preserves_original_sanitized_provider_diagnostic_across_resume(self):
+        self.install_composed_gemini('diagnostic-first')
+        self.env['QUALIFY_API_KEY'] = 'fixture-collection-private-value'
+        self.setup_root()
+        first = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run',
+                                '--gemini', str(self.gemini), timeout=30)
+        self.assertEqual(first.returncode, 3, first.stdout + first.stderr)
+        run = Path(json.loads(first.stdout)['run_directory'])
+        runner = json.loads((self.root / 'evidence/attempts/attempt-0001/runner-summary.json').read_text())
+        diagnostic = runner['iterations'][0]['provider_diagnostic']
+        reference = diagnostic['artifact_ref']
+        artifact = run / reference
+        retained = artifact.read_bytes()
+        self.assertNotIn(self.env['QUALIFY_API_KEY'].encode(), retained)
+        collected = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+        collection = json.loads(collected.stdout)
+        self.assertEqual(collection['reports'][0]['runner']['provider_diagnostics'], [diagnostic])
+        self.assertEqual(collection['reports'][0]['runner']['run_directory'], str(run))
+        self.assertEqual(list(self.root.rglob(reference)), [artifact])
+        resumed = self.run_helper('run', '--root', str(self.root), '--resume', str(run),
+                                  '--authorize-paid-run', '--gemini', str(self.gemini), timeout=30)
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        after = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(after.returncode, 0, after.stdout + after.stderr)
+        self.assertEqual([item['runner']['provider_diagnostics'] for item in json.loads(after.stdout)['reports']],
+                         [[diagnostic], [diagnostic]])
+        self.assertEqual(artifact.read_bytes(), retained)
+        saved = json.loads((run / 'state.json').read_text())
+        self.assertEqual(saved['iterations'][0]['provider_diagnostic'], diagnostic)
+
+    def test_collection_rejects_diagnostic_escape_symlink_and_malformed_metadata(self):
+        self.install_composed_gemini('diagnostic-first')
+        self.env['QUALIFY_API_KEY'] = 'fixture-collection-private-value'
+        self.setup_root()
+        first = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run',
+                                '--gemini', str(self.gemini), timeout=30)
+        self.assertEqual(first.returncode, 3, first.stdout + first.stderr)
+        summary = self.root / 'evidence/attempts/attempt-0001/runner-summary.json'
+        original = json.loads(summary.read_text())
+        run = Path(original['run_directory'])
+        outside = self.base / 'outside-diagnostic'
+        outside.write_bytes(b'outside')
+        for changes in ({'artifact_ref': '../doctor.json'}, {'artifact_ref': str(outside)},
+                        {'artifact_ref': 'linked-diagnostic'}, {'captured_bytes': True},
+                        {'retained_bytes': 65537}, {'encoding': 'utf-8'}, {'artifact_ref': None}):
+            with self.subTest(changes=changes):
+                modified = json.loads(json.dumps(original))
+                modified['iterations'][0]['provider_diagnostic'].update(changes)
+                summary.write_text(json.dumps(modified))
+                if changes.get('artifact_ref') == 'linked-diagnostic':
+                    (run / 'linked-diagnostic').symlink_to(outside)
+                collected = self.run_helper('collect', '--root', str(self.root))
+                if (run / 'linked-diagnostic').is_symlink():
+                    (run / 'linked-diagnostic').unlink()
+                self.assertEqual(collected.returncode, 2, collected.stdout + collected.stderr)
+                self.assertEqual(list((self.root / 'evidence/collections').iterdir()), [])
+                self.assertEqual(outside.read_bytes(), b'outside')
+        summary.write_text(json.dumps(original))
+        collected = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
 
     def test_real_helper_runner_composition_preserves_reviewed_resume_and_evidence(self):
         self.install_composed_gemini()

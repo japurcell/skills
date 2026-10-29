@@ -1,6 +1,48 @@
 """Bounded, deterministic diagnostics shared by every runner summary."""
 from pathlib import Path
+import os
+import re
 import shlex
+
+
+DIAGNOSTIC_LIMIT = 65536
+
+
+def provider_diagnostic(raw, captured_bytes, truncated):
+    """Sanitize before bounding; arbitrary secrets cannot be perfectly scrubbed.
+
+    A captured tail can start inside a credential, so omit it entirely rather
+    than treat a partially captured token as safe diagnostic text.
+    """
+    metadata = dict(artifact_ref=None, captured_bytes=captured_bytes, retained_bytes=0,
+                    truncated=truncated, encoding='utf-8-replace', redaction_status='content_omitted')
+    if truncated:
+        return metadata, None
+    try:
+        text = raw.decode('utf-8', errors='replace')
+        original = text
+        secrets = {value for name, value in os.environ.items() if value and re.search(
+            r'token|secret|pass(?:word|wd)?|api[_-]?key|private[_-]?key|credential|auth', name, re.I)}
+        for value in sorted(secrets, key=len, reverse=True):
+            text = text.replace(value, '[REDACTED]')
+        patterns = (
+            r'(?i)\b(?:Bearer|Basic)\s+[^\s,;\"\']+',
+            r'(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|(?:client[_-])?secret|password|passwd)'
+            r'["\']?\s*[=:]\s*(?:"[^"\n]*"|\'[^\'\n]*\'|[^\s,;]+)',
+            r'-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[\s\S]*?(?:-----END (?:[A-Z]+ )?PRIVATE KEY-----|\Z)',
+            r'\bAIza[0-9A-Za-z_-]{20,}',
+            r'\bsk-[0-9A-Za-z_-]{16,}',
+            r'(?i)https?://[^\s/:]+:[^\s/@]+@',
+        )
+        for pattern in patterns:
+            text = re.sub(pattern, '[REDACTED]', text)
+        encoded = text.encode('utf-8')
+        retained = encoded[:DIAGNOSTIC_LIMIT].decode('utf-8', errors='ignore').encode('utf-8')
+        metadata.update(retained_bytes=len(retained), truncated=len(encoded) > DIAGNOSTIC_LIMIT,
+                        redaction_status='known_patterns_applied' if text != original else 'no_known_patterns_detected')
+        return metadata, retained
+    except (UnicodeError, ValueError, TypeError, re.error):
+        return metadata, None
 
 
 _MESSAGES = {
@@ -86,7 +128,12 @@ _MESSAGES = {
     ),
     'provider_blocked': (
         'provider', 'Gemini did not provide a usable result for this iteration.',
-        'Inspect the saved provider session through Gemini’s own interface, then decide whether the workspace state is safe to continue.',
+        'Inspect the saved provider diagnostic when present and the provider session through Gemini’s own interface. Pattern-based redaction cannot guarantee removal of arbitrary secrets; review diagnostic text before sharing it.',
+        'After review, resume this run with: ',
+    ),
+    'diagnostic_persistence_failed': (
+        'recovery', 'The sanitized provider diagnostic could not be persisted.',
+        'Inspect the run directory and local filesystem state before deciding whether to resume.',
         'After review, resume this run with: ',
     ),
     'spawn_error': (

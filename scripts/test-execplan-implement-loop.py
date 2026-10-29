@@ -130,6 +130,11 @@ if behavior == 'escaped_descendant':
     time.sleep(30)
 if behavior == 'provider_exit':
     raise SystemExit(1)
+if behavior == 'diagnostic_exit':
+    sys.stderr.buffer.write(bytes.fromhex(os.environ['DIAGNOSTIC_HEX']))
+    sys.stderr.buffer.write(b'x' * int(os.environ.get('DIAGNOSTIC_PADDING', '0')))
+    sys.stderr.flush()
+    raise SystemExit(1)
 if behavior in ('branch_switch', 'branch_timeout'):
     import subprocess
     subprocess.run(['git', 'switch', '-qc', 'worker-created'], check=True)
@@ -311,6 +316,118 @@ class ContractTests(Fixture):
 
 
 class ProcessTests(Fixture):
+    def test_diagnostic_redacts_quoted_keys_and_common_credentials(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = (b'{"api_key": "quoted-sentinel", "client_secret": "client-sentinel"}\n'
+                   b'Authorization: Basic basic-sentinel\n'
+                   b'https://user:password-sentinel@example.invalid\n'
+                   b'-----BEGIN PRIVATE KEY-----\nprivate-sentinel\n-----END PRIVATE KEY-----\n')
+        self.env['DIAGNOSTIC_HEX'] = payload.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        retained = (Path(report['run_directory']) / diagnostic['artifact_ref']).read_text()
+        for value in ('quoted-sentinel', 'client-sentinel', 'basic-sentinel', 'password-sentinel', 'private-sentinel'):
+            self.assertNotIn(value, retained)
+
+    def test_incomplete_capture_omits_unsafe_stderr_tail(self):
+        self.execution_fixture('diagnostic_exit')
+        self.env.update(DIAGNOSTIC_HEX=b'Authorization: Bearer unsafe-tail'.hex(),
+                        DIAGNOSTIC_PADDING='1200000')
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['iterations'][0]['provider_diagnostic'], dict(
+            artifact_ref=None, captured_bytes=1200000 + len(b'Authorization: Bearer unsafe-tail'),
+            retained_bytes=0, truncated=True, encoding='utf-8-replace', redaction_status='content_omitted'))
+        self.assertEqual(list(Path(report['run_directory']).glob('provider-stderr-*')), [])
+
+    def test_diagnostic_persistence_failure_is_typed_and_does_not_disclose_error_text(self):
+        self.execution_fixture('diagnostic_exit')
+        self.env['DIAGNOSTIC_HEX'] = b'Ordinary startup failure'.hex()
+        injection = self.root / 'diagnostic-fault'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''
+import os
+original = os.replace
+def replace(source, target, *args, **kwargs):
+    if str(target).split('/')[-1].startswith('provider-stderr-'):
+        raise OSError('untrusted-persistence-error-sentinel')
+    return original(source, target, *args, **kwargs)
+os.replace = replace
+''')
+        self.env['PYTHONPATH'] = str(injection)
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['reason_code'], 'diagnostic_persistence_failed')
+        self.assertEqual(report['iterations'][0]['reason_code'], 'diagnostic_persistence_failed')
+        self.assertIsNone(report['iterations'][0]['provider_diagnostic']['artifact_ref'])
+        self.assertEqual(report['iterations'][0]['provider_diagnostic']['redaction_status'], 'content_omitted')
+        self.assertEqual(report['commits'], [])
+        self.assertEqual((self.root / 'calls').read_text(), '1')
+        self.assertNotIn('untrusted-persistence-error-sentinel', result.stdout + result.stderr)
+        state = json.loads((Path(report['run_directory']) / 'state.json').read_text())
+        self.assertIsNone(state['execution_in_flight'])
+
+    def test_plain_stderr_diagnostic_preserves_typed_untruncated_metadata(self):
+        self.execution_fixture('diagnostic_exit')
+        self.env['DIAGNOSTIC_HEX'] = b'Ordinary startup failure'.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual({key: value for key, value in diagnostic.items() if key != 'artifact_ref'}, dict(
+            captured_bytes=24, retained_bytes=24, truncated=False, encoding='utf-8-replace',
+            redaction_status='no_known_patterns_detected'))
+        self.assertEqual((Path(report['run_directory']) / diagnostic['artifact_ref']).read_bytes(),
+                         b'Ordinary startup failure')
+
+    def test_missing_terminal_diagnostic_is_redacted_bounded_and_survives_resume(self):
+        self.execution_fixture('diagnostic_exit')
+        secret = 'fixture-private-environment-value'
+        payload = (f'Startup failed: {secret}\nAuthorization: Bearer bearer-sentinel\n'
+                   'api_key="pattern-sentinel"\nMultibyte: café\n').encode() + b'\xff\n' + b'x' * 90000
+        self.env.update(FIXTURE_API_KEY=secret, DIAGNOSTIC_HEX=payload.hex())
+
+        result = self.execute()
+
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['reason_code'], 'provider_blocked')
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['captured_bytes'], len(payload))
+        self.assertIs(type(diagnostic['captured_bytes']), int)
+        self.assertIs(type(diagnostic['retained_bytes']), int)
+        self.assertIs(diagnostic['truncated'], True)
+        self.assertEqual(diagnostic['encoding'], 'utf-8-replace')
+        self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+        run = Path(report['run_directory'])
+        artifact = run / diagnostic['artifact_ref']
+        retained = artifact.read_bytes()
+        self.assertEqual(len(retained), diagnostic['retained_bytes'])
+        self.assertLessEqual(len(retained), 65536)
+        self.assertIn('café\n�', retained.decode('utf-8'))
+        self.assertIn(b'Startup failed:', retained)
+        for value in (secret, 'bearer-sentinel', 'pattern-sentinel'):
+            self.assertNotIn(value, retained.decode())
+            self.assertNotIn(value, result.stdout + result.stderr)
+            for path in run.rglob('*'):
+                if path.is_file():
+                    self.assertNotIn(value.encode(), path.read_bytes(), str(path))
+        state = json.loads((run / 'state.json').read_text())
+        self.assertEqual(state['iterations'][0]['provider_diagnostic'], diagnostic)
+        self.assertEqual(report['failure_counts'], state['failures'])
+        self.assertTrue(all(value == 0 for value in report['failure_counts'].values()))
+        self.assertTrue(all(value == 0 for value in report['retries'].values()))
+        self.assertIsNone(state['execution_in_flight'])
+        self.env['BEHAVIOR'] = 'success'
+        resumed = self.execute('--resume', str(run))
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        self.assertEqual(json.loads(resumed.stdout)['iterations'][0]['provider_diagnostic'], diagnostic)
+        self.assertEqual(artifact.read_bytes(), retained)
+
     def test_signal_denial_reports_cleanup_uncertainty_and_preserves_unclean_worker(self):
         self.execution_fixture('timeout')
         marker = self.deny_group_signals(self.root / 'calls')
