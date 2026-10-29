@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 20 -->
+<!-- next-id: 21 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -23,3 +23,4 @@
 17. [ ] Clean up skills: remove `addy-*` skills and assess minimal bespoke replacements to reduce context usage.
 18. [ ] Incorporate relevant brain principles into code review skills.
 19. [ ] Add the unslop skill.
+20. [ ] Minimize the commit skill.
