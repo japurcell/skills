@@ -1,6 +1,6 @@
 # Native desktop popup and sound experiment
 
-- Status: native macOS window/audio and corrected Quit verified. Windows media-backend listening and lifecycle passed the documented checks; automatic-mute audibility remains inconclusive. For the current WSL2/WSLg media receiver, the user confirmed automatic success/failure audio, repeated manual Preview/Replay attempts, good quality, silent automatic delivery with mute checked, and audible manual Replay with mute checked. Automatic mute and manual Replay override are accepted for WSLg media; manual sound is expected because the checkbox mutes automatic sounds only. WSLg offline silent restore, audio-active Quit, old soundeffect A/B, and runtime-log assessment remain pending. Ubuntu desktop remains pending.
+- Status: native macOS window/audio and corrected Quit verified. Windows media-backend listening, controlled mute, keyboard/stack/Undo observations, both existing output devices, desktop behavior, and clean shutdown passed the documented follow-up checks; no-output and multi-monitor coverage remain untested. For the current WSL2/WSLg media receiver, the user confirmed automatic success/failure audio, repeated manual Preview/Replay attempts, good quality, silent automatic delivery with mute checked, and audible manual Replay with mute checked. Automatic mute and manual Replay override are accepted for WSLg media; manual sound is expected because the checkbox mutes automatic sounds only. WSLg offline silent restore, audio-active Quit, old soundeffect A/B, and runtime-log assessment remain pending. Ubuntu desktop remains pending.
 - User accepted deletion/Undo browser interaction and requested native prototypes. Linux targets are Ubuntu desktop and WSL2. User has no admin access.
 - [Runnable source bundle](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype.zip)
 - [Tracked source kit](../../../prototypes/agent-notifications/README.md) is the canonical fetchable copy on branch `codex/notify-app`. It includes only source, launchers, pinned requirements, and gentle WAV assets; no environments, logs, pending alerts, or local app bundles.
@@ -32,6 +32,14 @@
 - The user heard separate automatic success/failure, all three previews, and repeated Replay; confirmed the level control worked, the alert did not steal focus, and Quit during Replay closed cleanly.
 - Automatic mute remained inconclusive by ear; playback count did not increase for the muted test event. The user heard a fresh automatic failure after unmuting.
 - Offline send queued while stopped; reopen restored two pending alerts silently on a new PID. Final status was stopped with both shutdown markers in the isolated runtime log. Full details are in [the Windows run note](windows-native-run-2026-10-29.md).
+
+## Windows remaining-check follow-up (2026-10-29)
+
+- This is additive to the earlier Windows runs above and in [the Windows run note](windows-native-run-2026-10-29.md); it does not replace their observations. On revision `d1c97146`, the fresh isolated media receiver passed the controlled automatic-mute/unmute check with direct listening confirmation. Manual Preview/Replay stayed audible while muted; older muted alerts did not replay after unmuting.
+- The user confirmed the A/B/C stack stayed unchanged for 30 seconds; silent Snooze rotation, single and batch Dismiss/Undo ordering, 11-second Undo expiry, empty-state disabled controls, reactivation, and Ctrl+Z Undo all behaved as expected. All buttons were reachable and Space activated controls. Tab/Shift+Tab were reported to work; visible focus and Enter were not separately detailed.
+- With user approval, Preview and automatic events were audible after switching to LG Display Audio and after restoring the Realtek speakers. No device was removed or disabled, so missing-output handling remains untested.
+- On the single LG display (2560x1440, DPR 1.5), the popup appeared while another app retained typing focus, stayed readable and fully on-screen, and appeared above a full-screen app without taking its focus. On an alternate virtual desktop, it remained on the original desktop while the other app retained focus. Multi-monitor behavior is unavailable.
+- The Windows receiver stopped cleanly (`running=false`, `paused=true`, `pending=6`); the isolated log contains both shutdown markers and no traceback, exception, crash, failed operation, or non-empty audio error. Full details and log path are in the Windows run note.
 
 ## Observed macOS evidence
 

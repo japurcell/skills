@@ -30,12 +30,12 @@ Requires existing user-accessible Python 3.10+, a graphical desktop, an audio ou
 
 These are checkpoints from the 2026-10-29 evidence, not live receiver status. Do not rerun accepted checks by default. Run the relevant remaining checks below only when asked to perform platform testing. This guide itself does not authorize starting, stopping, or changing a receiver; follow the user's current request. The authorized WSLg media lifecycle below was completed in an isolated session-files directory and the receiver is now stopped. The previous `/tmp` session remains untouched; do not treat any saved PID as live.
 
-### Windows: finish mute, input, and desktop coverage
+### Windows: remaining coverage after the 2026-10-29 follow-up
 
-- Use `media`. Already verified: audible automatic success/failure, repeated Preview/Replay, volume adjustment, ordinary focus retention, offline queue/silent restore, and Quit during playback. Earlier button legibility and disabled-state checks also passed.
-- First resolve automatic mute using [the controlled mute check](#controlled-mute-check). Previous API counts showed suppression, but the human could not confirm silence. Require an explicit listening answer; do not turn uncertainty into a pass.
-- Then perform [keyboard and stack checks](#keyboard-and-stack-checks), [output-device checks](#output-device-checks), and [desktop coverage](#desktop-coverage). Record each result separately. Ordinary focus retention does not establish full-screen or multiple-monitor behavior.
-- For a new isolated session, use the Windows commands below. Stop only the receiver associated with that session when finished. Previously accepted audio/lifecycle checks need rerunning only if a failure, source change, or device change affects them.
+- The fresh `media` receiver follow-up completed the controlled mute/unmute check with direct listening confirmation, keyboard/stack/Undo and Ctrl+Z checks, approved switching between the existing LG and Realtek outputs, focus/full-screen/virtual-desktop observations, and clean shutdown. Detailed additive results are in [the Windows run note](windows-native-run-2026-10-29.md); earlier QSoundEffect and media findings remain intact.
+- Tab/Shift+Tab navigation was reported to work; all buttons were reachable and Space activated controls. Visible focus indication and Enter behavior were not separately itemized.
+- The alert stayed on the original desktop when another virtual desktop was active. One physical display was available, so multi-monitor behavior is untested. No output device was removed or disabled, so missing-output handling is also untested.
+- The isolated follow-up receiver is stopped. Do not rerun accepted Windows checks by default; use a new isolated data directory for any future authorized check. Stop only the receiver associated with that directory.
 
 ### WSLg: media lifecycle verified; keep optional comparisons gated
 
