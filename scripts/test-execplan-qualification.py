@@ -285,6 +285,29 @@ print(json.dumps({'type': 'result', 'status': 'success',
                 self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
                 self.assertTrue(json.loads(collected.stdout)['git']['clean'])
 
+    def test_setup_rejects_ignored_selected_resource_before_baseline_commit(self):
+        source = self.skill_source('tdd')
+        (source / '.gitignore').write_text('required-fixture.txt\n')
+        resource = source / 'required-fixture.txt'
+        resource.write_bytes(b'required regular fixture resource\n')
+        result = self.run_helper('setup', '--root', str(self.root), '--tdd-source', str(source))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)['reason_code'], 'qualification_setup_failed')
+        manifest = json.loads((self.root / 'manifest.json').read_text())
+        self.assertEqual(manifest['setup_state']['status'], 'failed')
+        self.assertIsNone(manifest['baseline_commit'])
+        project = self.root / 'project'
+        head = subprocess.run(['git', '-C', str(project), 'rev-parse', '--verify', 'HEAD'],
+                              env=self.env, capture_output=True)
+        self.assertNotEqual(head.returncode, 0)
+        self.assertEqual((project / '.gemini/skills/tdd/required-fixture.txt').read_bytes(),
+                         resource.read_bytes())
+        self.assertEqual((source / '.gitignore').read_text(), 'required-fixture.txt\n')
+        collected = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(json.loads(collected.stdout)['reason_code'], 'qualification_setup_incomplete')
+        self.assertFalse(self.fake_calls.exists())
+        self.assertFalse(self.home.exists())
+
     def test_setup_rejects_unsafe_skill_sources_before_creating_root(self):
         cases = ('missing', 'relative', 'missing-entrypoint', 'malformed', 'wrong-name',
                  'symlink-root', 'symlink-parent', 'symlink-child', 'fifo', 'oversized',

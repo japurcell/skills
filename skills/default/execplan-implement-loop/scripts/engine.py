@@ -61,14 +61,36 @@ def result_schema(iteration, task):
                 ]})
 
 
+def prose_headings(text):
+    """Locate structural headings while leaving fenced examples untouched."""
+    headings, offset, fence = [], 0, None
+    for line in text.splitlines(keepends=True):
+        body = line.rstrip('\n')
+        if fence is not None:
+            character, length = fence
+            if re.fullmatch(r' {0,3}' + re.escape(character) + '{' + str(length) + r',}[ \t]*', body):
+                fence = None
+        else:
+            opening = re.fullmatch(r' {0,3}(`{3,}|~{3,})(.*)', body)
+            if opening and not (opening[1][0] == '`' and '`' in opening[2]):
+                fence = (opening[1][0], len(opening[1]))
+            else:
+                heading = re.fullmatch(r'(#{1,6}) (.+)', body)
+                if heading:
+                    headings.append((offset, len(heading[1]), heading[2]))
+        offset += len(line)
+    return headings
+
+
 def worker_context(plan, task):
     """Keep design prose and current/prerequisite requirements without truncation."""
     text = plan.text
     replacements = [(plan.block.start(), plan.block.end())] + list(plan.regions.values())
     for start, end in sorted(replacements, reverse=True):
         text = text[:start] + text[end:]
-    headings = list(re.finditer(r'^(#{1,6}) (.+)$', text, re.M))
+    headings = prose_headings(text)
     selected = plan.ancestors[task['id']] | {task['id']}
+    milestones = {plan.tasks[identifier]['milestone_id'] for identifier in selected}
     removals = []
     for index, heading in enumerate(headings):
         label = re.fullmatch(r'(Task|Milestone) ([^ :]+): .+', heading[2])
@@ -76,11 +98,11 @@ def worker_context(plan, task):
             continue
         kind, identifier = label.groups()
         if (kind == 'Task' and identifier in selected or
-                kind == 'Milestone' and identifier == task['milestone_id']):
+                kind == 'Milestone' and identifier in milestones):
             continue
-        end = next((following.start() for following in headings[index + 1:]
-                    if len(following[1]) <= 4), len(text))
-        removals.append((heading.start(), end))
+        end = next((following[0] for following in headings[index + 1:]
+                    if following[1] <= 4), len(text))
+        removals.append((heading[0], end))
     for start, end in sorted(removals, reverse=True):
         text = text[:start] + text[end:]
     return text

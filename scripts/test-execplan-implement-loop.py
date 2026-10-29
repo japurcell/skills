@@ -370,6 +370,54 @@ class ProcessTests(Fixture):
         self.assertEqual(report['commits'], [])
         self.assertEqual(report['iterations'], [])
 
+    def test_worker_prompt_preserves_fenced_task_requirement_bytes(self):
+        requirement = ('Required example follows exactly:\n```markdown\n'
+                       '# Task EXAMPLE: Document syntax\nCURRENT_REQUIRED_SENTINEL\n```\n'
+                       'Keep the requirement after the example.\n'
+                       '~~~~markdown\n# Task EXAMPLE: Also literal\n'
+                       'TILDE_REQUIRED_SENTINEL\n~~~~\n')
+        self.plan.write_text(markdown(self.data).replace(
+            '#### Task T1: Work\n', '#### Task T1: Work\n' + requirement))
+        validated = self.run_cli('--validate-only')
+        self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
+        self.execution_fixture()
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+        result = self.execute()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        prompt = json.loads((self.root / 'observations.json').read_text())['prompt']
+        packet = json.loads(prompt.split('\nRUNNER_PACKET=', 1)[1])
+        self.assertIn(requirement, packet['design_context'])
+        self.assertNotIn('#### Task T3: Work', packet['design_context'])
+        self.assertLessEqual(len(prompt.encode('utf-8')), 98304)
+
+    def test_worker_prompt_preserves_prerequisite_milestone_shared_requirements(self):
+        self.data['tasks'][2].update(milestone_id='M2', kind='implementation')
+        self.data['tasks'].extend([
+            dict(id='T4', milestone_id='M2', kind='verification', depends_on=['T3'],
+                 verification=[command()], writable_paths=['output.txt'], state='open', evidence=[]),
+            dict(id='T5', milestone_id='M2', kind='verification', depends_on=['T4'],
+                 verification=[command()], writable_paths=['output.txt'], state='open', evidence=[])])
+        self.data['milestones'].append(dict(id='M2', verification_task_id='T4', state='open', evidence=[]))
+        self.data['final_task_id'] = 'T5'
+        shared = 'SHARED_INTERFACE_REQUIRED_SENTINEL: all consumers preserve the café wire format.\n'
+        self.plan.write_text(markdown(self.data).replace(
+            '### Milestone M1: Deliver output\n', '### Milestone M1: Deliver output\n' + shared))
+        validated = self.run_cli('--validate-only')
+        self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
+        self.execution_fixture('per_task')
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+        result = self.execute()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        prompt = json.loads((self.root / 'observations.json').read_text())['prompt']
+        packet = json.loads(prompt.split('\nRUNNER_PACKET=', 1)[1])
+        self.assertEqual(packet['task_id'], 'T3')
+        self.assertIn(shared, packet['design_context'])
+        for identifier in ('T1', 'T2', 'T3'):
+            self.assertIn('#### Task ' + identifier + ': Work', packet['design_context'])
+        self.assertNotIn('#### Task T4: Work', packet['design_context'])
+        self.assertNotIn('#### Task T5: Work', packet['design_context'])
+        self.assertLessEqual(len(prompt.encode('utf-8')), 98304)
+
     def test_final_repair_packet_includes_resolved_milestone_acceptance_commands(self):
         final_command = command('final')
         final_command['argv'] = [sys.executable, '-c',
@@ -404,6 +452,127 @@ class ProcessTests(Fixture):
         retained = (Path(report['run_directory']) / diagnostic['artifact_ref']).read_text()
         for value in ('quoted-sentinel', 'client-sentinel', 'basic-sentinel', 'password-sentinel', 'private-sentinel'):
             self.assertNotIn(value, retained)
+
+    def test_diagnostic_redacts_escaped_credentials_before_every_retained_write(self):
+        self.execution_fixture('diagnostic_exit')
+        environment_secret = 'environment-"quoted"-\\path-café-sentinel'
+        labeled = {'password': 'prefix"escaped-suffix-sentinel',
+                   'clientSecret': 'client-camel-sentinel', 'id_token': 'id-token-sentinel',
+                   'CLIENT_SECRET': 'client-env-sentinel', 'ACCESS_TOKEN': 'access-env-sentinel',
+                   'API_KEY': 'api-env-sentinel', 'PRIVATE_KEY': 'private-env-sentinel'}
+        payload = (json.dumps(labeled) + '\nCLIENT_SECRET=plain-env-sentinel\n' +
+                   json.dumps({'unlabeled': environment_secret}, ensure_ascii=True) + '\n' +
+                   json.dumps({'unlabeled': environment_secret}, ensure_ascii=False) + '\n' +
+                   environment_secret + '\n').encode()
+        self.env.update(FIXTURE_CREDENTIAL=environment_secret, DIAGNOSTIC_HEX=payload.hex())
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+        self.assertEqual(diagnostic['captured_bytes'], len(payload))
+        self.assertIs(diagnostic['truncated'], False)
+        run = Path(report['run_directory'])
+        retained = (run / diagnostic['artifact_ref']).read_bytes()
+        self.assertEqual(diagnostic['retained_bytes'], len(retained))
+        self.assertLessEqual(len(retained), 65536)
+        surfaces = [result.stdout.encode(), result.stderr.encode()]
+        surfaces += [path.read_bytes() for path in run.rglob('*') if path.is_file()]
+        sentinels = ['escaped-suffix-sentinel', 'plain-env-sentinel', 'environment-',
+                     *[value for key, value in labeled.items() if key != 'password']]
+        for surface in surfaces:
+            for value in sentinels:
+                self.assertNotIn(value.encode(), surface)
+        state = json.loads((run / 'state.json').read_text())
+        self.assertIsNone(state['execution_in_flight'])
+        self.assertEqual(report['commits'], [])
+        self.assertTrue(all(value == 0 for value in report['failure_counts'].values()))
+
+    def test_malformed_quoted_credential_omits_diagnostic_content(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = b'{"password":"unterminated-\\"malformed-sentinel\nordinary text\n'
+        self.env['DIAGNOSTIC_HEX'] = payload.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['iterations'][0]['provider_diagnostic'], dict(
+            artifact_ref=None, captured_bytes=len(payload), retained_bytes=0, truncated=False,
+            encoding='utf-8-replace', redaction_status='content_omitted'))
+        run = Path(report['run_directory'])
+        self.assertEqual(list(run.glob('provider-stderr-*')), [])
+        for surface in [result.stdout.encode(), result.stderr.encode(),
+                        *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+            self.assertNotIn(b'malformed-sentinel', surface)
+
+    def test_diagnostic_redacts_quoted_authorization_and_prefixed_environment_labels(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = (b'Authorization: "Bearer prefix\\"authorization-suffix-sentinel"\n'
+                   b'GOOGLE_API_KEY="google-env-sentinel"\n')
+        self.env['DIAGNOSTIC_HEX'] = payload.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+        run = Path(report['run_directory'])
+        self.assertIsNotNone(diagnostic['artifact_ref'])
+        for surface in [result.stdout.encode(), result.stderr.encode(),
+                        *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+            self.assertNotIn(b'authorization-suffix-sentinel', surface)
+            self.assertNotIn(b'google-env-sentinel', surface)
+
+    def test_ambiguous_quoted_credential_suffix_omits_diagnostic_content(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = b'password="first-portion"ambiguous-suffix-sentinel\n'
+        self.env['DIAGNOSTIC_HEX'] = payload.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['iterations'][0]['provider_diagnostic'], dict(
+            artifact_ref=None, captured_bytes=len(payload), retained_bytes=0, truncated=False,
+            encoding='utf-8-replace', redaction_status='content_omitted'))
+        run = Path(report['run_directory'])
+        self.assertEqual(list(run.glob('provider-stderr-*')), [])
+        for surface in [result.stdout.encode(), result.stderr.encode(),
+                        *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+            self.assertNotIn(b'ambiguous-suffix-sentinel', surface)
+
+    def test_diagnostic_long_hyphenated_noise_returns_bounded_public_result(self):
+        self.execution_fixture('diagnostic_exit')
+        self.provider.write_text('#!' + sys.executable + '\n'
+            'import sys\n'
+            'if "--version" in sys.argv:\n'
+            '    print("0.65.0"); raise SystemExit()\n'
+            'sys.stderr.buffer.write(b"segment-" * 80000)\n'
+            'raise SystemExit(1)\n')
+        result = self.execute(timeout=15)
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['captured_bytes'], 640000)
+        self.assertEqual(diagnostic['retained_bytes'], 65536)
+        self.assertIs(diagnostic['truncated'], True)
+        self.assertEqual(diagnostic['redaction_status'], 'no_known_patterns_detected')
+        artifact = Path(report['run_directory']) / diagnostic['artifact_ref']
+        self.assertEqual(artifact.stat().st_size, 65536)
+        self.assertEqual(report['commits'], [])
+
+    def test_environment_redaction_does_not_hide_recognized_credential_labels(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = (b'{"password":"label-collision-sentinel"}\n'
+                   b'https://user:uri-collision-sentinel@example.invalid\n')
+        self.env.update(FIXTURE_API_KEY='password', FIXTURE_AUTH_SECRET='https',
+                        DIAGNOSTIC_HEX=payload.hex())
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+        run = Path(report['run_directory'])
+        for surface in [result.stdout.encode(), result.stderr.encode(),
+                        *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+            self.assertNotIn(b'label-collision-sentinel', surface)
+            self.assertNotIn(b'uri-collision-sentinel', surface)
 
     def test_incomplete_capture_omits_unsafe_stderr_tail(self):
         self.execution_fixture('diagnostic_exit')

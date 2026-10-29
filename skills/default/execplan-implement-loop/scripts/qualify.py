@@ -1216,6 +1216,37 @@ def _setup(root_value: str, exec_plans_source: str | None = None,
                                  reason_code='qualification_setup_failed') from error
 
 
+def _setup_resource_identities(root: Path, manifest: dict[str, object]) -> dict[str, tuple[str, str, str]]:
+    project = root / 'project'
+    algorithm = _git(project, 'rev-parse', '--show-object-format')
+    resources = [{'path': 'project/ExecPlan.md', 'sha256': manifest['fixture']['sha256'], 'mode': 0o600}]
+    resources.extend(item for skill in manifest['skills'] for item in skill['files'])
+    expected = {}
+    for item in resources:
+        path = _owned_path(root, item['path'], must_exist=True)
+        descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | getattr(os, 'O_NOFOLLOW', 0))
+        with os.fdopen(descriptor, 'rb') as source:
+            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                raise QualificationError('A selected baseline resource is not a regular file')
+            raw = source.read(SKILL_FILE_LIMIT + 1)
+        if len(raw) > SKILL_FILE_LIMIT or hashlib.sha256(raw).hexdigest() != item['sha256']:
+            raise QualificationError('A selected baseline resource differs from its validated bytes')
+        oid = hashlib.new(algorithm, b'blob ' + str(len(raw)).encode('ascii') + b'\0' + raw).hexdigest()
+        expected[Path(item['path']).relative_to('project').as_posix()] = (
+            '100755' if item['mode'] & 0o111 else '100644', 'blob', oid)
+    return expected
+
+
+def _verify_setup_tree(project: Path, tree: str, expected: dict[str, tuple[str, str, str]]) -> None:
+    actual = {}
+    for entry in _git(project, 'ls-tree', '-r', '-z', '--full-tree', tree).split('\0'):
+        if entry:
+            metadata, name = entry.split('\t', 1)
+            actual[name] = tuple(metadata.split())
+    if any(actual.get(name) != identity for name, identity in expected.items()):
+        raise QualificationError('Git baseline omits or changes a selected resource; review ignore rules and filters')
+
+
 def _finish_setup(root: Path, fixture: Path, manifest: dict[str, object],
                   payloads: dict[str, bytes]) -> dict[str, object]:
     project = root / 'project'
@@ -1254,8 +1285,11 @@ def _finish_setup(root: Path, fixture: Path, manifest: dict[str, object],
         _git(project, 'config', '--local', key, value)
     paths = ['ExecPlan.md'] + (['.gemini/skills'] if manifest['skills'] else [])
     _git(project, 'add', '--', *paths)
+    expected = _setup_resource_identities(root, manifest)
+    _verify_setup_tree(project, _git(project, 'write-tree'), expected)
     _git(project, 'commit', '--quiet', '--no-gpg-sign', '-m', 'qualification baseline')
     baseline = _git(project, 'rev-parse', 'HEAD')
+    _verify_setup_tree(project, baseline, expected)
     if _git(project, 'status', '--porcelain'):
         raise QualificationError('Disposable repository was not clean after baseline commit')
 

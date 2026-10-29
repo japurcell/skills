@@ -1,11 +1,51 @@
 """Bounded, deterministic diagnostics shared by every runner summary."""
 from pathlib import Path
+import json
 import os
 import re
 import shlex
 
 
 DIAGNOSTIC_LIMIT = 65536
+
+
+def redact_labeled_credentials(text):
+    labels = re.compile(
+        r'(?i)(?<![a-z0-9])'
+        r'(?P<label>api[_-]?key|(?:access|refresh|id)[_-]?token|(?:client[_-]?)?secret|'
+        r'password|passwd|private[_-]?key|credentials?|auth(?:orization)?(?:[_-]?token)?)'
+        r'["\']?\s*[=:]\s*')
+    pieces, cursor = [], 0
+    while match := labels.search(text, cursor):
+        end = match.end()
+        if end < len(text) and text[end] in ('"', "'"):
+            quote = text[end]
+            end += 1
+            while end < len(text) and text[end] != quote:
+                if text[end] in '\r\n':
+                    raise ValueError('Unsafe quoted credential')
+                if text[end] == '\\':
+                    end += 1
+                    if end == len(text) or text[end] in '\r\n':
+                        raise ValueError('Unsafe quoted credential escape')
+                end += 1
+            if end == len(text):
+                raise ValueError('Unterminated quoted credential')
+            end += 1
+            if end < len(text) and not text[end].isspace() and text[end] not in ',;}]':
+                raise ValueError('Ambiguous quoted credential suffix')
+        elif re.sub(r'[_-]', '', match['label']).lower() in (
+                'auth', 'authorization', 'authtoken', 'authorizationtoken'):
+            # Header values may contain an authentication scheme and whitespace.
+            # Retain none of that line rather than exposing its credential tail.
+            while end < len(text) and text[end] not in '\r\n':
+                end += 1
+        else:
+            while end < len(text) and not text[end].isspace() and text[end] not in ',;':
+                end += 1
+        pieces.extend((text[cursor:match.start()], '[REDACTED]'))
+        cursor = end
+    return ''.join((*pieces, text[cursor:]))
 
 
 def provider_diagnostic(raw, captured_bytes, truncated):
@@ -23,12 +63,11 @@ def provider_diagnostic(raw, captured_bytes, truncated):
         original = text
         secrets = {value for name, value in os.environ.items() if value and re.search(
             r'token|secret|pass(?:word|wd)?|api[_-]?key|private[_-]?key|credential|auth', name, re.I)}
-        for value in sorted(secrets, key=len, reverse=True):
-            text = text.replace(value, '[REDACTED]')
+        encoded_secrets = secrets | {json.dumps(value, ensure_ascii=ascii_only)[1:-1]
+                                    for value in secrets for ascii_only in (True, False)}
+        text = redact_labeled_credentials(text)
         patterns = (
             r'(?i)\b(?:Bearer|Basic)\s+[^\s,;\"\']+',
-            r'(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|(?:client[_-])?secret|password|passwd)'
-            r'["\']?\s*[=:]\s*(?:"[^"\n]*"|\'[^\'\n]*\'|[^\s,;]+)',
             r'-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[\s\S]*?(?:-----END (?:[A-Z]+ )?PRIVATE KEY-----|\Z)',
             r'\bAIza[0-9A-Za-z_-]{20,}',
             r'\bsk-[0-9A-Za-z_-]{16,}',
@@ -36,6 +75,10 @@ def provider_diagnostic(raw, captured_bytes, truncated):
         )
         for pattern in patterns:
             text = re.sub(pattern, '[REDACTED]', text)
+        # Substitutions must not erase labels or URI schemes before their
+        # complete credential values have been recognized and removed.
+        for value in sorted(encoded_secrets, key=len, reverse=True):
+            text = text.replace(value, '[REDACTED]')
         encoded = text.encode('utf-8')
         retained = encoded[:DIAGNOSTIC_LIMIT].decode('utf-8', errors='ignore').encode('utf-8')
         metadata.update(retained_bytes=len(retained), truncated=len(encoded) > DIAGNOSTIC_LIMIT,
