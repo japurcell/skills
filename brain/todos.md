@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 21 -->
+<!-- next-id: 22 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -24,3 +24,4 @@
 18. [ ] Incorporate relevant brain principles into code review skills.
 19. [ ] Add the unslop skill.
 20. [ ] Minimize the commit skill.
+21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`.
