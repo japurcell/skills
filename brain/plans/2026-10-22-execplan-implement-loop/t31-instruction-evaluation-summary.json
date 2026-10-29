@@ -1,0 +1,40 @@
+{
+  "source_commit": "e8d59c08929ad60347db9a1204ce14c6a694e061",
+  "baseline_commit": "305ee3a3bc67c7d2ece26dba509cca3899854258",
+  "canonical_iteration": "/private/tmp/execplan-live-evals-y4gqfj0s/execplan-implement-loop-workspace/iteration-2",
+  "sample_count": "one valid run per scenario and configuration",
+  "totals": {
+    "with_skill": {"passed": 17, "failed": 0, "total": 17},
+    "old_skill": {"passed": 16, "failed": 1, "total": 17}
+  },
+  "cases": [
+    {"case": 1, "with_skill": "4/4", "old_skill": "4/4"},
+    {"case": 2, "with_skill": "4/4", "old_skill": "4/4"},
+    {"case": 3, "with_skill": "4/4", "old_skill": "4/4"},
+    {"case": 4, "with_skill": "5/5", "old_skill": "4/5"}
+  ],
+  "case4": {
+    "run1": "Excluded from grading because the actor wrapper denied all fixture project writes, introducing an independent blocker. Both responses are preserved ungraded.",
+    "run2": "Fresh actors used the declared task write scope with unchanged assertions and source snapshots. The with-skill actor stopped after the recorded fake read denial and passed 5/5. The old-skill actor continued to ready_for_verification and failed the blocked-response assertion, passing 4/5.",
+    "correction_note": "/private/tmp/execplan-live-evals-y4gqfj0s/case4-harness-correction.md"
+  },
+  "metrics": {
+    "tokens": null,
+    "time_seconds": null,
+    "tool_calls": null,
+    "errors": null,
+    "source": "Unknown; original grader metrics were null or absent."
+  },
+  "limitations": [
+    "Fake-provider instruction evaluation only; it does not establish live Gemini behavior or filesystem containment.",
+    "One valid sample per scenario and configuration; no statistical or performance claim is supported.",
+    "The installed aggregator cannot sum null metrics. Compatibility inputs omitted unknown fields, raw zero defaults were not measurements, and public benchmark metrics were normalized back to null."
+  ],
+  "artifacts": {
+    "grading_summary": "/private/tmp/execplan-live-evals-y4gqfj0s/execplan-implement-loop-workspace/iteration-2/grading-summary.json",
+    "benchmark_json": "/private/tmp/execplan-live-evals-y4gqfj0s/execplan-implement-loop-workspace/iteration-2/benchmark.json",
+    "benchmark_markdown": "/private/tmp/execplan-live-evals-y4gqfj0s/execplan-implement-loop-workspace/iteration-2/benchmark.md",
+    "review_html": "/private/tmp/execplan-live-evals-y4gqfj0s/execplan-implement-loop-workspace/iteration-2/review.html",
+    "raw_actor_outputs_and_per_step_cli_evidence": "Preserved under canonical_iteration, grouped by eval-N/configuration/run-N."
+  }
+}
