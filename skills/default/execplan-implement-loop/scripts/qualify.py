@@ -23,7 +23,12 @@ except ImportError:  # Native Windows supports setup only; the runner is POSIX-o
 
 
 SCHEMA_VERSION = 1
+MANIFEST_SCHEMA_VERSION = 2
 FIXTURE_RELATIVE_PATH = Path('evals/fixtures/live-qualification.md')
+SKILL_FILE_LIMIT = 1024 * 1024
+SKILL_TOTAL_LIMIT = 16 * 1024 * 1024
+SKILL_FILE_COUNT_LIMIT = 256
+SKILL_DEPTH_LIMIT = 16
 
 
 class QualificationError(Exception):
@@ -200,11 +205,159 @@ def _reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]
     return result
 
 
+def _selected_skill(name: str, value: str, root: Path) -> tuple[dict[str, object], dict[str, bytes]]:
+    source = Path(value)
+    if not source.is_absolute():
+        raise QualificationError('Skill source directories must be absolute', reason_code='invalid_skill_source')
+    if '..' in source.parts or root.is_relative_to(source) or source.is_relative_to(root):
+        raise QualificationError('Skill source must be a directory outside the new root',
+                                 reason_code='invalid_skill_source')
+    directory_flags = os.O_RDONLY | getattr(os, 'O_DIRECTORY', 0) | getattr(os, 'O_NOFOLLOW', 0)
+    descriptor = os.open(source.anchor, directory_flags)
+    try:
+        for part in source.parts[1:]:
+            child = os.open(part, directory_flags, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+    except BaseException:
+        os.close(descriptor)
+        raise
+    prefix = f'project/.gemini/skills/{name}'
+    files: list[dict[str, object]] = []
+    directories = [prefix]
+    payloads: dict[str, bytes] = {}
+    total = 0
+    def inspect_tree(directory: int, parent: str, depth: int) -> None:
+        nonlocal total
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                relative = parent + '/' + entry.name if parent else entry.name
+                try:
+                    relative.encode('utf-8')
+                except UnicodeError as error:
+                    raise QualificationError('Skill source paths must be UTF-8', reason_code='invalid_skill_source') from error
+                if '\\' in relative:
+                    raise QualificationError('Unsafe skill source path', reason_code='invalid_skill_source')
+                _safe_relative(relative, 'skill source path')
+                target = prefix + '/' + relative
+                metadata = entry.stat(follow_symlinks=False)
+                if stat.S_ISDIR(metadata.st_mode):
+                    if depth >= SKILL_DEPTH_LIMIT or len(directories) >= 4096:
+                        raise QualificationError('Skill source directory limit exceeded', reason_code='invalid_skill_source')
+                    directories.append(target)
+                    nested = os.open(entry.name, directory_flags, dir_fd=directory)
+                    try:
+                        opened = os.fstat(nested)
+                        if (opened.st_dev, opened.st_ino) != (metadata.st_dev, metadata.st_ino):
+                            raise QualificationError('Skill directory changed during inspection', reason_code='invalid_skill_source')
+                        inspect_tree(nested, relative, depth + 1)
+                    finally:
+                        os.close(nested)
+                elif stat.S_ISREG(metadata.st_mode):
+                    if len(files) >= SKILL_FILE_COUNT_LIMIT or metadata.st_size > SKILL_FILE_LIMIT:
+                        raise QualificationError('Skill source file limit exceeded', reason_code='invalid_skill_source')
+                    file_descriptor = os.open(entry.name, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0)
+                                              | getattr(os, 'O_NONBLOCK', 0), dir_fd=directory)
+                    with os.fdopen(file_descriptor, 'rb') as stream:
+                        opened = os.fstat(stream.fileno())
+                        if (not stat.S_ISREG(opened.st_mode) or
+                                (opened.st_dev, opened.st_ino) != (metadata.st_dev, metadata.st_ino)):
+                            raise QualificationError('Skill source changed during inspection', reason_code='invalid_skill_source')
+                        raw = stream.read(SKILL_FILE_LIMIT + 1)
+                    total += len(raw)
+                    if len(raw) > SKILL_FILE_LIMIT or total > SKILL_TOTAL_LIMIT:
+                        raise QualificationError('Skill source byte limit exceeded', reason_code='invalid_skill_source')
+                    payloads[target] = raw
+                    files.append({'path': target, 'sha256': hashlib.sha256(raw).hexdigest(),
+                                  'size_bytes': len(raw), 'mode': 0o700 if opened.st_mode & 0o111 else 0o600})
+                else:
+                    raise QualificationError('Skill sources require regular files and directories without symlinks',
+                                             reason_code='invalid_skill_source')
+    try:
+        inspect_tree(descriptor, '', 0)
+    finally:
+        os.close(descriptor)
+    skill = payloads.get(prefix + '/SKILL.md')
+    if skill is None:
+        raise QualificationError('Skill source requires a regular SKILL.md', reason_code='invalid_skill_source')
+    try:
+        text = skill.decode('utf-8')
+    except UnicodeError as error:
+        raise QualificationError('SKILL.md must be UTF-8', reason_code='invalid_skill_source') from error
+    lines = text.splitlines()
+    if '\x00' in text or not lines or lines[0] != '---' or '---' not in lines[1:]:
+        raise QualificationError('SKILL.md requires skill metadata', reason_code='invalid_skill_source')
+    frontmatter = lines[1:lines.index('---', 1)]
+    names = [line[5:].strip().strip('\"\'') for line in frontmatter if line.startswith('name:')]
+    if names != [name]:
+        raise QualificationError('SKILL.md name must match the selected skill', reason_code='invalid_skill_source')
+    return ({'name': name, 'source': str(source), 'directories': sorted(directories),
+             'files': sorted(files, key=lambda item: item['path'])}, payloads)
+
+
+def _skill_owned_paths(manifest: dict[str, object]) -> set[str]:
+    if manifest['schema_version'] == 1:
+        return set()
+    skills = manifest.get('skills')
+    if not isinstance(skills, list) or len(skills) > 2:
+        raise QualificationError('Manifest skill records are invalid')
+    expected: set[str] = set()
+    names: set[str] = set()
+    for skill in skills:
+        if not isinstance(skill, dict) or set(skill) != {'name', 'source', 'directories', 'files'}:
+            raise QualificationError('Manifest skill record is malformed')
+        name = skill['name']
+        if name not in ('exec-plans', 'tdd') or name in names:
+            raise QualificationError('Manifest skill name is invalid or duplicated')
+        names.add(name)
+        if not isinstance(skill['source'], str) or not Path(skill['source']).is_absolute():
+            raise QualificationError('Manifest skill source is invalid')
+        prefix = f'project/.gemini/skills/{name}'
+        directories, files = skill['directories'], skill['files']
+        if not isinstance(directories, list) or not isinstance(files, list) or not 1 <= len(files) <= SKILL_FILE_COUNT_LIMIT:
+            raise QualificationError('Manifest skill tree is invalid')
+        paths = set()
+        total = 0
+        for path in directories:
+            parsed = _safe_relative(path, 'skill directory')
+            if (path != prefix and not path.startswith(prefix + '/')) or len(parsed.parts) - 4 > SKILL_DEPTH_LIMIT:
+                raise QualificationError('Manifest skill directory escapes its selected skill')
+            if path != prefix and parsed.parent.as_posix() not in directories:
+                raise QualificationError('Manifest skill parent directory is missing')
+            if path in paths:
+                raise QualificationError('Manifest skill paths repeat')
+            paths.add(path)
+        if prefix not in paths or len(directories) > 4096:
+            raise QualificationError('Manifest skill root is missing')
+        for item in files:
+            if not isinstance(item, dict) or set(item) != {'path', 'sha256', 'size_bytes', 'mode'}:
+                raise QualificationError('Manifest skill file is invalid')
+            path = item['path']
+            parsed = _safe_relative(path, 'skill file')
+            if not path.startswith(prefix + '/') or parsed.parent.as_posix() not in directories or path in paths:
+                raise QualificationError('Manifest skill file escapes its selected skill or repeats')
+            checksum, size = item['sha256'], item['size_bytes']
+            if (not isinstance(checksum, str) or len(checksum) != 64 or
+                    any(char not in '0123456789abcdef' for char in checksum) or
+                    type(size) is not int or not 0 <= size <= SKILL_FILE_LIMIT or
+                    type(item['mode']) is not int or item['mode'] not in (0o600, 0o700)):
+                raise QualificationError('Manifest skill digest or size is invalid')
+            total += size
+            paths.add(path)
+        if total > SKILL_TOTAL_LIMIT or prefix + '/SKILL.md' not in paths:
+            raise QualificationError('Manifest skill bytes or entrypoint is invalid')
+        expected.update(paths)
+    if skills:
+        expected.update(('project/.gemini', 'project/.gemini/skills'))
+    return expected
+
+
 def _expected_owned_paths(manifest: dict[str, object]) -> set[str]:
     expected = {
         'manifest.json', 'project', 'project/.git', 'project/ExecPlan.md',
         'evidence', 'evidence/attempts', 'evidence/collections', 'evidence/run.lock',
     }
+    expected.update(_skill_owned_paths(manifest))
     attempts = manifest.get('attempts')
     collections = manifest.get('collections')
     if not isinstance(attempts, list) or not isinstance(collections, list):
@@ -355,9 +508,17 @@ def _load_root(root_value: str) -> tuple[Path, dict[str, object]]:
         raise QualificationError(f'Owned manifest is malformed or unreadable: {error}') from error
     manifest_fields = {'schema_version', 'root', 'project', 'baseline_commit', 'bundle',
                        'fixture', 'owned_artifact_paths', 'attempts', 'collections'}
-    if (not isinstance(manifest, dict) or manifest.get('schema_version') != SCHEMA_VERSION
-            or set(manifest) != manifest_fields):
+    if isinstance(manifest, dict) and manifest.get('schema_version') == MANIFEST_SCHEMA_VERSION:
+        manifest_fields.update(('skills', 'setup_state'))
+    if (not isinstance(manifest, dict) or type(manifest.get('schema_version')) is not int
+            or manifest['schema_version'] not in (1, MANIFEST_SCHEMA_VERSION) or set(manifest) != manifest_fields):
         raise QualificationError('Owned manifest has an unsupported schema')
+    if manifest['schema_version'] == MANIFEST_SCHEMA_VERSION:
+        setup_state = manifest['setup_state']
+        if (not isinstance(setup_state, dict) or set(setup_state) != {'status', 'reason_code'}
+                or setup_state['status'] != 'complete' or setup_state['reason_code'] is not None):
+            raise QualificationError('Setup did not complete; preserve this root and select a new root',
+                                     reason_code='qualification_setup_incomplete')
     if manifest.get('root') != str(root):
         raise QualificationError('Manifest belongs to a different physical root')
     if manifest.get('project') != 'project':
@@ -385,6 +546,16 @@ def _load_root(root_value: str) -> tuple[Path, dict[str, object]]:
         raise QualificationError('Manifest owned artifact paths do not match its ledger')
     for rel in owned:
         _owned_path(root, rel)
+    if manifest['schema_version'] == MANIFEST_SCHEMA_VERSION and manifest['skills']:
+        skill_root = _owned_path(root, 'project/.gemini/skills', must_exist=True)
+        allowed = _skill_owned_paths(manifest)
+        directories = {path for skill in manifest['skills'] for path in skill['directories']}
+        for child in skill_root.rglob('*'):
+            relative = child.relative_to(root).as_posix()
+            metadata = child.lstat()
+            expected_type = stat.S_ISDIR if relative in directories else stat.S_ISREG
+            if relative not in allowed or not expected_type(metadata.st_mode):
+                raise QualificationError('Fixture skills contain an unowned or non-regular path')
     for rel, kind in (('project', 'directory'), ('project/.git', 'directory'),
                       ('project/ExecPlan.md', 'file'), ('evidence', 'directory')):
         path = _owned_path(root, rel, must_exist=True)
@@ -941,7 +1112,8 @@ def _collect_qualification(root_value: str) -> dict[str, object]:
         return report
 
 
-def _setup(root_value: str) -> dict[str, object]:
+def _setup(root_value: str, exec_plans_source: str | None = None,
+           tdd_source: str | None = None) -> dict[str, object]:
     raw_root = Path(root_value)
     if not raw_root.is_absolute():
         raise QualificationError('--root for setup must be an absolute path')
@@ -952,6 +1124,23 @@ def _setup(root_value: str) -> dict[str, object]:
         raise QualificationError(f'Refusing to overwrite an existing root: {root}')
     if not root.parent.is_dir():
         raise QualificationError(f'Root parent must already exist: {root.parent}')
+
+    skills = []
+    payloads = {}
+    for name, value in (('exec-plans', exec_plans_source), ('tdd', tdd_source)):
+        if value is not None:
+            try:
+                metadata, contents = _selected_skill(name, value, root)
+            except OSError as error:
+                raise QualificationError(f'Cannot read selected skill source: {error}',
+                                         reason_code='invalid_skill_source') from error
+            skills.append(metadata)
+            payloads.update(contents)
+    # Keep the initial metadata well below the existing bounded manifest read,
+    # leaving room for the append-only attempt and collection ledgers.
+    if len(json.dumps(skills).encode('utf-8')) > 256 * 1024:
+        raise QualificationError('Skill path metadata exceeds the bounded manifest allowance',
+                                 reason_code='invalid_skill_source')
 
     bundle = _bundle_root()
     fixture = bundle / FIXTURE_RELATIVE_PATH
@@ -969,6 +1158,44 @@ def _setup(root_value: str) -> dict[str, object]:
     (evidence / 'attempts').mkdir(mode=0o700)
     (evidence / 'collections').mkdir(mode=0o700)
     _write_bytes_exclusive(evidence / 'run.lock', b'')
+    manifest = {
+        'schema_version': MANIFEST_SCHEMA_VERSION,
+        'root': str(root), 'project': 'project', 'baseline_commit': None,
+        'bundle': {'path': str(bundle), 'sha256': bundle_digest},
+        'fixture': {'path': FIXTURE_RELATIVE_PATH.as_posix(), 'sha256': fixture_digest},
+        'owned_artifact_paths': [], 'attempts': [], 'collections': [], 'skills': skills,
+        'setup_state': {'status': 'starting', 'reason_code': None},
+    }
+    _add_owned_paths(manifest)
+    _write_json_exclusive(root / 'manifest.json', manifest)
+    try:
+        return _finish_setup(root, fixture, manifest, payloads)
+    except (OSError, QualificationError, ValueError, subprocess.SubprocessError) as error:
+        manifest['setup_state'] = {'status': 'failed', 'reason_code': 'qualification_setup_failed'}
+        try:
+            _atomic_manifest(root, manifest)
+        except (OSError, QualificationError):
+            pass  # The durable starting state also forbids adopting this partial root.
+        raise QualificationError(f'Setup failed; preserve the partial root and choose a new root: {error}',
+                                 reason_code='qualification_setup_failed') from error
+
+
+def _finish_setup(root: Path, fixture: Path, manifest: dict[str, object],
+                  payloads: dict[str, bytes]) -> dict[str, object]:
+    project = root / 'project'
+    if manifest['skills']:
+        gemini = project / '.gemini'
+        gemini.mkdir(mode=0o700)
+        staging = gemini / '.skills-staging'
+        staging.mkdir(mode=0o700)
+        for skill in manifest['skills']:
+            for relative in skill['directories']:
+                destination = staging / Path(relative).relative_to('project/.gemini/skills')
+                destination.mkdir(mode=0o700, parents=True, exist_ok=False)
+            for item in skill['files']:
+                destination = staging / Path(item['path']).relative_to('project/.gemini/skills')
+                _write_bytes_exclusive(destination, payloads[item['path']], item['mode'])
+        os.rename(staging, gemini / 'skills')
     plan = project / 'ExecPlan.md'
     with fixture.open('rb') as source, plan.open('xb') as destination:
         os.chmod(plan, 0o600)
@@ -989,29 +1216,17 @@ def _setup(root_value: str) -> dict[str, object]:
         ('commit.gpgsign', 'false'),
     ):
         _git(project, 'config', '--local', key, value)
-    _git(project, 'add', '--', 'ExecPlan.md')
+    paths = ['ExecPlan.md'] + (['.gemini/skills'] if manifest['skills'] else [])
+    _git(project, 'add', '--', *paths)
     _git(project, 'commit', '--quiet', '--no-gpg-sign', '-m', 'qualification baseline')
     baseline = _git(project, 'rev-parse', 'HEAD')
     if _git(project, 'status', '--porcelain'):
         raise QualificationError('Disposable repository was not clean after baseline commit')
 
-    manifest = {
-        'schema_version': SCHEMA_VERSION,
-        'root': str(root),
-        'project': 'project',
-        'baseline_commit': baseline,
-        'bundle': {'path': str(bundle), 'sha256': bundle_digest},
-        'fixture': {'path': FIXTURE_RELATIVE_PATH.as_posix(), 'sha256': fixture_digest},
-        'owned_artifact_paths': [
-            'manifest.json', 'project', 'project/.git', 'project/ExecPlan.md',
-            'evidence', 'evidence/attempts', 'evidence/collections', 'evidence/run.lock',
-        ],
-        'attempts': [],
-        'collections': [],
-    }
+    manifest['baseline_commit'] = baseline
+    manifest['setup_state'] = {'status': 'complete', 'reason_code': None}
+    _atomic_manifest(root, manifest)
     manifest_path = root / 'manifest.json'
-    _write_json_exclusive(manifest_path, manifest)
-    manifest_path.chmod(0o600)
     next_argv = [sys.executable, str(Path(__file__).resolve()), 'run', '--root',
                  str(root), '--authorize-paid-run']
     return {'schema_version': SCHEMA_VERSION, 'status': 'setup_complete',
@@ -1025,6 +1240,8 @@ def _parser() -> argparse.ArgumentParser:
     setup = commands.add_parser('setup', allow_abbrev=False,
                                 help='create a new disposable qualification repository')
     setup.add_argument('--root', required=True, help='absolute new directory for qualification files')
+    setup.add_argument('--exec-plans-source', help='explicit absolute exec-plans skill directory to copy locally')
+    setup.add_argument('--tdd-source', help='explicit absolute tdd skill directory to copy locally')
     run = commands.add_parser('run', allow_abbrev=False, help='run or resume a qualification')
     run.add_argument('--root', required=True, help='owned qualification root')
     run.add_argument('--resume', help='explicit run directory to resume')
@@ -1043,7 +1260,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == 'setup':
-            report = _setup(args.root)
+            report = _setup(args.root, args.exec_plans_source, args.tdd_source)
             code = 0
         elif args.command == 'run':
             if sys.platform not in ('darwin', 'linux'):

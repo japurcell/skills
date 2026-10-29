@@ -204,6 +204,216 @@ print(json.dumps({'type': 'result', 'status': 'success',
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return json.loads(result.stdout)
 
+    def skill_source(self, name):
+        source = self.base / 'selected skills' / name
+        source.mkdir(parents=True)
+        (source / 'SKILL.md').write_text('---\nname: ' + name + '\n---\nSelected fixture skill.\n')
+        (source / 'references').mkdir()
+        (source / 'references/example.txt').write_bytes(b'copied exactly\x00\xff\n')
+        (source / 'check.py').write_text('#!/usr/bin/env python3\nprint("selected helper")\n')
+        (source / 'check.py').chmod(0o700)
+        return source
+
+    def test_setup_provisions_selected_skills_before_immutable_baseline(self):
+        self.install_composed_gemini()
+        shutil.rmtree(self.home)
+        sources = {name: self.skill_source(name) for name in ('exec-plans', 'tdd')}
+        before = {name: {path.relative_to(source).as_posix(): path.read_bytes()
+                         for path in source.rglob('*') if path.is_file()}
+                  for name, source in sources.items()}
+        result = self.run_helper('setup', '--root', str(self.root),
+                                 '--exec-plans-source', str(sources['exec-plans']),
+                                 '--tdd-source', str(sources['tdd']))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        project = self.root / 'project'
+        manifest = json.loads((self.root / 'manifest.json').read_text())
+        self.assertEqual(manifest['schema_version'], 2)
+        self.assertEqual(manifest['setup_state']['status'], 'complete')
+        self.assertEqual({item['name'] for item in manifest['skills']}, set(sources))
+        for name, source in sources.items():
+            for relative, payload in before[name].items():
+                owned = 'project/.gemini/skills/' + name + '/' + relative
+                self.assertEqual((self.root / owned).read_bytes(), payload)
+                self.assertIn(owned, manifest['owned_artifact_paths'])
+                committed = subprocess.run(['git', '-C', str(project), 'show',
+                                            report['baseline_commit'] + ':' + owned[8:]],
+                                           env=self.env, capture_output=True, check=True)
+                self.assertEqual(committed.stdout, payload)
+                self.assertEqual((source / relative).read_bytes(), payload)
+                if relative == 'check.py':
+                    self.assertEqual((self.root / owned).stat().st_mode & 0o777, 0o700)
+        self.assertEqual(subprocess.run(['git', '-C', str(project), 'status', '--porcelain'],
+                                       env=self.env, capture_output=True, check=True).stdout, b'')
+        self.assertEqual(self.gemini_calls_read(), [])
+        self.assertFalse(self.home.exists())
+        doctor = subprocess.run([sys.executable, str(self.bundle / 'scripts/run.py'),
+                                 str(project / 'ExecPlan.md'), '--doctor', '--gemini', str(self.gemini)],
+                                env=self.env, cwd=self.base, capture_output=True, text=True, timeout=10)
+        self.assertEqual(doctor.returncode, 0, doctor.stdout + doctor.stderr)
+        skills = json.loads(doctor.stdout)['readiness']['provenance']['skills']
+        self.assertEqual({item['name'] for item in skills}, set(sources))
+        self.assertTrue(all('/project/.gemini/skills/' in item['path'] for item in skills))
+
+    def test_post_setup_skill_changes_remain_rejected(self):
+        self.install_fake_runner()
+        self.setup_root()
+        project = self.root / 'project'
+        shutil.copytree(self.skill_source('exec-plans'), project / '.gemini/skills/exec-plans')
+        dirty = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+        self.assertEqual(json.loads(dirty.stdout)['reason_code'], 'project_changed_without_resume')
+        subprocess.run(['git', '-C', str(project), 'add', '--', '.gemini'], env=self.env, check=True)
+        subprocess.run(['git', '-C', str(project), 'commit', '--quiet', '-m', 'manual skills'],
+                       env=self.env, check=True)
+        changed = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+        self.assertEqual(json.loads(changed.stdout)['reason_code'], 'project_changed_without_resume')
+        self.assertEqual(self.fake_calls_read(), [])
+
+    def test_setup_accepts_either_explicit_skill_independently(self):
+        for name in ('exec-plans', 'tdd'):
+            with self.subTest(skill=name):
+                self.root = self.base / ('root for ' + name)
+                source = self.skill_source(name)
+                result = self.run_helper('setup', '--root', str(self.root), '--' + name + '-source', str(source))
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                skills = self.root / 'project/.gemini/skills'
+                self.assertEqual({path.name for path in skills.iterdir()}, {name})
+                collected = self.run_helper('collect', '--root', str(self.root))
+                self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+                self.assertTrue(json.loads(collected.stdout)['git']['clean'])
+
+    def test_setup_rejects_unsafe_skill_sources_before_creating_root(self):
+        cases = ('missing', 'relative', 'missing-entrypoint', 'malformed', 'wrong-name',
+                 'symlink-root', 'symlink-parent', 'symlink-child', 'fifo', 'oversized',
+                 'too-many-files', 'too-many-bytes', 'too-deep', 'recursive-root')
+        for case in cases:
+            with self.subTest(case=case):
+                source = self.base / case / 'tdd'
+                source.mkdir(parents=True)
+                (source / 'SKILL.md').write_text('---\nname: tdd\n---\nFixture.\n')
+                self.root = self.base / ('invalid root ' + case)
+                selected = source
+                if case == 'missing':
+                    selected = source / 'absent'
+                elif case == 'relative':
+                    selected = Path('relative-source')
+                elif case == 'missing-entrypoint':
+                    (source / 'SKILL.md').unlink()
+                elif case == 'malformed':
+                    (source / 'SKILL.md').write_bytes(b'\xff')
+                elif case == 'wrong-name':
+                    (source / 'SKILL.md').write_text('---\nname: other\n---\n')
+                elif case == 'symlink-root':
+                    selected = source.parent / 'linked-source'
+                    selected.symlink_to(source, target_is_directory=True)
+                elif case == 'symlink-parent':
+                    link = self.base / 'linked-parent'
+                    link.symlink_to(source.parent, target_is_directory=True)
+                    selected = link / source.name
+                elif case == 'symlink-child':
+                    (source / 'linked').symlink_to(source / 'SKILL.md')
+                elif case == 'fifo':
+                    os.mkfifo(source / 'fifo')
+                elif case == 'oversized':
+                    with (source / 'large').open('wb') as stream:
+                        stream.truncate(1024 * 1024 + 1)
+                elif case == 'too-many-files':
+                    for index in range(256):
+                        (source / f'file-{index}').write_bytes(b'')
+                elif case == 'too-many-bytes':
+                    for index in range(16):
+                        with (source / f'file-{index}').open('wb') as stream:
+                            stream.truncate(1024 * 1024)
+                elif case == 'too-deep':
+                    nested = source
+                    for _ in range(17):
+                        nested = nested / 'deep'
+                        nested.mkdir()
+                elif case == 'recursive-root':
+                    self.root = source / 'qualification-root'
+                result = self.run_helper('setup', '--root', str(self.root), '--tdd-source', str(selected))
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertEqual(json.loads(result.stdout)['reason_code'], 'invalid_skill_source')
+                self.assertFalse(self.root.exists())
+        self.assertFalse(self.home.exists())
+
+    def test_setup_copy_failure_retains_typed_partial_root_without_publishing_skills(self):
+        source = self.skill_source('tdd')
+        before = (source / 'references/example.txt').read_bytes()
+        injection = self.base / 'copy failure injection'
+        injection.mkdir()
+        (injection / 'sitecustomize.py').write_text('''import os
+original = os.open
+def open_file(path, *args, **kwargs):
+    if '.skills-staging' in str(path) and str(path).endswith('example.txt'):
+        raise OSError('injected staging copy failure')
+    return original(path, *args, **kwargs)
+os.open = open_file
+''')
+        self.env['PYTHONPATH'] = str(injection)
+        result = self.run_helper('setup', '--root', str(self.root), '--tdd-source', str(source))
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout)['reason_code'], 'qualification_setup_failed')
+        manifest = json.loads((self.root / 'manifest.json').read_text())
+        self.assertEqual(manifest['setup_state']['status'], 'failed')
+        self.assertIsNone(manifest['baseline_commit'])
+        self.assertFalse((self.root / 'project/.gemini/skills').exists())
+        self.assertFalse((self.root / 'project/.git').exists())
+        self.assertTrue((self.root / 'project/.gemini/.skills-staging').is_dir())
+        self.assertEqual((source / 'references/example.txt').read_bytes(), before)
+        self.env.pop('PYTHONPATH')
+        collected = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(json.loads(collected.stdout)['reason_code'], 'qualification_setup_incomplete')
+        retried = self.run_helper('setup', '--root', str(self.root), '--tdd-source', str(source))
+        self.assertEqual(retried.returncode, 2, retried.stdout + retried.stderr)
+        self.assertEqual((source / 'references/example.txt').read_bytes(), before)
+
+    def test_schema_one_roots_still_collect_and_resume_without_manifest_migration(self):
+        self.install_fake_runner()
+        self.setup_root()
+        path = self.root / 'manifest.json'
+        manifest = json.loads(path.read_text())
+        manifest['schema_version'] = 1
+        del manifest['skills'], manifest['setup_state']
+        path.write_text(json.dumps(manifest))
+        first = self.run_helper('run', '--root', str(self.root), '--authorize-paid-run')
+        self.assertEqual(first.returncode, 3, first.stdout + first.stderr)
+        run_directory = json.loads(first.stdout)['run_directory']
+        resumed = self.run_helper('run', '--root', str(self.root), '--resume', run_directory,
+                                  '--authorize-paid-run')
+        self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
+        collected = self.run_helper('collect', '--root', str(self.root))
+        self.assertEqual(collected.returncode, 0, collected.stdout + collected.stderr)
+        current = json.loads(path.read_text())
+        self.assertEqual(current['schema_version'], 1)
+        self.assertNotIn('skills', current)
+        self.assertNotIn('setup_state', current)
+
+    def test_provisioned_skills_keep_foreign_evidence_and_skill_paths_rejected(self):
+        self.install_fake_runner()
+        source = self.skill_source('tdd')
+        setup = self.run_helper('setup', '--root', str(self.root), '--tdd-source', str(source))
+        self.assertEqual(setup.returncode, 0, setup.stdout + setup.stderr)
+        manifest_path = self.root / 'manifest.json'
+        before = manifest_path.read_bytes()
+        for relative in ('evidence/diagnostics', 'project/.gemini/skills/unselected'):
+            with self.subTest(path=relative):
+                foreign = self.root / relative
+                foreign.mkdir()
+                sentinel = foreign / 'operator-note.txt'
+                sentinel.write_text('preserve operator data\n')
+                for command in ('collect', 'run'):
+                    args = [command, '--root', str(self.root)]
+                    if command == 'run':
+                        args.append('--authorize-paid-run')
+                    rejected = self.run_helper(*args)
+                    self.assertEqual(rejected.returncode, 2, rejected.stdout + rejected.stderr)
+                self.assertEqual(manifest_path.read_bytes(), before)
+                self.assertEqual(sentinel.read_text(), 'preserve operator data\n')
+                sentinel.unlink()
+                foreign.rmdir()
+        self.assertEqual(self.fake_calls_read(), [])
+
     def fake_calls_read(self):
         if not self.fake_calls.exists():
             return []
@@ -251,7 +461,7 @@ print(json.dumps({'type': 'result', 'status': 'success',
         manifest = json.loads(manifest_path.read_text())
         self.assertEqual(manifest['root'], physical_root)
         self.assertEqual(manifest['baseline_commit'], report['baseline_commit'])
-        self.assertEqual(manifest['schema_version'], 1)
+        self.assertEqual(manifest['schema_version'], 2)
         self.assertEqual(manifest['fixture']['sha256'],
                          hashlib.sha256((self.root / 'project/ExecPlan.md').read_bytes()).hexdigest())
         self.assertEqual(len(manifest['bundle']['sha256']), 64)
