@@ -1,0 +1,15 @@
+qt.multimedia.symbolsresolver: Couldn't load pipewire-0.3 library
+qt.multimedia.symbolsresolver: Couldn't resolve pipewire-0.3 symbols
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 9.0.1 LGPL version 2.1 or later
+{"audio": "success", "status": "Loading", "output_available": true}
+{"audio": "failure", "status": "Loading", "output_available": true}
+{"audio": "attention", "status": "Loading", "output_available": true}
+{"audio": "success", "status": "Ready", "output_available": true}
+{"audio": "failure", "status": "Ready", "output_available": true}
+{"audio": "attention", "status": "Ready", "output_available": true}
+{"audio": "success", "playing": true, "play_count": 1}
+{"audio": "success", "playing": false, "play_count": 1}
+{"audio": "failure", "playing": true, "play_count": 2}
+{"shutdown": "event-loop-stopped"}
+{"audio": "failure", "playing": false, "play_count": 2}
+{"shutdown": "objects-destroyed"}
