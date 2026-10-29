@@ -16,8 +16,16 @@
 - User could not hear QSoundEffect Preview/Replay even at its maximum configured volume (0.50); Qt status/playback signals continued to indicate readiness and playback.
 - The same `sounds/success.wav` was audible to the user through Python `winsound.PlaySound` at original, 0.50, and 0.25 sample gain.
 - A minimal Qt `QMediaPlayer` + `QAudioOutput` test of the same WAV at volume 0.25 emitted Playing/Stopped and was audible to the user.
-- This isolates the observable difference to the QSoundEffect path or its integration, but does not establish a lower-level cause. The owning agent should decide and implement any backend change. Do not equate playback signals with audible success.
+- This isolates the observable difference to the QSoundEffect path or its integration, but does not establish a lower-level cause. The user later accepted the Windows media-backend revision; its integrated listening results are recorded below. Do not equate playback signals with audible success.
 - Official API references used: [Qt 6.12 QMediaPlayer](https://doc.qt.io/qt-6.12/qmediaplayer.html), [Qt 6.12 QAudioOutput](https://doc.qt.io/qt-6.12/qaudiooutput.html), [Python 3.14 winsound](https://docs.python.org/3.14/library/winsound.html).
+
+## Integrated Windows media-backend check (2026-10-29)
+
+- Source revision: `ad4cc6da`; Windows, PySide6 6.12.0, fresh isolated state under `%TEMP%\agent-alert-prototype-windows-media-20261029-082619`. PID 45084 served the first run with `audio_backend=media`, visible window, available output, and all sources Ready.
+- The user heard separate automatic success and failure sounds, each Preview button, and repeated Replay. They reported the sounds distinct and gentle, confirmed the level slider changed volume, and confirmed a new automatic failure was audible after unmuting. Manual Preview/Replay remained audible while mute was checked, as intended.
+- Automatic mute is not fully accepted: the user could not tell whether the test event while muted was silent. The receiver's `audio_play_count` remained 13 during that event. A subsequent unmuted event increased it from 14 to 15 and the user heard it.
+- User confirmed the alert did not take focus when another app was focused. Stop persisted one alert; an offline `approval` send queued a second; reopen on PID 26388 restored both silently (`audio_play_count=0`, backend `media`). The user clicked Replay and Quit during playback; the window closed cleanly. Final status was `running=false`, `paused=true`, `pending=2`; log includes `event-loop-stopped` and `objects-destroyed`.
+- Isolated `runtime.log` and `pending.json` are under `%TEMP%\agent-alert-prototype-windows-media-20261029-082619\`. No receiver remains active. This run does not establish automatic-mute audibility, no-device handling, full keyboard behavior, or WSLg/Ubuntu support.
 
 ## Repeat and recovery
 

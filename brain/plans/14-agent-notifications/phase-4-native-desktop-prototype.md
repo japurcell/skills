@@ -1,6 +1,6 @@
 # Native desktop popup and sound experiment
 
-- Status: native macOS window/audio and corrected Quit verified. Windows runtime/lifecycle and empty-state controls were manually checked; QSoundEffect audio remains inaudible to the user. For the current WSL2/WSLg media receiver, the user confirmed automatic success/failure audio, repeated manual Preview/Replay attempts, good quality, silent automatic delivery with mute checked, and audible manual Replay with mute checked. Automatic mute and manual Replay override are accepted for WSLg media; manual sound is expected because the checkbox mutes automatic sounds only. Offline silent restore, audio-active Quit, old soundeffect A/B, and integrated Windows listening remain pending. Ubuntu desktop remains pending.
+- Status: native macOS window/audio and corrected Quit verified. Windows media-backend listening and lifecycle passed the documented checks; automatic-mute audibility remains inconclusive. For the current WSL2/WSLg media receiver, the user confirmed automatic success/failure audio, repeated manual Preview/Replay attempts, good quality, silent automatic delivery with mute checked, and audible manual Replay with mute checked. Automatic mute and manual Replay override are accepted for WSLg media; manual sound is expected because the checkbox mutes automatic sounds only. WSLg offline silent restore, audio-active Quit, old soundeffect A/B, and runtime-log assessment remain pending. Ubuntu desktop remains pending.
 - User accepted deletion/Undo browser interaction and requested native prototypes. Linux targets are Ubuntu desktop and WSL2. User has no admin access.
 - [Runnable source bundle](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype.zip)
 - [Tracked source kit](../../../prototypes/agent-notifications/README.md) is the canonical fetchable copy on branch `codex/notify-app`. It includes only source, launchers, pinned requirements, and gentle WAV assets; no environments, logs, pending alerts, or local app bundles.
@@ -25,7 +25,13 @@
 - User accepted switching Windows to QMediaPlayer/QAudioOutput and comparing that path on WSLg. `auto` selects media on Windows and QSoundEffect elsewhere. Backend selection applies only to receiver startup; `status` identifies the actual selection.
 - Existing sound files, volume range/default, manual previews/replay, automatic mute, and explicit Qt teardown remain. Muting cancels queued/loading automatic playback; manual previews remain available.
 - Local macOS offscreen CLI checks passed for both backends: four separate events produced four playback starts, all sources became Ready, stop during playback reached both cleanup markers, offline send queued without launching, and reopen restored six alerts with zero playback. Retained logs: `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/agent-alert-final-media-tpdj25vi/runtime.log` and `agent-alert-final-soundeffect-sxy3d18y/runtime.log` in the same parent directory. These are API/process checks, not human listening or Windows/WSLg proof.
-- [Run guide](native-platform-run-guide.md) now gives a novice coding agent exact commands, isolated state, expected results, backend restart/recovery, human listening questions, and a reporting checklist. Limited WSLg media listening acceptance is recorded below; integrated Windows listening and the remaining WSLg checklist remain pending.
+- [Run guide](native-platform-run-guide.md) gives exact commands, isolated state, expected results, backend restart/recovery, human listening questions, and a reporting checklist. Integrated Windows media checks and limited WSLg media listening acceptance are recorded below.
+
+## Integrated Windows media-backend check (2026-10-29)
+
+- The user heard separate automatic success/failure, all three previews, and repeated Replay; confirmed the level control worked, the alert did not steal focus, and Quit during Replay closed cleanly.
+- Automatic mute remained inconclusive by ear; playback count did not increase for the muted test event. The user heard a fresh automatic failure after unmuting.
+- Offline send queued while stopped; reopen restored two pending alerts silently on a new PID. Final status was stopped with both shutdown markers in the isolated runtime log. Full details are in [the Windows run note](windows-native-run-2026-10-29.md).
 
 ## Observed macOS evidence
 
@@ -34,7 +40,7 @@
 - All sound sources became Ready; QSoundEffect reported a complete playing/finished cycle. User explicitly confirmed the popup was visible and success/failure previews were audible and gentle.
 - Later reopen reported `window_visible=true`, `window_active=false`, all sounds Ready, and 331.8 ms CLI handling. This is own-window state evidence, not full focus behavior across applications/spaces.
 - Native computer-use permission was unavailable, so no OS screenshot, keyboard walkthrough, or pixel-level inspection was performed. User confirmation supplies direct visual/listening evidence only for the stated checks.
-- Syntax compilation, POSIX launcher syntax, and `pip check` passed. These checks do not prove native UI/audio behavior. The Windows run is documented separately; Ubuntu remains unrun and QSoundEffect behavior remains distinct from the user-confirmed media-backend checks.
+- Syntax compilation, POSIX launcher syntax, and `pip check` passed. These checks do not prove native UI/audio behavior. Windows and WSLg media evidence is recorded separately; Ubuntu remains unrun and historical QSoundEffect behavior remains distinct from the user-confirmed media-backend checks.
 
 ## Observed WSL2 / WSLg audio feedback
 

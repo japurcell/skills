@@ -141,6 +141,6 @@ Use the same launcher and `--data-dir` for subsequent Windows `status` and `stop
 
 ## Evidence baseline and API references
 
-Earlier macOS QSoundEffect popup/audio and corrected Quit were confirmed by the user. Earlier Windows QSoundEffect was inaudible while the same WAV was audible through QMediaPlayer/QAudioOutput at 0.25 and winsound. Earlier WSLg Preview/Replay was inaudible despite playback signals. These observations justify this comparison; they do not establish acceptance of the new integrated path. Ubuntu desktop remains unrun.
+Earlier macOS QSoundEffect popup/audio and corrected Quit were confirmed by the user. Windows QSoundEffect was inaudible while the same WAV was audible through QMediaPlayer/QAudioOutput and winsound. Integrated Windows media checks are documented in [Windows evidence](windows-native-run-2026-10-29.md). On WSLg, the user confirmed audible automatic success/failure and repeated Preview/Replay, good sound quality, silent automatic delivery when muted, and audible manual Replay while muted. WSLg offline restore, audio-active Quit, and QSoundEffect A/B remain pending; keep the currently running media receiver unchanged until authorized. Ubuntu desktop remains unrun.
 
 See [Windows comparison](windows-native-run-2026-10-29.md), [native evidence](phase-4-native-desktop-prototype.md), [Qt 6.12 QMediaPlayer](https://doc.qt.io/qt-6.12/qmediaplayer.html), and [Qt 6.12 QAudioOutput](https://doc.qt.io/qt-6.12/qaudiooutput.html).
