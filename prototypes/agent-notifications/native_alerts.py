@@ -123,7 +123,7 @@ def rpc(directory, request, timeout=500):
     return response
 
 
-def client(directory, request):
+def client(directory, request, audio_backend="auto"):
     response = rpc(directory, request)
     if response is not None:
         return response
@@ -153,7 +153,8 @@ def client(directory, request):
             state_lock.unlock()
         with (directory / "runtime.log").open("ab") as log:
             subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "serve", "--data-dir",
-                              str(directory)], stdout=log, stderr=log, start_new_session=True)
+                              str(directory), "--audio-backend", audio_backend],
+                             stdout=log, stderr=log, start_new_session=True)
         deadline = time.monotonic() + 12
         while time.monotonic() < deadline:
             response = rpc(directory, request, 150)
@@ -165,15 +166,17 @@ def client(directory, request):
         launch_lock.unlock()
 
 
-def serve(directory, force_show=False):
+def serve(directory, force_show=False, audio_backend="auto"):
     from PySide6.QtGui import QFont, QShortcut, QKeySequence
-    from PySide6.QtMultimedia import QMediaDevices, QSoundEffect
+    from PySide6.QtMultimedia import QAudioOutput, QMediaDevices, QMediaPlayer, QSoundEffect
     from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QHBoxLayout, QLabel,
                                    QPushButton, QSlider, QVBoxLayout, QWidget)
 
     app = QApplication(sys.argv[:1])
     app.setApplicationName("Agent Alert Prototype")
     app.setQuitOnLastWindowClosed(False)
+    if audio_backend == "auto":
+        audio_backend = "media" if sys.platform == "win32" else "soundeffect"
     instance = QLockFile(str(directory / "instance.lock"))
     if not instance.tryLock(0):
         return 0
@@ -278,13 +281,23 @@ def serve(directory, force_show=False):
             row.addWidget(close)
             root.addLayout(row)
             self.effects = {}
+            self.outputs = {}
             self.pending_play = None
             for kind in ("success", "failure", "attention"):
-                effect = QSoundEffect(self)
-                effect.setLoopCount(1)
-                effect.setVolume(self.state.get("volume", 0.25))
-                effect.statusChanged.connect(lambda k=kind: self.audio_changed(k))
-                effect.playingChanged.connect(lambda k=kind: self.playing_changed(k))
+                if audio_backend == "media":
+                    effect = QMediaPlayer(self)
+                    output = QAudioOutput(self)
+                    output.setVolume(self.state.get("volume", 0.25))
+                    effect.setAudioOutput(output)
+                    self.outputs[kind] = output
+                    effect.mediaStatusChanged.connect(lambda status, k=kind: self.audio_changed(k))
+                    effect.errorOccurred.connect(lambda error, message, k=kind: self.audio_changed(k))
+                else:
+                    effect = QSoundEffect(self)
+                    effect.setLoopCount(1)
+                    effect.setVolume(self.state.get("volume", 0.25))
+                    effect.statusChanged.connect(lambda k=kind: self.audio_changed(k))
+                effect.playingChanged.connect(lambda *args, k=kind: self.playing_changed(k))
                 self.effects[kind] = effect
                 effect.setSource(QUrl.fromLocalFile(str(ROOT / "sounds" / (kind + ".wav"))))
             self.devices = QMediaDevices(self)
@@ -367,27 +380,51 @@ def serve(directory, force_show=False):
             self.state["muted"] = muted
             self.persist()
             if muted:
+                self.pending_play = None
+                self.sound_queue.clear()
+                self.sound_timer.stop()
                 for effect in self.effects.values():
                     effect.stop()
 
         def volume_changed(self, value):
             self.state["volume"] = value / 100
-            for effect in self.effects.values():
-                effect.setVolume(value / 100)
+            for output in (self.outputs or self.effects).values():
+                output.setVolume(value / 100)
             self.persist()
+
+        def source_status(self, kind):
+            effect = self.effects[kind]
+            if audio_backend == "soundeffect":
+                return effect.status().name
+            if effect.error() != QMediaPlayer.Error.NoError:
+                return "Error"
+            status = effect.mediaStatus()
+            if status == QMediaPlayer.MediaStatus.InvalidMedia:
+                return "Error"
+            if status == QMediaPlayer.MediaStatus.StalledMedia:
+                return "Stalled"
+            if status in (QMediaPlayer.MediaStatus.LoadedMedia, QMediaPlayer.MediaStatus.BufferedMedia,
+                          QMediaPlayer.MediaStatus.EndOfMedia):
+                return "Ready"
+            return "Loading"
 
         def audio_changed(self, kind):
             output = QMediaDevices.defaultAudioOutput()
-            failed = [name for name, effect in self.effects.items() if effect.status() == QSoundEffect.Status.Error]
+            failed = [name for name in self.effects if self.source_status(name) == "Error"]
             if output.isNull():
+                self.pending_play = None
                 self.audio_status.setText("Audio unavailable: no output device. No beep fallback.")
             elif failed:
-                self.audio_status.setText("Audio load failed: " + ", ".join(failed))
+                if self.pending_play in failed:
+                    self.pending_play = None
+                details = [self.effects[name].errorString() for name in failed] if self.outputs else []
+                self.audio_status.setText("Audio load failed: " + ", ".join(failed + details))
             else:
-                self.audio_status.setText("Audio output: " + output.description())
-            print(json.dumps({"audio": kind, "status": self.effects[kind].status().name,
+                self.audio_status.setText("Audio (" + audio_backend + "): " + output.description())
+            print(json.dumps({"audio": kind, "backend": audio_backend, "status": self.source_status(kind),
+                              "error": self.effects[kind].errorString() if self.outputs else "",
                               "output_available": not output.isNull()}), flush=True)
-            if self.pending_play == kind and self.effects[kind].status() == QSoundEffect.Status.Ready:
+            if self.pending_play == kind and not output.isNull() and self.source_status(kind) == "Ready":
                 self.pending_play = None
                 self.effects[kind].play()
 
@@ -400,15 +437,16 @@ def serve(directory, force_show=False):
         def play(self, kind, manual=False):
             if not manual and (self.state.get("muted") or self.state["paused"]):
                 return
+            self.pending_play = None
             if QMediaDevices.defaultAudioOutput().isNull():
                 self.audio_status.setText("Audio unavailable: no output device. No beep fallback.")
                 return
             sound = kind if kind in ("success", "failure") else "attention"
             for effect in self.effects.values():
                 effect.stop()
-            if self.effects[sound].status() == QSoundEffect.Status.Loading:
+            if self.source_status(sound) == "Loading":
                 self.pending_play = sound
-            elif self.effects[sound].status() == QSoundEffect.Status.Ready:
+            elif self.source_status(sound) == "Ready":
                 self.pending_play = None
                 self.effects[sound].play()
             else:
@@ -481,7 +519,8 @@ def serve(directory, force_show=False):
             return {"ok": True, "pid": os.getpid(), "pending": len(self.state["events"]),
                     "paused": self.state["paused"], "audio_play_count": self.play_count,
                     "window_visible": self.isVisible(), "window_active": self.isActiveWindow(),
-                    "audio_status": {name: effect.status().name for name, effect in self.effects.items()},
+                    "audio_backend": audio_backend,
+                    "audio_status": {name: self.source_status(name) for name in self.effects},
                     "platform": app.platformName(), "uptime_seconds": round(time.monotonic() - self.started, 3)}
 
         def quit_prototype(self):
@@ -511,7 +550,11 @@ def serve(directory, force_show=False):
     window.server.close()
     for effect in window.effects.values():
         effect.stop()
-        effect.statusChanged.disconnect()
+        if audio_backend == "media":
+            effect.mediaStatusChanged.disconnect()
+            effect.errorOccurred.disconnect()
+        else:
+            effect.statusChanged.disconnect()
         effect.playingChanged.disconnect()
     for socket in list(window.sockets):
         socket.disconnectFromServer()
@@ -531,11 +574,13 @@ def main():
     parser.add_argument("--summary", default="Native popup and gentle sound experiment.")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "PROTOTYPE-data")
     parser.add_argument("--show", action="store_true", help="Open the native window when launching its app bundle")
+    parser.add_argument("--audio-backend", choices=("auto", "media", "soundeffect"), default="auto",
+                        help="Receiver startup only: auto uses media on Windows, soundeffect elsewhere; stop first to change")
     args = parser.parse_args()
     directory = args.data_dir.resolve()
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     if args.command == "serve":
-        return serve(directory, args.show)
+        return serve(directory, args.show, args.audio_backend)
     if args.command == "sounds":
         make_sounds()
         return 0
@@ -543,7 +588,7 @@ def main():
     event_from_request(vars(args))
     start = time.monotonic()
     response = client(directory, {"command": args.command, "kind": args.kind,
-                                 "agent": args.agent, "repo": args.repo, "summary": args.summary})
+                                 "agent": args.agent, "repo": args.repo, "summary": args.summary}, args.audio_backend)
     response["cli_elapsed_ms"] = round((time.monotonic() - start) * 1000, 1)
     print(json.dumps(response))
     return 0 if response.get("ok") else 1

@@ -12,13 +12,20 @@
 
 ## Implemented experiment
 
-- PySide6/Qt 6.12.0 real desktop window and QSoundEffect playback. This is an experiment, not production framework approval.
+- PySide6/Qt 6.12.0 real desktop window. Windows now defaults to QMediaPlayer/QAudioOutput; Linux/macOS retain QSoundEffect, with `--audio-backend media|soundeffect` for explicit comparison. This is an experiment, not production framework approval.
 - One resident receiver via local IPC; bounded event context, plain-text labels, per-user endpoint protection, and isolated `PROTOTYPE-data/pending.json`.
 - Real first-send startup, warm reuse, persistent pending stack, Snooze, deletion/10-second memory-only Undo, bulk deletion, replay, mute, and sound level.
 - Quit persists paused state and exits. Later CLI sends queue offline without launching a popup or playing audio. Open restores pending alerts silently.
 - Three generated 1.1-second WAV motifs: success, failure, and attention. Peak source levels are about -24.4 to -25.0 dBFS; default playback gain is 0.25. These figures do not establish acoustic loudness.
 - No system install, real hooks, login items, global shortcut, network listener, or remote delivery. Dependencies live in the project virtual environment. Python 3.10+ and existing desktop/audio prerequisites are required.
 - Quiet-hours schedules, temporary mute durations, sound-file picking, login registration, and full visual-stack styling are not implemented in this bounded native experiment.
+
+## Authorized media-backend revision (2026-10-29)
+
+- User accepted switching Windows to QMediaPlayer/QAudioOutput and comparing that path on WSLg. `auto` selects media on Windows and QSoundEffect elsewhere. Backend selection applies only to receiver startup; `status` identifies the actual selection.
+- Existing sound files, volume range/default, manual previews/replay, automatic mute, and explicit Qt teardown remain. Muting cancels queued/loading automatic playback; manual previews remain available.
+- Local macOS offscreen CLI checks passed for both backends: four separate events produced four playback starts, all sources became Ready, stop during playback reached both cleanup markers, offline send queued without launching, and reopen restored six alerts with zero playback. Retained logs: `/var/folders/gx/mt30j4xd1zq0cyt0mp86q8300000gn/T/agent-alert-final-media-tpdj25vi/runtime.log` and `agent-alert-final-soundeffect-sxy3d18y/runtime.log` in the same parent directory. These are API/process checks, not human listening or Windows/WSLg proof.
+- [Run guide](native-platform-run-guide.md) now gives a novice coding agent exact commands, isolated state, expected results, backend restart/recovery, human listening questions, and a reporting checklist. New integrated Windows/WSLg listening acceptance remains pending.
 
 ## Observed macOS evidence
 

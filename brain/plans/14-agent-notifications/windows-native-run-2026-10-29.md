@@ -34,4 +34,4 @@
 - Direct WAV control from the same directory: `.venv\Scripts\python.exe -c "import winsound,sys; winsound.PlaySound(sys.argv[1], winsound.SND_FILENAME)" sounds\success.wav`.
 - QMediaPlayer comparison from PowerShell in the same directory: `& .\.venv\Scripts\python.exe -c 'import sys; from PySide6.QtCore import QCoreApplication,QTimer,QUrl; from PySide6.QtMultimedia import QMediaPlayer,QAudioOutput; app=QCoreApplication([]); output=QAudioOutput(); output.setVolume(0.25); player=QMediaPlayer(); player.setAudioOutput(output); player.errorOccurred.connect(lambda *args: print(args)); player.playbackStateChanged.connect(lambda state: print(state)); player.setSource(QUrl.fromLocalFile(sys.argv[1])); player.play(); QTimer.singleShot(2200,app.quit); app.exec()' "$PWD\sounds\success.wav"`.
 - Listening is required for acceptance. Do not equate playback signals with audible output.
-- The two screenshots under `prototypes/agent-notifications/` were supplied by the user and remain untracked. Do not stage them unless asked.
+- The two screenshots under `prototypes/agent-notifications/` were supplied by the user and included in the Windows findings commit `574e2045`.
