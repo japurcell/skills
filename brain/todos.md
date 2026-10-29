@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 17 -->
+<!-- next-id: 19 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -20,3 +20,5 @@
 7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [codebase/secret-scanner](codebase/secret-scanner.md)
 11. [ ] Research interface options for assigning and monitoring agentic work across multiple repositories before choosing a UI or implementing it. Compare a web app, a CLI, and integration with the existing Codex UI against the workflow of assigning work to a repository, following progress, and identifying work that needs attention. Document supported integration capabilities, constraints, tradeoffs, and supporting sources; recommend an initial interface and a bounded first version. Leave #4 unchanged; its workflow prototype is already in progress in another session.
 14. [ ] Use the wayfinder skill to research, grill, and prototype a cross-platform desktop notification app for Windows, Linux, and macOS that tells the user when an agent stops working or needs attention. Existing tools have not provided a satisfactory solution across all three platforms. Hooks invoke the app through the command line to report completion, failure, waiting for input or approval, cancellation, and unexpected stalls; the app does not monitor agents or detect stalls itself. Deliver visual and audio alerts only on the computer running the agent, with enough context to identify the sending agent and repository; remote notification delivery is out of scope for the first version. Aim for fast, snappy behavior, high performance, and a visually pleasing, customizable interface. Let users choose sounds by alert type, including distinct success and failure sounds for successful and unsuccessful completion. All sounds should be gentle and pleasant, never abrupt, displeasing, or loud. Use research, live questioning, and prototypes to settle requirements and technical choices before implementation.
+17. [ ] Clean up skills: remove `addy-*` skills and assess minimal bespoke replacements to reduce context usage.
+18. [ ] Incorporate relevant brain principles into code review skills.
