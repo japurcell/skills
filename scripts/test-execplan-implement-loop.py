@@ -641,6 +641,94 @@ class ProcessTests(Fixture):
                 self.assertEqual(retained.read_bytes(), b'[REDACTED]\n')
                 self.assertEqual(diagnostic['retained_bytes'], 11)
 
+    def test_diagnostic_redacts_or_omits_whole_private_key_armor_before_labels(self):
+        self.execution_fixture('diagnostic_exit')
+        complete = ('-----BEGIN PRIVATE KEY-----\nprivate-body-sentinel\n'
+                    '-----END PRIVATE KEY-----')
+        incomplete = '-----BEGIN PRIVATE KEY-----\nprivate-body-sentinel\n'
+        unsupported = ('-----BEGIN STRANGE KEY MATERIAL-----\nprivate-body-sentinel\n'
+                       '-----END STRANGE KEY MATERIAL-----')
+        cases = [('bare-complete', complete + '\n', False),
+                 ('labeled-complete', 'PRIVATE_KEY=' + complete + '\n', True),
+                 ('json-quoted-complete', json.dumps({'privateKey': complete}) + '\n', False),
+                 ('bare-incomplete', incomplete, True),
+                 ('labeled-incomplete', 'PRIVATE_KEY=' + incomplete, True),
+                 ('json-quoted-incomplete', json.dumps({'privateKey': incomplete}) + '\n', True),
+                 ('labeled-unsupported', 'PRIVATE_KEY=' + unsupported + '\n', True),
+                 ('json-quoted-unsupported', json.dumps({'privateKey': unsupported}) + '\n', True)]
+        for name, payload, omitted in cases:
+            with self.subTest(format=name):
+                self.env['DIAGNOSTIC_HEX'] = payload.encode().hex()
+                result = self.execute()
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                diagnostic = report['iterations'][0]['provider_diagnostic']
+                run = Path(report['run_directory'])
+                if omitted:
+                    self.assertEqual(diagnostic, dict(artifact_ref=None, captured_bytes=len(payload.encode()),
+                        retained_bytes=0, truncated=False, encoding='utf-8-replace', redaction_status='content_omitted'))
+                    self.assertEqual(list(run.glob('provider-stderr-*')), [])
+                else:
+                    self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+                    self.assertIsNotNone(diagnostic['artifact_ref'])
+                for surface in [result.stdout.encode(), result.stderr.encode(),
+                                *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+                    for sentinel in (b'private-body-sentinel', b'-----END PRIVATE KEY-----',
+                                     b'-----END STRANGE KEY MATERIAL-----'):
+                        self.assertNotIn(sentinel, surface)
+
+    def test_diagnostic_omits_compound_and_ambiguous_multiline_credentials(self):
+        self.execution_fixture('diagnostic_exit')
+        cases = [
+            ('json-array', '{"token":["first-credential-sentinel", "second-credential-sentinel"]}\n'),
+            ('json-object', '{"credential":{"value":"first-credential-sentinel", "other":"second-credential-sentinel"}}\n'),
+            ('yaml-literal', 'password: |\n  first-credential-sentinel\n  second-credential-sentinel\n'),
+            ('yaml-folded', 'password: >\n  first-credential-sentinel\n  second-credential-sentinel\n'),
+            ('yaml-modifier', 'password: |-\n  first-credential-sentinel\n'),
+            ('value-after-newline', 'token:\n  first-credential-sentinel\n'),
+            ('indented-continuation', 'token=first-credential-sentinel\n  second-credential-sentinel\n'),
+            ('plain-continuation', 'token=first-credential-sentinel\nsecond-credential-sentinel\n'),
+            ('marker-prefixed-continuation', 'token=first-credential-sentinel\n[REDACTED]second-credential-sentinel\n'),
+            ('escaped-continuation', 'token=first-credential-sentinel\\\nsecond-credential-sentinel\n'),
+            ('quoted-continuation', 'token="first-credential-sentinel"\n  second-credential-sentinel\n'),
+            ('quoted-spaced-continuation', 'token="first-credential-sentinel" second-credential-sentinel\n')]
+        for name, payload in cases:
+            with self.subTest(format=name):
+                self.env['DIAGNOSTIC_HEX'] = payload.encode().hex()
+                result = self.execute()
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report['iterations'][0]['provider_diagnostic'], dict(
+                    artifact_ref=None, captured_bytes=len(payload.encode()), retained_bytes=0,
+                    truncated=False, encoding='utf-8-replace', redaction_status='content_omitted'))
+                run = Path(report['run_directory'])
+                self.assertEqual(list(run.glob('provider-stderr-*')), [])
+                for surface in [result.stdout.encode(), result.stderr.encode(),
+                                *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+                    self.assertNotIn(b'first-credential-sentinel', surface)
+                    self.assertNotIn(b'second-credential-sentinel', surface)
+                self.assertEqual(report['commits'], [])
+                self.assertTrue(all(value == 0 for value in report['failure_counts'].values()))
+
+    def test_diagnostic_redacts_complete_unquoted_values_with_spaces_and_punctuation(self):
+        self.execution_fixture('diagnostic_exit')
+        for payload in (b'password=first-value-sentinel second-value-sentinel\n',
+                        b'token=first-value-sentinel,second-value-sentinel\n',
+                        b'credential: first-value-sentinel; second-value-sentinel\n'):
+            with self.subTest(payload=payload):
+                self.env['DIAGNOSTIC_HEX'] = payload.hex()
+                result = self.execute()
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                diagnostic = report['iterations'][0]['provider_diagnostic']
+                self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+                run = Path(report['run_directory'])
+                self.assertEqual((run / diagnostic['artifact_ref']).read_bytes(), b'[REDACTED]\n')
+                for surface in [result.stdout.encode(), result.stderr.encode(),
+                                *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+                    self.assertNotIn(b'first-value-sentinel', surface)
+                    self.assertNotIn(b'second-value-sentinel', surface)
+
     def test_incomplete_capture_omits_unsafe_stderr_tail(self):
         self.execution_fixture('diagnostic_exit')
         self.env.update(DIAGNOSTIC_HEX=b'Authorization: Bearer unsafe-tail'.hex(),

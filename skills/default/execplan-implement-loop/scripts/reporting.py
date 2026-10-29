@@ -9,11 +9,26 @@ import shlex
 DIAGNOSTIC_LIMIT = 65536
 
 
+def redact_private_keys(text):
+    """Remove complete known armor before labels can destroy its boundaries."""
+    opening = re.compile(r'-----BEGIN ((?:[A-Z]+ )?PRIVATE KEY)-----')
+    pieces, cursor = [], 0
+    while match := opening.search(text, cursor):
+        footer = '-----END ' + match[1] + '-----'
+        end = text.find(footer, match.end())
+        if end < 0:
+            raise ValueError('Incomplete private-key armor')
+        end += len(footer)
+        pieces.extend((text[cursor:match.start()], '[REDACTED]'))
+        cursor = end
+    return ''.join((*pieces, text[cursor:]))
+
+
 def redact_labeled_credentials(text):
     labels = re.compile(
         r'(?i)(?<![a-z0-9_-])(?P<label>[-_]*[a-z][a-z0-9_-]*)'
-        r'["\']?\s*[=:]\s*')
-    authorization_scheme = re.compile(r'(?:Bearer|Basic)[ \t]+', re.I)
+        r'["\']?\s*[=:](?P<value_space>\s*)')
+    armor = re.compile(r'(?:-{2,}[ \t]*)?BEGIN\b', re.I)
     pieces, cursor, search_start = [], 0, 0
     while match := labels.search(text, search_start):
         label = match['label']
@@ -23,6 +38,13 @@ def redact_labeled_credentials(text):
             search_start = match.end()
             continue
         end = match.end()
+        if '\n' in match['value_space'] or '\r' in match['value_space']:
+            raise ValueError('Multiline credential value')
+        value_start = end + 1 if end < len(text) and text[end] in ('"', "'") else end
+        if armor.match(text, value_start):
+            raise ValueError('Unsupported credential armor')
+        if end < len(text) and text[end] in '[{|>':
+            raise ValueError('Structured credential value')
         if end < len(text) and text[end] in ('"', "'"):
             quote = text[end]
             end += 1
@@ -37,16 +59,26 @@ def redact_labeled_credentials(text):
             if end == len(text):
                 raise ValueError('Unterminated quoted credential')
             end += 1
-            if end < len(text) and not text[end].isspace() and text[end] not in ',;}]':
+            boundary = end
+            while boundary < len(text) and text[boundary] in ' \t':
+                boundary += 1
+            if boundary < len(text) and text[boundary] not in '\r\n,;}]':
                 raise ValueError('Ambiguous quoted credential suffix')
-        elif header or authorization_scheme.match(text, end):
-            # Header values may contain an authentication scheme and whitespace.
-            # Retain none of that line rather than exposing its credential tail.
+        else:
+            # Unquoted values, including authorization schemes, can contain
+            # whitespace or punctuation. Never retain a guessed value tail.
             while end < len(text) and text[end] not in '\r\n':
                 end += 1
-        else:
-            while end < len(text) and not text[end].isspace() and text[end] not in ',;':
-                end += 1
+            if text[value_start:end].rstrip().endswith('\\'):
+                raise ValueError('Continued credential value')
+            boundary = end
+        if boundary < len(text) and text[boundary] in '\r\n':
+            following = boundary
+            while following < len(text) and text[following] in '\r\n':
+                following += 1
+            if (following < len(text) and text[following] != '{' and
+                    not labels.match(text, following)):
+                raise ValueError('Ambiguous credential continuation')
         pieces.extend((text[cursor:match.start()], '[REDACTED]'))
         cursor = search_start = end
     return ''.join((*pieces, text[cursor:]))
@@ -69,10 +101,9 @@ def provider_diagnostic(raw, captured_bytes, truncated):
             r'token|secret|pass(?:word|wd)?|api[_-]?key|private[_-]?key|credential|auth', name, re.I)}
         encoded_secrets = secrets | {json.dumps(value, ensure_ascii=ascii_only)[1:-1]
                                     for value in secrets for ascii_only in (True, False)}
-        text = redact_labeled_credentials(text)
+        text = redact_labeled_credentials(redact_private_keys(text))
         patterns = (
             r'(?i)\b(?:Bearer|Basic)\s+[^\s,;\"\']+',
-            r'-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[\s\S]*?(?:-----END (?:[A-Z]+ )?PRIVATE KEY-----|\Z)',
             r'\bAIza[0-9A-Za-z_-]{20,}',
             r'\bsk-[0-9A-Za-z_-]{16,}',
             r'(?i)https?://[^\s/:]+:[^\s/@]+@',
