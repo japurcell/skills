@@ -7,6 +7,7 @@
 ## Repository maintenance
 
 8. [ ] Set an acceptable maximum feedback runtime for `.github/workflows/hooks-posix.yml`, then refactor the workflow to meet it while preserving required coverage; some runs currently take nearly 30 minutes.
+
 13. [ ] Reproduce and fix stale observability cleanup deleting sessions SQLite still reports as running, finalizing, or sealing after seven days. Follow [the restored cleanup policy](codebase/hook-observability.md): require age over 24 hours and terminal/absent database state. Change the canonical helper, regenerate provider copies, and verify active-session retention, terminal/absent cleanup, and database-failure behavior through the existing disposable observability fixtures. Preserve unrelated logs and session state; do not test against real installed logs.
 
 ## Investigations
@@ -14,14 +15,25 @@
 15. [ ] Make a minimal change to `execplan-implement` so needed code review happens outside its task loop; long-running plans currently bog down in implement-review-fix loops. Also move worktree cleanup to the end (see pocock's implement-spec and chief of staff).
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
+
 3. [ ] Evaluate correction capture, deduplication, provenance, staleness, and replay for agent memory; distinguish measured improvements from the [source video's proposals](https://youtu.be/mAKUL12h1n8?si=jo_E1lSoFM9btLqY). Retain the [original investigation context](archive/plans/2026-10-21-legacy-guidance-audit/idea-context.md#investigation-3-agent-memory) when framing the research.
+
 4. [ ] Define one bounded prototype for configurable agent workflows, multi-harness routing, live/history inspection, and evidence-based self-improvement. References: [Shopify process](https://youtu.be/bBMp5tLxShQ?si=qgFTxY2TBbCXjlvd), [validation pipeline](https://github.com/kunchenguid/no-mistakes), [software factory UI](https://github.com/disler/super-simple-software-factory), [Noodle](https://github.com/poteto/noodle).
+
 6. [ ] Audit all repository-local `.agents/skills/` and published `skills/` against [official skill guidance](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices), applying guidance compatible with Codex, Copilot, and Gemini. Cover long-reference tables of contents, direct reference navigation, workflows and feedback loops, conditional workflows, concise content, appropriate degrees of freedom, effective descriptions, and progressive disclosure. Test with every intended OpenAI model; model testing for this audit remains scoped to OpenAI. Apply compatible practices and document any incompatible exceptions.
+
 7. [ ] Reproduce scanner capacity/recovery behavior on current code before considering budget changes; historical incomplete-scan incidents are not current defect proof. [codebase/secret-scanner](codebase/secret-scanner.md)
+
 11. [ ] Research interface options for assigning and monitoring agentic work across multiple repositories before choosing a UI or implementing it. Compare a web app, a CLI, and integration with the existing Codex UI against the workflow of assigning work to a repository, following progress, and identifying work that needs attention. Document supported integration capabilities, constraints, tradeoffs, and supporting sources; recommend an initial interface and a bounded first version. Leave #4 unchanged; its workflow prototype is already in progress in another session.
+
 14. [ ] Use the wayfinder skill to research, grill, and prototype a cross-platform desktop notification app for Windows, Linux, and macOS that tells the user when an agent stops working or needs attention. Existing tools have not provided a satisfactory solution across all three platforms. Hooks invoke the app through the command line to report completion, failure, waiting for input or approval, cancellation, and unexpected stalls; the app does not monitor agents or detect stalls itself. Deliver visual and audio alerts only on the computer running the agent, with enough context to identify the sending agent and repository; remote notification delivery is out of scope for the first version. Aim for fast, snappy behavior, high performance, and a visually pleasing, customizable interface. Let users choose sounds by alert type, including distinct success and failure sounds for successful and unsuccessful completion. All sounds should be gentle and pleasant, never abrupt, displeasing, or loud. Use research, live questioning, and prototypes to settle requirements and technical choices before implementation.
+
 17. [ ] Clean up skills: remove `addy-*` skills and assess minimal bespoke replacements to reduce context usage.
+
 18. [ ] Incorporate relevant brain principles into code review skills.
+
 19. [ ] Pull in the unslop skill from [poteto/noodle](https://github.com/poteto/noodle/tree/main/.agents/skills/unslop).
+
 20. [ ] Minimize the commit skill, using [poteto/noodle's commit skill](https://github.com/poteto/noodle/blob/main/.agents/skills/commit/SKILL.md) and [OpenAI Symphony's commit skill](https://github.com/openai/symphony/blob/main/.codex/skills/commit/SKILL.md) as inspiration.
+
 21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`.
