@@ -291,6 +291,24 @@ class _Collector:
                     'supported_platform' if supported else 'unsupported_platform',
                     f'{sys.platform}; Python {version}; requires macOS/Linux and Python 3.12+')
 
+    def _collect_cloud_project(self) -> None:
+        primary_present = bool(os.environ.get('GOOGLE_CLOUD_PROJECT'))
+        fallback_present = bool(os.environ.get('GOOGLE_CLOUD_PROJECT_ID'))
+        selected = ('GOOGLE_CLOUD_PROJECT' if primary_present else
+                    'GOOGLE_CLOUD_PROJECT_ID' if fallback_present else None)
+        primary_state = 'present' if primary_present else 'absent-or-empty'
+        fallback_state = 'present' if fallback_present else 'absent-or-empty'
+        selected_state = selected or 'none'
+        detail = (f'GOOGLE_CLOUD_PROJECT={primary_state}; '
+                  f'GOOGLE_CLOUD_PROJECT_ID={fallback_state}; selected={selected_state}')
+        if selected is None:
+            detail += ('. Some authentication paths do not require a Cloud project; '
+                       'if this account requires one, export the intended authorized project '
+                       'into the runner environment.')
+            self._check('cloud_project_configuration', 'unknown', 'cloud_project_not_configured', detail)
+        else:
+            self._check('cloud_project_configuration', 'pass', 'cloud_project_configuration_present', detail)
+
     def _collect_plan(self) -> None:
         try:
             self.plan = Plan(self.plan_path)
@@ -467,8 +485,11 @@ class _Collector:
             self._check('provider_version', 'blocked', 'provider_version_failed',
                         f'Gemini --version exited {outcome.code}')
         elif observed != PINNED_GEMINI_VERSION:
-            detail = (f'Requires Gemini CLI {PINNED_GEMINI_VERSION}; observed {observed}' if observed
-                      else 'Gemini --version did not return a supported version string')
+            remediation = (f'Select an executable known to be Gemini CLI {PINNED_GEMINI_VERSION} '
+                           'with --gemini PATH; this does not change the global installation.')
+            detail = (f'Gemini CLI {observed} is untested; compatibility is unknown. '
+                      f'{remediation}' if observed else
+                      f'Gemini --version did not return a supported version string. {remediation}')
             self._check('provider_version', 'blocked', 'unsupported_gemini_version', detail)
         else:
             self._check('provider_version', 'pass', 'supported_gemini_version', observed)
@@ -729,6 +750,7 @@ class _Collector:
         try:
             self.supervisor.check()
             self._collect_platform()
+            self._collect_cloud_project()
             self._collect_plan()
             self._collect_git()
             self._collect_provider()

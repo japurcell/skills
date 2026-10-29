@@ -992,6 +992,8 @@ class ReadinessTests(Fixture):
         self.assertEqual(blocker['resume'], dict(required=False, run_directory=None))
 
     def test_later_repair_refreshes_skills_and_preserves_previous_readiness(self):
+        self.env.pop('GOOGLE_CLOUD_PROJECT', None)
+        self.env.pop('GOOGLE_CLOUD_PROJECT_ID', None)
         skill = Path(self.env['HOME']) / '.agents/skills/tdd/SKILL.md'
         self.data['tasks'][0]['verification'][0]['argv'] = [sys.executable, '-c',
             'from pathlib import Path; '
@@ -1015,12 +1017,21 @@ class ReadinessTests(Fixture):
         self.assertEqual(len(history), 2)
         self.assertTrue(history[0]['can_attempt'])
         self.assertFalse(history[1]['can_attempt'])
+        initial_project_check = {check['id']: check for check in history[0]['checks']}[
+            'cloud_project_configuration']
+        self.assertEqual(initial_project_check['status'], 'unknown')
         skill.write_bytes(original)
         self.env['BEHAVIOR'] = 'success'
+        resumed_project = 'resumed-project-secret-value'
+        self.env['GOOGLE_CLOUD_PROJECT'] = resumed_project
         resumed = self.execute('--resume', report['run_directory'])
         self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
         after = json.loads(resumed.stdout)
         self.assertEqual(after['invocations'][0]['readiness_history'], history)
+        resumed_project_check = self.checks(after)['cloud_project_configuration']
+        self.assertEqual(resumed_project_check['status'], 'pass')
+        self.assertIn('selected=GOOGLE_CLOUD_PROJECT', resumed_project_check['detail'])
+        self.assertNotIn(resumed_project, resumed.stdout)
         self.assertEqual((self.root / 'calls').read_text(), '2')
         self.assertEqual(len(after['commits']), 3)
 
@@ -1484,6 +1495,101 @@ raise SystemExit(97)
         self.assertFalse((self.repo / '.git/execplan-implement-loop.lock').exists())
         self.assertFalse((self.repo / '.git/execplan-implement-loop').exists())
 
+    def test_doctor_reports_effective_cloud_project_presence_without_values(self):
+        self.doctor_fixture()
+        self.env.pop('GOOGLE_CLOUD_PROJECT', None)
+        self.env.pop('GOOGLE_CLOUD_PROJECT_ID', None)
+        primary_value = 'private-project-primary-value'
+        fallback_value = 'private-project-fallback-value'
+        self.env['GOOGLE_CLOUD_PROJECT'] = primary_value
+        self.env['GOOGLE_CLOUD_PROJECT_ID'] = fallback_value
+
+        result = self.run_doctor()
+
+        report = self.assert_doctor_summary(result, 0, 'doctor_complete')
+        check = self.checks(report)['cloud_project_configuration']
+        self.assertEqual(check['status'], 'pass')
+        self.assertIn('GOOGLE_CLOUD_PROJECT=present', check['detail'])
+        self.assertIn('GOOGLE_CLOUD_PROJECT_ID=present', check['detail'])
+        self.assertIn('selected=GOOGLE_CLOUD_PROJECT', check['detail'])
+        self.assertNotIn(primary_value, result.stdout)
+        self.assertNotIn(fallback_value, result.stdout)
+        checks = self.checks(report)
+        for identifier in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(checks[identifier]['status'], 'unknown')
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_doctor_uses_nonempty_project_variables_with_primary_precedence(self):
+        self.doctor_fixture()
+        cases = [
+            ('primary only', {'GOOGLE_CLOUD_PROJECT': 'primary-only-secret'},
+             'pass', 'present', 'absent-or-empty', 'GOOGLE_CLOUD_PROJECT'),
+            ('fallback only', {'GOOGLE_CLOUD_PROJECT_ID': 'fallback-only-secret'},
+             'pass', 'absent-or-empty', 'present', 'GOOGLE_CLOUD_PROJECT_ID'),
+            ('empty primary and nonempty fallback',
+             {'GOOGLE_CLOUD_PROJECT': '', 'GOOGLE_CLOUD_PROJECT_ID': 'fallback-secret'},
+             'pass', 'absent-or-empty', 'present', 'GOOGLE_CLOUD_PROJECT_ID'),
+            ('nonempty primary and empty fallback',
+             {'GOOGLE_CLOUD_PROJECT': 'primary-secret', 'GOOGLE_CLOUD_PROJECT_ID': ''},
+             'pass', 'present', 'absent-or-empty', 'GOOGLE_CLOUD_PROJECT'),
+            ('both empty', {'GOOGLE_CLOUD_PROJECT': '', 'GOOGLE_CLOUD_PROJECT_ID': ''},
+             'unknown', 'absent-or-empty', 'absent-or-empty', 'none'),
+            ('both absent', {}, 'unknown', 'absent-or-empty', 'absent-or-empty', 'none'),
+        ]
+
+        for label, values, status, primary_state, fallback_state, selected in cases:
+            with self.subTest(label=label):
+                self.env.pop('GOOGLE_CLOUD_PROJECT', None)
+                self.env.pop('GOOGLE_CLOUD_PROJECT_ID', None)
+                self.env.update(values)
+
+                result = self.run_doctor()
+
+                report = self.assert_doctor_summary(result, 0, 'doctor_complete')
+                check = self.checks(report)['cloud_project_configuration']
+                self.assertEqual(check['status'], status)
+                self.assertIn(f'GOOGLE_CLOUD_PROJECT={primary_state}', check['detail'])
+                self.assertIn(f'GOOGLE_CLOUD_PROJECT_ID={fallback_state}', check['detail'])
+                self.assertIn(f'selected={selected}', check['detail'])
+                for value in values.values():
+                    if value:
+                        self.assertNotIn(value, result.stdout)
+                self.assertTrue(report['readiness']['can_attempt'])
+                if selected == 'none':
+                    self.assertIn('export the intended authorized project into the runner environment',
+                                  check['detail'])
+                for identifier in ('authentication', 'trust', 'effective_permission'):
+                    self.assertEqual(self.checks(report)[identifier]['status'], 'unknown')
+
+        self.assertEqual([item['argv'] for item in self.provider_calls()],
+                         [['--version']] * len(cases))
+
+    def test_doctor_does_not_source_or_modify_shell_startup_files_for_project_config(self):
+        self.doctor_fixture()
+        self.env.pop('GOOGLE_CLOUD_PROJECT', None)
+        self.env.pop('GOOGLE_CLOUD_PROJECT_ID', None)
+        home = Path(self.env['HOME'])
+        startup = home / '.bashrc'
+        project_value = 'startup-file-project-secret'
+        sourced_marker = self.root / 'startup-file-was-executed'
+        startup.write_text(f'export GOOGLE_CLOUD_PROJECT={project_value}\n'
+                           f'touch {shlex.quote(str(sourced_marker))}\n')
+        before_home = self.snapshot_tree(home)
+        before_repo = self.snapshot_tree(self.repo)
+
+        result = self.run_doctor()
+
+        report = self.assert_doctor_summary(result, 0, 'doctor_complete')
+        check = self.checks(report)['cloud_project_configuration']
+        self.assertEqual(check['status'], 'unknown')
+        self.assertTrue(report['readiness']['can_attempt'])
+        self.assertEqual(self.checks(report)['authentication']['status'], 'unknown')
+        self.assertNotIn(project_value, result.stdout)
+        self.assertFalse(sourced_marker.exists())
+        self.assertEqual(before_home, self.snapshot_tree(home))
+        self.assertEqual(before_repo, self.snapshot_tree(self.repo))
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
     def test_doctor_fresh_copy_does_not_create_bundle_bytecode(self):
         self.doctor_fixture()
         for cache in self.bundle.rglob('__pycache__'):
@@ -1524,13 +1630,35 @@ raise SystemExit(97)
 
     def test_doctor_reports_wrong_provider_version_as_a_blocker(self):
         self.doctor_fixture()
-        self.env['DOCTOR_VERSION'] = '9.9.9'
+        self.env['DOCTOR_VERSION'] = '0.66.0'
 
         report = self.assert_doctor_summary(self.run_doctor(), 3, 'doctor_blocked')
 
         check = self.checks(report)['provider_version']
         self.assertEqual(check['status'], 'blocked')
         self.assertEqual(check['reason_code'], 'unsupported_gemini_version')
+        self.assertIn('untested', check['detail'].lower())
+        self.assertIn('compatibility is unknown', check['detail'].lower())
+        self.assertIn('--gemini', check['detail'])
+        self.assertIn('0.65.0', check['detail'])
+        self.assertNotIn('incompatible', check['detail'].lower())
+        self.assertEqual(report['readiness']['provenance']['provider']['executable'],
+                         str(self.provider.resolve()))
+        self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
+
+    def test_doctor_blocks_malformed_provider_version_output_without_prompting(self):
+        self.doctor_fixture()
+        self.env['DOCTOR_VERSION'] = 'Gemini CLI v0.65.0'
+
+        report = self.assert_doctor_summary(self.run_doctor(), 3, 'doctor_blocked')
+
+        check = self.checks(report)['provider_version']
+        self.assertEqual(check['status'], 'blocked')
+        self.assertEqual(check['reason_code'], 'unsupported_gemini_version')
+        self.assertIn('0.65.0', check['detail'])
+        self.assertIn('--gemini', check['detail'])
+        for identifier in ('authentication', 'trust', 'effective_permission'):
+            self.assertEqual(self.checks(report)[identifier]['status'], 'unknown')
         self.assertEqual([item['argv'] for item in self.provider_calls()], [['--version']])
 
     def test_invalid_plan_does_not_suppress_other_readiness_checks(self):
