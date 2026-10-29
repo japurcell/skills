@@ -86,7 +86,7 @@ The extension makes setup failures diagnosable before a paid attempt, records re
 - [ ] [milestone-17] T34: Reconcile active plan prose and task status labels with the current embedded-reference design and repaired task graph.
 - [ ] [milestone-17] T35: Preserve fenced task prose and all required ancestor-milestone context in the bounded worker packet.
 - [ ] [milestone-17] T36: Ensure every copied fixture skill resource is represented in the immutable baseline or fail setup before baseline creation.
-- [ ] [milestone-17] T37: Run current-source integration proof after T33-T36, then prepare review cycle 2 if the fixed source is ready.
+- [ ] [milestone-17] T37: After T33-T36, run the current-source process-enabled runner and helper serially with fake providers, then complete the scoped static and source-hash checks, including confirming T31 instruction/eval content is unchanged. Reuse the preserved single-sample instruction grades (17/17 updated skill, 16/17 baseline) and unknown-metrics limits unless the relevant content changes or a new concern invalidates that proof; rerun only affected actors and graders if needed. Preserve original evaluation artifacts, make no live provider calls, and prepare review cycle 2 only if the fixed source passes.
 
 ## Surprises & Discoveries
 
