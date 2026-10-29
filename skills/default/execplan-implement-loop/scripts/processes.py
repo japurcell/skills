@@ -31,6 +31,7 @@ class Outcome:
     timed_out: bool
     stdout_truncated: bool
     stderr_truncated: bool
+    stderr_captured_bytes: int
 
 
 class Supervisor:
@@ -199,7 +200,7 @@ class Supervisor:
             if failure:
                 raise Stop('protocol', failure.detail, 1)
             return Outcome(child.returncode, bytes(output), bytes(errors), time.monotonic() - started, timed_out,
-                           sizes[0] > LIMIT, sizes[1] > LIMIT)
+                           sizes[0] > LIMIT, sizes[1] > LIMIT, sizes[1])
         except OSError as error:
             raise Stop('cleanup_unconfirmed', f'Owned child I/O or cleanup failed: {error}', 3) from error
         finally:
