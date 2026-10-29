@@ -316,6 +316,80 @@ class ContractTests(Fixture):
 
 
 class ProcessTests(Fixture):
+    def test_worker_prompt_embeds_exact_references_and_complete_task_context(self):
+        prerequisite = dict(id='PREP', milestone_id='M1', kind='verification', depends_on=[],
+                            verification=[command('prepare')], writable_paths=['output.txt'], state='open', evidence=[])
+        self.data['tasks'].insert(0, prerequisite)
+        self.data['tasks'][1]['depends_on'] = ['PREP']
+        context = '## Context and Orientation\nUse the approved café design.\n'
+        self.plan.write_text(markdown(self.data) + '\n' + context)
+        self.execution_fixture()
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+        result = self.execute()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        prompt = json.loads((self.root / 'observations.json').read_text())['prompt']
+        packet = json.loads(prompt.split('\nRUNNER_PACKET=', 1)[1])
+        for name in ('message.md', 'protocol.md'):
+            raw = (self.bundle / 'references' / name).read_bytes()
+            self.assertEqual(packet['references'][name]['content'].encode('utf-8'), raw)
+            self.assertEqual(packet['references'][name]['sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertNotIn(str(self.bundle), prompt)
+        self.assertNotIn(str(ROOT), prompt)
+        self.assertEqual(packet['task'], self.data['tasks'][1])
+        self.assertEqual(packet['acceptance_commands'], self.data['tasks'][1]['verification'])
+        dependency, = packet['prerequisites']
+        self.assertEqual(dependency['state'], 'done')
+        self.assertEqual({key: value for key, value in dependency['task'].items() if key not in ('state', 'evidence')},
+                         {key: value for key, value in prerequisite.items() if key not in ('state', 'evidence')})
+        self.assertEqual(dependency['task']['state'], 'done')
+        self.assertEqual(dependency['task']['evidence'][0]['command_id'], 'prepare')
+        self.assertIn(context.strip(), packet['design_context'])
+        self.assertIn('#### Task T1: Work', packet['design_context'])
+        self.assertNotIn('#### Task T3: Work', packet['design_context'])
+        schema = packet['result_schema']
+        self.assertEqual(set(schema['required']), {'schema_version', 'iteration_id', 'task_id', 'status',
+            'summary', 'changed_files', 'commit_message', 'plan_notes', 'reason_code'})
+        self.assertIs(schema['additionalProperties'], False)
+        self.assertEqual(schema['properties']['task_id']['const'], 'T1')
+        self.assertEqual(schema['properties']['iteration_id']['const'], packet['iteration_id'])
+        self.assertEqual(schema['properties']['status']['enum'], ['ready_for_verification', 'blocked', 'failed'])
+        self.assertEqual(schema['properties']['changed_files']['maxItems'], 10000)
+        self.assertEqual(schema['properties']['commit_message']['x-maxUtf8Bytes'], 32768)
+        self.assertEqual(schema['x-maxUtf8Bytes'], 1048576)
+        self.assertEqual(len(schema['allOf']), 1)
+        self.assertLessEqual(len(prompt.encode('utf-8')), 98304)
+
+    def test_required_worker_context_overflow_stops_before_provider_prompt(self):
+        self.plan.write_text(markdown(self.data) + '\n## Context and Orientation\n' + 'x' * 100000)
+        self.execution_fixture()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['reason_code'], 'worker_context_limit')
+        self.assertFalse((self.root / 'calls').exists())
+        self.assertEqual(report['commits'], [])
+        self.assertEqual(report['iterations'], [])
+
+    def test_final_repair_packet_includes_resolved_milestone_acceptance_commands(self):
+        final_command = command('final')
+        final_command['argv'] = [sys.executable, '-c',
+            'from pathlib import Path; raise SystemExit(Path("output.txt").read_text() != "complete-T3")']
+        self.data['tasks'][2]['verification'] = [final_command]
+        self.data['tasks'][1]['verification'][0]['failure_policy'] = {}
+        self.plan.write_text(markdown(self.data))
+        self.execution_fixture('per_task')
+        self.env['OBSERVATIONS'] = str(self.root / 'observations.json')
+        result = self.execute()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        prompt = json.loads((self.root / 'observations.json').read_text())['prompt']
+        packet = json.loads(prompt.split('\nRUNNER_PACKET=', 1)[1])
+        self.assertEqual(packet['task_id'], 'T3')
+        expected_milestone = copy.deepcopy(self.data['tasks'][1]['verification'][0])
+        expected_milestone['failure_policy'] = {'1': 'repair'}
+        self.assertEqual(packet['acceptance_commands'], [expected_milestone, final_command])
+        self.assertEqual({item['task']['id']: item['state'] for item in packet['prerequisites']},
+                         {'T1': 'done', 'T2': 'done'})
+
     def test_diagnostic_redacts_quoted_keys_and_common_credentials(self):
         self.execution_fixture('diagnostic_exit')
         payload = (b'{"api_key": "quoted-sentinel", "client_secret": "client-sentinel"}\n'

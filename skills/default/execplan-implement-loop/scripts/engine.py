@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import tempfile
@@ -22,6 +23,7 @@ from readiness import collect_readiness, recorded_policy, validate_policy_file
 from reporting import make_blocker, provider_diagnostic
 
 BUNDLE = Path(__file__).resolve().parents[1]
+PROMPT_LIMIT = 98304
 
 
 def now():
@@ -30,6 +32,70 @@ def now():
 
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
+
+
+def result_schema(iteration, task):
+    """Describe the entire result contract, including non-JSON-Schema rules."""
+    string = dict(type='string', minLength=1, maxLength=4096)
+    strings = dict(type='array', maxItems=10000, items=dict(type='string', maxLength=4096))
+    properties = dict(schema_version=dict(type='integer', const=1),
+                      iteration_id=dict(type='string', const=iteration), task_id=dict(type='string', const=task),
+                      status=dict(type='string', enum=['ready_for_verification', 'blocked', 'failed']),
+                      summary=string, reason_code=string,
+                      changed_files=dict(**strings, uniqueItems=True), plan_notes=strings,
+                      commit_message={'type': ['string', 'null'], 'x-maxUtf8Bytes': 32768})
+    return dict(type='object', required=list(properties), additionalProperties=False, properties=properties,
+                allOf=[{'if': {'properties': {'status': {'const': 'ready_for_verification'}}},
+                        'then': {'properties': {'commit_message': {'type': 'string'}}},
+                        'else': {'properties': {'commit_message': {'type': 'null'}}}}],
+                **{'x-maxUtf8Bytes': 1048576, 'x-validation': [
+                    'Use exactly one JSON object; duplicate keys and nonfinite JSON numbers are rejected.',
+                    'changed_files entries must be nonempty normalized POSIX repository-relative file paths, '
+                    'without NUL, backslash, parent traversal, or any case-insensitive .git component.',
+                    'A ready commit_message must have no NUL, a conventional subject of at most 72 characters '
+                    'without a trailing period, a blank second line, and exactly one Summary:, Rationale:, '
+                    'and Tests: heading in that order, each followed immediately by a nonempty - bullet.',
+                    'Commit subject types are docs, test, fix, feat, refactor, perf, chore; optional scopes '
+                    'contain letters, numbers, underscore, period, slash, or dash.',
+                    'The Copilot co-author trailer is forbidden. Follow the embedded message.md reference.',
+                ]})
+
+
+def worker_context(plan, task):
+    """Keep design prose and current/prerequisite requirements without truncation."""
+    text = plan.text
+    replacements = [(plan.block.start(), plan.block.end())] + list(plan.regions.values())
+    for start, end in sorted(replacements, reverse=True):
+        text = text[:start] + text[end:]
+    headings = list(re.finditer(r'^(#{1,6}) (.+)$', text, re.M))
+    selected = plan.ancestors[task['id']] | {task['id']}
+    removals = []
+    for index, heading in enumerate(headings):
+        label = re.fullmatch(r'(Task|Milestone) ([^ :]+): .+', heading[2])
+        if label is None:
+            continue
+        kind, identifier = label.groups()
+        if (kind == 'Task' and identifier in selected or
+                kind == 'Milestone' and identifier == task['milestone_id']):
+            continue
+        end = next((following.start() for following in headings[index + 1:]
+                    if len(following[1]) <= 4), len(text))
+        removals.append((heading.start(), end))
+    for start, end in sorted(removals, reverse=True):
+        text = text[:start] + text[end:]
+    return text
+
+
+def prompt_reference(name):
+    with (BUNDLE / 'references' / name).open('rb') as source:
+        raw = source.read(PROMPT_LIMIT + 1)
+    if len(raw) > PROMPT_LIMIT:
+        raise Stop('worker_context_limit', 'Required worker reference exceeds the 96 KiB prompt bound', 3)
+    try:
+        content = raw.decode('utf-8')
+    except UnicodeError as error:
+        raise Stop('invalid_worker_reference', 'Required worker reference is not UTF-8', 3) from error
+    return dict(content=content, sha256=digest(raw))
 
 
 def usage_totals(iterations):
@@ -435,13 +501,23 @@ class Engine:
         packet = dict(iteration_id=iteration, task_id=task['id'], plan_path=str(self.plan.path),
                       remaining_seconds=max(0, self.supervisor.deadline - time.monotonic()),
                       partial_changed_files=self.changed(), diagnostics=diagnostics,
-                      result_schema=dict(schema_version=1, iteration_id=iteration, task_id=task['id'],
-                          status='ready_for_verification|blocked|failed', summary='string', changed_files=['relative/path'],
-                          commit_message='string or null outside ready status', plan_notes=['string'], reason_code='string'))
-        prompt = (BUNDLE / 'references/worker-prompt.md').read_text()
-        prompt += '\nCommit message reference: ' + str(BUNDLE / 'references/message.md')
-        prompt += '\nProtocol reference: ' + str(BUNDLE / 'references/protocol.md')
-        prompt += '\nRUNNER_PACKET=' + json.dumps(packet, separators=(',', ':'))
+                      task=copy.deepcopy(task),
+                      prerequisites=[dict(task=copy.deepcopy(dependency), state=self.state['task_states'][identifier])
+                                     for identifier, dependency in self.plan.tasks.items()
+                                     if identifier in self.plan.ancestors[task['id']]],
+                      acceptance_commands=copy.deepcopy(task['verification']),
+                      design_context=worker_context(self.plan, task),
+                      references={name: prompt_reference(name) for name in ('message.md', 'protocol.md')},
+                      result_schema=result_schema(iteration, task['id']))
+        if task['id'] == self.plan.data['final_task_id']:
+            packet['acceptance_commands'] = [dict(copy.deepcopy(command),
+                failure_policy=copy.deepcopy(task['verification'][0]['failure_policy'])) for milestone in self.plan.milestones.values()
+                for command in self.plan.tasks[milestone['verification_task_id']]['verification']] + packet['acceptance_commands']
+        prompt = prompt_reference('worker-prompt.md')['content']
+        prompt += '\nRequired references are embedded in RUNNER_PACKET.references with exact UTF-8 content and SHA-256.'
+        prompt += '\nRUNNER_PACKET=' + json.dumps(packet, separators=(',', ':'), ensure_ascii=False)
+        if len(prompt.encode('utf-8')) > PROMPT_LIMIT:
+            raise Stop('worker_context_limit', 'Required worker context exceeds the 96 KiB prompt bound', 3)
         argv = [self.executable, '--prompt', prompt, '--output-format', 'stream-json']
         if self.args.model:
             argv += ['--model', self.args.model]
