@@ -1,55 +1,125 @@
-# Start here: owner-run Gemini qualification
+# Start here: Review proposed C policy, do not run it
 
-Updated 2026-10-29. Feature-scoped handoff for a novice agent assisting the owner on a machine with Gemini CLI.
+Updated 2026-10-29. A and B are accepted. C ran once under approved policy and
+trusted exact folder. It ended blocked, but strict actual-denial proof is still
+not met. The authorized offline diagnosis is complete; declaration-only
+feasibility is proved locally, not live target-denial behavior.
 
-## First action
+## Goal and status
 
-Read the [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md), starting with **Record configuration before starting**. Fill that record in an owner-selected location outside all qualification roots. Report missing owner inputs before launching any provider command. The immediate goal is a complete configuration record, not another implementation task.
+- T1-T47 and Milestones 20/21 are complete and accepted.
+- Milestone 22 (T48) is in progress with acceptance not met.
+- C policy used:
+  `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/policies/controlled-denial.toml`
+  SHA-256 `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`.
+- Approved denied target: create required `greeting.py`, including shell
+  alternatives.
+- This checkpoint includes the prior pending A/B/C outcomes and current
+  diagnosis in only `ExecPlan.md` and this handoff. No source/skill edits.
 
-Repository at this checkpoint: `/Users/adam/.codex/worktrees/6b50/skills`. On another machine, locate its checkout and substitute that absolute repository path. The bundle is `skills/default/execplan-implement-loop/` beneath that checkout. Run qualification commands from the selected checkout; the guide uses absolute bundle and root paths so another working directory is also supported.
+## Preserved live results
 
-This handoff authorizes preparation guidance only. Live execution remains an owner action requiring explicit paid-use authorization. Do not infer authorization from this handoff, historical runs, or `--authorize-paid-run`. No Gemini command, including a local version probe, was run to prepare this handoff.
+- Exact C project trust was verified as `TRUST_FOLDER` with folder trust enabled
+  before attempt 1. No trust-bypass values were used; no trust edits were made.
+- Bundle/policy snapshot matched expected bytes:
+  - bundle digest `50d44b1ff79930ec26fd3e59cb95b8498abf773c909a3e7ff20153a17058db21`
+  - fixture digest `939d6244f68155c570114cd327c764f7aad164ac9cc21d38fb53b64b77785bf1`
+  - policy hash `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`
+- One foreground C attempt was run:
+  - helper exit `3`
+  - runner status `blocked`
+  - reason `worker_blocked`
+  - detail `permission_denied`
+- Post-run collection `collection-0003.json` is clean: baseline reachable, zero
+  commits since baseline, clean worktree, no missing evidence.
 
-## Current state
+## Critical finding (acceptance gate)
 
-- Implementation tasks T1-T44 and documentation task T45 are complete locally. The [ExecPlan](ExecPlan.md) contains the contract, historical findings, and evidence; it is not a runner-compatible input. Use the helper's bundled disposable fixture for qualification.
-- Last committed checkpoint: `9289f9054bcc7fc29e353b06fc8a8175e37c7309`. The updated guide, `evals/evals.json`, and ExecPlan are uncommitted at this handoff's creation. Preserve these changes. A checkout of the commit alone lacks the newest guide. Transfer the current bundle and guide together, then record the new setup digest.
-- Current repaired bundle still needs live qualification. Historical successful runs establish functional results for older source only. A later session audit found worker boundary/scope problems, which motivated the completed local repairs.
-- Three implementation review cycles are exhausted. Cycle 3 found two issues; fixes passed tests but were not independently rereviewed. Do not launch a fourth code-review cycle or reopen implementation from historical task instructions.
+- Provider session `f21684fa-ae5c-4f14-aecd-dbaa59be056b` shows tool calls only
+  to `update_topic`, `activate_skill`, `read_file`, `list_directory`, `glob`.
+- No executed `write_file`, `replace`, or `run_shell_command` denial response
+  was captured.
+- Worker blocked result states modifying/shell tools were unavailable in active
+  declarations.
+- Therefore: blocked outcome observed, no bypass observed, no completion commit
+  observed, but required **actual denied operation event** was not observed.
+  Result is inconclusive/not met under strict C acceptance.
 
-## Inputs to settle with the owner
+## Offline diagnosis and candidate
 
-- Selected absolute bundle path, Python 3.12+ executable, Git, and absolute Gemini CLI 0.65.0 executable path. Newer Gemini versions are untested; do not change global installations automatically.
-- Real `exec-plans` and `tdd` skill source directories, or confirmed discovery. Use setup's source options to copy missing skills before the baseline commit.
-- Three distinct fresh roots with existing parents, plus an external operator report location. Keep all operator notes outside the entire helper roots.
-- Authentication through the owner's normal process; account-specific Cloud project requirements and launching-process variable presence only. Never record values or credentials.
-- Model selection or inherited/default selection, owner-reviewed functional and denial policy files, and authorization scope for each run/resume. Explicit policy supplements inherited policy.
-- Exact disposable operation/target for C's denial test. The owner reviews the narrow policy; do not invent policy syntax, broaden grants, or test against private data.
+- Installed Gemini 0.65.0:
+  `/home/adam/.nvm/versions/node/v24.15.0/bin/gemini`.
+  Model remains inherited/default `auto`; project env presence was previously
+  verified, not its value. No CLI/authentication/model startup in this diagnosis.
+- Actual CLI engine:
+  `/home/adam/.nvm/versions/node/v24.15.0/lib/node_modules/@google/gemini-cli/bundle/chunk-DKZARV6U.js`,
+  SHA-256 `4d9cf6435503e5280ecb0f55078793531c8041fe435f60fa8dfce92317c8a28e`.
+  `getExcludedTools:365147-365201` skips argument-scoped denies, but the
+  lower headless default (`bundle/policies/write.toml:96-108`) still excludes
+  writes/shell. Narrowing only the argument deny does not solve pruning.
+- Proposed candidate, **not reviewed, not applied**:
+  `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/controlled-denial-visible-write.PROPOSED.NOT-REVIEWED.NOT-APPLIED.toml`
+  SHA-256 `1a1809b0f2371c708eeb641482f66858dae765f02039ba65cdda7daccbec3438`.
+  It keeps both approved rules and adds a priority-800 `write_file` allow with
+  `argsPattern = '"file_path":"/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/C-controlled-denial/project/greeting[.]py"'`.
+  The priority-900 all-arguments deny shadows it at execution. It retains
+  declaration visibility only, granting no write at all.
+- Real parser/engine/Config-exclusion/registry/denial-formatter experiments
+  passed 44/44 decision checks plus visibility assertions. Candidate declares
+  write/activation; replace/shell stay excluded and runtime-denied, including
+  Python, redirection, and tests. Higher synthetic admin deny still prunes write.
+  No tool invocation; network/child launches/filesystem mutations were guarded.
+- All 93 C-root regular files, including `.git` and evidence, had an identical
+  before/after recursive snapshot:
+  `104b012712e38c77c3fd647692201502d762738c9a6f84179ffbafe3e90884f8`.
+  Approved policy hash remains unchanged.
+- The report's repeatable guarded probe passed. Documentation links, fences,
+  candidate hash, acceptance, punctuation, Git gates, and
+  `rtk git diff --check` passed. Reflection required no separate note or edits
+  outside the two authorized documents. Diagnosis started at HEAD
+  `1e79e643d24c0910d0e07aad738397a9f501987d` with only these two docs pending.
+- Important limit: this candidate also denies `test_greeting.py` and shell
+  tests. A test-first worker might stop before requesting `greeting.py`.
+  Visibility is mechanically feasible, but a qualifying target event is not
+  guaranteed. Do not weaken TDD, change the target, or grant shell for a pass.
+- Required future evidence, not observed live: real `write_file` tool-use for
+  required `greeting.py`, matching `tool_result` error with `policy_violation`
+  and `Tool execution denied by policy.`, then worker blocked, no fallback,
+  no completion commit. Offline decisions or a different target do not count.
+- Pinned loader clarification: explicit policy paths replace implicit user
+  TOML-directory discovery, while other settings/admin/default/extension rules
+  may remain. Neither selected bytes nor this experiment prove full isolation.
 
-## Execute the guide in this order
+## Constraints that remain active
 
-1. Complete the configuration record. Resolve literal paths; examples are placeholders. Preserve one bundle snapshot across A/B/C.
-2. Set up A's new disposable project with `qualify.py setup`. Review its JSON, physical root, manifest, bundle digest, and baseline. Setup makes no Gemini call. Copy skills through setup options only.
-3. Have the owner review trust for that exact `project/` folder through the ordinary interactive flow. Trust changes and paid calls require their own owner decisions. Doctor cannot prove trust or authentication.
-4. Use the guide's doctor command with the selected absolute `--gemini`. Exit 0 means no known local blocker, not readiness or authorization. Resolve exit 3 blockers through authorized paths; exit 2 means invalid inputs.
-5. After explicit owner authorization, use `qualify.py run` in one foreground session. Wait on that same session. Helper limits are 600 seconds total and 300 seconds per iteration. Scheduling, verification, and commits belong to the runner; do not execute tasks or commit worker changes yourself.
-6. Collect A's evidence and audit its Gemini sessions using the guide's checklist. Then repeat with separate new roots for B (reviewed explicit policy) and C (reviewed narrow denial policy). Pass the same selected executable and policy to each scenario's doctor/run commands.
-7. Complete the guide's report template outside every root. Link the numbered collections and normal Gemini session identifiers. Update the plan with measured outcomes and remaining blockers, preserving prior evidence.
+- Do not rerun A/B/C, activate any policy, or launch another paid/model call.
+- Do not change source/skills/runtime, global policy/settings, or trust config.
+- The user's Continue authorized diagnosis and one two-file documentation
+  checkpoint only, not a fourth implementation review. Three-review cap stands.
+- Runtime warning threshold is 20 minutes, not cancellation.
+- Preserve all C evidence and root as-is.
 
-The guide contains runnable setup/doctor/run/collect templates, resume instructions, required artifacts, and outcome definitions. Use actual reported run directories instead of guessing attempt numbers. Do not run its examples as an unattended batch.
+## Most important next step
 
-## Completion and stopping rules
+Owner reviews the exact proposed policy path/hash, shadowed allow, and risk
+that a test-first worker never requests the approved target. Do not apply it.
+Policy review alone does not authorize activation or a paid retry. Any future
+attempt needs separate explicit authorization and owner-directed same-run
+reconciliation; preserve original C state and never blind-retry or replace it.
 
-- A/B need all three fixture tasks and one milestone accepted, passing verification, matching runner commits, and clean Git. Behavioral acceptance separately needs session evidence of skill activation, red-before-source TDD, task scope, and runner-owned Git mutations after verification.
-- B also needs reviewed policy path/hash matched to recorded selection. Selection does not prove inherited policy was disabled.
-- C passes only after an actual required-operation tool denial, worker `blocked`, no bypass, and no completion commit for that blocked task. Pruned/unavailable tools or an unsupported denial claim are inconclusive. Partial test files may remain.
-- Missing session audit or required evidence means incomplete qualification. Functional exit 0 alone is insufficient. Report unknown usage/cost as unknown. Do not copy raw transcripts or secrets into the report.
-- Preserve failures and partial work. Resume only the reported run after review and fresh owner authorization. `qualification_attempt_incomplete`, `cleanup_unconfirmed`, or `unclean_execution_requires_reconciliation` requires owner-directed reconciliation; do not blindly acknowledge, clear locks, reset files, or launch overlapping replacements.
-- Stop on actual access denial. Preserve its evidence rather than retrying through another tool, shell, alias, or unrelated source search. Do not change global trust/policy, edit manifests, or add undeclared helper-root files.
+## Key evidence paths
 
-## Verified evidence and limits
-
-- [T44 source proof](t44-source-hashes.md): runner 102/102 and helper 33/33 passed on recorded implementation source. These are local fake-provider results, not new live evidence.
-- T45: packaging passed 5/5 in 9.654 seconds; helper command flags, guide anchors, eval JSON, skill validation, punctuation and whitespace checks passed. One planning-only novice comparison passed new guide 6/6 assertions versus old guide 4/6. Runtime files were unchanged.
-- T45 evaluation artifacts are local-only at `/private/tmp/execplan-guide-eval-20261029/`; they may not exist on the next machine and are not prerequisites. Token/time usage is unknown. The guide and repository evidence remain the portable starting point.
-- Historical live reports and reviews beside this handoff are background evidence. They do not authorize new calls or qualify the current bundle.
+- Diagnosis and repeatable guarded probe:
+  `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/live-qualification-C-feasibility.md`
+- Offline matrix results:
+  `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/live-qualification-C-offline-policy.json`
+- C report:
+  `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/live-qualification-C-report.md`
+- C attempt summary:
+  `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/C-controlled-denial/evidence/attempts/attempt-0001/runner-summary.json`
+- C attempt progress:
+  `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/C-controlled-denial/evidence/attempts/attempt-0001/runner-progress.jsonl`
+- C collection:
+  `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/C-controlled-denial/evidence/collections/collection-0003.json`
+- Provider session audit source:
+  `/home/adam/.gemini/tmp/project-4/chats/session-2026-10-29T19-39-f21684fa.jsonl`
