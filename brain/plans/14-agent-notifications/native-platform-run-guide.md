@@ -28,7 +28,7 @@ Requires existing user-accessible Python 3.10+, a graphical desktop, an audio ou
 
 ## Choose the remaining work for this platform
 
-These are checkpoints from the 2026-10-29 evidence, not live receiver status. Do not rerun accepted checks by default. Run the relevant remaining checks below only when asked to perform platform testing. This guide update itself does not authorize starting, stopping, or changing an existing receiver. The WSLg receiver was explicitly left open; preserve it until the human authorizes further runtime work.
+These are checkpoints from the 2026-10-29 evidence, not live receiver status. Do not rerun accepted checks by default. Run the relevant remaining checks below only when asked to perform platform testing. This guide itself does not authorize starting, stopping, or changing a receiver; follow the user's current request. The authorized WSLg media lifecycle below was completed in an isolated session-files directory and the receiver is now stopped. The previous `/tmp` session remains untouched; do not treat any saved PID as live.
 
 ### Windows: finish mute, input, and desktop coverage
 
@@ -37,14 +37,13 @@ These are checkpoints from the 2026-10-29 evidence, not live receiver status. Do
 - Then perform [keyboard and stack checks](#keyboard-and-stack-checks), [output-device checks](#output-device-checks), and [desktop coverage](#desktop-coverage). Record each result separately. Ordinary focus retention does not establish full-screen or multiple-monitor behavior.
 - For a new isolated session, use the Windows commands below. Stop only the receiver associated with that session when finished. Previously accepted audio/lifecycle checks need rerunning only if a failure, source change, or device change affects them.
 
-### WSLg: finish lifecycle before more backend experiments
+### WSLg: media lifecycle verified; keep optional comparisons gated
 
-- Use explicit `media`. Already verified by listening: automatic success/failure, repeated Preview/Replay, sound quality, silent automatic delivery while muted, and audible manual Replay while muted.
-- Last saved receiver checkpoint: data `/tmp/agent-alert-wslg-media.ZTWz4x`, PID `1658470`. This may be stale. After runtime testing is authorized, set `data=/tmp/agent-alert-wslg-media.ZTWz4x`, then run `sh run.sh status --data-dir "$data"`. Confirm the backend and pending count before any send. If the directory is missing or the receiver is stopped, report that condition before deciding whether to create a fresh session. Do not assume the saved PID still belongs to this app.
-- With the human ready, click Replay, then immediately Quit prototype during playback. Confirm no error and query stopped/paused status. Continue with the shell offline-send/reopen sequence below, keeping `--audio-backend media`; record the pending count before stop and expect exactly one additional offline alert after reopen, with zero playback on the new receiver.
-- Inspect this session's runtime log for both shutdown markers, tracebacks, audio errors, PipeWire warnings, and sink timeouts. Record any warnings alongside the human result without claiming they caused a failure.
-- Then perform keyboard/stack, focus, output-device, and desktop checks below. WSLg desktop behavior is separate from Ubuntu desktop behavior.
-- QSoundEffect A/B remains a diagnostic follow-up, not a prerequisite for accepting successful media playback. Only switch when specifically requested, using the comparison commands below. Leave the working media receiver unchanged otherwise.
+- Use explicit `media`. Human listening acceptance covers automatic success/failure, repeated Preview/Replay, sound quality, automatic mute, and manual Replay while muted.
+- On 2026-10-29, the coordinator reported the previous `/tmp/agent-alert-wslg-media.ZTWz4x` session stopped/paused with one pending alert. It was not modified or restored by the follow-up test.
+- Lifecycle evidence is in `~/.copilot/session-state/051f9d43-c2e7-45ef-bbb8-c33bf6a7b99e/files/wslg-lifecycle-20261029/` on source commit `d1c97146e70ba5f76179dd807ec9486655e9b6d3`. In this separate synthetic session, the human confirmed Replay was audible and Quit during playback closed without error. One synthetic alert queued while stopped; two alerts reopened on explicit `media`. The human confirmed both were restored and that a controlled relaunch was silent. Final status was stopped/paused with two pending alerts, the process was absent, and the log contained `event-loop-stopped` and `objects-destroyed`. It had no traceback or audio error in the inspected tail; Qt logged PipeWire symbol-resolution warnings and used FFmpeg. These results do not restore or change the prior session's pending alert.
+- During the first reopened receiver, `audio_play_count` later rose from zero to four after 266 seconds; the cause and audibility were unknown. The user requested a controlled relaunch; its playback count stayed zero after two seconds and the human confirmed silence. Do not treat playback counts alone as audibility evidence.
+- The final test receiver is stopped. Do not launch another sound test or switch to `soundeffect` unless specifically requested. QSoundEffect A/B remains optional diagnostic follow-up. WSLg keyboard/stack, focus, output-device, and desktop checks remain separate; WSLg on Arch does not establish Ubuntu support.
 
 ### Ubuntu desktop: establish the first real desktop result
 
@@ -112,13 +111,15 @@ For macOS, select instead:
 backend=soundeffect
 ```
 
-Keep this terminal open so `$data` and `$backend` retain their values. For an authorized existing WSLg session, use its verified data directory and `backend=media`, skip the fresh-session setup and initial sound sends below, and proceed to the remaining WSLg lifecycle check. Otherwise create isolated state outside Git:
+Keep this terminal open so `$data` and `$backend` retain their values. The 2026-10-29 WSLg lifecycle is complete: the isolated test receiver is stopped with two synthetic alerts pending. Do not reopen it or the original `/tmp` session as part of this checkpoint. For any future WSLg runtime check, first obtain current user authorization and create a fresh isolated directory outside Git with `backend=media`; do not send alerts or start a listening sequence unless the request explicitly includes it. If the execution environment prohibits `/tmp` file operations, use the authorized session-files fallback described below. Otherwise create isolated state outside Git:
 
 ```sh
 data=$(mktemp -d /tmp/agent-alert-prototype.XXXXXX)
 sh run.sh open --data-dir "$data" --audio-backend "$backend"
 sh run.sh status --data-dir "$data"
 ```
+
+If the execution environment prohibits `/tmp` file operations, do not run `mktemp`. Use a unique session-provided `files/` directory outside the repository only when the user's current request authorizes that state location. Pass its absolute path as `data`; the launcher changes to its own directory, so a relative path would resolve under the source kit. This guide alone does not authorize reopening existing state.
 
 Expect `audio_backend` to match `$backend`, a PID, and a visible window. macOS should report `soundeffect`; Ubuntu/WSLg media experiments should report `media`. Repeat status after two seconds if sources are loading. Opening an empty stack should be silent.
 
@@ -234,6 +235,6 @@ Use the same launcher and `--data-dir` for subsequent Windows `status` and `stop
 
 ## Evidence baseline and API references
 
-Earlier macOS QSoundEffect popup/audio and corrected Quit were confirmed by the user. Windows QSoundEffect was inaudible while the same WAV was audible through QMediaPlayer/QAudioOutput and winsound. Integrated Windows media checks are documented in [Windows evidence](windows-native-run-2026-10-29.md). On WSLg, the user confirmed audible automatic success/failure and repeated Preview/Replay, good sound quality, silent automatic delivery when muted, and audible manual Replay while muted. WSLg offline restore, audio-active Quit, and QSoundEffect A/B remain pending; keep the currently running media receiver unchanged until authorized. Ubuntu desktop remains unrun.
+Earlier macOS QSoundEffect popup/audio and corrected Quit were confirmed by the user. Windows QSoundEffect was inaudible while the same WAV was audible through QMediaPlayer/QAudioOutput and winsound. Integrated Windows media checks are documented in [Windows evidence](windows-native-run-2026-10-29.md). On WSLg, the user confirmed audible automatic success/failure and repeated Preview/Replay, good sound quality, silent automatic delivery when muted, and audible manual Replay while muted. The isolated WSLg lifecycle is also complete: Replay was audible, Quit during playback closed without error, two synthetic alerts were restored, and a controlled reopen was silent. The final session-files receiver was stopped with two alerts pending; its process was absent and shutdown markers were present. Evidence is under `~/.copilot/session-state/051f9d43-c2e7-45ef-bbb8-c33bf6a7b99e/files/wslg-lifecycle-20261029/` on source commit `d1c97146e70ba5f76179dd807ec9486655e9b6d3`. The previous `/tmp` session remains untouched. Optional QSoundEffect A/B and remaining WSLg interaction/device checks require future authorization; Ubuntu desktop remains unrun.
 
 See [Windows comparison](windows-native-run-2026-10-29.md), [native evidence](phase-4-native-desktop-prototype.md), [Qt 6.12 QMediaPlayer](https://doc.qt.io/qt-6.12/qmediaplayer.html), and [Qt 6.12 QAudioOutput](https://doc.qt.io/qt-6.12/qaudiooutput.html).
