@@ -11,12 +11,17 @@ DIAGNOSTIC_LIMIT = 65536
 
 def redact_labeled_credentials(text):
     labels = re.compile(
-        r'(?i)(?<![a-z0-9])'
-        r'(?P<label>api[_-]?key|(?:access|refresh|id)[_-]?token|(?:client[_-]?)?secret|'
-        r'password|passwd|private[_-]?key|credentials?|auth(?:orization)?(?:[_-]?token)?)'
+        r'(?i)(?<![a-z0-9_-])(?P<label>[-_]*[a-z][a-z0-9_-]*)'
         r'["\']?\s*[=:]\s*')
-    pieces, cursor = [], 0
-    while match := labels.search(text, cursor):
+    authorization_scheme = re.compile(r'(?:Bearer|Basic)[ \t]+', re.I)
+    pieces, cursor, search_start = [], 0, 0
+    while match := labels.search(text, search_start):
+        label = match['label']
+        normalized = re.sub(r'[_-]', '', label).lower()
+        header = re.search(r'(?:^|[_-])auth(?:orization)?(?:[_-]?token)?$', label, re.I)
+        if not header and not re.search(r'token|secret|password|passwd|apikey|privatekey|credential', normalized):
+            search_start = match.end()
+            continue
         end = match.end()
         if end < len(text) and text[end] in ('"', "'"):
             quote = text[end]
@@ -34,8 +39,7 @@ def redact_labeled_credentials(text):
             end += 1
             if end < len(text) and not text[end].isspace() and text[end] not in ',;}]':
                 raise ValueError('Ambiguous quoted credential suffix')
-        elif re.sub(r'[_-]', '', match['label']).lower() in (
-                'auth', 'authorization', 'authtoken', 'authorizationtoken'):
+        elif header or authorization_scheme.match(text, end):
             # Header values may contain an authentication scheme and whitespace.
             # Retain none of that line rather than exposing its credential tail.
             while end < len(text) and text[end] not in '\r\n':
@@ -44,7 +48,7 @@ def redact_labeled_credentials(text):
             while end < len(text) and not text[end].isspace() and text[end] not in ',;':
                 end += 1
         pieces.extend((text[cursor:match.start()], '[REDACTED]'))
-        cursor = end
+        cursor = search_start = end
     return ''.join((*pieces, text[cursor:]))
 
 

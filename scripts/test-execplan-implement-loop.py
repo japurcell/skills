@@ -574,6 +574,73 @@ class ProcessTests(Fixture):
             self.assertNotIn(b'label-collision-sentinel', surface)
             self.assertNotIn(b'uri-collision-sentinel', surface)
 
+    def test_diagnostic_redacts_common_credential_key_families_before_retention(self):
+        self.execution_fixture('diagnostic_exit')
+        labels = ('token', 'TOKEN', 'session_token', 'sessionToken', 'oauthToken',
+                  'accessToken', 'refresh_token', 'id_token', 'clientSecret',
+                  'AWS_SECRET_ACCESS_KEY', 'servicePassword', 'SERVICE_API_KEY',
+                  'signingPrivateKey', 'credential', '--api-key', 'HTTP_AUTHORIZATION')
+        sentinels = [f'credential-family-{index}-sentinel' for index in range(len(labels))]
+        payload = '\n'.join(json.dumps({label: 'prefix"' + sentinel})
+                            for label, sentinel in zip(labels, sentinels))
+        payload += '\nSESSION_TOKEN=plain-session-sentinel\n--token=cli-token-sentinel\n'
+        payload += 'session_token=Bearer session-bearer-sentinel\noauthToken=Basic oauth-basic-sentinel\n'
+        self.env['DIAGNOSTIC_HEX'] = payload.encode().hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+        self.assertIs(diagnostic['truncated'], False)
+        run = Path(report['run_directory'])
+        self.assertLessEqual(diagnostic['retained_bytes'], 65536)
+        for surface in [result.stdout.encode(), result.stderr.encode(),
+                        *[path.read_bytes() for path in run.rglob('*') if path.is_file()]]:
+            for sentinel in [*sentinels, 'plain-session-sentinel', 'cli-token-sentinel',
+                             'session-bearer-sentinel', 'oauth-basic-sentinel']:
+                self.assertNotIn(sentinel.encode(), surface)
+        self.assertEqual(report['commits'], [])
+        self.assertTrue(all(value == 0 for value in report['failure_counts'].values()))
+
+    def test_diagnostic_preserves_actionable_authentication_and_trust_errors(self):
+        self.execution_fixture('diagnostic_exit')
+        payload = (b'Error authenticating: ProjectIdRequiredError: This account requires setting '
+                   b'GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_PROJECT_ID env var.\n'
+                   b'FatalUntrustedWorkspaceError: Workspace is not trusted.\n')
+        self.env['DIAGNOSTIC_HEX'] = payload.hex()
+        result = self.execute()
+        self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+        report = json.loads(result.stdout)
+        diagnostic = report['iterations'][0]['provider_diagnostic']
+        self.assertEqual(diagnostic['redaction_status'], 'no_known_patterns_detected')
+        self.assertEqual(diagnostic['captured_bytes'], len(payload))
+        self.assertEqual(diagnostic['retained_bytes'], len(payload))
+        self.assertIs(diagnostic['truncated'], False)
+        self.assertEqual((Path(report['run_directory']) / diagnostic['artifact_ref']).read_bytes(), payload)
+
+    def test_diagnostic_long_credential_keys_and_values_remain_bounded(self):
+        self.execution_fixture('diagnostic_exit')
+        expressions = ('b"component_" * 60000 + b\'token="long-key-sentinel"\\n\'',
+                       'b\'token="\' + b"v" * 900000 + b\'"\\n\'')
+        for expression in expressions:
+            with self.subTest(stderr=expression):
+                self.provider.write_text('#!' + sys.executable + '\n'
+                    'import sys\n'
+                    'if "--version" in sys.argv:\n'
+                    '    print("0.65.0"); raise SystemExit()\n'
+                    'sys.stderr.buffer.write(' + expression + ')\n'
+                    'raise SystemExit(1)\n')
+                result = self.execute(timeout=15)
+                self.assertEqual(result.returncode, 3, result.stdout + result.stderr)
+                report = json.loads(result.stdout)
+                diagnostic = report['iterations'][0]['provider_diagnostic']
+                self.assertLessEqual(diagnostic['captured_bytes'], 1048576)
+                self.assertEqual(diagnostic['redaction_status'], 'known_patterns_applied')
+                self.assertIs(diagnostic['truncated'], False)
+                retained = Path(report['run_directory']) / diagnostic['artifact_ref']
+                self.assertEqual(retained.read_bytes(), b'[REDACTED]\n')
+                self.assertEqual(diagnostic['retained_bytes'], 11)
+
     def test_incomplete_capture_omits_unsafe_stderr_tail(self):
         self.execution_fixture('diagnostic_exit')
         self.env.update(DIAGNOSTIC_HEX=b'Authorization: Bearer unsafe-tail'.hex(),
