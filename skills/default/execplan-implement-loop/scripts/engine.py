@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from contracts import Plan, Stop, confined, message_valid, require, worker_result
 from processes import GeminiStream, Supervisor
 from readiness import collect_readiness, recorded_policy, validate_policy_file
-from reporting import make_blocker
+from reporting import make_blocker, provider_diagnostic
 
 BUNDLE = Path(__file__).resolve().parents[1]
 
@@ -465,6 +465,19 @@ class Engine:
                 record['status'] = 'timeout'
                 return None
             try:
+                if stream.terminal is None:
+                    metadata, sanitized = provider_diagnostic(
+                        result.stderr, result.stderr_captured_bytes, result.stderr_truncated)
+                    record['provider_diagnostic'] = metadata
+                    if sanitized is not None:
+                        reference = f'provider-stderr-{iteration}.log'
+                        try:
+                            atomic(self.directory / reference, sanitized)
+                        except (OSError, Stop) as error:
+                            metadata.update(retained_bytes=0, redaction_status='content_omitted')
+                            raise Stop('diagnostic_persistence_failed',
+                                       'Unable to persist sanitized provider diagnostic', 3) from error
+                        metadata['artifact_ref'] = reference
                 if result.code and stream.terminal is None:
                     raise Stop('provider_blocked', f'Gemini exited {result.code} without terminal result', 3)
                 text = stream.finish()

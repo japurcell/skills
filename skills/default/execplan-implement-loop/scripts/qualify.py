@@ -1064,6 +1064,46 @@ def _collect_qualification(root_value: str) -> dict[str, object]:
                         provider = provenance.get('provider')
                         version = provider.get('version') if isinstance(provider, dict) else None
                         versions = {'provider': version if isinstance(version, str) and version else None}
+            runner_observation = None
+            if runner_report is not None:
+                runner_observation = {key: runner_report.get(key)
+                                      for key in ('status', 'reason_code', 'run_directory')}
+                diagnostics = []
+                iterations = runner_report.get('iterations', [])
+                if not isinstance(iterations, list) or len(iterations) > 10000:
+                    raise QualificationError('Runner diagnostic iteration list is invalid')
+                for iteration in iterations:
+                    if not isinstance(iteration, dict) or 'provider_diagnostic' not in iteration:
+                        continue
+                    diagnostic = iteration['provider_diagnostic']
+                    fields = {'artifact_ref', 'captured_bytes', 'retained_bytes', 'truncated',
+                              'encoding', 'redaction_status'}
+                    if (not isinstance(diagnostic, dict) or set(diagnostic) != fields
+                            or any(type(diagnostic.get(key)) is not int or diagnostic[key] < 0
+                                   for key in ('captured_bytes', 'retained_bytes'))
+                            or diagnostic['retained_bytes'] > 65536
+                            or type(diagnostic['truncated']) is not bool
+                            or diagnostic['encoding'] != 'utf-8-replace'
+                            or diagnostic['redaction_status'] not in {
+                                'known_patterns_applied', 'no_known_patterns_detected', 'content_omitted'}):
+                        raise QualificationError('Runner provider diagnostic metadata is invalid')
+                    run_path = _owned_path(root, attempt['run_directory'], must_exist=True)
+                    if runner_report.get('run_directory') != str(run_path):
+                        raise QualificationError('Runner diagnostic directory does not match owned state')
+                    reference = diagnostic['artifact_ref']
+                    if reference is None:
+                        if diagnostic['retained_bytes'] or diagnostic['redaction_status'] != 'content_omitted':
+                            raise QualificationError('Omitted runner diagnostic metadata is invalid')
+                    else:
+                        parsed = _safe_relative(reference, 'provider diagnostic')
+                        if parsed.as_posix() != reference:
+                            raise QualificationError('Runner diagnostic reference is not normalized')
+                        artifact = _owned_path(root, attempt['run_directory'] + '/' + reference, must_exist=True)
+                        if not artifact.is_file() or artifact.stat().st_size != diagnostic['retained_bytes']:
+                            raise QualificationError('Runner diagnostic artifact does not match metadata')
+                    diagnostics.append(diagnostic)
+                if diagnostics:
+                    runner_observation['provider_diagnostics'] = diagnostics
             reports.append({
                 'attempt': attempt['number'], 'status': attempt['status'],
                 'exit_code': attempt['exit_code'], 'reason_code': attempt['reason_code'],
@@ -1074,11 +1114,7 @@ def _collect_qualification(root_value: str) -> dict[str, object]:
                     'blockers': doctor_report.get('blockers'),
                     'versions': versions,
                 },
-                'runner': None if runner_report is None else {
-                    'status': runner_report.get('status'),
-                    'reason_code': runner_report.get('reason_code'),
-                    'run_directory': runner_report.get('run_directory'),
-                },
+                'runner': runner_observation,
                 'doctor_report_path': attempt['doctor_report'],
                 'runner_summary_path': attempt['runner_summary'] if attempt['runner_started'] else None,
                 'runner_progress_path': attempt['runner_progress'] if attempt['runner_started'] else None,
