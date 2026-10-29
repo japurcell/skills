@@ -1,6 +1,6 @@
 # Native desktop popup and sound experiment
 
-- Status: native macOS window/audio and corrected Quit verified. Windows, Ubuntu, and WSL2 launchers prepared; actual desktop runs there remain pending.
+- Status: native macOS window/audio and corrected Quit verified. WSL2/WSLg runs on Arch Linux, but manual Preview/Replay sound is not audibly confirmed. Windows and Ubuntu desktop runs remain pending.
 - User accepted deletion/Undo browser interaction and requested native prototypes. Linux targets are Ubuntu desktop and WSL2. User has no admin access.
 - [Runnable source bundle](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype.zip)
 - [Tracked source kit](../../../prototypes/agent-notifications/README.md) is the canonical fetchable copy on branch `codex/notify-app`. It includes only source, launchers, pinned requirements, and gentle WAV assets; no environments, logs, pending alerts, or local app bundles.
@@ -28,6 +28,14 @@
 - Native computer-use permission was unavailable, so no OS screenshot, keyboard walkthrough, or pixel-level inspection was performed. User confirmation supplies direct visual/listening evidence only for the stated checks.
 - Syntax compilation, POSIX launcher syntax, and `pip check` passed. Windows launcher and Ubuntu/WSL runtime behavior are not verified by those checks.
 
+## Observed WSL2 / WSLg audio feedback
+
+- Host: Arch Linux under WSL2, WSLg, Qt `wayland`, PulseAudio server configured at `/mnt/wslg/PulseServer`.
+- On 2026-10-29, user reported hearing a sound when the app first opened, but hearing nothing after clicking any Preview button or Replay sound. This is direct user listening feedback; do not treat Qt playback state as proof the user heard it.
+- Test receiver PID 1469090 used isolated directory `prototypes/agent-notifications/PROTOTYPE-wslg-feedback-20261029/`. Qt reported all effects `Ready`, available output, visible/active window, and `playing=true` then `playing=false` for requests. After user interaction, status reported `audio_play_count=21`, `pending=0`. Thus native API playback and audible user outcome disagree.
+- The runtime log also has PipeWire symbol-resolution warnings and later `Failed to get sink information: "Timeout"` diagnostics. These are observed alongside the issue; root cause is not established.
+- Keep this as an unresolved audio-delivery defect. Further diagnosis must distinguish button handler/play invocation, Qt output-device/backend state, and audible WSLg output. Preserve the user's observation; do not claim manual preview works based only on `QSoundEffect` status/signals.
+
 ## Quit crash and correction
 
 - User reported a Python error after clicking Quit prototype. macOS crash report showed SIGSEGV in `PySide::SenderSignalDeletionTracker::senderDestroyed`, during QWidget/Python binding teardown.
@@ -35,5 +43,5 @@
 - Explicit object cleanup after `app.quit()` alone was insufficient when sound was active; native termination could occur before that cleanup executed.
 - Fix: exit the Qt event loop with `app.exit(0)`, stop timers/audio/socket activity, then destroy owned Qt objects while Python binding machinery remains alive. Also replace a delayed callback against a destroyed socket with a parent-owned timer and live-socket check.
 - Audio-active reproducer then exited 0 and logged both event-loop stop and object destruction. [After-fix log](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype/quit-with-audio-after.log). User retried the actual Quit prototype button and confirmed no error.
-- The user has now quit the prototype; leave it closed until another explicit Open request. Do not restart it merely to show progress.
+- The user previously quit the macOS prototype after verifying its Quit button. Current WSLg receiver state is tracked in the active handoff; do not infer it is stopped from the older macOS observation.
 - Reflection: task-specific findings stay here. Explicit Qt/Python lifetime cleanup and actual process exit checks are required before trusting native shutdown; no unrelated skill files were edited.

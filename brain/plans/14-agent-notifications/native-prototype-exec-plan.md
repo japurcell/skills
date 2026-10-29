@@ -14,11 +14,12 @@ Move the accepted browser interaction into a disposable real desktop-window expe
 - [x] (2026-10-22) [milestone-3] Produce portable source kit and Windows/Ubuntu/WSL2 instructions without system/admin installation steps.
 - [x] (2026-10-28) [milestone-3] Add the verified source kit to `prototypes/agent-notifications/` for Git-based transfer, excluding environments, logs, app bundles, and pending alerts.
 - [x] (2026-10-22) [milestone-3] Record evidence, limits, and recovery in the native phase note and run guide.
-- [ ] [milestone-3] Run the experiment on actual Windows, Ubuntu desktop, and WSL2 sessions and reconcile findings before accepting cross-platform feasibility.
+- [x] (2026-10-29) [milestone-3] Exercise the Linux WSL2/WSLg source-kit path; window/audio API and shutdown diagnostics passed.
+- [ ] [milestone-3] Diagnose WSLg manual Preview/Replay audio failure reported by user; complete remaining WSLg interaction checks and run Windows/Ubuntu desktop checks.
 
 ## Surprises & Discoveries
 
-- Only a macOS desktop is presently available to this agent. The user specified Ubuntu/WSL2 requirements, not remote machine access. Windows/Linux runtime results must remain pending until those desktop environments run the prototype.
+- WSL2 WSLg is available on this host (Arch Linux, Wayland). Qt reports effects Ready and playback start/finish, but the user heard only the initial sound and heard nothing from Preview or Replay controls. API diagnostics are not proof of audible output; root cause remains unknown.
 - Existing browser acceptance covers interaction only. Native focus, compositor positioning, audio devices, and runtime resource use are unproven.
 - Native computer-use permission is unavailable. User directly confirmed macOS visibility and pleasant audible previews; own-window diagnostics reported visible/inactive. No desktop screenshot or keyboard walkthrough is claimed.
 - Quit initially crashed in Qt/Python signal teardown. `app.quit()` could enter native termination before Python-owned widget cleanup. Using `app.exit(0)` followed by explicit native cleanup passed an audio-active process reproducer and the user's actual Quit-button retry. See [native evidence](phase-4-native-desktop-prototype.md).
@@ -32,7 +33,7 @@ Move the accepted browser interaction into a disposable real desktop-window expe
 
 ## Outcomes & Retrospective
 
-Research/scaffolding and a portable source kit are complete. User confirmed native macOS popup/audio and clean Quit after the reproduced crash fix. Broader native interaction acceptance and Windows/Ubuntu/WSL2 desktop proof remain pending. This is a prototype checkpoint, not production implementation or cross-platform acceptance. User has quit the fixed app; leave it closed until explicitly reopened.
+Research/scaffolding and a portable source kit are complete. User confirmed native macOS popup/audio and clean Quit after the reproduced crash fix. WSL2/WSLg on Arch Linux reports a visible Qt Wayland window and playback state, but user feedback shows a real mismatch: initial open made sound, Preview and Replay made none. Root cause and working manual playback remain unverified. Windows and Ubuntu desktop runs remain unverified. This is a prototype checkpoint, not production implementation or cross-platform acceptance. Current receiver state is documented in the handoff; avoid stopping or restarting without a reason.
 
 ## Context and Orientation
 
@@ -66,7 +67,7 @@ Complete evidence notes and handoff with exactly what ran on each platform, reta
 
 ## Concrete Steps
 
-Next owner action: fetch branch `codex/notify-app` on a real Windows or Ubuntu/WSL2 desktop, enter `prototypes/agent-notifications/`, and follow [the run guide](native-platform-run-guide.md). Use separate Windows/Linux clones. The macOS user has already confirmed the fixed Quit button. Do not reopen the app automatically after explicit Quit.
+Next action: diagnose why user-clicked Preview/Replay controls are inaudible in WSLg even though Qt reports playback. User heard a sound on initial app open, but no sound after clicking any Preview button or Replay sound. Receiver PID 1469090 remains open in isolated directory `prototypes/agent-notifications/PROTOTYPE-wslg-feedback-20261029/`; the latest status showed `audio_play_count=21`, `pending=0`. Runtime log includes PipeWire symbol-resolution warnings and `Failed to get sink information: "Timeout"`; these are clues, not proven cause. Preserve user observation as acceptance evidence; do not claim audible success from Qt signals. After resolving this bounded audio issue, finish visibility/focus/keyboard checks and run Windows and Ubuntu desktop checks using [the run guide](native-platform-run-guide.md).
 
 Completed local commands from the artifact `native-alert-prototype/` directory: `.venv/bin/python native_alerts.py open`, `status`, and `stop`; `.venv/bin/python -m py_compile native_alerts.py`; `sh -n run.sh`; `.venv/bin/python -m pip check`. Real desktop/audio execution required sandbox escalation but ran as the same user, without admin privileges. The source kit contains no virtual environment or user state. Its `START-HERE.txt` supplies no-admin launch commands.
 
@@ -74,7 +75,11 @@ Completed local commands from the artifact `native-alert-prototype/` directory: 
 
 Use `sh run.sh send success --agent Codex --repo skills` (Windows: `run.cmd send success --agent Codex --repo skills`), inspect the popup, then exercise controls. `status` reports PID, pending count, playback count, source readiness, own-window visibility/activation, and Qt platform. `stop` uses the same shutdown handler as Quit prototype. To reproduce shutdown with output capture, run `sh run.sh serve --show --data-dir PROTOTYPE-quit-check` in one terminal, then send an alert and `stop` with the same data directory from another. Expect receiver exit 0 and both shutdown log markers; -11/139 indicates failure. User confirmed the actual button now exits without error.
 
-Remaining observations: full focus/keyboard behavior, correct content under bursts, stack/Undo controls, mute/no-device feedback, and target compositor behavior. Windows, Ubuntu, and WSL2 require real interactive desktop runs; source portability, headless rendering, or a successful import are not substitutes. No quiet-hours scheduler or login registration was implemented in this native feasibility scope.
+Observed WSL2/WSLg run on 2026-10-29 from the repository root, using isolated data directory `PROTOTYPE-wslg-check-20261029`: `sh prototypes/agent-notifications/run.sh open --data-dir PROTOTYPE-wslg-check-20261029`, followed by success and failure sends, `status`, and `stop`. Host reported WSL2 kernel `6.18.54.1-microsoft-standard-WSL2`, Arch Linux, `DISPLAY=:0`, `WAYLAND_DISPLAY=wayland-0`, and PulseAudio at `/mnt/wslg/PulseServer`. Receiver used Qt `wayland`; one PID served open and both sends; `window_visible=true`; it became inactive after sends; all sounds reached `Ready`; output was available and both sound calls logged `playing=true` then `playing=false`. Qt warned it could not load PipeWire symbols and used FFmpeg. `stop` reported paused/not running with two queued test alerts; the process exited and logged both shutdown markers. Log: `prototypes/agent-notifications/PROTOTYPE-wslg-check-20261029/runtime.log`. These diagnostics do not prove a person saw the popup or heard gentle audio.
+
+User's later listening feedback on the open WSLg preview: heard sound when app first opened, but none after clicking any Preview button or Replay sound. Latest queried status still showed effects Ready, window visible/active, `audio_play_count=21`, `pending=0`; runtime log records repeated playback signals but also PipeWire resolver warnings and `Failed to get sink information: "Timeout"`. Log: `prototypes/agent-notifications/PROTOTYPE-wslg-feedback-20261029/runtime.log`. The receiver state might have changed after this observation; check before interaction. This audible/manual path is not accepted.
+
+Remaining observations: diagnose WSLg manual Preview/Replay inaudibility; complete full focus/keyboard behavior, correct content under bursts, stack/Undo controls, mute/no-device feedback, and target compositor behavior. Windows and Ubuntu still need real desktop runs. Source portability, headless rendering, or a successful import are not substitutes. No quiet-hours scheduler or login registration was implemented in this native feasibility scope.
 
 ## Idempotence and Recovery
 
