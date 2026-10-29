@@ -1,6 +1,6 @@
 # Live qualification repair evidence
 
-Bounded research for T25, T28, and T31. Repository source was read-only during research. No Gemini CLI execution, authentication, model call, or repository edit occurred.
+Bounded research for T24/T25, T28, and T31. Repository source was read-only during research. No Gemini CLI execution, authentication, model call, or repository edit occurred.
 
 ## LQ-1: Version boundary
 
@@ -8,6 +8,12 @@ Bounded research for T25, T28, and T31. Repository source was read-only during r
 - This is an exact qualification pin. The observed rejection of 0.66.0 does not establish incompatibility. Keep 0.65.0 as the only qualified version until a separately scoped compatibility review proves more.
 - The local runner and qualification helper already accept an explicit --gemini executable path. Document selecting the known binary with that option; do not change the global install.
 - Pinned primary sources: [Gemini CLI v0.65.0 release](https://github.com/google-gemini/gemini-cli/releases/tag/v0.65.0), [v0.65.0 CLI reference](https://github.com/google-gemini/gemini-cli/blob/v0.65.0/docs/cli/cli-reference.md), and [v0.65.0 package metadata](https://github.com/google-gemini/gemini-cli/blob/v0.65.0/packages/cli/package.json).
+
+## LQ-3: Cloud project variable presence and precedence
+
+- The pinned [v0.65.0 authentication guide](https://github.com/google-gemini/gemini-cli/blob/v0.65.0/docs/get-started/authentication.mdx#L360) says individual accounts may not require a Cloud project. At [line 374](https://github.com/google-gemini/gemini-cli/blob/v0.65.0/docs/get-started/authentication.mdx#L374), it says to set either project variable and that the CLI checks `GOOGLE_CLOUD_PROJECT` first, then falls back to `GOOGLE_CLOUD_PROJECT_ID`.
+- Pinned [`contentGenerator.ts`](https://github.com/google-gemini/gemini-cli/blob/v0.65.0/packages/core/src/core/contentGenerator.ts#L1343-L1349) computes the project from `getEnv('GOOGLE_CLOUD_PROJECT') || getEnv('GOOGLE_CLOUD_PROJECT_ID') || undefined`. Its `getEnv` also prefers values loaded into CLI config before `process.env`; therefore the T24 child-process check reports environment-variable presence and precedence, not every possible Gemini configuration source or authentication validity.
+- This source supports T24's primary-variable selection when both child variables are present. It does not support treating either variable's presence as successful authentication or as proof that a project is required. No account probe or Gemini execution was used to establish this behavior.
 
 ## LQ-5: Trust remains unknown locally
 
