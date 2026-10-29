@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 22 -->
+<!-- next-id: 23 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -37,3 +37,4 @@
 20. [ ] Minimize the commit skill, using [poteto/noodle's commit skill](https://github.com/poteto/noodle/blob/main/.agents/skills/commit/SKILL.md) and [OpenAI Symphony's commit skill](https://github.com/openai/symphony/blob/main/.codex/skills/commit/SKILL.md) as inspiration.
 
 21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`.
+22. [ ] Fix `subagent-model-router` choosing `gpt-5.3-codex` at high effort over `gpt-6.1-terra` at medium effort for tasks like permission-precedence and alternate-editing-path analysis. Review the demanding/security-sensitive classification and escalation criteria; route by demonstrated task requirements and supported configurations, not provisional catalog labels or unmeasured assumptions that one model outperforms another.
