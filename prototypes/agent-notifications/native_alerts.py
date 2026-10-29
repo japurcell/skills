@@ -194,7 +194,9 @@ def serve(directory, force_show=False):
             self.setMinimumWidth(410)
             self.setMaximumWidth(510)
             self.setFont(QFont("", 11))
-            self.setStyleSheet("QWidget {font-size:14px;} QPushButton {padding:8px 12px;} "
+            self.setStyleSheet("QWidget {font-size:14px;} QPushButton {padding:8px 12px;min-height:40px;} "
+                               "QPushButton:disabled {color:palette(text);background-color:palette(window);"
+                               "border:1px solid palette(mid);border-radius:4px;} "
                                "QLabel#title {font-size:22px;font-weight:600;} "
                                "QFrame#card {border:1px solid palette(mid);border-radius:10px;} "
                                "QLabel#muted {color:palette(mid);}")

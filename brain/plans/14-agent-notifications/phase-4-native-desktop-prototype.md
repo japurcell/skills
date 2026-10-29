@@ -1,11 +1,12 @@
 # Native desktop popup and sound experiment
 
-- Status: native macOS window/audio and corrected Quit verified. WSL2/WSLg runs on Arch Linux, but manual Preview/Replay sound is not audibly confirmed. Windows and Ubuntu desktop runs remain pending.
+- Status: native macOS window/audio and corrected Quit verified. Windows runtime/lifecycle and empty-state controls were manually checked; QSoundEffect audio remains inaudible to the user. WSL2/WSLg manual Preview/Replay sound is also unconfirmed. Ubuntu desktop remains pending.
 - User accepted deletion/Undo browser interaction and requested native prototypes. Linux targets are Ubuntu desktop and WSL2. User has no admin access.
 - [Runnable source bundle](../../../../../../visualizations/2026/10/22/01a16214-d358-76a3-b29a-244a36c7786e/native-alert-prototype.zip)
 - [Tracked source kit](../../../prototypes/agent-notifications/README.md) is the canonical fetchable copy on branch `codex/notify-app`. It includes only source, launchers, pinned requirements, and gentle WAV assets; no environments, logs, pending alerts, or local app bundles.
 - [Prototype source](../../../prototypes/agent-notifications/native_alerts.py)
 - [Platform run instructions](native-platform-run-guide.md)
+- [Windows run and audio comparison](windows-native-run-2026-10-29.md)
 - [Native ExecPlan](native-prototype-exec-plan.md)
 - [Toolkit research](research/native-toolkit-feasibility/findings.md)
 
@@ -26,7 +27,7 @@
 - All sound sources became Ready; QSoundEffect reported a complete playing/finished cycle. User explicitly confirmed the popup was visible and success/failure previews were audible and gentle.
 - Later reopen reported `window_visible=true`, `window_active=false`, all sounds Ready, and 331.8 ms CLI handling. This is own-window state evidence, not full focus behavior across applications/spaces.
 - Native computer-use permission was unavailable, so no OS screenshot, keyboard walkthrough, or pixel-level inspection was performed. User confirmation supplies direct visual/listening evidence only for the stated checks.
-- Syntax compilation, POSIX launcher syntax, and `pip check` passed. Windows launcher and Ubuntu/WSL runtime behavior are not verified by those checks.
+- Syntax compilation, POSIX launcher syntax, and `pip check` passed. These checks do not prove native UI/audio behavior. The Windows run is documented separately; Ubuntu remains unrun and WSLg audibility is unresolved.
 
 ## Observed WSL2 / WSLg audio feedback
 

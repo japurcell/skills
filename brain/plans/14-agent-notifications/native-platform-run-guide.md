@@ -16,7 +16,7 @@ run.cmd status
 run.cmd stop
 ```
 
-`run.cmd` uses the existing `py -3` launcher to create a user-local virtual environment. A source kit is supplied, not a standalone signed `.exe`; Windows packaging and live execution remain unverified.
+`run.cmd` uses the existing `py -3` launcher to create a user-local virtual environment. A source kit is supplied, not a standalone signed `.exe`. Windows source-kit launch, CLI delivery, offline queue/reopen, and clean stop were exercised on 2026-10-29; the QSoundEffect Preview/Replay path was not audibly confirmed. See the [Windows run evidence](windows-native-run-2026-10-29.md). Packaging remains unverified.
 
 ## Ubuntu desktop / macOS / WSLg
 
@@ -32,7 +32,7 @@ sh run.sh stop
 
 On Ubuntu, record the release and whether the session is GNOME/X11 or Wayland. A compositor may ignore requested placement/topmost behavior. Missing xcb/Wayland/audio libraries must be reported rather than addressed with admin commands.
 
-On WSL2, the Linux route requires WSLg GUI/audio already available. Headless WSL2 cannot display a popup on its own. WSLg runtime behavior is still unverified here.
+On WSL2, the Linux route requires WSLg GUI/audio already available. Headless WSL2 cannot display a popup on its own. WSLg ran on Arch Linux/Wayland on 2026-10-29, but user listening did not confirm Preview/Replay audio despite Qt playback signals; Ubuntu remains unrun.
 
 ## WSL2 to a Windows-host popup
 

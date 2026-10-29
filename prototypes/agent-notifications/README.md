@@ -13,4 +13,4 @@ The launcher installs pinned Qt wheels in a local `.venv`; no admin privileges o
 
 The kit includes source and the generated gentle WAVs used in the macOS experiment. Environments, pending alerts, crash logs, and app bundles are ignored. Nothing registers real agent hooks or login items.
 
-See the [platform run guide](../../brain/plans/14-agent-notifications/native-platform-run-guide.md) for WSL2 interoperability and live validation steps. macOS popup/audio and corrected Quit were verified; Windows/Ubuntu/WSL2 runtime checks remain pending.
+See the [platform run guide](../../brain/plans/14-agent-notifications/native-platform-run-guide.md) for WSL2 interoperability and live validation steps. macOS popup/audio and corrected Quit were verified. Windows runtime/lifecycle was exercised, but QSoundEffect audio was not audibly confirmed; WSLg manual audio is also unresolved, and Ubuntu remains unrun. See [Windows evidence](../../brain/plans/14-agent-notifications/windows-native-run-2026-10-29.md).
