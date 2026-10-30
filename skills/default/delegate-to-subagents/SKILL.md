@@ -25,9 +25,7 @@ While you pursue the long-running goal and maintain dialogue with the user, you 
 - Determine the most cost-efficient and capable model and reasoning effort for that subtask.
 - If you have already dispatched a subagent that has the context needed for this subtask and matches the routed model and reasoning effort, assign the subtask to that subagent. Otherwise, dispatch a fresh subagent by submitting the exact routed model and reasoning effort through dispatch controls. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
 
-Coordinate integration and verification through one persistent **integration coordinator** subagent. Stop when the combined result meets the goal's acceptance criteria and required checks pass.
-
 **Subagent rules**:
 
-- Set status checkpoints based on expected effort and complexity. When overdue, request status, completed work, blockers, and an updated ETA without interrupting. Lateness alone does not justify cancellation or replacement.
+- Enforce runtime limits based on expected effort and complexity. When overdue, request a **progress update** that includes: request status, completed work, blockers, and an updated ETA. Set a new runtime limit based on the **progress update**. If the second runtime limit is exceeded, cancel the subagent and dispatch a fresh **replacement agent**.
 - Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
