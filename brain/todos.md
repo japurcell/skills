@@ -12,7 +12,6 @@
 
 ## Investigations
 
-15. [ ] Make a minimal change to `execplan-implement` so needed code review happens outside its task loop; long-running plans currently bog down in implement-review-fix loops. Also move worktree cleanup to the end (see pocock's implement-spec and chief of staff).
 
 2. [ ] Investigate a pre-commit hook that runs all tests and checks Markdown syntax and local links. Select existing Markdown/link tooling, and assess changed-file scoping and feedback runtime against the original full-test requirement before proposing a narrower alternative.
 
@@ -34,7 +33,6 @@
 
 19. [ ] Pull in the unslop skill from [poteto/noodle](https://github.com/poteto/noodle/tree/main/.agents/skills/unslop).
 
-20. [ ] Minimize the commit skill, using [poteto/noodle's commit skill](https://github.com/poteto/noodle/blob/main/.agents/skills/commit/SKILL.md) and [OpenAI Symphony's commit skill](https://github.com/openai/symphony/blob/main/.codex/skills/commit/SKILL.md) as inspiration.
 
 21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`.
 22. [ ] Fix `subagent-model-router` choosing `gpt-5.3-codex` at high effort over `gpt-6.1-terra` at medium effort for tasks like permission-precedence and alternate-editing-path analysis. Review the demanding/security-sensitive classification and escalation criteria; route by demonstrated task requirements and supported configurations, not provisional catalog labels or unmeasured assumptions that one model outperforms another.
