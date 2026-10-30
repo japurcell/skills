@@ -87,7 +87,7 @@ $data = Join-Path $env:TEMP ('agent-alert-prototype-windows-' + (Get-Date -Forma
 
 Expect JSON with `ok: true`, `audio_backend: "media"`, `window_visible: true`, and a PID. Audio sources may briefly load; repeat status after two seconds and record the result. Ask the human whether the window appeared. Opening an empty stack should be silent.
 
-Send two alerts, waiting at least two seconds between commands so these test separate sounds rather than burst coalescing:
+Send two alerts, waiting at least two seconds between commandss o these test separate sounds rather than burst coalescing:
 
 ```powershell
 & .\run.cmd send success --agent Codex --repo demo --summary 'Windows success audio check' --data-dir $data
