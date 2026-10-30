@@ -1,7 +1,13 @@
-# Start here: Package existing Linux evidence without Gemini
+# Start here: T55/T56 complete; preserve evidence and stop
 
-Updated 2026-10-30. T54 scoped closeout is committed at `0ca7ba02`.
-The user explicitly removed the raw B provider session as a T55 prerequisite.
+Updated 2026-10-30. Linux packaging/audit closeout is committed at `8c497ea6`.
+The current reconciliation checked committed scope, cross-document v3 hashes
+and count consistency; Linux package/report files are unavailable on this macOS
+host. No actual archive/report hash or privacy audit was rerun here. Current
+plan/handoff/closeout edits are uncommitted documentation reconciliation only.
+T54's historical scoped closeout is committed at `0ca7ba02`.
+The user explicitly removed the raw B provider session as a T55 prerequisite,
+not as a requirement for independently supporting B behavioral claims.
 T56 independently reviewed frozen v2 and found one verification-mode
 contradiction; the audit is complete with conclusion `needs_evidence`. T55
 created a fresh corrected v3 package; the independent T56 v3 follow-up is now
@@ -34,7 +40,9 @@ overall closeout had not yet been authorized at that checkpoint.
 
 - T55 v3 readiness and independent T56 v3 package/audit follow-up are complete; Milestone 28 is met for package/audit only, not qualification. The v2 audit concluded `needs_evidence` after finding one verifier-mode contradiction, corrected in v3. V1, v2 and both review reports are preserved. B's raw session is absent and TDD/scope/no-bypass claims remain insufficient; original C remains unmet/no-retry; C2's literal native `error.type` remains absent. No authorized local work remains. See the [packaging/review tasks](ExecPlan.md#milestone-28-package-and-independently-review-existing-qualification-evidence).
 
-- T1-T47 and Milestones 20/21 are complete and accepted. T49 is committed at
+- T1-T47 and Milestones 20/21 retain historical operator acceptance; current
+  independent support for B TDD/scope/no-bypass is insufficient without its raw
+  session. Packaging prerequisite removal did not waive behavioral evidence. T49 is committed at
   `48e660e1`; T50 at `08f10761`. Previous integration/commit steps are complete.
 - Milestone 22 (T48) is retained historically with acceptance not met and no
   retry. C2/T54 supersedes it for active coverage; do not reopen or mark it passed.
@@ -346,6 +354,14 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
 
 ## Current T55/T56 result and owner boundary
 
+No execution task remains. The remaining unresolved items are evidence limits
+or owner disposition, not instructions to collect again: original T48 remains
+unmet/no-retry; independent B behavioral support is insufficient; C2 native
+`error.type` is absent. See the reconciled [qualification closeout](qualification-closeout.md).
+This reconciliation checked repository links/anchors, fences, digest agreement,
+member arithmetic, current statuses and whitespace only. No Linux package bytes
+were available to recheck. Preserve that distinction in any later report.
+
 T55 package readiness and independent T56 v3 package/audit follow-up are
 complete. Milestone 28 is met for package/audit only, not qualification. No
 authorized local work remains. V1, v2, the v2 reports, v3 and both v3 review
@@ -369,7 +385,7 @@ Archive:
 (299,786 bytes, SHA-256
 `dd55bac1c34f0b24a87a1e7e53b765be7135ecb02b462306c79e58b50ff10b05`).
 
-Independent v3 reports were read and their SHA-256 values verified:
+On the Linux host, independent v3 reports were read and their SHA-256 values verified (not reverified on this reconciliation host):
 `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/T56-independent-review/independent-review-v3.md`
 (`cafc26494dab0b3210b1f8eb6f78b90b371f04e9ba773456c31d0c3254f00beb`) and
 `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/T56-independent-review/independent-review-v3.json`
@@ -433,8 +449,8 @@ for v2 without implying the earlier tree can be reconstructed.
 The earlier focused package check passed after correcting claim paths,
 package-relative links, sanitized inline-code delimiters, and the manifest
 inventory entry. It does not override this later source-preservation failure.
-T56 remains independent reviewer work; do not claim it complete.
-No archive/checksum identity exists yet. The checkout was clean before the
+At that historical v1 checkpoint T56 had not run and no archive/checksum
+identity existed. Both statements were superseded by the recorded v2/v3 audits. The checkout was clean before the
 current plan/handoff maintenance; no commit or push is authorized.
 
 ## Linux collection source map
