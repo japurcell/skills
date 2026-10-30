@@ -1,6 +1,6 @@
 # Todos
 
-<!-- next-id: 24 -->
+<!-- next-id: 25 -->
 <!-- completed todos live in archive/todos.md -->
 <!-- completed plans live in archive/plans/ -->
 
@@ -38,3 +38,5 @@
 22. [ ] Fix `subagent-model-router` choosing `gpt-5.3-codex` at high effort over `gpt-6.1-terra` at medium effort for tasks like permission-precedence and alternate-editing-path analysis. Review the demanding/security-sensitive classification and escalation criteria; route by demonstrated task requirements and supported configurations, not provisional catalog labels or unmeasured assumptions that one model outperforms another.
 
 23. [ ] Investigate Cursor’s formal verification skill: [create-formal-verification-skill](https://github.com/cursor/plugins/blob/main/pstack/skills/create-formal-verification-skill/SKILL.md).
+
+24. [ ] Update `subagent-model-router` with default models for planning.
