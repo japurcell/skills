@@ -1,24 +1,26 @@
-# Start here: T55/T56 complete; preserve evidence and stop
+# Closed with documented limitations; preserve evidence
 
-Updated 2026-10-30. Linux packaging/audit closeout is committed at `8c497ea6`.
-The current reconciliation checked committed scope, cross-document v3 hashes
-and count consistency; Linux package/report files are unavailable on this macOS
-host. No actual archive/report hash or privacy audit was rerun here. Current
-plan/handoff/closeout edits are uncommitted documentation reconciliation only.
-T54's historical scoped closeout is committed at `0ca7ba02`.
-The user explicitly removed the raw B provider session as a T55 prerequisite,
-not as a requirement for independently supporting B behavioral claims.
-T56 independently reviewed frozen v2 and found one verification-mode
-contradiction; the audit is complete with conclusion `needs_evidence`. T55
-created a fresh corrected v3 package; the independent T56 v3 follow-up is now
-complete, with Milestone 28 met for package/audit only. Preserve v1, v2, both
-v2 reports, v3 and both v3 review reports byte-for-byte. The B session is
-absent and TDD/scope/no-bypass claims that depend on its full history remain
-insufficient. Do not recover it or fabricate a timeline. No authorized local
-work remains. No further provider invocation, helper/probe/test execution, live retry,
-policy change, upload, commit or push. Original C remains unmet/no-retry; C2
-native-record/type and snapshot limits remain explicit. Package integrity is
-not qualification.
+Final owner disposition, 2026-10-30: **closed with documented limitations**.
+The owner explicitly accepted all four dispositions:
+
+1. B functional/policy-selection evidence and its historical operator audit are
+   retained. Independent TDD/scope/no-bypass verification remains insufficient
+   because the raw session is absent. Do not recover it or claim that proof.
+2. Original C/T48 is retired as inconclusive/unmet and superseded by C2 for
+   denial coverage. Its no-retry decision and original results remain intact.
+3. C2 native correlated call/denial evidence is accepted with its representation
+   exception. Literal `error.type` remains unobserved; `policy_violation` is
+   source-backed, not a retained native field.
+4. A/B and C2 evidence is accepted with distinct bundle snapshots. Do not claim
+   one identical bundle passed every scenario.
+
+T55/T56 v3 package/audit work is complete; package integrity does not upgrade
+qualification. No active task or pending owner disposition remains. Preserve
+v1/v2/v3, all reports and original evidence unchanged. No Gemini call, recovery,
+retry, helper/probe/test execution, policy/configuration edit, upload, commit or
+push is authorized by this closure. New work requires separate user direction.
+See [qualification closeout](qualification-closeout.md). Current edits record
+this owner disposition; Linux artifacts were not reverified here.
 
 Historical T53 checkpoint (subsequent disposition is T54 above):
 
@@ -37,6 +39,8 @@ review, checkout commit or push. Original C/T48 remains unmet under no-retry;
 overall closeout had not yet been authorized at that checkpoint.
 
 ## Goal and status
+
+- Overall: closed with documented limitations by explicit owner acceptance on 2026-10-30. Historical unmet results remain unchanged. Nothing remains queued.
 
 - T55 v3 readiness and independent T56 v3 package/audit follow-up are complete; Milestone 28 is met for package/audit only, not qualification. The v2 audit concluded `needs_evidence` after finding one verifier-mode contradiction, corrected in v3. V1, v2 and both review reports are preserved. B's raw session is absent and TDD/scope/no-bypass claims remain insufficient; original C remains unmet/no-retry; C2's literal native `error.type` remains absent. No authorized local work remains. See the [packaging/review tasks](ExecPlan.md#milestone-28-package-and-independently-review-existing-qualification-evidence).
 
@@ -354,8 +358,8 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
 
 ## Current T55/T56 result and owner boundary
 
-No execution task remains. The remaining unresolved items are evidence limits
-or owner disposition, not instructions to collect again: original T48 remains
+No execution task remains. The owner accepted the remaining evidence limits
+for closure; they are not pending decisions or instructions to collect again: original T48 remains
 unmet/no-retry; independent B behavioral support is insufficient; C2 native
 `error.type` is absent. See the reconciled [qualification closeout](qualification-closeout.md).
 This reconciliation checked repository links/anchors, fences, digest agreement,
@@ -403,8 +407,8 @@ No provider, helper/probe/test/doctor/collection, session recovery, policy or
 trust change, upload, commit or push is authorized. The owner/coordinator has
 no local next action under this plan. Any future work outside this completed
 package/audit scope requires separate explicit user direction and does not
-authorize a retry or provider call. The overall ExecPlan remains incomplete
-because Milestone 22/T48 acceptance is not met.
+authorize a retry or provider call. The work is closed with documented limitations by explicit owner disposition;
+Milestone 22/T48 remains historically unmet, not an active closure blocker.
 
 ### Historical v1 source-preservation checkpoint
 

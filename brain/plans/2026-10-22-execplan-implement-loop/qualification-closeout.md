@@ -1,6 +1,10 @@
-# Qualification closeout
+# Qualification closeout: closed with documented limitations
 
 Original closeout: 2026-10-29 local. Reconciled 2026-10-30 with committed T55/T56 results at `8c497ea6`. Original basis: committed evidence through `00a67dab`, followed by the user's instruction to continue with the recommended closeout. This is a documentation disposition, not another execution or independent raw-artifact audit.
+
+## Final owner disposition (2026-10-30)
+
+The owner explicitly accepted all four dispositions and directed closure. Work is **closed with documented limitations**: B independent behavioral verification remains insufficient; original C is retired as inconclusive/unmet and superseded by C2 with no retry; C2 native correlated denial evidence is accepted while its literal type-field gap remains; and distinct A/B/C2 snapshot provenance is accepted without identical-bundle claims. No historical gate or missing evidence is converted into a pass. No active work or pending owner decision remains.
 
 ## Accepted coverage
 
@@ -33,4 +37,4 @@ B's session remains absent. Removing it from package prerequisites did not waive
 
 The historical scoped closeout is retained with the current independent-evidence limits above. A/B functional records and C2 observed-denial coverage remain distinct from insufficient independent support for B TDD/scope/no-bypass. Original C is retained as an unmet historical experiment, superseded for active denial coverage by C2. Implementation/local acceptance and scoped qualification documentation are complete; this does not assert every historical task passed.
 
-Stop and preserve all roots, policies, candidate bytes, reports, sessions and the runner lock. No Gemini startup, retry/resume, new setup, policy/trust/global configuration change, runtime repair, fourth implementation review, commit or push is authorized by this closeout. Packaging and independent audit are complete on Linux. No active authorized implementation, packaging, review or live task remains. Original C/T48 remains an unmet historical gate, so this is not an all-original-gates-passed claim. Any decision to accept remaining evidence limitations, obtain access to the existing frozen package elsewhere, or change historical gate disposition requires owner direction; no missing fact justifies an automatic rerun.
+Stop and preserve all roots, policies, candidate bytes, reports, sessions and the runner lock. No Gemini startup, retry/resume, new setup, policy/trust/global configuration change, runtime repair, fourth implementation review, commit or push is authorized by this closeout. Packaging and independent audit are complete on Linux. No active authorized implementation, packaging, review or live task remains. Original C/T48 remains an unmet historical gate, so this is not an all-original-gates-passed claim. The owner has now accepted the four documented limitations for closure. This does not prove missing facts or permit a rerun. Obtaining/transferring existing evidence or any other future work still requires separate user direction.
