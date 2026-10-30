@@ -30,11 +30,11 @@ Requires existing user-accessible Python 3.10+, a graphical desktop, an audio ou
 
 These are checkpoints from the 2026-10-29 evidence, not live receiver status. Do not rerun accepted checks by default. Run the relevant remaining checks below only when asked to perform platform testing. This guide itself does not authorize starting, stopping, or changing a receiver; follow the user's current request. The authorized WSLg media lifecycle below was completed in an isolated session-files directory and the receiver is now stopped. The previous `/tmp` session remains untouched; do not treat any saved PID as live.
 
-Previously accepted evidence commits: `4bae34c2` (WSLg lifecycle) and `12a58123` (Windows follow-up). Both tested source revision `d1c97146`. The table also includes the later uncommitted Windows keyboard-focus/Enter observation recorded in [the Windows run note](windows-native-run-2026-10-29.md); none of this establishes production readiness.
+Evidence commits: `4bae34c2` (WSLg lifecycle), `12a58123` (Windows follow-up), and `97c22ecd` (Windows visible-focus and limited Enter check). These runs tested source revision `d1c97146`. The [Windows run note](windows-native-run-2026-10-29.md) retains the per-run observations. The table separates verified behavior, observed limitations, and remaining coverage; it does not establish production readiness.
 
-| Platform / backend | Accepted observations | Remaining checks, in order |
+| Platform / backend | Verified behavior and observed limitations | Remaining checks, in order |
 | --- | --- | --- |
-| Windows / `media` | Automatic/manual audio, volume, controlled mute/unmute, stack/Snooze/deletion/Undo, visible focus at every enabled control using Tab/Shift+Tab, Space activation, Enter does nothing on Replay sound and Preview success (two controls only), two existing outputs, ordinary/full-screen focus retention, offline restore, clean Quit | Missing-output recovery if safely available; multiple monitors if available. Record the original-desktop placement limitation. |
+| Windows / `media` | Automatic/manual audio, volume, controlled mute/unmute, stack/Snooze/deletion/Undo, visible focus at every enabled control using Tab/Shift+Tab, Space activation, Enter does nothing on Replay sound and Preview success (two controls only), two existing outputs, ordinary/full-screen focus retention, offline restore, clean Quit | Missing-output recovery if safely available; multiple monitors if available. Both are unavailable on the tested host. No routine focus/Enter retest remains; broader Enter behavior needs a separate requirement or test request. |
 | WSLg on Arch / explicit `media` | Automatic/manual audio, mute/manual override, offline queue and restored content, controlled silent relaunch, Quit during playback | Keyboard/stack/Undo; focus/full-screen/desktop placement; output switching/missing-output; investigate the unexplained later playback-count increase separately. QSoundEffect A/B is optional. |
 | Ubuntu desktop / explicit `media` experiment | No real Ubuntu desktop result yet | Full first-run checklist, including prerequisites, audio, input/stack, mute, lifecycle, devices, and desktop coverage. |
 | macOS / `soundeffect` | Visible popup, gentle success/failure previews, corrected Quit | Keyboard/stack/Undo; controlled mute/manual replay; human-observed focus and silent restore; output changes/missing-output; Spaces/full-screen/multiple monitors where available. |
@@ -45,8 +45,10 @@ Previously accepted evidence commits: `4bae34c2` (WSLg lifecycle) and `12a58123`
 - In the original PID `37976` follow-up, Tab/Shift+Tab navigation was reported to work, all buttons were reachable, and Space activated controls; visible focus and Enter were not itemized in that run.
 - A fresh isolated Windows check on PID `9840` completed the keyboard focus and limited Enter observations. The human confirmed visible focus at every enabled control with Tab/Shift+Tab. Enter did nothing on focused `Replay sound` and `Preview success`; Space played `Replay sound`. Record these two per-control outcomes only; do not infer Enter support or lack of support for every button.
 - The alert stayed on the original desktop when another virtual desktop was active. One physical display was available, so multi-monitor behavior is untested. No output device was removed or disabled, so missing-output handling is also untested.
+- Review outcome: visible focus passed at every enabled control. Enter was observed to do nothing on two non-destructive controls; this is a recorded behavior, not a pass for Enter activation and not evidence about other buttons. No universal Enter requirement was agreed, so this documentation review authorizes no keyboard-source change. Use Space for the verified button activation path.
 - The fresh-session open/status, visible-focus, and limited Enter checks are complete. Do not rerun them by default. Existing LG/Realtek output switching and single-display full-screen/focus checks need no routine repeat.
-- Remaining Windows coverage is conditional: use [output-device checks](#output-device-checks) for missing-output recovery only if safely available, and [desktop coverage](#desktop-coverage) for multiple monitors only if equipment is available. If unavailable, record the reason rather than attempting driver or hardware changes.
+- Remaining Windows coverage is conditional: use [output-device checks](#output-device-checks) for missing-output recovery only if safely available, and [desktop coverage](#desktop-coverage) for multiple monitors only if equipment is available. Both cases were unavailable on the tested host. If that remains true, report them as unavailable and finish without opening a new receiver. Do not repeat accepted tests, disable devices, or change drivers to manufacture coverage.
+- If a future request specifically asks for broader Enter coverage, test each named control in a fresh synthetic session and record its actual behavior separately. Do not infer results for Dismiss, Dismiss all, Undo, or Quit from the two audio controls, or activate destructive controls in preserved queues.
 - Record the virtual-desktop observation as a limitation: the popup remained on its original desktop. Do not describe this as following the user across desktops.
 - The original PID `37976` follow-up ended stopped/paused with six synthetic alerts in its isolated temporary directory. Preserve that data. The separate PID `9840` focus/Enter follow-up ended stopped/paused with one synthetic alert and its own isolated log. No production default or delivery guarantee is established by these checks.
 
@@ -73,7 +75,7 @@ Previously accepted evidence commits: `4bae34c2` (WSLg lifecycle) and `12a58123`
 - Use `backend=soundeffect`. Popup, gentle success/failure previews, and the corrected Quit button already passed on macOS. Do not switch to media merely because Windows uses it.
 - Start a fresh isolated session using the shell commands below. Complete [keyboard and stack checks](#keyboard-and-stack-checks) and [controlled mute check](#controlled-mute-check), including audible manual Replay while muted and no catch-up audio after unmuting. Then complete [output-device checks](#output-device-checks) and [desktop coverage](#desktop-coverage), including Spaces and full-screen. The earlier inactive-window diagnostic does not replace a human focus check while typing in another app.
 - Verify silent offline restore if not already recorded as a human-observed macOS result. Automated/offscreen lifecycle results establish process behavior only. Rerun Quit during playback if these checks reveal a shutdown concern; otherwise preserve the existing accepted Quit result.
-- Stop the isolated test receiver when finished. Do not reopen the earlier macOS prototype or alter login items.
+- Stop the isolated test receiver when finished. Do not reopen the earlier macOS prototype or alter login items. If native computer-use permission is unavailable, have the human operate the controls and report observations; do not treat internal Qt state as keyboard, focus, or Spaces proof.
 
 ## Windows: PowerShell
 
@@ -87,7 +89,7 @@ $data = Join-Path $env:TEMP ('agent-alert-prototype-windows-' + (Get-Date -Forma
 
 Expect JSON with `ok: true`, `audio_backend: "media"`, `window_visible: true`, and a PID. Audio sources may briefly load; repeat status after two seconds and record the result. Ask the human whether the window appeared. Opening an empty stack should be silent.
 
-Send two alerts, waiting at least two seconds between commandss o these test separate sounds rather than burst coalescing:
+Send two alerts, waiting at least two seconds between commands so these test separate sounds rather than burst coalescing:
 
 ```powershell
 & .\run.cmd send success --agent Codex --repo demo --summary 'Windows success audio check' --data-dir $data
