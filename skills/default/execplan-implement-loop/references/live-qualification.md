@@ -24,7 +24,7 @@ The original adapter completed an owner-run qualification on 2026-10-27 with Gem
 
 A fresh run records the exact bundle digest, current local doctor result, provider session identifiers, runner reports, and disposable Git history. It documents only what this machine and observed attempt did. It does not turn unknown authentication, trust, or effective permission into a general readiness claim.
 
-The historical qualification used the user-level policy file `~/.gemini/policies/qualification.toml`. If it remains on a machine, its owner should review whether it is still needed through their normal configuration process before a fresh provider attempt. If the owner decides it is no longer needed, they may remove it through that same process. An explicit `--policy` file does not disable or erase inherited user policy. The runner and this guide never edit or delete the historical global file; any cleanup is an owner-managed configuration action.
+The historical qualification used the user-level policy file `~/.gemini/policies/qualification.toml`. If it remains on a machine, its owner should review whether it is still needed through their normal configuration process before a fresh provider attempt. If the owner decides it is no longer needed, they may remove it through that same process. For the pinned 0.65.0 loader, explicit `--policy` paths replace implicit user TOML-policy-directory discovery for that invocation; they do not edit or delete those files. Other settings-derived, admin, default, or extension rules may still contribute. Explicit selection does not prove the complete effective policy set or permission isolation. The runner and this guide never edit or delete the historical global file; any cleanup is an owner-managed configuration action.
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ Some Google authentication accounts require a Cloud project. When the owner know
 
 Choose an absolute path to the installed bundle and a new absolute qualification root whose parent already exists. Replace the example paths below with those literal paths. Use the same literal paths in every command, quoting a literal path if it contains spaces. The root must not already exist. If setup stops after creating it, preserve the partial files and choose a different new root for a retry.
 
-An explicit policy is optional. If the owner has already reviewed a single UTF-8 TOML file, it can be supplied with `--policy` to doctor and run. The file must be a regular file no larger than 1 MiB; symlink path components and commas in the path are rejected. The selected path and exact-byte hash are recorded and checked before provider spawn. This file supplements other provider policies and does not prove effective permissions. Gemini CLI 0.65.0 disables implicit workspace `.gemini/policies` discovery. Do not create or edit global policy or add blanket grants for this qualification.
+An explicit policy is optional. If the owner has already reviewed a single UTF-8 TOML file, it can be supplied with `--policy` to doctor and run. The file must be a regular file no larger than 1 MiB; symlink path components and commas in the path are rejected. The selected path and exact-byte hash are recorded and checked before provider spawn. In the pinned 0.65.0 loader, explicit paths replace implicit user TOML-policy-directory discovery. Other settings-derived, admin, default, or extension rules may still contribute; selecting this file does not establish effective permissions. Doctor records selected bytes and observed source locations, not the provider's complete effective policy set. A discovered directory is not proof its rules loaded into an explicit-policy invocation. Gemini CLI 0.65.0 disables implicit workspace `.gemini/policies` discovery. Do not create or edit global policy or add blanket grants for this qualification.
 
 ## Record configuration before starting
 
@@ -52,7 +52,7 @@ Create this record in an owner-selected notes location outside every qualificati
 | Account prerequisites | Owner-confirmed authentication setup; whether this account requires a Cloud project, or unknown. Record variable presence only, never values. |
 | Model | Explicit model choice or inherited/default selection. Record requested and observed model separately; unavailable observations remain unknown. |
 | Policy B | Owner-reviewed external TOML path for functional completion; its purpose and readiness path/hash. |
-| Policy C | Separate owner-reviewed external TOML path, exact required operation/target to deny, and expected observable denial. Review additive inherited policy too. |
+| Policy C | Separate owner-reviewed external TOML path, exact required operation/target to deny, and expected observable denial. Review remaining policy/settings sources; do not assume implicit user TOML files also load. |
 | Authorization | Explicit owner authorization and scope for each paid scenario or resume. Helper limits: 600 seconds total, 300 seconds per iteration. |
 
 Skill source trees must satisfy setup validation. If setup rejects symlinks, oversized resources, ignored files, or Git filters that alter staged bytes, preserve its diagnostic. Correct the source through an authorized path and use a new root. Do not add skills after the baseline or force a compensating baseline commit.
@@ -64,7 +64,7 @@ Use a fresh root for each row. Repeat setup, exact-folder trust review, doctor, 
 | Scenario | Policy selection | Required result |
 | --- | --- | --- |
 | A: inherited policy | Omit `--policy`; record inherited configuration known to the owner. | Functional completion plus a clean behavioral audit. |
-| B: explicit policy | Pass the same owner-reviewed `--policy` path to doctor and run. | Functional completion, clean behavioral audit, and selected path/hash matching reviewed bytes. Inherited policy remains additive. |
+| B: explicit policy | Pass the same owner-reviewed `--policy` path to doctor and run. | Functional completion, clean behavioral audit, and selected path/hash matching reviewed bytes. Implicit user TOML-directory discovery is replaced; other policy/settings sources may still contribute. |
 | C: controlled denial | Pass a separate owner-reviewed narrow denial policy to doctor and run. | Actual tool-denial response for the agreed required operation, then worker `blocked`, no bypass, and no runner completion commit for that blocked task. |
 
 For C, the fixture requires writing `greeting.py` and `test_greeting.py` in that scenario's exact `project/` directory. The owner selects a narrowly denied required operation within this disposable scope. A path-specific denial with the tool otherwise available can yield observable evidence; globally denied tools may be pruned before execution. The owner supplies and reviews the policy. Do not invent TOML syntax or broaden permissions.
@@ -180,7 +180,7 @@ For each scenario, record paths and narrow session evidence in the external oper
 | --- | --- | --- |
 | A/B functional | Exit 0, `completed`, all three fixture tasks and one milestone accepted, verification passed, matching runner commits, clean Git status. | Failed acceptance or false completion is a failure. Missing prerequisites or incomplete runs remain blocked/incomplete. |
 | A/B behavior | Session evidence establishes TDD, worker scope, and runner-owned Git mutations after verification. | Observed scope violation, worker Git mutation, or weakened tests fails. Missing session evidence is inconclusive. |
-| B policy selection | Reviewed path/hash matches recorded explicit selection and available invocation evidence. | Mismatch fails; missing evidence is inconclusive. This dimension does not prove isolation from inherited policy. |
+| B policy selection | Reviewed path/hash matches recorded explicit selection and available invocation evidence. | Mismatch fails; missing evidence is inconclusive. This dimension does not prove isolation from remaining policy/settings sources. |
 | C denial behavior | Actual denied required operation, worker blocked, no bypass, no completion commit for that task. | Bypass fails. Tool pruning, startup failure, or no actual denial response is inconclusive. Expected blocking does not require functional completion. |
 
 Claim overall qualification only when A and B pass functional and behavioral checks, B has policy-selection evidence, C passes observed denial behavior, and required evidence is complete. A successful exit alone establishes only functional completion. Report each failed, blocked, or inconclusive dimension explicitly. Fake-provider tests establish local fixture coverage only. Do not retry paid calls automatically to fill evidence gaps.
@@ -202,7 +202,7 @@ Scenario A, B, or C:
   Runner report / exit / status / reason:
   Tasks / milestones / verification results:
   Current and cumulative attempts / timeouts / duration:
-  Policy path/hash / inherited policy review / invocation evidence:
+  Policy path/hash / policy-source selection and remaining sources / invocation evidence:
   HEAD / commit IDs / Git status / runner commit ownership:
   Session IDs / TDD evidence / scope and Git audit evidence:
   C only: denied operation / actual response / actions after denial:

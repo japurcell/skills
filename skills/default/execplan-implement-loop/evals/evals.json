@@ -65,6 +65,18 @@
         "Separates functional completion from TDD/scope/runner-owned commit behavioral proof",
         "Rejects overall qualification for the hypothetical missing evidence and supplies actionable report fields"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "Read references/live-qualification.md and references/protocol.md. Documentation interpretation only: no provider calls, commands, edits, policy application or retries. Explain Gemini CLI 0.65.0 policy loading with --policy versus omitted --policy. Does a doctor-discovered user policy directory prove its rules loaded during explicit selection? Does selection prove isolation or delete global files? Separately, an existing C run had pruned modifying tools and no actual denied tool response. The owner says keep C blocked and do not retry. State the correct conclusion and next action. Cite the reference wording rather than inventing provider behavior.",
+      "expected_output": "Explicit paths replace implicit user TOML-directory discovery in pinned 0.65.0, while other policy/settings sources may remain. Discovery is not proof of loading; selection is not isolation and changes no files. C remains inconclusive, blocked, without activation or retry.",
+      "files": [],
+      "assertions": [
+        "States explicit paths replace implicit user TOML-policy-directory discovery in pinned 0.65.0",
+        "States other settings/admin/default/extension sources may still contribute without claiming complete isolation",
+        "Distinguishes discovered source locations from actual loaded rules and preserves user policy files",
+        "Keeps C inconclusive and blocked; no policy activation or retry follows the owner stop decision"
+      ]
     }
   ]
 }

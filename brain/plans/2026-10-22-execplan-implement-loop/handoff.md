@@ -16,11 +16,10 @@ evidence and stop; the offline diagnosis does not prove live target-denial behav
   SHA-256 `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`.
 - Approved denied target: create required `greeting.py`, including shell
   alternatives.
-- Checkpoint `803753556d5fc0a61f1f752117e2a711c77ec42d` recorded A/B/C outcomes
-  and diagnosis in only `ExecPlan.md` and this handoff. This follow-up records
-  owner disposition in the same two docs. The user authorized preserving,
-  pulling/rebasing, committing, and pushing only these documentation updates;
-  no source/skill changes or qualification activity are authorized.
+- Checkpoints `803753556d5fc0a61f1f752117e2a711c77ec42d` and
+  `fc477d47ebc48bcd00901d565a6ff0f075b2e7e4` preserve live outcomes,
+  diagnosis, and owner disposition. Current T49 scope is policy-documentation
+  reconciliation only, now complete; the earlier Git checkpoint is no longer pending.
 
 ## Preserved live results
 
@@ -95,26 +94,46 @@ evidence and stop; the offline diagnosis does not prove live target-denial behav
 - Pinned loader clarification: explicit policy paths replace implicit user
   TOML-directory discovery, while other settings/admin/default/extension rules
   may remain. Neither selected bytes nor this experiment prove full isolation.
+  Doctor-discovered directories are observations, not proof their rules loaded
+  during explicit selection. No user policy file is edited or deleted.
+- T49 reconciles this distinction in the bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md)
+  and [protocol](../../../skills/default/execplan-implement-loop/references/protocol.md).
+  These documentation edits change the bundle digest; the recorded live digest
+  identifies the pre-reconciliation bundle. Runtime behavior is unchanged.
+- Linux reports, sessions, and the installed CLI source are unavailable on this
+  machine. Current guidance uses committed findings, not a new raw-evidence audit.
+
+## T49 verification
+
+- Local reference links, Markdown fences, policy wording, eval JSON, added-line
+  punctuation, portable skill validation, and whitespace checks passed.
+- One planning-only old/new interpretation: updated references 4/4 assertions,
+  old references 2/4. Root graded retained outputs; this is not live proof.
+  Artifacts: `/private/tmp/execplan-policy-guidance-20261029/`, local-only.
+  Usage/time metrics are unknown. Runtime suites were not rerun for docs-only edits.
+- Guidance, evaluation, plan and handoff are uncommitted at this checkpoint.
+  Preserve these changes. No Gemini calls, policy application or C retry occurred.
 
 ## Constraints that remain active
 
 - Do not rerun A/B/C, activate any policy, or launch another paid/model call.
-- Do not change source/skills/runtime, global policy/settings, or trust config.
-- Diagnosis and its one documentation checkpoint are complete. Current scope
-  is safe Git preservation, upstream pull/rebase, commit, and push of only
-  these two documentation updates. No qualification run or retry is authorized;
-  the three-review cap stands.
-- This follow-up's warning threshold is 5 minutes, not cancellation.
+- Limit edits to the authorized policy documentation, affected evaluation, plan,
+  and handoff. Preserve runtime/source, global policy/settings, and trust config.
+- Diagnosis and both Git documentation checkpoints are complete. T49 permits
+  local document checks and planning-only interpretation evaluation, with no
+  Gemini executable invocation, provider prompt, policy activation, or retry.
+  The three-review cap remains exhausted.
 - Preserve all C evidence and root as-is.
 
 ## Most important next step
 
-Complete only the authorized Git preservation, upstream integration,
-documentation commit, and push, then stop. The owner selected "Keep C blocked;
-do not retry" and declined candidate activation/retry. Candidate remains
+T49 documentation reconciliation and local checks are complete. Stop; no
+qualification action is authorized.
+The owner selected "Keep C blocked; do not retry". Candidate remains
 unapproved/unapplied; C strict acceptance remains unmet. There is no pending
 approval request or authorized qualification action. Any future change requires
 new explicit owner direction and same-run reconciliation, not a blind retry.
+Do not repeat historical pull/rebase/commit/push instructions as pending work.
 
 ## Key evidence paths
 
