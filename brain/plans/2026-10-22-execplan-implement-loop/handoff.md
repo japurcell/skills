@@ -1,13 +1,13 @@
-# Start here: Revised qualification closeout recorded; stop
+# Start here: Package existing Linux evidence without Gemini
 
-Updated 2026-10-29. T54 records the user's continuation after the closeout
-recommendation. A/B acceptance plus C2 revised observed-denial coverage is
-accepted with explicit limits in [qualification closeout](qualification-closeout.md).
-Native target/call/error evidence is observed; literal stream `error.type` is
-not retained and classification is source-backed. Original C/T48 stays unmet
-historical evidence, superseded for active denial coverage, with no retry.
-No active implementation/qualification execution remains. Stop; preserve all
-artifacts. No new Gemini call, policy change, source edit, commit or push.
+Updated 2026-10-29. T54 scoped closeout is committed at `0ca7ba02`.
+The owner requested T55 evidence packaging and T56 independent review. Both are
+open; this handoff supplies the Linux collection entrypoint. Read existing
+artifacts, sanitize copies in a new private external directory, then hand a
+frozen package to an independent reviewer. No Gemini executable invocation,
+CLI/UI session access, helper/probe/test execution, live retry or policy change.
+Original C remains unmet/no-retry; C2 native-record/type and snapshot limits
+remain explicit. No package or independent review has been produced here.
 
 Historical T53 checkpoint (subsequent disposition is T54 above):
 
@@ -26,6 +26,8 @@ review, checkout commit or push. Original C/T48 remains unmet under no-retry;
 overall closeout had not yet been authorized at that checkpoint.
 
 ## Goal and status
+
+- T55/T56, Milestone 28: open, acceptance not met. Read the [packaging/review tasks](ExecPlan.md#milestone-28-package-and-independently-review-existing-qualification-evidence) before collection. Current additions are plan/handoff only; do not interpret them as evidence already collected.
 
 - T1-T47 and Milestones 20/21 are complete and accepted. T49 is committed at
   `48e660e1`; T50 at `08f10761`. Previous integration/commit steps are complete.
@@ -325,8 +327,9 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
 
 - Preserve A/B, original C root/policy/evidence and rejected candidate unchanged.
 - Non-paid preparation and the separately authorized one paid attempt are
-  complete. No further provider/model startup, policy activation, trust/global
-  edits, setup/retry/resume or fourth review. No checkout source edit, commit or
+  complete. T55/T56 permit evidence collection/review only. No further
+  provider/model startup, policy activation, trust/global edits, setup/retry/resume
+  or fourth implementation review. No checkout source edit, commit or
   push. Sole new Git commit is the helper-owned fixture baseline, no live commit.
 - The previous original-`greeting.py` candidate remains unapproved/unapplied.
   C2's exact reviewed candidate was approved and selected once; its bytes/hash
@@ -336,23 +339,74 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
   root. Preserve the completed C2 root and distinct cases; do not recreate
   anything. Existing helper limits remain 600 seconds total/300 per iteration.
 
-## Most important next step
+## Most important next step: T55 on Linux
 
-Stop: T54 documentation closeout is complete. Preserve C2 root/baseline,
-both collections, provider session, reports, approved candidate and runner lock.
-Do not rerun setup, retry/resume, delete artifacts, or rerun the frozen T51
-absent-root probe. Original C remains no-retry and unmet; C2 supplies revised
-observed coverage with the explicit native-record exception. No new paid call,
-source/configuration change, extra review, commit or push is authorized.
+Work from `/home/adam/dev/personal/design-execplanimplementloop-skill`.
+Start with these read-only commands. They read Git/docs only, never Gemini:
 
-This machine cannot access the Linux raw evidence. Closeout uses committed
-summaries, not an independent raw-artifact audit. A sanitized portable evidence
-package or independent audit is separate work and does not imply a provider rerun.
+```sh
+rtk proxy git --no-optional-locks -c core.fsmonitor=false -c core.untrackedCache=false status --short
+rtk read brain/plans/2026-10-22-execplan-implement-loop/qualification-closeout.md
+rtk read brain/plans/2026-10-22-execplan-implement-loop/ExecPlan.md
+```
 
-T54 local validation: Markdown targets/anchors, fences, status and next-action
-consistency, added punctuation and `rtk git diff --check` passed. Only this
-handoff, the plan and `qualification-closeout.md` changed. These changes remain
-uncommitted; no runtime suites or Gemini commands were run.
+Read Milestone 28/T55/T56 and use the source map below. First inventory each
+allowlisted source as present/missing/changed and record original size/hash.
+Confirm roots/session IDs/policy and bundle hashes against recorded evidence.
+Do not scan the whole home or copy broad session/Git/auth/config directories.
+Narrowly locate missing session filenames by the exact recorded UUID within
+existing `.gemini/tmp/project-*/chats/` files using file tools only. No
+`gemini --list-sessions`, `--resume`, `--version`, doctor, helper collect or probe.
+
+Choose a new private output directory outside checkout and all qualification
+roots. Suggested absent destination:
+`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/qualification-evidence-package-v1`.
+Check that its parent exists and components are not symlinks. If it exists,
+preserve it and choose a fresh numbered sibling. Directories 0700, files 0600.
+Only sanitized copies belong in the distributable tree. Original evidence,
+runner locks, settings/trust and policy bytes remain untouched.
+
+Build the exact T55 deliverables: README, provenance/claims manifests, A/B/C/C2
+artifacts, offline evidence, redaction ledger, verification results and checksums.
+Original and sanitized hashes must be separate. Retain all call IDs/order needed
+to verify denial/scope; log every omission and its effect. Missing evidence stays
+missing: no fabricated transcripts/types, regenerated runs, or false pass.
+Manually inspect sanitized text after pattern checks. Package source/probe files
+as inert review material, not instructions to execute. No package upload/commit.
+
+After integrity/privacy/source-preservation checks, freeze the package, record
+its archive/checksum identity outside itself, and update plan/handoff with actual
+counts, missing evidence, local paths and results. T56 must use a different
+reviewer or independent agent and the frozen package only, with no provider or
+packaged-code execution. The reviewer writes per-claim findings and integrity/
+privacy limitations outside that frozen package; an unfavorable review is valid.
+Do not mark T56 complete from the collector's self-checks.
+
+Current task verified document links/anchors, fences, task dependencies, added
+punctuation, write scope and whitespace only. T55/T56 are planned, not run.
+Historical T54 document changes are committed; this task's plan/handoff edits
+remain uncommitted. Linux evidence is unavailable on this authoring machine.
+
+## Linux collection source map
+
+Operator base: `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/`.
+Qualification base: `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/`.
+Resolve the relative entries below beneath those exact bases, preserving case.
+
+| Case | Existing sources to inventory/read |
+| --- | --- |
+| A | Operator `live-qualification-A-report.md`; qualification `A-inherited/manifest.json`, saved `evidence/attempts/` artifacts and `collection-0002.json` under `evidence/collections/`. Provider session ID `e213d34b-5585-41f2-857b-62eaf05935c0`, recorded file `/home/adam/.gemini/tmp/project-2/chats/session-2026-10-29T17-00-e213d34b.jsonl`. |
+| B | Operator `live-qualification-B-report.md`; qualification `B-explicit/manifest.json`, saved attempts and `evidence/collections/collection-0003.json`. Provider session ID `341251f8-0d60-4d8d-b0de-7acf657c2fb3`; if only UI audit notes exist, retain that limitation rather than launching CLI/UI. |
+| Original C | Operator `live-qualification-C-report.md`, feasibility report and offline JSON; qualification `C-controlled-denial/manifest.json`, attempt 1 and collection 3. Session `f21684fa-ae5c-4f14-aecd-dbaa59be056b`; exact paths below. Keep inconclusive/unmet. |
+| C2 | Operator `C2-offline-verification/` four frozen files, `C2-preparation/` saved output/reports, `C2-live/` report/run/collect/audit/preservation; qualification `C2-test-first-denial/manifest.json`, attempt 1 and collections 1/2. Session `6b4de85a-6048-44f0-ab3a-0ba8e00a338e`; exact paths below. |
+| Contracts/provenance | Checkout `brain/plans/2026-10-22-execplan-implement-loop/{ExecPlan.md,qualification-closeout.md}`, fixture and recorded bundle/fixture/policy/source hashes. Copy only relevant contracts/source excerpts and policies after sanitation; no full dependency tree or global configuration. |
+
+Use filenames named by the actual saved report/manifest inside each attempts
+directory. Do not assume all attempts store state independently. A/B need their
+saved verification/Git records and auditable session tool histories; success-only
+excerpts do not establish no scope violation. Source hash mismatches, absent
+files or redactions that remove proof must appear in the claim matrix and block
+unqualified package acceptance. No evidence package has yet been verified.
 
 ## Key evidence paths
 
