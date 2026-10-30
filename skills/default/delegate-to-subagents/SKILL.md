@@ -13,7 +13,7 @@ Use background agents so you can stay in active dialogue with the user.
 
 Run independent work in parallel and dependent work in waves. Serialize edits to shared files.
 
-Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers.
+Routine communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers. There is an exception: relay every subagent question requiring human input through the parent’s user-facing question tool immediately.
 
 ## Dispatch loop
 
