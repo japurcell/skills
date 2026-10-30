@@ -263,11 +263,15 @@ def serve(directory, force_show=False, audio_backend="auto"):
             row.addWidget(self.volume)
             root.addLayout(row)
             row = QHBoxLayout()
+            preview_buttons = []
             for kind in ("success", "failure", "approval"):
                 button = QPushButton("Preview " + ("attention" if kind == "approval" else kind))
                 button.clicked.connect(lambda checked=False, k=kind: self.play(k, manual=True))
+                preview_buttons.append(button)
                 row.addWidget(button)
             root.addLayout(row)
+            for button in preview_buttons:
+                button.setMinimumWidth(button.sizeHint().width())
             self.audio_status = QLabel("Audio: loading gentle WAVs")
             self.audio_status.setWordWrap(True)
             root.addWidget(self.audio_status)
@@ -317,6 +321,7 @@ def serve(directory, force_show=False, audio_backend="auto"):
                 raise RuntimeError("Unable to listen on local prototype socket")
             self.server.newConnection.connect(self.connect_client)
             self.render()
+            self.setMaximumWidth(max(self.maximumWidth(), self.minimumSizeHint().width()))
             self.position_popup()
 
         def persist(self):
