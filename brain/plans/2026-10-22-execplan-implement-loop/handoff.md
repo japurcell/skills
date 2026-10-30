@@ -1,13 +1,18 @@
 # Start here: Package existing Linux evidence without Gemini
 
-Updated 2026-10-29. T54 scoped closeout is committed at `0ca7ba02`.
-The owner requested T55 evidence packaging and T56 independent review. Both are
-open; this handoff supplies the Linux collection entrypoint. Read existing
-artifacts, sanitize copies in a new private external directory, then hand a
-frozen package to an independent reviewer. No Gemini executable invocation,
-CLI/UI session access, helper/probe/test execution, live retry or policy change.
-Original C remains unmet/no-retry; C2 native-record/type and snapshot limits
-remain explicit. No package or independent review has been produced here.
+Updated 2026-10-30. T54 scoped closeout is committed at `0ca7ba02`.
+The user explicitly removed the raw B provider session as a T55 prerequisite.
+T56 independently reviewed frozen v2 and found one verification-mode
+contradiction; the audit is complete with conclusion `needs_evidence`. T55
+created a fresh corrected v3 package; the independent T56 v3 follow-up is now
+complete, with Milestone 28 met for package/audit only. Preserve v1, v2, both
+v2 reports, v3 and both v3 review reports byte-for-byte. The B session is
+absent and TDD/scope/no-bypass claims that depend on its full history remain
+insufficient. Do not recover it or fabricate a timeline. No authorized local
+work remains. No further provider invocation, helper/probe/test execution, live retry,
+policy change, upload, commit or push. Original C remains unmet/no-retry; C2
+native-record/type and snapshot limits remain explicit. Package integrity is
+not qualification.
 
 Historical T53 checkpoint (subsequent disposition is T54 above):
 
@@ -27,7 +32,7 @@ overall closeout had not yet been authorized at that checkpoint.
 
 ## Goal and status
 
-- T55/T56, Milestone 28: open, acceptance not met. Read the [packaging/review tasks](ExecPlan.md#milestone-28-package-and-independently-review-existing-qualification-evidence) before collection. Current additions are plan/handoff only; do not interpret them as evidence already collected.
+- T55 v3 readiness and independent T56 v3 package/audit follow-up are complete; Milestone 28 is met for package/audit only, not qualification. The v2 audit concluded `needs_evidence` after finding one verifier-mode contradiction, corrected in v3. V1, v2 and both review reports are preserved. B's raw session is absent and TDD/scope/no-bypass claims remain insufficient; original C remains unmet/no-retry; C2's literal native `error.type` remains absent. No authorized local work remains. See the [packaging/review tasks](ExecPlan.md#milestone-28-package-and-independently-review-existing-qualification-evidence).
 
 - T1-T47 and Milestones 20/21 are complete and accepted. T49 is committed at
   `48e660e1`; T50 at `08f10761`. Previous integration/commit steps are complete.
@@ -339,53 +344,98 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
   root. Preserve the completed C2 root and distinct cases; do not recreate
   anything. Existing helper limits remain 600 seconds total/300 per iteration.
 
-## Most important next step: T55 on Linux
+## Current T55/T56 result and owner boundary
 
-Work from `/home/adam/dev/personal/design-execplanimplementloop-skill`.
-Start with these read-only commands. They read Git/docs only, never Gemini:
+T55 package readiness and independent T56 v3 package/audit follow-up are
+complete. Milestone 28 is met for package/audit only, not qualification. No
+authorized local work remains. V1, v2, the v2 reports, v3 and both v3 review
+reports are preserved unchanged.
 
-```sh
-rtk proxy git --no-optional-locks -c core.fsmonitor=false -c core.untrackedCache=false status --short
-rtk read brain/plans/2026-10-22-execplan-implement-loop/qualification-closeout.md
-rtk read brain/plans/2026-10-22-execplan-implement-loop/ExecPlan.md
-```
+The v2 T56 audit concluded `needs_evidence`: it found `verification.json`
+0644 in the tree and archive despite the all-files-0600 claim. Its Markdown
+report SHA-256 is
+`4ad4e56734f96421f5f82e193452badb55845364bb64336fa506df278fa5f4ff`;
+JSON is `eb65f37fc94b2d952b924456844a82f1da7dbfd048e7e7ef1332afd6c7353741`.
+V2 archive SHA-256 remains
+`71f74b744a6fc155aff119d63cbb310fa234c95ea93133ae1673474a5712788e`.
 
-Read Milestone 28/T55/T56 and use the source map below. First inventory each
-allowlisted source as present/missing/changed and record original size/hash.
-Confirm roots/session IDs/policy and bundle hashes against recorded evidence.
-Do not scan the whole home or copy broad session/Git/auth/config directories.
-Narrowly locate missing session filenames by the exact recorded UUID within
-existing `.gemini/tmp/project-*/chats/` files using file tools only. No
-`gemini --list-sessions`, `--resume`, `--version`, doctor, helper collect or probe.
+V3 package:
+`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/qualification-evidence-package-v3`
+(117 regular files, 2,131,287 bytes, no symlinks; files 0600, 24
+directories 0700). `SHA256SUMS` has 116 entries and SHA-256
+`a1866996e9978639b802e15bf05acafd34e6e6851ce7595f212df1a8af57981b`.
+Archive:
+`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/qualification-evidence-package-v3.tar.gz`
+(299,786 bytes, SHA-256
+`dd55bac1c34f0b24a87a1e7e53b765be7135ecb02b462306c79e58b50ff10b05`).
 
-Choose a new private output directory outside checkout and all qualification
-roots. Suggested absent destination:
-`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/qualification-evidence-package-v1`.
-Check that its parent exists and components are not symlinks. If it exists,
-preserve it and choose a fresh numbered sibling. Directories 0700, files 0600.
-Only sanitized copies belong in the distributable tree. Original evidence,
-runner locks, settings/trust and policy bytes remain untouched.
+Independent v3 reports were read and their SHA-256 values verified:
+`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/T56-independent-review/independent-review-v3.md`
+(`cafc26494dab0b3210b1f8eb6f78b90b371f04e9ba773456c31d0c3254f00beb`) and
+`/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/T56-independent-review/independent-review-v3.json`
+(`1c5c8997641064b53fadd7d9bdddcd6f54ce1b435e9addd85a6b5c4bad91f515`).
+The independent reviewer reports 116/116 checksum pass, 117-file tree/archive
+parity, verifier mode 0600 in both, only six v2-to-v3 content changes, and
+unchanged v2 archive and original report. No discrepancies or new privacy
+contradiction were found; conclusion is `supported within stated limits`.
 
-Build the exact T55 deliverables: README, provenance/claims manifests, A/B/C/C2
-artifacts, offline evidence, redaction ledger, verification results and checksums.
-Original and sanitized hashes must be separate. Retain all call IDs/order needed
-to verify denial/scope; log every omission and its effect. Missing evidence stays
-missing: no fabricated transcripts/types, regenerated runs, or false pass.
-Manually inspect sanitized text after pattern checks. Package source/probe files
-as inert review material, not instructions to execute. No package upload/commit.
+B's raw session remains absent; B TDD/scope/no-bypass and effective-policy
+isolation remain insufficient. Original C/T48 remains unmet/no-retry. C2
+observed denial remains supported, but literal native `error.type` is absent
+and classification is source-backed. Package integrity is not qualification.
+No provider, helper/probe/test/doctor/collection, session recovery, policy or
+trust change, upload, commit or push is authorized. The owner/coordinator has
+no local next action under this plan. Any future work outside this completed
+package/audit scope requires separate explicit user direction and does not
+authorize a retry or provider call. The overall ExecPlan remains incomplete
+because Milestone 22/T48 acceptance is not met.
 
-After integrity/privacy/source-preservation checks, freeze the package, record
-its archive/checksum identity outside itself, and update plan/handoff with actual
-counts, missing evidence, local paths and results. T56 must use a different
-reviewer or independent agent and the frozen package only, with no provider or
-packaged-code execution. The reviewer writes per-claim findings and integrity/
-privacy limitations outside that frozen package; an unfavorable review is valid.
-Do not mark T56 complete from the collector's self-checks.
+### Historical v1 source-preservation checkpoint
 
-Current task verified document links/anchors, fences, task dependencies, added
-punctuation, write scope and whitespace only. T55/T56 are planned, not run.
-Historical T54 document changes are committed; this task's plan/handoff edits
-remain uncommitted. Linux evidence is unavailable on this authoring machine.
+The read-only source recheck on 2026-10-30 checked all 99 inventory entries
+marked present using no-atime reads and path-component/symlink checks. Of the
+99, 97 matched their recorded size, SHA-256, mode, and mtime. Two checkout
+contract snapshots no longer match because the plan and handoff were updated
+after package capture. Separately, the inventory marks the B provider session
+missing, ID `341251f8-0d60-4d8d-b0de-7acf657c2fb3`.
+
+At recheck time, `contract.execplan-at-capture` recorded
+311243 bytes, SHA-256
+`809bc962c8f7a239b15fdb853b1b2a131ec80ddbf4a5247ae1c2b4a8a586d3ab`,
+mode `0o644`, mtime_ns `1793337873342473799`; observed checkout values were
+312825 bytes, SHA-256
+`ef00548e9f72ff9aff712feb07fbc0448eb575bcf8e58435b2f1bab5badde45b`,
+mode `0o644`, mtime_ns `1793340600220530262`.
+`contract.handoff-at-capture` recorded 30369 bytes, SHA-256
+`6ead0267317475616eb0a31115f2609557847a0a5a0121f40a88b76c77b95d35`,
+mode `0o644`, mtime_ns `1793337873345437332`; observed checkout values were
+29065 bytes, SHA-256
+`345c074633c6b7301e7268ac3c8c98f4e312c68fe37d6d9d83a9ab2affb54480`,
+mode `0o644`, mtime_ns `1793340619719059507`. These are task-status document
+updates, not evidence-file edits, but the recorded source-preservation check
+requires stopping on any mismatch. Preserve the inventory and both
+observations; do not normalize hashes or modify captured evidence.
+
+At this checkpoint, T55 acceptance was unmet. The initial package checkpoint
+recorded 113 files and 2,080,158 bytes; a later metadata-only walk counted 113
+files and 2,084,718 bytes. Comprehensive manual review and final
+privacy/schema/reference/permission checks were not completed.
+`verification.json`, `SHA256SUMS`, and an archive were not created because the
+source-preservation check failed. The latest user authorization supersedes the
+raw B session prerequisite and permits a fresh v2 package; this historical
+checkpoint does not authorize or direct session recovery.
+
+The earlier next step was to request the raw B session and then rebuild; that
+instruction is superseded. Preserve the recorded absence and do not recover it.
+The v1 count discrepancy is historical; establish an exact count/hash baseline
+for v2 without implying the earlier tree can be reconstructed.
+
+The earlier focused package check passed after correcting claim paths,
+package-relative links, sanitized inline-code delimiters, and the manifest
+inventory entry. It does not override this later source-preservation failure.
+T56 remains independent reviewer work; do not claim it complete.
+No archive/checksum identity exists yet. The checkout was clean before the
+current plan/handoff maintenance; no commit or push is authorized.
 
 ## Linux collection source map
 
@@ -396,17 +446,20 @@ Resolve the relative entries below beneath those exact bases, preserving case.
 | Case | Existing sources to inventory/read |
 | --- | --- |
 | A | Operator `live-qualification-A-report.md`; qualification `A-inherited/manifest.json`, saved `evidence/attempts/` artifacts and `collection-0002.json` under `evidence/collections/`. Provider session ID `e213d34b-5585-41f2-857b-62eaf05935c0`, recorded file `/home/adam/.gemini/tmp/project-2/chats/session-2026-10-29T17-00-e213d34b.jsonl`. |
-| B | Operator `live-qualification-B-report.md`; qualification `B-explicit/manifest.json`, saved attempts and `evidence/collections/collection-0003.json`. Provider session ID `341251f8-0d60-4d8d-b0de-7acf657c2fb3`; if only UI audit notes exist, retain that limitation rather than launching CLI/UI. |
+| B | Operator `live-qualification-B-report.md`; qualification `B-explicit/manifest.json`, saved attempts and `evidence/collections/collection-0003.json`. Provider session ID `341251f8-0d60-4d8d-b0de-7acf657c2fb3` is absent and is not required for revised T55 packaging. Do not launch CLI/UI or infer a full tool timeline. |
 | Original C | Operator `live-qualification-C-report.md`, feasibility report and offline JSON; qualification `C-controlled-denial/manifest.json`, attempt 1 and collection 3. Session `f21684fa-ae5c-4f14-aecd-dbaa59be056b`; exact paths below. Keep inconclusive/unmet. |
 | C2 | Operator `C2-offline-verification/` four frozen files, `C2-preparation/` saved output/reports, `C2-live/` report/run/collect/audit/preservation; qualification `C2-test-first-denial/manifest.json`, attempt 1 and collections 1/2. Session `6b4de85a-6048-44f0-ab3a-0ba8e00a338e`; exact paths below. |
 | Contracts/provenance | Checkout `brain/plans/2026-10-22-execplan-implement-loop/{ExecPlan.md,qualification-closeout.md}`, fixture and recorded bundle/fixture/policy/source hashes. Copy only relevant contracts/source excerpts and policies after sanitation; no full dependency tree or global configuration. |
 
 Use filenames named by the actual saved report/manifest inside each attempts
-directory. Do not assume all attempts store state independently. A/B need their
-saved verification/Git records and auditable session tool histories; success-only
-excerpts do not establish no scope violation. Source hash mismatches, absent
-files or redactions that remove proof must appear in the claim matrix and block
-unqualified package acceptance. No evidence package has yet been verified.
+directory. Do not assume all attempts store state independently. A's retained
+tool-call index and the C/C2 timelines remain evidence inputs. B's report and
+saved runner/Git artifacts are available, but its raw session is missing; the
+claim matrix must leave B TDD/scope/no-bypass history insufficient. This known
+absence is not a T55 packaging blocker under the revised user authorization.
+Other source hash mismatches, missing required non-B evidence, or redactions
+that remove required proof must remain explicit and block unqualified
+acceptance. The v1 package is not verified; v2 must pass its own checks.
 
 ## Key evidence paths
 
