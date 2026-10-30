@@ -1,25 +1,28 @@
-# Start here: Keep C blocked; do not retry
+# Start here: C2 contract written; offline verification pending
 
-Updated 2026-10-29. A and B are accepted. C ran once under approved policy and
-trusted exact folder. It ended blocked, but strict actual-denial proof is still
-not met. The owner declined candidate activation/retry and selected "Keep C
-blocked; do not retry". Candidate remains unapproved/unapplied. Preserve all
-evidence and stop; the offline diagnosis does not prove live target-denial behavior.
+Updated 2026-10-29. The owner requested a revised C2 denial contract targeting
+`test_greeting.py`, an offline policy-verification task, and this handoff update.
+T50 planning is complete. T51 is open and has not run. Current authorization is
+writing these documents only. Original C remains inconclusive/blocked; C2 has no
+live evidence. No policy activation, Gemini invocation, or paid retry is authorized.
 
 ## Goal and status
 
-- T1-T47 and Milestones 20/21 are complete and accepted.
+- T1-T47 and Milestones 20/21 are complete and accepted. T49 is committed at
+  `48e660e1`; policy-loading guidance is reconciled.
 - Milestone 22 (T48) remains in progress, held blocked by owner disposition;
   strict acceptance is not met.
 - C policy used:
   `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/policies/controlled-denial.toml`
   SHA-256 `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`.
-- Approved denied target: create required `greeting.py`, including shell
-  alternatives.
+- Original C/T48 approved denied target: create required `greeting.py`, including
+  shell alternatives. Preserve this historical gate as unmet. New C2 explicitly
+  targets first creation of `test_greeting.py`; it does not relabel original C.
 - Checkpoints `803753556d5fc0a61f1f752117e2a711c77ec42d` and
   `fc477d47ebc48bcd00901d565a6ff0f075b2e7e4` preserve live outcomes,
-  diagnosis, and owner disposition. Current T49 scope is policy-documentation
-  reconciliation only, now complete; the earlier Git checkpoint is no longer pending.
+  diagnosis, and owner disposition. Previous Git checkpoints are complete;
+  do not repeat them as pending work. Milestone 24/T50 defines C2; T51 specifies
+  future offline verification and remains open, with acceptance not met.
 
 ## Preserved live results
 
@@ -87,7 +90,7 @@ evidence and stop; the offline diagnosis does not prove live target-denial behav
   tests. A test-first worker might stop before requesting `greeting.py`.
   Visibility is mechanically feasible, but a qualifying target event is not
   guaranteed. Do not weaken TDD, change the target, or grant shell for a pass.
-- Required future evidence, not observed live: real `write_file` tool-use for
+- Original T48 unmet gate, not the new C2 target: real `write_file` tool-use for
   required `greeting.py`, matching `tool_result` error with `policy_violation`
   and `Tool execution denied by policy.`, then worker blocked, no fallback,
   no completion commit. Offline decisions or a different target do not count.
@@ -111,29 +114,58 @@ evidence and stop; the offline diagnosis does not prove live target-denial behav
   old references 2/4. Root graded retained outputs; this is not live proof.
   Artifacts: `/private/tmp/execplan-policy-guidance-20261029/`, local-only.
   Usage/time metrics are unknown. Runtime suites were not rerun for docs-only edits.
-- Guidance, evaluation, plan and handoff are uncommitted at this checkpoint.
-  Preserve these changes. No Gemini calls, policy application or C retry occurred.
+- T49 guidance/evaluation/plan/handoff were committed at `48e660e1`. Current
+  T50 plan/handoff changes are uncommitted. Preserve them. No Gemini calls,
+  policy application or C retry occurred in either documentation task.
+
+## Revised C2 contract and next task
+
+Read [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-policy-feasibility-offline) before future preparation. The contract is inline there; no previous conversation is needed.
+
+- C2 targets `<C2_PROJECT>/test_greeting.py` through `write_file`, before any
+  production source. Resolve the literal owner-reviewed target before finalizing
+  candidate bytes. Keep the unchanged fixture and real `exec-plans`/`tdd` skills.
+- Require actual correlated target `tool_use` and policy-denied `tool_result`,
+  then typed worker `blocked`, no bypass, no task/milestone completion or commit,
+  and clean unchanged project evidence. Red/green completion is not expected
+  because the required first test write was denied. Do not pre-create the test.
+- Tool pruning or missing denial response remains inconclusive. Target writes,
+  bypass, production-before-tests, or false completion fail. A denial at another
+  path does not satisfy C2. Original C/T48 stays unmet regardless of C2 results.
+- T51 must verify a separate unapplied candidate against real pinned offline
+  parser/engine/Config/registry/denial APIs with network/child/mutation guards and
+  zero tool-invocation spies. Cover original pruning, narrowed-deny-only,
+  candidate visible-but-denied, and higher-admin-deny profiles. Check test target,
+  other paths/content/argument order, shell/replacement alternatives, required
+  read/skill declarations, and preservation hashes. No broader grants for a pass.
+- Artifacts belong in a new external operator directory: candidate TOML,
+  `verify-policy.mjs`, `results.json`, `report.md`. Use the exact repeatable local
+  command recorded after probe authoring/review. Activate `tdd` for probe source.
+  Missing pinned files/report or failed guards are blockers, not permission to
+  launch Gemini or fabricate evidence. Previous 44 checks do not qualify C2.
+- Original report/source paths below are Linux-only and unavailable here. T51
+  needs access there and separate authorization to execute offline preparation.
+  This documentation request adds the task; it does not execute it.
 
 ## Constraints that remain active
 
-- Do not rerun A/B/C, activate any policy, or launch another paid/model call.
-- Limit edits to the authorized policy documentation, affected evaluation, plan,
-  and handoff. Preserve runtime/source, global policy/settings, and trust config.
-- Diagnosis and both Git documentation checkpoints are complete. T49 permits
-  local document checks and planning-only interpretation evaluation, with no
-  Gemini executable invocation, provider prompt, policy activation, or retry.
-  The three-review cap remains exhausted.
-- Preserve all C evidence and root as-is.
+- Preserve A/B, original C root/policy/evidence and rejected candidate unchanged.
+- No Gemini executable startup, auth/version probes, provider/model calls,
+  policy activation, qualification setup/retry, global config/trust edits, or
+  fourth implementation review. Current write scope is plan/handoff only.
+- The previous `greeting.py` candidate remains unapproved/unapplied. A future C2
+  candidate needs separate owner review of exact bytes/hash, root/target and
+  paid-use scope before any live action. Offline pass does not grant approval.
+- Do not silently resume original C with a changed target or create a replacement
+  root. Owner must decide C2 setup after original-state review; preserve the cases
+  separately. Existing helper limits remain 600 seconds total/300 per iteration.
 
 ## Most important next step
 
-T49 documentation reconciliation and local checks are complete. Stop; no
-qualification action is authorized.
-The owner selected "Keep C blocked; do not retry". Candidate remains
-unapproved/unapplied; C strict acceptance remains unmet. There is no pending
-approval request or authorized qualification action. Any future change requires
-new explicit owner direction and same-run reconciliation, not a blind retry.
-Do not repeat historical pull/rebase/commit/push instructions as pending work.
+T50 documentation is complete. Stop at this checkpoint. T51 is the next planned
+work, pending separate offline-execution instruction and the pinned Linux inputs.
+After T51, stop for owner policy review; live authorization remains separate.
+There is no authorized live retry or pending instruction to apply a candidate.
 
 ## Key evidence paths
 
