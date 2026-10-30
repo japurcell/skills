@@ -1,21 +1,26 @@
-# Start here: Review proposed C policy, do not run it
+# Start here: Keep C blocked; do not retry
 
 Updated 2026-10-29. A and B are accepted. C ran once under approved policy and
 trusted exact folder. It ended blocked, but strict actual-denial proof is still
-not met. The authorized offline diagnosis is complete; declaration-only
-feasibility is proved locally, not live target-denial behavior.
+not met. The owner declined candidate activation/retry and selected "Keep C
+blocked; do not retry". Candidate remains unapproved/unapplied. Preserve all
+evidence and stop; the offline diagnosis does not prove live target-denial behavior.
 
 ## Goal and status
 
 - T1-T47 and Milestones 20/21 are complete and accepted.
-- Milestone 22 (T48) is in progress with acceptance not met.
+- Milestone 22 (T48) remains in progress, held blocked by owner disposition;
+  strict acceptance is not met.
 - C policy used:
   `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/policies/controlled-denial.toml`
   SHA-256 `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`.
 - Approved denied target: create required `greeting.py`, including shell
   alternatives.
-- This checkpoint includes the prior pending A/B/C outcomes and current
-  diagnosis in only `ExecPlan.md` and this handoff. No source/skill edits.
+- Checkpoint `803753556d5fc0a61f1f752117e2a711c77ec42d` recorded A/B/C outcomes
+  and diagnosis in only `ExecPlan.md` and this handoff. This follow-up records
+  owner disposition in the same two docs. The user authorized preserving,
+  pulling/rebasing, committing, and pushing only these documentation updates;
+  no source/skill changes or qualification activity are authorized.
 
 ## Preserved live results
 
@@ -57,7 +62,8 @@ feasibility is proved locally, not live target-denial behavior.
   `getExcludedTools:365147-365201` skips argument-scoped denies, but the
   lower headless default (`bundle/policies/write.toml:96-108`) still excludes
   writes/shell. Narrowing only the argument deny does not solve pruning.
-- Proposed candidate, **not reviewed, not applied**:
+- Retained candidate, **unapproved, unapplied; owner declined activation/retry**
+  (original proposal filename preserved):
   `/home/adam/.copilot/session-state/49ac217d-e098-4590-9ab1-ffc892ef5760/files/controlled-denial-visible-write.PROPOSED.NOT-REVIEWED.NOT-APPLIED.toml`
   SHA-256 `1a1809b0f2371c708eeb641482f66858dae765f02039ba65cdda7daccbec3438`.
   It keeps both approved rules and adds a priority-800 `write_file` allow with
@@ -94,18 +100,21 @@ feasibility is proved locally, not live target-denial behavior.
 
 - Do not rerun A/B/C, activate any policy, or launch another paid/model call.
 - Do not change source/skills/runtime, global policy/settings, or trust config.
-- The user's Continue authorized diagnosis and one two-file documentation
-  checkpoint only, not a fourth implementation review. Three-review cap stands.
-- Runtime warning threshold is 20 minutes, not cancellation.
+- Diagnosis and its one documentation checkpoint are complete. Current scope
+  is safe Git preservation, upstream pull/rebase, commit, and push of only
+  these two documentation updates. No qualification run or retry is authorized;
+  the three-review cap stands.
+- This follow-up's warning threshold is 5 minutes, not cancellation.
 - Preserve all C evidence and root as-is.
 
 ## Most important next step
 
-Owner reviews the exact proposed policy path/hash, shadowed allow, and risk
-that a test-first worker never requests the approved target. Do not apply it.
-Policy review alone does not authorize activation or a paid retry. Any future
-attempt needs separate explicit authorization and owner-directed same-run
-reconciliation; preserve original C state and never blind-retry or replace it.
+Complete only the authorized Git preservation, upstream integration,
+documentation commit, and push, then stop. The owner selected "Keep C blocked;
+do not retry" and declined candidate activation/retry. Candidate remains
+unapproved/unapplied; C strict acceptance remains unmet. There is no pending
+approval request or authorized qualification action. Any future change requires
+new explicit owner direction and same-run reconciliation, not a blind retry.
 
 ## Key evidence paths
 
