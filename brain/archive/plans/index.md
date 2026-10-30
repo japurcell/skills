@@ -8,3 +8,4 @@
 - [Tool Guardian duplication cleanup](2026-10-21-tool-guard-techdebt/ExecPlan.md)
 - [Brain install](brain-install/ExecPlan.md)
 - [AGENTS.md installer skill](01-agents-md-install/ExecPlan.md)
+- [ExecPlan implementation loop (closed with documented limitations)](2026-10-22-execplan-implement-loop/ExecPlan.md)

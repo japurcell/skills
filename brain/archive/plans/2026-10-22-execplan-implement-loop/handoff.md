@@ -144,8 +144,8 @@ overall closeout had not yet been authorized at that checkpoint.
   may remain. Neither selected bytes nor this experiment prove full isolation.
   Doctor-discovered directories are observations, not proof their rules loaded
   during explicit selection. No user policy file is edited or deleted.
-- T49 reconciles this distinction in the bundled [qualification guide](../../../skills/default/execplan-implement-loop/references/live-qualification.md)
-  and [protocol](../../../skills/default/execplan-implement-loop/references/protocol.md).
+- T49 reconciles this distinction in the bundled [qualification guide](../../../../skills/default/execplan-implement-loop/references/live-qualification.md)
+  and [protocol](../../../../skills/default/execplan-implement-loop/references/protocol.md).
   These documentation edits change the bundle digest; the recorded live digest
   identifies the pre-reconciliation bundle. Runtime behavior is unchanged.
 - Current Linux checks read local package metadata (0.65.0), pinned engine,
