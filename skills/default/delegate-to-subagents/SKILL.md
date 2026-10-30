@@ -1,6 +1,6 @@
 ---
 name: delegate-to-subagents
-description: Pursue a long-running goal in a single session by co-ordinating subagents. Use when the user explicitly asks to delegate, spawn,dispatch, or fan out subagents.
+description: Pursue a long-running goal in a single session by co-ordinating subagents. Use when the user explicitly asks to delegate, spawn, dispatch, or fan out subagents.
 ---
 
 # Delegate to Subagents
@@ -11,22 +11,23 @@ All work should be done in subagents. Protect your context window.
 
 Use background agents so you can stay in active dialogue with the user.
 
-Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers.
-
-## 1. Define assignments
-
 Run independent work in parallel and dependent work in waves. Serialize edits to shared files.
 
-Avoid duplicate reads and context gathering; consider one exploration subagent when several subagents need the same context.
+Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: research notes, previous commits, knowledge base files, and others. Don't duplicate information already available via pointers.
 
-## 2. Dispatch
+## Dispatch loop
 
-Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask.
+Activate the `subagent-model-router` skill.
 
-Submit the exact routed model and reasoning effort through dispatch controls when dispatching a subagent. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
+While you pursue the long-running goal and maintain dialogue with the user, you will continuously identify subtasks to make progress until the goal is achieved. For each subtask:
 
-Prohibit nested delegation unless intentionally authorized.
+- Define scope, file ownership, acceptance criteria, and required completion evidence.
+- Determine the most cost-efficient and capable model and reasoning effort for that subtask.
+- If you have already dispatched a subagent that has the context needed for this subtask and matches the routed model and reasoning effort, assign the subtask to that subagent. Otherwise, dispatch a fresh subagent by submitting the exact routed model and reasoning effort through dispatch controls. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
 
-Give every subagent a runtime limit based on the expected effort and complexity of its task to prevent indefinite execution. Treat runtime limits as warning thresholds. When overdue, send a non-interrupting warning and request status, completed work, blockers, and an updated ETA. Keep the subagent running; lateness alone does not justify interruption, cancellation, or replacement.
+Coordinate integration and verification through one persistent **integration coordinator** subagent. Stop when the combined result meets the goal's acceptance criteria and required checks pass.
 
-Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
+**Subagent rules**:
+
+- Set status checkpoints based on expected effort and complexity. When overdue, request status, completed work, blockers, and an updated ETA without interrupting. Lateness alone does not justify cancellation or replacement.
+- Keep routing metadata out of subagent prompts. This information is only for your coordination and routing purposes.
