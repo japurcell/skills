@@ -1,6 +1,17 @@
-# Start here: C2 actual denial observed; one-attempt permission consumed
+# Start here: Revised qualification closeout recorded; stop
 
-Updated 2026-10-29 local / 2026-10-30 UTC at unchanged HEAD `08f10761`.
+Updated 2026-10-29. T54 records the user's continuation after the closeout
+recommendation. A/B acceptance plus C2 revised observed-denial coverage is
+accepted with explicit limits in [qualification closeout](qualification-closeout.md).
+Native target/call/error evidence is observed; literal stream `error.type` is
+not retained and classification is source-backed. Original C/T48 stays unmet
+historical evidence, superseded for active denial coverage, with no retry.
+No active implementation/qualification execution remains. Stop; preserve all
+artifacts. No new Gemini call, policy change, source edit, commit or push.
+
+Historical T53 checkpoint (subsequent disposition is T54 above):
+
+Historical T53 capture, 2026-10-29 local / 2026-10-30 UTC, before commit `00a67dab`: source checkout HEAD was `08f10761`.
 Owner-confirmed exact trust was locally verified, then one authorized foreground
 C2 attempt used the reviewed policy below, inherited `auto`, 600/300-second
 limits. Helper/runner exit 3: `worker_blocked` /
@@ -12,14 +23,16 @@ classification limits below. Collection 2 is clean, unchanged baseline, zero
 commits since baseline, greeting files absent, all 30 protected inputs unchanged.
 Stop: permission consumed; no retry/resume, global edits, source repair, extra
 review, checkout commit or push. Original C/T48 remains unmet under no-retry;
-the entire ExecPlan is not marked complete.
+overall closeout had not yet been authorized at that checkpoint.
 
 ## Goal and status
 
 - T1-T47 and Milestones 20/21 are complete and accepted. T49 is committed at
   `48e660e1`; T50 at `08f10761`. Previous integration/commit steps are complete.
-- Milestone 22 (T48) remains in progress, held blocked by owner disposition;
-  strict acceptance is not met.
+- Milestone 22 (T48) is retained historically with acceptance not met and no
+  retry. C2/T54 supersedes it for active coverage; do not reopen or mark it passed.
+- T54/Milestone 27 closeout is complete. The scoped result is accepted with
+  evidence limits, not a claim that every historical gate passed.
 - C policy used:
   `/home/adam/.local/share/execplan-loop-qualification-49ac217d/2026-10-29/policies/controlled-denial.toml`
   SHA-256 `2a2fb94733d88819db59b7eaf13a21110151f2d373a217832d4b656da5170bd9`.
@@ -305,7 +318,8 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
 - T53/Milestone 26 observed-denial acceptance met for this configuration.
   Original C/T48/Milestone 22 remains historically inconclusive/unmet; A/B
   acceptance remains on their earlier bundle snapshot, not this new digest.
-  No all-ExecPlan completion/accomplishment-report closeout is claimed.
+  At the T53 checkpoint no overall closeout was claimed; T54 subsequently records
+  the scoped disposition, not a blanket all-historical-gates pass.
 
 ## Constraints that remain active
 
@@ -324,13 +338,21 @@ The [Milestone 24, T50 and T51](ExecPlan.md#milestone-24-define-c2-and-verify-po
 
 ## Most important next step
 
-Stop after the terminal attempt, collection, audit and documentation. No live
-retry/resume or checkout commit/push is authorized. Preserve C2 root/baseline,
-both collections, real provider session and external report. Do not repeat
-setup, delete artifacts/runner lock or rerun the frozen T51 absent-root probe.
-Original C remains held no-retry with its historical gate unmet; any eventual
-closeout/disposition of that gate belongs to the owner, not inferred paid work.
-On later drift/helper refusal, preserve and report for owner reconciliation.
+Stop: T54 documentation closeout is complete. Preserve C2 root/baseline,
+both collections, provider session, reports, approved candidate and runner lock.
+Do not rerun setup, retry/resume, delete artifacts, or rerun the frozen T51
+absent-root probe. Original C remains no-retry and unmet; C2 supplies revised
+observed coverage with the explicit native-record exception. No new paid call,
+source/configuration change, extra review, commit or push is authorized.
+
+This machine cannot access the Linux raw evidence. Closeout uses committed
+summaries, not an independent raw-artifact audit. A sanitized portable evidence
+package or independent audit is separate work and does not imply a provider rerun.
+
+T54 local validation: Markdown targets/anchors, fences, status and next-action
+consistency, added punctuation and `rtk git diff --check` passed. Only this
+handoff, the plan and `qualification-closeout.md` changed. These changes remain
+uncommitted; no runtime suites or Gemini commands were run.
 
 ## Key evidence paths
 
