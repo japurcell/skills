@@ -59,8 +59,7 @@ Tests:
 Session: <optional session note>
 Refs #123
 Fixes #456
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-Co-authored-by: Jane <jane@example.com>
+Co-authored-by: <name> <email>
 ```
 
 Rules:
@@ -69,9 +68,6 @@ Rules:
 - `Summary`, `Rationale`, and `Tests` are required.
 - Each required section needs at least one bullet.
 - Omit `Session:` if no reliable session data exists.
-- Use `Fixes` only when the user explicitly says fix, close, bug, or bugfix.
-- Otherwise use `Refs`.
-- Keep issue trailers and co-author trailers contiguous.
-- Do not add blank lines between trailers.
-- Add default Copilot co-author unless explicitly declined.
-- Add extra co-authors after the Copilot trailer.
+- Use `Fixes` only when the user explicitly intends this commit to close that specific issue; otherwise use `Refs`.
+- Keep issue and co-author trailers contiguous, without blank lines between them.
+- Add `Co-authored-by` trailers only for contributors explicitly identified by the user or reliably established by session context.

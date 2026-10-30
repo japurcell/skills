@@ -1,24 +1,19 @@
 ---
 name: commit
-description: Create exactly one safe non-interactive git commit from the current worktree. Use when the user asks to commit, save, stage, push, or open a PR for current changes.
+description: Create a well-formed git commit from current changes using session history for rationale and summary. Use when asked to commit, save, or push current changes.
 ---
 
 # Commit
 
-Create **exactly one** clean commit. Push only when explicitly requested, except a requested PR requires a push.
+## Inputs
 
-## Use for
+- `issue_numbers`: accept `#123` or `123`; dedupe and keep order.
+- `co_author`: co-author attribution trailer.
+- Documented repo-specific commit conventions override message-format defaults in this skill; retain scope, safety, and execution rules.
 
-- Commit/save/stage current changes
-- Push current branch
-- Create a PR for current changes
-- Choose files, branch, commit message, issue trailers, or PR text
+## Steps
 
-Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pick cleanup, or conflict resolution.
-
-## Workflow
-
-1. Read the conversation for intent, scope, rationale, tests, issues, branch, push, and PR requests.
+1. Read the conversation for intent, scope, rationale, tests, and issues.
 
 2. Inspect git state before changing anything:
 
@@ -38,67 +33,27 @@ Do **not** use for multi-commit work, history rewriting, merge/rebase/cherry-pic
 3. Stop and report the blocker if:
    - Not in a git repo
    - Git author name or email is unset
-   - No tracked, staged, or untracked non-ignored changes exist
-   - Merge, rebase, or cherry-pick is in progress
+   - No changes exist within the selected scope
    - Conflicts or unmerged paths exist
    - `HEAD` is detached and no branch will be created
-   - Chosen scope is empty
    - A required command fails unexpectedly
 
-4. Choose branch:
-   - If `feature_branch` is provided, reuse a local branch, track a remote branch, or create it.
-   - Otherwise keep the current branch unless the branch name is blank, `main`, `master`, or `base_branch`.
-   - If a new branch is needed, use `references/branch-names.md`.
+4. Stage intended changes, including new files (`git add -A`) after confirming scope.
 
-5. Choose commit scope:
-   - If anything is staged, commit **only staged changes**.
-   - Else auto-stage only when there is:
-     1. one changed file, or
-     2. changed files under one top-level directory.
-   - Otherwise stop and ask which files to commit.
-   - Never include ignored files, generated artifacts, local state, traces, videos, screenshots, storage-state files, or scratch outputs unless explicitly requested.
-   - If such files are already staged, stop and ask.
+5. Sanity-check newly added files. Stop and report blocker if anything looks random or likely ignored (build artifacts, logs, temp files, scratch outputs).
 
-6. Build the commit message using `references/message.md`.
+6. If staging is incomplete or includes unrelated files, ask the user for confirmation before proceeding.
 
-7. Commit once using a file:
+7. Build the message using [commit message](references/message.md), then create exactly one commit using a file:
 
    ```bash
    git commit -F <message-file>
    ```
 
-   Do not use multiple commits. Do not use escaped newlines with `-m`.
+   Do not use escaped newlines with `-m`.
 
-8. Push, create PR, or dry run:
-   - Push only if the user explicitly asked, or PR creation requires it.
-   - For PRs, follow `references/pr.md`.
-   - For dry runs, follow `references/dry-run.md`.
+8. Verify the SHA, committed diff, and remaining staged and unstaged changes. Confirm exactly one commit was created with the selected scope. Report discrepancies and stop before pushing.
 
-9. Final response must include:
-   - Branch name
-   - Commit SHA
-   - Commit subject
-   - PR URL, if created
-   - Or exact blocker and next action, if stopped
+9. Push only if the user explicitly asked.
 
-## Inputs
-
-- `issue_numbers`: accept `#123` or `123`; dedupe and keep order.
-- `base_branch`: default `main`.
-- `feature_branch`: requested branch name.
-- `co_author`: extra co-author trailer.
-- Default co-author: `Copilot <223556219+Copilot@users.noreply.github.com>`.
-- Include default Copilot trailer unless the user explicitly declines it.
-- PR requested if user asks for a PR or sets `create_pr=true`.
-
-## Verification
-
-Before final response, verify:
-
-- Exactly one commit was created, or no commit was created.
-- Scope followed staged → single file → one directory → ask.
-- Generated/local files were excluded unless explicitly requested.
-- Branch rules were followed.
-- Message has subject, blank line, `Summary`, `Rationale`, `Tests`, applicable issue trailers, and co-author trailers.
-- Push happened only when explicitly requested or required for PR.
-- PR used explicit title and body.
+10. Report the branch, commit SHA, and subject, or the exact blocker and next action if stopped.
