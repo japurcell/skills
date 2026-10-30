@@ -48,16 +48,16 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | Provider | Model | Effort | Status | Best for |
 | --- | --- | --- | --- | --- |
 | OpenAI | `gpt-5.6-luna` | `max` | GA | Cost-conscious agentic coding or bounded review |
-| OpenAI | `gpt-6-luna` | `max` | GA | Cost-conscious agentic coding or bounded review |
+| OpenAI | `gpt-6-luna` | `high` or greater | GA | Cost-conscious agentic coding or bounded review |
 | OpenAI | `gpt-6.1-sol` | `medium` | GA | Connected or complex coding and broader analysis |
-| OpenAI | `gpt-6.1-terra` | `medium` | GA | Everyday agentic coding and terminal work |
+| OpenAI | `gpt-6.1-terra` | `medium` | GA | Everyday agentic coding, terminal work, and review |
 | OpenAI | `gpt-6-sol` | `medium` | GA | Interactive and agentic coding |
 | OpenAI | `gpt-5.6-terra` | `medium` | GA | Connected coding and broader analysis |
 | OpenAI | `gpt-5.3-codex` | `medium` | GA | Agentic coding and review |
 | Anthropic | `claude-sonnet-5.5` | `medium` | GA | General coding and agent tasks; fallback to `claude-sonnet-5` |
 | Anthropic | `claude-sonnet-5` | `medium` | GA | General coding and agent tasks; fallback for `claude-sonnet-5.5` |
 | Anthropic | `claude-sonnet-4.6` | `medium` | Legacy annual Copilot Pro/Pro+ only | General coding and agent tasks when legacy access is confirmed |
-| Google | `gemini-4-argon` | `medium` | GA | Complex coding, agentic work, and reasoning; provisional candidate; promotional pricing |
+| Google | `gemini-4-argon` | `medium` | GA | Agentic work, and reasoning; provisional candidate; promotional pricing |
 | xAI | `grok-4.5` | `medium` | GA | Versatile work; long-context pricing |
 | xAI | `grok-4.6` | `medium` | GA | Versatile work; long-context pricing |
 | xAI | `grok-4.7` | `medium` | GA | Agentic coding; long-context pricing |
@@ -68,6 +68,7 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | --- | --- | --- | --- | --- |
 | OpenAI | `gpt-6.1-sol` | `high` | GA | Demanding code or security review |
 | OpenAI | `gpt-6-sol` | `high` | GA | Demanding code or security review |
+| OpenAI | `gpt-6.1-terra` | `high` | GA | Demanding connected-code analysis or review |
 | OpenAI | `gpt-5.6-terra` | `high` | GA | Demanding connected-code analysis |
 | OpenAI | `gpt-5.6-sol` | `high` | GA | Complex codebase reasoning and long-running agentic work |
 | OpenAI | `gpt-5.3-codex` | `high` | GA | Demanding agentic coding or review |
@@ -78,7 +79,6 @@ Fast review is limited to mechanical or non-semantic changes with straightforwar
 | Anthropic | `claude-opus-5` | `medium` | GA | Powerful reasoning |
 | Anthropic | `claude-opus-5.5` | `medium` | GA | Long-running agentic work |
 | Anthropic | `claude-fable-5.1` | `medium` | GA | Long-horizon autonomous work; low cached-input rate |
-| Google | `gemini-4-argon` | `high` | GA | Complex coding, agentic work, and reasoning; provisional candidate; promotional pricing |
 | Moonshot AI | `kimi-k3` | `medium` | GA | Multi-step agentic coding over large contexts |
 
 ## Task defaults
@@ -88,9 +88,9 @@ These are provisional starting candidates, not measured quality rankings. Altern
 | Default | Tier | Starting configuration | Alternatives |
 | --- | --- | --- | --- |
 | Bounded work | Fast | `gpt-6-luna`, `medium` | `claude-haiku-5.5`, `medium`; `gpt-5.6-luna`, `medium`; `mai-code-1.1-flash`, `medium` |
-| Budget review | Standard | `gpt-6-luna`, `max` | `gpt-5.6-luna`, `max`; another Standard review configuration |
+| Budget review | Standard | `gpt-6-luna`, `high` | `gpt-5.6-luna`, `high`; another Standard review configuration |
 | General work | Standard | `gpt-6.1-sol`, `medium` | `gpt-6.1-terra`, `medium`; `gpt-6-sol`, `medium`; `gemini-4-argon`, `medium`; `gpt-5.6-terra`, `medium`; `gpt-5.3-codex`, `medium` |
-| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gemini-4-argon`, `high`; `gpt-6-astra`, `medium`; another validated Premium review configuration |
+| Demanding review | Premium | `gpt-6.1-sol`, `high` | `gpt-6-sol`, `high`; `gpt-6-astra`, `medium`; another validated Premium review configuration |
 | Demanding autonomous work | Premium | `gpt-6-astra`, `medium` | Another validated Premium autonomous-work configuration |
 
 Use bounded work for low-risk coding and mechanical review only. Substantive review is at least Standard; review floors are defined in [`review-routing.md`](review-routing.md).
