@@ -29,7 +29,7 @@ Produce an agreed product spec, researched technical choices, and user-reviewed 
 
 - [Startup and platform delivery](tickets/startup-and-platform-delivery.md): sourced comparison complete; user selected lazy single-resident startup with optional login startup for prototyping.
 - [Integration event coverage](tickets/integration-event-coverage.md): command hooks cover differing subsets; generic turn end cannot prove success, and no provider offers a stall event.
-- [Hybrid startup prototype](tickets/hybrid-startup-prototype.md): user accepted the browser flow for persistent stacked alerts, Snooze cycling, individual/bulk dismissal, and Quit queuing; native feasibility remains unproven.
+- [Hybrid startup prototype](tickets/hybrid-startup-prototype.md): user accepted the browser flow for persistent stacked alerts, Snooze cycling, individual/bulk dismissal, and Quit queuing; native evidence now covers Windows media audio/interaction and scoped Arch/WSLg acceptance; remaining macOS interaction and native Ubuntu keep cross-platform feasibility open.
 - [Native toolkit feasibility](tickets/native-toolkit-feasibility.md): use Qt/PySide 6.12 for this bounded native-window/audio experiment; this is not production framework approval.
 
 ## Not yet specified

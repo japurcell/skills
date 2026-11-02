@@ -21,9 +21,12 @@ Windows now defaults to QMediaPlayer/QAudioOutput. Linux/macOS keep QSoundEffect
 To compare WSLg media playback: sh run.sh open --audio-backend media
 Stop the receiver before changing backends. Status reports the actual audio_backend.
 Windows media listening passed for the checks documented in the run guide.
-WSLg media listening passed for its documented audio/mute checks; lifecycle checks
-and Ubuntu remain pending. Do not stop or change the current WSLg receiver without
-authorization.
+Authorized Arch/WSLg media, lifecycle, interaction, and safe-environment checks
+are complete; later test receivers were stopped. Do not reopen saved test state.
+Preview clipping was fixed with a widget regression test in commit a06fe4a4.
+Windows/macOS need focused visual checks of that changed layout. Remaining macOS
+interaction and native Ubuntu checks are separate work.
+Physical output recovery and optional WSLg QSoundEffect comparison are unverified.
 Follow brain/plans/14-agent-notifications/native-platform-run-guide.md from the
 repository root for exact isolated-state commands and acceptance checks.
 This is not a packaged/signed production app or a replacement for OS mute controls.
