@@ -420,22 +420,28 @@ class InstallerTests(unittest.TestCase):
 
 
 class PayloadTests(unittest.TestCase):
+    def run_extractor(self, relocated, root, home, output, *arguments):
+        return subprocess.run(
+            check=False,
+            args=[sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
+                  str(output), *arguments],
+            cwd=root, env=dict(os.environ, HOME=str(home), USERPROFILE=str(home),
+                               PYTHONIOENCODING="cp1252"), capture_output=True,
+        )
+
     def test_relocated_extractor_uses_utf8_for_unicode_output_paths(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory(prefix="ruminate-") as temporary:
             root = Path(temporary)
             relocated = copy_bundle(root)
-            conversations = root / "conversations"
-            conversations.mkdir()
+            home = root / "home"
+            conversations = home / ".claude/projects/project"
+            conversations.mkdir(parents=True)
             message = "Preserve this conversation guidance."
             (conversations / "session.jsonl").write_text(json.dumps(
                 {"type": "user", "message": {"content": message}}) + "\n", encoding="utf-8")
             output = root / "output-漢字"
-            result = subprocess.run(
-                check=False,
-                args=[sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
-                 str(output), "--claude-dir", str(conversations), "--min-size", "0"],
-                cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
-            )
+            result = self.run_extractor(relocated, root, home, output,
+                                        "--claude-dir", str(conversations), "--min-size", "0")
             self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
             self.assertEqual(result.stdout.decode("utf-8").strip(), str(output))
             extracted = output / "000_claude_session.txt"
@@ -444,12 +450,13 @@ class PayloadTests(unittest.TestCase):
                              f"{output}/000_claude_session.txt\n")
 
     def test_relocated_extractor_preserves_claude_and_codex_cli_messages(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory(prefix="ruminate-") as temporary:
             root = Path(temporary)
             relocated = copy_bundle(root)
-            claude_dir = root / "claude projects"
-            claude_dir.mkdir()
-            codex_dir = root / "codex sessions"
+            home = root / "home"
+            claude_dir = home / ".claude/projects/project"
+            claude_dir.mkdir(parents=True)
+            codex_dir = home / ".codex/sessions"
             codex_file = codex_dir / "2026" / "10" / "21" / "codex-session.jsonl"
             codex_file.parent.mkdir(parents=True)
             claude_file = claude_dir / "claude-session.jsonl"
@@ -492,12 +499,8 @@ class PayloadTests(unittest.TestCase):
             os.utime(codex_file, (1_800_000_100, 1_800_000_100))
 
             output = root / "extract café"
-            result = subprocess.run(
-                check=False,
-                args=[sys.executable, str(relocated / "assets/skills/ruminate/scripts/extract-conversations.py"),
-                 str(output), "--claude-dir", str(claude_dir), "--codex-dir", str(codex_dir), "--min-size", "0"],
-                cwd=root, env=dict(os.environ, PYTHONIOENCODING="cp1252"), capture_output=True,
-            )
+            result = self.run_extractor(relocated, root, home, output, "--claude-dir", str(claude_dir),
+                                        "--codex-dir", str(codex_dir), "--min-size", "0")
 
             self.assertEqual(result.returncode, 0, result.stderr.decode("utf-8", errors="replace"))
             self.assertEqual(result.stdout.decode("utf-8").strip(), str(output))

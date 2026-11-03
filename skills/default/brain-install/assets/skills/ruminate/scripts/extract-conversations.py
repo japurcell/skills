@@ -69,18 +69,122 @@ def source_root(value: str, anchor: Path) -> str:
 
 def private_directory(path: Path) -> None:
     info = path.lstat()
-    if not stat.S_ISDIR(info.st_mode):
+    if (not stat.S_ISDIR(info.st_mode)
+            or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)):
         raise PathPolicyError(f"output directory must be a real directory, not a symlink: {path}")
-    if info.st_uid != os.getuid() or info.st_mode & 0o077:
+    if os.name == "nt":
+        windows_private_object(path)
+    elif info.st_uid != os.getuid() or info.st_mode & 0o077:
         raise PathPolicyError(f"output directory must be owned by this user and private (mode 700): {path}")
+
+
+def windows_private_object(path: Path, descriptor_handle: int | None = None) -> None:
+    # Windows inherits DACLs, and its stat mode bits do not describe privacy.
+    # Accept only ordinary allow ACEs for the current user, SYSTEM, and local
+    # administrators, and OWNER RIGHTS after verifying ownership. An
+    # inherit-only CREATOR OWNER ACE is safe for new children.
+    import ctypes
+    from ctypes import wintypes
+
+    advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    pointer = ctypes.c_void_p
+    dword = wintypes.DWORD
+    advapi.GetNamedSecurityInfoW.argtypes = [wintypes.LPWSTR, dword, dword,
+                                            ctypes.POINTER(pointer), pointer,
+                                            ctypes.POINTER(pointer), pointer,
+                                            ctypes.POINTER(pointer)]
+    advapi.GetNamedSecurityInfoW.restype = dword
+    advapi.GetSecurityInfo.argtypes = [pointer, dword, dword, ctypes.POINTER(pointer), pointer,
+                                       ctypes.POINTER(pointer), pointer, ctypes.POINTER(pointer)]
+    advapi.GetSecurityInfo.restype = dword
+    advapi.OpenProcessToken.argtypes = [pointer, dword, ctypes.POINTER(pointer)]
+    advapi.GetTokenInformation.argtypes = [pointer, dword, pointer, dword, ctypes.POINTER(dword)]
+    advapi.EqualSid.argtypes = [pointer, pointer]
+    advapi.CreateWellKnownSid.argtypes = [dword, pointer, pointer, ctypes.POINTER(dword)]
+    advapi.GetAce.argtypes = [pointer, dword, ctypes.POINTER(pointer)]
+    kernel.GetCurrentProcess.restype = pointer
+    kernel.CloseHandle.argtypes = [pointer]
+    kernel.LocalFree.argtypes = [pointer]
+    kernel.LocalFree.restype = pointer
+
+    owner, acl, descriptor, token = pointer(), pointer(), pointer(), pointer()
+    if descriptor_handle is None:
+        error = advapi.GetNamedSecurityInfoW(str(path), 1, 5, ctypes.byref(owner), None,
+                                            ctypes.byref(acl), None, ctypes.byref(descriptor))
+    else:
+        error = advapi.GetSecurityInfo(descriptor_handle, 1, 5, ctypes.byref(owner), None,
+                                       ctypes.byref(acl), None, ctypes.byref(descriptor))
+    if error:
+        raise OSError(error, "cannot inspect output security", str(path))
+    try:
+        if not acl or not advapi.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token)):
+            raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+        size = dword()
+        advapi.GetTokenInformation(token, 1, None, 0, ctypes.byref(size))
+        if not size.value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        user = ctypes.create_string_buffer(size.value)
+        if not advapi.GetTokenInformation(token, 1, user, size, ctypes.byref(size)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        user_sid = ctypes.cast(user, ctypes.POINTER(pointer))[0]
+        if not advapi.EqualSid(owner, user_sid):
+            raise PathPolicyError(f"output must be owned by this user and private: {path}")
+        trusted = [user_sid]
+        sid_buffers = []
+        for sid_type in (22, 26, 71, 3):  # SYSTEM, Administrators, Owner Rights, Creator Owner
+            sid = ctypes.create_string_buffer(68)
+            sid_size = dword(len(sid))
+            if not advapi.CreateWellKnownSid(sid_type, None, sid, ctypes.byref(sid_size)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            sid_buffers.append(sid)
+        trusted.extend(ctypes.cast(sid, pointer) for sid in sid_buffers[:3])
+        creator = ctypes.cast(sid_buffers[3], pointer)
+        # ACL header: revision, reserved, size, ACE count, reserved.
+        ace_count = ctypes.c_ushort.from_address(acl.value + 4).value
+        for index in range(ace_count):
+            ace = pointer()
+            if not advapi.GetAce(acl, index, ctypes.byref(ace)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            ace_type = ctypes.c_ubyte.from_address(ace.value).value
+            flags = ctypes.c_ubyte.from_address(ace.value + 1).value
+            if ace_type == 1:  # Deny ACE cannot broaden access.
+                continue
+            if ace_type != 0:
+                raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+            sid = pointer(ace.value + 8)
+            if not (any(advapi.EqualSid(sid, allowed) for allowed in trusted)
+                    or flags & 0x08 and advapi.EqualSid(sid, creator)):
+                raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+    finally:
+        if token:
+            kernel.CloseHandle(token)
+        kernel.LocalFree(descriptor)
 
 
 def output_parts(path: Path, workspace: Path) -> tuple[str, ...]:
     if not path.resolve().is_relative_to(workspace):
         raise PathPolicyError(f"output path escapes workspace: {path}")
     parts = path.relative_to(workspace).parts
-    name_max = os.pathconf(workspace, "PC_NAME_MAX")
-    if name_max > 0 and any(len(os.fsencode(part)) > name_max for part in parts):
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.GetVolumePathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+        kernel.GetVolumeInformationW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD,
+                                                ctypes.POINTER(wintypes.DWORD), ctypes.POINTER(wintypes.DWORD),
+                                                ctypes.POINTER(wintypes.DWORD), wintypes.LPWSTR, wintypes.DWORD]
+        volume = ctypes.create_unicode_buffer(32768)
+        limit = wintypes.DWORD()
+        if (not kernel.GetVolumePathNameW(str(workspace), volume, len(volume))
+                or not kernel.GetVolumeInformationW(volume, None, 0, None,
+                                                     ctypes.byref(limit), None, None, 0)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        too_long = any(len(part.encode("utf-16-le")) // 2 > limit.value for part in parts)
+    else:
+        name_max = os.pathconf(workspace, "PC_NAME_MAX")
+        too_long = name_max > 0 and any(len(os.fsencode(part)) > name_max for part in parts)
+    if too_long:
         raise PathPolicyError("output component exceeds the filesystem name limit")
     return parts
 
@@ -134,8 +238,11 @@ def output_file(path: Path, workspace: Path) -> None:
         info = path.lstat()
     except FileNotFoundError:
         return
-    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)):
         raise PathPolicyError(f"output must be a regular, non-symlink file with one link: {path}")
+    if os.name == "nt":
+        windows_private_object(path)
 
 
 def write_output(path: Path, content: str, workspace: Path) -> None:
@@ -146,6 +253,9 @@ def write_output(path: Path, content: str, workspace: Path) -> None:
         info = os.fstat(descriptor)
         if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
             raise PathPolicyError(f"output must be a regular file with one link: {path}")
+        if os.name == "nt":
+            import msvcrt
+            windows_private_object(path, msvcrt.get_osfhandle(descriptor))
         with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
             descriptor = -1
             handle.truncate(0)
@@ -388,7 +498,7 @@ def run(args: argparse.Namespace) -> None:
 
     for idx, fpath in enumerate(files):
         provider, cwd, messages = extract_messages(fpath, sources[fpath])
-        if args.cwd and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
+        if args.cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
             continue
         if not messages:
             continue
