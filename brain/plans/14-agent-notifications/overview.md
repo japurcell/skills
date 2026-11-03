@@ -8,7 +8,7 @@
 - [Native desktop prototype evidence](phase-4-native-desktop-prototype.md)
 - [Windows native run and audio comparison](windows-native-run-2026-10-29.md)
 - [Native prototype ExecPlan](native-prototype-exec-plan.md)
-- [Windows, Ubuntu, macOS, and WSL2 run guide](native-platform-run-guide.md)
+- [Windows, macOS, and Linux/WSLg run guide (with optional Ubuntu notes)](native-platform-run-guide.md)
 - [Historical stack evidence before deletion semantics](phase-2-alert-stack-before-deletion.md)
 - [Decision tickets](tickets/index.md)
 - [Research findings](research/index.md)

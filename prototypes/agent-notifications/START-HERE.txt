@@ -24,8 +24,16 @@ Windows media listening passed for the checks documented in the run guide.
 Authorized Arch/WSLg media, lifecycle, interaction, and safe-environment checks
 are complete; later test receivers were stopped. Do not reopen saved test state.
 Preview clipping was fixed with a widget regression test in commit a06fe4a4.
-Windows/macOS need focused visual checks of that changed layout. Remaining macOS
-interaction and native Ubuntu checks are separate work.
+macOS available-environment checks confirm labels, alert/preview/Replay audio, visible
+Tab focus and Space activation, stack/Snooze, Undo and mute/manual Replay. Fresh
+automatic events were heard through MacBook Pro speakers and LG HDR 4K. Low/high
+volume comparison, repeated previews/Replay, and Dismiss + Command+Z passed. The
+preferred OS output was restored; final volume was 0.41 at the user's choice. Ordinary
+and full-screen laptop/LG checks passed within reported scope; another Space was
+unavailable. Receiver shut down cleanly with eight synthetic alerts retained.
+Ubuntu desktop behavior was not tested; a separate live run is not required.
+Windows Preview/focus smoke remains open. macOS focused suites and
+source/launcher/dependency/diff checks passed.
 Physical output recovery and optional WSLg QSoundEffect comparison are unverified.
 Follow brain/plans/14-agent-notifications/native-platform-run-guide.md from the
 repository root for exact isolated-state commands and acceptance checks.

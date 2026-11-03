@@ -175,6 +175,7 @@ def serve(directory, force_show=False, audio_backend="auto"):
     app = QApplication(sys.argv[:1])
     app.setApplicationName("Agent Alert Prototype")
     app.setQuitOnLastWindowClosed(False)
+
     if audio_backend == "auto":
         audio_backend = "media" if sys.platform == "win32" else "soundeffect"
     instance = QLockFile(str(directory / "instance.lock"))
@@ -198,6 +199,8 @@ def serve(directory, force_show=False, audio_backend="auto"):
             self.setMaximumWidth(510)
             self.setFont(QFont("", 11))
             self.setStyleSheet("QWidget {font-size:14px;} QPushButton {padding:8px 12px;min-height:40px;} "
+                               "QPushButton:focus, QCheckBox:focus, QSlider:focus {"
+                               "border:2px solid palette(highlight);border-radius:5px;} "
                                "QPushButton:disabled {color:palette(text);background-color:palette(window);"
                                "border:1px solid palette(mid);border-radius:4px;} "
                                "QLabel#title {font-size:22px;font-weight:600;} "
@@ -330,6 +333,20 @@ def serve(directory, force_show=False, audio_backend="auto"):
                 save_state(directory, self.state)
             finally:
                 lock.unlock()
+
+        def focusNextPrevChild(self, forward):
+            # Include all tab-focusable controls even when Cocoa's system hint
+            # restricts traversal to text and list controls.
+            start = app.focusWidget() or self
+            candidate = start
+            while True:
+                candidate = candidate.nextInFocusChain() if forward else candidate.previousInFocusChain()
+                if (candidate is not self and candidate.isVisibleTo(self) and candidate.isEnabled()
+                        and candidate.focusPolicy() & Qt.FocusPolicy.TabFocus):
+                    candidate.setFocus(Qt.FocusReason.TabFocusReason if forward else Qt.FocusReason.BacktabFocusReason)
+                    return True
+                if candidate is start:
+                    return False
 
         def position_popup(self):
             screen = app.primaryScreen().availableGeometry()

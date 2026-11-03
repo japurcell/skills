@@ -21,7 +21,7 @@ Produce an agreed product spec, researched technical choices, and user-reviewed 
 - Prior PowerShell popups, notify-send, and VS Code terminal settings failed user expectations: sound did not work, appearance did not attract attention, and none satisfied all platforms. Root causes are unverified.
 - User selected hybrid startup: first CLI invocation starts one resident app; later invocations reuse it; login startup is optional. Explicit Quit preserves the stack and queues new alerts until manual reopening, when the stack returns.
 - Keep all planning documents under `brain/plans/14-agent-notifications/`, per user direction. Disposable prototype code stays outside the vault.
-- User accepted the deletion/Undo browser revision and authorized native desktop experiments. Linux targets are Ubuntu desktop and WSL2; user has no admin access. Keep dependencies user-local and stop on unavailable system prerequisites.
+- User accepted the deletion/Undo browser revision and authorized native desktop experiments. Linux coverage uses WSL2 through WSLg; a separate Ubuntu desktop live run is not required. Ubuntu-specific behavior remains untested. The user has no admin access. Keep dependencies user-local and stop on unavailable system prerequisites.
 - Research and disposable prototypes are authorized. No installations, real hook changes, or production implementation.
 - Coordinator owns map/handoff. Research workers own their tickets/findings. Research can close in parallel; otherwise resolve at most one ticket per session.
 
@@ -29,7 +29,7 @@ Produce an agreed product spec, researched technical choices, and user-reviewed 
 
 - [Startup and platform delivery](tickets/startup-and-platform-delivery.md): sourced comparison complete; user selected lazy single-resident startup with optional login startup for prototyping.
 - [Integration event coverage](tickets/integration-event-coverage.md): command hooks cover differing subsets; generic turn end cannot prove success, and no provider offers a stall event.
-- [Hybrid startup prototype](tickets/hybrid-startup-prototype.md): user accepted the browser flow for persistent stacked alerts, Snooze cycling, individual/bulk dismissal, and Quit queuing; native evidence now covers Windows media audio/interaction and scoped Arch/WSLg acceptance; remaining macOS interaction and native Ubuntu keep cross-platform feasibility open.
+- [Hybrid startup prototype](tickets/hybrid-startup-prototype.md): user accepted the browser flow for persistent stacked alerts, Snooze cycling, individual/bulk dismissal, and Quit queuing; native evidence covers Windows media audio/interaction, scoped Arch/WSLg acceptance, and macOS desktop/audio/interaction checks. macOS Milestone 2 is met for the observed host and available environment. Overall prototype work remains open for the latest-source Windows Preview/focus smoke and production decisions. Native Ubuntu-specific behavior is untested; a separate live run is not required.
 - [Native toolkit feasibility](tickets/native-toolkit-feasibility.md): use Qt/PySide 6.12 for this bounded native-window/audio experiment; this is not production framework approval.
 
 ## Not yet specified
@@ -37,7 +37,7 @@ Produce an agreed product spec, researched technical choices, and user-reviewed 
 <!-- FOG START -->
 - Visual identity and detailed interaction beyond the accepted pending-alert stack and deletion/Undo flow.
 - Sound selection, previews, customization, and accessibility experience.
-- Production architecture after native Windows/Ubuntu/WSL2 proof; macOS window/audio were user-confirmed, but compositor, accessibility, and cross-platform behavior remain open.
+- Production architecture after native Windows and Linux/WSLg prototyping; no separate Ubuntu live run is required. macOS window/audio were user-confirmed, while compositor, accessibility, production framework, packaging, and broader cross-platform behavior remain open.
 - Packaging, updates, and integration installation after architecture is understood.
 <!-- FOG END -->
 
