@@ -13,7 +13,7 @@ The tasks are not a list of steps. They are a **task graph** with blocking relat
 **Subagent management rules:**
 
 - Activate the `subagent-model-router` skill. Route each subtask to the most cost-efficient and capable model and reasoning effort for that subtask. Submit the exact routed model and reasoning effort through dispatch controls when dispatching a subagent. If the router does not return an exact model and reasoning effort or the host does not permit both to be specified, do not dispatch and report the issue. Never fall back to runtime defaults.
-- Give every subagent a runtime limit. Treat runtime limits as warning thresholds; lateness alone does not justify interruption, cancellation, or replacement.
+- Enforce runtime limits based on expected effort and complexity. When overdue, request a **progress update** that includes: request status, completed work, blockers, and an updated ETA. Set a new runtime limit based on the **progress update**. If the second runtime limit is exceeded, cancel the subagent and dispatch a fresh **replacement agent**.
 - **Implementer subagents** should be run in the background where possible for maximum concurrency.
 - Communication to and from subagents should be sparse. Communicate primarily through **context pointers**: to the plan, tasks, research notes, and previous commits. Don't duplicate information already available via pointers.
 - Keep one persistent **integration coordinator** subagent across merge waves, progress updates, and final checks to reduce coordination overhead. The coordinator should also handle deterministic commits and status checks directly when safe.
@@ -41,4 +41,8 @@ All commits must follow [commit message guidelines](references/message.md).
 
 8. Ensure all tasks and milestones are resolved and report the integration branch.
 
-9. Clean up all **implementer subagent** worktrees.
+9. Clean up all **implementer subagent** worktrees and their related branches.
+
+## Gotchas
+
+- Do not create worktrees anywhere within the main project directory because agents will automatically discover files like `AGENTS.md` causing context window bloat. Recommend creating them in `../<project name>.worktrees`.
