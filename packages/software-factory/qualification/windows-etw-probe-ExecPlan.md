@@ -1,6 +1,6 @@
 # Prove bounded Windows ETW process observation
 
-This ExecPlan follows `.agents/skills/exec-plans/SKILL.md` and the canonical `docs/software-factory/ExecPlan.md`. It covers only known Node/child ETW feasibility. The user requires all remaining reviews after all implementation tasks; provider qualification stays blocked and live desktop notifications stay last.
+This ExecPlan follows `.agents/skills/exec-plans/SKILL.md` and the canonical `brain/plans/software-factory/ExecPlan.md`. It covers only known Node/child ETW feasibility. The user requires all remaining reviews after all implementation tasks; provider qualification stays blocked and live desktop notifications stay last.
 
 ## Purpose / Big Picture
 

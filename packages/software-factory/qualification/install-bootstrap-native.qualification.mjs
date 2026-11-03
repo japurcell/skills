@@ -20,7 +20,7 @@ assert.equal(sha(readFileSync(archive)), nodeAsset.sha256, 'native archive must 
 const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
 const prerequisite = spawnSync(python, ['-c', 'import sys; assert sys.version_info >= (3, 11), "Python 3.11+ required"'], { encoding: 'utf8' });
 assert.equal(prerequisite.status, 0, `Python 3.11+ prerequisite failed: ${prerequisite.error?.message ?? prerequisite.stderr}`);
-const script = resolve(fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url)));
+const script = resolve(fileURLToPath(new URL('../../../skills/default/software-factory/scripts/install.py', import.meta.url)));
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const packageCommand = join(packageRoot, 'scripts/package-release.mjs');
 

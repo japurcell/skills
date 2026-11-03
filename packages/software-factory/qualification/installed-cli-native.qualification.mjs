@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createRepository } from '../test/fixtures/repository.mjs';
 
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
-const script = resolve(packageRoot, '../../skills/software-factory/scripts/install.py');
+const script = resolve(packageRoot, '../../skills/default/software-factory/scripts/install.py');
 const platform = `${process.platform}-${process.arch}`;
 const assets = {
   'darwin-arm64': { version: 'v24.22.1', url: 'https://nodejs.org/download/release/v24.22.1/node-v24.22.1-darwin-arm64.tar.xz',

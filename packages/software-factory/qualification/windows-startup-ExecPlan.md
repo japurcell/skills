@@ -45,7 +45,7 @@ Reflection reviewed `brain/index.md` and the session. The new failure-stage evid
 
 ## Context and Orientation
 
-The accepted research lives in `docs/software-factory/research/windows-startup-{feasibility-2026-10-22,artifacts-2026-10-21,source-audit-2026-10-21}.md`. The selected Git source commit is `2b8a3ab140826ac423c2845ef81d4c6ac4f7bf3c`; TypeScript source commit is `2bd066d87f5bafd315be9f40889d0a60b9e58e0b`. The package's existing foundation workflow supplies CI bootstrap patterns. All repositories/configuration are created under a disposable job directory.
+The accepted research lives in `brain/plans/software-factory/research/windows-startup-{feasibility-2026-10-22,artifacts-2026-10-21,source-audit-2026-10-21}.md`. The selected Git source commit is `2b8a3ab140826ac423c2845ef81d4c6ac4f7bf3c`; TypeScript source commit is `2bd066d87f5bafd315be9f40889d0a60b9e58e0b`. The package's existing foundation workflow supplies CI bootstrap patterns. All repositories/configuration are created under a disposable job directory.
 
 ## Plan of Work
 

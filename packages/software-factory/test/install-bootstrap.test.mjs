@@ -8,7 +8,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { pythonSourcePaths } from './fixtures/python-source-paths.mjs';
 
-const script = resolve(fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url)));
+const script = resolve(fileURLToPath(new URL('../../../skills/default/software-factory/scripts/install.py', import.meta.url)));
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const packageCommand = join(packageRoot, 'scripts/package-release.mjs');
 const nativeQualification = join(packageRoot, 'qualification/install-bootstrap-native.qualification.mjs');

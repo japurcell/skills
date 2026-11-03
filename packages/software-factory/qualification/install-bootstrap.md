@@ -1,9 +1,9 @@
 # T15b install bootstrap verification
 
-`skills/software-factory/scripts/install.py` is a Python 3.11+ standard-library first-execution boundary. It also requires callable `os.fchmod` before creating a private stage or file; Windows Python 3.11/3.12 without that API refuses before stage creation, and hosted Windows CI pins Python 3.13.14. The public command is:
+`skills/default/software-factory/scripts/install.py` is a Python 3.11+ standard-library first-execution boundary. It also requires callable `os.fchmod` before creating a private stage or file; Windows Python 3.11/3.12 without that API refuses before stage creation, and hosted Windows CI pins Python 3.13.14. The public command is:
 
 ```text
-python3.11 skills/software-factory/scripts/install.py verify --bundle-root ABSOLUTE_BUNDLE --manifest-sha256 EXTERNALLY_SELECTED_SHA256 --node-archive ABSOLUTE_PINNED_ARCHIVE
+python3.11 skills/default/software-factory/scripts/install.py verify --bundle-root ABSOLUTE_BUNDLE --manifest-sha256 EXTERNALLY_SELECTED_SHA256 --node-archive ABSOLUTE_PINNED_ARCHIVE
 ```
 
 It returns one bounded JSON receipt with the schema, release version/platform, selected manifest and Node digests, archive size/member count, bundle file count, and exact omitted convenience-link names. It writes no repository, `factory/`, store, installed-ready state, provider artifact, authentication data or configuration. It makes no download or desktop call. Verification refusals exit 1 with no receipt on stdout and a capped diagnostic on stderr. Conventional `argparse` usage errors, such as a missing required flag, exit 2.

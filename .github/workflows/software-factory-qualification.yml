@@ -4,13 +4,13 @@ on:
   pull_request:
     paths:
       - 'packages/software-factory/**'
-      - 'skills/software-factory/**'
+      - 'skills/default/software-factory/**'
       - '.github/workflows/software-factory-qualification.yml'
       - 'scripts/test-software-factory.py'
   push:
     paths:
       - 'packages/software-factory/**'
-      - 'skills/software-factory/**'
+      - 'skills/default/software-factory/**'
       - '.github/workflows/software-factory-qualification.yml'
       - 'scripts/test-software-factory.py'
   workflow_dispatch:

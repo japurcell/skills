@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createRepository } from '../test/fixtures/repository.mjs';
 
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
-const script = resolve(packageRoot, '../../skills/software-factory/scripts/install.py');
+const script = resolve(packageRoot, '../../skills/default/software-factory/scripts/install.py');
 const archive = '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz';
 const cache = '/tmp/software-factory-npm-cache';
 const python = process.env.FACTORY_TEST_PYTHON ?? '/Users/adam/.pyenv/versions/3.13.14/bin/python3.13';

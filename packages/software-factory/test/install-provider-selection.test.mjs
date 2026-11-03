@@ -5,8 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { pythonCanonicalPaths } from './fixtures/python-source-paths.mjs';
 
-const script = fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url));
+const script = fileURLToPath(new URL('../../../skills/default/software-factory/scripts/install.py', import.meta.url));
 const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
 
 test('public verify, prepare and install reject an unsafe provider selector before selected JavaScript', () => {
@@ -74,9 +75,11 @@ test('public selector accepts the bounded provider shape and continues to releas
     const executable = join(root, 'codex');
     const providers = join(root, 'providers.json');
     writeFileSync(executable, 'disposable nonqualified bytes');
-    writeFileSync(providers, JSON.stringify({ codex: { executable, modes: ['read-only', 'workspace-write'] } }));
+    writeFileSync(providers, '{}');
+    const [selectedExecutable, selectedProviders] = pythonCanonicalPaths(python, executable, providers);
+    writeFileSync(providers, JSON.stringify({ codex: { executable: selectedExecutable, modes: ['read-only', 'workspace-write'] } }));
     const result = spawnSync(python, [script, 'verify', '--bundle-root', join(root, 'absent-bundle'),
-      '--manifest-sha256', '0'.repeat(64), '--node-archive', join(root, 'absent-node.tar.xz'), '--providers', providers],
+      '--manifest-sha256', '0'.repeat(64), '--node-archive', join(root, 'absent-node.tar.xz'), '--providers', selectedProviders],
     { encoding: 'utf8', timeout: 30_000 });
     assert.equal(result.status, 1);
     assert.doesNotMatch(result.stderr, /provider selection refused|Traceback/i);
