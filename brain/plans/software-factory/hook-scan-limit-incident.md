@@ -31,7 +31,7 @@ The measured value is not necessarily the total size of all pending files. The i
 
 ## Evidence gathered after access was restored
 
-The six supplied PNGs under [prototypes/screenshots](prototypes/screenshots/) total **20,026,474 bytes**:
+The six supplied PNGs under [prototypes/screenshots](prototypes/screenshots) total **20,026,474 bytes**:
 
 | File | Bytes |
 | --- | ---: |
@@ -47,8 +47,8 @@ These assets alone exceed the installed aggregate allowance. They are intentiona
 Source inspection found an important version distinction:
 
 - Installed scanner: `/Users/adam/.codex/hooks/scan-secrets.py`. It contains `MAX_TOTAL_BYTES = 8388608`, a `ScanBudget` class, `Snapshot`, and `SnapshotSource.acquire`. Worktree acquisition checks remaining capacity against file size, then charges bytes while capturing the file, before classification. Binary content also has a scanning path; PNGs are not automatically outside the budget.
-- This checkout's canonical renderer: [hooks/families/scan_secrets.py](../../hooks/families/scan_secrets.py). It also sets an 8 MiB aggregate limit, but has `MAX_FILE_BYTES = 1048576` and different implementation structure.
-- This checkout's generated Codex entrypoint: [.codex/hooks/scan-secrets.py](../../.codex/hooks/scan-secrets.py). It likewise has the older per-file limit. The installed scanner's diagnostic policy says that constant is not defined.
+- This checkout's canonical renderer: [hooks/families/scan_secrets.py](../../../hooks/families/scan_secrets.py). It also sets an 8 MiB aggregate limit, but has `MAX_FILE_BYTES = 1048576` and different implementation structure.
+- This checkout's generated Codex entrypoint: [.codex/hooks/scan-secrets.py](../../../.codex/hooks/scan-secrets.py). It likewise has the older per-file limit. The installed scanner's diagnostic policy says that constant is not defined.
 
 Therefore **this checkout does not contain the same scanner implementation as the installed incident version**. Locate the source checkout that produced build `471533ef86089e4b` before patching or installing. Reinstalling this checkout blindly could replace the newer installed implementation with a different one.
 
@@ -71,4 +71,4 @@ Therefore **this checkout does not contain the same scanner implementation as th
 - Ordinary PreToolUse and Stop delivery are exercised end to end, including repeated Stop events and a human recovery route.
 - Generated adapters agree with canonical source, installed build identity is verified, and the hook is re-enabled and tested.
 
-Existing test entry points to investigate in the correct source revision include [capture tests](../../scripts/test-scan-secrets-capture.py), [Codex scanner tests](../../scripts/test-codex-hooks-secrets-scanner.sh), and [Windows scanner tests](../../scripts/test-scan-secrets-windows.ps1). This report did not run them, reproduce the incident in a scratch repository, or change any scanner code. No repair or clean scan is claimed.
+Existing test entry points to investigate in the correct source revision include [capture tests](../../../scripts/test-scan-secrets-capture.py), [Codex scanner tests](../../../scripts/test-codex-hooks-secrets-scanner.sh), and [Windows scanner tests](../../../scripts/test-scan-secrets-windows.ps1). This report did not run them, reproduce the incident in a scratch repository, or change any scanner code. No repair or clean scan is claimed.

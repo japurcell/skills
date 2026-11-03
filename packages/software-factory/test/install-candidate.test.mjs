@@ -15,7 +15,7 @@ const selection = { release: '1.2.3', selectionDigest: 'a'.repeat(64), targetRel
   artifactDigests: { bundle: 'b'.repeat(64), node: 'c'.repeat(64) }, targetSchema: 7 };
 const { scanOwnedTree, directoryIdentity, writeCandidateReceipt, verifyBoundInstallCandidate } = await import('../dist/install-candidate.js');
 const { runManagedInstallCommand } = await import('../dist/install.js');
-const bootstrapScript = fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url));
+const bootstrapScript = fileURLToPath(new URL('../../../skills/default/software-factory/scripts/install.py', import.meta.url));
 const packageRoot = join(import.meta.dirname, '..');
 const canonical = value => Array.isArray(value) ? `[${value.map(canonical).join(',')}]`
   : value && typeof value === 'object' ? `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`

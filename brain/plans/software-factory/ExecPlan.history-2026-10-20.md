@@ -4,7 +4,7 @@ Snapshot preserved on 2026-10-20. Background only: its durable-graph recommendat
 
 # Research and compare software factory designs
 
-This living plan is `docs/software-factory/ExecPlan.md`. It follows `.agents/skills/exec-plans/SKILL.md`.
+This living plan is `brain/plans/software-factory/ExecPlan.md`. It follows `.agents/skills/exec-plans/SKILL.md`.
 
 ## Purpose / Big Picture
 
@@ -29,7 +29,7 @@ The user's requirements are skill-based installation in arbitrary repositories, 
 
 ## Decision Log
 
-- 2026-10-08: Keep requested research and prototypes in `docs/software-factory/` while the architecture decision remains open. Treat them as user deliverables, not transient notes to delete.
+- 2026-10-08: Keep requested research and prototypes in `brain/plans/software-factory/` while the architecture decision remains open. Treat them as user deliverables, not transient notes to delete.
 - 2026-10-08: Use plain standalone HTML documents with inline CSS and JavaScript, so opening a file needs no build or service. Persist only user feedback in browser storage, with explicit export/import. Factory scenarios remain in memory.
 - 2026-10-08: Build three architecture alternatives, not visual skins: a repo-local runner, a durable workflow graph, and an event-driven factory. Final mechanics depend on source findings.
 - 2026-10-08: Do not add a test suite for disposable prototype documents. Verify behavior directly through the visible browser interface and inspect scripts for syntax. This follows the prototype skill and the higher-priority rule against tests for low-impact reversible changes.
@@ -48,7 +48,7 @@ This repository publishes skills, agent instructions, and provider hooks. The cu
 Status: done
 Acceptance: met
 
-R1 owns only `research/super-simple-software-factory.md`; R2 owns only `research/no-mistakes.md`; R3 owns only `research/noodle.md`, all under `docs/software-factory/`. Their prerequisites are the user's requirements and public repository access. Each investigates code, documentation, tests, and event/storage interfaces, records revision/date, cites primary files, distinguishes implemented behavior from intent, and stops after its report. All three may proceed in parallel. They must not execute upstream code or modify shared files.
+R1 owns only `research/super-simple-software-factory.md`; R2 owns only `research/no-mistakes.md`; R3 owns only `research/noodle.md`, all under `brain/plans/software-factory/`. Their prerequisites are the user's requirements and public repository access. Each investigates code, documentation, tests, and event/storage interfaces, records revision/date, cites primary files, distinguishes implemented behavior from intent, and stops after its report. All three may proceed in parallel. They must not execute upstream code or modify shared files.
 
 R4 is coordinator-owned. It investigates the supplied video, verifies representative source claims, and writes `research.md` with the complete requirements, source comparison, synthesis, unknowns, and options. It depends on R1-R3 for repository conclusions. Source claims need traceable links; gaps must not become attributed facts.
 
@@ -58,7 +58,7 @@ Each research agent has a 12-minute runtime warning threshold, tracked by coordi
 Status: done
 Acceptance: met
 
-D1 depends on milestone 1. The coordinator creates `index.html`, `repo-runner.html`, `durable-graph.html`, and `event-factory.html` under `docs/software-factory/prototypes/`. Each design explains its question, topology, state ownership, workflow customization, harness/model routing, memory improvement, and operational tradeoffs. Native clickable diagrams expose components. Guided scenarios show success, failed checks, recovery, and bounded review loops. A timeline/detail inspector demonstrates live and past session views using simulated events. Feedback supports section or component anchors, selected text, editable comments, local persistence, and portable export/import.
+D1 depends on milestone 1. The coordinator creates `index.html`, `repo-runner.html`, `durable-graph.html`, and `event-factory.html` under `brain/plans/software-factory/prototypes/`. Each design explains its question, topology, state ownership, workflow customization, harness/model routing, memory improvement, and operational tradeoffs. Native clickable diagrams expose components. Guided scenarios show success, failed checks, recovery, and bounded review loops. A timeline/detail inspector demonstrates live and past session views using simulated events. Feedback supports section or component anchors, selected text, editable comments, local persistence, and portable export/import.
 
 D2 depends on D1 and owns browser verification. Open every file, exercise each scenario, inspect at desktop and narrow widths, verify comment persistence after reload, export/import feedback, keyboard navigation, and absence of clipped diagrams or text. Validate inline JavaScript syntax and local links. Report simulation limits and any unavailable browser capability.
 

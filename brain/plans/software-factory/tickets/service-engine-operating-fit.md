@@ -3,7 +3,7 @@
 **Type:** research
 **Status:** closed
 **Blocked By:** local-runtime-prerequisites.md
-**Research Dir:** docs/software-factory/research/service-engine-operating-fit
+**Research Dir:** brain/plans/software-factory/research/service-engine-operating-fit
 
 ## Question
 

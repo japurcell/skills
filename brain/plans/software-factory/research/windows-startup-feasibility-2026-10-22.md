@@ -1,6 +1,6 @@
 # T17 Windows startup feasibility decision
 
-Date: 2026-10-22 UTC. Read-only decision against immutable source `caf46b425c8b19e871a496dda08edfb96d946b50` in `/Users/adam/.codex/worktrees/ea58/skills`. The active T17-Windows-startup contract was read from the parent's current `docs/software-factory/ExecPlan.md`. The researcher changed no maintained source/tests, canonical docs, brain, installation, provider, real repository/user configuration, or CI publication. Disposable E2E fixtures used private configuration. The parent retained this report as canonical evidence. Research is not native qualification.
+Date: 2026-10-22 UTC. Read-only decision against immutable source `caf46b425c8b19e871a496dda08edfb96d946b50` in `/Users/adam/.codex/worktrees/ea58/skills`. The active T17-Windows-startup contract was read from the parent's current `brain/plans/software-factory/ExecPlan.md`. The researcher changed no maintained source/tests, canonical docs, brain, installation, provider, real repository/user configuration, or CI publication. Disposable E2E fixtures used private configuration. The parent retained this report as canonical evidence. Research is not native qualification.
 
 ## Recommendation
 

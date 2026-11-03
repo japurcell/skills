@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { pythonCanonicalPaths } from './fixtures/python-source-paths.mjs';
 
-const script = fileURLToPath(new URL('../../../skills/software-factory/scripts/install.py', import.meta.url));
+const script = fileURLToPath(new URL('../../../skills/default/software-factory/scripts/install.py', import.meta.url));
 const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
 
 test('public verify, prepare and install reject an unsafe provider selector before selected JavaScript', () => {

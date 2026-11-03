@@ -3,7 +3,7 @@
 **Type:** research
 **Status:** closed
 **Blocked By:** agent-execution-profiles.md
-**Research Dir:** docs/software-factory/research/live-progress-transport-fit
+**Research Dir:** brain/plans/software-factory/research/live-progress-transport-fit
 
 ## Question
 

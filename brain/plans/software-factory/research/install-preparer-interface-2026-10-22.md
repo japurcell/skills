@@ -1,6 +1,6 @@
 # Private Python to verified Node preparer interface
 
-Read-only follow-up decision, 2026-10-22. Base source is `packages/software-factory/src/installation-bindings.ts` and `release.ts` in the integrated tree; the bootstrap under review is private `skills/software-factory/scripts/install.py` at `acd1`. This refines the candidate packet in `docs/software-factory/research/install-candidate-boundary-2026-10-22.md`. It does not authorize installed publication or change any existing 8 KiB ticket, 512-file/256-MiB controller stage, 128-MiB archive, 8,192-member extraction, or candidate bounds.
+Read-only follow-up decision, 2026-10-22. Base source is `packages/software-factory/src/installation-bindings.ts` and `release.ts` in the integrated tree; the bootstrap under review is private `skills/default/software-factory/scripts/install.py` at `acd1`. This refines the candidate packet in `brain/plans/software-factory/research/install-candidate-boundary-2026-10-22.md`. It does not authorize installed publication or change any existing 8 KiB ticket, 512-file/256-MiB controller stage, 128-MiB archive, 8,192-member extraction, or candidate bounds.
 
 ## Source facts and decision
 

@@ -9,7 +9,7 @@ import test from 'node:test';
 import { createRepository } from '../test/fixtures/repository.mjs';
 
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
-const script = resolve(packageRoot, '../../skills/software-factory/scripts/install.py');
+const script = resolve(packageRoot, '../../skills/default/software-factory/scripts/install.py');
 const archive = '/private/tmp/factory-node-v24.22.1-darwin-arm64-selection.tar.xz';
 const cache = '/tmp/software-factory-npm-cache';
 const codex = '/Users/adam/homebrew/Caskroom/codex/0.163.0/bin/codex';

@@ -1,6 +1,8 @@
 # Software factory handoff
 
-Updated 2026-10-22 local time. Continue the accepted `docs/software-factory/ExecPlan.md` until complete. This is current guidance; historical snapshots are evidence only.
+Updated 2026-10-22 local time. Continue the accepted `brain/plans/software-factory/ExecPlan.md` until complete. This is current guidance; historical snapshots are evidence only.
+
+Repository layout updated 2026-11-03: the plan, research, prototypes and handoff now live in `brain/plans/software-factory/`; the published entry skill lives in `skills/default/software-factory/`. This move updates repository links, installer-test paths and CI filters without completing any pending implementation or qualification gate. Relocation checks preserve all119 moved files, all592 previously valid affected Markdown links, and710 static relative Markdown/HTML targets including new navigation; all101 plan notes are reachable from the curated plans index. The rebuilt bootstrap/provider/candidate checks pass24cases on available Node24.21.0/Python3.14.6; this is relocation regression evidence, not pinned native qualification. Skill-source and skill-format validation pass; the complete disposable `bash scripts/test-install.sh` suite exits0. Reflection found no additional durable note to add.
 
 ## Authorization and current base
 

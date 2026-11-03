@@ -18,7 +18,7 @@ An implementation-ready specification for a fully customizable, code-controlled 
 - On 2026-10-15 the user explicitly directed: prefer removing optional complexity over designing more machinery. Test whether a capability is needed before refining its mechanisms. Present consequential scope changes explicitly; do not silently revoke accepted behavior. Derive routine record fields, command names, and exit codes from accepted contracts rather than turning every implementation detail into another feature decision.
 - On 2026-10-15 the user clarified that proposed simplifications must actually reduce complexity. Evaluate the complete replacement and retained correctness requirements against available evidence; similarity to SSSF alone is not a reason to replace an accepted mechanism. The polling proposal was rejected and SSE reaffirmed in [Session events and live progress](tickets/session-events-and-live-progress.md#live-ui-reliability-unchanged-pending-discussion).
 - Evidence entry points: [initial research](research.md) and [reviewable architecture documents](README.md). Source studies and simulations have different evidentiary limits.
-- The user promoted this map and its tickets to `docs/software-factory/` on 2026-10-12 for version control. Resume wayfinder in this directory; do not recreate a scratchpad map.
+- The user promoted this map and its tickets to `brain/plans/software-factory/` on 2026-10-12 for version control. Resume wayfinder in this directory; do not recreate a scratchpad map.
 - The [handoff](handoff.md) tracks current progress, verification limits, and the next session. Keep decision details in their owning tickets.
 
 ## Decisions so far

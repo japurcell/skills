@@ -16,7 +16,7 @@ The [Foreground invocation lifecycle specification](lifecycle-specification.md) 
 
 ## Swimlane design review
 
-**Layout accepted, 2026-10-15:** open the [observability prototype](http://localhost:8765/prototypes/observability-prototype.html), or its [standalone HTML](prototypes/observability-prototype.html). It follows the supplied [SSSF screenshots](prototypes/screenshots/): run index with miniature live timelines, full run timeline, then phase request/configuration/events/outputs. All workflow inputs now belong to configuration and CLI arguments. The web UI has no execution controls. View filtering and freezing affect observation only; prototype review notes are separate design feedback.
+**Layout accepted, 2026-10-15:** open the [observability prototype](http://localhost:8765/prototypes/observability-prototype.html), or its [standalone HTML](prototypes/observability-prototype.html). It follows the supplied [SSSF screenshots](prototypes/screenshots): run index with miniature live timelines, full run timeline, then phase request/configuration/events/outputs. All workflow inputs now belong to configuration and CLI arguments. The web UI has no execution controls. View filtering and freezing affect observation only; prototype review notes are separate design feedback.
 
 Select a run card, then a phase. Synthetic output arrives every two seconds in the active run, including on its index card. Freeze this view holds an observation snapshot while recording continues. Ended needs-input, interrupted, and unknown-outcome examples show cleanup separately without accepting workflow responses. Notes save in this browser and export as Markdown. The simulation proves no runtime or adapter guarantees. The [layout resolution](tickets/swimlane-interaction-design.md#resolution) records acceptance. [Detailed observability UI design](tickets/detailed-observability-ui-design.md) records the accepted visual, interaction, responsive, accessibility, and scale contract.
 
@@ -63,7 +63,7 @@ The HTML files contain their own styles, scripts, and simulated data. No build o
 To restart the preview from the repository root:
 
 ```sh
-rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/software-factory
+rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory brain/plans/software-factory
 ```
 
 Then open [the local comparison](http://localhost:8765/prototypes/index.html).

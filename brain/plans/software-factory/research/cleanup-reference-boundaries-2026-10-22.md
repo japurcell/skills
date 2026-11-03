@@ -1,6 +1,6 @@
 # T16 selected cleanup reference decision (read-only, 2026-10-22)
 
-Scope: decision input for the future T16-cleanup task. No repository or user history was changed, no cleanup path was exercised, and this does not claim an installed cleanup interface exists. The accepted task boundary is `docs/software-factory/ExecPlan.md:391-399`. T16-upgrade and the installed maintenance controller must precede implementation.
+Scope: decision input for the future T16-cleanup task. No repository or user history was changed, no cleanup path was exercised, and this does not claim an installed cleanup interface exists. The accepted task boundary is `brain/plans/software-factory/ExecPlan.md:391-399`. T16-upgrade and the installed maintenance controller must precede implementation.
 
 ## Actual persisted shapes
 

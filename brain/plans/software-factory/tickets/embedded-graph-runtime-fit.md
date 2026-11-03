@@ -3,7 +3,7 @@
 **Type:** research
 **Status:** closed
 **Blocked By:** none
-**Research Dir:** docs/software-factory/research/embedded-graph-runtimes
+**Research Dir:** brain/plans/software-factory/research/embedded-graph-runtimes
 
 ## Question
 

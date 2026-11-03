@@ -1,6 +1,6 @@
 # Software factory development package
 
-This package implements `docs/software-factory/ExecPlan.md`. Development source stays outside published skills. It currently provides build/test infrastructure, native foundation qualification, transactional ownership/accounting, bounded filtered capture, command-only foreground workflows through `invoke`, paged `history`, bounded shutdown and exact-claim owner clearance. Startup requires an explicitly prepared shared toolchain; it never installs dependencies. See the [invocation contract](qualification/invocation.md) and [lifecycle evidence and limits](qualification/lifecycle.md). Real harness adapters remain unfinished.
+This package implements `brain/plans/software-factory/ExecPlan.md`. Development source stays outside published skills. It currently provides build/test infrastructure, native foundation qualification, transactional ownership/accounting, bounded filtered capture, command-only foreground workflows through `invoke`, paged `history`, bounded shutdown and exact-claim owner clearance. Startup requires an explicitly prepared shared toolchain; it never installs dependencies. See the [invocation contract](qualification/invocation.md) and [lifecycle evidence and limits](qualification/lifecycle.md). Real harness adapters remain unfinished.
 
 Explicit setup from repository root:
 

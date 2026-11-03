@@ -4,7 +4,7 @@
 **Status:** closed
 **Claim:** subagent-f4a9c2
 **Blocked By:** none
-**Research Dir:** docs/software-factory/research/embedded-workflow-runtimes
+**Research Dir:** brain/plans/software-factory/research/embedded-workflow-runtimes
 
 ## Question
 

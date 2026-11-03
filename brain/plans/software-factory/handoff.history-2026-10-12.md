@@ -70,7 +70,7 @@ Earlier validation covered simulated scenario paths and document interactions, i
 To serve the documents, run from `/Users/adam/.codex/worktrees/ea58/skills`:
 
 ```sh
-rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory docs/software-factory
+rtk proxy python3 -m http.server 8765 --bind 127.0.0.1 --directory brain/plans/software-factory
 ```
 
 Open `http://localhost:8765/prototypes/durable-graph.html`. Server status was not checked this session. Annotations are browser-local and origin-specific; retain the hostname and port or export notes before changing origin.
