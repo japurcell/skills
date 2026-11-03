@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { closeSync, constants, fstatSync, lstatSync, openSync, readSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, parse, resolve, sep } from 'node:path';
-import { validateCopilotPackageArtifact } from './adapters/copilot.js';
+import { validateCopilotPackageArtifact, validateRetainedCopilotPackageArtifact } from './adapters/copilot.js';
 import { validateReleaseBundle, type ReleasePlatform } from './release.js';
 
 const CODEX_SHA256 = '8813367285524ac798dd96d1b071aea30d58708c7226fd236cd275cf1cfdee31';
@@ -159,5 +159,33 @@ export function validateBoundProviderSources(value: unknown): void {
       || copilot.version !== '1.0.101' || copilot.manifestSha256 !== COPILOT_MANIFEST_SHA256
       || copilot.model !== 'gpt-6-luna' || copilot.reasoning !== 'low') fail('bound Copilot source differs');
     validateCopilotPackageArtifact({ packageRoot, manifestFile, manifestSha256: COPILOT_MANIFEST_SHA256 });
+  }
+}
+
+/** Recheck exact previously-owned provider bytes without imposing the target release's pins. */
+export function validateRetainedProviderSources(value: unknown): void {
+  const providers = object(value);
+  keys(providers, [], ['codex', 'copilot']);
+  if (providers.codex !== undefined) {
+    const codex = object(providers.codex);
+    keys(codex, ['executable', 'version', 'sha256', 'bytes', 'model', 'reasoning', 'modes']);
+    const executable = canonicalPath(codex.executable, 'file');
+    modes(codex.modes, ['read-only', 'workspace-write']);
+    if (typeof codex.version !== 'string' || !codex.version || typeof codex.model !== 'string' || !codex.model
+      || typeof codex.reasoning !== 'string' || !codex.reasoning || typeof codex.sha256 !== 'string'
+      || !/^[a-f0-9]{64}$/.test(codex.sha256) || !Number.isSafeInteger(codex.bytes)) fail('retained Codex binding invalid');
+    const measured = checkedHash(executable, MAX_CODEX_EXECUTABLE_BYTES);
+    if (codex.bytes !== measured.bytes || codex.sha256 !== measured.sha256) fail('retained Codex source differs');
+  }
+  if (providers.copilot !== undefined) {
+    const copilot = object(providers.copilot);
+    keys(copilot, ['packageRoot', 'manifestFile', 'version', 'manifestSha256', 'model', 'reasoning', 'modes']);
+    const packageRoot = canonicalPath(copilot.packageRoot, 'directory');
+    const manifestFile = canonicalPath(copilot.manifestFile, 'file');
+    modes(copilot.modes, ['read-only']);
+    if (typeof copilot.version !== 'string' || !copilot.version || typeof copilot.model !== 'string' || !copilot.model
+      || typeof copilot.reasoning !== 'string' || !copilot.reasoning || typeof copilot.manifestSha256 !== 'string'
+      || !/^[a-f0-9]{64}$/.test(copilot.manifestSha256)) fail('retained Copilot binding invalid');
+    validateRetainedCopilotPackageArtifact({ packageRoot, manifestFile, manifestSha256: copilot.manifestSha256 }, copilot.version);
   }
 }

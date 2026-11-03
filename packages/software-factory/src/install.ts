@@ -6,11 +6,14 @@ import { dirname, isAbsolute, join, parse, resolve, sep } from 'node:path';
 import { currentOwner } from './native/process.js';
 import { validateInstallSelection, type InstallSelection, type VerifiedInstallSelection } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
-import { beginRepositoryBootstrap, measureMaintenanceStage, prepareMaintenanceHandoff, type MaintenanceSelection } from './maintenance.js';
+import { beginRepositoryBootstrap, prepareForwardSchema, measureMaintenanceStage, prepareMaintenanceHandoff, type MaintenanceSelection } from './maintenance.js';
 import { openMaintenanceStore } from './store.js';
 import { directoryIdentity, scanOwnedTree, verifyBoundInstallCandidate, writeCandidateReceipt,
   type CandidateReceipt, type TreeEntry, type TreeEvidence } from './install-candidate.js';
 import { repositoryIdentity } from './workspace.js';
+import { captureOriginalInstallation, assertOriginalInstallation } from './upgrade-original.js';
+import { writePublicationRecord } from './install-publication-state.js';
+import { prepareUpgradeIntent } from './upgrade-publication-state.js';
 
 const SHA = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
@@ -19,6 +22,7 @@ const OMIT = ['bin/corepack', 'bin/npm', 'bin/npx'];
 const MAX_REQUEST = 64 * 1024, PREPARATION_MS = 240_000;
 
 interface Request {
+  python?: { path: string; identity: string; sha256: string; version: string };
   schema: 1; requestId: string; repository: string; npm: { offline: boolean };
   stageRoot: string; stageIdentity: string; source: InstallSelection;
   snapshot: { bundleRoot: string; nodeArchivePath: string; extractedNodeRoot: string;
@@ -77,13 +81,39 @@ function stageChild(root: string, path: unknown, suffix: string, kind: 'file' | 
   if (path !== join(root, suffix)) fail('private snapshot path differs');
   return checkedPath(path, kind);
 }
-function readRequest(requestPath: string): Request {
+function validateSelectedPython(value: unknown): Request['python'] {
+  const selected = exact(value, ['path', 'identity', 'sha256', 'version']);
+  const path = checkedPath(selected.path, 'file');
+  const version = typeof selected.version === 'string' ? /^(\d+)\.(\d+)\.(\d+)$/.exec(selected.version) : null;
+  if (typeof selected.identity !== 'string' || !/^\d+:\d+$/.test(selected.identity)
+    || typeof selected.sha256 !== 'string' || !SHA.test(selected.sha256)
+    || !version || (Number(version[1]) < 3 || (Number(version[1]) === 3 && Number(version[2]) < 11)))
+    fail('selected Python binding invalid');
+  const observed = lstatSync(path);
+  if (observed.nlink !== 1 || observed.size < 1 || observed.size > 128 * 1024 * 1024
+    || `${observed.dev}:${observed.ino}` !== selected.identity) fail('selected Python identity differs');
+  const fd = openSync(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const before = fstatSync(fd), digest = createHash('sha256'), buffer = Buffer.alloc(1024 * 1024);
+    if (before.dev !== observed.dev || before.ino !== observed.ino) fail('selected Python identity changed');
+    for (let count = readSync(fd, buffer, 0, buffer.length, null); count; count = readSync(fd, buffer, 0, buffer.length, null))
+      digest.update(buffer.subarray(0, count));
+    const after = fstatSync(fd), current = lstatSync(path);
+    if (after.dev !== before.dev || after.ino !== before.ino || after.size !== before.size
+      || after.mtimeMs !== before.mtimeMs || after.ctimeMs !== before.ctimeMs
+      || current.dev !== before.dev || current.ino !== before.ino || current.size !== before.size || current.nlink !== 1
+      || current.mtimeMs !== before.mtimeMs || current.ctimeMs !== before.ctimeMs || digest.digest('hex') !== selected.sha256) fail('selected Python bytes changed');
+  } finally { closeSync(fd); }
+  return selected as unknown as Request['python'];
+}
+function readRequest(requestPath: string, upgrade = false): Request {
   checkedPath(requestPath, 'file');
   const raw = privateFile(requestPath, MAX_REQUEST);
   const parsed = JSON.parse(raw.toString('utf8')) as unknown;
   // Python emits a fixed canonical JSON form. This also rejects duplicate JSON keys.
   if (raw.toString('utf8') !== `${canonicalJson(parsed)}\n`) fail('noncanonical or duplicate private request');
-  const value = exact(parsed, ['schema', 'requestId', 'repository', 'npm', 'stageRoot', 'stageIdentity', 'source', 'snapshot']);
+  const value = exact(parsed, ['schema', 'requestId', 'repository', 'npm', 'stageRoot', 'stageIdentity', 'source', 'snapshot', ...(upgrade ? ['python'] : [])]);
+  if (upgrade) validateSelectedPython(value.python);
   if (value.schema !== 1 || typeof value.requestId !== 'string' || !UUID.test(value.requestId)) fail('private request identity invalid');
   const npm = exact(value.npm, ['offline']);
   if (typeof npm.offline !== 'boolean') fail('invalid private npm mode');
@@ -228,9 +258,11 @@ function validateToolchain(toolchain: string): void {
 
 /** Authenticated private request to an incomplete, candidate-bound operation. No installed-ready effect. */
 async function prepareCandidate(requestPath: string, handoff: false): Promise<PreparedCandidateReceipt>;
-async function prepareCandidate(requestPath: string, handoff: true): Promise<PreparedInstallHandoff>;
-async function prepareCandidate(requestPath: string, handoff: boolean): Promise<PreparedCandidateReceipt | PreparedInstallHandoff> {
-  const request = readRequest(requestPath);
+async function prepareCandidate(requestPath: string, handoff: true, upgrade?: boolean): Promise<PreparedInstallHandoff>;
+async function prepareCandidate(requestPath: string, handoff: boolean, upgrade = false): Promise<PreparedCandidateReceipt | PreparedInstallHandoff> {
+  if (upgrade && (process.platform !== 'darwin' || process.arch !== 'arm64'))
+    fail('upgrade publication platform is not qualified');
+  const request = readRequest(requestPath, upgrade);
   const privateSelection = validateInstallSelection({ bundleRoot: request.snapshot.bundleRoot,
     manifestSha256: request.source.manifestSha256, nodeArchivePath: request.snapshot.nodeArchivePath,
     ...(request.source.providers ? { providers: request.source.providers } : {}) });
@@ -242,6 +274,13 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
   const original = validateInstallSelection(request.source);
   sameSelection(privateSelection, original);
   const { common } = await repositoryIdentity(request.repository);
+  if (upgrade) {
+    const python = validateSelectedPython(request.python)!;
+    const factory = join(common, 'factory');
+    if (python.path === factory || python.path.startsWith(`${factory}${sep}`)
+      || python.path === request.stageRoot || python.path.startsWith(`${request.stageRoot}${sep}`))
+      fail('selected Python under replaceable or private stage');
+  }
   for (const provider of [original.providers.codex?.executable, original.providers.copilot?.packageRoot,
     original.providers.copilot?.manifestFile]) {
     const factory = join(common, 'factory');
@@ -250,7 +289,20 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
       fail('provider source under replaceable or private stage');
   }
   const selection = selectionFrom(original);
-  const handle = await beginRepositoryBootstrap(request.repository, selection, currentOwner());
+  const captured = upgrade ? await captureOriginalInstallation(common, request.repository) : null;
+  if (captured) {
+    selection.artifactDigests['original-installed'] = captured.digest;
+    selection.artifactDigests['original-completion'] = captured.completionDigest;
+  }
+  const handle = captured ? await prepareForwardSchema(request.repository, selection, currentOwner())
+    : await beginRepositoryBootstrap(request.repository, selection, currentOwner());
+  if (captured) {
+    assertOriginalInstallation(common, captured.original);
+    const operation = join(common, 'factory', `upgrade-${handle.operationId}`);
+    mkdirSync(operation, { mode: 0o700 });
+    mkdirSync(join(operation, 'old'), { mode: 0o700 });
+    writePublicationRecord(join(operation, 'original.json'), captured.original);
+  }
   const candidate = join(common, 'factory', `install-candidate-${handle.operationId}`);
   mkdirSync(candidate, { mode: 0o700 });
   const runtimeSource = scanOwnedTree(request.snapshot.bundleRoot, 'candidate');
@@ -277,13 +329,27 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
   const manifestFd = openSync(manifestPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL, 0o600);
   try { writeSync(manifestFd, manifestBytes); fsyncSync(manifestFd); } finally { closeSync(manifestFd); }
   const compiledStage = join(common, 'factory', 'controller-staging');
-  mkdirSync(compiledStage, { mode: 0o700 });
+  if (!upgrade) mkdirSync(compiledStage, { mode: 0o700 });
+  else directoryIdentity(compiledStage);
   const stagePath = join(compiledStage, handle.operationId);
   mkdirSync(stagePath, { mode: 0o700 });
   const payload = join(stagePath, 'payload');
   mkdirSync(payload, { mode: 0o700 });
   fileCopy(nodeExecutable, join(payload, privateSelection.bundle.platform === 'win32-x64' ? 'node.exe' : 'node'), undefined, 0o700);
   fileCopy(join(candidate, 'install/runtime/package.json'), join(payload, 'package.json'));
+  let atomicBinding: { interpreter: { path: string; identity: string; sha256: string }; helper: { path: string; identity: string; sha256: string }; pythonVersion: string } | undefined;
+  if (upgrade) {
+    const selectedPython = validateSelectedPython(request.python)!;
+    const helperRow = runtimeSource.rows.find(row => row.path === 'native/atomic-publication.py');
+    if (!helperRow || helperRow.type !== 'file' || !helperRow.sha256) fail('authenticated publication helper missing');
+    const helperDirectory = join(payload, 'native'), helperPath = join(helperDirectory, 'atomic-publication.py');
+    mkdirSync(helperDirectory, { mode: 0o700 });
+    fileCopy(join(candidate, 'install/runtime/native/atomic-publication.py'), helperPath, helperRow);
+    const helperInfo = lstatSync(helperPath);
+    atomicBinding = { interpreter: { path: selectedPython.path, identity: selectedPython.identity, sha256: selectedPython.sha256 },
+      helper: { path: helperPath, identity: `${helperInfo.dev}:${helperInfo.ino}`, sha256: helperRow.sha256 },
+      pythonVersion: selectedPython.version };
+  }
   const distSource = scanOwnedTree(join(candidate, 'install/runtime/dist'), 'candidate');
   copyTree(join(candidate, 'install/runtime/dist'), join(payload, 'dist'), distSource);
   await runManagedInstallCommand(join(payload, privateSelection.bundle.platform === 'win32-x64' ? 'node.exe' : 'node'),
@@ -291,6 +357,7 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
   const stageEvidence = measureMaintenanceStage(stagePath);
   const originalAgain = validateInstallSelection(request.source);
   sameSelection(original, originalAgain);
+  if (upgrade) validateSelectedPython(request.python);
   if (directoryIdentity(request.stageRoot) !== request.stageIdentity
     || scanOwnedTree(request.snapshot.extractedNodeRoot, 'node').digest !== measuredNode.digest)
     fail('private snapshot changed before candidate binding');
@@ -306,7 +373,14 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
   verifyBoundInstallCandidate(binding, { operationId: handle.operationId, repositoryId: handle.repositoryId,
     claimId: handle.claimId, selectionDigest: selection.selectionDigest, manifestSha256: request.source.manifestSha256 });
   const store = openMaintenanceStore(common);
-  try { await store.bindInstallCandidate({ handle, candidate: binding, ...stageEvidence }); } finally { store.close(); }
+  try {
+    if (captured) {
+      assertOriginalInstallation(common, captured.original);
+      if (!atomicBinding) fail('upgrade helper binding missing');
+      const { sha256: intentSha256, receipt } = prepareUpgradeIntent(handle, binding, stageEvidence, atomicBinding);
+      await store.bindUpgradeCandidate({ handle, candidate: binding, intentSha256, receipt, ...stageEvidence });
+    } else await store.bindInstallCandidate({ handle, candidate: binding, ...stageEvidence });
+  } finally { store.close(); }
   const result = { operationId: handle.operationId, repositoryId: handle.repositoryId, claimId: handle.claimId,
     stagePath, candidateDigest: tree.digest };
   if (handoff) {
@@ -319,3 +393,6 @@ async function prepareCandidate(requestPath: string, handoff: boolean): Promise<
 export function prepareInstallCandidate(requestPath: string): Promise<PreparedCandidateReceipt> { return prepareCandidate(requestPath, false); }
 /** Trusted preparer emits a private one-use handoff ticket while it still owns the claim. */
 export function prepareInstallHandoff(requestPath: string): Promise<PreparedInstallHandoff> { return prepareCandidate(requestPath, true); }
+
+/** Authenticated installed upgrade preparation; publication remains in the staged controller. */
+export function prepareUpgradeHandoff(requestPath: string): Promise<PreparedInstallHandoff> { return prepareCandidate(requestPath, true, true); }

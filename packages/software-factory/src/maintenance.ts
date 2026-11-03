@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { currentOwner, inspectOwner } from './native/process.js';
 import { LiveProcessScope } from './native/process.js';
 import { verifyPublicationLayout } from './install-publication-state.js';
+import { directoryIdentity, verifyBoundInstallCandidate } from './install-candidate.js';
 import { assertLocalPlacement } from './placement.js';
 import { schemaVersion, initializeSchema } from './schema.js';
 import { openForwardMaintenanceStore, openMaintenanceStore, openRepositoryStore } from './store.js';
@@ -204,6 +205,43 @@ function assertRecordedIntent(commonDir: string, claim: Claim): MaintenanceInten
 }
 function verifyInstallCandidate(commonDir: string, claim: Claim, required: boolean): void {
   const recorded = assertRecordedIntent(commonDir, claim);
+  if (recorded.kind === 'upgrade' && recorded.artifactDigests['original-installed']) {
+    if (!recorded.candidate || !recorded.targetReleaseSha256) {
+      if (required) throw new Error('upgrade candidate absent or unbound');
+      return;
+    }
+    if (!recorded.upgradeIntentSha256 || !SHA.test(recorded.upgradeIntentSha256))
+      throw new Error('upgrade publication intent unbound');
+    const directory = join(commonDir, 'factory', `upgrade-${recorded.operationId}`);
+    const bytes = readRecord(join(directory, 'intent.json'));
+    const intent = JSON.parse(bytes.toString('utf8')) as Record<string, unknown>;
+    if (hash(bytes) !== recorded.upgradeIntentSha256 || intent['version'] !== 1
+      || intent['operationId'] !== recorded.operationId || intent['repositoryId'] !== recorded.repositoryId
+      || intent['claimId'] !== claim.id || intent['selectionDigest'] !== recorded.selectionDigest
+      || intent['originalSha256'] !== recorded.artifactDigests['original-installed']
+      || intent['backupReceiptSha256'] !== recorded.forward?.backup?.receiptSha256
+      || intent['operationIdentity'] !== directoryIdentity(directory)
+      || intent['oldDirectoryIdentity'] !== directoryIdentity(join(directory, 'old'))
+      || hash(JSON.stringify(JSON.parse(readRecord(join(directory, 'original.json')).toString('utf8'))))
+        !== recorded.artifactDigests['original-installed']
+      || intent['stageDigest'] !== recorded.stageDigest || intent['stageIdentity'] !== recorded.stageIdentity
+      || JSON.stringify(intent['candidate']) !== JSON.stringify(recorded.candidate))
+      throw new Error('upgrade publication intent changed');
+    const receiptPath = join(directory, 'new-receipt.json'), receiptInfo = lstatSync(receiptPath);
+    const receiptBytes = readRecord(receiptPath), receipt = JSON.parse(receiptBytes.toString('utf8')) as Record<string, unknown>;
+    const receiptAfter = lstatSync(receiptPath);
+    if (!recorded.upgradeReceipt || !receiptInfo.isFile() || receiptInfo.isSymbolicLink() || receiptInfo.nlink !== 1
+      || `${receiptInfo.dev}:${receiptInfo.ino}` !== recorded.upgradeReceipt.identity
+      || receiptAfter.dev !== receiptInfo.dev || receiptAfter.ino !== receiptInfo.ino || receiptAfter.nlink !== 1
+      || hash(receiptBytes) !== recorded.upgradeReceipt.sha256 || receipt['receiptId'] !== recorded.upgradeReceipt.id
+      || receipt['operationId'] !== recorded.operationId || receipt['claimId'] !== claim.id
+      || receipt['intentSha256'] !== recorded.upgradeIntentSha256)
+      throw new Error('upgrade installed receipt binding changed');
+    if (!recorded.ticketConsumed) verifyBoundInstallCandidate(recorded.candidate, {
+      operationId: recorded.operationId, repositoryId: recorded.repositoryId, claimId: claim.id,
+      selectionDigest: recorded.selectionDigest, manifestSha256: recorded.targetReleaseSha256 });
+    return;
+  }
   if (recorded.kind !== 'install') return;
   const path = join(commonDir, 'factory', `install-candidate-${recorded.operationId}`);
   if (!recorded.candidate) {
@@ -477,11 +515,25 @@ export async function inspectMaintenance(repository: string) {
   if (absent(directory)) return { status: 'absent' as const, commonDir: common, marker: 'absent', database: 'absent', claims: 0 };
   try { assertFactory(directory); } catch { return { status: 'blocked' as const, commonDir: common, marker: 'unknown', database: 'unknown', claims: 0 }; }
   const markerPath = join(directory, 'bootstrap-incomplete'), databasePath = join(directory, 'history.sqlite');
+  const upgradeMarkerPath = join(directory, 'upgrade-incomplete');
+  let upgradeMarker: { operationId: string; claimId: string } | undefined;
+  if (!absent(upgradeMarkerPath)) {
+    try {
+      const value = JSON.parse(readRecord(upgradeMarkerPath).toString('utf8')) as Record<string, unknown>;
+      if (value['version'] !== 1 || typeof value['operationId'] !== 'string' || !UUID.test(value['operationId'])
+        || typeof value['claimId'] !== 'string' || !UUID.test(value['claimId'])) throw new Error('invalid upgrade marker');
+      const markerInfo = lstatSync(upgradeMarkerPath), template = lstatSync(join(directory, `upgrade-${value['operationId']}`, 'marker-template.json'));
+      if (!markerInfo.isFile() || markerInfo.isSymbolicLink() || markerInfo.nlink !== 2 || template.nlink !== 2
+        || markerInfo.dev !== template.dev || markerInfo.ino !== template.ino) throw new Error('upgrade marker identity differs');
+      upgradeMarker = { operationId: value['operationId'], claimId: value['claimId'] };
+    } catch { return { status: 'blocked' as const, commonDir: common, marker: 'invalid', database: 'unknown', claims: 0 }; }
+  }
   let marker: BootstrapRecord | undefined;
   if (!absent(markerPath)) {
     try { marker = parseMarker(markerPath, root, common); }
     catch { return { status: 'blocked' as const, commonDir: common, marker: 'invalid', database: absent(databasePath) ? 'absent' : 'unknown', claims: 0 }; }
   }
+  if (marker && upgradeMarker) return { status: 'blocked' as const, commonDir: common, marker: 'invalid', database: 'unknown', claims: 0 };
   if (absent(databasePath)) {
     if (readdirSync(directory).some(name => name !== 'bootstrap-incomplete'))
       return { status: 'blocked' as const, commonDir: common, marker: marker ? 'complete' : 'absent', database: 'absent', claims: 0 };
@@ -512,14 +564,16 @@ export async function inspectMaintenance(repository: string) {
       if (typed?.maintenance?.forward?.backup) verifyForwardBackup(common, typed);
       if (typed) verifyInstallCandidate(common, typed, false);
       if (typed && claims.length !== 1) throw new Error('typed maintenance claim is not exclusive');
+      if (upgradeMarker && typed && (typed.maintenance?.operationId !== upgradeMarker.operationId || typed.id !== upgradeMarker.claimId))
+        throw new Error('upgrade marker and claim disagree');
       if (marker && (marker.claim.resourceKey !== row['id'] || (typed && !sameBootstrapOperation(marker, typed))))
         throw new Error('marker and database disagree');
       if (row['state'] === 'incomplete' && !typed) throw new Error('incomplete repository without recorded operation');
       if (!marker && typed?.maintenance?.kind === 'install' && row['state'] === 'incomplete')
         throw new Error('incomplete install missing bootstrap marker');
       const summary = typed?.maintenance ? redacted(typed.maintenance) : marker ? redacted(marker.claim.maintenance!) : undefined;
-      return { status: marker || row['state'] !== 'ready' || typed ? 'incomplete' as const : 'ready' as const,
-        commonDir: common, marker: marker ? 'complete' : 'absent', database: observedShape === 'v7' ? 'current' : observedShape, claims: claims.length,
+      return { status: marker || upgradeMarker || row['state'] !== 'ready' || typed ? 'incomplete' as const : 'ready' as const,
+        commonDir: common, marker: marker ? 'complete' : upgradeMarker ? 'upgrade' : 'absent', database: observedShape === 'v7' ? 'current' : observedShape, claims: claims.length,
         ...(summary ? { intent: summary } : {}) };
     } finally { database.close(); }
   } catch {
@@ -654,8 +708,9 @@ export async function prepareMaintenanceHandoff(repository: string, current: Mai
       throw new Error('bootstrap marker differs from maintenance claim');
     verifyInstallCandidate(common, claim, true);
     const stage = stageEvidence(recorded.stagePath), nonce = randomUUID();
-    if (recorded.kind === 'install' && (recorded.stageDigest !== stage.stageDigest
-      || recorded.stageIdentity !== stage.stageIdentity)) throw new Error('prepared install stage changed');
+    if ((recorded.kind === 'install' || recorded.artifactDigests['original-installed'])
+      && (recorded.stageDigest !== stage.stageDigest || recorded.stageIdentity !== stage.stageIdentity))
+      throw new Error('prepared installation stage changed');
     const ticket: HandoffTicket = { version: 1, operationId: current.operationId, repositoryId: current.repositoryId,
       root, commonDir: common, claimId: current.claimId, token: current.token,
       stagePath: recorded.stagePath, ...stage, nonce,
@@ -715,7 +770,8 @@ export async function consumeMaintenanceHandoff(ticketPath: string) {
       throw new Error('handoff ticket selection differs from recorded intent');
     if (JSON.stringify(ticket.candidate ?? null) !== JSON.stringify(claim.maintenance.candidate ?? null))
       throw new Error('handoff candidate binding differs');
-    verifyInstallCandidate(common, claim, claim.maintenance.kind === 'install');
+    verifyInstallCandidate(common, claim, claim.maintenance.kind === 'install'
+      || Boolean(claim.maintenance.artifactDigests['original-installed']));
     if (claim.maintenance?.kind === 'install' && absent(markerPath)) throw new Error('bootstrap marker missing; handoff refused');
     if (!absent(markerPath) && !sameBootstrapOperation(parseMarker(markerPath, root, common), claim))
       throw new Error('handoff bootstrap marker differs');
@@ -776,6 +832,31 @@ export async function advanceForwardSchema(current: MaintenanceHandle): Promise<
     if (intent.forward.currentShape === 'v7') return { shape: 'v7', state: 'incomplete' };
     const shape = await store.advanceForwardStep(current);
     return { shape, state: 'incomplete' };
+  } finally { store.close(); }
+}
+
+/** Revalidate the sole staged upgrade owner, backup and immutable stage before publication steps. */
+export function assertForwardPublication(current: MaintenanceHandle): Claim {
+  const store = openForwardMaintenanceStore(current.commonDir);
+  try {
+    const claim = store.readMaintenanceClaim(current.operationId), selected = assertRecordedIntent(current.commonDir, claim);
+    if (claim.id !== current.claimId || claim.token !== current.token || claim.resourceKey !== current.repositoryId
+      || selected.kind !== 'upgrade' || !selected.artifactDigests['original-installed'] || !selected.upgradeIntentSha256
+      || !selected.forward?.backup || selected.forward.currentShape !== 'v7' || store.forwardShape() !== 'v7'
+      || store.forwardIdentity() !== selected.forward.sourceIdentity || store.repositoryRelease() !== selected.forward.sourceRelease
+      || !selected.ticketConsumed || !['modifying', 'validating'].includes(selected.phase))
+      throw new Error('upgrade publication claim/token/checkpoint differs');
+    const live = currentOwner();
+    if (inspectOwner(live).state !== 'known_live' || live.host !== claim.owner.host
+      || live.pid !== claim.owner.pid || live.start !== claim.owner.start)
+      throw new Error('upgrade publication requires live staged owner');
+    store.assertSoleMaintenance(current);
+    verifyForwardBackup(current.commonDir, claim);
+    verifyInstallCandidate(current.commonDir, claim, true);
+    const stage = stageEvidence(selected.stagePath);
+    if (stage.stageDigest !== selected.stageDigest || stage.stageIdentity !== selected.stageIdentity)
+      throw new Error('upgrade publication stage changed');
+    return claim;
   } finally { store.close(); }
 }
 

@@ -40,7 +40,7 @@ LOCK_SHA = "bea7cfb5a835aba203893966dde3e964418b12c69f8680e53a65b3603b9467d6"
 MODULES = (
     "accounting", "adapters/codex", "adapters/copilot", "adapters/fake", "adapters/types",
     "agents", "build", "capture", "clearance", "cli", "dashboard", "execution-control", "installation-bindings", "installed-bindings",
-    "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
+    "owned-release", "upgrade-installed", "upgrade-original", "upgrade-publication", "upgrade-publication-state", "install", "install-candidate", "install-entry", "install-publication", "install-publication-state", "learning", "lifecycle", "maintenance", "maintenance-entry", "native/notification-transport", "native/notifications",
     "native/process", "notifications", "placement", "profiles", "redaction", "release", "schema", "schema-forward", "forward-backup-entry", "store",
     "workflow", "workspace",
 )
@@ -948,7 +948,31 @@ def adopt_npm_outputs(stage: PrivateStage, seeded: dict):
         stage.check(name)
 
 
-def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None, handoff=False):
+def selected_python_binding():
+    """Capture the operator-selected Python without exposing its path in diagnostics."""
+    path = canonical(os.path.realpath(sys.executable), False)
+    observed = path.lstat()
+    if observed.st_nlink != 1 or observed.st_size < 1 or observed.st_size > 128 * MIB:
+        refuse("selected Python executable refused")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        before = os.fstat(descriptor)
+        if file_id(before) != file_id(observed):
+            refuse("selected Python executable changed")
+        digest = hashlib.sha256()
+        while chunk := os.read(descriptor, MIB):
+            digest.update(chunk)
+        after = os.fstat(descriptor)
+        if file_id(after) != file_id(before) or file_id(path.lstat()) != file_id(before):
+            refuse("selected Python executable changed")
+    finally:
+        os.close(descriptor)
+    return {"path": str(path), "identity": f"{before.st_dev}:{before.st_ino}", "sha256": digest.hexdigest(),
+            "version": ".".join(map(str, sys.version_info[:3]))}
+
+
+def prepare_candidate(prepared: PreparedSelection, repository: str, offline: bool, seed: str | None, handoff=False, upgrade=False):
     stage = prepared.stage
     stage.check("")
     canonical(repository, True)
@@ -957,6 +981,7 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     request = {"schema": 1, "requestId": str(uuid.uuid4()),
                "repository": repository, "npm": {"offline": offline}, "stageRoot": str(stage.root),
                "stageIdentity": f"{stage.root.lstat().st_dev}:{stage.root.lstat().st_ino}",
+               **({"python": selected_python_binding()} if upgrade else {}),
                "source": {"bundleRoot": str(prepared.source_bundle_root), "manifestSha256": prepared.manifest_sha256,
                           "nodeArchivePath": str(prepared.source_node_archive),
                           **({"providers": prepared.providers} if prepared.providers else {})},
@@ -975,12 +1000,14 @@ def prepare_candidate(prepared: PreparedSelection, repository: str, offline: boo
     executable = prepared.extracted_node_root / ("node.exe" if prepared.receipt["platform"] == "win32-x64" else "bin/node")
     try:
         command = [str(executable), str(entry), "--request", str(stage.root / "preparer-request.json")]
-        if handoff:
+        if upgrade:
+            command.append("--upgrade")
+        elif handoff:
             command.append("--handoff")
         response = bounded_child(command, stage,
                                  timeout_seconds=300)
         required = {"operationId", "repositoryId", "claimId", "stagePath", "candidateDigest"}
-        if handoff:
+        if handoff or upgrade:
             required.update({"ticketPath", "stageDigest"})
         result = fields(json_bytes(response), required)
         if any(not isinstance(result[key], str) or not result[key] for key in result):
