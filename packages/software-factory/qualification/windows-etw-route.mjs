@@ -27,7 +27,99 @@ const base = () => ({ observationComplete: false, graphMatched: false, productAd
   helperAdmission: 'refused', helperIdentity: 'process-file-identity-unverified',
   namespaceIdentity: 'unverified', imageEvidence: 'expected-pin-path-match-only',
   refusals: ['transient-process-identity-unverified', 'namespace-identity-unverified'],
-  outputVerified: false, failures: [], descendants: 0, suspiciousConsoleHosts: 0 });
+  outputVerified: false, failures: [], descendants: 0, suspiciousConsoleHosts: 0, diagnostics: emptyDiagnostics() });
+
+// Closed, sparse aggregates only. Ambiguous identities never acquire a graph role.
+const diagnosticRoles = ['root', 'direct', 'intended-nested', 'other-descendant', 'unassigned', 'unknown'];
+const diagnosticReasons = ['name-mismatch', 'expected-image-zero', 'expected-image-one', 'expected-image-multiple',
+  'expected-load-outside-lifetime', 'image-outside-lifetime', 'prohibited-image-class', 'missing-git-import', 'child-start-outside-parent',
+  'child-end-at-or-after-root', 'invalid-lifecycle', 'nonroot-outside-bracket', 'direct-exit-mismatch', 'other-nonzero-exit'];
+const emptyDiagnostics = () => ({ graph: [], predicates: [], console: [] });
+function diagnosticProjection(starts, ends, images, relevant, graph, rootPid, directPid, root, caseName, result, stop) {
+  const out = emptyDiagnostics();
+  const add = (list, fields) => {
+    const key = JSON.stringify(fields);
+    const entry = list.find(x => JSON.stringify(Object.fromEntries(Object.entries(x).filter(([k]) => k !== 'count'))) === key);
+    if (entry) entry.count++; else list.push({ ...fields, count: 1 });
+  };
+  const ambiguousCache = new Map();
+  const ambiguous = pid => {
+    if (ambiguousCache.has(pid)) return ambiguousCache.get(pid);
+    const ss = starts.filter(x => x[2] === pid), ee = ends.filter(x => x[2] === pid);
+    let invalid = ss.length !== 1 || ee.length !== 1;
+    if (!invalid) {
+      const [s] = ss, [e] = ee;
+      invalid = s[4] === '0' || s[4] !== e[4] || s[3] !== e[3] ||
+        starts.some(x => x !== s && x[4] === s[4]) || ends.some(x => x !== e && x[4] === e[4]);
+    }
+    ambiguousCache.set(pid, invalid);
+    return invalid;
+  };
+  const role = pid => {
+    if (ambiguous(pid)) return 'unknown';
+    if (!relevant.has(pid)) return 'unassigned';
+    const visited = new Set();
+    for (let cursor = pid; cursor !== rootPid;) {
+      if (visited.has(cursor) || ambiguous(cursor) || !graph.has(cursor)) return 'unknown';
+      visited.add(cursor); cursor = graph.get(cursor).s[3];
+      if (!relevant.has(cursor)) return 'unknown';
+    }
+    if (ambiguous(rootPid)) return 'unknown';
+    if (pid === rootPid) return 'root';
+    if (pid === directPid) return 'direct';
+    if (caseName === 'candidate-nested-cmd' && graph.get(pid)?.s[3] === directPid &&
+      graph.get(pid).s[6] === 'cmd' && graph.get(pid).e[6] === 'cmd') {
+      const candidates = [...relevant].filter(x => x !== rootPid && x !== directPid &&
+        graph.get(x)?.s[3] === directPid && graph.get(x).s[6] === 'cmd' && graph.get(x).e[6] === 'cmd');
+      return candidates.length === 1 ? 'intended-nested' : 'unknown';
+    }
+    return 'other-descendant';
+  };
+  const rootEnd = graph.get(rootPid)?.e[5];
+  const release = BigInt(root[4]), observed = BigInt(root[5]);
+  for (const s of starts) {
+    const pid = s[2], r = role(pid), pair = graph.get(pid), uncertain = r === 'unknown';
+    const parent = role(s[3]);
+    const parentRole = uncertain ? 'outside-unknown' : parent === 'root' ? 'root' : parent === 'direct' ? 'direct' :
+      ['other-descendant', 'intended-nested'].includes(parent) ? 'other-descendant' : 'outside-unknown';
+    const expected = pid === rootPid ? 'node' : pid === directPid ? expectedKind(caseName) : 'cmd';
+    const processClass = uncertain ? 'other-unknown' : s[6] === 'console' ? 'console' : s[6] === expected ? 'expected' : 'other-unknown';
+    const startPhase = uncertain ? 'outside-unknown' : BigInt(s[5]) < release ? 'before-release' :
+      BigInt(s[5]) <= observed ? 'release-to-observed' : 'outside-unknown';
+    const e = ends.find(x => x[2] === pid);
+    const endRelation = uncertain || !e || !rootEnd || ambiguous(rootPid) ? 'missing-unknown' :
+      BigInt(e[5]) < BigInt(rootEnd) ? 'before' : 'at-or-after';
+    add(out.graph, { role: r, processClass, parentRole, startPhase, endRelation });
+    if (s[6] === 'console') add(out.console, { membership: r === 'unknown' ? 'unknown' : r === 'unassigned' ? 'unassigned' : 'graph-member', evidence: 'start' });
+    if (!pair || uncertain || r === 'unassigned') continue;
+    const end = pair.e, pin = expected;
+    const mark = reason => add(out.predicates, { role: r, reason });
+    if (s[6] !== pin || end[6] !== pin) mark('name-mismatch');
+    const loaded = images.filter(x => x[1] === pid && x[3] === pin);
+    mark(loaded.length === 0 ? 'expected-image-zero' : loaded.length === 1 ? 'expected-image-one' : 'expected-image-multiple');
+    const outside = x => BigInt(x[2]) < BigInt(s[5]) || BigInt(x[2]) > BigInt(end[5]) ||
+      pid === rootPid && (BigInt(x[2]) < BigInt(root[2]) || BigInt(x[2]) > BigInt(root[3]));
+    if (loaded.some(outside)) mark('expected-load-outside-lifetime');
+    if (images.some(x => x[1] === pid && !(x[3] === pin || x[3] === 'system' || pin === 'git' && /^git-dll-[1-5]$/.test(x[3])))) mark('prohibited-image-class');
+    if (pid === directPid && caseName.endsWith('git')) for (let i = 1; i <= 5; i++)
+      if (!images.some(x => x[1] === pid && x[3] === `git-dll-${i}`)) mark('missing-git-import');
+    if (BigInt(s[5]) >= BigInt(end[5])) mark('invalid-lifecycle');
+    if (images.some(x => x[1] === pid && outside(x))) mark('image-outside-lifetime');
+    if (pid !== rootPid) {
+      const parentPair = graph.get(s[3]);
+      if (!parentPair || ambiguous(s[3]) || BigInt(s[5]) <= BigInt(parentPair.s[5]) || BigInt(s[5]) >= BigInt(parentPair.e[5])) mark('child-start-outside-parent');
+      if (!rootEnd || ambiguous(rootPid) || BigInt(end[5]) >= BigInt(rootEnd)) mark('child-end-at-or-after-root');
+      if (BigInt(s[5]) < release || BigInt(end[5]) > observed) mark('nonroot-outside-bracket');
+      if (pid === directPid && (stop ? end[7] === '0' || result?.exitCode !== null && Number(end[7]) !== result?.exitCode : Number(end[7]) !== result?.exitCode)) mark('direct-exit-mismatch');
+      if (pid !== directPid && end[7] !== '0') mark('other-nonzero-exit');
+    }
+  }
+  for (const image of images.filter(x => x[3] === 'console')) {
+    const r = role(image[1]);
+    add(out.console, { membership: r === 'unknown' ? 'unknown' : r === 'unassigned' ? 'unassigned' : 'graph-member', evidence: 'image' });
+  }
+  return out;
+}
 
 export function validateObservation(text, result, caseName) {
   const answer = base();
@@ -162,6 +254,7 @@ export function validateObservation(text, result, caseName) {
   answer.suspiciousConsoleHosts = starts.filter(row => row[6] === 'console').length +
     images.filter(row => row[3] === 'console' && !starts.some(s => s[2] === row[1] && s[6] === 'console')).length;
   if (answer.suspiciousConsoleHosts) fail('console-host-ambiguous');
+  answer.diagnostics = diagnosticProjection(starts, ends, images, relevant, graph, rootPid, directPid, root, caseName, result, stop);
   // These conditions diagnose the route. They never certify a held helper or namespace.
   const infrastructure = ['receipt-invalid', 'receipt-incomplete', 'case-mismatch', 'cleanup', 'native-api',
     'close', 'session', 'loss', 'header', 'file-cap', 'graph-cap', 'root-identity', 'launcher-incomplete', 'output-bound'];
@@ -213,6 +306,33 @@ const safeFailure = new Set(['receipt-invalid', 'receipt-incomplete', 'case-mism
  'output-bound', 'stop-outcome', 'direct-pid', 'lifecycle-ambiguous', 'identity-key', 'lifetime', 'image-name',
  'image-unknown', 'direct-parent', 'exit-status', 'parent-lifetime', 'unexpected-descendant', 'console-host-ambiguous',
  'host', 'pin', 'launch', 'protocol', 'timeout', 'schema', 'callback-cap', 'decode', 'stop', 'file-cap', 'receipt', 'operation']);
+function safeDiagnostics(value) {
+  const schema = {
+    graph: { role: diagnosticRoles, processClass: ['expected', 'console', 'other-unknown'],
+      parentRole: ['root', 'direct', 'other-descendant', 'outside-unknown'],
+      startPhase: ['before-release', 'release-to-observed', 'outside-unknown'], endRelation: ['before', 'at-or-after', 'missing-unknown'] },
+    predicates: { role: diagnosticRoles, reason: diagnosticReasons },
+    console: { membership: ['graph-member', 'unassigned', 'unknown'], evidence: ['start', 'image'] }
+  };
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).sort().join() !== 'console,graph,predicates') throw new Error('receipt-invalid');
+  const output = emptyDiagnostics();
+  for (const [group, fields] of Object.entries(schema)) {
+    const rows = value[group];
+    if (!Array.isArray(rows) || rows.length > 4096) throw new Error('receipt-invalid');
+    const seen = new Set();
+    for (const row of rows) {
+      if (!row || typeof row !== 'object' || Array.isArray(row) ||
+        Object.keys(row).sort().join() !== [...Object.keys(fields), 'count'].sort().join() ||
+        !Number.isSafeInteger(row.count) || row.count < 1 || row.count > 4096 ||
+        Object.entries(fields).some(([key, choices]) => !choices.includes(row[key]))) throw new Error('receipt-invalid');
+      const normalized = Object.fromEntries(Object.keys(fields).map(key => [key, row[key]]));
+      const key = JSON.stringify(normalized);
+      if (seen.has(key)) throw new Error('receipt-invalid');
+      seen.add(key); output[group].push({ ...normalized, count: row.count });
+    }
+  }
+  return output;
+}
 export function safeObservation(value) {
   if (!value || value.productAdmission !== false || value.helperAdmission !== 'refused' ||
     value.helperIdentity !== 'process-file-identity-unverified' || value.namespaceIdentity !== 'unverified' ||
@@ -224,7 +344,7 @@ export function safeObservation(value) {
     value.graphMatched && (!value.observationComplete || value.failures.length)) throw new Error('receipt-invalid');
   return { ...base(), observationComplete: value.observationComplete, graphMatched: value.graphMatched,
     outputVerified: value.outputVerified === true, failures: [...new Set(value.failures)], descendants: value.descendants,
-    suspiciousConsoleHosts: value.suspiciousConsoleHosts };
+    suspiciousConsoleHosts: value.suspiciousConsoleHosts, diagnostics: safeDiagnostics(value.diagnostics) };
 }
 
 export function prepareUpload(evidence) {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -95,13 +95,16 @@ test('artifact preparation recomputes private evidence and exports only fixed bo
   writeFileSync(join(directory,'launcher.private.json'),JSON.stringify(complete));
   writeFileSync(join(directory,'spec.private.json'),JSON.stringify({case:'baseline-git',cwd:'/repo',env:{SECRET:'never-upload'}}));
   writeFileSync(join(evidence,'qualification.json'),JSON.stringify({productAdmission:true,status:'FORGED',
-   rawEtl:'removed-after-offline-parse',cleanupUncertain:false,cases:[{name:'baseline-git',secret:'C:\\ambient'}]}));
+   rawEtl:'removed-after-offline-parse',cleanupUncertain:false,cases:[{name:'baseline-git',secret:'C:\\ambient',diagnostics:{graph:[{role:'forged'}]}}]}));
  };
  try{
   save(); prepareUpload(evidence);
   const text=readFileSync(join(evidence,'upload','qualification.json'),'utf8');
   const output=JSON.parse(text);
   assert.equal(output.productAdmission,false);assert.equal(output.cases[0].outputVerified,true);
+  assert.deepEqual(readdirSync(join(evidence,'upload')).sort(),['native.tsv','qualification.json']);
+  assert.ok(output.cases[0].diagnostics.graph.some(x=>x.role==='root'));
+  assert.equal(text.includes('forged'),false);
   for(const secret of ['SECRET','never-upload','C:\\ambient','FORGED','"childPid"','"env"']) assert.equal(text.includes(secret),false);
   writeFileSync(join(directory,'trace.etl'),'raw');assert.throws(()=>prepareUpload(evidence));
   rmSync(join(directory,'trace.etl'));save();
@@ -175,4 +178,85 @@ test('nested cmd requires both independent generations and stop requires a defin
   exitCode:null,closeCode:null,exitSignal:'SIGTERM',closeSignal:'SIGTERM',stop:{reason:'deadline',killReturned:true,requestedAtMs:500}};
  assert.equal(validateObservation(stopReceipt,stopped,'candidate-deadline-control').graphMatched,true);
  assert.equal(validateObservation(stopReceipt,{...stopped,exitSignal:null,closeSignal:null},'candidate-deadline-control').graphMatched,false);
+});
+
+
+test('bounded diagnostics distinguish console graph roles without attribution',()=>{
+ const extra=(parent)=>receipt.replace('COUNTS\t20\t11',`P\tS\t102\t${parent}\t13\t40\tconsole\t0\nP\tE\t102\t${parent}\t13\t50\tconsole\t0\nI\t102\t42\tconsole\nCOUNTS\t20\t14`);
+ const root=validateObservation(extra(100),result,'baseline-git');
+ const helper=validateObservation(extra(101),result,'baseline-git');
+ const ambient=validateObservation(extra(999),result,'baseline-git');
+ assert.deepEqual(root.diagnostics.graph.find(x=>x.processClass==='console'),{role:'other-descendant',processClass:'console',parentRole:'root',startPhase:'release-to-observed',endRelation:'before',count:1});
+ assert.equal(helper.diagnostics.graph.find(x=>x.processClass==='console').parentRole,'direct');
+ assert.equal(ambient.diagnostics.graph.find(x=>x.processClass==='console').role,'unassigned');
+ for(const value of [root,helper,ambient]) { assert.equal(value.graphMatched,false); assert.equal(value.productAdmission,false); }
+});
+
+
+test('diagnostics isolate predicate subreasons and ambiguous identities',()=>{
+ const check=(text,reason,role='direct')=>{const value=validateObservation(text,result,'baseline-git'); assert.ok(value.diagnostics.predicates.some(x=>x.role===role&&x.reason===reason),reason); assert.equal(value.graphMatched,false);};
+ check(receipt.replace('I\t101\t35\tgit','I\t101\t35\tother'),'expected-image-zero');
+ check(receipt.replace('I\t101\t35\tgit','I\t101\t35\tother'),'prohibited-image-class');
+ check(receipt.replace('I\t101\t40\tgit-dll-5\n','').replace('COUNTS\t20\t11','COUNTS\t20\t10'),'missing-git-import');
+ check(receipt.replace('P\tS\t101\t100\t12\t30','P\tS\t101\t100\t12\t19'),'nonroot-outside-bracket');
+ check(receipt.replace('P\tE\t101\t100\t12\t60','P\tE\t101\t100\t12\t96'),'child-end-at-or-after-root');
+ check(receipt.replace('P\tE\t101\t100\t12\t60\tgit\t0','P\tE\t101\t100\t12\t60\tgit\t2'),'direct-exit-mismatch');
+ const duplicate=receipt.replace('P\tS\t101\t100\t12\t30\tgit\t0','P\tS\t101\t100\t12\t30\tgit\t0\nP\tS\t101\t100\t13\t31\tgit\t0').replace('COUNTS\t20\t11','COUNTS\t20\t12');
+ const value=validateObservation(duplicate,result,'baseline-git');
+ assert.ok(value.diagnostics.graph.some(x=>x.role==='unknown'));assert.ok(value.failures.includes('lifecycle-ambiguous'));
+});
+
+test('diagnostic public grammar rejects forged and sensitive fields',async()=>{
+ const {safeObservation}=await import('./windows-etw-route.mjs');
+ const valid=validateObservation(receipt,result,'baseline-git');
+ for(const patch of [d=>d.graph[0].role='C:\\private',d=>d.graph[0].count=4097,d=>d.graph[0].count=1.5,d=>d.graph[0].secret='path',d=>d.graph.push({...d.graph[0]}),d=>d.secret='private']) {
+  const forged=structuredClone(valid);patch(forged.diagnostics);assert.throws(()=>safeObservation(forged));
+ }
+});
+
+
+test('ambiguous parent identity propagates uncertainty to descendants',()=>{
+ const changed=receipt.replace('P\tS\t100\t50\t11\t10\tnode\t0','P\tS\t100\t50\t11\t10\tnode\t0\nP\tS\t100\t50\t77\t11\tnode\t0').replace('COUNTS\t20\t11','COUNTS\t20\t12');
+ const value=validateObservation(changed,result,'baseline-git');
+ assert.equal(value.diagnostics.graph.some(x=>x.role==='direct'),false);
+ assert.ok(value.failures.includes('lifecycle-ambiguous'));
+});
+
+test('nested extra exit and image timing retain separate subreasons',()=>{
+ const nested=receipt.replaceAll('baseline-git','candidate-nested-cmd').replaceAll('\tgit\t','\tcmd\t').replaceAll('\tgit\n','\tcmd\n')
+  .replace(/I\t101\t(?:36|37|38|39|40)\tgit-dll-[1-5]\n/g,'')
+  .replace('COUNTS\t20\t11','P\tS\t102\t101\t13\t40\tcmd\t0\nP\tE\t102\t101\t13\t50\tcmd\t2\nI\t102\t51\tcmd\nCOUNTS\t20\t9');
+ const candidate={...result,case:'candidate-nested-cmd',stdoutBytes:0,stdoutCapturedBytes:0,spawnOptions:{detached:true,windowsHide:true,shell:false,stdio:['ignore','pipe','pipe']}};
+ const value=validateObservation(nested,candidate,'candidate-nested-cmd');
+ for(const reason of ['other-nonzero-exit','expected-load-outside-lifetime','image-outside-lifetime']) assert.ok(value.diagnostics.predicates.some(x=>x.role==='intended-nested'&&x.reason===reason),reason);
+ assert.equal(value.diagnostics.predicates.some(x=>x.role==='intended-nested'&&x.reason==='invalid-lifecycle'),false);
+ assert.ok(value.failures.includes('exit-status'));assert.equal(value.productAdmission,false);
+});
+
+
+test('ordinary extra helper and pre-release child have distinct closed categories',()=>{
+ const extra=receipt.replace('COUNTS\t20\t11','P\tS\t102\t100\t13\t19\tcmd\t0\nP\tE\t102\t100\t13\t50\tcmd\t0\nI\t102\t21\tcmd\nCOUNTS\t20\t14');
+ const value=validateObservation(extra,result,'baseline-git');
+ assert.deepEqual(value.diagnostics.graph.find(x=>x.role==='other-descendant'),{role:'other-descendant',processClass:'expected',parentRole:'root',startPhase:'before-release',endRelation:'before',count:1});
+ assert.ok(value.diagnostics.predicates.some(x=>x.role==='other-descendant'&&x.reason==='nonroot-outside-bracket'));
+ assert.ok(value.failures.includes('unexpected-descendant'));assert.equal(value.graphMatched,false);
+});
+
+test('duplicate keys and image-only console retain unknown identity',()=>{
+ const duplicate=receipt.replace('P\tS\t101\t100\t12','P\tS\t101\t100\t11').replace('P\tE\t101\t100\t12','P\tE\t101\t100\t11');
+ const value=validateObservation(duplicate,result,'baseline-git');
+ assert.ok(value.failures.includes('identity-key'));assert.ok(value.diagnostics.graph.some(x=>x.role==='unknown'));
+ const imageOnly=receipt.replace('COUNTS\t20\t11','I\t202\t45\tconsole\nCOUNTS\t20\t12');
+ assert.deepEqual(validateObservation(imageOnly,result,'baseline-git').diagnostics.console,[{membership:'unknown',evidence:'image',count:1}]);
+});
+
+
+test('multiple intended nested candidates remain unknown rather than merging roles',()=>{
+ const nested=receipt.replaceAll('baseline-git','candidate-nested-cmd').replaceAll('\tgit\t','\tcmd\t').replaceAll('\tgit\n','\tcmd\n')
+  .replace(/I\t101\t(?:36|37|38|39|40)\tgit-dll-[1-5]\n/g,'')
+  .replace('COUNTS\t20\t11','P\tS\t102\t101\t13\t40\tcmd\t0\nP\tE\t102\t101\t13\t50\tcmd\t0\nI\t102\t42\tcmd\nP\tS\t103\t101\t14\t41\tcmd\t0\nP\tE\t103\t101\t14\t51\tcmd\t0\nI\t103\t43\tcmd\nCOUNTS\t20\t12');
+ const candidate={...result,case:'candidate-nested-cmd',stdoutBytes:0,stdoutCapturedBytes:0,spawnOptions:{detached:true,windowsHide:true,shell:false,stdio:['ignore','pipe','pipe']}};
+ const value=validateObservation(nested,candidate,'candidate-nested-cmd');
+ assert.equal(value.diagnostics.graph.find(x=>x.role==='unknown').count,2);
+ assert.ok(value.failures.includes('unexpected-descendant'));
 });
