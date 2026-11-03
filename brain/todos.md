@@ -34,7 +34,7 @@
 19. [ ] Pull in the unslop skill from [poteto/noodle](https://github.com/poteto/noodle/tree/main/.agents/skills/unslop).
 
 
-21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`.
+21. [ ] Add a rule to the brain skill and a template to brain-install: keep `AGENTS.md` files concise; put topic-specific procedures in focused brain reference docs, with explicit required-read links from the applicable `AGENTS.md`. "## AGENTS.md Guidelines - Keep `AGENTS.md` as the concise repository-specific entrypoint and map. Put detailed examples, formats, procedures, and rationale in focused brain notes, linked here with explicit read conditions. When updating guidance, consolidate or relocate detail rather than duplicating it in `AGENTS.md`. Preserve `## Brain` and `## End of Work Session Defined` as explicit exceptions."
 22. [ ] Fix `subagent-model-router` choosing `gpt-5.3-codex` at high effort over `gpt-6.1-terra` at medium effort for tasks like permission-precedence and alternate-editing-path analysis. Review the demanding/security-sensitive classification and escalation criteria; route by demonstrated task requirements and supported configurations, not provisional catalog labels or unmeasured assumptions that one model outperforms another.
 
 23. [ ] Investigate Cursor’s formal verification skill: [create-formal-verification-skill](https://github.com/cursor/plugins/blob/main/pstack/skills/create-formal-verification-skill/SKILL.md).
