@@ -2,10 +2,10 @@
 
 This standalone helper is not integrated into release or maintenance. It emits no receipt and does not flush directories. The caller must authenticate the complete stage and runtime, hold the operation claim, validate inventories and intent, flush both parents, and record receipts only after its own checks. Unknown means preserve the claim and evidence without retry, adoption or rollback.
 
-On 2026-11-03, Darwin arm64, Node 24.22.1 and Python 3.13.14, the focused test exercised a benign absent destination and existing empty directory, nonempty directory, regular file and symbolic link, plus identity/digest refusal, request framing, timeout, ambiguous output, owned-descendant cleanup and unrelated-process survival. These checks do not establish general filesystem, crash durability, adversarial concurrency, interpreter lifetime, or product acceptance. Run explicitly from `packages/software-factory` with `FACTORY_ATOMIC_PYTHON` naming the qualified interpreter:
+On 2026-11-03, Darwin arm64, Node 24.22.1 and Python 3.13.14, the focused test exercised a benign absent destination and existing empty directory, nonempty directory, regular file and symbolic link, plus identity/digest refusal, request framing, timeout, ambiguous output, owned-descendant cleanup and unrelated-process survival. All13 cases now live in `qualification/atomic-publication-native.qualification.mjs`, outside Node default discovery. These checks do not establish general filesystem, crash durability, adversarial concurrency, interpreter lifetime, or product acceptance. Run the unconditional public selector from `packages/software-factory` with `FACTORY_ATOMIC_PYTHON` naming the qualified interpreter:
 
 ```
-FACTORY_ATOMIC_PYTHON=/Users/adam/.pyenv/versions/3.13.14/bin/python3.13 /tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node --test test/atomic-publication.test.mjs
+FACTORY_ATOMIC_PYTHON=/Users/adam/.pyenv/versions/3.13.14/bin/python3.13 /tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node scripts/test.mjs qualification --area atomic-publication
 ```
 
 The explicit test fails without its Python prerequisite. No Windows positive result is claimed. Windows returns unsupported until the source/destination handle, filesystem, ACL, durability and process-lifetime gates are independently qualified. Linux implementation uses `renameat2(RENAME_NOREPLACE)` and has no native qualification from this run.

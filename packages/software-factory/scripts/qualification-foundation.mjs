@@ -31,6 +31,8 @@ try {
   assert.ok(process.env.FACTORY_NPM_CLI, 'explicit bundled npm CLI required');
   assert.ok(process.env.FACTORY_TEST_PYTHON, 'explicit Python 3.11 or newer interpreter required');
   assert.ok(isAbsolute(process.env.FACTORY_TEST_PYTHON), 'selected Python interpreter must be an absolute path');
+  assert.ok(process.env.FACTORY_ATOMIC_PYTHON, 'explicit atomic publication Python interpreter required');
+  assert.ok(isAbsolute(process.env.FACTORY_ATOMIC_PYTHON), 'selected atomic publication Python interpreter must be an absolute path');
   assert.ok(run('python', ['-I', '-c',
     'import json,sys;sys.exit("Python 3.11 or newer required") if sys.version_info < (3,11) else print(json.dumps({"version":sys.version.split()[0]}))',
   ], 10_000, process.env.FACTORY_TEST_PYTHON), 'Python prerequisite failed');
@@ -65,6 +67,11 @@ try {
       `--test-name-pattern=${diagnosticCase}`,
       'test/learning.test.mjs',
     ]);
+  }
+  // This explicit native phase currently qualifies only macOS arm64. Linux and
+  // Windows remain separate helper support/qualification gates.
+  if (process.platform === 'darwin' && process.arch === 'arm64') {
+    run('atomic-publication-native-darwin-arm64', ['scripts/test.mjs', 'qualification', '--area', 'atomic-publication']);
   }
   run('store', ['scripts/test.mjs', 'store']);
   const placementPassed = run('placement', ['--test', 'test/placement.test.mjs']);

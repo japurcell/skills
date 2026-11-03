@@ -10,12 +10,16 @@ for (const [name, script, expected, prerequisites = {}] of [
   ['bootstrap refuses local downloads and retains structured failure evidence', 'qualification-bootstrap.mjs', /ephemeral GitHub Actions/],
   ['foundation refuses missing exact npm prerequisite and retains structured failure evidence', 'qualification-foundation.mjs', /explicit bundled npm CLI/],
   ['foundation refuses missing Python before installing dependencies', 'qualification-foundation.mjs', /explicit Python 3\.11 or newer interpreter/, { FACTORY_NPM_CLI: 'unused-npm-cli' }],
+  ['foundation refuses missing atomic helper Python before installing dependencies', 'qualification-foundation.mjs', /explicit atomic publication Python interpreter/, {
+    FACTORY_NPM_CLI: 'unused-npm-cli', FACTORY_TEST_PYTHON: process.execPath,
+  }],
 ]) test(name, () => {
   const directory = mkdtempSync(join(tmpdir(), 'factory-ci-test-'));
   try {
     const env = { ...process.env, GITHUB_ACTIONS: 'false', FACTORY_EVIDENCE_DIR: directory };
     delete env.FACTORY_NPM_CLI;
     delete env.FACTORY_TEST_PYTHON;
+    delete env.FACTORY_ATOMIC_PYTHON;
     Object.assign(env, prerequisites);
     const result = spawnSync(process.execPath, [fileURLToPath(new URL(`../scripts/${script}`, import.meta.url))], { env, encoding: 'utf8', timeout: 5000 });
     assert.equal(result.status, 1, result.stderr);
@@ -32,7 +36,8 @@ test('foundation validates the selected interpreter before dependency installati
   const directory = mkdtempSync(join(tmpdir(), 'factory-ci-python-test-'));
   try {
     const result = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/qualification-foundation.mjs', import.meta.url))], {
-      env: { ...process.env, FACTORY_EVIDENCE_DIR: directory, FACTORY_NPM_CLI: 'unused-npm-cli', FACTORY_TEST_PYTHON: process.execPath },
+      env: { ...process.env, FACTORY_EVIDENCE_DIR: directory, FACTORY_NPM_CLI: 'unused-npm-cli',
+        FACTORY_TEST_PYTHON: process.execPath, FACTORY_ATOMIC_PYTHON: process.execPath },
       encoding: 'utf8', timeout: 5000,
     });
     assert.equal(result.status, 1, result.stderr);

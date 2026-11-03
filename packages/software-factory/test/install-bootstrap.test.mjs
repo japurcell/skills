@@ -12,6 +12,7 @@ const script = resolve(fileURLToPath(new URL('../../../skills/default/software-f
 const packageRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const packageCommand = join(packageRoot, 'scripts/package-release.mjs');
 const nativeQualification = join(packageRoot, 'qualification/install-bootstrap-native.qualification.mjs');
+const atomicNativeQualification = join(packageRoot, 'qualification/atomic-publication-native.qualification.mjs');
 const python = process.env.FACTORY_TEST_PYTHON ?? 'python3';
 const prerequisite = spawnSync(python, ['-c', 'import sys; assert sys.version_info >= (3, 11), "Python 3.11+ required"'], { encoding: 'utf8' });
 assert.equal(prerequisite.status, 0, `Python 3.11+ prerequisite failed: ${prerequisite.error?.message ?? prerequisite.stderr}`);
@@ -34,6 +35,28 @@ test('default Node discovery excludes explicit native bootstrap qualification', 
     const explicit = spawnSync(process.execPath, ['--test', 'qualification/install-bootstrap-native.qualification.mjs'], { cwd: root, env: environment, encoding: 'utf8' });
     assert.equal(explicit.status, 1);
     assert.match(explicit.stdout + explicit.stderr, /FACTORY_TEST_NODE_ARCHIVE is required/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('default Node discovery excludes the explicit atomic publication native qualification', () => {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-atomic-discovery-')));
+  try {
+    mkdirSync(join(root, 'qualification'));
+    mkdirSync(join(root, 'src'));
+    copyFileSync(join(packageRoot, 'src/atomic-publication.ts'), join(root, 'src/atomic-publication.ts'));
+    copyFileSync(atomicNativeQualification, join(root, 'qualification/atomic-publication-native.qualification.mjs'));
+    const environment = { ...process.env };
+    delete environment.FACTORY_ATOMIC_PYTHON;
+    delete environment.NODE_TEST_CONTEXT;
+    const result = spawnSync(process.execPath, ['--test'], { cwd: root, env: environment, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /tests 0/);
+    assert.doesNotMatch(result.stdout + result.stderr, /FACTORY_ATOMIC_PYTHON is required/);
+    const explicit = spawnSync(process.execPath, ['--test', 'qualification/atomic-publication-native.qualification.mjs'], {
+      cwd: root, env: environment, encoding: 'utf8',
+    });
+    assert.equal(explicit.status, 1);
+    assert.match(explicit.stdout + explicit.stderr, /FACTORY_ATOMIC_PYTHON is required/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
