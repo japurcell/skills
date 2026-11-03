@@ -1,6 +1,6 @@
 ---
 name: execplan-implement
-description: ExecPlan implementation workflow.
+description: ExecPlan implementation workflow used by parent agent when delegating tasks to subagents. Not intended for use by subagents directly.
 ---
 
 You have been provided an ExecPlan. This plan should have tasks and milestones associated with it, describing how to implement the plan.
