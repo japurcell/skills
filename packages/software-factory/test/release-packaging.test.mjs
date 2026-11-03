@@ -190,7 +190,8 @@ test('dedicated release toolchain lock installs only pinned compiler and Node ty
     assert.equal(packaged.status, 0, packaged.stderr);
     mkdirSync(installation);
     for (const file of ['package.json', 'package-lock.json']) cpSync(join(f.destination, 'toolchain', file), join(installation, file));
-    const result = spawnSync('npm', ['ci', '--ignore-scripts', '--offline', '--cache', '/tmp/software-factory-npm-cache', '--audit=false', '--fund=false'], { cwd: installation, encoding: 'utf8' });
+    const cache = process.env.FACTORY_TEST_NPM_CACHE_SEED ?? '/tmp/software-factory-npm-cache';
+    const result = spawnSync('npm', ['ci', '--ignore-scripts', '--offline', '--cache', cache, '--audit=false', '--fund=false'], { cwd: installation, encoding: 'utf8' });
     assert.equal(result.status, 0, result.stderr);
     assert.equal(JSON.parse(readFileSync(join(installation, 'node_modules/typescript/package.json'), 'utf8')).version, '7.0.2');
     assert.equal(JSON.parse(readFileSync(join(installation, 'node_modules/@types/node/package.json'), 'utf8')).version, '24.19.2');
