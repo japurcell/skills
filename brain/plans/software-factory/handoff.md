@@ -4,39 +4,36 @@ Updated 2026-11-03. Continue `brain/plans/software-factory/ExecPlan.md`; the cur
 
 ## Authorization and boundaries
 
-- User authorization covers implementation, commits, pushes and qualification Actions. No release publication, global install, real user-repository install/adoption, destructive workspace test, or learning adoption.
-- Final source/security reviews remain deferred until all implementation tasks finish. Keep Gemini/OpenCode/Pi provider qualification blocked: no auth or credential inspection, provider calls, or changes. Codex/Copilot call budgets are spent. Live desktop notifications run last.
-- Preserve failing assertions and bounds. No broad maintenance completion from T16a. Windows ownership/process lifetime stays fail-closed.
-- Shell `login:false`, prefix commands with RTK. `rtk gain` telemetry DB initialization failed once, but `rtk 1.1.0` and other RTK commands work.
-- Do not overlap full composed proof with base writes, builds, installation or lifecycle tests.
+- User authorization covers implementation, commits, pushes and qualification Actions. No release publication, global install, real user-repository installation/adoption, destructive workspace test, or learning adoption.
+- All final source/security reviews remain deferred until implementation tasks finish. Keep Gemini/OpenCode/Pi provider qualification blocked: no auth or credential inspection, provider calls or changes. Codex/Copilot paid-call budgets are spent. Live desktop notifications run last.
+- T16a is accepted only to its schema7/incomplete/claimed boundary. Never mark broad maintenance, ready upgrade, dependency repair, uninstall or cleanup complete from this result. Windows ownership/process lifetime stays fail-closed.
+- Shell `login:false`, prefix commands with RTK. `rtk gain` telemetry DB initialization failed once, but `rtk 1.1.0` and other RTK commands work. Never weaken assertions or bounds.
 
-## Base state and T16a
+## Accepted T16a checkpoint
 
-- Base: `/Users/adam/.codex/worktrees/ea58/skills`, branch `codex/research-agentic-workflow-prototypes`, current source merge `a046e1b4`.
-- Worker commit `3dae7fc5` was merged into its branch as `9345ead6`, then merged into base. `maintenance.ts` and `forward-schema.test.mjs` are blob-identical to the worker. Git rename detection carried the fixed Python module inventory to `skills/default/software-factory/scripts/install.py`, adding only `schema-forward` and `forward-backup-entry`.
-- T16a narrowly recognizes real v3, v4-base, v4-plus, v5, v6 and v7 shapes; it makes an owned backup, does staged one-step forward migration and stops at v7 with repository incomplete and the sole upgrade claim retained. It does not publish files or mark ready. T16a acceptance remains pending full composed base proof; T16b is the next dependent task only after that pass and a genuine owned installation baseline. Its preparation-only interface/journaling packet is `research/t16b-upgrade-publication-task-2026-11-03.md`; recheck current source before any authorized dispatch.
-- Base pinned Node24.22.1/SQLite3.53.4 typecheck and build pass. Focused `test:maintenance -- --operation forward-schema` passes12/12, zero skips (8.871s); base `test:store` passes33/33 (2.137s); `test:release` passes55/55, zero skips (12.290s). Logs: `/tmp/factory-t16a-base-typecheck.log`, `/tmp/factory-t16a-base-build.log`, `/tmp/factory-t16a-base-focused.log`, `/tmp/factory-t16a-base-store.log`, `/tmp/factory-t16a-base-release.log`.
-- The base release selector first failed four publication tests because sandboxed sysctl returned EPERM, plus one offline fixture because shared `/tmp/software-factory-npm-cache` lacked locked `undici-types@7.24.6`. Narrow escalation cleared process identity failures. The fixture now accepts `FACTORY_TEST_NPM_CACHE_SEED`, defaulting to the same shared cache; `/tmp/factory-forward-schema-npm-cache` was seeded from the checked-in toolchain lock in a disposable copy with `npm ci --ignore-scripts`. The shared cache was not modified. Full release is now green.
-- Public maintenance selector showed red (`no tests match supplied filters`) before registering only `forward-schema`; after registration it passes12/12. Without an operation filter, broad maintenance must continue refusing while install, upgrade, dependencies, repair, uninstall and cleanup suites are missing.
+- Base: `/Users/adam/.codex/worktrees/ea58/skills`, branch `codex/research-agentic-workflow-prototypes`, source checkpoint `4d75045b9153b5710171e45298bf5c2923e7da22`.
+- Worker source commit `3dae7fc5` merged through `9345ead6` into base. `maintenance.ts` and `forward-schema.test.mjs` are blob-identical to worker source. Git rename detection carried the fixed Python inventory to `skills/default/software-factory/scripts/install.py`, adding `schema-forward` and `forward-backup-entry`.
+- Full deterministic/browser composed proof on stable base passes530/530, zero failures, zero skips, Node duration209.064s (`/tmp/factory-t16a-base-composed.log`). No overlapping base writes/builds occurred.
+- Focused evidence: pinned typecheck/build pass; forward-schema public selection12/12 (8.871s); base store33/33 (2.137s); release55/55 (12.290s), all zero skips. Logs: `/tmp/factory-t16a-base-typecheck.log`, `/tmp/factory-t16a-base-build.log`, `/tmp/factory-t16a-base-focused.log`, `/tmp/factory-t16a-base-store.log`, `/tmp/factory-t16a-base-release.log`.
+- Public API ready for T16b: `prepareForwardSchema`, `prepareMaintenanceHandoff`, `consumeMaintenanceHandoff`, `advanceForwardSchema`, `inspectForwardSchema`, and `resumeForwardSchema`. T16a ends v7/incomplete/claimed; no installed file publication or ready transition.
+- T16b preparation packet: `research/t16b-upgrade-publication-task-2026-11-03.md`. Root is assigning `/root/upgrade_publication` to the retained installer checkout after I create branch `codex/factory-upgrade-publication` from the accepted base checkpoint. Recheck source signatures before editing. If a genuine owned installation baseline cannot be established, installed-upgrade acceptance stays blocked.
 
-## Windows route diagnostics
+## T17 Windows route diagnostics
 
-- Read-only diagnosis: `research/windows-route-native-diagnosis-2026-11-03.md`. It compared source and the supplied run `39886478568`; previous sanitized artifacts were unavailable, so reported counts do not establish a root-console cause and no native rerun occurred.
-- New T17 task requires a bounded qualification-only closed projection reconstructed from private rows, with graph role/class/parent/phase/end and per-predicate subreason counts, no raw telemetry, no guard weakening or product admission; first portable controls, then same seven native cases. Root owns routing and private worker dispatch.
-- Diagnosis memo and task are now in the plan graph. Historical handoff details are retained in [checkpoint history](handoff.history-2026-11-03-t16a.md).
+- Read-only evidence analysis: `research/windows-route-native-diagnosis-2026-11-03.md`. Run `39886478568` reported aggregate extra descendants and console-class events, but those counts do not establish process association, role or predicate cascade. Previous sanitized artifacts could not be fetched; no native rerun occurred.
+- Root reports a clean qualification-only worker branch `codex/factory-etw-route-diagnostics` in `/Users/adam/.codex/worktrees/factory-windows-etw-route/skills`, commit `21c57d664d70225aeea5a960b13f1b684fc6f120`. Portable tests20/20, zero skips (`/tmp/factory-etw-route-diagnostics-tests.log`); no native run. Author stopped and ownership transferred. After T16b checkout prep, integration owner must merge this branch into base using merge workflow, verify source identity and all existing guards/privacy/productAdmission=false, and rerun20 portable plus artifact-guard tests. Root owns native job coordination and has authorized the existing seven-case workflow run. Upload only its two sanitized artifacts; raw ETL is removed.
+- No diagnostic projection may contain PIDs, keys, timestamps, paths, argv, hashes, output or free text. Preserve unknown/identity ambiguity; no guard weakening, console-client inference, arbitrary signaling, helper admission or product support claim.
 
-## Next action and exact proof
+## Immediate next actions
 
-1. Ensure package-pinned Chromium is available only in a new task-private `/tmp` browser directory. The previous `/tmp/software-factory-playwright-browsers` path is missing. Use installed Playwright1.64.1 and its existing package CLI; no browser version substitution or user-cache writes.
-2. Run the complete deterministic/browser composed command against stable base `a046e1b4`, with no concurrent base writes:
-
-   `rtk proxy env PATH=/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin:$PATH FACTORY_TEST_PYTHON=/Users/adam/.pyenv/versions/3.13.14/bin/python3.13 PLAYWRIGHT_BROWSERS_PATH=/tmp/factory-forward-schema-playwright-browsers /tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node --experimental-test-module-mocks --test --test-concurrency=2 packages/software-factory/test/*.test.mjs packages/software-factory/test/browser/*.test.mjs packages/software-factory/qualification/runtime.test.mjs packages/software-factory/qualification/ci.test.mjs`
-
-3. Record exact case count, time, skips and log path in the ExecPlan. A pass accepts T16a only to its incomplete-store boundary. Then report the base proof to root so T16b can begin.
+1. Commit the updated T16a acceptance evidence and handoff.
+2. In the clean retained `/Users/adam/.codex/worktrees/factory-install-candidate/skills`, switch from the fully integrated clean `codex/factory-forward-store` branch to a new `codex/factory-upgrade-publication` based on the accepted checkpoint. Only then delete the verified clean, fully integrated forward-store branch. Keep the worktree for explicit reuse and send the clean branch/status to root so T16b can start. Assign no source work yourself.
+3. After T16b checkout prep, integrate the Windows diagnostics worker branch into base, verify owned-file identity and portable/artifact checks, then let root coordinate the authorized exact-head seven-case Windows observation. Keep base source edits serialized with the ongoing T16b private worker.
 
 ## Toolchain and recovery
 
-- Verified runtime: `/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node`, official runtime-manifest archive SHA256 `654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628`; Node24.22.1, SQLite3.53.4. Default Node24.21.0 is not acceptance.
-- Python3.13.14: `/Users/adam/.pyenv/versions/3.13.14/bin/python3.13`; do not substitute default Python3.14.6.
-- Release test cache: `/tmp/factory-forward-schema-npm-cache`; shared seed remains `/tmp/software-factory-npm-cache` and must not be modified.
-- If composed proof fails, retain the log and concrete failing assertion; do not weaken the test. Reconcile the plan/handoff before retrying. No base writes until the composed run exits.
+- Pinned Node: `/tmp/factory-qualified-node-342t16a/node-v24.22.1-darwin-arm64/bin/node` (Node24.22.1, SQLite3.53.4). Archive SHA256 `654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628`.
+- Python3.13.14: `/Users/adam/.pyenv/versions/3.13.14/bin/python3.13`; do not substitute Python3.14.6.
+- Private release npm cache: `/tmp/factory-forward-schema-npm-cache`. Shared seed `/tmp/software-factory-npm-cache` was not modified.
+- Private Playwright1.64.1 browser cache: `/tmp/factory-forward-schema-playwright-browsers` (Chromium/headless-shell1248, Chrome156.0.8078.4, FFmpeg1013).
+- Preserve complete run logs under `/tmp`. On a failure, capture the exact assertion and stop dependent integration; never reset user work or weaken tests.
