@@ -48,9 +48,10 @@ export async function atomicPublicationMove(input: AtomicPublicationInput): Prom
     const request = JSON.stringify({ source: input.source, destination: input.destination, sourceIdentity: input.sourceIdentity,
       sourceParentIdentity: input.sourceParentIdentity, destinationParentIdentity: input.destinationParentIdentity });
     if (Buffer.byteLength(request) > 16384) return 'refused';
-    interpreterFd = checkedFile(input.binding.interpreter);
     helperFd = checkedFile(input.binding.helper);
+    interpreterFd = checkedFile(input.binding.interpreter);
     // Pass the already authenticated helper descriptor; no pathname is reopened by Python.
+    const deadline = Date.now() + 12000;
     const child = spawn(input.binding.interpreter.path, ['-I', '-S', '-B', '/dev/fd/3'], {
       cwd: dirname(input.binding.helper.path), env: {}, detached: true, shell: false,
       stdio: ['pipe', 'pipe', 'pipe', helperFd],
@@ -69,9 +70,23 @@ export async function atomicPublicationMove(input: AtomicPublicationInput): Prom
       child.once('error', () => finish(null));
       child.once('close', (code, signal) => finish({ code, signal }));
     });
-    if (!child.pid || !result || expired || bad || result.code !== 0 || result.signal) return 'unknown';
-    try { process.kill(-child.pid, 0); return 'unknown'; }
-    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') return 'unknown'; }
+    if (!child.pid) return 'unknown';
+    // A direct child can close its pipes while an owned descendant remains.
+    // Terminate only this invocation's detached process group, then wait within
+    // the original overall deadline. Any lingering group makes the result unknown.
+    let lingering = false;
+    try { process.kill(-child.pid, 0); lingering = true; }
+    catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') lingering = true; }
+    if (lingering) {
+      try { process.kill(-child.pid, 'SIGKILL'); } catch { /* closure check decides */ }
+      while (Date.now() < deadline) {
+        try { process.kill(-child.pid, 0); }
+        catch (error) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') break; return 'unknown'; }
+        await new Promise(resolve => setTimeout(resolve, Math.min(10, Math.max(1, deadline - Date.now()))));
+      }
+      return 'unknown';
+    }
+    if (!result || expired || bad || result.code !== 0 || result.signal) return 'unknown';
     const values: AtomicPublicationResult[] = ['moved', 'collision', 'unsupported', 'refused', 'unknown'];
     const category = output.endsWith('\n') ? output.slice(0, -1) : '';
     if (!values.includes(category as AtomicPublicationResult)) return 'unknown';

@@ -104,3 +104,68 @@ test('returns unknown when a success response lacks matching namespace evidence'
     binding: { interpreter: file(python), helper: file(script) } };
   assert.equal(await atomicPublicationMove(input), 'unknown');
 });
+
+for (const outcomeMode of ['normal', 'error']) test(`closes owned descendants after ${outcomeMode} helper exit without affecting an unrelated process`, async () => {
+  const { writeFileSync, rmSync } = await import('node:fs');
+  const { spawn } = await import('node:child_process');
+  const { once } = await import('node:events');
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-atomic-'))), source = join(root, 'source');
+  mkdirSync(source, { mode: 0o700 });
+  const script = join(root, 'descendant.py'), pidFile = join(root, 'child.pid');
+  writeFileSync(script, `import subprocess, sys\np = subprocess.Popen([sys.executable, '-I', '-S', '-B', '-c', 'import time; time.sleep(60)'], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\nwith open(${JSON.stringify(pidFile)}, 'w') as f: f.write(str(p.pid))\n${outcomeMode === 'normal' ? "print('moved')" : 'sys.exit(7)'}\n`);
+  const unrelated = spawn(realpathSync(python), ['-I', '-S', '-B', '-c', 'import time; time.sleep(60)'],
+    { detached: true, stdio: 'ignore' });
+  let fixturePid;
+  try {
+    await once(unrelated, 'spawn');
+    const input = { source, destination: join(root, 'destination'), sourceIdentity: identity(source),
+      sourceParentIdentity: identity(root), destinationParentIdentity: identity(root),
+      binding: { interpreter: file(python), helper: file(script) } };
+    const started = Date.now();
+    const outcome = await atomicPublicationMove(input);
+    fixturePid = Number(readFileSync(pidFile, 'utf8'));
+    assert.equal(outcome, 'unknown');
+    assert.ok(Number.isSafeInteger(fixturePid) && fixturePid > 1);
+    assert.throws(() => process.kill(fixturePid, 0), { code: 'ESRCH' });
+    assert.doesNotThrow(() => process.kill(unrelated.pid, 0));
+    assert.ok(Date.now() - started < 12000);
+    assert.equal(identity(source), input.sourceIdentity);
+  } finally {
+    if (fixturePid) try { process.kill(fixturePid, 'SIGKILL'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
+    if (unrelated.exitCode === null && unrelated.signalCode === null) unrelated.kill('SIGKILL');
+    await once(unrelated, 'close');
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('refuses interpreter changed while the helper is authenticated', async () => {
+  const { copyFileSync, writeFileSync, truncateSync, existsSync, rmSync } = await import('node:fs');
+  const { spawn } = await import('node:child_process');
+  const { once } = await import('node:events');
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'factory-atomic-'))), source = join(root, 'source');
+  mkdirSync(source, { mode: 0o700 });
+  const script = join(root, 'large.py'), interpreter = join(root, 'python'), ready = join(root, 'ready'), changed = join(root, 'changed');
+  copyFileSync(realpathSync(python), interpreter);
+  writeFileSync(script, "print('refused')\n");
+  truncateSync(script, 120 * 1024 * 1024);
+  const binding = { interpreter: file(interpreter), helper: file(script) };
+  const watcherCode = `import ctypes, os, sys, time\nscript, interpreter, ready, changed, parent = sys.argv[1:]\nparent = int(parent)\nif sys.platform == 'darwin':\n lib = ctypes.CDLL('/usr/lib/libproc.dylib')\n def opened():\n  for fd in range(3, 128):\n   data = ctypes.create_string_buffer(4096)\n   if lib.proc_pidfdinfo(parent, fd, 2, data, len(data)) > 0 and script.encode() in data.raw: return True\n  return False\nelif sys.platform == 'linux':\n def opened():\n  for fd in os.listdir('/proc/%d/fd' % parent):\n   try:\n    if os.readlink('/proc/%d/fd/%s' % (parent, fd)) == script: return True\n   except OSError: pass\n  return False\nelse: raise RuntimeError('unsupported test host')\nopen(ready, 'w').close()\nend = time.monotonic() + 8\nwhile time.monotonic() < end:\n if opened():\n  with open(interpreter, 'ab') as f: f.write(b'x')\n  open(changed, 'w').close()\n  break\n time.sleep(0.001)\n`;
+  const watcher = spawn(realpathSync(python), ['-I', '-S', '-B', '-c', watcherCode, script, interpreter, ready, changed, String(process.pid)], { stdio: 'ignore' });
+  const closed = once(watcher, 'close');
+  try {
+    const waitUntil = Date.now() + 3000;
+    while (!existsSync(ready) && Date.now() < waitUntil) await new Promise(resolve => setTimeout(resolve, 5));
+    assert.ok(existsSync(ready), 'watcher did not start');
+    const input = { source, destination: join(root, 'destination'), sourceIdentity: identity(source),
+      sourceParentIdentity: identity(root), destinationParentIdentity: identity(root), binding };
+    const result = await atomicPublicationMove(input);
+    await closed;
+    assert.ok(existsSync(changed), 'helper access was not observed during verification');
+    assert.equal(result, 'refused');
+    assert.equal(identity(source), input.sourceIdentity);
+  } finally {
+    if (watcher.exitCode === null && watcher.signalCode === null) watcher.kill('SIGKILL');
+    await closed;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
