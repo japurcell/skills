@@ -1,0 +1,299 @@
+{
+  "scope": "one-changed-windows-fixture-allocation-and-closed-owner-facts-push",
+  "schema": 1,
+  "rootDecision": "released-one-changed-windows-fixture-and-closed-owner-facts-push",
+  "rootDecisionUtc": "2026-11-04T21:00:36Z",
+  "codeCommit": "e2630158940a8281eea2e5f2af94901e38dcf55e",
+  "sourceCommit": "27f20627f24f84f156c21d06627d4eb75d1b7d70",
+  "cleanPrivateHandback": "80806402f3860d45493ae80d65d364a1e13072f5",
+  "privateProofHead": "43d665c740b21b4fd7ccd78e214ce6731034a8c0",
+  "privateProofWorkingTree": true,
+  "testedSources": [
+    {
+      "path": ".github/workflows/brain-hooks.yml",
+      "sha256": "6d9c8d19c2ee8f01698f66527c59692cd95717d002d1c159b64f3c8d2fd46727",
+      "gitBlob": "4b45e69f88ce78542d645340b2a6835fb9703166"
+    },
+    {
+      "path": "scripts/test-scan-secrets-windows.ps1",
+      "sha256": "f4da0f587b98e6c2b969008b4ce7e267c76e4779001cf05fe640b0db02f6abbc",
+      "gitBlob": "bb3105d252afe58abb48bc727d60fdc115f6d2df"
+    },
+    {
+      "path": "scripts/test-extract-conversations-windows-owner.py",
+      "sha256": "52a7df49b3a9509e61ac1037746e620a16b9259c3f9bfe8aa8699d5391b87531",
+      "gitBlob": "43b944ecb3c9f20dd90d3df8be7b7a714c5fabb5"
+    },
+    {
+      "path": "scripts/test-extract-conversations-windows-owner-portable.py",
+      "sha256": "0d893e76633ec42c0d4956a2ee70e5a55e6e2cab28cc516c395ba86f0c4befb4",
+      "gitBlob": "8e4216e5197f811fdce3368a02bed81fbcbe1080"
+    },
+    {
+      "path": "scripts/windows-owner-facts.md",
+      "sha256": "0a7b3fe16101ab5ee9b124e15150b1938b4045c7ace1bc0d45568b64e6cc1e3e",
+      "gitBlob": "b6cf39642dc46a0e0185d2715b927bb9cebe220d"
+    }
+  ],
+  "normalMergePreservedAllTestedBytes": true,
+  "executableChangesAfterProof": false,
+  "sourceProof": {
+    "actualNativeAllocationRed": {
+      "runId": 41897732229,
+      "jobId": 126811647208,
+      "stage": "second repeated completion-accounting New-Item collision after first240capturespass"
+    },
+    "allocationPreludeGreen": {
+      "scope": "actualASTallocationprelude only",
+      "seconds": 0.767814833,
+      "fourDistinct": true,
+      "firstSentinelPreserved": true,
+      "foreignExistingTargetRefused": true,
+      "syntaxPassed": true
+    },
+    "platformRedCases": 1,
+    "platformGreenCases": 1,
+    "inertApiRed": {
+      "cases": 2,
+      "passed": 1,
+      "failed": 1
+    },
+    "inertApiGreen": {
+      "cases": 2,
+      "failed": 0,
+      "seconds": 0.028
+    },
+    "workflowRedCases": 1,
+    "workflowGreen": {
+      "cases": 3,
+      "failed": 0,
+      "seconds": 0.88,
+      "actualRunBodyInertPythonStubOutcomes": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1
+        ],
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "bothOriginalCommandsAlwaysObserved": true,
+      "actionlintWorkflows": 1,
+      "fullPostflightSeconds": 1.477528000017628
+    },
+    "allFullEofPostflightsZero": true,
+    "noActualWinDllOrNativeOwnerApiCalled": true,
+    "actualWindowsAbiUnproven": true,
+    "logs": "/tmp/factory-hook-windows-{allocation,owner-platform,owner-api,owner-workflow}-{red,green}{.log,-postflight.json}",
+    "portabilityRefresh": {
+      "privateProofHead": "719e865d26564edf6eecb632a357f6261a023888",
+      "workingTree": true,
+      "testSha256": "0d893e76633ec42c0d4956a2ee70e5a55e6e2cab28cc516c395ba86f0c4befb4",
+      "cases": 3,
+      "seconds": 0.86,
+      "fullSeconds": 1.3622912089922465,
+      "actionlintWorkflows": 1,
+      "sameVerifiedPowerShellEnvOverride": true,
+      "missingDependencyFailsWithoutSkipOrAcquisition": true,
+      "fullEofPostflightZero": true
+    }
+  },
+  "ownerFactObservation": {
+    "workflow": ".github/workflows/brain-hooks.yml",
+    "job": "standalone matrix Windows only",
+    "maximumRuns": 1,
+    "maximumActualNativeHelperInvocations": 2,
+    "pythonMinorMatrix": [
+      "3.12",
+      "3.14"
+    ],
+    "actualPatchVersions": "record from original setup-python logs; no invented servicing pin",
+    "runner": "windows-latest existing alias",
+    "jobMinutes": 10,
+    "externalPremise": "Root explicitly accepted externally trusted hosted WindowsLatest/source and protected C:/Windows/System32 advapi32/kernel32 premise; not selfhash/job-attested trust",
+    "dlls": [
+      "C:\\Windows\\System32\\advapi32.dll",
+      "C:\\Windows\\System32\\kernel32.dll"
+    ],
+    "dllLoadFlags": 2048,
+    "apiScope": "GetNamedSecurityInfoW(owner only), current-process TOKEN_QUERY, TokenUser/TokenOwner, fixed Administrators SID validity/length/equality; owned CloseHandle/LocalFree only",
+    "workspaceMaximumPerJob": 1,
+    "callerArgsOrPathAccepted": false,
+    "tokenInformationBufferMaximum": 4096,
+    "sidBufferMaximum": 68,
+    "readTokenClasses": [
+      1,
+      4
+    ],
+    "successfulTokenInformationCallsMaximum": 4,
+    "fourOutputBooleans": [
+      "ownerEqualsTokenUser",
+      "ownerEqualsTokenOwner",
+      "ownerEqualsAdministrators",
+      "tokenOwnerEqualsTokenUser"
+    ],
+    "success": "one closed schema1 record, primitive fourbooleans only; no owner-policy/admission conclusion",
+    "failure": "fixed unproven category andexit1, no rawSID/path/username/PID/token/error string; no retry/fallback/owner/DACL/privilege mutation",
+    "originalBrainTests": "all44 original unit cases still executed evenhelperfails; final unitnonzero preferred, elsehelperstatus; existingplatform skips unchanged",
+    "currentNativeFactsAndAbiKnown": false
+  },
+  "captureRepairObservation": {
+    "workflow": ".github/workflows/ready-ideas-windows.yml",
+    "command": "pwsh -NoProfile -File scripts/test-scan-secrets-windows.ps1",
+    "fullCases": 580,
+    "stressCaptures": 480,
+    "completionCases": 12,
+    "otherScenarioCases": 78,
+    "extraStressCases": 10,
+    "allAssertionsModesCleanupDeadlinesUnchanged": true,
+    "allocation": "one long ordinal percall prefix, noForce/adoption, finalownworkdircleanup unchanged",
+    "jobTimeout": "Root explicitly accepted unchanged inherited no-explicit-timeout job, GitHub default360minutes; no cap invented/weakened",
+    "otherFocusedCaptureContext": ".github/workflows/hook-windows-capture-diagnostic.yml unchanged copilot/warn/partial exactly1case,10minjob",
+    "full580NativeAcceptanceStillOpen": true
+  },
+  "expectedAutomaticWorkflows": [
+    {
+      "path": ".github/workflows/hook-windows-capture-diagnostic.yml",
+      "name": "name: Windows hook capture diagnostic",
+      "triggeringPaths": [
+        "scripts/test-scan-secrets-windows.ps1"
+      ],
+      "jobs": 1,
+      "sha256": "dad68e201086a7b0135de6fe2295b15247424dc3a269b25722516db6d431acda"
+    },
+    {
+      "path": ".github/workflows/software-factory-qualification.yml",
+      "name": "name: Software factory native foundation qualification",
+      "triggeringPaths": [
+        "packages/software-factory/qualification/windows-sdk-registration-native-result.json"
+      ],
+      "jobs": 3,
+      "sha256": "6c018b703b134c9551a9efdab0bc5de7cffac3782c0047fa841ee4aa39e0a848"
+    },
+    {
+      "path": ".github/workflows/brain-hooks.yml",
+      "name": "name: Standalone brain hooks",
+      "triggeringPaths": [
+        ".github/workflows/brain-hooks.yml",
+        "scripts/test-extract-conversations-windows-owner-portable.py",
+        "scripts/test-extract-conversations-windows-owner.py"
+      ],
+      "jobs": 6,
+      "sha256": "6d9c8d19c2ee8f01698f66527c59692cd95717d002d1c159b64f3c8d2fd46727"
+    },
+    {
+      "path": ".github/workflows/ready-ideas-windows.yml",
+      "name": "name: Ready ideas Windows hooks",
+      "triggeringPaths": [
+        "scripts/test-extract-conversations-windows-owner-portable.py",
+        "scripts/test-extract-conversations-windows-owner.py",
+        "scripts/test-scan-secrets-windows.ps1",
+        "scripts/windows-owner-facts.md"
+      ],
+      "jobs": 1,
+      "sha256": "5fa2bb0eecd15def3822dfe3acb07cfca76b456348e9933b60ae1fc5cb3b68bb"
+    },
+    {
+      "path": ".github/workflows/hooks-posix.yml",
+      "name": "name: Hook security POSIX",
+      "triggeringPaths": [
+        "scripts/test-extract-conversations-windows-owner-portable.py",
+        "scripts/test-extract-conversations-windows-owner.py",
+        "scripts/test-scan-secrets-windows.ps1",
+        "scripts/windows-owner-facts.md"
+      ],
+      "jobs": 2,
+      "sha256": "712077b090d7b9969cfe8be17351ddafab932d3c261ddeec82ae4aafa95f7d11"
+    }
+  ],
+  "expectedWorkflowCount": 5,
+  "expectedJobCount": 13,
+  "collateralScope": {
+    "foundationJobs": 3,
+    "reason": "already-unpushed SDK native-result JSON at43 triggers broad factoryqualification filter; no new app source",
+    "hookPosixJobs": 2,
+    "knownLifecycleFailure": "32tests/7fail fixture-source missing real brain-install generated asset parent, preserved guard; repair is separate follow-on, do not claim fixed by this push",
+    "sdkMetadataAndSpecializedCleanupIr1Timing": "no trigger changes, no native SDK query or dispatch"
+  },
+  "appRuntime": {
+    "receiptSha256": "74c344f9798ecd29bbaec65c5358ebd068cd8c407ee577e845b668b3e6f867c9",
+    "inputs": 734,
+    "outputs": 186,
+    "qualificationInputs": 0,
+    "node": "v24.22.1",
+    "nodeSha256": "6f32069480ec14d52b6d7b1f3c7124cfbbc46203abf5ddf5c65b127435f3f329",
+    "localAuthenticatedDarwinArchiveSha256": "654ba79de6155647e22321932b45f2a1ccb705976cc337c9b8e278beb085a628",
+    "archiveUsedByPortableProof": false,
+    "nativeArchiveBootstrapPins": "existing foundation/runtime-manifest pins unchanged from863",
+    "runtimeManifestSha256": "49bfd21fbef5d0c308b60bac3ddeaec368e902bdee9a1f809d181681ba5e6897"
+  },
+  "unchangedSdkContext": {
+    "sourceCommit": "5405a163b4e591705f9888440ec5cb8933c48d2c",
+    "sourceCount": 10,
+    "currentSelectionSha256": "10f2bd54b5e47122e4d5283ba83a72e776ba3b87fdf74d8eb68d02908257bf98",
+    "digestSidecarExact": true,
+    "historyD4": "d4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359",
+    "history719": "719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650",
+    "provenance": "45f71b4264e83eeb945d0ecb2263d892561487accc4d33705b600265596a2544",
+    "phaseASources": 3,
+    "phaseACommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+    "sdkQueryReleasedByThisProposal": false
+  },
+  "authority": {
+    "selection": false,
+    "build": false,
+    "nativeAdmission": false,
+    "sdkAuthentication": false,
+    "providerAuthHelpVersionModelCalls": false,
+    "desktop": false,
+    "realRepositoryInstallOrPublication": false,
+    "ownerDaclOrPrivilegeWrite": false,
+    "extractorPolicyOrAssetChange": false,
+    "heldProbe": false
+  },
+  "push": {
+    "requiresSeparateRootReadAndRelease": true,
+    "maximumPushes": 1,
+    "expectedRemoteBefore": "863f20bf359354bc5ae853f8dcb331c77f3bec82",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "workingDirectory": "/Users/adam/.codex/worktrees/ea58/skills",
+    "command": "/Users/adam/homebrew/bin/rtk proxy git -c credential.helper= -c 'credential.https://github.com.helper=!/Users/adam/homebrew/bin/gh auth git-credential' push origin HEAD:refs/heads/codex/research-agentic-workflow-prototypes",
+    "postReleaseCommitScope": "executionrecord and evidence-onlydocs; no source/workflow/context/app changes",
+    "recordDestination": "brain/plans/software-factory/research/windows-owner-facts-native-execution-2026-11-04.json",
+    "prepushChecks": [
+      "cleanexactintendedbranch/origin/remote863",
+      "exact5sourceGitcodehead+h1app/source9/10/3/current+sidecar/history/prov",
+      "codee263->finalrecordhead diff evidence-onlyallowlist",
+      "all5workflowhashes/triggered13jobs",
+      "all734inputs186outputsreceipt74/actualNode6f/authenticatedarchive+runtimeManifest"
+    ],
+    "afterPush": "record exactpushedhead/run/jobIDs; boundedreadonlywatch; no cancel/dispatch/retry/rerun",
+    "prepushDriver": "/tmp/factory-windows-owner-prepush.py",
+    "prepushDriverSha256": "b8662811fdb5b41b4ed20565c7f058091aa8af93c1781b97d9249e6230ba6e5f",
+    "prepushCommand": "/Users/adam/homebrew/bin/rtk proxy /Users/adam/.pyenv/versions/3.13.14/bin/python3.13 /tmp/factory-windows-owner-prepush.py --head <exact-evidence-commit>",
+    "rootReleaseRecorded": true,
+    "readonlyWatchFirstUtc": "2026-11-04T21:15:00Z"
+  },
+  "knownOpenLimits": [
+    "actualSIDclasses/WindowsABIunknown",
+    "extractorowner/DACL/creatorpolicyunchanged",
+    "readyfull580acceptanceopen",
+    "oldWindowsstorage/notificationdeadlinesandIR1Darwintimeoutopen",
+    "lifecyclefixture32/7failunfixed",
+    "SDKwire3source/nativequeryunreleased"
+  ],
+  "portabilityCommit": "d0ba93a76c68d537e3c58c372aae07fda0d591ff"
+}

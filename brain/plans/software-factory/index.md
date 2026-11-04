@@ -173,3 +173,5 @@
 - [IR1 qualification stage observation source contract](research/repair-inspection-stage-observation-contract-2026-11-04.md)
 
 - [SDK malformed closed diagnostic design, source unreleased](research/sdk-registration-malformed-diagnostics-contract-2026-11-04.md)
+
+- [Windows fixture and closed owner-facts released execution](research/windows-owner-facts-native-execution-2026-11-04.json)
