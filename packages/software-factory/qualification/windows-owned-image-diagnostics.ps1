@@ -1,4 +1,4 @@
-# Pure qualification diagnostic projection. Never return a compiler message/path.
+# Qualification query/projection helpers. Never return a message/path/signature.
 function Get-OwnedImageCompilerDiagnostic {
     param([string]$Text)
     $empty = @{ code = 'none'; source = 'none'; line = 0 }
@@ -28,7 +28,21 @@ function Get-OwnedImageSignatureCondition {
         if ($null -eq $Signature.SignerCertificate) { return 'signer-absent' }
         if ($Signature.SignerCertificate.Subject -notmatch '(?:^|, )O=Microsoft Corporation(?:,|$)') { return 'subject-mismatch' }
         return 'none'
-    } catch { return 'api-failure' }
+    } catch { return 'classification-failure' }
+}
+
+function Invoke-OwnedImageSignatureCondition {
+    param([string]$Path)
+    try {
+        $signature = Get-AuthenticodeSignature -LiteralPath $Path
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        return 'command-unavailable'
+    } catch [System.Management.Automation.ParameterBindingException] {
+        return 'parameter-binding'
+    } catch {
+        return 'invocation-failure'
+    }
+    return (Get-OwnedImageSignatureCondition $signature)
 }
 
 function Format-OwnedImageBuildDiagnostic {
@@ -39,7 +53,8 @@ function Format-OwnedImageBuildDiagnostic {
     if ($Tool -isnot [string] -or $Condition -isnot [string]) { return $unexpected }
     if ($Category -ceq 'tool-signature') {
         if ($Tool -cnotin @('vswhere', 'compiler', 'linker')) { return $unexpected }
-        if ($Condition -cnotin @('status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure')) { return $unexpected }
+        if ($Condition -cnotin @('status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure', 'command-unavailable',
+            'parameter-binding', 'invocation-failure', 'classification-failure')) { return $unexpected }
     } elseif ($Tool -cne 'none' -or $Condition -cne 'none') { return $unexpected }
     if ($Compiler -isnot [Collections.IDictionary] -or $Compiler.Count -ne 3 -or
         @($Compiler.Keys | Where-Object { $_ -cnotin @('code', 'source', 'line') }).Count -ne 0) { return $unexpected }

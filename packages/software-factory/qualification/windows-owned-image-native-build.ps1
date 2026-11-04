@@ -34,8 +34,7 @@ try {
         $script:diagnosticCategory = 'tool-signature'
         $script:diagnosticTool = $Role
         $script:diagnosticCondition = 'api-failure'
-        $signature = Get-AuthenticodeSignature -LiteralPath $Path
-        $script:diagnosticCondition = Get-OwnedImageSignatureCondition $signature
+        $script:diagnosticCondition = Invoke-OwnedImageSignatureCondition $Path
         if ($script:diagnosticCondition -cne 'none') { throw 'tool-signature' }
         $script:diagnosticTool = 'none'
         $script:diagnosticCondition = 'none'

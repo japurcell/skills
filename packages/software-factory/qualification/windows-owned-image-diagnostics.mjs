@@ -7,7 +7,8 @@ const empty = () => ({ category: 'unexpected', code: 'none', source: 'none', lin
 const validTool = (category, tool) => category === 'tool-signature'
   ? ['vswhere', 'compiler', 'linker'].includes(tool) : tool === 'none';
 const validCondition = (category, condition) => category === 'tool-signature'
-  ? ['status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure'].includes(condition) : condition === 'none';
+  ? ['status-not-valid', 'signer-absent', 'subject-mismatch', 'api-failure', 'command-unavailable',
+    'parameter-binding', 'invocation-failure', 'classification-failure'].includes(condition) : condition === 'none';
 const validCompiler = (category, code, source, line) => {
   if (code === 'none') return source === 'none' && line === 0;
   if (category !== 'compile' || typeof code !== 'string') return false;
@@ -19,7 +20,7 @@ const validCompiler = (category, code, source, line) => {
 
 export function parseBuildDiagnostic(text) {
   if (typeof text !== 'string' || Buffer.byteLength(text) > 512) return empty();
-  const match = /^OWNED_IMAGE_BUILD\t3\t([a-z-]+)\t(none|C[1-9][0-9]{3}|LNK[1-9][0-9]{3})\t(none|probe|shared|fixture|fixture-dll)\t(0|[1-9][0-9]{0,3})\t(none|vswhere|compiler|linker)\t(none|status-not-valid|signer-absent|subject-mismatch|api-failure)\r?\n$/.exec(text);
+  const match = /^OWNED_IMAGE_BUILD\t3\t([a-z-]+)\t(none|C[1-9][0-9]{3}|LNK[1-9][0-9]{3})\t(none|probe|shared|fixture|fixture-dll)\t(0|[1-9][0-9]{0,3})\t(none|vswhere|compiler|linker)\t(none|status-not-valid|signer-absent|subject-mismatch|api-failure|command-unavailable|parameter-binding|invocation-failure|classification-failure)\r?\n$/.exec(text);
   if (!match || match[0] !== text || !buildCategories.includes(match[1])) return empty();
   const [, category, code, source, number, tool, condition] = match;
   const line = Number(number);

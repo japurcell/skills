@@ -312,3 +312,28 @@ test('signature conditions reject forged context and private or malformed values
     'OWNED_IMAGE_BUILD\t2\ttool-signature\tnone\tnone\t0\tvswhere\n'])
     assert.deepEqual(parseBuildDiagnostic(text), { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
 });
+
+test('query failure diagnostics distinguish only closed command and classification branches', () => {
+  for (const condition of ['command-unavailable', 'parameter-binding', 'invocation-failure', 'classification-failure']) {
+    const parsed = parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\t${condition}\n`);
+    assert.deepEqual(parsed, { category: 'tool-signature', code: 'none', source: 'none', line: 0, tool: 'vswhere', condition });
+    assert.equal(formatFailure({ phase: 'build', ...parsed }),
+      `Owned image native qualification failed phase=build case=none category=tool-signature code=none source=none line=0 tool=vswhere condition=${condition}\n`);
+  }
+});
+
+test('query branch diagnostics cannot disclose error names or escape signature-stage coherence', () => {
+  const unexpected = 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0 tool=none condition=none\n';
+  for (const condition of ['command-unavailable', 'parameter-binding', 'invocation-failure', 'classification-failure']) {
+    for (const value of [{ phase: 'host', category: 'host', condition }, { phase: 'pin', category: 'pin', condition },
+      { phase: 'case', name: 'positive', category: 'native', condition }, { phase: 'build', category: 'compile', condition },
+      { phase: 'build', name: 'positive', category: 'tool-signature', tool: 'vswhere', condition }])
+      assert.equal(formatFailure(value), unexpected);
+  }
+  for (const condition of ['System.Management.Automation.ParameterBindingException', 'C:\\private\\error',
+    'parameter-binding\nprivate', 'invocation-failure\n', 'x'.repeat(513)]) {
+    assert.equal(formatFailure({ phase: 'build', category: 'tool-signature', tool: 'vswhere', condition }), unexpected);
+    assert.deepEqual(parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t3\ttool-signature\tnone\tnone\t0\tvswhere\t${condition}\n`),
+      { category: 'unexpected', code: 'none', source: 'none', line: 0, tool: 'none', condition: 'none' });
+  }
+});
