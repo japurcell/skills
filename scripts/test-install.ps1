@@ -52,7 +52,7 @@
          `$(<file)` comparison, which strips the trailing newline the same way.
 
     Exits 0 on success and 1 on the first failed assertion. Self-contained:
-    does not source scripts/test-common.sh. Requires pwsh on PATH (it spawns
+    does not source scripts/tests/support/test-common.sh. Requires pwsh on PATH (it spawns
     child `pwsh -NoProfile -File` processes).
 #>
 

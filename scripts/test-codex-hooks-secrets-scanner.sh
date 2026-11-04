@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
 
 python3 - "$REPO_ROOT/.codex/global-hooks.json" <<'PY'
 import json

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
 
 RTK_PROVIDER="gemini"
 RTK_PROVIDER_LABEL="Gemini"

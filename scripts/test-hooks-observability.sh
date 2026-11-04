@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/test-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/tests/support/test-common.sh"
 clear_observability_test_overrides
 
 OBS_TEST_PROVIDER="copilot"
