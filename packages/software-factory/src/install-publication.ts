@@ -1,17 +1,18 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { closeSync, constants, fsyncSync, lstatSync, mkdirSync, openSync, readFileSync,
-  realpathSync, renameSync, unlinkSync, writeSync } from 'node:fs';
+  realpathSync, unlinkSync, writeSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { directoryIdentity } from './install-candidate.js';
+import { atomicPublicationMove, type AtomicPublicationFileBinding } from './atomic-publication.js';
 import { runManagedInstallCommand } from './install.js';
 import { validateBoundProviderSources } from './installation-bindings.js';
 import { publicationIntentPath, readPublicationRecord, verifyPublicationLayout, writePublicationRecord,
   type PublicationIntent } from './install-publication-state.js';
 import { assertInstallBootstrapMarker, measureMaintenanceStage, recordMaintenanceStage } from './maintenance.js';
-import { currentOwner } from './native/process.js';
+import { currentOwner, inspectOwner } from './native/process.js';
 import { validateReleaseBundle } from './release.js';
 import { schemaVersion } from './schema.js';
-import { openMaintenanceStore, type CandidateBinding, type Claim, type MaintenanceHandle } from './store.js';
+import { openMaintenanceStore, type CandidateBinding, type Claim, type MaintenanceHandle, type Owner } from './store.js';
 import { repositoryIdentity } from './workspace.js';
 
 const SHA = /^[0-9a-f]{64}$/;
@@ -252,10 +253,26 @@ function assertIntent(common: string, intent: PublicationIntent): string {
   if (JSON.stringify(JSON.parse(actual.toString('utf8'))) !== JSON.stringify(intent)) fail('publication intent changed');
   return hash(actual);
 }
-function moveSubtree(common: string, claim: Claim, name: 'install' | 'toolchain'): void {
-  const source = join(claim.maintenance!.candidate!.path, name), target = join(common, 'factory', name);
-  if (!absent(target)) fail('publication target collision');
-  renameSync(source, target);
+async function moveSubtree(common: string, claim: Claim, name: 'install' | 'toolchain'): Promise<void> {
+  const recorded = claim.maintenance!, source = join(recorded.candidate!.path, name), target = join(common, 'factory', name);
+  const path = join(recorded.stagePath, 'payload', 'atomic-binding.json');
+  const raw = JSON.parse(readPublicationRecord(path).toString('utf8')) as Record<string, unknown>;
+  const binding = { interpreter: raw['interpreter'] as AtomicPublicationFileBinding, helper: raw['helper'] as AtomicPublicationFileBinding };
+  if (raw['version'] !== 1 || Object.keys(raw).sort().join(',') !== 'factoryIdentity,helper,interpreter,launcher,pythonVersion,version'
+    || typeof raw['factoryIdentity'] !== 'string' || raw['factoryIdentity'] !== directoryIdentity(join(common, 'factory'))
+    || !binding.helper || binding.helper.path !== join(recorded.stagePath, 'payload', 'native', 'atomic-publication.py')
+    || !binding.interpreter || typeof binding.interpreter.path !== 'string'
+    || binding.interpreter.path === join(common, 'factory') || binding.interpreter.path.startsWith(`${join(common, 'factory')}${sep}`))
+    fail('publication helper binding differs');
+  const launcher = raw['launcher'] as Owner;
+  if (!launcher || (inspectOwner(launcher).state === 'known_live' && launcher.pid !== process.ppid))
+    fail('known-live original launcher blocks publication');
+  const layout = verifyPublicationLayout(common, claim);
+  if (!layout.intent || layout[name] !== 'candidate') fail('publication source differs');
+  const result = await atomicPublicationMove({ source, destination: target,
+    sourceIdentity: layout.intent[`${name}Identity`], sourceParentIdentity: recorded.candidate!.identity,
+    destinationParentIdentity: raw['factoryIdentity'], binding });
+  if (result !== 'moved') fail(`publication move ${result}; evidence retained`);
   flush(dirname(source)); flush(dirname(target));
 }
 async function validatePublished(root: string, common: string, claim: Claim, authoring: InstalledReceipt['authoring']) {
@@ -307,11 +324,11 @@ export async function publishFirstInstall(ticketPath: string): Promise<{ state: 
     ({ claim, layout } = await gate(ticket.root, handle));
   }
   if (layout.install === 'candidate') {
-    moveSubtree(common, claim, 'install');
+    await moveSubtree(common, claim, 'install');
     ({ claim, layout } = await gate(ticket.root, handle));
   }
   if (layout.toolchain === 'candidate') {
-    moveSubtree(common, claim, 'toolchain');
+    await moveSubtree(common, claim, 'toolchain');
     ({ claim, layout } = await gate(ticket.root, handle));
   }
   if (layout.install !== 'published' || layout.toolchain !== 'published') fail('publication not fully moved');
@@ -355,6 +372,16 @@ export async function recoverCompletedFirstInstall(repository: string, operation
   const store = openMaintenanceStore(common);
   try {
     const { completion, repositoryId } = store.readFirstInstallCompletion(operationId);
+    const owner = (completion as typeof completion & { controllerOwner?: Owner; stageIdentity?: string }).controllerOwner;
+    const stageIdentity = (completion as typeof completion & { stageIdentity?: string }).stageIdentity;
+    const stagePath = markerClaim.maintenance!.stagePath, stage = measureMaintenanceStage(stagePath);
+    const stageBinding = JSON.parse(readPublicationRecord(join(stagePath, 'payload', 'atomic-binding.json')).toString('utf8')) as { launcher?: Owner };
+    if (!owner || !stageBinding.launcher || !stageIdentity || stage.stageIdentity !== stageIdentity || stage.stageDigest !== receipt.stageDigest)
+      fail('completed installation controller evidence unavailable');
+    const current = currentOwner(), sameController = owner.host === current.host && owner.pid === current.pid && owner.start === current.start;
+    if (inspectOwner(owner).state === 'known_live' && !sameController) fail('known-live original controller blocks cleanup');
+    if (inspectOwner(stageBinding.launcher).state === 'known_live'
+      && !(sameController && stageBinding.launcher.pid === process.ppid)) fail('known-live original launcher blocks cleanup');
     if (completion.version !== 1 || repositoryId !== receipt.repositoryId || completion.repositoryId !== receipt.repositoryId
       || completion.claimId !== receipt.claimId || completion.selectionDigest !== receipt.selectionDigest
       || completion.manifestSha256 !== receipt.manifestSha256 || completion.receiptId !== receipt.receiptId

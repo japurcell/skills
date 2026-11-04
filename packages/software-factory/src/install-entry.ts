@@ -1,10 +1,11 @@
-import { prepareInstallCandidate, prepareInstallHandoff } from './install.js';
+import { prepareInstallCandidate, prepareInstallHandoff, prepareUpgradeHandoff } from './install.js';
 
 async function main(): Promise<void> {
   if ((process.argv.length !== 4 && process.argv.length !== 5) || process.argv[2] !== '--request'
-    || (process.argv.length === 5 && process.argv[4] !== '--handoff')) throw new Error('private install request required');
-  const prepared = process.argv.length === 5 ? await prepareInstallHandoff(process.argv[3]!)
-    : await prepareInstallCandidate(process.argv[3]!);
+    || (process.argv.length === 5 && !['--handoff', '--upgrade'].includes(process.argv[4]!))) throw new Error('private install request required');
+  const prepared = process.argv[4] === '--upgrade' ? await prepareUpgradeHandoff(process.argv[3]!)
+    : process.argv.length === 5 ? await prepareInstallHandoff(process.argv[3]!)
+      : await prepareInstallCandidate(process.argv[3]!);
   process.stdout.write(`${JSON.stringify(prepared)}\n`);
 }
 main().catch(error => {
