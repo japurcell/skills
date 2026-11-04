@@ -18,8 +18,8 @@ export function inboxEnvironment(inherited, canonicalHost, selectedHost) {
 
 const checks = { environment: ['path', 'profile', 'inbox', 'assignment', 'reparse'],
   'management-import': ['manifest', 'reparse', 'import'], 'utility-import': ['manifest', 'reparse', 'import'],
-  'security-import': ['manifest', 'reparse', 'import'], 'management-origin': ['count', 'name', 'manifest', 'base'],
-  'utility-origin': ['count', 'name', 'manifest', 'base'], 'security-origin': ['count', 'name', 'manifest', 'base'],
+  'security-import': ['manifest', 'reparse', 'import'], 'management-origin': ['count', 'capture', 'name', 'kind', 'manifest', 'base'],
+  'utility-origin': ['count', 'capture', 'name', 'kind', 'manifest', 'base'], 'security-origin': ['count', 'capture', 'name', 'kind', 'manifest', 'base'],
   'cmdlet-resolution': ['resolution', 'count'], 'cmdlet-origin': ['path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base'],
   ready: ['none'], unknown: ['unknown'] };
 function valid(value) {

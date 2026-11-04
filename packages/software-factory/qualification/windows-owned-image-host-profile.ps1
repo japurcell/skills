@@ -19,6 +19,38 @@ function Test-OwnedImageSecurityOrigin {
     } catch { return $false }
 }
 
+function Get-OwnedImageModuleSnapshot {
+    param([object]$Module)
+    try {
+        # Copy each relevant property once. Only typed immutable values can pass.
+        return @{ Name = $Module.Name; ModuleType = $Module.ModuleType; Path = $Module.Path; ModuleBase = $Module.ModuleBase }
+    } catch { return $null }
+}
+
+function Test-OwnedImageInboxModuleOrigin {
+    param([string]$HostHome, [string]$Name, [object]$Snapshot, [Collections.IDictionary]$Facts = $null)
+    if ($null -eq $Facts) { $Facts = @{} }
+    $Facts.field = 'capture'
+    try {
+        if ($Snapshot -isnot [Collections.IDictionary] -or $Snapshot.Count -ne 4 -or
+            @($Snapshot.Keys | Where-Object { $_ -cnotin @('Name', 'ModuleType', 'Path', 'ModuleBase') }).Count -ne 0) { return $false }
+        $hostDirectory = [IO.Path]::GetFullPath($HostHome)
+        $Facts.field = 'name'
+        if ($Name -cnotin @('Microsoft.PowerShell.Management', 'Microsoft.PowerShell.Utility', 'Microsoft.PowerShell.Security') -or
+            $Snapshot.Name -isnot [string] -or $Snapshot.Name -cne $Name) { return $false }
+        $directory = [IO.Path]::Combine($hostDirectory, 'Modules', $Name)
+        $manifest = [IO.Path]::Combine($directory, $Name + '.psd1')
+        $Facts.field = 'kind'
+        if ($Snapshot.ModuleType -isnot [Management.Automation.ModuleType] -or $Snapshot.ModuleType -ne [Management.Automation.ModuleType]::Manifest) { return $false }
+        $Facts.field = 'manifest'
+        if ($Snapshot.Path -isnot [string] -or -not [string]::Equals($Snapshot.Path, $manifest, [StringComparison]::OrdinalIgnoreCase)) { return $false }
+        $Facts.field = 'base'
+        return $Snapshot.ModuleBase -is [string] -and
+            ([string]::Equals($Snapshot.ModuleBase, $directory, [StringComparison]::OrdinalIgnoreCase) -or
+             [string]::Equals($Snapshot.ModuleBase, $hostDirectory, [StringComparison]::OrdinalIgnoreCase))
+    } catch { return $false }
+}
+
 function Get-OwnedImageManagementRelation {
     param([string]$HostHome, [object]$Module)
     $relation = @{ kind = 'unknown'; base = 'other'; path = 'other'; baseType = 'other' }
@@ -92,14 +124,11 @@ function Initialize-OwnedImageInboxProfile {
             $loaded = @(Import-Module -Name $manifest -Scope Global -PassThru -ErrorAction Stop)
             $facts.stage = $role + '-origin'; $facts.field = 'count'
             if ($loaded.Count -ne 1) { $facts.origin = 'refused'; return $facts }
-            $facts.field = 'name'
-            if ($loaded[0].Name -cne $name) { $facts.origin = 'refused'; return $facts }
-            $facts.field = 'manifest'
-            if (-not [string]::Equals([IO.Path]::GetFullPath($loaded[0].Path), $manifest, [StringComparison]::OrdinalIgnoreCase)) { $facts.origin = 'refused'; return $facts }
-            $facts.field = 'base'
-            if (-not [string]::Equals([IO.Path]::GetFullPath($loaded[0].ModuleBase), $directory, [StringComparison]::OrdinalIgnoreCase)) {
+            $facts.field = 'capture'
+            $snapshot = Get-OwnedImageModuleSnapshot $loaded[0]
+            if (-not (Test-OwnedImageInboxModuleOrigin $HostHome $name $snapshot $facts)) {
                 $facts.origin = 'refused'
-                if ($role -ceq 'management') { $facts.relation = Get-OwnedImageManagementRelation $HostHome $loaded[0] }
+                if ($role -ceq 'management' -and $facts.field -ceq 'base') { $facts.relation = Get-OwnedImageManagementRelation $HostHome $snapshot }
                 return $facts
             }
         }
@@ -121,7 +150,7 @@ function Format-OwnedImageHostProfile {
     $fallback = "OWNED_IMAGE_PROFILE`t2`twinps-inbox-only`tunverified`tunavailable`tunknown`tunknown"
     $checks = @{ environment = @('path', 'profile', 'inbox', 'assignment', 'reparse')
         'management-import' = @('manifest', 'reparse', 'import'); 'utility-import' = @('manifest', 'reparse', 'import'); 'security-import' = @('manifest', 'reparse', 'import')
-        'management-origin' = @('count', 'name', 'manifest', 'base'); 'utility-origin' = @('count', 'name', 'manifest', 'base'); 'security-origin' = @('count', 'name', 'manifest', 'base')
+        'management-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'utility-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base'); 'security-origin' = @('count', 'capture', 'name', 'kind', 'manifest', 'base')
         'cmdlet-resolution' = @('resolution', 'count'); 'cmdlet-origin' = @('path', 'cmdlet-name', 'cmdlet-type', 'module-name', 'manifest', 'base')
         ready = @('none'); unknown = @('unknown') }
     if ($Facts -isnot [Collections.IDictionary]) { return $fallback }

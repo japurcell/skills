@@ -481,3 +481,14 @@ test('Management metadata relations reject foreign contexts, raw values and malf
     wire.replace('exact-selected-manifest', 'exact-selected-manifest\nprivate'), 'x'.repeat(513)])
     assert.equal(hostProfile.parseProfile(text), null);
 });
+
+test('fixed-origin candidate exposes capture and kind refusals only at fixed module origin stages', () => {
+  for (const stage of ['management-origin', 'utility-origin', 'security-origin']) for (const field of ['capture', 'kind']) {
+    const value = { profile: 'winps-inbox-only', origin: 'refused', availability: 'unavailable', stage, field };
+    assert.deepEqual(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', stage, field)), value);
+    assert.equal(hostProfile.formatProfile(value),
+      `Owned image host profile=winps-inbox-only origin=refused availability=unavailable stage=${stage} field=${field}\n`);
+  }
+  for (const stage of ['environment', 'management-import', 'cmdlet-origin', 'ready'])
+    assert.equal(hostProfile.parseProfile(profileStageRow('refused', 'unavailable', stage, 'kind')), null);
+});
