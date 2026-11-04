@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ownedWorkerTiming } from '../qualification/selector-timing.mjs';
 
 const cancellationGraceMs = 1000;
 const worker = fileURLToPath(new URL('./ordered-test-worker.mjs', import.meta.url));
@@ -10,7 +11,8 @@ const worker = fileURLToPath(new URL('./ordered-test-worker.mjs', import.meta.ur
 export async function runOrderedTests(files, { concurrency, cwd, execArgv = [], signal } = {}) {
   if (files.length === 0) throw new Error('no test files selected');
   if (signal?.aborted) return 1;
-  const config = { files: files.map((file) => resolve(cwd, file)), concurrency, cwd, execArgv };
+  const timing = ownedWorkerTiming();
+  const config = { files: files.map((file) => resolve(cwd, file)), concurrency, cwd, execArgv, ...(timing ? { timingWorkerId: timing.workerId } : {}) };
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
   return new Promise((resolveResult) => {
@@ -18,6 +20,7 @@ export async function runOrderedTests(files, { concurrency, cwd, execArgv = [], 
       cwd, env, stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
       detached: process.platform !== 'win32',
     });
+    timing?.observe(child);
     let graceTimer;
     let forcePromise;
     let spawnError;

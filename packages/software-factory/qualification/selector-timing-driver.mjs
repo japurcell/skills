@@ -36,7 +36,7 @@ try {
   catch { evidence = { status: 'incomplete', records: [] }; }
   if (!hasSelectorCoverage(evidence.records)) evidence.status = 'incomplete';
   const image = value => typeof value === 'string' && /^[a-zA-Z0-9._-]{1,64}$/.test(value) ? value : 'unavailable';
-  const metadata = { schema: 1, status: evidence.status, sourceSha, runtimeSha256, node: process.version, platform: process.platform, arch: process.arch,
+  const metadata = { schema: 2, status: evidence.status, sourceSha, runtimeSha256, node: process.version, platform: process.platform, arch: process.arch,
     availableParallelism: availableParallelism(), runtimeOsRelease: image(release()), runnerImage: image(process.env.ImageOS), runnerImageVersion: image(process.env.ImageVersion), fixtureExitCode,
     clock: 'host-monotonic-ms', attemptClock: 'persisted-utc-wall', cpu: 'emitting-process-only', records: evidence.records.length };
   writeFileSync(resolve(destination, 'selector-timing.jsonl'), evidence.records.map(record => JSON.stringify(record) + '\n').join(''), { flag: 'wx', mode: 0o600 });
