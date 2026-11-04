@@ -8,6 +8,7 @@ import { initializeRepositoryStore, openRepositoryStore } from '../../dist/store
 import { copyLearningToolchain } from './learning-toolchain-copy.mjs';
 import { createRepository } from './repository.mjs';
 import { telemetry, timingSync } from '../../qualification/selector-timing.mjs';
+import { fixtureHostTiming } from '../../qualification/selector-timing-host.mjs';
 import { fixtureAttemptTiming } from '../../qualification/selector-timing-attempts.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -45,7 +46,7 @@ export async function run(context: WorkflowContext, input: Record<string, unknow
   const host = join(common, 'host.mjs'), input = join(common, 'input.json'), launchLog = join(common, 'learn-launches.jsonl');
   writeFileSync(host, `import { invoke } from ${JSON.stringify(new URL('../../dist/lifecycle.js', import.meta.url).href)};
 import { createFakeAdapter } from ${JSON.stringify(new URL('../../dist/adapters/fake.js', import.meta.url).href)};
-const { scenario, ...options } = JSON.parse(process.argv[2]);
+const { scenario, qualificationTiming, ...options } = JSON.parse(process.argv[2]);
 const adapter = createFakeAdapter({ executable: process.execPath, script: ${JSON.stringify(join(root, 'test/fixtures/learning-harness.mjs'))} });
 const start = adapter.start;
 adapter.start = request => start({ ...request, context: JSON.stringify({ context: request.context, scenario, launchLog: ${JSON.stringify(launchLog)} }) });
@@ -57,7 +58,9 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
     const started = performance.now();
     diagnostic(`invoke ${workflow} begin`);
     const end = telemetry()?.begin(workflow === 'learn' ? 'learn' : 'source');
-    const result = spawnSync(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: `.factory/workflows/${workflow}.ts`, input, newWorktree: true, shutdownGraceMs: 100, scenario, ...extra })], { encoding: 'utf8', timeout: 60000 });
+    const hostTiming = fixtureHostTiming(repo.path, 'sync');
+    const result = spawnSync(process.execPath, [...(hostTiming?.nodeArgs ?? []), host, JSON.stringify({ repository: repo.path, workflow: `.factory/workflows/${workflow}.ts`, input, newWorktree: true, shutdownGraceMs: 100, scenario, ...extra, ...(hostTiming ? { qualificationTiming: hostTiming.context } : {}) })], { encoding: 'utf8', timeout: 60000 });
+    hostTiming?.returned({ pid: result.pid, status: result.status, signal: result.signal, apiError: result.error !== undefined });
     diagnostic(`invoke ${workflow} end status=${result.status ?? 'none'} signal=${result.signal ?? 'none'} elapsedMs=${Math.round(performance.now() - started)}`);
     assert.equal(result.error, undefined);
     const parsed = timingSync('result', () => ({ ...result, saved: result.stdout.trim() ? JSON.parse(result.stdout) : undefined }));
@@ -72,7 +75,9 @@ console.log(JSON.stringify(result)); process.exit(result.exitCode);`);
     const end = telemetry()?.begin('interrupt');
     diagnostic('interrupt source begin');
     writeFileSync(input, JSON.stringify({ mode: 'wait' }));
-    const child = spawn(process.execPath, [host, JSON.stringify({ repository: repo.path, workflow: '.factory/workflows/source.ts', input, newWorktree: true, shutdownGraceMs: 100, scenario: { kind: 'result', payload: {} } })], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const hostTiming = fixtureHostTiming(repo.path, 'async');
+    const child = spawn(process.execPath, [...(hostTiming?.nodeArgs ?? []), host, JSON.stringify({ repository: repo.path, workflow: '.factory/workflows/source.ts', input, newWorktree: true, shutdownGraceMs: 100, scenario: { kind: 'result', payload: {} }, ...(hostTiming ? { qualificationTiming: hostTiming.context } : {}) })], { stdio: ['ignore', 'pipe', 'pipe'] });
+    hostTiming?.observe(child);
     let stdout = '', stderr = '';
     child.stdout.on('data', chunk => { stdout += chunk; });
     child.stderr.on('data', chunk => { stderr += chunk; });

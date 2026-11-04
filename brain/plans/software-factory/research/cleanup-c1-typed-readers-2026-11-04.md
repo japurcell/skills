@@ -59,3 +59,10 @@ The Windows foundation CI contract also fails separately:17/18, zero skips. The 
 ## Integration reflection
 
 Darwin focused and ordinary passes do not establish Windows private-sidecar preconditions or selector completion. The separate native phase and CI control exposed different finite gaps; keep their observations and budgets separate until a bounded reproduction proves their relationship. Existing guards and assertions remain authoritative. This is scoped qualification work already covered by the current plan, not a reason for a general skill change or an unsupported platform fallback.
+
+
+## POSIX result and C2 frontier
+
+Retained C1 Linux foundation41794618726/job126455664039 has completed successfully. Its separate cleanup-read area passes12/12, zero failures/skips,492.432311ms at exact57638b10. Logs `/tmp/factory-cleanup-c1-foundation-linux-41794618726-job.log` and `/tmp/factory-cleanup-c1-linux-41794618726-area.log`. Darwin12/12 and ordinary722 remain valid; these POSIX results do not qualify the failed Windows reader.
+
+C2 is explicitly released for POSIX only: sole backend owner `/root/cleanup_backup_authority`, branch `codex/factory-cleanup-backup-authority`, private `/private/tmp/factory-cleanup-backup-authority` from317f16be. It owns cleanup-backups/store/narrow fixed module triplets and the exact repository+backup tuple seam; no C3 graph/selection, claim, pruning, publicCLI or DDL. It must not flip C1 recovery.authority from unassessed without the separately proved authority join. Windows C1 remains OPEN: direct11/12 private-sidecar refusal and separate CI selector5000ms/null-result gap. Qualification-only `/root/cleanup_windows_qualification` owns its Windows diagnostic/CI work, with no shared backend source. Root owns all heavy-proof windows. Root has accepted a later full-creator Windows contract, but no worker/native retry of the current creator profile is selected by this integration.

@@ -549,36 +549,93 @@ unsigned __stdcall LoseDebuggerThread(void* argument)
     return 0;
 }
 
-struct TargetOutcome
+struct ProfileOutcome
 {
     const char* failure = "none";
-    const char* failurePhase = "probe";
-    bool entered = false, eligible = true, cleanup = false;
+    const char* failurePhase = "survival-create";
+    bool entered = false, eligible = true, cleanup = true;
+    bool survival = false, controlStopped = false;
+    Check exitQuery = Check::NotReached, exitInactive = Check::NotReached;
+    Check earlyClear = Check::NotReached, rejectedClear = Check::NotReached;
 };
-struct TargetWork
+struct ProfileWork
 {
     Child* child;
-    const std::wstring* root;
+    Child* control;
+    const wchar_t* root;
     const std::string* name;
     CreatorGate gate;
-    TargetOutcome outcome;
-    TargetWork(Child* target, const std::wstring* directory, const std::string* selected, ULONGLONG start) :
-        child(target), root(directory), name(selected), gate(start) {}
+    ProfileOutcome outcome;
+    ProfileWork(Child* target, Child* survivor, const wchar_t* directory, const std::string* selected, ULONGLONG start) :
+        child(target), control(survivor), root(directory), name(selected), gate(start) {}
 };
-void RunTarget(TargetWork& work)
+void FinishProfile(ProfileWork& work)
 {
     Child& child = *work.child;
+    Child& control = *work.control;
+    const std::string& name = *work.name;
+    const char*& failure = work.outcome.failure;
+    const char*& failurePhase = work.outcome.failurePhase;
+    bool& cleanup = work.outcome.cleanup;
+    bool& survival = work.outcome.survival;
+    bool& controlStopped = work.outcome.controlStopped;
+    Check& exitQuery = work.outcome.exitQuery;
+    Check& exitInactive = work.outcome.exitInactive;
+    Check& earlyClear = work.outcome.earlyClear;
+    Check& rejectedClear = work.outcome.rejectedClear;
+    // Every cleanup attempt runs independently and cannot erase the first failure.
+    // Attached cleanup stays on the thread that created the debuggee.
+    cleanup = child.Stop();
+    CaptureCount(CountPhase::ChildStopped);
+    cleanup = cleanup && work.outcome.eligible;
+    if (child.process.Valid())
+    {
+        if (child.MarkerBits() == 7 && child.markers->early == 0 &&
+            !Is(name, "stop-resume"))
+            printf("MARKERS\t%ld\t%ld\t%ld\t%ld\n", child.markers->dll, child.markers->tls, child.markers->entry, child.markers->debugger);
+        DWORD code = 0;
+        if (Observe(exitQuery, GetExitCodeProcess(child.process.value, &code) != FALSE) &&
+            Observe(exitInactive, code != STILL_ACTIVE)) printf("EXIT\t%lu\n", code);
+        else cleanup = false;
+    }
+    printf("OUTPUT\t%lu\t%lu\t%d\t%d\n", child.output.bytes, child.error.bytes, child.output.eof ? 1 : 0, child.error.eof ? 1 : 0);
+    survival = control.process.Valid() && WaitForSingleObject(control.process.value, 0) == WAIT_TIMEOUT && control.MarkerBits() == 7;
+    controlStopped = control.Stop();
+    CaptureCount(CountPhase::ControlStopped);
+    cleanup = cleanup && controlStopped;
+    printf("CONTROL\t%d\t%d\n", survival ? 1 : 0, controlStopped ? 1 : 0);
+    if (child.markers && !Observe(earlyClear, child.markers->early == 0)) cleanup = false;
+    // Even rejected pre-resume paths must retain an empty shared marker mapping.
+    if (!Is(name, "stop-resume") && Is(failure, "none") == false &&
+        !Is(failure, "deadline") && !Is(failure, "output-limit") && !Is(failure, "crash") &&
+        child.markers && !Observe(rejectedClear, child.MarkerBits() == 0)) cleanup = false;
+    if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' }))
+    { failure = "pipe"; failurePhase = "output-check"; }
+    child.Release(); CaptureCount(CountPhase::ChildReleased); control.Release();
+}
+void RunProfile(ProfileWork& work)
+{
+    Child& child = *work.child;
+    Child& control = *work.control;
     const std::string& name = *work.name;
     const char*& failure = work.outcome.failure;
     const char*& failurePhase = work.outcome.failurePhase;
     work.outcome.entered = true;
     try
     {
+        control.Create(std::wstring(work.root) + L"\\fixture\\canary.exe", std::wstring(work.root) + L"\\fixture", false, 1);
+        failurePhase = "survival-ready";
+        ULONGLONG ready = GetTickCount64() + 1000;
+        while (control.MarkerBits() != 7 && GetTickCount64() < ready) Sleep(1);
+        Require(control.MarkerBits() == 7 && control.markers->debugger == 0, "host");
+        CaptureCount(CountPhase::ControlReady);
+        failurePhase = "probe";
+        std::wstring root = work.root;
         if (Is(name, "owner-interruption"))
         {
             failurePhase = "owner-interruption";
-            std::wstring root = *work.root;
-            OwnerLoss state{ &child, &root, work.gate.start };
+            std::wstring ownerRoot = root;
+            OwnerLoss state{ &child, &ownerRoot, work.gate.start };
             Handle owner(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, LoseDebuggerThread, &state, 0, nullptr)));
             if (!owner.Valid()) work.outcome.eligible = false;
             Require(owner.Valid(), "host");
@@ -597,23 +654,30 @@ void RunTarget(TargetWork& work)
         else
         {
             failurePhase = "probe";
-            Probe(child, *work.root, name);
+            Probe(child, root, name);
             failurePhase = "none";
         }
     }
     catch (const char* code) { failure = code; }
     catch (...) { failure = "host"; }
-    // Attached cleanup must run on the thread that created the debuggee.
-    work.outcome.cleanup = child.Stop();
-    CaptureCount(CountPhase::ChildStopped);
+    FinishProfile(work);
 }
-unsigned __stdcall OwnTarget(void* argument)
+unsigned __stdcall OwnProfile(void* argument)
 {
-    TargetWork* work = static_cast<TargetWork*>(argument);
-    if (work->gate.Enter()) RunTarget(*work);
-    // The operation's automatic objects have unwound. A signaled thread wait
-    // is still required to prove CRT/DLL teardown has completed.
-    work->gate.returned.store(true, std::memory_order_release);
+    ProfileWork* work = static_cast<ProfileWork*>(argument);
+    try
+    {
+        if (work->gate.Enter()) RunProfile(*work);
+        // The full operation and its automatic objects have finished. Actual
+        // thread termination is also required before reading shared evidence.
+        work->gate.returned.store(true, std::memory_order_release);
+    }
+    catch (...)
+    {
+        // An unexpected partial operation must never publish completion or
+        // guess which cleanup/release work can safely be repeated.
+        work->outcome.eligible = false;
+    }
     return 0;
 }
 }
@@ -642,73 +706,41 @@ int wmain(int argc, wchar_t** argv)
     RecordCount(CountPhase::Baseline, before, true);
     ULONGLONG start = GetTickCount64();
     Child child, control;
-    const char* failure = "none";
-    const char* failurePhase = "survival-create";
-    bool cleanup = true, survival = false, controlStopped = false;
-    bool childStopped = false, creatorEligible = true;
     printf("OWNED\t1\t%s\n", name.c_str());
     CaptureCount(CountPhase::EntryOutput);
-    try
+    ProfileWork state{ &child, &control, argv[1], &name, start };
+    Handle creator(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, OwnProfile, &state, 0, nullptr)));
+    if (!creator.Valid())
     {
-        control.Create(std::wstring(argv[1]) + L"\\fixture\\canary.exe", std::wstring(argv[1]) + L"\\fixture", false, 1);
-        failurePhase = "survival-ready";
-        ULONGLONG ready = GetTickCount64() + 1000;
-        while (control.MarkerBits() != 7 && GetTickCount64() < ready) Sleep(1);
-        Require(control.MarkerBits() == 7 && control.markers->debugger == 0, "host");
-        CaptureCount(CountPhase::ControlReady);
-        failurePhase = "probe";
-        std::wstring root = argv[1];
-        TargetWork state{ &child, &root, &name, start };
-        Handle creator(reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0, OwnTarget, &state, 0, nullptr)));
-        if (!creator.Valid()) { creatorEligible = false; throw "host"; }
+        state.outcome.eligible = false;
+        state.outcome.failure = "host";
+        // No creator exists and neither Child has been touched by an operation.
+        FinishProfile(state);
+    }
+    else
+    {
         state.gate.released.store(true, std::memory_order_release);
-        // Only the join may run while the creator owns child/global evidence.
+        // Only the join may run while the creator owns Child/control/evidence.
         ULONGLONG elapsed = GetTickCount64() - start;
         if (elapsed > 10000) PinUnjoinedCreator();
         if (WaitForSingleObject(creator.value, static_cast<DWORD>(10000 - elapsed)) != WAIT_OBJECT_0 ||
             GetTickCount64() - start > 10000 || !state.gate.returned.load(std::memory_order_acquire)) PinUnjoinedCreator();
         creator.Close();
-        if (!state.outcome.entered) { creatorEligible = false; throw "host"; }
-        failure = state.outcome.failure; failurePhase = state.outcome.failurePhase;
-        cleanup = state.outcome.cleanup; creatorEligible = state.outcome.eligible;
-        childStopped = true;
+        if (!state.outcome.entered)
+        {
+            state.outcome.eligible = false;
+            state.outcome.failure = "host";
+            // A joined, published no-entry creator never touched either Child.
+            FinishProfile(state);
+        }
     }
-    catch (const char* code) { failure = code; }
-    catch (...) { failure = "host"; }
-    Check exitQuery = Check::NotReached, exitInactive = Check::NotReached;
-    Check earlyClear = Check::NotReached, rejectedClear = Check::NotReached, countQuery = Check::NotReached;
-    Check countNonincrease = Check::NotReached, leakedZero = Check::NotReached;
-    // Every cleanup attempt runs independently and cannot erase the first failure.
-    if (!childStopped)
-    {
-        cleanup = child.Stop();
-        CaptureCount(CountPhase::ChildStopped);
-    }
-    cleanup = cleanup && creatorEligible;
-    if (child.process.Valid())
-    {
-        if (child.MarkerBits() == 7 && child.markers->early == 0 &&
-            !Is(name, "stop-resume"))
-            printf("MARKERS\t%ld\t%ld\t%ld\t%ld\n", child.markers->dll, child.markers->tls, child.markers->entry, child.markers->debugger);
-        DWORD code = 0;
-        if (Observe(exitQuery, GetExitCodeProcess(child.process.value, &code) != FALSE) &&
-            Observe(exitInactive, code != STILL_ACTIVE)) printf("EXIT\t%lu\n", code);
-        else cleanup = false;
-    }
-    printf("OUTPUT\t%lu\t%lu\t%d\t%d\n", child.output.bytes, child.error.bytes, child.output.eof ? 1 : 0, child.error.eof ? 1 : 0);
-    survival = control.process.Valid() && WaitForSingleObject(control.process.value, 0) == WAIT_TIMEOUT && control.MarkerBits() == 7;
-    controlStopped = control.Stop();
-    CaptureCount(CountPhase::ControlStopped);
-    cleanup = cleanup && controlStopped;
-    printf("CONTROL\t%d\t%d\n", survival ? 1 : 0, controlStopped ? 1 : 0);
-    if (child.markers && !Observe(earlyClear, child.markers->early == 0)) cleanup = false;
-    // Even rejected pre-resume paths must retain an empty shared marker mapping.
-    if (!Is(name, "stop-resume") && Is(failure, "none") == false &&
-        !Is(failure, "deadline") && !Is(failure, "output-limit") && !Is(failure, "crash") &&
-        child.markers && !Observe(rejectedClear, child.MarkerBits() == 0)) cleanup = false;
-    if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' }))
-    { failure = "pipe"; failurePhase = "output-check"; }
-    child.Release(); CaptureCount(CountPhase::ChildReleased); control.Release();
+    const char* failure = state.outcome.failure;
+    const char* failurePhase = state.outcome.failurePhase;
+    bool cleanup = state.outcome.cleanup;
+    bool survival = state.outcome.survival;
+    Check exitQuery = state.outcome.exitQuery, exitInactive = state.outcome.exitInactive;
+    Check earlyClear = state.outcome.earlyClear, rejectedClear = state.outcome.rejectedClear;
+    Check countQuery = Check::NotReached, countNonincrease = Check::NotReached, leakedZero = Check::NotReached;
     if (!Observe(countQuery, GetProcessHandleCount(GetCurrentProcess(), &after) != FALSE)) closed = false;
     RecordCount(CountPhase::Final, after, countQuery == Check::Pass);
     Log("handles-before", before); Log("handles-after", after);
