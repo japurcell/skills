@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "scope": "factory-c3d2-h1-posix-native-execution-control",
+  "purpose": "one-initial-exceptional-impact-genuine-installed-POSIX-qualification",
+  "rootExecutionDecision": "released-h1-posix-native-only",
+  "rootExecutionDecisionUtc": "2026-11-04T18:29:53Z",
+  "approvedCodeCommit": "96c80a7815ee6245329c444531528457703b982a",
+  "integratedProofHead": "96c80a7815ee6245329c444531528457703b982a",
+  "ordinaryProofHead": "96c80a7815ee6245329c444531528457703b982a",
+  "authorHandback": "e40fba5f8d36d0f078e2f05ba38076a22a7a60cb",
+  "backendSourceCommit": "ceb6ebfad5b4f00fde43b5570d75e9012a328860",
+  "fastRouteSourceCommit": "d144f84372f81001e9926747b6c08e5bfc770949",
+  "registrationCommit": "c0db5f5bf9a09583b077624256f314ed09fbfcfb",
+  "sources": [
+    {
+      "path": "packages/software-factory/src/cleanup-references.ts",
+      "gitBlob": "957f835f650d772e3839f4cf7c63923aea486a0a",
+      "sha256": "1f9c026c568147ba656ce15f0cdc2c538d9154b93e1e7e02ea0f45c8184d2e16"
+    },
+    {
+      "path": "packages/software-factory/qualification/cleanup-exceptional-public.qualification.mjs",
+      "gitBlob": "35e6b16c732756ad0dc3098c73dc5aa3d426a1df",
+      "sha256": "7f42778d34394f5ab95e36edf367fa2838d26716b82475c07756d6470f7baf10"
+    },
+    {
+      "path": "packages/software-factory/test/cleanup-exceptional-closure.test.mjs",
+      "gitBlob": "a48ab73e69d0d4eb391017d55a9118e5c83210ef",
+      "sha256": "c61833ee6a9f4b2c770600f539474eee1f07189777a536738cab23382c79027c"
+    },
+    {
+      "path": "packages/software-factory/scripts/test.mjs",
+      "gitBlob": "7c876aed5bca283eb65d9dd9006481298f0b6c3f",
+      "sha256": "8e4fb9fdb305edc3a300984b62af4f63dba082ca0fbfdb8762e7b431e581289f"
+    },
+    {
+      "path": "packages/software-factory/qualification/ci.test.mjs",
+      "gitBlob": "b4a64e1fbc2e2ee8dcd9f312f13b664163073d8a",
+      "sha256": "6642117efd8934a3c6508afd756d3fee878acf6e51776b70e07fd73cc8b27de1"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-exceptional.yml",
+      "gitBlob": "67cabe11ff09bc5c39771250999e108055a760a4",
+      "sha256": "c34315f8551cf5a01f3dac7b647675c16c820c00a8dfc926d970ac4679d6896c"
+    }
+  ],
+  "sourceIdentityEvidence": "/tmp/factory-h1-merged-source-identities.json",
+  "sourceProof": {
+    "authorParityCases": 4,
+    "authorParitySeconds": 179.652,
+    "authorInstalledCases": 2,
+    "authorFastRegressCases": 156,
+    "authorFastRegressSeconds": 24.758,
+    "authorArchiveUnsetRouteCases": 2,
+    "authorArchiveUnsetRouteSeconds": 3.537208792,
+    "ciCases": 26,
+    "workflowLintCount": 2,
+    "registryAndCiSyntax": "passed",
+    "sourceAndQualificationTypes": "passed",
+    "freshBuild": "passed",
+    "focusedEntries": 16,
+    "focusedCases": 307,
+    "focusedFailed": 0,
+    "focusedSkipped": 0,
+    "focusedCancelled": 0,
+    "focusedTodo": 0,
+    "focusedDurationMs": 61799.416125,
+    "integratedInstalledPositiveCases": 2,
+    "integratedInstalledPositiveDurationMs": 95278.033667,
+    "focusedFullSeconds": 163.26548383300542,
+    "focusedPostflight": "/tmp/factory-cleanup-h1-focused-postflight.json",
+    "ordinaryEntries": 66,
+    "ordinaryCases": 930,
+    "ordinaryFailed": 0,
+    "ordinarySkipped": 0,
+    "ordinaryCancelled": 0,
+    "ordinaryTodo": 0,
+    "ordinaryDurationMs": 246075.60275,
+    "ordinaryFullSeconds": 247.75781087501673,
+    "ordinaryPostflight": "/tmp/factory-cleanup-h1-ordinary-postflight.json",
+    "ordinaryCanonicalEntries": "/tmp/factory-h1-ordinary-entries-proposed.txt",
+    "fullEofAndFullSourceHeadStatusPassed": true,
+    "rootReadAccepted": true
+  },
+  "runtime": {
+    "nodeVersion": "v24.22.1",
+    "localNodeSha256": "6f32069480ec14d52b6d7b1f3c7124cfbbc46203abf5ddf5c65b127435f3f329",
+    "inputs": 734,
+    "outputs": 186,
+    "receiptSha256": "74c344f9798ecd29bbaec65c5358ebd068cd8c407ee577e845b668b3e6f867c9",
+    "ordinaryArchiveUnset": true,
+    "pythonVersion": "3.13.14",
+    "nativeArchiveAuthority": "existing exact platform archive/executable bootstrap pins; no runtime selection change"
+  },
+  "native": {
+    "workflow": ".github/workflows/software-factory-cleanup-exceptional.yml",
+    "area": "cleanup-exceptional-public",
+    "file": "qualification/cleanup-exceptional-public.qualification.mjs",
+    "casesPerTarget": 2,
+    "targets": [
+      "linux-x64",
+      "darwin-arm64"
+    ],
+    "jobMinutes": 20,
+    "publicStepMinutes": 10,
+    "defaultFoundationFixtureCountsUnchanged": [
+      31,
+      13,
+      36
+    ],
+    "genuineFirstInstallAndUpgrade": true,
+    "ordinaryStillSeparatelySelected": true,
+    "actualNativeAcceptance": false
+  },
+  "controls": {
+    "maximumPushes": 1,
+    "event": "push",
+    "manualDispatch": false,
+    "retry": false,
+    "rerun": false,
+    "cancellation": false,
+    "sourceAndProofFrozenBeforePush": true,
+    "qualifiedDisposableFixturesOnly": true,
+    "providerCredentialsAuthVersionHelpModelCalls": false,
+    "desktop": false,
+    "heldProbe": false,
+    "realRepositoryInstallOrReleasePublication": false,
+    "windowsSdkRegistryQuery": false,
+    "windowsToolSelectionOrBuild": false,
+    "metadataControllerSelectionChanged": false,
+    "H2orH3SourceRelease": false
+  },
+  "expectedAutomaticWorkflows": [
+    {
+      "path": ".github/workflows/software-factory-cleanup-exceptional.yml",
+      "jobs": 2,
+      "purpose": "new H1 genuine public2 per POSIX target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-ordinary.yml",
+      "jobs": 2,
+      "purpose": "ordinary public1 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-actions.yml",
+      "jobs": 2,
+      "purpose": "action41 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-learning.yml",
+      "jobs": 2,
+      "purpose": "learning2 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-advisory.yml",
+      "jobs": 2,
+      "purpose": "base14 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-cleanup-backups.yml",
+      "jobs": 2,
+      "purpose": "backup43 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-repair-inspection.yml",
+      "jobs": 2,
+      "purpose": "read-only inspection33 per target"
+    },
+    {
+      "path": ".github/workflows/software-factory-qualification.yml",
+      "jobs": 3,
+      "purpose": "existing foundation, known Windows failures stay open"
+    },
+    {
+      "path": ".github/workflows/darwin-selector-timing.yml",
+      "jobs": 1,
+      "purpose": "existing timing context; prior failure stays open"
+    }
+  ],
+  "expectedWorkflowCount": 9,
+  "expectedJobCount": 18,
+  "metadataExclusion": {
+    "workflow": ".github/workflows/windows-storage-loader-metadata-collect.yml",
+    "triggerPaths": [
+      ".github/workflows/windows-storage-loader-metadata-collect.yml",
+      "packages/software-factory/qualification/windows-storage-loader-node-bootstrap.ps1",
+      "packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs"
+    ],
+    "allUnchangedFromPushed6cf": true,
+    "sdkSourceIntegrationMustNotBeImplicitlyCoupled": true
+  },
+  "unchangedMetadataContext": {
+    "source10Commit": "4b311737aa7484619dc304b3db84cfb463792c48",
+    "controllerSelectionSha256": "d4bc231636b66d0cc25775643f77ed9ae781c8f2356936f163210fd9e3836359",
+    "historicalSelectionSha256": "719d27ea0ed7cb4e554adf02e0384c8a67a50bae61c6cdb80f832f4991335650",
+    "PhaseASourceCommit": "172b285e3d3ba07f3d2e6e42a9ef7fb791253c4a",
+    "allSelectionBuildNativeAuthoritiesFalse": true,
+    "actualSdkRegistryOrNativeBindingRelease": false
+  },
+  "pushControl": {
+    "workingDirectory": "/Users/adam/.codex/worktrees/ea58/skills",
+    "branch": "codex/research-agentic-workflow-prototypes",
+    "command": "/Users/adam/homebrew/bin/rtk proxy git -c credential.helper= -c 'credential.https://github.com.helper=!/Users/adam/homebrew/bin/gh auth git-credential' push origin HEAD:refs/heads/codex/research-agentic-workflow-prototypes",
+    "requiresRootReadAndRelease": true,
+    "postReleaseCommitScope": "execution record and evidence-only canonical/qualification notes",
+    "recordDestination": "packages/software-factory/qualification/cleanup-exceptional-native-execution.json",
+    "nativeWatch": "fresh bounded exact-head read-only watch after push; retain exact run/job/artifact IDs; no dispatch/retry/cancel",
+    "freshWatchFirstBoundUtc": "2026-11-04T18:45:00Z"
+  },
+  "remainingAcceptance": "Root acceptance of integrated proof then separately released native2 per POSIX target; H2 stays gated until accepted H1 and separate Root release; full C3d2 requires H2/H3 later",
+  "knownOpenFailures": {
+    "previousExact6cfFoundation": "Windows10of13 plus directstorage6of7 nativepositive wal-modebit refusal; Linux14 and Darwin15 pass",
+    "previousTiming": "41871471551 failed30of31 with schema3incomplete2265record export and no worker closure/coverage; no cause/repair claim",
+    "previousMetadata": "41871471587 blocked/tool-provenance-unproven,14blank companion versions and SDK7unproven; no SDK/tool/build authentication"
+  },
+  "integratedLocalGateAcceptedByRoot": true
+}
