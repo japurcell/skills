@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { initializeRepositoryStore, openRepositoryStore } from '../../dist/store.js';
+import { copyLearningToolchain } from './learning-toolchain-copy.mjs';
 import { createRepository } from './repository.mjs';
 import { telemetry, timingSync } from '../../qualification/selector-timing.mjs';
 import { fixtureAttemptTiming } from '../../qualification/selector-timing-attempts.mjs';
@@ -39,7 +40,7 @@ export async function run(context: WorkflowContext, input: Record<string, unknow
   (await initializeRepositoryStore(common, { release: 'fixture' })).close();
   const toolchain = join(common, 'factory/toolchain');
   mkdirSync(toolchain);
-  timingSync('copy', () => cpSync(join(root, 'node_modules'), join(toolchain, 'node_modules'), { recursive: true }));
+  timingSync('copy', () => copyLearningToolchain(join(root, 'node_modules'), join(toolchain, 'node_modules')));
   writeFileSync(join(toolchain, 'manifest.json'), JSON.stringify({ schema: 1, node: '24.22.1', typescript: '7.0.2', dependencies: { '@types/node': '24.19.2' } }));
   const host = join(common, 'host.mjs'), input = join(common, 'input.json'), launchLog = join(common, 'learn-launches.jsonl');
   writeFileSync(host, `import { invoke } from ${JSON.stringify(new URL('../../dist/lifecycle.js', import.meta.url).href)};
