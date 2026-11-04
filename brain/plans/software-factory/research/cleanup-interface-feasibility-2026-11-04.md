@@ -4,11 +4,11 @@ Read-only source mapping, 2026-11-04 UTC. Baseline: `9fdc2307b2a61182d65afbf4667
 
 ## Decision
 
-Root endorsed these next bounded contracts only. C1 source is NOT released: IR1 must first return a clean handback and shared source ownership, pass the coordinator integration gate, and receive explicit root release. No source, mutation, registry, DDL, proof or cleanup execution permission follows from this saved note. Reconcile the anchored interfaces with that actual IR1 integration before dispatch.
+Root originally endorsed the bounded contracts only. IR1 has since returned a clean handback/shared source ownership and passed ordinary709 integration; root explicitly released C1 typed retained reads as sole backend source. C2/C3/claim/prune remain unreleased. No source, mutation, registry, DDL, proof or cleanup execution permission follows from this saved note. Reconcile the anchored interfaces with that actual IR1 integration before dispatch.
 
 Deliver narrow typed reads and selection/impact first, then separately release mutation. Keep schema 7. Neither a generic history service nor a permanent backup registry is required to start. Caller-selected `(operationId, backupId)` can resolve an exact retained backup authority join for a completed installed upgrade. Missing authority for other historical selections remains a typed refusal; a filename, a matching digest alone, or an on-disk directory is never ownership evidence.
 
-The accepted public no-provider install/upgrade and dependency ownership/claim/preparing-backup gates are inputs. Candidate source is internal/incomplete; its held native acceptance does not become cleanup acceptance. IR1 remains the only active backend author. These source tasks start only after its clean handback, shared source ownership return, coordinator integration gate and explicit root release. Providers remain blocked, reviews deferred, desktop last.
+The accepted public no-provider install/upgrade and dependency ownership/claim/preparing-backup gates are inputs. Candidate source is internal/incomplete; its held native acceptance does not become cleanup acceptance. IR1 clean handback/source return and ordinary709 integration are now complete. Root released `/root/cleanup_typed_readers` as sole backend author for C1 typed reads only; every later source task retains its explicit prerequisites and root release. Providers remain blocked, reviews deferred, desktop last.
 
 ## What exists, and what it does not supply
 
