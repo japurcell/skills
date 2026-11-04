@@ -1,0 +1,81 @@
+name: Windows storage loader metadata only
+
+# Root separately releases one exact registration push and its execution record.
+# Dispatch requires default-branch registration; no inputs or automatic selection.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/research-agentic-workflow-prototypes
+    paths:
+      - .github/workflows/windows-storage-loader-metadata-collect.yml
+      - packages/software-factory/qualification/windows-storage-loader-node-bootstrap.ps1
+      - packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-storage-loader-metadata-only
+  cancel-in-progress: false
+
+jobs:
+  metadata-only:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Checkout separately selected source without credentials
+        timeout-minutes: 1
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Fetch and authenticate only the fixed official Node executable
+        timeout-minutes: 5
+        env:
+          FACTORY_PRIVATE_ROOT: ${{ runner.temp }}
+        run: |
+          & ./packages/software-factory/qualification/windows-storage-loader-node-bootstrap.ps1
+      - name: Collect only fixed metadata and retain validated blocked diagnostics
+        id: collect
+        timeout-minutes: 5
+        env:
+          FACTORY_PRIVATE_ROOT: ${{ runner.temp }}
+          FACTORY_COLLECTION_SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
+          Set-StrictMode -Version Latest
+          $private = [IO.File]::ReadAllText([IO.Path]::Combine($env:FACTORY_PRIVATE_ROOT, 'factory-metadata-collect-node-location.txt'))
+          $parent = [IO.Path]::GetFullPath($env:FACTORY_PRIVATE_ROOT)
+          if ([IO.Path]::GetDirectoryName($private) -cne $parent -or [IO.Path]::GetFileName($private) -cnotmatch '^factory-metadata-collect-node-[0-9a-f]{32}$') { throw 'Private runtime location refused' }
+          $binary = [IO.Path]::Combine($private, 'node-v24.22.1-win-x64', 'node.exe')
+          $sha = [Security.Cryptography.SHA256]::Create()
+          $stream = [IO.FileStream]::new($binary, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+          try {
+            if ($stream.Length -lt 1 -or $stream.Length -gt 134217728 -or ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() -cne 'd702daa815eabbff763c7d3808e235cf031cf2ca70211b56847bc72f51e240e5') { throw 'Selected Node integrity refused' }
+          } finally { $stream.Dispose(); $sha.Dispose() }
+          # The helper emits only this fixed readiness marker, never child output.
+          $ready = @(& $binary packages/software-factory/qualification/windows-storage-loader-metadata-collect-result.mjs 2>$null)
+          $collectionExit = $LASTEXITCODE
+          if (($collectionExit -eq 0 -or $collectionExit -eq 1) -and $ready.Count -eq 1 -and $ready[0] -ceq 'metadata-artifacts-ready') {
+            [IO.File]::AppendAllText($env:GITHUB_OUTPUT, "artifacts_ready=true`n", [Text.UTF8Encoding]::new($false))
+            # Exit1 remains a failed collection step and failed job after upload.
+            exit $collectionExit
+          }
+          throw 'Metadata collection refused without export'
+      - name: Upload only closed metadata and redacted control records
+        if: ${{ !cancelled() && steps.collect.outputs.artifacts_ready == 'true' }}
+        timeout-minutes: 1
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: windows-storage-loader-metadata-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/factory-metadata-collect-upload/metadata.json
+            ${{ runner.temp }}/factory-metadata-collect-upload/control.json
+          if-no-files-found: error
+          retention-days: 14
