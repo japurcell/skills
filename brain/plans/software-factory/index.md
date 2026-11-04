@@ -77,6 +77,7 @@
 - [research/windows-etw-held-identity-repair-2026-10-22.md](research/windows-etw-held-identity-repair-2026-10-22.md)
 - [research/windows-etw-identity-boundary-2026-10-22.md](research/windows-etw-identity-boundary-2026-10-22.md)
 - [research/windows-handle-lifetime-decision-2026-11-04.md](research/windows-handle-lifetime-decision-2026-11-04.md)
+- [research/windows-full-creator-contract-2026-11-04.md](research/windows-full-creator-contract-2026-11-04.md)
 - [research/windows-hook-job-completion-2026-10-22.md](research/windows-hook-job-completion-2026-10-22.md)
 - [research/windows-node-launch-equivalence-2026-10-22.md](research/windows-node-launch-equivalence-2026-10-22.md)
 - [research/windows-owned-creator-lifetime-contract-2026-11-04.md](research/windows-owned-creator-lifetime-contract-2026-11-04.md)
