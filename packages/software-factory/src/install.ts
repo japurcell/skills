@@ -4,6 +4,7 @@ import { chmodSync, closeSync, constants, fchmodSync, fstatSync, fsyncSync, lsta
   realpathSync, statSync, writeSync } from 'node:fs';
 import { dirname, isAbsolute, join, parse, resolve, sep } from 'node:path';
 import { currentOwner, inspectOwner } from './native/process.js';
+import { atomicPublicationSupportProfile } from './atomic-publication.js';
 import { selectUpgradeProviders, validateInstallSelection, type InstallSelection, type VerifiedInstallSelection } from './installation-bindings.js';
 import { validateReleaseBundle } from './release.js';
 import { beginRepositoryBootstrap, prepareForwardSchema, measureMaintenanceStage, prepareMaintenanceHandoff, type MaintenanceSelection } from './maintenance.js';
@@ -258,7 +259,10 @@ function validateToolchain(toolchain: string): void {
 }
 
 /** Authenticated private request to an incomplete, candidate-bound operation. No installed-ready effect. */
-function publicationPlatformQualified(): boolean { return process.platform === 'darwin' && process.arch === 'arm64'; }
+function publicationPlatformQualified(): boolean {
+  const profile = atomicPublicationSupportProfile();
+  return (profile === 'darwin' && process.arch === 'arm64') || profile === 'linux-x64';
+}
 
 async function prepareCandidate(requestPath: string, handoff: false): Promise<PreparedCandidateReceipt>;
 async function prepareCandidate(requestPath: string, handoff: true, upgrade?: boolean): Promise<PreparedInstallHandoff>;
