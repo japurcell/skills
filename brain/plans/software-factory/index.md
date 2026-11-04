@@ -129,3 +129,6 @@
 - [Windows fixture first-load custody](research/windows-storage-bootstrap-contract-2026-11-04.md)
 
 - [C3a base advisory source and proof](research/cleanup-c3a-base-advisory-2026-11-04.md)
+
+- [Darwin learning bounded native-compiler feasibility](research/darwin-learning-repair-contract-2026-11-04.md)
+- [Windows loader builder and input-selection proposal](research/windows-storage-loader-builder-contract-2026-11-04.md)
