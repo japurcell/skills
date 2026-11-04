@@ -15,8 +15,33 @@ namespace
 {
 constexpr DWORD Cap = 262144;
 bool closed = true;
+bool closeCalls = true;
 unsigned ownedHandles = 0;
 FILE* details = nullptr;
+
+enum class Check { NotReached, Pass, Fail };
+Check closeIdentity = Check::NotReached, closeQuery = Check::NotReached;
+Check ownedClose = Check::NotReached, mappingClose = Check::NotReached, debugClose = Check::NotReached;
+Check hashClose = Check::NotReached, algorithmClose = Check::NotReached, ownerFileClose = Check::NotReached;
+bool Observe(Check& check, bool passed)
+{
+    if (!passed || check == Check::NotReached) check = passed ? Check::Pass : Check::Fail;
+    return passed;
+}
+bool CheckedClose(Check& check, bool passed) { Observe(check, passed); if (!passed) closeCalls = false; return passed; }
+const char* State(Check check) { return check == Check::Pass ? "1" : check == Check::Fail ? "0" : "n"; }
+struct StopEvidence
+{
+    Check process = Check::NotReached, result = Check::NotReached, initialWait = Check::NotReached, termination = Check::NotReached;
+    Check debugWait = Check::NotReached, eventOwner = Check::NotReached, eventClose = Check::NotReached, continuation = Check::NotReached;
+    Check debugExit = Check::NotReached, finalWait = Check::NotReached, outputEof = Check::NotReached, errorEof = Check::NotReached;
+    Check outputValid = Check::NotReached, errorValid = Check::NotReached;
+    void Write(FILE* stream) const
+    {
+        for (Check check : { process, result, initialWait, termination, debugWait, eventOwner, eventClose, continuation,
+            debugExit, finalWait, outputEof, errorEof, outputValid, errorValid }) fprintf(stream, "\t%s", State(check));
+    }
+};
 
 void Log(const char* operation, unsigned long long value)
 {
@@ -34,7 +59,7 @@ struct Handle
     void Set(HANDLE h) { Close(); value = h; if (Valid()) ownedHandles++; }
     void Close()
     {
-        if (Valid()) { if (!CloseHandle(value)) closed = false; ownedHandles--; }
+        if (Valid()) { if (!CheckedClose(ownedClose, CloseHandle(value) != FALSE)) closed = false; ownedHandles--; }
         value = nullptr;
     }
 };
@@ -107,7 +132,8 @@ struct Child
     bool attached = false, pending = false, debugExited = false;
     DEBUG_EVENT event{};
     HANDLE debugProcess = nullptr, debugThread = nullptr;
-    ~Child() { if (markers && !UnmapViewOfFile(markers)) closed = false; }
+    StopEvidence stop;
+    ~Child() { if (markers && !CheckedClose(mappingClose, UnmapViewOfFile(markers) != FALSE)) closed = false; }
     DWORD MarkerBits() const
     {
         return markers ? (markers->dll ? 1u : 0u) | (markers->tls ? 2u : 0u) |
@@ -171,24 +197,27 @@ struct Child
             DWORD flags = 0;
             if (GetHandleInformation(h, &flags))
             {
+                Observe(closeQuery, true);
                 bool exact = h == debugThread ? GetThreadId(h) == tid : GetProcessId(h) == pid;
-                if (!exact || !CloseHandle(h)) closed = false;
+                Observe(closeIdentity, exact);
+                if (!exact || !CheckedClose(debugClose, CloseHandle(h) != FALSE)) closed = false;
             }
-            else if (GetLastError() != ERROR_INVALID_HANDLE) closed = false;
+            else if (!Observe(closeQuery, GetLastError() == ERROR_INVALID_HANDLE)) closed = false;
         }
         debugThread = nullptr; debugProcess = nullptr;
     }
     bool Stop()
     {
-        if (!process.Valid()) return true;
+        if (!Observe(stop.process, process.Valid())) { Observe(stop.result, true); return true; }
         bool ok = true;
         DWORD wait = WaitForSingleObject(process.value, 0);
+        Observe(stop.initialWait, wait == WAIT_TIMEOUT || wait == WAIT_OBJECT_0);
         if (wait == WAIT_TIMEOUT)
         {
             // Only the continuously held, newly created object is signaled.
             bool sent = TerminateProcess(process.value, 125) != FALSE;
             Log("terminate", sent ? 1 : GetLastError());
-            if (!sent && WaitForSingleObject(process.value, 0) != WAIT_OBJECT_0) ok = false;
+            if (!Observe(stop.termination, sent || WaitForSingleObject(process.value, 0) == WAIT_OBJECT_0)) ok = false;
         }
         else if (wait != WAIT_OBJECT_0) ok = false;
         ULONGLONG deadline = GetTickCount64() + 2000;
@@ -202,42 +231,46 @@ struct Child
                     ZeroMemory(&event, sizeof(event));
                     if (!WaitForDebugEvent(&event, 20))
                     {
-                        if (GetLastError() != ERROR_SEM_TIMEOUT) ok = false;
+                        if (!Observe(stop.debugWait, GetLastError() == ERROR_SEM_TIMEOUT)) ok = false;
                         continue;
                     }
+                    Observe(stop.debugWait, true);
                     pending = true;
                 }
-                if (event.dwProcessId != pid) { ok = false; break; }
+                if (!Observe(stop.eventOwner, event.dwProcessId == pid)) { ok = false; break; }
                 if (event.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
                 {
                     debugProcess = event.u.CreateProcessInfo.hProcess;
                     debugThread = event.u.CreateProcessInfo.hThread;
-                    if (event.u.CreateProcessInfo.hFile && !CloseHandle(event.u.CreateProcessInfo.hFile)) ok = false;
+                    if (event.u.CreateProcessInfo.hFile && !Observe(stop.eventClose, CloseHandle(event.u.CreateProcessInfo.hFile) != FALSE)) ok = false;
                     event.u.CreateProcessInfo.hFile = nullptr;
                 }
-                if (event.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT && event.u.LoadDll.hFile && !CloseHandle(event.u.LoadDll.hFile)) ok = false;
+                if (event.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT && event.u.LoadDll.hFile && !Observe(stop.eventClose, CloseHandle(event.u.LoadDll.hFile) != FALSE)) ok = false;
                 bool exiting = event.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT;
                 // Termination has already been requested. Never resume a suspended thread.
-                if (!ContinueDebugEvent(pid, event.dwThreadId,
-                    event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE))
+                if (!Observe(stop.continuation, ContinueDebugEvent(pid, event.dwThreadId,
+                    event.dwDebugEventCode == EXCEPTION_DEBUG_EVENT ? DBG_EXCEPTION_NOT_HANDLED : DBG_CONTINUE) != FALSE))
                 { ok = false; break; }
                 pending = false;
                 if (exiting) { debugExited = true; debugProcess = nullptr; debugThread = nullptr; }
             }
-            if (!debugExited) ok = false;
+            if (!Observe(stop.debugExit, debugExited)) ok = false;
         }
-        if (WaitForSingleObject(process.value, 1000) != WAIT_OBJECT_0) ok = false;
+        if (!Observe(stop.finalWait, WaitForSingleObject(process.value, 1000) == WAIT_OBJECT_0)) ok = false;
         while (GetTickCount64() < deadline && (!output.eof || !error.eof))
         { output.Drain(); error.Drain(); Sleep(1); }
-        if (!output.eof || !error.eof || !output.valid || !error.valid) ok = false;
+        bool outputEnded = Observe(stop.outputEof, output.eof), errorEnded = Observe(stop.errorEof, error.eof);
+        bool outputGood = Observe(stop.outputValid, output.valid), errorGood = Observe(stop.errorValid, error.valid);
+        if (!outputEnded || !errorEnded || !outputGood || !errorGood) ok = false;
         if (!attached) CloseDebugHandles();
+        Observe(stop.result, ok);
         return ok;
     }
     void Release()
     {
         process.Close(); thread.Close(); output.read.Close(); output.write.Close(); error.read.Close(); error.write.Close();
         input.Close();
-        if (markers) { if (!UnmapViewOfFile(markers)) closed = false; markers = nullptr; }
+        if (markers) { if (!CheckedClose(mappingClose, UnmapViewOfFile(markers) != FALSE)) closed = false; markers = nullptr; }
         mapping.Close(); pin.Close(); actual.Close();
     }
 };
@@ -271,8 +304,8 @@ Identity Identify(HANDLE file)
         if (BCryptHashData(hash, buffer, read, 0) < 0) { ok = false; break; }
     }
     if (BCryptFinishHash(hash, identity.hash.data(), static_cast<ULONG>(identity.hash.size()), 0) < 0) ok = false;
-    if (BCryptDestroyHash(hash) < 0) closed = false;
-    if (BCryptCloseAlgorithmProvider(algorithm, 0) < 0) closed = false;
+    if (!CheckedClose(hashClose, BCryptDestroyHash(hash) >= 0)) closed = false;
+    if (!CheckedClose(algorithmClose, BCryptCloseAlgorithmProvider(algorithm, 0) >= 0)) closed = false;
     Require(ok, "query");
     Log("volume", identity.id.VolumeSerialNumber);
     if (details)
@@ -422,7 +455,7 @@ unsigned __stdcall LoseDebuggerThread(void* argument)
     if (state->child->pending && state->child->event.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
     {
         HANDLE file = state->child->event.u.CreateProcessInfo.hFile;
-        if (file && !CloseHandle(file)) closed = false;
+        if (file && !CheckedClose(ownerFileClose, CloseHandle(file) != FALSE)) closed = false;
         state->child->event.u.CreateProcessInfo.hFile = nullptr;
     }
     // Intentionally leave the first event uncontinued. The documented default
@@ -490,6 +523,9 @@ int wmain(int argc, wchar_t** argv)
     }
     catch (const char* code) { failure = code; }
     catch (...) { failure = "host"; }
+    Check exitQuery = Check::NotReached, exitInactive = Check::NotReached;
+    Check earlyClear = Check::NotReached, rejectedClear = Check::NotReached, countQuery = Check::NotReached;
+    Check countNonincrease = Check::NotReached, leakedZero = Check::NotReached;
     // Every cleanup attempt runs independently and cannot erase the first failure.
     cleanup = child.Stop();
     if (child.process.Valid())
@@ -498,7 +534,8 @@ int wmain(int argc, wchar_t** argv)
             !Is(name, "stop-resume"))
             printf("MARKERS\t%ld\t%ld\t%ld\t%ld\n", child.markers->dll, child.markers->tls, child.markers->entry, child.markers->debugger);
         DWORD code = 0;
-        if (GetExitCodeProcess(child.process.value, &code) && code != STILL_ACTIVE) printf("EXIT\t%lu\n", code);
+        if (Observe(exitQuery, GetExitCodeProcess(child.process.value, &code) != FALSE) &&
+            Observe(exitInactive, code != STILL_ACTIVE)) printf("EXIT\t%lu\n", code);
         else cleanup = false;
     }
     printf("OUTPUT\t%lu\t%lu\t%d\t%d\n", child.output.bytes, child.error.bytes, child.output.eof ? 1 : 0, child.error.eof ? 1 : 0);
@@ -506,24 +543,40 @@ int wmain(int argc, wchar_t** argv)
     controlStopped = control.Stop();
     cleanup = cleanup && controlStopped;
     printf("CONTROL\t%d\t%d\n", survival ? 1 : 0, controlStopped ? 1 : 0);
-    if (child.markers && child.markers->early != 0) cleanup = false;
+    if (child.markers && !Observe(earlyClear, child.markers->early == 0)) cleanup = false;
     // Even rejected pre-resume paths must retain an empty shared marker mapping.
     if (!Is(name, "stop-resume") && Is(failure, "none") == false &&
         !Is(failure, "deadline") && !Is(failure, "output-limit") && !Is(failure, "crash") &&
-        child.markers && child.MarkerBits() != 0) cleanup = false;
+        child.markers && !Observe(rejectedClear, child.MarkerBits() == 0)) cleanup = false;
     if (Is(failure, "none") && (child.output.prefix != std::array<char, 3>{ 'O', 'K', '\n' }))
     { failure = "pipe"; failurePhase = "output-check"; }
     child.Release(); control.Release();
-    if (!GetProcessHandleCount(GetCurrentProcess(), &after)) closed = false;
+    if (!Observe(countQuery, GetProcessHandleCount(GetCurrentProcess(), &after) != FALSE)) closed = false;
     Log("handles-before", before); Log("handles-after", after);
-    unsigned leaked = ownedHandles + (after > before ? after - before : 0);
-    cleanup = cleanup && closed && leaked == 0;
+    bool increased = after > before;
+    bool ownedZero = ownedHandles == 0;
+    if (countQuery == Check::Pass) Observe(countNonincrease, !increased);
+    unsigned leaked = ownedHandles + (increased ? after - before : 0);
+    cleanup = cleanup && closed && Observe(leakedZero, leaked == 0);
     printf("CLEANUP\t%d\t%u\n", cleanup ? 1 : 0, cleanup ? 0 : 1);
     printf("HANDLES\t%u\nELAPSED\t%llu\nRESULT\t%s\nCOMPLETE\n", leaked, GetTickCount64() - start, failure);
     bool flushed = fflush(details) == 0;
     bool fileClosed = fclose(details) == 0; details = nullptr;
     if (!(cleanup && survival && flushed && fileClosed))
+    {
         fprintf(stderr, "OWNED_IMAGE_REFUSAL\t1\t%s\t%s\t%s\t%d\t%d\t%d\t%d\n", name.c_str(),
             failurePhase, RefusalReason(failure), cleanup ? 1 : 0, survival ? 1 : 0, flushed ? 1 : 0, fileClosed ? 1 : 0);
+        if (!cleanup)
+        {
+            fprintf(stderr, "OWNED_IMAGE_CLEANUP\t1\t%s", name.c_str());
+            child.stop.Write(stderr); control.stop.Write(stderr);
+            fprintf(stderr, "\t%s\t%s\t%s\t%s\t%d\t%s\t%s\t%s\t%d\t%s\t%s\t%d",
+                State(exitQuery), State(exitInactive), State(earlyClear), State(rejectedClear), ownedZero ? 1 : 0,
+                State(countQuery), State(countNonincrease), State(leakedZero), closeCalls ? 1 : 0,
+                State(closeIdentity), State(closeQuery), closed ? 1 : 0);
+            fprintf(stderr, "\t%s\t%s\t%s\t%s\t%s\t%s\n", State(ownedClose), State(mappingClose), State(debugClose),
+                State(hashClose), State(algorithmClose), State(ownerFileClose));
+        }
+    }
     return cleanup && survival && flushed && fileClosed ? 0 : 1;
 }

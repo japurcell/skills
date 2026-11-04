@@ -175,3 +175,21 @@ test('learning copy qualification is separately selectable without changing the 
   assert.match(result.stdout, /selected learning compiler closure preserves regular-file bytes and remains independent/);
   assert.match(result.stdout, /tests 1/);
 });
+
+
+test('OpenCode source-contract qualification stays separate from canonical provider support', () => {
+  const dispatch = fileURLToPath(new URL('../scripts/test.mjs', import.meta.url));
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, [dispatch, 'qualification', '--area', 'opencode-contract'], { encoding: 'utf8', timeout: 5000, env });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /synthetic OpenCode text without a terminal is only a candidate with unknown terminal evidence/);
+  assert.match(result.stdout, /source success and external user interruption can have indistinguishable JSONL and exit fixtures/);
+  assert.match(result.stdout, /tests 68/);
+  for (const args of [['adapters', '--provider', 'opencode'], ['qualification', '--area', 'opencode-contract', '--provider', 'opencode']]) {
+    const refused = spawnSync(process.execPath, [dispatch, ...args], { encoding: 'utf8', timeout: 5000, env });
+    assert.equal(refused.status, 1, refused.stdout + refused.stderr);
+    assert.match(refused.stderr, /no tests match supplied filters/);
+    assert.equal(refused.stdout, '');
+  }
+});

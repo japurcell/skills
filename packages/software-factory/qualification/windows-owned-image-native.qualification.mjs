@@ -5,7 +5,7 @@ import { mkdirSync, writeFileSync, existsSync, lstatSync, copyFileSync, realpath
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cases, limit, readBounded, validateNative } from './windows-owned-image.mjs';
-import { parseBuildObservation, formatFailure, nativeOutcome, parseNativeRefusal } from './windows-owned-image-diagnostics.mjs';
+import { parseBuildObservation, formatFailure, nativeOutcome, parseNativeDiagnostic } from './windows-owned-image-diagnostics.mjs';
 import { inboxEnvironment, parseProfile, formatProfile } from './windows-owned-image-host-profile.mjs';
 import { runOwnedImageTransport } from './windows-owned-image-transport.mjs';
 
@@ -92,8 +92,12 @@ try {
       : result.capped ? 'cap' : result.signal !== null ? 'signal' : result.exitCode !== 0 || result.stderr ? 'native' : 'receipt' };
     if (diagnostic.category === 'native') {
       diagnostic.native = nativeOutcome(result);
-      if (diagnostic.native?.exit === 'present' && diagnostic.native.status === 1)
-        diagnostic.refusal = parseNativeRefusal(result, name);
+      if (diagnostic.native?.exit === 'present' && diagnostic.native.status === 1) {
+        const observation = parseNativeDiagnostic(result, name);
+        diagnostic.refusal = observation?.refusal ?? null;
+        if (diagnostic.refusal?.cleanup === false || diagnostic.refusal === null)
+          diagnostic.cleanupEvidence = observation?.cleanup ?? null;
+      }
     }
     writeFileSync(join(evidence, `${name}.private.tsv`), result.stdout, { flag: 'wx' });
     writeFileSync(join(evidence, `${name}.stderr.private.txt`), result.stderr, { flag: 'wx' });
