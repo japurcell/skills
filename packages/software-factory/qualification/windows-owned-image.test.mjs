@@ -4,6 +4,9 @@ import { validateNative, cases, prepareUpload } from './windows-owned-image.mjs'
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { buildCategories, parseBuildDiagnostic, formatFailure } from './windows-owned-image-diagnostics.mjs';
 
 // Public seam: bounded native evidence -> fixed sanitized qualification result.
 const positive = () => [
@@ -183,4 +186,60 @@ test('native stop and crash controls require their actual intended exit outcome'
   for (const name of ['wrong-hash', 'different-file-id', 'stop-created', 'stop-resume', 'deadline', 'output-limit', 'crash'])
     assert.equal(validateNative(fixture(name).replace(/^EXIT.*$/m, 'EXIT\t94'), name).qualified, false, name);
   assert.equal(validateNative(fixture('deadline').replace(/^ELAPSED.*$/m, 'ELAPSED\t250'), 'deadline').qualified, false);
+});
+
+test('build diagnostics accept only the complete fixed producer grammar', () => {
+  for (const category of buildCategories)
+    assert.deepEqual(parseBuildDiagnostic(`OWNED_IMAGE_BUILD\t1\t${category}\tnone\tnone\t0\n`),
+      { category, code: 'none', source: 'none', line: 0 });
+  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t1\tcompile\tC2065\tprobe\t123\r\n'),
+    { category: 'compile', code: 'C2065', source: 'probe', line: 123 });
+  assert.deepEqual(parseBuildDiagnostic('OWNED_IMAGE_BUILD\t1\tmissing-msvc\tnone\tnone\t0\n'),
+    { category: 'missing-msvc', code: 'none', source: 'none', line: 0 });
+});
+
+test('path-bearing, forged, multiline and oversized build data is fully redacted', () => {
+  for (const value of ['C:\\private\\tool.exe failed', 'OWNED_IMAGE_BUILD\t1\tC:\\private\tnone\tnone\t0\n',
+    'OWNED_IMAGE_BUILD\t1\tcompile\tC2065: secret\tprobe\t123\n',
+    'OWNED_IMAGE_BUILD\t1\tcompile\tC2065\tC:\\private.cpp\t123\n',
+    'OWNED_IMAGE_BUILD\t1\tcompile\tC2065\tprobe\t999999\n',
+    'OWNED_IMAGE_BUILD\t1\thost\tnone\tnone\t0\nsecret\n', 'x'.repeat(513),
+    'OWNED_IMAGE_BUILD\t1\thost\tnone\tnone\t0\n\n',
+    'OWNED_IMAGE_BUILD\t1\thost\tC2065\tprobe\t1\n',
+    'OWNED_IMAGE_BUILD\t1\tcompile\tLNK2019\tprobe\t1\n',
+    'OWNED_IMAGE_BUILD\t1\tcompile\tC2065\tprobe\t01\n'])
+    assert.deepEqual(parseBuildDiagnostic(value), { category: 'unexpected', code: 'none', source: 'none', line: 0 });
+});
+
+test('driver failure output validates phase, finite case and fixed compiler fields again', () => {
+  for (const category of ['launch', 'timeout', 'cap', 'interrupted'])
+    assert.equal(formatFailure({ phase: 'build', category }),
+      `Owned image native qualification failed phase=build case=none category=${category} code=none source=none line=0\n`);
+  assert.equal(formatFailure({ phase: 'case', name: 'fail-detach', category: 'native' }),
+    'Owned image native qualification failed phase=case case=fail-detach category=native code=none source=none line=0\n');
+  assert.equal(formatFailure({ phase: 'build', ...parseBuildDiagnostic('OWNED_IMAGE_BUILD\t1\tcompile\tC2065\tprobe\t123\n') }),
+    'Owned image native qualification failed phase=build case=none category=compile code=C2065 source=probe line=123\n');
+  for (const value of [{ phase: 'C:\\secret', name: 'positive', category: 'native' },
+    { phase: 'case', name: 'positive\nsecret', category: 'native' },
+    { phase: 'host', category: 'C:\\secret' }, { phase: 'pin', category: 'native' },
+    { phase: ['host'], category: 'host' },
+    { phase: 'build', category: 'compile', code: 'C2065\nsecret', source: 'probe', line: 4 },
+    { phase: 'build', category: 'compile', code: 'C2065\n', source: 'probe', line: 4 },
+    { phase: 'host', category: 'host', secret: 'C:\\private' }]) {
+    const output = formatFailure(value);
+    assert.equal(output, 'Owned image native qualification failed phase=unexpected case=none category=unexpected code=none source=none line=0\n');
+  }
+});
+
+test('public driver reports a fixed host phase without invoking a native build', () => {
+  const root = mkdtempSync(join(tmpdir(), 'owned-image-host-diagnostic-'));
+  try {
+    const driver = fileURLToPath(new URL('./windows-owned-image-native.qualification.mjs', import.meta.url));
+    const result = spawnSync(process.execPath, [driver], { encoding: 'utf8', timeout: 5000, maxBuffer: 1024,
+      env: { ...process.env, WINDOWS_OWNED_IMAGE_EVIDENCE: root } });
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, 'Owned image native qualification failed phase=host case=none category=host code=none source=none line=0\n');
+    assert.deepEqual(readdirSync(root), []);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
