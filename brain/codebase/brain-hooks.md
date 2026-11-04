@@ -30,7 +30,7 @@ When copying a script to another repository, use its repository path or an absol
 
 ## Verification and recovery
 
-Run `python3 scripts/test-brain-hooks.py` for process, copied-script, and repository registration checks. Installer preservation checks run in their dedicated suites. Run `python3 scripts/generate-hooks.py --check` for freshness. The `brain-hooks` workflow prepares native Windows, Linux, and macOS checks on Python 3.12 and 3.14. Local contract checks do not prove actual provider context delivery or native Windows behavior; retain those results separately in the migration plan.
+Run `python3 scripts/tests/hooks/test-brain-hooks.py` for process, copied-script, and repository registration checks. Installer preservation checks run in their dedicated suites. Run `python3 scripts/generate-hooks.py --check` for freshness. The `brain-hooks` workflow prepares native Windows, Linux, and macOS checks on Python 3.12 and 3.14. Local contract checks do not prove actual provider context delivery or native Windows behavior; retain those results separately in the migration plan.
 
 Live checks on 2026-10-21 verified Copilot CLI 1.0.101 startup, clear/new and interactive resume, and Codex CLI 0.163.0 startup, clear, compact and interactive resume. Codex noninteractive `exec resume` did not refresh hook context in that probe; use interactive resume when fresh context is required. Gemini CLI delivery was explicitly waived and is not claimed. Native process checks cover all three providers.
 

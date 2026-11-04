@@ -6,8 +6,8 @@
 - Verify bounded Git capture and descendant cleanup; native Windows behavior requires native execution.
 - Preserve failed warm/cold benchmark observations and compare equivalent workloads before claiming improved performance.
 - Use the current scanner and guardian suites as the detailed behavioral contract rather than copying thresholds into many notes.
-- Guardian public-envelope changes retain the focused Codex suite alongside Copilot/Gemini and the shared [security-banner suite](../../scripts/test-security-banners.py) in [the suite registry](../../scripts/test-all.py). Suite coverage does not imply global handler registration.
-- For scanner/capture/banner changes run affected public [Codex](../../scripts/test-codex-hooks-secrets-scanner.sh), [Copilot](../../scripts/test-hooks-secrets-scanner.sh), [Gemini](../../scripts/test-gemini-hooks-secrets-scanner.sh), [capture](../../scripts/test-scan-secrets-capture.py), and [banner](../../scripts/test-security-banners.py) suites. Index/merge changes require [merge tests](../../scripts/test-scan-secrets-merge.py) through all three providers.
+- Guardian public-envelope changes retain the focused Codex suite alongside Copilot/Gemini and the shared [security-banner suite](../../scripts/tests/guardian/test-security-banners.py) in [the suite registry](../../scripts/test-all.py). Suite coverage does not imply global handler registration.
+- For scanner/capture/banner changes run affected public [Codex](../../scripts/tests/scanner/test-codex-hooks-secrets-scanner.sh), [Copilot](../../scripts/tests/scanner/test-hooks-secrets-scanner.sh), [Gemini](../../scripts/tests/scanner/test-gemini-hooks-secrets-scanner.sh), [capture](../../scripts/tests/scanner/test-scan-secrets-capture.py), and [banner](../../scripts/tests/guardian/test-security-banners.py) suites. Index/merge changes require [merge tests](../../scripts/tests/scanner/test-scan-secrets-merge.py) through all three providers.
 
 ## Acceptance evidence
 
@@ -21,6 +21,6 @@
 
 ## Native Windows capture
 
-- Read [the native PowerShell acceptance suite](../../scripts/test-scan-secrets-windows.ps1) before changing capture. Preserve all three provider JSON envelopes across failures, descendants, size bounds, malformed output, temporary-file handling, and unborn-versus-failed HEAD detection. Assert temporary-file cleanup immediately after return; retain actionable provider/mode/scenario/filename diagnostics and six total Gemini stress executions per selected case (base case plus five repeats).
+- Read [the native PowerShell acceptance suite](../../scripts/tests/scanner/test-scan-secrets-windows.ps1) before changing capture. Preserve all three provider JSON envelopes across failures, descendants, size bounds, malformed output, temporary-file handling, and unborn-versus-failed HEAD detection. Assert temporary-file cleanup immediately after return; retain actionable provider/mode/scenario/filename diagnostics and six total Gemini stress executions per selected case (base case plus five repeats).
 
-Evidence: `scripts/test-scan-secrets-*.py`, `scripts/test-tool-guard-*.py`, [bounded JSON reader](../../hooks/families/common.py), and [hook-testing](hook-testing.md), checked 2026-10-21. Recheck after policy or capture changes.
+Evidence: `scripts/tests/scanner/test-scan-secrets-*.py`, `scripts/tests/guardian/test-tool-guard-*.py`, [bounded JSON reader](../../hooks/families/common.py), and [hook-testing](hook-testing.md), checked 2026-10-21. Recheck after policy or capture changes.

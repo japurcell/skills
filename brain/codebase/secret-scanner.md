@@ -12,4 +12,4 @@
 
 For a scanner incident, installed/source mismatch, or blocked diagnostic path, read [scanner recovery](secret-scanner-recovery.md). For a future authorized limit change, read [security acceptance](security-testing.md#acceptance-evidence) before designing the fix.
 
-Evidence checked 2026-10-20: [limits](../../hooks/runtime/scan_types.py), [merge fixtures](../../scripts/test-scan-secrets-merge.py), [diagnostic recovery](../../scripts/test-hook-diagnostic-recovery.py). Recheck when enumeration, capture, locking, or limits change. Follow-up: [todos](../todos.md).
+Evidence checked 2026-10-20: [limits](../../hooks/runtime/scan_types.py), [merge fixtures](../../scripts/tests/scanner/test-scan-secrets-merge.py), [diagnostic recovery](../../scripts/tests/hooks/test-hook-diagnostic-recovery.py). Recheck when enumeration, capture, locking, or limits change. Follow-up: [todos](../todos.md).

@@ -9,6 +9,6 @@
 - When changing configuration, preserve emitter registration for every supported Copilot/Gemini event, including lifecycle events with no operational handler. Check the [Copilot config](../../.copilot/hooks/hooks.json) and [Gemini template](../../.gemini/global-settings.json); provider event support remains version-specific.
 - Test copied provider-local scripts, retained stdin, trailing data, and UTF-8 output under Windows codepages.
 - Rotation tests that exclude maintenance need the existing stale-maintenance sentinel fixture; avoid accidental maintenance changing their premise.
-- For shared observability changes run both [Copilot observability tests](../../scripts/test-hooks-observability.sh) and [Gemini observability tests](../../scripts/test-gemini-hooks-observability.sh).
+- For shared observability changes run both [Copilot observability tests](../../scripts/tests/hooks/test-hooks-observability.sh) and [Gemini observability tests](../../scripts/tests/hooks/test-gemini-hooks-observability.sh).
 
 Evidence: [observability ADR](../../docs/adr/0003-sqlite-backed-hook-observability.md), `hooks/families/observability.py`, checked 2026-10-20. Recheck log lifecycle or maintenance changes. See [hook-testing](hook-testing.md).
