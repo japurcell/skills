@@ -1,6 +1,7 @@
 ---
 name: prd-ralph
 description: Complete at most one eligible unfinished PRD task, verify it, log progress, and optionally create one scoped commit.
+argument-hint: '<prd-file> [progress_file <path>] [task_id <id>] [commit false]'
 ---
 
 # /prd-ralph

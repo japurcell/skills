@@ -56,6 +56,29 @@ class BenchmarkCliTests(unittest.TestCase):
             self.assertNotEqual(candidate.returncode,0)
             self.assertIn("expected allow",candidate.stderr)
 
+    def test_resource_cli_versions_conditions_and_preserves_existing_evidence(self) -> None:
+        script = BENCHMARK.with_name("benchmark-tool-guard-resources.py")
+        expectations = BENCHMARK.parent / "fixtures/tool_guard_file_operations_expectations.json"
+        for condition, expected in (("baseline", "deny"), ("candidate", "allow")):
+            result = subprocess.run([sys.executable, str(script), "--list", "--fixture-set", "file-operations-v1",
+                                     "--expectations", str(expectations), "--condition", condition],
+                                    capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            rows = {row["case"]: row for row in json.loads(result.stdout)}
+            self.assertEqual(rows["codex.resources.writer.quoted-document"]["decision"], expected)
+            self.assertEqual(rows["codex.resources.audit-unavailable.warn.finding"]["audit"]["outcome"], "failed")
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "original.json"
+            output.write_text("retained failed evidence\n")
+            result = subprocess.run([sys.executable, str(script), "--output", str(output)], capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertIn("already exists", result.stderr)
+            self.assertEqual(output.read_text(), "retained failed evidence\n")
+        result = subprocess.run([sys.executable, str(script), "--list", "--fixture-set", "file-operations-v1",
+                                 "--expectations", "/missing-reviewed-expectations.json"], capture_output=True, text=True, timeout=5)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("reviewed expectations", result.stderr)
+
     def test_public_flags_validate_usage_before_running(self) -> None:
         for args in (("--help",),("--expected-behavior","unknown"),("--guard-only","--script-root","/nonexistent/guardian-fixture")):
             result=subprocess.run([sys.executable,str(BENCHMARK),*args],capture_output=True,text=True,timeout=5)

@@ -1,7 +1,7 @@
 ---
 name: guidance-review
 description: Review guidance for contradictions, ambiguity, duplication, omissions, and opportunities for concise wording.
-argument-hint: "[guidance text or path/to/file.md]"
+argument-hint: '[guidance text or path/to/file.md]'
 disable-model-invocation: true
 ---
 

@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly REPO_ROOT="${ADDY_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+readonly INSTALLER_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly DEFAULT_SOURCE_ROOT="${REPO_ROOT}/../addy-agent-skills"
 readonly SOURCE_ROOT="${ADDY_SOURCE_ROOT:-${DEFAULT_SOURCE_ROOT}}"
 readonly SOURCE_REMOTE_URL="${ADDY_REMOTE_URL:-https://github.com/addyosmani/agent-skills}"
@@ -372,14 +373,19 @@ resolve_selected_skills() {
     [[ -n "$resolved_skill" ]] || continue
     add_selected_skills "$resolved_skill"
   done < <(
-    python3 - "$SKILLS_SRC" "${SELECTED_SKILLS[@]}" <<'PY'
+    python3 -B - "$SKILLS_SRC" "$INSTALLER_DIR/rebase-skill-references.py" "${SELECTED_SKILLS[@]}" <<'PY'
 from collections import deque
+import importlib.util
+import os
 from pathlib import Path
 import re
 import sys
 
 skills_src = Path(sys.argv[1])
-selected = sys.argv[2:]
+spec = importlib.util.spec_from_file_location("skill_references", sys.argv[2])
+helper = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helper)
+selected = sys.argv[3:]
 skill_dirs = {
     path.name: path
     for path in sorted(skills_src.iterdir())
@@ -393,13 +399,23 @@ patterns = {
 
 
 def iter_text_files(skill_dir: Path):
-    for path in sorted(skill_dir.rglob("*")):
-        if not path.is_file():
-            continue
-        try:
-            yield path.read_text(encoding="utf-8")
-        except UnicodeDecodeError:
-            continue
+    for directory, child_dirs, filenames in os.walk(skill_dir, followlinks=False):
+        parent = Path(directory)
+        child_dirs[:] = [
+            name for name in child_dirs
+            if not helper.artifact_excluded(name, True, (parent / name).is_symlink())
+            and not (parent / name).is_symlink()
+        ]
+        for name in sorted(filenames):
+            path = parent / name
+            if helper.artifact_excluded(name, False, helper.is_link_or_junction(path)):
+                continue
+            if not path.is_file():
+                continue
+            try:
+                yield path.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
 
 
 def referenced_skills(skill_name: str):
@@ -462,8 +478,12 @@ copy_skills() {
     target_dir="${SKILLS_DEST}/${PREFIX}${base_name}"
     skill_file="${target_dir}/SKILL.md"
 
-    rm -rf "$target_dir"
-    cp -Rp "$source_dir" "$target_dir"
+    python3 -B "$INSTALLER_DIR/rebase-skill-references.py" \
+      --source-dir "$source_dir" \
+      --destination-dir "$target_dir" \
+      --copy-filtered \
+      --replace-destination \
+      --prune-test-files
     rewrite_name_field "$skill_file" "$base_name" "${PREFIX}${base_name}"
     COPIED_SKILL_DIRS+=("$target_dir")
   done < <(iter_skill_source_dirs)

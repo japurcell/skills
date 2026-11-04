@@ -22,15 +22,247 @@ Date filters are composable:
 Output:
   <output-dir>/000_<provider>_<name>.txt  - extracted messages per conversation
   <output-dir>/batches/batch_0.txt ... batch_N.txt - file lists for each batch
+
+Inputs are confined to ~/.claude/projects and ~/.codex/sessions. Output must
+be below an existing private ruminate-* workspace in the platform temporary
+directory. HOME, temporary configuration, and the trees must remain trusted
+and stable; path checks do not prevent hostile concurrent ancestor swaps.
 """
 
 import argparse
-import glob
 import json
 import os
+import stat
 import sys
+import tempfile
+import unicodedata
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any, Callable
+
+
+class PathPolicyError(ValueError):
+    pass
+
+
+def literal_path(value: str) -> Path:
+    if any(unicodedata.category(char) in {"Cc", "Zl", "Zp"} for char in value):
+        raise PathPolicyError("paths must not contain control characters or line separators")
+    path = Path(value)
+    if ".." in path.parts:
+        raise PathPolicyError("paths must not contain '..' components")
+    return path.absolute()
+
+
+def source_root(value: str, anchor: Path) -> str:
+    path = literal_path(value)
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise PathPolicyError(f"input directory is unavailable: {path}") from exc
+    if not resolved.is_relative_to(anchor):
+        raise PathPolicyError(f"input directory must be within {anchor}")
+    if not resolved.is_dir():
+        raise PathPolicyError(f"input root must be a directory: {path}")
+    return str(resolved)
+
+
+def private_directory(path: Path) -> None:
+    info = path.lstat()
+    if (not stat.S_ISDIR(info.st_mode)
+            or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)):
+        raise PathPolicyError(f"output directory must be a real directory, not a symlink: {path}")
+    if os.name == "nt":
+        windows_private_object(path)
+    elif info.st_uid != os.getuid() or info.st_mode & 0o077:
+        raise PathPolicyError(f"output directory must be owned by this user and private (mode 700): {path}")
+
+
+def windows_private_object(path: Path, descriptor_handle: int | None = None) -> None:
+    # Windows inherits DACLs, and its stat mode bits do not describe privacy.
+    # Accept only ordinary allow ACEs for the current user, SYSTEM, and local
+    # administrators, and OWNER RIGHTS after verifying ownership. An
+    # inherit-only CREATOR OWNER ACE is safe for new children.
+    import ctypes
+    from ctypes import wintypes
+
+    advapi = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    pointer = ctypes.c_void_p
+    dword = wintypes.DWORD
+    advapi.GetNamedSecurityInfoW.argtypes = [wintypes.LPWSTR, dword, dword,
+                                            ctypes.POINTER(pointer), pointer,
+                                            ctypes.POINTER(pointer), pointer,
+                                            ctypes.POINTER(pointer)]
+    advapi.GetNamedSecurityInfoW.restype = dword
+    advapi.GetSecurityInfo.argtypes = [pointer, dword, dword, ctypes.POINTER(pointer), pointer,
+                                       ctypes.POINTER(pointer), pointer, ctypes.POINTER(pointer)]
+    advapi.GetSecurityInfo.restype = dword
+    advapi.OpenProcessToken.argtypes = [pointer, dword, ctypes.POINTER(pointer)]
+    advapi.GetTokenInformation.argtypes = [pointer, dword, pointer, dword, ctypes.POINTER(dword)]
+    advapi.EqualSid.argtypes = [pointer, pointer]
+    advapi.CreateWellKnownSid.argtypes = [dword, pointer, pointer, ctypes.POINTER(dword)]
+    advapi.GetAce.argtypes = [pointer, dword, ctypes.POINTER(pointer)]
+    kernel.GetCurrentProcess.restype = pointer
+    kernel.CloseHandle.argtypes = [pointer]
+    kernel.LocalFree.argtypes = [pointer]
+    kernel.LocalFree.restype = pointer
+
+    owner, acl, descriptor, token = pointer(), pointer(), pointer(), pointer()
+    if descriptor_handle is None:
+        error = advapi.GetNamedSecurityInfoW(str(path), 1, 5, ctypes.byref(owner), None,
+                                            ctypes.byref(acl), None, ctypes.byref(descriptor))
+    else:
+        error = advapi.GetSecurityInfo(descriptor_handle, 1, 5, ctypes.byref(owner), None,
+                                       ctypes.byref(acl), None, ctypes.byref(descriptor))
+    if error:
+        raise OSError(error, "cannot inspect output security", str(path))
+    try:
+        if not acl or not advapi.OpenProcessToken(kernel.GetCurrentProcess(), 8, ctypes.byref(token)):
+            raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+        size = dword()
+        advapi.GetTokenInformation(token, 1, None, 0, ctypes.byref(size))
+        if not size.value:
+            raise ctypes.WinError(ctypes.get_last_error())
+        user = ctypes.create_string_buffer(size.value)
+        if not advapi.GetTokenInformation(token, 1, user, size, ctypes.byref(size)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        user_sid = ctypes.cast(user, ctypes.POINTER(pointer))[0]
+        if not advapi.EqualSid(owner, user_sid):
+            raise PathPolicyError(f"output must be owned by this user and private: {path}")
+        trusted = [user_sid]
+        sid_buffers = []
+        for sid_type in (22, 26, 71, 3):  # SYSTEM, Administrators, Owner Rights, Creator Owner
+            sid = ctypes.create_string_buffer(68)
+            sid_size = dword(len(sid))
+            if not advapi.CreateWellKnownSid(sid_type, None, sid, ctypes.byref(sid_size)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            sid_buffers.append(sid)
+        trusted.extend(ctypes.cast(sid, pointer) for sid in sid_buffers[:3])
+        creator = ctypes.cast(sid_buffers[3], pointer)
+        # ACL header: revision, reserved, size, ACE count, reserved.
+        ace_count = ctypes.c_ushort.from_address(acl.value + 4).value
+        for index in range(ace_count):
+            ace = pointer()
+            if not advapi.GetAce(acl, index, ctypes.byref(ace)):
+                raise ctypes.WinError(ctypes.get_last_error())
+            ace_type = ctypes.c_ubyte.from_address(ace.value).value
+            flags = ctypes.c_ubyte.from_address(ace.value + 1).value
+            if ace_type == 1:  # Deny ACE cannot broaden access.
+                continue
+            if ace_type != 0:
+                raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+            sid = pointer(ace.value + 8)
+            if not (any(advapi.EqualSid(sid, allowed) for allowed in trusted)
+                    or flags & 0x08 and advapi.EqualSid(sid, creator)):
+                raise PathPolicyError(f"output must have a private Windows ACL: {path}")
+    finally:
+        if token:
+            kernel.CloseHandle(token)
+        kernel.LocalFree(descriptor)
+
+
+def output_parts(path: Path, workspace: Path) -> tuple[str, ...]:
+    if not path.resolve().is_relative_to(workspace):
+        raise PathPolicyError(f"output path escapes workspace: {path}")
+    parts = path.relative_to(workspace).parts
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.GetVolumePathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+        kernel.GetVolumeInformationW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD,
+                                                ctypes.POINTER(wintypes.DWORD), ctypes.POINTER(wintypes.DWORD),
+                                                ctypes.POINTER(wintypes.DWORD), wintypes.LPWSTR, wintypes.DWORD]
+        volume = ctypes.create_unicode_buffer(32768)
+        limit = wintypes.DWORD()
+        if (not kernel.GetVolumePathNameW(str(workspace), volume, len(volume))
+                or not kernel.GetVolumeInformationW(volume, None, 0, None,
+                                                     ctypes.byref(limit), None, None, 0)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        too_long = any(len(part.encode("utf-16-le")) // 2 > limit.value for part in parts)
+    else:
+        name_max = os.pathconf(workspace, "PC_NAME_MAX")
+        too_long = name_max > 0 and any(len(os.fsencode(part)) > name_max for part in parts)
+    if too_long:
+        raise PathPolicyError("output component exceeds the filesystem name limit")
+    return parts
+
+
+def output_directory(path: Path, workspace: Path) -> None:
+    current = workspace
+    for part in output_parts(path, workspace):
+        current /= part
+        try:
+            private_directory(current)
+        except FileNotFoundError:
+            continue
+
+
+def output_root(value: str) -> tuple[Path, Path]:
+    path = literal_path(value)
+    temp = Path(tempfile.gettempdir())
+    anchor = temp.resolve(strict=True)
+    if not path.resolve().is_relative_to(anchor):
+        raise PathPolicyError("output must be below a private ruminate-* workspace in the platform temporary directory")
+    if path.is_relative_to(temp):
+        relative = path.relative_to(temp)
+    elif path.is_relative_to(anchor):
+        relative = path.relative_to(anchor)
+    else:
+        raise PathPolicyError("output must not use a symlink to the temporary directory")
+    if len(relative.parts) < 2 or not relative.parts[0].startswith("ruminate-"):
+        raise PathPolicyError("output must be a strict descendant of a ruminate-* workspace")
+    workspace = anchor / relative.parts[0]
+    try:
+        private_directory(workspace)
+    except FileNotFoundError as exc:
+        raise PathPolicyError("the private ruminate-* workspace must already exist") from exc
+    output = anchor / relative
+    output_directory(output, workspace)
+    return output, workspace
+
+
+def make_output_directory(path: Path, workspace: Path) -> None:
+    output_directory(path, workspace)
+    current = workspace
+    for part in path.relative_to(workspace).parts:
+        current /= part
+        current.mkdir(mode=0o700, exist_ok=True)
+
+
+def output_file(path: Path, workspace: Path) -> None:
+    output_directory(path.parent, workspace)
+    output_parts(path, workspace)
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return
+    if (not stat.S_ISREG(info.st_mode) or info.st_nlink != 1
+            or getattr(info, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)):
+        raise PathPolicyError(f"output must be a regular, non-symlink file with one link: {path}")
+    if os.name == "nt":
+        windows_private_object(path)
+
+
+def write_output(path: Path, content: str, workspace: Path) -> None:
+    output_file(path, workspace)
+    flags = os.O_WRONLY | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    descriptor = os.open(path, flags, 0o600)
+    try:
+        info = os.fstat(descriptor)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise PathPolicyError(f"output must be a regular file with one link: {path}")
+        if os.name == "nt":
+            import msvcrt
+            windows_private_object(path, msvcrt.get_osfhandle(descriptor))
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = -1
+            handle.truncate(0)
+            handle.write(content)
+    finally:
+        if descriptor != -1:
+            os.close(descriptor)
 
 
 def file_mod_date(fpath: str) -> date:
@@ -75,7 +307,7 @@ def append_message(messages: list[str], role: str, text: str, max_len: int) -> N
         messages.append(f"[ASSISTANT]: {text[:max_len]}")
 
 
-def extract_messages(fpath: str) -> tuple[str, str, list[str]]:
+def extract_messages(fpath: str, root: Path) -> tuple[str, str, list[str]]:
     """Extract messages from one conversation JSONL file.
 
     Returns (provider, cwd, messages), where provider is one of:
@@ -85,7 +317,8 @@ def extract_messages(fpath: str) -> tuple[str, str, list[str]]:
     cwd = ""
     messages: list[str] = []
 
-    with open(fpath, encoding="utf-8", errors="replace") as handle:
+    checked = contained_source(Path(fpath), root)
+    with open(checked, encoding="utf-8", errors="replace") as handle:
         for line in handle:
             try:
                 entry = json.loads(line)
@@ -138,24 +371,43 @@ def extract_messages(fpath: str) -> tuple[str, str, list[str]]:
     return provider, cwd, messages
 
 
-def discover_files(claude_dirs: list[str], codex_dirs: list[str]) -> list[str]:
-    files: list[str] = []
-    seen: set[str] = set()
+def contained_source(path: Path, root: Path) -> Path:
+    literal_path(str(path))
+    try:
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise PathPolicyError(f"source is unavailable: {path}") from exc
+    if not resolved.is_relative_to(root):
+        raise PathPolicyError(f"source escapes input directory: {path}")
+    literal_path(str(resolved))
+    return resolved
 
-    for root in claude_dirs:
-        for fpath in glob.glob(os.path.join(root, "*.jsonl")):
-            real = os.path.realpath(fpath)
-            if real not in seen:
-                seen.add(real)
-                files.append(real)
 
-    for root in codex_dirs:
-        for fpath in glob.glob(os.path.join(root, "**", "*.jsonl"), recursive=True):
-            real = os.path.realpath(fpath)
-            if real not in seen:
-                seen.add(real)
-                files.append(real)
+def discover_files(claude_dirs: list[str], codex_dirs: list[str]) -> dict[str, Path]:
+    files: dict[str, Path] = {}
 
+    def visit(directory: Path, root: Path, recursive: bool) -> None:
+        directories: list[Path] = []
+        with os.scandir(directory) as entries:
+            for entry in entries:
+                if entry.name.startswith("."):
+                    continue
+                path = Path(entry.path)
+                resolved = contained_source(path, root)
+                if resolved.is_dir():
+                    if recursive and not entry.is_symlink():
+                        directories.append(resolved)
+                elif entry.name.endswith(".jsonl"):
+                    if not resolved.is_file():
+                        raise PathPolicyError(f"source must be a regular file: {path}")
+                    files.setdefault(str(resolved), root)
+        # Match glob's immediate-files-first order when modification times tie.
+        for child in directories:
+            visit(child, root, recursive)
+
+    for roots, recursive in ((claude_dirs, False), (codex_dirs, True)):
+        for root in roots:
+            visit(Path(root), Path(root), recursive)
     return files
 
 
@@ -165,9 +417,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Extract messages from Claude and Codex conversation JSONL files."
     )
-    parser.add_argument("output_dir", help="Directory to write extracted conversations")
-    parser.add_argument("--claude-dir", action="append", default=[], help="Claude project dir containing .jsonl files")
-    parser.add_argument("--codex-dir", action="append", default=[], help="Codex sessions root (searched recursively)")
+    parser.add_argument(
+        "output_dir", help="Output below a private ruminate-* workspace in the platform temporary directory",
+    )
+    parser.add_argument(
+        "--claude-dir", action="append", default=[],
+        help="Literal directory beneath ~/.claude/projects (nonrecursive)",
+    )
+    parser.add_argument(
+        "--codex-dir", action="append", default=[],
+        help="Literal directory beneath ~/.codex/sessions (recursive)",
+    )
     parser.add_argument("--cwd", help="Only include conversations where detected cwd matches this path")
     parser.add_argument("--batches", type=int, default=5, help="Number of batch manifests (default: 5)")
     parser.add_argument(
@@ -187,11 +447,30 @@ def main() -> None:
 
     if not args.claude_dir and not args.codex_dir:
         parser.error("at least one input source is required (--claude-dir or --codex-dir)")
+    if args.batches <= 0:
+        parser.error("--batches must be positive")
+    if args.min_size < 0:
+        parser.error("--min-size must be nonnegative")
+    if args.from_date and args.to_date and args.from_date > args.to_date:
+        parser.error("--from must be on or before --to")
 
-    os.makedirs(args.output_dir, exist_ok=True)
+    try:
+        run(args)
+    except PathPolicyError as exc:
+        parser.error(str(exc))
+    except OSError as exc:
+        parser.exit(1, f"{parser.prog}: error: I/O failure: {exc}\n")
+
+
+def run(args: argparse.Namespace) -> None:
+    home = Path.home().resolve()
+    claude_dirs = [source_root(root, home / ".claude/projects") for root in args.claude_dir]
+    codex_dirs = [source_root(root, home / ".codex/sessions") for root in args.codex_dir]
+    output, workspace = output_root(args.output_dir)
+    sources = discover_files(claude_dirs, codex_dirs)
 
     files = []
-    for fpath in discover_files(args.claude_dir, args.codex_dir):
+    for fpath in sources:
         if os.path.getsize(fpath) < args.min_size:
             continue
         if args.from_date or args.to_date:
@@ -214,11 +493,12 @@ def main() -> None:
     print(f"Found {len(files)} candidate conversations{date_desc}", file=sys.stderr)
 
     extracted: list[str] = []
+    outputs: list[tuple[Path, str]] = []
     provider_counts: dict[str, int] = {"claude": 0, "codex": 0, "unknown": 0}
 
     for idx, fpath in enumerate(files):
-        provider, cwd, messages = extract_messages(fpath)
-        if args.cwd and cwd and os.path.realpath(cwd) != os.path.realpath(args.cwd):
+        provider, cwd, messages = extract_messages(fpath, sources[fpath])
+        if args.cwd is not None and (not cwd or os.path.realpath(cwd) != os.path.realpath(args.cwd)):
             continue
         if not messages:
             continue
@@ -226,14 +506,30 @@ def main() -> None:
         provider_counts[provider] = provider_counts.get(provider, 0) + 1
         fname = os.path.basename(fpath).replace(".jsonl", "")
         out_path = f"{args.output_dir}/{idx:03d}_{provider}_{fname}.txt"
-        with open(out_path, "w", encoding="utf-8") as out:
-            out.write(f"[PROVIDER]: {provider}\n")
-            if cwd:
-                out.write(f"[CWD]: {cwd}\n")
-            out.write(f"[SOURCE_FILE]: {fpath}\n\n")
-            out.write("\n\n".join(messages))
-            out.write("\n")
+        destination = output / f"{idx:03d}_{provider}_{fname}.txt"
+        output_file(destination, workspace)
+        content = f"[PROVIDER]: {provider}\n"
+        if cwd:
+            content += f"[CWD]: {cwd}\n"
+        content += f"[SOURCE_FILE]: {fpath}\n\n" + "\n\n".join(messages) + "\n"
+        outputs.append((destination, content))
         extracted.append(out_path)
+
+    batch_dir = output / "batches"
+    output_directory(batch_dir, workspace)
+    batch_size = max(1, (len(extracted) + args.batches - 1) // args.batches)
+    manifests: list[tuple[Path, list[str]]] = []
+    for b in range(args.batches):
+        batch_files = extracted[b * batch_size : (b + 1) * batch_size]
+        if batch_files:
+            manifest = batch_dir / f"batch_{b}.txt"
+            output_file(manifest, workspace)
+            manifests.append((manifest, batch_files))
+
+    make_output_directory(output, workspace)
+    make_output_directory(batch_dir, workspace)
+    for destination, content in outputs:
+        write_output(destination, content, workspace)
 
     print(
         "Extracted "
@@ -244,17 +540,8 @@ def main() -> None:
         file=sys.stderr,
     )
 
-    batch_dir = f"{args.output_dir}/batches"
-    os.makedirs(batch_dir, exist_ok=True)
-    batch_size = max(1, (len(extracted) + args.batches - 1) // args.batches)
-
-    for b in range(args.batches):
-        batch_files = extracted[b * batch_size : (b + 1) * batch_size]
-        if not batch_files:
-            continue
-        manifest = f"{batch_dir}/batch_{b}.txt"
-        with open(manifest, "w", encoding="utf-8") as mf:
-            mf.write("\n".join(batch_files) + "\n")
+    for b, (manifest, batch_files) in enumerate(manifests):
+        write_output(manifest, "\n".join(batch_files) + "\n", workspace)
         print(f"Batch {b}: {len(batch_files)} conversations", file=sys.stderr)
 
     print(args.output_dir)

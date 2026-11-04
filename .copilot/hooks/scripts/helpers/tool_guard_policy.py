@@ -1,23 +1,32 @@
 #!/usr/bin/env python3
 # Generated from hooks/families/tool_guard.py by scripts/generate-hooks.py. Do not edit.
 
+"""Bounded Guardian policy, literal proofs, and provider input inspection.
+
+inspect_tool returns owned inspection facts; enforcement and auditing stay separate.
+Rule records contain ID, category, severity, matcher, cause, and trusted action.
+"""
 from __future__ import annotations
 
 import json
-import sys
-
-
 import re
+import sys
 import unicodedata
 
+from .scan_allowlist import allowlist_contains, parse_allowlist
+from .scan_reporting import report_json_bytes, report_label, report_text
 
 MAX_SCAN_TEXT = 32768
-MAX_NATIVE_DATA_BYTES = 65536
-MAX_NATIVE_PATCH_BYTES = 262144
+MAX_NATIVE_DATA_BYTES = 1048576
+MAX_NATIVE_PATCH_BYTES = 1048576
+MAX_INSPECTION_SOURCE_BYTES = MAX_NATIVE_DATA_BYTES + MAX_SCAN_TEXT
+MAX_INSPECTION_WORK_BYTES = 2 * MAX_INSPECTION_SOURCE_BYTES
+MAX_GUARD_INPUT_BYTES = 6 * (MAX_NATIVE_DATA_BYTES + 3 * MAX_SCAN_TEXT) + 8192
 MAX_COMMAND_SEGMENTS = 128
 MAX_COMMAND_TOKENS = 256
 MAX_STRUCTURED_DEPTH = 32
 MAX_STRUCTURED_NODES = 256
+MAX_GUARD_INPUT_MARKERS = 8 * (2 * MAX_STRUCTURED_NODES)
 MAX_STRUCTURED_STRINGS = 128
 MAX_TOOL_NAME_LENGTH = 160
 MAX_EXCERPT_LENGTH = 160
@@ -51,10 +60,6 @@ class ScanLimitExceeded(ValueError):
             "cause": cause,
         }
 
-def R(*codes: int) -> str:
-    return "".join(chr(code) for code in codes)
-
-
 def _is_word_char(char: str) -> bool:
     return char.isalnum() or char == "_"
 
@@ -71,8 +76,7 @@ def _find_word(lower_text: str, word: str, start: int = 0) -> int:
     return -1
 
 
-def _simple_match(*codes: int):
-    needle = R(*codes)
+def _simple_match(needle: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         index = lower_text.find(needle)
@@ -169,8 +173,7 @@ def _matches_protected_remove_target(target: str, target_kind: str) -> bool:
     return unquoted == ".." or unquoted.startswith("../")
 
 
-def _match_recursive_rm_target(*target_codes: int):
-    target_kind = R(*target_codes)
+def _match_recursive_rm_target(target_kind: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         del lower_text
@@ -203,8 +206,8 @@ def _match_recursive_rm_target(*target_codes: int):
 
 
 def _match_rm_env(text: str, lower_text: str) -> str | None:
-    commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
-    suffix = R(46, 101, 110, 118)
+    commands = ('rm', 'del', 'unlink')
+    suffix = '.env'
     for command in commands:
         start = 0
         while True:
@@ -228,8 +231,8 @@ def _match_rm_env(text: str, lower_text: str) -> str | None:
 
 
 def _match_rm_git(text: str, lower_text: str) -> str | None:
-    commands = (R(114, 109), R(100, 101, 108), R(117, 110, 108, 105, 110, 107))
-    suffix = R(46, 103, 105, 116)
+    commands = ('rm', 'del', 'unlink')
+    suffix = '.git'
     for command in commands:
         start = 0
         while True:
@@ -252,10 +255,9 @@ def _match_rm_git(text: str, lower_text: str) -> str | None:
     return None
 
 
-def _match_git_push(*prefix_codes: int):
-    prefix = R(*prefix_codes)
+def _match_git_push(prefix: str):
     force_option = prefix.split()[-1]
-    protected = {R(109, 97, 105, 110), R(109, 97, 115, 116, 101, 114)}
+    protected = {'main', 'master'}
 
     options_with_values = {
         "-C",
@@ -392,30 +394,29 @@ def _sql_code_without_comments_or_literals(text: str) -> str:
 
 
 def _match_delete_from(text: str, lower_text: str) -> str | None:
-    if _find_word(lower_text, R(100, 101, 108, 101, 116, 101)) == -1:
+    if _find_word(lower_text, 'delete') == -1:
         return None
     normalized = _sql_code_without_comments_or_literals(_bounded_normalized_text(text))
     statement_pattern = re.compile(
-        R(92, 98, 100, 101, 108, 101, 116, 101, 92, 115, 43, 102, 114, 111, 109, 92, 115, 43)
+        '\\bdelete\\s+from\\s+'
         + r"[^\s;]+(?P<tail>.*?)(?:;|$)",
         re.IGNORECASE | re.DOTALL,
     )
     for statement in statement_pattern.finditer(normalized):
         tail = statement.group("tail")
-        if re.search(R(92, 98, 119, 104, 101, 114, 101, 92, 98), tail, re.IGNORECASE):
+        if re.search('\\bwhere\\b', tail, re.IGNORECASE):
             continue
         return statement.group(0).strip()
     return None
 
 
-def _match_pipe_chain(*codes: int):
-    first, second = (R(*codes[0]), R(*codes[1]))
+def _match_pipe_chain(first: str, second: str):
 
     def matcher(text: str, lower_text: str) -> str | None:
         index = lower_text.find(first)
         if index == -1:
             return None
-        pipe = lower_text.find(R(124), index + len(first))
+        pipe = lower_text.find('|', index + len(first))
         if pipe == -1:
             return None
         tail = lower_text.find(second, pipe + 1)
@@ -428,9 +429,9 @@ def _match_pipe_chain(*codes: int):
 
 
 def _match_data_upload(text: str, lower_text: str) -> str | None:
-    curl = R(99, 117, 114, 108)
-    data = R(45, 45, 100, 97, 116, 97)
-    at_sign = R(64)
+    curl = 'curl'
+    data = '--data'
+    at_sign = '@'
     index = lower_text.find(curl)
     if index == -1:
         return None
@@ -443,102 +444,53 @@ def _match_data_upload(text: str, lower_text: str) -> str | None:
     return text[index : end + 1]
 
 
-PATTERNS = [
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(47), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(126), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(46), "Use targeted removals."),
-    ("destructive_file_ops", "critical", _match_recursive_rm_target(46, 46), "Avoid recursive parent removal."),
-    ("destructive_file_ops", "critical", _match_rm_env, "Back up sensitive files first."),
-    ("destructive_file_ops", "critical", _match_rm_git, "Never delete repository metadata."),
-    ("destructive_git_ops", "critical", _match_git_push(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 45, 102, 111, 114, 99, 101), "Use a safer push strategy."),
-    ("destructive_git_ops", "critical", _match_git_push(103, 105, 116, 32, 112, 117, 115, 104, 32, 45, 102), "Use a safer push strategy."),
-    ("destructive_git_ops", "high", _simple_match(103, 105, 116, 32, 114, 101, 115, 101, 116, 32, 45, 45, 104, 97, 114, 100), "Prefer a softer reset path."),
-    ("destructive_git_ops", "high", _simple_match(103, 105, 116, 32, 99, 108, 101, 97, 110, 32, 45, 102, 100), "Preview deletions first."),
-    ("database_destruction", "critical", _simple_match(100, 114, 111, 112, 32, 116, 97, 98, 108, 101), "Preserve the schema instead."),
-    ("database_destruction", "critical", _simple_match(100, 114, 111, 112, 32, 100, 97, 116, 97, 98, 97, 115, 101), "Back up before removing."),
-    ("database_destruction", "critical", _simple_match(116, 114, 117, 110, 99, 97, 116, 101), "Preserve the schema instead."),
-    ("database_destruction", "high", _match_delete_from, "Add a filter clause."),
-    ("permission_abuse", "high", _simple_match(99, 104, 109, 111, 100, 32, 45, 114, 32, 55, 55, 55), "Use narrower permissions."),
-    ("permission_abuse", "high", _simple_match(99, 104, 109, 111, 100, 32, 55, 55, 55), "Use narrower permissions."),
-    ("network_exfiltration", "critical", _match_pipe_chain((99, 117, 114, 108), (98, 97, 115, 104)), "Review downloads before execution."),
-    ("network_exfiltration", "critical", _match_pipe_chain((119, 103, 101, 116), (115, 104)), "Review downloads before execution."),
-    ("network_exfiltration", "high", _match_data_upload, "Review outbound data before sending."),
-    ("system_danger", "high", _simple_match(115, 117, 100, 111, 32), "Use least privilege."),
-    ("system_danger", "high", _simple_match(110, 112, 109, 32, 112, 117, 98, 108, 105, 115, 104), "Dry-run publication first."),
-]
-
-RULE_DETAILS = (
-    ("recursive_remove_root", "recursive forced removal targets the filesystem root"),
-    ("recursive_remove_home", "recursive forced removal targets the home directory"),
-    ("recursive_remove_current", "recursive forced removal targets the current directory"),
-    ("recursive_remove_parent", "recursive forced removal targets a parent directory"),
-    ("remove_env_file", "removal targets an environment file"),
-    ("remove_git_metadata", "removal targets Git metadata"),
-    ("force_push_protected_branch", "forced push targets a protected branch"),
-    ("force_push_protected_branch", "forced push targets a protected branch"),
-    ("hard_reset", "hard reset can discard local work"),
-    ("forced_git_clean", "forced Git clean can delete untracked work"),
-    ("drop_table", "SQL drops a table"),
-    ("drop_database", "SQL drops a database"),
-    ("truncate_table", "SQL truncates a table"),
-    ("delete_without_where", "SQL DELETE has no WHERE clause"),
-    ("recursive_world_writable", "recursive permissions grant write access to everyone"),
-    ("world_writable", "permissions grant write access to everyone"),
-    ("download_execute_bash", "download output is piped to bash"),
-    ("download_execute_sh", "download output is piped to sh"),
-    ("upload_local_data", "curl uploads local data"),
-    ("privileged_command", "command requests elevated privileges"),
-    ("publish_package", "command publishes a package"),
+RULES = (
+    ("recursive_remove_root", "destructive_file_ops", "critical", _match_recursive_rm_target('/'),
+     "recursive forced removal targets the filesystem root", "rm -rf /"),
+    ("recursive_remove_home", "destructive_file_ops", "critical", _match_recursive_rm_target('~'),
+     "recursive forced removal targets the home directory", "rm -rf ~"),
+    ("recursive_remove_current", "destructive_file_ops", "critical", _match_recursive_rm_target('.'),
+     "recursive forced removal targets the current directory", "rm -rf ."),
+    ("recursive_remove_parent", "destructive_file_ops", "critical", _match_recursive_rm_target('..'),
+     "recursive forced removal targets a parent directory", "rm -rf .."),
+    ("remove_env_file", "destructive_file_ops", "critical", _match_rm_env,
+     "removal targets an environment file", "remove .env file"),
+    ("remove_git_metadata", "destructive_file_ops", "critical", _match_rm_git,
+     "removal targets Git metadata", "remove .git metadata"),
+    ("force_push_protected_branch", "destructive_git_ops", "critical", _match_git_push('git push --force'),
+     "forced push targets a protected branch", "git push --force (main/master)"),
+    ("force_push_protected_branch", "destructive_git_ops", "critical", _match_git_push('git push -f'),
+     "forced push targets a protected branch", "git push --force (main/master)"),
+    ("hard_reset", "destructive_git_ops", "high", _simple_match('git reset --hard'),
+     "hard reset can discard local work", "git reset --hard"),
+    ("forced_git_clean", "destructive_git_ops", "high", _simple_match('git clean -fd'),
+     "forced Git clean can delete untracked work", "git clean -fd"),
+    ("drop_table", "database_destruction", "critical", _simple_match('drop table'),
+     "SQL drops a table", "DROP TABLE"),
+    ("drop_database", "database_destruction", "critical", _simple_match('drop database'),
+     "SQL drops a database", "DROP DATABASE"),
+    ("truncate_table", "database_destruction", "critical", _simple_match('truncate'),
+     "SQL truncates a table", "TRUNCATE TABLE"),
+    ("delete_without_where", "database_destruction", "high", _match_delete_from,
+     "SQL DELETE has no WHERE clause", "DELETE FROM without WHERE"),
+    ("recursive_world_writable", "permission_abuse", "high", _simple_match('chmod -r 777'),
+     "recursive permissions grant write access to everyone", "chmod -R 777"),
+    ("world_writable", "permission_abuse", "high", _simple_match('chmod 777'),
+     "permissions grant write access to everyone", "chmod 777"),
+    ("download_execute_bash", "network_exfiltration", "critical", _match_pipe_chain('curl', 'bash'),
+     "download output is piped to bash", "curl | bash"),
+    ("download_execute_sh", "network_exfiltration", "critical", _match_pipe_chain('wget', 'sh'),
+     "download output is piped to sh", "wget | sh"),
+    ("upload_local_data", "network_exfiltration", "high", _match_data_upload,
+     "curl uploads local data", "curl --data @file"),
+    ("privileged_command", "system_danger", "high", _simple_match('sudo '),
+     "command requests elevated privileges", "sudo command"),
+    ("publish_package", "system_danger", "high", _simple_match('npm publish'),
+     "command publishes a package", "npm publish"),
 )
 
-
-def _normalize_allowlist_value(value: str) -> str:
-    return value.strip(" ")
-
-
-def _has_forbidden_allowlist_separator(value: str) -> bool:
-    return any(unicodedata.category(character) == "Cc" for character in value) or bool(
-        re.search(r"\\(?:n|r|t|x0[9ad]|u000[9ad])", value, re.IGNORECASE)
-    )
-
-
-def parse_allowlist(raw_allowlist: str | None) -> list[dict[str, str]]:
-    if not raw_allowlist:
-        return []
-    try:
-        decoded = json.loads(raw_allowlist)
-    except (TypeError, ValueError):
-        return []
-    if not isinstance(decoded, list) or len(decoded) > 64:
-        return []
-
-    entries: list[dict[str, str]] = []
-    for raw_entry in decoded:
-        if not isinstance(raw_entry, dict) or set(raw_entry) != {"tool", "input"}:
-            return []
-        tool = raw_entry.get("tool")
-        tool_input = raw_entry.get("input")
-        if not isinstance(tool, str) or not isinstance(tool_input, str):
-            return []
-        if _has_forbidden_allowlist_separator(tool) or _has_forbidden_allowlist_separator(tool_input):
-            return []
-        normalized_tool = _normalize_allowlist_value(tool).casefold()
-        normalized_input = _normalize_allowlist_value(tool_input)
-        if not normalized_tool or not normalized_input or len(normalized_tool) > 128 or len(normalized_input) > 8192:
-            return []
-        entries.append({"tool": normalized_tool, "input": normalized_input})
-    return entries
-
-
-def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, str]]) -> bool:
-    if _has_forbidden_allowlist_separator(tool_name) or _has_forbidden_allowlist_separator(tool_input):
-        return False
-    normalized_tool = _normalize_allowlist_value(tool_name).casefold()
-    normalized_input = _normalize_allowlist_value(tool_input)
-    return any(
-        entry["tool"] == normalized_tool and entry["input"] == normalized_input
-        for entry in entries
-    )
+ACTION_SUMMARIES = {rule_id: action for rule_id, _category, _severity, _matcher, _cause, action in RULES}
+RULE_ORDER = {rule[0]: index for index, rule in enumerate(RULES)}
 
 
 
@@ -549,11 +501,17 @@ def allowlist_contains(tool_name: str, tool_input: str, entries: list[dict[str, 
 
 class NativeToolInput:
     """Validated native arguments, with file operations separate from inert data."""
-    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = ()) -> None:
+    def __init__(self, kind: str, metadata: tuple[str, ...], data: tuple[str, ...], operations: tuple[tuple[str, str], ...] = (), *, data_fields: tuple[str, ...] = ()) -> None:
         self.kind = kind
         self.metadata = metadata
         self.data = data
         self.operations = operations
+        self.data_fields = frozenset(data_fields)
+
+
+def _native_data_input(kind: str, metadata: tuple[str, ...], value: dict, data_fields: tuple[str, ...]) -> NativeToolInput:
+    """Keep proven data values and their field provenance in the same order."""
+    return NativeToolInput(kind, metadata, tuple(value[field] for field in data_fields), data_fields=data_fields)
 
 
 def _matches_native_schema(value: dict, required: dict[str, type], optional: dict[str, type] | None = None) -> bool:
@@ -608,7 +566,7 @@ def _parse_native_patch(patch: str) -> NativeToolInput | None:
 
 
 def _native_operation_threats(native: NativeToolInput) -> list[dict[str, str]]:
-    threats: list[dict[str, str]] = []
+    threats: list[dict[str, str]] | tuple[dict[str, str], ...] = []
     seen: set[str] = set()
     normalized_bytes = 0
     for operation, path in native.operations:
@@ -642,14 +600,16 @@ class InspectionFailure(ValueError):
 
 
 class _ShellWord:
-    def __init__(self, value: str, literal: bool = True, quoted: bool = False) -> None:
+    def __init__(self, value: str, literal: bool = True, quoted: bool = False, *, span=(0, 0), descriptor="") -> None:
         self.value, self.literal, self.quoted = value, literal, quoted
+        self.span, self.descriptor = span, descriptor
 
 
 class _ShellCommand:
     def __init__(self) -> None:
         self.words = []
         self.heredocs = []
+        self.heredoc_spans = []
         self.redirects = []
         self.pipe = False
 
@@ -657,20 +617,47 @@ class _ShellCommand:
 class _InspectionBudget:
     def __init__(self) -> None:
         self.bytes = self.commands = self.tokens = 0
+        self.source_bytes = self.content_bytes = 0
 
     def source(self, source: str, depth: int) -> str:
         if depth > 16:
             raise ScanLimitExceeded("executable_depth", 16, depth, "levels")
+        size = len(source.encode("utf-8"))
+        if size > MAX_INSPECTION_SOURCE_BYTES:
+            raise ScanLimitExceeded("inspection_source_bytes", MAX_INSPECTION_SOURCE_BYTES, size, "bytes")
+        self.source_bytes += size
+        if self.source_bytes > MAX_INSPECTION_WORK_BYTES:
+            raise ScanLimitExceeded("inspection_work_bytes", MAX_INSPECTION_WORK_BYTES, self.source_bytes, "bytes")
+        return source
+
+    def executable(self, source: str) -> None:
         normalized = _bounded_normalized_text(source)
         self.bytes += len(normalized.encode("utf-8"))
         if self.bytes > MAX_SCAN_TEXT:
             raise ScanLimitExceeded("executable_bytes", MAX_SCAN_TEXT, self.bytes, "bytes")
-        return source
+
+    def content(self, size: int) -> None:
+        self.content_bytes += size
+        if self.content_bytes > MAX_NATIVE_DATA_BYTES:
+            raise ScanLimitExceeded("literal_content_bytes", MAX_NATIVE_DATA_BYTES, self.content_bytes, "bytes")
 
     def matcher_tokens(self, segments, charged=0):
         self.tokens += max(0, sum(len(segment) for segment in segments) - charged)
         if self.tokens > MAX_COMMAND_TOKENS:
             raise ScanLimitExceeded("command_tokens", MAX_COMMAND_TOKENS, self.tokens, "tokens")
+
+
+def _without_spans(source, spans):
+    if not spans:
+        return source
+    pieces, cursor = [], 0
+    for start, end in sorted(spans):
+        if not cursor <= start <= end <= len(source):
+            raise InspectionFailure("invalid literal source provenance")
+        pieces.extend((source[cursor:start], " "))
+        cursor = end
+    pieces.append(source[cursor:])
+    return "".join(pieces)
 
 
 def _shell_representation(source: str, budget: _InspectionBudget):
@@ -679,20 +666,20 @@ def _shell_representation(source: str, budget: _InspectionBudget):
     pieces = []
     active = quoted = False
     literal = True
-    quote = redirect = ""
+    quote = redirect = redirect_fd = ""
     strict = False
-    index = 0
+    index = word_start = 0
 
     def word():
-        nonlocal pieces, active, quoted, literal, redirect
+        nonlocal pieces, active, quoted, literal, redirect, redirect_fd
         if not active:
             return
-        value = _ShellWord("".join(pieces), literal, quoted)
+        value = _ShellWord("".join(pieces), literal, quoted, span=(word_start, index), descriptor=redirect_fd)
         if redirect:
             command.redirects.append((redirect, value))
             if redirect in {"<<", "<<-"}:
                 pending.append((command, value, redirect == "<<-"))
-            redirect = ""
+            redirect = redirect_fd = ""
         else:
             command.words.append(value)
         pieces = []
@@ -746,13 +733,17 @@ def _shell_representation(source: str, budget: _InspectionBudget):
         raise InspectionFailure("unterminated shell substitution")
 
     while index < len(source):
+        if not active:
+            word_start = index
         ch = source[index]
         if quote == "'":
-            if ch == "'":
-                quote = ""
-            else:
-                pieces.append(ch)
-            index += 1
+            end = source.find("'", index)
+            if end < 0:
+                raise InspectionFailure("unterminated shell quote or heredoc")
+            if end > index:
+                pieces.append(source[index:end])
+            quote = ""
+            index = end + 1
             continue
         if ch == "\\":
             if index + 1 >= len(source):
@@ -806,6 +797,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
                 for owner, delimiter, strip_tabs in pending:
                     body_start, body_lines = index, []
                     while index < len(source):
+                        line_start = index
                         end = source.find("\n", index)
                         end = len(source) if end < 0 else end
                         line = source[index:end]
@@ -818,6 +810,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
                         raise InspectionFailure("unterminated heredoc")
                     strict = strict or not delimiter.literal
                     owner.heredocs.append(("\n".join(body_lines), delimiter.quoted))
+                    owner.heredoc_spans.append((body_start, line_start))
                     if not delimiter.quoted:
                         cursor = body_start
                         body_end = index - len(delimiter.value) - 1
@@ -849,6 +842,7 @@ def _shell_representation(source: str, budget: _InspectionBudget):
             strict = strict or operator in {"<&", ">&"} or descriptor not in {"", "0", "1", "2"}
             strict = strict or operator.startswith("<<") and descriptor not in {"", "0"}
             redirect = operator
+            redirect_fd = descriptor
             index += len(operator)
             continue
         strict = strict or ch in "(){}" or ch == "\x00"
@@ -886,9 +880,24 @@ def _literal_search(command):
         elif not pattern_seen:
             pattern_seen = True
     return pattern_seen and not needs_pattern
+
+
+def _literal_file_writer(command):
+    """Prove a quoted heredoc written through literal cat stdin/stdout redirects."""
+    if (len(command.words) != 1 or command.words[0].value != "cat" or not command.words[0].literal
+            or len(command.redirects) != 2 or len(command.heredocs) != 1 or not command.heredocs[0][1]):
+        return False
+    outputs = [(operator, operand) for operator, operand in command.redirects
+               if operator in {">", ">>"} and operand.descriptor in {"", "1"}]
+    inputs = [(operator, operand) for operator, operand in command.redirects
+              if operator in {"<<", "<<-"} and operand.descriptor in {"", "0"}]
+    return len(outputs) == len(inputs) == 1 and all(operand.literal for _operator, operand in command.redirects)
+
+
 def _python_preflight(source):
     """Bound parser work before ast.parse without importing another lexer."""
     index = depth = tokens = 0
+    spans = []
     while index < len(source):
         char = source[index]
         if char == "#":
@@ -896,13 +905,25 @@ def _python_preflight(source):
             index = len(source) if end < 0 else end
             continue
         if char in "'\"":
+            start = index
             delimiter = char * 3 if source.startswith(char * 3, index) else char
             index += len(delimiter)
-            while index < len(source) and not source.startswith(delimiter, index):
-                index += 2 if source[index] == "\\" else 1
+            # Search ordinary literal text in C; only odd backslash parity escapes a delimiter.
+            while True:
+                end = source.find(delimiter, index)
+                if end < 0:
+                    raise InspectionFailure("unterminated Python literal")
+                backslash = end
+                while backslash > index and source[backslash - 1] == "\\":
+                    backslash -= 1
+                if (end - backslash) % 2 == 0:
+                    index = end
+                    break
+                index = end + 1
             if index >= len(source):
                 raise InspectionFailure("unterminated Python literal")
             index += len(delimiter)
+            spans.append((start, index))
             tokens += 1
             if tokens > 1024:
                 raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
@@ -922,10 +943,12 @@ def _python_preflight(source):
             raise ScanLimitExceeded("python_syntax_tokens", 1024, tokens, "tokens")
         index += 1
 
+    return spans
+
 
 def _python_inspection(source):
     """Prove whole writers/surveys, discovering execution sinks independently."""
-    _python_preflight(source)
+    literal_spans = _python_preflight(source)
     import ast
     try:
         tree = ast.parse(source)
@@ -941,27 +964,39 @@ def _python_inspection(source):
             raise ScanLimitExceeded("python_ast_depth", 32, depth, "levels")
         if isinstance(node, ast.Constant) and isinstance(node.value, (str, bytes)):
             constant_bytes += len(node.value.encode("utf-8") if isinstance(node.value, str) else node.value)
-            if constant_bytes > MAX_SCAN_TEXT:
-                raise ScanLimitExceeded("python_constant_bytes", MAX_SCAN_TEXT, constant_bytes, "bytes")
+            if constant_bytes > MAX_NATIVE_DATA_BYTES:
+                raise ScanLimitExceeded("python_constant_bytes", MAX_NATIVE_DATA_BYTES, constant_bytes, "bytes")
         stack.extend((child, depth + 1) for child in ast.iter_child_nodes(node))
     symbols = {}
     sink_aliases = {}
+    output_aliases = {}
     for node in nodes:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 if alias.name in {"os", "subprocess"}:
                     sink_aliases[alias.asname or alias.name] = ("module", alias.name)
+                if alias.name == "builtins":
+                    output_aliases[alias.asname or alias.name] = "module"
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module in {"os", "subprocess"}:
             for alias in node.names:
                 sink_aliases[alias.asname or alias.name] = ("function", node.module + "." + alias.name)
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module == "builtins":
+            for alias in node.names:
+                if alias.name == "print":
+                    output_aliases[alias.asname or alias.name] = "print"
     supported = True
-    wrote = surveyed = False
+    wrote = surveyed = may_emit_output = False
     sinks, inspected = [], set()
+    paths = {}
 
     def resolve(node):
+        nonlocal may_emit_output
         if isinstance(node, ast.Constant) and type(node.value) in {str, int, bool, type(None)}:
             return ("literal", node.value)
         if isinstance(node, ast.Name):
+            # Known output references stay tainted even when a later call is unsupported.
+            if node.id == "print" and node.id not in symbols or output_aliases.get(node.id) == "print":
+                may_emit_output = True
             return symbols.get(node.id)
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
             left, right = resolve(node.left), resolve(node.right)
@@ -978,6 +1013,11 @@ def _python_inspection(source):
             return ("json", values) if all(key and value and key[0] == "literal" and value[0] in {"literal", "json", "sequence"} for key, value in values) else None
         if isinstance(node, ast.Attribute):
             base = resolve(node.value)
+            if (node.attr == "print" and isinstance(node.value, ast.Name)
+                    and output_aliases.get(node.value.id) == "module"):
+                may_emit_output = True
+            if base and base[0] == "path" and node.attr == "write_text":
+                may_emit_output = True
             if base == ("module", "sys") and node.attr == "executable":
                 return ("python", None)
             if base and base[0] == "survey_result" and node.attr == "stdout":
@@ -986,11 +1026,14 @@ def _python_inspection(source):
                 return ("function", base[1] + "." + node.attr)
         if isinstance(node, ast.Call):
             function = resolve(node.func)
+            if function == ("function", "builtins.print"):
+                may_emit_output = True
             args = [resolve(argument) for argument in node.args]
             kwargs = {keyword.arg: resolve(keyword.value) for keyword in node.keywords}
             if None in kwargs or any(value is None for value in args) or any(value is None for value in kwargs.values()):
                 return None
             if function == ("function", "pathlib.Path") and len(args) == 1 and args[0][0] == "literal" and isinstance(args[0][1], str) and not kwargs:
+                paths[id(node)] = args[0][1]
                 return ("path", args[0][1])
             if isinstance(node.func, ast.Attribute):
                 base = resolve(node.func.value)
@@ -1008,12 +1051,16 @@ def _python_inspection(source):
                 return ("survey_display", None)
             if isinstance(node.func, ast.Name) and node.func.id == "print" and node.func.id not in symbols and args == [("survey_display", None)] and not kwargs:
                 return ("survey_print", None)
+            if isinstance(node.func, ast.Name) and node.func.id == "print" and node.func.id not in symbols and args and all(arg[0] == "literal" and isinstance(arg[1], str) for arg in args) and not kwargs:
+                return ("status_print", None)
         return None
 
     def inspect_sink(node):
         if not isinstance(node, ast.Call) or id(node) in inspected:
             return
         inspected.add(id(node))
+        # Discover recognized output effects even in unsupported statements.
+        resolve(node)
         function = resolve(node.func)
         name = function[1] if function and function[0] == "function" else None
         if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
@@ -1072,14 +1119,16 @@ def _python_inspection(source):
         elif isinstance(statement, ast.Expr):
             value = resolve(statement.value)
             wrote = wrote or bool(value and value[0] == "write")
-            if not value or value[0] not in {"write", "survey_print"}:
+            if not value or value[0] not in {"write", "survey_print", "status_print"}:
                 supported = False
         else:
             supported = False
             for node in ast.walk(statement):
                 if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
                     symbols[node.id] = ("unknown", None)
-    return supported and (wrote or surveyed), sinks, [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)]
+    return (supported and (wrote or surveyed), sinks,
+            [node.value for node in nodes if isinstance(node, ast.Constant) and isinstance(node.value, str)],
+            literal_spans, list(paths.values()), constant_bytes, may_emit_output)
 
 
 def _strict_threats(text, segments=None, pipeline_text=None):
@@ -1089,19 +1138,27 @@ def _strict_threats(text, segments=None, pipeline_text=None):
     pipeline_text = _bounded_normalized_text(pipeline_text) if pipeline_text is not None else normalized
     pipeline_lower = pipeline_text.lower()
     lower, threats = normalized.lower(), []
-    for (category, severity, matcher, _suggestion), (rule_id, cause) in zip(PATTERNS, RULE_DETAILS, strict=True):
+    for rule_id, category, severity, matcher, cause, _action in RULES:
         match = matcher(pipeline_text, pipeline_lower) if hasattr(matcher, "pipe_names") else matcher(scanned, lower)
         if match:
             threats.append({"category": category, "severity": severity, "rule_id": rule_id, "cause": cause, "matched": match})
     return threats
 
 
-def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None):
+def _python_threats(source, budget, depth, permit_data=True, pipeline_context=None, output_is_code=False):
     source = budget.source(source, depth)
-    proven, sinks, constants = _python_inspection(source)
+    proven, sinks, constants, spans, paths, constant_bytes, may_emit_output = _python_inspection(source)
     proven = proven and permit_data
     threats = []
-    if not proven:
+    if may_emit_output and output_is_code:
+        raise InspectionFailure("literal writer output may reach an executable consumer")
+    if proven:
+        budget.content(constant_bytes)
+        budget.executable(_without_spans(source, spans))
+        for path in paths:
+            budget.executable(path)
+    else:
+        budget.executable(source)
         if pipeline_context is not None:
             pipeline_context.append(source.replace("|", " "))
         segments = _command_segments(source)
@@ -1113,9 +1170,9 @@ def _python_threats(source, budget, depth, permit_data=True, pipeline_context=No
             threats.extend(_strict_threats(constant, segments))
     for language, sink in sinks:
         if language == "python":
-            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context))
+            threats.extend(_python_threats(sink, budget, depth + 1, pipeline_context=pipeline_context, output_is_code=output_is_code))
         else:
-            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context))
+            threats.extend(_shell_threats(sink, budget, depth + 1, pipeline_context, output_is_code))
     return threats
 
 
@@ -1162,8 +1219,9 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
     strict = strict or windows
     threats = []
     for fragment in nested:
-        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context))
+        threats.extend(_shell_threats(fragment, budget, depth + 1, pipeline_context, True))
     if strict:
+        budget.executable(source)
         if pipeline_context is not None:
             pipeline_context.append(source)
         if windows:
@@ -1178,9 +1236,14 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 inline = _inline_operand(command.words, offset)
                 if inline:
                     language, operand, _index = inline
-                    threats.extend(_python_threats(operand, budget, depth + 1, False) if language == "python" else _shell_threats(operand, budget, depth + 1))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, output_is_code=True) if language == "python" else _shell_threats(operand, budget, depth + 1, pipeline_context, True))
         return threats
-    rendered, segments, pipeline_rendered = [], [], []
+    for command in commands:
+        if (len(command.words) >= 3 and [word.value for word in command.words[:2]] == ["rtk", "proxy"]
+                and all(word.literal for word in command.words[:3])
+                and command.words[2].value in {"python", "python3", sys.executable}):
+            command.words = command.words[2:]
+    rendered, segments, pipeline_rendered, excluded = [], [], [], []
     pipeline_commands = {"curl", "wget", "bash", "sh", "python", "python3", "rg", "cat", "echo", "printf", "tee", "head", "tail", "sort", "uniq", "wc"}
     unsafe_pipeline = set()
     inherited_output_is_code = output_is_code
@@ -1208,7 +1271,7 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 language, operand, argument = inline
                 exact = offset == 0 and argument == 1 and len(words) == 3 and words[0] in {"python", "python3", sys.executable, "sh", "bash"}
                 if not exact:
-                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
+                    threats.extend(_python_threats(operand, budget, depth + 1, False, body_context, id(command) in unsafe_pipeline) if language == "python" else _shell_threats(operand, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
         stdin = [(operator, operand) for operator, operand in command.redirects if operator in {"<", "<<", "<<-"}]
         body = command.heredocs[-1] if command.heredocs and stdin and stdin[-1][0] in {"<<", "<<-"} else None
         python_code = shell_code = None
@@ -1252,8 +1315,17 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                     sql_segments = _command_segments(operand.value)
                     budget.matcher_tokens(sql_segments, 1)
                     threats.extend(_strict_threats(operand.value, sql_segments))
+        if id(command) not in unsafe_pipeline and _literal_file_writer(command):
+            proven = True
+            for start, end in command.heredoc_spans:
+                budget.content(len(source[start:end].encode("utf-8")))
+                excluded.append((start, end))
         if python_code is not None:
-            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context))
+            threats.extend(_python_threats(python_code, budget, depth + 1, pipeline_context=body_context, output_is_code=id(command) in unsafe_pipeline))
+            if words[1:2] == ["-c"]:
+                excluded.append(command.words[2].span)
+            else:
+                excluded.extend(command.heredoc_spans)
             proven = True
         elif shell_code is not None:
             threats.extend(_shell_threats(shell_code, budget, depth + 1, body_context, id(command) in unsafe_pipeline))
@@ -1286,14 +1358,14 @@ def _shell_threats(source, budget, depth=0, pipeline_context=None, output_is_cod
                 heredoc_segments = _command_segments(heredoc)
                 budget.matcher_tokens(heredoc_segments)
                 threats.extend(_strict_threats(heredoc, heredoc_segments))
+    budget.executable(_without_spans(source, excluded))
     if pipeline_context is not None:
         pipeline_context.extend(pipeline_rendered)
     if rendered:
         pipeline_text = "\n".join(pipeline_rendered) if any(command.pipe for command in commands) else ""
         threats.extend(_strict_threats("\n".join(rendered), segments, pipeline_text))
-    order = {rule: index for index, (rule, _cause) in enumerate(RULE_DETAILS)}
     ordered, seen = [], set()
-    for threat in sorted(threats, key=lambda threat: order.get(threat["rule_id"], -1)):
+    for threat in sorted(threats, key=lambda threat: RULE_ORDER.get(threat["rule_id"], -1)):
         if threat["rule_id"] not in seen:
             seen.add(threat["rule_id"])
             ordered.append(threat)
@@ -1366,7 +1438,7 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
             except InspectionFailure:
                 return [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure", "cause": "executable input could not be completely inspected"}]
         return _native_operation_threats(tool_inputs)
-    threats: list[dict[str, str]] = []
+    threats: list[dict[str, str]] | tuple[dict[str, str], ...] = []
     seen: set[str] = set()
     for tool_input in tool_inputs:
         for threat in build_threats(f"{tool_name} {tool_input}"):
@@ -1377,119 +1449,22 @@ def build_input_threats(tool_name: str, tool_inputs: tuple[str, ...] | NativeToo
     return threats
 
 
-def sanitize_excerpt(value: str) -> str:
-    normalized = " ".join(unicodedata.normalize("NFKC", value[:4096]).split())
-    normalized = re.sub(r"(?i)\b(https?://)[^/\s@]+@", r"\1[REDACTED]@", normalized)
-    normalized = re.sub(
-        r'(?i)("[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*"\s*:\s*)"(?:\\.|[^"\\])*(?:"|$)',
-        r'\1"[REDACTED]"', normalized,
-    )
-    credential_value = r""""(?:\\.|[^"\\])*(?:"|$)|'(?:\\.|[^'\\])*(?:'|$)|[^\s,;&]+"""
-    normalized = re.sub(
-        r"(?i)(--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+))(?:" + credential_value + ")",
-        r"\1[REDACTED]", normalized,
-    )
-    normalized = re.sub(
-        r"(?i)\b([A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*)\s*=\s*(?:" + credential_value + ")",
-        r"\1=[REDACTED]", normalized,
-    )
-    normalized = re.sub(r"(?i)\b(authorization|proxy-authorization|x-api-key|api-key|cookie|set-cookie)\s*:\s*(?:(?:bearer|basic)\s+)?[^\s,;]+", r"\1: [REDACTED]", normalized)
-    normalized = re.sub(r"(?i)\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|github_pat_[A-Za-z0-9_]{8,}|sk[-_](?:live_)?[A-Za-z0-9_-]{8,}|xox[baprs]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{8,})\b", REDACTED, normalized)
-    normalized = re.sub(r"(?<![A-Za-z0-9])(?=[A-Za-z0-9_/-]{24,}(?![A-Za-z0-9_/-]))(?=[A-Za-z0-9_/-]*[A-Za-z])(?=[A-Za-z0-9_/-]*[0-9])[A-Za-z0-9_/-]+", REDACTED, normalized)
-    return normalized
 
 
-def safe_excerpt_context(tool_input: str, matched: str) -> str:
-    """Keep context only when every part outside the match is known safe."""
-    normalized = " ".join(unicodedata.normalize("NFKC", tool_input[:4096]).split())
-    if matched not in normalized:
-        return ""
-    context = sanitize_excerpt(tool_input)
-    if matched.casefold() == "drop" + " table" and re.fullmatch(
-        r'(?i)\{"command":"DROP' + r' TABLE [A-Z_][A-Z0-9_]*;"\}', context
-    ):
-        return context
-    remainder = context.replace(sanitize_excerpt(matched), "", 1)
-    remainder = re.sub(
-        r'(?i)(?:"(?:[A-Z0-9_-]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_-]*)"\s*:\s*"\[REDACTED\]"|'
-        r'(?:--(?:token|api-key|secret|password|passwd|authorization)(?:=|\s+)|'
-        r'[A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|PASSWD|CREDENTIAL|AUTH)[A-Z0-9_]*\s*=)\[REDACTED\])',
-        "",
-        remainder,
-    )
-    remainder = re.sub(r'(?i)"command"\s*:', "", remainder)
-    remainder = re.sub(r'([A-Za-z])\1{31,}', "", remainder)
-    if re.fullmatch(r'[\s,;:{}"\']*', remainder):
-        return context
-    return ""
+
+def build_action_excerpt(threats: list[dict[str, str]] | tuple[dict[str, str], ...]) -> str:
+    """Describe the first finding using trusted text, never caller content."""
+    return ACTION_SUMMARIES.get(threats[0].get("rule_id"), "command omitted") if threats else "command omitted"
 
 
-def safe_git_push_match(matched: str) -> str:
-    """Describe a protected push using only known flags, remotes, and branches."""
-    tokens = matched.split()
-    try:
-        push_index = next(index for index, token in enumerate(tokens) if token.casefold() == "push")
-    except StopIteration:
-        return " ".join(("git", "push"))
-    tail = tokens[push_index + 1 :]
-    folded = [token.casefold() for token in tail]
-    force = "--force" if "--force" in folded else "-f" if "-f" in folded else ""
-    remote = next((token for token in folded if token in {"origin", "upstream"}), "")
-    branch = ""
-    for token in folded:
-        destination = token.lstrip("+").split(":")[-1].removeprefix("refs/heads/")
-        if destination in {"main", "master"}:
-            branch = ("+" if token.startswith("+") and not force else "") + destination
-            break
-    summary = ["git", "push"]
-    if force:
-        summary.append(force)
-    if remote:
-        summary.append(remote)
-    if branch:
-        summary.append(branch)
-    return " ".join(summary)
-
-
-def build_action_excerpt(tool_input: str, threats: list[dict[str, str]]) -> str:
-    matched_threat = next((threat for threat in threats if threat.get("matched")), None)
-    if not matched_threat:
-        return "command omitted"
-    try:
-        matched = matched_threat["matched"]
-        safe_match = sanitize_excerpt(matched)
-        if matched_threat["category"] == "destructive_git_ops" and "push" in matched.casefold().split():
-            safe_match = safe_git_push_match(matched)
-        elif matched_threat["category"] == "network_exfiltration":
-            folded = matched.casefold()
-            if "curl" in folded and "bash" in folded and chr(124) in matched:
-                safe_match = "curl " + chr(124) + " bash"
-            elif "wget" in folded and "sh" in folded and chr(124) in matched:
-                safe_match = "wget " + chr(124) + " sh"
-            elif "curl" in folded and "--" + "data" in folded:
-                safe_match = "curl --" + "data " + chr(64)
-        elif re.search(r"\b[A-Za-z][A-Za-z0-9_-]*:\s+\S", matched):
-            return "command omitted"
-        safe_context = (
-            "" if matched_threat["category"] == "network_exfiltration" or safe_match != sanitize_excerpt(matched)
-            else safe_excerpt_context(tool_input, matched)
-        )
-        if not safe_match or "\n" in safe_match or "\r" in safe_match:
-            return "command omitted"
-        excerpt = safe_match if not safe_context or safe_context == safe_match else f"{safe_match}; {safe_context}"
-        return excerpt[:MAX_EXCERPT_LENGTH]
-    except (TypeError, ValueError, UnicodeError):
-        return "command omitted"
-
-
-def log_threat_metadata(threats: list[dict[str, str]]) -> list[dict[str, str]]:
+def log_threat_metadata(threats: list[dict[str, str]] | tuple[dict[str, str], ...]) -> list[dict[str, str]]:
     return [
         {key: threat[key] for key in ("category", "severity", "rule_id", "cause") if key in threat}
         for threat in threats
     ]
 
 
-def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: str, mode: str) -> str:
+def build_block_reason(tool_name: str, threats: list[dict[str, str]] | tuple[dict[str, str], ...], excerpt: str, mode: str) -> str:
     summary = [
         f"{threat['category']}/{threat['severity']} [{threat['rule_id']}]: {threat['cause']}"
         if "rule_id" in threat else f"{threat['category']}/{threat['severity']}"
@@ -1505,54 +1480,326 @@ def build_block_reason(tool_name: str, threats: list[dict[str, str]], excerpt: s
         message += " Adjust TOOL_GUARD_ALLOWLIST only if this action is intentional."
     return message
 
-import re as _label_re
+
+def inspection_incomplete(threats):
+    return any(threat["category"] in {"input_limits", "inspection_failure"} for threat in threats)
 
 
-def credential_label(text):
-    """Recognize credentials in caller-normalized labels before display clipping."""
-    return bool(_label_re.search(r"(?i)(?:gh[pousr]_|github_pat_|akia|sk-|sk_live_|xox[baprs]-|bearer\s|(?:token|secret|password|passwd|api[_-]?key|authorization)\s*[:=]|https?://[^/\s]*@)", text))
+class InspectionResult:
+    """Owned per-invocation inspection facts, independent of mode and auditing."""
+    __slots__ = ("profile", "route", "profile_cause", "findings", "complete")
 
-# Bounds apply to retained report fields before JSON serialization. Labels are
-# ASCII, so each retained character costs at most two JSON bytes after escaping.
-REPORT_LABEL_CHARS = 160
+    def __init__(self, profile="unsupported", route="strict_fallback",
+                 profile_cause="unsupported_tool_profile"):
+        self.profile, self.route, self.profile_cause = profile, route, profile_cause
+        self.findings = ()
+        self.complete = True
 
+    def finish(self, findings):
+        self.findings = tuple(findings)
+        self.complete = not inspection_incomplete(self.findings)
+        return self
 
-def report_text(value, limit=REPORT_LABEL_CHARS):
-    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
-    text = "".join(char if 32 <= ord(char) <= 126 else " " for char in text)
-    return text if len(text) <= limit else text[:limit - 3] + "..."
-
-
-def report_label(value):
-    text = unicodedata.normalize("NFKC", value[:4096]) if isinstance(value, str) else ""
-    if text.isascii():
-        lowered = text.lower()
-        # This conservative filter only avoids regex work for impossible matches.
-        # Unicode case folding and all potential credentials stay with the regex.
-        triggers = ("ghp_", "gho_", "ghu_", "ghs_", "ghr_", "github_pat_", "akia", "sk-", "sk_live_",
-                    "xoxb-", "xoxa-", "xoxp-", "xoxr-", "xoxs-", "bearer", "token", "secret",
-                    "password", "passwd", "api", "authorization", "http")
-        if not any(trigger in lowered for trigger in triggers):
-            return report_text(text)
-    # Labels have no need to reproduce a credential-bearing identifier. Omit the
-    # whole label, including credentials crossing the display clipping boundary.
-    if credential_label(text):
-        return "[REDACTED]"
-    return report_text(text)
+    @property
+    def security(self):
+        return "incomplete" if not self.complete else "findings" if self.findings else "clean"
 
 
-def report_json_bytes(value):
-    """Exact ensure_ascii JSON byte cost without serializing retained data."""
+def normal_enforcement(result, mode):
+    return "deny" if not result.complete or (result.findings and mode == "block") else "allow"
+
+
+PROVIDER_KEYS = {
+    "copilot": (("toolName", "tool_name"), ("toolArgs", "toolInput", "tool_input")),
+    "gemini": (("tool_name", "toolName"), ("tool_input", "toolInput", "toolArgs")),
+    "codex": (("tool_name", "toolName"), ("tool_input", "toolInput", "toolArgs")),
+}
+
+
+def read_tool_name(payload: dict, provider: str) -> str:
+    for key in PROVIDER_KEYS[provider][0]:
+        value = payload.get(key)
+        if value is not None:
+            return str(value)
+    return ""
+
+
+
+def _read_tool_input_value(payload: dict, provider: str) -> object:
+    for key in PROVIDER_KEYS[provider][1]:
+        if key not in payload:
+            continue
+        value = payload.get(key)
+        if value is None:
+            return ""
+        return value
+    return ""
+
+
+
+def read_tool_input(payload: dict, provider: str) -> str:
+    value = _read_tool_input_value(payload, provider)
     if isinstance(value, str):
-        return 2 + sum(2 if char in '\\"' or char in '\b\f\n\r\t' else
-                       6 if ord(char) < 32 or 127 <= ord(char) <= 65535 else
-                       12 if ord(char) > 65535 else 1 for char in value)
-    if isinstance(value, dict):
-        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(key) + 1 + report_json_bytes(child) for key, child in value.items())
-    if isinstance(value, (list, tuple)):
-        return 2 + max(0, len(value) - 1) + sum(report_json_bytes(child) for child in value)
-    if value is None:
-        return 4
-    if isinstance(value, bool):
-        return 4 if value else 5
-    return len(str(value))
+        return value
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+
+def _native_shell_shape(tool_name: str, value: dict, provider: str) -> NativeToolInput | None:
+    """Only proven inert fields leave inspection; execution context stays strict."""
+    metadata: list[str] = []
+    numeric: tuple[str, ...] = ()
+    if provider == "codex" and tool_name in {"exec_command", "functions.exec_command"}:
+        key = "cmd"
+        optional = {"max_output_tokens": int, "yield_time_ms": int, "workdir": str,
+                    "shell": str, "login": bool, "tty": bool, "justification": str,
+                    "sandbox_permissions": str, "prefix_rule": list}
+        numeric = ("max_output_tokens", "yield_time_ms")
+    elif provider == "codex" and tool_name == "Bash":
+        key, optional = "command", {}
+    elif provider == "copilot" and tool_name == "bash":
+        key = "command"
+        optional = {"description": str, "initial_wait": int, "mode": str, "detach": bool}
+        numeric = ("initial_wait",)
+    elif provider == "gemini" and tool_name == "run_shell_command":
+        key = "command"
+        optional = {"description": str, "dir_path": str, "is_background": bool,
+                    "delay_ms": int, "additional_permissions": dict}
+        numeric = ("delay_ms",)
+    else:
+        return None
+    if not _matches_native_schema(value, {key: str}, optional):
+        return None
+    # Booleans are not integers here. Finite bounded counters cannot carry code.
+    if any(not 0 <= value[field] <= 2147483647 for field in numeric if field in value):
+        return None
+    if "shell" in value and value["shell"] not in {
+        "bash", "sh", "zsh", "/bin/bash", "/bin/sh", "/bin/zsh",
+        "/usr/bin/bash", "/usr/bin/sh", "/usr/bin/zsh",
+    }:
+        return None
+    if "sandbox_permissions" in value and value["sandbox_permissions"] not in {
+        "use_default", "require_escalated",
+    }:
+        return None
+    if "mode" in value and value["mode"] not in {"sync", "async"}:
+        return None
+    for field in ("workdir", "dir_path"):
+        if field in value:
+            metadata.append(value[field])
+    if "prefix_rule" in value:
+        prefix = value["prefix_rule"]
+        if len(prefix) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in prefix):
+            return None
+        metadata.extend(prefix)
+    if "additional_permissions" in value:
+        permissions = value["additional_permissions"]
+        if not _matches_native_schema(permissions, {}, {"network": bool, "fileSystem": dict}):
+            return None
+        if "fileSystem" in permissions:
+            filesystem = permissions["fileSystem"]
+            if not _matches_native_schema(filesystem, {}, {"read": list, "write": list}):
+                return None
+            for paths in filesystem.values():
+                if len(paths) > MAX_STRUCTURED_NODES or any(type(path) is not str for path in paths):
+                    return None
+                metadata.extend(paths)
+    return _native_data_input("shell", tuple(metadata), value, (key,))
+
+
+
+def _native_tool_shape(tool_name: str, value: object, provider: str) -> NativeToolInput | None:
+    if not isinstance(value, dict) or len(value) > MAX_STRUCTURED_NODES:
+        return None
+    shell = _native_shell_shape(tool_name, value, provider)
+    if shell is not None:
+        return shell
+    if provider == "codex" and tool_name == "apply_patch" and _matches_native_schema(value, {"command": str}):
+        return _native_data_input("patch", (), value, ("command",))
+    if provider == "gemini":
+        if tool_name == "write_file" and _matches_native_schema(value, {"file_path": str, "content": str}):
+            return _native_data_input("write", (value["file_path"],), value, ("content",))
+        if tool_name == "replace" and _matches_native_schema(value, {"file_path": str, "instruction": str, "old_string": str, "new_string": str}, {"allow_multiple": bool}):
+            return _native_data_input("edit", (value["file_path"], value["instruction"]), value, ("old_string", "new_string"))
+        if tool_name == "grep_search" and _matches_native_schema(value, {"pattern": str}, {"path": str, "include": str}):
+            return _native_data_input("search", tuple(value.get(key, "") for key in ("path", "include")), value, ("pattern",))
+    if provider == "copilot":
+        if tool_name == "create" and _matches_native_schema(value, {"path": str, "file_text": str}):
+            return _native_data_input("write", (value["path"],), value, ("file_text",))
+        if tool_name == "edit" and _matches_native_schema(value, {"path": str, "old_str": str, "new_str": str}):
+            return _native_data_input("edit", (value["path"],), value, ("old_str", "new_str"))
+        if tool_name in {"grep", "rg"}:
+            # Observed CLI arguments, not a guessed complete provider schema.
+            pattern_keys = value.keys() & {"pattern", "query"}
+            if len(pattern_keys) != 1 or (tool_name == "rg" and "query" in value):
+                return None
+            pattern_key = next(iter(pattern_keys))
+            fields = {"path": str, "paths": (str, list), "output_mode": str, "head_limit": int,
+                      "n": (bool, int), "C": int, "case_sensitive": bool} if tool_name == "grep" else {
+                          "paths": (str, list), "output_mode": str, "head_limit": int, "glob": str,
+                          "-n": bool, "-i": bool, "-A": int, "-C": int, "n": int}
+            if not value.keys() <= fields.keys() | {pattern_key} or type(value[pattern_key]) is not str:
+                return None
+            if "path" in value and "paths" in value:
+                return None
+            for key, child in value.items():
+                if key == pattern_key:
+                    continue
+                allowed_types = fields[key] if isinstance(fields[key], tuple) else (fields[key],)
+                if type(child) not in allowed_types or (type(child) is list and (
+                    len(child) > MAX_STRUCTURED_NODES or any(type(item) is not str for item in child)
+                )):
+                    return None
+            return NativeToolInput("search", (), tuple(child for child in value.values() if isinstance(child, str)), data_fields=(pattern_key,))
+    return None
+
+
+
+def read_tool_scan_inputs(payload: dict, result: InspectionResult, provider: str) -> tuple[str, ...] | NativeToolInput:
+    input_key = next((key for key in PROVIDER_KEYS[provider][1] if key in payload), None)
+    if len(payload) > MAX_STRUCTURED_NODES:
+        raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(payload), "nodes")
+    envelope_nodes = envelope_bytes = 0
+    envelope_stack = [(child, 0) for key, child in payload.items() if key != input_key]
+    envelope_bytes = sum(len(key.encode("utf-8")) for key in payload)
+    while envelope_stack:
+        current, depth = envelope_stack.pop()
+        envelope_nodes += 1
+        if envelope_nodes > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, envelope_nodes, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("envelope_metadata_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, dict):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_bytes += sum(len(key.encode("utf-8")) for key in current)
+            envelope_stack.extend((child, depth + 1) for child in current.values())
+        elif isinstance(current, list):
+            if len(current) > MAX_STRUCTURED_NODES:
+                raise ScanLimitExceeded("envelope_metadata_nodes", MAX_STRUCTURED_NODES, len(current), "nodes")
+            envelope_stack.extend((child, depth + 1) for child in current)
+        else:
+            envelope_bytes += len((current if isinstance(current, str) else json.dumps(current)).encode("utf-8"))
+        if envelope_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("envelope_metadata_bytes", MAX_SCAN_TEXT, envelope_bytes, "bytes")
+    value = _read_tool_input_value(payload, provider)
+    tool_name = read_tool_name(payload, provider)
+    if isinstance(value, str):
+        # Copilot's native patch transport is raw text in the primary fields.
+        # Alternate input/name fields and serialized objects remain strict.
+        if provider == "copilot" and payload.get("toolName") == "apply_patch" and type(payload.get("toolArgs")) is str:
+            native = NativeToolInput("patch", (), (value,))
+        else:
+            return (value,)
+    else:
+        native = _native_tool_shape(tool_name, value, provider)
+    if native:
+        result.profile = native.kind + "_v1"
+        result.profile_cause = "recognized_profile"
+    elif tool_name.casefold() in KNOWN_TOOL_FIELDS:
+        result.profile_cause = "native_profile_rejected"
+    byte_limit = MAX_SCAN_TEXT
+    if native and native.kind == "patch":
+        byte_limit = MAX_NATIVE_PATCH_BYTES
+    elif native and native.kind != "shell":
+        byte_limit = MAX_NATIVE_DATA_BYTES
+    known_fields = KNOWN_TOOL_FIELDS.get(tool_name.casefold(), frozenset())
+    if native and native.kind == "shell":
+        byte_limit = MAX_INSPECTION_SOURCE_BYTES
+    strings: list[str] = []
+    node_count = 0
+    total_string_bytes = 0
+    keys: list[str] = []
+    content_bytes = metadata_bytes = normalized_metadata_bytes = 0
+
+    def metadata_text(text, *, key=False):
+        nonlocal metadata_bytes, normalized_metadata_bytes
+        metadata_bytes += len(text.encode("utf-8"))
+        if metadata_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("metadata_bytes", MAX_SCAN_TEXT, metadata_bytes, "bytes")
+        if not key:
+            normalized_metadata_bytes += len(_bounded_normalized_text(text).encode("utf-8"))
+            if normalized_metadata_bytes > MAX_SCAN_TEXT:
+                raise ScanLimitExceeded("normalized_metadata_bytes", MAX_SCAN_TEXT, normalized_metadata_bytes, "bytes")
+
+    def dictionary_children(mapping, depth):
+        for key, child in mapping.items():
+            keys.append(key)
+            if native:
+                metadata_text(key, key=True)
+            field = f"{tool_name.casefold()}.{key}" if depth == 0 and key in known_fields and isinstance(child, str) else "tool input"
+            data_field = bool(native and depth == 0 and key in native.data_fields)
+            yield child, depth + 1, field, data_field
+
+    def sequence_children(sequence, depth):
+        for child in sequence:
+            yield child, depth + 1, "tool input", False
+
+    stack = [iter(((value, 0, "tool input", bool(native and isinstance(value, str))),))]
+
+    while stack:
+        try:
+            current, depth, field, data_field = next(stack[-1])
+        except StopIteration:
+            stack.pop()
+            continue
+        node_count += 1
+        if node_count > MAX_STRUCTURED_NODES:
+            raise ScanLimitExceeded("structured_nodes", MAX_STRUCTURED_NODES, node_count, "nodes")
+        if depth > MAX_STRUCTURED_DEPTH:
+            raise ScanLimitExceeded("structured_depth", MAX_STRUCTURED_DEPTH, depth, "levels")
+        if isinstance(current, str):
+            strings.append(current)
+            current_bytes = len(current.encode("utf-8"))
+            total_string_bytes += current_bytes
+            if len(strings) > MAX_STRUCTURED_STRINGS:
+                raise ScanLimitExceeded("structured_strings", MAX_STRUCTURED_STRINGS, len(strings), "strings")
+            if native and data_field:
+                content_bytes += current_bytes
+                if content_bytes > byte_limit:
+                    raise ScanLimitExceeded("inspection_source_bytes" if native.kind == "shell" else "native_content_bytes", byte_limit, content_bytes, "bytes", field)
+            elif native:
+                metadata_text(current)
+            elif total_string_bytes > byte_limit:
+                source = field if current_bytes > byte_limit else "tool input"
+                raise ScanLimitExceeded("structured_bytes", byte_limit, total_string_bytes, "bytes", source)
+        elif isinstance(current, dict):
+            stack.append(dictionary_children(current, depth))
+        elif isinstance(current, (list, tuple)):
+            stack.append(sequence_children(current, depth))
+        elif native:
+            metadata_text(json.dumps(current), key=True)
+
+    key_bytes = sum(len(key.encode("utf-8")) for key in keys)
+    if native:
+        if native.kind == "patch":
+            native = _parse_native_patch(native.data[0])
+            if native is not None:
+                for path in native.metadata:
+                    metadata_text(path)
+        if native is not None:
+            result.profile, result.route, result.profile_cause = native.kind + "_v1", "native", "recognized_profile"
+            return native
+        result.profile, result.profile_cause = "unsupported", "native_profile_rejected"
+        if isinstance(value, str):
+            return (value,)
+        if total_string_bytes > MAX_SCAN_TEXT:
+            raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, total_string_bytes, "bytes")
+    elif key_bytes > MAX_SCAN_TEXT:
+        raise ScanLimitExceeded("structured_bytes", MAX_SCAN_TEXT, key_bytes, "bytes")
+    serialized = json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return tuple(strings) + tuple(keys) + (serialized,)
+
+
+def inspect_tool(payload, provider):
+    result = InspectionResult()
+    tool_name = read_tool_name(payload, provider)
+    try:
+        inputs = read_tool_scan_inputs(payload, result, provider)
+        findings = build_input_threats(tool_name, inputs)
+    except ScanLimitExceeded as limit:
+        findings = [limit.threat()]
+    except UnicodeError:
+        findings = [{"category": "inspection_failure", "severity": "critical", "rule_id": "inspection_failure",
+                     "cause": "tool input cannot be encoded as UTF-8 for inspection"}]
+    return result.finish(findings)

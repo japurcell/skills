@@ -1,0 +1,346 @@
+{
+  "candidate_runtime_sha256": {
+    ".codex/hooks/helpers/audit.py": "ccc58956b61edb5e6bb4914ed90326c0fedc565fd3732d4c6edccac6136f9f87",
+    ".codex/hooks/helpers/common.py": "5c4a4b1131feb3723624da7049e2fee8137ccd093f78c16dff677578a2adc40e",
+    ".codex/hooks/helpers/okf.py": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+    ".codex/hooks/helpers/okf_audit.py": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+    ".codex/hooks/helpers/scan_allowlist.py": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43",
+    ".codex/hooks/helpers/scan_audit.py": "501f7dc6d5705538672642061835f9d1b95a35b2c69f1b73ba29d9934bc15450",
+    ".codex/hooks/helpers/scan_engine.py": "2f75e639211905e25650af46959512e49ac2abb338aa248ffeb74b81d43570d1",
+    ".codex/hooks/helpers/scan_git.py": "5f40f7158fb649f23056da9a20d2c7239786f6b82493403fb9e0f31d4ebd7809",
+    ".codex/hooks/helpers/scan_native_file.py": "1c07697a5020bed461b41f3c0015c7dc798fc8f5c62941af60947c003ea4adf8",
+    ".codex/hooks/helpers/scan_native_process.py": "ed68b76b0021e2514ffd0822eba2a463e1bfb459ab707d47a4161c42e909bbc1",
+    ".codex/hooks/helpers/scan_reporting.py": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28",
+    ".codex/hooks/helpers/scan_stream.py": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31",
+    ".codex/hooks/helpers/scan_types.py": "19f69ccb6d3268d9c43c353b86c0898d75994c1bf1279a544eed52dbac2bfe59",
+    ".codex/hooks/helpers/tool_guard_policy.py": "c49ce24e7fad3ae619929eea4e0bdcde0735ccc3a6c9c24c8f6275e7d1cd8197",
+    ".codex/hooks/tool-guard.py": "860535f9319f669f5f6715f2d31de6dc0ff2095b4a1faa5c970ac430392b94d5",
+    ".copilot/hooks/scripts/helpers/__init__.py": "edacb3b7f7c6d96178611a62bc519105a705a8ab6281e89fa165a2a4f7b2021f",
+    ".copilot/hooks/scripts/helpers/audit.py": "06ddba0401d3bda51400cf626c3ce3acca00ab12a87fd7f356a2f1c5d0156022",
+    ".copilot/hooks/scripts/helpers/common.py": "5c4a4b1131feb3723624da7049e2fee8137ccd093f78c16dff677578a2adc40e",
+    ".copilot/hooks/scripts/helpers/observability.py": "dba71447093ea81f3b38cb9985dde6d662a474c7ad9756058f3eed75ae456713",
+    ".copilot/hooks/scripts/helpers/scan_allowlist.py": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43",
+    ".copilot/hooks/scripts/helpers/scan_audit.py": "501f7dc6d5705538672642061835f9d1b95a35b2c69f1b73ba29d9934bc15450",
+    ".copilot/hooks/scripts/helpers/scan_engine.py": "2f75e639211905e25650af46959512e49ac2abb338aa248ffeb74b81d43570d1",
+    ".copilot/hooks/scripts/helpers/scan_git.py": "5f40f7158fb649f23056da9a20d2c7239786f6b82493403fb9e0f31d4ebd7809",
+    ".copilot/hooks/scripts/helpers/scan_native_file.py": "1c07697a5020bed461b41f3c0015c7dc798fc8f5c62941af60947c003ea4adf8",
+    ".copilot/hooks/scripts/helpers/scan_native_process.py": "ed68b76b0021e2514ffd0822eba2a463e1bfb459ab707d47a4161c42e909bbc1",
+    ".copilot/hooks/scripts/helpers/scan_reporting.py": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28",
+    ".copilot/hooks/scripts/helpers/scan_stream.py": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31",
+    ".copilot/hooks/scripts/helpers/scan_types.py": "19f69ccb6d3268d9c43c353b86c0898d75994c1bf1279a544eed52dbac2bfe59",
+    ".copilot/hooks/scripts/helpers/tool_guard_policy.py": "c49ce24e7fad3ae619929eea4e0bdcde0735ccc3a6c9c24c8f6275e7d1cd8197",
+    ".copilot/hooks/scripts/tool-guard.py": "c4306cb37f9bc9cfb4a0a778d5ef31477d2247fd54c70ab7355630fc7ffadd02",
+    ".gemini/hooks/scripts/helpers/__init__.py": "719c4fe8bfbe377622146afc85be344331090b56791b3a8143f41549c6e19a20",
+    ".gemini/hooks/scripts/helpers/audit.py": "0a41a58053222793ff30388309ccd0196a1e85603d003f7965ff340d2d8a5661",
+    ".gemini/hooks/scripts/helpers/common.py": "1a1e208285c1618bd8e7ddb84c09571ee3b9a3f82685946da255f259076f695f",
+    ".gemini/hooks/scripts/helpers/observability.py": "8d01e21a47f237f7830dc2c7fb438b1201c99606b5c32adccc1a2824160b4a35",
+    ".gemini/hooks/scripts/helpers/okf.py": "e47f1e645bcf9c6882106991dac7137c3ea430feff666579f24edfbb61c83f3b",
+    ".gemini/hooks/scripts/helpers/okf_audit.py": "66c43ec59482b363358155b4d1fe27ce7720b231632e8064b1dee5c1c880fc43",
+    ".gemini/hooks/scripts/helpers/scan_allowlist.py": "370485db39a1ceccee1bfdf078ef21b490f778b5e5e8644dab644c2984fcbe43",
+    ".gemini/hooks/scripts/helpers/scan_audit.py": "501f7dc6d5705538672642061835f9d1b95a35b2c69f1b73ba29d9934bc15450",
+    ".gemini/hooks/scripts/helpers/scan_engine.py": "2f75e639211905e25650af46959512e49ac2abb338aa248ffeb74b81d43570d1",
+    ".gemini/hooks/scripts/helpers/scan_git.py": "5f40f7158fb649f23056da9a20d2c7239786f6b82493403fb9e0f31d4ebd7809",
+    ".gemini/hooks/scripts/helpers/scan_native_file.py": "1c07697a5020bed461b41f3c0015c7dc798fc8f5c62941af60947c003ea4adf8",
+    ".gemini/hooks/scripts/helpers/scan_native_process.py": "ed68b76b0021e2514ffd0822eba2a463e1bfb459ab707d47a4161c42e909bbc1",
+    ".gemini/hooks/scripts/helpers/scan_reporting.py": "0b3d355f49f49d22ac8340e644635c7ad7306af59c22215ace7e42c5b94e1c28",
+    ".gemini/hooks/scripts/helpers/scan_stream.py": "631b9d0b3f3b9389be6de37843f941c35950256f0c7b9c55fd5a874fbd4abf31",
+    ".gemini/hooks/scripts/helpers/scan_types.py": "19f69ccb6d3268d9c43c353b86c0898d75994c1bf1279a544eed52dbac2bfe59",
+    ".gemini/hooks/scripts/helpers/source_ingest.py": "ada92fbadfa7b5500eca61ecad63e9bf3d5d4c5f5afe7b5c7eaee101884e1a82",
+    ".gemini/hooks/scripts/helpers/tool_guard_policy.py": "c49ce24e7fad3ae619929eea4e0bdcde0735ccc3a6c9c24c8f6275e7d1cd8197",
+    ".gemini/hooks/scripts/tool-guard.py": "e2caf31fbaefd5b149122a4ababe55b469e5f4d680a5b156a0e5bd8603d4f235",
+    "hooks/families/audit.py": "6852ab0e845b3f11d3c81bc44ba007c087a248946359dcc0ce5572d52bfa4608",
+    "hooks/families/common.py": "2e420aba53721ed0e80d773ca1004a1dfc903fd9ef71ecadd004163d953015a4",
+    "hooks/families/reporting.py": "dcd2b76cd5373ed572352cc027fd860754f057549327d11add02681f9c0149c7",
+    "hooks/families/tool_guard.py": "e4ddd002b10cd1a4e716eba80d3e8e0bcc912492f16e2684f4d5b66a7b6ed853",
+    "hooks/runtime/__init__.py": "8ca3c985bb8842b18a276aa21d9d83375c2ff8a5fa6ea27f1aee9b3a79d16d93",
+    "hooks/runtime/scan_allowlist.py": "80eb5a115707ad03c227b6e3c1c43da463b0ce303a60909f398eab6dd9c7c7e7",
+    "hooks/runtime/scan_audit.py": "86b5527ad96a9495079b4e3a5fdb6ed8562a900744665c39b9fdd9000ca18451",
+    "hooks/runtime/scan_budget.py": "0ce123e105ef306fef10c7be66e1666ef890f55463b61360cd9c170fefd40ca0",
+    "hooks/runtime/scan_cli.py": "2b67b8d5eb53678a6894f52f1aceee785c7f03c7c4a2fbbde749ea43b278b5c7",
+    "hooks/runtime/scan_dispatch.py": "99f5dcffe05e6b97f7fdac636154bfb9c65d03833963383ab6576236398dbe30",
+    "hooks/runtime/scan_engine.py": "33bbfb091672a9ef5b03d04c291e9e91ec063945cbbfbc08a0007ab2c3ab2249",
+    "hooks/runtime/scan_gate.py": "a8c36bcfad6aec72ac0ce9d9325a25cf9854eee7c9f15eda136251166b4381db",
+    "hooks/runtime/scan_git.py": "592eba71352b62e6a970db8fd75f783d31b4ff5257369794d72d0429ffb25454",
+    "hooks/runtime/scan_lfs.py": "bcd53cb7738e43f52e6097fbfeaf461b130f15b35f2912a7fba2d53b5aa6112b",
+    "hooks/runtime/scan_native_file.py": "ad72ff10d136cab09e8291353a0067c879f68d83f53a6be0c33a3eeb709ba8b6",
+    "hooks/runtime/scan_native_process.py": "cf829e6e6b92945f62154257ddedec7fd17845bab52203b1cd641fbea7448055",
+    "hooks/runtime/scan_private.py": "3b910c861215f34cc69d1aa065a24a398d0e20fee39ee2a386be09d66b19a8e0",
+    "hooks/runtime/scan_publication.py": "6e07c3ec4763671781963e4e12b237acf817e5f04f1a74376666ecbcebfe9bce",
+    "hooks/runtime/scan_repo_dispatch.py": "e41cbbdc418f1b8fa93d3308652b3dcf72eaa35475c38e1014929b78c6d347f5",
+    "hooks/runtime/scan_repo_install.py": "fbf1021aaa0685b2e6581feea7c91e9466e0cc7dc2c6e1c1f30d689be096c0d3",
+    "hooks/runtime/scan_repo_state.py": "69ea57e1af5a29eea6d1dbc2c950e14019bb3d7f90d5bdbe84bc62333dac402a",
+    "hooks/runtime/scan_reporting.py": "c57d577217aed68e7e0e191c3225195a1950e0b4fd18c8524f93984a2de2d8c9",
+    "hooks/runtime/scan_repository.py": "adfea4ca41a50ddd31d0fd15fb1b45c7ece29881a15321a84ece0fdc68b76775",
+    "hooks/runtime/scan_status.py": "c70549592deb0db92ab44a6e5dac4352343f89afec903fc34647eff056d136fc",
+    "hooks/runtime/scan_stream.py": "2b91062b6440457ca26488d9dba43e2a4bda9d2a7dc309e256da1c0b6c9b707b",
+    "hooks/runtime/scan_transaction.py": "005b2bb173cadf708ccc0f1041404c90797421843a8a88d07e2c626497c90894",
+    "hooks/runtime/scan_types.py": "57f6116d711302a3c106556caa4f6ed98aa60a7b2e5a8f6cd78081b914e6581e",
+    "hooks/runtime/tool_guard_policy.py": "e4cd2f0d04eb2a31505f7786a8f34657fbd7e5fa40881cde459e9394b94c5e1c"
+  },
+  "date": "2026-10-21",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6",
+    "python_executable": "/Users/adam/.pyenv/versions/3.14.6/bin/python3"
+  },
+  "equivalent_reference": "65cd978",
+  "evidence_root": "/private/tmp/tool-guard-file-operations-fjhc6r2a",
+  "installed_hook": "disabled; no real-home installation or enablement performed",
+  "native_windows": "not verified; separate platform proof outstanding",
+  "original_reference": "effd0d7b",
+  "resources": {
+    "cases": 231,
+    "ceiling_ms": 500,
+    "errors": [],
+    "gates_met": true,
+    "harness_sha256": {
+      "benchmark-tool-guard-resources.py": "fdb7a44051c8393d20c3fc5bc3d0d0cf22fbe7725723060e83a19448b36a77a3",
+      "fixtures/tool_guard_resource_cases.py": "0f116e64553e2bdd60f8c6cec4f8301ae950006626e6a93716b300279b832bf2",
+      "fixtures/tool_guard_vectors.py": "099d11716894c041e5566767b3dfe1cec8b43c3b11471f8f1f9be410eefa3550",
+      "hook_benchmark_support.py": "f1d632337c2c13f74ffc7b803a3dee7c225988936d1b92a90438c43a87506d5a",
+      "reviewed_expectations": "59174284ca686cb27cf5a5e4c2f58afa8c964a5d5009b29e27d22b9e4a253c7a",
+      "tool_guard_corpus.py": "60caad194711d3e36930862d3e37ed9f222def3b7bbec47fae81878f8ba25408"
+    },
+    "max_launch_ms": 133.413417,
+    "peak_rss_bytes": 48660480,
+    "report": "/private/tmp/tool-guard-file-operations-fjhc6r2a/final-r3-resources.json",
+    "report_sha256": "67cf06a7e1a888c6fcd9b9353b96646935ec9f4bc9a03a7a94fd63ca30587b8c",
+    "samples": 25,
+    "sources_unchanged": true,
+    "warmups": 3
+  },
+  "runtime_commit": "aa4a7976",
+  "status": "source acceptance met",
+  "timing": [
+    {
+      "acceptance": "met with permitted exact isolated repeat; original failures retained",
+      "changed_workload_observation_cases": 0,
+      "cold_rows": 13950,
+      "comparisons": 837,
+      "exact_repeat_report": "/private/tmp/tool-guard-file-operations-fjhc6r2a/final-r3-t6-equivalent-timing-repeat.json",
+      "exact_repeat_sha256": "fe40f9a5387197cc05a342f8d7eea9aae9e06dc4686674c4d6bdbff5fd6e4aa8",
+      "full_report": "/private/tmp/tool-guard-file-operations-fjhc6r2a/final-r3-t6-equivalent-timing.json",
+      "full_report_sha256": "1f1aedb0118a8aa008b22646c0a8781728a69ecc8991014ce4a4cfb35cdb5c78",
+      "full_run_gates_met": false,
+      "gated_cases": 279,
+      "harness_sha256": {
+        "benchmark-high-rate-hooks.py": "88d1470e044d4d248eb27d0015f49da64003eef78cfc660f7a450bef4de1c1f9",
+        "benchmark-tool-guard-resources.py": "fdb7a44051c8393d20c3fc5bc3d0d0cf22fbe7725723060e83a19448b36a77a3",
+        "fixtures/tool_guard_resource_cases.py": "0f116e64553e2bdd60f8c6cec4f8301ae950006626e6a93716b300279b832bf2",
+        "fixtures/tool_guard_vectors.py": "099d11716894c041e5566767b3dfe1cec8b43c3b11471f8f1f9be410eefa3550",
+        "hook_benchmark_support.py": "f1d632337c2c13f74ffc7b803a3dee7c225988936d1b92a90438c43a87506d5a",
+        "hook_test_support.py": "d932f68fc6686273fb061dde94546a0310efe6bf9cddcacd51a6daed01c6e7a7",
+        "reviewed_expectations": "59174284ca686cb27cf5a5e4c2f58afa8c964a5d5009b29e27d22b9e4a253c7a",
+        "tool_guard_corpus.py": "60caad194711d3e36930862d3e37ed9f222def3b7bbec47fae81878f8ba25408",
+        "verify-hook-release.py": "e5a705d0cb312baf0f11d1d1699dc8a6707d5d2825f6f35f9f2bf3092ed94bfa"
+      },
+      "reference_kind": "equivalent",
+      "repeat_comparisons": [
+        {
+          "case": "copilot.guard.write.english-inflection",
+          "delta_ms": {
+            "median_ms": -1.7910000000000004,
+            "p95_ms": -1.8729999999999976
+          },
+          "met": true,
+          "phase": "warm-pair-1"
+        },
+        {
+          "case": "copilot.guard.write.english-inflection",
+          "delta_ms": {
+            "median_ms": -1.8290000000000006,
+            "p95_ms": -1.8470000000000013
+          },
+          "met": true,
+          "phase": "warm-pair-2"
+        },
+        {
+          "case": "copilot.guard.write.english-inflection",
+          "delta_ms": {
+            "median_ms": -0.07099999999999795,
+            "p95_ms": -1.0060000000000002
+          },
+          "met": true,
+          "phase": "cold"
+        }
+      ],
+      "retained_failed_comparisons": [
+        {
+          "allowance_ms": {
+            "median_ms": 2,
+            "p95_ms": 5
+          },
+          "case": "copilot.guard.write.english-inflection",
+          "classification": "gated",
+          "conditions": {
+            "baseline": {
+              "mad_ms": 0.161,
+              "max_ms": 24.807,
+              "median_ms": 23.933,
+              "min_ms": 23.483,
+              "p95_ms": 24.748
+            },
+            "candidate": {
+              "mad_ms": 0.201,
+              "max_ms": 30.169,
+              "median_ms": 21.909,
+              "min_ms": 21.363,
+              "p95_ms": 30.063
+            }
+          },
+          "delta_ms": {
+            "median_ms": -2.024000000000001,
+            "p95_ms": 5.314999999999998
+          },
+          "met": false,
+          "phase": "warm-pair-1"
+        }
+      ],
+      "warm_rows": 1116
+    },
+    {
+      "acceptance": "met with permitted exact isolated repeat; original failures retained",
+      "changed_workload_observation_cases": 60,
+      "cold_rows": 13950,
+      "comparisons": 837,
+      "exact_repeat_report": "/private/tmp/tool-guard-file-operations-fjhc6r2a/final-r3-original-timing-repeat.json",
+      "exact_repeat_sha256": "d9aa79d211f026710ffb29dd25cae8deaaa8c3559a6faa621a287be18478c933",
+      "full_report": "/private/tmp/tool-guard-file-operations-fjhc6r2a/final-r3-original-timing.json",
+      "full_report_sha256": "58d560d04fe82c54e3484274156cbb05234b4294ce03a4c9571800a0dc9d6371",
+      "full_run_gates_met": false,
+      "gated_cases": 219,
+      "harness_sha256": {
+        "benchmark-high-rate-hooks.py": "88d1470e044d4d248eb27d0015f49da64003eef78cfc660f7a450bef4de1c1f9",
+        "benchmark-tool-guard-resources.py": "fdb7a44051c8393d20c3fc5bc3d0d0cf22fbe7725723060e83a19448b36a77a3",
+        "fixtures/tool_guard_resource_cases.py": "0f116e64553e2bdd60f8c6cec4f8301ae950006626e6a93716b300279b832bf2",
+        "fixtures/tool_guard_vectors.py": "099d11716894c041e5566767b3dfe1cec8b43c3b11471f8f1f9be410eefa3550",
+        "hook_benchmark_support.py": "f1d632337c2c13f74ffc7b803a3dee7c225988936d1b92a90438c43a87506d5a",
+        "hook_test_support.py": "d932f68fc6686273fb061dde94546a0310efe6bf9cddcacd51a6daed01c6e7a7",
+        "reviewed_expectations": "59174284ca686cb27cf5a5e4c2f58afa8c964a5d5009b29e27d22b9e4a253c7a",
+        "tool_guard_corpus.py": "60caad194711d3e36930862d3e37ed9f222def3b7bbec47fae81878f8ba25408",
+        "verify-hook-release.py": "e5a705d0cb312baf0f11d1d1699dc8a6707d5d2825f6f35f9f2bf3092ed94bfa"
+      },
+      "reference_kind": "original",
+      "repeat_comparisons": [
+        {
+          "case": "gemini.guard.danger.publish_package",
+          "delta_ms": {
+            "median_ms": -2.8110000000000035,
+            "p95_ms": -2.8359999999999985
+          },
+          "met": true,
+          "phase": "warm-pair-1"
+        },
+        {
+          "case": "codex.guard.mode.block.incomplete",
+          "delta_ms": {
+            "median_ms": -1.3480000000000025,
+            "p95_ms": -1.2019999999999982
+          },
+          "met": true,
+          "phase": "warm-pair-1"
+        },
+        {
+          "case": "gemini.guard.danger.publish_package",
+          "delta_ms": {
+            "median_ms": -2.730999999999998,
+            "p95_ms": -2.6560000000000024
+          },
+          "met": true,
+          "phase": "warm-pair-2"
+        },
+        {
+          "case": "codex.guard.mode.block.incomplete",
+          "delta_ms": {
+            "median_ms": -1.2270000000000003,
+            "p95_ms": -1.3859999999999992
+          },
+          "met": true,
+          "phase": "warm-pair-2"
+        },
+        {
+          "case": "gemini.guard.danger.publish_package",
+          "delta_ms": {
+            "median_ms": -0.490000000000002,
+            "p95_ms": -0.9310000000000045
+          },
+          "met": true,
+          "phase": "cold"
+        },
+        {
+          "case": "codex.guard.mode.block.incomplete",
+          "delta_ms": {
+            "median_ms": 1.0529999999999973,
+            "p95_ms": 1.0039999999999978
+          },
+          "met": true,
+          "phase": "cold"
+        }
+      ],
+      "retained_failed_comparisons": [
+        {
+          "allowance_ms": {
+            "median_ms": 2,
+            "p95_ms": 5
+          },
+          "case": "gemini.guard.danger.publish_package",
+          "classification": "gated",
+          "conditions": {
+            "baseline": {
+              "mad_ms": 0.183,
+              "max_ms": 26.055,
+              "median_ms": 25.328,
+              "min_ms": 24.916,
+              "p95_ms": 25.865
+            },
+            "candidate": {
+              "mad_ms": 0.113,
+              "max_ms": 38.591,
+              "median_ms": 22.544,
+              "min_ms": 22.189,
+              "p95_ms": 36.529
+            }
+          },
+          "delta_ms": {
+            "median_ms": -2.783999999999999,
+            "p95_ms": 10.664000000000005
+          },
+          "met": false,
+          "phase": "warm-pair-1"
+        },
+        {
+          "allowance_ms": {
+            "median_ms": 5,
+            "p95_ms": 10
+          },
+          "case": "codex.guard.mode.block.incomplete",
+          "classification": "gated",
+          "conditions": {
+            "baseline": {
+              "mad_ms": 0.47,
+              "max_ms": 35.756,
+              "median_ms": 33.558,
+              "min_ms": 32.907,
+              "p95_ms": 35.635
+            },
+            "candidate": {
+              "mad_ms": 0.665,
+              "max_ms": 50.011,
+              "median_ms": 34.571,
+              "min_ms": 33.749,
+              "p95_ms": 46.774
+            }
+          },
+          "delta_ms": {
+            "median_ms": 1.0129999999999981,
+            "p95_ms": 11.139000000000003
+          },
+          "met": false,
+          "phase": "cold"
+        }
+      ],
+      "warm_rows": 1116
+    }
+  ]
+}

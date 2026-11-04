@@ -8,7 +8,7 @@ from pathlib import PurePosixPath
 
 @dataclass(frozen=True)
 class GeneratedTarget:
-    """A checked-in provider-local file rendered from one canonical family."""
+    """A checked-in hook file rendered from one canonical family."""
 
     family: str
     provider: str
@@ -17,7 +17,7 @@ class GeneratedTarget:
 
 
 def targets() -> tuple[GeneratedTarget, ...]:
-    """Return the explicit provider-local generated ownership inventory."""
+    """Return the explicit provider and bundled-hook ownership inventory."""
     return (
         GeneratedTarget("send_event", "copilot", PurePosixPath(".copilot/hooks/scripts/send-event.py")),
         GeneratedTarget("send_event", "gemini", PurePosixPath(".gemini/hooks/scripts/send-event.py")),
@@ -79,4 +79,6 @@ def targets() -> tuple[GeneratedTarget, ...]:
         GeneratedTarget("brain", "gemini", PurePosixPath(".gemini/hooks/scripts/inject-brain.py")),
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/auto-index-brain.py")),
         GeneratedTarget("brain", "codex", PurePosixPath(".codex/hooks/inject-brain.py")),
+        GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/skills/brain/scripts/auto-index-brain.py")),
+        GeneratedTarget("brain", "github", PurePosixPath("skills/default/brain-install/assets/hooks/inject-brain.py")),
     )

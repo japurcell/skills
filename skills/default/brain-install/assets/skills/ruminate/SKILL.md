@@ -2,6 +2,7 @@
 name: ruminate
 description: Mine past conversations for uncaptured patterns, corrections, and knowledge. Cross-references with existing brain content. Triggers on "ruminate", "mine my history", "what have I been working on", "review past sessions", "extract learnings".
 disable-model-invocation: true
+compatibility: Requires Python 3.12+.
 ---
 
 # Ruminate
@@ -50,6 +51,8 @@ subprocess.run([
 ```
 
 Replace placeholders with actual skill and temporary paths; omit unavailable provider options. Choose the batch count based on total extracted conversations (Claude + Codex): ~1 batch per 20 conversations, minimum 2, maximum 10.
+
+Keep `--cwd` for project-scoped extraction: it includes only conversations with matching working-directory metadata, skipping different or missing attribution even within a provider's project directory. Omitting `--cwd` leaves extraction unfiltered by project.
 
 ### 4. Spawn analysis team
 

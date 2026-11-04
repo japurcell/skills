@@ -15,6 +15,8 @@ create_fixture_repo() {
     "$repo/scripts" \
     "$repo/skills/default/alpha" \
     "$repo/skills/default/alpha/evals" \
+    "$repo/skills/default/alpha/scripts" \
+    "$repo/skills/default/alpha/tests" \
     "$repo/skills/forest-service" \
     "$repo/skills/default/beta-workspace" \
     "$repo/skills/default/archive" \
@@ -41,6 +43,11 @@ create_fixture_repo() {
   cp -p "$REPO_ROOT/.codex/hooks/load-required-skills.py" "$repo/.codex/hooks/load-required-skills.py"
   printf '%s\n' '---' 'name: alpha' '---' 'Standalone.' > "$repo/skills/default/alpha/SKILL.md"
   printf '%s\n' 'fixture eval content' > "$repo/skills/default/alpha/evals/evals.json"
+  printf '%s\n' 'runtime helper' > "$repo/skills/default/alpha/scripts/route.py"
+  printf '%s\n' 'runtime helper with test in its name' > "$repo/skills/default/alpha/scripts/runtime_test_adapter.py"
+  printf '%s\n' 'repository test' > "$repo/skills/default/alpha/scripts/test_route.py"
+  printf '%s\n' 'dot-suffix test' > "$repo/skills/default/alpha/scripts/route.test.py"
+  printf '%s\n' 'skill test' > "$repo/skills/default/alpha/tests/test_install.py"
   : > "$repo/skills/forest-service/.gitkeep"
   printf '%s\n' 'workspace skill should not copy' > "$repo/skills/default/beta-workspace/SKILL.md"
   printf '%s\n' 'archive entry should not copy' > "$repo/skills/default/archive/README.md"
@@ -90,6 +97,11 @@ for target in targets():
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, destination)
     os.chmod(destination, target.mode)
+    # Generated skill assets need their owning skill metadata for source validation.
+    parts = target.output_path.parts
+    if parts[:1] == ("skills",):
+        skill_path = Path(*parts[:3]) / "SKILL.md"
+        shutil.copy2(source_root / skill_path, fixture_root / skill_path)
 PY
   PYTHONDONTWRITEBYTECODE=1 python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
 }
@@ -949,7 +961,9 @@ test_excludes_and_prunes_skill_evals() {
 
   create_fixture_repo "$repo"
   mkdir -p "$home/.agents/skills/alpha/evals"
+  mkdir -p "$home/.agents/skills/alpha/scripts"
   printf '%s\n' 'stale eval content' > "$home/.agents/skills/alpha/evals/stale.txt"
+  printf '%s\n' 'stale repository test' > "$home/.agents/skills/alpha/scripts/test_stale.py"
   printf '%s\n' 'keep this installed note' > "$home/.agents/skills/alpha/existing-note.txt"
 
   HOME="$home" bash "$repo/scripts/install.sh" >/dev/null
@@ -968,6 +982,12 @@ test_excludes_and_prunes_skill_evals() {
   copied_existing_note="$(<"$home/.agents/skills/alpha/existing-note.txt")"
   assert_equals $'---\nname: alpha\n---\nStandalone.' "$copied_skill" "Expected non-evals skill content to remain installed."
   assert_equals "keep this installed note" "$copied_existing_note" "Expected existing non-evals installed content to remain after eval cleanup."
+  assert_equals "runtime helper" "$(<"$home/.agents/skills/alpha/scripts/route.py")" "Expected runtime skill helpers to remain installed."
+  assert_equals "runtime helper with test in its name" "$(<"$home/.agents/skills/alpha/scripts/runtime_test_adapter.py")" "Expected runtime helpers with test in their names to remain installed."
+  if [[ -e "$home/.agents/skills/alpha/scripts/test_route.py" || -e "$home/.agents/skills/alpha/scripts/route.test.py" || -e "$home/.agents/skills/alpha/scripts/test_stale.py" || -e "$home/.agents/skills/alpha/tests" ]]; then
+    echo "Expected conventional test scripts and test-only directories to stay out of published skill bundles, including stale installed copies." >&2
+    exit 1
+  fi
 
   if [[ -d "$home/.agents/skills/alpha/evals" ]]; then
     echo "Expected ~/.agents/skills/alpha/evals to be removed during install." >&2
@@ -1587,6 +1607,15 @@ test_empty_categories_markers_and_exclusions() {
   done
   rm -rf -- "$repo/skills/default" "$repo/skills/forest-service"
   mkdir -p "$repo/skills/default" "$repo/skills/forest-service"
+  # This fixture models empty skill categories, so it owns no generated skill assets.
+  python3 - "$repo/hooks/manifest.py" <<'PYFIXTURE'
+from pathlib import Path
+import sys
+manifest = Path(sys.argv[1])
+manifest.write_text("".join(line for line in manifest.read_text().splitlines(keepends=True)
+                            if not ('GeneratedTarget(' in line and 'PurePosixPath("skills/' in line)))
+PYFIXTURE
+  python3 "$repo/scripts/generate-hooks.py" --write >/dev/null
   home="$workdir/empty-home"
   HOME="$home" INSTALL_FOREST_SERVICE_SKILLS=0 bash "$repo/scripts/install.sh" --fs >"$workdir/out" 2>"$workdir/err"
   assert_equals '' "$(find "$home/.agents/skills" -mindepth 1 -maxdepth 1 -print)" 'Expected both empty categories valid without leaf copies.'
@@ -1609,13 +1638,22 @@ import shlex
 import sys
 
 script, origin, repo = map(Path, sys.argv[1:])
-expected = {"caveman", "show-me", "lavish"}
+expected = {"caveman", "show-me"}
 found = set()
 for line in script.read_text().replace("\\\n", "").splitlines():
     args = shlex.split(line)
+    if args and args[0] == "run_step":
+        args = args[2:]
     if not args or args[0] != "$SCRIPT_DIR/copy-from-git.sh":
         continue
-    for source, destination in zip(args[2::2], args[3::2]):
+    pairs = args[1:]
+    if pairs[0] == "--repo":
+        pairs = pairs[2:]
+        if pairs[:1] == ["--clone-dir"]:
+            pairs = pairs[2:]
+    else:
+        pairs = pairs[1:]
+    for source, destination in zip(pairs[::2], pairs[1::2]):
         name = Path(source.rstrip("/")).name
         if name not in expected:
             continue
@@ -1629,12 +1667,17 @@ for line in script.read_text().replace("\\\n", "").splitlines():
         stale.write_text(f"Stale {name}.\n")
         print(name, source, destination, sep="\t")
 assert found == expected, found
+# Keep coverage for the optional lavish import without enabling it in orchestration.
+upstream = origin / "skills/lavish/SKILL.md"
+upstream.parent.mkdir(parents=True, exist_ok=True)
+upstream.write_text("---\nname: lavish\n---\nRefreshed lavish.\n")
+print("lavish", "skills/lavish", "skills/default", sep="\t")
 PY
   git -C "$origin" init -q -b main
   git -C "$origin" add .
   git -C "$origin" -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit -qm 'Fixture imported skills'
   while IFS=$'\t' read -r name source_path destination; do
-    bash "$repo/scripts/copy-from-git.sh" "$origin" "$source_path" "$destination" > "$workdir/import-out" 2> "$workdir/import-err"
+    bash "$repo/scripts/copy-from-git.sh" --clone-dir imported-fixture "$origin" "$source_path" "$destination" > "$workdir/import-out" 2> "$workdir/import-err"
   done < "$workdir/mappings"
 
   HOME="$home" bash "$repo/scripts/install.sh" > "$workdir/out" 2> "$workdir/err"
@@ -1645,7 +1688,94 @@ PY
   done
 }
 
+test_artifacts_are_excluded_before_copy() {
+  local workdir repo home
+  workdir="$(setup_test_workdir)"
+  repo="$workdir/repo"; home="$workdir/home"
+  create_fixture_repo "$repo"
+  mkdir -p "$repo/skills/default/alpha/scripts/__pycache__" "$repo/skills/default/alpha/build" "$repo/skills/default/alpha/case" "$home/.agents/skills/alpha/.pytest_cache" "$workdir/cp-bin"
+  printf 'bytecode' > "$repo/skills/default/alpha/scripts/__pycache__/route.pyc"
+  printf 'stale' > "$home/.agents/skills/alpha/.pytest_cache/stale"
+  printf 'keep' > "$repo/skills/default/alpha/build/runtime.py"
+  printf 'keep' > "$repo/skills/default/alpha/case/UPPER.PYC"
+  cat > "$workdir/cp-bin/cp" <<'SH'
+#!/bin/bash
+for arg in "$@"; do
+  case "$arg" in
+    */skills/default/alpha|*/__pycache__|*.pyc|*.pyo|*/.DS_Store) echo "artifact reached cp: $arg" >&2; exit 1 ;;
+  esac
+done
+exec /bin/cp "$@"
+SH
+  chmod +x "$workdir/cp-bin/cp"
+  HOME="$home" PATH="$workdir/cp-bin:$PATH" bash "$repo/scripts/install.sh" > "$workdir/out" 2> "$workdir/err"
+  [[ ! -e "$home/.agents/skills/alpha/scripts/__pycache__" && ! -e "$home/.agents/skills/alpha/.pytest_cache" ]] || return 1
+  [[ -f "$repo/skills/default/alpha/scripts/__pycache__/route.pyc" ]] || return 1
+  [[ -f "$home/.agents/skills/alpha/build/runtime.py" && -f "$home/.agents/skills/alpha/case/UPPER.PYC" ]]
+}
+
+test_filtered_copy_safety_and_policy() {
+  python3 -B - "$REPO_ROOT/scripts/rebase-skill-references.py" <<'PY'
+import json, os, stat, subprocess, sys, tempfile
+from pathlib import Path
+
+helper = sys.argv[1]
+policy = json.loads(subprocess.check_output([sys.executable, '-B', helper, '--print-artifact-policy']))
+assert policy == {'directory_names': ['__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache'], 'file_names': ['.DS_Store'], 'file_suffixes': ['.pyc', '.pyo']}
+with tempfile.TemporaryDirectory() as temporary:
+    root = Path(temporary).resolve()
+    source, destination, external = (root / name for name in ('source', 'destination', 'external'))
+    source.mkdir(); destination.mkdir(); external.mkdir()
+    (external / 'sentinel').write_text('external')
+    (source / 'runtime').write_text('new')
+    (source / 'file.pyc').write_text('excluded')
+    (source / 'directory').mkdir()
+    (source / 'directory' / '.DS_Store').write_text('excluded')
+    (source / '.ruff_cache').symlink_to(external, target_is_directory=True)
+    (source / 'runtime-link').symlink_to(external / 'sentinel')
+    (destination / 'runtime').symlink_to(external / 'sentinel')
+    (destination / '.mypy_cache').symlink_to(external, target_is_directory=True)
+    command = [sys.executable, '-B', helper, '--source-dir', str(source), '--destination-dir', str(destination), '--copy-filtered', '--prune-test-files']
+    for _ in range(2):
+        subprocess.run(command, check=True)
+        assert (destination / 'runtime').read_text() == 'new' and not (destination / 'runtime').is_symlink()
+        assert (destination / 'runtime-link').is_symlink()
+        assert not (destination / 'file.pyc').exists() and not (destination / 'directory' / '.DS_Store').exists()
+        assert not (destination / '.ruff_cache').is_symlink() and not (destination / '.mypy_cache').is_symlink()
+        assert (external / 'sentinel').read_text() == 'external'
+    (destination / 'runtime').unlink()
+    os.link(external / 'sentinel', destination / 'runtime')
+    subprocess.run(command, check=True)
+    assert (external / 'sentinel').read_text() == 'external'
+    assert (destination / 'runtime').stat().st_ino != (external / 'sentinel').stat().st_ino
+    (destination / 'runtime').unlink()
+    os.chmod(external / 'sentinel', 0o444)
+    os.link(external / 'sentinel', destination / 'runtime')
+    os.chmod(destination, 0o555)
+    assert subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0
+    assert (external / 'sentinel').read_text() == 'external' and stat.S_IMODE((external / 'sentinel').stat().st_mode) == 0o444
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o555
+    os.chmod(destination, 0o755)
+    linked = root / 'linked'
+    linked.symlink_to(external, target_is_directory=True)
+    unsafe = [sys.executable, '-B', helper, '--source-dir', str(source), '--destination-dir', str(linked / 'child'), '--copy-filtered']
+    assert subprocess.run(unsafe, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0
+    assert not (external / 'child').exists()
+    linked_source, linked_destination = root / 'linked-source', root / 'linked-destination'
+    linked_source.symlink_to(external, target_is_directory=True)
+    linked_command = [sys.executable, '-B', helper, '--source-dir', str(linked_source), '--destination-dir', str(linked_destination), '--copy-filtered']
+    subprocess.run(linked_command, check=True)
+    subprocess.run(linked_command, check=True)
+    assert linked_destination.is_symlink() and (external / 'sentinel').read_text() == 'external'
+    overlap = [sys.executable, '-B', helper, '--source-dir', str(source), '--destination-dir', str(source), '--copy-filtered', '--replace-destination']
+    assert subprocess.run(overlap, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0
+    assert (source / 'runtime').read_text() == 'new'
+PY
+}
+
 main() {
+  test_filtered_copy_safety_and_policy
+  test_artifacts_are_excluded_before_copy
   test_refreshed_imports_install_from_default_category
   test_helper_failures_are_installer_errors
   test_empty_categories_markers_and_exclusions

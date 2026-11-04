@@ -1,6 +1,6 @@
 ---
 description: Full discovery & portfolio analysis of a legacy system — inventory, complexity, debt, relative scale
-argument-hint: <system-dir> [--show-secrets] | --portfolio <parent-dir>
+argument-hint: '<system-dir> [--show-secrets] | --portfolio <parent-dir>'
 ---
 
 **Mode select.** If `$ARGUMENTS` starts with `--portfolio`, run **Portfolio

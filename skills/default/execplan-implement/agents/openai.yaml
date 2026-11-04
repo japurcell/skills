@@ -1,5 +1,0 @@
-interface:
-  display_name: "ExecPlan Implement"
-  short_description: "Implement an ExecPlan in code"
-policy:
-  allow_implicit_invocation: false

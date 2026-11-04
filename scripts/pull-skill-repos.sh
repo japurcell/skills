@@ -9,22 +9,22 @@ success_count=0
 failure_count=0
 failed_paths=()
 
-command -v jq >/dev/null 2>&1 || {
-  echo "Error: jq is required but not installed." >&2
+if [ ! -e "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ]; then
+  echo "[INFO] Skipping workspace repository updates: optional config file not found: $CONFIG_FILE" >&2
+  exit 0
+fi
+
+command -v python3 >/dev/null 2>&1 || {
+  echo "Error: Python 3 is required to read the VS Code workspace file." >&2
   exit 1
 }
 
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "Error: config file not found: $CONFIG_FILE" >&2
-  exit 1
-fi
-
-folder_paths="$(jq -r '.folders[].path' "$CONFIG_FILE")" || {
+folder_paths="$(python3 "$REPO_ROOT/scripts/read-workspace-folders.py" "$CONFIG_FILE")" || {
   echo "Error: failed to parse config file: $CONFIG_FILE" >&2
   exit 1
 }
 
-while read -r FOLDER_PATH; do
+while IFS= read -r FOLDER_PATH; do
   [ -n "$FOLDER_PATH" ] || continue
 
   TARGET_DIR="$REPO_ROOT/../$FOLDER_PATH"

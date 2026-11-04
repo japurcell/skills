@@ -1,6 +1,6 @@
 ---
 description: Where am I in the modernization workflow — artifact inventory, staleness, secrets hygiene, next step
-argument-hint: <system-dir>
+argument-hint: '<system-dir>'
 ---
 
 Report where the modernization of `$1` stands, in one screen. This is a

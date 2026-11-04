@@ -1,6 +1,6 @@
 ---
 description: Multi-agent greenfield rebuild — extract specs from legacy, design AI-native, scaffold & validate with HITL
-argument-hint: <system-dir> <target-vision>
+argument-hint: '<system-dir> <target-vision>'
 ---
 
 The first token of `$ARGUMENTS` is the system dir (`$1`); **everything

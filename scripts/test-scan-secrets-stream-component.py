@@ -7,7 +7,6 @@ from pathlib import Path
 import random
 import re
 import tracemalloc
-import unicodedata
 import unittest
 
 
@@ -137,18 +136,16 @@ class StreamTests(unittest.TestCase):
                                     processed=initial_count)
 
     def test_exact_normalized_allowlist_cap_and_forbidden_prefix(self):
-        spec = importlib.util.spec_from_file_location("allowlist", ROOT / "hooks/families/allowlist.py")
+        spec = importlib.util.spec_from_file_location("allowlist", ROOT / "hooks/runtime/scan_allowlist.py")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        namespace = {"re": re, "unicodedata": unicodedata, "json": json}
-        exec(module.ALLOWLIST_SOURCE, namespace)
         for path in ("p", "   p", "p\\n", "p\t", "p" * 8200):
             prefix = f"{path}:1:github_fine_grained_pat:"
             available = 8192 - len(prefix.lstrip(" "))
             for length in (31, max(31, available), max(32, available + 1)):
                 token = "github_pat_" + "B" * (length - 11)
-                entries = namespace["parse_allowlist"](json.dumps([{"tool": "scan_secrets", "input": prefix + token}]))
-                allow = lambda key: namespace["allowlist_contains"]("scan_secrets", key, entries)
+                entries = module.parse_allowlist(json.dumps([{"tool": "scan_secrets", "input": prefix + token}]))
+                allow = lambda key: module.allowlist_contains("scan_secrets", key, entries)
                 self.assert_full_parity((token + "/" + token + "Z").encode(), [19] * (length // 9),
                                         path=path, allow=allow)
 

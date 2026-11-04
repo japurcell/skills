@@ -2,6 +2,7 @@
 name: prd-ralph-loop
 description: Orchestrate the implementation of a PRD with subagents. Use for completing all PRD tasks/stories, not a single task.
 disable-model-invocation: true
+argument-hint: '<prd-file> [progress_file <path>] [commit <true|false>]'
 ---
 
 # /prd-ralph-loop

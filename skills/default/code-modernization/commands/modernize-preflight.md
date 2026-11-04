@@ -1,6 +1,6 @@
 ---
 description: Environment readiness check — analysis tools, build toolchain, source completeness, telemetry access
-argument-hint: <system-dir> [target-stack]
+argument-hint: '<system-dir> [target-stack]'
 ---
 
 Check whether this environment is ready to analyze — and eventually

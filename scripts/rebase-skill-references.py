@@ -1,21 +1,157 @@
 #!/usr/bin/env python3
-"""Rebase source-root reference links after a skill is installed flat."""
+"""Copy and prune installed skill artifacts, then rebase shared reference links."""
 
 from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager, nullcontext
+import json
 import os
 from pathlib import Path
 import re
 import shutil
 import stat
 import subprocess
+import sys
 
 
 MARKDOWN_SUFFIXES = {".md", ".markdown"}
 REFERENCE_PREFIX_BOUNDARY = r"(?<![A-Za-z0-9._/-])"
 SKILL_EXCLUSIONS = ("evals", "README.md", "LICENSE.txt", "LICENSE.md")
+TEST_DIRECTORY_NAMES = {"tests", "__tests__"}
+TEST_SCRIPT_NAME = re.compile(r"^(?:test(?:[_-].*)?|.+\.test)\.(?:py|sh|ps1)$")
+ARTIFACT_POLICY = {
+    "directory_names": ("__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"),
+    "file_names": (".DS_Store",),
+    "file_suffixes": (".pyc", ".pyo"),
+}
+
+
+def artifact_excluded(name: str, is_directory: bool, is_link: bool) -> bool:
+    return (
+        ((is_directory or is_link) and name in ARTIFACT_POLICY["directory_names"])
+        or (
+            (not is_directory or is_link)
+            and (
+                name in ARTIFACT_POLICY["file_names"]
+                or name.endswith(ARTIFACT_POLICY["file_suffixes"])
+            )
+        )
+    )
+
+
+def filtered_entries(directory: Path):
+    """Do not inspect children whose names alone exclude them for either type."""
+    with os.scandir(directory) as entries:
+        for entry in entries:
+            # A link can match either category, so stat only names whose type matters.
+            if (
+                entry.name in ARTIFACT_POLICY["directory_names"]
+                or entry.name in ARTIFACT_POLICY["file_names"]
+                or entry.name.endswith(ARTIFACT_POLICY["file_suffixes"])
+            ):
+                is_link = entry.is_symlink()
+                is_directory = entry.is_dir(follow_symlinks=False)
+                if artifact_excluded(entry.name, is_directory, is_link):
+                    continue
+            yield entry
+
+
+def reject_linked_ancestors(path: Path) -> None:
+    for component in (path, *path.parents):
+        # macOS exposes these standard system paths as aliases to /private.
+        if sys.platform == "darwin" and str(component) in ("/var", "/tmp", "/etc"):
+            continue
+        if is_link_or_junction(component):
+            raise ValueError(f"Refusing linked destination directory: {component}")
+
+
+def copy_filtered(source_dir: Path, destination_dir: Path, *, replace: bool = False) -> int:
+    """Copy allowed entries with native cp, without following destination links."""
+    reject_linked_ancestors(destination_dir.parent)
+    source_real = source_dir.resolve()
+    source_is_link = is_link_or_junction(source_dir)
+    if source_is_link and is_link_or_junction(destination_dir) and not replace:
+        destination_real = destination_dir.parent.resolve() / destination_dir.name
+    else:
+        destination_real = destination_dir.resolve()
+    if source_real == destination_real or source_real in destination_real.parents or destination_real in source_real.parents:
+        raise ValueError("Refusing overlapping source and destination")
+    if not source_dir.exists() and not source_is_link:
+        raise FileNotFoundError(source_dir)
+    if replace:
+        reject_linked_ancestors(destination_dir)
+        remove_pruned_path(destination_dir)
+    if source_is_link:
+        if destination_dir.is_symlink():
+            destination_dir.unlink()
+        elif destination_dir.exists():
+            raise ValueError(f"Refusing to replace destination with linked skill: {destination_dir}")
+        return subprocess.run(["cp", "-Rp", "--", str(source_dir), str(destination_dir)], check=False).returncode
+    reject_linked_ancestors(destination_dir)
+    changed_modes = []
+    succeeded = False
+
+    def writable(path: Path) -> None:
+        details = path.lstat()
+        mode = _checked_write_access_mode(path, details)
+        if not mode & stat.S_IWUSR:
+            path.chmod(mode | stat.S_IWUSR)
+            changed_modes.append((path, mode))
+
+    def copy_directory(source: Path, destination: Path) -> None:
+        if destination.exists():
+            if not destination.is_dir() or is_link_or_junction(destination):
+                raise ValueError(f"Refusing linked or non-directory destination: {destination}")
+            writable(destination)
+        else:
+            destination.mkdir()
+        directories, batch = [], []
+        size = 0
+
+        def flush() -> None:
+            nonlocal size
+            if batch:
+                subprocess.run(["cp", "-Rp", "--", *batch, str(destination)], check=True)
+                batch.clear()
+                size = 0
+
+        for entry in filtered_entries(source):
+            target = destination / entry.name
+            if entry.is_dir(follow_symlinks=False) and not is_link_or_junction(Path(entry.path)):
+                directories.append((Path(entry.path), target))
+                continue
+            if is_link_or_junction(target):
+                remove_pruned_path(target)
+            elif target.exists():
+                details = target.lstat()
+                if stat.S_ISDIR(details.st_mode):
+                    raise ValueError(f"Refusing directory in place of destination file: {target}")
+                if stat.S_ISREG(details.st_mode):
+                    _checked_write_access_mode(target, details)
+                    if details.st_nlink > 1:
+                        target.unlink()
+                    else:
+                        writable(target)
+            argument = entry.path
+            if batch and size + len(os.fsencode(argument)) > 65536:
+                flush()
+            batch.append(argument)
+            size += len(os.fsencode(argument)) + 1
+        flush()
+        for child_source, child_destination in directories:
+            copy_directory(child_source, child_destination)
+        shutil.copystat(source, destination, follow_symlinks=False)
+
+    try:
+        copy_directory(source_dir, destination_dir)
+        succeeded = True
+        return 0
+    finally:
+        if not succeeded:
+            for path, mode in reversed(changed_modes):
+                if path.exists() and not is_link_or_junction(path):
+                    path.chmod(mode)
 
 
 def portable_relative_path(target: Path, start: Path) -> str:
@@ -155,25 +291,61 @@ def temporary_write_access(root: Path, *, include_files: bool = False):
                 path.chmod(mode)
 
 
-def prune_skill_exclusions(destination_dir: Path) -> None:
-    for name in SKILL_EXCLUSIONS:
-        path = destination_dir / name
-        if is_link_or_junction(path):
-            # lstat retains the directory type for Windows junctions, including
-            # Python versions that have no os.path.isjunction().
-            if stat.S_ISDIR(path.lstat().st_mode):
-                path.rmdir()
+def remove_pruned_path(path: Path) -> None:
+    if is_link_or_junction(path):
+        # lstat retains the directory type for Windows junctions, including
+        # Python versions that have no os.path.isjunction().
+        if stat.S_ISDIR(path.lstat().st_mode):
+            path.rmdir()
+        else:
+            path.unlink()
+    elif path.exists():
+        # POSIX unlink needs writable parents, not writable files. Windows
+        # also needs a clear ReadOnly attribute; refuse to change a shared
+        # inode's attribute rather than mutating an external hard link.
+        with temporary_write_access(path, include_files=os.name == "nt"):
+            if path.is_dir():
+                shutil.rmtree(path)
             else:
                 path.unlink()
-        elif path.exists():
-            # POSIX unlink needs writable parents, not writable files. Windows
-            # also needs a clear ReadOnly attribute; refuse to change a shared
-            # inode's attribute rather than mutating an external hard link.
-            with temporary_write_access(path, include_files=os.name == "nt"):
-                if path.is_dir():
-                    shutil.rmtree(path)
-                else:
-                    path.unlink()
+
+
+def prune_skill_exclusions(destination_dir: Path) -> None:
+    for name in SKILL_EXCLUSIONS:
+        remove_pruned_path(destination_dir / name)
+
+
+def prune_skill_test_files(destination_dir: Path) -> None:
+    """Remove conventional test scripts and test-only directories from a copied skill."""
+    for current_dir, child_dirs, filenames in os.walk(destination_dir, followlinks=False):
+        directory = Path(current_dir)
+        for name in tuple(child_dirs):
+            candidate = directory / name
+            if name in TEST_DIRECTORY_NAMES:
+                remove_pruned_path(candidate)
+                child_dirs.remove(name)
+            elif is_link_or_junction(candidate):
+                child_dirs.remove(name)
+        for name in filenames:
+            if TEST_SCRIPT_NAME.fullmatch(name):
+                remove_pruned_path(directory / name)
+
+
+def prune_skill_artifacts(destination_dir: Path) -> None:
+    for current_dir, child_dirs, filenames in os.walk(destination_dir, followlinks=False):
+        directory = Path(current_dir)
+        for name in tuple(child_dirs):
+            path = directory / name
+            link = is_link_or_junction(path)
+            if artifact_excluded(name, not link, link):
+                remove_pruned_path(path)
+                child_dirs.remove(name)
+            elif link:
+                child_dirs.remove(name)
+        for name in filenames:
+            path = directory / name
+            if artifact_excluded(name, False, is_link_or_junction(path)):
+                remove_pruned_path(path)
 
 
 def rebase_skill_references(
@@ -238,13 +410,20 @@ def rebase_skill_references(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-dir", required=True, type=Path)
-    parser.add_argument("--destination-dir", required=True, type=Path)
-    parser.add_argument("--references-source", required=True, type=Path)
-    parser.add_argument("--references-destination", required=True, type=Path)
+    parser.add_argument("--source-dir", type=Path)
+    parser.add_argument("--destination-dir", type=Path)
+    parser.add_argument("--print-artifact-policy", action="store_true", help="Print the shared exclusion policy as JSON.")
+    parser.add_argument("--copy-filtered", action="store_true", help="Copy the skill using the shared artifact exclusions.")
+    parser.add_argument("--replace-destination", action="store_true", help="Replace the destination before a filtered copy.")
+    parser.add_argument("--references-source", type=Path)
+    parser.add_argument("--references-destination", type=Path)
     parser.add_argument(
         "--prune", action="store_true",
-        help="Remove installed skill exclusions before rebasing.",
+        help="Remove installed exclusions, test scripts and stale artifacts before rebasing.",
+    )
+    parser.add_argument(
+        "--prune-test-files", action="store_true",
+        help="Remove conventional tests and stale artifacts from the installed skill.",
     )
     parser.add_argument(
         "--copy-command", nargs=argparse.REMAINDER,
@@ -252,20 +431,42 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    if args.print_artifact_policy:
+        print(json.dumps(ARTIFACT_POLICY))
+        return 0
+    if args.source_dir is None or args.destination_dir is None:
+        parser.error("--source-dir and --destination-dir are required")
+    if args.copy_filtered and args.copy_command:
+        parser.error("--copy-filtered and --copy-command cannot be combined")
+    if args.replace_destination and not args.copy_filtered:
+        parser.error("--replace-destination requires --copy-filtered")
+    if (args.references_source is None) != (args.references_destination is None):
+        parser.error("--references-source and --references-destination must be used together")
+    if args.copy_filtered:
+        status = copy_filtered(args.source_dir, args.destination_dir, replace=args.replace_destination)
+        if status:
+            return status
     if args.copy_command:
         status = copy_with_preserved_modes(args.source_dir, args.destination_dir, args.copy_command)
         if status:
             return status
     should_prune = (
-        args.prune
+        (args.prune or args.prune_test_files)
         and not is_link_or_junction(args.source_dir)
         and not is_link_or_junction(args.destination_dir)
     )
+    if should_prune:
+        reject_linked_ancestors(args.destination_dir)
     # Source modes may make the copied root and evals directories read-only.
     # Keep pruning inside this scope, then restore every surviving directory.
     with temporary_write_access(args.destination_dir) if should_prune else nullcontext():
         if should_prune:
-            prune_skill_exclusions(args.destination_dir)
+            prune_skill_artifacts(args.destination_dir)
+            if args.prune:
+                prune_skill_exclusions(args.destination_dir)
+            prune_skill_test_files(args.destination_dir)
+        if args.references_source is None:
+            return 0
         rebase_skill_references(
             args.source_dir, args.destination_dir,
             args.references_source, args.references_destination,

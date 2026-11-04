@@ -1,6 +1,7 @@
 ---
 name: dotnet-upgrade
 description: "Use only when the user explicitly invokes dotnet-upgrade to research, plan, execute, or verify a .NET version upgrade."
+compatibility: Requires the .NET SDK for build, restore, and test verification; research and planning can proceed without it.
 disable-model-invocation: true
 ---
 

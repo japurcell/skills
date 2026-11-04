@@ -33,6 +33,7 @@ DEADLINE = None
 CANCEL_REQUESTS = 0
 CANCELLED_AT = None
 INSPECTOR = None
+OUTPUT_POLL = None
 PROCESS_BYTES = 1024 * 1024
 CLEANUP_SECONDS = 2.0
 # Ordinary observation uses half the cleanup envelope. During shutdown, a
@@ -125,6 +126,8 @@ def read_file(path, bound=LIMIT, *, phase="capture"):
 def check_cancelled():
     if CANCEL_REQUESTS:
         raise KeyboardInterrupt
+    if OUTPUT_POLL is not None and OUTPUT_POLL.poll(0):
+        raise BrokenPipeError
 
 
 def wait_process(process, timeout):
@@ -1289,6 +1292,7 @@ def failure_action(reason):
 
 
 def main():
+    global OUTPUT_POLL
     command = parser()
     if len(sys.argv) == 1 or sys.argv[1:] in (["help"], ["help", "check"]):
         command.print_help()
@@ -1297,6 +1301,12 @@ def main():
     code = 0
     try:
         args = command.parse_args()
+        if (args.json or not args.quiet) and hasattr(select, "poll"):
+            output_fd = sys.stdout.fileno()
+            if stat.S_ISFIFO(os.fstat(output_fd).st_mode):
+                OUTPUT_POLL = select.poll()
+                OUTPUT_POLL.register(output_fd, select.POLLERR | select.POLLHUP | select.POLLNVAL)
+        check_cancelled()
         def interrupted(signum, frame):
             global CANCEL_REQUESTS, CANCELLED_AT
             if CANCELLED_AT is None:

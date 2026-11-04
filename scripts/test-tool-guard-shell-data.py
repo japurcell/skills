@@ -9,13 +9,21 @@ import shlex
 import tempfile
 import unittest
 
-from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, script_path
+from tool_guard_corpus import OPERATIONS, PROVIDERS, Fixture, decision, encode, envelope, fixtures, file_operation_fixtures, script_path
 from tool_guard_test_support import invoke_guard, native_decision
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
 class ShellDataTests(unittest.TestCase):
+    def test_recent_document_writers_keep_literals_inert(self) -> None:
+        for fixture in file_operation_fixtures():
+            for provider in PROVIDERS:
+                with self.subTest(fixture=fixture.name, provider=provider):
+                    result = invoke_guard(ROOT, provider, encode(envelope(provider, fixture)))
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(decision(provider, json.loads(result.stdout)), fixture.candidate, result.stdout)
+
     def test_literal_delimiters_preserve_data_and_following_execution(self) -> None:
         operation = OPERATIONS['force_push_protected_branch']
         literals = [repr(operation + '\\'), repr('\\' * 257 + operation),
@@ -220,7 +228,13 @@ class ShellDataTests(unittest.TestCase):
         controls.append(prefix + 'sh -c ' + shlex.quote('eval ' + shlex.quote(search)))
         writer = 'from pathlib import Path;Path("example.txt").write_text(' + repr(operation) + ')'
         controls.append(prefix + 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer)))
-        controls.append('sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer) + '; printf safe') + ' ' + chr(124) + ' bash')
+        # A literal path may alias stdout through a descriptor or symlink.
+        # Keep normal writer coverage, and require incomplete denial when its
+        # output could become executable input, in both enforcement modes.
+        self.check('python3 -c ' + shlex.quote(writer), 'allow')
+        unsafe_writer = 'sh -c ' + shlex.quote('python3 -c ' + shlex.quote(writer) + '; printf safe') + ' ' + chr(124) + ' bash'
+        self.check(unsafe_writer, 'deny')
+        self.check(unsafe_writer, 'deny', mode='warn')
         for fixture in fixtures():
             if fixture.name in {'survey.json-stdin', 'survey.python-subprocess'}:
                 controls.append(prefix + 'sh -c ' + shlex.quote(fixture.value['command']))

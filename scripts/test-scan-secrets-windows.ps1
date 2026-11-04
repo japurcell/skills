@@ -684,6 +684,24 @@ try {
     Write-Output 'PASS: 240 repeated native Windows clean no-HEAD captures (batch and executable)'
     foreach ($provider in @('copilot', 'gemini', 'codex')) {
         foreach ($mode in @('block', 'warn')) {
+            Invoke-Case -Provider $provider -Mode $mode -Scenario 'completion-accounting'
+        }
+    }
+    Write-Output 'PASS: transient native completion accounting requires confirmed job zero'
+    # Repeated clean launches expose intermittent capture failures without
+    # accepting incomplete results or relaxing descendant and file checks.
+    for ($attempt = 1; $attempt -le 20; $attempt++) {
+        foreach ($provider in @('copilot', 'gemini', 'codex')) {
+            foreach ($mode in @('block', 'warn')) {
+                foreach ($scenario in @('success', 'native-success')) {
+                    Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario -Attempt $attempt
+                }
+            }
+        }
+    }
+    Write-Output 'PASS: 240 repeated native Windows clean no-HEAD captures (batch and executable)'
+    foreach ($provider in @('copilot', 'gemini', 'codex')) {
+        foreach ($mode in @('block', 'warn')) {
             foreach ($scenario in @('hardlinked-batch', 'image-pin', 'hostile-comspec', 'grandchild', 'launch-death', 'descendant', 'partial', 'oversized', 'nonzero', 'head-failure', 'malformed', 'capture-error', 'success')) {
                 Invoke-Case -Provider $provider -Mode $mode -Scenario $scenario
             }

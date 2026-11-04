@@ -1,6 +1,6 @@
 ---
 description: Dependency & topology mapping — call graphs, data lineage, batch flows, rendered as navigable diagrams
-argument-hint: <system-dir>
+argument-hint: '<system-dir>'
 ---
 
 Build a **dependency and topology map** of `legacy/$1` and render it visually.

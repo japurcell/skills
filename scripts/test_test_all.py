@@ -112,6 +112,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("scripts/test-security-banners.py")
         expected.add("scripts/test-scan-secrets-merge.py")
         expected.add("scripts/test-tool-guard-false-positives.py")
+        expected.add("scripts/test-tool-guard-file-operations.py")
         expected.add("scripts/test-tool-guard-native-data.py")
         expected.add("scripts/test-tool-guard-shell-data.py")
         expected.add("scripts/test-tool-guard-limits.py")
@@ -137,6 +138,7 @@ class TestTestAll(unittest.TestCase):
         expected.add("skills/default/create-skill/evals/test_grade_benchmark.py")
         expected.add("skills/default/spec-to-tasks/evals/test_grade_benchmark.py")
         expected.add("skills/default/prd-ralph-loop/evals/test_grade_benchmark.py")
+        expected.add("skills/default/subagent-model-router/scripts/test_route.py")
         listed = {
             part for command in commands for part in command
             if part.startswith(("scripts/", "skills/"))

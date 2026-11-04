@@ -113,7 +113,7 @@ class BrainHooksTests(unittest.TestCase):
                                   ("gemini", ("startup", "resume", "clear"))):
             for source in sources:
                 with self.subTest(provider=provider, source=source):
-                    event = "sessionStart" if provider == "copilot" else "SessionStart"
+                    event = "SessionStart"
                     result = self.invoke("inject-brain", {"cwd": str(self.directory), "source": source,
                                          "hook_event_name": event}, provider)
                     self.assertEqual(result.returncode, 0, result.stderr)
@@ -125,6 +125,28 @@ class BrainHooksTests(unittest.TestCase):
                         self.assertEqual(documents[-1]["systemMessage"], "inject-brain: pass; index loaded")
                         context = documents[-1]["hookSpecificOutput"]["additionalContext"]
                     self.assertIn("[private-name](<private-name.md>)", context)
+
+    def test_native_copilot_resets_emit_progress_and_index_context(self):
+        (self.vault / "note.md").touch()
+        hooks = json.loads((ROOT / ".github/hooks/hooks.json").read_text())["hooks"]
+        command = next(handler["bash"] for handler in hooks["sessionStart"]
+                       if "inject-brain.py" in handler["bash"])
+        scripts = self.directory / ".github/hooks/scripts"
+        scripts.mkdir(parents=True)
+        shutil.copyfile(ROOT / ".github/hooks/scripts/inject-brain.py", scripts / "inject-brain.py")
+        for source in ("startup", "resume", "new"):
+            with self.subTest(source=source):
+                payload = {"cwd": str(self.directory), "source": source,
+                           "sessionId": "native-copilot", "timestamp": 1792697840000}
+                result = run_registered_hook(command, self.directory, payload)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stderr, b"")
+                documents = [json.loads(line) for line in result.stdout.splitlines()]
+                self.assertEqual(documents, [
+                    {"type": "progress", "message": "inject-brain: pass; index loaded"},
+                    {"additionalContext": (self.vault / "index.md").read_text()},
+                ])
+                self.assertIn("[note](<note.md>)", documents[-1]["additionalContext"])
 
     def test_project_registrations_run_startup_and_completion(self):
         (self.directory / "pathlib.py").write_text("raise RuntimeError('cwd module imported')\n")
@@ -463,11 +485,16 @@ sys.stdin.read()
                 (self.vault / "index.md").unlink(missing_ok=True)
                 result = self.invoke("inject-brain", {"cwd": str(self.directory), "source": "startup"}, provider)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                output = json.loads(result.stdout)
+                documents = [json.loads(line) for line in result.stdout.splitlines()]
+                output = documents[-1]
                 expected = (self.vault / "index.md").read_text(encoding="utf-8")
                 if provider == "copilot":
+                    self.assertEqual(documents[:-1], [
+                        {"type": "progress", "message": "inject-brain: pass; index loaded"},
+                    ])
                     self.assertEqual(output, {"additionalContext": expected})
                 else:
+                    self.assertEqual(len(documents), 1)
                     specific = {"additionalContext": expected}
                     if provider == "codex":
                         specific["hookEventName"] = "SessionStart"
@@ -517,7 +544,7 @@ sys.stdin.read()
                     result = subprocess.run([sys.executable, "-I", "-S", "-B", str(copied), "--provider", provider],
                                             input=json.dumps(payload).encode(), capture_output=True, timeout=5)
                     self.assertEqual(result.returncode, 0, result.stderr)
-                    self.assertIsInstance(json.loads(result.stdout), dict)
+                    self.assertIsInstance(json.loads(result.stdout.splitlines()[-1]), dict)
                     self.assertIn("[note](<note.md>)", (self.vault / "index.md").read_text(encoding="utf-8"))
 
     def test_add_rename_delete_and_unchanged_runs_converge(self):

@@ -1,6 +1,6 @@
 ---
 description: Same-stack version uplift (e.g. .NET Framework 4.8 → .NET 8) — preserve the code, fix the version deltas, prove equivalence by running one test suite on both runtimes
-argument-hint: <system-dir> <source-version> <target-version> [project-pattern]
+argument-hint: '<system-dir> <source-version> <target-version> [project-pattern]'
 ---
 
 Uplift `legacy/$1` from **$2** to **$3** — same stack, newer version.

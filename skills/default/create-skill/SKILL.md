@@ -20,12 +20,13 @@ description: Create or revise portable agent skills with clear triggers, focused
    - Before pruning or restructuring, map every behavioral obligation to its replacement. Preserve explicit exclusions, conditions, approval requirements, and actionable task verification unless removal is authorized.
    - Write invocation instructions as “activate the `<name>` skill” or “activate the `<name>` and `<name>` skills”, including worker instructions.
    - Retain an existing `disable-model-invocation: true` unless a human explicitly approves removing it, for any reason.
-   - Consult the [Claude Code frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) when choosing invocation controls and argument hints. Use documented field names and account for differences in other target hosts.
+   - Consult the [Claude Code frontmatter reference](https://code.claude.com/docs/en/skills#frontmatter-reference) when choosing invocation controls and argument hints. Use documented field names and account for differences in other target hosts. Additionally, include `arguments`, `allowed-tools`, `disallowed-tools`, `compatibility` and any other helpful fields when known.
    - Keep the description trigger-oriented: state what the skill does and clear `Use when ...` conditions. Keep workflow steps in the body.
    - Keep the body under 500 lines. Keep references one level deep, preferably in an immediate reference directory; link directly from SKILL.md with a loading condition and read needed references completely. References longer than 100 lines MUST start with a table of contents.
    - Keep resources self-contained within the bundle. Refer to other skills through activation language, and derive target-project details from its applicable instructions instead of linking to the author's repository documents.
    - Keep a skill's own maintenance and evaluation instructions in README.md files. When writing or running evaluations and benchmarks is the skill's task, keep that procedure in its runtime instructions and bundled references.
    - Follow the [effective-skills checklist](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#checklist-for-effective-skills). Spell out exact commands and paths when required by the skill's task.
+   - Always look for opportunities to extract deterministic behavior into skill-bundled scripts. This helps reduce inference costs by avoiding repeated judgment during skill execution.
 
 4. **Write and run evaluations**
    - Add or update `evals/evals.json` with at least three realistic scenarios covering creation, modification, and a negative or duplicate-avoidance case.

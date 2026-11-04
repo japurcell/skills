@@ -1,7 +1,7 @@
 ---
 name: code-modernization
 description: Modernize legacy codebases with a guided, stepwise process that produces an executive brief
-argument-hint: <subcommand> <system-dir> [target-stack]
+argument-hint: '<subcommand> <system-dir> [target-stack]'
 disable-model-invocation: true
 compatibility: Requires python3, scc or cloc, lizard, glow, and delta or diff
 ---

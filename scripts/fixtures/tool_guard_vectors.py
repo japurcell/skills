@@ -181,11 +181,11 @@ FAKE_SENSITIVE_VALUES = (
 RECENT_NATIVE_PATCH_SIZES = (77089, 80666, 90127, 99186)
 
 
-def full_capacity_native_patch(*, key_bytes: int = 0, utf8: bool = False, high_lines: int = 0) -> str:
+def full_capacity_native_patch(*, capacity: int = 262144, key_bytes: int = 0, utf8: bool = False, high_lines: int = 0) -> str:
     """Fill the native aggregate capacity, including optional envelope key bytes."""
     prefix = '*** Begin Patch\n*** Add File: example.txt\n+'
     suffix = '\n' + '+\n' * high_lines + '*** End Patch'
-    available = 262144 - key_bytes - len((prefix + suffix).encode('utf-8'))
+    available = capacity - key_bytes - len((prefix + suffix).encode('utf-8'))
     if available < 0:
         raise ValueError('requested line count exceeds native capacity')
     body = '界' * (available // 3) + 'x' * (available % 3) if utf8 else 'x' * available

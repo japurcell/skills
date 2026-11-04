@@ -1,6 +1,7 @@
 ---
 name: ruminate
 description: Mine past conversations for uncaptured patterns, corrections, and knowledge. Cross-references with existing brain content. Triggers on "ruminate", "mine my history", "what have I been working on", "review past sessions", "extract learnings".
+compatibility: Requires python3
 disable-model-invocation: true
 ---
 

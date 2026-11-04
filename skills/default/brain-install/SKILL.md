@@ -1,7 +1,7 @@
 ---
 name: brain-install
 description: Install a portable brain vault, six local brain skills, and optional repository hooks, migrating existing guidance when present.
-argument-hint: "[target-repository] [--provider copilot|codex|gemini ...]"
+argument-hint: '[target-repository] [--provider copilot|codex|gemini ...]'
 disable-model-invocation: true
 compatibility: Python 3.12+; standard library only. Hooks support Copilot, Codex, and Gemini independently.
 ---
@@ -15,6 +15,8 @@ Install into the user's explicit target repository. Resolve `<skill-path>` to th
 Read the target's applicable instructions and current worktree state. Preserve manual changes. Inventory existing root/nested guidance, memory/KB notes, linked references, relevant skills, and registrations that load guidance. Check for an existing `brain/index.md` before running any indexer or activating hooks.
 
 Use only the requested providers. Repeat `--provider copilot`, `--provider codex`, or `--provider gemini` for any combination. Omit these options for no hooks. If the user has not requested hooks, use no hooks and say so. Selection adds or updates a provider; omission never removes a previously installed provider. User-global settings remain outside this operation.
+
+Selected hooks require the PATH alias `python` to run Python 3.12+ on every platform, including Windows. Inspection validates this alias in the installer environment; verify it also exists in the provider environment. A host with only `python3` or `py` must explicitly provide `python` before using hooks. Registrations remain portable and do not pin a user's absolute interpreter.
 
 Run inspection before applying:
 
@@ -34,7 +36,7 @@ Resolve each reported content conflict concretely. Preserve existing todos, prin
 
 For a populated codebase, plans, audits, or archive directory without an index, create a curated `index.md` linking its existing content, then retain it with `--keep-existing`. Empty starter indexes are only for empty directories.
 
-For differing AGENTS sections or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
+For differing AGENTS sections, helper payloads, or brain hook registrations, show the concrete difference and reconcile it through reviewed edits. Exact known registrations differing only in their Python executable prefix are automatically upgraded to the canonical PATH command; changed handler code or fields remain conflicts. Follow authorization already given; ask for a decision only when conflicting requirements leave a real choice. Back up exact uncommitted content before replacement. Do not add broad overwrite switches or infer permission to discard instructions.
 
 ## 3. Install
 

@@ -18,6 +18,8 @@ from typing import BinaryIO
 
 # Register maintained suites explicitly; never discover fixture or archived tests.
 SUITES = (
+    ("python3", "scripts/test_copy_from_git.py"),
+    ("python3", "scripts/test_workspace_config.py"),
     ("bash", "scripts/test-addy-install.sh"),
     ("bash", "scripts/test-cleanup-skill-workspaces.sh"),
     ("bash", "scripts/test-codex-hooks-startup.sh"),
@@ -61,6 +63,7 @@ SUITES = (
     ("python3", "scripts/test-tool-guard-native-data.py"),
     ("python3", "scripts/test-tool-guard-shell-data.py"),
     ("python3", "scripts/test-tool-guard-limits.py"),
+    ("python3", "scripts/test-tool-guard-file-operations.py"),
     ("python3", "scripts/test-benchmark-high-rate-hooks.py"),
     ("python3", "scripts/test-verify-hook-release.py"),
     ("pwsh", "-NoProfile", "-File", "scripts/test-install.ps1"),
@@ -74,6 +77,7 @@ SUITES = (
     ("python3", "skills/default/create-skill/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/spec-to-tasks/evals/test_grade_benchmark.py"),
     ("python3", "skills/default/prd-ralph-loop/evals/test_grade_benchmark.py"),
+    ("python3", "skills/default/subagent-model-router/scripts/test_route.py"),
     ("python3", "scripts/test_test_all.py"),
 )
 

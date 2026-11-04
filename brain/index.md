@@ -16,6 +16,7 @@
 ## codebase
 
 - [codebase/agents-installation](<codebase/agents-installation.md>)
+- [codebase/argument-hint-notation](<codebase/argument-hint-notation.md>)
 - [codebase/brain-hooks](<codebase/brain-hooks.md>)
 - [codebase/hook-observability](<codebase/hook-observability.md>)
 - [codebase/hook-testing](<codebase/hook-testing.md>)
